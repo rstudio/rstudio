@@ -136,7 +136,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.Completion
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.YamlCompletionSourceQuarto;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlersImpl;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobItemFactory;
@@ -194,6 +193,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeConfirm;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorFormat;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeSpelling;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlCompletionSourceQuarto;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeNavigation;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;

@@ -96,7 +96,6 @@ import org.rstudio.studio.client.workbench.views.console.shell.assist.PythonComp
 import org.rstudio.studio.client.workbench.views.console.shell.assist.RCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.SqlCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.StanCompletionManager;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.YamlCompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
@@ -157,6 +156,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Undo
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;

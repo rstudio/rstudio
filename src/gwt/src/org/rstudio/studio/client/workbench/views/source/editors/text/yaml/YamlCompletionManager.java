@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.console.shell.assist;
+package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,6 +23,10 @@ import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManagerBase;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionPopupDisplay;
+import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequestContext;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
