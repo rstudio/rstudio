@@ -66,10 +66,12 @@ const char * const kQuartoXt = "quarto-document";
 FilePath s_quartoPath;
 std::string s_quartoVersion;
 
+/*
 bool haveRequiredQuartoVersion(const std::string& version)
 {
    return Version(s_quartoVersion) >= Version(version);
 }
+*/
 
 void detectQuartoInstallation()
 {
@@ -108,7 +110,7 @@ void detectQuartoInstallation()
             contents = "99.9.9";
          }
 
-         const Version kQuartoRequiredVersion("0.2.159");
+         const Version kQuartoRequiredVersion("0.2.168");
          boost::algorithm::trim(contents);
          Version quartoVersion(contents);
          if (quartoVersion >= kQuartoRequiredVersion)
@@ -750,10 +752,38 @@ QuartoConfig quartoConfig(bool refresh)
 
    if (refresh)
    {
+      // detect installation
       detectQuartoInstallation();
       s_quartoConfig = QuartoConfig();
       s_quartoConfig.installed = quartoIsInstalled();
       s_quartoConfig.version = s_quartoVersion;
+
+      // if it's installed then detect bin and resources directories
+      if (s_quartoConfig.installed)
+      {
+         core::system::ProcessResult result;
+         Error error = quartoExec({ "--paths" }, &result);
+         if (error)
+         {
+            LOG_ERROR(error);
+            s_quartoConfig = QuartoConfig();
+            return s_quartoConfig;
+         }
+         std::vector<std::string> paths;
+         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n\r"));
+         if (paths.size() >= 2)
+         {
+            s_quartoConfig.bin_path = string_utils::systemToUtf8(paths[0]);
+            s_quartoConfig.resources_path = string_utils::systemToUtf8(paths[1]);
+         }
+         else
+         {
+            LOG_ERROR_MESSAGE("Unexpected output from quarto --paths: " + result.stdOut);
+            s_quartoConfig = QuartoConfig();
+            return s_quartoConfig;
+         }
+      }
+
       using namespace session::projects;
       const ProjectContext& context = projectContext();
       if (context.hasProject())

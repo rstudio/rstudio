@@ -538,6 +538,11 @@ FileLogDestination::~FileLogDestination()
       m_impl->LogOutputStream->flush();
 }
 
+std::string FileLogDestination::path()
+{
+   return m_impl->LogFile.getAbsolutePath();
+}
+
 void FileLogDestination::refresh(const RefreshParams& in_refreshParams)
 {
    // Close the log file to ensure that if we just forked old FDs are cleared out

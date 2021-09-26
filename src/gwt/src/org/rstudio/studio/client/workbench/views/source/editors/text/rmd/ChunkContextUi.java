@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import java.util.Map;
 
+import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -130,6 +131,20 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    {
       boolean showOptions = !outerEditor_.getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT);
       toolbar_.setShowOptions(showOptions);
+   }
+
+   /**
+    * Get the HTML element hosting the toolbar.
+    *
+    * @return An HTML element, or null if the toolbar hasn't been created yet
+    */
+   public Element getElement()
+   {
+      if (toolbar_ == null)
+      {
+         return null;
+      }
+      return toolbar_.getElement();
    }
 
    // ChunkContextToolbar.Host implementation ---------------------------------
