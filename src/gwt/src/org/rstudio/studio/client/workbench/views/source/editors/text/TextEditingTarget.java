@@ -8006,6 +8006,15 @@ public class TextEditingTarget implements
    private final CompletionContext rContext_ = new CompletionContext() {
 
       @Override
+      public String getId()
+      {
+         if (docUpdateSentinel_ == null)
+            return null;
+         else
+            return docUpdateSentinel_.getId();
+      }
+      
+      @Override
       public String getPath()
       {
          if (docUpdateSentinel_ == null)
@@ -8015,13 +8024,10 @@ public class TextEditingTarget implements
       }
 
       @Override
-      public String getId()
+      public String getExtendedFileType()
       {
-         if (docUpdateSentinel_ == null)
-            return null;
-         else
-            return docUpdateSentinel_.getId();
-      }
+         return extendedType_;
+      }      
    };
 
    public CompletionContext getRCompletionContext()

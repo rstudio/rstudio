@@ -1,5 +1,5 @@
 /*
- * CompletionContext.java
+ * YamlCompletion.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,11 +13,22 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
-public interface CompletionContext
+import com.google.gwt.core.client.JavaScriptObject;
+
+public class YamlCompletion extends JavaScriptObject
 {
-   String getId();
-   String getPath();
-   String getExtendedFileType();
+   protected YamlCompletion()
+   {
+   }
+   
+   public native final String getValue() /*-{
+      return this.value;
+   }-*/;
+   
+   public native final String getDescription() /*-{
+      return this.description;
+   }-*/;
+   
 }

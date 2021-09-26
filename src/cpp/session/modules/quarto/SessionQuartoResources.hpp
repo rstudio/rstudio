@@ -1,5 +1,5 @@
 /*
- * CompletionContext.java
+ * SessionQuartoResources.hpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,11 +13,27 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+#ifndef SESSION_QUARTO_RESOURCES_HPP
+#define SESSION_QUARTO_RESOURCES_HPP
 
-public interface CompletionContext
-{
-   String getId();
-   String getPath();
-   String getExtendedFileType();
+namespace rstudio {
+namespace core {
+   class Error;
 }
+}
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace quarto {
+namespace resources {
+
+core::Error initialize();
+
+} // namespace resources
+} // namespace quarto
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif // SESSION_QUARTO_RESOURCES_HPP

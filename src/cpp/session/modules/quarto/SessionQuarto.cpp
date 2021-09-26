@@ -51,6 +51,7 @@
 #include "SessionQuartoPreview.hpp"
 #include "SessionQuartoServe.hpp"
 #include "SessionQuartoXRefs.hpp"
+#include "SessionQuartoResources.hpp"
 
 using namespace rstudio::core;
 
@@ -110,7 +111,7 @@ void detectQuartoInstallation()
             contents = "99.9.9";
          }
 
-         const Version kQuartoRequiredVersion("0.2.168");
+         const Version kQuartoRequiredVersion("0.2.174");
          boost::algorithm::trim(contents);
          Version quartoVersion(contents);
          if (quartoVersion >= kQuartoRequiredVersion)
@@ -1070,6 +1071,7 @@ Error initialize()
      (boost::bind(quarto::preview::initialize))
      (boost::bind(quarto::serve::initialize))
      (boost::bind(quarto::xrefs::initialize))
+     (boost::bind(quarto::resources::initialize))
    ;
    return initBlock.execute();
 }

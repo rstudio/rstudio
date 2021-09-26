@@ -381,11 +381,17 @@
             "title": "Show diagnostics in C++ code",
             "description": "Whether to show diagnostic messages for C++ code as you type."
         },
+        "show_diagnostics_yaml": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show diagnostics in YAML code",
+            "description": "Whether to show diagnostic messages for YAML code as you type."
+        },
         "show_diagnostics_other": {
             "type": "boolean",
             "default": false,
             "title": "Show diagnostics in other languages",
-            "description": "Whether to show diagnostic messages for other types of code (not R or C++)."
+            "description": "Whether to show diagnostic messages for other types of code (not R, C++, or YAML)."
         },
         "style_diagnostics": {
             "type": "boolean",
