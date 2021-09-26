@@ -61,6 +61,19 @@ if(GWT_BUILD)
 
    # invoke ant to build
    add_custom_target(gwt_build ALL)
+
+   # wait for major C++ work to complete before running the GWT build;
+   # the Java compiler often runs out of resources when a parallel C++
+   # is happening: https://github.com/rstudio/rstudio/issues/7660
+   if (TARGET rserver)
+      add_dependencies(gwt_build rsession rserver)
+   elseif(TARGET desktop)
+      add_dependencies(gwt_build rsession desktop)
+   else()
+      add_dependencies(gwt_build rsession)
+   endif()
+
+
    add_custom_command(
       TARGET gwt_build
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
