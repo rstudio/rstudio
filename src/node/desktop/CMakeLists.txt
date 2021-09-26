@@ -20,7 +20,12 @@ project(ELECTRON_DESKTOP)
 set(MODIFIED_PATH "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")
 
 add_custom_target(electron_build ALL)
-add_dependencies(electron_build gwt_build rsession diagnostics)
+if (TARGET gwt_build)
+   add_dependencies(electron_build gwt_build rsession diagnostics)
+else()
+   # for iterating on build infrastructure, skipping gwt build
+   add_dependencies(electron_build rsession diagnostics)
+endif()
 
 add_custom_command(
    TARGET electron_build
