@@ -28,6 +28,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionQuarto.hpp>
+#include <session/SessionUrlPorts.hpp>
 
 #include "SessionQuartoJob.hpp"
 
@@ -286,7 +287,7 @@ private:
       if (isReveal)
       {
          json::Object eventData;
-         eventData["url"] = viewerUrl();
+         eventData["url"] = url_ports::mapUrlPorts(viewerUrl());
          eventData["quarto_navigation"] = module_context::quartoNavigateAsJson(quartoNav);
          ClientEvent event(client_events::kPresentationPreview, eventData);
          module_context::enqueClientEvent(event);

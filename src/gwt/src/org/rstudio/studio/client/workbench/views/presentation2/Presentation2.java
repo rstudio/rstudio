@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.presentation2;
 
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.workbench.WorkbenchView;
@@ -30,6 +31,7 @@ public class Presentation2 extends BasePresenter
    public interface Display extends WorkbenchView
    {
       void showPresentation(String url, QuartoNavigate nav);
+      void refresh();
    }
    
    @Inject
@@ -40,14 +42,23 @@ public class Presentation2 extends BasePresenter
    {
       super(display);
       display_ = display;
+      commands_ = commands;
+      commands_.refreshPresentation2().setEnabled(false);
    }
 
-   
    public void onPresentationPreview(PresentationPreviewEvent event)
    {
       PresentationPreviewEvent.Data data = event.getData();
       display_.showPresentation(data.getUrl(),  data.getQuartoNavigation());
+      commands_.refreshPresentation2().setEnabled(true);
+   }
+   
+   @Handler
+   void onRefreshPresentation2()
+   {
+      display_.refresh();
    }
    
    Display display_;
+   Commands commands_;
 }

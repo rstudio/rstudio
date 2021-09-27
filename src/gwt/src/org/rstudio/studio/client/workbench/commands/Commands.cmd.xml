@@ -2770,6 +2770,11 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"
         context="presentation"/>
 
+   <!--  Presentation2 -->
+   <cmd id="refreshPresentation2"
+        menuLabel="Refresh Presentation"
+        desc="Refresh the presentation preview"/>
+
    <cmd id="historySendToSource"
         label="Insert Command into Document"
         menuLabel="Insert into _Source"

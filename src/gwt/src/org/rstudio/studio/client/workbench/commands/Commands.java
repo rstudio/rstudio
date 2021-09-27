@@ -334,6 +334,7 @@ public abstract class
    // Presentation2
    public abstract AppCommand activatePresentation2();
    public abstract AppCommand layoutZoomPresentation2();
+   public abstract AppCommand refreshPresentation2();
 
    // View
    public abstract AppCommand showToolbar();

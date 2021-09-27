@@ -18,13 +18,15 @@
 package org.rstudio.studio.client.workbench.views.presentation2;
 
 import org.rstudio.core.client.URIConstants;
+import org.rstudio.core.client.URIUtils;
 import org.rstudio.core.client.widget.AnchorableFrame;
-import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
 import com.google.gwt.user.client.ui.Widget;
@@ -33,9 +35,10 @@ import com.google.inject.Inject;
 public class Presentation2Pane extends WorkbenchPane implements Presentation2.Display
 {
    @Inject
-   public Presentation2Pane()
+   public Presentation2Pane(Commands commands)
    {
       super("Presentation");
+      commands_ = commands;
       ensureWidget();
    }
    
@@ -43,19 +46,17 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Presentation Toolbar");
+      toolbar_ = new Toolbar("Presentation Toolbar");
       
       publishButton_ = new RSConnectPublishButton(
             RSConnectPublishButton.HOST_PRESENTATION2,
             RSConnect.CONTENT_TYPE_NONE, true, null);
-      toolbar.addRightWidget(publishButton_);
+      toolbar_.addRightWidget(publishButton_);
+   
+      toolbar_.addRightSeparator();
+      toolbar_.addRightWidget(commands_.refreshPresentation2().createToolbarButton());
       
-      /*
-      toolbar.addRightSeparator();
-      toolbar.addRightWidget(commands_.viewerRefresh().createToolbarButton());
-      */
-      
-      return toolbar;
+      return toolbar_;
    }
 
    @Override
@@ -73,6 +74,23 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       // bring tab to front
       bringToFront();
       
+      // in desktop mode we need to be careful about loading URLs which are
+      // non-local; before changing the URL, set the iframe to be sandboxed
+      // based on whether we're working with a local URL (note that prior to
+      // RStudio 1.2 local URLs were forbidden entirely)
+      if (Desktop.hasDesktopFrame())
+      {
+         if (URIUtils.isLocalUrl(url))
+         {
+            frame_.getElement().removeAttribute("sandbox");
+         }
+         else
+         {
+            frame_.getElement().setAttribute("sandbox", "allow-scripts");
+         }
+      }
+
+      
       // compute min height based on reveal presentation ratio and current width
       int frameWidth = frame_.getOffsetWidth();
       if (frameWidth > 0)
@@ -89,11 +107,34 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
          publishButton_.setQuartoSitePreview();
       else
          publishButton_.setQuartoDocPreview(nav.getSourceFile(), nav.getOutputFile());
+      
+      // redraw toolbar
+      toolbar_.invalidateSeparators();
+      
+      
+   }
+   
+   @Override
+   public void refresh()
+   {
+      try
+      {
+         frame_.getWindow().reload();
+      }
+      catch (Exception e)
+      {
+         String url = frame_.getUrl();
+         if (url != null)
+            frame_.navigate(url);
+      }
    }
 
-
    
-   private RStudioFrame frame_;
+   private AnchorableFrame frame_;
+   private Toolbar toolbar_;
    private RSConnectPublishButton publishButton_;
+   
+   private final Commands commands_;
+   
 
 }

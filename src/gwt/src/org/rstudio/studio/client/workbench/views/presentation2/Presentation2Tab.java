@@ -16,6 +16,8 @@
 
 package org.rstudio.studio.client.workbench.views.presentation2;
 
+import org.rstudio.core.client.command.CommandBinder;
+import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
@@ -29,15 +31,21 @@ import com.google.inject.Inject;
 
 public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
 {
+   public interface Binder extends CommandBinder<Commands, Presentation2Tab.Shim> {}
+   
    public abstract static class Shim 
    extends DelayLoadTabShim<Presentation2, Presentation2Tab> 
-   implements PresentationPreviewEvent.Handler {}
+   implements PresentationPreviewEvent.Handler {
+      @Handler
+      public abstract void onRefreshPresentation2();
+   }
    
    @Inject
-   public Presentation2Tab(Shim shim, Session session, Commands commands, EventBus eventBus)
+   public Presentation2Tab(Shim shim, Binder binder, Session session, Commands commands, EventBus eventBus)
    {
       super("Presentation", shim);
       session_ = session;
+      binder.bind(commands, shim);
       eventBus.addHandler(PresentationPreviewEvent.TYPE, shim);
       
       eventBus.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
