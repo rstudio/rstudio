@@ -19,7 +19,7 @@ package org.rstudio.studio.client.workbench.views.presentation2;
 
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
-import org.rstudio.core.client.widget.AnchorableFrame;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.AutoGlassPanel;
@@ -29,6 +29,7 @@ import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -62,9 +63,13 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    protected Widget createMainWidget()
    {
-      frame_ = new AnchorableFrame("Presentation Preview");
+      frame_ = new RStudioFrame("Presentation Preview");
+      frame_.addStyleName("ace_editor_theme");
       frame_.setSize("100%", "100%");
       frame_.setUrl(URIConstants.ABOUT_BLANK);
+      frame_.getElement().setAttribute("webkitallowfullscreen", "");
+      frame_.getElement().setAttribute("mozallowfullscreen", "");
+      frame_.getElement().setAttribute("allowfullscreen", "");
       return new AutoGlassPanel(frame_);
    }
    
@@ -125,12 +130,12 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       {
          String url = frame_.getUrl();
          if (url != null)
-            frame_.navigate(url);
+            frame_.setUrl(url);
       }
    }
 
    
-   private AnchorableFrame frame_;
+   private RStudioFrame frame_;
    private Toolbar toolbar_;
    private RSConnectPublishButton publishButton_;
    
