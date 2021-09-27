@@ -228,6 +228,10 @@ import org.rstudio.studio.client.workbench.views.presentation.Presentation;
 import org.rstudio.studio.client.workbench.views.presentation.PresentationPane;
 import org.rstudio.studio.client.workbench.views.presentation.PresentationTab;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
+import org.rstudio.studio.client.workbench.views.presentation2.Presentation2;
+import org.rstudio.studio.client.workbench.views.presentation2.Presentation2Pane;
+import org.rstudio.studio.client.workbench.views.presentation2.Presentation2Tab;
+import org.rstudio.studio.client.workbench.views.presentation2.model.Presentation2ServerOperations;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.SourceSatelliteView;
@@ -370,6 +374,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(TutorialPresenter.Display.class).to(TutorialPane.class);
       bind(BuildPresenter.Display.class).to(BuildPane.class);
       bind(Presentation.Display.class).to(PresentationPane.class);
+      bind(Presentation2.Display.class).to(Presentation2Pane.class);
       bind(EnvironmentPresenter.Display.class).to(EnvironmentPane.class);
       bind(ViewerPresenter.Display.class).to(ViewerPane.class);
       bind(ConnectionsPresenter.Display.class).to(ConnectionsPane.class);
@@ -389,6 +394,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("VCS", VCSTab.class);
       bindTab("Build", BuildTab.class);
       bindTab("Presentation", PresentationTab.class);
+      bindTab("Presentation2", Presentation2Tab.class);
       bindTab("Environment", EnvironmentTab.class);
       bindTab("Viewer", ViewerTab.class);
       bindTab("Connections", ConnectionsTab.class);
@@ -458,6 +464,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RPubsServerOperations.class).to(RemoteServer.class);
       bind(BuildServerOperations.class).to(RemoteServer.class);
       bind(PresentationServerOperations.class).to(RemoteServer.class);
+      bind(Presentation2ServerOperations.class).to(RemoteServer.class);
       bind(EnvironmentServerOperations.class).to(RemoteServer.class);
       bind(DebuggingServerOperations.class).to(RemoteServer.class);
       bind(MetaServerOperations.class).to(RemoteServer.class);

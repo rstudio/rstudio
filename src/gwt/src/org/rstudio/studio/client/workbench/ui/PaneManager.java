@@ -96,7 +96,7 @@ public class PaneManager
 
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
-      Presentation, Environment, Viewer, Source, Console, SourceColumn
+      Presentation, Presentation2, Environment, Viewer, Source, Console, SourceColumn
    }
 
    public static final String LEFT_COLUMN = "left";
@@ -231,6 +231,7 @@ public class PaneManager
                       @Named("VCS") final WorkbenchTab vcsTab,
                       @Named("Build") final WorkbenchTab buildTab,
                       @Named("Presentation") final WorkbenchTab presentationTab,
+                      @Named("Presentation2") final WorkbenchTab presentation2Tab,
                       @Named("Connections") final WorkbenchTab connectionsTab,
                       @Named("Environment") final WorkbenchTab environmentTab,
                       @Named("Viewer") final WorkbenchTab viewerTab,
@@ -265,6 +266,7 @@ public class PaneManager
       vcsTab_ = vcsTab;
       buildTab_ = buildTab;
       presentationTab_ = presentationTab;
+      presentation2Tab_ = presentation2Tab;
       connectionsTab_ = connectionsTab;
       environmentTab_ = environmentTab;
       viewerTab_ = viewerTab;
@@ -1329,6 +1331,8 @@ public class PaneManager
             return buildTab_;
          case Presentation:
             return presentationTab_;
+         case Presentation2:
+            return presentation2Tab_;
          case Environment:
             return environmentTab_;
          case Viewer:
@@ -1347,7 +1351,8 @@ public class PaneManager
    {
       return new WorkbenchTab[] { historyTab_, filesTab_,
                                   plotsTab_, packagesTab_, helpTab_,
-                                  vcsTab_, tutorialTab_, buildTab_, presentationTab_,
+                                  vcsTab_, tutorialTab_, buildTab_, 
+                                  presentationTab_, presentation2Tab_,
                                   environmentTab_, viewerTab_,
                                   connectionsTab_, jobsTab_, launcherJobsTab_ };
    }
@@ -1845,6 +1850,7 @@ public class PaneManager
       {
          case VCS:
          case Presentation:
+         case Presentation2:
          case Connections:
             return getTab(tab).getTitle();
          default:
@@ -1872,6 +1878,8 @@ public class PaneManager
          return Tab.Build;
       if (name.equalsIgnoreCase("presentation"))
          return Tab.Presentation;
+      if (name.equalsIgnoreCase("presentation2"))
+         return Tab.Presentation2;
       if (name.equalsIgnoreCase("environment"))
          return Tab.Environment;
       if (name.equalsIgnoreCase("viewer"))
@@ -1909,6 +1917,7 @@ public class PaneManager
       case Tutorial:     return commands_.layoutZoomTutorial();
       case Viewer:       return commands_.layoutZoomViewer();
       case Connections:  return commands_.layoutZoomConnections();
+      case Presentation2: return commands_.layoutZoomPresentation2();
       default:
          throw new IllegalArgumentException("Unexpected tab '" + tab.toString() + "'");
       }
@@ -1974,6 +1983,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomTutorial());
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
+      commands.add(commands_.layoutZoomPresentation2());
 
       return commands;
    }
@@ -2022,6 +2032,7 @@ public class PaneManager
    private final WorkbenchTab vcsTab_;
    private final WorkbenchTab buildTab_;
    private final WorkbenchTab presentationTab_;
+   private final WorkbenchTab presentation2Tab_;
    private final WorkbenchTab connectionsTab_;
    private final WorkbenchTab environmentTab_;
    private final WorkbenchTab viewerTab_;
