@@ -17,11 +17,16 @@
 
 package org.rstudio.studio.client.workbench.views.presentation2;
 
-import org.rstudio.core.client.widget.HorizontalCenterPanel;
+import org.rstudio.core.client.URIConstants;
+import org.rstudio.core.client.widget.AnchorableFrame;
+import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.common.AutoGlassPanel;
+import org.rstudio.studio.client.quarto.model.QuartoNavigate;
+import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -34,20 +39,61 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       ensureWidget();
    }
    
+
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Presentation toolbar");
+      Toolbar toolbar = new Toolbar("Presentation Toolbar");
+      
+      publishButton_ = new RSConnectPublishButton(
+            RSConnectPublishButton.HOST_PRESENTATION2,
+            RSConnect.CONTENT_TYPE_NONE, true, null);
+      toolbar.addRightWidget(publishButton_);
+      
+      /*
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(commands_.viewerRefresh().createToolbarButton());
+      */
+      
       return toolbar;
    }
-   
-   
+
    @Override
    protected Widget createMainWidget()
    {
-      Label label = new Label("Under Construction");
-      label.getElement().getStyle().setColor("#888");
-      return new HorizontalCenterPanel(label, 100);
+      frame_ = new AnchorableFrame("Presentation Preview");
+      frame_.setSize("100%", "100%");
+      frame_.setUrl(URIConstants.ABOUT_BLANK);
+      return new AutoGlassPanel(frame_);
    }
+   
+   @Override
+   public void showPresentation(String url, QuartoNavigate nav)
+   {
+      // bring tab to front
+      bringToFront();
+      
+      // compute min height based on reveal presentation ratio and current width
+      int frameWidth = frame_.getOffsetWidth();
+      if (frameWidth > 0)
+      {
+         double ratio = (double)700 / 960;
+         ensureHeight((int)(frameWidth * ratio));
+      }
+     
+      // navigate
+      frame_.setUrl(url);
+      
+      // set publish button
+      if (nav.isWebsite())
+         publishButton_.setQuartoSitePreview();
+      else
+         publishButton_.setQuartoDocPreview(nav.getSourceFile(), nav.getOutputFile());
+   }
+
+
+   
+   private RStudioFrame frame_;
+   private RSConnectPublishButton publishButton_;
 
 }

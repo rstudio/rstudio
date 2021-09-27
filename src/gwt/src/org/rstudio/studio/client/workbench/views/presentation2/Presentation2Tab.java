@@ -23,19 +23,22 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationPreviewEvent;
 
 import com.google.inject.Inject;
 
 public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
 {
    public abstract static class Shim 
-   extends DelayLoadTabShim<Presentation2, Presentation2Tab> {}
+   extends DelayLoadTabShim<Presentation2, Presentation2Tab> 
+   implements PresentationPreviewEvent.Handler {}
    
    @Inject
    public Presentation2Tab(Shim shim, Session session, Commands commands, EventBus eventBus)
    {
       super("Presentation", shim);
       session_ = session;
+      eventBus.addHandler(PresentationPreviewEvent.TYPE, shim);
       
       eventBus.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {

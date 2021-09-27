@@ -206,9 +206,10 @@ private:
          // activate the console
          activateConsole();
 
-         // if the viewer is already on the site just activate it
-         if (boost::algorithm::starts_with(
-                module_context::viewerCurrentUrl(false), viewerUrl()))
+         // if the viewer is already on the site just activate it (however for revealjs go
+         // back through standard presentation pane logic)
+         if (!formatIsRevealJs() &&
+              boost::algorithm::starts_with(module_context::viewerCurrentUrl(false), viewerUrl()))
          {
             module_context::activatePane("viewer");
          }
@@ -251,24 +252,49 @@ private:
       module_context::enqueClientEvent(activateConsoleEvent);
    }
 
+   bool formatIsRevealJs()
+   {
+      return boost::algorithm::starts_with(format_, "revealjs");
+   }
+
    void showInViewer()
    {
+      // format info
+      bool isReveal = formatIsRevealJs();
+      bool isSlidy = boost::algorithm::starts_with(format_, "slidy");
+      bool isBeamer = boost::algorithm::starts_with(format_, "beamer");
+
+      // determine height
       int minHeight = -1; // maximize
-      if (boost::algorithm::starts_with(format_, "revealjs") ||
-          boost::algorithm::starts_with(format_, "slidy"))
+      if (isReveal || isSlidy)
       {
          minHeight = 450;
       }
-      else if (boost::algorithm::starts_with(format_, "beamer"))
+      else if (isBeamer)
       {
           minHeight = 500;
       }
+
+
       std::string sourceFile = module_context::createAliasedPath(previewFile_);
       std::string outputFile;
       if (!outputFile_.isEmpty())
          outputFile = module_context::createAliasedPath(outputFile_);
       QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile);
-      module_context::viewer(viewerUrl(),  minHeight, quartoNav);
+
+      // route to either viewer or presentation pane (for reveal)
+      if (isReveal)
+      {
+         json::Object eventData;
+         eventData["url"] = viewerUrl();
+         eventData["quarto_navigation"] = module_context::quartoNavigateAsJson(quartoNav);
+         ClientEvent event(client_events::kPresentationPreview, eventData);
+         module_context::enqueClientEvent(event);
+      }
+      else
+      {
+         module_context::viewer(viewerUrl(),  minHeight, quartoNav);
+      }
    }
 
    std::string viewerUrl()
@@ -417,5 +443,25 @@ Error initialize()
 } // namespace prevew
 } // namespace quarto
 } // namespace modules
+
+namespace module_context {
+
+json::Value quartoNavigateAsJson(const QuartoNavigate& quartoNavigate)
+{
+   json::Value quartoNav;
+   if (!quartoNavigate.empty())
+   {
+      json::Object quartoNavObj;
+      quartoNavObj["is_website"] = quartoNavigate.website;
+      quartoNavObj["source_file"] = quartoNavigate.source;
+      quartoNavObj["output_file"] = quartoNavigate.output;
+      quartoNav = quartoNavObj;
+   }
+   return quartoNav;
+}
+
+
+} // namespace module_context
+
 } // namespace session
 } // namespace rstudio

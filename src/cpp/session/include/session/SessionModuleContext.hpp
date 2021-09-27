@@ -780,6 +780,8 @@ struct QuartoNavigate
    std::string output;
 };
 
+core::json::Value quartoNavigateAsJson(const QuartoNavigate& quartoNav);
+
 
 void viewer(const std::string& url,
             int height = 0, // pass 0 for no height change, // pass -1 for maximize

@@ -16,10 +16,12 @@
 package org.rstudio.studio.client.workbench.views.presentation2;
 
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
+import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationPreviewEvent;
 
 import com.google.inject.Inject;
 
@@ -27,7 +29,7 @@ public class Presentation2 extends BasePresenter
 {
    public interface Display extends WorkbenchView
    {
-
+      void showPresentation(String url, QuartoNavigate nav);
    }
    
    @Inject
@@ -40,6 +42,12 @@ public class Presentation2 extends BasePresenter
       display_ = display;
    }
 
+   
+   public void onPresentationPreview(PresentationPreviewEvent event)
+   {
+      PresentationPreviewEvent.Data data = event.getData();
+      display_.showPresentation(data.getUrl(),  data.getQuartoNavigation());
+   }
    
    Display display_;
 }
