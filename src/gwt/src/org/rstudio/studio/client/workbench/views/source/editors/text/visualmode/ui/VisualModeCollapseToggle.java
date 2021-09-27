@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import org.rstudio.core.client.a11y.A11y;
-import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.Value;
 
@@ -65,15 +64,13 @@ public class VisualModeCollapseToggle extends Composite
       // the expansion state of the chunk.
       toggle_ = new Image(new ImageResource2x(images.expand2x()));
       toggle_.setStyleName(images.collapseStyles().toggle(), true);
+      @SuppressWarnings("unused")
       Style style = toggle_.getElement().getStyle();
       host.add(toggle_);
 
       // Toggle expansion state on/off on click.
       DOM.sinkEvents(toggle_.getElement(), Event.ONCLICK);
-      DOM.setEventListener(toggle_.getElement(), evt ->
-      {
-         expanded.setValue(!expanded.getValue(), true);
-      });
+      DOM.setEventListener(toggle_.getElement(), evt -> toggleExpansion());
       setShowToggle(false);
 
       // Create decorative image to show that the chunk is in a collapsed state.
@@ -81,6 +78,9 @@ public class VisualModeCollapseToggle extends Composite
       collapsed_.setStyleName(images.collapseStyles().collapsed(), true);
       A11y.setDecorativeImage(collapsed_.getElement());
       host.add(collapsed_);
+
+      DOM.sinkEvents(collapsed_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(collapsed_.getElement(), evt -> toggleExpansion());
 
       // Set initial expansion state and listen for changes
       setExpanded(initial);
@@ -119,6 +119,15 @@ public class VisualModeCollapseToggle extends Composite
       // Change hint text.
       toggle_.setAltText((expanded ? "Collapse" : "Expand") + " code chunk");
    }
+
+   /**
+    * Toggles the current expansion state
+    */
+   private void toggleExpansion()
+   {
+      expanded.setValue(!expanded.getValue(), true);
+   }
+
 
    public Value<Boolean> expanded;
 

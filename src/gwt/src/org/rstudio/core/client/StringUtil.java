@@ -800,7 +800,7 @@ public class StringUtil
    }
 
 
-   public static boolean isEndOfLineInRStringState(String string)
+   public static boolean isEndOfLineInRStringState(String string, boolean allowInComment)
    {
       if (string == null)
          return false;
@@ -825,7 +825,7 @@ public class StringUtil
             previousChar = string.charAt(i - 1);
          }
 
-         if (currentChar == '#' && !inQuotes)
+         if (!allowInComment && currentChar == '#' && !inQuotes)
          {
             return false;
          }

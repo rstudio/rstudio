@@ -131,14 +131,16 @@ void initializeLogWriter()
    {
       case LoggerType::kFile:
       {
-         addLogDestination(
-            std::shared_ptr<ILogDestination>(new FileLogDestination(
+         FileLogDestination* dst = new FileLogDestination(
                generateShortenedUuid(),
                logLevel,
                formatType,
                s_programIdentity,
                boost::get<FileLogOptions>(options),
-               true)));
+               true);
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(dst));
+         ttyCheck(dst->path());
          break;
       }
       case LoggerType::kStdErr:
@@ -162,6 +164,7 @@ void initializeLogWriter()
                formatType,
                s_programIdentity,
                true)));
+         ttyCheck("syslog");
 #endif
       }
    }
@@ -235,6 +238,17 @@ void initializeLogWriters()
 }
 
 } // anonymous namespace
+
+void ttyCheck(const std::string& destination)
+{
+   // When running in a TTY, log some information about why we're logging to the TTY
+   // in addition to file/syslog.
+   if (stderrIsTerminal())
+      std::cerr << "TTY detected. Printing informational message about logging configuration. "
+                << "Logging configuration loaded from '"
+                << s_logOptions->getLogConfigFile().getAbsolutePath() << "'. "
+                << "Logging to '" << destination << "'.\n";
+}
 
 log::LoggerType loggerType(const std::string& in_sectionName)
 {

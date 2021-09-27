@@ -802,7 +802,7 @@ public class CompletionRequester
                null,
                "R");
       }
-
+      
       @Override
       public String toString()
       {
@@ -939,6 +939,8 @@ public class CompletionRequester
          case RCompletionType.PACKAGE:
             return new ImageResource2x(ICONS.rPackage2x());
          case RCompletionType.KEYWORD:
+            return new ImageResource2x(ICONS.keyword2x());
+         case RCompletionType.YAML:
             return new ImageResource2x(ICONS.keyword2x());
          case RCompletionType.CONTEXT:
             return new ImageResource2x(ICONS.context2x());

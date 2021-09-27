@@ -648,7 +648,20 @@ core::Error UserPrefValues::setShowDiagnosticsCpp(bool val)
 }
 
 /**
- * Whether to show diagnostic messages for other types of code (not R or C++).
+ * Whether to show diagnostic messages for YAML code as you type.
+ */
+bool UserPrefValues::showDiagnosticsYaml()
+{
+   return readPref<bool>("show_diagnostics_yaml");
+}
+
+core::Error UserPrefValues::setShowDiagnosticsYaml(bool val)
+{
+   return writePref("show_diagnostics_yaml", val);
+}
+
+/**
+ * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
  */
 bool UserPrefValues::showDiagnosticsOther()
 {
@@ -2999,6 +3012,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowFunctionSignatureTooltips,
       kShowDiagnosticsR,
       kShowDiagnosticsCpp,
+      kShowDiagnosticsYaml,
       kShowDiagnosticsOther,
       kStyleDiagnostics,
       kDiagnosticsOnSave,

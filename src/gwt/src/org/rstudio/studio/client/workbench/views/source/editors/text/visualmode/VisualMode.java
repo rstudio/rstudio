@@ -711,12 +711,6 @@ public class VisualMode implements VisualModeEditorSync,
         // embedded editors simultaneously
         commands_.findSelectAll(),
 
-        // Disabled since code folding doesn't work in embedded editors (there's
-        // no gutter in which to toggle folds)
-        commands_.fold(),
-        commands_.foldAll(),
-        commands_.unfold(),
-        commands_.unfoldAll(),
 
         // Disabled since we don't have line numbers in the visual editor
         commands_.goToLine()
@@ -858,6 +852,26 @@ public class VisualMode implements VisualModeEditorSync,
    public void goToPreviousChunk()
    {
       panmirror_.execCommand(PanmirrorCommands.GoToPreviousChunk);
+   }
+   
+   public void fold()
+   {
+      panmirror_.execCommand(PanmirrorCommands.CollapseChunk);
+   }
+   
+   public void unfold()
+   {
+      panmirror_.execCommand(PanmirrorCommands.ExpandChunk);
+   }
+   
+   public void foldAll()
+   {
+      panmirror_.execCommand(PanmirrorCommands.CollapseAllChunks);
+   }
+   
+   public void unfoldAll()
+   {
+      panmirror_.execCommand(PanmirrorCommands.ExpandAllChunks);
    }
 
    public HasFindReplace getFindReplace()

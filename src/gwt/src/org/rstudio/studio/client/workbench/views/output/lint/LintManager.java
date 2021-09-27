@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlDocumentLinter;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
@@ -88,6 +89,9 @@ public class LintManager
       if (type.isR() || type.isRnw() || type.isRpres() || type.isMarkdown())
          return userPrefs_.showDiagnosticsR().getValue() || userPrefs_.realTimeSpellchecking().getValue();
       
+      if (type.isYaml())
+         return userPrefs_.showDiagnosticsYaml().getValue();
+      
       return false;
    }
 
@@ -98,6 +102,7 @@ public class LintManager
       target_ = target;
       cppCompletionContext_ = cppCompletionContext;
       docDisplay_ = target.getDocDisplay();
+      yamlLinter_ = new YamlDocumentLinter(target_, docDisplay_);
       showMarkers_ = false;
       explicit_ = false;
       invalidation_ = new Invalidation();
@@ -227,6 +232,8 @@ public class LintManager
          performCppLintServerRequest(context);
       else if (userPrefs_.showDiagnosticsR().getValue() && (target_.getTextFileType().isR() || target_.getTextFileType().isRmd()))
          performRLintServerRequest(context);
+      else if (userPrefs_.showDiagnosticsYaml().getValue() && (target_.getTextFileType().isYaml()))
+         performYamlLintRequest(context);
       else if (userPrefs_.realTimeSpellchecking().getValue())
          showLint(context, JsArray.createArray().cast());
    }
@@ -306,8 +313,24 @@ public class LintManager
                {
                   if (context.token.isInvalid())
                      return;
-
-                  showLint(context, lint);
+                  
+                  // if this is an rmd file then also look for yaml lint
+                  if (docDisplay_.getFileType().isRmd() && 
+                      userPrefs_.showDiagnosticsYaml().getValue())
+                  {
+                     yamlLinter_.getLint(yamlLint -> {
+                        JsArray<LintItem> allLint = JsArray.createArray().cast();
+                        for (int i = 0; i < lint.length(); i++)
+                           allLint.push(lint.get(i));
+                        for (int i = 0; i < yamlLint.length(); i++)
+                           allLint.push(yamlLint.get(i));
+                        showLint(context, allLint);
+                     });
+                  }
+                  else
+                  {
+                     showLint(context, lint);
+                  }
                }
 
                @Override
@@ -316,6 +339,13 @@ public class LintManager
                   Debug.logError(error);
                }
             });
+   }
+   
+   private void performYamlLintRequest(final LintContext context)
+   {
+      yamlLinter_.getLint(lint -> {
+         showLint(context, lint);
+      });
    }
    
    private void showLint(LintContext context, JsArray<LintItem> lint)
@@ -416,6 +446,7 @@ public class LintManager
    private UserPrefs userPrefs_;
    private EventBus eventBus_;
    private final CppCompletionContext cppCompletionContext_;
+   private final YamlDocumentLinter yamlLinter_;
    
    static {
       LintResources.INSTANCE.styles().ensureInjected();

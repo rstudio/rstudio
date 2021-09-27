@@ -1,5 +1,5 @@
 /*
- * CompletionContext.java
+ * YamlEditorToolsProvider.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,11 +13,16 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.source.editors.text;
+package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
-public interface CompletionContext
-{
-   String getId();
-   String getPath();
-   String getExtendedFileType();
+import org.rstudio.core.client.CommandWithArg;
+
+import elemental2.core.JsObject;
+
+public interface YamlEditorToolsProvider
+{ 
+   boolean isActive(String path, String extendedType);  
+   void getCompletions(YamlEditorContext context, CommandWithArg<JsObject> results);
+   void getLint(YamlEditorContext context, CommandWithArg<JsObject> results);
 }
+
