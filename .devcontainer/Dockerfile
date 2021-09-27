@@ -13,6 +13,7 @@ RUN apt-get update && \
     cmake \
     curl \
     debsigs \
+    docker.io \
     dpkg-sig \
     expect \
     fakeroot \
@@ -55,6 +56,7 @@ RUN apt-get update && \
     uuid \
     uuid-dev \
     valgrind \
+    vim \
     wget \
     xvfb \
     zlib1g-dev
@@ -68,14 +70,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Java 8 and 11 (not in official repo for focal)
 RUN add-apt-repository -y ppa:openjdk-r/ppa && \
     apt-get update && \
-    apt-get install -y openjdk-11-jdk
-RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
-
-RUN apt-get -y  install apt-transport-https software-properties-common
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 0x51716619e084dab9
-RUN add-apt-repository -y 'deb https://cran.rstudio.com/bin/linux/ubuntu focal-cran40/'
-RUN apt update
-RUN apt-get -y install r-base
+    apt-get install -y openjdk-8-jdk openjdk-11-jdk
+RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/linux
@@ -142,5 +138,22 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
     && echo "$USERNAME:$USERNAME" | sudo chpasswd
+
+# Create config folder. The postCreateCommand in devcontainer.json will link the config
+RUN mkdir /etc/rstudio
+
+# Create the secure cookie key
+RUN sh -c "echo `uuid` > /etc/rstudio/secure-cookie-key"
+RUN chmod 0600 /etc/rstudio/secure-cookie-key
+
+# Install AWS CLI v2
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm -rf awscliv2.zip aws
+
+# Install docker-compose
+RUN curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+RUN chmod +x /usr/local/bin/docker-compose
 
 USER ${USERNAME}

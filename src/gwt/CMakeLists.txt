@@ -39,16 +39,6 @@ if(DEFINED ENV{GWT_BUILD})
    set(GWT_BUILD $ENV{GWT_BUILD})
 endif()
 
-# allow opt in / out of GWT building
-# with the 'all' target. 
-if(NOT DEFINED GWT_BUILD_ALL)
-   set(GWT_BUILD_ALL Yes)
-endif()
-
-if(DEFINED ENV{GWT_BUILD_ALL})
-   set(GWT_BUILD_ALL $ENV{GWT_BUILD_ALL})
-endif()
-
 # set main module (allow override from envvar)
 set(GWT_MAIN_MODULE "RStudio")
 if(DEFINED ENV{GWT_MAIN_MODULE})
@@ -60,7 +50,7 @@ set (GWT_XMX "-Xmx1536M")
 if(DEFINED ENV{GWT_XMX})
    set(GWT_XMX $ENV{GWT_XMX})
 endif()
-set (GWT_XSS "")
+set (GWT_XSS "-Xss16M")
 if(DEFINED ENV{GWT_XSS})
    set(GWT_XSS $ENV{GWT_XSS})
 endif()
@@ -92,7 +82,6 @@ if(GWT_BUILD)
    else()
       add_dependencies(gwt_build rsession)
    endif()
-
 
    add_custom_command(
       TARGET gwt_build

@@ -1,13 +1,12 @@
 {
   "name": "RStudio-Focal-Amd64",
-
-  "build": {
-    "dockerfile": "Dockerfile",
-    "context": ".."
-  },
+  "dockerComposeFile": "docker-compose-vscode.yml",
+  "service": "vscode",
+  "shutdownAction": "stopCompose",
+  "workspaceFolder": "/workspaces/rstudio",
 
   "settings": {
-    "terminal.integrated.defaultProfile.linux": "/bin/bash",
+    "terminal.integrated.defaultProfile.linux": "bash",
 
     "cmake.configureArgs": ["-DRSTUDIO_TARGET=Server"],
     "cmake.configureEnvironment": {
@@ -33,9 +32,17 @@
     "waderyan.nodejs-extension-pack"
   ],
 
+  "remoteEnv": {
+    "HOST_HOME": "${localEnv:HOME}",
+    "WORKSPACE_FOLDER": "${containerWorkspaceFolder}",
+    "PATH_NOT": "${containerEnv:PATH}:${containerWorkspaceFolder}/build/src/cpp/server",
+  },
+
   "forwardPorts": [
     8787
   ],
 
-  "remoteUser": "rstudio"
+  "remoteUser": "rstudio",
+
+  "postCreateCommand": "sudo -E ${containerWorkspaceFolder}/.devcontainer/conf/generate.sh && sudo ln -s ${containerWorkspaceFolder}/run/conf/rserver.conf /etc/rstudio/rserver.conf",
 }
