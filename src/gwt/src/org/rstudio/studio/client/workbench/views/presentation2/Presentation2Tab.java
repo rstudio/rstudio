@@ -20,6 +20,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 
@@ -39,7 +40,7 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
       eventBus.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
          // if the other presentation tab is active then remove our commands
-         if (session.getSessionInfo().getPresentationState().isActive())
+         if (isSuppressed())
          {
             commands.layoutZoomPresentation2().remove();
             commands.activatePresentation2().remove();
@@ -48,10 +49,13 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
       });
    }
    
+   // requires quarto and the legacy presentation tab be not active
    @Override
    public boolean isSuppressed()
    {
-      return session_.getSessionInfo().getPresentationState().isActive();
+      SessionInfo si = session_.getSessionInfo();
+      return !si.getQuartoConfig().installed ||
+             si.getPresentationState().isActive();
    }
    
    private final Session session_;
