@@ -558,6 +558,8 @@ public class VisualModeChunk
    public void removeWidget()
    {
       outputHost_.setInnerHTML("");
+      widget_ = null;
+      syncOutputClass();
    }
    
    /**
@@ -1036,9 +1038,9 @@ public class VisualModeChunk
       }
 
       String outputClass = "pm-ace-has-output";
-      if (getExpanded() && widget_ != null && widget_.isVisible())
+      if (widget_ != null && widget_.isVisible())
       {
-         // We have output (and are expanded); add the CSS decoration
+         // We have output; add the CSS decoration
          element_.addClassName(outputClass);
       }
       else
