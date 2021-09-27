@@ -64,6 +64,7 @@
 #include <core/system/Crypto.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/LibraryLoader.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/Xdg.hpp>
 
@@ -321,6 +322,9 @@ bool s_destroySession = false;
 // did we fail to coerce the charset to UTF-8
 bool s_printCharsetWarning = false;
 
+// (linux only) can we load the libR.so shared library
+std::string s_libRSoWarning = "";
+
 void handleINT(int)
 {
    rstudio::r::exec::setInterruptsPending(true);
@@ -460,6 +464,7 @@ Error runPreflightScript()
 
 // implemented below
 void stopMonitorWorkerThread();
+bool ensureLibRSoValid();
 
 void exitEarly(int status)
 {
@@ -698,6 +703,12 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
    if (s_printCharsetWarning)
       rstudio::r::exec::warning("Character set is not UTF-8; please change your locale");
+
+   if (!ensureLibRSoValid())
+     LOG_ERROR_MESSAGE(s_libRSoWarning +
+                       ". Linux may have loaded a different libR.so than requested."
+                       " R_HOME: " + rsession::module_context::rHomeDir() +
+                       ", R Version: " + rsession::module_context::rVersion());
 
    // propagate console history options
    rstudio::r::session::consoleHistory().setRemoveDuplicates(
@@ -1715,6 +1726,36 @@ bool ensureUtf8Charset()
    return false;
 #endif
 #endif
+}
+
+/*
+ * If linux couldn't load libR.so while the rsession binary was loading, it may
+ * have loaded a different libR.so from one of the default library locations:
+ * /lib/
+ * /usr/local/lib/
+ * /usr/local/lib64/R/
+ * etc.
+ * This is usually a system installation of R, potentially with a different
+ * version of R than this session is configured to run.
+ *
+ * This can put the session in a state where it thinks it's running one version
+ * of R, with all R libraries and paths set for version A, but the actual R
+ * version we're running is some version B. We check for that here so we can
+ * alert the user once R has completely loaded.
+ */
+bool ensureLibRSoValid()
+{
+#ifdef __linux__
+   void* pLib;
+   std::string libPath = rsession::module_context::rHomeDir() + "/lib/libR.so";
+   Error libError = core::system::verifyLibrary(libPath, &pLib);
+   if (libError)
+   {
+      s_libRSoWarning = "R shared library (" + libPath + ") failed load with error: " + libError.getProperty("dlerror");
+      return false;
+   }
+#endif
+   return true;
 }
 
 // io_service for performing monitor work on the thread
