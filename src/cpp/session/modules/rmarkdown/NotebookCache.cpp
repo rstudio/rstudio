@@ -505,6 +505,20 @@ void onDocSaved(FilePath path)
                // Move on
                continue;
             }
+            else
+            {
+               // The execution lock exists, but isn't actually locked. This suggests
+               // that a crash occurred while the chunk was executing, since the
+               // execution context should have cleaned up the lock after execution
+               // was complete. Just clean up the lock ourselves so it doesn't clutter
+               // the saved cache folder.
+               error = executionLock.remove();
+               if (error)
+               {
+                  error.addProperty("description", "Unable to clean up execution lock");
+                  LOG_ERROR(error);
+               }
+            }
          }
 
          // library folders should be merged and then removed, so we don't
