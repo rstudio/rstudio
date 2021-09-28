@@ -73,6 +73,7 @@ namespace r_util {
       static std::shared_ptr<IActiveSessionStorage> getActiveSessionStorage();
       static std::shared_ptr<IActiveSessionStorage> getLegacyActiveSessionStorage();
    };
+
 } // namespace r_util
 } // namespace core
 } // namespace rstudio
