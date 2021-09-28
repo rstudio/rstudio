@@ -21,3 +21,4 @@
 ### Bugfixes
 
 * Fixed errors when uploading files/directory names with invalid characters (Pro #698)
+* Fixed "No such file or directory" errors when auto-saving R Notebook chunks while running them (#9284)
