@@ -78,8 +78,5 @@ CREATE TABLE active_session_metadata(
          ON DELETE CASCADE
 );
 
-/* Remove previous schema version data */
-TRUNCATE schema_version;
-
 /* Update the version to the latest after all alter statements are applied. */
-INSERT INTO schema_version (current_version, release_name) VALUES ('20210916132211194382021', 'Prairie Trillium');
+UPDATE schema_version SET current_version = '20210916132211194382021' , release_name = 'Prairie Trillium';
