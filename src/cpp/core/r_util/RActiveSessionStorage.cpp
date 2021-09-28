@@ -19,8 +19,6 @@
 #include <core/Log.hpp>
 #include <core/system/Xdg.hpp>
 
-
-
 namespace rstudio {
 namespace core {
 namespace r_util {
