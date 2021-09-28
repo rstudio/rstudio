@@ -1143,9 +1143,7 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
       // Is the migration file from an update that predates the current version?
       // If so, skip it
       if(migrationFile.first <= currentVersion)
-      {
          continue;
-      }
 
       bool applyMigration = false;
 
