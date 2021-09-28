@@ -1140,7 +1140,7 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
    for (const std::pair<SchemaVersion, FilePath>& migrationFile : files)
    {
 
-      // Is the migration file from a update that predates the current version?
+      // Is the migration file from an update that predates the current version?
       // If so, skip it
       if(migrationFile.first <= currentVersion)
       {
