@@ -49,6 +49,7 @@ namespace r_util {
 
             boost::algorithm::trim(*pValue);
         }
+
         return Success();
     }
 
