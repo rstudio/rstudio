@@ -57,11 +57,11 @@ Error loadLibrary(const std::string& libPath, void** ppLib)
  * Verify that we can load a library (without actually loading it)
  * by passing RTLD_NOLOAD to dlopen
  */
-Error verifyLibrary(const std::string& libPath, void** ppLib)
+Error verifyLibrary(const std::string& libPath)
 {
-   *ppLib = nullptr;
-   *ppLib = ::dlopen(libPath.c_str(), RTLD_LAZY | RTLD_NOLOAD);
-   if (*ppLib == nullptr)
+   void* pLib = nullptr;
+   pLib = ::dlopen(libPath.c_str(), RTLD_LAZY | RTLD_NOLOAD);
+   if (pLib == nullptr)
    {
       // dlopen returns a null pointer on error rather than an error number.
       // using -1 here as a generic non-zero placeholder
@@ -75,7 +75,7 @@ Error verifyLibrary(const std::string& libPath, void** ppLib)
    }
    else
    {
-      return closeLibrary(*ppLib);
+      return closeLibrary(pLib);
    }
 }
 

@@ -322,9 +322,6 @@ bool s_destroySession = false;
 // did we fail to coerce the charset to UTF-8
 bool s_printCharsetWarning = false;
 
-// (linux only) can we load the libR.so shared library
-std::string s_libRSoWarning = "";
-
 void handleINT(int)
 {
    rstudio::r::exec::setInterruptsPending(true);
@@ -464,7 +461,7 @@ Error runPreflightScript()
 
 // implemented below
 void stopMonitorWorkerThread();
-bool ensureLibRSoValid();
+Error ensureLibRSoValid();
 
 void exitEarly(int status)
 {
@@ -704,11 +701,13 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    if (s_printCharsetWarning)
       rstudio::r::exec::warning("Character set is not UTF-8; please change your locale");
 
-   if (!ensureLibRSoValid())
-     LOG_ERROR_MESSAGE(s_libRSoWarning +
-                       ". Linux may have loaded a different libR.so than requested."
-                       " R_HOME: " + rsession::module_context::rHomeDir() +
-                       ", R Version: " + rsession::module_context::rVersion());
+   error = ensureLibRSoValid();
+   if (error)
+   {
+      rstudio::r::session::reportWarningToConsole(error.getProperty("description")
+         + ". Please contact your system administrator to correct this libR.so install.");
+      LOG_ERROR(error);
+   }
 
    // propagate console history options
    rstudio::r::session::consoleHistory().setRemoveDuplicates(
@@ -1743,19 +1742,22 @@ bool ensureUtf8Charset()
  * version we're running is some version B. We check for that here so we can
  * alert the user once R has completely loaded.
  */
-bool ensureLibRSoValid()
+Error ensureLibRSoValid()
 {
 #ifdef __linux__
-   void* pLib;
    std::string libPath = rsession::module_context::rHomeDir() + "/lib/libR.so";
-   Error libError = core::system::verifyLibrary(libPath, &pLib);
+   Error libError = core::system::verifyLibrary(libPath);
    if (libError)
    {
-      s_libRSoWarning = "R shared library (" + libPath + ") failed load with error: " + libError.getProperty("dlerror");
-      return false;
+      libError.addProperty("description", "R shared object (" + libPath + ") failed load test with error: " + libError.getProperty("dlerror") +
+         "\nLinux may have loaded a different libR.so than requested. "
+         "This can result in \"package was built under R version X.Y.Z\" user warnings and R_HOME/R version mismatches."
+         "\nR_HOME: " + rsession::module_context::rHomeDir() +
+         "\nR Version: " + rsession::module_context::rVersion());
+      return libError;
    }
 #endif
-   return true;
+   return Success();
 }
 
 // io_service for performing monitor work on the thread
