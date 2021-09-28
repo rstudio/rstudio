@@ -65,9 +65,6 @@ CREATE TABLE active_session_metadata(
    /* Whether or not a save prompt is required */
    save_prompt_required text NOT NULL DEFAULT 'not_required',
 
-   /* The size of the session on disk, if it is curruently suspended */
-   suspended_size_kb integer,
-
    PRIMARY KEY (session_id),
    
    /* User entries should not be deleted, but if they are, remove all of that user's sessions */
