@@ -21,3 +21,4 @@
 ### Bugfixes
 
 * Fixed errors when uploading files/directory names with invalid characters (Pro #698)
+* Added error when rsession may be running a different version of R than expected (Pro #2477)
