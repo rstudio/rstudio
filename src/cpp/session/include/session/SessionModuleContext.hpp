@@ -50,6 +50,8 @@ namespace core {
    namespace system {
       class ProcessSupervisor;
       struct ProcessResult;
+      struct ProcessOptions;
+
    }
    namespace shell_utils {
       class ShellCommand;
@@ -124,6 +126,9 @@ bool isPdfLatexInstalled();
 
 // is the file a text file
 bool isTextFile(const core::FilePath& targetPath);
+
+// edit a file
+void editFile(const core::FilePath& targetPath, int lineNumber = -1);
 
 // find the location of the R script
 core::Error rBinDir(core::FilePath* pRBinDirPath);
@@ -752,9 +757,35 @@ private:
 
 void addViewerHistoryEntry(const ViewerHistoryEntry& entry);
 
-// pass 0 for no height change
-// pass -1 for maximize
-void viewer(const std::string& url, int height = 0);
+struct QuartoNavigate
+{
+   QuartoNavigate() : website(false) {}
+   bool empty() const { return !website && source.empty(); }
+   static QuartoNavigate navWebsite()
+   {
+      QuartoNavigate nav;
+      nav.website = true;
+      return nav;
+   }
+   static QuartoNavigate navDoc(const std::string& source, const std::string& output)
+   {
+      QuartoNavigate nav;
+      nav.website = false;
+      nav.source = source;
+      nav.output = output;
+      return nav;
+   }
+   bool website;
+   std::string source;
+   std::string output;
+};
+
+
+void viewer(const std::string& url,
+            int height = 0, // pass 0 for no height change, // pass -1 for maximize
+            const QuartoNavigate& quartoNav = QuartoNavigate());
+
+void clearViewerCurrentUrl();
 std::string viewerCurrentUrl(bool mapped = true);
 
 core::Error recursiveCopyDirectory(const core::FilePath& fromDir,
@@ -786,8 +817,19 @@ bool isUserFile(const core::FilePath& filePath);
 struct SourceMarker
 {
    enum Type {
-      Error = 0, Warning = 1, Box = 2, Info = 3, Style = 4, Usage = 5
+      Error   = 0,
+      Warning = 1,
+      Box     = 2,
+      Info    = 3,
+      Style   = 4, 
+      Usage   = 5,
+      Empty   = 99
    };
+
+   SourceMarker()
+      : type(Empty)
+   {
+   }
 
    SourceMarker(Type type,
                 const core::FilePath& path,
@@ -795,9 +837,18 @@ struct SourceMarker
                 int column,
                 const core::html_utils::HTML& message,
                 bool showErrorList)
-      : type(type), path(path), line(line), column(column), message(message),
+      : type(type),
+        path(path),
+        line(line),
+        column(column),
+        message(message),
         showErrorList(showErrorList)
    {
+   }
+   
+   explicit operator bool() const
+   {
+      return type != Empty;
    }
 
    Type type;
@@ -878,27 +929,14 @@ void initializeConsoleCtrlHandler();
 bool isPythonReplActive();
 
 
-extern const char* const kQuartoProjectSite;
-extern const char* const kQuartoProjectBook;
+core::Error perFilePathStorage(const std::string& scope,
+                               const core::FilePath& filePath,
+                               bool directory,
+                               core::FilePath* pStorage);
 
-struct QuartoConfig
-{
-   QuartoConfig() : empty(true), installed(false), is_project(false) {}
-   bool empty;
-   bool installed;
-   bool is_project;
-   std::string project_type;
-   std::string project_dir;
-   std::string project_output_dir;
-   std::vector<std::string> project_formats;
-};
-
-QuartoConfig quartoConfig(bool refresh = false);
-
-// see if quarto wants to handle the preview
-bool handleQuartoPreview(const core::FilePath& sourceFile,
-                         const core::FilePath& outputFile,
-                         bool validateExtendedType);
+// returns -1 if no error was found in the output
+int jupyterErrorLineNumber(const std::vector<std::string>& srcLines,
+                           const std::string& output);
 
 std::vector<core::FilePath> ignoreContentDirs();
 bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);
@@ -911,10 +949,20 @@ core::Error adaptToLanguage(const std::string& language);
 std::string pandocPath();
 std::string pandocCiteprocPath();
 
+core::Error runPandoc(const std::string& pandocPath,
+                      const std::vector<std::string>& args,
+                      const std::string& input,
+                      core::system::ProcessOptions options,
+                      core::system::ProcessResult* pResult);
 core::Error runPandoc(const std::vector<std::string>& args,
                       const std::string& input,
                       core::system::ProcessResult* pResult);
 
+core::Error runPandocAsync(const std::string& pandocPath,
+                           const std::vector<std::string>& args,
+                           const std::string&input,
+                           core::system::ProcessOptions options,
+                           const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
 core::Error runPandocAsync(const std::vector<std::string>& args,
                            const std::string& input,
                            const boost::function<void(const core::system::ProcessResult&)>& onCompleted);

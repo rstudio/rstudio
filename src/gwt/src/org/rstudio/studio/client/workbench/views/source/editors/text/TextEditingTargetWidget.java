@@ -366,6 +366,9 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.knitDocument(), column_).createUnsyncedToolbarButton();
       knitDocumentButton_.getElement().getStyle().setMarginRight(0, Unit.PX);
       toolbar.addLeftWidget(knitDocumentButton_);
+      
+      toolbar.addLeftWidget(
+         mgr.getSourceCommand(commands_.runDocumentFromServerDotR(), column_).createToolbarButton());
 
       ToolbarPopupMenu shinyTestMenu = shinyTestMenu_;
       if (fileType.canKnitToHTML()) {
@@ -1072,8 +1075,9 @@ public class TextEditingTargetWidget
       else if (extendedType_ != null && 
             (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) || extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT)) )
       {
-         return  extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT) ?
-            "Render" : fileType.isRmd() ?  "Knit" : fileType.getPreviewButtonText();
+         boolean isQuarto = extendedType_.equals(SourceDocument.XT_QUARTO_DOCUMENT);
+         String commandText = (isQuarto ? quartoCommandText_ : knitCommandText_).split(" ")[0];
+         return isQuarto || fileType.isRmd() ? commandText : fileType.getPreviewButtonText();
       }
       else
       {
@@ -1534,7 +1538,7 @@ public class TextEditingTargetWidget
          }
          else if (type.equals(SourceDocument.XT_QUARTO_DOCUMENT))
          {
-            publishButton_.setRmd(publishPath, true);
+            publishButton_.setQmd(publishPath);
          }
          else if (type == SourceDocument.XT_PLUMBER_API)
          {
@@ -1703,6 +1707,12 @@ public class TextEditingTargetWidget
    {
       return handlerManager_.addHandler(
             RmdOutputFormatChangedEvent.TYPE, handler);
+   }
+   
+   @Override
+   public SourceColumn getSourceColumn()
+   {
+      return column_;
    }
 
    private void showRmdViewerMenuItems(boolean show, boolean showOutputOptions,

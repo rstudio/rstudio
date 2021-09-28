@@ -77,6 +77,7 @@
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionContentUrls.hpp>
+#include <session/SessionQuarto.hpp>
 
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
@@ -347,6 +348,22 @@ SEXP rs_rstudioEdition()
 
 // get version
 SEXP rs_rstudioVersion()
+{
+   std::string numericVersion(RSTUDIO_VERSION_MAJOR);
+   numericVersion.append(".")
+      .append(RSTUDIO_VERSION_MINOR).append(".")
+      .append(RSTUDIO_VERSION_PATCH).append(".")
+      .append(boost::regex_replace(
+         std::string(RSTUDIO_VERSION_SUFFIX),
+         boost::regex("[a-zA-Z\\-+]"),
+         ""));
+
+   r::sexp::Protect rProtect;
+   return r::sexp::create(numericVersion, &rProtect);
+}
+
+// get long form version
+SEXP rs_rstudioLongVersion()
 {
    r::sexp::Protect rProtect;
    return r::sexp::create(std::string(RSTUDIO_VERSION), &rProtect);
@@ -1342,6 +1359,29 @@ bool isTextFile(const FilePath& targetPath)
 
 }
 
+void editFile(const core::FilePath& filePath, int lineNumber)
+{
+   // construct file system item (also tag with mime type) and position
+   json::Object fileJson = module_context::createFileSystemItem(filePath);
+   fileJson["mime_type"] = filePath.getMimeContentType();
+
+   json::Value positionJsonValue;
+   if (lineNumber >= 0)
+   {
+      json::Object positionJson;
+      positionJson["line"] = lineNumber;
+      positionJson["column"] = 1;
+      positionJsonValue = positionJson;
+   }
+
+   // fire event
+   json::Object eventJson;
+   eventJson["file"] = fileJson;
+   eventJson["position"] = positionJsonValue;
+   ClientEvent event(client_events::kFileEdit, eventJson);
+   module_context::enqueClientEvent(event);
+}
+
 Error rBinDir(core::FilePath* pRBinDirPath)
 {
    std::string rHomeBin;
@@ -1731,6 +1771,14 @@ SEXP rs_base64decode(SEXP dataSEXP, SEXP binarySEXP)
       return r::sexp::createRawVector(output, &protect);
    else
       return r::sexp::create(output, &protect);
+}
+
+SEXP rs_htmlEscape(SEXP textSEXP, SEXP attributeSEXP)
+{
+   std::string escaped = string_utils::htmlEscape(r::sexp::safeAsString(textSEXP), 
+         r::sexp::asLogical(attributeSEXP));
+   r::sexp::Protect protect;
+   return r::sexp::create(escaped, &protect);
 }
 
 SEXP rs_resolveAliasedPath(SEXP pathSEXP)
@@ -2330,6 +2378,7 @@ FilePath sourceDiagnostics()
 }
    
 namespace {
+
 void beginRpcHandler(json::JsonRpcFunction function,
                      json::JsonRpcRequest request,
                      std::string asyncHandle)
@@ -2340,9 +2389,11 @@ void beginRpcHandler(json::JsonRpcFunction function,
       Error error = function(request, &response);
       BOOST_ASSERT(!response.hasAfterResponse());
       if (error)
-      {
          response.setError(error);
-      }
+      
+      if (!response.hasField(kEventsPending))
+         response.setField(kEventsPending, "false");
+      
       json::Object value;
       value["handle"] = asyncHandle;
       value["response"] = response.getRawResponse();
@@ -2352,6 +2403,7 @@ void beginRpcHandler(json::JsonRpcFunction function,
    CATCH_UNEXPECTED_EXCEPTION
 
 }
+
 } // anonymous namespace
 
 core::Error executeAsync(const json::JsonRpcFunction& function,
@@ -2549,11 +2601,11 @@ bool isPathViewAllowed(const FilePath& filePath)
       }
    }
 
-   // Check session option for explicitly whitelisted directories
-   std::string whitelistDirs = session::options().directoryViewWhitelist();
-   if (!whitelistDirs.empty())
+   // Check session option for explicitly allowed directories
+   std::string allowDirs = session::options().directoryViewAllowList();
+   if (!allowDirs.empty())
    {
-      std::vector<std::string> dirs = core::algorithm::split(whitelistDirs, ":");
+      std::vector<std::string> dirs = core::algorithm::split(allowDirs, ":");
       for (const auto& dir: dirs)
       {
          if (filePath.isWithin(FilePath(dir)))
@@ -2847,7 +2899,7 @@ std::vector<FilePath> ignoreContentDirs()
    if (projects::projectContext().hasProject()) {
       // python virtual environments
       ignoreDirs = projects::projectContext().pythonEnvs();
-      module_context::QuartoConfig quartoConf = module_context::quartoConfig();
+      quarto::QuartoConfig quartoConf = quarto::quartoConfig();
       // quarto site output dir
       if (quartoConf.is_project) {
          FilePath quartoProjDir = module_context::resolveAliasedPath(quartoConf.project_dir);
@@ -2943,6 +2995,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_base64decode);
    RS_REGISTER_CALL_METHOD(rs_base64encode);
    RS_REGISTER_CALL_METHOD(rs_base64encodeFile);
+   RS_REGISTER_CALL_METHOD(rs_htmlEscape);
    RS_REGISTER_CALL_METHOD(rs_enqueClientEvent);
    RS_REGISTER_CALL_METHOD(rs_ensureFileHidden);
    RS_REGISTER_CALL_METHOD(rs_generateShortUuid);
@@ -2961,6 +3014,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_rstudioEdition);
    RS_REGISTER_CALL_METHOD(rs_rstudioProgramMode);
    RS_REGISTER_CALL_METHOD(rs_rstudioVersion);
+   RS_REGISTER_CALL_METHOD(rs_rstudioLongVersion);
    RS_REGISTER_CALL_METHOD(rs_rstudioReleaseName);
    RS_REGISTER_CALL_METHOD(rs_sessionModulePath);
    RS_REGISTER_CALL_METHOD(rs_setPersistentValue);

@@ -51,6 +51,7 @@ bool s_isHTMLWidget = false;
 void viewerNavigate(const std::string& url,
                     int height,
                     bool isHTMLWidget,
+                    const module_context::QuartoNavigate& quartoNavigate,
                     bool bringToFront)
 {
    // record the url (for reloads)
@@ -58,16 +59,37 @@ void viewerNavigate(const std::string& url,
    s_currentUrl = url_ports::mapUrlPorts(url);
    s_isHTMLWidget = isHTMLWidget;
 
+   // create quarto nav object
+   json::Value quartoNav;
+   if (!quartoNavigate.empty())
+   {
+      json::Object quartoNavObj;
+      quartoNavObj["is_website"] = quartoNavigate.website;
+      quartoNavObj["source_file"] = quartoNavigate.source;
+      quartoNavObj["output_file"] = quartoNavigate.output;
+      quartoNav = quartoNavObj;
+   }
+
    // enque the event
    json::Object dataJson;
    dataJson["url"] = s_currentUrl;
    dataJson["height"] = height;
    dataJson["html_widget"] = isHTMLWidget;
+   dataJson["quarto_navigate"] = quartoNav;
    dataJson["has_next"] = isHTMLWidget && viewerHistory().hasNext();
    dataJson["has_previous"] = isHTMLWidget && viewerHistory().hasPrevious();
    dataJson["bring_to_front"] = bringToFront;
    ClientEvent event(client_events::kViewerNavigate, dataJson);
    module_context::enqueClientEvent(event);
+}
+
+// overload for non-Quarto navigation
+void viewerNavigate(const std::string& url,
+                    int height,
+                    bool isHTMLWidget,
+                    bool bringToFront)
+{
+   viewerNavigate(url, height, isHTMLWidget, module_context::QuartoNavigate(), bringToFront);
 }
 
 void viewerNavigateToCurrent(bool bringToFront = true)
@@ -77,8 +99,8 @@ void viewerNavigateToCurrent(bool bringToFront = true)
       viewerNavigate(current.url(), 0, true, bringToFront);
 }
 
-Error viewerStopped(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error viewerStopped(const json::JsonRpcRequest&,
+                    json::JsonRpcResponse*)
 {
    // clear current state
    s_currentUnmappedUrl.clear();
@@ -88,39 +110,39 @@ Error viewerStopped(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error viewerBack(const json::JsonRpcRequest& request,
-                 json::JsonRpcResponse* pResponse)
+Error viewerBack(const json::JsonRpcRequest&,
+                 json::JsonRpcResponse*)
 {
    if (viewerHistory().hasPrevious())
       viewerNavigate(viewerHistory().goBack().url(), 0, true, true);
    return Success();
 }
 
-Error viewerForward(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error viewerForward(const json::JsonRpcRequest&,
+                    json::JsonRpcResponse*)
 {
    if (viewerHistory().hasNext())
       viewerNavigate(viewerHistory().goForward().url(), 0, true, true);
    return Success();
 }
 
-Error viewerCurrent(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
+Error viewerCurrent(const json::JsonRpcRequest&,
+                    json::JsonRpcResponse*)
 {
    viewerNavigateToCurrent();
    return Success();
 }
 
-Error viewerClearCurrent(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
+Error viewerClearCurrent(const json::JsonRpcRequest&,
+                        json::JsonRpcResponse*)
 {
    viewerHistory().clearCurrent();
    viewerNavigateToCurrent();
    return Success();
 }
 
-Error viewerClearAll(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
+Error viewerClearAll(const json::JsonRpcRequest&,
+                        json::JsonRpcResponse*)
 {
    viewerHistory().clear();
    return Success();
@@ -190,7 +212,7 @@ Error currentViewerSourcePath(FilePath* pSourcePath)
 }
 
 Error viewerSaveAsWebPage(const json::JsonRpcRequest& request,
-                          json::JsonRpcResponse* pResponse)
+                          json::JsonRpcResponse*)
 {
    // get target path
    std::string targetPath;
@@ -361,6 +383,12 @@ Error initialize()
 
 namespace module_context {
 
+void clearViewerCurrentUrl()
+{
+   s_currentUrl = "";
+   s_currentUnmappedUrl = "";
+}
+
 std::string viewerCurrentUrl(bool mapped)
 {
    if (mapped)
@@ -369,7 +397,9 @@ std::string viewerCurrentUrl(bool mapped)
       return s_currentUnmappedUrl;
 }
 
-void viewer(const std::string& url, int height)
+void viewer(const std::string& url,
+            int height, // pass 0 for no height change, // pass -1 for maximize
+            const QuartoNavigate& quartoNav)
 {
    // transform the url to a localhost:<port>/session one if it's
    // a path to a file within the R session temporary directory
@@ -404,7 +434,7 @@ void viewer(const std::string& url, int height)
             // view it
             viewerNavigate(viewerHistory().current().url(),
                            height,
-                           true,
+                           true,  // is HTML widget
                            true);
          }
          else
@@ -412,6 +442,7 @@ void viewer(const std::string& url, int height)
             viewerNavigate(module_context::sessionTempDirUrl(path),
                            height,
                            false,
+                           quartoNav,
                            true);
          }
       }
@@ -427,15 +458,18 @@ void viewer(const std::string& url, int height)
       {
          if (!module_context::isPackageVersionInstalled("httpuv", "1.2"))
          {
-            module_context::consoleWriteError("\nWARNING: To run "
-              "applications within the RStudio Viewer pane you need to "
-              "install the latest version of the httpuv package from "
-              "CRAN (version 1.2 or higher is required).\n\n");
+            if (quartoNav.empty())
+            {
+               module_context::consoleWriteError("\nWARNING: To run "
+                 "applications within the RStudio Viewer pane you need to "
+                 "install the latest version of the httpuv package from "
+                 "CRAN (version 1.2 or higher is required).\n\n");
+            }
          }
       }
 
       // navigate the viewer
-      viewerNavigate(url, height, false, true);
+      viewerNavigate(url, height, false, quartoNav, true);
    }
 }
 

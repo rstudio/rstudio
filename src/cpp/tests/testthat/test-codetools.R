@@ -79,3 +79,12 @@ test_that(".rs.CRANDownloadOptionsString() fills missing CRAN repo", {
    expect_equal(unlist(actual[["repos"]]["CRAN"]), c(CRAN = cran))
 })
 
+
+test_that("HTML escaping escapes HTML entities", {
+   fake_header <- "<h1>Not a real header.</h1>"
+
+   escaped <- .rs.htmlEscape(fake_header)
+   expect_false(grepl(escaped, "<"))
+   expect_false(grepl(escaped, ">"))
+})
+

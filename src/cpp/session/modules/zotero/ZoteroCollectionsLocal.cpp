@@ -296,9 +296,14 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
       }
 
       // update version
-      int rowVersion = row.get<int>("version");
-      if (rowVersion > version)
-         version = rowVersion;
+      // further fix for https://github.com/rstudio/rstudio/issues/8861
+      try
+      {
+         int rowVersion = row.get<int>("version");
+         if (rowVersion > version)
+            version = rowVersion;
+      }
+      CATCH_UNEXPECTED_EXCEPTION
 
       // read the csl name value pairs
       soci::indicator nameIndicator = row.get_indicator("name");
@@ -383,20 +388,27 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
    ZoteroCollectionSpecs specs;
    Error error = execQuery(pConnection, sql, [&specs](const database::Row& row) {
 
-      ZoteroCollectionSpec spec;
-      spec.name = row.get<std::string>("collectionName");
-      spec.key = readString(row, "collectionKey", "-1");
-
-      std::string versionStr = readString(row, "version", "0");
-      spec.version = safe_convert::stringTo<int>(versionStr, 0);
-
-      const soci::indicator indicator = row.get_indicator("parentCollectionKey");
-      if (indicator == soci::i_ok)
+      // had this issue: https://github.com/rstudio/rstudio/issues/8861
+      // perhaps a corrupted collection or a collection using an older
+      // schema that was unversioned?
+      try
       {
-         // If the parent key is not null, this is a child collection
-         spec.parentKey = row.get<std::string>("parentCollectionKey");
+         ZoteroCollectionSpec spec;
+         spec.name = row.get<std::string>("collectionName");
+         spec.key = readString(row, "collectionKey", "-1");
+
+         std::string versionStr = readString(row, "version", "0");
+         spec.version = safe_convert::stringTo<int>(versionStr, 0);
+
+         const soci::indicator indicator = row.get_indicator("parentCollectionKey");
+         if (indicator == soci::i_ok)
+         {
+            // If the parent key is not null, this is a child collection
+            spec.parentKey = row.get<std::string>("parentCollectionKey");
+         }
+         specs.push_back(spec);
       }
-      specs.push_back(spec);
+      CATCH_UNEXPECTED_EXCEPTION
    });
 
    if (error)
@@ -486,7 +498,7 @@ void getLocalCollectionSpecs(std::string key, std::vector<std::string> collectio
    // get all collections
    ZoteroCollectionSpecs specs = getCollections(pConnection);
 
-   // filter the specs if there is a collections whitelist
+   // filter the specs if specific connections are being queried
    ZoteroCollectionSpecs filteredSpecs;
    if (collections.size() > 0)
    {
@@ -568,10 +580,16 @@ void getLocalCollections(std::string key,
          if (it != cacheSpecs.end())
          {
             ZoteroCollectionSpec collectionSpec(name, key, parentKey, version);
-            if (it->version != version)
+            // If the version is 0 this is a local instance that isn't incrementing version numbers, do not cache
+            if (it->version != version || it->version == 0)
+            {
+               TRACE("Need to update collection " + name);
                downloadCollections.push_back(std::make_pair(name, collectionSpec));
-            else
+            }
+            else {
+               TRACE("Collection " + name + " is up to date.");
                upToDateCollections.push_back(ZoteroCollection(collectionSpec));
+            }
          }
          else
          {

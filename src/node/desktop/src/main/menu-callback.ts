@@ -14,10 +14,53 @@
  */
 import { ipcMain, Menu, MenuItem } from 'electron';
 import { MenuItemConstructorOptions } from 'electron/main';
+import EventEmitter from 'events';
 
-import { MainWindow } from './main-window';
+/**
+ * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
+ * after startup.
+ */
+export function showPlaceholderMenu(): void {
+  const addPlaceholderMenuItem = function(mainMenu: Menu, label: string): void {
+    mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
+  };
 
-export class MenuCallback {
+  const mainMenuStub = new Menu();
+  if (process.platform === 'darwin') {
+    mainMenuStub.append(new MenuItem({role: 'appMenu'}));
+  }
+  addPlaceholderMenuItem(mainMenuStub, 'File');
+  addPlaceholderMenuItem(mainMenuStub, 'Edit');
+  addPlaceholderMenuItem(mainMenuStub, 'Code');
+  addPlaceholderMenuItem(mainMenuStub, 'View');
+  addPlaceholderMenuItem(mainMenuStub, 'Plots');
+  addPlaceholderMenuItem(mainMenuStub, 'Session');
+  addPlaceholderMenuItem(mainMenuStub, 'Build');
+  addPlaceholderMenuItem(mainMenuStub, 'Debug');
+  addPlaceholderMenuItem(mainMenuStub, 'Profile');
+  addPlaceholderMenuItem(mainMenuStub, 'Tools');
+  if (process.platform === 'darwin') {
+    addPlaceholderMenuItem(mainMenuStub, 'Window');
+  }
+  addPlaceholderMenuItem(mainMenuStub, 'Help');
+  Menu.setApplicationMenu(mainMenuStub);
+}
+
+function menuIdFromLabel(label: string): string {
+  return label.replace('&', '');
+}
+
+/**
+ * Callbacks from renderer to create application menu.
+ */
+export class MenuCallback extends EventEmitter {
+  static MENUBAR_COMPLETED = 'menu-callback-menubar_completed';
+  static MANAGE_COMMAND = 'menu-callback-manage_command';
+  static COMMAND_INVOKED = 'menu-callback-command_invoked';
+  static ZOOM_ACTUAL_SIZE = 'menu-callback-zoom_actual_size';
+  static ZOOM_IN = 'menu-callback-zoom_in';
+  static ZOOM_OUT = 'menu-callback-zoom_out';
+
   mainMenu?: Menu|null = null;
   menuStack: Menu[] = [];
   actions = new Map();
@@ -25,8 +68,8 @@ export class MenuCallback {
   lastWasTools = false;
   lastWasDiagnostics = false;
 
-  constructor(public mainWindow: MainWindow) {
-
+  constructor() {
+    super();
     ipcMain.on('menu_begin_main', () => {
       this.mainMenu = new Menu();
       if (process.platform === 'darwin') {
@@ -34,9 +77,9 @@ export class MenuCallback {
       }
     });
 
-    ipcMain.on('menu_begin', (event, label) => {
+    ipcMain.on('menu_begin', (event, label: string) => {
       const subMenu = new Menu();
-      const opts: MenuItemConstructorOptions = {submenu: subMenu, label: label};
+      const opts: MenuItemConstructorOptions = { submenu: subMenu, label: label, id: menuIdFromLabel(label) };
       if (label === '&File') {
         opts.role = 'fileMenu';
       } else if (label === '&Edit') {
@@ -60,45 +103,10 @@ export class MenuCallback {
       this.menuStack.push(subMenu);
     });
 
-    ipcMain.on('menu_add_command', (event, cmdId, label, tooltip, shortcut, checkable) => {
-      const menuItemOpts: MenuItemConstructorOptions = {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        label: label, id: cmdId, click: (menuItem, browserWindow, event) => {
-          this.actionInvoked(menuItem.id);
-        }};
-
-      if (checkable) {
-        menuItemOpts.checked = false;
-      }
-      if (shortcut.length > 0) {
-        menuItemOpts.accelerator = this.convertShortcut(shortcut);
-      }
-
-      // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
-      // populate those here when discovered
-      if (cmdId === 'zoomActualSize') {
-        menuItemOpts.role = 'resetZoom';
-      } else if (cmdId === 'zoomIn') {
-        menuItemOpts.role = 'zoomIn';
-      } else if (cmdId === 'zoomOut') {
-        menuItemOpts.role = 'zoomOut';
-      } else if (cmdId === 'cutDummy') {
-        menuItemOpts.role = 'cut';
-      } else if (cmdId === 'copyDummy') {
-        menuItemOpts.role = 'copy';
-      } else if (cmdId === 'pasteDummy') {
-        menuItemOpts.role = 'paste';
-      } else if (cmdId === 'pasteWithIndentDummy') {
-        menuItemOpts.role = 'pasteAndMatchStyle';
-      } else if (cmdId === 'undoDummy') {
-        menuItemOpts.role = 'undo';
-      } else if (cmdId === 'redoDummy') {
-        menuItemOpts.role = 'redo';
-      }
-
-      const menuItem = new MenuItem(menuItemOpts);
-      this.actions.set(cmdId, menuItem);
-      this.addToCurrentMenu(menuItem);
+    ipcMain.on('menu_add_command', (event, cmdId: string, label: string, tooltip: string,
+      shortcut: string, checkable: boolean
+    ) => {
+      this.addCommand(cmdId, label, tooltip, shortcut, checkable);
     });
 
     ipcMain.on('menu_add_separator', () => {
@@ -125,25 +133,24 @@ export class MenuCallback {
     });
 
     ipcMain.on('menu_end_main', () => {
-      if (this.mainMenu)
-        Menu.setApplicationMenu(this.mainMenu);
+      this.emit(MenuCallback.MENUBAR_COMPLETED, this.mainMenu);
     });
 
-    ipcMain.on('menu_set_command_visible', (event, commandId, visible) => {
+    ipcMain.on('menu_set_command_visible', (event, commandId: string, visible: boolean) => {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.visible = visible;
       }
     });
 
-    ipcMain.on('menu_set_command_enabled', (event, commandId, enabled) => {
+    ipcMain.on('menu_set_command_enabled', (event, commandId: string, enabled: boolean) => {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.enabled = enabled;
       }
     });
 
-    ipcMain.on('menu_set_command_checked', (event, commandId, checked) => {
+    ipcMain.on('menu_set_command_checked', (event, commandId: string, checked: boolean) => {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.checked = checked;
@@ -154,12 +161,57 @@ export class MenuCallback {
     ipcMain.on('menu_set_main_menu_enabled', () => {
     });
 
-    ipcMain.on('menu_set_command_label', (event, commandId, label) => {
+    ipcMain.on('menu_set_command_label', (event, commandId: string, label: string) => {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.label = label;
       }
     });
+  }
+
+  addCommand(cmdId: string, label: string, tooltip: string, shortcut: string, checkable: boolean): void {
+    const menuItemOpts: MenuItemConstructorOptions = {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      label: label, id: cmdId, click: (menuItem, browserWindow, event) => {
+        this.emit(MenuCallback.COMMAND_INVOKED, menuItem.id);
+      }};
+
+    if (checkable) {
+      menuItemOpts.checked = false;
+    }
+    if (shortcut.length > 0) {
+      menuItemOpts.accelerator = this.convertShortcut(shortcut);
+    }
+
+    // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
+    // populate those here when discovered
+
+    // TODO: probably need to not use the roles here, and instead follow pattern in the C++
+    // code where we assign shortcuts to these commands and let them flow through
+    // our regular command handling
+    if (cmdId === 'zoomActualSize') {
+      menuItemOpts.role = 'resetZoom';
+    } else if (cmdId === 'zoomIn') {
+      menuItemOpts.role = 'zoomIn';
+    } else if (cmdId === 'zoomOut') {
+      menuItemOpts.role = 'zoomOut';
+    } else if (cmdId === 'cutDummy') {
+      menuItemOpts.role = 'cut';
+    } else if (cmdId === 'copyDummy') {
+      menuItemOpts.role = 'copy';
+    } else if (cmdId === 'pasteDummy') {
+      menuItemOpts.role = 'paste';
+    } else if (cmdId === 'pasteWithIndentDummy') {
+      menuItemOpts.role = 'pasteAndMatchStyle';
+    } else if (cmdId === 'undoDummy') {
+      menuItemOpts.role = 'undo';
+    } else if (cmdId === 'redoDummy') {
+      menuItemOpts.role = 'redo';
+    }
+
+    const menuItem = new MenuItem(menuItemOpts);
+    this.actions.set(cmdId, menuItem);
+    this.addToCurrentMenu(menuItem);
   }
 
   addToCurrentMenu(menuItem: MenuItem): void {
@@ -168,8 +220,12 @@ export class MenuCallback {
     }
   }
 
-  getMenuItemById(id: string): MenuItem {
+  getMenuItemById(id: string): MenuItem | undefined {
     return this.actions.get(id);
+  }
+
+  cleanUpActions(): void {
+    // TODO
   }
 
   /**
@@ -185,9 +241,5 @@ export class MenuCallback {
         return key;
       }
     }).join('+');
-  }
-
-  actionInvoked(commandId: string): void {
-    this.mainWindow.invokeCommand(commandId);
   }
 }

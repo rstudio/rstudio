@@ -648,7 +648,20 @@ core::Error UserPrefValues::setShowDiagnosticsCpp(bool val)
 }
 
 /**
- * Whether to show diagnostic messages for other types of code (not R or C++).
+ * Whether to show diagnostic messages for YAML code as you type.
+ */
+bool UserPrefValues::showDiagnosticsYaml()
+{
+   return readPref<bool>("show_diagnostics_yaml");
+}
+
+core::Error UserPrefValues::setShowDiagnosticsYaml(bool val)
+{
+   return writePref("show_diagnostics_yaml", val);
+}
+
+/**
+ * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
  */
 bool UserPrefValues::showDiagnosticsOther()
 {
@@ -1909,16 +1922,16 @@ core::Error UserPrefValues::setBusyDetection(std::string val)
 }
 
 /**
- * A whitelist of apps that should not be considered busy in the Terminal.
+ * A list of apps that should not be considered busy in the Terminal.
  */
-core::json::Array UserPrefValues::busyWhitelist()
+core::json::Array UserPrefValues::busyExclusionList()
 {
-   return readPref<core::json::Array>("busy_whitelist");
+   return readPref<core::json::Array>("busy_exclusion_list");
 }
 
-core::Error UserPrefValues::setBusyWhitelist(core::json::Array val)
+core::Error UserPrefValues::setBusyExclusionList(core::json::Array val)
 {
-   return writePref("busy_whitelist", val);
+   return writePref("busy_exclusion_list", val);
 }
 
 /**
@@ -2637,6 +2650,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingShowMargin(bool val)
 }
 
 /**
+ * Whether to show line numbers in the code editors used in visual mode
+ */
+bool UserPrefValues::visualMarkdownCodeEditorLineNumbers()
+{
+   return readPref<bool>("visual_markdown_code_editor_line_numbers");
+}
+
+core::Error UserPrefValues::setVisualMarkdownCodeEditorLineNumbers(bool val)
+{
+   return writePref("visual_markdown_code_editor_line_numbers", val);
+}
+
+/**
  * The default visual editing mode font size, in points
  */
 int UserPrefValues::visualMarkdownEditingFontSizePoints()
@@ -2986,6 +3012,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowFunctionSignatureTooltips,
       kShowDiagnosticsR,
       kShowDiagnosticsCpp,
+      kShowDiagnosticsYaml,
       kShowDiagnosticsOther,
       kStyleDiagnostics,
       kDiagnosticsOnSave,
@@ -3083,7 +3110,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowLauncherJobsTab,
       kLauncherJobsSort,
       kBusyDetection,
-      kBusyWhitelist,
+      kBusyExclusionList,
       kKnitWorkingDir,
       kDocOutlineShow,
       kLatexPreviewOnCursorIdle,
@@ -3139,6 +3166,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingShowMargin,
+      kVisualMarkdownCodeEditorLineNumbers,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
       kZoteroLibraries,

@@ -418,7 +418,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   const onOk = () => {
     props.onOk(
       mergedCitationsToAdd,
-      insertCitationPanelState.existingBibliographyFile || insertCitationPanelState.createBibliographyFile,      
+      insertCitationPanelState.existingBibliographyFile || insertCitationPanelState.createBibliographyFile,
       insertCitationPanelState.selectedNode,
       insertCitationPanelState.intextCitationStyle
     );
@@ -607,7 +607,7 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   };
 
   const totalCitationCount = insertCitationPanelState.citationsToAdd.length + (insertCitationPanelState.selectedIndex > -1 ? 1 : 0);
-  
+
 
   // Create the panel that should be displayed for the selected node of the tree
   const panelToDisplay = selectedPanelProvider
@@ -644,33 +644,33 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
       </div>
       <div className="pm-cite-panel-insert-inputs">
         <div className="pm-cite-panel-insert-options">
-        {// Only show the picker if there are either no bibliographies specified, or if there are writable bibliographies
-        insertCitationConfiguration.bibliographyFiles.length === 0 ||
-        insertCitationConfiguration.bibliographyFiles.some(bibFile => bibFile?.writable) ? (
-          <CitationBibliographyPicker
-            bibliographyTypes={bibliographyTypes(props.ui)}
-            createBibliographyFileName={insertCitationPanelState.createBibliographyFile.displayPath}
-            onCreateBibliographyFileNameChanged={onCreateBibliographyFileNameChanged}
-            bibliographyFiles={insertCitationConfiguration.bibliographyFiles}
-            onBiblographyFileChanged={onBibliographyFileChanged}
-            ui={props.ui}
-          />
-        ) : (
-          <div />
-        )}
-                {
-          totalCitationCount <= 1  ? (
-          <div className='pm-cite-panel-checkbox-group'>
-            <CheckboxInput 
-              id='intextStyleCheckbox'
-              checked={insertCitationPanelState.intextCitationStyle} 
-              className='pm-cite-panel-checkbox' 
-              onChange={onCitationStyleChanged}/>
-            <label htmlFor='intextStyleCheckbox' className='pm-cite-panel-checkbox-label'>{props.ui.context.translateText('Use in-text citation')}</label>
-          </div>
-        ) : (
-          <div/>
-        )}
+          {// Only show the picker if there are either no bibliographies specified, or if there are writable bibliographies
+            insertCitationConfiguration.bibliographyFiles.length === 0 ||
+              insertCitationConfiguration.bibliographyFiles.some(bibFile => bibFile?.writable) ? (
+                <CitationBibliographyPicker
+                  bibliographyTypes={bibliographyTypes(props.ui)}
+                  createBibliographyFileName={insertCitationPanelState.createBibliographyFile.displayPath}
+                  onCreateBibliographyFileNameChanged={onCreateBibliographyFileNameChanged}
+                  bibliographyFiles={insertCitationConfiguration.bibliographyFiles}
+                  onBiblographyFileChanged={onBibliographyFileChanged}
+                  ui={props.ui}
+                />
+              ) : (
+                <div />
+              )}
+          {
+            totalCitationCount <= 1 ? (
+              <div className='pm-cite-panel-checkbox-group'>
+                <CheckboxInput
+                  id='intextStyleCheckbox'
+                  checked={insertCitationPanelState.intextCitationStyle}
+                  className='pm-cite-panel-checkbox'
+                  onChange={onCitationStyleChanged} />
+                <label htmlFor='intextStyleCheckbox' className='pm-cite-panel-checkbox-label'>{props.ui.context.translateText('Use in-text citation')}</label>
+              </div>
+            ) : (
+                <div />
+              )}
 
         </div>
 

@@ -15,9 +15,9 @@
 
 .rs.addFunction("quarto.servePort", function() {
    if (requireNamespace("quarto", quietly = TRUE)) {
-      if (!is.null(quarto:::quarto$ps) && quarto:::quarto$ps$is_alive()) {
-         if (is.numeric(quarto:::quarto$port)) {
-            quarto:::quarto$port
+      if (!is.null(quarto:::quarto$serve_ps) && quarto:::quarto$serve_ps$is_alive()) {
+         if (is.numeric(quarto:::quarto$serve_port)) {
+            quarto:::quarto$serve_port
          } else {
             0
          }
@@ -29,3 +29,9 @@
    }
 })
 
+.rs.addFunction("quarto.renderPreview", function(port) {
+   utils::download.file(paste0("http://localhost:", port, "/quarto-render/"),
+                        destfile = tempfile(),
+                        quiet = TRUE,
+                        cacheOK = FALSE)
+})

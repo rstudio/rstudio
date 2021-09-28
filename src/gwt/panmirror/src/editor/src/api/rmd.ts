@@ -92,8 +92,9 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
       if (prevListItemPos) {
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
       } else {
+        const from = tr.selection.from;
         tr.replaceSelectionWith(rmdNode);
-        const selPos = tr.selection.from - rmdNode.nodeSize - 1 + offsetChars - 1;
+        const selPos = from + offsetChars;
         setTextSelection(selPos)(tr);
       }
 

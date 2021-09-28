@@ -93,6 +93,8 @@ export interface EditorUIImages {
     r_chunk_dark?: string;
     rcpp_chunk?: string;
     rcpp_chunk_dark?: string;
+    tabset?: string;
+    tabset_dark?: string;
   };
   citations?: {
     article?: string;
@@ -130,6 +132,27 @@ export interface EditorUIImages {
     crossref?: string;
     pubmed?: string;
     datacite?: string;
+  };
+  xrefs?: {
+    section_dark?: string;
+    section?: string;
+    equation?: string;
+    equation_dark?: string;
+    table?: string;
+    table_dark?: string;
+    listing?: string;
+    listing_dark?: string;
+    theorem?: string;
+    theorem_dark?: string;
+    figure?: string;
+    figure_dark?: string;
+    type_all?: string;
+    type_section?: string;
+    type_figure?: string;
+    type_table?: string;
+    type_listing?: string;
+    type_equation?: string;
+    type_theorem?: string;
   };
   widgets?: {
     tag_delete?: string;

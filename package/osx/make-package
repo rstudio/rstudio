@@ -60,12 +60,7 @@ RSTUDIO_VERSION_ARRAY=(
    "${RSTUDIO_VERSION_PATCH-9}"
 )
 
-RSTUDIO_VERSION_FULL=$(IFS="."; echo "${RSTUDIO_VERSION_ARRAY[*]}")
-
-# include Pro version suffix if provided
-if [ -n "${RSTUDIO_VERSION_SUFFIX}" ] && [ "${RSTUDIO_VERSION_SUFFIX}" != "0" ]; then
-   RSTUDIO_VERSION_FULL+="-${RSTUDIO_VERSION_SUFFIX}"
-fi
+RSTUDIO_VERSION_FULL=$(IFS="."; echo "${RSTUDIO_VERSION_ARRAY[*]}")"${RSTUDIO_VERSION_SUFFIX}"
 
 # build bundle name (handle Pro builds as well)
 if [ -f "${PKG_DIR}/CMakeOverlay.txt" ]; then
@@ -145,12 +140,7 @@ if [ "${clean}" = "1" ]; then
 fi
 
 # set up MAKEFLAGS
-# don't use all CPUs on build machine (appears to cause hangs)
-if [ -n "${JENKINS_URL}" ]; then
-   MAKEFLAGS="${MAKEFLAGS} -j2"
-else
-   MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
-fi
+MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
 
 # perform an x86_64 build
 if [ -n "${build_x86_64}" ]; then

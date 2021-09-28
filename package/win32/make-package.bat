@@ -35,7 +35,10 @@ REM perform 64-bit build
 cd "%PACKAGE_DIR%"
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
-if exist "%BUILD_DIR%/_CPack_Packages" rmdir /s /q "%BUILD_DIR%\_CPack_Packages"
+
+REM Package these files into a shorter path to workaround windows max path of 260
+set PKG_TEMP_DIR=c:\temp\ide-build
+if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Packages"
 
 REM Configure and build the project. (Note that Windows / MSVC builds require
 REM that we specify the build type both at configure time and at build time)
@@ -56,6 +59,7 @@ cmake -G "Ninja" ^
       -DCMAKE_CXX_COMPILER=cl ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
+
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
@@ -66,6 +70,16 @@ cd "%BUILD_DIR%"
 if not "%1" == "quick" cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
 if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
 cd ..
+
+echo "Before moving files in %PKG_TEMP_DIR%:"
+dir "%PKG_TEMP_DIR%"
+move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
+move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
+echo "After moving files to %PACKAGE_DIR%\%BUILD_DIR%:"
+dir "%PACKAGE_DIR%\%BUILD_DIR%"
+
+REM emit NSIS error output if present
+if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
 
 REM reset modified environment variables (PATH)
 endlocal

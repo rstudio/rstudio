@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.rpubs.RPubsUploader;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.common.rpubs.ui.RPubsUploadDialog;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCancelledEvent;
@@ -49,6 +50,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentCompletedEv
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentFailedEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEvent;
 import org.rstudio.studio.client.rsconnect.model.PlotPublishMRUList;
+import org.rstudio.studio.client.rsconnect.model.QmdPublishDetails;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDirectoryState;
@@ -58,6 +60,7 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSettings;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
+import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
 import org.rstudio.studio.client.rsconnect.model.RmdPublishDetails;
 import org.rstudio.studio.client.rsconnect.ui.RSAccountConnector;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectDeployDialog;
@@ -164,7 +167,8 @@ public class RSConnect implements SessionInitEvent.Handler,
       dependencyManager_.withRSConnect(
          "Publishing content",
          event.getContentType() == CONTENT_TYPE_DOCUMENT ||
-         event.getContentType() == CONTENT_TYPE_WEBSITE,
+         event.getContentType() == CONTENT_TYPE_WEBSITE ||
+         event.getContentType() == CONTENT_TYPE_QUARTO_WEBSITE ,
          null, new CommandWithArg<Boolean>() {
             @Override
             public void execute(Boolean succeeded)
@@ -267,6 +271,12 @@ public class RSConnect implements SessionInitEvent.Handler,
                   {
                      if (arg == null)
                         return;
+                     
+                     boolean isQuarto = false;
+                     if (event.getFromPreview() != null)
+                     {
+                        isQuarto = event.getFromPreview().isQuarto();
+                     }
 
                      if (event.getFromPrevious().getAsStatic())
                         publishAsFiles(event,
@@ -277,6 +287,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                                     arg.isSelfContained(),
                                     true,
                                     arg.isShiny(),
+                                    isQuarto,
                                     arg.getDescription(),
                                     event.getContentType()));
                      else
@@ -284,8 +295,35 @@ public class RSConnect implements SessionInitEvent.Handler,
                               arg.isShiny());
                   }
                });
-            }
-            break;
+               }
+               break;
+            case CONTENT_TYPE_QUARTO_WEBSITE:
+               // Quarto website publishing metadata is extracted from the active Quarto project
+               QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+               FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
+               String websiteOutputDir = projectDir.completePath(config.project_output_dir);
+
+               if (event.getFromPrevious().getAsStatic())
+               {
+                  publishAsFiles(event,
+                     new RSConnectPublishSource(event.getPath(),
+                        config.project_dir,
+                        config.project_dir,
+                        websiteOutputDir,
+                        input.isSelfContained(),
+                        true, // isStatic
+                        false, // isShiny
+                        true, // isQuarto
+                        input.getDescription(),
+                        event.getContentType()));
+               }
+               else
+               {
+                  publishAsCode(event, config.project_dir, false /* isShiny */);
+               }
+               break;
+
+
             case CONTENT_TYPE_PLUMBER_API:
                publishAsCode(event, null, false);
                break;
@@ -316,6 +354,17 @@ public class RSConnect implements SessionInitEvent.Handler,
                }
             });
          }
+         else if (event.getContentType() == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE)
+         {
+            QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+            FileSystemItem projectDir = FileSystemItem.createDir(config.project_dir);
+
+            // fill publish input from session
+            input.setIsQuarto(true);
+            input.setWebsiteDir(config.project_dir);
+            input.setWebsiteOutputDir(projectDir.completePath(config.project_output_dir));
+            showPublishUI(input);
+         }
          else
          {
             showPublishUI(input);
@@ -343,10 +392,10 @@ public class RSConnect implements SessionInitEvent.Handler,
             publishAsStatic(input);
          }
       }
-      else if (input.getContentType() == CONTENT_TYPE_WEBSITE ||
+      else if (input.isWebsiteContentType() ||
                (input.getContentType() == CONTENT_TYPE_DOCUMENT && input.isWebsiteRmd()))
       {
-         if (input.hasDocOutput())
+         if (input.hasDocOutput() || input.isWebsiteContentType())
          {
             publishWithWizard(input);
          }
@@ -423,6 +472,7 @@ public class RSConnect implements SessionInitEvent.Handler,
          if (StringUtil.getExtension(event.getPath()).equalsIgnoreCase("r"))
          {
             FileSystemItem rFile = FileSystemItem.createFile(event.getPath());
+
             // use the directory for the deployment record when publishing APIs or
             // directory-based apps; use the file itself when publishing
             // single-file apps
@@ -431,6 +481,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                         rFile.getName() :
                         rFile.getParentPathString(),
                         isAPI);
+
          }
          else
          {
@@ -442,7 +493,14 @@ public class RSConnect implements SessionInitEvent.Handler,
       else
       {
          source = new RSConnectPublishSource(event.getPath(), websiteDir,
-            false, false, isShiny, null, event.getContentType());
+            false, false, isShiny,
+            event.getContentType() == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE, null, event.getContentType());
+      }
+
+      // detect quarto
+      if (event.getFromPreview() != null)
+      {
+         source.setIsQuarto(event.getFromPreview().isQuarto());
       }
 
       publishAsFiles(event, source);
@@ -452,7 +510,7 @@ public class RSConnect implements SessionInitEvent.Handler,
    {
       RSConnectPublishSource source = null;
       if (input.getContentType() == RSConnect.CONTENT_TYPE_DOCUMENT ||
-          input.getContentType() == RSConnect.CONTENT_TYPE_WEBSITE)
+          input.isWebsiteContentType())
       {
          source = new RSConnectPublishSource(
                      input.getOriginatingEvent().getFromPreview(),
@@ -470,6 +528,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                input.isSelfContained(),
                true,
                input.isShiny(),
+               input.isQuarto(),
                input.getDescription(),
                input.getContentType());
       }
@@ -772,12 +831,13 @@ public class RSConnect implements SessionInitEvent.Handler,
          boolean isShiny,
          boolean asMultiple,
          boolean asStatic,
+         boolean isQuarto,
          boolean launch,
          JavaScriptObject record) /*-{
       $wnd.opener.deployToRSConnect(sourceFile, deployDir, deployFile,
                                     websiteDir, description, deployFiles,
                                     additionalFiles, ignoredFiles, isSelfContained,
-                                    isShiny, asMultiple, asStatic, launch,
+                                    isShiny, asMultiple, asStatic, isQuarto, launch,
                                     record);
    }-*/;
 
@@ -806,6 +866,8 @@ public class RSConnect implements SessionInitEvent.Handler,
          return "Website";
       case RSConnect.CONTENT_TYPE_PLUMBER_API:
          return "API";
+      case RSConnect.CONTENT_TYPE_QUARTO_WEBSITE:
+         return "Quarto Website";
       }
       return "Content";
    }
@@ -833,6 +895,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                result.getSource().isShiny(),
                result.getSettings().getAsMultiple(),
                result.getSettings().getAsStatic(),
+               result.getSource().isQuarto(),
                launchBrowser,
                RSConnectDeploymentRecord.create(result.getAppName(),
                      result.getAppTitle(), result.getAppId(), result.getAccount(), ""));
@@ -1085,7 +1148,7 @@ public class RSConnect implements SessionInitEvent.Handler,
       var thiz = this;
       $wnd.deployToRSConnect = $entry(
          function(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record) {
-            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, launch, record);
+            thiz.@org.rstudio.studio.client.rsconnect.RSConnect::deployToRSConnect(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;Lcom/google/gwt/core/client/JsArrayString;ZZZZZZLcom/google/gwt/core/client/JavaScriptObject;)(sourceFile, deployDir, deployFile, websiteDir, description, deployFiles, additionalFiles, ignoredFiles, isSelfContained, isShiny, asMultiple, asStatic, isQuarto, launch, record);
          }
       );
    }-*/;
@@ -1102,6 +1165,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                                   boolean isShiny,
                                   boolean asMultiple,
                                   boolean asStatic,
+                                  boolean isQuarto,
                                   boolean launch,
                                   JavaScriptObject jsoRecord)
    {
@@ -1122,7 +1186,7 @@ public class RSConnect implements SessionInitEvent.Handler,
       RSConnectDeploymentRecord record = jsoRecord.cast();
       events_.fireEvent(new RSConnectDeployInitiatedEvent(
             new RSConnectPublishSource(sourceFile, deployDir, deployFile,
-                  websiteDir, isSelfContained, asStatic, isShiny, description),
+                  websiteDir, isSelfContained, asStatic, isShiny, isQuarto, description),
             new RSConnectPublishSettings(deployFilesList,
                   additionalFilesList, ignoredFilesList, asMultiple, asStatic),
             launch, record));
@@ -1132,7 +1196,60 @@ public class RSConnect implements SessionInitEvent.Handler,
          final String docPath,
          final CommandWithArg<RSConnectPublishInput> onComplete)
    {
-      server_.getRmdPublishDetails(
+      boolean isQuarto = false;
+      if (input.getOriginatingEvent() != null &&
+          input.getOriginatingEvent().getFromPreview() != null)
+      {
+         isQuarto = input.getOriginatingEvent().getFromPreview().isQuarto();
+      }
+
+      if (isQuarto)
+      {
+         // Quarto metadata lookup can take a couple of seconds; ensure the
+         // user can see some progress while we're doing it
+         final ProgressIndicator indicator = display_.getProgressIndicator("Error");
+         indicator.onProgress("Preparing for Publish...");
+
+         server_.quartoPublishDetails(
+            docPath,
+            new ServerRequestCallback<QmdPublishDetails>()
+            {
+               @Override
+               public void onResponseReceived(QmdPublishDetails details)
+               {
+                  indicator.onCompleted();
+                  RenderedDocPreview previewParams = input.getOriginatingEvent().getFromPreview();
+                  if (previewParams != null)
+                  {
+                     if (StringUtil.isNullOrEmpty(details.website_output_dir))
+                        previewParams.setOutputFile(details.output_file);
+                     else
+                        previewParams.setOutputFile(details.website_output_dir);
+                     previewParams.setWebsiteDir(details.website_dir);
+                  }
+                  input.setIsMultiRmd(false);
+                  input.setIsQuarto(true);
+                  input.setIsShiny(details.is_shiny_qmd);
+                  input.setIsSelfContained(details.is_self_contained);
+                  input.setHasConnectAccount(details.has_connect_account);
+                  input.setWebsiteDir(details.website_dir);
+                  input.setWebsiteOutputDir(details.website_output_dir);
+
+                  onComplete.execute(input);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  indicator.onError(error.getMessage());
+                  onComplete.execute(null);
+               }
+            }
+         );
+      }
+      else
+      {
+         server_.getRmdPublishDetails(
             docPath,
             new ServerRequestCallback<RmdPublishDetails>()
             {
@@ -1142,6 +1259,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                   input.setIsMultiRmd(details.is_multi_rmd);
                   input.setIsShiny(details.is_shiny_rmd);
                   input.setIsSelfContained(details.is_self_contained);
+                  input.setIsQuarto(false);
                   input.setHasConnectAccount(details.has_connect_account);
                   input.setWebsiteDir(details.website_dir);
                   input.setWebsiteOutputDir(details.website_output_dir);
@@ -1170,10 +1288,11 @@ public class RSConnect implements SessionInitEvent.Handler,
                   // we can't offer the right choices in the wizard if we
                   // don't know what we're working with.
                   display_.showErrorMessage("Could Not Publish",
-                        error.getMessage());
+                     error.getMessage());
                   onComplete.execute(null);
                }
             });
+      }
    }
 
    private final Commands commands_;
@@ -1228,6 +1347,9 @@ public class RSConnect implements SessionInitEvent.Handler,
 
    // Plumber API
    public final static int CONTENT_TYPE_PLUMBER_API    = 8;
+
+   // A Quarto website
+   public final static int CONTENT_TYPE_QUARTO_WEBSITE = 9;
 
    public final static String CONTENT_CATEGORY_PLOT = "plot";
    public final static String CONTENT_CATEGORY_SITE = "site";

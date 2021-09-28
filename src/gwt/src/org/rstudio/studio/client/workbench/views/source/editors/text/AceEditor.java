@@ -156,6 +156,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Undo
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDoc;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlCompletionManager;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationPositionEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SaveFileEvent;
@@ -767,6 +768,11 @@ public class AceEditor implements DocDisplay,
    {
       behavior_ = behavior;
    }
+   
+   public EditorBehavior getEditorBehavior()
+   {
+      return behavior_;
+   }
 
    @Override
    public void setRnwCompletionContext(RnwCompletionContext rnwContext)
@@ -887,6 +893,18 @@ public class AceEditor implements DocDisplay,
                         new CompletionPopupPanel(),
                         server_,
                         context_));
+               }
+               
+               // Yaml completion manager
+               if (fileType_.isYaml() || fileType_.isRmd() || 
+                   (behavior_ == EditorBehavior.AceBehaviorEmbedded && (fileType_.isR() || fileType_.isPython())))
+               {
+                  managers.put(DocumentMode.Mode.YAML, YamlCompletionManager.create(
+                       editor, 
+                       new CompletionPopupPanel(), 
+                       server_, 
+                       context_
+                  ));
                }
             }
          };
@@ -2872,9 +2890,9 @@ public class AceEditor implements DocDisplay,
    }
 
    @Override
-   public boolean isCursorInSingleLineString()
+   public boolean isCursorInSingleLineString(boolean allowInComment)
    {
-      return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor());
+      return StringUtil.isEndOfLineInRStringState(getCurrentLineUpToCursor(), allowInComment);
    }
 
    public void gotoPageUp()

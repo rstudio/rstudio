@@ -71,7 +71,7 @@ COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
 ENV RSTUDIO_DISABLE_CRASHPAD=1
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN

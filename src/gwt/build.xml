@@ -82,7 +82,7 @@
    </target>
 
    <!-- panmirror typescript library -->
-   <property name="node.version" value="10.19.0"/>
+   <property name="node.version" value="14.17.5"/>
    <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
    <condition property="node.bin" value="../../../${node.dir}/bin/node">
      <not>
@@ -150,7 +150,8 @@
             <path refid="project.class.path"/>
          </classpath>
          <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
-         <jvmarg value="-Xmx1536M"/>
+         <jvmarg value="${gwt.xmx}"/>
+         <jvmarg value="${gwt.xss}"/>
          <arg value="-war"/>
          <arg value="${www.dir}"/>
          <arg value="-localWorkers"/>

@@ -28,6 +28,7 @@ import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobOutputEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobsActivateEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobsPresenterEventHandlers;
 
 public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
@@ -59,6 +60,7 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
       events.addHandler(JobOutputEvent.TYPE, shim);
       events.addHandler(JobSelectionEvent.TYPE, shim);
       events.addHandler(JobElapsedTickEvent.TYPE, shim);
+      events.addHandler(JobsActivateEvent.TYPE, shim);
       
       events.addHandler(JobInitEvent.TYPE, this);
    }

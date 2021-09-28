@@ -20,8 +20,10 @@ import { CommandFn } from './command';
 export interface AttrEditOptions {
   type: (schema: Schema) => NodeType;
   tags?: (node: ProsemirrorNode) => string[];
+  noKeyvalueTags?: boolean;
   editFn?: () => CommandFn;
   noDecorator?: boolean;
+  preferHidden?: boolean;
   offset?: {
     top: number;
     right: number;

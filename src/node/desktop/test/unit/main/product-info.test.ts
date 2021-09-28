@@ -16,11 +16,11 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { getRStudioVersion } from '../../../src/main/product-info';
+import { productInfo } from '../../../src/main/product-info';
 
 describe('ProductInfo', () => {
-  it('getRStudioVersion returns version string', () => {
-    const ver = getRStudioVersion();
-    assert.isNotEmpty(ver);
+  it('productInfo returns version string', () => {
+    const info = productInfo();
+    assert.isNotEmpty(info.RSTUDIO_VERSION);
   });
 });

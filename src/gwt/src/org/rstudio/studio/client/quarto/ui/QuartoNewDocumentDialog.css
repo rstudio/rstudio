@@ -1,6 +1,6 @@
 @charset "UTF-8";
 
-@external gwt-TextBox;
+@external gwt-TextBox, gwt-CheckBox;
 
 .mainPanel {
  
@@ -18,7 +18,7 @@
 }
 
 .spacedRow > td {
-	padding-bottom: 10px
+   padding-top: 10px
 }
 
 .label {
@@ -35,4 +35,8 @@
   width: 280px;
   padding: 2px;
   padding-left: 4px;
+}
+
+.mainPanel .gwt-CheckBox {
+  margin-left: -3px;
 }

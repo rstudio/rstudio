@@ -70,6 +70,7 @@ public abstract class
    public abstract AppCommand previewSql();
    public abstract AppCommand sourceActiveDocument();
    public abstract AppCommand sourceActiveDocumentWithEcho();
+   public abstract AppCommand runDocumentFromServerDotR();
    public abstract AppCommand executeCode();
    public abstract AppCommand executeCodeWithoutMovingCursor();
    public abstract AppCommand executeCodeWithoutFocus();
@@ -249,6 +250,27 @@ public abstract class
 
    // Files
    public abstract AppCommand newFolder();
+   // ---
+   public abstract AppCommand touchSourceDoc();
+   public abstract AppCommand touchTextDoc();
+   public abstract AppCommand touchCDoc();
+   public abstract AppCommand touchCppDoc();
+   public abstract AppCommand touchHeaderDoc();
+   public abstract AppCommand touchMarkdownDoc();
+   public abstract AppCommand touchPythonDoc();
+   public abstract AppCommand touchShellDoc();
+   public abstract AppCommand touchStanDoc();
+   public abstract AppCommand touchHtmlDoc();
+   public abstract AppCommand touchJavaScriptDoc();
+   public abstract AppCommand touchCssDoc();
+   public abstract AppCommand touchD3Doc();
+   public abstract AppCommand touchSweaveDoc();
+   public abstract AppCommand touchRMarkdownDoc();
+   public abstract AppCommand touchQuartoDoc();
+   public abstract AppCommand touchRShinyApp();
+   public abstract AppCommand touchRHTMLDoc();
+   public abstract AppCommand touchSqlDoc();
+   // ---
    public abstract AppCommand uploadFile();
    public abstract AppCommand copyFile();
    public abstract AppCommand copyFileTo();
@@ -262,6 +284,8 @@ public abstract class
    public abstract AppCommand goToWorkingDir();
    public abstract AppCommand setAsWorkingDir();
    public abstract AppCommand copyFilesPaneCurrentDirectory();
+   public abstract AppCommand openFilesInSinglePane();
+   public abstract AppCommand openEachFileInColumns();
    public abstract AppCommand setWorkingDirToFilesPane();
    public abstract AppCommand showFolder();
 
@@ -523,6 +547,7 @@ public abstract class
    public abstract AppCommand viewerSaveAsImage();
    public abstract AppCommand viewerSaveAsWebPage();
    public abstract AppCommand viewerCopyToClipboard();
+   public abstract AppCommand viewerEditSource();
 
    // Application
    public abstract AppCommand newSession();

@@ -18,13 +18,18 @@ import fsPromises from 'fs/promises';
 
 import { logger } from './logger';
 import path from 'path';
-import { Err, Success } from './err';
+import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
+import { err, Expected, ok } from './expected';
 
 
-export interface FilePathWithError {
-  err?: Err;
-  path: FilePath;
+/** An Error containing 'path' that triggered the error */
+export class FilePathError extends Error {
+  path: string;
+  constructor(message: string, path: string) {
+    super(message);
+    this.path = path;
+  }
 }
 
 const homePathAlias = '~/';
@@ -104,7 +109,7 @@ export class FilePath {
     const p = filePath;
     try {
       return fs.existsSync(p);
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
       return false;
     }
@@ -112,8 +117,22 @@ export class FilePath {
 
   /**
    * Checks whether the specified path exists.
+   * 
+   * Returns Promise<boolean>; do not use without 'await' or * .then().
+   * 
+   * For example, this can give the WRONG result:
+   * 
+   * if (FilePath.existsAync(file)) { WRONG USAGE always true, a Promise is truthy }
+   *
+   * Use either:
+   * 
+   * if (await FilePath.existsAsync(file)) { ...}
+   * 
+   * or
+   * 
+   * if (FilePath.existsAsync(file).then((result) => { if (result) { ... } }
    */
-  static async exists(filePath: string): Promise<boolean> {
+  static async existsAsync(filePath: string): Promise<boolean> {
     if (!filePath) {
       return false;
     }
@@ -122,7 +141,7 @@ export class FilePath {
     try {
       await fsPromises.access(p);
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
       return false;
     }
@@ -180,7 +199,7 @@ export class FilePath {
   static safeCurrentPathSync(revertToPath: FilePath): FilePath {
     try {
       return new FilePath(process.cwd());
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
     }
 
@@ -207,14 +226,14 @@ export class FilePath {
   static async safeCurrentPath(revertToPath: FilePath): Promise<FilePath> {
     try {
       return new FilePath(process.cwd());
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
     }
 
     // revert to the specified path if it exists, otherwise
     // take the user home path from the system
     let safePath = revertToPath;
-    if (! await FilePath.exists(safePath.path)) {
+    if (! await FilePath.existsAsync(safePath.path)) {
       safePath = userHomePath();
     }
 
@@ -230,7 +249,7 @@ export class FilePath {
    * Creates a randomly named file in the temp directory.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static tempFilePath(extension?: string): FilePathWithError {
+  static tempFilePath(extension?: string): Expected<FilePath> {
     throw Error('tempFilePath is NYI');
   }
 
@@ -238,7 +257,7 @@ export class FilePath {
    * Creates a file with a random name in the specified directory.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  static uniqueFilePath(basePath: string, extension?: string): FilePathWithError {
+  static uniqueFilePath(basePath: string, extension?: string): Expected<FilePath> {
     throw Error('uniqueFilePath is NYI');
   }
 
@@ -249,7 +268,7 @@ export class FilePath {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   changeFileMode(fileModeStr: string, setStickyBit = false): Err {
     if (process.platform === 'win32')
-      return Success(); // no-op on Windows
+      return success(); // no-op on Windows
 
     throw Error('changeFileMode is NYI');
   }
@@ -272,11 +291,12 @@ export class FilePath {
    * refers to a path strictly within this one (i.e. ".." isn't allowed).
    */
   completeChildPath(filePath: string): FilePath {
-    const result = this.completeChildPathWithErrorResult(filePath);
-    if (result.err) {
-      logger().logError(result.err);
+    const [path, error] = this.completeChildPathWithErrorResult(filePath);
+    if (error) {
+      logger().logError(error);
+      return this;
     }
-    return result.path;
+    return path;
   }
 
   /**
@@ -286,10 +306,10 @@ export class FilePath {
    * `filePath` is the path to get as a child of this path. Must be a relative path that
    * refers to a path strictly within this one (i.e. ".." isn't allowed).
    */
-  completeChildPathWithErrorResult(filePath: string): FilePathWithError {
+  completeChildPathWithErrorResult(filePath: string): Expected<FilePath> {
     try {
       if (!filePath) {
-        return { path: this };
+        return ok(this);
       }
 
       // confirm this is a relative path
@@ -301,12 +321,13 @@ export class FilePath {
       const childPath = this.completePath(filePath);
 
       if (!childPath.isWithin(this)) {
-        return { err: new Error('child path must be inside parent path'), path: this };
+        return err(new FilePathError('child path must be inside parent path', this.getAbsolutePath()));
       }
 
-      return { path: childPath };
-    } catch (e) {
-      return { err: e, path: this };
+      return ok(childPath);
+    } catch (e: unknown) {
+      const error = safeError(e);
+      return err(new FilePathError(error.message, this.getAbsolutePath()));
     }
   }
 
@@ -317,7 +338,7 @@ export class FilePath {
   completePath(stem: string): FilePath {
     try {
       return new FilePath(normalizeSeparators(path.resolve(this.path, stem)));
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
       return this;
     }
@@ -351,10 +372,10 @@ export class FilePath {
 
     try {
       fs.mkdirSync(targetDirectory, { recursive: true });
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
-    return Success();
+    return success();
   }
 
   /**
@@ -370,10 +391,10 @@ export class FilePath {
 
     try {
       await fsPromises.mkdir(targetDirectory, { recursive: true });
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
-    return Success();
+    return success();
   }
 
   /**
@@ -383,7 +404,7 @@ export class FilePath {
     if (!this.existsSync()) {
       return this.createDirectorySync();
     } else {
-      return Success();
+      return success();
     }
   }
 
@@ -391,10 +412,10 @@ export class FilePath {
    * Creates this directory, if it does not exist.
    */
   async ensureDirectory(): Promise<Err> {
-    if (!await this.exists()) {
-      return await this.createDirectory();
+    if (!await this.existsAsync()) {
+      return this.createDirectory();
     } else {
-      return Success();
+      return success();
     }
   }
 
@@ -411,7 +432,7 @@ export class FilePath {
   existsSync(): boolean {
     try {
       return !this.isEmpty() && fs.existsSync(this.path);
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
       return false;
     }
@@ -419,15 +440,29 @@ export class FilePath {
 
   /**
    * Checks whether this file path exists in the file system.
+   * 
+   * Returns Promise<boolean>; do not use without 'await' or * .then().
+   * 
+   * For example, this can give the WRONG result:
+   * 
+   * if (file.existsAync()) { WRONG USAGE always true, a Promise is truthy }
+   *
+   * Use either:
+   * 
+   * if (await file.existsAsync()) { ...}
+   * 
+   * or
+   * 
+   * if (file.existsAsync().then((result) => { if (result) { ... } }
    */
-  async exists(): Promise<boolean> {
+  async existsAsync(): Promise<boolean> {
     try {
       if (this.isEmpty()) {
         return false;
       }
       await fsPromises.access(this.path);
       return true;
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
       return false;
     }
@@ -458,7 +493,7 @@ export class FilePath {
 
     try {
       return normalizeSeparators(fs.realpathSync(this.path));
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
     }
     return '';
@@ -476,7 +511,7 @@ export class FilePath {
 
     try {
       return await fsPromises.realpath(this.path);
-    } catch (err) {
+    } catch (err: unknown) {
       logger().logError(err);
     }
 
@@ -487,9 +522,26 @@ export class FilePath {
   /**
    * Gets the children of this directory. Sub-directories will not be traversed.
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getChildren(filePaths: Array<FilePath>): Err {
-    throw Error('getChildren is NYI');
+    if (!this.existsSync()) {
+      return new Error(`File not found: ${this.getAbsolutePath()}`);
+    }
+
+    let dir: fs.Dir | undefined = undefined;
+    try {
+      dir = fs.opendirSync(this.getAbsolutePath());
+      const files = fs.readdirSync(this.getAbsolutePath());
+      for (const file of files) {
+        filePaths.push(this.completeChildPath(file));
+      }
+    } catch (err: unknown) {
+      return safeError(err);
+    } finally {
+      if (dir) {
+        dir.closeSync();
+      }
+    }
+    return success();
   }
 
   /**
@@ -592,7 +644,13 @@ export class FilePath {
    * Gets only the name of the file, excluding the extension.
    */
   getStem(): string {
-    throw Error('getStem is NYI');
+    // If this is just a path to a directory, then there is no filename or stem.
+    if (this.path.endsWith('/') || this.path.endsWith('\\')) {
+      return '';
+    }
+    
+    const components = path.parse(this.path);
+    return components.name;
   }
 
   /**
@@ -730,9 +788,9 @@ export class FilePath {
 
     try {
       process.chdir(this.path);
-      return Success();
-    } catch (err) {
-      return err;
+      return success();
+    } catch (err: unknown) {
+      return safeError(err);
     }
   }
 
@@ -769,15 +827,49 @@ export class FilePath {
   /**
    * Removes this file or directory from the filesystem.
    */
-  remove(): Err {
-    throw Error('remove is NYI');
+  async remove(): Promise<Err> {
+    try {
+      await fsPromises.rm(this.path, { recursive: true });
+    } catch (err: unknown) {
+      return safeError(err);
+    }
+    return success();
   }
 
   /**
    * Removes this file or directory from the filesystem, if it exists.
    */
-  removeIfExists(): Err {
-    throw Error('removeIfExists is NYI');
+  async removeIfExists(): Promise<Err> {
+    try {
+      await fsPromises.rm(this.path, { force: true, recursive: true });
+    } catch (err: unknown) {
+      return safeError(err);
+    }
+    return success();
+  }
+
+  /**
+   * Removes this file or directory from the filesystem.
+   */
+  removeSync(): Err {
+    try {
+      fs.rmSync(this.path, { recursive: true });
+    } catch (err: unknown) {
+      return safeError(err);
+    }
+    return success();
+  }
+
+  /**
+   * Removes this file or directory from the filesystem, if it exists.
+   */
+  removeIfExistsSync(): Err {
+    try {
+      fs.rmSync(this.path, { force: true, recursive: true });
+    } catch (err: unknown) {
+      return safeError(err);
+    }
+    return success();
   }
 
   /**

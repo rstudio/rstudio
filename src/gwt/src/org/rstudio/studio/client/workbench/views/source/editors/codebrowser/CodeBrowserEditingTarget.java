@@ -379,6 +379,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    {
       return null;
    }
+   
+   @Override 
+   public boolean isShinyPrerenderedDoc()
+   {
+      return false;
+   }
 
    @Override
    public HasValue<String> getName()

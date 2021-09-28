@@ -32,11 +32,13 @@ sudo apt-get -y install \
   clang \
   clang-4.0 \
   cmake \
+  curl \
   debsigs \
   dpkg-sig \
   expect \
   fakeroot \
   gcc \
+  git \
   gnupg1 \
   libacl1-dev \
   libacl1-dev \
@@ -58,6 +60,7 @@ sudo apt-get -y install \
   make \
   mesa-common-dev \
   openjdk-8-jdk  \
+  p7zip-full \
   patchelf \
   python \
   r-base \
@@ -77,6 +80,6 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common debian9
 cd ../linux
 

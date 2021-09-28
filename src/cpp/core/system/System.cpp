@@ -20,23 +20,21 @@
 
 #include <boost/variant.hpp>
 
-#include <core/system/System.hpp>
-
-#include <core/Algorithm.hpp>
 #include <shared_core/Hash.hpp>
-#include <core/Log.hpp>
-#include <core/LogOptions.hpp>
-
-#include <core/system/Environment.hpp>
+#include <shared_core/FileLogDestination.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/StderrLogDestination.hpp>
 
 #ifndef _WIN32
 #include <shared_core/system/SyslogDestination.hpp>
 #endif
 
-#include <shared_core/FileLogDestination.hpp>
-#include <shared_core/FilePath.hpp>
-#include <shared_core/SafeConvert.hpp>
-#include <shared_core/StderrLogDestination.hpp>
+#include <core/Algorithm.hpp>
+#include <core/Log.hpp>
+#include <core/LogOptions.hpp>
+#include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 namespace rstudio {
 namespace core {
@@ -79,32 +77,6 @@ void addToSystemPath(const FilePath& path, bool prepend)
       systemPath = systemPath + kPathSeparator + path.getAbsolutePath();
    system::setenv("PATH", systemPath);
 }
-
-Error findProgramOnPath(const std::string& program,
-                        core::FilePath* pProgramPath)
-{
-   auto paths = core::algorithm::split(
-            core::system::getenv("PATH"),
-            kPathSeparator);
-
-   for (auto&& path : paths)
-   {
-      if (!path.empty())
-      {
-         FilePath candidatePath = FilePath(path).completeChildPath(program);
-         // TODO: check if program is executable - perhaps use boost::process::search_path() as it does this test for both
-         // unix and windows systems but right now we don't include the process module in our boost library
-         if (candidatePath.exists())
-         {
-            *pProgramPath = candidatePath;
-            return Success();
-         }
-      }
-   }
-
-   return fileNotFoundError(program, ERROR_LOCATION);
-}
-
 
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {
@@ -159,14 +131,16 @@ void initializeLogWriter()
    {
       case LoggerType::kFile:
       {
-         addLogDestination(
-            std::shared_ptr<ILogDestination>(new FileLogDestination(
+         FileLogDestination* dst = new FileLogDestination(
                generateShortenedUuid(),
                logLevel,
                formatType,
                s_programIdentity,
                boost::get<FileLogOptions>(options),
-               true)));
+               true);
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(dst));
+         ttyCheck(dst->path());
          break;
       }
       case LoggerType::kStdErr:
@@ -190,6 +164,7 @@ void initializeLogWriter()
                formatType,
                s_programIdentity,
                true)));
+         ttyCheck("syslog");
 #endif
       }
    }
@@ -263,6 +238,17 @@ void initializeLogWriters()
 }
 
 } // anonymous namespace
+
+void ttyCheck(const std::string& destination)
+{
+   // When running in a TTY, log some information about why we're logging to the TTY
+   // in addition to file/syslog.
+   if (stderrIsTerminal())
+      std::cerr << "TTY detected. Printing informational message about logging configuration. "
+                << "Logging configuration loaded from '"
+                << s_logOptions->getLogConfigFile().getAbsolutePath() << "'. "
+                << "Logging to '" << destination << "'.\n";
+}
 
 log::LoggerType loggerType(const std::string& in_sectionName)
 {

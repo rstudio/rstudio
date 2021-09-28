@@ -23,6 +23,7 @@
 }
 
 .messageCell {
+   white-space: pre;
    width: 100%;
    vertical-align: top;
    padding-right: 8px;

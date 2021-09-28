@@ -25,9 +25,9 @@ public class NewShinyAppPage extends NewDirectoryPage
 {
    public NewShinyAppPage()
    {
-      super("Shiny Web Application", 
-            "Create a new Shiny web application",
-            "Create Shiny Web Application",
+      super("Shiny Application", 
+            "Create a new Shiny application",
+            "Create Shiny Application",
             new ImageResource2x(NewProjectResources.INSTANCE.shinyAppIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.shinyAppIconLarge2x()));
    }
@@ -39,7 +39,7 @@ public class NewShinyAppPage extends NewDirectoryPage
    }
    
    @Override
-   protected void onAddBodyWidgets()
+   protected void onAddTopWidgets()
    {
      
    }

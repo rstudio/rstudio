@@ -23,7 +23,10 @@ public class PanmirrorImageProps extends PanmirrorAttrProps
 {
    public String src;
    public String title;
+   public String caption;
    public String alt;
+   public String align;
+   public String env;
    public String linkTo;
    public Double width;
    public Double height;

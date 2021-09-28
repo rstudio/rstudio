@@ -34,6 +34,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -139,8 +140,9 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       useSecurePackageDownload_ = new CheckBox(
             "Use secure download method for HTTP");
-      HorizontalPanel secureDownloadPanel = checkBoxWithHelp(
-                        useSecurePackageDownload_, "secure_download", "Help on secure package downloads for R");
+      HorizontalPanel secureDownloadPanel = HelpButton.checkBoxWithHelp(
+                        useSecurePackageDownload_, 
+                        new HelpButton("secure_download", "Help on secure package downloads for R"));
       lessSpaced(secureDownloadPanel);
       management.add(secureDownloadPanel);
 

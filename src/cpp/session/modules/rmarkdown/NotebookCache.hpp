@@ -36,7 +36,9 @@
 //   the document
 // - there are two types of cache folders -- one for content which has been
 //   committed ("s") and one for content which has not been committed ("u");
-//   there may be many uncomitted folders, but only one committed folder.
+//   there may be many uncommitted folders, but only one committed folder.
+//   - if an uncommitted folder corresponds to the currently running chunk, 
+//     it also contains an "execution.lock" file lock
 // - the folder contains a sequence of files which represent the content inside
 //   the chunk -- textual output, plots, and HTML; this content's output order
 //   is implied in the filenames 
@@ -50,6 +52,9 @@
 #define SESSION_NOTEBOOK_CACHE_HPP
 
 #define kSavedCtx "s"
+#define kStagingSuffix "_t"
+#define kExecutionLock "execution.lock"
+#define kMigrationTarget "migration.target"
 
 #include <string>
 

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Choose R Installation</title>
+  </head>
+
+  <body>
+
+    <p>RStudio requires an existing installation of R.</p>
+    <p>Please select the version of R to use.</p>
+
+    <div>
+      <input type="radio" id="use-default-64" name="r" value="use-default-64" checked>
+      <label for="use-default-64">Use your machine's default 64-bit version of R</label>
+    </div>
+
+    <div>
+      <input type="radio" id="use-default-32" name="r" value="use-default-32">
+      <label for="use-default-32">Use your machine's default 32-bit version of R</label>
+    </div>
+
+    <div>
+      <input type="radio" id="use-custom" name="r" value="use-custom">
+      <label for="use-custom">Choose a specific version of R:</label>
+    </div>
+
+    <select id="select" class="select" name="select" size="7">
+    </select>
+
+    <div class="footer-left">
+      <button id="button-browse" class="button" type="button">Browse...</button>
+    </div>
+
+    <div class="footer-right">
+      <button id="button-ok" class="button" type="button">OK</button>
+      <button id="button-cancel" class="button" type="button">Cancel</button>
+    </div>
+
+  </body>
+
+</html>

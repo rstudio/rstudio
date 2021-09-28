@@ -135,6 +135,12 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
     delete cslAny.license;
   }
 
+  // Datacite and others may include a 'contributor' field which should be an array of author types
+  // however, pandoc can't properly process contributor field
+  if (cslAny.contributor) {
+    delete cslAny.contributor;
+  }
+
   // pandoc-citeproc performance is extremely poor with large abstracts. As a result, purge this property
   delete cslAny.abstract;
   delete cslAny.id;

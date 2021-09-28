@@ -162,6 +162,7 @@ Changes that do not require rebuilding the interfaces/properties files:
          <cmd refid="previewHTML"/>
          <cmd refid="compilePDF"/>
          <cmd refid="compileNotebook"/>
+         <cmd refid="runDocumentFromServerDotR"/>
          <separator/>
          <cmd refid="rsconnectDeploy"/>
          <separator/>
@@ -823,10 +824,12 @@ Changes that do not require rebuilding the interfaces/properties files:
          <shortcut refid="previewHTML" value="Ctrl+Shift+K" disableModes="sublime"/>
          <shortcut refid="knitDocument" value="Ctrl+Shift+K" disableModes="sublime"/>
          <shortcut refid="quartoRenderDocument" value="Ctrl+Shift+K" disableModes="sublime"/>
+         <shortcut refid="runDocumentFromServerDotR" value="Ctrl+Shift+K" disableModes="sublime"/>
          <shortcut refid="compilePDF" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="previewHTML" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="knitDocument" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="quartoRenderDocument" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="runDocumentFromServerDotR" value="Meta+Shift+K" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="buildAll" value="Cmd+Shift+B"/>
          <shortcut refid="devtoolsLoadAll" value="Cmd+Shift+L" disableModes="sublime"/>
          <shortcut refid="devtoolsLoadAll" value="Ctrl+Shift+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -2050,6 +2053,11 @@ Changes that do not require rebuilding the interfaces/properties files:
         buttonLabel=""
         menuLabel="Source with _Echo"
         desc="Source the contents of the active document (with echo)"/>
+        
+   <cmd id="runDocumentFromServerDotR"
+        buttonLabel="Run Document"
+        menuLabel="Run _Document"
+        desc="Run the interactive document"/>
 
    <cmd id="commentUncomment"
         label="Comment / Uncomment Selection"
@@ -2341,6 +2349,102 @@ Changes that do not require rebuilding the interfaces/properties files:
         context="files"
         desc="Create a new folder"/>
 
+   <cmd id="touchSourceDoc"
+        label="Create a Blank R script in current directory"
+        buttonLabel=""
+        menuLabel="_R Script"
+        desc="Create a blank R script in current directory"/>
+
+   <cmd id="touchTextDoc"
+        menuLabel="_Text File"
+        desc="Create a blank text file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchCDoc"
+        menuLabel="_C File"
+        desc="Create a blank C file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchCppDoc"
+        menuLabel="_C++ File"
+        desc="Create a blank C++ file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchHeaderDoc"
+        menuLabel="_Header File"
+        desc="Create a blank header file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchMarkdownDoc"
+        menuLabel="_Markdown File"
+        desc="Create a blank Markdown document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchPythonDoc"
+        menuLabel="_Python Script"
+        desc="Create a blank Python script in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchShellDoc"
+        menuLabel="_Shell Script"
+        desc="Create a blank shell script in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchStanDoc"
+        menuLabel="_Stan File"
+        desc="Create a blank Stan program in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchHtmlDoc"
+        menuLabel="_HTML File"
+        desc="Create a blank HTML file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchJavaScriptDoc"
+        menuLabel="_JavaScript File"
+        desc="Create a blank JavaScript file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchCssDoc"
+        menuLabel="_CSS File"
+        desc="Create a blank CSS file in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchD3Doc"
+        menuLabel="_D3 Script"
+        desc="Create a blank D3 script in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchSweaveDoc"
+        menuLabel="R _Sweave"
+        desc="Create a blank R Sweave document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchRMarkdownDoc"
+        menuLabel="R _Markdown..."
+        desc="Create a blank R Markdown document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchQuartoDoc"
+        menuLabel="_Quarto Doc..."
+        desc="Create a blank Quarto document in current directory"
+        rebindable="false"/>
+        
+   <cmd id="serveQuartoSite"
+        menuLabel="_Serve Site"
+        desc="Run development server for Quarto site in current directory"
+        rebindable="false"/>      
+
+   <cmd id="touchRHTMLDoc"
+        menuLabel="R _HTML"
+        desc="Create a blank R HTML document in current directory"
+        rebindable="false"/>
+
+   <cmd id="touchSqlDoc"
+        menuLabel="SQ_L Script"
+        desc="Create a new SQL script in current directory"
+        rebindable="false"/>
+
    <cmd id="uploadFile"
         label="Upload Files..."
         menuLabel="Upload Files..."
@@ -2413,6 +2517,16 @@ Changes that do not require rebuilding the interfaces/properties files:
 
    <cmd id="copyFilesPaneCurrentDirectory"
         label="Copy Folder Path to Clipboard"
+        context="files"
+        rebindable="false"/>
+
+   <cmd id="openFilesInSinglePane"
+        label="Open Selected in Source Pane"
+        context="files"
+        rebindable="false"/>
+
+   <cmd id="openEachFileInColumns"
+        label="Open Each File in New Columns"
         context="files"
         rebindable="false"/>
 
@@ -3240,6 +3354,11 @@ Changes that do not require rebuilding the interfaces/properties files:
 
    <cmd id="viewerRefresh"
         desc="Refresh viewer"
+        rebindable="false"
+        context="viewer"/>
+        
+   <cmd id="viewerEditSource"
+        desc="Edit source file"
         rebindable="false"
         context="viewer"/>
 

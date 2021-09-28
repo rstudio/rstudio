@@ -23,9 +23,14 @@ public class ProductInfo
    protected ProductInfo() {}
    
    public String version;
+   public String version_major;
+   public String version_minor;
+   public String version_patch;
+   public String version_suffix;
    public String commit;
    public String build;
    public String release_name;
+   public String build_type;
    public String date;
    public String copyright_year;
    public String os;

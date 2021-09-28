@@ -306,11 +306,11 @@ public class GeneralPreferencesPane extends PreferencesPane
             renderingEngine_ = engine;
          });
 
-         useGpuBlacklist_ = new CheckBox("Use GPU blacklist (recommended)");
-         advanced.add(lessSpaced(useGpuBlacklist_));
-         Desktop.getFrame().getIgnoreGpuBlacklist((Boolean ignore) -> {
-            desktopIgnoreGpuBlacklist_ = ignore;
-            useGpuBlacklist_.setValue(!ignore);
+         useGpuExclusions_ = new CheckBox("Use GPU exclusion list (recommended)");
+         advanced.add(lessSpaced(useGpuExclusions_));
+         Desktop.getFrame().getIgnoreGpuExclusionList((Boolean ignore) -> {
+            desktopIgnoreGpuExclusions_ = ignore;
+            useGpuExclusions_.setValue(!ignore);
          });
 
          useGpuDriverBugWorkarounds_ = new CheckBox("Use GPU driver bug workarounds (recommended)");
@@ -503,13 +503,13 @@ public class GeneralPreferencesPane extends PreferencesPane
          Desktop.getFrame().setDesktopRenderingEngine(renderingEngine);
       }
 
-      if (useGpuBlacklist_ != null &&
-          desktopIgnoreGpuBlacklist_ != !useGpuBlacklist_.getValue())
+      if (useGpuExclusions_ != null &&
+          desktopIgnoreGpuExclusions_ != !useGpuExclusions_.getValue())
       {
          restartRequirement.setDesktopRestartRequired(true);
-         boolean ignore = !useGpuBlacklist_.getValue();
-         desktopIgnoreGpuBlacklist_ = ignore;
-         Desktop.getFrame().setIgnoreGpuBlacklist(ignore);
+         boolean ignore = !useGpuExclusions_.getValue();
+         desktopIgnoreGpuExclusions_ = ignore;
+         Desktop.getFrame().setIgnoreGpuExclusionList(ignore);
       }
 
       if (useGpuDriverBugWorkarounds_ != null &&
@@ -622,7 +622,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private static final String ENGINE_SOFTWARE    = "software";
 
    private boolean desktopMonitoring_ = false;
-   private boolean desktopIgnoreGpuBlacklist_ = false;
+   private boolean desktopIgnoreGpuExclusions_ = false;
    private boolean desktopDisableGpuDriverBugWorkarounds_ = false;
 
    private final FileSystemContext fsContext_;
@@ -633,7 +633,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private SelectWidget helpFontSize_;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox fullPathInTitle_ = null;
-   private CheckBox useGpuBlacklist_ = null;
+   private CheckBox useGpuExclusions_ = null;
    private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;
    private String renderingEngine_ = null;

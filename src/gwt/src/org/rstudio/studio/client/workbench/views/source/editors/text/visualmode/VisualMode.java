@@ -127,7 +127,7 @@ public class VisualMode implements VisualModeEditorSync,
       
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
-      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, this);
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, releaseOnDismiss, this);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
@@ -527,6 +527,14 @@ public class VisualMode implements VisualModeEditorSync,
                         allDone.execute(false);
                         return;
                      }
+                     
+                     // if we have example lists then don't switdch
+                     if (result.example_lists)
+                     {
+                        view_.showWarningBar("Unable to activate visual mode (document contains example lists which are not currently supported)");
+                        allDone.execute(false);
+                        return;
+                     }
 
                      // clear progress (for possible dialog overlays created by confirmation)
                      progress_.endProgressOperation();
@@ -627,7 +635,7 @@ public class VisualMode implements VisualModeEditorSync,
                // ensure that no source capsules have snuck in
                if (hasSourceCapsule(markdown))
                {
-                  view_.showWarningBar("Unable to reformat to canonical markdown (parsing error, please report this to RStudio)");
+                  view_.showWarningBar("Unable to parse markdown (please report at https://github.com/rstudio/rstudio/issues/new)");
                   completed.execute(null);  
                }
                /*
@@ -703,12 +711,6 @@ public class VisualMode implements VisualModeEditorSync,
         // embedded editors simultaneously
         commands_.findSelectAll(),
 
-        // Disabled since code folding doesn't work in embedded editors (there's
-        // no gutter in which to toggle folds)
-        commands_.fold(),
-        commands_.foldAll(),
-        commands_.unfold(),
-        commands_.unfoldAll(),
 
         // Disabled since we don't have line numbers in the visual editor
         commands_.goToLine()
@@ -818,6 +820,8 @@ public class VisualMode implements VisualModeEditorSync,
          commands_.runSelectionAsJob(),
          commands_.runSelectionAsLauncherJob(),
          commands_.sendToTerminal(),
+         commands_.yankAfterCursor(),
+         commands_.yankBeforeCursor()
       };
 
       for (AppCommand command : commands)
@@ -848,6 +852,26 @@ public class VisualMode implements VisualModeEditorSync,
    public void goToPreviousChunk()
    {
       panmirror_.execCommand(PanmirrorCommands.GoToPreviousChunk);
+   }
+   
+   public void fold()
+   {
+      panmirror_.execCommand(PanmirrorCommands.CollapseChunk);
+   }
+   
+   public void unfold()
+   {
+      panmirror_.execCommand(PanmirrorCommands.ExpandChunk);
+   }
+   
+   public void foldAll()
+   {
+      panmirror_.execCommand(PanmirrorCommands.CollapseAllChunks);
+   }
+   
+   public void unfoldAll()
+   {
+      panmirror_.execCommand(PanmirrorCommands.ExpandAllChunks);
    }
 
    public HasFindReplace getFindReplace()
@@ -998,6 +1022,16 @@ public class VisualMode implements VisualModeEditorSync,
    public JsArray<ChunkDefinition> getChunkDefs()
    {
       return visualModeChunks_.getChunkDefs();
+   }
+
+   /**
+    * Nudges the timer that runs to save the collapsed state of visual mode chunks.
+    * This is heavily debounced since it changes frequently (chunk position is
+    * used as an index key)
+    */
+   public void nudgeSaveCollapseState()
+   {
+      visualModeChunks_.nudgeSaveCollapseState();
    }
    
    public ChunkDefinition getChunkDefAtRow(int row)

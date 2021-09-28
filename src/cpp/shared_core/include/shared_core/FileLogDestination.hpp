@@ -288,6 +288,11 @@ public:
    ~FileLogDestination() override;
 
    /**
+    * @brief Returns the log destination.
+    */
+   std::string path();
+
+   /**
     * @brief Refreshes the log destintation. Ensures that the log does not have any stale file handles.
     *
     * @param in_refreshParams   Refresh params to use when refreshing the log destinations (if applicable).

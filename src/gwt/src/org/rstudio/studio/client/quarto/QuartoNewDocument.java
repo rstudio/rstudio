@@ -24,6 +24,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
+import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.quarto.ui.QuartoNewDocumentDialog;
 import org.rstudio.studio.client.server.ServerError;
@@ -77,7 +78,9 @@ public class QuartoNewDocument
       ArrayList<String> lines = new ArrayList<String>();
       lines.add("---");
       lines.add("title: \"" + result.getTitle() + "\"");
-      boolean simpleFormat = !result.getFormat().equals("html") && 
+      if (!StringUtil.isNullOrEmpty(result.getAuthor()))
+         lines.add("author: \"" + result.getAuthor() + "\"");
+      boolean simpleFormat = (!result.getFormat().equals("html") || result.getTheme() == "default") && 
                              !result.getTableOfContents() && 
                              !result.getNumberSections();
       if (simpleFormat)
@@ -88,7 +91,7 @@ public class QuartoNewDocument
       {
          lines.add("format:");
          lines.add("  " + result.getFormat() + ":");
-         if (result.getFormat().equals("html"))
+         if (result.getFormat().equals("html") && result.getTheme() != "default")
             lines.add("    theme: " + result.getTheme());
          if (result.getTableOfContents())
             lines.add("    toc: true");
@@ -96,17 +99,46 @@ public class QuartoNewDocument
             lines.add("    number-sections: true");
       }
       
-      if (result.getEngine().equals("jupyter"))
+      if (result.getEditor().equals(QuartoConstants.EDITOR_VISUAL));
+         lines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
+      
+      if (result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
          lines.add("jupyter: " + result.getKernel());
       lines.add("---");
-            
-      if (!result.getEngine().equals("none") && result.getLanguage() != null)
+      lines.add("");
+      
+      if (result.getEditor().equals(QuartoConstants.EDITOR_VISUAL))
       {
+         lines.add("This document uses the Quarto [visual markdown editor]" +
+                   "(https://quarto.org/docs/visual-editor/). Use the button " + 
+                   "at the far right of the editor toolbar to switch between " +
+                   "visual and source code mode.");
+         lines.add("");
+      }
+            
+      if (!result.getEngine().equals(QuartoConstants.ENGINE_MARKDOWN) && 
+          result.getLanguage() != null)
+      {
+         lines.add("This is an executable code chunk (click the run button on " + 
+                   "the right to execute it):");   
          lines.add("");
          lines.add("```{" + result.getLanguage() + "}");
-         lines.add("");
+         lines.add("1 + 1");
          lines.add("```");
+         lines.add("");
+         lines.add("Insert additional code chunks using the insert chunk " +
+                   "toolbar button (or **Insert** menu).");
+         lines.add("");
       }
+      
+      lines.add("Use the toolbar menus (**Format**, **Insert**, **Reference**, " +
+                "and **Table**) to apply formatting and insert various content " + 
+                "types (e.g. images, links, references, math, tables, etc.).");
+      lines.add("");
+      lines.add("Click the **Render** button on the editor toolbar to create an " + 
+                "output document from this file.");
+      lines.add("");
+      lines.add("Learn more about Quarto at <https://quarto.org>.");
       
       lines.add("");
       lines.add("");

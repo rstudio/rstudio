@@ -99,6 +99,12 @@ public class UrlContentEditingTarget implements EditingTarget
    {
       return null;
    }
+   
+   @Override 
+   public boolean isShinyPrerenderedDoc()
+   {
+      return false;
+   }
 
    public HasValue<String> getName()
    {

@@ -248,6 +248,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/fonts", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/python", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/tutorial", secureAsyncHttpHandler(proxyContentRequest));
+   uri_handlers::add("/quarto", secureAsyncHttpHandler(proxyContentRequest));
 
    // content handlers which might be accessed outside the context of the
    // workbench get secure + authentication when required
@@ -542,6 +543,14 @@ int main(int argc, char * const argv[])
 {
    try
    {
+      // read environment variables from config file; we have to do this before initializing logging
+      // so that logging environment variables like RS_LOG_LEVEL stored in this file will be
+      // respected when logging is initialized (below).
+      //
+      // note that we can't emit any logs or errors while reading this config file since logging
+      // isn't initialized yet, so we suppress logging in this step
+      env_vars::readEnvConfigFile(false /* suppress logs */);
+
       Error error = core::system::initializeLog(kProgramIdentity, core::log::LogLevel::WARN, false);
       if (error)
       {
@@ -806,14 +815,17 @@ int main(int argc, char * const argv[])
          }
       }
 
-      // give up root privilige if requested
-      std::string runAsUser = options.serverUser();
-      if (!runAsUser.empty())
+      // give up root privilege if requested and running as root
+      if (core::system::realUserIsRoot())
       {
-         // drop root priv
-         error = core::system::temporarilyDropPriv(runAsUser);
-         if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+         std::string runAsUser = options.serverUser();
+         if (!runAsUser.empty())
+         {
+            // drop root priv
+            error = core::system::temporarilyDropPriv(runAsUser);
+            if (error)
+               return core::system::exitFailure(error, ERROR_LOCATION);
+         }
       }
 
       // run special verify installation mode if requested

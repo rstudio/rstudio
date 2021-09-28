@@ -209,8 +209,8 @@ public Q_SLOTS:
    bool getClipboardMonitoring();
    void setClipboardMonitoring(bool monitoring);
    
-   bool getIgnoreGpuBlacklist();
-   void setIgnoreGpuBlacklist(bool ignore);
+   bool getIgnoreGpuExclusionList();
+   void setIgnoreGpuExclusionList(bool ignore);
    
    bool getDisableGpuDriverBugWorkarounds();
    void setDisableGpuDriverBugWorkarounds(bool disable);

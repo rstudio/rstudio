@@ -29,6 +29,7 @@ import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.patch.SubstringDiff;
 import org.rstudio.core.client.widget.Operation;
@@ -136,10 +137,12 @@ public class DocUpdateSentinel
 
       prefs_.autoSaveOnIdle().bind((String behavior) ->
       {
-         if (behavior == UserPrefs.AUTO_SAVE_ON_IDLE_BACKUP)
+         if (StringUtil.isNullOrEmpty(sourceDoc_.getPath()) ||
+             StringUtil.equals(behavior, UserPrefs.AUTO_SAVE_ON_IDLE_BACKUP))
          {
             // Set up the debounced auto-save method when the preference is
-            // enabled
+            // enabled. This is always enabled when we don't have a path because
+            // it isn't possible to do other kinds of saving in this case.
             createAutosaver();
          }
          else if (autosaver_ != null)
@@ -369,6 +372,15 @@ public class DocUpdateSentinel
    {
       if (autosaver_ != null)
          autosaver_.suspend();
+
+      // If the user pref indicates we should do a full save on idle, turn off the autosaver,
+      // which may have been on if the file han't been previously saved.
+      if (autosaver_ != null &&
+          !StringUtil.isNullOrEmpty(path) &&
+          StringUtil.equals(prefs_.autoSaveOnIdle().getValue(), UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT))
+      {
+         autosaver_ = null;
+      }
 
       doSave(path, fileType, encoding, retryWrite, new ProgressIndicator()
       {
@@ -764,6 +776,33 @@ public class DocUpdateSentinel
                public void onResponseReceived(Void response)
                {
                   applyProperties(sourceDoc_.getProperties(), properties);
+                  if (progress != null)
+                     progress.onCompleted();
+               }
+            });
+   }
+   
+   public static void modifyProperties(SourceServerOperations server,
+                                       SourceDocument document,
+                                       final HashMap<String, String> properties,
+                                       final ProgressIndicator progress)
+   {
+      server.modifyDocumentProperties(
+            document.getId(),
+            properties,
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  if (progress != null)
+                     progress.onError(error.getUserMessage());
+               }
+
+               @Override
+               public void onResponseReceived(Void response)
+               {
                   if (progress != null)
                      progress.onCompleted();
                }

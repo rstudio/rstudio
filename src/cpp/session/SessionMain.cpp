@@ -691,8 +691,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    using namespace rsession::client_events;
    if (rsession::persistentState().hadAbend() && !options().standalone())
    {
-      LOG_ERROR_MESSAGE("session hadabend");
-
+      LOG_ERROR_MESSAGE("The previous R session terminated abnormally");
       ClientEvent abendWarningEvent(kAbendWarning);
       rsession::clientEventQueue().add(abendWarningEvent);
    }
@@ -1771,6 +1770,17 @@ int main(int argc, char * const argv[])
          {
             boost::this_thread::sleep(boost::posix_time::seconds(sleepDuration));
          }
+      }
+
+      // terminate immediately with given exit code (for testing/debugging)
+      std::string exitOnStartup = core::system::getenv("RSTUDIO_SESSION_EXIT_ON_STARTUP");
+      if (!exitOnStartup.empty())
+      {
+         int exitCode = core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
+
+         std::cerr << "RSession terminating with exit code " << exitCode << " as requested.\n";
+         std::cout << "RSession will now exit.\n";
+         return core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
       }
 
       // initialize log so we capture all errors including ones which occur
