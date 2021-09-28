@@ -130,6 +130,10 @@ protected:
       std::vector<std::string> args({"preview"});
       args.push_back(string_utils::utf8ToSystem(previewFile_.getFilename()));
 
+      // presentation mode if this is reveal
+      if (formatIsRevealJs())
+         args.push_back("--presentation");
+
       // no automatic render and no browser
       args.push_back("--no-render");
       args.push_back("--no-browse");

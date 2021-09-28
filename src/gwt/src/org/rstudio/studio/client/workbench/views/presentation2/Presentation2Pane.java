@@ -29,7 +29,6 @@ import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -40,6 +39,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    {
       super("Presentation");
       commands_ = commands;
+      reveal_ = new RevealConnection();
       ensureWidget();
    }
    
@@ -78,7 +78,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    {
       // bring tab to front
       bringToFront();
-      
+         
       // in desktop mode we need to be careful about loading URLs which are
       // non-local; before changing the URL, set the iframe to be sandboxed
       // based on whether we're working with a local URL (note that prior to
@@ -103,39 +103,41 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
          double ratio = (double)700 / 960;
          ensureHeight((int)(frameWidth * ratio));
       }
-     
-      // navigate
-      frame_.setUrl(url);
       
-      // set publish button
-      if (nav.isWebsite())
-         publishButton_.setQuartoSitePreview();
+      // if we are repeating the same nav then just reload
+      if (activeNav_ != null && activeNav_.getOutputFile().equals(nav.getOutputFile()))
+      {
+         refresh();
+      }
       else
-         publishButton_.setQuartoDocPreview(nav.getSourceFile(), nav.getOutputFile());
-      
-      // redraw toolbar
-      toolbar_.invalidateSeparators();
-      
-      
+      {
+         // navigate
+         reveal_.setUrl(url);
+         frame_.setUrl(url);
+         activeNav_ = nav;
+         
+         // set publish button
+         if (nav.isWebsite())
+            publishButton_.setQuartoSitePreview();
+         else
+            publishButton_.setQuartoDocPreview(nav.getSourceFile(), nav.getOutputFile());
+         
+         // redraw toolbar
+         toolbar_.invalidateSeparators();
+      }      
    }
    
    @Override
    public void refresh()
    {
-      try
-      {
-         frame_.getWindow().reload();
-      }
-      catch (Exception e)
-      {
-         String url = frame_.getUrl();
-         if (url != null)
-            frame_.setUrl(url);
-      }
+      reveal_.reload();
    }
 
    
+   private QuartoNavigate activeNav_ = null;
    private RStudioFrame frame_;
+   private final RevealConnection reveal_;
+   
    private Toolbar toolbar_;
    private RSConnectPublishButton publishButton_;
    
