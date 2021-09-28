@@ -27,6 +27,7 @@
 
 #include <core/Algorithm.hpp>
 #include <core/Exec.hpp>
+#include <core/FileLock.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
@@ -398,11 +399,40 @@ void onDocAdded(const std::string& id)
    }
 }
 
+// Creates a migration file; used to mark a folder to be migrated to another location
+// when it's possible to do so.
+Error createMigrationFile(const FilePath& source, const FilePath& target)
+{
+   Error error;
+   FilePath migrationFile = source.completePath(kMigrationTarget);
+
+   // Ensure migration file doesn't already exist. This shouldn't happen unless a crash occurred
+   // during a previous chunk execution.
+   if (migrationFile.exists())
+   {
+      LOG_WARNING_MESSAGE("Notebook output migration file " kMigrationTarget " already exists in " + 
+            source.getAbsolutePath());
+      error = migrationFile.remove();
+      if (error)
+      {
+         error.addProperty("description", "Unable to remove notebook output migration file");
+         return error;
+      }
+   }
+
+   error = writeStringToFile(migrationFile, target.getAbsolutePath()); 
+   if (error)
+   {
+      error.addProperty("description", "Unable to write notebook output migration file");
+   }
+   return error;
+}
+
 void onDocSaved(FilePath path)
 {
    Error error;
-   // ignore non-R Markdown saves
-   if (!path.hasExtensionLowerCase(".rmd"))
+   // only R Markdown or Quarto docs can have notebooks
+   if (!(path.hasExtensionLowerCase(".rmd") || path.hasExtensionLowerCase(".qmd")))
       return;
 
    // find cache folder (bail out if it doesn't exist)
@@ -453,6 +483,44 @@ void onDocSaved(FilePath path)
       }
       else if (source.isDirectory())
       {
+         // Check to see if this folder represents a notebook chunk that is 
+         // currently executing; this can happen in cases where the notebook
+         // is saved while code is running.
+         FilePath executionLock = source.completePath(kExecutionLock);
+         if (executionLock.exists())
+         {
+            auto lock = FileLock::createDefault();
+            if (lock->isLocked(executionLock))
+            {
+               // There's code running; save a migration file and move on. The
+               // chunk execution context is responsible for picking up this file
+               // and migrating the folder once execution is complete (see
+               // ChunkExecContext).
+               error = createMigrationFile(source, target);
+               if (error)
+               {
+                  LOG_ERROR(error);
+               }
+
+               // Move on
+               continue;
+            }
+            else
+            {
+               // The execution lock exists, but isn't actually locked. This suggests
+               // that a crash occurred while the chunk was executing, since the
+               // execution context should have cleaned up the lock after execution
+               // was complete. Just clean up the lock ourselves so it doesn't clutter
+               // the saved cache folder.
+               error = executionLock.remove();
+               if (error)
+               {
+                  error.addProperty("description", "Unable to clean up execution lock");
+                  LOG_ERROR(error);
+               }
+            }
+         }
+
          // library folders should be merged and then removed, so we don't
          // lose library contents 
          if (source.getFilename() == kChunkLibDir)
