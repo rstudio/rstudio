@@ -285,7 +285,7 @@ private:
       std::string outputFile;
       if (!outputFile_.isEmpty())
          outputFile = module_context::createAliasedPath(outputFile_);
-      QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile);
+      QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
 
       // route to either viewer or presentation pane (for reveal)
       if (isReveal)
@@ -460,6 +460,7 @@ json::Value quartoNavigateAsJson(const QuartoNavigate& quartoNavigate)
       quartoNavObj["is_website"] = quartoNavigate.website;
       quartoNavObj["source_file"] = quartoNavigate.source;
       quartoNavObj["output_file"] = quartoNavigate.output;
+      quartoNavObj["job_id"] = quartoNavigate.job_id;
       quartoNav = quartoNavObj;
    }
    return quartoNav;

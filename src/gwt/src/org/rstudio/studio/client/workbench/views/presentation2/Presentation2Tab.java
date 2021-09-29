@@ -38,6 +38,16 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
    implements PresentationPreviewEvent.Handler {
       @Handler
       public abstract void onRefreshPresentation2();
+      @Handler
+      public abstract void onPresentation2Home();
+      @Handler
+      public abstract void onPresentation2Next();
+      @Handler
+      public abstract void onPresentation2Prev();
+      @Handler
+      public abstract void onPresentation2Edit();
+      @Handler
+      public abstract void onPresentation2ViewInBrowser();
    }
    
    @Inject

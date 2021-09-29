@@ -334,6 +334,11 @@ public abstract class
    // Presentation2
    public abstract AppCommand activatePresentation2();
    public abstract AppCommand layoutZoomPresentation2();
+   public abstract AppCommand presentation2Home();
+   public abstract AppCommand presentation2Next();
+   public abstract AppCommand presentation2Prev();
+   public abstract AppCommand presentation2Edit();
+   public abstract AppCommand presentation2ViewInBrowser();
    public abstract AppCommand refreshPresentation2();
 
    // View

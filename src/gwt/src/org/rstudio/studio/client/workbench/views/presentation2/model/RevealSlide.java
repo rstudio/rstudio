@@ -1,5 +1,5 @@
 /*
- * RevealMessage.java
+ * RevealSlide.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,24 +13,33 @@
  *
  */
 
-package org.rstudio.studio.client.workbench.views.presentation2;
+package org.rstudio.studio.client.workbench.views.presentation2.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
 
-public class RevealMessage extends JavaScriptObject
+public class RevealSlide extends JavaScriptObject
 {
-   protected RevealMessage() {}
+   protected RevealSlide() {}
 
-   public static native RevealMessage create(String message, JavaScriptObject data) /*-{
-      return {message: message, data: data};
+
+   public native final String getId() /*-{
+      return this.id;
    }-*/;
 
-   public native final String getMessage() /*-{
-      return this.message;
+   public native final String getTitle() /*-{
+      return this.title;
    }-*/;
-
-   public native final JavaScriptObject getData() /*-{
-      return this.data;
+   
+   public native final int getHIndex() /*-{
+      return this.h;
+   }-*/;
+   
+   public native final int getVIndex() /*-{
+      return this.v;
+   }-*/;
+   
+   public native final int getFIndex() /*-{
+      return this.f;
    }-*/;
 }

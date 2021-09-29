@@ -142,7 +142,6 @@ import org.rstudio.studio.client.workbench.views.jobs.view.JobItemFactory;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplayImpl;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.packages.ui.CheckForUpdatesDialog;
-import org.rstudio.studio.client.workbench.views.presentation2.RevealConnection;
 import org.rstudio.studio.client.workbench.views.source.DocsMenu;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.NewPlumberAPI;
@@ -353,7 +352,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(NewQuartoProjectPage newProjectPage);
    void injectMembers(QuartoConnection quartoMessageBus);
    void injectMembers(YamlEditorToolsProviderQuarto yamlCompletionSourceQuarto);
-   void injectMembers(RevealConnection revealConnection);
 
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);

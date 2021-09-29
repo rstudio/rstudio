@@ -1,5 +1,5 @@
 /*
- * QuartoNavigate.java
+ * PresentationMessage.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -13,30 +13,24 @@
  *
  */
 
-package org.rstudio.studio.client.quarto.model;
+package org.rstudio.studio.client.workbench.views.presentation2.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class QuartoNavigate extends JavaScriptObject
+
+public class RevealMessage extends JavaScriptObject
 {
-   protected QuartoNavigate()
-   {
-   }
-   
-   public native final boolean isWebsite() /*-{
-      return this.is_website;
+   protected RevealMessage() {}
+
+   public static native RevealMessage create(String message, JavaScriptObject data) /*-{
+      return {message: message, data: data};
    }-*/;
 
-   public native final String getSourceFile() /*-{
-      return this.source_file;
+   public native final String getMessage() /*-{
+      return this.message;
    }-*/;
 
-   public native final String getOutputFile() /*-{
-      return this.output_file;
+   public native final JavaScriptObject getData() /*-{
+      return this.data;
    }-*/;
-   
-   public native final String getJobId()  /*-{
-      return this.job_id;
-   }-*/;
-
 }
