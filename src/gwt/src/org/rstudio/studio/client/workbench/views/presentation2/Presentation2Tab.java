@@ -70,6 +70,13 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
          {
             commands.layoutZoomPresentation2().remove();
             commands.activatePresentation2().remove();
+            commands.refreshPresentation2().remove();
+            commands.presentation2Home().remove();
+            commands.presentation2Next().remove();
+            commands.presentation2Prev().remove();
+            commands.presentation2Edit().remove();
+            commands.presentation2Print().remove();
+            commands.presentation2ViewInBrowser().remove();
          }
          
       });
