@@ -38,9 +38,14 @@ Error productInfo(const json::JsonRpcRequest& request,
 {
    json::Object result;
    result["version"] = RSTUDIO_VERSION;
+   result["version_major"] = RSTUDIO_VERSION_MAJOR;
+   result["version_minor"] = RSTUDIO_VERSION_MINOR;
+   result["version_patch"] = RSTUDIO_VERSION_PATCH;
+   result["version_suffix"] = RSTUDIO_VERSION_SUFFIX;
    result["commit"] = RSTUDIO_GIT_COMMIT;
    result["build"] = RSTUDIO_BUILD_ID;
    result["release_name"] = RSTUDIO_RELEASE_NAME;
+   result["build_type"] = RSTUDIO_BUILD_TYPE;
    result["date"] = RSTUDIO_BUILD_DATE;
    result["copyright_year"] = RSTUDIO_COPYRIGHT_YEAR;
    result["os"] = RSTUDIO_PACKAGE_OS;

@@ -28,6 +28,16 @@ namespace tests {
 
 test_context("PosixSystemTests")
 {
+   test_that("findProgramOnPath can find core utils")
+   {
+      FilePath whichPath;
+      Error error = findProgramOnPath("which", &whichPath);
+      expect_true(error == Success());
+      
+      std::string resolvedPath = whichPath.getAbsolutePath();
+      expect_true(resolvedPath == "/usr/bin/which" || resolvedPath == "/bin/which");
+   }
+   
    test_that("Empty subprocess list returned correctly with pgrep method")
    {
       pid_t pid = fork();

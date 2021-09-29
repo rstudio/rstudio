@@ -252,6 +252,7 @@ class CodeSearchSuggestion implements Suggestion
       
       // tables
       map.put("tab", CodeIcons.INSTANCE.table2x());
+      map.put("tbl", CodeIcons.INSTANCE.table2x());
       
       // math-related sections (e.g. theorems)
       map.put("thm", CodeIcons.INSTANCE.function2x());

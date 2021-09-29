@@ -18,6 +18,18 @@
       .header input[type="checkbox"] {
          margin-right: 5px;
       }
+      
+      /* Chrome, Safari, Edge, Opera */
+      .column input::-webkit-outer-spin-button,
+      .column input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+		    margin: 0;
+		  }
+		
+      /* Firefox */
+      .column input[type=number] {
+        -moz-appearance: textfield;
+      }
    </ui:style>
 
    <g:VerticalPanel styleName="{res.styles.dialog}">

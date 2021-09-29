@@ -113,7 +113,7 @@ public class NewPackagePage extends NewDirectoryPage
    }
 
    @Override
-   protected void onAddBodyWidgets()
+   protected void onAddTopWidgets()
    {
       // code files panel
       listCodeFiles_ = new CodeFilesList();

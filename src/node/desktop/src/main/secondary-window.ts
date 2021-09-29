@@ -14,18 +14,26 @@
  *
  */
 
-import { WebContents } from 'electron';
-import { URL } from 'url';
+import { BrowserWindow, WebContents } from 'electron';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 
 export class SecondaryWindow extends DesktopBrowserWindow {
   constructor(
+    showToolbar: boolean,
     name: string,
-    baseUrl?: URL,
+    baseUrl?: string,
     parent?: DesktopBrowserWindow,
     opener?: WebContents,
-    allowExternalNavigate = false
+    allowExternalNavigate = false,
+    existingWindow?: BrowserWindow
   ) {
-    super(true, name, baseUrl, parent, opener, allowExternalNavigate);
+    super(showToolbar, true, name, baseUrl, parent, opener,
+      allowExternalNavigate, undefined, existingWindow);
+
+    this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
+  }
+
+  onCloseWindowShortcut(): void {
+    this.window.close();
   }
 }

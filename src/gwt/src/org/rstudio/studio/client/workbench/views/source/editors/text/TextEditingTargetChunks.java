@@ -315,7 +315,7 @@ public class TextEditingTargetChunks
       if (target_.getDocDisplay().showChunkOutputInline())
       {
          // treat all chunks as executable in notebook mode
-         List<String> dontRunEngines = Arrays.asList("js", "css", "observable");
+         List<String> dontRunEngines = Arrays.asList("js", "css", "ojs");
          return !dontRunEngines.contains(engine);
       }
       else

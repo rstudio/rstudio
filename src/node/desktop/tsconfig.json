@@ -6,14 +6,22 @@
     "outDir": "dist",
     "removeComments": true,
     "baseUrl": ".",
+    "strict": true,
     "paths": {
       "*": ["node_modules/*"]
-    }
+    },
+    "lib": [
+      "DOM",
+    ],
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "test/**/*"
   ],
   "exclude": [
     "node_modules"
-  ]
+  ],
+  "ts-node": {
+    "transpileOnly": true
+  }
 }

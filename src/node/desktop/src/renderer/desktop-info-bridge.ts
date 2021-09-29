@@ -13,19 +13,8 @@
  *
  */
 
-export interface DesktopInfoBridge {
-  platform: string;
-  version: string;
-  scrollingCompensationType: string;
-  fixedWidthFontList: string;
-  fixedWidthFont: string;
-  proportionalFont: string;
-  desktopSynctexViewer: string;
-  zoomLevel: number;
-  chromiumDevtoolsPort: number;
-}
-
-export function getDesktopInfoBridge(): DesktopInfoBridge {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function getDesktopInfoBridge() {
   if (process.platform === 'win32') {
     return {
       platform: '',

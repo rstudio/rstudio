@@ -62,7 +62,7 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
       if (dir.length() > 0)
       {
          return new NewProjectResult(
-                     Projects.projFileFromDir(dir), false, false, null, null, null, null, null, null);
+                     Projects.projFileFromDir(dir), false, false, null, null, null, null, null, null, null);
       }
       else
       {

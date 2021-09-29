@@ -44,9 +44,8 @@ std::string pandocBinary(const std::string& binary)
   return string_utils::utf8ToSystem(pandocPath.getAbsolutePath());
 }
 
-core::system::ProcessOptions pandocOptions()
+core::system::ProcessOptions withPandocDefaultOptions(core::system::ProcessOptions options)
 {
-   core::system::ProcessOptions options;
 #ifdef _WIN32
    options.createNewConsole = true;
 #else
@@ -58,13 +57,14 @@ core::system::ProcessOptions pandocOptions()
 Error runAsync(const std::string& executablePath,
                const std::vector<std::string>& args,
                const std::string&input,
+               core::system::ProcessOptions options,
                const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
    return module_context::processSupervisor().runProgram(
       executablePath,
       args,
       input,
-      pandocOptions(),
+      withPandocDefaultOptions(options),
       onCompleted
    );
 }
@@ -85,22 +85,43 @@ std::string pandocPath()
    return pandocBinary("pandoc");
 }
 
-Error runPandoc(const std::vector<std::string>& args, const std::string& input, core::system::ProcessResult* pResult)
+Error runPandoc(const std::string& pandocPath,
+                const std::vector<std::string>& args,
+                const std::string& input,
+                core::system::ProcessOptions options,
+                core::system::ProcessResult* pResult)
 {
+
    return core::system::runProgram(
-      pandocPath(),
+      pandocPath,
       prependStackSize(args),
       input,
-      pandocOptions(),
+      withPandocDefaultOptions(options),
       pResult
    );
 }
+
+
+Error runPandoc(const std::vector<std::string>& args, const std::string& input, core::system::ProcessResult* pResult)
+{
+   return runPandoc(pandocPath(), args, input, core::system::ProcessOptions(), pResult);
+}
+
+Error runPandocAsync(const std::string& pandocPath,
+                     const std::vector<std::string>& args,
+                     const std::string &input,
+                     core::system::ProcessOptions options,
+                     const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+{
+   return runAsync(pandocPath, prependStackSize(args), input, options, onCompleted);
+}
+
 
 Error runPandocAsync(const std::vector<std::string>& args,
                      const std::string&input,
                      const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
-   return runAsync(pandocPath(), prependStackSize(args), input, onCompleted);
+   return runPandocAsync(pandocPath(), args, input, core::system::ProcessOptions(), onCompleted);
 }
 
 

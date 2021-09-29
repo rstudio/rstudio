@@ -8,7 +8,7 @@
 # filenames, so tweaking for new releases is expected.
 
 # Modify to set the Pandoc version to upload
-PANDOC_VERSION=2.11.4
+PANDOC_VERSION=2.14.2
 
 for PLATFORM in linux-amd64.tar.gz macOS.zip windows-x86_64.zip; do
 

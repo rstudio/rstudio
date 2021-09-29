@@ -86,31 +86,43 @@ public class HelpInfoPopupPanel extends PopupPanel
 
    }
    
-   public void displayParameterHelp(Map<String, String> help, String paramName)
+   public void displayParameterHelp(String name, String description)
    {
-      String desc = help.get(paramName);
-      if (desc == null)
-      {
-         clearHelp(false);
-         return;
-      }
-
+      displayParameterHelp(name, description, true);
+   }
+   
+   public void displayParameterHelp(String name, String description, boolean showF1Help)
+   {
       timer_.cancel();
       vpanel_.clear();
 
-      if (paramName != null)
+      
+      if (name != null)
       {
-         Label lblSig = new Label(paramName);
+         Label lblSig = new Label(name);
          lblSig.setStylePrimaryName(consoleStyles_.paramInfoName());
          vpanel_.add(lblSig);
       }
       
-      HTML htmlDesc = new HTML(desc);
+      HTML htmlDesc = new HTML(description);
       htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
       vpanel_.add(htmlDesc);
       
-      doDisplay();
+      doDisplay(showF1Help);
    }
+   
+   public void displayParameterHelp(Map<String, String> help, String name)
+   {
+      String description = help.get(name);
+      if (description == null)
+      {
+         clearHelp(false);
+         return;
+      }
+      
+      displayParameterHelp(name, description);
+   }
+   
    
    public void displayPackageHelp(HelpInfo.ParsedInfo help)
    {
@@ -131,6 +143,7 @@ public class HelpInfoPopupPanel extends PopupPanel
 
       doDisplay();
    }
+   
    
    public void displaySnippetHelp(String contents)
    {

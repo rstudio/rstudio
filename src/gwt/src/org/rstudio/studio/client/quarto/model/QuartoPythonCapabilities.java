@@ -39,12 +39,6 @@ public class QuartoPythonCapabilities extends JavaScriptObject
    public final native String getExecutable() /*-{
       return this.executable;
    }-*/;
-   
-  
-   public final native JsArray<QuartoJupyterKernel> getKernels() /*-{
-      return this.kernels;
-   }-*/;
-  
 
    public final native String getJupyterCore() /*-{
       return this.jupyter_core;
@@ -65,7 +59,12 @@ public class QuartoPythonCapabilities extends JavaScriptObject
       return this.ipykernel;
    }-*/;
    
-   public final native String getYaml() /*-{
-      return this.yaml;
+   public final native JsArray<QuartoJupyterKernel> getKernels() /*-{
+      return this.kernels;
+   }-*/;  
+   
+   public final native boolean getVenv() /*-{
+      return this.venv === true;
    }-*/;
+
 }

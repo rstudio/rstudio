@@ -208,6 +208,7 @@ const int kDocumentCloseAllNoSave = 190;
 const int kMemoryUsageChanged = 191;
 const int kCommandCallbacksChanged = 192;
 const int kConsoleActivate = 193;
+const int kJobsActivate = 194;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -579,6 +580,8 @@ std::string ClientEvent::typeName() const
          return "command_callbacks_changed";
       case client_events::kConsoleActivate:
          return "console_activate";
+      case client_events::kJobsActivate:
+         return "jobs_activate";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

@@ -26,7 +26,7 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 
 public final class DialogHtmlSanitizer implements HtmlSanitizer {
-   private static final Set<String> TAG_WHITELIST = new HashSet<>(
+   private static final Set<String> TAG_ALLOW_LIST = new HashSet<>(
       Arrays.asList(
          "p", "em", "strong", "b", "i", "a"
       )
@@ -60,7 +60,7 @@ public final class DialogHtmlSanitizer implements HtmlSanitizer {
                tagStart = 1;
             }
             tag = segment.substring(tagStart, tagEnd).toLowerCase();
-            if (TAG_WHITELIST.contains(tag)) {
+            if (TAG_ALLOW_LIST.contains(tag)) {
                isValidTag = true;
             }
             else {

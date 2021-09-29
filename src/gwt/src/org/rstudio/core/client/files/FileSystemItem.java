@@ -355,6 +355,8 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "jpe",   "image/jpeg" );
       MIME_TYPES.put( "png",   "image/png" );
       MIME_TYPES.put( "js",    "text/javascript" );
+      MIME_TYPES.put( "ojs",   "text/javascript" );
+      MIME_TYPES.put( "ts",    "text/x-typescript" );
       MIME_TYPES.put( "pdf",   "application/pdf" );
       MIME_TYPES.put( "svg",   "image/svg+xml" );
       MIME_TYPES.put( "swf",   "application/x-shockwave-flash" );

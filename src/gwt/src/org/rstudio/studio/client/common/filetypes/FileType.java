@@ -29,6 +29,7 @@ public abstract class FileType
    public static final String TEX_LANG_MODE = "TeX";
    public static final String SQL_LANG_MODE = "SQL";
    public static final String STAN_LANG_MODE = "Stan";
+   public static final String YAML_LANG_MODE = "YAML";
    public static final String PYTHON_LANG_MODE = "Python";
    
    static ArrayList<FileType> ALL_FILE_TYPES = new ArrayList<>();

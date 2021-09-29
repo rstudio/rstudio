@@ -721,7 +721,7 @@ void getWebCollectionSpecs(std::string key, std::vector<std::string> collections
                return;
             }
 
-            // create specs (filter on collections if a whitelist was provided)
+            // create specs (filter on collections if a query list was provided)
             for (auto group : groups)
             {
                std::string groupName = group.first;

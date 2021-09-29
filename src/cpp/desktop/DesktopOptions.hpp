@@ -72,8 +72,8 @@ public:
    bool clipboardMonitoring() const;
    void setClipboardMonitoring(bool monitoring);
    
-   bool ignoreGpuBlacklist() const;
-   void setIgnoreGpuBlacklist(bool ignore);
+   bool ignoreGpuExclusionList() const;
+   void setIgnoreGpuExclusionList(bool ignore);
    
    bool disableGpuDriverBugWorkarounds() const;
    void setDisableGpuDriverBugWorkarounds(bool disable);

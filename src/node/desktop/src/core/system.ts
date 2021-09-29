@@ -15,6 +15,9 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import crc from 'crc';
+import fs from 'fs';
+
+import { FilePath } from './file-path';
 
 export function generateUuid(includeDashes = true): string {
   let uuid = uuidv4();
@@ -39,4 +42,19 @@ export function generateRandomPort(): number {
 export function localPeer(port: number): string {
   // local peer used for named-pipe communcation on Windows
   return `\\\\.\\pipe\\${port.toString()}-rsession`;
+}
+
+export function isCentOS(): boolean {
+  if (process.platform === 'linux') {
+    const redhatRelease = new FilePath('/etc/redhat-release');
+    if (redhatRelease.existsSync()) {
+      try {
+        const contents = fs.readFileSync(redhatRelease.getAbsolutePath(), 'utf-8');
+        return contents.includes('CentOS') || contents.includes('Red Hat Enterprise Linux');
+      } catch (error: unknown) {
+        return false;
+      }
+    }
+  }
+  return false;
 }

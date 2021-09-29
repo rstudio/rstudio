@@ -36,6 +36,7 @@ import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -192,9 +193,9 @@ public class PublishingPreferencesPane extends PreferencesPane
 
       final CheckBox chkEnableRSConnect = checkboxPref(constants_.chkEnableRSConnectLabel(),
             userState_.enableRsconnectPublishUi());
-      final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect,
-                                                        "rstudio_connect",
-                                                        constants_.checkBoxWithHelpTitle());
+      final HorizontalPanel rsconnectPanel = HelpButton.checkBoxWithHelp(
+         chkEnableRSConnect,
+         new HelpButton("rstudio_connect", constants_.checkBoxWithHelpTitle()));
       lessSpaced(rsconnectPanel);
 
       add(headerLabel(constants_.settingsHeaderLabel()));

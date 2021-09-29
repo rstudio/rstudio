@@ -30,6 +30,8 @@ namespace env_vars {
 
 core::Error initialize();
 
+core::Error readEnvConfigFile(bool emitInfoLog);
+
 void forwardHttpProxyVars(core::system::Options *pEnvironment);
 
 } // namespace env_vars

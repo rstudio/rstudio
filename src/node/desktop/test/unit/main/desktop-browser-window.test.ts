@@ -20,9 +20,9 @@ import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 
 describe('DesktopBrowserWindow', () => {
   it('construction creates a hidden BrowserWindow', () => {
-    const win = new DesktopBrowserWindow(false, '_blank');
+    const win = new DesktopBrowserWindow(false, false, '_blank');
     assert.isObject(win);
     assert.isObject(win.window);
-    assert.isFalse(win.window?.isVisible());
+    assert.isFalse(win.window.isVisible());
   });
 });

@@ -218,7 +218,7 @@ void reportAndLogWarning(const std::string& warning);
 
 // suspend/resume
 bool isSuspendable(const std::string& prompt);
-bool suspend(bool force, int status, const std::string& envVarSaveBlacklist);
+bool suspend(bool force, int status, const std::string& ephemeralEnvVars);
 
 struct RSuspendOptions
 {
@@ -227,16 +227,16 @@ struct RSuspendOptions
    {
    }
 
-   RSuspendOptions(int exitStatus, const std::string& blacklist) 
+   RSuspendOptions(int exitStatus, const std::string& ephemeral) 
       : status(exitStatus),
-        envVarSaveBlacklist(blacklist)
+        ephemeralEnvVars(ephemeral)
    {
    }
    int status;
    bool saveMinimal { false };
    bool saveWorkspace { false };
    bool excludePackages { false };
-   std::string envVarSaveBlacklist;
+   std::string ephemeralEnvVars;
 };
 void suspendForRestart(const RSuspendOptions& options);
    

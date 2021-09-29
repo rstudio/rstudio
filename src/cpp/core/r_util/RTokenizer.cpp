@@ -53,8 +53,6 @@ private:
       : NUMBER(L"[0-9]*(\\.[0-9]*)?([eE][+-]?[0-9]*)?[Li]?"),
         HEX_NUMBER(L"0x[0-9a-fA-F]*L?"),
         USER_OPERATOR(L"%[^\\n%]*%"),
-        QUOTED_IDENTIFIER(L"`[^`]*`"),
-        UNTIL_END_QUOTE(L"[\\\\\'\"]"),
         WHITESPACE(L"[\\s\x00A0\x3000]+"),
         COMMENT(L"#[^\\n]*$")
    {
@@ -64,8 +62,6 @@ public:
    const boost::wregex NUMBER;
    const boost::wregex HEX_NUMBER;
    const boost::wregex USER_OPERATOR;
-   const boost::wregex QUOTED_IDENTIFIER;
-   const boost::wregex UNTIL_END_QUOTE;
    const boost::wregex WHITESPACE;
    const boost::wregex COMMENT;
 };
@@ -189,9 +185,8 @@ RToken RTokenizer::nextToken()
      
   case L'"':
   case L'\'':
-     return matchStringLiteral();
   case L'`':
-     return matchQuotedIdentifier();
+     return matchDelimited();
   case L'#':
      return matchComment();
   case L'%':
@@ -224,6 +219,11 @@ RToken RTokenizer::nextToken()
      // match on number.
      return matchIdentifier();
   }
+  
+  // check for embedded knitr chunks
+  RToken embeddedChunk = matchKnitrEmbeddedChunk();
+  if (embeddedChunk)
+     return embeddedChunk;
 
   RToken oper = matchOperator();
   if (oper)
@@ -347,38 +347,34 @@ Error RTokenizer::matchRawStringLiteral(RToken* pToken)
    return Success();
 }
 
-RToken RTokenizer::matchStringLiteral()
+RToken RTokenizer::matchDelimited()
 {
-   std::wstring::const_iterator start = pos_;
-   wchar_t quot = eat();
+   auto start = pos_;
+   auto quote = eat();
 
    while (!eol())
    {
-      eatUntil(tokenPatterns().UNTIL_END_QUOTE);
-
-      if (eol())
-         break;
-
-      wchar_t c = eat();
-      if (c == quot)
-      {
-         // NOTE: this is where we used to set wellFormed = true
-         break;
-      }
-
-      if (c == L'\\')
+      wchar_t ch = eat();
+      
+      // skip over escaped characters
+      if (ch == L'\\')
       {
          if (!eol())
+         {
             eat();
-
-         // Actually the escape expression can be longer than
-         // just the backslash plus one character--but we don't
-         // need to distinguish escape expressions from other
-         // literal text other than for the purposes of breaking
-         // out of the string
+            continue;
+         }
+      }
+      
+      // check for matching quote
+      if (ch == quote)
+      {
+         break;
       }
    }
    
+   // because delimited items can contain newlines,
+   // update our row + column position after parsing the token
    std::size_t row = row_;
    std::size_t column = column_;
    updatePosition(start, pos_ - start, &row_, &column_);
@@ -388,7 +384,7 @@ RToken RTokenizer::matchStringLiteral()
    // implementation of RToken is stack based so doesn't support subclasses
    // (because they will be sliced when copied). If we need the well
    // formed flag we can just add it onto RToken.
-   return RToken(RToken::STRING,
+   return RToken(quote == L'`' ? RToken::ID : RToken::STRING,
                  start,
                  pos_,
                  start - data_.begin(),
@@ -433,15 +429,6 @@ RToken RTokenizer::matchIdentifier()
                  column);
 }
 
-RToken RTokenizer::matchQuotedIdentifier()
-{
-   std::size_t length = tokenLength(tokenPatterns().QUOTED_IDENTIFIER);
-   if (length == 0)
-      return consumeToken(RToken::ERR, 1);
-   else
-      return consumeToken(RToken::ID, length);
-}
-
 RToken RTokenizer::matchComment()
 {
    return consumeToken(RToken::COMMENT, tokenLength(tokenPatterns().COMMENT));
@@ -456,6 +443,35 @@ RToken RTokenizer::matchUserOperator()
       return consumeToken(RToken::UOPER, length);
 }
 
+RToken RTokenizer::matchKnitrEmbeddedChunk()
+{
+   wchar_t ch;
+   
+   // bail if we don't start with '<<' here
+   if (peek(0) != L'<' ||
+       peek(1) != L'<')
+   {
+      return RToken();
+   }
+   
+   // consume the chunk label, looking for '>>'
+   for (int offset = 1; ; offset++)
+   {
+      // give up on newlines or EOF
+      ch = peek(offset);
+      if (ch == 0 || ch == L'\n')
+         return RToken();
+      
+      // look for closing '>>'
+      if (peek(offset + 0) == L'>' &&
+          peek(offset + 1) == L'>')
+      {
+         return consumeToken(RToken::STRING, offset + 2);
+      }
+   }
+   
+   return RToken();
+}
 
 RToken RTokenizer::matchOperator()
 {

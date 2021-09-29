@@ -808,7 +808,19 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to show diagnostic messages for other types of code (not R or C++).
+    * Whether to show diagnostic messages for YAML code as you type.
+    */
+   public PrefValue<Boolean> showDiagnosticsYaml()
+   {
+      return bool(
+         "show_diagnostics_yaml",
+         "Show diagnostics in YAML code",
+         "Whether to show diagnostic messages for YAML code as you type.",
+         true);
+   }
+
+   /**
+    * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
     */
    public PrefValue<Boolean> showDiagnosticsOther()
    {
@@ -2128,22 +2140,22 @@ public class UserPrefsAccessor extends Prefs
               new String[] {
                       BUSY_DETECTION_ALWAYS,
                       BUSY_DETECTION_NEVER,
-                      BUSY_DETECTION_WHITELIST
+                      BUSY_DETECTION_LIST
               },
               "always");
    }
 
    public final static String BUSY_DETECTION_ALWAYS = "always";
    public final static String BUSY_DETECTION_NEVER = "never";
-   public final static String BUSY_DETECTION_WHITELIST = "whitelist";
+   public final static String BUSY_DETECTION_LIST = "list";
 
    /**
-    * A whitelist of apps that should not be considered busy in the Terminal.
+    * A list of apps that should not be considered busy in the Terminal.
     */
-   public PrefValue<JsArrayString> busyWhitelist()
+   public PrefValue<JsArrayString> busyExclusionList()
    {
       return object(
-              "busy_whitelist",
+              "busy_exclusion_list",
               _constants.busyWhitelistTitle(),
               _constants.busyWhitelistDescription(),
               JsArrayUtil.createStringArray("tmux", "screen"));
@@ -2921,6 +2933,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to show line numbers in the code editors used in visual mode
+    */
+   public PrefValue<Boolean> visualMarkdownCodeEditorLineNumbers()
+   {
+      return bool(
+         "visual_markdown_code_editor_line_numbers",
+         "Show line numbers in visual mode code blocks",
+         "Whether to show line numbers in the code editors used in visual mode",
+         false);
+   }
+
+   /**
     * The default visual editing mode font size, in points
     */
    public PrefValue<Integer> visualMarkdownEditingFontSizePoints()
@@ -3320,6 +3344,8 @@ public class UserPrefsAccessor extends Prefs
          showDiagnosticsR().setValue(layer, source.getBool("show_diagnostics_r"));
       if (source.hasKey("show_diagnostics_cpp"))
          showDiagnosticsCpp().setValue(layer, source.getBool("show_diagnostics_cpp"));
+      if (source.hasKey("show_diagnostics_yaml"))
+         showDiagnosticsYaml().setValue(layer, source.getBool("show_diagnostics_yaml"));
       if (source.hasKey("show_diagnostics_other"))
          showDiagnosticsOther().setValue(layer, source.getBool("show_diagnostics_other"));
       if (source.hasKey("style_diagnostics"))
@@ -3520,8 +3546,8 @@ public class UserPrefsAccessor extends Prefs
          launcherJobsSort().setValue(layer, source.getString("launcher_jobs_sort"));
       if (source.hasKey("busy_detection"))
          busyDetection().setValue(layer, source.getString("busy_detection"));
-      if (source.hasKey("busy_whitelist"))
-         busyWhitelist().setValue(layer, source.getObject("busy_whitelist"));
+      if (source.hasKey("busy_exclusion_list"))
+         busyExclusionList().setValue(layer, source.getObject("busy_exclusion_list"));
       if (source.hasKey("knit_working_dir"))
          knitWorkingDir().setValue(layer, source.getString("knit_working_dir"));
       if (source.hasKey("doc_outline_show"))
@@ -3632,6 +3658,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
       if (source.hasKey("visual_markdown_editing_show_margin"))
          visualMarkdownEditingShowMargin().setValue(layer, source.getBool("visual_markdown_editing_show_margin"));
+      if (source.hasKey("visual_markdown_code_editor_line_numbers"))
+         visualMarkdownCodeEditorLineNumbers().setValue(layer, source.getBool("visual_markdown_code_editor_line_numbers"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
@@ -3726,6 +3754,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showFunctionSignatureTooltips());
       prefs.add(showDiagnosticsR());
       prefs.add(showDiagnosticsCpp());
+      prefs.add(showDiagnosticsYaml());
       prefs.add(showDiagnosticsOther());
       prefs.add(styleDiagnostics());
       prefs.add(diagnosticsOnSave());
@@ -3826,7 +3855,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showLauncherJobsTab());
       prefs.add(launcherJobsSort());
       prefs.add(busyDetection());
-      prefs.add(busyWhitelist());
+      prefs.add(busyExclusionList());
       prefs.add(knitWorkingDir());
       prefs.add(docOutlineShow());
       prefs.add(latexPreviewOnCursorIdle());
@@ -3882,6 +3911,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingShowMargin());
+      prefs.add(visualMarkdownCodeEditorLineNumbers());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
       prefs.add(zoteroLibraries());

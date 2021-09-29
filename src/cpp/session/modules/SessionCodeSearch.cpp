@@ -51,6 +51,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/SessionRUtil.hpp>
 
 #include <session/projects/SessionProjects.hpp>
@@ -1562,24 +1563,28 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       safe_convert::numberTo<int>(cppDefinition.location.column, 1));
 }
 
-void fillFromBookdownRefs(const std::string& term,
-                          std::vector<SourceItem>* pSourceItems)
+void fillFromCrossrefs(const std::string& term,
+                       std::vector<SourceItem>* pSourceItems)
 {
    // retrieve refs for this project
-   core::json::Value bookdownIndex = module_context::bookdownXRefIndex();
-   
-   // may be null if we have no bookdown refs (typically implies
-   // we're not in a bookdown project)
-   if (!bookdownIndex.isObject())
-      return;
+   bool isQuarto = false;
+   core::json::Value crossrefIndex = module_context::bookdownXRefIndex();
+   if (!crossrefIndex.isObject())
+   {
+      crossrefIndex = quarto::quartoXRefIndex();
+      if (!crossrefIndex.isObject())
+         return;
+      isQuarto = true;
+   }
+
    
    std::string baseDir;
-   core::json::Array bookdownRefs;
+   core::json::Array xrefs;
    
    Error error = core::json::readObject(
-            bookdownIndex.getObject(),
+            crossrefIndex.getObject(),
             "baseDir", baseDir,
-            "refs", bookdownRefs);
+            "refs", xrefs);
    
    if (error)
    {
@@ -1596,14 +1601,14 @@ void fillFromBookdownRefs(const std::string& term,
    //     "title": "Introduction" (optional)
    // }
    
-   for (const json::Value& bookdownRef : bookdownRefs)
+   for (const json::Value& xref : xrefs)
    {
-      if (!bookdownRef.isObject())
+      if (!xref.isObject())
          continue;
       
       std::string file, type, id;
       Error error = core::json::readObject(
-               bookdownRef.getObject(),
+               xref.getObject(),
                "file", file,
                "type", type,
                "id", id);
@@ -1616,8 +1621,8 @@ void fillFromBookdownRefs(const std::string& term,
 
       // title is optional
       std::string title;
-      if (bookdownRef.getObject().hasMember("title"))
-         title = bookdownRef.getObject()["title"].getString();
+      if (xref.getObject().hasMember("title"))
+         title = xref.getObject()["title"].getString();
       
       // figure out appropriate source item type
       SourceItem::Type sourceType = SourceItem::None;
@@ -1625,12 +1630,12 @@ void fillFromBookdownRefs(const std::string& term,
       {
          sourceType = SourceItem::Figure;
       }
-      else if (type == "tab")
+      else if (type == "tab" || type == "tbl" || type == "lst")
       {
          sourceType = SourceItem::Table;
       }
       else if (type == "h1" || type == "h2" || type == "h3" ||
-               type == "h4" || type == "h5" || type == "h6")
+               type == "h4" || type == "h5" || type == "h6" || type == "sec")
       {
          sourceType = SourceItem::Section;
       }
@@ -1644,18 +1649,26 @@ void fillFromBookdownRefs(const std::string& term,
       // form appropriate text for display
       std::string displayText;
       
-      switch (sourceType)
+      if (isQuarto)
       {
-      case SourceItem::Figure:
-      case SourceItem::Table:
-      case SourceItem::Math:
-         displayText = type + ":" + id;
-         break;
-         
-      default:
-         displayText = title;
-         break;
+         displayText = type + "-" + id;
       }
+      else
+      {
+         switch (sourceType)
+         {
+         case SourceItem::Figure:
+         case SourceItem::Table:
+         case SourceItem::Math:
+            displayText = type + ":" + id;
+            break;
+
+         default:
+            displayText = title;
+            break;
+         }
+      }
+
       
       // check to see if this is a subsequence match of the
       // user-provided search term
@@ -1663,13 +1676,13 @@ void fillFromBookdownRefs(const std::string& term,
          continue;
 
       // add the suffix (if any)
-      if (bookdownRef.getObject().hasMember("suffix"))
-         displayText += bookdownRef.getObject()["suffix"].getString();
+      if (xref.getObject().hasMember("suffix"))
+         displayText += xref.getObject()["suffix"].getString();
       
       // bundle xref into source item
       json::Object meta;
       meta["type"] = "xref";
-      meta["xref"] = bookdownRef;
+      meta["xref"] = xref;
       
       // we found a match: construct source item and add to list
       SourceItem item(
@@ -1744,7 +1757,7 @@ Error searchCode(const json::JsonRpcRequest& request,
                   fromCppDefinition);
    
    // search bookdown xref index
-   fillFromBookdownRefs(term, &srcItems);
+   fillFromCrossrefs(term, &srcItems);
 
    // typedef necessary for range-based-for to work with pairs
    typedef std::pair<int, int> PairIntInt;

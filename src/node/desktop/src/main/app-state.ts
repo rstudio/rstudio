@@ -13,25 +13,36 @@
  *
  */
 
-import { BrowserWindow } from 'electron';
-
+import { BrowserWindow, WebContents } from 'electron';
 import { FilePath } from '../core/file-path';
 
 import { DesktopActivation } from './activation-overlay';
 import { Application } from './application';
+import { GwtCallback } from './gwt-callback';
+import { PendingWindow } from './pending-window';
+import { WindowTracker } from './window-tracker';
 
 /**
  * Global application state
  */
 export interface AppState {
-  mainWindow?: BrowserWindow;
   runDiagnostics: boolean;
   sessionPath?: FilePath;
   scriptsPath?: FilePath;
   supportingFilePath(): FilePath;
+  resourcesPath(): FilePath;
   activation(): DesktopActivation;
   port: number;
   generateNewPort(): void;
+  windowTracker: WindowTracker;
+  gwtCallback?: GwtCallback;
+  setScratchTempDir(path: FilePath): void;
+  scratchTempDir(defaultPath: FilePath): FilePath;
+  sessionStartDelaySeconds: number;
+  sessionEarlyExitCode: number;
+  prepareForWindow(pendingWindow: PendingWindow): void;
+  windowOpening(): { action: 'deny' } | { action: 'allow', overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined };
+  windowCreated(newWindow: BrowserWindow, owner: WebContents, baseUrl?: string): void;
 }
 
 let rstudio: AppState | null = null;

@@ -15,21 +15,8 @@
 
 import { ipcRenderer } from 'electron';
 
-export interface MenuBridge {
-  beginMainMenu(): void;
-  beginMenu(label: string): void;
-  addCommand(cmdId: string, label: string, tooltip: string, shortcut: string, isChecked: boolean): void;
-  addSeparator(): void;
-  endMenu(): void;
-  endMainMenu(): void;
-  setCommandVisible(commandId: string, visible: boolean): void;
-  setCommandEnabled(commandId: string, enabled: boolean): void;
-  setCommandChecked(commandId: string, checked: boolean): void;
-  setMainMenuEnabled(enabled: boolean): void;
-  setCommandLabel(commandId: string, label: string): void;
-}
-
-export function getMenuBridge(): MenuBridge {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function getMenuBridge() {
   return {
     beginMainMenu: () => {
       ipcRenderer.send('menu_begin_main');

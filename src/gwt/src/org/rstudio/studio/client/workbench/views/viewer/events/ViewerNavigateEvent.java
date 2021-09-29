@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer.events;
 
+import org.rstudio.studio.client.quarto.model.QuartoNavigate;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -49,8 +51,13 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
       public native final boolean bringToFront() /*-{
          return this.bring_to_front;
       }-*/;
-   }
 
+      public native final QuartoNavigate getQuartoNavigate() /*-{
+         return this.quarto_navigate;
+      }-*/;
+
+   }
+   
    public interface Handler extends EventHandler
    {
       void onViewerNavigate(ViewerNavigateEvent event);
@@ -74,6 +81,11 @@ public class ViewerNavigateEvent extends GwtEvent<ViewerNavigateEvent.Handler>
    public boolean isHTMLWidget()
    {
       return data_.isHTMLWidget();
+   }
+
+   public QuartoNavigate getQuartoNavigate()
+   {
+      return data_.getQuartoNavigate();
    }
 
    public boolean getHasNext()

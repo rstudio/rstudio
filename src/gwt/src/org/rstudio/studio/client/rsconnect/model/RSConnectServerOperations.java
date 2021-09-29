@@ -14,13 +14,14 @@
  */
 package org.rstudio.studio.client.rsconnect.model;
 
+import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
-public interface RSConnectServerOperations
+public interface RSConnectServerOperations extends QuartoServerOperations
 {
    void removeRSConnectAccount(String accountName, String server,
                ServerRequestCallback<Void> requestCallback);
@@ -46,6 +47,7 @@ public interface RSConnectServerOperations
    
    void getDeploymentFiles (String target, 
                boolean asMultipleRmd,
+               String quartoSrcFile,
                ServerRequestCallback<RSConnectDeploymentFiles> requestCallback);
    
    void publishContent(RSConnectPublishSource source, 

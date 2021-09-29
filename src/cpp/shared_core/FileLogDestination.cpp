@@ -62,7 +62,7 @@ FileLogOptions::FileLogOptions(FilePath in_directory,
    m_fileMode(s_defaultFileMode),
    m_maxSizeMb(s_defaultMaxSizeMb),
    m_rotationDays(s_defaultRotationDays),
-   m_maxRotations(s_defaultRotationDays),
+   m_maxRotations(s_defaultMaxRotations),
    m_deletionDays(s_defaultDeletionDays),
    m_doRotation(s_defaultDoRotation),
    m_includePid(s_defaultIncludePid),
@@ -218,6 +218,11 @@ struct FileLogDestination::Impl
 #else
       LogOptions.getDirectory().ensureDirectory();
 #endif
+
+      // initialize LogFile path here - this ensures that it is set properly
+      // in case we attempt to chown the file (due to permissions changing) before
+      // attempting to write to the log file for the first time during this process run
+      verifyLogFilePath();
    }
 
    ~Impl()
@@ -533,6 +538,11 @@ FileLogDestination::~FileLogDestination()
       m_impl->LogOutputStream->flush();
 }
 
+std::string FileLogDestination::path()
+{
+   return m_impl->LogFile.getAbsolutePath();
+}
+
 void FileLogDestination::refresh(const RefreshParams& in_refreshParams)
 {
    // Close the log file to ensure that if we just forked old FDs are cleared out
@@ -561,6 +571,12 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
    try
    {
       boost::lock_guard<boost::mutex> lock(m_impl->Mutex);
+
+#ifndef _WIN32
+         // First write to syslog if configured
+         if (in_logLevel <= LogLevel::WARN && m_impl->SyslogDest)
+            m_impl->SyslogDest->writeLog(in_logLevel, in_message);
+#endif
 
       // Check to make sure path to file is valid. If not, log nothing.
       if (!m_impl->verifyLogFilePath())
@@ -595,12 +611,6 @@ void FileLogDestination::writeLog(LogLevel in_logLevel, const std::string& in_me
       }
 
       m_impl->closeLogFile();
-
-#ifndef _WIN32
-      // Finally, send warn and error to syslog if configured
-      if (in_logLevel <= LogLevel::WARN && m_impl->SyslogDest)
-         m_impl->SyslogDest->writeLog(in_logLevel, in_message);
-#endif
    }
    catch (...)
    {

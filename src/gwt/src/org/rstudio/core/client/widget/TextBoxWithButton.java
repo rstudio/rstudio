@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.TextBox;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.studio.client.workbench.prefs.views.PythonPreferencesPaneConstants;
 
@@ -225,6 +226,11 @@ public class TextBoxWithButton extends Composite
    public void setReadOnly(boolean readOnly)
    {
       textBox_.setReadOnly(readOnly);
+   }
+   
+   public void disableSpellcheck()
+   {
+      DomUtils.disableSpellcheck(textBox_);
    }
 
    public void click()

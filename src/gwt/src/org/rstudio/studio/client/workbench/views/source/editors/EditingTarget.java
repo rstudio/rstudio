@@ -62,6 +62,7 @@ public interface EditingTarget extends IsWidget,
 
    void adaptToExtendedFileType(String extendedType);
    String getExtendedFileType();
+   boolean isShinyPrerenderedDoc();
    
    HashSet<AppCommand> getSupportedCommands();
    void manageCommands();

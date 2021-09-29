@@ -89,8 +89,8 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 #   DependencyManager.java: "Dependency.embeddedPackage" vs. ".cranPackage"
 
 # we often embed these packages but are not currently
-# install rmarkdown master rstudio
-# install rsconnect master rstudio
+# install rmarkdown main rstudio
+# install rsconnect main rstudio
 # install renv master rstudio
 
 # ascertain the site library. this is somewhat tricky since this script must
@@ -113,4 +113,4 @@ for RPKG in rmarkdown renv testthat xml2 yaml; do
 done
 
 # back to install-dir
-cd $INSTALL_DIR
+cd "$INSTALL_DIR"

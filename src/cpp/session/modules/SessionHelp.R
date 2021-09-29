@@ -90,7 +90,7 @@ options(help_type = "html")
    payload = paste(
       "<h3>R Custom HTTP Handler Not Found</h3>",
       "<p>Unable to locate custom HTTP handler for",
-      "<i>", path, "</i>",
+      "<i>", .rs.htmlEscape(path), "</i>",
       "<p>Is the package which implements this HTTP handler loaded?</p>")
    
    list(payload, "text/html", character(), 404)

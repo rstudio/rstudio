@@ -62,6 +62,8 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialog;
+import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -107,6 +109,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                    ProjectsServerOperations projServer,
                    RenvServerOperations renvServer,
                    GitServerOperations gitServer,
+                   QuartoServerOperations quartoServer,
                    EventBus eventBus,
                    Binder binder,
                    final Commands commands,
@@ -123,6 +126,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
       projServer_ = projServer;
       renvServer_ = renvServer;
       gitServer_ = gitServer;
+      quartoServer_ = quartoServer;
       fsContext_ = fsContext;
       session_ = session;
       pWorkbenchContext_ = pWorkbenchContext;
@@ -233,11 +237,17 @@ public class Projects implements OpenProjectFileEvent.Handler,
            @Override
            public void onReadyToQuit(final boolean saveChanges)
            {
+              final ProgressIndicator indicator =
+                    globalDisplay_.getProgressIndicator("Error");
+                 indicator.onProgress("New Project...");
+              
               projServer_.getNewProjectContext(
                 new SimpleRequestCallback<NewProjectContext>() {
                    @Override
                    public void onResponseReceived(NewProjectContext context)
                    {
+                      indicator.onCompleted();
+                      
                       NewProjectWizard wiz = new NewProjectWizard(
                          session_.getSessionInfo(),
                          pUserPrefs_.get(),
@@ -261,6 +271,14 @@ public class Projects implements OpenProjectFileEvent.Handler,
                       });
                       wiz.showModal();
                    }
+                   
+                   @Override
+                   public void onError(ServerError error)
+                   {
+                      indicator.onCompleted();
+                      super.onError(error);
+                   }
+                   
               });
            }
       });
@@ -305,6 +323,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                options,
                null /*newPackageOptions*/,
                null /*newShinyAppOptions*/,
+               null /*newQuartoProjectOptions*/,
                null /*projectTemplateOptions*/,
                event.getCallContext());
 
@@ -329,6 +348,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
                null/*vcsCloneOptions*/,
                null/*newPackageOptions*/,
                null/*newShinyAppOptions*/,
+               null/*newQuartoProjectOptions*/,
                null/*projectTemplateOptions*/,
                event.getCallContext());
 
@@ -458,41 +478,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
 
                gitServer_.vcsClone(
                      cloneOptions,
-                     new ServerRequestCallback<ConsoleProcess>() {
-                        @Override
-                        public void onResponseReceived(ConsoleProcess proc)
-                        {
-                           final ConsoleProgressDialog consoleProgressDialog =
-                                 new ConsoleProgressDialog(proc, gitServer_);
-                           consoleProgressDialog.showModal();
-
-                           proc.addProcessExitHandler(new ProcessExitEvent.Handler()
-                           {
-                              @Override
-                              public void onProcessExit(ProcessExitEvent event)
-                              {
-                                 if (event.getExitCode() == 0)
-                                 {
-                                    consoleProgressDialog.hide();
-                                    continuation.execute();
-                                 }
-                                 else
-                                 {
-                                    notifyTutorialCreateNewResult(newProject, false, "vcsClone failed");
-                                    indicator.onCompleted();
-                                 }
-                              }
-                           });
-                        }
-
-                        @Override
-                        public void onError(ServerError error)
-                        {
-                           Debug.logError(error);
-                           indicator.onError(error.getUserMessage());
-                           notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
-                        }
-                     });
+                     consoleProcessRequestCallback(newProject, indicator, continuation, "vcsClone failed"));
             }
          }, false);
       }
@@ -527,68 +513,79 @@ public class Projects implements OpenProjectFileEvent.Handler,
 
             if (newProject.getNewPackageOptions() == null)
             {
-               Command onReady = () -> {
-                  projServer_.createProject(
-                        newProject.getProjectFile(),
-                        newProject.getNewPackageOptions(),
-                        newProject.getNewShinyAppOptions(),
-                        newProject.getProjectTemplateOptions(),
-                        new ServerRequestCallback<String>()
-                        {
-                           @Override
-                           public void onResponseReceived(String foundProjectFile)
-                           {
-                              if (!StringUtil.isNullOrEmpty(foundProjectFile))
-                              {
-                                 // found an existing project file with different name than the
-                                 // parent folder; have to update here so that's what we end up
-                                 // opening
-                                 newProject.setProjectFile(foundProjectFile);
-                              }
-                              continuation.execute();
-                           }
-
-                           @Override
-                           public void onError(ServerError error)
-                           {
-                              Debug.logError(error);
-                              indicator.onError(error.getUserMessage());
-                              notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
-                           }
-                        });
-               };
-
-               if (newProject.getProjectTemplateOptions() != null)
+               if (newProject.getNewQuartoProjectOptions() != null)
                {
-                  // NOTE: We provide built-in project templates for packages that may
-                  // not be currently installed; in those cases, verify that the package is
-                  // installed and if not attempt installation from CRAN first
-                  String pkg = newProject.getProjectTemplateOptions().getDescription().getPackage();
-                  ArrayList<Dependency> deps = new ArrayList<>();
-                  deps.add(Dependency.cranPackage(pkg));
-                  RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
-                        "Creating project",
-                        "Creating a project with " + pkg,
-                        pkg + " Project",
-                        deps,
-                        false,
-                        (Boolean success) -> {
-                           if (!success)
-                           {
-                              globalDisplay_.showErrorMessage(
-                                    "Error installing " + pkg,
-                                    "Installation of package '" + pkg + "' failed, and so the project cannot " +
-                                    "be created. Try installing the package manually with " +
-                                    "'install.packages(\"" + pkg + "\")'.");
-                              return;
-                           }
-
-                           onReady.execute();
-                        });
+                  quartoServer_.quartoCreateProject(
+                     newProject.getProjectFile(),
+                     newProject.getNewQuartoProjectOptions(),
+                     consoleProcessRequestCallback(newProject, indicator, continuation, 
+                                                   "Quarto create project failed"));
                }
                else
                {
-                  onReady.execute();
+                  Command onReady = () -> {
+                     projServer_.createProject(
+                           newProject.getProjectFile(),
+                           newProject.getNewPackageOptions(),
+                           newProject.getNewShinyAppOptions(),
+                           newProject.getProjectTemplateOptions(),
+                           new ServerRequestCallback<String>()
+                           {
+                              @Override
+                              public void onResponseReceived(String foundProjectFile)
+                              {
+                                 if (!StringUtil.isNullOrEmpty(foundProjectFile))
+                                 {
+                                    // found an existing project file with different name than the
+                                    // parent folder; have to update here so that's what we end up
+                                    // opening
+                                    newProject.setProjectFile(foundProjectFile);
+                                 }
+                                 continuation.execute();
+                              }
+   
+                              @Override
+                              public void onError(ServerError error)
+                              {
+                                 Debug.logError(error);
+                                 indicator.onError(error.getUserMessage());
+                                 notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
+                              }
+                           });
+                  };
+   
+                  if (newProject.getProjectTemplateOptions() != null)
+                  {
+                     // NOTE: We provide built-in project templates for packages that may
+                     // not be currently installed; in those cases, verify that the package is
+                     // installed and if not attempt installation from CRAN first
+                     String pkg = newProject.getProjectTemplateOptions().getDescription().getPackage();
+                     ArrayList<Dependency> deps = new ArrayList<>();
+                     deps.add(Dependency.cranPackage(pkg));
+                     RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
+                           "Creating project",
+                           "Creating a project with " + pkg,
+                           pkg + " Project",
+                           deps,
+                           false,
+                           (Boolean success) -> {
+                              if (!success)
+                              {
+                                 globalDisplay_.showErrorMessage(
+                                       "Error installing " + pkg,
+                                       "Installation of package '" + pkg + "' failed, and so the project cannot " +
+                                       "be created. Try installing the package manually with " +
+                                       "'install.packages(\"" + pkg + "\")'.");
+                                 return;
+                              }
+   
+                              onReady.execute();
+                           });
+                  }
+                  else
+                  {
+                     onReady.execute();
+                  }
                }
             }
             else
@@ -666,7 +663,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
          }, false);
       }
 
-      if (newProject.getUseRenv())
+      if (initializeRenv(newProject))
       {
          createProjectCmds.addCommand((final Command continuation) -> {
             indicator.onProgress("Initializing renv...");
@@ -685,7 +682,8 @@ public class Projects implements OpenProjectFileEvent.Handler,
             });
 
          }, false);
-      }
+      } 
+      
 
       if (newProject.getOpenInNewWindow())
       {
@@ -1027,7 +1025,17 @@ public class Projects implements OpenProjectFileEvent.Handler,
          }
       });
    }
-
+   
+   // initialize renv if requested AND this isn't a quarto project with 
+   // an engine incompatible with renv
+   private boolean initializeRenv(NewProjectResult newProject)
+   {
+      return newProject.getUseRenv() &&
+             (newProject.getNewQuartoProjectOptions() == null ||
+             newProject.getNewQuartoProjectOptions().getEngine()
+                .equals(QuartoConstants.ENGINE_KNITR));
+   }
+   
    private void showOpenProjectDialog(
                   int defaultType,
                   boolean allowOpenInNewWindow,
@@ -1182,11 +1190,54 @@ public class Projects implements OpenProjectFileEvent.Handler,
       globalDisplay_.showErrorMessage("Error Opening Project", msg);
    }
 
+   private ServerRequestCallback<ConsoleProcess> consoleProcessRequestCallback(final NewProjectResult newProject,
+                                                           final ProgressIndicator indicator,
+                                                           final Command continuation,
+                                                           final String failMessage)
+   {
+      return new ServerRequestCallback<ConsoleProcess>() {
+         @Override
+         public void onResponseReceived(ConsoleProcess proc)
+         {
+            final ConsoleProgressDialog consoleProgressDialog =
+                  new ConsoleProgressDialog(proc, gitServer_);
+            consoleProgressDialog.showModal();
+
+            proc.addProcessExitHandler(new ProcessExitEvent.Handler()
+            {
+               @Override
+               public void onProcessExit(ProcessExitEvent event)
+               {
+                  if (event.getExitCode() == 0)
+                  {
+                     consoleProgressDialog.hide();
+                     continuation.execute();
+                  }
+                  else
+                  {
+                     notifyTutorialCreateNewResult(newProject, false, failMessage);
+                     indicator.onCompleted();
+                  }
+               }
+            });
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            indicator.onError(error.getUserMessage());
+            notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
+         }
+      };
+   }
+
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations projServer_;
    private final RenvServerOperations renvServer_;
    private final GitServerOperations gitServer_;
+   private final QuartoServerOperations quartoServer_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;

@@ -385,6 +385,7 @@ public class FileTypeRegistry
       register("*.scss", SCSS, new ImageResource2x(icons.iconScss2x()));
       register("*.js", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.ts", JS, new ImageResource2x(icons.iconJavascript2x()));
+      register("*.ojs", JS, new ImageResource2x(icons.iconJavascript2x()));
       register("*.json", JSON, new ImageResource2x(icons.iconJavascript2x()));
       register("*.rmd", RMARKDOWN, new ImageResource2x(icons.iconRmarkdown2x()));
       register("*.qmd", QUARTO, new ImageResource2x(icons.iconQuarto2x()));

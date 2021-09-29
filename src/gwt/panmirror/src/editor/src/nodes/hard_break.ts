@@ -56,7 +56,7 @@ const extension: Extension = {
   },
 };
 
-function hardBreakCommandFn() {
+export function hardBreakCommandFn() {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const br = state.schema.nodes.hard_break;
     if (dispatch) {

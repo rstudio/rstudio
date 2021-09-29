@@ -151,6 +151,7 @@ void handleFileRequest(const FileRequestOptions& options,
       // read existing CSRF token
       std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
+      vars["csrf_token_meta"] = kCSRFTokenCookie;
 
       // don't allow main page to be framed by other domains (clickjacking
       // defense)

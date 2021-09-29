@@ -463,6 +463,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.sourceAsJob());
          results.add(commands.runSelectionAsJob());
          results.add(commands.runSelectionAsLauncherJob());
+         results.add(commands.runDocumentFromServerDotR());
       }
 
       results.add(commands.sendToTerminal());

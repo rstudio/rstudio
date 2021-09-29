@@ -20,5 +20,6 @@ public class PanmirrorExtendedDocType
 {    
    public static String bookdown = "bookdown";
    public static String hugo = "hugo";
+   public static String quarto = "quarto";
 }
 

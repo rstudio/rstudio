@@ -267,6 +267,8 @@ private:
 
 ProjectContext& projectContext();
 
+void addFirstRunDocs(const core::FilePath& projectFilePath, const std::vector<std::string>& docs);
+
 core::json::Array websiteOutputFormatsJson();
 
 } // namespace projects

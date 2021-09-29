@@ -16,13 +16,10 @@
 import { BrowserWindow } from 'electron';
 import { EventEmitter } from 'events';
 
-export enum ActivationEvents {
-  LAUNCH_FIRST_SESSION = 'launchFirstSession',
-  LAUNCH_ERROR = 'launchError'
-}
-
 /* eslint-disable @typescript-eslint/no-empty-function */
 export class DesktopActivation extends EventEmitter {
+  static LAUNCH_FIRST_SESSION = 'desktop-activation-launch_first_session';
+  static LAUNCH_ERROR = 'desktop-activation-launch_error';
 
   getInitialLicense(): void {
     this.emitLaunchFirstSession();
@@ -53,7 +50,7 @@ export class DesktopActivation extends EventEmitter {
     * Set main window, so we can supply it as default parent of message boxes
     */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  setMainWindow(window?: BrowserWindow): void {
+  setMainWindow(window: BrowserWindow): void {
   }
 
   /**
@@ -80,7 +77,7 @@ export class DesktopActivation extends EventEmitter {
    * start a session after validating initial license
    */
   emitLaunchFirstSession(): void {
-    this.emit(ActivationEvents.LAUNCH_FIRST_SESSION);
+    this.emit(DesktopActivation.LAUNCH_FIRST_SESSION);
   }
 
   /**
@@ -88,7 +85,7 @@ export class DesktopActivation extends EventEmitter {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   emitLaunchError(message: string): void {
-    this.emit(ActivationEvents.LAUNCH_ERROR, message);
+    this.emit(DesktopActivation.LAUNCH_ERROR, message);
   }
 
   /**

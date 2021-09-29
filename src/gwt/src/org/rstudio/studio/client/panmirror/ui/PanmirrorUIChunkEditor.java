@@ -28,6 +28,8 @@ public class PanmirrorUIChunkEditor
    public SetMode setMode;
    public Destroy destroy;
    public ExecuteSelection executeSelection;
+   public SetExpanded setExpanded;
+   public GetExpanded getExpanded;
    
    @JsFunction
    public interface SetMode
@@ -45,5 +47,17 @@ public class PanmirrorUIChunkEditor
    public interface ExecuteSelection
    {
       void executeSelection();
+   }
+
+   @JsFunction
+   public interface SetExpanded
+   {
+      void setExpanded(boolean expanded);
+   }
+   
+   @JsFunction
+   public interface GetExpanded
+   {
+      boolean getExpanded();
    }
 }

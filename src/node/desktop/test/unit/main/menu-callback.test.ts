@@ -15,16 +15,12 @@
 
 import { describe } from 'mocha';
 import { assert } from 'chai';
-import sinon from 'sinon';
 
 import { MenuCallback } from '../../../src/main/menu-callback';
-import { MainWindow } from '../../../src/main/main-window';
 
 describe('MenuCallback', () => {
   it('can be constructed', () => {
-    const mainWindowStub = sinon.createStubInstance(MainWindow);
-    const callback = new MenuCallback(mainWindowStub);
-    assert.isNull(callback.mainMenu);
-    assert.equal(callback.mainWindow, mainWindowStub);
+    const callback = new MenuCallback();
+    assert.isObject(callback);
   });
 });

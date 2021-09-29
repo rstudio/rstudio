@@ -32,10 +32,12 @@ sudo apt-get -y install \
   build-essential \
   clang \
   cmake \
+  curl \
   debsigs \
   dpkg-sig \
   expect \
   fakeroot \
+  git \
   gnupg1 \
   libacl1-dev \
   libattr1-dev \
@@ -56,6 +58,7 @@ sudo apt-get -y install \
   libuser1-dev \
   libxslt1-dev \
   lsof \
+  p7zip-full \
   patchelf \
   pkg-config \
   python \
@@ -89,6 +92,6 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common bionic
 cd ../linux
 

@@ -108,7 +108,12 @@ var PythonHighlightRules = function() {
     var stringEscape =  "\\\\(x[0-9A-Fa-f]{2}|[0-7]{3}|[\\\\abfnrtv'\"]|U[0-9A-Fa-f]{8}|u[0-9A-Fa-f]{4})";
 
     this.$rules = {
-        "start" : [ {
+        "start" : [  {
+            // chunk metadata comments
+            token : "comment.doc.tag",
+            regex : "#[|].*$",
+            next  : "start"
+        }, {
             token : "comment",
             regex : "#.*$"
         }, {

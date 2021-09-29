@@ -105,13 +105,24 @@ core::Error readSecureKeyFile(const std::string& filename,
    if (core::system::effectiveUserIsRoot())
    {
       // check in our default configuration folder
-      secureKeyPath = core::system::xdg::systemConfigFile(filename);
+      secureKeyPath = core::system::xdg::findSystemConfigFile(
+            "secure key", filename);
       if (!secureKeyPath.exists())
          secureKeyPath = core::FilePath("/var/lib/rstudio-server")
             .completePath(filename);
    }
    else
+   {
       secureKeyPath = core::FilePath("/tmp/rstudio-server").completePath(filename);
+      if (secureKeyPath.exists())
+      {
+         LOG_INFO_MESSAGE("Running without privilege; using secure key at " + secureKeyPath.getAbsolutePath());
+      }
+      else
+      {
+         LOG_INFO_MESSAGE("Running without privilege; generating secure key at " + secureKeyPath.getAbsolutePath());
+      }
+   }
 
    return readSecureKeyFile(secureKeyPath, pContents, pContentsHash, pKeyPathUsed);
 }

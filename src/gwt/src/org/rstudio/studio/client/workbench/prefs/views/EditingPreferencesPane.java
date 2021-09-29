@@ -366,6 +366,7 @@ public class EditingPreferencesPane extends PreferencesPane
       Label diagOtherLabel = headerLabel(constants_.Editing_diagOtherLabel());
       diagnosticsPanel.add(spacedBefore(diagOtherLabel));
       diagnosticsPanel.add(checkboxPref(prefs.showDiagnosticsCpp()));
+      diagnosticsPanel.add(checkboxPref(prefs.showDiagnosticsYaml()));
       diagnosticsPanel.add(checkboxPref(prefs.showDiagnosticsOther()));
 
       Label diagShowLabel = headerLabel(constants_.Editing_diagShowLabel());

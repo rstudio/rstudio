@@ -73,14 +73,14 @@ export class BibliographyDataProviderZotero implements BibliographyDataProvider 
 
         // The collection specified in the document header
         const collections = Array.isArray(this.zoteroConfig) ? this.zoteroConfig : [];
-
         const result = await this.server.getCollections(docPath, collections, collectionSpecs || [], useCache);
         this.warning = result.warning;
         if (result.status === 'ok') {
           if (result.message) {
             const newCollections = (result.message as ZoteroCollection[]).map(collection => {
               const existingCollection = this.allCollections.find(col => col.name === collection.name);
-              if (useCache && existingCollection && existingCollection.version === collection.version) {
+              // If the version is 0 this is a local instance that isn't incrementing version numbers, do not cache
+              if (useCache && existingCollection && existingCollection.version === collection.version && existingCollection.version !== 0) {
                 collection.items = existingCollection.items;
               } else {
                 hasUpdates = true;

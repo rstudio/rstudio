@@ -33,4 +33,9 @@ export class ApplicationLaunch {
   activateWindow(): void {
     // TODO - reimplement (if needed at all)
   }
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  launchRStudio(args: string[], initialDir: string): void {
+    // TODO - reimplement
+  }
 }

@@ -130,4 +130,10 @@ temp/
 # electron-packager output
 package/
 
+# Webpack
+.webpack/
+
+# Electron-Forge
+out/
+
 # End of https://www.toptal.com/developers/gitignore/api/node

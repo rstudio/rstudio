@@ -14,6 +14,7 @@
  */
 
 import { ipcRenderer } from 'electron';
+import { FilePath } from '../core/file-path';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -24,132 +25,12 @@ interface CursorPosition {
   y: number
 }
 
-export interface DesktopBridge {
-  browseUrl(url: string): void;
-  getOpenFileName(
-    caption: string, label: string, dir: string, filter: string, canChooseDirectories: boolean,
-    focusOwner: boolean, callback: VoidCallback<string>): void;
-  getSaveFileName(
-    caption: string, label: string, dir: string, defaultExtension: string,
-    forceDefaultExtension: boolean, focusOwner: boolean, callback: VoidCallback<string>): void;
-  getExistingDirectory(
-    caption: string, label: string, dir: string, focusOwner: boolean, callback: VoidCallback<string>): void;
-  onClipboardSelectionChanged(): void;
-  undo(): void;
-  redo(): void;
-  clipboardCut(): void;
-  clipboardCopy(): void;
-  clipboardPaste(): void;
-  setClipboardText(text: string): void;
-  getClipboardText(callback: VoidCallback<string>): void;
-  getClipboardUris(callback: VoidCallback<string>): void;
-  getClipboardImage(callback: VoidCallback<string>): void;
-  setGlobalMouseSelection(selection: string): void;
-  getGlobalMouseSelection(callback: VoidCallback<string>): void;
-  getCursorPosition(callback: VoidCallback<CursorPosition>): void;
-  doesWindowExistAtCursorPosition(callback: VoidCallback<boolean>): void;
-  onWorkbenchInitialized(scratchPath: string): void;
-  showFolder(path: string): void;
-  showFile(file: string): void;
-  showWordDoc(wordDoc: string): void;
-  showPptPresentation(pptDoc: string): void;
-  showPDF(path: string, pdfPage: string): void;
-  prepareShowWordDoc(): void;
-  prepareShowPptPresentation(): void;
-  getRVersion(callback: VoidCallback<string>): void;
-  chooseRVersion(callback: VoidCallback<string>): void;
-  devicePixelRatio(callback: VoidCallback<number>): void;
-  openMinimalWindow(name: string, url: string, width: number, height: number): void;
-  activateMinimalWindow(name: string): void;
-  activateSatelliteWindow(name: string): void;
-  prepareForSatelliteWindow(name: string, x: number, y: number, width: number, height: number, callback: () => void): void;
-  prepareForNamedWindow(name: string, allowExternalNavigate: boolean, showToolbar: boolean, callback: () => void): void;
-  closeNamedWindow(name: string): void;
-  copyPageRegionToClipboard(left: number, top: number, width: number, height: number): void;
-  exportPageRegionToFile(targetPath: string, format: string, left: number, top: number, width: number, height: number): void;
-  printText(text: string): void;
-  paintPrintText(printer: string): void;
-  printFinished(result: number): void;
-  supportsClipboardMetafile(callback: VoidCallback<boolean>): void;
-  showMessageBox(type: number, caption: string, message: string, buttons: string, defaultButton: number,
-    cancelButton: number, callback: VoidCallback<number>): void;
-  promptForText(title: string, caption: string, defaultValue: string, type: number, rememberPasswordPrompt: boolean,
-    rememberByDefault: boolean, selectionStart: number, selectionLength: number, okButtonCaption: string,
-    callback: VoidCallback<string>): void;
-  bringMainFrameToFront(): void;
-  bringMainFrameBehindActive(): void;
-  desktopRenderingEngine(callback: VoidCallback<string>): void;
-  setDesktopRenderingEngine(engine: string): void;
-  filterText(text: string, callback: VoidCallback<string>): void;
-  cleanClipboard(stripHtml: boolean): void;
-  setPendingQuit(pendingQuit: number): void;
-  openProjectInNewWindow(projectFilePath: string): void;
-  openSessionInNewWindow(workingDirectoryPath: string): void;
-  openTerminal(terminalPath: string, workingDirectory: string, extraPathEntries: string, shellType: string): void;
-  getFixedWidthFontList(callback: VoidCallback<string>): void;
-  getFixedWidthFont(callback: VoidCallback<string>): void;
-  setFixedWidthFont(font: string): void;
-  getZoomLevels(callback: VoidCallback<string>): void;
-  getZoomLevel(callback: VoidCallback<number>): void;
-  setZoomLevel(zoomLevel: number): void;
-  zoomIn(): void;
-  zoomOut(): void;
-  zoomActualSize(): void;
-  setBackgroundColor(rgbColor: Record<string, unknown>[]): void;
-  changeTitleBarColor(red: number, green: number, blue: number): void;
-  syncToEditorTheme(isDark: boolean): void;
-  getEnableAccessibility(callback: VoidCallback<boolean>): void;
-  setEnableAccessibility(enable: boolean): void;
-  getClipboardMonitoring(callback: VoidCallback<boolean>): void;
-  setClipboardMonitoring(monitoring: boolean): void;
-  getIgnoreGpuBlacklist(callback: VoidCallback<boolean>): void;
-  setIgnoreGpuBlacklist(ignore: boolean): void;
-  getDisableGpuDriverBugWorkarounds(callback: VoidCallback<boolean>): void;
-  setDisableGpuDriverBugWorkarounds(disable: boolean): void;
-  showLicenseDialog(): void;
-  showSessionServerOptionsDialog(): void;
-  getInitMessages(callback: VoidCallback<string>): void;
-  getLicenseStatusMessage(callback: VoidCallback<string>): void;
-  allowProductUsage(callback: VoidCallback<boolean>): void;
-  getDesktopSynctexViewer(callback: VoidCallback<string>): void;
-  externalSynctexPreview(pdfPath: string, page: number): void;
-  externalSynctexView(pdfFile: string, srcFile: string, line: number, column: number): void;
-  supportsFullscreenMode(callback: VoidCallback<boolean>): void;
-  toggleFullscreenMode(): void;
-  showKeyboardShortcutHelp(): void;
-  launchSession(reload: boolean): void;
-  reloadZoomWindow(): void;
-  setTutorialUrl(url: string): void;
-  setViewerUrl(url: string): void;
-  reloadViewerZoomWindow(url: string): void;
-  setShinyDialogUrl(url: string): void;
-  getScrollingCompensationType(callback: VoidCallback<string>): void;
-  isMacOS(callback: VoidCallback<boolean>): void;
-  isCentOS(callback: VoidCallback<boolean>): void;
-  setBusy(busy: boolean): void;
-  setWindowTitle(title: string): void;
-  installRtools(version: string, installerPath: string): void;
-  getDisplayDpi(callback: VoidCallback<string>): void;
-  onSessionQuit(): void;
-  getSessionServer(callback: VoidCallback<Record<string, unknown>>): void;
-  getSessionServers(callback: VoidCallback<Record<string, unknown>[]>): void;
-  reconnectToSessionServer(sessionServerJson: Record<string, unknown>): void;
-  setLauncherServer(sessionServerJson: Record<string, unknown>, callback: VoidCallback<boolean>): void;
-  connectToLauncherServer(): void;
-  getLauncherServer(callback: VoidCallback<string>): void;
-  startLauncherJobStatusStream(jobId: string): void;
-  stopLauncherJobStatusStream(jobId: string): void;
-  startLauncherJobOutputStream(jobId: string): void;
-  stopLauncherJobOutputStream(jobId: string): void;
-  controlLauncherJob(jobId: string, operation: string): void;
-  submitLauncherJob(job: Record<string, unknown>): void;
-  getJobContainerUser(): void;
-  validateJobsConfig(): void;
-  getProxyPortNumber(callback: VoidCallback<number>): void;
-  signOut(): void;
+function reportIpcError(name: string, error: Error) {
+  console.log(`${name}: ${error.message}`);
 }
 
-export function getDesktopBridge(): DesktopBridge {
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+export function getDesktopBridge() {
   return {
     browseUrl: (url: string) => {
       ipcRenderer.send('desktop_browse_url', url);
@@ -170,12 +51,13 @@ export function getDesktopBridge(): DesktopBridge {
           canChooseDirectories,
           focusOwner)
         .then(result => {
-          if (result.canceled) {
+          if (result.canceled as boolean) {
             callback('');
           } else {
             callback(result.filePaths[0]);
           }
-        });
+        })
+        .catch(error => reportIpcError('getOpenFileName', error));
     },
 
     getSaveFileName: (caption: string,
@@ -192,7 +74,26 @@ export function getDesktopBridge(): DesktopBridge {
           defaultExtension,
           forceDefaultExtension,
           focusOwner)
-        .then(filename => callback(filename));
+        .then(result => {
+          if (result.canceled as boolean) {
+            callback('');
+          } else {
+            if (defaultExtension.length !== 0) {
+
+              // Add default extension, if it's missing
+              const fp = new FilePath(result.filePath);
+              if ((fp.getExtension().length == 0) ||
+                (forceDefaultExtension &&
+                (fp.getExtension() !== defaultExtension))) {
+                callback(fp.getStem() + defaultExtension);
+                return;
+              } 
+            }
+
+            callback(result.filePath);
+          }
+        })
+        .catch(error => reportIpcError('getSaveFileName', error));
     },
 
     getExistingDirectory: (caption: string,
@@ -205,7 +106,14 @@ export function getDesktopBridge(): DesktopBridge {
           label,
           dir,
           focusOwner)
-        .then(directory => callback(directory));
+        .then(result => {
+          if (result.canceled as boolean) {
+            callback('');
+          } else {
+            callback(result.filePaths[0]);
+          }
+        })
+        .catch(error => reportIpcError('getExistingDirectory', error));
     },
 
     onClipboardSelectionChanged: () => {
@@ -239,19 +147,22 @@ export function getDesktopBridge(): DesktopBridge {
     getClipboardText: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_clipboard_text')
-        .then(text => callback(text));
+        .then(text => callback(text))
+        .catch(error => reportIpcError('getClipboardText', error));
     },
 
     getClipboardUris: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_clipboard_uris')
-        .then(text => callback(text));
+        .then(text => callback(text))
+        .catch(error => reportIpcError('getClipboardUris', error));
     },
 
     getClipboardImage: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_clipboard_image')
-        .then(text => callback(text));
+        .then(text => callback(text))
+        .catch(error => reportIpcError('getClipboardImage', error));
     },
 
     setGlobalMouseSelection: (selection: string) => {
@@ -261,19 +172,22 @@ export function getDesktopBridge(): DesktopBridge {
     getGlobalMouseSelection: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_global_mouse_selection')
-        .then(selection => callback(selection));
+        .then(selection => callback(selection))
+        .catch(error => reportIpcError('getGlobalMouseSelection', error));
     },
 
     getCursorPosition: (callback: VoidCallback<CursorPosition>) => {
       ipcRenderer
         .invoke('desktop_get_cursor_position')
-        .then(position => callback(position));
+        .then(position => callback(position))
+        .catch(error => reportIpcError('getCursorPosition', error));
     },
 
     doesWindowExistAtCursorPosition: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_does_window_exist_at_cursor_position')
-        .then(exists => callback(exists));
+        .then(exists => callback(exists))
+        .catch(error => reportIpcError('doesWindowExistAtCursorPosition', error));
     },
 
     onWorkbenchInitialized: (scratchPath: string) => {
@@ -312,19 +226,22 @@ export function getDesktopBridge(): DesktopBridge {
     getRVersion: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_r_version')
-        .then(rver => callback(rver));
+        .then(rver => callback(rver))
+        .catch(error => reportIpcError('getRVersion', error));
     },
 
     chooseRVersion: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_choose_r_version')
-        .then(rver => callback(rver));
+        .then(rver => callback(rver))
+        .catch(error => reportIpcError('chooseRVersion', error));
     },
 
     devicePixelRatio: (callback: VoidCallback<number>) => {
       ipcRenderer
         .invoke('desktop_device_pixel_ratio')
-        .then(ratio => callback(ratio));
+        .then(ratio => callback(ratio))
+        .catch(error => reportIpcError('devicePixelRatio', error));
     },
 
     openMinimalWindow: (name: string, url: string, width: number, height: number) => {
@@ -341,12 +258,14 @@ export function getDesktopBridge(): DesktopBridge {
 
     prepareForSatelliteWindow: (name: string, x: number, y: number, width: number, height: number, callback: () => void) => {
       ipcRenderer.invoke('desktop_prepare_for_satellite_window', name, x, y, width, height)
-        .then(() => callback());
+        .then(() => callback())
+        .catch(error => reportIpcError('prepareForSatelliteWindow', error));
     },
 
     prepareForNamedWindow: (name: string, allowExternalNavigate: boolean, showToolbar: boolean, callback: () => void) => {
       ipcRenderer.invoke('desktop_prepare_for_named_window', name, allowExternalNavigate, showToolbar)
-        .then(() => callback());
+        .then(() => callback())
+        .catch(error => reportIpcError('prepareForNamedWindow', error));
     },
 
     closeNamedWindow: (name: string) => {
@@ -376,7 +295,8 @@ export function getDesktopBridge(): DesktopBridge {
     supportsClipboardMetafile: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_supports_clipboard_metafile')
-        .then(metafilesupport => callback(metafilesupport));
+        .then(metafilesupport => callback(metafilesupport))
+        .catch(error => reportIpcError('supportsClipboardMetafile', error));
     },
 
     showMessageBox: (type: number,
@@ -388,24 +308,8 @@ export function getDesktopBridge(): DesktopBridge {
       callback: VoidCallback<number>) => {
       ipcRenderer
         .invoke('desktop_show_message_box', type, caption, message, buttons, defaultButton, cancelButton)
-        .then(result => callback(result.response));
-    },
-
-    promptForText: (title: string,
-      caption: string,
-      defaultValue: string,
-      type: number,
-      rememberPasswordPrompt: boolean,
-      rememberByDefault: boolean,
-      selectionStart: number,
-      selectionLength: number,
-      okButtonCaption: string,
-      callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_prompt_for_text', title, caption, defaultValue, type,
-          rememberPasswordPrompt, rememberByDefault,
-          selectionStart, selectionLength, okButtonCaption)
-        .then(text => callback(text));
+        .then(result => callback(result.response))
+        .catch(error => reportIpcError('showMessageBox', error));
     },
 
     bringMainFrameToFront: () => {
@@ -419,7 +323,8 @@ export function getDesktopBridge(): DesktopBridge {
     desktopRenderingEngine: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_rendering_engine')
-        .then(engine => callback(engine));
+        .then(engine => callback(engine))
+        .catch(error => reportIpcError('desktopRenderingEngine', error));
     },
 
     setDesktopRenderingEngine: (engine: string) => {
@@ -429,7 +334,8 @@ export function getDesktopBridge(): DesktopBridge {
     filterText: (text: string, callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_filter_text', text)
-        .then(filtered => callback(filtered));
+        .then(filtered => callback(filtered))
+        .catch(error => reportIpcError('filterText', error));
     },
 
     cleanClipboard: (stripHtml: boolean) => {
@@ -455,13 +361,15 @@ export function getDesktopBridge(): DesktopBridge {
     getFixedWidthFontList: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_fixed_width_font_list')
-        .then(fonts => callback(fonts));
+        .then(fonts => callback(fonts))
+        .catch(error => reportIpcError('getFixedWidthFontList', error));
     },
 
     getFixedWidthFont: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_fixed_width_font')
-        .then(font => callback(font));
+        .then(font => callback(font))
+        .catch(error => reportIpcError('getFixedWidthFont', error));
     },
 
     setFixedWidthFont: (font: string) => {
@@ -471,13 +379,15 @@ export function getDesktopBridge(): DesktopBridge {
     getZoomLevels: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_zoom_levels')
-        .then(levels => callback(levels));
+        .then(levels => callback(levels))
+        .catch(error => reportIpcError('getZoomLevels', error));
     },
 
     getZoomLevel: (callback: VoidCallback<number>) => {
       ipcRenderer
         .invoke('desktop_get_zoom_level')
-        .then(zoomLevel => callback(zoomLevel));
+        .then(zoomLevel => callback(zoomLevel))
+        .catch(error => reportIpcError('getZoomLevel', error));
     },
 
     setZoomLevel: (zoomLevel: number) => {
@@ -511,7 +421,8 @@ export function getDesktopBridge(): DesktopBridge {
     getEnableAccessibility: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_get_enable_accessibility')
-        .then(enabled => callback(enabled));
+        .then(enabled => callback(enabled))
+        .catch(error => reportIpcError('getEnableAccessibility', error));
     },
 
     setEnableAccessibility: (enable: boolean) => {
@@ -521,27 +432,30 @@ export function getDesktopBridge(): DesktopBridge {
     getClipboardMonitoring: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_get_clipboard_monitoring')
-        .then(monitoring => callback(monitoring));
+        .then(monitoring => callback(monitoring))
+        .catch(error => reportIpcError('getClipboardMonitoring', error));
     },
 
     setClipboardMonitoring: (monitoring: boolean) => {
       ipcRenderer.send('desktop_set_clipboard_monitoring', monitoring);
     },
 
-    getIgnoreGpuBlacklist: (callback: VoidCallback<boolean>) => {
+    getIgnoreGpuExclusionList: (callback: VoidCallback<boolean>) => {
       ipcRenderer
-        .invoke('desktop_get_ignore_gpu_blacklist')
-        .then(ignore => callback(ignore));
+        .invoke('desktop_get_ignore_gpu_exclusion_list')
+        .then(ignore => callback(ignore))
+        .catch(error => reportIpcError('getIgnoreGpuExclusionList', error));
     },
 
-    setIgnoreGpuBlacklist: (ignore: boolean) => {
-      ipcRenderer.send('desktop_set_ignore_gpu_blacklist', ignore);
+    setIgnoreGpuExclusionList: (ignore: boolean) => {
+      ipcRenderer.send('desktop_set_ignore_gpu_exclusion_list', ignore);
     },
 
     getDisableGpuDriverBugWorkarounds: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_get_disable_gpu_driver_bug_workarounds')
-        .then(disabled => callback(disabled));
+        .then(disabled => callback(disabled))
+        .catch(error => reportIpcError('getDisableGpuDriverBugWorkarounds', error));
     },
 
     setDisableGpuDriverBugWorkarounds: (disable: boolean) => {
@@ -559,25 +473,29 @@ export function getDesktopBridge(): DesktopBridge {
     getInitMessages: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_init_messages')
-        .then(messages => callback(messages));
+        .then(messages => callback(messages))
+        .catch(error => reportIpcError('getInitMessages', error));
     },
 
     getLicenseStatusMessage: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_license_status_message')
-        .then(message => callback(message));
+        .then(message => callback(message))
+        .catch(error => reportIpcError('getLicenseStatusMessage', error));
     },
 
     allowProductUsage: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_allow_product_usage')
-        .then(allow => callback(allow));
+        .then(allow => callback(allow))
+        .catch(error => reportIpcError('allowProductUsage', error));
     },
 
     getDesktopSynctexViewer: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_desktop_synctex_viewer')
-        .then(viewer => callback(viewer));
+        .then(viewer => callback(viewer))
+        .catch(error => reportIpcError('getDesktopSynctexViewer', error));
     },
 
     externalSynctexPreview: (pdfPath: string, page: number) => {
@@ -594,7 +512,8 @@ export function getDesktopBridge(): DesktopBridge {
     supportsFullscreenMode: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_supports_fullscreen_mode')
-        .then(supportsFullScreen => callback(supportsFullScreen));
+        .then(supportsFullScreen => callback(supportsFullScreen))
+        .catch(error => reportIpcError('supportsFullscreenMode', error));
     },
 
     toggleFullscreenMode: () => {
@@ -632,19 +551,22 @@ export function getDesktopBridge(): DesktopBridge {
     getScrollingCompensationType: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_scrolling_compensation_type')
-        .then(compensationType => callback(compensationType));
+        .then(compensationType => callback(compensationType))
+        .catch(error => reportIpcError('getScrollingCompensationType', error));
     },
 
     isMacOS: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_is_macos')
-        .then(isMac => callback(isMac));
+        .then(isMac => callback(isMac))
+        .catch(error => reportIpcError('isMacOS', error));
     },
 
     isCentOS: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_is_centos')
-        .then(isCentOS => callback(isCentOS));
+        .then(isCentOS => callback(isCentOS))
+        .catch(error => reportIpcError('isCentOS', error));
     },
 
     setBusy: (busy: boolean) => {
@@ -662,7 +584,8 @@ export function getDesktopBridge(): DesktopBridge {
     getDisplayDpi: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_display_dpi')
-        .then(dpi => callback(dpi));
+        .then(dpi => callback(dpi))
+        .catch(error => reportIpcError('getDisplayDpi', error));
     },
 
     onSessionQuit: () => {
@@ -672,13 +595,15 @@ export function getDesktopBridge(): DesktopBridge {
     getSessionServer: (callback: VoidCallback<Record<string, unknown>>) => {
       ipcRenderer
         .invoke('desktop_get_session_server')
-        .then(server => callback(server));
+        .then(server => callback(server))
+        .catch(error => reportIpcError('getSessionServer', error));
     },
 
     getSessionServers: (callback: VoidCallback<Record<string, unknown>[]>) => {
       ipcRenderer
         .invoke('desktop_get_session_servers')
-        .then(servers => callback(servers));
+        .then(servers => callback(servers))
+        .catch(error => reportIpcError('getSessionServers', error));
     },
 
     reconnectToSessionServer: (sessionServerJson: Record<string, unknown>) => {
@@ -688,7 +613,8 @@ export function getDesktopBridge(): DesktopBridge {
     setLauncherServer: (sessionServerJson: Record<string, unknown>, callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_set_launcher_server', sessionServerJson)
-        .then(result => callback(result));
+        .then(result => callback(result))
+        .catch(error => reportIpcError('setLauncherServer', error));
     },
 
     connectToLauncherServer: () => {
@@ -698,7 +624,8 @@ export function getDesktopBridge(): DesktopBridge {
     getLauncherServer: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_launcher_server')
-        .then(server => callback(server));
+        .then(server => callback(server))
+        .catch(error => reportIpcError('getLauncherServer', error));
     },
 
     startLauncherJobStatusStream: (jobId: string) => {
@@ -736,11 +663,19 @@ export function getDesktopBridge(): DesktopBridge {
     getProxyPortNumber: (callback: VoidCallback<number>) => {
       ipcRenderer
         .invoke('desktop_get_proxy_port_number')
-        .then(port => callback(port));
+        .then(port => callback(port))
+        .catch(error => reportIpcError('getProxyPortNumber', error));
     },
 
     signOut: () => {
       ipcRenderer.send('desktop_sign_out');
     },
+
+    getStartupErrorInfo: (varName: string, callback: VoidCallback<string>) => {
+      ipcRenderer
+        .invoke('desktop_startup_error_info', varName)
+        .then(info => callback(info))
+        .catch(error => reportIpcError('getStartupErrorInfo', error));
+    }
   };
 }

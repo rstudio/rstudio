@@ -323,6 +323,43 @@ FilePath systemConfigFile(const std::string& filename)
 #endif
 }
 
+FilePath findSystemConfigFile(const std::string& context, const std::string& filename)
+{
+   FilePath configFile = systemConfigFile(filename);
+   if (configFile.exists())
+   {
+      // We found the file, so just say where we found it
+      rstudio::core::log::logInfoMessage("Reading " + context + " from '" +
+            configFile.getAbsolutePath() + "'");
+   }
+   else
+   {
+      if (getenv("RSTUDIO_CONFIG_DIR").empty())
+      {
+         if (getenv("XDG_CONFIG_DIRS").empty())
+         {
+            // No env vars so just say we didn't find the file at its default location
+            rstudio::core::log::logInfoMessage("No " + context + " found at " +
+                  configFile.getAbsolutePath());
+         }
+         else
+         {
+            // XDG_CONFIG_DIRS was set, so emit the search path we used
+            rstudio::core::log::logInfoMessage("No " + context + " '" + filename + "' "
+                  "found in XDG_CONFIG_DIRS, expected in an 'rstudio' folder in one of "
+                  "'" + getenv("XDG_CONFIG_DIRS") + "'");
+         }
+      }
+      else
+      {
+         // RSTUDIO_CONFIG_DIR was set, so emit where we expected the file to be
+         rstudio::core::log::logInfoMessage("No " + context + " found in RSTUDIO_CONFIG_DIR, "
+               "expected at '" + configFile.getAbsolutePath() + "'");
+      }
+   }
+   return configFile;
+}
+
 void forwardXdgEnvVars(Options *pEnvironment)
 {
    // forward relevant XDG environment variables (i.e. all those we respect above)

@@ -553,12 +553,14 @@ public class TextEditingTargetRMarkdownHelper
    {
       String runtime = getRuntime(yaml);
       return runtime == RmdFrontMatter.SHINY_PRERENDERED_RUNTIME ||
-             runtime == RmdFrontMatter.SHINY_RMD_RUNTIME;
+             runtime == RmdFrontMatter.SHINY_RMD_RUNTIME ||
+             getIsShinyServer(yaml);
    }
 
    public boolean isRuntimeShiny(String yaml)
    {
-      return getRuntime(yaml).startsWith(RmdFrontMatter.SHINY_RUNTIME);
+      return getRuntime(yaml).startsWith(RmdFrontMatter.SHINY_RUNTIME) ||
+             isRuntimeShinyPrerendered(yaml);
    }
 
    private String getRuntime(String yaml)
@@ -579,6 +581,37 @@ public class TextEditingTargetRMarkdownHelper
          Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
       }
       return "";
+   }
+   
+   private boolean getIsShinyServer(String yaml)
+   {
+      // This is in the editor load path, so guard against exceptions and log
+      // any we find without bringing down the editor.
+      try
+      {
+         YamlTree tree = new YamlTree(yaml);
+
+         if (tree.getKeyValue(RmdFrontMatter.KNIT_KEY).length() > 0)
+            return false;
+
+         if (tree.getChildValue(RmdFrontMatter.SERVER_KEY, "type") == "shiny")
+         {
+            return true;
+         }
+         else if (tree.getKeyValue(RmdFrontMatter.SERVER_KEY) == "shiny")
+         {
+            return true;
+         }
+         else
+         {
+            return false;
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
+      }
+      return false;
    }
 
    public String getCustomKnit(String yaml)
@@ -1097,6 +1130,10 @@ public class TextEditingTargetRMarkdownHelper
          return null;
       if (outputs.isEmpty())
          outputs.add(tree.getKeyValue(outputKey));
+      
+      // filter commented out outputs
+      outputs.removeIf(output -> output.startsWith("#"));
+      
       return outputs;
    }
    

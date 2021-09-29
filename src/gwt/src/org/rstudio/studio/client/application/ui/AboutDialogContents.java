@@ -62,7 +62,8 @@ public class AboutDialogContents extends Composite
    public AboutDialogContents(ProductInfo info, ProductEditionInfo editionInfo)
    {
       initWidget(uiBinder.createAndBindUi(this));
-      versionLabel.setText(info.version);
+      versionMajorLabel.setText(info.version_major + "." + info.version_minor + "." + info.version_patch);
+      versionBuildLabel.setText("Build " + info.version_suffix.split("\\+")[1]);
 
       // a11y
       productInfo.getElement().setId("productinfo");
@@ -72,10 +73,26 @@ public class AboutDialogContents extends Composite
       userAgentLabel.setText(
             Window.Navigator.getUserAgent());
       buildLabel.setText(
-           "\"" + info.release_name + "\" (" + info.commit.substring(0, 8) + ", " +
+           "\"" + info.release_name + "\" " + info.build_type + " (" + info.commit.substring(0, 8) + ", " +
            info.date + ") for " + info.os);
       productName.setText(editionInfo.editionName());
       copyrightYearLabel.setText("2009-" + info.copyright_year);
+
+      // Warn that dailies and previews aren't supported
+      if (!info.build_type.equals("Release")) {
+         supportNotice.setText(
+            "This " +
+            info.build_type +
+            " build of " +
+            editionInfo.editionName() +
+            " is provided by RStudio, PBC for testing purposes only and is not an officially supported release."
+         );
+      }
+      else
+      {
+         preReleaseRibbon.setVisible(false);
+      }
+
 
       showNoticelink_.setClickHandler(() ->
       {
@@ -120,16 +137,19 @@ public class AboutDialogContents extends Composite
       return productInfo.getElement();
    }
 
-   @UiField InlineLabel versionLabel;
+   @UiField InlineLabel versionMajorLabel;
+   @UiField InlineLabel versionBuildLabel;
    @UiField InlineLabel userAgentLabel;
    @UiField InlineLabel buildLabel;
    @UiField InlineLabel copyrightYearLabel;
    @UiField HyperlinkLabel showNoticelink_;
    @UiField HTMLPanel gplNotice;
    @UiField HTMLPanel licenseLabel;
+   @UiField HTMLPanel preReleaseRibbon;
    @UiField TextArea licenseBox;
    @UiField Label productName;
    @UiField HTMLPanel productInfo;
+   @UiField InlineLabel supportNotice;
    @UiField Anchor gplLink;
    @UiField Label gplLinkLabel;
 }

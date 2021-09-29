@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.panmirror.ui;
 
+import com.google.gwt.dom.client.Element;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
@@ -21,10 +22,17 @@ import jsinterop.annotations.JsType;
 public class PanmirrorUIChunks
 {
    public CreateChunkEditor createChunkEditor;
+   public SetChunksExpanded setChunksExpanded;
 
    @JsFunction
    public interface CreateChunkEditor
    {
-      PanmirrorUIChunkEditor create(String type, int position, PanmirrorUIChunkCallbacks callbacks);
+      PanmirrorUIChunkEditor create(String type, Element element, int position, PanmirrorUIChunkCallbacks callbacks);
+   }
+
+   @JsFunction
+   public interface SetChunksExpanded
+   {
+      void setExpanded(boolean expanded);
    }
 }

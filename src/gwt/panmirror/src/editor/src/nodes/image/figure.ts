@@ -47,7 +47,7 @@ import { imageNodeViewPlugins } from './image-view';
 import { figureKeys } from './figure-keys';
 
 const extension = (context: ExtensionContext): Extension => {
-  const { pandocExtensions, ui, events } = context;
+  const { pandocExtensions, ui, events, format } = context;
 
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
@@ -117,7 +117,13 @@ const extension = (context: ExtensionContext): Extension => {
 
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.figure,
-          editFn: () => imageCommand(ui, imageAttr),
+          editFn: () => imageCommand(ui, format, imageAttr),
+          offset: {
+            top: 2,
+            right: 0
+          },
+          noKeyvalueTags: true,
+          preferHidden: true
         }),
       },
     ],
@@ -147,7 +153,7 @@ const extension = (context: ExtensionContext): Extension => {
     baseKeys: figureKeys,
 
     plugins: (schema: Schema) => {
-      return [...imageNodeViewPlugins('figure', ui, events, pandocExtensions)];
+      return [...imageNodeViewPlugins('figure', ui, format, events, pandocExtensions)];
     },
   };
 };
@@ -204,7 +210,7 @@ function imagesToFiguresTransform(tr: Transform) {
         }
 
         // figure content
-        const content = attrs.alt ? Fragment.from(schema.text(attrs.alt)) : Fragment.empty;
+        const content = attrs.caption ? Fragment.from(schema.text(attrs.caption)) : Fragment.empty;
 
         // replace image with figure
         const figure = schema.nodes.figure.createAndFill(attrs, content);

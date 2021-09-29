@@ -395,15 +395,24 @@ const formatNames = (names: NameDictObject[]): string => {
       const prefix = name.prefix ? formatText(name.prefix) : false;
 
       if (suffix && prefix) {
-        formattedNames.push(`{${prefix} ${family}}, {${suffix}}, {${given}}`);
+        formattedNames.push(`${protect(`${prefix} ${family}`)}, ${protect(suffix)}, ${protect(given)}`);
       } else if (suffix) {
-        formattedNames.push(`{${family}}, {${suffix}}, {${given}}`);
+        formattedNames.push(`${protect(family)}, ${protect(suffix)}, ${protect(given)}`);
       } else if (prefix) {
-        formattedNames.push(`{${prefix} ${family}}, {${given}}`);
+        formattedNames.push(`${protect(`${prefix} ${family}`)}, ${protect(given)}`);
       } else {
-        formattedNames.push(`{${family}}, {${given}}`);
+        formattedNames.push(`${protect(family)}, ${protect(given)}`);
       }
     }
   });
   return formattedNames.join(' and ');
 };
+
+const kBibtexSafeRegex = /^[a-zA-Z0-9 .-]*$/;
+function protect(str: string) {
+  if (str.match(kBibtexSafeRegex)) {
+    return str;
+  } else {
+    return `{${str}}`;
+  }
+}

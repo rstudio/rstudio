@@ -32,6 +32,22 @@ export type Err = Error | null;
  * Convenience function for returning "no error" state from a function that
  * can return an Error.
  */
-export function Success(): null {
+export function success(): null {
   return null;
+}
+
+export function isSuccessful(error: Err): boolean {
+  return !error;
+}
+
+export function isFailure(error: Err): boolean {
+  return !!error;
+}
+
+export function safeError(error: unknown): Error {
+  if (error instanceof Error) {
+    return error;
+  } else {
+    return new Error('unknown error');
+  }
 }
