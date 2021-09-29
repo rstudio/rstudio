@@ -140,12 +140,7 @@ if [ "${clean}" = "1" ]; then
 fi
 
 # set up MAKEFLAGS
-# don't use all CPUs on build machine (appears to cause hangs)
-if [ -n "${JENKINS_URL}" ]; then
-   MAKEFLAGS="${MAKEFLAGS} -j2"
-else
-   MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
-fi
+MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
 
 # perform an x86_64 build
 if [ -n "${build_x86_64}" ]; then

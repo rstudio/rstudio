@@ -45,6 +45,16 @@ if(DEFINED ENV{GWT_MAIN_MODULE})
    set(GWT_MAIN_MODULE $ENV{GWT_MAIN_MODULE})
 endif()
 
+# memory settings (allow override from env)
+set (GWT_XMX "-Xmx1536M")
+if(DEFINED ENV{GWT_XMX})
+   set(GWT_XMX $ENV{GWT_XMX})
+endif()
+set (GWT_XSS "-Xss16M")
+if(DEFINED ENV{GWT_XSS})
+   set(GWT_XSS $ENV{GWT_XSS})
+endif()
+
 if(GWT_BUILD)
    message(STATUS "Configured to build GWT")
    set(GWT_COPY Yes)
@@ -73,7 +83,6 @@ if(GWT_BUILD)
       add_dependencies(gwt_build rsession)
    endif()
 
-
    add_custom_command(
       TARGET gwt_build
       WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -83,6 +92,8 @@ if(GWT_BUILD)
          -Dwww.dir="${GWT_WWW_DIR}"
          -Dextras.dir="${GWT_EXTRAS_DIR}"
          -Dlib.dir="${GWT_LIB_DIR}"
+         -Dgwt.xmx="${GWT_XMX}"
+         -Dgwt.xss="${GWT_XSS}"
          -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}")
 endif()
 

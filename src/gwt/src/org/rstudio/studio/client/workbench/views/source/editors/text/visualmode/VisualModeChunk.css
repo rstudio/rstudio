@@ -77,6 +77,7 @@
 .pm-ace-collapsed .editorHost
 {
     height: 0px;
+    overflow: hidden;
 }
 
 .pm-ace-collapsed .summary
