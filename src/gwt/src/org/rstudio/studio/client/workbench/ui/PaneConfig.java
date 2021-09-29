@@ -67,7 +67,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet1.push("VCS");
       tabSet1.push("Tutorial");
       tabSet1.push("Presentation");
-      tabSet1.push("Presentation2");
+      tabSet1.push("Presentations");
 
       JsArrayString tabSet2 = createArray().cast();
       tabSet2.push("Files");
@@ -107,7 +107,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // last element in this array that's part of the first tabset (ts1)
       return new String[] {"Environment", "History", "Files", "Plots", "Connections",
                            "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer",
-                           "Presentation2", "Presentation"};
+                           "Presentations", "Presentation"};
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets
@@ -230,7 +230,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       if (!hasPresentation2(ts1) && !hasPresentation2(ts2))
       {
          ts1.set(ts1.length(), "Presentation");
-         ts1.set(ts1.length() - 2, "Presentation2");
+         ts1.set(ts1.length() - 2, "Presentations");
       }
 
 
@@ -247,7 +247,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       for (int idx = 0; idx < tabs.length(); idx++)
       {
-         if (tabs.get(idx).equals("Presentation2"))
+         if (tabs.get(idx).equals("Presentations"))
             return true;
       }
       return false;

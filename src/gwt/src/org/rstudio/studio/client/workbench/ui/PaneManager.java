@@ -96,7 +96,7 @@ public class PaneManager
 
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
-      Presentation, Presentation2, Environment, Viewer, Source, Console, SourceColumn
+      Presentation, Presentations, Environment, Viewer, Source, Console, SourceColumn
    }
 
    public static final String LEFT_COLUMN = "left";
@@ -231,7 +231,7 @@ public class PaneManager
                       @Named("VCS") final WorkbenchTab vcsTab,
                       @Named("Build") final WorkbenchTab buildTab,
                       @Named("Presentation") final WorkbenchTab presentationTab,
-                      @Named("Presentation2") final WorkbenchTab presentation2Tab,
+                      @Named("Presentations") final WorkbenchTab presentation2Tab,
                       @Named("Connections") final WorkbenchTab connectionsTab,
                       @Named("Environment") final WorkbenchTab environmentTab,
                       @Named("Viewer") final WorkbenchTab viewerTab,
@@ -1331,7 +1331,7 @@ public class PaneManager
             return buildTab_;
          case Presentation:
             return presentationTab_;
-         case Presentation2:
+         case Presentations:
             return presentation2Tab_;
          case Environment:
             return environmentTab_;
@@ -1850,7 +1850,11 @@ public class PaneManager
       {
          case VCS:
          case Presentation:
-         case Presentation2:
+         // The "Presentations" tab should always be displayed as "Presentation" (since 
+         // the tab only shows a single presentation at a time. We named it "Presentations"
+         // under the hood so it wouldn't conflict in config with the existing 
+         // Presentation tab
+         case Presentations:
          case Connections:
             return getTab(tab).getTitle();
          default:
@@ -1878,8 +1882,8 @@ public class PaneManager
          return Tab.Build;
       if (name.equalsIgnoreCase("presentation"))
          return Tab.Presentation;
-      if (name.equalsIgnoreCase("presentation2"))
-         return Tab.Presentation2;
+      if (name.equalsIgnoreCase("presentations"))
+         return Tab.Presentations;
       if (name.equalsIgnoreCase("environment"))
          return Tab.Environment;
       if (name.equalsIgnoreCase("viewer"))
@@ -1917,7 +1921,7 @@ public class PaneManager
       case Tutorial:     return commands_.layoutZoomTutorial();
       case Viewer:       return commands_.layoutZoomViewer();
       case Connections:  return commands_.layoutZoomConnections();
-      case Presentation2: return commands_.layoutZoomPresentation2();
+      case Presentations: return commands_.layoutZoomPresentation2();
       default:
          throw new IllegalArgumentException("Unexpected tab '" + tab.toString() + "'");
       }

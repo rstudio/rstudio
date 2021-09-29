@@ -22,6 +22,13 @@ public class RevealSlide extends JavaScriptObject
 {
    protected RevealSlide() {}
 
+   
+   public final boolean hasSameIndices(RevealSlide other)
+   {
+      return getHIndex() == other.getHIndex() &&
+             getVIndex() == other.getVIndex() &&
+             getFIndex() == other.getFIndex();
+   }
 
    public native final String getId() /*-{
       return this.id;

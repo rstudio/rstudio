@@ -114,8 +114,6 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             flowPanel.add(checkBox);
             if (module == "Presentation")
               checkBox.setVisible(false);
-            else if (module == "Presentation2")
-              checkBox.setText("Presentation");
          }
 
          ScrollPanel scrollPanel = new ScrollPanelWithClick();

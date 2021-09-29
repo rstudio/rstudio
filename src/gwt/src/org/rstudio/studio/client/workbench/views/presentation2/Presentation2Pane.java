@@ -57,6 +57,9 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Inject
    public Presentation2Pane(Commands commands, ApplicationServerOperations server)
    {
+      // This should always be title "Presentation" (rather than the name of the underlying
+      // tab "Presentations". The proper name is "Presentation", we just used
+      // "Presentations" so the configurations wouldn't conflict.
       super("Presentation");
       commands_ = commands;
       server_ = server;
@@ -133,8 +136,8 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       if (width == 0)
          return;
       
-      slidesMenuLabel_.getElement().getStyle().setProperty("maxWidth", (width - 70) + "px");
-      slidesMenuWidget_.getElement().getStyle().setProperty("maxWidth", (width - 50) + "px");
+      slidesMenuLabel_.getElement().getStyle().setProperty("maxWidth", (width - 100) + "px");
+      slidesMenuWidget_.getElement().getStyle().setProperty("maxWidth", (width - 70) + "px");
    
    }
    
@@ -191,6 +194,9 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    public void init(JsArray<RevealSlide> slides)
    {
+      // save slides (for creating slide caption)
+      activeSlides_ = slides;
+      
       // populate the menu
       slidesMenu_.clearItems();
       for (int i=0; i<slides.length(); i++)
@@ -220,8 +226,26 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
 
    @Override
    public void change(RevealSlide slide)
-   {
-      slidesMenuLabel_.setText(slideTitle(slide.getTitle()));
+   { 
+      // determine slide index
+      int slideIndex = 0;
+      int totalSlides = activeSlides_.length();
+      for (int i=0; i<totalSlides; i++)
+      {
+         if (activeSlides_.get(i).hasSameIndices(slide))
+         {
+            slideIndex = i + 1;
+            break;
+         }
+      }
+      
+      // form title (use index if we have one)
+      String title = slideTitle(slide.getTitle());
+      if (slideIndex > 0)
+         title = title + " (" + slideIndex + "/" + totalSlides + ")";
+      
+      // set title
+      slidesMenuLabel_.setText(title);
    }
    
    
@@ -229,6 +253,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    public void clear()
    {
       activeUrl_ = null;
+      activeSlides_ = null;
       source_ = null;
       origin_ = null;
       publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
@@ -365,6 +390,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    }-*/;
 
    private String activeUrl_ = null;
+   private JsArray<RevealSlide> activeSlides_ = null;
    private JavaScriptObject source_ = null;
    private String origin_ = null;
      

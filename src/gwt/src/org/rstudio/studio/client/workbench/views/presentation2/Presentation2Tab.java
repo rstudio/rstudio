@@ -53,6 +53,9 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
    @Inject
    public Presentation2Tab(Shim shim, Binder binder, Session session, Commands commands, EventBus eventBus)
    {
+      // This should always be title "Presentation" (rather than the name of the underlying
+      // tab "Presentations". The proper name is "Presentation", we just used
+      // "Presentations" so the configurations wouldn't conflict.
       super("Presentation", shim);
       session_ = session;
       binder.bind(commands, shim);
