@@ -78,6 +78,10 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       toolbar_.addLeftWidget(commands_.presentation2Prev().createToolbarButton());
       toolbar_.addLeftWidget(commands_.presentation2Next().createToolbarButton());
          
+      // print
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.presentation2Print().createToolbarButton());
+     
       // view in browser
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.presentation2ViewInBrowser().createToolbarButton());

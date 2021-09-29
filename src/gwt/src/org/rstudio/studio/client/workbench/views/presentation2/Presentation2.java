@@ -164,6 +164,12 @@ public class Presentation2 extends BasePresenter
    }
    
    @Handler
+   void onPresentation2Print()
+   {
+      globalDisplay_.openWindow(activeUrl_ + "?print-pdf");
+   }
+   
+   @Handler
    void onPresentation2ViewInBrowser()
    {
       globalDisplay_.openWindow(activeSlideHref_);
@@ -182,6 +188,7 @@ public class Presentation2 extends BasePresenter
       commands_.presentation2Next().setEnabled(enable);
       commands_.presentation2Prev().setEnabled(enable);
       commands_.presentation2Edit().setEnabled(enable);
+      commands_.presentation2Print().setEnabled(enable);
       commands_.presentation2ViewInBrowser().setEnabled(enable);
    }
    

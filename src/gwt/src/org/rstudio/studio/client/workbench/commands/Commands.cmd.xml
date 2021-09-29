@@ -2792,8 +2792,11 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
 
    <cmd id="presentation2ViewInBrowser"
-        menuLabel="_View in Browser"
         desc="View the presentation in an external web browser"
+        rebindable="false"/>   
+        
+    <cmd id="presentation2Print"
+        desc="Open a browser to print the presentation"
         rebindable="false"/>     
         
 

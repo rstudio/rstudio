@@ -47,6 +47,8 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
       @Handler
       public abstract void onPresentation2Edit();
       @Handler
+      public abstract void onPresentation2Print();
+      @Handler
       public abstract void onPresentation2ViewInBrowser();
    }
    

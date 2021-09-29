@@ -339,6 +339,7 @@ public abstract class
    public abstract AppCommand presentation2Prev();
    public abstract AppCommand presentation2Edit();
    public abstract AppCommand presentation2ViewInBrowser();
+   public abstract AppCommand presentation2Print();
    public abstract AppCommand refreshPresentation2();
 
    // View
