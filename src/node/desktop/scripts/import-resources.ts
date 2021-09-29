@@ -13,7 +13,7 @@
  *
  */
 
-// Copies resources such as rsession from the specified build output folder into the packaged 
+// Copies resources such as rsession from the build output folder into the packaged 
 // RStudio Electron app.
 
 import fs from 'fs';
@@ -58,6 +58,16 @@ async function getBuildDir(): Promise<string> {
   }
 
   return buildDir;
+}
+
+async function copyFiles(files: Array<string>, sourceDir: string, destDir: string): Promise<void> {
+  await copy(
+    sourceDir,
+    destDir, {
+    filter: files, 
+  }).on(copy.events.COPY_FILE_COMPLETE, function (copyOperation) {
+    console.info('Copied to ' + copyOperation.dest);
+  });
 }
 
 // Run the script!
@@ -153,7 +163,15 @@ async function packageDarwin(buildDir: string): Promise<number> {
     console.error(`'yarn package' output not found at: ${packageDir}`);
     return 1;
   }
-  console.log(info(`Using electron-packager output from ${packageDir}`));
+  const appDest = path.join(packageDir, 'RStudio.app', 'Contents', 'resources', 'app');
+  const binDest = path.join(appDest, 'bin');
 
-  return 0;
+  console.log(info(`Using electron-packager output from ${packageDir}`));
+  console.log(info('Copying binary files'));
+
+  await copyFiles(['diagnostics'], path.join(cppFolder, 'diagnostics'), binDest);
+  // TODO await copyFile('mac-terminal', path.join(cppFolder, 'diagnostics'), binDest);
+  await copyFiles(['r-ldpath', 'rsession'], path.join(cppFolder, 'session'), binDest);
+  await copyFiles(['rpostback'], path.join(cppFolder, 'session', 'postback'), binDest);
+  await copyFiles(['*'], path.join(cppFolder, 'session', 'postback', 'postback'), path.join(binDest, 'postback'));
 }

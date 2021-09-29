@@ -9,16 +9,16 @@
   "license": "AGPL-3.0-only",
   "scripts": {
     "clean": "ts-node scripts/clean.ts",
-    "package": "electron-forge package",
     "lint": "eslint ./src ./test",
+    "make": "yarn run package && ts-node scripts/import-resources && electron-forge make --skip-package",
+    "package": "electron-forge package",
     "start": "electron-forge start",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
     "testint": "mocha -c --config ./test/int/mocharc.json",
     "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json",
     "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
-    "win-package": "yarn run package && ts-node scripts/package-helper",
-    "make": "electron-forge make"
+    "win-package": "yarn run package && ts-node scripts/package-helper"
   },
   "config": {
     "forge": "./forge.config.js"

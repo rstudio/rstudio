@@ -13,8 +13,7 @@
  *
  */
 
-import { startsWith } from 'core-js/core/string';
-import { fstat, promises } from 'fs';
+import { promises } from 'fs';
 import path from 'path';
 
 export function getProjectRootDir(): string {

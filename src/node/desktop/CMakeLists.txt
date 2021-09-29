@@ -27,6 +27,12 @@ else()
    add_dependencies(electron_build rsession diagnostics)
 endif()
 
+# install mac-terminal script on apple
+if(APPLE)
+   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/mac-terminal.in
+                  ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal)
+endif()
+
 add_custom_command(
    TARGET electron_build
    PRE_BUILD
@@ -41,21 +47,4 @@ add_custom_command(
    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
    COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" 
       ${YARN}
-      "package")
-
-#add_custom_target(electron_make ALL)
-#add_dependencies(electron_make electron_build)
-#add_custom_command(
-#   TARGET electron_make
-#   PRE_BUILD
-#   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-#   COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-#      ${YARN}
-#      "")
-#add_custom_command(
-#   TARGET electron_make
-#   POST_BUILD
-#   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-#   COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-#      ${YARN}
-#      "package")
+      "make")
