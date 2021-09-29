@@ -15,9 +15,14 @@
 
 package org.rstudio.studio.client.workbench.views.presentation2;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
+import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
+import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -32,10 +37,18 @@ import org.rstudio.studio.client.workbench.views.presentation2.events.Presentati
 import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationInitEvent.Handler;
 import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationSlideChangeEvent;
 import org.rstudio.studio.client.workbench.views.presentation2.model.RevealMessage;
+import org.rstudio.studio.client.workbench.views.presentation2.model.RevealSlide;
 
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -49,6 +62,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       server_ = server;
       ensureWidget();
       initializeEvents();
+      setSecondaryToolbarVisible(false);
    }
    
 
@@ -60,9 +74,8 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       // navigate
       toolbar_.addLeftWidget(commands_.presentation2Prev().createToolbarButton());
       toolbar_.addLeftWidget(commands_.presentation2Next().createToolbarButton());
-      
-      // TODO: standard slide navigation/edit widget
-      
+         
+      // view in browser
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.presentation2ViewInBrowser().createToolbarButton());
       
@@ -78,6 +91,24 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       
       return toolbar_;
    }
+   
+   @Override
+   protected SecondaryToolbar createSecondaryToolbar()
+   {
+      SecondaryToolbar toolbar = new SecondaryToolbar("Presentation Slides Toolbar");
+      toolbar.addLeftWidget(commands_.presentation2Home().createToolbarButton());
+      toolbar.addLeftSeparator();
+      slidesMenuLabel_ = new Label();
+      slidesMenuLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles().presentationNavigatorLabel());
+      slidesMenuLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles().toolbarButtonLabel());   
+      slidesMenu_ = new SlidesPopupMenu();
+      slidesMenuWidget_ = toolbar.addLeftPopupMenu(slidesMenuLabel_, slidesMenu_);
+      slidesMenuWidget_.getElement().getStyle().setMarginTop(-1, Unit.PX);
+      toolbar.addLeftSeparator();
+      toolbar.addLeftWidget(commands_.presentation2Edit().createToolbarButton());
+      return toolbar;
+      
+   }
 
    @Override
    protected Widget createMainWidget()
@@ -90,6 +121,21 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       frame_.getElement().setAttribute("mozallowfullscreen", "");
       frame_.getElement().setAttribute("allowfullscreen", "");
       return new AutoGlassPanel(frame_);
+   }
+   
+   @Override
+   public void onResize()
+   {
+      super.onResize();
+      
+      // sometimes width is 0 (not sure why)
+      int width = getOffsetWidth();
+      if (width == 0)
+         return;
+      
+      slidesMenuLabel_.getElement().getStyle().setProperty("maxWidth", (width - 70) + "px");
+      slidesMenuWidget_.getElement().getStyle().setProperty("maxWidth", (width - 50) + "px");
+   
    }
    
    @Override
@@ -143,17 +189,53 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    }
    
    @Override
+   public void init(JsArray<RevealSlide> slides)
+   {
+      // populate the menu
+      slidesMenu_.clearItems();
+      for (int i=0; i<slides.length(); i++)
+      {
+         // get slide
+         final RevealSlide slide = slides.get(i);
+          
+         // build html
+         SafeHtmlBuilder menuHtml = new SafeHtmlBuilder();
+         if (slide.getVIndex() > 0)
+            menuHtml.appendHtmlConstant("&nbsp;&nbsp;");
+         menuHtml.appendEscaped(slideTitle(slide.getTitle()));
+      
+         slidesMenu_.addItem(new MenuItem(menuHtml.toSafeHtml(),
+                                        new Command() {
+            @Override
+            public void execute()
+            {
+               postRevealMessage("slide", slide);
+            }
+         })); 
+      }
+      
+      setSecondaryToolbarVisible(true);
+   }
+
+
+   @Override
+   public void change(RevealSlide slide)
+   {
+      slidesMenuLabel_.setText(slideTitle(slide.getTitle()));
+   }
+   
+   
+   @Override
    public void clear()
    {
       activeUrl_ = null;
       source_ = null;
       origin_ = null;
       publishButton_.setContentType(RSConnect.CONTENT_TYPE_NONE);
+      setSecondaryToolbarVisible(false);
       frame_.setUrl("about:blank");
    }
-   
-   // TODO: use SlideNavigationToolbar re-usable class
-   
+      
    @Override
    public void home()
    {
@@ -170,14 +252,15 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    public void prev()
    {
-      postRevealMessage("previous");
+      postRevealMessage("prev");
    }
 
    @Override
    public void refresh()
    {
-      postRevealMessage("reload");
+      postRevealMessage("refresh");
    }
+
    
    @Override
    public HandlerRegistration addPresentationInitHandler(Handler handler)
@@ -195,6 +278,28 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    public HandlerRegistration addPresentationHashChangeHandler(org.rstudio.studio.client.workbench.views.presentation2.events.PresentationHashChangeEvent.Handler handler)
    {
       return handlerManager_.addHandler(PresentationHashChangeEvent.TYPE, handler);
+   }
+   
+   private String slideTitle(String title)
+   {
+      if (StringUtil.isNullOrEmpty(title))
+         title = "(Untitled)";
+      return title;
+   }
+   
+   private class SlidesPopupMenu extends ScrollableToolbarPopupMenu
+   {
+      public SlidesPopupMenu()
+      {
+         addStyleName(ThemeStyles.INSTANCE.statusBarMenu());
+      }
+      
+      @Override
+      protected int getMaxHeight()
+      {
+         return Window.getClientHeight() - toolbar_.getAbsoluteTop() -
+               toolbar_.getOffsetHeight() - 200;
+      }
    }
    
    private native void initializeEvents() /*-{  
@@ -267,8 +372,13 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    private ApplicationServerOperations server_;
    
    private Toolbar toolbar_;
+   private Label slidesMenuLabel_;
+   private SlidesPopupMenu slidesMenu_;
+   private Widget slidesMenuWidget_;
    private RSConnectPublishButton publishButton_;
+  
    private RStudioFrame frame_;
   
    private HandlerManager handlerManager_ = new HandlerManager(this);
+
 }

@@ -16,9 +16,11 @@
 package org.rstudio.studio.client.workbench.views.presentation2;
 
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -30,7 +32,9 @@ import org.rstudio.studio.client.workbench.views.presentation2.events.Presentati
 import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationInitEvent;
 import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationPreviewEvent;
 import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationSlideChangeEvent;
+import org.rstudio.studio.client.workbench.views.presentation2.model.RevealSlide;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.inject.Inject;
 
@@ -40,17 +44,19 @@ public class Presentation2 extends BasePresenter
    {
       void activate();
       void navigate(String url, QuartoNavigate nav);
+      void init(JsArray<RevealSlide> slides);
+      void change(RevealSlide slide);
       void clear();
       
       void home();
       void next();
       void prev();
+      
       void refresh();
       
-      public HandlerRegistration addPresentationInitHandler(PresentationInitEvent.Handler handler);
-      public HandlerRegistration addPresentationSlideChangeHandler(PresentationSlideChangeEvent.Handler handler);
-      public HandlerRegistration addPresentationHashChangeHandler(PresentationHashChangeEvent.Handler handler);
-
+      HandlerRegistration addPresentationInitHandler(PresentationInitEvent.Handler handler);
+      HandlerRegistration addPresentationSlideChangeHandler(PresentationSlideChangeEvent.Handler handler);
+      HandlerRegistration addPresentationHashChangeHandler(PresentationHashChangeEvent.Handler handler);
    }
    
    @Inject
@@ -58,6 +64,7 @@ public class Presentation2 extends BasePresenter
                         Commands commands,
                         GlobalDisplay globalDisplay,
                         ApplicationServerOperations server,
+                        FileTypeRegistry fileTypeRegistry,
                         EventBus eventBus)
    {
       super(display);
@@ -65,15 +72,22 @@ public class Presentation2 extends BasePresenter
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       server_ = server;
+      fileTypeRegistry_ = fileTypeRegistry;
+      
       enableCommands(false);
       
       display_.addPresentationInitHandler(event -> {
+         // notify display that we are ready to rock
+         display_.init(event.getSlides()); 
+         
+         // enable all commands
          enableCommands(true);
       });
       
       display_.addPresentationSlideChangeHandler(event -> {
          commands_.presentation2Prev().setEnabled(!event.isFirst());
          commands_.presentation2Next().setEnabled(!event.isLast());
+         display_.change(event.getSlide());
       });
       
       display_.addPresentationHashChangeHandler(event -> {
@@ -92,7 +106,7 @@ public class Presentation2 extends BasePresenter
             enableCommands(false);
             display_.clear();
          }
-      });
+      }); 
    }
 
    // request from server to preview a presentation
@@ -141,7 +155,12 @@ public class Presentation2 extends BasePresenter
    @Handler
    void onPresentation2Edit()
    {
-      
+      if (activePresentation_ != null)
+      {
+         fileTypeRegistry_.editFile(
+            FileSystemItem.createFile(activePresentation_.getSourceFile())
+         );
+      }
    }
    
    @Handler
@@ -180,5 +199,6 @@ public class Presentation2 extends BasePresenter
    private final Display display_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
+   private final FileTypeRegistry fileTypeRegistry_;
    private final ApplicationServerOperations server_;
 }
