@@ -813,10 +813,10 @@ public class UserPrefsAccessor extends Prefs
    public PrefValue<Boolean> showDiagnosticsYaml()
    {
       return bool(
-         "show_diagnostics_yaml",
-         "Show diagnostics in YAML code",
-         "Whether to show diagnostic messages for YAML code as you type.",
-         true);
+              "show_diagnostics_yaml",
+              _constants.showDiagnosticsYamlTitle(),
+              _constants.showDiagnosticsYamlDescription(),
+              true);
    }
 
    /**

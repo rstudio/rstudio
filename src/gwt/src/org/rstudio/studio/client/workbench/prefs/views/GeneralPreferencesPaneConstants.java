@@ -435,13 +435,13 @@ public interface GeneralPreferencesPaneConstants extends com.google.gwt.i18n.cli
     String renderingEngineSoftwareOption();
 
     /**
-     * Translated "Use GPU blacklist (recommended)".
+     * Translated "Use GPU exclusion list (recommended)".
      *
-     * @return translated "Use GPU blacklist (recommended)"
+     * @return translated "Use GPU exclusion list (recommended)"
      */
-    @DefaultStringValue("Use GPU blacklist (recommended)")
-    @Key("useGpuBlacklistLabel")
-    String useGpuBlacklistLabel();
+    @DefaultStringValue("Use GPU exclusion list (recommended)")
+    @Key("useGpuExclusionListLabel")
+    String useGpuExclusionListLabel();
 
     /**
      * Translated "Use GPU driver bug workarounds (recommended)".
@@ -631,5 +631,4 @@ public interface GeneralPreferencesPaneConstants extends com.google.gwt.i18n.cli
     @DefaultStringValue("Choose Directory")
     @Key("directoryLabel")
     String directoryLabel();
-
 }

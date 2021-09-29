@@ -319,7 +319,7 @@ public class TerminalPreferencesPane extends PreferencesPane
          busyMode_.getListBox().clear();
          busyMode_.addChoice(constants_.busyModeAlwaysOption(), UserPrefs.BUSY_DETECTION_ALWAYS);
          busyMode_.addChoice(constants_.busyModeNeverOption(), UserPrefs.BUSY_DETECTION_NEVER);
-         busyMode_.addChoice(constants_.busyModeWhitelistOption(), UserPrefs.BUSY_DETECTION_LIST);
+         busyMode_.addChoice(constants_.busyModeListOption(), UserPrefs.BUSY_DETECTION_LIST);
          busyMode_.setEnabled(true);
 
          prefs_.busyDetection().getValue();

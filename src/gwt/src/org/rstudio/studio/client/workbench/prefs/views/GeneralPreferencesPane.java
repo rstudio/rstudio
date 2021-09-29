@@ -292,7 +292,7 @@ public class GeneralPreferencesPane extends PreferencesPane {
                 renderingEngine_ = engine;
             });
 
-         useGpuExclusions_ = new CheckBox(constants_.useGpuBlacklistLabel());
+         useGpuExclusions_ = new CheckBox(constants_.useGpuExclusionListLabel());
          advanced.add(lessSpaced(useGpuExclusions_));
          Desktop.getFrame().getIgnoreGpuExclusionList((Boolean ignore) -> {
             desktopIgnoreGpuExclusions_ = ignore;

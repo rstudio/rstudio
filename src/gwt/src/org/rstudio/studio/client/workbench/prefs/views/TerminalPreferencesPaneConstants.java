@@ -336,13 +336,13 @@ public interface TerminalPreferencesPaneConstants extends com.google.gwt.i18n.cl
     String busyModeNeverOption();
 
     /**
-     * Translated "Always except for whitelist".
+     * Translated "Always except for list".
      *
-     * @return translated "Always except for whitelist"
+     * @return translated "Always except for list"
      */
-    @DefaultStringValue("Always except for whitelist")
-    @Key("busyModeWhitelistOption")
-    String busyModeWhitelistOption();
+    @DefaultStringValue("Always except for list")
+    @Key("busyModeListOption")
+    String busyModeListOption();
 
     /**
      * Translated "Enable Python integration".

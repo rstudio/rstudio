@@ -427,19 +427,27 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showDiagnosticsRDescription();
 
    /**
-    * Whether to show diagnostic messages for C++ code as you type.
+    * Whether to show diagnostic messages for C/C++ code as you type.
     */
-   @DefaultStringValue("@dShow diagnostics in C++ code")
+   @DefaultStringValue("@dShow diagnostics for C/C++")
    String showDiagnosticsCppTitle();
-   @DefaultStringValue("@dWhether to show diagnostic messages for C++ code as you type.")
+   @DefaultStringValue("@dWhether to show diagnostic messages for C/C++ code as you type.")
    String showDiagnosticsCppDescription();
+
+   /**
+    * Whether to show diagnostic messages for YAML code as you type.
+    */
+   @DefaultStringValue("@dShow diagnostics for YAML")
+   String showDiagnosticsYamlTitle();
+   @DefaultStringValue("@dWhether to show diagnostic messages for YAML code as you type.")
+   String showDiagnosticsYamlDescription();
 
    /**
     * Whether to show diagnostic messages for other types of code (not R or C++).
     */
    @DefaultStringValue("@dShow diagnostics in other languages")
    String showDiagnosticsOtherTitle();
-   @DefaultStringValue("@dWhether to show diagnostic messages for other types of code (not R or C++).")
+   @DefaultStringValue("@dWhether to show diagnostic messages for other types of code (not R, C++, or YAML).")
    String showDiagnosticsOtherDescription();
 
    /**
@@ -1237,11 +1245,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String busyDetectionDescription();
 
    /**
-    * A whitelist of apps that should not be considered busy in the Terminal.
+    * A list of apps that should not be considered busy in the Terminal.
     */
    @DefaultStringValue("@d")
    String busyWhitelistTitle();
-   @DefaultStringValue("@dA whitelist of apps that should not be considered busy in the Terminal.")
+   @DefaultStringValue("@dA list of apps that should not be considered busy in the Terminal.")
    String busyWhitelistDescription();
 
    /**
