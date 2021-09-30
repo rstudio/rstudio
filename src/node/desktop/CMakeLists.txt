@@ -43,10 +43,12 @@ add_custom_command(
       "install")
 
 # Package and bundle the Electron application
-add_custom_command(
-   TARGET electron_build
-   POST_BUILD
-   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-   COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" 
-      ${YARN}
-      "make")
+if(RSTUDIO_PACKAGE_BUILD)
+   add_custom_command(
+      TARGET electron_build
+      POST_BUILD
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" 
+         ${YARN}
+         "make")
+endif()
