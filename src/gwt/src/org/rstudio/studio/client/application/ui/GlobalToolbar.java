@@ -72,7 +72,6 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newSweaveDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRHTMLDoc().createMenuItem(false));
-      newMenu_.addItem(commands.newRPresentationDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRDocumentationDoc().createMenuItem(false));
 
       // create and add new menu

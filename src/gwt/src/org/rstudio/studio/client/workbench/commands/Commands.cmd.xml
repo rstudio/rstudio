@@ -71,7 +71,6 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="newSweaveDoc"/>
             <cmd refid="newRHTMLDoc"/>
-            <cmd refid="newRPresentationDoc"/>
             <cmd refid="newRDocumentationDoc"/>
          </menu>
          <cmd refid="newProject"/>
