@@ -330,6 +330,17 @@ public abstract class
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand clearPresentationCache();
+   
+   // Presentation2
+   public abstract AppCommand activatePresentation2();
+   public abstract AppCommand layoutZoomPresentation2();
+   public abstract AppCommand presentation2Home();
+   public abstract AppCommand presentation2Next();
+   public abstract AppCommand presentation2Prev();
+   public abstract AppCommand presentation2Edit();
+   public abstract AppCommand presentation2ViewInBrowser();
+   public abstract AppCommand presentation2Print();
+   public abstract AppCommand refreshPresentation2();
 
    // View
    public abstract AppCommand showToolbar();

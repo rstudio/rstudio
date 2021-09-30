@@ -463,6 +463,12 @@ void setClientMetrics(const RClientMetrics& metrics)
    }
 }
 
+void reportWarningToConsole(const std::string& warning)
+{
+   std::string msg = "WARNING: " + warning + "\n";
+   RWriteConsoleEx(msg.c_str(), gsl::narrow_cast<int>(msg.length()), 1);
+}
+
 void reportAndLogWarning(const std::string& warning)
 {
    std::string msg = "WARNING: " + warning + "\n";
