@@ -207,17 +207,17 @@ private:
 
    std::string rVersion()
    {
-      getProperty(kRVersion);
+      return getProperty(kRVersion);
    }
 
    std::string rVersionLabel()
    {
-      getProperty(kRVersionLabel);
+      return getProperty(kRVersionLabel);
    }
 
    std::string rVersionHome()
    {
-      getProperty(kRVersionHome);
+      return getProperty(kRVersionHome);
    }
 
    void setRVersion(const std::string& rVersion,
