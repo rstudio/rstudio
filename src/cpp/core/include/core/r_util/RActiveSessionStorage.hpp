@@ -33,10 +33,11 @@ namespace r_util {
       IActiveSessionStorage() = default;
    };
 
-   class LegacySessionStorage : public IActiveSessionStorage
+   class FileActiveSessionStorage : public IActiveSessionStorage
    {
    public:
-      explicit LegacySessionStorage(const FilePath& location);
+      explicit FileActiveSessionStorage(const FilePath& location);
+      virtual ~FileActiveSessionStorage() = default;
 
       Error readProperty(const std::string& id, const std::string& name, std::string* pValue) override;   
       Error writeProperty(const std::string& id, const std::string& name, const std::string& value) override;
@@ -44,13 +45,13 @@ namespace r_util {
    private:
       FilePath activeSessionsDir_;
       const std::string propertiesDirName_ = "properites";
-      const std::string legacySessionDirPrefix_ = "session-";
+      const std::string fileSessionDirPrefix_ = "session-";
 
       FilePath buildPropertyPath(const std::string& id, const std::string& name);
 
-      static const std::string& getLegacyName(const std::string& name)
+      static const std::string& getPropertyFileName(const std::string& propertyName)
       {
-         static const std::map<std::string, std::string> legacyNames = 
+         static const std::map<std::string, std::string> fileNames = 
          {
             { "last_used" , "last-used" },
             { "r_version" , "r-version" },
@@ -60,10 +61,10 @@ namespace r_util {
             { "launch_parameters" , "launch-parameters" }
          };
 
-         if (legacyNames.find(name) != legacyNames.end())
-            return legacyNames.at(name);
+         if (fileNames.find(propertyName) != fileNames.end())
+            return fileNames.at(propertyName);
 
-         return name;
+         return propertyName;
       }
    };
 
@@ -71,7 +72,7 @@ namespace r_util {
    {
    public:
       static std::shared_ptr<IActiveSessionStorage> getActiveSessionStorage();
-      static std::shared_ptr<IActiveSessionStorage> getLegacyActiveSessionStorage();
+      static std::shared_ptr<IActiveSessionStorage> getFileActiveSessionStorage();
    };
 
 } // namespace r_util
