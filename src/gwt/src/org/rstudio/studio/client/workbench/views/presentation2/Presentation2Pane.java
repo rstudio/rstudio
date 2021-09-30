@@ -145,14 +145,15 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    {
       // bring tab to front
       bringToFront();
-          
-      // compute min height based on normal reveal presentation ratio and current width
-      int frameWidth = frame_.getOffsetWidth();
-      if (frameWidth > 0)
-      {
-         double ratio = (double)700 / 960;
-         ensureHeight((int)(frameWidth * ratio));
-      }
+   }
+   
+   @Override
+   public void setFocus()
+   {
+      if (frame_ != null)
+         frame_.getIFrame().setFocus();
+      else
+         super.setFocus();
    }
    
    @Override
@@ -176,6 +177,14 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       // captured from init message and played back to reveal frame
       source_ = null;
       origin_ = null;
+      
+      // compute min height based on normal reveal presentation ratio and current width
+      int frameWidth = frame_.getOffsetWidth();
+      if (frameWidth > 0)
+      {
+         double ratio = (double)700 / 960;
+         ensureHeight((int)(frameWidth * ratio) + getToolbarsHeight());
+      }
       
       // load content
       frame_.setUrl(activeUrl_);
@@ -207,7 +216,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
          SafeHtmlBuilder menuHtml = new SafeHtmlBuilder();
          if (slide.getVIndex() > 0)
             menuHtml.appendHtmlConstant("&nbsp;&nbsp;");
-         menuHtml.appendEscaped(slideTitle(slide.getTitle()));
+         menuHtml.appendEscaped(slideTitle(slide.getTitle())); 
       
          slidesMenu_.addItem(new MenuItem(menuHtml.toSafeHtml(),
                                         new Command() {

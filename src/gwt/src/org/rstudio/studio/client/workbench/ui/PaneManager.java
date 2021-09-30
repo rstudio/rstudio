@@ -1408,6 +1408,13 @@ public class PaneManager
       if (tab != null)
          activateTab(tab);
    }
+   
+   public void focusTab(Tab tab)
+   {
+      WorkbenchTab wbTab = getTab(tab);
+      if (wbTab != null)
+         wbTab.setFocus();
+   }
 
    public void zoomTab(Tab tab)
    {

@@ -346,7 +346,11 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onActivateTutorial() { paneManager_.activateTab(Tab.Tutorial); }
    @Handler
-   void onActivatePresentation2() { paneManager_.activateTab(Tab.Presentations); }
+   void onActivatePresentation2() 
+   { 
+      paneManager_.activateTab(Tab.Presentations); 
+      paneManager_.focusTab(Tab.Presentations);
+   }
 
 
    @Handler
