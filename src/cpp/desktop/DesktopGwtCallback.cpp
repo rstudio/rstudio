@@ -1453,6 +1453,12 @@ void GwtCallback::setTutorialUrl(QString url)
    pOwner_->webPage()->setTutorialUrl(url);
 }
 
+void GwtCallback::setPresentationUrl(QString url)
+{
+   pOwner_->webPage()->setPresentationUrl(url);
+}
+
+
 void GwtCallback::setViewerUrl(QString url)
 {
    pOwner_->webPage()->setViewerUrl(url);

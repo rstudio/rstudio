@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.presentation2;
 
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -125,6 +126,8 @@ public class Presentation2 extends BasePresenter
          activeUrl_ = url;
          activeSlideHref_ = url;
          activePresentation_ = data.getQuartoNavigation();
+         if (Desktop.hasDesktopFrame())
+            Desktop.getFrame().setPresentationUrl(activeUrl_);
          display_.navigate(activeUrl_, activePresentation_);
       }
       else
