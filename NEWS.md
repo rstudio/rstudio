@@ -17,6 +17,7 @@
 * Add commands to open selected files in columns or active editor (#7920)
 * Add *New Blank File* command to Files pane to create empty files of selected type in the directory (#1564)
 * Rename CSRF token header `X-CSRF-Token` and cookie `csrf-token` to `X-RS-CSRF-Token` and `rs-csrf-token`, respectively, to avoid clashing with similarly named headers and cookies in other services (#7319)
+* Use double indent for function parameters to align with Tidyverse style (#9766)
 
 ### Bugfixes
 
