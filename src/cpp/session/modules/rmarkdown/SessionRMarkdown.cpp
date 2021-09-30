@@ -271,6 +271,21 @@ enum RenderTerminateType
 std::vector<std::string> s_renderOutputs(kMaxRenderOutputs);
 int s_currentRenderOutput = 0;
 
+std::string parsableRStudioVersion()
+{
+   std::string version(RSTUDIO_VERSION_MAJOR);
+   version.append(".")
+      .append(RSTUDIO_VERSION_MINOR)
+      .append(".")
+      .append(RSTUDIO_VERSION_PATCH)
+      .append(".")
+      .append(boost::regex_replace(
+         std::string(RSTUDIO_VERSION_SUFFIX),
+         boost::regex("[a-zA-Z\\-+]"),
+         ""));
+   return version;
+}
+
 FilePath outputCachePath()
 {
    return module_context::sessionScratchPath().completeChildPath("rmd-outputs");
@@ -604,7 +619,8 @@ private:
          LOG_ERROR(error);
 
       // pass along the RSTUDIO_VERSION
-      environment.push_back(std::make_pair("RSTUDIO_VERSION", RSTUDIO_VERSION));
+      environment.push_back(std::make_pair("RSTUDIO_VERSION", parsableRStudioVersion()));
+      environment.push_back(std::make_pair("RSTUDIO_LONG_VERSION", RSTUDIO_VERSION));
 
       // set the not cran env var
       environment.push_back(std::make_pair("NOT_CRAN", "true"));

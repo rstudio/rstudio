@@ -223,10 +223,15 @@ public:
       else
       {
          // make sure that if no body and content-length were specified,
+         // and the status code is not 1xx or 204,
          // we send 0 for Content-Length
          // otherwise, this response will be invalid
-         if (response_.body().empty() && response_.headerValue("Content-Length").empty())
+         if ((response_.body().empty() && response_.headerValue("Content-Length").empty()) &&
+             (response_.statusCode() < 100 || response_.statusCode() > 199) &&
+             response_.statusCode() != 204)
+         {
              response_.setContentLength(0);
+         }
 
          // write
          socketOperations_->asyncWrite(

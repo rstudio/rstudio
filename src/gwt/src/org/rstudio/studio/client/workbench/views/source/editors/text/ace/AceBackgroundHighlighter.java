@@ -424,7 +424,7 @@ public class AceBackgroundHighlighter
             // latex blocks
             new HighlightPattern(
                   "^[$][$]\\s*$",
-                  "^[$][$]\\s*$")
+                  "^[$][$].*$")
             
       );
             

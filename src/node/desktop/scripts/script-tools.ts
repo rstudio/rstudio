@@ -24,7 +24,11 @@ export function getBuildOutputDir(): string {
 }
 
 export function getPackageOutputDir(): string {
-  return path.join(getProjectRootDir(), 'package');
+  return path.join(getProjectRootDir(), 'out');
+}
+
+export function getPlatformPackageOutputDir(): string {
+  return path.join(getPackageOutputDir(), `RStudio-${process.platform}-x64`);
 }
 
 export function section(message: string): string {

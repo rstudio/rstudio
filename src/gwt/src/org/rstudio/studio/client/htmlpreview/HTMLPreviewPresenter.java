@@ -199,7 +199,7 @@ public class HTMLPreviewPresenter implements IsWidget
          
                url = URIUtils.addQueryParam(url,
                                             "host",
-                                            htmlMessageListener_.getOriginDomain());
+                                            HtmlMessageListener.getOriginDomain());
                
                htmlMessageListener_.allowOpenOnLoad();
                htmlMessageListener_.setUrl(url);

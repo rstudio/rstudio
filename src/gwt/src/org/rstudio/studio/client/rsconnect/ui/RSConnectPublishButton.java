@@ -1007,6 +1007,7 @@ public class RSConnectPublishButton extends Composite
    public final static String HOST_EDITOR = "editor";
    public final static String HOST_PLOTS = "plots_pane";
    public final static String HOST_PRESENTATION = "presentation";
+   public final static String HOST_PRESENTATION2 = "presentation2";
    public final static String HOST_PROFILER = "profiler";
    public final static String HOST_RMD_OUTPUT = "rmd_output";
    public final static String HOST_SHINY_APP = "shiny_app";

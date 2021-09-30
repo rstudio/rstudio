@@ -14,16 +14,15 @@
  */
 
 import { BrowserWindow } from 'electron';
-import { existsSync, readFileSync } from 'fs';
-import path from 'path';
 import { err, Expected, ok } from '../core/expected';
+import { safeError } from '../core/err';
 
 export abstract class ModalDialog<T> extends BrowserWindow {
 
   abstract onShowModal(): Promise<T>;
 
-  private readonly widgetDir: string;
-  constructor(widgetDir: string) {
+  private readonly widgetUrl: string;
+  constructor(url: string, preload: string) {
     
     super({
       minWidth: 400,
@@ -32,12 +31,12 @@ export abstract class ModalDialog<T> extends BrowserWindow {
       height: 400,
       show: false,
       webPreferences: {
-        preload: path.join(widgetDir, 'preload.js'),
+        preload: preload,
       }
     });
 
     // initialize instance variables
-    this.widgetDir = widgetDir;
+    this.widgetUrl = url;
 
     // make this look and behave like a modal
     this.setMenu(null);
@@ -53,8 +52,8 @@ export abstract class ModalDialog<T> extends BrowserWindow {
     try {
       const result = await this.showModalImpl();
       return ok(result);
-    } catch (error) {
-      return err(error);
+    } catch (error: unknown) {
+      return err(safeError(error));
     }
 
   }
@@ -62,21 +61,7 @@ export abstract class ModalDialog<T> extends BrowserWindow {
   async showModalImpl(): Promise<T> {
 
     // load the associated HTML
-    await this.loadFile(path.join(this.widgetDir, 'ui.html'));
-
-    // load any bundled CSS
-    const cssStylesPath = path.join(this.widgetDir, 'styles.css');
-    if (existsSync(cssStylesPath)) {
-      const cssStylesContents = readFileSync(cssStylesPath, { encoding: 'utf-8' });
-      this.webContents.send('css', cssStylesContents);
-    }
-
-    // load any bundled JavaScript
-    const jsLoadPath = path.join(this.widgetDir, 'load.js');
-    if (existsSync(jsLoadPath)) {
-      const jsLoadContents = readFileSync(jsLoadPath, { encoding: 'utf-8' });
-      await this.webContents.executeJavaScript(jsLoadContents);
-    }
+    await this.loadURL(this.widgetUrl);
 
     // show the window after loading everything
     this.show();

@@ -51,7 +51,7 @@
          margin-bottom: 15px;
       }
 
-      .notice, .supportNotice {
+      .notice, .supportNotice, .trademarkNotice {
          margin-top: 15px;
          margin-bottom: 15px;
       }
@@ -168,6 +168,16 @@
             </g:HTMLPanel>
             <g:HTMLPanel styleName="{style.supportNotice}">
                <g:InlineLabel ui:field="supportNotice"></g:InlineLabel>
+            </g:HTMLPanel>
+            <g:HTMLPanel styleName="{style.trademarkNotice}">
+               <g:InlineLabel
+                  text="RStudio and Shiny are registered trademarks of RStudio, PBC, all rights reserved. See"></g:InlineLabel>
+               <g:Anchor
+                  href="https://www.rstudio.com/about/trademark/"
+                  text="https://www.rstudio.com/about/trademark/"
+                  target="_blank"></g:Anchor>
+               <g:InlineLabel
+                  text="for permitted uses and guidelines."></g:InlineLabel>
             </g:HTMLPanel>
             <g:HTMLPanel ui:field="gplNotice">
                <g:InlineLabel

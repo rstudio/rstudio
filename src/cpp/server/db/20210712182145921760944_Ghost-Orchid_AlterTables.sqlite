@@ -10,4 +10,4 @@ CREATE TABLE schema_version(
 );
 
 /* Update the version to the latest after all alter statements are applied. */
-INSERT INTO schema_version VALUES ('20210712182145921760944', 'Ghost Orchid');
+INSERT INTO schema_version (current_version, release_name) VALUES ('20210712182145921760944', 'Ghost Orchid');

@@ -239,7 +239,7 @@ describe('FilePath', () => {
       try {
         fs.rmdirSync(testDir);
       }
-      catch (error) {
+      catch (error: unknown) {
         // On Windows, trying to remove current-working-directory may fail so can't 
         // execute rest of this test case; cleanup and exit
         assert.isTrue(process.platform === 'win32');
@@ -262,7 +262,7 @@ describe('FilePath', () => {
       try {
         fs.rmdirSync(testDir);
       }
-      catch (error) {
+      catch (error: unknown) {
         // On Windows, trying to remove current-working-directory may fail so can't 
         // execute rest of this test case; cleanup and exit
         assert.isTrue(process.platform === 'win32');
@@ -291,7 +291,7 @@ describe('FilePath', () => {
       try {
         await fsPromises.rmdir(testDir);
       }
-      catch (error) {
+      catch (error: unknown) {
         // On Windows, trying to remove current-working-directory may fail so can't 
         // execute rest of this test case; cleanup and exit
         assert.isTrue(process.platform === 'win32');
@@ -314,7 +314,7 @@ describe('FilePath', () => {
       try {
         await fsPromises.rmdir(testDir);
       }
-      catch (error) {
+      catch (error: unknown) {
         // On Windows, trying to remove current-working-directory may fail so can't 
         // execute rest of this test case; cleanup and exit
         assert.isTrue(process.platform === 'win32');

@@ -34,5 +34,9 @@ public class QuartoNavigate extends JavaScriptObject
    public native final String getOutputFile() /*-{
       return this.output_file;
    }-*/;
+   
+   public native final String getJobId()  /*-{
+      return this.job_id;
+   }-*/;
 
 }

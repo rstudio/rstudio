@@ -24,6 +24,11 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class PanmirrorDialogsUtil
 {
+   public static TextBox addTextBox(VerticalTabPanel panel, String id, String initialValue)
+   {
+      return addTextBox(panel, id, (String)null, initialValue);
+   }
+   
    public static TextBox addTextBox(VerticalTabPanel panel, String id, String label, String initialValue)
    {
       return addTextBox(panel, id, new FormLabel(label), initialValue);
@@ -31,13 +36,18 @@ public class PanmirrorDialogsUtil
    
    public static TextBox addTextBox(VerticalTabPanel panel, String id, FormLabel label, String initialValue)
    {
-      panel.add(label);
+      if (label != null)
+         panel.add(label);
+      
       TextBox textBox = new TextBox();
       textBox.getElement().setId(id);
-      label.setFor(textBox);
       setFullWidthStyles(textBox);
       textBox.setText(initialValue);
       panel.add(textBox);
+      
+      if (label != null)
+         label.setFor(textBox);
+      
       return textBox;
    }
    

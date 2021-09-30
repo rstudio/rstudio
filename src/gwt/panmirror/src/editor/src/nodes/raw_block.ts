@@ -146,8 +146,16 @@ const extension = (context: ExtensionContext): Extension | null => {
             // from being considered the end of the raw html block.
             } else if (node.textContent.includes("\n```")) {
               // find the ``` standing by itself on a line
-              const match = node.textContent.matchAll(/\n(`{3,})\s*?\n/g);
-              const matchRev = Array.from(match || []).reverse();
+              const matches: RegExpExecArray[] = [];
+              const embeddedTickRegEx = /\n(`{3,})\s*?\n/g;
+              embeddedTickRegEx.lastIndex = 0;
+              let match: RegExpExecArray | null = null;
+               // tslint:disable-next-line no-conditional-assignment
+              while (match = embeddedTickRegEx.exec(node.textContent)) {
+                matches.push(match);
+              }
+              embeddedTickRegEx.lastIndex = 0;
+              const matchRev = matches.reverse();
               const ticks = (matchRev.length > 0 ? matchRev[0][1] : "```") + "`";
               output.writeToken(PandocTokenType.Para, () => {
                 output.writeRawMarkdown(`${ticks}{=${node.attrs.format}}\n${node.textContent}\n${ticks}\n`);

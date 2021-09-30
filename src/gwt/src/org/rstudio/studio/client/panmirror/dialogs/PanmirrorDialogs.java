@@ -22,12 +22,15 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCalloutEditProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCalloutEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCiteResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTableResult;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTabsetResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabilities;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkProps;
@@ -157,11 +160,12 @@ public class PanmirrorDialogs {
       );
    }
    
-   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, PanmirrorImageDimensions dims, boolean editAttributes)
+   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, PanmirrorImageDimensions dims, 
+                                                 boolean figure, boolean editAttributes)
    {
       return new Promise<>(
          (ResolveCallbackFn<PanmirrorImageProps> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, dims, editAttributes, uiContext_,
+            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, dims, figure, editAttributes, uiContext_,
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);
@@ -209,7 +213,7 @@ public class PanmirrorDialogs {
    {
       return editPanmirrorAttr("Div Attributes", removeEnabled ? "Unwrap Div" : null, null, attr);
    }
-
+   
 
    private Promise<PanmirrorAttrEditResult> editPanmirrorAttr(String caption, String removeButtonCaption, String idHint, PanmirrorAttrProps attr) 
    {
@@ -221,6 +225,20 @@ public class PanmirrorDialogs {
             dialog.showModal(false);
          }
       );
+   }
+   
+  
+   
+   public Promise<PanmirrorCalloutEditResult> editCallout(PanmirrorCalloutEditProps attr, boolean removeEnabled)
+   {
+     return new Promise<>(
+       (ResolveCallbackFn<PanmirrorCalloutEditResult> resolve, RejectCallbackFn reject) -> {
+          PanmirrorEditCalloutDialog dialog = new PanmirrorEditCalloutDialog(removeEnabled, attr, (result) -> {
+             resolve.onInvoke(result);
+          });
+          dialog.showModal(false);
+       }
+     );
    }
    
    
@@ -247,12 +265,35 @@ public class PanmirrorDialogs {
       );
    }
    
+   public Promise<String> editMath(String id) 
+   {
+      return new Promise<>((ResolveCallbackFn<String> resolve, RejectCallbackFn reject) -> {
+         PanmirrorEditMathDialog dialog = new PanmirrorEditMathDialog(id, (result) -> {
+           resolve.onInvoke(result);
+         });
+         dialog.showModal(false);
+         
+      });
+   }
+   
    public Promise<PanmirrorInsertTableResult> insertTable(PanmirrorTableCapabilities capabilities)
    {
       return new Promise<>(
          (ResolveCallbackFn<PanmirrorInsertTableResult> resolve, RejectCallbackFn reject) -> {  
             PanmirrorInsertTableDialog dialog = new PanmirrorInsertTableDialog(capabilities, (result) -> {
                resolve.onInvoke(result);
+            });
+            dialog.showModal(false);
+         }
+      );
+   }
+   
+   public Promise<PanmirrorInsertTabsetResult> insertTabset()
+   {
+      return new Promise<>(
+         (ResolveCallbackFn<PanmirrorInsertTabsetResult> resolve, RejectCallbackFn reject) -> { 
+            PanmirrorInsertTabsetDialog dialog = new PanmirrorInsertTabsetDialog((result) -> {
+              resolve.onInvoke(result);
             });
             dialog.showModal(false);
          }

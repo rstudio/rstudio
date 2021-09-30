@@ -28,7 +28,7 @@ public class ApplicationCsrfToken
       for (int i = 0; i < metas.getLength(); i++)
       {
           Element meta = metas.getItem(i);
-          if (StringUtil.equals(meta.getAttribute("name"), "csrf-token"))
+          if (StringUtil.equals(meta.getAttribute("name"), "rs-csrf-token"))
           {
              return meta.getAttribute("content");
           }

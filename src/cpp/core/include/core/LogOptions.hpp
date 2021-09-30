@@ -80,6 +80,8 @@ public:
 
    static FilePath defaultLogDirectory();
 
+   FilePath getLogConfigFile();
+   
 private:
    void initProfile();
 

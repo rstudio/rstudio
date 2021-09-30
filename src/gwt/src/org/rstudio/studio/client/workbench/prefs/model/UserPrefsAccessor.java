@@ -381,7 +381,7 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native JsArrayString getTabSet1() /*-{
-         return this && this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentation"];
+         return this && this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentations", "Presentation"];
       }-*/;
 
       public final native JsArrayString getTabSet2() /*-{
@@ -783,14 +783,26 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to show diagnostic messages for other types of code (not R or C++).
+    * Whether to show diagnostic messages for YAML code as you type.
+    */
+   public PrefValue<Boolean> showDiagnosticsYaml()
+   {
+      return bool(
+         "show_diagnostics_yaml",
+         "Show diagnostics in YAML code", 
+         "Whether to show diagnostic messages for YAML code as you type.", 
+         true);
+   }
+
+   /**
+    * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
     */
    public PrefValue<Boolean> showDiagnosticsOther()
    {
       return bool(
          "show_diagnostics_other",
          "Show diagnostics in other languages", 
-         "Whether to show diagnostic messages for other types of code (not R or C++).", 
+         "Whether to show diagnostic messages for other types of code (not R, C++, or YAML).", 
          false);
    }
 
@@ -2846,6 +2858,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to show line numbers in the code editors used in visual mode
+    */
+   public PrefValue<Boolean> visualMarkdownCodeEditorLineNumbers()
+   {
+      return bool(
+         "visual_markdown_code_editor_line_numbers",
+         "Show line numbers in visual mode code blocks", 
+         "Whether to show line numbers in the code editors used in visual mode", 
+         false);
+   }
+
+   /**
     * The default visual editing mode font size, in points
     */
    public PrefValue<Integer> visualMarkdownEditingFontSizePoints()
@@ -3269,6 +3293,8 @@ public class UserPrefsAccessor extends Prefs
          showDiagnosticsR().setValue(layer, source.getBool("show_diagnostics_r"));
       if (source.hasKey("show_diagnostics_cpp"))
          showDiagnosticsCpp().setValue(layer, source.getBool("show_diagnostics_cpp"));
+      if (source.hasKey("show_diagnostics_yaml"))
+         showDiagnosticsYaml().setValue(layer, source.getBool("show_diagnostics_yaml"));
       if (source.hasKey("show_diagnostics_other"))
          showDiagnosticsOther().setValue(layer, source.getBool("show_diagnostics_other"));
       if (source.hasKey("style_diagnostics"))
@@ -3575,6 +3601,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
       if (source.hasKey("visual_markdown_editing_show_margin"))
          visualMarkdownEditingShowMargin().setValue(layer, source.getBool("visual_markdown_editing_show_margin"));
+      if (source.hasKey("visual_markdown_code_editor_line_numbers"))
+         visualMarkdownCodeEditorLineNumbers().setValue(layer, source.getBool("visual_markdown_code_editor_line_numbers"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("visual_markdown_code_editor"))
@@ -3673,6 +3701,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showFunctionSignatureTooltips());
       prefs.add(showDiagnosticsR());
       prefs.add(showDiagnosticsCpp());
+      prefs.add(showDiagnosticsYaml());
       prefs.add(showDiagnosticsOther());
       prefs.add(styleDiagnostics());
       prefs.add(diagnosticsOnSave());
@@ -3826,6 +3855,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(visualMarkdownEditingMaxContentWidth());
       prefs.add(visualMarkdownEditingShowDocOutline());
       prefs.add(visualMarkdownEditingShowMargin());
+      prefs.add(visualMarkdownCodeEditorLineNumbers());
       prefs.add(visualMarkdownEditingFontSizePoints());
       prefs.add(visualMarkdownCodeEditor());
       prefs.add(zoteroLibraries());

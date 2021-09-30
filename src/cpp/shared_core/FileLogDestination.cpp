@@ -62,7 +62,7 @@ FileLogOptions::FileLogOptions(FilePath in_directory,
    m_fileMode(s_defaultFileMode),
    m_maxSizeMb(s_defaultMaxSizeMb),
    m_rotationDays(s_defaultRotationDays),
-   m_maxRotations(s_defaultRotationDays),
+   m_maxRotations(s_defaultMaxRotations),
    m_deletionDays(s_defaultDeletionDays),
    m_doRotation(s_defaultDoRotation),
    m_includePid(s_defaultIncludePid),
@@ -536,6 +536,11 @@ FileLogDestination::~FileLogDestination()
 {
    if (m_impl->LogOutputStream.get())
       m_impl->LogOutputStream->flush();
+}
+
+std::string FileLogDestination::path()
+{
+   return m_impl->LogFile.getAbsolutePath();
 }
 
 void FileLogDestination::refresh(const RefreshParams& in_refreshParams)

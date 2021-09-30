@@ -104,9 +104,6 @@ pipeline {
           ).trim().toLowerCase()
 
           def buildDest =  "s3://rstudio-ide-build/desktop/macos/"
-          if (buildType != "daily") {
-            buildDest =  "s3://rstudio-ide-build-internal/${buildType}/desktop/macos/"
-          }
 
           withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
             sh "docker/jenkins/notarize-release.sh package/osx/build/${packageFile}"

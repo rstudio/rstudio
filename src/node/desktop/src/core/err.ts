@@ -43,3 +43,11 @@ export function isSuccessful(error: Err): boolean {
 export function isFailure(error: Err): boolean {
   return !!error;
 }
+
+export function safeError(error: unknown): Error {
+  if (error instanceof Error) {
+    return error;
+  } else {
+    return new Error('unknown error');
+  }
+}

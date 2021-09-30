@@ -226,7 +226,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             false);
       lessSpaced(visualEditorShowMargin);
       visualModeOptions.add(visualEditorShowMargin);
-      
+
+      // line numbers
+      CheckBox visualEditorShowLineNumbers = checkboxPref(
+         "Show line numbers in code blocks",
+         prefs_.visualMarkdownCodeEditorLineNumbers(),
+         false);
+      lessSpaced(visualEditorShowLineNumbers);
+      visualModeOptions.add(visualEditorShowLineNumbers);
 
       // content width
       visualModeContentWidth_ = numericPref(

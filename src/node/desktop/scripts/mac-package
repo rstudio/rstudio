@@ -48,12 +48,14 @@ function package() {
     exit 1
   fi
 
+  DEST_ROOT=./out/RStudio-darwin-x64
+  DEST_BASE=${DEST_ROOT}/RStudio.app/Contents
+
   section Erasing previous Electron package build
-  rm -rf package/*
+  rm -rf ${DEST_ROOT}
 
   section Performing Electron package build
   yarn package
-  DEST_BASE=./package/RStudio-darwin-x64/RStudio.app/Contents
   if [ ! -d ${DEST_BASE} ]; then
     error Package build output not found at ${DEST_BASE}
     exit 1
@@ -87,7 +89,7 @@ function package() {
 }
 
 function start() {
-  APP=./package/RStudio-darwin-x64/RStudio.app/Contents/MacOS/RStudio
+  APP=${DEST_BASE}/Contents/MacOS/RStudio
   if [ ! -f ${APP} ]; then
     package
   fi
@@ -132,5 +134,5 @@ if ${START}; then
   start 
 else
   package
-  open ./package/RStudio-darwin-x64/
+  open ${DEST_ROOT}
 fi

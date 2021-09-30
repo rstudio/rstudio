@@ -16,65 +16,43 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { renderTemplateString } from '../../../src/core/template-filter';
+import { resolveTemplateVar } from '../../../src/core/template-filter';
 
 describe('template-filter', () => {
-  it('renderTemplateString returns same string when no templates', () => {
-    const source =
-      `Hello world, how
-       are you?`;
-    const result = renderTemplateString(source, new Map<string, string>());
-    assert.equal(source, result);
-  });
-  it('renderTemplateString returns same string when string contains unmatched #', () => {
-    const source =
-      `Hello #world, how
-       are you?`;
-    const result = renderTemplateString(source, new Map<string, string>());
-    assert.equal(source, result);
-  });
-  it('renderTemplateString replaces single simple variable', () => {
-    const source =
-      `Hello #world#, how
-       are you?`;
+  it('resolveTemplateVar replaces single simple variable', () => {
     const vars = new Map<string, string>([
       ['world', 'People of Earth']
     ]);
-    const expected =
-      `Hello People of Earth, how
-       are you?`;
+    const expected = 'People of Earth';
 
-    const result = renderTemplateString(source, vars);
+    const result = resolveTemplateVar('world', vars);
     assert.equal(expected, result);
   });
-  it('renderTemplateString HTML-encodes variable', () => {
-    const source = 'Hello #world#, how are you?';
+  it('resolveTemplateVar HTML-encodes variable', () => {
     const vars = new Map<string, string>([
       ['world', '<my test>']
     ]);
-    const expected = 'Hello &lt;my test&gt;, how are you?';
+    const expected = '&lt;my test&gt;';
 
-    const result = renderTemplateString(source, vars);
+    const result = resolveTemplateVar('world', vars);
     assert.equal(expected, result);
   });
-  it('renderTemplateString passes through raw variable', () => {
-    const source = 'Hello #!world#, how are you?';
+  it('resolveTemplateVar passes through raw variable', () => {
     const vars = new Map<string, string>([
       ['world', '<my test>']
     ]);
-    const expected = 'Hello <my test>, how are you?';
+    const expected = '<my test>';
 
-    const result = renderTemplateString(source, vars);
+    const result = resolveTemplateVar('!world', vars);
     assert.equal(expected, result);
   });
-  it('renderTemplateString js-encodes variable', () => {
-    const source = 'Hello #\'world#, how are you?';
+  it('resolveTemplateVar js-encodes variable', () => {
     const vars = new Map<string, string>([
       ['world', '"hello"']
     ]);
-    const expected = 'Hello \\"hello\\", how are you?';
+    const expected = '\\"hello\\"';
 
-    const result = renderTemplateString(source, vars);
+    const result = resolveTemplateVar('\'world', vars);
     assert.equal(expected, result);
   });
-});
+}); 

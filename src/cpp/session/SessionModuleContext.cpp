@@ -1773,6 +1773,14 @@ SEXP rs_base64decode(SEXP dataSEXP, SEXP binarySEXP)
       return r::sexp::create(output, &protect);
 }
 
+SEXP rs_htmlEscape(SEXP textSEXP, SEXP attributeSEXP)
+{
+   std::string escaped = string_utils::htmlEscape(r::sexp::safeAsString(textSEXP), 
+         r::sexp::asLogical(attributeSEXP));
+   r::sexp::Protect protect;
+   return r::sexp::create(escaped, &protect);
+}
+
 SEXP rs_resolveAliasedPath(SEXP pathSEXP)
 {
    std::string path = r::sexp::asUtf8String(pathSEXP);
@@ -2987,6 +2995,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_base64decode);
    RS_REGISTER_CALL_METHOD(rs_base64encode);
    RS_REGISTER_CALL_METHOD(rs_base64encodeFile);
+   RS_REGISTER_CALL_METHOD(rs_htmlEscape);
    RS_REGISTER_CALL_METHOD(rs_enqueClientEvent);
    RS_REGISTER_CALL_METHOD(rs_ensureFileHidden);
    RS_REGISTER_CALL_METHOD(rs_generateShortUuid);

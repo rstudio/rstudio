@@ -219,6 +219,7 @@ public class TextEditingTarget implements
 
    public static final String RMD_VISUAL_MODE = "rmdVisualMode";
    public static final String RMD_VISUAL_MODE_WRAP_CONFIGURED = "rmdVisualWrapConfigured";
+   public static final String RMD_VISUAL_MODE_COLLAPSED_CHUNKS = "rmdVisualCollapsedChunks";
 
    public static final String SOFT_WRAP_LINES = "softWrapLines";
    public static final String USE_RAINBOW_PARENS = "useRainbowParens";
@@ -595,7 +596,7 @@ public class TextEditingTarget implements
                if (commands_.interruptR().isEnabled())
                   commands_.interruptR().execute();
             }
-            else if (continueSpecialCommentOnNewline(ne))
+            else if (TextEditingTargetQuartoHelper.continueSpecialCommentOnNewline(docDisplay_, ne))
             {
                // nothing to do; continueSpecialCommentOnNewline() does all the magic
             }
@@ -3455,15 +3456,17 @@ public class TextEditingTarget implements
          return;
       }
 
-      
       view_.adaptToExtendedFileType(extendedType);
+
+      // save new extended type (updateRmdFormat below reads it)
+      extendedType_ = extendedType;
+
       if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX) ||
           extendedType.equals(SourceDocument.XT_QUARTO_DOCUMENT))
       {
          updateRmdFormat();
       }
-      extendedType_ = extendedType;
-      
+
       quartoHelper_.manageCommands();
    }
 
@@ -7401,7 +7404,11 @@ public class TextEditingTarget implements
    @Handler
    void onFold()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.fold();
+      }
+      else if (useScopeTreeFolding())
       {
          Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
                                         docDisplay_.getSelectionEnd());
@@ -7433,7 +7440,11 @@ public class TextEditingTarget implements
    @Handler
    void onUnfold()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.unfold();
+      }
+      else if (useScopeTreeFolding())
       {
          Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
                                         docDisplay_.getSelectionEnd());
@@ -7497,7 +7508,6 @@ public class TextEditingTarget implements
          else
          {
             // If selection, unfold the selection
-
             docDisplay_.unfold(range);
          }
       }
@@ -7511,7 +7521,11 @@ public class TextEditingTarget implements
    @Handler
    void onFoldAll()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.foldAll();
+      }
+      else  if (useScopeTreeFolding())
       {
          // Fold all except anonymous braces
          HashSet<Integer> rowsFolded = new HashSet<>();
@@ -7531,12 +7545,17 @@ public class TextEditingTarget implements
       {
          docDisplay_.foldAll();
       }
+       
    }
 
    @Handler
    void onUnfoldAll()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.unfoldAll();
+      }
+      else  if (useScopeTreeFolding())
       {
          for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
             docDisplay_.unfold(f);
@@ -7987,6 +8006,15 @@ public class TextEditingTarget implements
    private final CompletionContext rContext_ = new CompletionContext() {
 
       @Override
+      public String getId()
+      {
+         if (docUpdateSentinel_ == null)
+            return null;
+         else
+            return docUpdateSentinel_.getId();
+      }
+      
+      @Override
       public String getPath()
       {
          if (docUpdateSentinel_ == null)
@@ -7996,13 +8024,10 @@ public class TextEditingTarget implements
       }
 
       @Override
-      public String getId()
+      public String getExtendedFileType()
       {
-         if (docUpdateSentinel_ == null)
-            return null;
-         else
-            return docUpdateSentinel_.getId();
-      }
+         return extendedType_;
+      }      
    };
 
    public CompletionContext getRCompletionContext()
@@ -8652,85 +8677,6 @@ public class TextEditingTarget implements
             }
          });
       }
-   }
-   
-   private boolean continueSpecialCommentOnNewline(NativeEvent event)
-   {
-      // don't do anything if we have a completion popup showing
-      if (docDisplay_.isPopupVisible())
-         return false;
-      
-      // only handle plain Enter insertions
-      if (event.getKeyCode() != KeyCodes.KEY_ENTER)
-         return false;
-      
-      int modifier = KeyboardShortcut.getModifierValue(event);
-      if (modifier != KeyboardShortcut.NONE)
-         return false;
-      
-      String line = docDisplay_.getCurrentLineUpToCursor();
-
-      // validate that this line begins with a comment character
-      // (necessary to check token type for e.g. Markdown documents)
-      // https://github.com/rstudio/rstudio/issues/6421
-      //
-      // note that we don't check all tokens here since we provide
-      // special token styling within some comments (e.g. roxygen)
-      JsArray<Token> tokens =
-            docDisplay_.getTokens(docDisplay_.getCursorPosition().getRow());
-               
-      for (int i = 0, n = tokens.length(); i < n; i++)
-      {
-         Token token = tokens.get(i);
-
-         // skip initial whitespace tokens if any
-         String value = token.getValue();
-         if (value.trim().isEmpty())
-            continue;
-
-         // check that we have a comment
-         if (token.hasType("comment"))
-            break;
-         
-         // the token isn't a comment; we shouldn't take action here
-         return false;
-      }
-      
-      // if this is an R Markdown chunk metadata comment, and this
-      // line is blank other than the comment prefix, remove that
-      // prefix and insert a newline (terminating the block)
-      {
-         Pattern pattern = Pattern.create("^\\s*#[|]\\s*$", "");
-         Match match = pattern.match(line, 0);
-         if (match != null)
-         {
-            Position cursorPos = docDisplay_.getCursorPosition();
-            Range range = Range.create(
-                  cursorPos.getRow(), 0,
-                  cursorPos.getRow() + 1, 0);
-            
-            event.stopPropagation();
-            event.preventDefault();
-            docDisplay_.replaceRange(range, "\n\n");
-            docDisplay_.moveCursorBackward();
-            docDisplay_.ensureCursorVisible();
-            return true;
-         }
-      }
-      
-      // NOTE: we are generous with our pattern definition here
-      // as we've already validated this is a comment token above
-      Pattern pattern = Pattern.create("^(\\s*(?:#+|%+|//+)['*+>|]\\s*)");
-      Match match = pattern.match(line, 0);
-      if (match == null)
-         return false;
-      
-      event.preventDefault();
-      event.stopPropagation();
-      docDisplay_.insertCode("\n" + match.getGroup(1));
-      docDisplay_.ensureCursorVisible();
-      
-      return true;
    }
 
    private StatusBar statusBar_;

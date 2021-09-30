@@ -122,6 +122,7 @@ namespace prefs {
 #define kShowFunctionSignatureTooltips "show_function_signature_tooltips"
 #define kShowDiagnosticsR "show_diagnostics_r"
 #define kShowDiagnosticsCpp "show_diagnostics_cpp"
+#define kShowDiagnosticsYaml "show_diagnostics_yaml"
 #define kShowDiagnosticsOther "show_diagnostics_other"
 #define kStyleDiagnostics "style_diagnostics"
 #define kDiagnosticsOnSave "diagnostics_on_save"
@@ -348,6 +349,7 @@ namespace prefs {
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingShowMargin "visual_markdown_editing_show_margin"
+#define kVisualMarkdownCodeEditorLineNumbers "visual_markdown_code_editor_line_numbers"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
 #define kVisualMarkdownCodeEditor "visual_markdown_code_editor"
 #define kVisualMarkdownCodeEditorAce "ace"
@@ -684,7 +686,13 @@ public:
    core::Error setShowDiagnosticsCpp(bool val);
 
    /**
-    * Whether to show diagnostic messages for other types of code (not R or C++).
+    * Whether to show diagnostic messages for YAML code as you type.
+    */
+   bool showDiagnosticsYaml();
+   core::Error setShowDiagnosticsYaml(bool val);
+
+   /**
+    * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
     */
    bool showDiagnosticsOther();
    core::Error setShowDiagnosticsOther(bool val);
@@ -1600,6 +1608,12 @@ public:
     */
    bool visualMarkdownEditingShowMargin();
    core::Error setVisualMarkdownEditingShowMargin(bool val);
+
+   /**
+    * Whether to show line numbers in the code editors used in visual mode
+    */
+   bool visualMarkdownCodeEditorLineNumbers();
+   core::Error setVisualMarkdownCodeEditorLineNumbers(bool val);
 
    /**
     * The default visual editing mode font size, in points

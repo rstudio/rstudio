@@ -33,12 +33,11 @@ import { xrefCompletionHandler } from './xref-completion';
 import { xrefPopupPlugin } from './xref-popup';
 import { kQuartoDocType } from '../../api/format';
 import { insertXref } from '../../behaviors/insert_xref/insert_xref';
-import { XRef, xrefKey } from '../../api/xref';
 
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([ A-Za-z0-9:-]*\))/g;
 
 const extension = (context: ExtensionContext): Extension | null => {
-  const { pandocExtensions, format, ui, navigation, server } = context;
+  const { pandocExtensions, format, ui, server } = context;
 
   if (!format.rmdExtensions.bookdownXRef) {
     return null;
@@ -185,7 +184,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             },
           ),
         ];
-      } else if (format.docTypes.includes(kQuartoDocType)) {
+      } else if (format.docTypes.includes(kQuartoDocType) && pandocExtensions.citations) {
         return [
           new ProsemirrorCommand(
             EditorCommandId.CrossReference,

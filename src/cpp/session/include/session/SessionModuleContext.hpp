@@ -50,6 +50,8 @@ namespace core {
    namespace system {
       class ProcessSupervisor;
       struct ProcessResult;
+      struct ProcessOptions;
+
    }
    namespace shell_utils {
       class ShellCommand;
@@ -759,24 +761,29 @@ struct QuartoNavigate
 {
    QuartoNavigate() : website(false) {}
    bool empty() const { return !website && source.empty(); }
-   static QuartoNavigate navWebsite()
+   static QuartoNavigate navWebsite(const std::string& jobId)
    {
       QuartoNavigate nav;
       nav.website = true;
+      nav.job_id = jobId;
       return nav;
    }
-   static QuartoNavigate navDoc(const std::string& source, const std::string& output)
+   static QuartoNavigate navDoc(const std::string& source, const std::string& output, const std::string& jobId)
    {
       QuartoNavigate nav;
       nav.website = false;
       nav.source = source;
       nav.output = output;
+      nav.job_id = jobId;
       return nav;
    }
    bool website;
    std::string source;
    std::string output;
+   std::string job_id;
 };
+
+core::json::Value quartoNavigateAsJson(const QuartoNavigate& quartoNav);
 
 
 void viewer(const std::string& url,
@@ -947,10 +954,20 @@ core::Error adaptToLanguage(const std::string& language);
 std::string pandocPath();
 std::string pandocCiteprocPath();
 
+core::Error runPandoc(const std::string& pandocPath,
+                      const std::vector<std::string>& args,
+                      const std::string& input,
+                      core::system::ProcessOptions options,
+                      core::system::ProcessResult* pResult);
 core::Error runPandoc(const std::vector<std::string>& args,
                       const std::string& input,
                       core::system::ProcessResult* pResult);
 
+core::Error runPandocAsync(const std::string& pandocPath,
+                           const std::vector<std::string>& args,
+                           const std::string&input,
+                           core::system::ProcessOptions options,
+                           const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
 core::Error runPandocAsync(const std::vector<std::string>& args,
                            const std::string& input,
                            const boost::function<void(const core::system::ProcessResult&)>& onCompleted);

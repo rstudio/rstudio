@@ -76,9 +76,6 @@ def s3_upload(type, flavor, os, arch) {
   ).trim().toLowerCase()
 
   def buildDest =  "s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
-  if (buildType != "daily") {
-    buildDest =  "s3://rstudio-ide-build-internal/${buildType}/${flavor}/${os}/${arch}/"
-  }
 
   // copy installer to s3
   sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
@@ -104,6 +101,11 @@ def s3_upload(type, flavor, os, arch) {
   // update daily build redirect
   withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
     sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
+    // for the last linux build, on OS only we also update windows to avoid the need for publish-daily-binary.bat
+    if (flavor == "desktop" && os == "centos8") {
+       def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+       sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
+    }
   }
 }
 
@@ -365,8 +367,9 @@ try {
                 def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}-RelWithDebInfo"
 
                 withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
-                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /ac package\\win32\\cert\\After_10-10-10_MSCV-VSClass3.cer /n \"RStudio, Inc.\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
-                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /kp package\\win32\\build\\${packageName}.exe"
+                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
+
+                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
                 }
               }
               stage('upload debug symbols') {
@@ -391,6 +394,7 @@ try {
                   bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.exe ${buildDest}/${packageName}.exe"
                   bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.zip ${buildDest}/${packageName}.zip"
                 }
+
               }
             }
           }

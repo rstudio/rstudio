@@ -19,7 +19,6 @@ package org.rstudio.studio.client.panmirror.findreplace;
 
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.KeyboardHelper;
-import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -53,16 +52,12 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
       // re-execute search on changes
       addFindKeyUpHandler((event) -> {
          
-         // reject keys w/ modifiers
-         if (KeyboardShortcut.getModifierValue(event.getNativeEvent()) != KeyboardShortcut.NONE)
-            return;
-         
-         // reject navigational and control keys
          int keycode = event.getNativeKeyCode();
-         if (KeyboardHelper.isNavigationalKeycode(keycode))
+         if (KeyboardHelper.isNavigationalKeycode(keycode) ||
+             KeyboardHelper.isControlKeycode(keycode))
          {
             return;
-         } 
+         }
          
          // perform incremental search
          performFind();

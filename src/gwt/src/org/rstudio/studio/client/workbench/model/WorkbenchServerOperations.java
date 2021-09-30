@@ -57,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSer
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
+import org.rstudio.studio.client.workbench.views.presentation2.model.Presentation2ServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerServerOperations;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -114,7 +115,8 @@ public interface WorkbenchServerOperations extends ConsoleServerOperations,
                                                    SecondaryReposServerOperations,
                                                    ThemeServerOperations,
                                                    TutorialServerOperations,
-                                                   PythonServerOperations
+                                                   PythonServerOperations,
+                                                   Presentation2ServerOperations
 {   
    void initializeForMainWorkbench();
    void disconnect();

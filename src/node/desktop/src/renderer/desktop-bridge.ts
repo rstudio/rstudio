@@ -670,5 +670,12 @@ export function getDesktopBridge() {
     signOut: () => {
       ipcRenderer.send('desktop_sign_out');
     },
+
+    getStartupErrorInfo: (varName: string, callback: VoidCallback<string>) => {
+      ipcRenderer
+        .invoke('desktop_startup_error_info', varName)
+        .then(info => callback(info))
+        .catch(error => reportIpcError('getStartupErrorInfo', error));
+    }
   };
 }

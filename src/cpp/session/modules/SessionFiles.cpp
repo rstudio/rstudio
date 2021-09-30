@@ -489,6 +489,29 @@ core::Error renameFile(const core::json::JsonRpcRequest& request,
    return Success();
 }
 
+// IN: String newPath
+core::Error touchFile(const core::json::JsonRpcRequest& request,
+                       json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string newPath;
+   Error error = json::readParams(request.params, &newPath);
+   if (error)
+      return error;
+
+   // if the destination already exists then send back file exists
+   FilePath destPath = module_context::resolveAliasedPath(newPath);
+   if (destPath.exists())
+      return fileExistsError(ERROR_LOCATION);
+   
+   // attempt to create the file
+   Error touchError = destPath.ensureFile();
+   if (touchError)
+      return touchError;
+   
+   return Success();
+}
+
 void handleFilesRequest(const http::Request& request, 
                         http::Response* pResponse)
 {   
@@ -1115,7 +1138,19 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    json::Object uploadJson;
    uploadJson["token"] = uploadTokenJson;
    uploadJson["overwrites"] = overwritesJson;
-   json::setJsonRpcResult(uploadJson, &response);
+
+   // write the JSON result, escaping HTML since the client requires text/html
+   // (see below)
+   json::JsonRpcResponse uploadResponse;
+   uploadResponse.setResult(uploadJson);
+   std::stringstream uploadResult;
+   uploadResponse.write(uploadResult);
+   Error error = response.setBody(string_utils::jsonHtmlEscape(uploadResult.str()));
+   if (error)
+   {
+      writeError(error);
+      return false;
+   }
 
    // response content type must always be text/html to be handled
    // properly by the browser/gwt on the client side
@@ -1380,6 +1415,7 @@ Error initialize()
       (bind(registerRpcMethod, "copy_file", copyFile))
       (bind(registerRpcMethod, "move_files", moveFiles))
       (bind(registerRpcMethod, "rename_file", renameFile))
+      (bind(registerRpcMethod, "touch_file", touchFile))
       (bind(registerUriHandler, "/files", handleFilesRequest))
       (bind(registerUploadHandler, "/upload", handleFileUploadRequestAsync))
       (bind(registerUriHandler, "/export", handleFileExportRequest))

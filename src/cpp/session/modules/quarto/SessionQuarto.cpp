@@ -51,6 +51,7 @@
 #include "SessionQuartoPreview.hpp"
 #include "SessionQuartoServe.hpp"
 #include "SessionQuartoXRefs.hpp"
+#include "SessionQuartoResources.hpp"
 
 using namespace rstudio::core;
 
@@ -65,6 +66,13 @@ const char * const kQuartoXt = "quarto-document";
 
 FilePath s_quartoPath;
 std::string s_quartoVersion;
+
+/*
+bool haveRequiredQuartoVersion(const std::string& version)
+{
+   return Version(s_quartoVersion) >= Version(version);
+}
+*/
 
 void detectQuartoInstallation()
 {
@@ -103,7 +111,7 @@ void detectQuartoInstallation()
             contents = "99.9.9";
          }
 
-         const Version kQuartoRequiredVersion("0.2.94");
+         const Version kQuartoRequiredVersion("0.2.180");
          boost::algorithm::trim(contents);
          Version quartoVersion(contents);
          if (quartoVersion >= kQuartoRequiredVersion)
@@ -524,13 +532,14 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string type, engine, kernel, venv, packages;
+   std::string type, engine, kernel, venv, packages, editor;
    error = json::readObject(projectOptionsJson,
                             "type", type,
                             "engine", engine,
                             "kernel", kernel,
                             "venv", venv,
-                            "packages", packages);
+                            "packages", packages,
+                            "editor", editor);
    if (error)
    {
       LOG_ERROR(error);
@@ -595,6 +604,13 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
                                  boost::algorithm::is_any_of(", "));
          args.push_back(boost::algorithm::join(pkgVector, ","));
       }
+   }
+
+   // visual editor (optional)
+   if (!editor.empty())
+   {
+      args.push_back("--editor");
+      args.push_back(editor);
    }
 
    // create the console process
@@ -737,10 +753,38 @@ QuartoConfig quartoConfig(bool refresh)
 
    if (refresh)
    {
+      // detect installation
       detectQuartoInstallation();
       s_quartoConfig = QuartoConfig();
       s_quartoConfig.installed = quartoIsInstalled();
       s_quartoConfig.version = s_quartoVersion;
+
+      // if it's installed then detect bin and resources directories
+      if (s_quartoConfig.installed)
+      {
+         core::system::ProcessResult result;
+         Error error = quartoExec({ "--paths" }, &result);
+         if (error)
+         {
+            LOG_ERROR(error);
+            s_quartoConfig = QuartoConfig();
+            return s_quartoConfig;
+         }
+         std::vector<std::string> paths;
+         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n\r"));
+         if (paths.size() >= 2)
+         {
+            s_quartoConfig.bin_path = string_utils::systemToUtf8(paths[0]);
+            s_quartoConfig.resources_path = string_utils::systemToUtf8(paths[1]);
+         }
+         else
+         {
+            LOG_ERROR_MESSAGE("Unexpected output from quarto --paths: " + result.stdOut);
+            s_quartoConfig = QuartoConfig();
+            return s_quartoConfig;
+         }
+      }
+
       using namespace session::projects;
       const ProjectContext& context = projectContext();
       if (context.hasProject())
@@ -765,7 +809,8 @@ QuartoConfig quartoConfig(bool refresh)
                                     &s_quartoConfig.project_type,
                                     &s_quartoConfig.project_output_dir,
                                     &s_quartoConfig.project_formats,
-                                    &s_quartoConfig.project_bibliographies);
+                                    &s_quartoConfig.project_bibliographies,
+                                    &s_quartoConfig.project_editor);
 
             // provide default output dirs
             if (s_quartoConfig.project_output_dir.length() == 0)
@@ -807,6 +852,7 @@ json::Object quartoConfigJSON(bool refresh)
    quartoConfigJSON["project_type"] = config.project_type;
    quartoConfigJSON["project_output_dir"] = config.project_output_dir;
    quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);
+   quartoConfigJSON["project_editor"] = config.project_editor;
    return quartoConfigJSON;
 }
 
@@ -859,7 +905,8 @@ void readQuartoProjectConfig(const FilePath& configFile,
                              std::string* pType,
                              std::string* pOutputDir,
                              std::vector<std::string>* pFormats,
-                             std::vector<std::string>* pBibliographies)
+                             std::vector<std::string>* pBibliographies,
+                             std::string* pEditor)
 {
    // read the config
    std::string configText;
@@ -919,6 +966,27 @@ void readQuartoProjectConfig(const FilePath& configFile,
                   for (auto formatIt = node.begin(); formatIt != node.end(); ++formatIt)
                   {
                      pBibliographies->push_back(formatIt->as<std::string>());
+                  }
+               }
+            }
+            else if (key == "editor" && pEditor != nullptr)
+            {
+               auto node = it->second;
+               if (node.Type() == YAML::NodeType::Scalar)
+               {
+                  *pEditor = node.as<std::string>();
+               }
+               else if (node.Type() == YAML::NodeType::Map)
+               {
+                  for (auto editorId = node.begin(); editorId != node.end(); ++editorId)
+                  {
+                     if ((editorId->first.as<std::string>() == "type" || editorId->first.as<std::string>() == "mode") &&
+                         editorId->second.Type() == YAML::NodeType::Scalar)
+                     {
+                        std::string value = editorId->second.as<std::string>();
+                        if (value == "visual" || value == "source")
+                           *pEditor = value;
+                     }
                   }
                }
             }
@@ -1003,6 +1071,7 @@ Error initialize()
      (boost::bind(quarto::preview::initialize))
      (boost::bind(quarto::serve::initialize))
      (boost::bind(quarto::xrefs::initialize))
+     (boost::bind(quarto::resources::initialize))
    ;
    return initBlock.execute();
 }

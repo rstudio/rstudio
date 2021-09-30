@@ -17,10 +17,17 @@ import { app, dialog } from 'electron';
 
 import { ConsoleLogger } from '../core/console-logger';
 import { LogLevel, parseCommandLineLogLevel, setLogger, setLoggerLevel } from '../core/logger';
+import { safeError } from '../core/err';
 
 import { Application, kLogLevel } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
+
+// Handle creating/removing shortcuts on Windows when installing/uninstalling.
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+if (require('electron-squirrel-startup') as boolean) {
+  app.quit();
+}
 
 /**
  * RStudio entrypoint
@@ -30,9 +37,10 @@ class RStudioMain {
   async main(): Promise<void> {
     try {
       await this.startup();
-    } catch (error) {
-      dialog.showErrorBox('Unhandled Exception', error.message);
-      console.error(error.message); // logging possibly not available this early in startup
+    } catch (error: unknown) {
+      const err = safeError(error);
+      dialog.showErrorBox('Unhandled Exception', err.message);
+      console.error(err.message); // logging possibly not available this early in startup
       app.exit(1);
     }
   }

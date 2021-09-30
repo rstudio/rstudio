@@ -399,6 +399,7 @@ function gfmExtensions() {
     '+pipe_tables',
     '+strikeout',
     '+task_lists',
+    '+tex_math_dollars'
   ];
   return extensions;
 }

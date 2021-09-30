@@ -10,9 +10,6 @@ rm -f /usr/sbin/rstudio-server
 rm -rf /tmp/rstudio-rsession
 rm -rf /tmp/rstudio-rserver
 
-# remove database files
-rm -rf /usr/lib/rstudio-server/db/*
-
 # determine which init system is in use
 # a variation on:
 # https://wiki.ubuntu.com/SystemdForUpstartUsers#How_to_identify_which_init_system_you_are_currently_booting_with
