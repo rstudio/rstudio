@@ -45,6 +45,9 @@ public class Presentation2 extends BasePresenter
    {
       void activate();
       void navigate(String url, QuartoNavigate nav);
+      
+      boolean connected();
+      
       void init(JsArray<RevealSlide> slides);
       void change(RevealSlide slide);
       void clear();
@@ -121,7 +124,7 @@ public class Presentation2 extends BasePresenter
       display_.activate();
       
       // navigate (or refresh if it's the same target as what we have)
-      if (!url.equals(activeUrl_))
+      if (!url.equals(activeUrl_) || !display_.connected())
       {
          activeUrl_ = url;
          activeSlideHref_ = url;

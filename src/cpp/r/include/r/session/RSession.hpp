@@ -213,6 +213,9 @@ void ensureDeserialized();
 // set client metrics 
 void setClientMetrics(const RClientMetrics& metrics);
 
+// report a warning to the user
+void reportWarningToConsole(const std::string& warning);
+
 // report a warning to the user and also log it
 void reportAndLogWarning(const std::string& warning);
 

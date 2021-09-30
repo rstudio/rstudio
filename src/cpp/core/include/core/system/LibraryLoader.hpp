@@ -26,6 +26,7 @@ class Error;
 namespace system {
 
 Error loadLibrary(const std::string& libPath, void** ppLib);
+Error verifyLibrary(const std::string& libPath);
 Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol);
 Error closeLibrary(void* pLib);
 
