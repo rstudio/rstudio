@@ -83,60 +83,54 @@ private:
 
    const FilePath& scratchPath() const { return scratchPath_; }
 
-   std::string project() const
-   {
-      std::string project;
-      if (!empty())
-      {
-         Error error = storage_->readProperty(id_, kProject, &project);
-         if (error)
-            LOG_ERROR(error);
-      }
-
-      return project;
-   }
-
-   void setProject(const std::string& project)
-   {
-      if (!empty())
-      {
-         Error error = storage_->writeProperty(id_, kProject, project);
-         if (error)
-            LOG_ERROR(error);
-      }
-   }
-
-   std::string workingDir() const
+   std::string getProperty(std::string const propertyName) const
    {
       std::string value;
       if (!empty())
       {
-         Error error = storage_->readProperty(id_, kWorkingDir, &value);
+         Error error = storage_->readProperty(id_, propertyName, &value);
          if (error)
             LOG_ERROR(error);
       }
+
       return value;
+   }
+
+   void setProperty(std::string const propertyName, std::string const value)
+   {
+      if (!empty())
+      {
+         Error error = storage_->writeProperty(id_, propertyName, value);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
+   std::string project() const
+   {
+      return getProperty(kProject);
+   }
+
+   void setProject(const std::string& project)
+   {
+      setProperty(kProject, project);
+   }
+
+   std::string workingDir() const
+   {
+      return getProperty(kWorkingDir);
    }
 
    void setWorkingDir(const std::string& workingDir)
    {
-      if (!empty())
-      {
-         Error error = storage_->writeProperty(id_, kWorkingDir, workingDir);
-         if (error)
-            LOG_ERROR(error);
-      }
+      setProperty(kWorkingDir, workingDir);
    }
 
    bool initial() const
    {
       if (!empty())
       {
-         std::string value;
-         Error error = storage_->readProperty(id_, kInitial, &value);
-         
-         if (error)
-            LOG_ERROR(error);
+         std::string value = getProperty(kInitial);
 
          if (!value.empty())
             return safe_convert::stringTo<bool>(value, false);
@@ -154,13 +148,8 @@ private:
 
    void setInitial(bool initial)
    {
-      if (!empty())
-      {
-         std::string value = safe_convert::numberToString(initial);
-         Error error = storage_->writeProperty(id_, kInitial, value);
-         if (error)
-            LOG_ERROR(error);
-      }
+      std::string value = safe_convert::numberToString(initial);
+      setProperty(kInitial, value);
    }
 
    double lastUsed() const
@@ -175,173 +164,81 @@ private:
 
    bool executing() const
    {
-      if (!empty())
-      {
-         std::string value = "";
-         Error error = storage_->readProperty(id_, kExecuting, &value);
+      std::string value = getProperty(kExecuting);
 
-         if (error)
-            LOG_ERROR(error);
-
-         if (!value.empty())
-            return safe_convert::stringTo<bool>(value, false);
-         else
-            return false;
-      }
+      if (!value.empty())
+         return safe_convert::stringTo<bool>(value, false);
       else
          return false;
    }
 
    void setExecuting(bool executing)
    {
-      if (!empty())
-      {
-         std::string value = safe_convert::numberToString(executing);
-         Error error = storage_->writeProperty(id_, kExecuting, value);
-
-         if (error)
-            LOG_ERROR(error);
-      }
+      std::string value = safe_convert::numberToString(executing);
+      setProperty(kExecuting, value);
    }
 
    bool savePromptRequired() const
    {
-      if (!empty())
-      {
-         std::string value = "";
-         Error error = storage_->readProperty(id_, kSavePromptRequired, &value);
+      std::string value = getProperty(kSavePromptRequired);
 
-         if (error)
-            LOG_ERROR(error);
-
-         if (!value.empty())
-            return safe_convert::stringTo<bool>(value, false);
-         else
-            return false;
-      }
+      if (!value.empty())
+         return safe_convert::stringTo<bool>(value, false);
       else
          return false;
    }
 
    void setSavePromptRequired(bool savePromptRequired)
    {
-      if (!empty())
-      {
          std::string value = safe_convert::numberToString(savePromptRequired);
-         Error error = storage_->writeProperty(id_, kSavePromptRequired, value);
-
-         if (error)
-            LOG_ERROR(error);
-      }
+         setProperty(kSavePromptRequired, value);
    }
 
 
    bool running() const
    {
-      if (!empty())
-      {
-         std::string value = "";
-         Error error = storage_->readProperty(id_, kRunning, &value);
+      std::string value = getProperty(kRunning);
 
-         if (error)
-            LOG_ERROR(error);
-
-         if (!value.empty())
-            return safe_convert::stringTo<bool>(value, false);
-         else
-            return false;
-      }
+      if (!value.empty())
+         return safe_convert::stringTo<bool>(value, false);
       else
          return false;
    }
 
    std::string rVersion()
    {
-      std::string value;
-      if (!empty())
-      {  
-         Error error = storage_->readProperty(id_, kRVersion, &value);
-
-         if (error)
-            LOG_ERROR(error);
-      }
-      return value;
+      getProperty(kRVersion);
    }
 
    std::string rVersionLabel()
    {
-      std::string value;
-      if (!empty())
-      {
-         Error error = storage_->readProperty(id_, kRVersionLabel, &value);
-
-         if (error)
-            LOG_ERROR(error);
-         
-      }
-      return value;
+      getProperty(kRVersionLabel);
    }
 
    std::string rVersionHome()
    {
-      std::string value;
-      if (!empty())
-      {
-         Error error = storage_->readProperty(id_, kRVersionHome, &value);
-         
-         if (error)
-            LOG_ERROR(error);
-      }
-      return std::string();
+      getProperty(kRVersionHome);
    }
 
    void setRVersion(const std::string& rVersion,
                     const std::string& rVersionHome,
                     const std::string& rVersionLabel = "")
    {
-      if (!empty())
-      {
-         Error error = storage_->writeProperty(id_, kRVersion, rVersion);
-
-         if (error)
-            LOG_ERROR(error);
-
-         error = storage_->writeProperty(id_, kRVersionHome, rVersionHome);
-
-         if (error)
-            LOG_ERROR(error);
-
-         error = storage_->writeProperty(id_, kRVersionLabel, rVersionLabel);
-
-         if (error)
-            LOG_ERROR(error);
-      }
+         setProperty(kRVersion, rVersion);
+         setProperty(kRVersionHome, rVersionHome);
+         setProperty(kRVersionLabel, rVersionLabel);
    }
 
    // historical note: this will be displayed as the session name
    std::string label()
    {
-      std::string value;
-      if (!empty())
-      {
-         Error error = storage_->readProperty(id_, kLabel, &value);
-         
-         if (error)
-            LOG_ERROR(error);
-      }
-      return value;
+      return getProperty(kLabel);
    }
 
    // historical note: this will be displayed as the session name
    void setLabel(const std::string& label)
    {
-      if (!empty())
-      {
-         Error error = storage_->writeProperty(id_, kLabel, label);
-
-         if (error)
-            LOG_ERROR(error);
-      }
+      setProperty(kLabel, label);
    }
 
    void beginSession(const std::string& rVersion,
@@ -448,46 +345,26 @@ private:
 
    void setTimestampProperty(const std::string& property)
    {
-      if (!empty())
-      {
-         double now = date_time::millisecondsSinceEpoch();
-         std::string value = safe_convert::numberToString(now);
-        storage_->writeProperty(id_, property, value);
-      }
+      double now = date_time::millisecondsSinceEpoch();
+      std::string value = safe_convert::numberToString(now);
+      setProperty(property, value);
    }
 
    double timestampProperty(const std::string& property) const
    {
-      if (!empty())
-      {
-         std::string value = "";
-         Error error = storage_->readProperty(id_, property, &value);
+      std::string value = getProperty(property);
 
-         if (error)
-            LOG_ERROR(error);
-
-         if (!value.empty())
-            return safe_convert::stringTo<double>(value, 0);
-         else
-            return 0;
-      }
+      if (!value.empty())
+         return safe_convert::stringTo<double>(value, 0);
       else
-      {
          return 0;
-      }
    }
 
 
    void setRunning(bool running)
    {
-      if (!empty())
-      {
          std::string value = safe_convert::numberToString(running);
-         Error error = storage_->writeProperty(id_, kRunning, value);
-
-         if(error) 
-            LOG_ERROR(error);
-      }
+         setProperty(kRunning, value);
    }
 
    std::shared_ptr<IActiveSessionStorage> storage_;
