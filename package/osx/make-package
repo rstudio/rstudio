@@ -305,9 +305,6 @@ if [ "${build_package}" = "1" ] && [ "${rstudio_target}" != "Electron" ]; then
    restore-java-home
 
    info "Done!"
-
-elif [ "${build_package}" = "1" ] && [ "${rstudio_target}" = "Electron" ]; then
-
 fi
 
 cd "${PKG_DIR}"
