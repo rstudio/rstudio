@@ -64,6 +64,7 @@
 #include <core/system/Crypto.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/LibraryLoader.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/Xdg.hpp>
 
@@ -460,6 +461,7 @@ Error runPreflightScript()
 
 // implemented below
 void stopMonitorWorkerThread();
+Error ensureLibRSoValid();
 
 void exitEarly(int status)
 {
@@ -698,6 +700,14 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
    if (s_printCharsetWarning)
       rstudio::r::exec::warning("Character set is not UTF-8; please change your locale");
+
+   error = ensureLibRSoValid();
+   if (error)
+   {
+      rstudio::r::session::reportWarningToConsole(error.getProperty("description")
+         + ". Please contact your system administrator to correct this libR.so install.");
+      LOG_ERROR(error);
+   }
 
    // propagate console history options
    rstudio::r::session::consoleHistory().setRemoveDuplicates(
@@ -1715,6 +1725,39 @@ bool ensureUtf8Charset()
    return false;
 #endif
 #endif
+}
+
+/*
+ * If linux couldn't load libR.so while the rsession binary was loading, it may
+ * have loaded a different libR.so from one of the default library locations:
+ * /lib/
+ * /usr/local/lib/
+ * /usr/local/lib64/R/
+ * etc.
+ * This is usually a system installation of R, potentially with a different
+ * version of R than this session is configured to run.
+ *
+ * This can put the session in a state where it thinks it's running one version
+ * of R, with all R libraries and paths set for version A, but the actual R
+ * version we're running is some version B. We check for that here so we can
+ * alert the user once R has completely loaded.
+ */
+Error ensureLibRSoValid()
+{
+#ifdef __linux__
+   std::string libPath = rsession::module_context::rHomeDir() + "/lib/libR.so";
+   Error libError = core::system::verifyLibrary(libPath);
+   if (libError)
+   {
+      libError.addProperty("description", "R shared object (" + libPath + ") failed load test with error: " + libError.getProperty("dlerror") +
+         "\nLinux may have loaded a different libR.so than requested. "
+         "This can result in \"package was built under R version X.Y.Z\" user warnings and R_HOME/R version mismatches."
+         "\nR_HOME: " + rsession::module_context::rHomeDir() +
+         "\nR Version: " + rsession::module_context::rVersion());
+      return libError;
+   }
+#endif
+   return Success();
 }
 
 // io_service for performing monitor work on the thread
