@@ -63,6 +63,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.ParallelCommandList;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
@@ -245,7 +246,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       table_.setEmptyTableWidget(emptyWidget);
       
       table_.setWidth("700px");
-      table_.setHeight("400px");
+      table_.setHeight("512px");
       
       // Add a 'global' click handler that performs a row selection regardless
       // of the cell clicked (it seems GWT clicks can be 'fussy' about whether
@@ -325,14 +326,18 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       addHandlers();
       
       setText("Keyboard Shortcuts");
-      addOkButton(new ThemedButton("Apply", new ClickHandler()
+
+      applyButton_ = new ThemedButton("Apply", new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
          {
             applyChanges();
          }
-      }));
+      });
+      applyButton_.setEnabled(false);
+
+      addOkButton(applyButton_);
       
       addCancelButton();
       
@@ -606,7 +611,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             
             // Differentiate between resetting the key sequence and
             // adding a new key sequence.
-            if (keys == binding.getOriginalKeySequence())
+            if (keys.equals(binding.getOriginalKeySequence()))
             {
                changes_.remove(binding);
                binding.restoreOriginalKeySequence();
@@ -1020,15 +1025,23 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private void collectShortcuts()
    {
       final List<KeyboardShortcutEntry> bindings = new ArrayList<>();
-      SerializedCommandQueue queue = new SerializedCommandQueue();
+      final SerializedCommandQueue queue = new SerializedCommandQueue();
+      ParallelCommandList parallelCmds = new ParallelCommandList(new Command()
+      {
+         @Override
+         public void execute() {
+            // run the final comands in order after loading has been completed
+            queue.run();
+         }
+      });
       
       // Load addins discovered as part of package exports. This registers
       // the addin, with the actual keybinding to be registered later,
       // if discovered.
-      queue.addCommand(new SerializedCommand()
+      final Command getAddins = new Command()
       {
          @Override
-         public void onExecute(final Command continuation)
+         public void execute()
          {
             RAddins rAddins = addins_.getRAddins();
             for (String key : JsUtil.asIterable(rAddins.keys()))
@@ -1043,12 +1056,14 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                      false,
                      AppCommand.Context.Addin));
             }
-            continuation.execute();
+            parallelCmds.run();
          }
-      });
+      };
       
       // Load saved addin bindings
-      queue.addCommand(new SerializedCommand()
+      // Do loading in parallel to be as fast as possible, they'll be sorted later
+      // anyway, so the order doesn't matter
+      parallelCmds.addCommand(new SerializedCommand()
       {
          @Override
          public void onExecute(final Command continuation)
@@ -1093,7 +1108,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       });
       
       // Ace loading command
-      queue.addCommand(new SerializedCommand()
+      parallelCmds.addCommand(new SerializedCommand()
       {
          @Override
          public void onExecute(final Command continuation)
@@ -1127,7 +1142,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       });
       
       // RStudio commands
-      queue.addCommand(new SerializedCommand()
+      parallelCmds.addCommand(new SerializedCommand()
       {
          @Override
          public void onExecute(final Command continuation)
@@ -1192,7 +1207,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             updateData(bindings);
             continuation.execute();
          }
-      });
+      }, false);
       
       queue.addCommand(new SerializedCommand()
       {
@@ -1206,15 +1221,16 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             }
             continuation.execute();
          }
-      });
+      }, false);
       
-      // Exhaust the queue
-      queue.run();
+      // start running everything by executing the getAddins command
+      getAddins.execute(); 
    }
    
    private void updateData(List<KeyboardShortcutEntry> bindings)
    {
       dataProvider_.setList(bindings);
+      applyButton_.setEnabled(changes_.size() > 0);
       
       // Loop through and update styling on each row.
       for (int i = 0; i < bindings.size(); i++)
@@ -1450,6 +1466,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private List<KeyboardShortcutEntry> originalBindings_;
    private Pair<Integer, Integer> lastSelectedIndices_;
    private boolean swallowNextKeyUpEvent_;
+
+   private ThemedButton applyButton_;
    
    // Columns ----
    private TextColumn<KeyboardShortcutEntry> nameColumn_;

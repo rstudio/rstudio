@@ -565,7 +565,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public String getMenuHTML(boolean mainMenu)
    {
       String label = getMenuLabel(false);
-      String shortcut = shortcut_ != null ? shortcut_.toString(true) : "";
+      String shortcut = getShortcut() != null ? getShortcut().toString(true) : "";
 
       return formatMenuLabel(
             getImageResource(), label, shortcut, rightImage_, rightImageDesc_);
@@ -704,15 +704,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
 
    public KeyboardShortcut getShortcut()
    {
-      return shortcut_;
+      return customShortcut_ != null ? customShortcut_ : shortcut_;
    }
 
    public KeySequence getKeySequence()
    {
-      if (shortcut_ == null)
+      if (getShortcut() == null)
          return new KeySequence();
 
-      return shortcut_.getKeySequence();
+      return getShortcut().getKeySequence();
    }
 
    public void setShortcut(KeyboardShortcut shortcut)
@@ -720,14 +720,19 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       shortcut_ = shortcut;
    }
 
+   public void setCustomShortcut(KeyboardShortcut shortcut)
+   {
+      customShortcut_ = shortcut;
+   }
+
    public String getShortcutRaw()
    {
-      return shortcut_ != null ? shortcut_.toString(false) : null;
+      return getShortcut() != null ? getShortcut().toString(false) : null;
    }
 
    public String getShortcutPrettyHtml()
    {
-      return shortcut_ != null ? shortcut_.toString(true) : null;
+      return getShortcut() != null ? getShortcut().toString(true) : null;
    }
 
    public boolean getExecutedFromShortcut()
@@ -797,6 +802,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    private String desc_;
    private ImageResource imageResource_;
    private KeyboardShortcut shortcut_;
+   private KeyboardShortcut customShortcut_;
    private String id_;
    private ImageResource rightImage_ = null;
    private String rightImageDesc_ = null;
