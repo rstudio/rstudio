@@ -12,7 +12,7 @@ module.exports = {
       const script = path.join(__dirname, 'scripts', 'import-resources.ts');
       const promise = execFile(tsNode, [script]);
       promise.catch(function (e) {
-        spin.fail(spinner.fail(e.message));
+        spin.fail(e.message);
       });
       const child = promise.child;
       child.stdout.on('data', function (data) {

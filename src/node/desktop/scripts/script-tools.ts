@@ -15,39 +15,72 @@
 
 import { promises } from 'fs';
 import path from 'path';
+import copy, { CopyErrorInfo } from 'recursive-copy';
 
+/**
+ * @returns Folder containing package.json for Electron project
+ */
 export function getProjectRootDir(): string {
   return path.dirname(__dirname);
 }
 
-export function getBuildOutputDir(): string {
-  return path.join(getProjectRootDir(), 'dist');
+/**
+ * @returns Folder where webpack puts build output
+ */
+export function getWebpackBuildOutputDir(): string {
+  return path.join(getProjectRootDir(), '.webpack');
 }
 
-export function getPackageOutputDir(): string {
+/**
+ * @returns Root folder where forge package builds are generated
+ */
+export function getForgePackageOutputDir(): string {
   return path.join(getProjectRootDir(), 'out');
 }
 
+/**
+ * @returns Platform-specific folder containing package build
+ */
 export function getPlatformPackageOutputDir(): string {
-  return path.join(getPackageOutputDir(), `RStudio-${process.platform}-x64`);
+  return path.join(getForgePackageOutputDir(), `RStudio-${process.platform}-x64`);
 }
 
-export function section(message: string): string {
-  return '\x1b[1m\x1b[36m==>\x1b[39m ' + message + '\x1b[0m';
-}
-
-export function info(message: string): string {
-  return '\x1b[1m[I]\x1b[0m ' + message;
-}
-
-export function warn(message: string): string {
-  return '\x1b[1m\x1b[31m[W]\x1b[0m ' + message;
-}
-
+/**
+ * @returns ProgramFiles folder on Windows
+ */
 export function getProgramFilesWindows(): string {
   return process.env['PROGRAMFILES'];
 }
 
+/**
+ * @returns make-package build output folder
+ */
+export function getPackageBuildDir(): string {
+  let buildDir = '';
+  let osFolder = '';
+  switch (process.platform) {
+    case 'darwin':
+      osFolder = 'osx';
+      break;
+    case 'linux':
+      osFolder = 'linux';
+      break;
+    case 'win32':
+      osFolder = 'win32';
+      break;
+    default:
+      console.error(`Unsupported platform: ${process.platform}`);
+      process.exit(1);
+  }
+
+  // package build output location: this assumes execution from the src/node/desktop folder
+  return path.join('..', '..', '..', 'package', osFolder, 'build');
+}
+
+/**
+ * @param path Path to test
+ * @returns true if path is a folder
+ */
 export async function isDirectory(path): Promise<boolean> {
   try {
     const stats = await promises.stat(path);
@@ -56,3 +89,24 @@ export async function isDirectory(path): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Copy files. Throws an exception on error.
+ * 
+ * @param files file(s) to copy
+ * @param sourceDir source directory
+ * @param destDir destination directory
+ */
+export async function copyFiles(files: Array<string>, sourceDir: string, destDir: string): Promise<void> {
+  await copy(
+    sourceDir,
+    destDir, {
+    filter: files, overwrite: true
+  }).on(copy.events.COPY_FILE_COMPLETE, function (copyOperation) {
+    // Too verbose normally but helpful when debugging
+    // console.log('Copied to ' + copyOperation.dest);
+  }).on(copy.events.ERROR, function (error: Error, info: CopyErrorInfo) {
+    throw error;
+  });
+}
+
