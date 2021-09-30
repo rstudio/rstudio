@@ -129,9 +129,6 @@ fi
 
 if [ "${rstudio_target}" = "Electron" ]
 then
-   # Electron toolchain does its own packaging as part of build, doesn't use cpack
-   build_package=0
-
    # At the moment only support building Electron for Intel
    build_x86_64=1
 else
@@ -255,8 +252,7 @@ if [ -n "${build_arm64}" ]; then
 
 fi
 
-
-if [ "${build_package}" = "1" ]; then
+if [ "${build_package}" = "1" ] && [ "${rstudio_target}" != "Electron" ]; then
 
    info "Building package ..."
 
@@ -309,6 +305,8 @@ if [ "${build_package}" = "1" ]; then
    restore-java-home
 
    info "Done!"
+
+elif [ "${build_package}" = "1" ] && [ "${rstudio_target}" = "Electron" ]; then
 
 fi
 

@@ -33,6 +33,7 @@ if(APPLE)
                   ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal)
 endif()
 
+# Install node_modules
 add_custom_command(
    TARGET electron_build
    PRE_BUILD
@@ -41,6 +42,7 @@ add_custom_command(
       ${YARN}
       "install")
 
+# Package and bundle the Electron application
 add_custom_command(
    TARGET electron_build
    POST_BUILD

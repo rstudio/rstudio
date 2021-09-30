@@ -10,7 +10,7 @@
   "scripts": {
     "clean": "ts-node scripts/clean.ts",
     "lint": "eslint ./src ./test",
-    "make": "yarn run package && ts-node scripts/import-resources && electron-forge make --skip-package",
+    "make": "electron-forge make",
     "package": "electron-forge package",
     "start": "electron-forge start",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
