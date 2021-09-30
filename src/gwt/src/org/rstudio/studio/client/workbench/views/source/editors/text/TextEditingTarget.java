@@ -82,6 +82,8 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.mathjax.MathJax;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorState;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorToken;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -6809,21 +6811,23 @@ public class TextEditingTarget implements
             // see if we should be using quarto preview
             String quartoFormat = useQuartoPreview();
             if (quartoFormat != null)
-            {
+            {               
                // quarto preview can reject the preview (e.g. if it turns
                // out this file is part of a website or book project)
-               server_.quartoPreview(docUpdateSentinel_.getPath(), 
-                                     quartoFormat, 
-                                     new SimpleRequestCallback<Boolean>() {
-                  @Override
-                  public void onResponseReceived(Boolean previewed)
-                  {
-                     if (!previewed) 
+               server_.quartoPreview(
+                  docUpdateSentinel_.getPath(), 
+                  quartoFormat, 
+                  isQuartoRevealJs(quartoFormat) ? presentationEditorState() : null,
+                  new SimpleRequestCallback<Boolean>() {
+                     @Override
+                     public void onResponseReceived(Boolean previewed)
                      {
-                        renderCmd.execute();
+                        if (!previewed) 
+                        {
+                           renderCmd.execute();
+                        }
                      }
-                  }
-               });
+                  });
             }
             else
             {
@@ -6870,6 +6874,18 @@ public class TextEditingTarget implements
             return true;
       }
       return false;
+   }
+   
+   
+   private PresentationEditorState presentationEditorState()
+   {
+      // TODO: if revealjs then provide JsArray<PresentationEditorToken>
+      // (from source or visual mode as appropriate -- it's mode dependent
+      // for accurate detection of the cursor location)
+      
+      JsArray<PresentationEditorToken> tokens = JsArray.createArray().cast();
+      
+      return PresentationEditorState.create(tokens);
    }
 
    private boolean isShinyDoc()
@@ -6919,8 +6935,13 @@ public class TextEditingTarget implements
          else
          {
             String format = outputFormats.get(0);
-            final ArrayList<String> previewFormats = new ArrayList<String>(
-                  Arrays.asList("pdf", "beamer", "html", "revealjs", "slidy"));
+            final ArrayList<String> previewFormats = new ArrayList<String>(Arrays.asList(
+                  QUARTO_PDF_FORMAT, 
+                  QUARTO_BEAMER_FORMAT, 
+                  QUARTO_HTML_FORMAT, 
+                  QUARTO_REVEALJS_FORMAT, 
+                  QUARTO_SLIDY_FORMAT)
+            );
             return previewFormats.stream()
                .filter(fmt -> format.startsWith(fmt))
                .findAny()
@@ -6933,6 +6954,17 @@ public class TextEditingTarget implements
          return null;
       }
      
+   }
+   
+   private static final String QUARTO_PDF_FORMAT = "pdf";
+   private static final String QUARTO_BEAMER_FORMAT = "beamer";
+   private static final String QUARTO_HTML_FORMAT = "html";
+   private static final String QUARTO_SLIDY_FORMAT = "slidy";
+   private static final String QUARTO_REVEALJS_FORMAT = "revealjs";
+   
+   private boolean isQuartoRevealJs(String format)
+   {
+      return format.startsWith(QUARTO_REVEALJS_FORMAT);
    }
    
    private boolean isQuartoWebsiteDoc()

@@ -158,6 +158,12 @@ public class Presentation2 extends BasePresenter
    @Handler
    void onPresentation2Edit()
    {
+      // TODO: fire a special event here that includes the slide index
+      // and the slide-level (passed to us in the PresentationPreviewEvent)
+      // The text and visual editors will then have separate logic (e.g.
+      // as they do for crossrefs) for determining where to place
+      // the cursor for the edit operation`
+      
       if (activePresentation_ != null)
       {
          fileTypeRegistry_.editFile(
