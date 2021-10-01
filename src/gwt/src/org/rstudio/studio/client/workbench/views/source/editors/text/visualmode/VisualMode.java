@@ -1397,6 +1397,10 @@ public class VisualMode implements VisualModeEditorSync,
     */
    private void syncStatusBarLocation()
    {
+      // bail if no panmirror
+      if (panmirror_ == null)
+         return;
+      
       // Get the current outline so we can look up details of the selection
       PanmirrorOutlineItem[] items = panmirror_.getOutline();
       String targetId = panmirror_.getSelection().navigation_id;
