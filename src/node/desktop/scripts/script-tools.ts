@@ -16,6 +16,7 @@
 import { promises } from 'fs';
 import path from 'path';
 import copy, { CopyErrorInfo } from 'recursive-copy';
+import lineReader from 'line-reader';
 
 /**
  * @returns Folder containing package.json for Electron project
@@ -41,7 +42,7 @@ export function getForgePackageOutputDir(): string {
 /**
  * @returns Platform-specific folder containing package build
  */
-export function getPlatformPackageOutputDir(): string {
+export function getForgePlatformOutputDir(): string {
   return path.join(getForgePackageOutputDir(), `RStudio-${process.platform}-x64`);
 }
 
@@ -55,7 +56,7 @@ export function getProgramFilesWindows(): string {
 /**
  * @returns make-package build output folder
  */
-export function getPackageBuildDir(): string {
+export function getMakePackageBuildDir(): string {
   let buildDir = '';
   let osFolder = '';
   switch (process.platform) {
@@ -73,8 +74,51 @@ export function getPackageBuildDir(): string {
       process.exit(1);
   }
 
-  // package build output location: this assumes execution from the src/node/desktop folder
+  // package build output location: this assumes script execution from the src/node/desktop folder
   return path.join('..', '..', '..', 'package', osFolder, 'build');
+}
+
+// promisify line-reader
+const eachLine = async function(filename: string, iteratee: (line: string) => void): Promise<void> {
+  return new Promise(function(resolve, reject) {
+    lineReader.eachLine(filename, iteratee, function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+/**
+ * Load properties from a CMakeCache.txt-formatted file.
+ * 
+ * Syntax:
+ *   - lines starting with '#' or '//' are ignored (comments) as are blank lines
+ *   - VAR:TYPE=value
+ *       - the TYPE is ignored and everything is returned as a string
+ *   - VAR:TYPE=
+ *       - variables with no value are ignored
+ * 
+ * @param file full path to CMakeCache.txt-formatted file (including filename)
+ * @returns name/values
+ */
+export async function loadCMakeVars(file: string): Promise<Map<string, string>> {
+  const results = new Map<string, string>();
+
+    await eachLine(file, (line: string) => {
+      line = line.trim();
+      if (line.length > 0) {
+        if (!line.startsWith('//') && !line.startsWith('#')) {
+          const match = /^(.+):.+=(.+)/.exec(line);
+          if (match) {
+            results.set(match[1], match[2]);
+          }
+        }
+      }
+    });
+  return results;
 }
 
 /**
@@ -101,7 +145,7 @@ export async function copyFiles(files: Array<string>, sourceDir: string, destDir
   await copy(
     sourceDir,
     destDir, {
-    filter: files, overwrite: true
+    filter: files, dot: true,
   }).on(copy.events.COPY_FILE_COMPLETE, function (copyOperation) {
     // Too verbose normally but helpful when debugging
     // console.log('Copied to ' + copyOperation.dest);

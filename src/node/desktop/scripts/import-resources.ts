@@ -90,20 +90,125 @@ async function packageLinux(): Promise<number> {
  * Mac implementation
  */
 async function packageDarwin(): Promise<number> {
-  const buildDir = tools.getPackageBuildDir();
-  const gwtFolder = path.join(buildDir, 'gwt');
-  const cppFolder = path.join(buildDir, 'src', 'cpp');
+  const sourceDir = path.join(tools.getProjectRootDir(), '..', '..');
+  const buildDir = tools.getMakePackageBuildDir();
+  const cppBuildDir = path.join(buildDir, 'src', 'cpp');
+  const cppSourceDir = path.join(sourceDir, 'cpp');
   const nodeFolder = path.join(buildDir, 'src', 'node');
-  const packageDir = tools.getForgePackageOutputDir();
+
+  const packageDir = tools.getForgePlatformOutputDir();
   const appDest = path.join(packageDir, 'RStudio.app', 'Contents', 'resources', 'app');
+  const appResDest = path.join(appDest, 'resources');
   const binDest = path.join(appDest, 'bin');
 
   try {
-    await tools.copyFiles(['diagnostics'], path.join(cppFolder, 'diagnostics'), binDest);
+    const cmakeVars = await tools.loadCMakeVars(path.join(buildDir, 'CMakeCache.txt'));
+
+    // cpp/session
+    const sessionCppDir = path.join(cppSourceDir, 'session');
+    const sessionBuildDir = path.join(cppBuildDir, 'session');
+    await tools.copyFiles(
+      ['r-ldpath', 'rsession'],
+      sessionBuildDir,
+      binDest);
+    await tools.copyFiles(
+      ['*.html', '*.css', '*.js', '*.lua', '*.csl', 'NOTICE'],
+      path.join(sessionCppDir, 'resources'),
+      appResDest);
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'templates'),
+      path.join(appResDest, 'templates'));
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'presentation'),
+      path.join(appResDest, 'presentation'));
+    await tools.copyFiles(
+      ['CITATION'],
+      sessionBuildDir,
+      appResDest);
+    await tools.copyFiles(
+      ['*.rstheme', '*.R'],
+      path.join(sessionCppDir, 'resources', 'themes'),
+      path.join(appResDest, 'themes'));
+    await tools.copyFiles(
+      ['*.css'],
+      path.join(sessionCppDir, 'resources', 'themes', 'css'),
+      path.join(appResDest, 'themes', 'css'));
+    await tools.copyFiles(
+      ['*.R'],
+      path.join(sessionBuildDir, 'modules', 'R'),
+      path.join(appDest, 'R', 'modules'));
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'connections'),
+      path.join(appResDest, 'connections'));
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'schema'),
+      path.join(appResDest, 'schema'));
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'dependencies'),
+      path.join(appResDest, 'dependencies'));
+    await tools.copyFiles(
+      ['**/*'],
+      cmakeVars.get('RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR'),
+      path.join(appResDest, path.basename(cmakeVars.get('RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR'))));
+    await tools.copyFiles(
+      ['**/*'],
+      cmakeVars.get('RSTUDIO_DEPENDENCIES_MATHJAX_DIR'),
+      path.join(appResDest, path.basename(cmakeVars.get('RSTUDIO_DEPENDENCIES_MATHJAX_DIR'))));
+    await tools.copyFiles(
+      ['pandoc*'],
+      cmakeVars.get('RSTUDIO_DEPENDENCIES_PANDOC_DIR'),
+      path.join(binDest, 'pandoc'));
+    if (cmakeVars.get('RSTUDIO_EMBEDDED_PACKAGES')) {
+      // TODO - Embedded R Packages
+      throw new Error('Embedding R Packages NYI for Electron packaging');
+    }
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'pdfjs'),
+      path.join(appResDest, 'pdfjs'));
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'grid'),
+      path.join(appResDest, 'grid'));
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'help_resources'),
+      path.join(appResDest, 'help_resources'));
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'pagedtable'),
+      path.join(appResDest, 'pagedtable'));
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'profiler'),
+      path.join(appResDest, 'profiles'));
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'tutorial_resources'),
+      path.join(appResDest, 'tutorial_resources'));
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(sessionCppDir, 'resources', 'terminal'),
+      path.join(appResDest, 'terminal'));
+
+    // TODO : win32 has several additional things installed via session
+
+    // cpp/session/postback
+    await tools.copyFiles(['rpostback'], path.join(cppBuildDir, 'session', 'postback'), binDest);
+    await tools.copyFiles(['**/*'], path.join(cppBuildDir, 'session', 'postback', 'postback'), path.join(binDest, 'postback'));
+
+    // cpp/diagnostics
+    await tools.copyFiles(['diagnostics'], path.join(cppBuildDir, 'diagnostics'), binDest);
+
+    // node/desktop
     await tools.copyFiles(['mac-terminal'], path.join(nodeFolder, 'desktop'), binDest);
-    await tools.copyFiles(['r-ldpath', 'rsession'], path.join(cppFolder, 'session'), binDest);
-    await tools.copyFiles(['rpostback'], path.join(cppFolder, 'session', 'postback'), binDest);
-    await tools.copyFiles(['*'], path.join(cppFolder, 'session', 'postback', 'postback'), path.join(binDest, 'postback'));
+
+
   } catch (e) {
     console.error(e.message);
     return 1;
