@@ -23,6 +23,8 @@
    <property name="lib.dir" value="./lib"/>        <!-- libraries (GWT, GIN, etc. -->
    <property name="tools.dir" value="./tools"/>    <!-- other tools -->
    <property name="extras.dir" value="./extras"/>  <!-- extras: symbol maps, etc. -->
+   <property name="gwt.xmx" value="-Xmx1536M"/>    <!-- set maximum Java heap size -->
+   <property name="gwt.xss" value="-Xss16M"/>      <!-- set java thread stack size -->
 
    <taskdef name="jscomp"
             classname="com.google.javascript.jscomp.ant.CompileTask"
