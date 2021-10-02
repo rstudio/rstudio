@@ -74,6 +74,10 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    {
       toolbar_ = new Toolbar("Presentation Toolbar");
       
+      toolbar_.addLeftWidget(commands_.presentation2Prev().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.presentation2Next().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      
       toolbar_.addLeftWidget(commands_.presentation2ViewInBrowser().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.presentation2Print().createToolbarButton());
@@ -95,9 +99,6 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    protected SecondaryToolbar createSecondaryToolbar()
    {
       SecondaryToolbar toolbar = new SecondaryToolbar("Presentation Slides Toolbar");
-      toolbar.addLeftWidget(commands_.presentation2Prev().createToolbarButton());
-      toolbar.addLeftWidget(commands_.presentation2Next().createToolbarButton());
-      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.presentation2Home().createToolbarButton());
       toolbar.addLeftSeparator();
       slidesMenuLabel_ = new Label();
@@ -105,7 +106,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       slidesMenuLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles().toolbarButtonLabel());   
       slidesMenu_ = new SlidesPopupMenu();
       slidesMenuWidget_ = toolbar.addLeftPopupMenu(slidesMenuLabel_, slidesMenu_);
-      slidesMenuWidget_.getElement().getStyle().setMarginTop(-1, Unit.PX);
+      slidesMenuWidget_.getElement().getStyle().setMarginTop(-4, Unit.PX);
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.presentation2Edit().createToolbarButton());
       return toolbar;
@@ -135,8 +136,8 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       if (width == 0)
          return;
       
-      slidesMenuLabel_.getElement().getStyle().setProperty("maxWidth", (width - 160) + "px");
-      slidesMenuWidget_.getElement().getStyle().setProperty("maxWidth", (width - 130) + "px");
+      slidesMenuLabel_.getElement().getStyle().setProperty("maxWidth", (width - 130) + "px");
+      slidesMenuWidget_.getElement().getStyle().setProperty("maxWidth", (width - 100) + "px");
    
    }
    
