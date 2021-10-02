@@ -16,8 +16,8 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.common.presentation2.model.PresentationEditorState;
-import org.rstudio.studio.client.common.presentation2.model.PresentationEditorToken;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocationItem;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -33,9 +33,9 @@ public class TextEditingTargetPresentation2Helper
       docDisplay_ = docDisplay;
    }
    
-   public PresentationEditorState getPresentationEditorState()
+   public PresentationEditorLocation getPresentationEditorLocation()
    {
-      JsArray<PresentationEditorToken> tokens = JsArray.createArray().cast();
+      JsArray<PresentationEditorLocationItem> items = JsArray.createArray().cast();
       
       boolean foundCursor = false;
       Token lastRowToken = null;
@@ -52,7 +52,7 @@ public class TextEditingTargetPresentation2Helper
          // horizontal rule
          if (type.equals("constant.hr"))
          {
-            tokens.push(PresentationEditorToken.hr());
+            items.push(PresentationEditorLocationItem.hr());
          }
          
          // headings can be atx style or can actually be an 
@@ -66,13 +66,13 @@ public class TextEditingTargetPresentation2Helper
             // atx style
             if (rowToken.getValue().trim().startsWith("#"))
             {
-               tokens.push(PresentationEditorToken.heading(level));
+               items.push(PresentationEditorLocationItem.heading(level));
             }
             else if (rowToken.getValue().startsWith("---") &&
                      lastRowToken != null &&
                      !lastRowToken.getType().startsWith("markup.heading"))
             {
-               tokens.push(PresentationEditorToken.hr());
+               items.push(PresentationEditorLocationItem.hr());
             }
          }
          
@@ -81,7 +81,7 @@ public class TextEditingTargetPresentation2Helper
          if (!foundCursor && linePos.isAfterOrEqualTo(docDisplay_.getCursorPosition()))
          {
             foundCursor = true;
-            tokens.push(PresentationEditorToken.cursor());
+            items.push(PresentationEditorLocationItem.cursor());
          }
          
          //  note last row token
@@ -93,9 +93,14 @@ public class TextEditingTargetPresentation2Helper
       YamlTree tree = new YamlTree(yaml);
       String title = tree.getKeyValue("title");
       if (!StringUtil.isNullOrEmpty(title))
-         tokens.unshift(PresentationEditorToken.title());
+         items.unshift(PresentationEditorLocationItem.title());
           
-      return PresentationEditorState.create(tokens);
+      return PresentationEditorLocation.create(items);
+   }
+   
+   public void navigationToPresentationEditorLocation(PresentationEditorLocation location)
+   {
+      // TODO: implement nativation to state
    }
   
    private final DocDisplay docDisplay_;

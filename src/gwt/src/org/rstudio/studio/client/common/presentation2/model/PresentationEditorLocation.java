@@ -1,5 +1,5 @@
 /*
- * PresentationEditorState.java
+ * PresentationEditorLocation.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -17,21 +17,21 @@ package org.rstudio.studio.client.common.presentation2.model;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
-public class PresentationEditorState extends JavaScriptObject
+public class PresentationEditorLocation extends JavaScriptObject
 {   
-   protected PresentationEditorState()
+   protected PresentationEditorLocation()
    {
    }
    
-   public static final native PresentationEditorState create(JsArray<PresentationEditorToken> tokens) /*-{
+   public static final native PresentationEditorLocation create(JsArray<PresentationEditorLocationItem> items) /*-{
       return {
-         tokens: tokens
+         items: items
       };
    }-*/;
    
      
-   public final native JsArray<PresentationEditorToken> getTokens() /*-{
-      return this.tokens;
+   public final native JsArray<PresentationEditorLocationItem> getItems() /*-{
+      return this.items;
    }-*/;
  
 }

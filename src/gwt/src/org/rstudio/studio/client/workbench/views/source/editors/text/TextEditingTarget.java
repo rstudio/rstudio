@@ -82,7 +82,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.mathjax.MathJax;
-import org.rstudio.studio.client.common.presentation2.model.PresentationEditorState;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -1255,6 +1255,22 @@ public class TextEditingTarget implements
          }
       }
 
+   }
+   
+   public void navigateToPresentationEditorLocation(PresentationEditorLocation location)
+   {
+      if (isVisualModeActivated())
+      {
+         ensureVisualModeActive(() -> {
+            Scheduler.get().scheduleDeferred(() -> {
+               visualMode_.navigateToPresentationEditorLocation(location);
+            });
+         });
+      }
+      else
+      {
+         presentation2Helper_.navigationToPresentationEditorLocation(location);
+      }
    }
 
    // the navigateToPosition methods are called by modules that explicitly
@@ -6816,7 +6832,7 @@ public class TextEditingTarget implements
                server_.quartoPreview(
                   docUpdateSentinel_.getPath(), 
                   quartoFormat, 
-                  isQuartoRevealJs(quartoFormat) ? presentationEditorState() : null,
+                  isQuartoRevealJs(quartoFormat) ? presentationEditorLocation() : null,
                   new SimpleRequestCallback<Boolean>() {
                      @Override
                      public void onResponseReceived(Boolean previewed)
@@ -6876,19 +6892,18 @@ public class TextEditingTarget implements
    }
    
    
-   private PresentationEditorState presentationEditorState()
+   private PresentationEditorLocation presentationEditorLocation()
    {
-      
-      PresentationEditorState state;
+      PresentationEditorLocation location;
       if (isVisualEditorActive())
       {
-         state = visualMode_.getPresentationEditorState();
+         location = visualMode_.getPresentationEditorLocation();
       }
       else
       {
-         state = presentation2Helper_.getPresentationEditorState();
+         location = presentation2Helper_.getPresentationEditorLocation();
       } 
-      return state;
+      return location;
    }
 
    private boolean isShinyDoc()

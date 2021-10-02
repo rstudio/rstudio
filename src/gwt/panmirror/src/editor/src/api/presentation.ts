@@ -18,33 +18,33 @@ import { EditorState } from 'prosemirror-state';
 import { findTopLevelBodyNodes } from './node';
 import { titleFromState } from './yaml';
 
-export interface PresentationEditorState {
-  tokens: PresentationEditorToken[];
+export interface PresentationEditorLocation {
+  items: PresentationEditorLocationItem[];
 }
 
-export const kPresentationEditorTokenTitle = "title";
-export const kPresentationEditorTokenHeading = "heading";
-export const kPresentationEditorTokenHr = "hr";
-export const kPresentationEditorTokenCursor = "cursor";
+export const kPresentationEditorLocationTitle = "title";
+export const kPresentationEditorLocationHeading = "heading";
+export const kPresentationEditorLocationHr = "hr";
+export const kPresentationEditorLocationCursor = "cursor";
 
-export interface PresentationEditorToken {
+export interface PresentationEditorLocationItem {
   type: string;
   level: number;
 }
 
-export function getPresentationEditorState(state: EditorState) : PresentationEditorState {
+export function getPresentationEditorLocation(state: EditorState) : PresentationEditorLocation {
   
   // not the cursor position
   const cursorPos = state.selection.from;
 
-  // build list of tokens
-  const tokens: PresentationEditorToken[] = [];
+  // build list of items
+  const items: PresentationEditorLocationItem[] = [];
 
   // start with title if we have one. note that pandoc will make the title slide
   // first no matter where it appears in the document, so we do the same here
   const title = titleFromState(state);
   if (title) {
-    tokens.push({ type: kPresentationEditorTokenTitle, level: 0} );
+    items.push({ type: kPresentationEditorLocationTitle, level: 0} );
   }
 
   // get top level headings and horizontal rules
@@ -60,26 +60,30 @@ export function getPresentationEditorState(state: EditorState) : PresentationEdi
     // if node is past the selection then add the cursor token
     if (!foundCursor && (nodeWithPos.pos > cursorPos)) {
       foundCursor = true;
-      tokens.push({
-        type: kPresentationEditorTokenCursor,
+      items.push({
+        type: kPresentationEditorLocationCursor,
         level: 0
       });
     }
     // add the node with the requisite type
     const node = nodeWithPos.node;
     if (node.type === schema.nodes.heading) {
-      tokens.push({
-        type: kPresentationEditorTokenHeading,
+      items.push({
+        type: kPresentationEditorLocationHeading,
         level: node.attrs.level || 0
       });
     } else {
-      tokens.push({
-        type: kPresentationEditorTokenHr,
+      items.push({
+        type: kPresentationEditorLocationHr,
         level: 0
       });
     }
   }
 
   // return the tokens
-  return { tokens };
+  return { items };
+}
+
+export function navigateToPresentationEditorLocation(_location: PresentationEditorLocation) {
+  // TODO: implement navigation
 }

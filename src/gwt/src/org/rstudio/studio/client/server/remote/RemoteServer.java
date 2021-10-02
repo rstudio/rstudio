@@ -56,7 +56,7 @@ import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
-import org.rstudio.studio.client.common.presentation2.model.PresentationEditorState;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
@@ -6413,7 +6413,7 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void quartoPreview(String file, String format, PresentationEditorState editorState,
+   public void quartoPreview(String file, String format, PresentationEditorLocation editorState,
                             ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();

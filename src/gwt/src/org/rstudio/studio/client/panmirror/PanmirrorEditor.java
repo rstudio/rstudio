@@ -19,7 +19,7 @@ import jsinterop.annotations.JsType;
 
 import org.rstudio.core.client.jsinterop.JsConsumerFunction;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
-import org.rstudio.studio.client.common.presentation2.model.PresentationEditorState;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenus;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
@@ -92,7 +92,8 @@ public class PanmirrorEditor
    public native String getYamlFrontMatter();
    public native void applyYamlFrontMatter(String yaml);
    
-   public native PresentationEditorState getPresentationEditorState();
+   public native PresentationEditorLocation getPresentationEditorLocation();
+   public native void navigateToPresentationEditorLocation(PresentationEditorLocation location);
    
    public native void focus();
    public native void blur();
@@ -114,5 +115,4 @@ public class PanmirrorEditor
    public native PanmirrorPandocFormatConfig getPandocFormatConfig(boolean isRmd);
    
    public native void enableDevTools(JsObject initFn);
- 
 }

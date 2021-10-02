@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.presentation2.events;
 
 
-import org.rstudio.studio.client.common.presentation2.model.PresentationEditorState;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -37,7 +37,7 @@ public class PresentationPreviewEvent extends GwtEvent<PresentationPreviewEvent.
          return this.quarto_navigation;
       }-*/;
       
-      public final native PresentationEditorState getEditorState() /*-{
+      public final native PresentationEditorLocation getEditorState() /*-{
          return this.editor_state;
       }-*/;
       

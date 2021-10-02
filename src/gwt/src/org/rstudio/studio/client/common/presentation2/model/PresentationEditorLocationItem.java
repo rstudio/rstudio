@@ -1,5 +1,5 @@
 /*
- * PresentationToken.java
+ * PresentationEditorLocationItem.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,7 +16,7 @@ package org.rstudio.studio.client.common.presentation2.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
-public class PresentationEditorToken extends JavaScriptObject
+public class PresentationEditorLocationItem extends JavaScriptObject
 {
    public static final String TITLE = "title";
    public static final String HEADING = "heading";
@@ -24,25 +24,25 @@ public class PresentationEditorToken extends JavaScriptObject
    public static final String CURSOR = "cursor";
    
    
-   protected PresentationEditorToken()
+   protected PresentationEditorLocationItem()
    {
    }
    
-   public static final native PresentationEditorToken title() /*-{
+   public static final native PresentationEditorLocationItem title() /*-{
       return {
          type: 'title',
          level: 0
       };
    }-*/;
    
-   public static final native PresentationEditorToken heading(int level) /*-{
+   public static final native PresentationEditorLocationItem heading(int level) /*-{
       return {
          type: 'heading',
          level: level
       };
    }-*/;
    
-   public static final native PresentationEditorToken hr() /*-{
+   public static final native PresentationEditorLocationItem hr() /*-{
       return {
          type: 'hr',
          level: 0
@@ -50,7 +50,7 @@ public class PresentationEditorToken extends JavaScriptObject
    }-*/;
    
    
-   public static final native PresentationEditorToken cursor() /*-{
+   public static final native PresentationEditorLocationItem cursor() /*-{
       return {
          type: 'cursor',
          level: 0

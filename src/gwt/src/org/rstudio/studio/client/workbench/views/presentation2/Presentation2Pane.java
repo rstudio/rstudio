@@ -207,10 +207,15 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    }
    
    @Override
-   public void init(JsArray<RevealSlide> slides)
+   public void init(JsArray<RevealSlide> slides, int slideIndex)
    {
       // save slides (for creating slide caption)
       activeSlides_ = slides;
+      
+      // navigate to initial slide
+      RevealSlide intialSlide = activeSlides_.get(slideIndex);
+      if (intialSlide != null)
+         postRevealMessage("slide", intialSlide);   
       
       // populate the menu
       slidesMenu_.clearItems();
@@ -238,31 +243,6 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       setSecondaryToolbarVisible(true);
    }
 
-
-   @Override
-   public void change(RevealSlide slide)
-   { 
-      // determine slide index
-      int slideIndex = 0;
-      int totalSlides = activeSlides_.length();
-      for (int i=0; i<totalSlides; i++)
-      {
-         if (activeSlides_.get(i).hasSameIndices(slide))
-         {
-            slideIndex = i + 1;
-            break;
-         }
-      }
-      
-      // form title (use index if we have one)
-      String title = slideTitle(slide.getTitle());
-      if (slideIndex > 0)
-         title = title + " (" + slideIndex + "/" + totalSlides + ")";
-      
-      // set title
-      slidesMenuLabel_.setText(title);
-   }
-   
    
    @Override
    public void clear()
@@ -342,6 +322,32 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       }
    }
    
+   private int slideChanged(RevealSlide slide)
+   { 
+      // determine slide index
+      int slideIndex = 0;
+      int totalSlides = activeSlides_.length();
+      for (int i=0; i<totalSlides; i++)
+      {
+         if (activeSlides_.get(i).hasSameIndices(slide))
+         {
+            slideIndex = i;
+            break;
+         }
+      }
+      
+      // form title (use index if we have one)
+      String title = slideTitle(slide.getTitle());
+      title = title + " (" + (slideIndex+1) + "/" + totalSlides + ")";
+      
+      // set title
+      slidesMenuLabel_.setText(title);
+      
+      // return slide index
+      return slideIndex;
+   }
+   
+   
    private native void initializeEvents() /*-{  
       var self = this;
       var callback = $entry(function(event) {
@@ -376,7 +382,11 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
          }
          else if (type == "slidechange")
          {
-            handlerManager_.fireEvent(new PresentationSlideChangeEvent(message.getData().cast()));
+            PresentationSlideChangeEvent.Data data = message.getData().cast();
+            int slideIndex = slideChanged(data.getSlide());
+            handlerManager_.fireEvent(new PresentationSlideChangeEvent(
+              PresentationSlideChangeEvent.Data.withSlideIndex(data,  slideIndex)
+            ));
          }  
          else if (type == "hashchange")
          {
@@ -421,6 +431,4 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    private RStudioFrame frame_;
   
    private HandlerManager handlerManager_ = new HandlerManager(this);
-
-
 }

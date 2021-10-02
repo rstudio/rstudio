@@ -117,7 +117,7 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
-import { getPresentationEditorState } from '../api/presentation';
+import { getPresentationEditorLocation, PresentationEditorLocation } from '../api/presentation';
 
 export interface EditorCode {
   code: string;
@@ -687,8 +687,12 @@ export class Editor {
     }
   }
 
-  public getPresentationEditorState() {
-    return getPresentationEditorState(this.state);
+  public getPresentationEditorLocation() {
+    return getPresentationEditorLocation(this.state);
+  }
+
+  public navigateToPresentationEditorLocation(location: PresentationEditorLocation) {
+    this.navigateToPresentationEditorLocation(location);
   }
 
   public applyYamlFrontMatter(yaml: string) {
