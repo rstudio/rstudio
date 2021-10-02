@@ -18,7 +18,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class PresentationEditorToken extends JavaScriptObject
 {
-   public static final String TITLE_BLOCK = "title-block";
+   public static final String TITLE = "title";
    public static final String HEADING = "heading";
    public static final String HR = "hr";
    public static final String CURSOR = "cursor";
@@ -28,9 +28,9 @@ public class PresentationEditorToken extends JavaScriptObject
    {
    }
    
-   public static final native PresentationEditorToken titleBlock() /*-{
+   public static final native PresentationEditorToken title() /*-{
       return {
-         type: 'title-block',
+         type: 'title',
          level: 0
       };
    }-*/;
@@ -57,9 +57,9 @@ public class PresentationEditorToken extends JavaScriptObject
       };
    }-*/;
    
-   public final boolean isTitleBlock()
+   public final boolean isTitle()
    {
-      return getType().equals(TITLE_BLOCK);
+      return getType().equals(TITLE);
    }
    
    public final boolean isHeading()

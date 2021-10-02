@@ -117,6 +117,7 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
+import { getPresentationEditorState } from '../api/presentation';
 
 export interface EditorCode {
   code: string;
@@ -684,6 +685,10 @@ export class Editor {
     } else {
       return '';
     }
+  }
+
+  public getPresentationEditorState() {
+    return getPresentationEditorState(this.state);
   }
 
   public applyYamlFrontMatter(yaml: string) {

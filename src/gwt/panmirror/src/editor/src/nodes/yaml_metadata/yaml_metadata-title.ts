@@ -20,7 +20,7 @@ import {
   isYamlMetadataNode,
   yamlMetadataNodes,
   kYamlMetadataTitleRegex,
-  titleFromYamlMetadataNode,
+  titleFromState,
 } from '../../api/yaml';
 
 const plugin = new PluginKey<string>('yaml-metadata-title');
@@ -103,13 +103,3 @@ export function setTitle(state: EditorState, title: string) {
   return tr;
 }
 
-function titleFromState(state: EditorState) {
-  const yamlNodes = yamlMetadataNodes(state.doc);
-  for (const yaml of yamlNodes) {
-    const title = titleFromYamlMetadataNode(yaml.node);
-    if (title) {
-      return title;
-    }
-  }
-  return '';
-}

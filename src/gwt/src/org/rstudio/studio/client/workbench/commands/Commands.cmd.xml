@@ -2787,6 +2787,8 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
 
    <cmd id="presentation2Edit"
+        menuLabel="Edit Presentation Source"
+        buttonLabel="Edit"
         desc="Edit this slide of the presentation"
         rebindable="false"/>
 

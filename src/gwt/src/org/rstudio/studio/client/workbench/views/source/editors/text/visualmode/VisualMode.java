@@ -37,6 +37,7 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorState;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -971,6 +972,11 @@ public class VisualMode implements VisualModeEditorSync,
    {
       panmirror_.applyYamlFrontMatter(yaml);
       return true;
+   }
+   
+   public PresentationEditorState getPresentationEditorState()
+   {
+      return panmirror_.getPresentationEditorState();
    }
    
    public void activateDevTools()

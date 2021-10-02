@@ -83,7 +83,6 @@ import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.mathjax.MathJax;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorState;
-import org.rstudio.studio.client.common.presentation2.model.PresentationEditorToken;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -523,8 +522,8 @@ public class TextEditingTarget implements
                                                   docDisplay_);
       jsHelper_ = new TextEditingTargetJSHelper(docDisplay_);
       sqlHelper_ = new TextEditingTargetSqlHelper(docDisplay_);
-      presentationHelper_ = new TextEditingTargetPresentationHelper(
-                                                                  docDisplay_);
+      presentationHelper_ = new TextEditingTargetPresentationHelper(docDisplay_);
+      presentation2Helper_ = new TextEditingTargetPresentation2Helper(docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
       quartoHelper_ = new TextEditingTargetQuartoHelper(this, docDisplay_);
 
@@ -6879,13 +6878,17 @@ public class TextEditingTarget implements
    
    private PresentationEditorState presentationEditorState()
    {
-      // TODO: if revealjs then provide JsArray<PresentationEditorToken>
-      // (from source or visual mode as appropriate -- it's mode dependent
-      // for accurate detection of the cursor location)
       
-      JsArray<PresentationEditorToken> tokens = JsArray.createArray().cast();
-      
-      return PresentationEditorState.create(tokens);
+      PresentationEditorState state;
+      if (isVisualEditorActive())
+      {
+         state = visualMode_.getPresentationEditorState();
+      }
+      else
+      {
+         state = presentation2Helper_.getPresentationEditorState();
+      } 
+      return state;
    }
 
    private boolean isShinyDoc()
@@ -8745,6 +8748,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetJSHelper jsHelper_;
    private final TextEditingTargetSqlHelper sqlHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
+   private final TextEditingTargetPresentation2Helper presentation2Helper_;
    private final TextEditingTargetRHelper rHelper_;
    private VisualMode visualMode_;
    private final TextEditingTargetQuartoHelper quartoHelper_;
