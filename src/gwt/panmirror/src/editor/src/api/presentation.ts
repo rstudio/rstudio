@@ -30,6 +30,8 @@ export const kPresentationEditorLocationCursor = "cursor";
 export interface PresentationEditorLocationItem {
   type: string;
   level: number;
+  // extra field we use internally for navigation
+  pos: number;
 }
 
 export function getPresentationEditorLocation(state: EditorState) : PresentationEditorLocation {
@@ -40,13 +42,6 @@ export function getPresentationEditorLocation(state: EditorState) : Presentation
   // build list of items
   const items: PresentationEditorLocationItem[] = [];
 
-  // start with title if we have one. note that pandoc will make the title slide
-  // first no matter where it appears in the document, so we do the same here
-  const title = titleFromState(state);
-  if (title) {
-    items.push({ type: kPresentationEditorLocationTitle, level: 0} );
-  }
-
   // get top level headings and horizontal rules
   const schema = state.schema;
   const bodyNodes = findTopLevelBodyNodes(state.doc, node => {
@@ -55,6 +50,24 @@ export function getPresentationEditorLocation(state: EditorState) : Presentation
       schema.nodes.horizontal_rule,
     ].includes(node.type);
   });
+
+  // bail if empty
+  if (bodyNodes.length === 0) {
+    return { items };
+  }
+
+  // start with title if we have one. note that pandoc will make the title slide
+  // first no matter where it appears in the document, so we do the same here
+  const title = titleFromState(state);
+  if (title) {
+    items.push({ 
+      type: kPresentationEditorLocationTitle, 
+      level: 0,
+      pos: bodyNodes[0].pos
+    });
+  }
+
+  // get top level headings and horizontal rules
   let foundCursor = false;
   for (const nodeWithPos of bodyNodes) {
     // if node is past the selection then add the cursor token
@@ -62,7 +75,8 @@ export function getPresentationEditorLocation(state: EditorState) : Presentation
       foundCursor = true;
       items.push({
         type: kPresentationEditorLocationCursor,
-        level: 0
+        level: 0,
+        pos: nodeWithPos.pos
       });
     }
     // add the node with the requisite type
@@ -70,12 +84,14 @@ export function getPresentationEditorLocation(state: EditorState) : Presentation
     if (node.type === schema.nodes.heading) {
       items.push({
         type: kPresentationEditorLocationHeading,
-        level: node.attrs.level || 0
+        level: node.attrs.level || 0,
+        pos: nodeWithPos.pos
       });
     } else {
       items.push({
         type: kPresentationEditorLocationHr,
-        level: 0
+        level: 0,
+        pos: nodeWithPos.pos
       });
     }
   }
@@ -84,6 +100,25 @@ export function getPresentationEditorLocation(state: EditorState) : Presentation
   return { items };
 }
 
-export function navigateToPresentationEditorLocation(_location: PresentationEditorLocation) {
-  // TODO: implement navigation
+export function positionForPresentationEditorLocation(
+  state: EditorState, 
+  location: PresentationEditorLocation
+) : number {
+  // get the positions of the editor's current state (filter out cursor)
+  const editorItems = getPresentationEditorLocation(state).items
+    .filter(item => item.type !== kPresentationEditorLocationCursor);
+  
+  // get the index of the cursor passed in the location
+  const cursorIdx = location.items.findIndex(
+    item => item.type === kPresentationEditorLocationCursor)
+  ;
+
+  // go one slide before the cursor
+  if (cursorIdx > 0) {
+    const locationItem = editorItems[cursorIdx - 1];
+    return locationItem.pos;
+  }
+
+  // default if we can't find a location
+  return -1;
 }

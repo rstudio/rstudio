@@ -28,32 +28,36 @@ public class PresentationEditorLocationItem extends JavaScriptObject
    {
    }
    
-   public static final native PresentationEditorLocationItem title() /*-{
+   public static final native PresentationEditorLocationItem title(int row) /*-{
       return {
          type: 'title',
-         level: 0
+         level: 0,
+         row: row
       };
    }-*/;
    
-   public static final native PresentationEditorLocationItem heading(int level) /*-{
+   public static final native PresentationEditorLocationItem heading(int level, int row) /*-{
       return {
          type: 'heading',
-         level: level
+         level: level,
+         row: row
       };
    }-*/;
    
-   public static final native PresentationEditorLocationItem hr() /*-{
+   public static final native PresentationEditorLocationItem hr(int row) /*-{
       return {
          type: 'hr',
-         level: 0
+         level: 0,
+         row: row
       };
    }-*/;
    
    
-   public static final native PresentationEditorLocationItem cursor() /*-{
+   public static final native PresentationEditorLocationItem cursor(int row) /*-{
       return {
          type: 'cursor',
-         level: 0
+         level: 0,
+         row: row
       };
    }-*/;
    
@@ -83,5 +87,10 @@ public class PresentationEditorLocationItem extends JavaScriptObject
  
    public final native int getLevel() /*-{
       return this.level;
+   }-*/;
+   
+   // NOTE: row is a special field use internally for navigation
+   public final native int getRow() /*-{
+      return this.row;
    }-*/;
 }

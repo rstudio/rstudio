@@ -1269,7 +1269,7 @@ public class TextEditingTarget implements
       }
       else
       {
-         presentation2Helper_.navigationToPresentationEditorLocation(location);
+         presentation2Helper_.navigateToPresentationEditorLocation(location);
       }
    }
 

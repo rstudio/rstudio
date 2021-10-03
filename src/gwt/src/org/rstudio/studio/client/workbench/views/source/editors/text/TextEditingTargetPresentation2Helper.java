@@ -22,6 +22,7 @@ import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
+import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.JsArray;
 
@@ -52,7 +53,7 @@ public class TextEditingTargetPresentation2Helper
          // horizontal rule
          if (type.equals("constant.hr"))
          {
-            items.push(PresentationEditorLocationItem.hr());
+            items.push(PresentationEditorLocationItem.hr(i));
          }
          
          // headings can be atx style or can actually be an 
@@ -66,13 +67,13 @@ public class TextEditingTargetPresentation2Helper
             // atx style
             if (rowToken.getValue().trim().startsWith("#"))
             {
-               items.push(PresentationEditorLocationItem.heading(level));
+               items.push(PresentationEditorLocationItem.heading(level, i));
             }
             else if (rowToken.getValue().startsWith("---") &&
                      lastRowToken != null &&
                      !lastRowToken.getType().startsWith("markup.heading"))
             {
-               items.push(PresentationEditorLocationItem.hr());
+               items.push(PresentationEditorLocationItem.hr(i));
             }
          }
          
@@ -81,7 +82,7 @@ public class TextEditingTargetPresentation2Helper
          if (!foundCursor && linePos.isAfterOrEqualTo(docDisplay_.getCursorPosition()))
          {
             foundCursor = true;
-            items.push(PresentationEditorLocationItem.cursor());
+            items.push(PresentationEditorLocationItem.cursor(i));
          }
          
          //  note last row token
@@ -93,14 +94,47 @@ public class TextEditingTargetPresentation2Helper
       YamlTree tree = new YamlTree(yaml);
       String title = tree.getKeyValue("title");
       if (!StringUtil.isNullOrEmpty(title))
-         items.unshift(PresentationEditorLocationItem.title());
+         items.unshift(PresentationEditorLocationItem.title(0));
           
       return PresentationEditorLocation.create(items);
    }
    
-   public void navigationToPresentationEditorLocation(PresentationEditorLocation location)
+   public void navigateToPresentationEditorLocation(PresentationEditorLocation location)
    {
-      // TODO: implement nativation to state
+      // get the current set of locations in the editor (filtering out the cursor)
+      JsArray<PresentationEditorLocationItem> editorItemsWithCursor = 
+         getPresentationEditorLocation().getItems();
+      JsArray<PresentationEditorLocationItem> editorItems = JsArray.createArray().cast();
+      for (int i=0; i<editorItemsWithCursor.length(); i++) {
+         PresentationEditorLocationItem item = editorItemsWithCursor.get(i);
+         if (!item.getType().equals(PresentationEditorLocationItem.CURSOR)) {
+            editorItems.push(item);
+         }
+      }
+      
+      // find the index of the cursor in the passed location
+      int cursorIdx = -1;
+      JsArray<PresentationEditorLocationItem> locationItems = location.getItems();
+      for (int i=0; i<locationItems.length(); i++)
+      {
+         if (locationItems.get(i).getType().equals(PresentationEditorLocationItem.CURSOR))
+         {
+            cursorIdx = i;
+            break;
+         }
+      }
+      
+      // navigate to the location right above the cursor
+      if (cursorIdx > 0)
+      {
+         PresentationEditorLocationItem item = editorItems.get(cursorIdx - 1);
+         if (item != null)
+         {
+            docDisplay_.navigateToPosition(SourcePosition.create(item.getRow(), 0), true);
+         }
+      }
+      
+      
    }
   
    private final DocDisplay docDisplay_;
