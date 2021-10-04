@@ -16,7 +16,7 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
 
-import { NodeWithPos, findChildrenByType } from 'prosemirror-utils';
+import { NodeWithPos, findChildrenByType, findChildren } from 'prosemirror-utils';
 
 import { findTopLevelBodyNodes } from './node';
 import { titleFromYamlMetadataNode } from './yaml';
@@ -103,7 +103,7 @@ export function getEditingOutlineLocation(state: EditorState): EditingOutlineLoc
 // get a document outline that matches the scheme provided in EditingOutlineLocation:
 //  - yaml metadata blocks
 //  - top-level headings
-//  - rmd chunks at the top level or within a top-level list
+//  - rmd chunks at the top level or within a top-level list or div,
 export function getDocumentOutline(state: EditorState): NodeWithPos[] {
   // get top level body nodes
   const schema = state.schema;
@@ -114,6 +114,7 @@ export function getDocumentOutline(state: EditorState): NodeWithPos[] {
       schema.nodes.heading,
       schema.nodes.bullet_list,
       schema.nodes.ordered_list,
+      schema.nodes.div
     ].includes(node.type);
   });
 
@@ -132,6 +133,19 @@ export function getDocumentOutline(state: EditorState): NodeWithPos[] {
         });
       });
 
+      // find headings and rmd chunks within divs
+    } else if (schema.nodes.div === bodyNode.node.type) {
+      findChildren(bodyNode.node, 
+                   node => [schema.nodes.rmd_chunk, schema.nodes.heading].includes(node.type),
+                   true)
+        .forEach(childNode => {
+          outlineNodes.push({
+            node: childNode.node,
+            pos: bodyNode.pos + 1 + childNode.pos
+          });
+        }
+      );
+    
       // other nodes go straight through
     } else {
       outlineNodes.push(bodyNode);
