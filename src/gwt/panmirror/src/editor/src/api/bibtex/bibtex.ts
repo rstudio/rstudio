@@ -234,13 +234,7 @@ const escapeNonAscii = (value: string): string => {
         result = result + (characterMap.ungrouped ? characterMap.latex : `{${characterMap.latex}}`);
       } else {
         // No LaTeX replacement, just emit the character
-        if (char < 255) {
-          result = result + String.fromCodePoint(char);
-        } else {
-          // A unicode character for which we have no valid LaTeX replacement
-          // emit a question mark
-          result = result + '?';
-        }
+        result = result + String.fromCodePoint(char);
       }
     } else {
       // A position which has no codepoint. what on earth is this?
