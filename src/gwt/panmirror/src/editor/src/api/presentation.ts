@@ -116,9 +116,7 @@ export function getPresentationEditorLocation(state: EditorState) : Presentation
     autoSlideLevel = 0;
   }
   
-  // return the tokens
-  console.log("slide level: " + autoSlideLevel);
-
+  // return the items
   return { items, auto_slide_level: autoSlideLevel };
 }
 
@@ -136,8 +134,8 @@ export function positionForPresentationEditorLocation(
   ;
 
   // go one slide before the cursor
-  if (cursorIdx > 0) {
-    const locationItem = editorItems[cursorIdx - 1];
+  if (cursorIdx >= 0) {
+    const locationItem = editorItems[cursorIdx];
     return locationItem.pos;
   }
 

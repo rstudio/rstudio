@@ -15,7 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocationItem;
@@ -45,6 +44,16 @@ public class TextEditingTargetPresentation2Helper
       Token lastRowToken = null;
       for (int i=0; i<docDisplay_.getRowCount(); i++)
       { 
+         
+         // if the cursor is on this line then add the cursor token
+         Position linePos = Position.create(i, 0);
+         if (!foundCursor && linePos.isAfterOrEqualTo(docDisplay_.getCursorPosition()))
+         {
+            foundCursor = true;
+            items.push(PresentationEditorLocationItem.cursor(i));
+         }
+         
+         
          // determine the current token and type
          Token rowToken = docDisplay_.getTokenAt(i, 0);
          if (rowToken == null)
@@ -113,14 +122,7 @@ public class TextEditingTargetPresentation2Helper
             }
          }
          
-         // if the cursor is on this line then add the cursor token
-         Position linePos = Position.create(i, 0);
-         if (!foundCursor && linePos.isAfterOrEqualTo(docDisplay_.getCursorPosition()))
-         {
-            foundCursor = true;
-            items.push(PresentationEditorLocationItem.cursor(i));
-         }
-         
+   
          //  note last row token
          lastRowToken = docDisplay_.getTokenAt(i, 0);
       }
@@ -171,10 +173,10 @@ public class TextEditingTargetPresentation2Helper
          }
       }
       
-      // navigate to the location right above the cursor
-      if (cursorIdx > 0)
+      // navigate to the cursor location
+      if (cursorIdx >= 0)
       {
-         PresentationEditorLocationItem item = editorItems.get(cursorIdx - 1);
+         PresentationEditorLocationItem item = editorItems.get(cursorIdx);
          if (item != null)
          {
             docDisplay_.navigateToPosition(SourcePosition.create(item.getRow(), 0), true);
