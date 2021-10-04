@@ -188,9 +188,15 @@ public class Presentation2 extends BasePresenter
    }
    
    @Handler
-   void onPresentation2ViewInBrowser()
+   void onPresentation2Present()
    {
       globalDisplay_.openWindow(activeSlideHref_);
+   }
+   
+   @Handler
+   void onPresentation2PresentFromBeginning()
+   {
+      globalDisplay_.openWindow(activeUrl_);
    }
    
    @Handler
@@ -207,7 +213,8 @@ public class Presentation2 extends BasePresenter
       commands_.presentation2Prev().setEnabled(enable);
       commands_.presentation2Edit().setEnabled(enable);
       commands_.presentation2Print().setEnabled(enable);
-      commands_.presentation2ViewInBrowser().setEnabled(enable);
+      commands_.presentation2Present().setEnabled(enable);
+      commands_.presentation2PresentFromBeginning().setEnabled(enable);
    }
    
    private String asApplicationUrl(String url)

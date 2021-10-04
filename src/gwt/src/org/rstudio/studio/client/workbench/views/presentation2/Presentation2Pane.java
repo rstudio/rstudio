@@ -24,6 +24,9 @@ import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.AutoGlassPanel;
@@ -74,13 +77,22 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    {
       toolbar_ = new Toolbar("Presentation Toolbar");
       
-      toolbar_.addLeftWidget(commands_.presentation2Prev().createToolbarButton());
-      toolbar_.addLeftWidget(commands_.presentation2Next().createToolbarButton());
-      toolbar_.addLeftSeparator();
       
-      toolbar_.addLeftWidget(commands_.presentation2ViewInBrowser().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.presentation2Present().createToolbarButton());
+      
+      ToolbarPopupMenu presentMenu = new ToolbarPopupMenu();
+      presentMenu.addItem(commands_.presentation2PresentFromBeginning().createMenuItem(false));
+      ToolbarMenuButton presentButton = new ToolbarMenuButton(ToolbarButton.NoText, "Present", presentMenu, true);
+      presentButton.setEnabled(commands_.presentation2PresentFromBeginning().isEnabled());
+      commands_.presentation2PresentFromBeginning().addEnabledChangedHandler(event -> {
+         presentButton.setEnabled(commands_.presentation2PresentFromBeginning().isEnabled());
+      });
+      toolbar_.addLeftWidget(presentButton);
+      
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.presentation2Print().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.presentation2Edit().createToolbarButton());
       
       // publish
       publishButton_ = new RSConnectPublishButton(
@@ -99,6 +111,9 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    protected SecondaryToolbar createSecondaryToolbar()
    {
       SecondaryToolbar toolbar = new SecondaryToolbar("Presentation Slides Toolbar");
+      toolbar.addLeftWidget(commands_.presentation2Prev().createToolbarButton());
+      toolbar.addLeftWidget(commands_.presentation2Next().createToolbarButton());
+      toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.presentation2Home().createToolbarButton());
       toolbar.addLeftSeparator();
       slidesMenuLabel_ = new Label();
@@ -107,8 +122,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       slidesMenu_ = new SlidesPopupMenu();
       slidesMenuWidget_ = toolbar.addLeftPopupMenu(slidesMenuLabel_, slidesMenu_);
       slidesMenuWidget_.getElement().getStyle().setMarginTop(-4, Unit.PX);
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.presentation2Edit().createToolbarButton());
+      
       return toolbar;
       
    }

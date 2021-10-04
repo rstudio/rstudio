@@ -49,7 +49,9 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
       @Handler
       public abstract void onPresentation2Print();
       @Handler
-      public abstract void onPresentation2ViewInBrowser();
+      public abstract void onPresentation2Present();
+      @Handler
+      public abstract void onPresentation2PresentFromBeginning();
    }
    
    @Inject
@@ -76,7 +78,8 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
             commands.presentation2Prev().remove();
             commands.presentation2Edit().remove();
             commands.presentation2Print().remove();
-            commands.presentation2ViewInBrowser().remove();
+            commands.presentation2Present().remove();
+            commands.presentation2PresentFromBeginning().remove();
          }
          
       });
