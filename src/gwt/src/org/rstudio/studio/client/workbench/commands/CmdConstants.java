@@ -1374,6 +1374,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Source the contents of the active document (with echo)") // $NON-NLS-1$
     String sourceActiveDocumentWithEchoDesc();
     
+    // runDocumentFromServerDotR
+    @DefaultStringValue("Run Document") // $NON-NLS-1$
+    String runDocumentFromServerDotRButtonLabel();
+    @DefaultStringValue("Run _Document") // $NON-NLS-1$
+    String runDocumentFromServerDotRMenuLabel();
+    @DefaultStringValue("Run the interactive document") // $NON-NLS-1$
+    String runDocumentFromServerDotRDesc();
+    
     // commentUncomment
     @DefaultStringValue("Comment / Uncomment Selection") // $NON-NLS-1$
     String commentUncommentLabel();
@@ -1762,6 +1770,124 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Create a new folder") // $NON-NLS-1$
     String newFolderDesc();
     
+    // touchSourceDoc
+    @DefaultStringValue("Create a Blank R script in current directory") // $NON-NLS-1$
+    String touchSourceDocLabel();
+    @DefaultStringValue("") // $NON-NLS-1$
+    String touchSourceDocButtonLabel();
+    @DefaultStringValue("_R Script") // $NON-NLS-1$
+    String touchSourceDocMenuLabel();
+    @DefaultStringValue("Create a blank R script in current directory") // $NON-NLS-1$
+    String touchSourceDocDesc();
+    
+    // touchTextDoc
+    @DefaultStringValue("_Text File") // $NON-NLS-1$
+    String touchTextDocMenuLabel();
+    @DefaultStringValue("Create a blank text file in current directory") // $NON-NLS-1$
+    String touchTextDocDesc();
+    
+    // touchCDoc
+    @DefaultStringValue("_C File") // $NON-NLS-1$
+    String touchCDocMenuLabel();
+    @DefaultStringValue("Create a blank C file in current directory") // $NON-NLS-1$
+    String touchCDocDesc();
+    
+    // touchCppDoc
+    @DefaultStringValue("_C++ File") // $NON-NLS-1$
+    String touchCppDocMenuLabel();
+    @DefaultStringValue("Create a blank C++ file in current directory") // $NON-NLS-1$
+    String touchCppDocDesc();
+    
+    // touchHeaderDoc
+    @DefaultStringValue("_Header File") // $NON-NLS-1$
+    String touchHeaderDocMenuLabel();
+    @DefaultStringValue("Create a blank header file in current directory") // $NON-NLS-1$
+    String touchHeaderDocDesc();
+    
+    // touchMarkdownDoc
+    @DefaultStringValue("_Markdown File") // $NON-NLS-1$
+    String touchMarkdownDocMenuLabel();
+    @DefaultStringValue("Create a blank Markdown document in current directory") // $NON-NLS-1$
+    String touchMarkdownDocDesc();
+    
+    // touchPythonDoc
+    @DefaultStringValue("_Python Script") // $NON-NLS-1$
+    String touchPythonDocMenuLabel();
+    @DefaultStringValue("Create a blank Python script in current directory") // $NON-NLS-1$
+    String touchPythonDocDesc();
+    
+    // touchShellDoc
+    @DefaultStringValue("_Shell Script") // $NON-NLS-1$
+    String touchShellDocMenuLabel();
+    @DefaultStringValue("Create a blank shell script in current directory") // $NON-NLS-1$
+    String touchShellDocDesc();
+    
+    // touchStanDoc
+    @DefaultStringValue("_Stan File") // $NON-NLS-1$
+    String touchStanDocMenuLabel();
+    @DefaultStringValue("Create a blank Stan program in current directory") // $NON-NLS-1$
+    String touchStanDocDesc();
+    
+    // touchHtmlDoc
+    @DefaultStringValue("_HTML File") // $NON-NLS-1$
+    String touchHtmlDocMenuLabel();
+    @DefaultStringValue("Create a blank HTML file in current directory") // $NON-NLS-1$
+    String touchHtmlDocDesc();
+    
+    // touchJavaScriptDoc
+    @DefaultStringValue("_JavaScript File") // $NON-NLS-1$
+    String touchJavaScriptDocMenuLabel();
+    @DefaultStringValue("Create a blank JavaScript file in current directory") // $NON-NLS-1$
+    String touchJavaScriptDocDesc();
+    
+    // touchCssDoc
+    @DefaultStringValue("_CSS File") // $NON-NLS-1$
+    String touchCssDocMenuLabel();
+    @DefaultStringValue("Create a blank CSS file in current directory") // $NON-NLS-1$
+    String touchCssDocDesc();
+    
+    // touchD3Doc
+    @DefaultStringValue("_D3 Script") // $NON-NLS-1$
+    String touchD3DocMenuLabel();
+    @DefaultStringValue("Create a blank D3 script in current directory") // $NON-NLS-1$
+    String touchD3DocDesc();
+    
+    // touchSweaveDoc
+    @DefaultStringValue("R _Sweave") // $NON-NLS-1$
+    String touchSweaveDocMenuLabel();
+    @DefaultStringValue("Create a blank R Sweave document in current directory") // $NON-NLS-1$
+    String touchSweaveDocDesc();
+    
+    // touchRMarkdownDoc
+    @DefaultStringValue("R _Markdown...") // $NON-NLS-1$
+    String touchRMarkdownDocMenuLabel();
+    @DefaultStringValue("Create a blank R Markdown document in current directory") // $NON-NLS-1$
+    String touchRMarkdownDocDesc();
+    
+    // touchQuartoDoc
+    @DefaultStringValue("_Quarto Doc...") // $NON-NLS-1$
+    String touchQuartoDocMenuLabel();
+    @DefaultStringValue("Create a blank Quarto document in current directory") // $NON-NLS-1$
+    String touchQuartoDocDesc();
+    
+    // serveQuartoSite
+    @DefaultStringValue("_Serve Site") // $NON-NLS-1$
+    String serveQuartoSiteMenuLabel();
+    @DefaultStringValue("Run development server for Quarto site in current directory") // $NON-NLS-1$
+    String serveQuartoSiteDesc();
+    
+    // touchRHTMLDoc
+    @DefaultStringValue("R _HTML") // $NON-NLS-1$
+    String touchRHTMLDocMenuLabel();
+    @DefaultStringValue("Create a blank R HTML document in current directory") // $NON-NLS-1$
+    String touchRHTMLDocDesc();
+    
+    // touchSqlDoc
+    @DefaultStringValue("SQ_L Script") // $NON-NLS-1$
+    String touchSqlDocMenuLabel();
+    @DefaultStringValue("Create a new SQL script in current directory") // $NON-NLS-1$
+    String touchSqlDocDesc();
+    
     // uploadFile
     @DefaultStringValue("Upload Files...") // $NON-NLS-1$
     String uploadFileLabel();
@@ -1849,6 +1975,14 @@ public interface CmdConstants extends Constants {
     // copyFilesPaneCurrentDirectory
     @DefaultStringValue("Copy Folder Path to Clipboard") // $NON-NLS-1$
     String copyFilesPaneCurrentDirectoryLabel();
+    
+    // openFilesInSinglePane
+    @DefaultStringValue("Open Selected in Source Pane") // $NON-NLS-1$
+    String openFilesInSinglePaneLabel();
+    
+    // openEachFileInColumns
+    @DefaultStringValue("Open Each File in New Columns") // $NON-NLS-1$
+    String openEachFileInColumnsLabel();
     
     // showFolder
     @DefaultStringValue("Show Folder in New Window") // $NON-NLS-1$
@@ -2829,6 +2963,10 @@ public interface CmdConstants extends Constants {
     // viewerRefresh
     @DefaultStringValue("Refresh viewer") // $NON-NLS-1$
     String viewerRefreshDesc();
+    
+    // viewerEditSource
+    @DefaultStringValue("Edit source file") // $NON-NLS-1$
+    String viewerEditSourceDesc();
     
     // viewerSaveAllAndRefresh
     @DefaultStringValue("Save source files and refresh viewer") // $NON-NLS-1$

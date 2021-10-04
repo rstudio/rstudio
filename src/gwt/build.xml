@@ -180,6 +180,7 @@
    </target>
 
    <target name="draft" description="Compile using GWT's draft mode">
+      <antcall target="generate-i18n"/>
       <antcall target="gwtc">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
          <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile -Xnamespace NONE" />
@@ -246,7 +247,7 @@
 
    <!-- verify if Commands.cmd.xml has changed -->
    <target name="i18n-checksum">
-      <checksum file="${commands-xml-full-path}" verifyproperty="cmdChanges"/>
+      <checksum file="${commands-xml-full-path}" verifyproperty="isMD5ok"/>
    </target>
 
    <!-- determine what type of i18n generation is required (if any) -->
@@ -254,7 +255,7 @@
       <condition property="generate-i18n-windows">
          <and>
             <os family="windows"/>
-            <isfalse value="${cmdChanges}"/>
+            <isfalse value="${isMD5ok}"/>
          </and>
       </condition>
    </target>
@@ -262,7 +263,7 @@
       <condition property="generate-i18n-unix">
          <and>
             <os family="unix"/>
-            <isfalse value="${cmdChanges}"/>
+            <isfalse value="${isMD5ok}"/>
          </and>
       </condition>
    </target>
@@ -315,7 +316,7 @@
 
    <target name="generate-i18n" depends="i18n-unix, i18n-windows" description="Generates i18n for Command and Menu constants" />
 
-   <target name="build" depends="gwtc, generate-i18n" description="Build this project" />
+   <target name="build" depends="generate-i18n, gwtc" description="Build this project" />
 
    <target name="clean" description="Cleans this project">
       <delete dir="${build.dir}" failonerror="false" />
