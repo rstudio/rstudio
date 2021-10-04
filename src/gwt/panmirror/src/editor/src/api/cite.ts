@@ -16,7 +16,9 @@
 import { CSLName, CSLDate, CSL } from './csl';
 import { InsertCiteProps, InsertCiteUI } from './ui-dialogs';
 import { urlForDOI } from './doi';
+
 import pinyin from 'pinyin';
+import { transliterate } from 'transliteration';
 
 export const kInvalidCiteKeyChars = /[\]\[\s@',\\\#}{~%&\$\^_]/g;
 const kCiteIdLeadingLength = 8;
@@ -39,7 +41,8 @@ export function createUniqueCiteId(existingIds: string[], baseId: string): strin
     } else if (isHanzi(char)) {
       asciiOnlyBaseId = asciiOnlyBaseId + pinyin(String.fromCharCode(char));
     } else {
-      // Do not add non ascii characters to the citekey
+      // Transliterate other non ascii characters to the citekey
+      asciiOnlyBaseId = asciiOnlyBaseId + transliterate(String.fromCharCode(char));
     }
   }
 
