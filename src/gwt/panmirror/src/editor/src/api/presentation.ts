@@ -20,6 +20,7 @@ import { titleFromState } from './yaml';
 
 export interface PresentationEditorLocation {
   items: PresentationEditorLocationItem[];
+  auto_slide_level: number;
 }
 
 export const kPresentationEditorLocationTitle = "title";
@@ -40,20 +41,16 @@ export function getPresentationEditorLocation(state: EditorState) : Presentation
   const cursorPos = state.selection.from;
 
   // build list of items
+  let autoSlideLevel = Number.MAX_VALUE;
   const items: PresentationEditorLocationItem[] = [];
 
   // get top level headings and horizontal rules
   const schema = state.schema;
-  const bodyNodes = findTopLevelBodyNodes(state.doc, node => {
-    return [
-      schema.nodes.heading,
-      schema.nodes.horizontal_rule,
-    ].includes(node.type);
-  });
+  const bodyNodes = findTopLevelBodyNodes(state.doc, node => true);
 
   // bail if empty
   if (bodyNodes.length === 0) {
-    return { items };
+    return { items, auto_slide_level: 0 };
   }
 
   // start with title if we have one. note that pandoc will make the title slide
@@ -68,6 +65,8 @@ export function getPresentationEditorLocation(state: EditorState) : Presentation
   }
 
   // get top level headings and horizontal rules
+  
+  let pendingAutoSlideLevel = 0;
   let foundCursor = false;
   for (const nodeWithPos of bodyNodes) {
     // if node is past the selection then add the cursor token
@@ -82,22 +81,45 @@ export function getPresentationEditorLocation(state: EditorState) : Presentation
     // add the node with the requisite type
     const node = nodeWithPos.node;
     if (node.type === schema.nodes.heading) {
+      const level = node.attrs.level || 0;
+      // track pending auto slide level
+      if (level < autoSlideLevel) {
+        pendingAutoSlideLevel = level;
+      } else{
+        pendingAutoSlideLevel= 0;
+      }
       items.push({
         type: kPresentationEditorLocationHeading,
-        level: node.attrs.level || 0,
+        level,
         pos: nodeWithPos.pos
       });
-    } else {
+    } else if (node.type === schema.nodes.horizontal_rule) {
       items.push({
         type: kPresentationEditorLocationHr,
         level: 0,
         pos: nodeWithPos.pos
       });
+      pendingAutoSlideLevel= 0;
+    } else if (pendingAutoSlideLevel > 0) {
+      autoSlideLevel = pendingAutoSlideLevel;
+      pendingAutoSlideLevel = 0;
     }
   }
 
+  // last chance to collect pending auto slide level
+  if (pendingAutoSlideLevel > 0){
+    autoSlideLevel = pendingAutoSlideLevel;
+  }
+  
+  // didn't find an auto slide level
+  if (autoSlideLevel === Number.MAX_VALUE) {
+    autoSlideLevel = 0;
+  }
+  
   // return the tokens
-  return { items };
+  console.log("slide level: " + autoSlideLevel);
+
+  return { items, auto_slide_level: autoSlideLevel };
 }
 
 export function positionForPresentationEditorLocation(

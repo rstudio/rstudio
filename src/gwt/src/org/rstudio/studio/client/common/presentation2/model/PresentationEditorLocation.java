@@ -23,15 +23,21 @@ public class PresentationEditorLocation extends JavaScriptObject
    {
    }
    
-   public static final native PresentationEditorLocation create(JsArray<PresentationEditorLocationItem> items) /*-{
+   public static final native PresentationEditorLocation create(JsArray<PresentationEditorLocationItem> items,
+                                                                int autoSlideLevel) /*-{
       return {
-         items: items
+         items: items,
+         auto_slide_level: autoSlideLevel 
       };
    }-*/;
    
      
    public final native JsArray<PresentationEditorLocationItem> getItems() /*-{
       return this.items;
+   }-*/;
+   
+   public final native int getAutoSlideLevel() /*-{
+      return this.auto_slide_level;
    }-*/;
  
 }

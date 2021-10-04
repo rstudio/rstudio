@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocationItem;
@@ -36,8 +37,10 @@ public class TextEditingTargetPresentation2Helper
    
    public PresentationEditorLocation getPresentationEditorLocation()
    {
+      int autoSlideLevel = Integer.MAX_VALUE;
       JsArray<PresentationEditorLocationItem> items = JsArray.createArray().cast();
       
+      int pendingAutoSlideLevel = 0;
       boolean foundCursor = false;
       Token lastRowToken = null;
       for (int i=0; i<docDisplay_.getRowCount(); i++)
@@ -50,16 +53,19 @@ public class TextEditingTargetPresentation2Helper
          if (type == null)
             continue;
          
+            
          // horizontal rule
          if (type.equals("constant.hr"))
          {
             items.push(PresentationEditorLocationItem.hr(i));
+            pendingAutoSlideLevel = 0;
          }
          
          // headings can be atx style or can actually be an 
          // hr without a caption
          else if (type.startsWith("markup.heading."))
          {
+            boolean foundHeading = false;
             int level = StringUtil.parseInt(
                type.substring(type.length()-1, type.length()),
                0
@@ -68,12 +74,42 @@ public class TextEditingTargetPresentation2Helper
             if (rowToken.getValue().trim().startsWith("#"))
             {
                items.push(PresentationEditorLocationItem.heading(level, i));
+               foundHeading = true;
             }
             else if (rowToken.getValue().startsWith("---") &&
                      lastRowToken != null &&
                      !lastRowToken.getType().startsWith("markup.heading"))
             {
                items.push(PresentationEditorLocationItem.hr(i));
+            }
+            else if (rowToken.getValue().startsWith("---"))
+            {
+               items.push(PresentationEditorLocationItem.heading(level, i-1));
+               foundHeading = true;
+            }
+            else if (rowToken.getValue().startsWith("==="))
+            {
+               items.push(PresentationEditorLocationItem.heading(level, i-1));
+               foundHeading = true;
+            }
+            
+            // see if this might qualifiy as the auto slide level
+            if (foundHeading && (level < autoSlideLevel))
+            {
+               pendingAutoSlideLevel = level;
+            }
+            else
+            {
+               pendingAutoSlideLevel = 0; 
+            }
+         }
+         // non-blank, non-slide-delimiting line confirms a pending auto slide level
+         else if (!StringUtil.isNullOrEmpty(rowToken.getValue().trim()))
+         {
+            if (pendingAutoSlideLevel > 0)
+            {
+               autoSlideLevel = pendingAutoSlideLevel;
+               pendingAutoSlideLevel = 0;
             }
          }
          
@@ -96,7 +132,18 @@ public class TextEditingTargetPresentation2Helper
       if (!StringUtil.isNullOrEmpty(title))
          items.unshift(PresentationEditorLocationItem.title(0));
           
-      return PresentationEditorLocation.create(items);
+      
+      // last chance to collect pending auto slide level
+      if (pendingAutoSlideLevel > 0)
+         autoSlideLevel = pendingAutoSlideLevel;
+      
+      
+      // didn't find an auto slide level
+      if (autoSlideLevel == Integer.MAX_VALUE)
+         autoSlideLevel = 0;
+      
+      // create and return
+      return PresentationEditorLocation.create(items, autoSlideLevel);
    }
    
    public void navigateToPresentationEditorLocation(PresentationEditorLocation location)
