@@ -96,7 +96,7 @@ void beginUpdateCheck(bool manual,
    cmd.append("source('");
    cmd.append(string_utils::jsLiteralEscape(scriptPath));
    cmd.append("'); downloadUpdateInfo('");
-   cmd.append(RSTUDIO_VERSION);
+   cmd.append(http::util::urlEncode(RSTUDIO_VERSION));
    cmd.append("', '");
 #if defined(_WIN32)
    cmd.append("windows");
