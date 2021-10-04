@@ -17,6 +17,7 @@
 #define CORE_R_UTIL_R_ACTIVE_SESSION_STORAGE
 
 #include <shared_core/FilePath.hpp>
+#include <set>
 
 namespace rstudio {
 namespace core {
@@ -26,7 +27,9 @@ namespace r_util {
    {
    public:
       Error virtual readProperty(const std::string& id, const std::string& name, std::string* pValue) = 0;
+      Error virtual readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues) = 0;
       Error virtual writeProperty(const std::string& id, const std::string& name, const std::string& value) = 0;
+      Error virtual writeProperties(const std::string& id, const std::map<std::string, std::string>& properties) = 0;
 
    protected:
       virtual ~IActiveSessionStorage() = default;
@@ -37,10 +40,11 @@ namespace r_util {
    {
    public:
       explicit FileActiveSessionStorage(const FilePath& location);
-      virtual ~FileActiveSessionStorage() = default;
-
+      ~FileActiveSessionStorage() = default;
       Error readProperty(const std::string& id, const std::string& name, std::string* pValue) override;   
+      Error readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
       Error writeProperty(const std::string& id, const std::string& name, const std::string& value) override;
+      Error writeProperties(const std::string& id, const std::map<std::string, std::string>& properties) override;
 
    private:
       FilePath activeSessionsDir_;

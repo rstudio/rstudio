@@ -33,28 +33,63 @@ namespace r_util {
 
     Error FileActiveSessionStorage::readProperty(const std::string& id, const std::string& name, std::string* pValue)
     {
-        const std::string& fileName = getPropertyFileName(name);
-
-        using namespace rstudio::core;
+        std::set<std::string> propertyName = {name};
+        std::map<std::string, std::string> propertyValue{};
         *pValue = "";
 
-        FilePath readPath = buildPropertyPath(id, fileName);
-        if (readPath.exists())
+        Error error = readProperties(id, propertyName, &propertyValue);
+
+        if (error)
+            return error;
+
+        std::map<std::string, std::string>::iterator iter = propertyValue.begin();
+
+        if(iter != propertyValue.end())
+            *pValue = iter->second;
+
+        return Success();
+    }
+
+    Error FileActiveSessionStorage::readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
+    {
+        std::map<std::string, std::string> returnedValues{};
+        for (const std::string &name : names)
         {
-            Error error = core::readStringFromFile(readPath, pValue);
-            if (error)
-                return error;
+            const std::string& fileName = getPropertyFileName(name);
+            FilePath readPath = buildPropertyPath(id, fileName);
+            std::string value = "";
 
-            boost::algorithm::trim(*pValue);
+            if (readPath.exists())
+            {
+                Error error = core::readStringFromFile(readPath, &value);
+                if (error)
+                    return error;
+
+                boost::algorithm::trim(value);
+            }
+            returnedValues.insert(std::pair<std::string, std::string>(name, value));
         }
-
+        pValues = &returnedValues;
         return Success();
     }
 
     Error FileActiveSessionStorage::writeProperty(const std::string& id, const std::string& name, const std::string& value)
     {
-        FilePath writePath = buildPropertyPath(id, name);
-        return core::writeStringToFile(writePath, value);
+        std::map<std::string, std::string> property = {{name, value}};
+        return writeProperties(id, property);
+    }
+
+    Error FileActiveSessionStorage::writeProperties(const std::string& id, const std::map<std::string, std::string>& properties)
+    {
+        Error error;
+        for (const std::pair<std::string, std::string> &prop : properties)
+        {
+            FilePath writePath = buildPropertyPath(id, prop.first);
+            error = core::writeStringToFile(writePath, prop.second);
+            if (error)
+                return error;
+        }
+        return Success();
     }
 
     FilePath FileActiveSessionStorage::buildPropertyPath(const std::string& id, const std::string& name)
