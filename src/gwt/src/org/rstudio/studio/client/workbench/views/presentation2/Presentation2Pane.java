@@ -200,6 +200,12 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    }
    
    @Override
+   public boolean connected()
+   {
+      return source_ != null;
+   }
+   
+   @Override
    public void init(JsArray<RevealSlide> slides)
    {
       // save slides (for creating slide caption)
@@ -351,17 +357,17 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    private void onMessage(JavaScriptObject source, String origin, RevealMessage message) 
    {    
       // check to see if the message originated from the same origin
-      if (activeUrl_ == null || !activeUrl_.startsWith(origin))
+      if (activeUrl_ == null || !activeUrl_.startsWith(origin) || source == null || origin== null)
          return;
         
-      // record source and origin for sending messages back
-      source_ = source;
-      origin_ = origin;
-      
       final String kRevealMessagePrefix = "reveal-";
       if (message.getMessage() != null &&
           message.getMessage().startsWith(kRevealMessagePrefix))
       {
+         // record source and origin for sending messages back
+         source_ = source;
+         origin_ = origin;
+         
          String type = message.getMessage().replaceFirst(kRevealMessagePrefix, "");
          if (type == "init")
          {
@@ -414,5 +420,6 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    private RStudioFrame frame_;
   
    private HandlerManager handlerManager_ = new HandlerManager(this);
+
 
 }
