@@ -204,7 +204,7 @@ QAction* MenuCallback::duplicateAppMenuAction(QString commandToDuplicate,
       connect(pBinder, SIGNAL(manageCommand(QString, QAction*)),
               this, SIGNAL(manageCommand(QString, QAction*)));
       connect(pAction, SIGNAL(triggered()), this, SLOT(actionInvoked()));
-      binders_[commandId].push_back(QPointer<MenuActionBinder>(pBinder));
+      binders_[commandId].push_back(pBinder);
    }
    return pAction;
 }
@@ -287,7 +287,7 @@ void MenuCallback::addCommand(QString commandId,
       auto* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
       connect(pBinder, SIGNAL(manageCommand(QString, QAction*)),
               this, SIGNAL(manageCommand(QString, QAction*)));
-      binders_[commandId].push_back(QPointer<MenuActionBinder>(pBinder));
+      binders_[commandId].push_back(pBinder);
    }
 
    // remember action for later
@@ -339,35 +339,40 @@ void setCommandProperty(T& actions, QString commandId, F&& setter)
 
 void MenuCallback::setCommandEnabled(QString commandId, bool enabled)
 {
-   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) 
+   {
       pAction->setEnabled(enabled);
    });
 }
 
 void MenuCallback::setCommandVisible(QString commandId, bool visible)
 {
-   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) 
+   {
       pAction->setVisible(visible);
    });
 }
 
 void MenuCallback::setCommandLabel(QString commandId, QString label)
 {
-   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) 
+   {
       pAction->setText(label);
    });
 }
 
 void MenuCallback::setCommandChecked(QString commandId, bool checked)
 {
-   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) {
+   setCommandProperty(actions_, commandId, [=](QPointer<QAction> pAction) 
+   {
       pAction->setChecked(checked);
    });
 }
 
 void MenuCallback::setCommandShortcut(QString commandId, QString shortcut) 
 {
-   setCommandProperty(binders_, commandId, [=](QPointer<MenuActionBinder> binder) {
+   setCommandProperty(binders_, commandId, [=](QPointer<MenuActionBinder> binder) 
+   {
       QKeySequence keySequence(shortcut);
       binder->setCustomSequence(keySequence);
    });
@@ -383,7 +388,8 @@ void MenuCallback::cleanUpActions()
 {
    for (auto& actions : actions_.values())
    {
-      core::algorithm::expel_if(actions, [](QPointer<QAction> pAction) {
+      core::algorithm::expel_if(actions, [](QPointer<QAction> pAction) 
+      {
          return pAction.isNull();
       });
    }
@@ -395,7 +401,6 @@ MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAc
    connect(pMenu, SIGNAL(aboutToHide()), this, SLOT(onHideMenu()));
    pAction_ = pAction;
    keySequence_ = pAction->shortcut();
-   customSequence_ = QKeySequence();
    pAction->setShortcut(QKeySequence());
 }
 
@@ -443,6 +448,7 @@ WindowMenu::WindowMenu(QWidget *parent) : QMenu(QString::fromUtf8("&Window"), pa
 
    connect(this, SIGNAL(aboutToShow()),
            this, SLOT(onAboutToShow()));
+
    connect(this, SIGNAL(aboutToHide()),
            this, SLOT(onAboutToHide()));
 }
@@ -451,18 +457,14 @@ void WindowMenu::onMinimize()
 {
    QWidget* pWin = QApplication::activeWindow();
    if (pWin)
-   {
       pWin->setWindowState(Qt::WindowMinimized);
-   }
 }
 
 void WindowMenu::onZoom()
 {
    QWidget* pWin = QApplication::activeWindow();
    if (pWin)
-   {
       pWin->setWindowState(pWin->windowState() ^ Qt::WindowMaximized);
-   }
 }
 
 void WindowMenu::onBringAllToFront()
@@ -520,11 +522,14 @@ void WindowMenu::showWindow()
    auto* pAction = qobject_cast<QAction*>(sender());
    if (!pAction)
       return;
+
    auto* pWidget = pAction->data().value<QWidget*>();
    if (!pWidget)
       return;
+
    if (pWidget->isMinimized())
       pWidget->setWindowState(pWidget->windowState() & ~Qt::WindowMinimized);
+
    pWidget->activateWindow();
    pWidget->raise();
 }
