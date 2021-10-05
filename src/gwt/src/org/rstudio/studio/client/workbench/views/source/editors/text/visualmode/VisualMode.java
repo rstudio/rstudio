@@ -1494,14 +1494,15 @@ public class VisualMode implements VisualModeEditorSync,
          PanmirrorContext context = createPanmirrorContext(); 
          PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
-         PanmirrorWidget.create(context, visualModeFormat_.formatSource(), 
+         PanmirrorWidget.FormatSource formatSource = visualModeFormat_.formatSource();
+         PanmirrorWidget.create(context, formatSource, 
                                 options, widgetOptions, kCreationProgressDelayMs, (panmirror) -> {
          
             // save reference to panmirror
             panmirror_ = panmirror;
             
             // track format comment (used to detect when we need to reload for a new format)
-            panmirrorFormatConfig_ = new VisualModeReloadChecker(view_);
+            panmirrorFormatConfig_ = new VisualModeReloadChecker(formatSource);
             
             // remove some keybindings that conflict with the ide
             // (currently no known conflicts)

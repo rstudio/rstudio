@@ -26,5 +26,14 @@ public class PanmirrorRmdExtensions
    public boolean bookdownXRefUI;
    public boolean bookdownPart;
    public boolean blogdownMathInCode;
+   
+   public static boolean areEqual(PanmirrorRmdExtensions a, PanmirrorRmdExtensions b)
+   {
+      return a.codeChunks == b.codeChunks &&
+             a.bookdownXRef == b.bookdownXRef &&
+             a.bookdownXRefUI == b.bookdownXRefUI &&
+             a.bookdownPart == b.bookdownPart &&
+             a.blogdownMathInCode == b.blogdownMathInCode;
+   }
 }
 
