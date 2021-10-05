@@ -12,7 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 #include "DesktopMenuCallback.hpp"
 
 #include <core/Algorithm.hpp>
@@ -202,8 +201,10 @@ QAction* MenuCallback::duplicateAppMenuAction(QString commandToDuplicate,
       menuStack_.top()->addAction(pAction);
 
       auto* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
-      connect(pBinder, SIGNAL(manageCommand(QString, QAction * )), this, SIGNAL(manageCommand(QString, QAction * )));
+      connect(pBinder, SIGNAL(manageCommand(QString, QAction*)),
+              this, SIGNAL(manageCommand(QString, QAction*)));
       connect(pAction, SIGNAL(triggered()), this, SLOT(actionInvoked()));
+      binders_[commandId].push_back(QPointer<MenuActionBinder>(pBinder));
    }
    return pAction;
 }
@@ -283,9 +284,10 @@ void MenuCallback::addCommand(QString commandId,
       if (checkable)
          pAction->setCheckable(true);
 
-      auto * pBinder = new MenuActionBinder(menuStack_.top(), pAction);
-      connect(pBinder, SIGNAL(manageCommand(QString,QAction*)),
-              this, SIGNAL(manageCommand(QString,QAction*)));
+      auto* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
+      connect(pBinder, SIGNAL(manageCommand(QString, QAction*)),
+              this, SIGNAL(manageCommand(QString, QAction*)));
+      binders_[commandId].push_back(QPointer<MenuActionBinder>(pBinder));
    }
 
    // remember action for later
@@ -363,6 +365,14 @@ void MenuCallback::setCommandChecked(QString commandId, bool checked)
    });
 }
 
+void MenuCallback::setCommandShortcut(QString commandId, QString shortcut) 
+{
+   setCommandProperty(binders_, commandId, [=](QPointer<MenuActionBinder> binder) {
+      QKeySequence keySequence(shortcut);
+      binder->setCustomSequence(keySequence);
+   });
+}
+
 void MenuCallback::setMainMenuEnabled(bool enabled)
 {
    if (pMainMenu_)
@@ -385,13 +395,22 @@ MenuActionBinder::MenuActionBinder(QMenu* pMenu, QAction* pAction) : QObject(pAc
    connect(pMenu, SIGNAL(aboutToHide()), this, SLOT(onHideMenu()));
    pAction_ = pAction;
    keySequence_ = pAction->shortcut();
+   customSequence_ = QKeySequence();
    pAction->setShortcut(QKeySequence());
+}
+
+void MenuActionBinder::setCustomSequence(QKeySequence seq) 
+{
+   customSequence_ = seq;
 }
 
 void MenuActionBinder::onShowMenu()
 {
    QString commandId = pAction_->data().toString();
-   pAction_->setShortcut(keySequence_);
+   if (!customSequence_.isEmpty())
+      pAction_->setShortcut(customSequence_);
+   else 
+      pAction_->setShortcut(keySequence_);
 }
 
 void MenuActionBinder::onHideMenu()

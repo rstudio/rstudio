@@ -718,11 +718,15 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public void setShortcut(KeyboardShortcut shortcut)
    {
       shortcut_ = shortcut;
+      if (Desktop.hasDesktopFrame())
+         DesktopMenuCallback.setCommandShortcut(id_, this.getShortcutRaw());
    }
 
    public void setCustomShortcut(KeyboardShortcut shortcut)
    {
       customShortcut_ = shortcut;
+      if (Desktop.hasDesktopFrame())
+         DesktopMenuCallback.setCommandShortcut(id_, this.getShortcutRaw());
    }
 
    public String getShortcutRaw()

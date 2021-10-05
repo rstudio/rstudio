@@ -29,6 +29,8 @@
 namespace rstudio {
 namespace desktop {
 
+class MenuActionBinder;
+
 class MenuCallback : public QObject
 {
     Q_OBJECT
@@ -54,6 +56,7 @@ public Q_SLOTS:
     void setCommandVisible(QString commandId, bool visible);
     void setCommandLabel(QString commandId, QString label);
     void setCommandChecked(QString commandId, bool checked);
+    void setCommandShortcut(QString commandId, QString shorcut);
     void setMainMenuEnabled(bool enabled);
 
     // other slots
@@ -86,6 +89,7 @@ private:
     QMenuBar* pMainMenu_ = nullptr;
     QStack<SubMenu*> menuStack_;
     QMap<QString, QVector<QPointer<QAction>>> actions_;
+    QMap<QString, QVector<QPointer<MenuActionBinder>>> binders_;
 };
 
 /* Previously, in desktop mode, many keyboard shortcuts were handled by Qt,
@@ -104,6 +108,7 @@ class MenuActionBinder : public QObject
    Q_OBJECT
 public:
    MenuActionBinder(QMenu* pMenu, QAction* action);
+   void setCustomSequence(QKeySequence seq);
 
 public Q_SLOTS:
    void onShowMenu();
@@ -115,6 +120,7 @@ Q_SIGNALS:
 private:
    QAction* pAction_;
    QKeySequence keySequence_;
+   QKeySequence customSequence_;
 };
 
 class WindowMenu : public QMenu

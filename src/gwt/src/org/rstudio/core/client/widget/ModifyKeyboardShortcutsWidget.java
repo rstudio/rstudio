@@ -335,7 +335,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             applyChanges();
          }
       });
-      applyButton_.setEnabled(false);
 
       addOkButton(applyButton_);
       
@@ -1230,7 +1229,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private void updateData(List<KeyboardShortcutEntry> bindings)
    {
       dataProvider_.setList(bindings);
-      applyButton_.setEnabled(changes_.size() > 0);
       
       // Loop through and update styling on each row.
       for (int i = 0; i < bindings.size(); i++)
