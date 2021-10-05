@@ -67,7 +67,7 @@ FilePath collectionsCacheDir(const std::string& type, const std::string& context
 struct IndexedCollection
 {
    bool empty() const { return file.empty(); }
-   int version;
+   double version;
    std::string file;
    std::string key;
    std::string parentKey;
@@ -92,7 +92,7 @@ std::map<std::string,IndexedCollection> collectionsCacheIndex(const FilePath& ca
 
                json::Object entryJson = member.getValue().getObject();
                IndexedCollection coll;
-               coll.version = entryJson[kVersion].getInt();
+               coll.version = entryJson[kVersion].getDouble();
                coll.file = entryJson[kFile].getString();
                coll.key = entryJson[kKey].getString();
                coll.parentKey = entryJson[kParentKey].getString();
@@ -142,7 +142,7 @@ Error readCollection(const FilePath& filePath, ZoteroCollection* pCollection)
       return error;
 
    pCollection->name = collectionJson[kName].getString();
-   pCollection->version = collectionJson[kVersion].getInt();
+   pCollection->version = collectionJson[kVersion].getDouble();
    pCollection->key = collectionJson[kKey].getString();
    pCollection->parentKey = collectionJson[kParentKey].getString();
    pCollection->items = collectionJson[kItems].getArray();
@@ -326,7 +326,7 @@ const char * const kKey = "key";
 const char * const kParentKey = "parentKey";
 const char * const kItems = "items";
 
-const int kNoVersion = -1;
+const double kNoVersion = -1;
 
 ZoteroCollectionSpec findParentSpec(const ZoteroCollectionSpec& spec, const ZoteroCollectionSpecs& specs)
 {

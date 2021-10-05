@@ -355,7 +355,7 @@ private:
          for (auto collectionSpecJson : collectionSpecsJson)
          {
             json::Object collectionJson = collectionSpecJson.getObject()["data"].getObject();
-            int version = collectionJson[kVersion].getInt();
+            double version = collectionJson[kVersion].getDouble();
             std::string name = collectionJson[kName].getString();
             std::string collectionID = collectionJson[kKey].getString();
 
@@ -475,10 +475,10 @@ private:
       else
       {
          // calculate library version from max of items downloaed
-         int version = 0;
+         double version = 0;
          json::Array itemsJson = jsonValue.getArray();
          std::for_each(itemsJson.begin(), itemsJson.end(), [&version](const json::Value& item) {
-            int itemVersion = item.getObject()[kVersion].getInt();
+            double itemVersion = item.getObject()[kVersion].getDouble();
             if (itemVersion > version)
                version = itemVersion;
          });
