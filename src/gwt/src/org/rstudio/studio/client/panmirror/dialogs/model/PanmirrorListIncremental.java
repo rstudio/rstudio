@@ -1,5 +1,5 @@
 /*
- * PanmirrorListProps.java
+ * PanmirrorListIncremental.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -14,18 +14,12 @@
  */
 
 
+
 package org.rstudio.studio.client.panmirror.dialogs.model;
 
-import jsinterop.annotations.JsType;
-
-@JsType
-public class PanmirrorListProps
+public class PanmirrorListIncremental
 {
-   public String type;
-   public boolean tight;
-   public int order;
-   public String number_style;
-   public String number_delim;
-   public String incremental;
+   public static String Default = "default";
+   public static String Incremental = "incremental";
+   public static String Nonincremental = "nonincremental";
 }
-

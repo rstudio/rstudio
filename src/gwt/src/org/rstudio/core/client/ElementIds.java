@@ -554,6 +554,8 @@ public class ElementIds
    public static String getVisualMdCitationLocator() { return getElementId(VISUAL_MD_CITATION_LOCATOR); }
    public final static String VISUAL_MD_LIST_TYPE = "visual_md_list_type";
    public static String getVisualMdListType() { return getElementId(VISUAL_MD_LIST_TYPE); }
+   public final static String VISUAL_MD_LIST_INCREMENTAL = "visual_md_list_incremental";
+   public static String getVisualMdListIncremental() { return getElementId(VISUAL_MD_LIST_INCREMENTAL); }
    public final static String VISUAL_MD_LIST_ORDER = "visual_md_list_order";
    public static String getVisualMdListOrder() { return getElementId(VISUAL_MD_LIST_ORDER); }
    public final static String VISUAL_MD_LIST_NUMBER_STYLE = "visual_md_list_number_style";
