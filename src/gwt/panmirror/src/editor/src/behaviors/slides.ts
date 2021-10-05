@@ -14,13 +14,14 @@
  */
 
 import { Transaction, EditorState } from "prosemirror-state";
-import { setTextSelection } from "prosemirror-utils";
+import { setTextSelection, findParentNodeOfType } from "prosemirror-utils";
 
 import { ExtensionContext } from "../api/extension";
 import { kPresentationDocType } from "../api/format";
 import { canInsertNode, editingRootNode } from "../api/node";
 import { ProsemirrorCommand, EditorCommandId } from "../api/command";
 import { OmniInsertGroup } from "../api/omni_insert";
+import { wrapIn } from "prosemirror-commands";
 
 const extension = (context: ExtensionContext) => {
 
@@ -38,7 +39,7 @@ const extension = (context: ExtensionContext) => {
           description: ui.context.translateText('Pause after content'),
           group: OmniInsertGroup.Content,
           priority: 2,
-          image: () => ui.images.omni_insert?.generic!,
+          image: () => ui.prefs.darkMode() ? ui.images.omni_insert!.slide_pause_dark! : ui.images.omni_insert!.slide_pause!
         })
       ];
 
@@ -48,7 +49,14 @@ const extension = (context: ExtensionContext) => {
           description: ui.context.translateText('Slide speaker notes'),
           group: OmniInsertGroup.Content,
           priority: 2,
-          image: () => ui.images.omni_insert?.generic!,
+          image: () => ui.prefs.darkMode() ? ui.images.omni_insert!.slide_notes_dark! : ui.images.omni_insert!.slide_notes!
+        }));
+        cmds.push(new ProsemirrorCommand(EditorCommandId.InsertSlideColumns, [], insertSlideColumns, {
+          name: ui.context.translateText('Slide Columns'),
+          description: ui.context.translateText('Two column layout'),
+          group: OmniInsertGroup.Content,
+          priority: 2,
+          image: () => ui.images.omni_insert!.generic!
         }));
       }
 
@@ -57,6 +65,41 @@ const extension = (context: ExtensionContext) => {
 
   };
 };
+
+
+export function insertSlideColumns(state: EditorState, dispatch?: (tr: Transaction) => void) {
+  const schema = state.schema;
+  if (!canInsertNode(state, schema.nodes.div)) {
+    return false;
+  }
+
+
+
+  if (dispatch) {
+    wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
+
+      const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
+      tr.setNodeMarkup(div.pos, div.node.type, { classes: ["columns"] });
+
+      const columnAttrs =  { classes: ["column"], keyvalue:[["width", "50%"]] };
+      const columnsContent = [
+        state.schema.nodes.div.create(
+          columnAttrs,
+          state.schema.nodes.paragraph.create()
+        ),
+        state.schema.nodes.div.create(
+          columnAttrs,
+          state.schema.nodes.paragraph.create()
+        )
+      ];
+      tr.replaceWith(div.start, div.start + 1, columnsContent);
+      setTextSelection(div.start + 1)(tr);
+     
+      dispatch(tr);
+    });
+  }
+  return true;
+}
 
 export function insertSlidePause(state: EditorState, dispatch?: (tr: Transaction) => void) {
   const schema = state.schema;

@@ -154,6 +154,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       // slides
       add(PanmirrorCommands.InsertSlidePause, "Insert:::Slide Pause");
       add(PanmirrorCommands.InsertSlideNotes, "Insert:::Slide Notes");
+      add(PanmirrorCommands.InsertSlideColumns, "Insert:::Slide Columns");
    }
    
    public PanmirrorCommandUI get(String id)

@@ -136,4 +136,5 @@ public class PanmirrorCommands
    // slides
    public static final String InsertSlidePause = "FCA8BF2E-2668-4919-92FC-02083EB48246";
    public static final String InsertSlideNotes = "9C709915-02BE-4F4F-9CEB-50E17973C9BE";
+   public static final String InsertSlideColumns = "AE62D05F-1415-4E1F-84AE-753EE2393002";
 }
