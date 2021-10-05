@@ -150,6 +150,10 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.GoToPreviousSection, "Go to Previous Section");
       add(PanmirrorCommands.GoToNextChunk, "Go to Next Chunk");
       add(PanmirrorCommands.GoToPreviousChunk, "Go to Previous Chunk");
+      
+      // slides
+      add(PanmirrorCommands.InsertSlidePause, "Insert:::Slide Pause");
+      add(PanmirrorCommands.InsertSlideNotes, "Insert:::Slide Notes");
    }
    
    public PanmirrorCommandUI get(String id)

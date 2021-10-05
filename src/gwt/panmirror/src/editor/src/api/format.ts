@@ -38,4 +38,4 @@ export const kHugoDocType = 'hugo';
 export const kQuartoDocType = 'quarto';
 export const kPresentationDocType = 'presentation';
 
-export type EditorExtendedDocType = 'bookdown' | 'hugo' | 'quarto';
+export type EditorExtendedDocType = 'bookdown' | 'hugo' | 'quarto' | 'presentation';

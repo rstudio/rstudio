@@ -128,6 +128,12 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.Link },
     { command: EditorCommandId.Shortcode },
     { command: EditorCommandId.HorizontalRule },
+    ...(haveAnyOf(commands, EditorCommandId.InsertSlideNotes, EditorCommandId.InsertSlidePause)
+    ? [
+      { separator: true },
+      { command: EditorCommandId.InsertSlidePause },
+      { command: EditorCommandId.InsertSlideNotes }
+    ] : []),
     { separator: true },
     ...(haveAnyOf(commands, EditorCommandId.InlineMath, EditorCommandId.DisplayMath)
     ? [

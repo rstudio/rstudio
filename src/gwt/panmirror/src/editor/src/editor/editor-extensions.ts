@@ -77,6 +77,7 @@ import behaviorInsertSymbolEmoji from '../behaviors/insert_symbol/insert_symbol-
 import beahviorInsertSpecialCharacters from '../behaviors/insert_symbol/insert_special_characters';
 import behaviorNbsp from '../behaviors/nbsp';
 import behaviorRemoveSection from '../behaviors/remove_section';
+import behaviorSlides from '../behaviors/slides';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -140,6 +141,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorFind,
     behaviorSpellingInteractive,
     behaviorClearFormatting,
+    behaviorSlides
   ]);
 
   // optional extensions

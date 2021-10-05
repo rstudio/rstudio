@@ -132,4 +132,8 @@ public class PanmirrorCommands
    public static final String GoToPreviousSection = "E6AA728C-2B75-4939-9123-0F082837ACDF";
    public static final String GoToNextChunk = "50DD6E51-13B5-4F1E-A46B-6A33EB1609D9";
    public static final String GoToPreviousChunk = "8D105D33-78FE-4A98-8195-6B71361424C5";
+   
+   // slides
+   public static final String InsertSlidePause = "FCA8BF2E-2668-4919-92FC-02083EB48246";
+   public static final String InsertSlideNotes = "9C709915-02BE-4F4F-9CEB-50E17973C9BE";
 }
