@@ -96,6 +96,8 @@ import rcppChunkImage from './images/omni_insert/rcpp_chunk.png';
 import rcppChunkDarkImage from './images/omni_insert/rcpp_chunk_dark.png';
 import tabsetImage from './images/omni_insert/tabset.png';
 import tabsetDarkImage from './images/omni_insert/tabset_dark.png';
+import slideColumns from './images/omni_insert/slide_columns.png';
+import slideColumnsDark from './images/omni_insert/slide_columns_dark.png';
 import slidePause from './images/omni_insert/slide_pause.png';
 import slidePauseDark from './images/omni_insert/slide_pause_dark.png';
 import slideNotes from './images/omni_insert/slide_notes.png';
@@ -244,6 +246,8 @@ export function defaultEditorUIImages(): EditorUIImages {
       rcpp_chunk_dark: rcppChunkDarkImage,
       tabset: tabsetImage,
       tabset_dark: tabsetDarkImage,
+      slide_columns: slideColumns,
+      slide_columns_dark: slideColumnsDark,
       slide_notes: slideNotes,
       slide_notes_dark: slideNotesDark,
       slide_pause: slidePause,

@@ -56,7 +56,7 @@ const extension = (context: ExtensionContext) => {
           description: ui.context.translateText('Two column layout'),
           group: OmniInsertGroup.Content,
           priority: 2,
-          image: () => ui.images.omni_insert!.generic!
+          image: () => ui.prefs.darkMode() ? ui.images.omni_insert!.slide_columns_dark! : ui.images.omni_insert!.slide_columns!
         }));
       }
 
