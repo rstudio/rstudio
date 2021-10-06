@@ -8,6 +8,9 @@
 * Fixed code execution via selection in indented visual mode code chunks (#9108)
 * Fixed detection of HTTP(S) URLs on Windows in the image resolver (#9837)
 * Improved behavior of citekey removal in Insert Citation dialog (#9124)
+* Fix issue with unicode characters in citation data (#9745)
+* Fix issue with unicode characters in citekeys (#9754)
+* Fix issue with delay showing newly added Zotero references when inserting citations (#9800)
 
 ### RStudio Workbench
 

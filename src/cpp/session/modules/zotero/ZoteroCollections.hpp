@@ -41,7 +41,7 @@ extern const char * const kKey;
 extern const char * const kParentKey;
 extern const char * const kItems;
 
-extern const int kNoVersion;
+extern const double kNoVersion;
 
 // collection spec
 struct ZoteroCollectionSpec
@@ -49,11 +49,11 @@ struct ZoteroCollectionSpec
    explicit ZoteroCollectionSpec(const std::string& name = "",
                                  const std::string& key = "",
                                  const std::string& parentKey = "",
-                                 int version = kNoVersion)
+                                 double version = kNoVersion)
       : name(name), key(key), parentKey(parentKey), version(version)
    {
    }
-   explicit ZoteroCollectionSpec(const std::string& colName, const std::string& key, int version)
+   explicit ZoteroCollectionSpec(const std::string& colName, const std::string& key, double version)
        : ZoteroCollectionSpec(colName, key, "", version)
    {
    }
@@ -62,7 +62,7 @@ struct ZoteroCollectionSpec
    std::string name;
    std::string key;
    std::string parentKey;
-   int version;
+   double version;
 };
 typedef std::vector<ZoteroCollectionSpec> ZoteroCollectionSpecs;
 typedef boost::function<void(core::Error,ZoteroCollectionSpecs)> ZoteroCollectionSpecsHandler;
