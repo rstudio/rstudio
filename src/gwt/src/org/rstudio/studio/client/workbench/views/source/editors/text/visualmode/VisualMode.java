@@ -331,55 +331,63 @@ public class VisualMode implements VisualModeEditorSync,
                   PanmirrorCode markdown = Js.uncheckedCast(obj);
                   rv.arrive(() ->
                   {
-                     if (markdown == null)
+                     try
                      {
-                        // note that ready.execute() is never called in the error case
-                        return;
-                     }
-
-                     // we are about to mutate the document, so create a single
-                     // shot handler that will adjust the known position of
-                     // items in the outline (we do this opportunistically
-                     // unless executing code)
-                     if (markdown.location != null && syncType != SyncType.SyncTypeExecution)
-                     {
-                         alignScopeTreeAfterUpdate(markdown.location);
-                     }
-                     
-                     // apply diffs unless the wrap column changed (too expensive)
-                     if (!writerOptions.wrapChanged) 
-                     {
-                        TextEditorContainer.Changes changes = toEditorChanges(markdown);
-                        getSourceEditor().applyChanges(changes, syncType == SyncType.SyncTypeActivate); 
-                     }
-                     else
-                     {
-                        getSourceEditor().setCode(markdown.code);
-                     }
-                     
-                     // if the format comment has changed then show the reload prompt
-                     if (panmirrorFormatConfig_.requiresReload())
-                     {
-                        view_.showPanmirrorFormatChanged(() ->
+                        if (markdown == null)
                         {
-                           // dismiss the warning bar
-                           view_.hideWarningBar();
-                           // this will trigger the refresh b/c the format changed
-                           syncFromEditorIfActivated();
-                          
-                        });
+                           // note that ready.execute() is never called in the error case
+                           return;
+                        }
+   
+                        // we are about to mutate the document, so create a single
+                        // shot handler that will adjust the known position of
+                        // items in the outline (we do this opportunistically
+                        // unless executing code)
+                        if (markdown.location != null && syncType != SyncType.SyncTypeExecution)
+                        {
+                            alignScopeTreeAfterUpdate(markdown.location);
+                        }
+                        
+                        // apply diffs unless the wrap column changed (too expensive)
+                        if (!writerOptions.wrapChanged) 
+                        {
+                           TextEditorContainer.Changes changes = toEditorChanges(markdown);
+                           getSourceEditor().applyChanges(changes, syncType == SyncType.SyncTypeActivate); 
+                        }
+                        else
+                        {
+                           getSourceEditor().setCode(markdown.code);
+                        }
+                        
+                        // if the format comment has changed then show the reload prompt
+                        if ((panmirrorFormatConfig_ != null) && panmirrorFormatConfig_.requiresReload())
+                        {
+                           view_.showPanmirrorFormatChanged(() ->
+                           {
+                              // dismiss the warning bar
+                              view_.hideWarningBar();
+                              // this will trigger the refresh b/c the format changed
+                              syncFromEditorIfActivated();
+                             
+                           });
+                        }
+                        
+                        if (markdown.location != null && syncType == SyncType.SyncTypeExecution)
+                        {
+                           // if syncing for execution, force a rebuild of the scope tree 
+                           alignScopeOutline(markdown.location);
+                        }
+   
+                        // invoke ready callback if supplied
+                        if (ready != null)
+                        {
+                           ready.execute();
+                        }
                      }
-                     
-                     if (markdown.location != null && syncType == SyncType.SyncTypeExecution)
+                     catch(Exception ex)
                      {
-                        // if syncing for execution, force a rebuild of the scope tree 
-                        alignScopeOutline(markdown.location);
-                     }
-
-                     // invoke ready callback if supplied
-                     if (ready != null)
-                     {
-                        ready.execute();
+                        Debug.logToConsole("Unexpected error occurred during syncToEditor");
+                        Debug.logException(ex);
                      }
                   }, true);  
                } 
