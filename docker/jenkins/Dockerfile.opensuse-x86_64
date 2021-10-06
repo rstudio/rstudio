@@ -1,28 +1,25 @@
-FROM opensuse/leap:15.1
+FROM opensuse/leap:42.3
 
-ENV OPERATING_SYSTEM=opensus_leap15
+ENV OPERATING_SYSTEM=opensuse_leap42
 
 # needed to build RPMs
-RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Tumbleweed/systemsmanagement:wbem:deps.repo
+RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Leap_42.3/systemsmanagement:wbem:deps.repo
 
 # refresh repos and install required packages
 RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
     boost-devel \
-    clang \
     curl \
     expect \
     fakeroot \
     gcc \
     gcc-c++ \
-    gdb \
     git \
-    java-1_8_0-openjdk-devel  \
+    java-1_8_0-openjdk  \
     libacl-devel \
     libattr-devel \
     libcap-devel \
-    libcurl-devel \
     libuser-devel \
     libuuid-devel \
     libxml2-devel \
@@ -31,12 +28,10 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     lsof \
     make \
     openssl-devel \
-    p7zip \
     pam-devel \
     pango-devel \
     postgresql-devel \
     python \
-    python-xml \
     R \
     rpm-build \
     sqlite-devel \
@@ -46,7 +41,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     valgrind \
     wget \
     xml-commons-apis \
-    zlib-devel
+    zlib-devel \
+    libuser-devel
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools
@@ -64,13 +60,6 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
-# install crashpad and its dependencies
-COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad opensuse15
-
-# ensure we use the java 8 compiler
-RUN update-alternatives --set java /usr/lib64/jvm/jre-1.8.0-openjdk/bin/java
-
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
@@ -81,23 +70,8 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse15
-
-# install Qt SDK
-COPY dependencies/common/install-qt.sh /tmp/
-COPY dependencies/linux/install-qt-linux /tmp/
-RUN export QT_VERSION=5.12.8 && \
-    cd /tmp && /bin/bash ./install-qt-linux
-
-# install GnuPG 1.4 from source (needed for release signing)
-RUN cd /tmp && \
-    wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
-    bzip2 -d gnupg-1.4.23.tar.bz2 && \
-    tar xvf gnupg-1.4.23.tar && \
-    cd gnupg-1.4.23 && \
-    ./configure && \
-    make && \
-    make install
+ENV RSTUDIO_DISABLE_CRASHPAD=1
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
