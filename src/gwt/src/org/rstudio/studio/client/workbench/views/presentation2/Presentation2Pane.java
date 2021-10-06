@@ -121,7 +121,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       slidesMenuLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles().toolbarButtonLabel());   
       slidesMenu_ = new SlidesPopupMenu();
       slidesMenuWidget_ = toolbar.addLeftPopupMenu(slidesMenuLabel_, slidesMenu_);
-      slidesMenuWidget_.getElement().getStyle().setMarginTop(-4, Unit.PX);
+      slidesMenuWidget_.getElement().getStyle().setMarginTop(-3, Unit.PX);
       
       return toolbar;
       
