@@ -487,18 +487,13 @@ Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppC
 {
    // get path to actual sqlite db
    FilePath dbFile(dataDir + "/zotero.sqlite");
-   FilePath dbJournal(dbFile.getAbsolutePath() + "-journal");
 
    // get path to copy of file we will use for queries
    FilePath dbCopyFile = zoteroSqliteCopyPath(dataDir);
-   FilePath dbCopyJournal(dbCopyFile.getAbsolutePath() + "-journal");
-
-   bool databaseIsStale = dbCopyFile.getLastWriteTime() < dbFile.getLastWriteTime();
-   bool journalIsStale = dbCopyJournal.getLastWriteTime() < dbJournal.getLastWriteTime();
-
 
    // if the copy file doesn't exist or is older than the dbFile then make another copy
-   if (databaseIsStale || journalIsStale)
+   bool databaseIsStale = dbCopyFile.getLastWriteTime() < dbFile.getLastWriteTime();
+   if (databaseIsStale)
    {
       TRACE("Copying " + dbFile.getAbsolutePath());
       std::time_t writeTime = dbFile.getLastWriteTime();
@@ -506,25 +501,6 @@ Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppC
       if (error)
          return error;
       dbCopyFile.setLastWriteTime(writeTime);
-
-      // Manage journal files that may be open as well
-      if (dbJournal.exists()) {
-          TRACE("Copying Journal");
-          // If there a journal, we should copy that as well
-          std::time_t writeTime = dbJournal.getLastWriteTime();
-          Error error = dbJournal.copy(dbCopyJournal, true);
-          if (error)
-              return error;
-          dbCopyJournal.setLastWriteTime(writeTime);
-      } else {
-          TRACE("Removing Journal");
-          // If there is no journal file, we should ensure that any existing journal is removed
-          if (dbCopyJournal.exists()) {
-              Error error = dbCopyJournal.remove();
-              if (error)
-                  return error;
-          }
-      }
    }
 
    // create connection
