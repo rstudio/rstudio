@@ -1354,6 +1354,18 @@ public class RemoteServer implements Server
 
       sendRequest(RPC_SCOPE, GET_PACKAGE_NEWS_URL, params, requestCallback);
    }
+   
+   @Override
+   public void getPackageCitations(String packageName,
+                                   ServerRequestCallback<JavaScriptObject> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(packageName)
+            .get();
+
+      sendRequest(RPC_SCOPE, GET_PACKAGE_CITATIONS, params, requestCallback);
+   }
+   
 
    public void setCRANMirror(CRANMirror mirror,
                              ServerRequestCallback<Void> requestCallback)
@@ -6572,6 +6584,7 @@ public class RemoteServer implements Server
    private static final String GET_CRAN_ACTIVES = "get_cran_actives";
    private static final String PACKAGE_SKELETON = "package_skeleton";
    private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
+   private static final String GET_PACKAGE_CITATIONS = "get_package_citations";
 
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic";
@@ -6987,6 +7000,6 @@ public class RemoteServer implements Server
    private static final String QUARTO_PREVIEW = "quarto_preview";
    private static final String QUARTO_SERVE = "quarto_serve";
    private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
-   
+  
 
 }

@@ -583,6 +583,24 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
 })
 
+.rs.addJsonRpcHandler("get_package_citations", function(packageName, libraryPath)
+{
+   cites <- citation(packageName)
+   lapply(unclass(cites), function(cite) {
+      list(
+         type = .rs.scalar(attr(cite, "bibtype")),
+         author = lapply(unclass(cite[["author"]]), function(author) {
+            list(
+               given = author[["given"]],
+               family = .rs.scalar(author[["family"]])
+            )
+         }),
+         title =.rs.scalar(cite[["title"]]),
+         desc = .rs.scalar(cite[["doi"]])
+      )
+   })
+})
+
 .rs.addJsonRpcHandler("get_package_news_url", function(packageName, libraryPath)
 {
    # first, check if we've already discovered a NEWS link
