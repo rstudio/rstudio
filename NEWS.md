@@ -7,6 +7,7 @@
 * Made visual code chunks collapsible (#8613)
 * Fixed code execution via selection in indented visual mode code chunks (#9108)
 * Fixed detection of HTTP(S) URLs on Windows in the image resolver (#9837)
+* Improved behavior of citekey removal in Insert Citation dialog (#9124)
 
 ### RStudio Workbench
 
@@ -24,3 +25,4 @@
 * Fixed errors when uploading files/directory names with invalid characters (Pro #698)
 * Added error when rsession may be running a different version of R than expected (Pro #2477)
 * Fixed "No such file or directory" errors when auto-saving R Notebook chunks while running them (#9284)
+* Fixed issue causing unnecessary document switching when evaluating statements in debugger (#9918)
