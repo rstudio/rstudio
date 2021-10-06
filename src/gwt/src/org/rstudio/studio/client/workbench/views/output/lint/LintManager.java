@@ -344,11 +344,16 @@ public class LintManager
    private void performYamlLintRequest(final LintContext context)
    {
       yamlLinter_.getLint(lint -> {
-         showLint(context, lint);
+         showLint(context, lint, false);
       });
    }
    
    private void showLint(LintContext context, JsArray<LintItem> lint)
+   {
+      showLint(context, lint, true);
+   }
+   
+   private void showLint(LintContext context, JsArray<LintItem> lint, boolean spellcheck)
    {
       if (docDisplay_.isPopupVisible())
          return;
@@ -367,7 +372,7 @@ public class LintManager
       else
          finalLint = lint;
 
-      if (userPrefs_.realTimeSpellchecking().getValue())
+      if (spellcheck && userPrefs_.realTimeSpellchecking().getValue())
       {
          target_.getSpellingTarget().getLint(new ServerRequestCallback<JsArray<LintItem>>()
          {
