@@ -25,8 +25,8 @@ public class NewQuartoWebsiteProjectPage extends NewQuartoProjectPage
            "Quarto Website", 
            "Create a new Quarto website project",
            "Create Quarto Website",
-            new ImageResource2x(NewProjectResources.INSTANCE.quartoIcon2x()),
-            new ImageResource2x(NewProjectResources.INSTANCE.quartoIconLarge2x()));
+            new ImageResource2x(NewProjectResources.INSTANCE.quartoWebsiteIcon2x()),
+            new ImageResource2x(NewProjectResources.INSTANCE.quartoWebsiteIconLarge2x()));
    }
 
 }

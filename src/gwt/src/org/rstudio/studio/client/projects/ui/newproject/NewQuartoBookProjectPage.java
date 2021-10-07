@@ -25,8 +25,8 @@ public class NewQuartoBookProjectPage extends NewQuartoProjectPage
            "Quarto Book", 
            "Create a new Quarto book project",
            "Create Quarto Book",
-            new ImageResource2x(NewProjectResources.INSTANCE.quartoIcon2x()),
-            new ImageResource2x(NewProjectResources.INSTANCE.quartoIconLarge2x()));
+            new ImageResource2x(NewProjectResources.INSTANCE.quartoBookIcon2x()),
+            new ImageResource2x(NewProjectResources.INSTANCE.quartoBookIconLarge2x()));
    }
 
 }
