@@ -220,6 +220,8 @@ try {
                 }
             }
         }
+        
+        parallel parallel_containers
     }
 } catch(err) {
   //Swallow
