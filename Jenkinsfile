@@ -308,4 +308,6 @@ try {
           }
         }
     }
+} catch {
+  //Swallow
 }
