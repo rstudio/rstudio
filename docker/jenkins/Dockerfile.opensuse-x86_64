@@ -3,7 +3,7 @@ FROM opensuse/leap:42.3
 ENV OPERATING_SYSTEM=opensuse_leap42
 
 # needed to build RPMs
-RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Leap_42.3/systemsmanagement:wbem:deps.repo
+RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Tumbleweed/systemsmanagement:wbem:deps.repo
 
 # refresh repos and install required packages
 RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
@@ -60,6 +60,9 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
+# ensure we use the java 8 compiler
+RUN update-alternatives --set java /usr/lib64/jvm/jre-1.8.0-openjdk/bin/java
+
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
@@ -72,6 +75,16 @@ COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 # install common dependencies
 ENV RSTUDIO_DISABLE_CRASHPAD=1
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
+
+# install GnuPG 1.4 from source (needed for release signing)
+RUN cd /tmp && \
+    wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
+    bzip2 -d gnupg-1.4.23.tar.bz2 && \
+    tar xvf gnupg-1.4.23.tar && \
+    cd gnupg-1.4.23 && \
+    ./configure && \
+    make && \
+    make install
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
