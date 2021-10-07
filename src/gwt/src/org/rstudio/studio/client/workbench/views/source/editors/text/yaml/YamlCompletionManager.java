@@ -95,9 +95,10 @@ public class YamlCompletionManager extends CompletionManagerBase
          // default "empty" completion response
          String token = "";
          boolean cacheable = false;
-         boolean suggestOnAccept = false;
+        
          ArrayList<String> values = new ArrayList<String>();
          ArrayList<String> descriptions = new ArrayList<String>();
+         ArrayList<Boolean> suggestOnAccept = new ArrayList<Boolean>();
          
          // fill from result if we got one
          if (res != null)
@@ -106,11 +107,12 @@ public class YamlCompletionManager extends CompletionManagerBase
             token = result.getToken();
             for (int i=0; i<result.getCompletions().length(); i++)
             {
-               values.add(result.getCompletions().get(i).getValue());
-               descriptions.add(result.getCompletions().get(i).getDescription());
+               YamlCompletion completion = result.getCompletions().get(i);
+               values.add(completion.getValue());
+               descriptions.add(completion.getDescription());
+               suggestOnAccept.add(completion.getSuggestOnAccept());
             }
             cacheable = result.getCacheable();
-            suggestOnAccept = result.getSuggestOnAccept();
          }
           
          // create and send back response
@@ -120,6 +122,7 @@ public class YamlCompletionManager extends CompletionManagerBase
                JsUtil.toJsArrayString(new ArrayList<>(values.size())),
                JsUtil.toJsArrayBoolean(new ArrayList<>(values.size())),
                JsUtil.toJsArrayInteger(Collections.nCopies(values.size(), RCompletionType.YAML)),
+               JsUtil.toJsArrayBoolean(suggestOnAccept),
                JsUtil.toJsArrayString(descriptions),
                "",
                true,
@@ -128,7 +131,6 @@ public class YamlCompletionManager extends CompletionManagerBase
                null,
                null);         
          response.setCacheable(cacheable);
-         response.setSuggestOnAccept(suggestOnAccept);
          context.onResponseReceived(response); 
       });
       

@@ -31,4 +31,8 @@ public class YamlCompletion extends JavaScriptObject
       return this.description;
    }-*/;
    
+   public native final boolean getSuggestOnAccept() /*-{
+      return !!this.suggest_on_accept;
+   }-*/;
+   
 }

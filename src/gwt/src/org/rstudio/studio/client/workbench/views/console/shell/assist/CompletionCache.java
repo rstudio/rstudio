@@ -92,6 +92,7 @@ public class CompletionCache
       JsArrayString packages    = original.getPackages();
       JsArrayBoolean quote      = original.getQuote();
       JsArrayInteger type       = original.getType();
+      JsArrayBoolean suggestOnAccept = original.getSuggestOnAccept();
       JsArrayString meta        = original.getMeta();
       
       // Now, generate narrowed versions of the above
@@ -99,6 +100,7 @@ public class CompletionCache
       final JsVectorString packagesNarrow    = JsVectorString.createVector().cast();
       final JsVectorBoolean quoteNarrow      = JsVectorBoolean.createVector().cast();
       final JsVectorInteger typeNarrow       = JsVectorInteger.createVector().cast();
+      final JsArrayBoolean suggestOnAcceptNarrow = JsVectorBoolean.createVector().cast();
       final JsVectorString metaNarrow        = JsVectorString.createVector().cast();
       
       for (int i = 0, n = completions.length(); i < n; i++)
@@ -110,6 +112,7 @@ public class CompletionCache
             packagesNarrow.push(packages.get(i));
             quoteNarrow.push(quote.get(i));
             typeNarrow.push(type.get(i));
+            suggestOnAcceptNarrow.push(suggestOnAccept.get(i));
             metaNarrow.push(meta.get(i));
          }
       }
@@ -149,6 +152,7 @@ public class CompletionCache
       final JsVectorString packagesSorted    = JsVectorString.createVector().cast();
       final JsVectorBoolean quoteSorted      = JsVectorBoolean.createVector().cast();
       final JsVectorInteger typeSorted       = JsVectorInteger.createVector().cast();
+      final JsVectorBoolean suggestOnAcceptSorted = JsVectorBoolean.createVector().cast();
       final JsVectorString metaSorted        = JsVectorString.createVector().cast();
       
       for (int i = 0, n = indices.size(); i < n; i++)
@@ -158,6 +162,7 @@ public class CompletionCache
          packagesSorted.push(packagesNarrow.get(index));
          quoteSorted.push(quoteNarrow.get(index));
          typeSorted.push(typeNarrow.get(index));
+         suggestOnAcceptSorted.push(suggestOnAcceptNarrow.get(index));
          metaSorted.push(metaNarrow.get(index));
       }
       
@@ -168,6 +173,7 @@ public class CompletionCache
             packagesSorted.cast(),
             quoteSorted.cast(),
             typeSorted.cast(),
+            suggestOnAcceptSorted.cast(),
             metaSorted.cast(),
             original.getGuessedFunctionName(),
             original.getExcludeOtherCompletions(),
