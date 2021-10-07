@@ -191,42 +191,6 @@ try {
             }
         }
 
-        // prepare container for windows builder
-        parallel_images["windows"] = {
-          node('windows') {
-            stage('prepare Windows container') {
-              checkout scm
-              withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
-                def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
-                def dockerfile = "-f docker/jenkins/Dockerfile.windows"
-                def container
-                // the following is adapted from pullBuildPush with the
-                // omission of Unix-isms
-                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                  def image_cache
-                  def image_name = "jenkins/ide"
-                  def image_tag = "windows-${rstudioReleaseBranch}"
-                  def cache_tag = image_tag
-                  def build_args = github_args
-                  def docker_context = '.'
-                  try {
-                    image_cache = docker.image(image_name + ':' + cache_tag)
-                    image_cache.pull()
-                  } catch(e) { // docker.image throws a generic exception.
-                    echo 'Windows container image not found; expect build to take a bit longer.'
-                  }
-
-                  echo 'Building Windows container image'
-                  container = docker.build(image_name + ':' + image_tag, "--cache-from ${image_cache.imageName()} ${build_args} ${dockerfile} ${docker_context}")
-
-                  echo 'Pushing Windows container'
-                  container.push()
-                }
-              }
-            }
-          }
-        }
-
         parallel parallel_images
 
         def parallel_containers = [:]
@@ -255,47 +219,6 @@ try {
                     }
                 }
             }
-        }
-
-        parallel_containers["windows"] = {
-          node('windows') {
-            stage('prepare container') {
-               checkout scm
-               docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                 def image_tag = "windows-${rstudioReleaseBranch}"
-                 windows_image = docker.image("jenkins/ide:" + image_tag)
-               }
-            }
-            windows_image.inside() {
-              stage('dependencies') {
-                  withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
-                    bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
-                }
-              }
-              stage('build'){
-                def env = "set \"RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor}\" && set \"RSTUDIO_VERSION_MINOR=${rstudioVersionMinor}\" && set \"RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}\" && set \"RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}\""
-                bat "cd package/win32 && ${env} && set \"PACKAGE_OS=Windows\" && make-package.bat clean && cd ../.."
-              }
-              stage('tests'){
-                try {
-                  bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
-                }
-                catch(err){
-                  currentBuild.result = "UNSTABLE"
-                }
-              }
-              stage('sign') {
-
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}-RelWithDebInfo"
-
-                withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
-                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
-
-                  bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
-                }
-              }
-            }
-          }
         }
     }
 } catch(err) {
