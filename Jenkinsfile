@@ -308,6 +308,6 @@ try {
           }
         }
     }
-} catch {
+} catch(err) {
   //Swallow
 }
