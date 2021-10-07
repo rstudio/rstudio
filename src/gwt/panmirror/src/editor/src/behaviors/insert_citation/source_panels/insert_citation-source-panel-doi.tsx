@@ -55,9 +55,6 @@ export function doiSourcePanel(
         expanded: true,
       };
     },
-    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
-      return null;
-    },
     progressMessage: ui.context.translateText('Looking up DOI....'),
     placeHolderMessage: ui.context.translateText('Paste or enter a DOI to find citation data.'),
     search: async (searchTerm: string, _selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {

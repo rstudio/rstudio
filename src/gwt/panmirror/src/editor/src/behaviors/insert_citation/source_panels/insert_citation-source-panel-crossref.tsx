@@ -54,9 +54,6 @@ export function crossrefSourcePanel(
         expanded: true,
       };
     },
-    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
-      return null;
-    },
     progressMessage: ui.context.translateText('Searching Crossref....'),
     placeHolderMessage: ui.context.translateText('Enter search terms to search Crossref'),
     search: async (searchTerm: string, _selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {

@@ -53,9 +53,6 @@ export function pubmedSourcePanel(
         expanded: true,
       };
     },
-    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
-      return null;
-    },
     progressMessage: ui.context.translateText('Searching PubMed....'),
     placeHolderMessage: ui.context.translateText('Enter a PubMed query to search for citations.'),
     search: async (searchTerm: string, _selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
