@@ -26,6 +26,7 @@ public class Completions extends JavaScriptObject
                                                       JsArrayString packages,
                                                       JsArrayBoolean quote,
                                                       JsArrayInteger type,
+                                                      JsArrayBoolean suggestOnAccept,
                                                       JsArrayString meta,
                                                       String fguess,
                                                       boolean excludeOtherCompletions,
@@ -40,6 +41,7 @@ public class Completions extends JavaScriptObject
          packages: packages,
          quote: quote,
          type: type,
+         suggestOnAccept: suggestOnAccept,
          meta: meta,
          fguess: fguess ? [fguess] : null,
          excludeOtherCompletions: excludeOtherCompletions,
@@ -88,7 +90,7 @@ public class Completions extends JavaScriptObject
       return !!this.cacheable;
    }-*/;
 
-   public final native void setSuggestOnAccept(boolean suggestOnAccept) /*-{
+   public final native void setSuggestOnAccept(JsArrayBoolean suggestOnAccept) /*-{
       this.suggestOnAccept = suggestOnAccept;
    }-*/;
    
@@ -108,8 +110,17 @@ public class Completions extends JavaScriptObject
       return this.meta;
    }-*/;
 
-   public final native boolean getSuggestOnAccept() /*-{
-      return !!this.suggestOnAccept;
+   // provide suggestOnAccept if it isn't present (server completions will 
+   // generally not yield this)
+   public final native JsArrayBoolean getSuggestOnAccept() /*-{
+      if (!this.suggestOnAccept) {
+         this.suggestOnAccept = new Array(this.results.length);
+         for (var i=0; i<this.suggestOnAccept.length;i++) {
+            this.suggestOnAccept[i] = false;
+         }
+      }
+      return this.suggestOnAccept;   
+      
    }-*/;
    
    public final native boolean getExcludeOtherCompletions() /*-{

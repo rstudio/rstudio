@@ -140,6 +140,7 @@ public class StanCompletionManager extends CompletionManagerBase
                "[identifier]",
                false,
                RCompletionType.CONTEXT,
+               false,
                "",
                null,
                "Stan");
