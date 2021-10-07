@@ -111,7 +111,7 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'RSTUDIO_VERSION_PATCH',  value: "${rstudioVersionPatch}"),
                                                   string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
                                                   string(name: 'GIT_REVISION', value: "${rstudioBuildCommit}"),
-                                                  string(name: 'BRANCH_NAME', value: "${rstudioReleaseBranch}"),
+                                                  string(name: 'BRANCH_NAME', value: "main"), //pretend to be main for our purposes
                                                   string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
 }
 
