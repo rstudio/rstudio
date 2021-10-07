@@ -53,68 +53,6 @@ def run_tests(os, type, flavor) {
   }
 }
 
-def s3_upload(type, flavor, os, arch) {
-  // get package name from filesystem
-  def buildFolder = "package/linux/build-${flavor.capitalize()}-${type}"
-  def packageFile = sh (
-    script: "basename `ls ${buildFolder}/rstudio-*.${type.toLowerCase()}`",
-    returnStdout: true
-  ).trim()
-
-  // rename package to not include the build type
-  def renamedFile = sh (
-    script: "echo ${packageFile} | sed 's/-relwithdebinfo//'",
-    returnStdout: true
-  ).trim()
-
-  sh "mv ${buildFolder}/${packageFile} ${buildFolder}/${renamedFile}"
-  packageFile = renamedFile
-
-  def buildType = sh (
-    script: "cat version/BUILDTYPE",
-    returnStdout: true
-  ).trim().toLowerCase()
-
-  def buildDest =  "s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
-
-  // copy installer to s3
-  sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
-
-  // add installer-less tarball if desktop
-  if (flavor == "desktop") {
-    def tarballFile = sh (
-      script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
-      returnStdout: true
-    ).trim()
-
-    def renamedTarballFile = sh (
-      script: "echo ${tarballFile} | sed 's/-relwithdebinfo//'",
-      returnStdout: true
-    ).trim()
-
-    sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
-    tarballFile = renamedTarballFile
-
-    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildDest}"
-  }
-
-  // update daily build redirect
-  withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
-    sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
-    // for the last linux build, on OS only we also update windows to avoid the need for publish-daily-binary.bat
-    if (flavor == "desktop" && os == "centos8") {
-       def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-       sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
-    }
-  }
-}
-
-def sentry_upload(type, flavor) {
-  withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
-  }
-}
-
 def jenkins_user_build_args() {
   def jenkins_uid = sh (script: 'id -u jenkins', returnStdout: true).trim()
   def jenkins_gid = sh (script: 'id -g jenkins', returnStdout: true).trim()
@@ -323,13 +261,7 @@ try {
                             stage('run tests') {
                                 run_tests(current_container.os, get_type_from_os(current_container.os), current_container.flavor)
                             }
-                            stage('sentry upload') {
-                                sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
-                            }
                         }
-                    }
-                    stage('upload artifacts') {
-                        s3_upload(get_type_from_os(current_container.os), current_container.flavor, current_container.os, current_container.arch)
                     }
                 }
             }
@@ -372,57 +304,8 @@ try {
                   bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
                 }
               }
-              stage('upload debug symbols') {
-                // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
-                bat '''
-                  cd package\\win32\\build
-                  FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
-                '''
-
-                // upload the breakpad symbols
-                withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-                  bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --org rstudio --project ide-backend -t breakpad ."
-                }
-              }
-              stage('upload') {
-
-                def buildDest = "s3://rstudio-ide-build/desktop/windows"
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-
-                // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-                  bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.exe ${buildDest}/${packageName}.exe"
-                  bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.zip ${buildDest}/${packageName}.zip"
-                }
-
-              }
             }
           }
         }
-
-        // trigger macos build if we're in open-source repo
-        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
-          trigger_external_build('IDE/macos-pipeline')
-        }
-
-        parallel parallel_containers
-
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/main') {
-          trigger_external_build('IDE/qa-opensource-automation')
-        }
-
-        // trigger downstream pro artifact builds if we're finished building
-        // the pro variants
-        // additionally, run qa-autotest against the version we've just built
-        if (env.JOB_NAME == 'IDE/pro-pipeline/master') {
-          trigger_external_build('IDE/qa-autotest')
-          trigger_external_build('IDE/qa-automation')
-        }
-
-        slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
     }
-
-} catch(err) {
-   slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'bad', message: "${messagePrefix} failed: ${err}"
-   error("failed: ${err}")
 }
