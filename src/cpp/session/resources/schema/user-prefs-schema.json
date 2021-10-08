@@ -201,7 +201,7 @@
                     "TabSet1",
                     "TabSet2",
                     "HiddenTabSet"],
-                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentation"],
+                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentations", "Presentation"],
                 "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
                 "hiddenTabSet": [],
                 "console_left_on_top": false,
