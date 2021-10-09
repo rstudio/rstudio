@@ -2,12 +2,11 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
-   xmlns:rc="urn:import:org.rstudio.studio.client.common"
-   xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui">
+   xmlns:rc="urn:import:org.rstudio.studio.client.common">
 
    <ui:with field="resources" type="org.rstudio.studio.client.common.newdocument.NewDocumentResources" />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
-  
+   
    <g:HTMLPanel>
    <g:HorizontalPanel height="375px" styleName="{resources.styles.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
@@ -36,19 +35,14 @@
                 </rw:customCell>
               </rw:row>
            </rw:LayoutGrid>
-           <rw:FieldSetPanel legend="Default Output Format:" styleName="{resources.styles.defaultOutputLabel}">
-              <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
-           </rw:FieldSetPanel>
+           <g:HTMLPanel ui:field="templateFormatPanel_" styleName="{resources.styles.formatPanel}"></g:HTMLPanel>
+           <g:HTMLPanel>
+             <rw:LayoutGrid ui:field="grid_">
+             </rw:LayoutGrid>
+           </g:HTMLPanel>
         </g:HTMLPanel>
-        <g:HTMLPanel ui:field="existingTemplatePanel_">
-          <rmd:RmdTemplateChooser ui:field="templateChooser_">
-          </rmd:RmdTemplateChooser>
-        </g:HTMLPanel>
-        <g:HTMLPanel styleName="{resources.styles.shinyInfoPanel}"
-                        ui:field="shinyInfoPanel_" visible="false">
-           <rc:HelpLink styleName="{resources.styles.shinyInfoHeader}">
-           </rc:HelpLink>
-        </g:HTMLPanel>
+        
+       
      </g:HTMLPanel>
    </g:HorizontalPanel>
    </g:HTMLPanel>

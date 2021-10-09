@@ -26,7 +26,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
-import org.rstudio.studio.client.quarto.ui.QuartoNewDocumentDialog;
+import org.rstudio.studio.client.quarto.ui.NewQuartoDocumentDialog;
 import org.rstudio.studio.client.server.ServerError;
 
 import com.google.inject.Inject;
@@ -59,9 +59,11 @@ public class QuartoNewDocument
                public void onResponseReceived(QuartoCapabilities caps)
                {
                   indicator.onCompleted();
-                  new QuartoNewDocumentDialog(caps, (result) -> {
+                  
+                  new NewQuartoDocumentDialog(caps, result -> {
                      onResult.execute(generateDoc(caps, result));
-                  }).showModal();;
+                  }).showModal();
+                  
                }
    
                @Override
@@ -73,31 +75,15 @@ public class QuartoNewDocument
    }
    
    private String generateDoc(QuartoCapabilities caps, 
-                              QuartoNewDocumentDialog.Result result)
+                              NewQuartoDocumentDialog.Result result)
    {
       ArrayList<String> lines = new ArrayList<String>();
       lines.add("---");
       lines.add("title: \"" + result.getTitle() + "\"");
       if (!StringUtil.isNullOrEmpty(result.getAuthor()))
          lines.add("author: \"" + result.getAuthor() + "\"");
-      boolean simpleFormat = (!result.getFormat().equals("html") || result.getTheme() == "default") && 
-                             !result.getTableOfContents() && 
-                             !result.getNumberSections();
-      if (simpleFormat)
-      {
-         lines.add("format: " + result.getFormat());
-      }
-      else
-      {
-         lines.add("format:");
-         lines.add("  " + result.getFormat() + ":");
-         if (result.getFormat().equals("html") && result.getTheme() != "default")
-            lines.add("    theme: " + result.getTheme());
-         if (result.getTableOfContents())
-            lines.add("    toc: true");
-         if (result.getNumberSections())
-            lines.add("    number-sections: true");
-      }
+   
+      lines.add("format: " + result.getFormat());
       
       if (result.getEditor().equals(QuartoConstants.EDITOR_VISUAL));
          lines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
