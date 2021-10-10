@@ -55,7 +55,10 @@ import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
+import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.ui.NewQuartoDocumentDialog;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -1179,6 +1182,107 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    // new doc functions
 
+   public void newQuartoDoc()
+   {
+      newQuarto(false);
+   }
+   
+   public void newQuartoPres()
+   {
+      newQuarto(true);
+   }
+   
+   private void newQuarto(boolean presentation)
+   {
+      final ProgressIndicator indicator = globalDisplay_.getProgressIndicator("Error");
+      indicator.onProgress(
+         "New Quarto " + 
+         (presentation ? "Presentation" : "Document") + 
+         "...");
+
+      server_.quartoCapabilities(
+         new SimpleRequestCallback<QuartoCapabilities>() {
+            @Override
+            public void onResponseReceived(QuartoCapabilities caps)
+            {
+               indicator.onCompleted();
+               new NewQuartoDocumentDialog(caps, presentation, result -> {
+          
+                  ArrayList<String> yamlLines = new ArrayList<String>();
+                  String template = "default.qmd";
+                  if (result != null)
+                  {
+                     // generate yaml
+                     yamlLines.add("---");
+                     yamlLines.add("title: \"" + result.getTitle() + "\"");
+                     if (!StringUtil.isNullOrEmpty(result.getAuthor()))
+                        yamlLines.add("author: \"" + result.getAuthor() + "\"");
+                  
+                     yamlLines.add("format: " + result.getFormat());
+                     
+                     if (result.getEditor().equals(QuartoConstants.EDITOR_VISUAL));
+                        yamlLines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
+                     
+                     if (result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
+                        yamlLines.add("jupyter: " + result.getKernel());
+                     yamlLines.add("---");
+                     yamlLines.add("");
+                     
+                     // select appropriate template
+                     String format = result.getFormat();
+                     if (format.equals(QuartoConstants.FORMAT_HTML) ||
+                         format.equals(QuartoConstants.FORMAT_PDF) ||
+                         format.equals(QuartoConstants.FORMAT_DOCX))
+                     {
+                        template = "document.qmd";
+                     }
+                     else if (format.equals(QuartoConstants.FORMAT_REVEALJS) ||
+                              format.equals(QuartoConstants.FORMAT_BEAMER) ||
+                              format.equals(QuartoConstants.FORMAT_PPTX))
+                     {
+                        template = "presentation.qmd";
+                     }
+                     else if (format.equals(QuartoConstants.INTERACTIVE_SHINY))
+                     {
+                        template = "shiny.qmd";
+                     }
+                     else if (format.equals(QuartoConstants.INTERACTIVE_OJS))
+                     {
+                        template = "ojs.qmd";
+                     }
+                     else
+                     {
+                        template = "default.qmd";
+                     }
+                  }
+                  
+                  final String yaml = StringUtil.join(yamlLines, "\n");
+                  
+   
+                  newSourceDocWithTemplate(FileTypeRegistry.QUARTO,
+                     "",
+                     template,
+                     Position.create(1, 0),
+                     null,
+                     new TransformerCommand<String>()
+                     {
+                        @Override
+                        public String transform(String input)
+                        {       
+                           return yaml + input;
+                        }
+                     });
+                  
+               }).showModal();
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+               indicator.onError(error.getUserMessage());
+            }
+         }); 
+   }
+   
    public void newRMarkdownV1Doc()
    {
       newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN,
