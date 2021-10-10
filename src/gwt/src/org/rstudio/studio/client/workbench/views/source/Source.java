@@ -1110,10 +1110,18 @@ public class Source implements InsertSourceEvent.Handler,
       }
       else
       {
-         new QuartoNewDocument().newDocument((contents) -> {
+         new QuartoNewDocument().newDocument(false, (contents) -> {
             columnManager_.newDoc(FileTypeRegistry.QUARTO, contents, null);
          });
       }
+   }
+   
+   @Handler
+   public void onNewQuartoPres()
+   {
+      new QuartoNewDocument().newDocument(true, (contents) -> {
+         columnManager_.newDoc(FileTypeRegistry.QUARTO, contents, null);
+      });
    }
    
 

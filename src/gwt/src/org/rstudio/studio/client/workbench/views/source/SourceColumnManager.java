@@ -222,6 +222,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          SessionInfo sessionInfo = session.getSessionInfo();
          QuartoConfig quartoConfig = sessionInfo.getQuartoConfig();
          commands_.newQuartoDoc().setVisible(quartoConfig.installed);
+         commands_.newQuartoPres().setVisible(quartoConfig.installed);
       });
 
       WindowEx.addFocusHandler(new FocusHandler()

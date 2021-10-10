@@ -46,11 +46,14 @@ public class QuartoNewDocument
       server_ = server;
    }
    
-   public void newDocument(CommandWithArg<String> onResult)
+   public void newDocument(boolean presentation, CommandWithArg<String> onResult)
    {
       final ProgressIndicator indicator =
             globalDisplay_.getProgressIndicator("Error");
-         indicator.onProgress("New Quarto Doc...");
+         indicator.onProgress(
+            "New Quarto " + 
+            (presentation ? "Presentation" : "Document") + 
+            "...");
    
          server_.quartoCapabilities(
             new SimpleRequestCallback<QuartoCapabilities>() {
@@ -60,7 +63,7 @@ public class QuartoNewDocument
                {
                   indicator.onCompleted();
                   
-                  new NewQuartoDocumentDialog(caps, result -> {
+                  new NewQuartoDocumentDialog(caps, presentation, result -> {
                      onResult.execute(generateDoc(caps, result));
                   }).showModal();
                   

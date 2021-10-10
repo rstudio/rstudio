@@ -129,6 +129,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    }
 
    public NewQuartoDocumentDialog(QuartoCapabilities caps, 
+                                  boolean presentation,
                                   OperationWithInput<Result> operation)
    {
       super("New Quarto Document", Roles.getDialogRole(), operation);
@@ -157,17 +158,20 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
          }
       });
 
-      TemplateMenuItem document = new TemplateMenuItem(TEMPLATE_DOCUMENT);
-      document.addIcon(new ImageResource2x(resources.documentIcon2x()));
-      listTemplates_.addItem(document);
+      TemplateMenuItem docTemplate = new TemplateMenuItem(TEMPLATE_DOCUMENT);
+      docTemplate.addIcon(new ImageResource2x(resources.documentIcon2x()));
+      listTemplates_.addItem(docTemplate);
 
-      TemplateMenuItem presentation = new TemplateMenuItem(TEMPLATE_PRESENTATION);
-      presentation.addIcon(new ImageResource2x(resources.presentationIcon2x()));
-      listTemplates_.addItem(presentation);
+      TemplateMenuItem presTemplate = new TemplateMenuItem(TEMPLATE_PRESENTATION);
+      presTemplate.addIcon(new ImageResource2x(resources.presentationIcon2x()));
+      listTemplates_.addItem(presTemplate);
 
-      TemplateMenuItem interactive = new TemplateMenuItem(TEMPLATE_INTERACTIVE);
-      interactive.addIcon(new ImageResource2x(resources.shinyIcon2x()));
-      listTemplates_.addItem(interactive);
+      TemplateMenuItem appTemplate = new TemplateMenuItem(TEMPLATE_INTERACTIVE);
+      appTemplate.addIcon(new ImageResource2x(resources.shinyIcon2x()));
+      listTemplates_.addItem(appTemplate);
+      
+      if (presentation)
+         listTemplates_.setSelectedIndex(1);
 
       updateOptions(getSelectedTemplate());
       
