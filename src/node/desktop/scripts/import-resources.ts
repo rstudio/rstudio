@@ -104,7 +104,7 @@ async function packageDarwin(): Promise<number> {
   try {
     const cmakeVars = await tools.loadCMakeVars(path.join(buildDir, 'CMakeCache.txt'));
 
-    // cpp/session
+    // src/cpp/session
     const sessionCppDir = path.join(cppSourceDir, 'session');
     const sessionBuildDir = path.join(cppBuildDir, 'session');
     await tools.copyFiles(
@@ -198,14 +198,17 @@ async function packageDarwin(): Promise<number> {
 
     // TODO : win32 has several additional things installed via session
 
-    // cpp/session/postback
+    // src/cpp/r
+
+
+    // src/cpp/session/postback
     await tools.copyFiles(['rpostback'], path.join(cppBuildDir, 'session', 'postback'), binDest);
     await tools.copyFiles(['**/*'], path.join(cppBuildDir, 'session', 'postback', 'postback'), path.join(binDest, 'postback'));
 
-    // cpp/diagnostics
+    // src/cpp/diagnostics
     await tools.copyFiles(['diagnostics'], path.join(cppBuildDir, 'diagnostics'), binDest);
 
-    // node/desktop
+    // src/node/desktop
     await tools.copyFiles(['mac-terminal'], path.join(nodeFolder, 'desktop'), binDest);
 
 
