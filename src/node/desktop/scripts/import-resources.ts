@@ -16,7 +16,6 @@
 // Copies resources such as rsession from the build output folder into the packaged 
 // RStudio Electron app.
 
-import fs from 'fs';
 import path from 'path';
 import * as tools from './script-tools';
 
@@ -93,6 +92,7 @@ async function packageDarwin(): Promise<number> {
   const sourceDir = path.join(tools.getProjectRootDir(), '..', '..');
   const buildDir = tools.getMakePackageBuildDir();
   const cppBuildDir = path.join(buildDir, 'src', 'cpp');
+  const gwtBuildDir = path.join(buildDir, 'gwt');
   const cppSourceDir = path.join(sourceDir, 'cpp');
   const nodeFolder = path.join(buildDir, 'src', 'node');
 
@@ -199,7 +199,10 @@ async function packageDarwin(): Promise<number> {
     // TODO : win32 has several additional things installed via session
 
     // src/cpp/r
-
+    await tools.copyFiles(
+      ['**/*.R'],
+      path.join(cppSourceDir, 'r', 'R'),
+      path.join(appDest, 'R'));
 
     // src/cpp/session/postback
     await tools.copyFiles(['rpostback'], path.join(cppBuildDir, 'session', 'postback'), binDest);
@@ -211,6 +214,23 @@ async function packageDarwin(): Promise<number> {
     // src/node/desktop
     await tools.copyFiles(['mac-terminal'], path.join(nodeFolder, 'desktop'), binDest);
 
+    // src/gwt
+    const gwtSourceDir = path.join(sourceDir, 'gwt');
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(gwtSourceDir, 'www'),
+      path.join(appDest, 'www')
+    )
+     await tools.copyFiles(
+      ['**/*'],
+      path.join(gwtBuildDir, 'www', 'rstudio'),
+      path.join(appDest, 'www', 'rstudio')
+    )
+    await tools.copyFiles(
+      ['**/*'],
+      path.join(gwtBuildDir, 'extras', 'rstudio', 'symbolMaps'),
+      path.join(appDest, 'www-symbolmaps')
+    )
 
   } catch (e) {
     console.error(e.message);
