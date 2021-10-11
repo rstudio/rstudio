@@ -33,9 +33,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
-// Remove visual editor comment when approriate
 // Substitute Python or Julia for R when approriate
-// Untitled doc is dirty on open (visual editor transform)
+// Optional for author
 // Shiny template
 // OJS template
 // Custom help links for various types
@@ -103,7 +102,7 @@ public class QuartoCommands
                         template = "default.qmd";
                      }
                   }
-                  
+                 
                   // generate preamble
                   lines.add("---");
                   lines.add("title: \"" + result.getTitle() + "\"");
@@ -112,7 +111,9 @@ public class QuartoCommands
                
                   lines.add("format: " + result.getFormat());
                   
-                  if (result.getEditor().equals(QuartoConstants.EDITOR_VISUAL));
+                  
+                  final boolean visualEditor = result.getEditor().equals(QuartoConstants.EDITOR_VISUAL);
+                  if (visualEditor)
                      lines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
                   
                   if (result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
@@ -132,10 +133,10 @@ public class QuartoCommands
                         @Override
                         public String transform(String input)
                         {       
+                           if (!visualEditor)
+                              input = removeVisualEditorLine(input); 
                            
-                           
-                           
-                           return preamble + input;
+                           return preamble + "\n" + input;
                         }
                      });
                   
@@ -147,6 +148,11 @@ public class QuartoCommands
                indicator.onError(error.getUserMessage());
             }
          }); 
+   }
+   
+   private String removeVisualEditorLine(String input)
+   {
+      return input.replaceFirst("\\n.*?\\[visual markdown editor\\].*?\\n", "");
    }
    
 

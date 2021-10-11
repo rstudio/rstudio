@@ -120,7 +120,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       public final native String getEngine() /*-{ return this["engine"]; }-*/;
       public final native String getKernel() /*-{ return this["kernel"]; }-*/;
       public final native String getLanguage() /*-{ return this["language"]; }-*/;
-      public final native String getEditor() /*-{ return this["editor"] || "visual" ; }-*/;
+      public final native String getEditor() /*-{ return this["editor"]; }-*/;
    }
    
 
