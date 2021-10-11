@@ -132,7 +132,9 @@ public class QuartoCommands
    
                   columnManager_.newSourceDocWithTemplate(FileTypeRegistry.QUARTO,
                      "",
-                     result.getEmpty() ? "default.qmd" : template,
+                     result.getEmpty() || result.getEngine().equals(QuartoConstants.ENGINE_MARKDOWN) 
+                        ? "default.qmd" 
+                        : template,
                      Position.create(1, 0),
                      null,
                      new TransformerCommand<String>()
