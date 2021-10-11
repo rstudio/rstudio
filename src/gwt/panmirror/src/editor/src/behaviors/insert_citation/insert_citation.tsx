@@ -541,8 +541,17 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
   };
 
   const deleteCitation = (id: string) => {
-    const filteredCitations = insertCitationPanelState.citationsToAdd.filter(source => source.id !== id);
-    updateState({ citationsToAdd: filteredCitations });
+
+    // First, see if the item we're delete is the selection
+    const selCite = displayedCitations[insertCitationPanelState.selectedIndex];
+    if (selCite && selCite.id === id) {
+      // This is the selected index, just clear the selection
+      updateState({ selectedIndex: -1 });
+    } else {
+      // This is an explicitly added citation, remove it
+      const filteredCitations = insertCitationPanelState.citationsToAdd.filter(source => source.id !== id);
+      updateState({ citationsToAdd: filteredCitations });
+    }
   };
 
   const onTagDeleted = (tag: TagItem) => {

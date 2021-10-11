@@ -512,7 +512,7 @@ public class RCompletionManager implements CompletionManager
                   if (value != null)
                   {
                      if (value.type == RCompletionType.DIRECTORY)
-                        context_.suggestOnAccept_ = true;
+                        value = value.withSuggestOnAccept();
                      
                      context_.onSelection(value);
                      return true;
@@ -1837,7 +1837,6 @@ public class RCompletionManager implements CompletionManager
                selection_.getStart().movePosition(-token.length(), true));
 
          token_ = token;
-         suggestOnAccept_ = completions.suggestOnAccept;
          overrideInsertParens_ = completions.dontInsertParens;
 
          if (results.length == 1
@@ -1875,7 +1874,7 @@ public class RCompletionManager implements CompletionManager
          applyValue(qname);
          
          // For in-line edits, we don't want to auto-popup after replacement
-         if (suggestOnAccept_ || 
+         if (qname.suggestOnAccept || 
                (qname.name.endsWith(":") &&
                      docDisplay_.getCharacterAtCursor() != ':'))
          {
@@ -2119,7 +2118,6 @@ public class RCompletionManager implements CompletionManager
       private final Position position_;
       private InputEditorSelection selection_;
       private final boolean canAutoAccept_;
-      private boolean suggestOnAccept_;
       private boolean overrideInsertParens_;
       
    }

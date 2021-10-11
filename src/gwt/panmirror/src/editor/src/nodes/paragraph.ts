@@ -19,8 +19,6 @@ import { BlockCommand, EditorCommandId, ProsemirrorCommand } from '../api/comman
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
 import { insertParagraph } from '../api/paragraph';
-import { EditorUI } from '../api/ui';
-import { OmniInsertGroup } from '../api/omni_insert';
 
 const extension: Extension = {
   nodes: [

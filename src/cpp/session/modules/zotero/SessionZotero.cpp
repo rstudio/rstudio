@@ -363,7 +363,7 @@ void zoteroGetCollections(const json::JsonRpcRequest& request,
       auto jsonSpec = json.getObject();
       ZoteroCollectionSpec cacheSpec;
       cacheSpec.name = jsonSpec[kName].getString();
-      cacheSpec.version = jsonSpec[kVersion].getInt();
+      cacheSpec.version = jsonSpec[kVersion].getDouble();
       cacheSpec.key = jsonSpec[kKey].getString();
       cacheSpec.parentKey = jsonSpec[kParentKey].getString();
       return cacheSpec;

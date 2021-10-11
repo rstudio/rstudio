@@ -37,6 +37,7 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -330,55 +331,63 @@ public class VisualMode implements VisualModeEditorSync,
                   PanmirrorCode markdown = Js.uncheckedCast(obj);
                   rv.arrive(() ->
                   {
-                     if (markdown == null)
+                     try
                      {
-                        // note that ready.execute() is never called in the error case
-                        return;
-                     }
-
-                     // we are about to mutate the document, so create a single
-                     // shot handler that will adjust the known position of
-                     // items in the outline (we do this opportunistically
-                     // unless executing code)
-                     if (markdown.location != null && syncType != SyncType.SyncTypeExecution)
-                     {
-                         alignScopeTreeAfterUpdate(markdown.location);
-                     }
-                     
-                     // apply diffs unless the wrap column changed (too expensive)
-                     if (!writerOptions.wrapChanged) 
-                     {
-                        TextEditorContainer.Changes changes = toEditorChanges(markdown);
-                        getSourceEditor().applyChanges(changes, syncType == SyncType.SyncTypeActivate); 
-                     }
-                     else
-                     {
-                        getSourceEditor().setCode(markdown.code);
-                     }
-                     
-                     // if the format comment has changed then show the reload prompt
-                     if (panmirrorFormatConfig_.requiresReload())
-                     {
-                        view_.showPanmirrorFormatChanged(() ->
+                        if (markdown == null)
                         {
-                           // dismiss the warning bar
-                           view_.hideWarningBar();
-                           // this will trigger the refresh b/c the format changed
-                           syncFromEditorIfActivated();
-                          
-                        });
+                           // note that ready.execute() is never called in the error case
+                           return;
+                        }
+   
+                        // we are about to mutate the document, so create a single
+                        // shot handler that will adjust the known position of
+                        // items in the outline (we do this opportunistically
+                        // unless executing code)
+                        if (markdown.location != null && syncType != SyncType.SyncTypeExecution)
+                        {
+                            alignScopeTreeAfterUpdate(markdown.location);
+                        }
+                        
+                        // apply diffs unless the wrap column changed (too expensive)
+                        if (!writerOptions.wrapChanged) 
+                        {
+                           TextEditorContainer.Changes changes = toEditorChanges(markdown);
+                           getSourceEditor().applyChanges(changes, syncType == SyncType.SyncTypeActivate); 
+                        }
+                        else
+                        {
+                           getSourceEditor().setCode(markdown.code);
+                        }
+                        
+                        // if the format comment has changed then show the reload prompt
+                        if ((panmirrorFormatConfig_ != null) && panmirrorFormatConfig_.requiresReload())
+                        {
+                           view_.showPanmirrorFormatChanged(() ->
+                           {
+                              // dismiss the warning bar
+                              view_.hideWarningBar();
+                              // this will trigger the refresh b/c the format changed
+                              syncFromEditorIfActivated();
+                             
+                           });
+                        }
+                        
+                        if (markdown.location != null && syncType == SyncType.SyncTypeExecution)
+                        {
+                           // if syncing for execution, force a rebuild of the scope tree 
+                           alignScopeOutline(markdown.location);
+                        }
+   
+                        // invoke ready callback if supplied
+                        if (ready != null)
+                        {
+                           ready.execute();
+                        }
                      }
-                     
-                     if (markdown.location != null && syncType == SyncType.SyncTypeExecution)
+                     catch(Exception ex)
                      {
-                        // if syncing for execution, force a rebuild of the scope tree 
-                        alignScopeOutline(markdown.location);
-                     }
-
-                     // invoke ready callback if supplied
-                     if (ready != null)
-                     {
-                        ready.execute();
+                        Debug.logToConsole("Unexpected error occurred during syncToEditor");
+                        Debug.logException(ex);
                      }
                   }, true);  
                } 
@@ -973,6 +982,16 @@ public class VisualMode implements VisualModeEditorSync,
       return true;
    }
    
+   public PresentationEditorLocation getPresentationEditorLocation()
+   {
+      return panmirror_.getPresentationEditorLocation();
+   }
+   
+   public void navigateToPresentationEditorLocation(PresentationEditorLocation location)
+   {
+      panmirror_.navigateToPresentationEditorLocation(location);
+   }
+   
    public void activateDevTools()
    {
       withPanmirror(() -> {
@@ -1483,14 +1502,15 @@ public class VisualMode implements VisualModeEditorSync,
          PanmirrorContext context = createPanmirrorContext(); 
          PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
-         PanmirrorWidget.create(context, visualModeFormat_.formatSource(), 
+         PanmirrorWidget.FormatSource formatSource = visualModeFormat_.formatSource();
+         PanmirrorWidget.create(context, formatSource, 
                                 options, widgetOptions, kCreationProgressDelayMs, (panmirror) -> {
          
             // save reference to panmirror
             panmirror_ = panmirror;
             
             // track format comment (used to detect when we need to reload for a new format)
-            panmirrorFormatConfig_ = new VisualModeReloadChecker(view_);
+            panmirrorFormatConfig_ = new VisualModeReloadChecker(formatSource);
             
             // remove some keybindings that conflict with the ide
             // (currently no known conflicts)

@@ -143,7 +143,12 @@ export enum EditorCommandId {
   GoToNextSection = 'AE827BDA-96F8-4E84-8030-298D98386765',
   GoToPreviousSection = 'E6AA728C-2B75-4939-9123-0F082837ACDF',
   GoToNextChunk = '50DD6E51-13B5-4F1E-A46B-6A33EB1609D9',
-  GoToPreviousChunk = '8D105D33-78FE-4A98-8195-6B71361424C5'
+  GoToPreviousChunk = '8D105D33-78FE-4A98-8195-6B71361424C5',
+
+  // slides
+  InsertSlidePause = 'FCA8BF2E-2668-4919-92FC-02083EB48246',
+  InsertSlideNotes = '9C709915-02BE-4F4F-9CEB-50E17973C9BE',
+  InsertSlideColumns = 'AE62D05F-1415-4E1F-84AE-753EE2393002'
 }
 
 export interface EditorCommand {

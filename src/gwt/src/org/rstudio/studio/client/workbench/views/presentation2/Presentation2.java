@@ -21,7 +21,8 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.presentation2.PresentationEditorSync;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -34,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.presentation2.events.Presentati
 import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationPreviewEvent;
 import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationSlideChangeEvent;
 import org.rstudio.studio.client.workbench.views.presentation2.model.RevealSlide;
+import org.rstudio.studio.client.workbench.views.source.events.EditPresentation2SourceEvent;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -48,8 +50,7 @@ public class Presentation2 extends BasePresenter
       
       boolean connected();
       
-      void init(JsArray<RevealSlide> slides);
-      void change(RevealSlide slide);
+      void init(JsArray<RevealSlide> slides, int slideIndex);
       void clear();
       
       void home();
@@ -68,7 +69,6 @@ public class Presentation2 extends BasePresenter
                         Commands commands,
                         GlobalDisplay globalDisplay,
                         ApplicationServerOperations server,
-                        FileTypeRegistry fileTypeRegistry,
                         EventBus eventBus)
    {
       super(display);
@@ -76,13 +76,13 @@ public class Presentation2 extends BasePresenter
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       server_ = server;
-      fileTypeRegistry_ = fileTypeRegistry;
+      eventBus_ = eventBus;
       
       enableCommands(false);
       
       display_.addPresentationInitHandler(event -> {
          // notify display that we are ready to rock
-         display_.init(event.getSlides()); 
+         display_.init(event.getSlides(), initialSlideIndex_); 
          
          // enable all commands
          enableCommands(true);
@@ -91,7 +91,7 @@ public class Presentation2 extends BasePresenter
       display_.addPresentationSlideChangeHandler(event -> {
          commands_.presentation2Prev().setEnabled(!event.isFirst());
          commands_.presentation2Next().setEnabled(!event.isLast());
-         display_.change(event.getSlide());
+         activeSlideIndex_ = event.getSlideIndex();
       });
       
       display_.addPresentationHashChangeHandler(event -> {
@@ -107,6 +107,9 @@ public class Presentation2 extends BasePresenter
             activeUrl_ = null;
             activeSlideHref_ = null;
             activePresentation_ = null;
+            activeEditorState_ = null;
+            activeSlideLevel_ = -1;
+            activeSlideIndex_ = 0;
             enableCommands(false);
             display_.clear();
          }
@@ -120,6 +123,11 @@ public class Presentation2 extends BasePresenter
       PresentationPreviewEvent.Data data = event.getData();
       String url = asApplicationUrl(data.getUrl());
       
+      // determine initial slide lindex
+      initialSlideIndex_ = PresentationEditorSync.slideIndexForLocation(
+         event.getData().getEditorState(), event.getData().getSlideLevel()
+      );
+      
       // activate pane
       display_.activate();
       
@@ -129,6 +137,8 @@ public class Presentation2 extends BasePresenter
          activeUrl_ = url;
          activeSlideHref_ = url;
          activePresentation_ = data.getQuartoNavigation();
+         activeEditorState_ = data.getEditorState();
+         activeSlideLevel_ = data.getSlideLevel();
          if (Desktop.hasDesktopFrame())
             Desktop.getFrame().setPresentationUrl(activeUrl_);
          display_.navigate(activeUrl_, activePresentation_);
@@ -163,9 +173,11 @@ public class Presentation2 extends BasePresenter
    {
       if (activePresentation_ != null)
       {
-         fileTypeRegistry_.editFile(
-            FileSystemItem.createFile(activePresentation_.getSourceFile())
-         );
+         eventBus_.fireEvent(new EditPresentation2SourceEvent(
+            FileSystemItem.createFile(activePresentation_.getSourceFile()),
+            PresentationEditorSync.locationForSlideIndex(
+               activeSlideIndex_, activeEditorState_, activeSlideLevel_)
+         ));      
       }
    }
    
@@ -176,9 +188,15 @@ public class Presentation2 extends BasePresenter
    }
    
    @Handler
-   void onPresentation2ViewInBrowser()
+   void onPresentation2Present()
    {
       globalDisplay_.openWindow(activeSlideHref_);
+   }
+   
+   @Handler
+   void onPresentation2PresentFromBeginning()
+   {
+      globalDisplay_.openWindow(activeUrl_);
    }
    
    @Handler
@@ -195,7 +213,8 @@ public class Presentation2 extends BasePresenter
       commands_.presentation2Prev().setEnabled(enable);
       commands_.presentation2Edit().setEnabled(enable);
       commands_.presentation2Print().setEnabled(enable);
-      commands_.presentation2ViewInBrowser().setEnabled(enable);
+      commands_.presentation2Present().setEnabled(enable);
+      commands_.presentation2PresentFromBeginning().setEnabled(enable);
    }
    
    private String asApplicationUrl(String url)
@@ -205,13 +224,20 @@ public class Presentation2 extends BasePresenter
       return url;
    }
    
+  
+   
+   
    private String activeUrl_ = null;
    private String activeSlideHref_ = null;
    private QuartoNavigate activePresentation_ = null;
+   private PresentationEditorLocation activeEditorState_ = null;
+   private int activeSlideLevel_ = -1;
+   private int activeSlideIndex_ = 0;
+   private int initialSlideIndex_ = 0;
    
    private final Display display_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
-   private final FileTypeRegistry fileTypeRegistry_;
+   private final EventBus eventBus_;
    private final ApplicationServerOperations server_;
 }

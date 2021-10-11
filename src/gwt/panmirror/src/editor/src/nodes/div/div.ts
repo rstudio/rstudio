@@ -180,6 +180,11 @@ const extension = (context: ExtensionContext) : Extension | null => {
 
 export function removeDiv(state: EditorState, dispatch: (tr: Transaction) => void, div: ContentNodeWithPos) {
   const tr = state.tr;
+  trRemoveDiv(tr, div);
+  dispatch(tr);
+}
+
+export function trRemoveDiv(tr: Transaction, div: ContentNodeWithPos) {
   const fromPos = tr.doc.resolve(div.pos + 1);
   const toPos = tr.doc.resolve(div.pos + div.node.nodeSize - 1);
   const nodeRange = fromPos.blockRange(toPos);
@@ -189,7 +194,6 @@ export function removeDiv(state: EditorState, dispatch: (tr: Transaction) => voi
       tr.lift(nodeRange, targetLiftDepth);
     }
   }
-  dispatch(tr);
 }
 
 function divCommand(ui: EditorUI, allowEdit: boolean) {

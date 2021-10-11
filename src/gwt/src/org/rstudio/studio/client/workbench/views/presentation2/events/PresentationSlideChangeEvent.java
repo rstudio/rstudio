@@ -25,9 +25,22 @@ public class PresentationSlideChangeEvent extends GwtEvent<PresentationSlideChan
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
+      
+      public static final native Data withSlideIndex(Data data, int index) /*-{
+         return {
+            slide: data.slide,
+            index: index,
+            first: data.first,
+            last: data.last
+         }
+      }-*/;
 
       public final native RevealSlide getSlide() /*-{
          return this.slide;
+      }-*/;
+      
+      public final native int getSlideIndex() /*-{
+         return this.index;
       }-*/;
       
       public final native boolean isFirst() /*-{
@@ -52,6 +65,11 @@ public class PresentationSlideChangeEvent extends GwtEvent<PresentationSlideChan
    public RevealSlide getSlide()
    {
       return data_.getSlide();
+   }
+   
+   public int getSlideIndex()
+   {
+      return data_.getSlideIndex();
    }
    
    public boolean isFirst()

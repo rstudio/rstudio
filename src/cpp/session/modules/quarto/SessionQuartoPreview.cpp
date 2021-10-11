@@ -52,9 +52,10 @@ class QuartoPreview : public QuartoJob
 public:
    static Error create(const core::FilePath& previewFile,
                        const std::string& format,
+                       const json::Value& editorState,
                        boost::shared_ptr<QuartoPreview>* ppPreview)
    {
-      ppPreview->reset(new QuartoPreview(previewFile, format));
+      ppPreview->reset(new QuartoPreview(previewFile, format, editorState));
       return (*ppPreview)->start();
    }
 
@@ -70,6 +71,16 @@ public:
    std::string format()
    {
       return format_;
+   }
+
+   json::Value editorState()
+   {
+      return editorState_;
+   }
+
+   int slideLevel()
+   {
+      return slideLevel_;
    }
 
    bool hasModifiedProject()
@@ -96,11 +107,15 @@ public:
       return pJob_->id();
    }
 
-   Error render()
+   Error render(const json::Value& editorState)
    {
-      // reset output and re-read input file
+      // reset state
+      slideLevel_= -1;
+      editorState_ = editorState;
       outputFile_ = FilePath();
       allOutput_.clear();
+
+      // re-read input file
       readInputFileLines();
 
       // render
@@ -109,8 +124,8 @@ public:
    }
 
 protected:
-   explicit QuartoPreview(const FilePath& previewFile, const std::string& format)
-      : QuartoJob(), previewFile_(previewFile), format_(format), port_(0)
+   explicit QuartoPreview(const FilePath& previewFile, const std::string& format, const json::Value& editorState)
+      : QuartoJob(), previewFile_(previewFile), format_(format), editorState_(editorState), slideLevel_(-1), port_(0)
    {
      readInputFileLines();
 
@@ -177,6 +192,13 @@ private:
          module_context::extractOutputFileCreated(previewFile_.getParent(), output);
       if (!outputFile.isEmpty())
          outputFile_ = outputFile;
+
+      // always be looking for slide-level
+      int slideLevel = quartoSlideLevelFromOutput(output);
+      if (slideLevel != -1)
+      {
+         slideLevel_ = slideLevel;
+      }
 
       // detect browse directive
       if (port_ == 0) {
@@ -293,6 +315,8 @@ private:
          json::Object eventData;
          eventData["url"] = url_ports::mapUrlPorts(viewerUrl());
          eventData["quarto_navigation"] = module_context::quartoNavigateAsJson(quartoNav);
+         eventData["editor_state"] = editorState_;
+         eventData["slide_level"] = slideLevel_;
          ClientEvent event(client_events::kPresentationPreview, eventData);
          module_context::enqueClientEvent(event);
       }
@@ -314,6 +338,20 @@ private:
          LOG_ERROR(error);
    }
 
+   int quartoSlideLevelFromOutput(const std::string& output)
+   {
+      boost::regex slideLevelRe("\n\\s+slide-level:\\s+(\\d)+\n");
+      boost::smatch match;
+      if (regex_utils::search(output, match, slideLevelRe))
+      {
+         return safe_convert::stringTo<int>(match[1], -1);
+      }
+      else
+      {
+         return -1;
+      }
+   }
+
 private:
    FilePath previewFile_;
    FileInfo projectFile_;
@@ -321,13 +359,11 @@ private:
    FilePath outputFile_;
    std::string allOutput_;
    std::string format_;
+   json::Value editorState_;
+   int slideLevel_;
    int port_;
    std::string path_;
 };
-
-
-// keep a list of previews so we can re-render, re-activate
-std::vector<boost::shared_ptr<QuartoPreview>> s_previews;
 
 // preview singleton
 boost::shared_ptr<QuartoPreview> s_pPreview;
@@ -347,12 +383,12 @@ void stopPreview()
 }
 
 // create a preview job
-Error createPreview(const FilePath& previewFilePath, const std::string& format)
+Error createPreview(const FilePath& previewFilePath, const std::string& format, const json::Value& editorState)
 {
    // stop any running preview
    stopPreview();
 
-   Error error = QuartoPreview::create(previewFilePath, format, &s_pPreview);
+   Error error = QuartoPreview::create(previewFilePath, format, editorState, &s_pPreview);
    if (error)
       return error;
    return Success();
@@ -363,8 +399,9 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
                        json::JsonRpcResponse* pResponse)
 {
    // read params
+   json::Value editorState;
    std::string previewFile, format;
-   Error error = json::readParams(request.params, &previewFile, &format);
+   Error error = json::readParams(request.params, &previewFile, &format, &editorState);
    if (error)
       return error;
    FilePath previewFilePath = module_context::resolveAliasedPath(previewFile);
@@ -394,11 +431,11 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
          json::Object eventJson;
          eventJson["id"] = s_pPreview->jobId();
          module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate, eventJson));
-         return s_pPreview->render();
+         return s_pPreview->render(editorState);
       }
       else
       {
-         return createPreview(previewFilePath, format);
+         return createPreview(previewFilePath, format, editorState);
       }
    }
    else

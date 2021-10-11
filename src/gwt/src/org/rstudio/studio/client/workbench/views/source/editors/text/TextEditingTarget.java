@@ -82,6 +82,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.mathjax.MathJax;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -521,8 +522,8 @@ public class TextEditingTarget implements
                                                   docDisplay_);
       jsHelper_ = new TextEditingTargetJSHelper(docDisplay_);
       sqlHelper_ = new TextEditingTargetSqlHelper(docDisplay_);
-      presentationHelper_ = new TextEditingTargetPresentationHelper(
-                                                                  docDisplay_);
+      presentationHelper_ = new TextEditingTargetPresentationHelper(docDisplay_);
+      presentation2Helper_ = new TextEditingTargetPresentation2Helper(docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
       quartoHelper_ = new TextEditingTargetQuartoHelper(this, docDisplay_);
 
@@ -1254,6 +1255,22 @@ public class TextEditingTarget implements
          }
       }
 
+   }
+   
+   public void navigateToPresentationEditorLocation(PresentationEditorLocation location)
+   {
+      if (isVisualModeActivated())
+      {
+         ensureVisualModeActive(() -> {
+            Scheduler.get().scheduleDeferred(() -> {
+               visualMode_.navigateToPresentationEditorLocation(location);
+            });
+         });
+      }
+      else
+      {
+         presentation2Helper_.navigateToPresentationEditorLocation(location);
+      }
    }
 
    // the navigateToPosition methods are called by modules that explicitly
@@ -6809,21 +6826,23 @@ public class TextEditingTarget implements
             // see if we should be using quarto preview
             String quartoFormat = useQuartoPreview();
             if (quartoFormat != null)
-            {
+            {               
                // quarto preview can reject the preview (e.g. if it turns
                // out this file is part of a website or book project)
-               server_.quartoPreview(docUpdateSentinel_.getPath(), 
-                                     quartoFormat, 
-                                     new SimpleRequestCallback<Boolean>() {
-                  @Override
-                  public void onResponseReceived(Boolean previewed)
-                  {
-                     if (!previewed) 
+               server_.quartoPreview(
+                  docUpdateSentinel_.getPath(), 
+                  quartoFormat, 
+                  isQuartoRevealJs(quartoFormat) ? presentationEditorLocation() : null,
+                  new SimpleRequestCallback<Boolean>() {
+                     @Override
+                     public void onResponseReceived(Boolean previewed)
                      {
-                        renderCmd.execute();
+                        if (!previewed) 
+                        {
+                           renderCmd.execute();
+                        }
                      }
-                  }
-               });
+                  });
             }
             else
             {
@@ -6870,6 +6889,21 @@ public class TextEditingTarget implements
             return true;
       }
       return false;
+   }
+   
+   
+   private PresentationEditorLocation presentationEditorLocation()
+   {
+      PresentationEditorLocation location;
+      if (isVisualEditorActive())
+      {
+         location = visualMode_.getPresentationEditorLocation();
+      }
+      else
+      {
+         location = presentation2Helper_.getPresentationEditorLocation();
+      } 
+      return location;
    }
 
    private boolean isShinyDoc()
@@ -6919,8 +6953,13 @@ public class TextEditingTarget implements
          else
          {
             String format = outputFormats.get(0);
-            final ArrayList<String> previewFormats = new ArrayList<String>(
-                  Arrays.asList("pdf", "beamer", "html", "revealjs", "slidy"));
+            final ArrayList<String> previewFormats = new ArrayList<String>(Arrays.asList(
+                  QUARTO_PDF_FORMAT, 
+                  QUARTO_BEAMER_FORMAT, 
+                  QUARTO_HTML_FORMAT, 
+                  QUARTO_REVEALJS_FORMAT, 
+                  QUARTO_SLIDY_FORMAT)
+            );
             return previewFormats.stream()
                .filter(fmt -> format.startsWith(fmt))
                .findAny()
@@ -6933,6 +6972,17 @@ public class TextEditingTarget implements
          return null;
       }
      
+   }
+   
+   private static final String QUARTO_PDF_FORMAT = "pdf";
+   private static final String QUARTO_BEAMER_FORMAT = "beamer";
+   private static final String QUARTO_HTML_FORMAT = "html";
+   private static final String QUARTO_SLIDY_FORMAT = "slidy";
+   private static final String QUARTO_REVEALJS_FORMAT = "revealjs";
+   
+   private boolean isQuartoRevealJs(String format)
+   {
+      return format.startsWith(QUARTO_REVEALJS_FORMAT);
    }
    
    private boolean isQuartoWebsiteDoc()
@@ -8713,6 +8763,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetJSHelper jsHelper_;
    private final TextEditingTargetSqlHelper sqlHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
+   private final TextEditingTargetPresentation2Helper presentation2Helper_;
    private final TextEditingTargetRHelper rHelper_;
    private VisualMode visualMode_;
    private final TextEditingTargetQuartoHelper quartoHelper_;

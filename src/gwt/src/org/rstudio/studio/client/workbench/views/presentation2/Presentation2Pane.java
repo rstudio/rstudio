@@ -24,6 +24,9 @@ import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.common.AutoGlassPanel;
@@ -74,9 +77,22 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    {
       toolbar_ = new Toolbar("Presentation Toolbar");
       
-      toolbar_.addLeftWidget(commands_.presentation2ViewInBrowser().createToolbarButton());
+      
+      toolbar_.addLeftWidget(commands_.presentation2Present().createToolbarButton());
+      
+      ToolbarPopupMenu presentMenu = new ToolbarPopupMenu();
+      presentMenu.addItem(commands_.presentation2PresentFromBeginning().createMenuItem(false));
+      ToolbarMenuButton presentButton = new ToolbarMenuButton(ToolbarButton.NoText, "Present", presentMenu, true);
+      presentButton.setEnabled(commands_.presentation2PresentFromBeginning().isEnabled());
+      commands_.presentation2PresentFromBeginning().addEnabledChangedHandler(event -> {
+         presentButton.setEnabled(commands_.presentation2PresentFromBeginning().isEnabled());
+      });
+      toolbar_.addLeftWidget(presentButton);
+      
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.presentation2Print().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.presentation2Edit().createToolbarButton());
       
       // publish
       publishButton_ = new RSConnectPublishButton(
@@ -105,9 +121,8 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       slidesMenuLabel_.addStyleName(ThemeResources.INSTANCE.themeStyles().toolbarButtonLabel());   
       slidesMenu_ = new SlidesPopupMenu();
       slidesMenuWidget_ = toolbar.addLeftPopupMenu(slidesMenuLabel_, slidesMenu_);
-      slidesMenuWidget_.getElement().getStyle().setMarginTop(-1, Unit.PX);
-      toolbar.addLeftSeparator();
-      toolbar.addLeftWidget(commands_.presentation2Edit().createToolbarButton());
+      slidesMenuWidget_.getElement().getStyle().setMarginTop(-3, Unit.PX);
+      
       return toolbar;
       
    }
@@ -135,8 +150,8 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       if (width == 0)
          return;
       
-      slidesMenuLabel_.getElement().getStyle().setProperty("maxWidth", (width - 160) + "px");
-      slidesMenuWidget_.getElement().getStyle().setProperty("maxWidth", (width - 130) + "px");
+      slidesMenuLabel_.getElement().getStyle().setProperty("maxWidth", (width - 130) + "px");
+      slidesMenuWidget_.getElement().getStyle().setProperty("maxWidth", (width - 100) + "px");
    
    }
    
@@ -206,10 +221,15 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    }
    
    @Override
-   public void init(JsArray<RevealSlide> slides)
+   public void init(JsArray<RevealSlide> slides, int slideIndex)
    {
       // save slides (for creating slide caption)
       activeSlides_ = slides;
+      
+      // navigate to initial slide
+      RevealSlide intialSlide = activeSlides_.get(slideIndex);
+      if (intialSlide != null)
+         postRevealMessage("slide", intialSlide);   
       
       // populate the menu
       slidesMenu_.clearItems();
@@ -237,31 +257,6 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       setSecondaryToolbarVisible(true);
    }
 
-
-   @Override
-   public void change(RevealSlide slide)
-   { 
-      // determine slide index
-      int slideIndex = 0;
-      int totalSlides = activeSlides_.length();
-      for (int i=0; i<totalSlides; i++)
-      {
-         if (activeSlides_.get(i).hasSameIndices(slide))
-         {
-            slideIndex = i + 1;
-            break;
-         }
-      }
-      
-      // form title (use index if we have one)
-      String title = slideTitle(slide.getTitle());
-      if (slideIndex > 0)
-         title = title + " (" + slideIndex + "/" + totalSlides + ")";
-      
-      // set title
-      slidesMenuLabel_.setText(title);
-   }
-   
    
    @Override
    public void clear()
@@ -341,6 +336,32 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       }
    }
    
+   private int slideChanged(RevealSlide slide)
+   { 
+      // determine slide index
+      int slideIndex = 0;
+      int totalSlides = activeSlides_.length();
+      for (int i=0; i<totalSlides; i++)
+      {
+         if (activeSlides_.get(i).hasSameIndices(slide))
+         {
+            slideIndex = i;
+            break;
+         }
+      }
+      
+      // form title (use index if we have one)
+      String title = slideTitle(slide.getTitle());
+      title = title + " (" + (slideIndex+1) + "/" + totalSlides + ")";
+      
+      // set title
+      slidesMenuLabel_.setText(title);
+      
+      // return slide index
+      return slideIndex;
+   }
+   
+   
    private native void initializeEvents() /*-{  
       var self = this;
       var callback = $entry(function(event) {
@@ -375,7 +396,11 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
          }
          else if (type == "slidechange")
          {
-            handlerManager_.fireEvent(new PresentationSlideChangeEvent(message.getData().cast()));
+            PresentationSlideChangeEvent.Data data = message.getData().cast();
+            int slideIndex = slideChanged(data.getSlide());
+            handlerManager_.fireEvent(new PresentationSlideChangeEvent(
+              PresentationSlideChangeEvent.Data.withSlideIndex(data,  slideIndex)
+            ));
          }  
          else if (type == "hashchange")
          {
@@ -420,6 +445,4 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    private RStudioFrame frame_;
   
    private HandlerManager handlerManager_ = new HandlerManager(this);
-
-
 }

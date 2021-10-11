@@ -83,7 +83,9 @@ public class NewDirectoryNavigationPage
       pages.add(new NewPackagePage());
       pages.add(new NewShinyAppPage());
       if (sessionInfo.getQuartoConfig().installed) {
-         pages.add(new NewQuartoProjectPage());
+         pages.add(new NewQuartoDefaultProjectPage());
+         pages.add(new NewQuartoWebsiteProjectPage());
+         pages.add(new NewQuartoBookProjectPage());
       }
       
       // add user-defined project template dialogs

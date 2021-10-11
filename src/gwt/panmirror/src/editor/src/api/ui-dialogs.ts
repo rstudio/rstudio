@@ -179,6 +179,7 @@ export interface ListProps {
   order: number;
   number_style: string;
   number_delim: string;
+  incremental: "default" | "incremental" | "nonincremental";
 }
 
 export type ListEditResult = ListProps;

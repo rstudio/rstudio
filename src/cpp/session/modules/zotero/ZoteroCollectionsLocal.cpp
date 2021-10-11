@@ -106,7 +106,7 @@ std::string creatorsSQL(const ZoteroCollectionSpec& spec)
    boost::format fmt(R"(
       SELECT
         items.key as key,
-        items.version,
+        strftime('%%s', items.clientDateModified) AS version,
         creators.firstName as firstName,
         creators.LastName as lastName,
         itemCreators.orderIndex,
@@ -140,7 +140,6 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
    boost::format fmt(R"(
       SELECT
          items.key as key,
-         items.version,
          fields.fieldName as name,
          itemDataValues.value as value,
          itemTypeFields.orderIndex as fieldOrder
@@ -163,7 +162,6 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
    UNION
       SELECT
          items.key as key,
-         items.version,
          'type' as name,
          itemTypes.typeName as  value,
          0 as fieldOrder
@@ -181,7 +179,6 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
    UNION
       SELECT
          items.key as key,
-         items.version,
          'libraryID' as name,
          CAST(items.libraryID as text) as value,
          500 as fieldOrder
@@ -199,7 +196,6 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
    UNION
       SELECT
          items.key as key,
-         items.version,
          'collectionKeys' as name,
          libraries.libraryID || ',' || IFNULL(group_concat(collections.key), '') as value,
          10000 as fieldOrder
@@ -232,7 +228,58 @@ std::string collectionSQL(const ZoteroCollectionSpec& spec)
          ("AND collections.key = '" + spec.key + "'")
       );
    }
+}
 
+double getCollectionVersion(boost::shared_ptr<database::IConnection> pConnection, const ZoteroCollectionSpec& spec) {
+    // This is a library
+    std::string query;
+    if (spec.parentKey.empty()) {
+        query = R"(
+                   SELECT
+                       IFNULL(strftime('%%s', MAX(MAX(items.clientDateModified), MAX(collections.clientDateModified))), '0') AS version
+                   FROM
+                       libraries
+                       left join items on libraries.libraryID = items.libraryID
+                       left join collections on libraries.libraryID = collections.libraryID
+                       join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+                       left join deletedItems on items.itemId = deletedItems.itemID
+                   WHERE
+                       libraries.libraryID = %1%
+                   AND
+                       itemTypes.typeName <> 'attachment'
+                   AND
+                       itemTypes.typeName <> 'note'
+                   AND
+                       deletedItems.dateDeleted IS NULL
+                )";
+    } else {
+        query = R"(
+                SELECT
+                    IFNULL(strftime('%%s', MAX(MAX(items.clientDateModified), MAX(collections.clientDateModified))), '0') AS version
+                FROM
+                    collections
+                    left join collectionItems on collections.collectionID = collectionItems.collectionID
+                    left join items on collectionItems.itemID = items.itemID
+                    left join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+                    left join collections as parentCollections on collections.parentCollectionID = parentCollections.collectionID
+                WHERE
+                    collections.collectionID = %1%
+                   )";
+
+    }
+
+    double version = 0;
+    Error error = execQuery(pConnection, boost::str(boost::format(query) % spec.key),
+                      [&version](const database::Row& row) {
+        try
+        {
+           std::string versionStr = readString(row, "version", "0");
+           version = safe_convert::stringTo<double>(versionStr, 0);
+        }
+        CATCH_UNEXPECTED_EXCEPTION
+
+    });
+    return version;
 }
 
 ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnection, const ZoteroCollectionSpec& spec)
@@ -271,12 +318,10 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
       return collection;
    }
 
-   int version = 0;
    std::map<std::string,std::string> currentItem;
    json::Array itemsJson;
    error = execQuery(pConnection, collectionSQL(spec),
-                     [&creators, &version, &currentItem, &itemsJson](const database::Row& row) {
-
+                     [&creators, &currentItem, &itemsJson](const database::Row& row) {
 
       std::string key = row.get<std::string>("key");
       std::string currentKey = currentItem.count("key") ? currentItem["key"] : "";
@@ -294,16 +339,6 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
          currentItem.clear();
          currentItem["key"] = key;
       }
-
-      // update version
-      // further fix for https://github.com/rstudio/rstudio/issues/8861
-      try
-      {
-         int rowVersion = row.get<int>("version");
-         if (rowVersion > version)
-            version = rowVersion;
-      }
-      CATCH_UNEXPECTED_EXCEPTION
 
       // read the csl name value pairs
       soci::indicator nameIndicator = row.get_indicator("name");
@@ -328,6 +363,9 @@ ZoteroCollection getCollection(boost::shared_ptr<database::IConnection> pConnect
       return collection;
    }
 
+   // Read the collection version
+   double version = getCollectionVersion(pConnection, spec);
+
    // success!
    collection.version = version;
    collection.items = itemsJson;
@@ -338,7 +376,7 @@ struct LibraryInfo
 {
    LibraryInfo() : version(0) {}
    std::string name;
-   int version;
+   double version;
 };
 
 
@@ -349,13 +387,22 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
                                   CAST(libraries.libraryID as text) as collectionKey,
                                   IFNULL(groups.name, 'My Library') as collectionName,
                                   NULL as parentCollectionKey,
-                                  IFNULL(MAX(items.version), 0) AS version
+                                  IFNULL(strftime('%s', MAX(MAX(items.clientDateModified), MAX(collections.clientDateModified))), '0') AS version
                               FROM
                                   libraries
                                   left join items on libraries.libraryID = items.libraryID
+                                  left join collections on libraries.libraryID = collections.libraryID
+                                  join itemTypes on items.itemTypeID = itemTypes.itemTypeID
+                                  left join deletedItems on items.itemId = deletedItems.itemID
                                   left join groups as groups on libraries.libraryID = groups.libraryID
                               WHERE
                                   libraries.type in ('user', 'group')
+                              AND
+                                  itemTypes.typeName <> 'attachment'
+                              AND
+                                  itemTypes.typeName <> 'note'
+                              AND
+                                  deletedItems.dateDeleted IS NULL
                               GROUP
                                   BY libraries.libraryID
                           )";
@@ -365,7 +412,7 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
                                     collections.key as collectionKey,
                                     collections.collectionName as collectionName,
                                     IFNULL(parentCollections.key, libraries.libraryId) as parentCollectionKey,
-                                    IFNULL(MAX(items.version), 0) AS version
+                                    IFNULL(strftime('%s', MAX(MAX(items.clientDateModified), MAX(collections.clientDateModified))), '0') AS version
                                 FROM
                                     collections
                                     join libraries on libraries.libraryID = collections.libraryID
@@ -398,7 +445,7 @@ ZoteroCollectionSpecs getCollections(boost::shared_ptr<database::IConnection> pC
          spec.key = readString(row, "collectionKey", "-1");
 
          std::string versionStr = readString(row, "version", "0");
-         spec.version = safe_convert::stringTo<int>(versionStr, 0);
+         spec.version = safe_convert::stringTo<double>(versionStr, 0);
 
          const soci::indicator indicator = row.get_indicator("parentCollectionKey");
          if (indicator == soci::i_ok)
@@ -445,12 +492,15 @@ Error connect(std::string dataDir, boost::shared_ptr<database::IConnection>* ppC
    FilePath dbCopyFile = zoteroSqliteCopyPath(dataDir);
 
    // if the copy file doesn't exist or is older than the dbFile then make another copy
-   if (!dbCopyFile.exists() || (dbCopyFile.getLastWriteTime() < dbFile.getLastWriteTime()))
+   bool databaseIsStale = dbCopyFile.getLastWriteTime() < dbFile.getLastWriteTime();
+   if (databaseIsStale)
    {
       TRACE("Copying " + dbFile.getAbsolutePath());
+      std::time_t writeTime = dbFile.getLastWriteTime();
       Error error = dbFile.copy(dbCopyFile, true);
       if (error)
          return error;
+      dbCopyFile.setLastWriteTime(writeTime);
    }
 
    // create connection
@@ -561,7 +611,7 @@ void getLocalCollections(std::string key,
    for (auto userCollection : userCollections)
    {  
       std::string name = userCollection.name;
-      int version = userCollection.version;
+      double version = userCollection.version;
       std::string key = userCollection.key;
       std::string parentKey = userCollection.parentKey;
 
