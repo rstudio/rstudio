@@ -24,7 +24,12 @@ export interface TableCapabilities {
 
 export function tableMenu(insert: boolean, ui: EditorUI) {
   return [
-    ...(insert ? [{ command: EditorCommandId.TableInsertTable }] : []),
+    ...(insert 
+      ? [{ command: EditorCommandId.TableInsertTable }, 
+         { separator: true }
+      ] 
+      : []
+    ),
     { command: EditorCommandId.TableAddRowBefore },
     { command: EditorCommandId.TableAddRowAfter },
     { separator: true },

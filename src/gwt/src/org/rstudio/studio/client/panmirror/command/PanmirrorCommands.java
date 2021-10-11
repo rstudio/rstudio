@@ -83,6 +83,7 @@ public class PanmirrorCommands
 
    // insert
    public static final String OmniInsert = "12F96C13-38C1-4266-A0A1-E871D8C709FB";
+   public static final String Table = "CBD3ACC6-B2A3-457D-885C-EDA600F6FC67";
    public static final String Link = "842FCB9A-CA61-4C5F-A0A0-43507B4B3FA9";
    public static final String RemoveLink = "072D2084-218D-4A34-AF1F-7E196AF684B2";
    public static final String Image = "808220A3-2B83-4CB6-BCC1-46565D54FA47";
