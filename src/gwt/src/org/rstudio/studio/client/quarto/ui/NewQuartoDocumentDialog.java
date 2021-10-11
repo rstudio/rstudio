@@ -74,7 +74,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
                       QuartoConstants.ENGINE_KNITR, 
                       "python3", 
                       "python", 
-                      QuartoConstants.EDITOR_VISUAL);
+                      QuartoConstants.EDITOR_VISUAL,
+                      false);
       }
 
       public static final native Result create(String title,
@@ -83,7 +84,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
                                                String engine,
                                                String kernel,
                                                String language,
-                                               String editor)
+                                               String editor,
+                                               boolean empty)
       /*-{
          return {
             "title": title,
@@ -92,7 +94,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
             "engine": engine,
             "kernel": kernel,
             "language": language,
-            "editor": editor
+            "editor": editor,
+            "empty": empty
          };
       }-*/;
       
@@ -105,7 +108,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
             "engine": this.engine,
             "kernel": this.kernel,
             "language": this.language,
-            "editor": this.editor
+            "editor": this.editor,
+            "empty": this.empty
          };
       }-*/;
       
@@ -117,6 +121,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       public final native String getKernel() /*-{ return this["kernel"]; }-*/;
       public final native String getLanguage() /*-{ return this["language"]; }-*/;
       public final native String getEditor() /*-{ return this["editor"]; }-*/;
+      public final native boolean getEmpty() /*-{ return !!this["empty"] }-*/;
    }
    
 
@@ -242,7 +247,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       ThemedButton emptyDoc = new ThemedButton("Create Empty Document", evt -> {
          closeDialog();
          if (operation != null)
-            operation.execute(null);
+            operation.execute(getResult(true));
          onSuccess();
       });
       addLeftButton(emptyDoc, ElementIds.EMPTY_DOC_BUTTON);
@@ -266,6 +271,12 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
 
    @Override
    protected Result collectInput()
+   {   
+      lastResult_ = getResult(false);  
+      return lastResult_.clone();
+   }
+   
+   private Result getResult(boolean empty)
    {
       String formatName = getSelectedFormat();
       
@@ -294,17 +305,16 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
          }
       }
       
-      lastResult_ = Result.create(
+      return Result.create(
          txtTitle_.getText().trim(),
          txtAuthor_.getText().trim(),
          formatName,
          engine,
          kernel,
          language,
-         editor 
+         editor,
+         empty
        );
-      
-      return lastResult_.clone();
    }
    
    @Override
@@ -537,7 +547,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
                      value.getString("engine"),
                      value.getString("kernel"),
                      value.getString("language"),
-                     value.getString("editor")
+                     value.getString("editor"),
+                     false
                   );
       }
  

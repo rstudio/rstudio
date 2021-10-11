@@ -33,8 +33,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
-// Interactive still has visual editor
-// Empty doc should still use yaml
 // OJS template
 // How to insert a code chunk?
 
@@ -74,77 +72,75 @@ public class QuartoCommands
                   String template = "default.qmd";
                   String format = "html";
                   final boolean interactive = 
-                     result != null && 
                      (result.getFormat().equals(QuartoConstants.INTERACTIVE_SHINY) ||
                       result.getFormat().equals(QuartoConstants.INTERACTIVE_OJS));
                   
-                  final boolean visualEditor = result != null &&
-                                               result.getEditor().equals(QuartoConstants.EDITOR_VISUAL) &&
+                  final boolean visualEditor = result.getEditor().equals(QuartoConstants.EDITOR_VISUAL) &&
                                                !interactive;
-                  if (result != null)
+                 
+                  // select appropriate template
+                  format = result.getFormat();
+                  if (format.equals(QuartoConstants.FORMAT_HTML) ||
+                      format.equals(QuartoConstants.FORMAT_PDF) ||
+                      format.equals(QuartoConstants.FORMAT_DOCX))
                   {
-                     // select appropriate template
-                     format = result.getFormat();
-                     if (format.equals(QuartoConstants.FORMAT_HTML) ||
-                         format.equals(QuartoConstants.FORMAT_PDF) ||
-                         format.equals(QuartoConstants.FORMAT_DOCX))
-                     {
-                        template = "document.qmd";
-                     }
-                     else if (format.equals(QuartoConstants.FORMAT_REVEALJS) ||
-                              format.equals(QuartoConstants.FORMAT_BEAMER) ||
-                              format.equals(QuartoConstants.FORMAT_PPTX))
-                     {
-                        template = "presentation.qmd";
-                     }
-                     else if (format.equals(QuartoConstants.INTERACTIVE_SHINY))
-                     {
-                        format = "html";
-                        template = "shiny.qmd";
-                     }
-                     else if (format.equals(QuartoConstants.INTERACTIVE_OJS))
-                     {
-                        format = "html";
-                        template = "ojs.qmd";
-                     }
-                     else
-                     {
-                        format = "html";
-                        template = "default.qmd";
-                     }
-                     
-                     // generate preamble
-                     lines.add("---");
-                     lines.add("title: \"" + result.getTitle() + "\"");
-                     if (!StringUtil.isNullOrEmpty(result.getAuthor()))
-                        lines.add("author: \"" + result.getAuthor() + "\"");
-                     lines.add("format: " + format);
-                     
-                     if (visualEditor)
-                        lines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
-                     
-                     if (result.getFormat().equals(QuartoConstants.INTERACTIVE_SHINY))
-                        lines.add("server: shiny");
-                     else if (!interactive && result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
-                        lines.add("jupyter: " + result.getKernel());
-                     
-                     lines.add("---");
-                     lines.add("");
+                     template = "document.qmd";
                   }
+                  else if (format.equals(QuartoConstants.FORMAT_REVEALJS) ||
+                           format.equals(QuartoConstants.FORMAT_BEAMER) ||
+                           format.equals(QuartoConstants.FORMAT_PPTX))
+                  {
+                     template = "presentation.qmd";
+                  }
+                  else if (format.equals(QuartoConstants.INTERACTIVE_SHINY))
+                  {
+                     format = "html";
+                     template = "shiny.qmd";
+                  }
+                  else if (format.equals(QuartoConstants.INTERACTIVE_OJS))
+                  {
+                     format = "html";
+                     template = "ojs.qmd";
+                  }
+                  else
+                  {
+                     format = "html";
+                     template = "default.qmd";
+                  }
+                  
+                  
+                  // generate preamble
+                  lines.add("---");
+                  lines.add("title: \"" + result.getTitle() + "\"");
+                  if (!StringUtil.isNullOrEmpty(result.getAuthor()))
+                     lines.add("author: \"" + result.getAuthor() + "\"");
+                  lines.add("format: " + format);
+                  
+                  if (visualEditor)
+                     lines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
+                  
+                  if (result.getFormat().equals(QuartoConstants.INTERACTIVE_SHINY))
+                     lines.add("server: shiny");
+                  else if (!interactive && result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
+                     lines.add("jupyter: " + result.getKernel());
+                  
+                  lines.add("---");
+                  lines.add("");
+                  
                  
                   final String preamble = StringUtil.join(lines, "\n");
                   
    
                   columnManager_.newSourceDocWithTemplate(FileTypeRegistry.QUARTO,
                      "",
-                     template,
+                     result.getEmpty() ? "default.qmd" : template,
                      Position.create(1, 0),
                      null,
                      new TransformerCommand<String>()
                      {
                         @Override
                         public String transform(String input)
-                        {  
+                        {         
                            // remove bit about visual editor if we aren't using
                            // the visual editor
                            if (!visualEditor)
