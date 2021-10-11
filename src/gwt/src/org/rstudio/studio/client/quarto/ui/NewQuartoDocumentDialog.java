@@ -70,7 +70,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       public static final Result createDefault()
       {
          return create("", "", 
-                      TEMPLATE_DOCUMENT, 
                       QuartoConstants.FORMAT_HTML, 
                       QuartoConstants.ENGINE_KNITR, 
                       "python3", 
@@ -80,7 +79,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
 
       public static final native Result create(String title,
                                                String author,
-                                               String template,
                                                String format,
                                                String engine,
                                                String kernel,
@@ -90,7 +88,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
          return {
             "title": title,
             "author": author,
-            "template": template,
             "format": format,
             "engine": engine,
             "kernel": kernel,
@@ -104,7 +101,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
          return {
             "title": this.title,
             "author": this.author,
-            "template": this.template,
             "format": this.format,
             "engine": this.engine,
             "kernel": this.kernel,
@@ -116,7 +112,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
 
       public final native String getTitle() /*-{ return this["title"]; }-*/;
       public final native String getAuthor() /*-{ return this["author"]; }-*/;
-      public final native String getTemplate() /*-{ return this["template"]; }-*/;
       public final native String getFormat() /*-{ return this["format"]; }-*/;
       public final native String getEngine() /*-{ return this["engine"]; }-*/;
       public final native String getKernel() /*-{ return this["kernel"]; }-*/;
@@ -242,8 +237,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
          "https://quarto.org/docs/interactive/");
       
       updateOptions(getSelectedTemplate());
-
-      manageControls();
             
       // Add option to create empty document
       ThemedButton emptyDoc = new ThemedButton("Create Empty Document", evt -> {
@@ -274,20 +267,13 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    @Override
    protected Result collectInput()
    {
-      String formatName = "";
-      String template = getSelectedTemplate();
-      for (int i = 0; i < formatOptions_.size(); i++)
-      {
-         if (formatOptions_.get(i).getValue())
-         {
-            formatName = formatNames_.get(i);
-            break;
-         }
-      }
+      String formatName = getSelectedFormat();
       
       String engine = engineSelect_.getSelectedValue();
       String kernel = kernelSelect_.getSelectedValue();
-      String editor = editorCheckBox_.getValue() ? QuartoConstants.EDITOR_VISUAL : QuartoConstants.EDITOR_SOURCE;
+      String editor = editorCheckBox_.getValue() 
+                         ? QuartoConstants.EDITOR_VISUAL : 
+                           QuartoConstants.EDITOR_SOURCE;
       
       // determine language
       String language = null;
@@ -311,7 +297,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       lastResult_ = Result.create(
          txtTitle_.getText().trim(),
          txtAuthor_.getText().trim(),
-         template,
          formatName,
          engine,
          kernel,
@@ -350,6 +335,20 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       int idx = listTemplates_.getSelectedIndex();
       TemplateMenuItem item = listTemplates_.getItemAtIdx(idx);
       return item.getName();
+   }
+   
+   private String getSelectedFormat()
+   {
+      String formatName = null;
+      for (int i = 0; i < formatOptions_.size(); i++)
+      {
+         if (formatOptions_.get(i).getValue())
+         {
+            formatName = formatNames_.get(i);
+            break;
+         }
+      }
+      return formatName;
    }
 
    private void updateOptions(String selectedTemplate)
@@ -427,7 +426,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
          }
       }
       
-      
+      manageControls();
    }
 
    private Widget createFormatOption(String name, String text, String description)
@@ -453,7 +452,10 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    {
       RowFormatter rowFmt = grid_.getRowFormatter();
       // kernel only shows for jupyter
-      rowFmt.setVisible(ROW_KERNEL, engineSelect_.getSelectedValue().equals(QuartoConstants.ENGINE_JUPYTER));
+      rowFmt.setVisible(ROW_ENGINE, !getSelectedTemplate().equals(TEMPLATE_INTERACTIVE));
+      rowFmt.setVisible(ROW_KERNEL, !getSelectedTemplate().equals(TEMPLATE_INTERACTIVE) &&
+                                    engineSelect_.getSelectedValue().equals(QuartoConstants.ENGINE_JUPYTER));
+      rowFmt.setVisible(ROW_EDITOR, !getSelectedTemplate().equals(TEMPLATE_INTERACTIVE));
    }
    
    private Label createLabel(String caption)
@@ -531,7 +533,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
                   Result.create(
                      value.getString("title"),
                      value.getString("author"),
-                     value.getString("template"),
                      value.getString("format"),
                      value.getString("engine"),
                      value.getString("kernel"),

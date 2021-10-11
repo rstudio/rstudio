@@ -33,9 +33,10 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
-// Shiny template
+// Interactive still has visual editor
+// Empty doc should still use yaml
 // OJS template
-// Custom help links for various types
+// How to insert a code chunk?
 
 public class QuartoCommands
 {
@@ -71,10 +72,19 @@ public class QuartoCommands
           
                   ArrayList<String> lines = new ArrayList<String>();
                   String template = "default.qmd";
+                  String format = "html";
+                  final boolean interactive = 
+                     result != null && 
+                     (result.getFormat().equals(QuartoConstants.INTERACTIVE_SHINY) ||
+                      result.getFormat().equals(QuartoConstants.INTERACTIVE_OJS));
+                  
+                  final boolean visualEditor = result != null &&
+                                               result.getEditor().equals(QuartoConstants.EDITOR_VISUAL) &&
+                                               !interactive;
                   if (result != null)
                   {
                      // select appropriate template
-                     String format = result.getFormat();
+                     format = result.getFormat();
                      if (format.equals(QuartoConstants.FORMAT_HTML) ||
                          format.equals(QuartoConstants.FORMAT_PDF) ||
                          format.equals(QuartoConstants.FORMAT_DOCX))
@@ -89,35 +99,39 @@ public class QuartoCommands
                      }
                      else if (format.equals(QuartoConstants.INTERACTIVE_SHINY))
                      {
+                        format = "html";
                         template = "shiny.qmd";
                      }
                      else if (format.equals(QuartoConstants.INTERACTIVE_OJS))
                      {
+                        format = "html";
                         template = "ojs.qmd";
                      }
                      else
                      {
+                        format = "html";
                         template = "default.qmd";
                      }
+                     
+                     // generate preamble
+                     lines.add("---");
+                     lines.add("title: \"" + result.getTitle() + "\"");
+                     if (!StringUtil.isNullOrEmpty(result.getAuthor()))
+                        lines.add("author: \"" + result.getAuthor() + "\"");
+                     lines.add("format: " + format);
+                     
+                     if (visualEditor)
+                        lines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
+                     
+                     if (result.getFormat().equals(QuartoConstants.INTERACTIVE_SHINY))
+                        lines.add("server: shiny");
+                     else if (!interactive && result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
+                        lines.add("jupyter: " + result.getKernel());
+                     
+                     lines.add("---");
+                     lines.add("");
                   }
                  
-                  // generate preamble
-                  lines.add("---");
-                  lines.add("title: \"" + result.getTitle() + "\"");
-                  if (!StringUtil.isNullOrEmpty(result.getAuthor()))
-                     lines.add("author: \"" + result.getAuthor() + "\"");
-               
-                  lines.add("format: " + result.getFormat());
-                  
-                  
-                  final boolean visualEditor = result.getEditor().equals(QuartoConstants.EDITOR_VISUAL);
-                  if (visualEditor)
-                     lines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
-                  
-                  if (result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
-                     lines.add("jupyter: " + result.getKernel());
-                  lines.add("---");
-                  lines.add("");
                   final String preamble = StringUtil.join(lines, "\n");
                   
    
@@ -141,7 +155,7 @@ public class QuartoCommands
                            
                            // if it was built in and not interactive then do some
                            // language fixups
-                           if (builtIn && !result.getFormat().startsWith("interactive"))
+                           if (builtIn && !interactive)
                            {
                               input = updateLanguage(input, result.getLanguage());
                            }
