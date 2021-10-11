@@ -174,8 +174,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       
       if (presentation)
          listTemplates_.setSelectedIndex(1);
-
-      updateOptions(getSelectedTemplate());
       
       Label engineLabel = createLabel("Engine:");
       engineSelect_ = createListBox(
@@ -234,16 +232,19 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       rowFmt.addStyleName(ROW_ENGINE, RES.styles().spacedRow());
       rowFmt.addStyleName(ROW_EDITOR, RES.styles().spacedRow());
       
-      HelpLink quartoHelpLink = new HelpLink(
-            "Learn more about Quarto",
-            "https://quarto.org",
-            false, false);
-      quartoHelpLink.getElement().getStyle().setMarginTop(15, Unit.PX);
-      newTemplatePanel_.add(quartoHelpLink);
+      quartoHelpLink_ = addHelpLink("Learn more about Quarto",
+                                    "https://quarto.org");
+      quartoPresentationsHelpLink_ = addHelpLink(
+         "Learn more about Quarto presentations",
+         "https:/quarto.org/docs/presentations/");
+      quartoInteractiveHelpLink_ = addHelpLink(
+         "Learn more about Quarto interactive documents",
+         "https://quarto.org/docs/interactive/");
       
-      manageControls();
-      
+      updateOptions(getSelectedTemplate());
 
+      manageControls();
+            
       // Add option to create empty document
       ThemedButton emptyDoc = new ThemedButton("Create Empty Document", evt -> {
          closeDialog();
@@ -261,7 +262,6 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       globalDisplay_ = globalDisplay;
    }
 
- 
 
    @Override
    protected void focusInitialControl()
@@ -358,9 +358,14 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       templateFormatPanel_.clear();
       formatNames_.clear();
       formatOptions_.clear();
+      quartoHelpLink_.setVisible(false);
+      quartoPresentationsHelpLink_.setVisible(false);
+      quartoInteractiveHelpLink_.setVisible(false);
 
       if (selectedTemplate.equals(TEMPLATE_DOCUMENT))
       {
+         quartoHelpLink_.setVisible(true);
+         
          templateFormatPanel_.add(createFormatOption(
             QuartoConstants.FORMAT_HTML, 
             "HTML",
@@ -379,6 +384,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       }
       else if (selectedTemplate.equals(TEMPLATE_PRESENTATION))
       {
+         quartoPresentationsHelpLink_.setVisible(true);
+         
          templateFormatPanel_.add(createFormatOption(
             QuartoConstants.FORMAT_REVEALJS, 
             "Reveal JS",
@@ -397,6 +404,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       }
       else if (selectedTemplate.equals(TEMPLATE_INTERACTIVE))
       {
+         quartoInteractiveHelpLink_.setVisible(true);
+         
          templateFormatPanel_.add(createFormatOption(
             QuartoConstants.INTERACTIVE_SHINY, 
             "Shiny",
@@ -417,6 +426,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
             break;
          }
       }
+      
+      
    }
 
    private Widget createFormatOption(String name, String text, String description)
@@ -470,6 +481,15 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       });
       return listBox;
    }
+   
+   private HelpLink addHelpLink(String caption, String link)
+   {
+      HelpLink helpLink = new HelpLink(caption, link, false, false);
+      helpLink.getElement().getStyle().setMarginTop(12, Unit.PX);
+      newTemplatePanel_.add(helpLink);
+      return helpLink;
+   }
+ 
    
    private void setListBoxValue(ListBox listBox, String value)
    {
@@ -562,6 +582,10 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    private final ListBox engineSelect_;
    private final ListBox kernelSelect_;
    private QuartoVisualEditorCheckBox editorCheckBox_;
+   
+   private HelpLink quartoHelpLink_;
+   private HelpLink quartoPresentationsHelpLink_;
+   private HelpLink quartoInteractiveHelpLink_;
    
    private final QuartoCapabilities caps_;
    
