@@ -22,6 +22,8 @@ You can embed code like this (note that we use `echo: true` to show the code as 
 1 + 1
 ```
 
+Use the **Insert** menu to create additional code chunks and to add links, images, equations, and more to your document.
+
 ## Slide with Plot
 
 ```{r}

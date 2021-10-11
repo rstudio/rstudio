@@ -12,6 +12,8 @@ When you click the **Render** button a document will be generated that includes 
 1 + 1
 ```
 
+Use the **Insert** menu to create additional code chunks and to add links, images, equations, and more to your document.
+
 ## Plot Output
 
 You can also include plots, for example:

@@ -34,7 +34,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 // OJS template
-// How to insert a code chunk?
 
 public class QuartoCommands
 {
@@ -172,7 +171,9 @@ public class QuartoCommands
    
    private String removeVisualEditorLine(String input)
    {
-      return input.replaceFirst("\\n.*?\\[visual markdown editor\\].*?\\n", "");
+      input = input.replaceFirst("\\n.*?\\[visual markdown editor\\].*?\\n", "");
+      input = input.replaceFirst("\\nUse the \\*\\*Insert\\*\\* menu.*?\\n", "");
+      return input;
    }
    
    
