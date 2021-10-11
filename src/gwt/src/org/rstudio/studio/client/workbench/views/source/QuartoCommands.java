@@ -33,8 +33,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
-// Substitute Python or Julia for R when approriate
-// Optional for author
 // Shiny template
 // OJS template
 // Custom help links for various types
@@ -132,9 +130,21 @@ public class QuartoCommands
                      {
                         @Override
                         public String transform(String input)
-                        {       
+                        {  
+                           // remove bit about visual editor if we aren't using
+                           // the visual editor
                            if (!visualEditor)
                               input = removeVisualEditorLine(input); 
+                           
+                           // was this a built-in template?
+                           boolean builtIn = input.startsWith("## Quarto");
+                           
+                           // if it was built in and not interactive then do some
+                           // language fixups
+                           if (builtIn && !result.getFormat().startsWith("interactive"))
+                           {
+                              input = updateLanguage(input, result.getLanguage());
+                           }
                            
                            return preamble + "\n" + input;
                         }
@@ -155,6 +165,43 @@ public class QuartoCommands
       return input.replaceFirst("\\n.*?\\[visual markdown editor\\].*?\\n", "");
    }
    
+   
+   private String updateLanguage(String input, String language)
+   {
+      // if it's R we are good to go
+      if (language.equals("r")) 
+      {
+         return input;
+      }
+      // otherwise change out the chunk language
+      else
+      {
+         // change out the chunk language
+         input = input.replaceAll("```{r}", "```{" + language + "}");
+         
+         // if it's python then substitute plotting code, otherwise
+         // just eliminate the Plot section entirely
+         if (language.equals("python"))
+         {
+            input = input.replaceFirst(
+              "\nplot\\(pressure\\)\n", 
+              "\nimport matplotlib.pyplot as plt\n" + 
+              "plt.show(plt.plot([1,2,3,4]))\n"
+            );
+         }
+         else
+         {
+            int plotCodePos = input.indexOf("## Plot Output");
+            if (plotCodePos == -1 )
+               plotCodePos = input.indexOf("## Slide with Plot");
+            if (plotCodePos != -1)
+               input = input.substring(0, plotCodePos - 1);
+         }
+      }
+      
+      
+      return input;
+   }
 
    private final SourceColumnManager columnManager_;
    private final QuartoServerOperations server_;

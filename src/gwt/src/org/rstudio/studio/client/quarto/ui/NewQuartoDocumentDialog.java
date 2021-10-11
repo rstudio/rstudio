@@ -19,6 +19,7 @@ import java.util.List;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.LayoutGrid;
@@ -148,6 +149,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       resources.styles().ensureInjected();
       
       txtTitle_.setText("Untitled");
+      DomUtils.setPlaceholder(txtAuthor_, "(optional)");
       Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), "Templates");
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
