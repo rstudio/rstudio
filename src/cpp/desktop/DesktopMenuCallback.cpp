@@ -23,6 +23,27 @@
 namespace rstudio {
 namespace desktop {
 
+namespace {
+
+void adjustShortcutForPlatform(QString *pShortcut)
+{
+   #ifdef Q_OS_MAC
+   // on macOS, replace instances of 'Ctrl' with 'Meta'; QKeySequence renders "Ctrl" using the
+   // macOS command symbol, but we want the menu to show the literal Ctrl symbol (^)
+   pShortcut->replace(QStringLiteral("Ctrl"), QStringLiteral("Meta"));
+
+   // on Mac the enter key and return keys have different symbols
+   // https://github.com/rstudio/rstudio/issues/6524
+   pShortcut->replace(QStringLiteral("Enter"), QStringLiteral("Return"));
+#endif
+
+   // replace instances of 'Cmd' with 'Ctrl' -- note that on macOS
+   // Qt automatically maps that to the Command key
+   pShortcut->replace(QStringLiteral("Cmd"), QStringLiteral("Ctrl"));
+}
+
+} // anonymous namespace
+
 MenuCallback::MenuCallback(QObject *parent) :
     QObject(parent)
 {
@@ -216,20 +237,8 @@ void MenuCallback::addCommand(QString commandId,
                               bool checkable)
 {
 
-#ifdef Q_OS_MAC
-   // on macOS, replace instances of 'Ctrl' with 'Meta'; QKeySequence renders "Ctrl" using the
-   // macOS command symbol, but we want the menu to show the literal Ctrl symbol (^)
-   shortcut.replace(QStringLiteral("Ctrl"), QStringLiteral("Meta"));
-
-   // on Mac the enter key and return keys have different symbols
-   // https://github.com/rstudio/rstudio/issues/6524
-   shortcut.replace(QStringLiteral("Enter"), QStringLiteral("Return"));
-#endif
-
-   // replace instances of 'Cmd' with 'Ctrl' -- note that on macOS
-   // Qt automatically maps that to the Command key
-   shortcut.replace(QStringLiteral("Cmd"), QStringLiteral("Ctrl"));
-   
+   adjustShortcutForPlatform(&shortcut);
+  
    QKeySequence keySequence(shortcut);
 
    // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
@@ -371,11 +380,14 @@ void MenuCallback::setCommandChecked(QString commandId, bool checked)
 
 void MenuCallback::setCommandShortcut(QString commandId, QString shortcut) 
 {
-   setCommandProperty(binders_, commandId, [=](QPointer<MenuActionBinder> binder) 
-   {
-      QKeySequence keySequence(shortcut);
-      binder->setCustomSequence(keySequence);
-   });
+   adjustShortcutForPlatform(&shortcut);
+   setCommandProperty(binders_,
+                      commandId,
+                      [=](QPointer<MenuActionBinder> binder)
+                      {
+                         QKeySequence keySequence(shortcut);
+                         binder->setCustomSequence(keySequence);
+                      });
 }
 
 void MenuCallback::setMainMenuEnabled(bool enabled)
