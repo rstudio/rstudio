@@ -129,6 +129,7 @@ export interface EditorUIImages {
     web_dark?: string;
     zoteroOverlay?: string;
     local_sources?: string;
+    packages?: string;
     bibligraphy?: string;
     bibligraphy_folder?: string;
     zotero_library?: string;

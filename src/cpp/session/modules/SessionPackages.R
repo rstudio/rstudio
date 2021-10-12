@@ -585,18 +585,44 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addJsonRpcHandler("get_package_citations", function(packageName, libraryPath)
 {
+   toPerson <- function(author) {
+      list(
+         given = author[["given"]],
+         family = .rs.scalar(author[["family"]]),
+         email = .rs.scalar(author[["email"]]),
+         role = .rs.scalar(author[["role"]])
+      )
+   }
+   
    cites <- citation(packageName)
    lapply(unclass(cites), function(cite) {
       list(
+         # bibtex type
          type = .rs.scalar(attr(cite, "bibtype")),
-         author = lapply(unclass(cite[["author"]]), function(author) {
-            list(
-               given = author[["given"]],
-               family = .rs.scalar(author[["family"]])
-            )
-         }),
-         title =.rs.scalar(cite[["title"]]),
-         desc = .rs.scalar(cite[["doi"]])
+         
+         title = .rs.scalar(cite[["title"]]),
+         url = .rs.scalar(cite[["url"]]),
+         note = .rs.scalar(cite[["note"]]),
+         doi = .rs.scalar(cite[["doi"]]),
+         
+         publisher = .rs.scalar(cite[["publisher"]]),
+         institution = .rs.scalar(cite[["institution"]]),
+         address = .rs.scalar(cite[["address"]]),
+         
+         journal = .rs.scalar(cite[["journal"]]),
+         year = .rs.scalar(cite[["year"]]),
+         booktitle = .rs.scalar(cite[["booktitle"]]),
+         chapter = .rs.scalar(cite[["chapter"]]),
+         number = .rs.scalar(cite[["number"]]),
+         volume = .rs.scalar(cite[["volume"]]),
+         pages = .rs.scalar(cite[["pages"]]),
+         series = .rs.scalar(cite[["series"]]),
+         school = .rs.scalar(cite[["school"]]),
+         
+         
+         # person
+         author = lapply(unclass(cite[["author"]]), toPerson),
+         editor = lapply(unclass(cite[["editor"]]), toPerson)
       )
    })
 })
