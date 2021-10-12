@@ -18,6 +18,14 @@ package org.rstudio.studio.client.quarto.model;
 public class QuartoConstants
 {
    public final static String FORMAT_HTML = "html";
+   public final static String FORMAT_PDF = "pdf";
+   public final static String FORMAT_DOCX = "docx";
+   public final static String FORMAT_REVEALJS = "revealjs";
+   public final static String FORMAT_BEAMER = "beamer";
+   public final static String FORMAT_PPTX = "pptx";
+   
+   public final static String INTERACTIVE_SHINY = "shiny";
+   public final static String INTERACTIVE_OJS = "ojs";
    
    public final static String PROJECT_DEFAULT = "default";
    public final static String PROJECT_WEBSITE = "site";
@@ -29,5 +37,6 @@ public class QuartoConstants
    
    public final static String EDITOR_VISUAL = "visual";
    public final static String EDITOR_SOURCE = "source";
+   
    
 }

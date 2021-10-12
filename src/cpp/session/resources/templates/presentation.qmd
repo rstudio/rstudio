@@ -1,0 +1,31 @@
+## Quarto
+
+Quarto enables you to weave together content and executable code into a finished presentation. To learn more about Quarto see <https://quarto.org>.
+
+This presentation uses the Quarto [visual markdown editor](https://quarto.org/docs/visual-editor/). Use the button at the far right of the editor toolbar to switch between visual and source code mode.
+
+## Slide with Bullets
+
+When you click the **Render** button a document will be generated that includes:
+
+-   Content authored with markdown
+-   Output from executable code
+
+By default source code is not displayed in presentation output. Use the `echo: true` option to change this behavior
+
+## Slide with Code
+
+You can embed code like this (note that we use `echo: true` to show the code as well):
+
+```{r}
+#| echo: true
+1 + 1
+```
+
+Use the **Insert** menu to create additional code chunks and to add links, images, equations, and more to your document.
+
+## Slide with Plot
+
+```{r}
+plot(pressure)
+```

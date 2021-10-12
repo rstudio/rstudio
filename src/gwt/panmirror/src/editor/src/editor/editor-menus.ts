@@ -124,10 +124,10 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
         ]
       : []),
     { separator: true },
+    { command: EditorCommandId.Table },
     { command: EditorCommandId.Image },
     { command: EditorCommandId.Link },
     { command: EditorCommandId.Shortcode },
-    { command: EditorCommandId.HorizontalRule },
     ...(haveAnyOf(commands, EditorCommandId.InsertSlideNotes, EditorCommandId.InsertSlidePause, EditorCommandId.InsertSlideColumns)
     ? [
       { separator: true },
@@ -183,6 +183,7 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { separator: true },
     { command: EditorCommandId.ParagraphInsert },
     { command: EditorCommandId.InsertDiv },
+    { command: EditorCommandId.HorizontalRule },
     ...(haveAnyOf(commands, EditorCommandId.Tabset)
      ? [
       { separator: true },

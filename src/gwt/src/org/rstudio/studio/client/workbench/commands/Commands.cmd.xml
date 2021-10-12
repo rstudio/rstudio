@@ -48,7 +48,9 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="newRNotebook"/>
             <cmd refid="newRMarkdownDoc"/>
+            <separator/>
             <cmd refid="newQuartoDoc"/>
+            <cmd refid="newQuartoPres"/>
             <separator/>
             <cmd refid="newRShinyApp"/>
             <cmd refid="newRPlumberDoc"/>
@@ -1108,8 +1110,13 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
 
    <cmd id="newQuartoDoc"
-        menuLabel="_Quarto Doc..."
+        menuLabel="_Quarto Document..."
         desc="Create a new Quarto document"
+        rebindable="false"/>
+      
+   <cmd id="newQuartoPres"
+        menuLabel="_Quarto Presentation..."
+        desc="Create a new Quarto presentation"
         rebindable="false"/>
         
    <cmd id="serveQuartoSite"

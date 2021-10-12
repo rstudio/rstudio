@@ -11,6 +11,7 @@
 * Fix issue with unicode characters in citation data (#9745)
 * Fix issue with unicode characters in citekeys (#9754)
 * Fix issue with delay showing newly added Zotero references when inserting citations (#9800)
+* Add ability to insert citation for R Packages (#8921)
 
 ### RStudio Workbench
 

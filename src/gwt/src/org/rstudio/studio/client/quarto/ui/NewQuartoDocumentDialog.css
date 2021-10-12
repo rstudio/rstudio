@@ -23,11 +23,11 @@
 
 .label {
   padding-top: 2px;
-  min-width: 110px;
+  min-width: 60px;
 }
 
 .listBox {
-  width: 280px;
+  width: 200px;
   padding: 4px;
 }
 

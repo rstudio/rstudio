@@ -93,7 +93,7 @@ import org.rstudio.studio.client.projects.ui.newproject.NewQuartoProjectPage;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
 import org.rstudio.studio.client.quarto.QuartoNewDocument;
-import org.rstudio.studio.client.quarto.ui.QuartoNewDocumentDialog;
+import org.rstudio.studio.client.quarto.ui.NewQuartoDocumentDialog;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFramePane;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
@@ -350,7 +350,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PythonPreferencesPaneBase<?> pane);
    void injectMembers(ConsoleInterpreterVersion version);
    void injectMembers(QuartoNewDocument quartoNewDocument);
-   void injectMembers(QuartoNewDocumentDialog quartoNewDocumentDialog);
+   void injectMembers(NewQuartoDocumentDialog newQuartoDocumentDialog);
    void injectMembers(NewQuartoProjectPage newProjectPage);
    void injectMembers(QuartoConnection quartoMessageBus);
    void injectMembers(YamlEditorToolsProviderQuarto yamlCompletionSourceQuarto);
