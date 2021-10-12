@@ -46,6 +46,7 @@ trap on-exit EXIT
 
 # build / install directories
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
+ELECTRON_SRC_DIR="${PKG_DIR}/../../src/node/desktop"
 
 BUILD_DIR_X86_64="${PKG_DIR}/build"
 BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
@@ -147,6 +148,10 @@ if [ "${clean}" = "1" ]; then
       cd "${GWT_SRC_DIR}"
       "${ANT}" clean
    fi
+
+   # cleanup Electron project
+   rm -rf "${ELECTRON_SRC_DIR}/.webpack"
+   rm -rf "${ELECTRON_SRC_DIR}/out"
 
    # move back to package dir
    cd "${PKG_DIR}"
