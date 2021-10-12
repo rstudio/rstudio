@@ -92,7 +92,6 @@ async function packageDarwin(): Promise<number> {
   const sourceDir = path.join(tools.getProjectRootDir(), '..', '..');
   const buildDir = tools.getMakePackageBuildDir();
   const cppBuildDir = path.join(buildDir, 'src', 'cpp');
-  const gwtBuildDir = path.join(buildDir, 'gwt');
   const cppSourceDir = path.join(sourceDir, 'cpp');
   const nodeFolder = path.join(buildDir, 'src', 'node');
 
@@ -215,6 +214,7 @@ async function packageDarwin(): Promise<number> {
     await tools.copyFiles(['mac-terminal'], path.join(nodeFolder, 'desktop'), binDest);
 
     // src/gwt
+    const gwtBuildDir = path.join(buildDir, 'gwt');
     const gwtSourceDir = path.join(sourceDir, 'gwt');
     await tools.copyFiles(
       ['**/*'],
