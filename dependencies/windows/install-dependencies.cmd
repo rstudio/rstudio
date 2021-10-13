@@ -151,15 +151,17 @@ if not exist pandoc\%PANDOC_VERSION% (
   rmdir /s /q %PANDOC_NAME%
 )
 
-if not exist quarto\%QUARTO_VERSION% (
-  wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
-  echo Unzipping Quarto %QUARTO_FILE%
-  mkdir quarto\%QUARTO_VERSION%
-  cd quarto\%QUARTO_VERSION%
-  unzip %UNZIP_ARGS% ..\..\%QUARTO_FILE%
-  cd ..\..
-  del %QUARTO_FILE%
-)
+
+
+wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
+echo Unzipping Quarto %QUARTO_FILE%
+rmdir /s /q quarto
+mkdir quarto
+cd quarto
+unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
+cd ..
+del %QUARTO_FILE%
+
 
 if not exist libclang\%LIBCLANG_VERSION% (
   wget %WGET_ARGS% "%BASEURL%%LIBCLANG_FILE%"
