@@ -15,7 +15,7 @@
 
 export interface EnvironmentServer {
   getRPackageState: () => Promise<RPackageState>;
-  getRPackageCitations: (pkgName: string) => Promise<RPackageCitation[]>; 
+  getRPackageCitations: (pkgName: string) => Promise<RPackageCitation[]>;
 }
 
 export interface RPackageState {
@@ -31,13 +31,30 @@ export interface RPackageInfo {
 // https://stat.ethz.ch/R-manual/R-devel/library/utils/html/bibentry.html
 export interface RPackageCitation {
   type: string;
-  author: RPackageCitationAuthor[];
+  author: RPackageCitationPerson[];
+  editor?: RPackageCitationPerson[];
   title: string;
   doi?: string;
+  url?: string;
+  note?: string;
+  publisher?: string;
+  institution?: string;
+  adddress?: string;
+  journal?: string;
+  year?: string;
+  booktitle?: string;
+  chapter?: string;
+  number?: string;
+  volume?: string;
+  pages?: string;
+  series?: string;
+  school?: string;
 }
 
 // https://stat.ethz.ch/R-manual/R-devel/library/utils/html/person.html
-export interface RPackageCitationAuthor {
+export interface RPackageCitationPerson {
   given: string[];
-  family: string;  
+  family: string;
+  email?: string;
+  role?: string;
 }
