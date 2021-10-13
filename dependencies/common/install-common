@@ -21,6 +21,7 @@ set -e
 ./install-mathjax
 ./install-boost
 ./install-pandoc
+./install-quarto
 ./install-packages
 ./install-sentry-cli
 ./install-npm-dependencies

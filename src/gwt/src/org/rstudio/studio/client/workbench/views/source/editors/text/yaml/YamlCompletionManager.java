@@ -89,7 +89,7 @@ public class YamlCompletionManager extends CompletionManagerBase
          return false;
       
       // call for completions
-      YamlEditorContext editorContext = YamlEditorContext.fromDocDisplay(docDisplay_);
+      YamlEditorContext editorContext = YamlEditorContext.create(context_, docDisplay_);
       provider.getCompletions(editorContext, (res) -> {
          
          // default "empty" completion response

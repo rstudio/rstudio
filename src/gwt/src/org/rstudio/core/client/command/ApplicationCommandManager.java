@@ -44,7 +44,7 @@ public class ApplicationCommandManager
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      bindings_ = new ConfigFileBacked<>(
+      customBindingsConfig_ = new ConfigFileBacked<>(
             server_,
             KEYBINDINGS_PATH,
             false,
@@ -147,13 +147,13 @@ public class ApplicationCommandManager
    public void addBindingsAndSave(final EditorKeyBindings newBindings,
                                   final CommandWithArg<EditorKeyBindings> onLoad)
    {
-      bindings_.execute(new CommandWithArg<EditorKeyBindings>()
+      customBindingsConfig_.execute(new CommandWithArg<EditorKeyBindings>()
       {
          @Override
          public void execute(final EditorKeyBindings currentBindings)
          {
             currentBindings.insert(newBindings);
-            bindings_.set(currentBindings, new Command()
+            customBindingsConfig_.set(currentBindings, new Command()
             {
                @Override
                public void execute()
@@ -172,7 +172,7 @@ public class ApplicationCommandManager
 
    public void loadBindings(final CommandWithArg<EditorKeyBindings> afterLoad)
    {
-      bindings_.execute(new CommandWithArg<EditorKeyBindings>()
+      customBindingsConfig_.execute(new CommandWithArg<EditorKeyBindings>()
       {
          @Override
          public void execute(EditorKeyBindings bindings)
@@ -185,6 +185,7 @@ public class ApplicationCommandManager
    private void loadBindings(EditorKeyBindings bindings,
                              final CommandWithArg<EditorKeyBindings> afterLoad)
    {
+      customBindings_ = bindings;
       List<Pair<List<KeySequence>, AppCommand>> resolvedBindings;
       resolvedBindings = new ArrayList<>();
 
@@ -195,6 +196,9 @@ public class ApplicationCommandManager
             continue;
          List<KeySequence> keys = bindings.get(id).getKeyBindings();
          resolvedBindings.add(new Pair<>(keys, command));
+
+         if (keys.size() > 0) 
+            command.setCustomShortcut(new KeyboardShortcut(keys.get(keys.size() - 1)));
       }
 
       KeyMap map = ShortcutManager.INSTANCE.getKeyMap(KeyMapType.APPLICATION);
@@ -220,7 +224,20 @@ public class ApplicationCommandManager
 
    public void resetBindings(final CommandWithArg<EditorKeyBindings> afterReset)
    {
-      bindings_.set(EditorKeyBindings.create(), new Command()
+
+      // clear the customShortcuts on the last-loaded set of customized commands
+      if (customBindings_ != null) {
+         for (String id : customBindings_.iterableKeys())
+         {
+            AppCommand command = commands_.getCommandById(id);
+            if (command == null)
+               continue;
+
+            command.setCustomShortcut(null);
+         }
+      }
+
+      customBindingsConfig_.set(EditorKeyBindings.create(), new Command()
       {
          @Override
          public void execute()
@@ -230,7 +247,8 @@ public class ApplicationCommandManager
       });
    }
 
-   private final ConfigFileBacked<EditorKeyBindings> bindings_;
+   private final ConfigFileBacked<EditorKeyBindings> customBindingsConfig_;
+   private EditorKeyBindings customBindings_;
    private List<String> commandsWithCallbacks_;
 
    public static final String KEYBINDINGS_PATH =

@@ -9,6 +9,7 @@ node-webkit/
 overlay/
 packrat/
 pandoc*/
+quarto/
 node/
 plumber/
 profvis/

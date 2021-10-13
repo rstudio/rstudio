@@ -102,7 +102,7 @@ public class LintManager
       target_ = target;
       cppCompletionContext_ = cppCompletionContext;
       docDisplay_ = target.getDocDisplay();
-      yamlLinter_ = new YamlDocumentLinter(target_, docDisplay_);
+      yamlLinter_ = new YamlDocumentLinter(target_.getRCompletionContext(), docDisplay_);
       showMarkers_ = false;
       explicit_ = false;
       invalidation_ = new Invalidation();
