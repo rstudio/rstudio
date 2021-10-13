@@ -74,55 +74,64 @@ bool haveRequiredQuartoVersion(const std::string& version)
 }
 */
 
+Version readQuartoVersion(const core::FilePath& quartoBinPath)
+{
+   // return empty string if the file doesn't exist
+   if (!quartoBinPath.exists())
+      return Version();
+
+   // read version file -- if it doesn't exist we are running the dev
+   // version so are free to proceed
+   FilePath versionFile = quartoBinPath
+      .getParent()
+      .getParent()
+      .completeChildPath("share")
+      .completeChildPath("version");
+   std::string version;
+   if (versionFile.exists())
+   {
+      Error error = core::readStringFromFile(versionFile, &version);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return Version();
+      }
+      boost::algorithm::trim(version);
+   }
+   else
+   {
+      // dev version
+      version = "99.9.9";
+   }
+   return Version(version);
+}
+
 void detectQuartoInstallation()
 {
+   // required quarto version
+   const Version kQuartoRequiredVersion("0.2.214");
+
    // reset
    s_quartoPath = FilePath();
    s_quartoVersion = "";
 
-   // see if quarto is on the path
+   // see if there is a version on the path
    FilePath quartoPath = module_context::findProgram("quarto");
    if (!quartoPath.isEmpty())
    {
-      // convert to real path
       Error error = core::system::realPath(quartoPath, &quartoPath);
       if (!error)
       {
-         // read version file -- if it doesn't exist we are running the dev
-         // version so are free to proceed
-         FilePath versionFile = quartoPath
-            .getParent()
-            .getParent()
-            .completeChildPath("share")
-            .completeChildPath("version");
-         std::string contents;
-         if (versionFile.exists())
-         {
-            error = core::readStringFromFile(versionFile, &contents);
-            if (error)
-            {
-               LOG_ERROR(error);
-               return;
-            }
-         }
-         else
-         {
-            // dev version
-            contents = "99.9.9";
-         }
-
-         const Version kQuartoRequiredVersion("0.2.210");
-         boost::algorithm::trim(contents);
-         Version quartoVersion(contents);
-         if (quartoVersion >= kQuartoRequiredVersion)
+         Version pathVersion = readQuartoVersion(quartoPath);
+         if (pathVersion >= kQuartoRequiredVersion)
          {
             s_quartoPath = quartoPath;
-            s_quartoVersion = quartoVersion;
+            s_quartoVersion = pathVersion;
          }
          else
          {
             // enque a warning
-            const char * const kUpdateURL = "https://github.com/quarto-dev/quarto-cli/releases/latest";
+            const char * const kUpdateURL = "https://quarto.org/docs/getting-started/installation.html";
             json::Object msgJson;
             msgJson["severe"] = false;
             boost::format fmt(
@@ -130,13 +139,40 @@ void detectQuartoInstallation()
               "Please update to the latest version at <a href=\"%3%\" target=\"_blank\">%3%</a>"
             );
             msgJson["message"] = boost::str(fmt %
-                                            std::string(quartoVersion) %
+                                            std::string(pathVersion) %
                                             std::string(kQuartoRequiredVersion) %
                                             kUpdateURL);
             ClientEvent event(client_events::kShowWarningBar, msgJson);
             module_context::enqueClientEvent(event);
          }
       }
+      else
+      {
+         LOG_ERROR(error);
+      }
+   }
+   else
+   {
+      // embedded version of quarto
+#ifndef WIN32
+      std::string target = "quarto";
+#else
+      std::string target = quarto + ".exe";
+#endif
+      FilePath embeddedQuartoPath = session::options().quartoPath()
+         .completeChildPath("bin")
+         .completeChildPath(target);
+      if (readQuartoVersion(embeddedQuartoPath) >= kQuartoRequiredVersion)
+      {
+         s_quartoPath = embeddedQuartoPath;
+         s_quartoVersion = readQuartoVersion(s_quartoPath);
+         // append to path
+         core::system::addToPath(
+            string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath()),
+            false
+         );
+      }
+
    }
 }
 

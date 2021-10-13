@@ -22,24 +22,29 @@ section "Installing Quarto"
 
 # variables that control download + installation process
 QUARTO_VERSION="0.2.214"
-QUARTO_SUBDIR="quarto/${QUARTO_VERSION}"
+QUARTO_SUBDIR="quarto"
 QUARTO_URL_BASE="https://github.com/quarto-dev/quarto-cli/releases/download/v${QUARTO_VERSION}"
-
-# see if we already have binaries
-if [ -d "${RSTUDIO_TOOLS_ROOT}/${QUARTO_SUBDIR}" ]; then
-    echo "Quarto ${QUARTO_SUBDIR} already installed"
-    exit 0
-fi
 
 # move to tools root
 sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 cd "${RSTUDIO_TOOLS_ROOT}"
 
-# enter quarto subdirectory
+# check installed version
+QUARTO_BIN="${RSTUDIO_TOOLS_ROOT}/${QUARTO_SUBDIR}/bin/quarto"
+if test -f "${QUARTO_BIN}"; then
+   INSTALLED_QUARTO_VERSION=`${QUARTO_BIN} --version`
+   if [ $INSTALLED_QUARTO_VERSION == $QUARTO_VERSION ]; then
+      echo "Quarto ${QUARTO_VERSION} already installed"
+      exit 0
+   fi
+fi
+
+# reset quarto subdirectory
+rm -rf "${QUARTO_SUBDIR}"
 mkdir -p "${QUARTO_SUBDIR}"
 pushd "${QUARTO_SUBDIR}"
 
-# determine sub-directory based on platform
+# determine archive based on platform
 PLATFORM="$(uname)-$(getconf LONG_BIT)"
 case "${PLATFORM}" in
 
@@ -64,10 +69,10 @@ case "${PLATFORM}" in
 
 esac
 
-# download and extract files
+# download and extract files 
 for FILE in "${FILES[@]}"; do
-  echo "Downloading ${FILE} from ${QUARTO_URL_BASE}/${FILE}"
-  download "${QUARTO_URL_BASE}/${FILE}" "${FILE}"
-  extract "${FILE}"
-  rm -f "${FILE}"
+   echo "Downloading ${FILE} from ${QUARTO_URL_BASE}/${FILE}"
+   download "${QUARTO_URL_BASE}/${FILE}" "${FILE}"
+   extract "${FILE}"
+   rm -f "${FILE}"
 done

@@ -283,6 +283,7 @@ private:
    void resolvePath(const core::FilePath& resourcePath, std::string* pPath);
    void resolvePostbackPath(const core::FilePath& resourcePath, std::string* pPath);
    void resolvePandocPath(const core::FilePath& resourcePath, std::string* pPath);
+   void resolveQuartoPath(const core::FilePath& resourcePath, std::string* pPath);
    void resolveRsclangPath(const core::FilePath& resourcePath, std::string* pPath);
 
    void resolveOverlayOptions();
