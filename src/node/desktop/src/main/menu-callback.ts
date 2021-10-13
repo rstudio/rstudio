@@ -167,6 +167,20 @@ export class MenuCallback extends EventEmitter {
         item.label = label;
       }
     });
+
+    ipcMain.on('menu_set_command_shortcut', (event, commandId: string, shortcut: string) => {
+      const item = this.getMenuItemById(commandId);
+      if (item && shortcut.length > 0) {
+        // TODO: Electron doesn't support modifying shortcut of an existing MenuItem; if we want
+        // this to work we'll have to recreate the entire menu containing a command whenever we
+        // get this call. For more on this Electron limitation:
+        // https://github.com/electron/electron/issues/528
+        //
+        // You'd think you could remove the old menu item and replace it with an updated
+        // version, but no such thing as menu.remove:
+        // https://github.com/electron/electron/issues/527
+      }
+    });
   }
 
   addCommand(cmdId: string, label: string, tooltip: string, shortcut: string, checkable: boolean): void {
