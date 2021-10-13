@@ -71,7 +71,7 @@ export function packageSourcePanel(
     treeNode: () => {
       return {
         key: 'RPackages',
-        name: ui.context.translateText('R Packages'),
+        name: ui.context.translateText('R Package'),
         image: ui.images.citations?.packages,
         type: kPackageType,
         children: [],
