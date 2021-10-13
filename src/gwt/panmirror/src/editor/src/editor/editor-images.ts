@@ -129,6 +129,7 @@ import webImage from './images/citations/web.png';
 import webDarkImage from './images/citations/web_dark.png';
 import zoteroOverlayImage from './images/citations/zotero-overlay.png';
 import localSourcesImage from './images/citations/insert/local-sources.png';
+import packageImage from './images/citations/insert/packages.png';
 import bibliographyImage from './images/citations/insert/bibliography.png';
 import bibliographyFolderImage from './images/citations/insert/bibliography-folder.png';
 import zoteroRootImage from './images/citations/insert/zotero-root.png';
@@ -280,6 +281,7 @@ export function defaultEditorUIImages(): EditorUIImages {
       web_dark: webDarkImage,
       zoteroOverlay: zoteroOverlayImage,
       local_sources: localSourcesImage,
+      packages: packageImage,
       bibligraphy: bibliographyImage,
       bibligraphy_folder: bibliographyFolderImage,
       zotero_library: zoteroLibraryImage,
