@@ -2,7 +2,7 @@ module.exports = {
   hooks: {
     postPackage: async (forgeConfig, options) => {
       // Run import-resources.ts script to copy all the non-Electron bits
-      // produced by the cmake build into the Electron package
+      // produced by the cmake build/install into the Electron package
       const spin = options.spinner.start('Importing externally built dependencies');
 
       const util = require('util');

@@ -82,6 +82,15 @@ find-program ANT ant            \
    "${HOME}/homebrew/arm64/bin" \
    "${HOME}/opt/bin"
 
+# find node
+find-program NODE node \
+   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+ 
+# find yarn
+find-program YARN yarn \
+   "${HOME}/.yarn/bin"
+
 # determine architectures to build for
 if [ "$(arch)" = "arm64" ]; then
    arch=x86_64,arm64
@@ -188,7 +197,7 @@ if [ -n "${build_x86_64}" ]; then
    arch -x86_64 "${CMAKE}"                                   \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                      \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                  \
-      -DCMAKE_INSTALL_PREFIX="${PKG_DIR}/install"            \
+      -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"                \
       -DRSTUDIO_TARGET=${rstudio_target}                     \
       -DRSTUDIO_PACKAGE_BUILD=1                              \
       -DRSTUDIO_CRASHPAD_ENABLED=0                           \
@@ -257,7 +266,7 @@ if [ -n "${build_arm64}" ]; then
 
 fi
 
-if [ "${build_package}" = "1" ] && [ "${rstudio_target}" != "Electron" ]; then
+if [ "${build_package}" = "1" ]; then
 
    info "Building package ..."
 
@@ -280,8 +289,19 @@ if [ "${build_package}" = "1" ] && [ "${rstudio_target}" != "Electron" ]; then
    cd "${BUILD_DIR_X86_64}"
    "${CMAKE}" --build . --target install
 
-   if [ "${build_dmg}" = "1" ]; then
+   if [ "${rstudio_target}" = "Electron" ]; then
+      OLDPATH="${PATH}"
+      NODEPATH="$(dirname "${NODE}")"
+      YARNPATH="$(dirname "${YARN}")"
+      PATH="${NODEPATH}:${YARNPATH}:${OLDPATH}"
 
+      # Build and package the Electron app.
+      cd "${ELECTRON_SRC_DIR}"
+      yarn make
+      cd "${PKG_DIR}"
+      PATH="${OLDPATH}"
+      
+   elif [ "${build_dmg}" = "1" ]; then
       # move to target directory
       cd "${INSTALL_DIR}"
 

@@ -33,7 +33,7 @@ if(APPLE)
                   ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal)
 endif()
 
-# Install node_modules
+# Install node_modules during build phase
 add_custom_command(
    TARGET electron_build
    PRE_BUILD
@@ -42,13 +42,6 @@ add_custom_command(
       ${YARN}
       "install")
 
-# Package and bundle the Electron application
-if(RSTUDIO_PACKAGE_BUILD)
-   add_custom_command(
-      TARGET electron_build
-      POST_BUILD
-      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-      COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" 
-         ${YARN}
-         "make")
-endif()
+# Actual building and bundling of the Electron application is done via `yarn make`, not directly
+# by the cmake-driven build. See the `make-package` scripts in the `package` folder at root
+# of this repo.

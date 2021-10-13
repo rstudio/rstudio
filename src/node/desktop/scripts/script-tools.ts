@@ -56,7 +56,7 @@ export function getProgramFilesWindows(): string {
 /**
  * @returns make-package build output folder
  */
-export function getMakePackageBuildDir(): string {
+export function getMakePackageDir(): string {
   let buildDir = '';
   let osFolder = '';
   switch (process.platform) {
@@ -74,8 +74,8 @@ export function getMakePackageBuildDir(): string {
       process.exit(1);
   }
 
-  // package build output location: this assumes script execution from the src/node/desktop folder
-  return path.join('..', '..', '..', 'package', osFolder, 'build');
+  // make-package location: this assumes script execution from the src/node/desktop folder
+  return path.join('..', '..', '..', 'package', osFolder);
 }
 
 // promisify line-reader
