@@ -518,7 +518,7 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.getParent().completePath("MacOS/pandoc");
+      FilePath path = resourcePath.getParent().completePath("MacOS/quarto/bin");
       *pPath = path.getAbsolutePath();
    }
    else
