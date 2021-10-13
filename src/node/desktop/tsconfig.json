@@ -11,8 +11,8 @@
       "*": ["node_modules/*"]
     },
     "lib": [
-      "DOM",
-    ],
+      "DOM"
+    ]
   },
   "include": [
     "src/**/*",

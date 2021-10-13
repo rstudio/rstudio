@@ -707,6 +707,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       return customShortcut_ != null ? customShortcut_ : shortcut_;
    }
 
+   public KeyboardShortcut getShortcut(boolean custom)
+   {
+      return custom ? customShortcut_ : shortcut_;
+   }
+
    public KeySequence getKeySequence()
    {
       if (getShortcut() == null)

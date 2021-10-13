@@ -17,6 +17,7 @@
 
 * Added support for setting the `subPath` on Kubernetes sessions using `KubernetesPersistentVolumeClaim` mounts in `/etc/rstudio/launcher-mounts` (Pro #2976).
 * Fixed custom shortcuts not appearing correctly in menus (#9915)
+* Fixed custom shortcuts not appearing correctly in "Keyboard Shortcuts Help" and Electron menus. (#9953)
 
 ### Misc
 
