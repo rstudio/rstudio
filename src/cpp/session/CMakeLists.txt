@@ -23,6 +23,7 @@ add_subdirectory(workers)
 if(WIN32)
    set(RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/dictionaries")
    set(RSTUDIO_DEPENDENCIES_MATHJAX_DIR      "${RSTUDIO_DEPENDENCIES_DIR}/common/mathjax-27")
+   set(RSTUDIO_DEPENDENCIES_QUARTO_DIR       "${RSTUDIO_DEPENDENCIES_DIR}/common/quarto")
 else()
 
    # indirection to help build machine find these libraries?
