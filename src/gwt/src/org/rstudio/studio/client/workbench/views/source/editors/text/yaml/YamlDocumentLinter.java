@@ -17,8 +17,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 
 import com.google.gwt.core.client.JsArray;
 
@@ -26,9 +26,9 @@ import jsinterop.base.Js;
 
 public class YamlDocumentLinter
 {
-   public YamlDocumentLinter(TextEditingTarget target, DocDisplay docDisplay)
+   public YamlDocumentLinter(CompletionContext context, DocDisplay docDisplay)
    {
-      target_ = target;
+      context_ = context;
       docDisplay_ = docDisplay;
    }
    
@@ -36,7 +36,7 @@ public class YamlDocumentLinter
    {
       // do we have a provider that can handle this context
       YamlEditorToolsProvider provider = providers_.getActiveProvider(
-         target_.getPath(), target_.getExtendedFileType()
+         context_.getPath(), context_.getExtendedFileType()
       );
       if (provider == null)
       {
@@ -44,7 +44,7 @@ public class YamlDocumentLinter
       }
       
       // request lint
-      YamlEditorContext editorContext = YamlEditorContext.fromDocDisplay(docDisplay_);
+      YamlEditorContext editorContext = YamlEditorContext.create(context_, docDisplay_);
       provider.getLint(editorContext, (res) -> {
          if (res != null)
             ready.execute(Js.uncheckedCast(res));
@@ -56,6 +56,6 @@ public class YamlDocumentLinter
    
    private final YamlEditorToolsProviders providers_ = new YamlEditorToolsProviders();
    
-   private final TextEditingTarget target_;
+   private final CompletionContext context_;
    private final DocDisplay docDisplay_;
 }
