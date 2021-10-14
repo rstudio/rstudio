@@ -13,36 +13,144 @@
  *
  */
 
+import { promises } from 'fs';
 import path from 'path';
+import copy, { CopyErrorInfo } from 'recursive-copy';
+import lineReader from 'line-reader';
 
+/**
+ * @returns Folder containing package.json for Electron project
+ */
 export function getProjectRootDir(): string {
   return path.dirname(__dirname);
 }
 
-export function getBuildOutputDir(): string {
-  return path.join(getProjectRootDir(), 'dist');
+/**
+ * @returns Folder where webpack puts build output
+ */
+export function getWebpackBuildOutputDir(): string {
+  return path.join(getProjectRootDir(), '.webpack');
 }
 
-export function getPackageOutputDir(): string {
+/**
+ * @returns Root folder where forge package builds are generated
+ */
+export function getForgePackageOutputDir(): string {
   return path.join(getProjectRootDir(), 'out');
 }
 
-export function getPlatformPackageOutputDir(): string {
-  return path.join(getPackageOutputDir(), `RStudio-${process.platform}-x64`);
+/**
+ * @returns Platform-specific folder containing package build
+ */
+export function getForgePlatformOutputDir(): string {
+  return path.join(getForgePackageOutputDir(), `RStudio-${process.platform}-x64`);
 }
 
-export function section(message: string): string {
-  return '\x1b[1m\x1b[36m==>\x1b[39m ' + message + '\x1b[0m';
-}
-
-export function info(message: string): string {
-  return '\x1b[1m[I]\x1b[0m ' + message;
-}
-
-export function warn(message: string): string {
-  return '\x1b[1m\x1b[31m[W]\x1b[0m ' + message;
-}
-
+/**
+ * @returns ProgramFiles folder on Windows
+ */
 export function getProgramFilesWindows(): string {
   return process.env['PROGRAMFILES'];
 }
+
+/**
+ * @returns make-package build output folder
+ */
+export function getMakePackageDir(): string {
+  let buildDir = '';
+  let osFolder = '';
+  switch (process.platform) {
+    case 'darwin':
+      osFolder = 'osx';
+      break;
+    case 'linux':
+      osFolder = 'linux';
+      break;
+    case 'win32':
+      osFolder = 'win32';
+      break;
+    default:
+      console.error(`Unsupported platform: ${process.platform}`);
+      process.exit(1);
+  }
+
+  // make-package location: this assumes script execution from the src/node/desktop folder
+  return path.join('..', '..', '..', 'package', osFolder);
+}
+
+// promisify line-reader
+const eachLine = async function(filename: string, iteratee: (line: string) => void): Promise<void> {
+  return new Promise(function(resolve, reject) {
+    lineReader.eachLine(filename, iteratee, function(err) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+};
+
+/**
+ * Load properties from a CMakeCache.txt-formatted file.
+ * 
+ * Syntax:
+ *   - lines starting with '#' or '//' are ignored (comments) as are blank lines
+ *   - VAR:TYPE=value
+ *       - the TYPE is ignored and everything is returned as a string
+ *   - VAR:TYPE=
+ *       - variables with no value are ignored
+ * 
+ * @param file full path to CMakeCache.txt-formatted file (including filename)
+ * @returns name/values
+ */
+export async function loadCMakeVars(file: string): Promise<Map<string, string>> {
+  const results = new Map<string, string>();
+
+    await eachLine(file, (line: string) => {
+      line = line.trim();
+      if (line.length > 0) {
+        if (!line.startsWith('//') && !line.startsWith('#')) {
+          const match = /^(.+):.+=(.+)/.exec(line);
+          if (match) {
+            results.set(match[1], match[2]);
+          }
+        }
+      }
+    });
+  return results;
+}
+
+/**
+ * @param path Path to test
+ * @returns true if path is a folder
+ */
+export async function isDirectory(path): Promise<boolean> {
+  try {
+    const stats = await promises.stat(path);
+    return stats.isDirectory();
+  } catch (err) {
+    return false;
+  }
+}
+
+/**
+ * Copy files. Throws an exception on error.
+ * 
+ * @param files file(s) to copy
+ * @param sourceDir source directory
+ * @param destDir destination directory
+ */
+export async function copyFiles(files: Array<string>, sourceDir: string, destDir: string): Promise<void> {
+  await copy(
+    sourceDir,
+    destDir, {
+    filter: files, dot: true,
+  }).on(copy.events.COPY_FILE_COMPLETE, function (copyOperation) {
+    // Too verbose normally but helpful when debugging
+    // console.log('Copied to ' + copyOperation.dest);
+  }).on(copy.events.ERROR, function (error: Error, info: CopyErrorInfo) {
+    throw error;
+  });
+}
+

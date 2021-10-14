@@ -10,9 +10,9 @@ ulimit -n 2048
 
 PACKAGE_DIR=`pwd`
 
-if [ "$1" != "Desktop" ] && [ "$1" != "Server" ]
+if [ "$1" != "Desktop" ] && [ "$1" != "Electron" ] && [ "$1" != "Server" ]
 then
-   echo "error: must specify Desktop or Server as configuration"
+   echo "error: must specify Desktop, Electron or Server as configuration"
    exit 1
 fi
 
