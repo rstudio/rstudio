@@ -140,6 +140,19 @@ pipeline {
             sh "cd package/osx/build/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t dsym ."
           }
 
+          // publish build to dailies page
+          withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+
+            // derive product
+            def product="desktop"
+            if (rstudioVersionSuffix.contains("pro")) {
+              product = "desktop-pro"
+            }
+
+            // publish the build
+            sh "docker/jenkins/publish-build.sh --build ${product}/macos --url https://s3.amazonaws.com/rstudio-ide-build/desktop/macos/${packageFile} --pat ${GITHUB_PAT} --file package/osx/build/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+          }
+
         }
       }
 

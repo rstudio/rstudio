@@ -102,6 +102,23 @@ def s3_upload(type, flavor, os, arch) {
   withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
     sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
   }
+
+  // publish build to dailies page
+  withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+
+    // derive product
+    def product="${flavor}"
+    if (rstudioVersionSuffix.contains("pro")) {
+        if (product == "desktop") {
+            product = "desktop-pro"
+        } else if (product == "server") {
+            product = "workbench"
+        }
+    }
+
+    // publish the build
+    sh "docker/jenkins/publish-build.sh --build ${product}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_PAT} --file ${buildFolder}/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+  }
 }
 
 def sentry_upload(type, flavor) {
