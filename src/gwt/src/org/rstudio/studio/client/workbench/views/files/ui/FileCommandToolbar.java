@@ -16,6 +16,8 @@ package org.rstudio.studio.client.workbench.views.files.ui;
 
 import com.google.inject.Inject;
 
+import com.google.gwt.event.logical.shared.ResizeEvent;
+import com.google.gwt.event.logical.shared.ResizeHandler;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -36,7 +38,8 @@ public class FileCommandToolbar extends Toolbar
       super("File Commands");
       StandardIcons icons = StandardIcons.INSTANCE;
 
-      addLeftWidget(commands.newFolder().createToolbarButton());
+      newFolderButton_ = commands.newFolder().createToolbarButton();
+      addLeftWidget(newFolderButton_);
       addLeftSeparator();
       
       // New Blank File Menu
@@ -60,19 +63,25 @@ public class FileCommandToolbar extends Toolbar
       newFileMenu.addItem(commands.touchSweaveDoc().createMenuItem(false));
       newFileMenu.addItem(commands.touchRHTMLDoc().createMenuItem(false));
 
-      ToolbarMenuButton newFileButton = new ToolbarMenuButton(
+      newFileButton_ = new ToolbarMenuButton(
             "New Blank File",
             "Create a new blank file in current directory",
             new ImageResource2x(icons.stock_new2x()),
             newFileMenu);
-      ElementIds.assignElementId(newFileButton, ElementIds.MB_FILES_TOUCH_FILE);
-      addLeftWidget(newFileButton);
+      ElementIds.assignElementId(newFileButton_, ElementIds.MB_FILES_TOUCH_FILE);
+      addLeftWidget(newFileButton_);
       addLeftSeparator();
       
-      addLeftWidget(commands.uploadFile().createToolbarButton());
+      uploadButton_ = commands.uploadFile().createToolbarButton();
+      addLeftWidget(uploadButton_);
+
       addLeftSeparator();
-      addLeftWidget(commands.deleteFiles().createToolbarButton());
+
+      deleteButton_ = commands.deleteFiles().createToolbarButton();
+      addLeftWidget(deleteButton_);
+
       addLeftWidget(commands.renameFile().createToolbarButton());
+
       addLeftSeparator();
 
       // More
@@ -98,17 +107,60 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addSeparator();
       moreMenu.addItem(new UserPrefMenuItem<>(prefs.showHiddenFiles(), true, "Show Hidden Files", prefs));
 
-      ToolbarMenuButton moreButton = new ToolbarMenuButton(
+      moreButton_ = new ToolbarMenuButton(
             "More",
             "More file commands",
             new ImageResource2x(icons.more_actions2x()),
             moreMenu);
-      ElementIds.assignElementId(moreButton, ElementIds.MB_FILES_MORE);
-      addLeftWidget(moreButton);
+      ElementIds.assignElementId(moreButton_, ElementIds.MB_FILES_MORE);
+      addLeftWidget(moreButton_);
 
       // Refresh
       ToolbarButton refreshButton = commands.refreshFiles().createToolbarButton();
       refreshButton.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
       addRightWidget(refreshButton);
+
+      this.addHandler(new ResizeHandler()
+      {
+         @Override
+         public void onResize(ResizeEvent event)
+         {
+            manageToolbarSizes(event.getWidth());
+         }
+      }, ResizeEvent.getType());
    }
+
+   private void manageToolbarSizes(int width) 
+   {
+      if (width < 450) 
+      {
+         newFolderButton_.setText("");
+         newFileButton_.setText("");
+         uploadButton_.setText("");
+         deleteButton_.setText("");
+         moreButton_.setText("");
+      }
+      else if (width < 540)
+      {
+         newFolderButton_.setText("Folder");
+         newFileButton_.setText("Blank File");
+         uploadButton_.setText("Upload");
+         deleteButton_.setText("Delete");
+         moreButton_.setText("");
+      }
+      else
+      {
+         newFolderButton_.setText("New Folder");
+         newFileButton_.setText("New Blank File");
+         uploadButton_.setText("Upload");
+         deleteButton_.setText("Delete");
+         moreButton_.setText("More");
+      }
+   }
+
+   private ToolbarButton newFolderButton_;
+   private ToolbarMenuButton newFileButton_;
+   private ToolbarButton uploadButton_;
+   private ToolbarButton deleteButton_;
+   private ToolbarMenuButton moreButton_;
 }
