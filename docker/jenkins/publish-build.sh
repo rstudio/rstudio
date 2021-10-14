@@ -152,10 +152,13 @@ echo "Creating $flower/$build/$version_stem.md..."
 echo "$md_contents"
 base64_contents=$(echo "$md_contents" | base64)
 
+payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
+echo "Sending to Github: $payload"
+
 curl \
   -X PUT \
   -H "Accept: application/vnd.github.v3+json" \
   -H "Authorization: token $pat" \
   "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$version_stem.md" \
-  -d "{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
+  -d "$payload"
 
