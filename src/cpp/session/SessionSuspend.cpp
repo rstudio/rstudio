@@ -20,8 +20,11 @@
 #include "SessionConsoleInput.hpp"
 
 #include <session/SessionConstants.hpp>
+#include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionConstants.hpp>
+
+#include <shared_core/json/Json.hpp>
 
 #include <r/session/RSession.hpp>
 #include <r/RExec.hpp>
@@ -41,6 +44,10 @@ bool s_suspendedFromTimeout = false;
 // was the underlying r session resumed
 bool s_rSessionResumed = false;
 
+// keep track of what operations are blocking session from suspending
+std::vector<bool> opsBlockingSuspend(kBlockingOpsCount, false);
+boost::posix_time::ptime lastSuspendCheck = boost::posix_time::second_clock::universal_time();
+
 } // anonymous namespace
 
 // convenience function for disallowing suspend (note still doesn't override
@@ -48,6 +55,67 @@ bool s_rSessionResumed = false;
 bool disallowSuspend() 
 { 
    return false;
+}
+
+void storeBlockingOps()
+{
+   core::json::Object blockingOps;
+
+   if (opsBlockingSuspend[SuspendBlockingOps::kChildProcess])
+      blockingOps.insert("active-child-process", core::json::Array());
+   if (opsBlockingSuspend[SuspendBlockingOps::kConnection])
+      blockingOps.insert("active-connection", core::json::Array());
+   if (opsBlockingSuspend[SuspendBlockingOps::kOverlay])
+      blockingOps.insert("overlay", core::json::Array());
+   if (opsBlockingSuspend[SuspendBlockingOps::kExternalPointer])
+      blockingOps.insert("active-external-pointer", core::json::Array());
+   if (opsBlockingSuspend[SuspendBlockingOps::kActiveJob])
+      blockingOps.insert("active-job", core::json::Array());
+   if (opsBlockingSuspend[SuspendBlockingOps::kCommandPrompt])
+      blockingOps.insert("incomplete-command-prompt", core::json::Array());
+
+   module_context::activeSession().setBlockingSuspend(blockingOps);
+}
+
+void addBlockingOp(SuspendBlockingOps op)
+{
+   // If we're already tracking this op, nothing to do
+   if (opsBlockingSuspend[op])
+      return;
+
+   opsBlockingSuspend[op] = true;
+   storeBlockingOps();
+}
+
+void removeBlockingOp(SuspendBlockingOps op)
+{
+   if (!opsBlockingSuspend[op])
+      return;
+
+   opsBlockingSuspend[op] = false;
+   storeBlockingOps();
+}
+
+/**
+ * @brief Check if we're already tracking a blocking operation and update as
+ * necessary
+ *
+ * @param blocking True if this operation is blocking suspension. False otherwise
+ * @param op The operation type that's blocking session suspension
+ */
+void checkBlockingOp(bool blocking, SuspendBlockingOps op)
+{
+   if (opsBlockingSuspend[op] == blocking)
+      return;
+
+   opsBlockingSuspend[op] = blocking;
+   storeBlockingOps();
+}
+
+void clearBlockingOps()
+{
+   std::fill(opsBlockingSuspend.begin(), opsBlockingSuspend.end(), false);
+   storeBlockingOps();
 }
 
 bool sessionResumed()
@@ -76,6 +144,9 @@ bool suspendSession(bool force, int status)
    // attemmpt to save it!
    r::session::ensureDeserialized();
 
+   // If we're suspending (forced or otherwise) then clear list of blocking ops
+   clearBlockingOps();
+
    // perform the suspend (does not return if successful)
    return r::session::suspend(force, status, session::options().ephemeralEnvVars());
 }
@@ -85,6 +156,14 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
    // never suspend in desktop mode
    if (options().programMode() == kSessionProgramModeDesktop)
       return;
+
+   // check what might be blocking suspension (and report it),
+   // but no more than once a second
+   if (lastSuspendCheck + boost::posix_time::seconds(1) < boost::posix_time::second_clock::universal_time())
+   {
+      lastSuspendCheck = boost::posix_time::second_clock::universal_time();
+      allowSuspend();
+   }
 
    // check for forced suspend request
    if (s_forceSuspend)

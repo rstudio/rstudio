@@ -22,7 +22,23 @@ namespace rstudio {
 namespace session {
 namespace suspend {
 
+enum SuspendBlockingOps
+{
+   kChildProcess = 0,
+   kConnection,
+   kOverlay,
+   kExternalPointer,
+   kActiveJob,
+   kCommandPrompt,
+
+
+   kBlockingOpsCount // Always keep this at bottom of enum list
+};
+
 bool disallowSuspend();
+void addBlockingOp(SuspendBlockingOps op);
+void removeBlockingOp(SuspendBlockingOps op);
+void checkBlockingOp(bool blocking, SuspendBlockingOps op);
 bool suspendSession(bool force, int status = EXIT_SUCCESS);
 void suspendIfRequested(const boost::function<bool()>& allowSuspend);
 void handleUSR1(int unused);

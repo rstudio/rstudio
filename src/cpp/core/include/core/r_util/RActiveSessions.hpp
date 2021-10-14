@@ -26,6 +26,8 @@
 #include <core/DateTime.hpp>
 #include <shared_core/SafeConvert.hpp>
 
+#include <shared_core/json/Json.hpp>
+
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
@@ -117,6 +119,14 @@ public:
       {
          std::string value = safe_convert::numberToString(initial);
          writeProperty("initial", value);
+      }
+   }
+
+   void setBlockingSuspend(json::Object blocking)
+   {
+      if (!empty())
+      {
+         writeProperty("blocking-suspend", blocking.writeFormatted());
       }
    }
 

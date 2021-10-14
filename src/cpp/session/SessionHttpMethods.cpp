@@ -529,7 +529,14 @@ bool waitForMethod(const std::string& method,
       // if we have at least one async process running then this counts
       // as "activity" and resets the timeout timer
       if (main_process::haveActiveChildren())
+      {
          timeoutTime = timeoutTimeFromNow();
+         suspend::addBlockingOp(suspend::SuspendBlockingOps::kChildProcess);
+      }
+      else
+      {
+         suspend::removeBlockingOp(suspend::SuspendBlockingOps::kChildProcess);
+      }
 
       // look for a connection (waiting for the specified interval)
       boost::shared_ptr<HttpConnection> ptrConnection =
