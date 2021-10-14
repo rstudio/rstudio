@@ -146,8 +146,7 @@ pipeline {
             // derive product
             def product="desktop"
             if (rstudioVersionSuffix.contains("pro")) {
-                product = "desktop-pro"
-              }
+              product = "desktop-pro"
             }
 
             // publish the build

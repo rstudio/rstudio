@@ -150,7 +150,11 @@ size: $size
 
 echo "Creating $flower/$build/$version_stem.md..."
 echo "$md_contents"
-base64_contents=$(echo "$md_contents" | base64)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  base64_contents=$(echo "$md_contents" | base64 --break=0)
+else
+  base64_contents=$(echo "$md_contents" | base64 --wrap=0)
+fi
 
 payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
 echo "Sending to Github: $payload"
