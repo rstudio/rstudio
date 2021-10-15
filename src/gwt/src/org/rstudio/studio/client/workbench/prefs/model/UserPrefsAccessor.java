@@ -2548,6 +2548,10 @@ public class UserPrefsAccessor extends Prefs
          return this && this.label || "";
       }-*/;
 
+      public final native String getModule() /*-{
+         return this && this.module || "";
+      }-*/;
+
    }
 
    /**

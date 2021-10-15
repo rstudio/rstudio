@@ -77,12 +77,20 @@ public class RVersionSelectWidget extends SelectWidget
       for (int i=0; i<rVersions.length(); i++)
       {
          RVersionSpec version = rVersions.get(i);
-         String choice = "R version " + version.getVersion();
+
+         // Modules contain the system default as the version number, so ignore these
+         boolean module = !StringUtil.isNullOrEmpty(version.getModule());
+         StringBuilder choice = new StringBuilder();
+
+         if (module)
+            choice.append("Module " + version.getModule());
+         else
+            choice.append("R version " + version.getVersion());
          if (disambiguate)
-            choice = choice + " (" + version.getRHome() + ")";
+            choice.append(" (" + version.getRHome() + ")");
          if (!version.getLabel().isEmpty())
-            choice += " (" + version.getLabel() + ")";
-         choices.add(choice);
+           choice.append(" (" + version.getLabel() + ")");
+         choices.add(choice.toString());
       }
 
       return choices.toArray(new String[0]);
@@ -112,8 +120,9 @@ public class RVersionSelectWidget extends SelectWidget
             String version = values.get(0);
             String rHomeDir = values.get(1);
             String label = values.get(2);
+            String module = values.get(3);
             if (version.length() > 0 && rHomeDir.length() > 0)
-               return RVersionSpec.create(version, rHomeDir, label);
+               return RVersionSpec.create(version, rHomeDir, label, module);
          }
       }
       
@@ -126,7 +135,7 @@ public class RVersionSelectWidget extends SelectWidget
       if (version.getVersion().length() == 0)
          return "";
       else
-         return version.getVersion() + SEP + version.getRHome() + SEP + version.getLabel();
+         return version.getVersion() + SEP + version.getRHome() + SEP + version.getLabel() + SEP + version.getModule();
    }
 
    private final static String USE_DEFAULT_VERSION = "(Use System Default)";

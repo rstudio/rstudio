@@ -24,16 +24,25 @@ public class RVersionSpec extends DefaultRVersion
  
    public final static RVersionSpec createEmpty()
    {
-      return create("","","");
+      return create("","","","");
    }
    
+   public final static RVersionSpec create(String version,
+                                           String rHome,
+                                           String label)
+   {
+      return create(version, rHome, label, "");
+   };
+
    public final static native RVersionSpec create(String version, 
                                                   String rHome,
-                                                  String label) /*-{
+                                                  String label,
+                                                  String module) /*-{
       return {
          version: version,
          r_home: rHome,
-         label: label
+         label: label,
+         module: module
       };
    }-*/;
    
