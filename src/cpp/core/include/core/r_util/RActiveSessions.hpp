@@ -62,18 +62,18 @@ private:
          LOG_ERROR(error);
    }
 
-   std::string const kExecuting = "executing";
-   std::string const kInitial = "initial";
-   std::string const kLabel = "label";
-   std::string const kLastUsed = "last_used";
-   std::string const kProject = "project";
-   std::string const kSavePromptRequired = "save_prompt_required";
-   std::string const kSessionSuspendData = "suspended_session_data";
-   std::string const kRunning = "running";
-   std::string const kRVersion = "r_version";
-   std::string const kRVersionHome = "r_version_home";
-   std::string const kRVersionLabel = "r_version_label";
-   std::string const kWorkingDir = "working_directory";
+   const std::string kExecuting = "executing";
+   const std::string kInitial = "initial";
+   const std::string kLabel = "label";
+   const std::string kLastUsed = "last_used";
+   const std::string kProject = "project";
+   const std::string kSavePromptRequired = "save_prompt_required";
+   const std::string kSessionSuspendData = "suspended_session_data";
+   const std::string kRunning = "running";
+   const std::string kRVersion = "r_version";
+   const std::string kRVersionHome = "r_version_home";
+   const std::string kRVersionLabel = "r_version_label";
+   const std::string kWorkingDir = "working_directory";
 
  public:
 
@@ -83,7 +83,7 @@ private:
 
    const FilePath& scratchPath() const { return scratchPath_; }
 
-   std::string getProperty(std::string const propertyName) const
+   std::string readProperty(const std::string& propertyName) const
    {
       std::string value;
       if (!empty())
@@ -96,7 +96,7 @@ private:
       return value;
    }
 
-   void setProperty(std::string const propertyName, std::string const value)
+   void writeProperty(const std::string& propertyName, const std::string& value)
    {
       if (!empty())
       {
@@ -108,29 +108,29 @@ private:
 
    std::string project() const
    {
-      return getProperty(kProject);
+      return readProperty(kProject);
    }
 
    void setProject(const std::string& project)
    {
-      setProperty(kProject, project);
+      writeProperty(kProject, project);
    }
 
    std::string workingDir() const
    {
-      return getProperty(kWorkingDir);
+      return readProperty(kWorkingDir);
    }
 
    void setWorkingDir(const std::string& workingDir)
    {
-      setProperty(kWorkingDir, workingDir);
+      writeProperty(kWorkingDir, workingDir);
    }
 
    bool initial() const
    {
       if (!empty())
       {
-         std::string value = getProperty(kInitial);
+         std::string value = readProperty(kInitial);
 
          if (!value.empty())
             return safe_convert::stringTo<bool>(value, false);
@@ -149,7 +149,7 @@ private:
    void setInitial(bool initial)
    {
       std::string value = safe_convert::numberToString(initial);
-      setProperty(kInitial, value);
+      writeProperty(kInitial, value);
    }
 
    double lastUsed() const
@@ -164,7 +164,7 @@ private:
 
    bool executing() const
    {
-      std::string value = getProperty(kExecuting);
+      std::string value = readProperty(kExecuting);
 
       if (!value.empty())
          return safe_convert::stringTo<bool>(value, false);
@@ -175,12 +175,12 @@ private:
    void setExecuting(bool executing)
    {
       std::string value = safe_convert::numberToString(executing);
-      setProperty(kExecuting, value);
+      writeProperty(kExecuting, value);
    }
 
    bool savePromptRequired() const
    {
-      std::string value = getProperty(kSavePromptRequired);
+      std::string value = readProperty(kSavePromptRequired);
 
       if (!value.empty())
          return safe_convert::stringTo<bool>(value, false);
@@ -191,13 +191,13 @@ private:
    void setSavePromptRequired(bool savePromptRequired)
    {
          std::string value = safe_convert::numberToString(savePromptRequired);
-         setProperty(kSavePromptRequired, value);
+         writeProperty(kSavePromptRequired, value);
    }
 
 
    bool running() const
    {
-      std::string value = getProperty(kRunning);
+      std::string value = readProperty(kRunning);
 
       if (!value.empty())
          return safe_convert::stringTo<bool>(value, false);
@@ -207,38 +207,38 @@ private:
 
    std::string rVersion()
    {
-      return getProperty(kRVersion);
+      return readProperty(kRVersion);
    }
 
    std::string rVersionLabel()
    {
-      return getProperty(kRVersionLabel);
+      return readProperty(kRVersionLabel);
    }
 
    std::string rVersionHome()
    {
-      return getProperty(kRVersionHome);
+      return readProperty(kRVersionHome);
    }
 
    void setRVersion(const std::string& rVersion,
                     const std::string& rVersionHome,
                     const std::string& rVersionLabel = "")
    {
-         setProperty(kRVersion, rVersion);
-         setProperty(kRVersionHome, rVersionHome);
-         setProperty(kRVersionLabel, rVersionLabel);
+         writeProperty(kRVersion, rVersion);
+         writeProperty(kRVersionHome, rVersionHome);
+         writeProperty(kRVersionLabel, rVersionLabel);
    }
 
    // historical note: this will be displayed as the session name
    std::string label()
    {
-      return getProperty(kLabel);
+      return readProperty(kLabel);
    }
 
    // historical note: this will be displayed as the session name
    void setLabel(const std::string& label)
    {
-      setProperty(kLabel, label);
+      writeProperty(kLabel, label);
    }
 
    void beginSession(const std::string& rVersion,
@@ -347,12 +347,12 @@ private:
    {
       double now = date_time::millisecondsSinceEpoch();
       std::string value = safe_convert::numberToString(now);
-      setProperty(property, value);
+      writeProperty(property, value);
    }
 
    double timestampProperty(const std::string& property) const
    {
-      std::string value = getProperty(property);
+      std::string value = readProperty(property);
 
       if (!value.empty())
          return safe_convert::stringTo<double>(value, 0);
@@ -364,7 +364,7 @@ private:
    void setRunning(bool running)
    {
          std::string value = safe_convert::numberToString(running);
-         setProperty(kRunning, value);
+         writeProperty(kRunning, value);
    }
 
    std::shared_ptr<IActiveSessionStorage> storage_;
@@ -465,13 +465,6 @@ public:
 private:
    core::FilePath rootPath_;
 };
-
-void trackActiveSessionCount(std::shared_ptr<IActiveSessionStorage> storage,
-                             const FilePath& rootStoragePath,
-                             const FilePath& userHomePath,
-                             bool projectSharingEnabled,
-                             boost::function<void(size_t)> onCountChanged);
-
 
 } // namespace r_util
 } // namespace core

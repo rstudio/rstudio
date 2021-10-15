@@ -33,11 +33,10 @@ namespace r_util {
 
     Error FileActiveSessionStorage::readProperty(const std::string& id, const std::string& name, std::string* pValue)
     {
-        std::set<std::string> propertyName = {name};
         std::map<std::string, std::string> propertyValue{};
         *pValue = "";
 
-        Error error = readProperties(id, propertyName, &propertyValue);
+        Error error = readProperties(id, { name }, &propertyValue);
 
         if (error)
             return error;

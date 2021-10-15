@@ -1041,8 +1041,8 @@ Error SchemaUpdater::update()
       SchemaVersion currentVersion;
       error = databaseSchemaVersion(&currentVersion);
 
-      LOG_DEBUG_MESSAGE("Database Schema Version:\t\t" + currentVersion.Date + " : " + currentVersion.Flower);
-      LOG_DEBUG_MESSAGE("Highest Migration Schema Version:\t" + migrationVersion.Date + " : " + migrationVersion.Flower);
+      LOG_DEBUG_MESSAGE("Current Database Schema Version:\t\t" + currentVersion.Date + " : " + currentVersion.Flower);
+      LOG_DEBUG_MESSAGE("Highest Available Database Schema Version:\t" + migrationVersion.Date + " : " + migrationVersion.Flower);
 
       if (currentVersion < migrationVersion)
       {

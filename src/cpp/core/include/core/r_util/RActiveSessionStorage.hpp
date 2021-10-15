@@ -51,8 +51,9 @@ namespace r_util {
       const std::string propertiesDirName_ = "properites";
       const std::string fileSessionDirPrefix_ = "session-";
 
+      FilePath getPropertyDir(const std::string& id, const std::string& name);
       FilePath buildPropertyPath(const std::string& id, const std::string& name);
-
+      
       static const std::string& getPropertyFileName(const std::string& propertyName)
       {
          static const std::map<std::string, std::string> fileNames = 
