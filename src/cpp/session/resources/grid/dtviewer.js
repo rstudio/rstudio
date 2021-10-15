@@ -320,9 +320,11 @@
     var scrollBody = $(".dataTables_scrollBody");
     if (scrollBody) {
       // reattach handlers
+      /*
       for (var i = 0; i < detachedHandlers.length; i++) {
         scrollBody.on("scroll", detachedHandlers[i]);
       }
+      */
 
       // restore position
       if (lastScrollPos) scrollBody.scrollTop(lastScrollPos);
@@ -1573,6 +1575,7 @@
     lastScrollPos = scrollBody.scrollTop();
 
     // save all the of the scroll event handlers
+    /*
     detachedHandlers = [];
     var scrollEvents = $._data(scrollBody[0], "events");
     jQuery.each(scrollEvents.scroll, function (k, v) {
@@ -1581,6 +1584,7 @@
 
     // detach all scroll event handlers
     scrollBody.off("scroll");
+    */
   };
 
   window.setData = function (data) {
