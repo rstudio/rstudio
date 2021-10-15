@@ -149,11 +149,12 @@ else()
 
 endif()
 
-if(YARN)
-   message(STATUS "Using yarn: ${YARN}")
-else()
-   message(FATAL_ERROR "yarn not found (required)")
-endif()
+#if(YARN)
+#   message(STATUS "Using yarn: ${YARN}")
+#else()
+   message(STATUS "yarn not found (required for Electron)")
+   set(YARN yarn)
+#endif()
 
 get_filename_component(NODEJS_PATH ${NODEJS} DIRECTORY CACHE)
 get_filename_component(YARN_PATH ${YARN} DIRECTORY CACHE)
