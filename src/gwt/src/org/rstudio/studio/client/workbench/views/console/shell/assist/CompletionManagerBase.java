@@ -143,6 +143,7 @@ public abstract class CompletionManagerBase
                false,
                completions.getType().get(i),
                completions.getSuggestOnAccept().get(i),
+               completions.getReplaceToEnd().get(i),
                completions.getMeta().get(i),
                completions.getHelpHandler(),
                completions.getLanguage()));
@@ -720,6 +721,10 @@ public abstract class CompletionManagerBase
          {
             Position replaceStart = range.getEnd().movedLeft(offset);
             Position replaceEnd = range.getEnd();
+            
+            if (completion.replaceToEnd)
+               replaceEnd.setColumn(docDisplay_.getLength(replaceEnd.getRow()));
+            
             docDisplay_.replaceRange(Range.fromPoints(replaceStart, replaceEnd), value);
          }
 

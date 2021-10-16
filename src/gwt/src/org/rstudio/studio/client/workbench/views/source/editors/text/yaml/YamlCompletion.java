@@ -43,4 +43,8 @@ public class YamlCompletion extends JavaScriptObject
       return !!this.suggest_on_accept;
    }-*/;
    
+   public native final boolean getReplaceToEnd() /*-{
+      return !!this.replace_to_end;
+   }-*/;
+   
 }

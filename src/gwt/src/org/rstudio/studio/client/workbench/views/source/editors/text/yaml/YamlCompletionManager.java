@@ -100,6 +100,7 @@ public class YamlCompletionManager extends CompletionManagerBase
          ArrayList<String> display = new ArrayList<String>();
          ArrayList<String> descriptions = new ArrayList<String>();
          ArrayList<Boolean> suggestOnAccept = new ArrayList<Boolean>();
+         ArrayList<Boolean> replaceToEnd = new ArrayList<Boolean>();
          
          // fill from result if we got one
          if (res != null)
@@ -117,6 +118,7 @@ public class YamlCompletionManager extends CompletionManagerBase
                display.add(completion.getDisplay());
                descriptions.add(completion.getDescription());
                suggestOnAccept.add(completion.getSuggestOnAccept());
+               replaceToEnd.add(completion.getReplaceToEnd());
             }
             cacheable = result.getCacheable();
          }
@@ -130,6 +132,7 @@ public class YamlCompletionManager extends CompletionManagerBase
                JsUtil.toJsArrayBoolean(new ArrayList<>(values.size())),
                JsUtil.toJsArrayInteger(types),
                JsUtil.toJsArrayBoolean(suggestOnAccept),
+               JsUtil.toJsArrayBoolean(replaceToEnd),
                JsUtil.toJsArrayString(descriptions),
                "",
                true,

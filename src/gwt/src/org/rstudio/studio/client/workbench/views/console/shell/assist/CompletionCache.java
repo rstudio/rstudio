@@ -94,6 +94,7 @@ public class CompletionCache
       JsArrayBoolean quote      = original.getQuote();
       JsArrayInteger type       = original.getType();
       JsArrayBoolean suggestOnAccept = original.getSuggestOnAccept();
+      JsArrayBoolean replaceToEnd = original.getReplaceToEnd();
       JsArrayString meta        = original.getMeta();
       
       // Now, generate narrowed versions of the above
@@ -103,6 +104,7 @@ public class CompletionCache
       final JsVectorBoolean quoteNarrow      = JsVectorBoolean.createVector().cast();
       final JsVectorInteger typeNarrow       = JsVectorInteger.createVector().cast();
       final JsArrayBoolean suggestOnAcceptNarrow = JsVectorBoolean.createVector().cast();
+      final JsArrayBoolean replaceToEndNarrow = JsVectorBoolean.createVector().cast();
       final JsVectorString metaNarrow        = JsVectorString.createVector().cast();
       
       for (int i = 0, n = completions.length(); i < n; i++)
@@ -116,6 +118,7 @@ public class CompletionCache
             quoteNarrow.push(quote.get(i));
             typeNarrow.push(type.get(i));
             suggestOnAcceptNarrow.push(suggestOnAccept.get(i));
+            replaceToEndNarrow.push(replaceToEnd.get(i));
             metaNarrow.push(meta.get(i));
          }
       }
@@ -157,6 +160,7 @@ public class CompletionCache
       final JsVectorBoolean quoteSorted      = JsVectorBoolean.createVector().cast();
       final JsVectorInteger typeSorted       = JsVectorInteger.createVector().cast();
       final JsVectorBoolean suggestOnAcceptSorted = JsVectorBoolean.createVector().cast();
+      final JsVectorBoolean replaceToEndSorted = JsVectorBoolean.createVector().cast();
       final JsVectorString metaSorted        = JsVectorString.createVector().cast();
       
       for (int i = 0, n = indices.size(); i < n; i++)
@@ -168,6 +172,7 @@ public class CompletionCache
          quoteSorted.push(quoteNarrow.get(index));
          typeSorted.push(typeNarrow.get(index));
          suggestOnAcceptSorted.push(suggestOnAcceptNarrow.get(index));
+         replaceToEndSorted.push(replaceToEndNarrow.get(index));
          metaSorted.push(metaNarrow.get(index));
       }
       
@@ -180,6 +185,7 @@ public class CompletionCache
             quoteSorted.cast(),
             typeSorted.cast(),
             suggestOnAcceptSorted.cast(),
+            replaceToEndSorted.cast(),
             metaSorted.cast(),
             original.getGuessedFunctionName(),
             original.getExcludeOtherCompletions(),

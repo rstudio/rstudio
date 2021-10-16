@@ -292,6 +292,7 @@ public class CompletionRequester
       JsArrayBoolean quote = response.getQuote();
       JsArrayInteger type = response.getType();
       JsArrayBoolean suggestOnAccept = response.getSuggestOnAccept();
+      JsArrayBoolean replaceToEnd = response.getReplaceToEnd();
       JsArrayString meta = response.getMeta();
       ArrayList<QualifiedName> newComp = new ArrayList<>();
       for (int i = 0; i < comp.length(); i++)
@@ -303,6 +304,7 @@ public class CompletionRequester
             quote.get(i), 
             type.get(i), 
             suggestOnAccept.get(i),  
+            replaceToEnd.get(i),
             meta.get(i), 
             response.getHelpHandler(), 
             response.getLanguage())
@@ -389,6 +391,7 @@ public class CompletionRequester
             JsArrayBoolean quote = response.getQuote();
             JsArrayInteger type = response.getType();
             JsArrayBoolean suggestOnAccept = response.getSuggestOnAccept();
+            JsArrayBoolean replaceToEnd = response.getReplaceToEnd();
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
@@ -404,6 +407,7 @@ public class CompletionRequester
                      quote.get(i), 
                      type.get(i), 
                      suggestOnAccept.get(i), 
+                     replaceToEnd.get(i),
                      meta.get(i), 
                      response.getHelpHandler(), 
                      response.getLanguage()
@@ -437,6 +441,7 @@ public class CompletionRequester
                      quote.get(i), 
                      type.get(i), 
                      suggestOnAccept.get(i),
+                     replaceToEnd.get(i),
                      meta.get(i), 
                      response.getHelpHandler(), 
                      response.getLanguage()
@@ -743,6 +748,7 @@ public class CompletionRequester
                   JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayInteger(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
+                  JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayString(new ArrayList<>(result.completions.length())),
                   "",
                   true,
@@ -816,13 +822,13 @@ public class CompletionRequester
                            int type,
                            boolean suggestOnAccept)
       {
-         this(name, name, source, shouldQuote, type, suggestOnAccept, "", null, "R");
+         this(name, name, source, shouldQuote, type, suggestOnAccept, false, "", null, "R");
       }
 
       public QualifiedName(String name,
                            String source)
       {
-         this(name, name, source, false, RCompletionType.UNKNOWN, false, "", null, "R");
+         this(name, name, source, false, RCompletionType.UNKNOWN, false, false, "", null, "R");
       }
       
       public QualifiedName(String name,
@@ -831,6 +837,7 @@ public class CompletionRequester
                            boolean shouldQuote,
                            int type,
                            boolean suggestOnAccept,
+                           boolean replaceToEnd,
                            String meta,
                            String helpHandler,
                            String language)
@@ -841,6 +848,7 @@ public class CompletionRequester
          this.shouldQuote = shouldQuote;
          this.type = type;
          this.suggestOnAccept = suggestOnAccept;
+         this.replaceToEnd = replaceToEnd;
          this.meta = meta;
          this.helpHandler = helpHandler;
          this.language = language;
@@ -854,6 +862,7 @@ public class CompletionRequester
                "snippet",
                false,
                RCompletionType.SNIPPET,
+               false,
                false,
                "",
                null,
@@ -869,6 +878,7 @@ public class CompletionRequester
             this.shouldQuote,
             this.type,
             true,
+            this.replaceToEnd,
             this.meta,
             this.helpHandler,
             this.language  
@@ -1089,6 +1099,7 @@ public class CompletionRequester
       public final boolean shouldQuote;
       public final int type;
       public final boolean suggestOnAccept;
+      public final boolean replaceToEnd;
       public final String meta;
       public final String helpHandler;
       public final String language;

@@ -28,6 +28,7 @@ public class Completions extends JavaScriptObject
                                                       JsArrayBoolean quote,
                                                       JsArrayInteger type,
                                                       JsArrayBoolean suggestOnAccept,
+                                                      JsArrayBoolean replaceToEnd,
                                                       JsArrayString meta,
                                                       String fguess,
                                                       boolean excludeOtherCompletions,
@@ -44,6 +45,7 @@ public class Completions extends JavaScriptObject
          quote: quote,
          type: type,
          suggestOnAccept: suggestOnAccept,
+         replaceToEnd: replaceToEnd,
          meta: meta,
          fguess: fguess ? [fguess] : null,
          excludeOtherCompletions: excludeOtherCompletions,
@@ -126,6 +128,19 @@ public class Completions extends JavaScriptObject
          }
       }
       return this.suggestOnAccept;   
+      
+   }-*/;
+   
+   // provide replaceToEnd if it isn't present (server completions will 
+   // generally not yield this)
+   public final native JsArrayBoolean getReplaceToEnd() /*-{
+      if (!this.replaceToEnd) {
+         this.replaceToEnd = new Array(this.results.length);
+         for (var i=0; i<this.replaceToEnd.length;i++) {
+            this.replaceToEnd[i] = false;
+         }
+      }
+      return this.replaceToEnd;   
       
    }-*/;
    
