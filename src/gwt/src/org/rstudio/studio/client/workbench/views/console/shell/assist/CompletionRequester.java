@@ -873,15 +873,19 @@ public class CompletionRequester
          // Get an icon for the completion
          // We use separate styles for file icons, so we can nudge them
          // a bit differently
-         String style = RES.styles().completionIcon();
-         if (RCompletionType.isFileType(type))
-            style = RES.styles().fileIcon();
+         ImageResource icon = getIcon();
+         if (icon != null)
+         {
+            String style = RES.styles().completionIcon();
+            if (RCompletionType.isFileType(type))
+               style = RES.styles().fileIcon();
 
-         SafeHtmlUtil.appendImage(
-               sb,
-               style,
-               getIcon());
-
+            SafeHtmlUtil.appendImage(
+                  sb,
+                  style,
+                  getIcon());
+         }
+        
          // Get the display name. Note that for file completions this requires
          // some munging of the 'name' and 'package' fields.
          addDisplayName(sb);
@@ -966,10 +970,11 @@ public class CompletionRequester
       {
          if (RCompletionType.isFunctionType(type))
             return new ImageResource2x(ICONS.function2x());
-
+         
          switch(type)
          {
          case RCompletionType.UNKNOWN:
+         case RCompletionType.YAML_VALUE:
             return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.VECTOR:
             return new ImageResource2x(ICONS.variable2x());
@@ -1002,9 +1007,8 @@ public class CompletionRequester
             return new ImageResource2x(ICONS.rPackage2x());
          case RCompletionType.KEYWORD:
             return new ImageResource2x(ICONS.keyword2x());
-         case RCompletionType.YAML:
-            return new ImageResource2x(ICONS.keyword2x());
          case RCompletionType.CONTEXT:
+         case RCompletionType.YAML_KEY:
             return new ImageResource2x(ICONS.context2x());
          case RCompletionType.SNIPPET:
             return new ImageResource2x(ICONS.snippet2x());

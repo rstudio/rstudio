@@ -23,6 +23,10 @@ public class YamlCompletion extends JavaScriptObject
    {
    }
    
+   public native final String getType() /*-{
+      return this.type;
+   }-*/;
+   
    public native final String getValue() /*-{
       return this.value;
    }-*/;

@@ -828,7 +828,8 @@ public abstract class CompletionManagerBase
    {
       if (completion.type == RCompletionType.SNIPPET)
          popup_.displaySnippetHelp(snippets_.getSnippetContents(completion.name));
-      else if (completion.type == RCompletionType.YAML)
+      else if (completion.type == RCompletionType.YAML_KEY ||
+               completion.type == RCompletionType.YAML_VALUE)
          popup_.displayYAMLHelp(completion.name, completion.meta);
       else
          helpStrategy_.showHelp(completion, popup_);
