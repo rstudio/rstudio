@@ -97,6 +97,7 @@ public class YamlCompletionManager extends CompletionManagerBase
         
          ArrayList<Integer> types = new ArrayList<Integer>();
          ArrayList<String> values = new ArrayList<String>();
+         ArrayList<String> display = new ArrayList<String>();
          ArrayList<String> descriptions = new ArrayList<String>();
          ArrayList<Boolean> suggestOnAccept = new ArrayList<Boolean>();
          
@@ -113,6 +114,7 @@ public class YamlCompletionManager extends CompletionManagerBase
                else 
                   types.add(RCompletionType.YAML_VALUE);
                values.add(completion.getValue());
+               display.add(completion.getDisplay());
                descriptions.add(completion.getDescription());
                suggestOnAccept.add(completion.getSuggestOnAccept());
             }
@@ -123,6 +125,7 @@ public class YamlCompletionManager extends CompletionManagerBase
          Completions response = Completions.createCompletions(
                token,
                JsUtil.toJsArrayString(values),
+               JsUtil.toJsArrayString(display),
                JsUtil.toJsArrayString(new ArrayList<>(values.size())),
                JsUtil.toJsArrayBoolean(new ArrayList<>(values.size())),
                JsUtil.toJsArrayInteger(types),

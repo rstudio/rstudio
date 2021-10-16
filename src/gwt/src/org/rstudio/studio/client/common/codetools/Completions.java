@@ -23,6 +23,7 @@ public class Completions extends JavaScriptObject
 {
    public static native Completions createCompletions(String token,
                                                       JsArrayString completions,
+                                                      JsArrayString completionsDisplay,
                                                       JsArrayString packages,
                                                       JsArrayBoolean quote,
                                                       JsArrayInteger type,
@@ -38,6 +39,7 @@ public class Completions extends JavaScriptObject
       return {
          token: [token],
          results: completions,
+         display: completionsDisplay,
          packages: packages,
          quote: quote,
          type: type,
@@ -62,6 +64,10 @@ public class Completions extends JavaScriptObject
    
    public final native JsArrayString getCompletions() /*-{
       return this.results;
+   }-*/;
+   
+   public final native JsArrayString getCompletionsDisplay() /*-{
+      return this.display || this.results;
    }-*/;
    
    public final native JsArrayString getPackages() /*-{

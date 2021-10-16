@@ -138,6 +138,7 @@ public abstract class CompletionManagerBase
       {
          names.add(new QualifiedName(
                completions.getCompletions().get(i),
+               completions.getCompletionsDisplay().get(i),
                completions.getPackages().get(i),
                false,
                completions.getType().get(i),

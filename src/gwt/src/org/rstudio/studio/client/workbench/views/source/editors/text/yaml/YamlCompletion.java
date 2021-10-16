@@ -31,6 +31,10 @@ public class YamlCompletion extends JavaScriptObject
       return this.value;
    }-*/;
    
+   public native final String getDisplay() /*-{
+      return this.display || this.value;
+   }-*/;
+   
    public native final String getDescription() /*-{
       return this.description;
    }-*/;

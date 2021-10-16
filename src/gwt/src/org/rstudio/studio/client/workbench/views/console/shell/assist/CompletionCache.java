@@ -89,6 +89,7 @@ public class CompletionCache
       
       // Extract the vector elements of the completion string
       JsArrayString completions = original.getCompletions();
+      JsArrayString display     = original.getCompletionsDisplay();
       JsArrayString packages    = original.getPackages();
       JsArrayBoolean quote      = original.getQuote();
       JsArrayInteger type       = original.getType();
@@ -97,6 +98,7 @@ public class CompletionCache
       
       // Now, generate narrowed versions of the above
       final JsVectorString completionsNarrow = JsVectorString.createVector().cast();
+      final JsVectorString displayNarrow     = JsVectorString.createVector().cast();
       final JsVectorString packagesNarrow    = JsVectorString.createVector().cast();
       final JsVectorBoolean quoteNarrow      = JsVectorBoolean.createVector().cast();
       final JsVectorInteger typeNarrow       = JsVectorInteger.createVector().cast();
@@ -109,6 +111,7 @@ public class CompletionCache
          if (isSubsequence)
          {
             completionsNarrow.push(completions.get(i));
+            displayNarrow.push(display.get(i));
             packagesNarrow.push(packages.get(i));
             quoteNarrow.push(quote.get(i));
             typeNarrow.push(type.get(i));
@@ -149,6 +152,7 @@ public class CompletionCache
       
       // Finally, re-arrange our vectors.
       final JsVectorString completionsSorted = JsVectorString.createVector().cast();
+      final JsVectorString displaySorted     = JsVectorString.createVector().cast();
       final JsVectorString packagesSorted    = JsVectorString.createVector().cast();
       final JsVectorBoolean quoteSorted      = JsVectorBoolean.createVector().cast();
       final JsVectorInteger typeSorted       = JsVectorInteger.createVector().cast();
@@ -159,6 +163,7 @@ public class CompletionCache
       {
          int index = indices.get(i);
          completionsSorted.push(completionsNarrow.get(index));
+         displaySorted.push(displayNarrow.get(index));
          packagesSorted.push(packagesNarrow.get(index));
          quoteSorted.push(quoteNarrow.get(index));
          typeSorted.push(typeNarrow.get(index));
@@ -170,6 +175,7 @@ public class CompletionCache
       return Completions.createCompletions(
             token,
             completionsSorted.cast(),
+            displaySorted.cast(),
             packagesSorted.cast(),
             quoteSorted.cast(),
             typeSorted.cast(),

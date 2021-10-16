@@ -287,6 +287,7 @@ public class CompletionRequester
          ServerRequestCallback<CompletionResult> callback)
    {
       JsArrayString comp = response.getCompletions();
+      JsArrayString display = response.getCompletionsDisplay();
       JsArrayString pkgs = response.getPackages();
       JsArrayBoolean quote = response.getQuote();
       JsArrayInteger type = response.getType();
@@ -297,6 +298,7 @@ public class CompletionRequester
       {
          newComp.add(new QualifiedName(
             comp.get(i), 
+            display.get(i),
             pkgs.get(i), 
             quote.get(i), 
             type.get(i), 
@@ -382,6 +384,7 @@ public class CompletionRequester
             String token = response.getToken();
 
             JsArrayString comp = response.getCompletions();
+            JsArrayString display = response.getCompletionsDisplay();
             JsArrayString pkgs = response.getPackages();
             JsArrayBoolean quote = response.getQuote();
             JsArrayInteger type = response.getType();
@@ -396,6 +399,7 @@ public class CompletionRequester
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
+                     display.get(i),
                      pkgs.get(i), 
                      quote.get(i), 
                      type.get(i), 
@@ -428,6 +432,7 @@ public class CompletionRequester
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
+                     display.get(i),
                      pkgs.get(i), 
                      quote.get(i), 
                      type.get(i), 
@@ -733,6 +738,7 @@ public class CompletionRequester
             Completions response = Completions.createCompletions(
                   result.token,
                   result.completions,
+                  result.completions,
                   JsUtil.toJsArrayString(pkgNames),
                   JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayInteger(new ArrayList<>(result.completions.length())),
@@ -810,16 +816,17 @@ public class CompletionRequester
                            int type,
                            boolean suggestOnAccept)
       {
-         this(name, source, shouldQuote, type, suggestOnAccept, "", null, "R");
+         this(name, name, source, shouldQuote, type, suggestOnAccept, "", null, "R");
       }
 
       public QualifiedName(String name,
                            String source)
       {
-         this(name, source, false, RCompletionType.UNKNOWN, false, "", null, "R");
+         this(name, name, source, false, RCompletionType.UNKNOWN, false, "", null, "R");
       }
-
+      
       public QualifiedName(String name,
+                           String display,
                            String source,
                            boolean shouldQuote,
                            int type,
@@ -829,6 +836,7 @@ public class CompletionRequester
                            String language)
       {
          this.name = name;
+         this.display = display;
          this.source = source;
          this.shouldQuote = shouldQuote;
          this.type = type;
@@ -841,6 +849,7 @@ public class CompletionRequester
       public static QualifiedName createSnippet(String name)
       {
          return new QualifiedName(
+               name,
                name,
                "snippet",
                false,
@@ -855,6 +864,7 @@ public class CompletionRequester
       {
          return new QualifiedName(
             this.name,
+            this.display,
             this.source,
             this.shouldQuote,
             this.type,
@@ -912,7 +922,7 @@ public class CompletionRequester
             SafeHtmlUtil.appendSpan(
                   sb,
                   RES.styles().completion(),
-                  name);
+                  display);
          }
          else
          {
@@ -924,11 +934,11 @@ public class CompletionRequester
                firstSlashIndex = slashIndices.get(
                      slashIndices.size() - 3);
 
-            String endName = name.substring(lastSlashIndex + 1);
+            String endName = display.substring(lastSlashIndex + 1);
             String startName = "";
             if (slashIndices.size() > 2)
                startName += "...";
-            startName += name.substring(firstSlashIndex, lastSlashIndex);
+            startName += display.substring(firstSlashIndex, lastSlashIndex);
 
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -949,7 +959,7 @@ public class CompletionRequester
          SafeHtmlUtil.appendSpan(
                sb,
                RES.styles().completion(),
-               name);
+               display);
 
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"
@@ -1074,6 +1084,7 @@ public class CompletionRequester
       }
 
       public final String name;
+      public final String display;
       public final String source;
       public final boolean shouldQuote;
       public final int type;
