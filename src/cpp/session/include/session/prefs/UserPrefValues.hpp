@@ -313,6 +313,7 @@ namespace prefs {
 #define kDefaultRVersionVersion "version"
 #define kDefaultRVersionRHome "r_home"
 #define kDefaultRVersionLabel "label"
+#define kDefaultRVersionModule "module"
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"

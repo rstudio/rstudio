@@ -165,7 +165,7 @@ void detectQuartoInstallation()
 #ifndef WIN32
       std::string target = "quarto";
 #else
-      std::string target = quarto + ".exe";
+      std::string target = "quarto.exe";
 #endif
       FilePath embeddedQuartoPath = session::options().quartoPath()
          .completeChildPath("bin")

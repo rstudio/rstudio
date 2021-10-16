@@ -24,6 +24,7 @@
 * Add *New Blank File* command to Files pane to create empty files of selected type in the directory (#1564)
 * Rename CSRF token header `X-CSRF-Token` and cookie `csrf-token` to `X-RS-CSRF-Token` and `rs-csrf-token`, respectively, to avoid clashing with similarly named headers and cookies in other services (#7319)
 * Use double indent for function parameters to align with Tidyverse style (#9766)
+* When an R version defined in `r-versions` uses an environment module, the name of the module is displayed in the version select menus instead of the system R version name. (Pro #2687)
 
 ### Bugfixes
 

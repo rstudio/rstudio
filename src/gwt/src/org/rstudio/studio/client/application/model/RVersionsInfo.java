@@ -33,6 +33,10 @@ public class RVersionsInfo extends JavaScriptObject
       return this.r_home_dir;
    }-*/;
    
+   public final native String getRVersionModule() /*-{
+      return this.r_version_module;
+   }-*/;
+
    // settings below are null unless running with an overlay
    
    public final native String getDefaultRVersion() /*-{
