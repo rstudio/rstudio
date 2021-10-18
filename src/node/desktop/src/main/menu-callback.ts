@@ -61,12 +61,18 @@ export class MenuCallback extends EventEmitter {
   static ZOOM_IN = 'menu-callback-zoom_in';
   static ZOOM_OUT = 'menu-callback-zoom_out';
 
-  mainMenu?: Menu|null = null;
+  mainMenu: Menu | null = null;
   menuStack: Menu[] = [];
-  actions = new Map();
+  actions = new Map<string, MenuItem>();
+
+  // keep a list of templates around so we can re-build the menus with them
+  private menuItemTemplates = new Map<MenuItem, MenuItemConstructorOptions>();
 
   lastWasTools = false;
   lastWasDiagnostics = false;
+
+  private setShortcutDebounceId?: NodeJS.Timeout;
+  private setShortcutQueue = new Set<MenuItemConstructorOptions>();
 
   constructor() {
     super();
@@ -95,6 +101,7 @@ export class MenuCallback extends EventEmitter {
       }
 
       const menuItem = new MenuItem(opts);
+      this.menuItemTemplates.set(menuItem, opts);
       if (this.menuStack.length == 0) {
         this.mainMenu?.append(menuItem);
       } else {
@@ -136,10 +143,15 @@ export class MenuCallback extends EventEmitter {
       this.emit(MenuCallback.MENUBAR_COMPLETED, this.mainMenu);
     });
 
+    // for all events that modify commands, their templates must also be modified!
+
     ipcMain.on('menu_set_command_visible', (event, commandId: string, visible: boolean) => {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.visible = visible;
+        const template = this.menuItemTemplates.get(item);
+        if (template)
+          template.visible = visible;
       }
     });
 
@@ -147,6 +159,9 @@ export class MenuCallback extends EventEmitter {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.enabled = enabled;
+        const template = this.menuItemTemplates.get(item);
+        if (template)
+          template.enabled = enabled;
       }
     });
 
@@ -154,33 +169,123 @@ export class MenuCallback extends EventEmitter {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.checked = checked;
+        const template = this.menuItemTemplates.get(item);
+        if (template)
+          template.checked = checked;
       }
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-empty-function
     ipcMain.on('menu_set_main_menu_enabled', () => {
+      /* do nothing */
     });
 
     ipcMain.on('menu_set_command_label', (event, commandId: string, label: string) => {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.label = label;
+        const template = this.menuItemTemplates.get(item);
+        if (template)
+          template.label = label;
       }
     });
 
-    ipcMain.on('menu_set_command_shortcut', (event, commandId: string, shortcut: string) => {
+    ipcMain.on('menu_set_command_shortcut', (event, commandId: string, shortcut: string | null) => {
+      // Electron doesn't support modifying shortcut of an existing MenuItem;
+      // We have to recreate the application menus whenever* we
+      // get this call. For more on this Electron limitation:
+      // https://github.com/electron/electron/issues/528
+      //
+      // You'd think you could remove the old menu item and replace it with an updated
+      // version, but no such thing as menu.remove:
+      // https://github.com/electron/electron/issues/527
+      //
+      // * this call automatically commits changes after 5 seconds
+      //   if the "commit" event is not called before then
       const item = this.getMenuItemById(commandId);
-      if (item && shortcut.length > 0) {
-        // TODO: Electron doesn't support modifying shortcut of an existing MenuItem; if we want
-        // this to work we'll have to recreate the entire menu containing a command whenever we
-        // get this call. For more on this Electron limitation:
-        // https://github.com/electron/electron/issues/528
-        //
-        // You'd think you could remove the old menu item and replace it with an updated
-        // version, but no such thing as menu.remove:
-        // https://github.com/electron/electron/issues/527
+      if (item) {
+
+        const template = this.menuItemTemplates.get(item);
+        if (!template)
+          return;
+
+        const accelerator = this.convertShortcut(shortcut);
+        template.accelerator = accelerator;
+        this.setShortcutQueue.add({ ...template, accelerator });
+
+        if (this.setShortcutDebounceId) 
+          clearTimeout(this.setShortcutDebounceId);
+
+        this.setShortcutDebounceId = setTimeout(() => {
+          this.updateMenus(Array.from(this.setShortcutQueue.values()));
+          this.setShortcutQueue.clear();
+        }, 5000);
       }
     });
+
+    ipcMain.on('menu_commit_command_shortcuts', () => {
+      if (this.setShortcutDebounceId) 
+        clearTimeout(this.setShortcutDebounceId);
+
+      this.updateMenus(Array.from(this.setShortcutQueue.values()));
+      this.setShortcutQueue.clear();
+    });
+  }
+
+  /**
+   * Uses a list of templates to update existing menu items by reconstructing the entire app menu
+   *
+   * this function performs updates ONLY -- it does not add or remove anything
+   * @param items a list of MenuItemConstructorOptions that will overwrite existing menu items
+   */
+  updateMenus(items: MenuItemConstructorOptions[]): void {
+    const mainMenu = this.mainMenu;
+    if (!mainMenu)
+      return;
+
+    const newMenu = new Menu();
+
+    const recursiveCopy = (currentMenu: Menu, targetMenu: Menu) => {
+      for (const item of currentMenu.items) {
+        const itemTemplate = this.menuItemTemplates.get(item);
+        if (!itemTemplate)  {
+          // no itemTemplate found (separators, for example)
+          targetMenu.append(item);
+          continue;
+        }
+
+        const foundTemplate = items.find(item => item.id === itemTemplate.id);
+        const newItemTemplate = { ...itemTemplate, ...foundTemplate };
+
+        // remove the current entry, as it will be replaced later
+        this.menuItemTemplates.delete(item);
+
+        // itemTemplate can have a submenu, but that needs to be copied through iteration
+        // to avoid copying by reference
+        const { submenu } = newItemTemplate;
+
+        if (submenu instanceof Menu) {
+          const newSubmenu = new Menu();
+          recursiveCopy(submenu as Menu, newSubmenu);
+          newItemTemplate.submenu = newSubmenu;
+        }
+
+        const newMenuItem = new MenuItem(newItemTemplate);
+
+        // replace the existing item with the new item in the actions list
+        if (this.actions.delete(item.id)) {
+          this.actions.set(item.id, newMenuItem);
+        }
+
+        this.menuItemTemplates.set(newMenuItem, newItemTemplate);
+        targetMenu.append(newMenuItem);
+
+      }
+    };
+
+    recursiveCopy(mainMenu, newMenu);
+    this.mainMenu = newMenu;
+
+    Menu.setApplicationMenu(this.mainMenu);
   }
 
   addCommand(cmdId: string, label: string, tooltip: string, shortcut: string, checkable: boolean): void {
@@ -225,6 +330,7 @@ export class MenuCallback extends EventEmitter {
 
     const menuItem = new MenuItem(menuItemOpts);
     this.actions.set(cmdId, menuItem);
+    this.menuItemTemplates.set(menuItem, menuItemOpts);
     this.addToCurrentMenu(menuItem);
   }
 
@@ -245,7 +351,10 @@ export class MenuCallback extends EventEmitter {
   /**
    * Convert RStudio shortcut string to Electron Accelerator
    */
-  convertShortcut(shortcut: string): string {
+  convertShortcut(shortcut: string | null): string {
+    if (!shortcut)
+      return '';
+
     return shortcut.split('+').map(key => {
       if (key === 'Cmd') {
         return 'CommandOrControl';
