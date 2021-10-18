@@ -80,7 +80,8 @@ public class FileCommandToolbar extends Toolbar
       deleteButton_ = commands.deleteFiles().createToolbarButton();
       addLeftWidget(deleteButton_);
 
-      addLeftWidget(commands.renameFile().createToolbarButton());
+      renameButton_ = commands.renameFile().createToolbarButton();
+      addLeftWidget(renameButton_);
 
       addLeftSeparator();
 
@@ -138,6 +139,7 @@ public class FileCommandToolbar extends Toolbar
          newFileButton_.setText("");
          uploadButton_.setText("");
          deleteButton_.setText("");
+         renameButton_.setText("");
          moreButton_.setText("");
       }
       else if (width < 540)
@@ -146,6 +148,7 @@ public class FileCommandToolbar extends Toolbar
          newFileButton_.setText("Blank File");
          uploadButton_.setText("Upload");
          deleteButton_.setText("Delete");
+         renameButton_.setText("Rename");
          moreButton_.setText("");
       }
       else
@@ -154,6 +157,7 @@ public class FileCommandToolbar extends Toolbar
          newFileButton_.setText("New Blank File");
          uploadButton_.setText("Upload");
          deleteButton_.setText("Delete");
+         renameButton_.setText("Rename");
          moreButton_.setText("More");
       }
    }
@@ -162,5 +166,6 @@ public class FileCommandToolbar extends Toolbar
    private ToolbarMenuButton newFileButton_;
    private ToolbarButton uploadButton_;
    private ToolbarButton deleteButton_;
+   private ToolbarButton renameButton_;
    private ToolbarMenuButton moreButton_;
 }

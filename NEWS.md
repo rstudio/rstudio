@@ -19,6 +19,7 @@
 * Fixed custom shortcuts not appearing correctly in menus (#9915)
 * Fixed custom shortcuts not appearing correctly in "Keyboard Shortcuts Help" and Electron menus. (#9953)
 * File pane controls adjust based on the width of the pane so they are always visible (#9870)
+* Updated Files Pane buttons to resize and remain visible at smaller widths (#9870)
 
 ### Misc
 
