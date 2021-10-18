@@ -53,6 +53,7 @@ namespace r_util {
 
       FilePath getPropertyDir(const std::string& id, const std::string& name);
       FilePath buildPropertyPath(const std::string& id, const std::string& name);
+      Error createError(const std::string& errorName, const std::string& preamble, const std::vector<FilePath>& files, const ErrorLocation& errorLocation);
       
       static const std::string& getPropertyFileName(const std::string& propertyName)
       {

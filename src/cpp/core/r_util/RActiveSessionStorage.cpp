@@ -45,13 +45,15 @@ namespace r_util {
 
         if(iter != propertyValue.end())
             *pValue = iter->second;
-
+        
         return Success();
     }
 
     Error FileActiveSessionStorage::readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
     {
-        std::map<std::string, std::string> returnedValues{};
+        std::vector<FilePath> failedFiles{};
+        pValues->empty();
+        Error error;
         for (const std::string &name : names)
         {
             const std::string& fileName = getPropertyFileName(name);
@@ -60,16 +62,19 @@ namespace r_util {
 
             if (readPath.exists())
             {
-                Error error = core::readStringFromFile(readPath, &value);
+                error = core::readStringFromFile(readPath, &value);
                 if (error)
-                    return error;
-
+                    failedFiles.push_back(readPath);
                 boost::algorithm::trim(value);
             }
-            returnedValues.insert(std::pair<std::string, std::string>(name, value));
+            pValues->insert(std::pair<std::string, std::string>(name, value));
         }
-        pValues = &returnedValues;
-        return Success();
+
+        if(failedFiles.empty())
+            return Success();
+        else
+            return createError("UnableToReadFiles", "Failed to read from the following files ", 
+                failedFiles, error.getLocation());
     }
 
     Error FileActiveSessionStorage::writeProperty(const std::string& id, const std::string& name, const std::string& value)
@@ -80,15 +85,37 @@ namespace r_util {
 
     Error FileActiveSessionStorage::writeProperties(const std::string& id, const std::map<std::string, std::string>& properties)
     {
+        std::vector<FilePath> failedFiles{};
         Error error;
         for (const std::pair<std::string, std::string> &prop : properties)
         {
             FilePath writePath = buildPropertyPath(id, prop.first);
             error = core::writeStringToFile(writePath, prop.second);
             if (error)
-                return error;
+                failedFiles.push_back(writePath);
         }
-        return Success();
+        
+        if(failedFiles.empty())
+            return Success();
+        else
+            return createError("UnableToWriteFile", "Failed to write to the following files ", 
+                failedFiles, error.getLocation());
+    }
+
+    Error FileActiveSessionStorage::createError(const std::string& errorName, const std::string& preamble, 
+        const std::vector<FilePath>& files, const ErrorLocation& errorLocation)
+    {
+        std::string errorMessage = preamble + "[ ";
+        auto iter = files.begin();
+        while(iter != files.end())
+        {
+            errorMessage += "'" + iter->getAbsolutePath() + "'";
+            iter++;
+            if(iter != files.end())
+                errorMessage += ", ";
+        }
+        errorMessage += " ]";
+        return Error{errorName, 1, errorMessage, errorLocation};
     }
 
     FilePath FileActiveSessionStorage::buildPropertyPath(const std::string& id, const std::string& name)
