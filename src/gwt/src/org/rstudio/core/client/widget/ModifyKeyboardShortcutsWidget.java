@@ -369,6 +369,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
          
       });
+
+      filterWidget_.getElement().setId(FILTER_WIDGET_ID);
       
       filterWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
@@ -381,7 +383,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       filterWidget_.setPlaceholderText("Filter...");
       
-      addLeftWidget(new ThemedButton("Reset...", new ClickHandler()
+      resetButton_ = new ThemedButton("Reset...", new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -425,7 +427,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                   },
                   false);
          }
-      }));
+      });
+      resetButton_.getElement().setId(RESET_BUTTON_ID);
+      addLeftWidget(resetButton_);
    }
    
    private void applyChanges()
@@ -1452,6 +1456,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private final DataGrid<KeyboardShortcutEntry> table_;
    private final ListDataProvider<KeyboardShortcutEntry> dataProvider_;
    private final Map<KeyboardShortcutEntry, KeyboardShortcutEntry> changes_;
+   private static final String FILTER_WIDGET_ID = "rstudio_kybrd_shrtcts_fltr";
    private final SearchWidget filterWidget_;
    private final String initialFilterText_;
    
@@ -1465,6 +1470,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private Pair<Integer, Integer> lastSelectedIndices_;
    private boolean swallowNextKeyUpEvent_;
 
+   private static final String RESET_BUTTON_ID = "rstudio_kybrd_shrtcts_rst";
+   private ThemedButton resetButton_;
    private ThemedButton applyButton_;
    
    // Columns ----
