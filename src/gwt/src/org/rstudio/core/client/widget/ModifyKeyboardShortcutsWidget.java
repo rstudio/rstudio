@@ -62,6 +62,7 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.ParallelCommandList;
 import org.rstudio.core.client.SerializedCommand;
@@ -370,7 +371,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          
       });
 
-      filterWidget_.getElement().setId(FILTER_WIDGET_ID);
+      ElementIds.assignElementId(filterWidget_, ElementIds.KYBRD_SHRTCTS_FILTER_WIDGET); 
       
       filterWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
@@ -428,7 +429,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                   false);
          }
       });
-      resetButton_.getElement().setId(RESET_BUTTON_ID);
+      ElementIds.assignElementId(resetButton_, ElementIds.KYBRD_SHRTCTS_RESET_BUTTON);
       addLeftWidget(resetButton_);
    }
    
@@ -1456,7 +1457,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private final DataGrid<KeyboardShortcutEntry> table_;
    private final ListDataProvider<KeyboardShortcutEntry> dataProvider_;
    private final Map<KeyboardShortcutEntry, KeyboardShortcutEntry> changes_;
-   private static final String FILTER_WIDGET_ID = "rstudio_kybrd_shrtcts_fltr";
    private final SearchWidget filterWidget_;
    private final String initialFilterText_;
    
@@ -1470,7 +1470,6 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private Pair<Integer, Integer> lastSelectedIndices_;
    private boolean swallowNextKeyUpEvent_;
 
-   private static final String RESET_BUTTON_ID = "rstudio_kybrd_shrtcts_rst";
    private ThemedButton resetButton_;
    private ThemedButton applyButton_;
    
