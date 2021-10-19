@@ -62,6 +62,7 @@ import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.ParallelCommandList;
 import org.rstudio.core.client.SerializedCommand;
@@ -369,6 +370,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
          
       });
+
+      ElementIds.assignElementId(filterWidget_, ElementIds.KYBRD_SHRTCTS_FILTER_WIDGET); 
       
       filterWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
@@ -381,7 +384,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       
       filterWidget_.setPlaceholderText("Filter...");
       
-      addLeftWidget(new ThemedButton("Reset...", new ClickHandler()
+      resetButton_ = new ThemedButton("Reset...", new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -425,7 +428,9 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                   },
                   false);
          }
-      }));
+      });
+      ElementIds.assignElementId(resetButton_, ElementIds.KYBRD_SHRTCTS_RESET_BUTTON);
+      addLeftWidget(resetButton_);
    }
    
    private void applyChanges()
@@ -1465,6 +1470,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    private Pair<Integer, Integer> lastSelectedIndices_;
    private boolean swallowNextKeyUpEvent_;
 
+   private ThemedButton resetButton_;
    private ThemedButton applyButton_;
    
    // Columns ----

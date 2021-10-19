@@ -661,4 +661,10 @@ public class ElementIds
    // ChooseEncodingDialog
    public final static String ENC_SHOW_ALL = "enc_show_all";
    public final static String ENC_SET_DEFAULT = "enc_set_default";
+
+   // Modify Keyboard Shortcuts Dialog
+   public final static String KYBRD_SHRTCTS_FILTER_WIDGET = "kybrd_shrtcts_fltr";
+   public static String getKybrdShrtctsFilterWidget() { return getElementId(KYBRD_SHRTCTS_FILTER_WIDGET); }
+   public final static String KYBRD_SHRTCTS_RESET_BUTTON = "kybrd_shrtcts_rst";
+   public static String getKybrdShrtctsResetButton() { return getElementId(KYBRD_SHRTCTS_RESET_BUTTON); }
 }
