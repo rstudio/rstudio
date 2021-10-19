@@ -618,8 +618,21 @@ public class Files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
 
       // validation: some selection exists
-      if  (selectedFiles.size() == 0)
+      String message = "Are you sure you want to permanently delete ";
+      if (selectedFiles.size() == 0)
+      {
          return;
+      }
+      else if (selectedFiles.size() == 1)
+      {
+         message += selectedFiles.get(0).getName();
+      }
+      else
+      {
+         message += "the " + selectedFiles.size() + " selected files";
+      }
+      message += "?\n\nThis cannot be undone.";
+
 
       // validation -- not prohibited move of public folder
       if (!validateNotRestrictedFolder(selectedFiles, "deleted"))
@@ -629,7 +642,7 @@ public class Files
       globalDisplay_.showYesNoMessage(
                         GlobalDisplay.MSG_QUESTION,
                         "Confirm Delete",
-                        "Are you sure you want to delete the selected files?",
+                        message,
                         new ProgressOperation() {
                            public void execute(final ProgressIndicator progress)
                            {

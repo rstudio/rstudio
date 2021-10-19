@@ -345,6 +345,12 @@ public class WorkbenchScreen extends Composite
    void onActivateConnections() { paneManager_.activateTab(Tab.Connections); }
    @Handler
    void onActivateTutorial() { paneManager_.activateTab(Tab.Tutorial); }
+   @Handler
+   void onActivatePresentation2() 
+   { 
+      paneManager_.activateTab(Tab.Presentations); 
+      paneManager_.focusTab(Tab.Presentations);
+   }
 
 
    @Handler
@@ -373,6 +379,8 @@ public class WorkbenchScreen extends Composite
    void onLayoutZoomConnections() { paneManager_.zoomTab(Tab.Connections); }
    @Handler
    void onLayoutZoomTutorial() { paneManager_.zoomTab(Tab.Tutorial); }
+   @Handler
+   void onLayoutZoomPresentation2() { paneManager_.zoomTab(Tab.Presentations); }
 
    @Handler
    void onLayoutZoomLeftColumn() { paneManager_.zoomColumn(PaneManager.LEFT_COLUMN); }

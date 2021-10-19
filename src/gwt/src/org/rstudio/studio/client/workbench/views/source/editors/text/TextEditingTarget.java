@@ -82,6 +82,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.mathjax.MathJax;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -521,8 +522,8 @@ public class TextEditingTarget implements
                                                   docDisplay_);
       jsHelper_ = new TextEditingTargetJSHelper(docDisplay_);
       sqlHelper_ = new TextEditingTargetSqlHelper(docDisplay_);
-      presentationHelper_ = new TextEditingTargetPresentationHelper(
-                                                                  docDisplay_);
+      presentationHelper_ = new TextEditingTargetPresentationHelper(docDisplay_);
+      presentation2Helper_ = new TextEditingTargetPresentation2Helper(docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
       quartoHelper_ = new TextEditingTargetQuartoHelper(this, docDisplay_);
 
@@ -596,7 +597,7 @@ public class TextEditingTarget implements
                if (commands_.interruptR().isEnabled())
                   commands_.interruptR().execute();
             }
-            else if (continueSpecialCommentOnNewline(ne))
+            else if (TextEditingTargetQuartoHelper.continueSpecialCommentOnNewline(docDisplay_, ne))
             {
                // nothing to do; continueSpecialCommentOnNewline() does all the magic
             }
@@ -1254,6 +1255,22 @@ public class TextEditingTarget implements
          }
       }
 
+   }
+   
+   public void navigateToPresentationEditorLocation(PresentationEditorLocation location)
+   {
+      if (isVisualModeActivated())
+      {
+         ensureVisualModeActive(() -> {
+            Scheduler.get().scheduleDeferred(() -> {
+               visualMode_.navigateToPresentationEditorLocation(location);
+            });
+         });
+      }
+      else
+      {
+         presentation2Helper_.navigateToPresentationEditorLocation(location);
+      }
    }
 
    // the navigateToPosition methods are called by modules that explicitly
@@ -6809,21 +6826,23 @@ public class TextEditingTarget implements
             // see if we should be using quarto preview
             String quartoFormat = useQuartoPreview();
             if (quartoFormat != null)
-            {
+            {               
                // quarto preview can reject the preview (e.g. if it turns
                // out this file is part of a website or book project)
-               server_.quartoPreview(docUpdateSentinel_.getPath(), 
-                                     quartoFormat, 
-                                     new SimpleRequestCallback<Boolean>() {
-                  @Override
-                  public void onResponseReceived(Boolean previewed)
-                  {
-                     if (!previewed) 
+               server_.quartoPreview(
+                  docUpdateSentinel_.getPath(), 
+                  quartoFormat, 
+                  isQuartoRevealJs(quartoFormat) ? presentationEditorLocation() : null,
+                  new SimpleRequestCallback<Boolean>() {
+                     @Override
+                     public void onResponseReceived(Boolean previewed)
                      {
-                        renderCmd.execute();
+                        if (!previewed) 
+                        {
+                           renderCmd.execute();
+                        }
                      }
-                  }
-               });
+                  });
             }
             else
             {
@@ -6870,6 +6889,21 @@ public class TextEditingTarget implements
             return true;
       }
       return false;
+   }
+   
+   
+   private PresentationEditorLocation presentationEditorLocation()
+   {
+      PresentationEditorLocation location;
+      if (isVisualEditorActive())
+      {
+         location = visualMode_.getPresentationEditorLocation();
+      }
+      else
+      {
+         location = presentation2Helper_.getPresentationEditorLocation();
+      } 
+      return location;
    }
 
    private boolean isShinyDoc()
@@ -6919,8 +6953,13 @@ public class TextEditingTarget implements
          else
          {
             String format = outputFormats.get(0);
-            final ArrayList<String> previewFormats = new ArrayList<String>(
-                  Arrays.asList("pdf", "beamer", "html", "revealjs", "slidy"));
+            final ArrayList<String> previewFormats = new ArrayList<String>(Arrays.asList(
+                  QUARTO_PDF_FORMAT, 
+                  QUARTO_BEAMER_FORMAT, 
+                  QUARTO_HTML_FORMAT, 
+                  QUARTO_REVEALJS_FORMAT, 
+                  QUARTO_SLIDY_FORMAT)
+            );
             return previewFormats.stream()
                .filter(fmt -> format.startsWith(fmt))
                .findAny()
@@ -6933,6 +6972,17 @@ public class TextEditingTarget implements
          return null;
       }
      
+   }
+   
+   private static final String QUARTO_PDF_FORMAT = "pdf";
+   private static final String QUARTO_BEAMER_FORMAT = "beamer";
+   private static final String QUARTO_HTML_FORMAT = "html";
+   private static final String QUARTO_SLIDY_FORMAT = "slidy";
+   private static final String QUARTO_REVEALJS_FORMAT = "revealjs";
+   
+   private boolean isQuartoRevealJs(String format)
+   {
+      return format.startsWith(QUARTO_REVEALJS_FORMAT);
    }
    
    private boolean isQuartoWebsiteDoc()
@@ -7404,7 +7454,11 @@ public class TextEditingTarget implements
    @Handler
    void onFold()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.fold();
+      }
+      else if (useScopeTreeFolding())
       {
          Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
                                         docDisplay_.getSelectionEnd());
@@ -7436,7 +7490,11 @@ public class TextEditingTarget implements
    @Handler
    void onUnfold()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.unfold();
+      }
+      else if (useScopeTreeFolding())
       {
          Range range = Range.fromPoints(docDisplay_.getSelectionStart(),
                                         docDisplay_.getSelectionEnd());
@@ -7500,7 +7558,6 @@ public class TextEditingTarget implements
          else
          {
             // If selection, unfold the selection
-
             docDisplay_.unfold(range);
          }
       }
@@ -7514,7 +7571,11 @@ public class TextEditingTarget implements
    @Handler
    void onFoldAll()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.foldAll();
+      }
+      else  if (useScopeTreeFolding())
       {
          // Fold all except anonymous braces
          HashSet<Integer> rowsFolded = new HashSet<>();
@@ -7534,12 +7595,17 @@ public class TextEditingTarget implements
       {
          docDisplay_.foldAll();
       }
+       
    }
 
    @Handler
    void onUnfoldAll()
    {
-      if (useScopeTreeFolding())
+      if (visualMode_.isActivated())
+      {
+         visualMode_.unfoldAll();
+      }
+      else  if (useScopeTreeFolding())
       {
          for (AceFold f : JsUtil.asIterable(docDisplay_.getFolds()))
             docDisplay_.unfold(f);
@@ -7990,6 +8056,15 @@ public class TextEditingTarget implements
    private final CompletionContext rContext_ = new CompletionContext() {
 
       @Override
+      public String getId()
+      {
+         if (docUpdateSentinel_ == null)
+            return null;
+         else
+            return docUpdateSentinel_.getId();
+      }
+      
+      @Override
       public String getPath()
       {
          if (docUpdateSentinel_ == null)
@@ -7999,13 +8074,10 @@ public class TextEditingTarget implements
       }
 
       @Override
-      public String getId()
+      public String getExtendedFileType()
       {
-         if (docUpdateSentinel_ == null)
-            return null;
-         else
-            return docUpdateSentinel_.getId();
-      }
+         return extendedType_;
+      }      
    };
 
    public CompletionContext getRCompletionContext()
@@ -8656,85 +8728,6 @@ public class TextEditingTarget implements
          });
       }
    }
-   
-   private boolean continueSpecialCommentOnNewline(NativeEvent event)
-   {
-      // don't do anything if we have a completion popup showing
-      if (docDisplay_.isPopupVisible())
-         return false;
-      
-      // only handle plain Enter insertions
-      if (event.getKeyCode() != KeyCodes.KEY_ENTER)
-         return false;
-      
-      int modifier = KeyboardShortcut.getModifierValue(event);
-      if (modifier != KeyboardShortcut.NONE)
-         return false;
-      
-      String line = docDisplay_.getCurrentLineUpToCursor();
-
-      // validate that this line begins with a comment character
-      // (necessary to check token type for e.g. Markdown documents)
-      // https://github.com/rstudio/rstudio/issues/6421
-      //
-      // note that we don't check all tokens here since we provide
-      // special token styling within some comments (e.g. roxygen)
-      JsArray<Token> tokens =
-            docDisplay_.getTokens(docDisplay_.getCursorPosition().getRow());
-               
-      for (int i = 0, n = tokens.length(); i < n; i++)
-      {
-         Token token = tokens.get(i);
-
-         // skip initial whitespace tokens if any
-         String value = token.getValue();
-         if (value.trim().isEmpty())
-            continue;
-
-         // check that we have a comment
-         if (token.hasType("comment"))
-            break;
-         
-         // the token isn't a comment; we shouldn't take action here
-         return false;
-      }
-      
-      // if this is an R Markdown chunk metadata comment, and this
-      // line is blank other than the comment prefix, remove that
-      // prefix and insert a newline (terminating the block)
-      {
-         Pattern pattern = Pattern.create("^\\s*#[|]\\s*$", "");
-         Match match = pattern.match(line, 0);
-         if (match != null)
-         {
-            Position cursorPos = docDisplay_.getCursorPosition();
-            Range range = Range.create(
-                  cursorPos.getRow(), 0,
-                  cursorPos.getRow() + 1, 0);
-            
-            event.stopPropagation();
-            event.preventDefault();
-            docDisplay_.replaceRange(range, "\n\n");
-            docDisplay_.moveCursorBackward();
-            docDisplay_.ensureCursorVisible();
-            return true;
-         }
-      }
-      
-      // NOTE: we are generous with our pattern definition here
-      // as we've already validated this is a comment token above
-      Pattern pattern = Pattern.create("^(\\s*(?:#+|%+|//+)['*+>|]\\s*)");
-      Match match = pattern.match(line, 0);
-      if (match == null)
-         return false;
-      
-      event.preventDefault();
-      event.stopPropagation();
-      docDisplay_.insertCode("\n" + match.getGroup(1));
-      docDisplay_.ensureCursorVisible();
-      
-      return true;
-   }
 
    private StatusBar statusBar_;
    private final DocDisplay docDisplay_;
@@ -8770,6 +8763,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetJSHelper jsHelper_;
    private final TextEditingTargetSqlHelper sqlHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
+   private final TextEditingTargetPresentation2Helper presentation2Helper_;
    private final TextEditingTargetRHelper rHelper_;
    private VisualMode visualMode_;
    private final TextEditingTargetQuartoHelper quartoHelper_;

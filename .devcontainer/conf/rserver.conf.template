@@ -1,0 +1,10 @@
+# This file contains a server configuration that can be used to
+# run trserver from VS Code without further configuration.
+#
+# The post-create command (see `.devcontainer/devcontainer.json`) runs
+# a `generate.sh` script that replaces the ${WORKSPACE_FOLDER} variables
+# in this file with the correct paths. The resulting config file is
+# written to the `<project-dir>/run/conf` directory.
+#
+#[server]
+#log-dir=${WORKSPACE_FOLDER}/logs

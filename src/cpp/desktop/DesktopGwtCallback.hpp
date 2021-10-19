@@ -239,7 +239,7 @@ public Q_SLOTS:
    void reloadZoomWindow();
 
    void setTutorialUrl(QString url);
-   
+   void setPresentationUrl(QString url);
    void setViewerUrl(QString url);
    void reloadViewerZoomWindow(QString url);
 

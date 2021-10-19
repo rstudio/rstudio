@@ -8,6 +8,9 @@
       .orderedOptions {
          margin-top: 10px;
       }
+      .topSpaced {
+         margin-top: 4px;
+      }
    </ui:style>
 
    <g:VerticalPanel styleName="{res.styles.dialog}">
@@ -15,6 +18,10 @@
       <rw:FormLabel for="{ElementIds.getVisualMdListType}" text="List type:"/>
       <rw:SelectWidget elementId="{ElementIds.getVisualMdListType}" styleName="{res.styles.fullWidth} {res.styles.spaced}"
                        ui:field="listType_"/>
+                       
+      <rw:FormLabel for="{ElementIds.getVisualMdListIncremental}" text="Item display:" ui:field="labelIncremental_"/>
+      <rw:SelectWidget elementId="{ElementIds.getVisualMdListIncremental}" styleName="{res.styles.fullWidth} {res.styles.spaced} {style.topSpaced}"
+                       ui:field="listIncremental_"/>
 
       <g:CheckBox styleName="{res.styles.checkBox} {res.styles.spaced}" text="Tight layout (less vertical space between list items)"
                   ui:field="tight_"/>

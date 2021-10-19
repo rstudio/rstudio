@@ -14,6 +14,11 @@
  */
 @external editor_dark;
 
+@url EXPAND_LIGHT expand2x;
+@url EXPAND_DARK expandDark2x;
+@url COLLAPSED_LIGHT collapsed2x;
+@url COLLAPSED_DARK collapsedDark2x;
+
 .toggle
 {
     position: absolute;
@@ -25,20 +30,50 @@
     transition-duration: 0.2s;
 }
 
+.expandIcon, .collapsedIcon
+{
+    background-size: 100%;
+}
+
+.expandIcon
+{
+    width: 10px;
+    height: 10px;
+    background-image: EXPAND_LIGHT;
+}
+
+.editor_dark .expandIcon
+{
+    background-image: EXPAND_DARK;
+}
+
+.collapsedIcon
+{
+    width: 20px;
+    height: 20px;
+    background-image: COLLAPSED_LIGHT;
+}
+
+.editor_dark .collapsedIcon
+{
+    background-image: COLLAPSED_DARK;
+}
+
 .collapsed
 {
     position: absolute;
-    top: 0px;
-    right: 15px;
-    padding: 0px;
+    right: 0px;
+    padding-left: 15px;
+    padding-right: 15px;
     cursor: pointer;
-    transition-property: filter;
+    transition-property: filter, opacity;
     transition-duration: 0.2s;
+    z-index: 1;
     opacity: 0.5;
 }
 
-.editor_dark .toggle,
-.editor_dark .collapsed
+.collapsed:hover
 {
-    filter: invert(1);
+    opacity: 0.7;
 }
+

@@ -227,15 +227,15 @@ var MarkdownHighlightRules = function() {
             reference,
             linkByReference,
            { // HR *
-            token : "constant",
+            token : "constant.hr",
             regex : "^\\s*[*](?:\\s*[*]){2,}\\s*$",
             next  : "allowBlock",
         }, { // HR -
-            token : "constant",
+            token : "constant.hr",
             regex : "^\\s*[-](?:\\s*[-]){2,}\\s*$",
             next  : "allowBlock",
         }, { // HR _
-            token : "constant",
+            token : "constant.hr",
             regex : "^\\s*[_](?:\\s*[_]){2,}\\s*$",
             next  : "allowBlock"
         }, { // MathJax native display \[ ... \]

@@ -15,18 +15,14 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.ui;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.Style;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Image;
 import org.rstudio.core.client.a11y.A11y;
-import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.Value;
 
 public class VisualModeCollapseToggle extends Composite
@@ -34,10 +30,16 @@ public class VisualModeCollapseToggle extends Composite
    public interface CollapseImages extends ClientBundle
    {
       @Source("expand_2x.png")
-      ImageResource expand2x();
+      DataResource expand2x();
+
+      @Source("expandDark_2x.png")
+      DataResource expandDark2x();
 
       @Source("collapsed_2x.png")
-      ImageResource collapsed2x();
+      DataResource collapsed2x();
+
+      @Source("collapsedDark_2x.png")
+      DataResource collapsedDark2x();
 
       @Source("CollapseToggle.css")
       Styles collapseStyles();
@@ -47,6 +49,8 @@ public class VisualModeCollapseToggle extends Composite
    {
       String toggle();
       String collapsed();
+      String expandIcon();
+      String collapsedIcon();
    }
 
    public VisualModeCollapseToggle(boolean initial)
@@ -55,7 +59,7 @@ public class VisualModeCollapseToggle extends Composite
       HTMLPanel host = new HTMLPanel("");
 
       // Initialize value that contains the expansion state.
-      expanded = new Value<Boolean>(initial);
+      expanded = new Value<>(initial);
 
       // Initialize CSS and image resources.
       CollapseImages images = GWT.create(CollapseImages.class);
@@ -63,24 +67,29 @@ public class VisualModeCollapseToggle extends Composite
 
       // Create expander tool; this is a small triangle like ">" that toggles
       // the expansion state of the chunk.
-      toggle_ = new Image(new ImageResource2x(images.expand2x()));
+      toggle_ = new HTMLPanel("");
       toggle_.setStyleName(images.collapseStyles().toggle(), true);
-      Style style = toggle_.getElement().getStyle();
+      HTMLPanel toggleIcon = new HTMLPanel("");
+      toggleIcon.setStyleName(images.collapseStyles().expandIcon());
+      toggle_.add(toggleIcon);
       host.add(toggle_);
 
       // Toggle expansion state on/off on click.
       DOM.sinkEvents(toggle_.getElement(), Event.ONCLICK);
-      DOM.setEventListener(toggle_.getElement(), evt ->
-      {
-         expanded.setValue(!expanded.getValue(), true);
-      });
+      DOM.setEventListener(toggle_.getElement(), evt -> toggleExpansion());
       setShowToggle(false);
 
       // Create decorative image to show that the chunk is in a collapsed state.
-      collapsed_ = new Image(new ImageResource2x(images.collapsed2x()));
+      collapsed_ = new HTMLPanel("");
       collapsed_.setStyleName(images.collapseStyles().collapsed(), true);
+      HTMLPanel collapsedIcon = new HTMLPanel("");
+      collapsedIcon.setStyleName(images.collapseStyles().collapsedIcon());
+      collapsed_.add(collapsedIcon);
       A11y.setDecorativeImage(collapsed_.getElement());
       host.add(collapsed_);
+
+      DOM.sinkEvents(collapsed_.getElement(), Event.ONCLICK);
+      DOM.setEventListener(collapsed_.getElement(), evt -> toggleExpansion());
 
       // Set initial expansion state and listen for changes
       setExpanded(initial);
@@ -117,11 +126,20 @@ public class VisualModeCollapseToggle extends Composite
       collapsed_.setVisible(!expanded);
 
       // Change hint text.
-      toggle_.setAltText((expanded ? "Collapse" : "Expand") + " code chunk");
+      toggle_.setTitle((expanded ? "Collapse" : "Expand") + " code chunk");
    }
+
+   /**
+    * Toggles the current expansion state
+    */
+   private void toggleExpansion()
+   {
+      expanded.setValue(!expanded.getValue(), true);
+   }
+
 
    public Value<Boolean> expanded;
 
-   private Image toggle_;
-   private Image collapsed_;
+   private final HTMLPanel toggle_;
+   private final HTMLPanel collapsed_;
 }

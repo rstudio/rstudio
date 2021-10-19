@@ -94,6 +94,11 @@ public:
       return port_;
    }
 
+   std::string jobId()
+   {
+      return pJob_->id();
+   }
+
 
 protected:
    explicit QuartoServe(const std::string& render, const core::FilePath& initialDocPath)
@@ -141,7 +146,7 @@ protected:
             // launch viewer
             module_context::viewer(serverUrl(port_, initialDocPath_),
                                    -1,
-                                   module_context::QuartoNavigate::navWebsite());
+                                   module_context::QuartoNavigate::navWebsite(pJob_->id()));
 
             // now that the dev server is running restore the console tab
             ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
@@ -222,7 +227,7 @@ long pkgServePort()
 }
 
 
-void navigateToViewer(long port, const core::FilePath& docPath)
+void navigateToViewer(long port, const core::FilePath& docPath, const std::string& jobId)
 {
    // if the viewer is already on the site just activate it
    if (boost::algorithm::starts_with(
@@ -232,9 +237,11 @@ void navigateToViewer(long port, const core::FilePath& docPath)
    }
    else
    {
-      module_context::viewer(serverUrl(port, docPath),
-                             -1,
-                             module_context::QuartoNavigate::navWebsite());
+      module_context::viewer(
+          serverUrl(port, docPath),
+          -1,
+          module_context::QuartoNavigate::navWebsite(jobId)
+      );
    }
 }
 
@@ -251,14 +258,14 @@ void previewDoc(const std::string& renderOutput, const core::FilePath& docPath)
 {
    if (isJobServeRunning() && !isNewQuartoBuild(renderOutput))
    {
-      navigateToViewer(s_pServe->port(), docPath);
+      navigateToViewer(s_pServe->port(), docPath, s_pServe->jobId());
    }
    else
    {
        long port = pkgServePort();
        if (port > 0)
        {
-         navigateToViewer(port, docPath);
+         navigateToViewer(port, docPath, s_pServe->jobId());
        }
        else
        {

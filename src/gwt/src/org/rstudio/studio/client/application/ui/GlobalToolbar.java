@@ -58,7 +58,9 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newRNotebook().createMenuItem(false));
       newMenu_.addItem(commands.newRMarkdownDoc().createMenuItem(false));
+      newMenu_.addSeparator();
       newMenu_.addItem(commands.newQuartoDoc().createMenuItem(false));
+      newMenu_.addItem(commands.newQuartoPres().createMenuItem(false));
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newRShinyApp().createMenuItem(false));
       newMenu_.addItem(commands.newRPlumberDoc().createMenuItem(false));
@@ -72,7 +74,6 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newSweaveDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRHTMLDoc().createMenuItem(false));
-      newMenu_.addItem(commands.newRPresentationDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRDocumentationDoc().createMenuItem(false));
 
       // create and add new menu
@@ -218,6 +219,7 @@ public class GlobalToolbar extends Toolbar
       paneLayoutMenu.addItem(commands_.layoutZoomVcs().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomBuild().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomConnections().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomPresentation2().createMenuItem(false));
 
       ImageResource paneLayoutIcon = new ImageResource2x(ThemeResources.INSTANCE.paneLayoutIcon2x());
       ToolbarMenuButton paneLayoutButton = new ToolbarMenuButton(

@@ -131,6 +131,7 @@
 #define kSessionTmpDir             "rstudio-rsession"
 
 #define kDefaultPandocPath         "bin/pandoc"
+#define kDefaultQuartoPath         "bin/quarto"
 #define kDefaultPostbackPath       "bin/postback/rpostback"
 #define kDefaultRsclangPath        "bin/rsclang"
 

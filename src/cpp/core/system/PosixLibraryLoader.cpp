@@ -53,6 +53,32 @@ Error loadLibrary(const std::string& libPath, void** ppLib)
    }
 }
 
+/**
+ * Verify that we can load a library (without actually loading it)
+ * by passing RTLD_NOLOAD to dlopen
+ */
+Error verifyLibrary(const std::string& libPath)
+{
+   void* pLib = nullptr;
+   pLib = ::dlopen(libPath.c_str(), RTLD_LAZY | RTLD_NOLOAD);
+   if (pLib == nullptr)
+   {
+      // dlopen returns a null pointer on error rather than an error number.
+      // using -1 here as a generic non-zero placeholder
+      Error error = Error("LibraryVerifyFailed",
+                          -1,
+                          "Attempt to verify library failed",
+                          ErrorLocation());
+      error.addProperty("lib-path", libPath);
+      addLastDLErrorMessage(&error);
+      return error;
+   }
+   else
+   {
+      return closeLibrary(pLib);
+   }
+}
+
 Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol)
 {
    *ppSymbol = nullptr;

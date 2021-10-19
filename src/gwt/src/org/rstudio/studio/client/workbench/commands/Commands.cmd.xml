@@ -48,7 +48,9 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="newRNotebook"/>
             <cmd refid="newRMarkdownDoc"/>
+            <separator/>
             <cmd refid="newQuartoDoc"/>
+            <cmd refid="newQuartoPres"/>
             <separator/>
             <cmd refid="newRShinyApp"/>
             <cmd refid="newRPlumberDoc"/>
@@ -71,7 +73,6 @@ well as menu structures (for main menu and popup menus).
             <separator/>
             <cmd refid="newSweaveDoc"/>
             <cmd refid="newRHTMLDoc"/>
-            <cmd refid="newRPresentationDoc"/>
             <cmd refid="newRDocumentationDoc"/>
          </menu>
          <cmd refid="newProject"/>
@@ -299,6 +300,7 @@ well as menu structures (for main menu and popup menus).
             <cmd refid="layoutZoomTutorial"/>
             <cmd refid="layoutZoomBuild"/>
             <cmd refid="layoutZoomConnections"/>
+            <cmd refid="layoutZoomPresentation2"/>
             <separator/>
             <cmd refid="focusLeftSeparator"/>
             <cmd refid="focusRightSeparator"/>
@@ -337,6 +339,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="activateVcs"/>
          <cmd refid="activateBuild"/>
          <cmd refid="activateConnections"/>
+         <cmd refid="activatePresentation2"/>
          <cmd refid="activateTutorial"/>
          <cmd refid="activateJobs"/>
          <cmd refid="activateLauncherJobs"/>
@@ -751,6 +754,9 @@ well as menu structures (for main menu and popup menus).
          <!-- Not using Cmd+F5 (aka Meta+F5) on Mac, it is the standard shortcut for toggling VoiceOver -->
          <shortcut refid="activateConnections" value="Ctrl+F5" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
 
+         <shortcut refid="activatePresentation2" value="Meta+F8" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="activatePresentation2" value="Ctrl+F8" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         
          <shortcut refid="activateFindInFiles" value="Meta+F6" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="activateFindInFiles" value="Ctrl+F6" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="newSourceColumn" value="Meta+F7" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
@@ -953,6 +959,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F2"/>
          <shortcut refid="layoutZoomConnections" value="Ctrl+Shift+F5"/>
          <shortcut refid="layoutZoomTutorial" value="Ctrl+Shift+F6"/>
+         <shortcut refid="layoutZoomPresentation2" value="Ctrl+Shift+F8"/>
          <shortcut refid="layoutZoomLeftColumn" value="Ctrl+Alt+Shift+F12"/>
          <shortcut refid="layoutZoomRightColumn" value="Ctrl+Alt+Shift+F11"/>
       </shortcutgroup>
@@ -1103,8 +1110,13 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"/>
 
    <cmd id="newQuartoDoc"
-        menuLabel="_Quarto Doc..."
+        menuLabel="_Quarto Document..."
         desc="Create a new Quarto document"
+        rebindable="false"/>
+      
+   <cmd id="newQuartoPres"
+        menuLabel="_Quarto Presentation..."
+        desc="Create a new Quarto presentation"
         rebindable="false"/>
         
    <cmd id="serveQuartoSite"
@@ -1445,6 +1457,11 @@ well as menu structures (for main menu and popup menus).
         label="Show Presentation Pane"
         menuLabel="Show Prese_ntation"
         windowMode="main"/>
+        
+   <cmd id="activatePresentation2"
+        label="Show Presentation Pane"
+        menuLabel="Show Prese_ntation"
+        windowMode="main"/>
 
    <cmd id="activateConnections"
         label="Show Connections Pane"
@@ -1583,7 +1600,13 @@ well as menu structures (for main menu and popup menus).
         label="Zoom Connections"
         menuLabel="Zoom Co_nnections"
         windowMode="main"/>
-
+        
+    <cmd id="layoutZoomPresentation2"
+        checkable="true"
+        label="Zoom Presentation"
+        menuLabel="Zoom _Presentation"
+        windowMode="main"/>
+   
    <cmd id="layoutZoomCurrentPane"
         checkable="true"
         label="Toggle Zoom for Current Pane"/>
@@ -2753,6 +2776,45 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"
         context="presentation"/>
 
+   <!--  Presentation2 -->
+   <cmd id="refreshPresentation2"
+        menuLabel="Refresh Presentation"
+        desc="Refresh the presentation preview"/>
+        
+   <cmd id="presentation2Home"
+        desc="Go to the first slide"
+        rebindable="false"/>
+
+   <cmd id="presentation2Next"
+        desc="Go to the next slide"
+        rebindable="false"/>
+
+   <cmd id="presentation2Prev"
+        desc="Go to the previous slide"
+        rebindable="false"/>
+
+   <cmd id="presentation2Edit"
+        menuLabel="Edit Presentation Source"
+        buttonLabel="Edit"
+        desc="Edit this slide of the presentation"
+        rebindable="false"/>
+
+   <cmd id="presentation2Present"
+        buttonLabel="Present"
+        desc="Present in an external web browser"
+        rebindable="false"/>   
+        
+    <cmd id="presentation2PresentFromBeginning"
+        menuLabel="Present from Beginning"
+        desc="Present from the first slide in an external web browser"
+        rebindable="false"/>   
+        
+    <cmd id="presentation2Print"
+        buttonLabel="Print"
+        desc="Open a browser to print the presentation"
+        rebindable="false"/>     
+        
+
    <cmd id="historySendToSource"
         label="Insert Command into Document"
         menuLabel="Insert into _Source"
@@ -3271,6 +3333,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="refreshHelp"
         label="Refresh Help Topic"
         menuLabel="Refresh"
+        buttonLabel=""
         desc="Refresh topic"
         context="help"/>
 

@@ -17,6 +17,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.rstudio.core.client.Pair;
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.panmirror.format.PanmirrorRmdExtensions;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.quarto.QuartoHelper;
+import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.BlogdownConfig;
@@ -96,6 +98,8 @@ public class VisualModePanmirrorFormat
                quartoDocTypes.add(PanmirrorExtendedDocType.quarto);
                if (getOutputFormats().contains("hugo"))
                   quartoDocTypes.add(PanmirrorExtendedDocType.hugo);
+               if (isQuartoPresentation())
+                  quartoDocTypes.add(PanmirrorExtendedDocType.presentation);
                format.docTypes = quartoDocTypes.toArray(new String[] {}); 
             }
             else if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
@@ -105,6 +109,8 @@ public class VisualModePanmirrorFormat
                   configDocTypes.add(PanmirrorExtendedDocType.bookdown);
                if (isHugoProjectDocument() || isHugodownDocument())
                   configDocTypes.add(PanmirrorExtendedDocType.hugo);
+               if (isRmdPresentation())
+                  configDocTypes.add(PanmirrorExtendedDocType.presentation);
                format.docTypes = configDocTypes.toArray(new String[] {});
             }
             else
@@ -180,7 +186,7 @@ public class VisualModePanmirrorFormat
             // blogdown files be opened within projects). this idiom is obscure 
             // enough that it's vanishingly unlikely to affect non-blogdown docs
             format.hugoExtensions.shortcodes = true;
-                 
+            
             // return format
             return format;
          }
@@ -196,6 +202,47 @@ public class VisualModePanmirrorFormat
    {
       return isQuartoDocument() && 
              QuartoHelper.isQuartoBookDoc(docUpdateSentinel_.getPath(), sessionInfo_.getQuartoConfig());
+   }
+   
+   public boolean isQuartoPresentation()
+   {
+      if (isQuartoDocument())
+      {
+         List<String> formats = getOutputFormats();
+         final ArrayList<String> presentationFormats = new ArrayList<String>(Arrays.asList(
+               "beamer", 
+               "pptx",
+               "revealjs",
+               "slidy"
+         ));
+         for (String format : formats)
+         {
+            if (presentationFormats.stream().anyMatch(presFormat -> format.startsWith(presFormat)))
+               return true;
+         }
+      }
+     
+      return false;
+   }
+   
+   public boolean isRmdPresentation()
+   {
+      if (isRMarkdownDocument() && !isQuartoDocument())
+      {
+         List<String> formats = getOutputFormats();
+         final ArrayList<String> presentationFormats = new ArrayList<String>(Arrays.asList(
+            RmdOutputFormat.OUTPUT_BEAMER_PRESENTATION, 
+            RmdOutputFormat.OUTPUT_PPT_PRESENTATION,
+            RmdOutputFormat.OUTPUT_REVEALJS_PRESENTATION,
+            RmdOutputFormat.OUTPUT_SLIDY_PRESENTATION
+         ));
+         for (String format : formats)
+         {
+            if (presentationFormats.stream().anyMatch(presFormat -> format.endsWith(presFormat)))
+               return true;
+         }
+      }
+      return false;
    }
    
    

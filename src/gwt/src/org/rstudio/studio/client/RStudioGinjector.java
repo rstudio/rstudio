@@ -76,6 +76,7 @@ import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorDOIServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorDataCiteServer;
+import org.rstudio.studio.client.panmirror.server.PanmirrorEnvironmentServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorPubMedServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorXRefServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServer;
@@ -92,7 +93,7 @@ import org.rstudio.studio.client.projects.ui.newproject.NewQuartoProjectPage;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
 import org.rstudio.studio.client.quarto.QuartoNewDocument;
-import org.rstudio.studio.client.quarto.ui.QuartoNewDocumentDialog;
+import org.rstudio.studio.client.quarto.ui.NewQuartoDocumentDialog;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFramePane;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
@@ -193,6 +194,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeConfirm;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorFormat;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeSpelling;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlEditorToolsProviderQuarto;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeNavigation;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
@@ -326,6 +328,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PanmirrorDOIServer panmirrorDOIServer);
    void injectMembers(PanmirrorXRefServer panmirrorXRefServer);
    void injectMembers(PanmirrorZoteroServer panmirrorZoteroServer);
+   void injectMembers(PanmirrorEnvironmentServer panmirrorEnvironmentServer);
    void injectMembers(PanmirrorDialogs panmirrorEditorUI);
    void injectMembers(PanmirrorWidget panmirrorWidget);
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
@@ -347,9 +350,10 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PythonPreferencesPaneBase<?> pane);
    void injectMembers(ConsoleInterpreterVersion version);
    void injectMembers(QuartoNewDocument quartoNewDocument);
-   void injectMembers(QuartoNewDocumentDialog quartoNewDocumentDialog);
+   void injectMembers(NewQuartoDocumentDialog newQuartoDocumentDialog);
    void injectMembers(NewQuartoProjectPage newProjectPage);
    void injectMembers(QuartoConnection quartoMessageBus);
+   void injectMembers(YamlEditorToolsProviderQuarto yamlCompletionSourceQuarto);
 
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);

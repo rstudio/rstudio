@@ -554,6 +554,8 @@ public class ElementIds
    public static String getVisualMdCitationLocator() { return getElementId(VISUAL_MD_CITATION_LOCATOR); }
    public final static String VISUAL_MD_LIST_TYPE = "visual_md_list_type";
    public static String getVisualMdListType() { return getElementId(VISUAL_MD_LIST_TYPE); }
+   public final static String VISUAL_MD_LIST_INCREMENTAL = "visual_md_list_incremental";
+   public static String getVisualMdListIncremental() { return getElementId(VISUAL_MD_LIST_INCREMENTAL); }
    public final static String VISUAL_MD_LIST_ORDER = "visual_md_list_order";
    public static String getVisualMdListOrder() { return getElementId(VISUAL_MD_LIST_ORDER); }
    public final static String VISUAL_MD_LIST_NUMBER_STYLE = "visual_md_list_number_style";
@@ -659,4 +661,10 @@ public class ElementIds
    // ChooseEncodingDialog
    public final static String ENC_SHOW_ALL = "enc_show_all";
    public final static String ENC_SET_DEFAULT = "enc_set_default";
+
+   // Modify Keyboard Shortcuts Dialog
+   public final static String KYBRD_SHRTCTS_FILTER_WIDGET = "kybrd_shrtcts_fltr";
+   public static String getKybrdShrtctsFilterWidget() { return getElementId(KYBRD_SHRTCTS_FILTER_WIDGET); }
+   public final static String KYBRD_SHRTCTS_RESET_BUTTON = "kybrd_shrtcts_rst";
+   public static String getKybrdShrtctsResetButton() { return getElementId(KYBRD_SHRTCTS_RESET_BUTTON); }
 }

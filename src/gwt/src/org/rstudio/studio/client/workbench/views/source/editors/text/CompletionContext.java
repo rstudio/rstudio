@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 public interface CompletionContext
 {
-   String getPath();
    String getId();
+   String getPath();
+   String getExtendedFileType();
 }

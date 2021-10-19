@@ -84,8 +84,10 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.RcppCodeChunk, "Rcpp");
       add(PanmirrorCommands.SQLCodeChunk, "SQL");
       add(PanmirrorCommands.StanCodeChunk, "Stan");
-      add(PanmirrorCommands.ExpandAllChunks, "Expand All Chunks");
-      add(PanmirrorCommands.CollapseAllChunks, "Collapse All Chunks");
+      add(PanmirrorCommands.ExpandChunk, "Expand Chunk", false);
+      add(PanmirrorCommands.CollapseChunk, "Collapse Chunk", false);
+      add(PanmirrorCommands.ExpandAllChunks, "Expand All Chunks", false);
+      add(PanmirrorCommands.CollapseAllChunks, "Collapse All Chunks", false);
 
       // lists
       add(PanmirrorCommands.BulletList, "Bulleted List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
@@ -117,6 +119,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
      
       // insert
       add(PanmirrorCommands.OmniInsert, "Any...", icons.OMNI);
+      add(PanmirrorCommands.Table, "Table...", icons.TABLE);
       add(PanmirrorCommands.Link, "Link...", icons.LINK);
       add(PanmirrorCommands.RemoveLink, "Remove Link");
       add(PanmirrorCommands.Image, "Figure / Image...", icons.IMAGE);
@@ -148,6 +151,11 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.GoToPreviousSection, "Go to Previous Section");
       add(PanmirrorCommands.GoToNextChunk, "Go to Next Chunk");
       add(PanmirrorCommands.GoToPreviousChunk, "Go to Previous Chunk");
+      
+      // slides
+      add(PanmirrorCommands.InsertSlidePause, "Insert:::Slide Pause");
+      add(PanmirrorCommands.InsertSlideNotes, "Insert:::Slide Notes");
+      add(PanmirrorCommands.InsertSlideColumns, "Insert:::Slide Columns");
    }
    
    public PanmirrorCommandUI get(String id)
@@ -178,7 +186,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       List<CommandPaletteItem> items = new ArrayList<>();
       for (PanmirrorCommandUI cmd: commandsUI_.values())
       {
-         if (cmd != null && cmd.isVisible())
+         if (cmd != null && cmd.isVisible() && cmd.getCommandPallette())
          {
             items.add(new PanmirrorCommandPaletteItem(cmd));
          }
@@ -214,9 +222,14 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(id, menuText, Roles.getMenuitemRole());
    }
    
+   private void add(String id, String menuText, boolean commandPallette)
+   {
+      add(id, menuText, null, Roles.getMenuitemRole(), null, commandPallette);
+   }
+   
    private void add(String id, String menuText, String pluralMenuText, String image)
    {
-      add(id, menuText, pluralMenuText, Roles.getMenuitemRole(), image);
+      add(id, menuText, pluralMenuText, Roles.getMenuitemRole(), image, true);
    }
    
    private void add(String id, String menuText, String image)
@@ -232,10 +245,10 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
    
    private void add(String id, String menuText, MenuitemRole role, String image)
    {
-      add(id, menuText, null, role, image);
+      add(id, menuText, null, role, image, true);
    }
    
-   private void add(String id, String menuText, String pluralMenuText, MenuitemRole role, String image)
+   private void add(String id, String menuText, String pluralMenuText, MenuitemRole role, String image, boolean commandPallette)
    {
       // lookup the underlying command
       PanmirrorCommand command = null;
@@ -246,7 +259,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
          }
       }
       // add it
-      commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, pluralMenuText, role, image));
+      commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, pluralMenuText, role, image, commandPallette));
    }
    
    private PanmirrorCommand[] commands_ = null;

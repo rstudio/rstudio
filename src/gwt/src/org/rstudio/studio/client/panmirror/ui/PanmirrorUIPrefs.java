@@ -68,6 +68,11 @@ public class PanmirrorUIPrefs {
    {
       return pUserState_.get().zoteroUseBetterBibtex().getValue();
    }
+   
+   public Boolean packageListingEnabled()
+   {
+      return pUIPrefs_.get().packagesPaneEnabled().getValue();
+   }
 
    public String bibliographyDefaultType()
    {

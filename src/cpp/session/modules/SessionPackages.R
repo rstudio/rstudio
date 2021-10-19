@@ -583,6 +583,50 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
 })
 
+.rs.addJsonRpcHandler("get_package_citations", function(packageName, libraryPath)
+{
+   toPerson <- function(author) {
+      list(
+         given = author[["given"]],
+         family = .rs.scalar(author[["family"]]),
+         email = .rs.scalar(author[["email"]]),
+         role = .rs.scalar(author[["role"]])
+      )
+   }
+   
+   cites <- citation(packageName)
+   lapply(unclass(cites), function(cite) {
+      list(
+         # bibtex type
+         type = .rs.scalar(attr(cite, "bibtype")),
+         
+         title = .rs.scalar(cite[["title"]]),
+         url = .rs.scalar(cite[["url"]]),
+         note = .rs.scalar(cite[["note"]]),
+         doi = .rs.scalar(cite[["doi"]]),
+         
+         publisher = .rs.scalar(cite[["publisher"]]),
+         institution = .rs.scalar(cite[["institution"]]),
+         address = .rs.scalar(cite[["address"]]),
+         
+         journal = .rs.scalar(cite[["journal"]]),
+         year = .rs.scalar(cite[["year"]]),
+         booktitle = .rs.scalar(cite[["booktitle"]]),
+         chapter = .rs.scalar(cite[["chapter"]]),
+         number = .rs.scalar(cite[["number"]]),
+         volume = .rs.scalar(cite[["volume"]]),
+         pages = .rs.scalar(cite[["pages"]]),
+         series = .rs.scalar(cite[["series"]]),
+         school = .rs.scalar(cite[["school"]]),
+         
+         
+         # person
+         author = lapply(unclass(cite[["author"]]), toPerson),
+         editor = lapply(unclass(cite[["editor"]]), toPerson)
+      )
+   })
+})
+
 .rs.addJsonRpcHandler("get_package_news_url", function(packageName, libraryPath)
 {
    # first, check if we've already discovered a NEWS link

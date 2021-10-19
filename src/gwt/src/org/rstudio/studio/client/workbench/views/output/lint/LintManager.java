@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlDocumentLinter;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
@@ -88,6 +89,9 @@ public class LintManager
       if (type.isR() || type.isRnw() || type.isRpres() || type.isMarkdown())
          return userPrefs_.showDiagnosticsR().getValue() || userPrefs_.realTimeSpellchecking().getValue();
       
+      if (type.isYaml())
+         return userPrefs_.showDiagnosticsYaml().getValue();
+      
       return false;
    }
 
@@ -98,6 +102,7 @@ public class LintManager
       target_ = target;
       cppCompletionContext_ = cppCompletionContext;
       docDisplay_ = target.getDocDisplay();
+      yamlLinter_ = new YamlDocumentLinter(target_.getRCompletionContext(), docDisplay_);
       showMarkers_ = false;
       explicit_ = false;
       invalidation_ = new Invalidation();
@@ -150,7 +155,7 @@ public class LintManager
                   showMarkers_ = false;
                   excludeCurrentStatement_ = true;
                   explicit_ = false;
-                  timer_.schedule(userPrefs_.backgroundDiagnosticsDelayMs().getValue());
+                  timer_.schedule(defaultLintDelayMs());
                }
             });
          }
@@ -175,7 +180,7 @@ public class LintManager
 
    public void relintAfterDelay(int delayMills)
    {
-      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? userPrefs_.backgroundDiagnosticsDelayMs().getValue() : delayMills);
+      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? defaultLintDelayMs() : delayMills);
    }
 
    @Inject
@@ -186,6 +191,15 @@ public class LintManager
       server_ = server;
       userPrefs_ = uiPrefs;
       eventBus_ = eventBus;
+   }
+   
+   private int defaultLintDelayMs()
+   {
+      // give pure yaml linting a shorter delay b/c its known to be high performance
+      if (target_.getTextFileType().isYaml())
+         return 1000;
+      else
+         return userPrefs_.backgroundDiagnosticsDelayMs().getValue();
    }
    
    private void lintActiveDocument(final LintContext context)
@@ -227,6 +241,8 @@ public class LintManager
          performCppLintServerRequest(context);
       else if (userPrefs_.showDiagnosticsR().getValue() && (target_.getTextFileType().isR() || target_.getTextFileType().isRmd()))
          performRLintServerRequest(context);
+      else if (userPrefs_.showDiagnosticsYaml().getValue() && (target_.getTextFileType().isYaml()))
+         performYamlLintRequest(context);
       else if (userPrefs_.realTimeSpellchecking().getValue())
          showLint(context, JsArray.createArray().cast());
    }
@@ -306,8 +322,24 @@ public class LintManager
                {
                   if (context.token.isInvalid())
                      return;
-
-                  showLint(context, lint);
+                  
+                  // if this is an rmd file then also look for yaml lint
+                  if (docDisplay_.getFileType().isRmd() && 
+                      userPrefs_.showDiagnosticsYaml().getValue())
+                  {
+                     yamlLinter_.getLint(yamlLint -> {
+                        JsArray<LintItem> allLint = JsArray.createArray().cast();
+                        for (int i = 0; i < lint.length(); i++)
+                           allLint.push(lint.get(i));
+                        for (int i = 0; i < yamlLint.length(); i++)
+                           allLint.push(yamlLint.get(i));
+                        showLint(context, allLint);
+                     });
+                  }
+                  else
+                  {
+                     showLint(context, lint);
+                  }
                }
 
                @Override
@@ -318,7 +350,19 @@ public class LintManager
             });
    }
    
+   private void performYamlLintRequest(final LintContext context)
+   {
+      yamlLinter_.getLint(lint -> {
+         showLint(context, lint, false);
+      });
+   }
+   
    private void showLint(LintContext context, JsArray<LintItem> lint)
+   {
+      showLint(context, lint, true);
+   }
+   
+   private void showLint(LintContext context, JsArray<LintItem> lint, boolean spellcheck)
    {
       if (docDisplay_.isPopupVisible())
          return;
@@ -337,7 +381,7 @@ public class LintManager
       else
          finalLint = lint;
 
-      if (userPrefs_.realTimeSpellchecking().getValue())
+      if (spellcheck && userPrefs_.realTimeSpellchecking().getValue())
       {
          target_.getSpellingTarget().getLint(new ServerRequestCallback<JsArray<LintItem>>()
          {
@@ -416,6 +460,7 @@ public class LintManager
    private UserPrefs userPrefs_;
    private EventBus eventBus_;
    private final CppCompletionContext cppCompletionContext_;
+   private final YamlDocumentLinter yamlLinter_;
    
    static {
       LintResources.INSTANCE.styles().ensureInjected();

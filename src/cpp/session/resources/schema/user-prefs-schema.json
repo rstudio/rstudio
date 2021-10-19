@@ -201,7 +201,7 @@
                     "TabSet1",
                     "TabSet2",
                     "HiddenTabSet"],
-                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentation"],
+                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentations", "Presentation"],
                 "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
                 "hiddenTabSet": [],
                 "console_left_on_top": false,
@@ -381,11 +381,17 @@
             "title": "Show diagnostics in C++ code",
             "description": "Whether to show diagnostic messages for C++ code as you type."
         },
+        "show_diagnostics_yaml": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show diagnostics in YAML code",
+            "description": "Whether to show diagnostic messages for YAML code as you type."
+        },
         "show_diagnostics_other": {
             "type": "boolean",
             "default": false,
             "title": "Show diagnostics in other languages",
-            "description": "Whether to show diagnostic messages for other types of code (not R or C++)."
+            "description": "Whether to show diagnostic messages for other types of code (not R, C++, or YAML)."
         },
         "style_diagnostics": {
             "type": "boolean",
@@ -1209,6 +1215,10 @@
                 "label": {
                     "type": "string",
                     "description": "A free-form label for describing the R version."
+                },
+                "module": {
+                    "type": "string",
+                    "description": "The name of the environment module to load."
                 }
             },
             "description": "The R version to use by default."

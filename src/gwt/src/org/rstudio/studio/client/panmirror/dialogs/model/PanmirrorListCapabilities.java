@@ -25,5 +25,6 @@ public class PanmirrorListCapabilities
    public boolean fancy;
    public boolean example;
    public boolean order;
+   public boolean incremental;
 }
 

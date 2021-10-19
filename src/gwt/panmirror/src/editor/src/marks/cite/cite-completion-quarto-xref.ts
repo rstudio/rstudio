@@ -76,15 +76,18 @@ export function quartoXrefCiteCompletionProvider(ui: EditorUI, server: EditorSer
     streamEntries: (doc: ProsemirrorNode, onStreamReady: (entries: CiteCompletionEntry[]) => void) => {
       const docPath = ui.context.getDocumentPath();
       if (docPath) {
-        server.xref.quartoIndexForFile(docPath).then(xrefs => {
-          loadedEntries = xrefs.refs.map(ref => referenceEntryForXref(ref));
-          onStreamReady(loadedEntries);
+        ui.context.withSavedDocument().then(() => {
+          server.xref.quartoIndexForFile(docPath).then(xrefs => {
+            loadedEntries = xrefs.refs.map(ref => referenceEntryForXref(ref));
+            onStreamReady(loadedEntries);
+          });
         });
       }
     },
     awaitEntries: async (doc: ProsemirrorNode) => {
       const docPath = ui.context.getDocumentPath();
       if (docPath) {
+        await ui.context.withSavedDocument();
         const index = await server.xref.quartoIndexForFile(docPath);
         loadedEntries = index.refs.map(ref => referenceEntryForXref(ref));
         return loadedEntries;

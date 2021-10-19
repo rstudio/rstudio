@@ -55,7 +55,6 @@ import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -209,6 +208,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
       rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       vimCommands_ = new SourceVimCommands();
+      quartoCommands_ = new QuartoCommands(this, server_);
       columnState_ = null;
       initDynamicCommands();
 
@@ -220,8 +220,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       events_.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
          SessionInfo sessionInfo = session.getSessionInfo();
-         QuartoConfig quartoConfig = sessionInfo.getQuartoConfig();
-         commands_.newQuartoDoc().setVisible(quartoConfig.installed);
+         quartoCommands_.onSessionInit(sessionInfo, commands_);
       });
 
       WindowEx.addFocusHandler(new FocusHandler()
@@ -1178,6 +1177,17 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    // new doc functions
 
+   public void newQuartoDoc()
+   {
+      quartoCommands_.newQuarto(false);
+   }
+   
+   public void newQuartoPres()
+   {
+      quartoCommands_.newQuarto(true);
+   }
+   
+   
    public void newRMarkdownV1Doc()
    {
       newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN,
@@ -1332,7 +1342,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       return null;
    }
 
-   private void newSourceDocWithTemplate(
+   void newSourceDocWithTemplate(
       final TextFileType fileType,
       String name,
       String template,
@@ -2809,6 +2819,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private HashSet<AppCommand> dynamicCommands_ = new HashSet<>();
    private final HashMap<String, SourceAppCommand> sourceAppCommands_ = new HashMap<>();
    private SourceVimCommands vimCommands_;
+   private QuartoCommands quartoCommands_;
 
    private Commands commands_;
    private EventBus events_;

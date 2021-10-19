@@ -381,7 +381,7 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native JsArrayString getTabSet1() /*-{
-         return this && this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentation"];
+         return this && this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentations","Presentation"];
       }-*/;
 
       public final native JsArrayString getTabSet2() /*-{
@@ -783,14 +783,26 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to show diagnostic messages for other types of code (not R or C++).
+    * Whether to show diagnostic messages for YAML code as you type.
+    */
+   public PrefValue<Boolean> showDiagnosticsYaml()
+   {
+      return bool(
+         "show_diagnostics_yaml",
+         "Show diagnostics in YAML code", 
+         "Whether to show diagnostic messages for YAML code as you type.", 
+         true);
+   }
+
+   /**
+    * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
     */
    public PrefValue<Boolean> showDiagnosticsOther()
    {
       return bool(
          "show_diagnostics_other",
          "Show diagnostics in other languages", 
-         "Whether to show diagnostic messages for other types of code (not R or C++).", 
+         "Whether to show diagnostic messages for other types of code (not R, C++, or YAML).", 
          false);
    }
 
@@ -2536,6 +2548,10 @@ public class UserPrefsAccessor extends Prefs
          return this && this.label || "";
       }-*/;
 
+      public final native String getModule() /*-{
+         return this && this.module || "";
+      }-*/;
+
    }
 
    /**
@@ -2854,7 +2870,7 @@ public class UserPrefsAccessor extends Prefs
          "visual_markdown_code_editor_line_numbers",
          "Show line numbers in visual mode code blocks", 
          "Whether to show line numbers in the code editors used in visual mode", 
-         true);
+         false);
    }
 
    /**
@@ -3281,6 +3297,8 @@ public class UserPrefsAccessor extends Prefs
          showDiagnosticsR().setValue(layer, source.getBool("show_diagnostics_r"));
       if (source.hasKey("show_diagnostics_cpp"))
          showDiagnosticsCpp().setValue(layer, source.getBool("show_diagnostics_cpp"));
+      if (source.hasKey("show_diagnostics_yaml"))
+         showDiagnosticsYaml().setValue(layer, source.getBool("show_diagnostics_yaml"));
       if (source.hasKey("show_diagnostics_other"))
          showDiagnosticsOther().setValue(layer, source.getBool("show_diagnostics_other"));
       if (source.hasKey("style_diagnostics"))
@@ -3687,6 +3705,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(showFunctionSignatureTooltips());
       prefs.add(showDiagnosticsR());
       prefs.add(showDiagnosticsCpp());
+      prefs.add(showDiagnosticsYaml());
       prefs.add(showDiagnosticsOther());
       prefs.add(styleDiagnostics());
       prefs.add(diagnosticsOnSave());

@@ -77,6 +77,7 @@ import behaviorInsertSymbolEmoji from '../behaviors/insert_symbol/insert_symbol-
 import beahviorInsertSpecialCharacters from '../behaviors/insert_symbol/insert_special_characters';
 import behaviorNbsp from '../behaviors/nbsp';
 import behaviorRemoveSection from '../behaviors/remove_section';
+import behaviorSlides from '../behaviors/slides';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -109,7 +110,7 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 import nodeHtmlPreserve from '../nodes/html_preserve';
 
 // extension/plugin factories
-import { acePlugins } from '../optional/ace/ace';
+import { aceExtension } from '../optional/ace/ace';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
 import { codeViewClipboardPlugin } from '../api/code';
 
@@ -140,6 +141,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorFind,
     behaviorSpellingInteractive,
     behaviorClearFormatting,
+    behaviorSlides
   ]);
 
   // optional extensions
@@ -208,7 +210,9 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   const codeViews = manager.codeViews();
   const plugins: Plugin[] = [];
   if (context.options.codeEditor === 'ace') {
-    plugins.push(...acePlugins(codeViews, context));
+    manager.register([
+      aceExtension(codeViews)
+    ]);
   }
   plugins.push(codeViewClipboardPlugin(codeViews));
 

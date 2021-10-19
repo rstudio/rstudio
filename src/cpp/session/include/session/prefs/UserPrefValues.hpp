@@ -122,6 +122,7 @@ namespace prefs {
 #define kShowFunctionSignatureTooltips "show_function_signature_tooltips"
 #define kShowDiagnosticsR "show_diagnostics_r"
 #define kShowDiagnosticsCpp "show_diagnostics_cpp"
+#define kShowDiagnosticsYaml "show_diagnostics_yaml"
 #define kShowDiagnosticsOther "show_diagnostics_other"
 #define kStyleDiagnostics "style_diagnostics"
 #define kDiagnosticsOnSave "diagnostics_on_save"
@@ -312,6 +313,7 @@ namespace prefs {
 #define kDefaultRVersionVersion "version"
 #define kDefaultRVersionRHome "r_home"
 #define kDefaultRVersionLabel "label"
+#define kDefaultRVersionModule "module"
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
@@ -685,7 +687,13 @@ public:
    core::Error setShowDiagnosticsCpp(bool val);
 
    /**
-    * Whether to show diagnostic messages for other types of code (not R or C++).
+    * Whether to show diagnostic messages for YAML code as you type.
+    */
+   bool showDiagnosticsYaml();
+   core::Error setShowDiagnosticsYaml(bool val);
+
+   /**
+    * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
     */
    bool showDiagnosticsOther();
    core::Error setShowDiagnosticsOther(bool val);

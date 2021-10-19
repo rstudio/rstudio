@@ -53,7 +53,7 @@ ipcRenderer.on('initialize', (event, data) => {
   rInstalls.forEach(rInstall => {
 
     // normalize separators, etc
-    rInstall = path.normalize(rInstall).replaceAll(/[/\\]+$/g, '');
+    rInstall = path.normalize(rInstall).replace(/[/\\]+$/g, '');
 
     // skip if we've already seen this
     if (visitedInstallations[rInstall]) {

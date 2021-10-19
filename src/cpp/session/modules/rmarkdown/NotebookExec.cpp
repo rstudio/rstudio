@@ -147,6 +147,11 @@ void ChunkExecContext::connect()
       return;
    }
 
+   // leave an execution lock in this folder so it won't be moved if the notebook
+   // is saved while executing
+   locks_.push_back(boost::make_shared<ScopedFileLock>(FileLock::createDefault(),
+            outputPath_.completePath(kExecutionLock)));
+
    // if executing the whole chunk, initialize output right away (otherwise we
    // wait until we actually have output)
    if (execScope_ == ExecScopeChunk)
@@ -334,7 +339,6 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    // preserve original extension; some output types, such as plots, don't
    // have a canonical extension
    target = target.getParent().completePath(target.getStem() + file.getExtension());
-
    Error error = file.move(target);
    if (error)
    {
@@ -468,6 +472,9 @@ void ChunkExecContext::disconnect()
       pCapture->disconnect();
    }
 
+   // clear all execution locks
+   locks_.clear();
+
    // clean up staging folder
    error = outputPath_.removeIfExists();
    if (error)
@@ -494,6 +501,50 @@ void ChunkExecContext::disconnect()
    }
 
    NotebookCapture::disconnect();
+
+   // check to see whether we need to migrate the output folder to another location;
+   // this addresses the case where the output folder location changed during execution,
+   // i.e. if the notebook was saved while running
+   FilePath migrationFile = chunkOutputPath(docId_, chunkId_, nbCtxId_, ContextExact)
+      .completePath(kMigrationTarget);
+   if (migrationFile.exists())
+   {
+      std::string path;
+      error = readStringFromFile(migrationFile, &path);
+      if (error)
+      {
+         error.addProperty("description", "Unable to read notebook output migration file");
+         LOG_ERROR(error);
+      }
+      else
+      {
+         // clean up migration file so it doesn't get moved
+         error = migrationFile.remove();
+         if (error)
+         {
+            error.addProperty("description", "Unable to clean up output migration file");
+            LOG_ERROR(error);
+         }
+
+         // perform the migration
+         FilePath target(path);
+         error = target.removeIfExists();
+         if (error)
+         {
+            error.addProperty("description", "Unable to remove old notebook output folder");
+            LOG_ERROR(error);
+         }
+         else
+         {
+            error = migrationFile.getParent().move(target);
+            if (error)
+            {
+               error.addProperty("description", "Unable to move notebook output folder");
+               LOG_ERROR(error);
+            }
+         }
+      }
+   }
 
    events().onChunkExecCompleted(docId_, chunkId_, chunkCode_, chunkLabel_, nbCtxId_);
 }
@@ -525,10 +576,15 @@ void ChunkExecContext::initializeOutput()
       LOG_ERROR(error);
 
    // ensure that the output folder exists
-   error = chunkOutputPath(docId_, chunkId_, nbCtxId_, ContextExact)
-      .ensureDirectory();
+   FilePath outputPath = chunkOutputPath(docId_, chunkId_, nbCtxId_, ContextExact);
+   error = outputPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
+
+   // leave an execution lock in this folder so it won't be moved if the notebook
+   // is saved while executing
+   locks_.push_back(boost::make_shared<ScopedFileLock>(FileLock::createDefault(),
+            outputPath.completePath(kExecutionLock)));
 
    hasOutput_ = true;
 }

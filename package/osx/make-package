@@ -46,6 +46,7 @@ trap on-exit EXIT
 
 # build / install directories
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
+ELECTRON_SRC_DIR="${PKG_DIR}/../../src/node/desktop"
 
 BUILD_DIR_X86_64="${PKG_DIR}/build"
 BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
@@ -81,6 +82,15 @@ find-program ANT ant            \
    "${HOME}/homebrew/arm64/bin" \
    "${HOME}/opt/bin"
 
+# find node
+find-program NODE node \
+   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+ 
+# find yarn
+find-program YARN yarn \
+   "${HOME}/.yarn/bin"
+
 # determine architectures to build for
 if [ "$(arch)" = "arm64" ]; then
    arch=x86_64,arm64
@@ -96,6 +106,7 @@ clean=0
 copy_gwt=1
 install=0
 use_creds=0
+rstudio_target=Desktop
 
 # by default, use RStudio credentials for builds on Jenkins
 if [ -n "${JENKINS_URL}" ]; then
@@ -106,21 +117,34 @@ fi
 for arg in "$@"; do
 
    case "$arg" in
-   clean)             clean=1 ;;
-   --arch=*)          arch=${arg#*=} ;;
-   --clean)           clean=1 ;;
-   --install)         install=1 ;;
-   --build-gwt=*)     build_gwt=${arg#*=} ;;
-   --copy-gwt=*)      copy_gwt=${arg#*=} ;;
-   --build-package=*) build_package=${arg#*=} ;;
-   --build-dmg=*)     build_dmg=${arg#*=} ;;
-   --use-creds=*)     use_creds=${arg#*=} ;;
+   clean)              clean=1 ;;
+   --arch=*)           arch=${arg#*=} ;;
+   --clean)            clean=1 ;;
+   --install)          install=1 ;;
+   --build-gwt=*)      build_gwt=${arg#*=} ;;
+   --copy-gwt=*)       copy_gwt=${arg#*=} ;;
+   --build-package=*)  build_package=${arg#*=} ;;
+   --build-dmg=*)      build_dmg=${arg#*=} ;;
+   --use-creds=*)      use_creds=${arg#*=} ;;
+   --rstudio-target=*) rstudio_target=${arg#*=} ;;
    esac
 
 done
 
-case "${arch}" in *arm64*)  build_arm64=1  ;; esac
-case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
+if [ "${rstudio_target}" != "Desktop" ] && [ "${rstudio_target}" != "Electron" ]
+then
+   echo "error: must specify --rstudio-target=Desktop|Electron (default Desktop)"
+   exit 1
+fi
+
+if [ "${rstudio_target}" = "Electron" ]
+then
+   # At the moment only support building Electron for Intel
+   build_x86_64=1
+else
+   case "${arch}" in *arm64*)  build_arm64=1  ;; esac
+   case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
+fi
 
 if [ "${clean}" = "1" ]; then
 
@@ -134,18 +158,17 @@ if [ "${clean}" = "1" ]; then
       "${ANT}" clean
    fi
 
+   # cleanup Electron project
+   rm -rf "${ELECTRON_SRC_DIR}/.webpack"
+   rm -rf "${ELECTRON_SRC_DIR}/out"
+
    # move back to package dir
    cd "${PKG_DIR}"
 
 fi
 
 # set up MAKEFLAGS
-# don't use all CPUs on build machine (appears to cause hangs)
-if [ -n "${JENKINS_URL}" ]; then
-   MAKEFLAGS="${MAKEFLAGS} -j2"
-else
-   MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
-fi
+MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
 
 # perform an x86_64 build
 if [ -n "${build_x86_64}" ]; then
@@ -174,8 +197,8 @@ if [ -n "${build_x86_64}" ]; then
    arch -x86_64 "${CMAKE}"                                   \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                      \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                  \
-      -DCMAKE_INSTALL_PREFIX="${PKG_DIR}/install"            \
-      -DRSTUDIO_TARGET=Desktop                               \
+      -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"                \
+      -DRSTUDIO_TARGET=${rstudio_target}                     \
       -DRSTUDIO_PACKAGE_BUILD=1                              \
       -DRSTUDIO_CRASHPAD_ENABLED=0                           \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../x86_64" \
@@ -225,7 +248,7 @@ if [ -n "${build_arm64}" ]; then
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                     \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                 \
       -DRSESSION_ALTERNATE_BUILD=1                          \
-      -DRSTUDIO_TARGET=Desktop                              \
+      -DRSTUDIO_TARGET=${rstudio_target}                    \
       -DRSTUDIO_PACKAGE_BUILD=1                             \
       -DRSTUDIO_CRASHPAD_ENABLED=0                          \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../arm64" \
@@ -242,7 +265,6 @@ if [ -n "${build_arm64}" ]; then
    restore-java-home
 
 fi
-
 
 if [ "${build_package}" = "1" ]; then
 
@@ -267,8 +289,23 @@ if [ "${build_package}" = "1" ]; then
    cd "${BUILD_DIR_X86_64}"
    "${CMAKE}" --build . --target install
 
-   if [ "${build_dmg}" = "1" ]; then
+   if [ "${rstudio_target}" = "Electron" ]; then
+      OLDPATH="${PATH}"
+      NODEPATH="$(dirname "${NODE}")"
+      YARNPATH="$(dirname "${YARN}")"
+      PATH="${NODEPATH}:${YARNPATH}:${OLDPATH}"
 
+      # Build and package the Electron app.
+      cd "${ELECTRON_SRC_DIR}"
+      yarn make
+      cd "${PKG_DIR}"
+      PATH="${OLDPATH}"
+
+      # move to expected location in build folder
+      # TODO
+      # mv "${PKG_DIR}/../../src/node/desktop/out/make/${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
+
+   elif [ "${build_dmg}" = "1" ]; then
       # move to target directory
       cd "${INSTALL_DIR}"
 
@@ -297,7 +334,6 @@ if [ "${build_package}" = "1" ]; then
    restore-java-home
 
    info "Done!"
-
 fi
 
 cd "${PKG_DIR}"

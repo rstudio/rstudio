@@ -16,6 +16,7 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeWithPos } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
+import { EditorState } from 'prosemirror-state';
 
 import yaml from 'js-yaml';
 
@@ -55,6 +56,17 @@ export function yamlMetadataNodes(doc: ProsemirrorNode) {
 
 export function isYamlMetadataNode(node: ProsemirrorNode) {
   return node.type === node.type.schema.nodes.yaml_metadata;
+}
+
+export function titleFromState(state: EditorState) {
+  const yamlNodes = yamlMetadataNodes(state.doc);
+  for (const yamlNode of yamlNodes) {
+    const title = titleFromYamlMetadataNode(yamlNode.node);
+    if (title) {
+      return title;
+    }
+  }
+  return '';
 }
 
 export function titleFromYamlMetadataNode(node: ProsemirrorNode) {

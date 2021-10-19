@@ -1859,6 +1859,11 @@ std::string rHomeDir()
    return rVersionHome;
 }
 
+std::string rVersionModule()
+{
+   std::string module = system::getenv("RSTUDIO_R_MODULE");
+   return module;
+}
 
 r_util::ActiveSession& activeSession()
 {

@@ -458,6 +458,7 @@ public class EditingPreferencesPane extends PreferencesPane
       Label diagOtherLabel = headerLabel("Other Languages");
       diagnosticsPanel.add(spacedBefore(diagOtherLabel));
       diagnosticsPanel.add(checkboxPref("Show diagnostics for C/C++", prefs.showDiagnosticsCpp()));
+      diagnosticsPanel.add(checkboxPref("Show diagnostics for YAML", prefs.showDiagnosticsYaml()));
       diagnosticsPanel.add(checkboxPref("Show diagnostics for JavaScript, HTML, and CSS", prefs.showDiagnosticsOther()));
 
       Label diagShowLabel = headerLabel("Show Diagnostics");

@@ -137,9 +137,12 @@ public class StanCompletionManager extends CompletionManagerBase
          
          QualifiedName name = new QualifiedName(
                t.getValue(),
+               t.getValue(),
                "[identifier]",
                false,
                RCompletionType.CONTEXT,
+               false,
+               false,
                "",
                null,
                "Stan");

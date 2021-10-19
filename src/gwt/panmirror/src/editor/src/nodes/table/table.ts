@@ -93,10 +93,15 @@ const extension = (context: ExtensionContext): Extension | null => {
     commands: (_schema: Schema) => {
       const commands = [
         new ProsemirrorCommand(
-          EditorCommandId.TableInsertTable,
+          EditorCommandId.Table,
           ['Alt-Mod-t'],
           insertTable(capabilities, ui),
           insertTableOmniInsert(ui),
+        ),
+        new ProsemirrorCommand(
+          EditorCommandId.TableInsertTable,
+          [],
+          insertTable(capabilities, ui),
         ),
         new ProsemirrorCommand(EditorCommandId.TableNextCell, ['Tab'], goToNextCell(1)),
         new ProsemirrorCommand(EditorCommandId.TablePreviousCell, ['Shift-Tab'], goToNextCell(-1)),

@@ -23,6 +23,8 @@
    <property name="lib.dir" value="./lib"/>        <!-- libraries (GWT, GIN, etc. -->
    <property name="tools.dir" value="./tools"/>    <!-- other tools -->
    <property name="extras.dir" value="./extras"/>  <!-- extras: symbol maps, etc. -->
+   <property name="gwt.xmx" value="-Xmx1536M"/>    <!-- set maximum Java heap size -->
+   <property name="gwt.xss" value="-Xss16M"/>      <!-- set java thread stack size -->
 
    <taskdef name="jscomp"
             classname="com.google.javascript.jscomp.ant.CompileTask"
@@ -82,6 +84,7 @@
    </target>
 
    <!-- panmirror typescript library -->
+   <!-- ensure version matches RSTUDIO_NODE_VERSION -->
    <property name="node.version" value="14.17.5"/>
    <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
    <condition property="node.bin" value="../../../${node.dir}/bin/node">
@@ -150,7 +153,8 @@
             <path refid="project.class.path"/>
          </classpath>
          <!-- add jvmarg -Xss16M or similar if you see a StackOverflowError -->
-         <jvmarg value="-Xmx1536M"/>
+         <jvmarg value="${gwt.xmx}"/>
+         <jvmarg value="${gwt.xss}"/>
          <arg value="-war"/>
          <arg value="${www.dir}"/>
          <arg value="-localWorkers"/>

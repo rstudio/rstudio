@@ -26,5 +26,6 @@ public class PanmirrorListProps
    public int order;
    public String number_style;
    public String number_delim;
+   public String incremental;
 }
 
