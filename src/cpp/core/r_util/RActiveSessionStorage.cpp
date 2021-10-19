@@ -31,17 +31,27 @@ namespace r_util {
             LOG_ERROR(error);
     }
 
+    const std::map<std::string, std::string> FileActiveSessionStorage::fileNames =
+        {
+            { "last_used" , "last-used" },
+            { "r_version" , "r-version" },
+            { "r_version_label" , "r-version-label" },
+            { "r_version_home" , "r-version-home" },
+            { "working_directory" , "working-dir" },
+            { "launch_parameters" , "launch-parameters" }
+         };
+
     Error FileActiveSessionStorage::readProperty(const std::string& id, const std::string& name, std::string* pValue)
     {
         std::map<std::string, std::string> propertyValue{};
         *pValue = "";
 
-        Error error = readProperties(id, { name }, &propertyValue);
+        Error error = readProperties(id, {name}, &propertyValue);
 
         if (error)
             return error;
 
-        std::map<std::string, std::string>::iterator iter = propertyValue.begin();
+        std::map<std::string, std::string>::iterator iter = propertyValue.find(name);
 
         if(iter != propertyValue.end())
             *pValue = iter->second;
@@ -67,7 +77,7 @@ namespace r_util {
                     failedFiles.push_back(readPath);
                 boost::algorithm::trim(value);
             }
-            pValues->insert(std::pair<std::string, std::string>(name, value));
+            pValues->insert(std::pair<std::string, std::string>{name, value});
         }
 
         if(failedFiles.empty())
@@ -75,6 +85,34 @@ namespace r_util {
         else
             return createError("UnableToReadFiles", "Failed to read from the following files ", 
                 failedFiles, error.getLocation());
+    }
+
+    Error FileActiveSessionStorage::readProperties(const std::string& id, std::map<std::string, std::string>* pValues)
+    {
+        FilePath propertyDir = buildPropertyDir(id);
+        std::vector<FilePath> files{};
+        std::vector<FilePath> failedFiles{};
+        Error error;
+        pValues->empty();
+        propertyDir.getChildren(files);
+
+        for(FilePath file : files) {
+            std::string value = "";
+            error = core::readStringFromFile(file, &value);
+
+            if(error)
+                failedFiles.push_back(file);
+
+            std::string propertyName = getFileNameProperty(file.getFilename());
+            pValues->insert(std::pair<std::string, std::string>{propertyName, value});
+        }
+
+        if(failedFiles.empty())
+            return Success();
+        else
+            return createError("UnableToReadFiles", "Failed to read from the following files ",
+                failedFiles, error.getLocation());
+
     }
 
     Error FileActiveSessionStorage::writeProperty(const std::string& id, const std::string& name, const std::string& value)
@@ -98,7 +136,7 @@ namespace r_util {
         if(failedFiles.empty())
             return Success();
         else
-            return createError("UnableToWriteFile", "Failed to write to the following files ", 
+            return createError("UnableToWriteFiles", "Failed to write to the following files ", 
                 failedFiles, error.getLocation());
     }
 
@@ -118,10 +156,16 @@ namespace r_util {
         return Error{errorName, 1, errorMessage, errorLocation};
     }
 
-    FilePath FileActiveSessionStorage::buildPropertyPath(const std::string& id, const std::string& name)
+    FilePath FileActiveSessionStorage::buildPropertyDir(const std::string& id)
     {
         FilePath propertiesDir = activeSessionsDir_.completeChildPath(fileSessionDirPrefix_ + id + "/" + propertiesDirName_);
         propertiesDir.ensureDirectory();
+        return propertiesDir;
+    }
+
+    FilePath FileActiveSessionStorage::buildPropertyPath(const std::string& id, const std::string& name)
+    {
+        FilePath propertiesDir = buildPropertyDir(id);
         return propertiesDir.completeChildPath(name);
     }
 

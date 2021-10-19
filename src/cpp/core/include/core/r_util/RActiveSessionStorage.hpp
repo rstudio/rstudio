@@ -28,6 +28,7 @@ namespace r_util {
    public:
       Error virtual readProperty(const std::string& id, const std::string& name, std::string* pValue) = 0;
       Error virtual readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues) = 0;
+      Error virtual readProperties(const std::string& id, std::map<std::string, std::string>* pValues) = 0;
       Error virtual writeProperty(const std::string& id, const std::string& name, const std::string& value) = 0;
       Error virtual writeProperties(const std::string& id, const std::map<std::string, std::string>& properties) = 0;
 
@@ -43,6 +44,7 @@ namespace r_util {
       ~FileActiveSessionStorage() = default;
       Error readProperty(const std::string& id, const std::string& name, std::string* pValue) override;   
       Error readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
+      Error readProperties(const std::string& id, std::map<std::string, std::string>* pValues) override;
       Error writeProperty(const std::string& id, const std::string& name, const std::string& value) override;
       Error writeProperties(const std::string& id, const std::map<std::string, std::string>& properties) override;
 
@@ -51,26 +53,32 @@ namespace r_util {
       const std::string propertiesDirName_ = "properites";
       const std::string fileSessionDirPrefix_ = "session-";
 
-      FilePath getPropertyDir(const std::string& id, const std::string& name);
+      FilePath buildPropertyDir(const std::string& id);
       FilePath buildPropertyPath(const std::string& id, const std::string& name);
       Error createError(const std::string& errorName, const std::string& preamble, const std::vector<FilePath>& files, const ErrorLocation& errorLocation);
+
+      static const std::map<std::string, std::string> fileNames;
       
       static const std::string& getPropertyFileName(const std::string& propertyName)
       {
-         static const std::map<std::string, std::string> fileNames = 
-         {
-            { "last_used" , "last-used" },
-            { "r_version" , "r-version" },
-            { "r_version_label" , "r-version-label" },
-            { "r_version_home" , "r-version-home" },
-            { "working_directory" , "working-dir" },
-            { "launch_parameters" , "launch-parameters" }
-         };
-
          if (fileNames.find(propertyName) != fileNames.end())
             return fileNames.at(propertyName);
 
          return propertyName;
+      }
+
+      static const std::string& getFileNameProperty(const std::string& fileName)
+      {
+
+         for(auto iter = fileNames.begin(); iter != fileNames.end(); iter++)
+         {
+            if(iter->second == fileName)
+            {
+               return iter->first;
+            }
+         }
+
+         return fileName;
       }
    };
 
