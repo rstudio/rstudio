@@ -110,10 +110,14 @@ if [ -z "$pat" ]; then
 fi
 
 # Determine file size
-size=$(wc -c $file| awk '{print $1}')
+size=$(wc -c $file | awk '{print $1}')
 
 # Determine file SHA256 sum
-sha256=$(sha256sum $file| awk '{print $1}')
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  sha256=$(shasum -a 256 $file | awk '{print $1}')
+else
+  sha256=$(sha256sum $file | awk '{print $1}')
+fi
 
 # Form ISO 8601 timestamp
 timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
