@@ -83,7 +83,7 @@ Write-Host "Creating $flower/$build/$versionStem.md..."
 Write-Host $mdContents
 
 # Base64 encode the Markdown/YAML file
-$bytes = [System.Text.Encoding]::Unicode.GetBytes($mdContents)
+$bytes = [System.Text.Encoding]::UTF8.GetBytes($mdContents)
 $base64 = [System.Convert]::ToBase64String($bytes)
 
 # Prepare the payload for the Github API
@@ -100,4 +100,4 @@ $headers.Add("Authorization", "token $pat")
 $url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$versionStem.md"
 
 # Send to Github!
-Invoke-WebRequest -Body $payload -Method 'POST' -Headers $headers -Uri $url
+Invoke-WebRequest -Body $payload -Method 'PUT' -Headers $headers -Uri $url
