@@ -24,6 +24,25 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
+namespace
+{
+    Error createError(const std::string& errorName, const std::string& preamble, 
+        const std::vector<FilePath>& files, const ErrorLocation& errorLocation)
+    {
+        std::string errorMessage = preamble + "[ ";
+        auto iter = files.begin();
+        while(iter != files.end())
+        {
+            errorMessage += "'" + iter->getAbsolutePath() + "'";
+            iter++;
+            if(iter != files.end())
+                errorMessage += ", ";
+        }
+        errorMessage += " ]";
+        return Error{errorName, 1, errorMessage, errorLocation};
+    }
+} // anonymous namespace
+
     FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& activeSessionsDir) :
         activeSessionsDir_ (activeSessionsDir)
     {
@@ -67,7 +86,7 @@ namespace r_util {
         for (const std::string &name : names)
         {
             const std::string& fileName = getPropertyFileName(name);
-            FilePath readPath = buildPropertyPath(id, fileName);
+            FilePath readPath = getPropertyFile(id, fileName);
             std::string value = "";
 
             if (readPath.exists())
@@ -84,12 +103,12 @@ namespace r_util {
             return Success();
         else
             return createError("UnableToReadFiles", "Failed to read from the following files ", 
-                failedFiles, ErrorLocation{BOOST_CURRENT_FUNCTION, __FILE__, __LINE__});
+                failedFiles, ERROR_LOCATION);
     }
 
     Error FileActiveSessionStorage::readProperties(const std::string& id, std::map<std::string, std::string>* pValues)
     {
-        FilePath propertyDir = buildPropertyDir(id);
+        FilePath propertyDir = getPropertyDir(id);
         std::vector<FilePath> files{};
         std::vector<FilePath> failedFiles{};
         pValues->empty();
@@ -110,7 +129,7 @@ namespace r_util {
             return Success();
         else
             return createError("UnableToReadFiles", "Failed to read from the following files ",
-                failedFiles, ErrorLocation{BOOST_CURRENT_FUNCTION, __FILE__, __LINE__});
+                failedFiles, ERROR_LOCATION);
     }
 
     Error FileActiveSessionStorage::writeProperty(const std::string& id, const std::string& name, const std::string& value)
@@ -124,7 +143,7 @@ namespace r_util {
         std::vector<FilePath> failedFiles{};
         for (const std::pair<std::string, std::string> &prop : properties)
         {
-            FilePath writePath = buildPropertyPath(id, prop.first);
+            FilePath writePath = getPropertyFile(id, prop.first);
             Error error = core::writeStringToFile(writePath, prop.second);
             if (error)
                 failedFiles.push_back(writePath);
@@ -134,35 +153,19 @@ namespace r_util {
             return Success();
         else
             return createError("UnableToWriteFiles", "Failed to write to the following files ", 
-                failedFiles, ErrorLocation{BOOST_CURRENT_FUNCTION, __FILE__, __LINE__});
+                failedFiles, ERROR_LOCATION);
     }
 
-    Error FileActiveSessionStorage::createError(const std::string& errorName, const std::string& preamble, 
-        const std::vector<FilePath>& files, const ErrorLocation& errorLocation)
-    {
-        std::string errorMessage = preamble + "[ ";
-        auto iter = files.begin();
-        while(iter != files.end())
-        {
-            errorMessage += "'" + iter->getAbsolutePath() + "'";
-            iter++;
-            if(iter != files.end())
-                errorMessage += ", ";
-        }
-        errorMessage += " ]";
-        return Error{errorName, 1, errorMessage, errorLocation};
-    }
-
-    FilePath FileActiveSessionStorage::buildPropertyDir(const std::string& id)
+    FilePath FileActiveSessionStorage::getPropertyDir(const std::string& id) const
     {
         FilePath propertiesDir = activeSessionsDir_.completeChildPath(fileSessionDirPrefix_ + id + "/" + propertiesDirName_);
         propertiesDir.ensureDirectory();
         return propertiesDir;
     }
 
-    FilePath FileActiveSessionStorage::buildPropertyPath(const std::string& id, const std::string& name)
+    FilePath FileActiveSessionStorage::getPropertyFile(const std::string& id, const std::string& name) const
     {
-        FilePath propertiesDir = buildPropertyDir(id);
+        FilePath propertiesDir = getPropertyDir(id);
         return propertiesDir.completeChildPath(name);
     }
 

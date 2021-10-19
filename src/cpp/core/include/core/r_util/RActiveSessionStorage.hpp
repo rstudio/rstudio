@@ -53,10 +53,9 @@ namespace r_util {
       const std::string propertiesDirName_ = "properites";
       const std::string fileSessionDirPrefix_ = "session-";
 
-      FilePath buildPropertyDir(const std::string& id);
-      FilePath buildPropertyPath(const std::string& id, const std::string& name);
-      Error createError(const std::string& errorName, const std::string& preamble, const std::vector<FilePath>& files, const ErrorLocation& errorLocation);
-
+      FilePath getPropertyDir(const std::string& id) const;
+      FilePath getPropertyFile(const std::string& id, const std::string& name) const;
+      
       static const std::map<std::string, std::string> fileNames;
       
       static const std::string& getPropertyFileName(const std::string& propertyName)
