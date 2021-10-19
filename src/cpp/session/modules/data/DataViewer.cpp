@@ -863,6 +863,7 @@ Error getGridData(const http::Request& request,
 
    pResponse->setNoCacheHeaders();    // don't cache data/grid shape
    pResponse->setStatusCode(status);
+   pResponse->setContentType("application/json");
    pResponse->setBody(output);
 
    return Success();
