@@ -128,6 +128,9 @@ pushd $RSTUDIO_ROOT_DIR
 commit=$(git rev-parse HEAD)
 popd
 
+# Escape + characters in URL (for versioning)
+url=$(echo $url | sed -e 's/+/%2B/g')
+
 # Create version stem. This is a very file-safe version of the version: first
 # we replace non-alphanumerics with dashes, then collapse multiple dashes to a
 # single dash.
