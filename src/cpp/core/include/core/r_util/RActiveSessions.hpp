@@ -28,6 +28,7 @@
 
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RProjectFile.hpp>
+#include <core/r_util/RActiveSessionStorage.hpp>
 
 namespace rstudio {
 namespace core {
@@ -36,27 +37,45 @@ namespace r_util {
 class ActiveSession : boost::noncopyable
 {
 private:
-   friend class ActiveSessions;
-   ActiveSession() {}
 
-   explicit ActiveSession(const std::string& id) : id_(id) 
+   friend class ActiveSessions;
+   explicit ActiveSession(std::shared_ptr<IActiveSessionStorage> storage) {}
+
+   ActiveSession(
+      std::shared_ptr<IActiveSessionStorage> storage,
+      const std::string& id) :
+         storage_(storage),
+         id_(id) 
    {
    }
 
-   explicit ActiveSession(const std::string& id, const FilePath& scratchPath)
-      : id_(id), scratchPath_(scratchPath)
+   ActiveSession(
+      std::shared_ptr<IActiveSessionStorage> storage,
+      const std::string& id,
+      const FilePath& scratchPath) : 
+         storage_(storage),
+         id_(id),
+         scratchPath_(scratchPath)
    {
       core::Error error = scratchPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
-
-      propertiesPath_ = scratchPath_.completeChildPath("properites");
-      error = propertiesPath_.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
    }
 
-public:
+   const std::string kExecuting = "executing";
+   const std::string kInitial = "initial";
+   const std::string kLabel = "label";
+   const std::string kLastUsed = "last_used";
+   const std::string kProject = "project";
+   const std::string kSavePromptRequired = "save_prompt_required";
+   const std::string kSessionSuspendData = "suspended_session_data";
+   const std::string kRunning = "running";
+   const std::string kRVersion = "r_version";
+   const std::string kRVersionHome = "r_version_home";
+   const std::string kRVersionLabel = "r_version_label";
+   const std::string kWorkingDir = "working_directory";
+
+ public:
 
    bool empty() const { return scratchPath_.isEmpty(); }
 
@@ -64,39 +83,55 @@ public:
 
    const FilePath& scratchPath() const { return scratchPath_; }
 
-   std::string project() const
+   std::string readProperty(const std::string& propertyName) const
+   {
+      std::string value;
+      if (!empty())
+      {
+         Error error = storage_->readProperty(id_, propertyName, &value);
+         if (error)
+            LOG_ERROR(error);
+      }
+
+      return value;
+   }
+
+   void writeProperty(const std::string& propertyName, const std::string& value)
    {
       if (!empty())
-         return readProperty("project");
-      else
-         return std::string();
+      {
+         Error error = storage_->writeProperty(id_, propertyName, value);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+
+   std::string project() const
+   {
+      return readProperty(kProject);
    }
 
    void setProject(const std::string& project)
    {
-      if (!empty())
-         writeProperty("project", project);
+      writeProperty(kProject, project);
    }
 
    std::string workingDir() const
    {
-      if (!empty())
-         return readProperty("working-dir");
-      else
-         return std::string();
+      return readProperty(kWorkingDir);
    }
 
    void setWorkingDir(const std::string& workingDir)
    {
-      if (!empty())
-         writeProperty("working-dir", workingDir);
+      writeProperty(kWorkingDir, workingDir);
    }
 
    bool initial() const
    {
       if (!empty())
       {
-         std::string value = readProperty("initial");
+         std::string value = readProperty(kInitial);
+
          if (!value.empty())
             return safe_convert::stringTo<bool>(value, false);
          else
@@ -113,134 +148,97 @@ public:
 
    void setInitial(bool initial)
    {
-      if (!empty())
-      {
-         std::string value = safe_convert::numberToString(initial);
-         writeProperty("initial", value);
-      }
+      std::string value = safe_convert::numberToString(initial);
+      writeProperty(kInitial, value);
    }
 
    double lastUsed() const
    {
-      return timestampProperty("last-used");
+      return timestampProperty(kLastUsed);
    }
 
    void setLastUsed()
    {
-      setTimestampProperty("last-used");
+      setTimestampProperty(kLastUsed);
    }
 
    bool executing() const
    {
-      if (!empty())
-      {
-         std::string value = readProperty("executing");
-         if (!value.empty())
-            return safe_convert::stringTo<bool>(value, false);
-         else
-            return false;
-      }
+      std::string value = readProperty(kExecuting);
+
+      if (!value.empty())
+         return safe_convert::stringTo<bool>(value, false);
       else
          return false;
    }
 
    void setExecuting(bool executing)
    {
-      if (!empty())
-      {
-         std::string value = safe_convert::numberToString(executing);
-         writeProperty("executing", value);
-      }
+      std::string value = safe_convert::numberToString(executing);
+      writeProperty(kExecuting, value);
    }
 
    bool savePromptRequired() const
    {
-      if (!empty())
-      {
-         std::string value = readProperty("save_prompt_required");
-         if (!value.empty())
-            return safe_convert::stringTo<bool>(value, false);
-         else
-            return false;
-      }
+      std::string value = readProperty(kSavePromptRequired);
+
+      if (!value.empty())
+         return safe_convert::stringTo<bool>(value, false);
       else
          return false;
    }
 
    void setSavePromptRequired(bool savePromptRequired)
    {
-      if (!empty())
-      {
          std::string value = safe_convert::numberToString(savePromptRequired);
-         writeProperty("save_prompt_required", value);
-      }
+         writeProperty(kSavePromptRequired, value);
    }
 
 
    bool running() const
    {
-      if (!empty())
-      {
-         std::string value = readProperty("running");
-         if (!value.empty())
-            return safe_convert::stringTo<bool>(value, false);
-         else
-            return false;
-      }
+      std::string value = readProperty(kRunning);
+
+      if (!value.empty())
+         return safe_convert::stringTo<bool>(value, false);
       else
          return false;
    }
 
    std::string rVersion()
    {
-      if (!empty())
-         return readProperty("r-version");
-      else
-         return std::string();
+      return readProperty(kRVersion);
    }
 
    std::string rVersionLabel()
    {
-      if (!empty())
-         return readProperty("r-version-label");
-      else
-         return std::string();
+      return readProperty(kRVersionLabel);
    }
 
    std::string rVersionHome()
    {
-      if (!empty())
-         return readProperty("r-version-home");
-      else
-         return std::string();
+      return readProperty(kRVersionHome);
    }
 
    void setRVersion(const std::string& rVersion,
                     const std::string& rVersionHome,
                     const std::string& rVersionLabel = "")
    {
-      if (!empty())
-      {
-         writeProperty("r-version", rVersion);
-         writeProperty("r-version-home", rVersionHome);
-         writeProperty("r-version-label", rVersionLabel);
-      }
+         writeProperty(kRVersion, rVersion);
+         writeProperty(kRVersionHome, rVersionHome);
+         writeProperty(kRVersionLabel, rVersionLabel);
    }
 
    // historical note: this will be displayed as the session name
    std::string label()
    {
-      if (!empty())
-         return readProperty("label");
-      else
-         return std::string();
+      return readProperty(kLabel);
    }
 
    // historical note: this will be displayed as the session name
    void setLabel(const std::string& label)
    {
-      if (!empty())
-         writeProperty("label", label);
+      writeProperty(kLabel, label);
    }
 
    void beginSession(const std::string& rVersion,
@@ -257,15 +255,6 @@ public:
       setLastUsed();
       setRunning(false);
       setExecuting(false);
-   }
-
-   uintmax_t suspendSize()
-   {
-      FilePath suspendPath = scratchPath_.completePath("suspended-session-data");
-      if (!suspendPath.exists())
-         return 0;
-
-      return suspendPath.getSizeRecursive();
    }
 
    core::Error destroy()
@@ -356,50 +345,34 @@ public:
 
    void setTimestampProperty(const std::string& property)
    {
-      if (!empty())
-      {
-         double now = date_time::millisecondsSinceEpoch();
-         std::string value = safe_convert::numberToString(now);
-         writeProperty(property, value);
-      }
+      double now = date_time::millisecondsSinceEpoch();
+      std::string value = safe_convert::numberToString(now);
+      writeProperty(property, value);
    }
 
    double timestampProperty(const std::string& property) const
    {
-      if (!empty())
-      {
-         std::string value = readProperty(property);
-         if (!value.empty())
-            return safe_convert::stringTo<double>(value, 0);
-         else
-            return 0;
-      }
+      std::string value = readProperty(property);
+
+      if (!value.empty())
+         return safe_convert::stringTo<double>(value, 0);
       else
-      {
          return 0;
-      }
    }
 
 
    void setRunning(bool running)
    {
-      if (!empty())
-      {
          std::string value = safe_convert::numberToString(running);
-         writeProperty("running", value);
-      }
+         writeProperty(kRunning, value);
    }
 
-   void writeProperty(const std::string& name, const std::string& value) const;
-   std::string readProperty(const std::string& name) const;
-
-private:
+   std::shared_ptr<IActiveSessionStorage> storage_;
    std::string id_;
    FilePath scratchPath_;
    FilePath propertiesPath_;
    SortConditions sortConditions_;
 };
-
 
 class ActiveSessions : boost::noncopyable
 {
@@ -407,6 +380,7 @@ public:
    explicit ActiveSessions(const FilePath& rootStoragePath)
    {
       storagePath_ = storagePath(rootStoragePath);
+      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
       Error error = storagePath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
@@ -440,10 +414,12 @@ public:
 
    FilePath storagePath() const { return storagePath_; }
 
-   static boost::shared_ptr<ActiveSession> emptySession(const std::string& id);
+   boost::shared_ptr<ActiveSession> emptySession(
+      const std::string& id) const;
 
 private:
    core::FilePath storagePath_;
+   std::shared_ptr<IActiveSessionStorage> storage_;
 };
 
 // active session as tracked by rserver processes
@@ -489,12 +465,6 @@ public:
 private:
    core::FilePath rootPath_;
 };
-
-void trackActiveSessionCount(const FilePath& rootStoragePath,
-                             const FilePath& userHomePath,
-                             bool projectSharingEnabled,
-                             boost::function<void(size_t)> onCountChanged);
-
 
 } // namespace r_util
 } // namespace core
