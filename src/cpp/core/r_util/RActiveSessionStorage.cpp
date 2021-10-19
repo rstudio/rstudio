@@ -18,6 +18,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/Log.hpp>
 #include <core/system/Xdg.hpp>
+#include <boost/current_function.hpp>
 
 namespace rstudio {
 namespace core {
@@ -46,7 +47,7 @@ namespace r_util {
         std::map<std::string, std::string> propertyValue{};
         *pValue = "";
 
-        Error error = readProperties(id, {name}, &propertyValue);
+        Error error = readProperties(id, { name }, &propertyValue);
 
         if (error)
             return error;
@@ -63,7 +64,6 @@ namespace r_util {
     {
         std::vector<FilePath> failedFiles{};
         pValues->empty();
-        Error error;
         for (const std::string &name : names)
         {
             const std::string& fileName = getPropertyFileName(name);
@@ -72,7 +72,7 @@ namespace r_util {
 
             if (readPath.exists())
             {
-                error = core::readStringFromFile(readPath, &value);
+                Error error = core::readStringFromFile(readPath, &value);
                 if (error)
                     failedFiles.push_back(readPath);
                 boost::algorithm::trim(value);
@@ -84,7 +84,7 @@ namespace r_util {
             return Success();
         else
             return createError("UnableToReadFiles", "Failed to read from the following files ", 
-                failedFiles, error.getLocation());
+                failedFiles, ErrorLocation{BOOST_CURRENT_FUNCTION, __FILE__, __LINE__});
     }
 
     Error FileActiveSessionStorage::readProperties(const std::string& id, std::map<std::string, std::string>* pValues)
@@ -92,13 +92,12 @@ namespace r_util {
         FilePath propertyDir = buildPropertyDir(id);
         std::vector<FilePath> files{};
         std::vector<FilePath> failedFiles{};
-        Error error;
         pValues->empty();
         propertyDir.getChildren(files);
 
         for(FilePath file : files) {
             std::string value = "";
-            error = core::readStringFromFile(file, &value);
+            Error error = core::readStringFromFile(file, &value);
 
             if(error)
                 failedFiles.push_back(file);
@@ -111,8 +110,7 @@ namespace r_util {
             return Success();
         else
             return createError("UnableToReadFiles", "Failed to read from the following files ",
-                failedFiles, error.getLocation());
-
+                failedFiles, ErrorLocation{BOOST_CURRENT_FUNCTION, __FILE__, __LINE__});
     }
 
     Error FileActiveSessionStorage::writeProperty(const std::string& id, const std::string& name, const std::string& value)
@@ -124,11 +122,10 @@ namespace r_util {
     Error FileActiveSessionStorage::writeProperties(const std::string& id, const std::map<std::string, std::string>& properties)
     {
         std::vector<FilePath> failedFiles{};
-        Error error;
         for (const std::pair<std::string, std::string> &prop : properties)
         {
             FilePath writePath = buildPropertyPath(id, prop.first);
-            error = core::writeStringToFile(writePath, prop.second);
+            Error error = core::writeStringToFile(writePath, prop.second);
             if (error)
                 failedFiles.push_back(writePath);
         }
@@ -137,7 +134,7 @@ namespace r_util {
             return Success();
         else
             return createError("UnableToWriteFiles", "Failed to write to the following files ", 
-                failedFiles, error.getLocation());
+                failedFiles, ErrorLocation{BOOST_CURRENT_FUNCTION, __FILE__, __LINE__});
     }
 
     Error FileActiveSessionStorage::createError(const std::string& errorName, const std::string& preamble, 
