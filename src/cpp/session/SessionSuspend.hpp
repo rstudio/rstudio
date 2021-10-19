@@ -38,7 +38,8 @@ enum SuspendBlockingOps
 bool disallowSuspend();
 void addBlockingOp(SuspendBlockingOps op);
 void removeBlockingOp(SuspendBlockingOps op);
-void checkBlockingOp(bool blocking, SuspendBlockingOps op);
+bool checkBlockingOp(bool blocking, SuspendBlockingOps op);
+void sendBlockingOpsEvent();
 bool suspendSession(bool force, int status = EXIT_SUCCESS);
 void suspendIfRequested(const boost::function<bool()>& allowSuspend);
 void handleUSR1(int unused);

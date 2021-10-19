@@ -524,6 +524,10 @@ bool waitForMethod(const std::string& method,
                timeoutTime = timeoutTimeFromNow();
             }
          }
+         else
+         {
+            suspend::sendBlockingOpsEvent();
+         }
       }
 
       // if we have at least one async process running then this counts

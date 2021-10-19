@@ -98,12 +98,12 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 bool canSuspend(const std::string& prompt)
 {
    bool suspendIsBlocked = false;
-   session::suspend::checkBlockingOp((suspendIsBlocked |= main_process::haveActiveChildren()), suspend::SuspendBlockingOps::kChildProcess);
-   session::suspend::checkBlockingOp((suspendIsBlocked |= !modules::connections::isSuspendable()), suspend::SuspendBlockingOps::kConnection);
-   session::suspend::checkBlockingOp((suspendIsBlocked |= !modules::overlay::isSuspendable()), suspend::SuspendBlockingOps::kOverlay);
-   session::suspend::checkBlockingOp((suspendIsBlocked |= !modules::environment::isSuspendable()), suspend::SuspendBlockingOps::kExternalPointer);
-   session::suspend::checkBlockingOp((suspendIsBlocked |= !modules::jobs::isSuspendable()), suspend::SuspendBlockingOps::kActiveJob);
-   session::suspend::checkBlockingOp((suspendIsBlocked |= !rstudio::r::session::isSuspendable(prompt)), suspend::SuspendBlockingOps::kCommandPrompt);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveActiveChildren(), suspend::SuspendBlockingOps::kChildProcess);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::SuspendBlockingOps::kConnection);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::overlay::isSuspendable(), suspend::SuspendBlockingOps::kOverlay);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::SuspendBlockingOps::kExternalPointer);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::SuspendBlockingOps::kActiveJob);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::SuspendBlockingOps::kCommandPrompt);
 
    return !suspendIsBlocked;
 }

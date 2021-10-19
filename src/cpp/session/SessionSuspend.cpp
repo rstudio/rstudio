@@ -57,7 +57,7 @@ bool disallowSuspend()
    return false;
 }
 
-void storeBlockingOps()
+core::json::Object blockingOpsToJson()
 {
    core::json::Object blockingOps;
 
@@ -74,6 +74,18 @@ void storeBlockingOps()
    if (opsBlockingSuspend[SuspendBlockingOps::kCommandPrompt])
       blockingOps.insert("incomplete-command-prompt", core::json::Array());
 
+   return blockingOps;
+}
+
+void sendBlockingOpsEvent()
+{
+   core::json::Object blockingOps = blockingOpsToJson();
+   module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
+}
+
+void storeBlockingOps()
+{
+   core::json::Object blockingOps = blockingOpsToJson();
    module_context::activeSession().setBlockingSuspend(blockingOps);
 }
 
@@ -103,13 +115,15 @@ void removeBlockingOp(SuspendBlockingOps op)
  * @param blocking True if this operation is blocking suspension. False otherwise
  * @param op The operation type that's blocking session suspension
  */
-void checkBlockingOp(bool blocking, SuspendBlockingOps op)
+bool checkBlockingOp(bool blocking, SuspendBlockingOps op)
 {
-   if (opsBlockingSuspend[op] == blocking)
-      return;
+   if (opsBlockingSuspend[op] != blocking)
+   {
+      opsBlockingSuspend[op] = blocking;
+      storeBlockingOps();
+   }
 
-   opsBlockingSuspend[op] = blocking;
-   storeBlockingOps();
+   return blocking;
 }
 
 void clearBlockingOps()
