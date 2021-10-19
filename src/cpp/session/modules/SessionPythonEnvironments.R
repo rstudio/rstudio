@@ -672,7 +672,7 @@
    condaPaths <- file.path(condaRoots, condaSuffix)
    for (condaPath in condaPaths)
       if (file.exists(condaPath))
-         return(condaPath)
+         return(path.expand(condaPath))
    
    ""
    
