@@ -81,6 +81,8 @@ public class ChunkOutputStream extends FlowPanel
 
          getElement().getStyle().setOverflow(Overflow.AUTO);
       }
+
+      setUpEvents(getElement());
    }
 
    @Override
@@ -674,6 +676,51 @@ public class ChunkOutputStream extends FlowPanel
    }
    
    // Private methods ---------------------------------------------------------
+   
+   /** 
+    * A native hack function to workaround {@code <iframes>} stealing all pointer events.
+    *  
+    * @param el the Element to target for event setup, which should always be {@code this}
+    */
+   private native void setUpEvents(Element el) /*-{
+      // create two event handlers: 
+      // - one to handle when the mouse leaves the iframe,
+      // - another to handle when the mouse moves inside the current widget
+      //
+      // mousemove events signal user intent to do something with the current iframe, which will
+      // "unlock" the frame for interaction. When the mouse leaves, the frame is disabled, which prevents the
+      // frame from eating mouse events (like scroll). This makes it possible to scroll accross iframes
+      // without interruptions, assuming the user keeps their mouse perfectly still.
+      //
+      // Each event sets up the other in such a way that they can only ever trigger once at a time.
+
+      var moveEventHandler = function() {
+         var frames = el.querySelectorAll("iframe");
+         if (!frames.length)
+            return;
+
+         frames.forEach(function(frame) {
+            frame.style.pointerEvents = "all";
+            frame.style.opacity = 1;
+            frame.addEventListener("mouseout", outEventHandler, { once: true });
+         });
+      };
+
+      var outEventHandler = function() {
+         var frames = el.querySelectorAll("iframe");
+         if (!frames.length)
+            return;
+
+         frames.forEach(function(frame) {
+            frame.style.pointerEvents = "none"; 
+            frame.style.opacity = 0.7;
+         });
+
+         el.addEventListener("mousemove", moveEventHandler, { once: true });
+      }
+
+      el.addEventListener("mousemove", moveEventHandler, { once: true });
+   }-*/;
    
    private String classOfOutput(int type)
    {
