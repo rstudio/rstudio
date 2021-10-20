@@ -99,5 +99,7 @@ $headers.Add("Authorization", "token $pat")
 
 $url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstudio/$flower/$build/$versionStem.md"
 
-# Send to Github!
-Invoke-WebRequest -Body $payload -Method 'PUT' -Headers $headers -Uri $url
+# Send to Github! We have to use basic parsing here because this script runs on SKU of Windows that
+# doesn't contain a working copy of IE (and, incredibly, without -UseBasicParsing, Invoke-WebRequest
+# has a dendency on the IE DOM engine).
+Invoke-WebRequest -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
