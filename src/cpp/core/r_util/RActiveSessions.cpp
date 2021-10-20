@@ -196,6 +196,46 @@ GlobalActiveSessions::get(const std::string& id) const
 
    return boost::shared_ptr<GlobalActiveSession>(new GlobalActiveSession(sessionFile));
 }
+namespace {
+
+void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
+                        const FilePath& userHomePath,
+                        bool projectSharingEnabled,
+                        boost::function<void(size_t)> onCountChanged)
+{
+   onCountChanged(pSessions->count(userHomePath, projectSharingEnabled));
+}
+
+} // anonymous namespace
+
+void trackActiveSessionCount(const FilePath& rootStoragePath,
+                             const FilePath& userHomePath,
+                             bool projectSharingEnabled,
+                             boost::function<void(size_t)> onCountChanged)
+{
+
+   boost::shared_ptr<ActiveSessions> pSessions(
+                                          new ActiveSessions(rootStoragePath));
+
+   core::system::file_monitor::Callbacks cb;
+   cb.onRegistered = boost::bind(notifyCountChanged,
+                                 pSessions,
+                                 userHomePath,
+                                 projectSharingEnabled,
+                                 onCountChanged);
+   cb.onFilesChanged = boost::bind(notifyCountChanged,
+                                   pSessions,
+                                   userHomePath,
+                                   projectSharingEnabled,
+                                   onCountChanged);
+   cb.onRegistrationError = boost::bind(log::logError, _1, ERROR_LOCATION);
+
+   core::system::file_monitor::registerMonitor(
+                   pSessions->storagePath(),
+                   false,
+                   boost::function<bool(const FileInfo&)>(),
+                   cb);
+}
 
 } // namespace r_util
 } // namespace core
