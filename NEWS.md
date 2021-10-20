@@ -20,6 +20,11 @@
 * Fixed custom shortcuts not appearing correctly in "Keyboard Shortcuts Help" and Electron menus. (#9953)
 * Updated Files Pane buttons to resize and remain visible at smaller widths (#9870)
 * Fixed header scrolling in data viewer tables not following table contents in unfocused windows (#8208)
+* Added support for Slurm 21.08 to the Slurm Launcher plugin
+* Fixed a bug where Slurm Launcher jobs that exited with a non-zero exit code would still have a zero exit code (#203)
+* Fixed a bug where Slurm Launcher jobs with standard error would never be written to the output file (#203)
+* Fixed a bug where Slurm Launcher jobs that exited due to a signal would not show the exit code as 128+signal (#203)
+* Fixed a bug where Launcher log files could be stuck being owned by the root user (#9728)
 
 ### Misc
 
