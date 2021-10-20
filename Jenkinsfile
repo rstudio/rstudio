@@ -340,13 +340,18 @@ try {
                             stage('run tests') {
                                 run_tests(current_container.os, get_type_from_os(current_container.os), current_container.flavor)
                             }
-                            stage('sentry upload') {
-                                sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
+                            if (current_container.os != 'windows') {
+                                stage('sentry upload') {
+                                    sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
+                                }
                             }
                         }
                     }
                     stage('upload artifacts') {
                         s3_upload(get_type_from_os(current_container.os), current_container.flavor, current_container.os, current_container.arch)
+                    }
+                    if (current_container.os == 'windows') {
+                        sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
                     }
                 }
             }
@@ -389,18 +394,6 @@ try {
                   bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
                 }
               }
-              stage('upload debug symbols') {
-                // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
-                bat '''
-                  cd package\\win32\\build
-                  FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
-                '''
-
-                // upload the breakpad symbols
-                withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-                  bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
-                }
-              }
               stage('upload') {
 
                 def buildDest = "s3://rstudio-ide-build/desktop/windows"
@@ -431,6 +424,18 @@ try {
                   def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
 
                   println stdout
+                }
+              }
+              stage('upload debug symbols') {
+                // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
+                bat '''
+                  cd package\\win32\\build
+                  FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
+                '''
+
+                // upload the breakpad symbols
+                withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+                  bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
                 }
               }
             }
