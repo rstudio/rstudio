@@ -1,5 +1,5 @@
 /* Stores users of RStudio Server */
-CREATE TABLE licensed_users(
+CREATE TABLE IF NOT EXISTS licensed_users(
 
    /* The username associated with the user */
    user_name text NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE licensed_users(
 );
 
 /* Stores metadata about actvie sessions */ 
-CREATE TABLE active_session_metadata(
+CREATE TABLE IF NOT EXISTS active_session_metadata(
 
    /* The ID of the session which this row describes */
    session_id text NOT NULL,
