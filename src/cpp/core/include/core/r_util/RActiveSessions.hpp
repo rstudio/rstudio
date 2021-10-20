@@ -257,6 +257,15 @@ private:
       setExecuting(false);
    }
 
+   uintmax_t suspendSize()
+   {
+      FilePath suspendPath = scratchPath_.completePath("suspended-session-data");
+      if (!suspendPath.exists())
+         return 0;
+
+      return suspendPath.getSizeRecursive();
+   }
+
    core::Error destroy()
    {
       if (!empty())
