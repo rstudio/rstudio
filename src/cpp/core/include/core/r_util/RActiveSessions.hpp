@@ -475,8 +475,7 @@ private:
    core::FilePath rootPath_;
 };
 
-void trackActiveSessionCount(std::shared_ptr<IActiveSessionStorage> storage,
-                             const FilePath& rootStoragePath,
+void trackActiveSessionCount(const FilePath& rootStoragePath,
                              const FilePath& userHomePath,
                              bool projectSharingEnabled,
                              boost::function<void(size_t)> onCountChanged);
