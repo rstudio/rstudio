@@ -36,8 +36,54 @@ For example, below shows a "dev" locale where menus and commands have i18n suppo
 
 # Tools
 
+The following tools are included to help with i18n development:
+
 ## create_dev_locale.sh
 
-Useful for debugging i18n and visually confirming what is/is not i18n-enabled by creating `*_dev.properties` files from existing `*_en.properties` files.  The script copies the English properties files and prefixes their texts with `@`. 
+Useful for debugging i18n and visually confirming what is/is not i18n-enabled by creating `*_dev.properties` files from
+existing `*_en.properties` files.  The script copies the English properties files and prefixes their texts with `@`.
 
 Run this script from `/src/gwt/src` with syntax `./create_dev_locale.sh`
+
+## commands_xml_to_i18n.py
+
+### Summary
+
+Auto-generates java interfaces and properties files for all commands and menus defined with `Commands.cmd.xml` using 
+the English text in that file.  This script must be run whenever `Commands.cmd.xml` is edited, and is automatically
+executed whenever chages to this file are detected and the `build`, `desktop`, or `devmode` ant targets are triggered.
+
+Usage below shows how to trigger the scripts manually (instead of via ant buildfile targets) for the creation of English
+and "dev" locales, as discussed above for `create_dev_locale.sh`
+
+TODO: Mention shortcuts
+
+### Usage
+
+See `commands_xml_to_i18n.py -h` for more details on options.
+
+Typical usage (from the `commands.cmd.xml` subfolder) is:
+
+```shell
+CMD_DIR="../../../src/org/rstudio/studio/client/workbench/commands/"
+
+# Commands
+# Interface (no prefix added to texts)
+python commands_xml_to_i18n.py "${CMD_DIR}/Commands.cmd.xml" cmd constant "${CMD_DIR}/CmdConstants.java" --package "package org.rstudio.studio.client.workbench.commands;"
+# English (en) properties file (no prefix added to texts)
+python commands_xml_to_i18n.py "${CMD_DIR}/Commands.cmd.xml" cmd properties "${CMD_DIR}/CmdConstants_en.properties"
+# (optional) Development (dev) properties file (prefix "@" added to all texts for development - see Summary)
+python commands_xml_to_i18n.py "${CMD_DIR}/Commands.cmd.xml" cmd properties "${CMD_DIR}/CmdConstants_dev.properties" --prefix "@"
+
+# Menus
+# Interface (no prefix added to texts)
+python commands_xml_to_i18n.py "${CMD_DIR}/Commands.cmd.xml" menu constant "${CMD_DIR}/MenuConstants.java" --package "package org.rstudio.studio.client.workbench.commands;"
+# English (en) properties file (no prefix added to texts)
+python commands_xml_to_i18n.py "${CMD_DIR}/Commands.cmd.xml" menu properties "${CMD_DIR}/MenuConstants_en.properties"
+# (optional) Development (dev) properties file (prefix "@" added to all texts for development - see Summary)
+python commands_xml_to_i18n.py "${CMD_DIR}/Commands.cmd.xml" menu properties "${CMD_DIR}/MenuConstants_dev.properties" --prefix "@"
+```
+
+### Tests
+
+A minimal test suite for the tool is available using `python -m pytest ./test_command.py`
