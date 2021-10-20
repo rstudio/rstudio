@@ -197,7 +197,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       int frameWidth = frame_.getOffsetWidth();
       if (frameWidth > 0)
       {
-         double ratio = (double)700 / 960;
+         double ratio = (double)700 / 1050;
          ensureHeight((int)(frameWidth * ratio) + getToolbarsHeight());
       }
       
