@@ -31,6 +31,12 @@ enum SuspendBlockingOps
    kActiveJob,
    kCommandPrompt,
 
+   kWaitingForEditCompletion,
+   kWaitingForChooseFileCompletion,
+   kWaitingForLocatorCompletion,
+   kWaitingForUnsavedHandlerCompletion,
+   kWaitingForUserPromptCompletion,
+
 
    kBlockingOpsCount // Always keep this at bottom of enum list
 };

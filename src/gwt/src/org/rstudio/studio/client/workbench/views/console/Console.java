@@ -27,6 +27,9 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
@@ -55,6 +58,8 @@ public class Console
       IsWidget getConsoleInterruptButton();
       IsWidget getConsoleClearButton();
       IsWidget getProfilerInterruptButton();
+      IsWidget getSuspendBlockedIcon();
+      IsWidget getSuspendedIcon();
       void enterMode(ConsolePane.ConsoleMode mode);
       void leaveMode(ConsolePane.ConsoleMode mode);
       ConsolePane.ConsoleMode mode();
@@ -173,6 +178,30 @@ public class Console
          }
          else
             view.leaveMode(ConsoleMode.Job);
+      });
+
+      events.addHandler(SessionSerializationEvent.TYPE, event -> {
+         if (event.getAction().getType() == SessionSerializationAction.SUSPEND_SESSION)
+         {
+            view.getSuspendBlockedIcon().asWidget().setVisible(false);
+            view.getSuspendedIcon().asWidget().setVisible(true);
+         }
+         else if (event.getAction().getType() == SessionSerializationAction.RESUME_SESSION)
+         {
+            view.getSuspendBlockedIcon().asWidget().setVisible(false);
+            view.getSuspendedIcon().asWidget().setVisible(false);
+         }
+      });
+
+      events.addHandler(SessionSuspendBlockedEvent.TYPE, event -> {
+         if (view.getSuspendBlockedIcon().asWidget().isVisible()) {
+            view.getSuspendBlockedIcon().asWidget().setVisible(false);
+            view.getSuspendedIcon().asWidget().setVisible(true);
+         }
+         else {
+            view.getSuspendBlockedIcon().asWidget().setVisible(true);
+            view.getSuspendedIcon().asWidget().setVisible(false);
+         }
       });
    }
 

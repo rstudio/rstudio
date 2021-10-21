@@ -494,6 +494,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private ConsoleClearButton consoleClearButton_;
    @SuppressWarnings("unused")
    private ConsoleInterpreterVersion consoleInterpreterVersion_;
+   private ConsoleSuspendBlockedIcon consoleSuspendBlockedIcon_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;

@@ -85,13 +85,21 @@ std::string s_nextSessionUrl;
 bool s_protocolDebugEnabled = false;
 bool s_sessionDebugLogCreated = false;
 
-boost::posix_time::ptime timeoutTimeFromNow()
+boost::posix_time::ptime timeoutTimeFromNow(int minutes = -1)
 {
    int timeoutMinutes = options().timeoutMinutes();
    if (timeoutMinutes > 0)
    {
-      return boost::posix_time::second_clock::universal_time() +
-             boost::posix_time::minutes(options().timeoutMinutes());
+      if (minutes == -1)
+      {
+         return boost::posix_time::second_clock::universal_time() +
+                boost::posix_time::minutes(options().timeoutMinutes());
+      }
+      else
+      {
+         return boost::posix_time::second_clock::universal_time() +
+                boost::posix_time::minutes(minutes);
+      }
    }
    else
    {
@@ -526,7 +534,10 @@ bool waitForMethod(const std::string& method,
          }
          else
          {
+            // Notify client we're blocked from suspending and try checking
+            // again a minute from now
             suspend::sendBlockingOpsEvent();
+            timeoutTime = timeoutTimeFromNow(1);
          }
       }
 

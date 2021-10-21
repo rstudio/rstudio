@@ -121,6 +121,12 @@ public class ConsolePane extends WorkbenchPane
       return profilerInterruptButton_;
    }
 
+   @Override
+   public IsWidget getSuspendBlockedIcon() { return consoleSuspendBlockedIcon_; }
+
+   @Override
+   public IsWidget getSuspendedIcon() { return consoleSuspendedIcon_; }
+
    public int getCharacterWidth()
    {
       return shell_.getDisplay().getCharacterWidth();
@@ -151,8 +157,14 @@ public class ConsolePane extends WorkbenchPane
 
       profilerInterruptButton_ = ConsoleInterruptProfilerButton.CreateProfilerButton();
       profilerInterruptButton_.setVisible(false);
-      
 
+      consoleSuspendBlockedIcon_ = new ConsoleSuspendBlockedIcon().getSuspendBlocked();
+      consoleSuspendBlockedIcon_.setVisible(false);
+      consoleSuspendedIcon_ = new ConsoleSuspendBlockedIcon().getSuspended();
+      consoleSuspendedIcon_.setVisible(false);
+
+      toolbar.addRightWidget(consoleSuspendedIcon_);
+      toolbar.addRightWidget(consoleSuspendBlockedIcon_);
       toolbar.addRightWidget(profilerInterruptButton_);
       toolbar.addRightWidget(consoleInterruptButton_);
       toolbar.addRightWidget(consoleClearButton_);
@@ -357,6 +369,8 @@ public class ConsolePane extends WorkbenchPane
    private ToolbarButton consoleClearButton_;
    private ConsoleInterpreterVersion consoleInterpreterVersion_;
    private Image profilerInterruptButton_;
+   private Image consoleSuspendBlockedIcon_;
+   private Image consoleSuspendedIcon_;
    private Stack<ConsoleMode> mode_;
    private SecondaryToolbar secondaryToolbar_;
 }
