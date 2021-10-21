@@ -906,12 +906,14 @@ public abstract class CompletionManagerBase
                ignoreNextBlur_ = true;
             }),
             
-            popup_.addAttachHandler((AttachEvent event) -> {
-               docDisplay_.setPopupVisible(event.isAttached());
+            popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
+               docDisplay_.setPopupVisible(true);
+               onPopupSelection(event.getSelectedItem());
             }),
             
-            popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
-               onPopupSelection(event.getSelectedItem());
+            popup_.addCloseHandler(event ->
+            {
+               Scheduler.get().scheduleDeferred(() -> docDisplay_.setPopupVisible(false));
             }),
             
             popup_.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) -> {
