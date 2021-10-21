@@ -102,6 +102,23 @@ def s3_upload(type, flavor, os, arch) {
   withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
     sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
   }
+
+  // publish build to dailies page
+  withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+
+    // derive product
+    def product="${flavor}"
+    if (rstudioVersionSuffix.contains("pro")) {
+        if (product == "desktop") {
+            product = "desktop-pro"
+        } else if (product == "server") {
+            product = "workbench"
+        }
+    }
+
+    // publish the build
+    sh "docker/jenkins/publish-build.sh --build ${product}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_PAT} --file ${buildFolder}/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+  }
 }
 
 def sentry_upload(type, flavor) {
@@ -318,13 +335,18 @@ try {
                             stage('run tests') {
                                 run_tests(current_container.os, get_type_from_os(current_container.os), current_container.flavor)
                             }
-                            stage('sentry upload') {
-                                sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
+                            if (current_container.os != 'windows') {
+                                stage('sentry upload') {
+                                    sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
+                                }
                             }
                         }
                     }
                     stage('upload artifacts') {
                         s3_upload(get_type_from_os(current_container.os), current_container.flavor, current_container.os, current_container.arch)
+                    }
+                    if (current_container.os == 'windows') {
+                        sentry_upload(get_type_from_os(current_container.os), current_container.flavor)
                     }
                 }
             }
@@ -367,6 +389,38 @@ try {
                   bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
                 }
               }
+              stage('upload') {
+
+                def buildDest = "s3://rstudio-ide-build/desktop/windows"
+                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+
+                // strip unhelpful suffixes from filenames
+                bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
+                bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.zip package\\win32\\build\\${packageName}.zip"
+
+                // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+                  bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
+                  bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
+                }
+
+              }
+              stage ('publish') {
+                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+
+                  // derive product
+                  def product="desktop"
+                  if (rstudioVersionSuffix.contains("pro")) {
+                      product = "desktop-pro"
+                  }
+
+                  // publish the build
+                  def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
+
+                  println stdout
+                }
+              }
               stage('upload debug symbols') {
                 // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
                 bat '''
@@ -376,18 +430,7 @@ try {
 
                 // upload the breakpad symbols
                 withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-                  bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --org rstudio --project ide-backend -t breakpad ."
-                }
-              }
-              stage('upload') {
-
-                def buildDest = "s3://rstudio-ide-build/desktop/windows"
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-
-                // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
-                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-                  bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.exe ${buildDest}/${packageName}.exe"
-                  bat "aws s3 cp package\\win32\\build\\${packageName}-RelWithDebInfo.zip ${buildDest}/${packageName}.zip"
+                  bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
                 }
               }
             }

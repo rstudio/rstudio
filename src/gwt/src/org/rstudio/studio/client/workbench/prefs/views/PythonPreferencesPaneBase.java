@@ -173,8 +173,8 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
          cbAutoUseProjectInterpreter_ =
                new CheckBox("Automatically activate project-local Python environments");
          
-         cbAutoUseProjectInterpreter_.setValue(
-               prefs_.pythonProjectEnvironmentAutomaticActivate().getGlobalValue());
+         initialAutoUseProjectInterpreter_ = prefs_.pythonProjectEnvironmentAutomaticActivate().getGlobalValue();
+         cbAutoUseProjectInterpreter_.setValue(initialAutoUseProjectInterpreter_);
          
          cbAutoUseProjectInterpreter_.getElement().setTitle(
                "When enabled, RStudio will automatically find and activate a " +
@@ -384,6 +384,15 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
          if (projDir.exists() && newValue.startsWith(projDir.getPath()))
             newValue = newValue.substring(projDir.getLength() + 1);
       }
+      else
+      {
+         boolean newAutoActivateValue = cbAutoUseProjectInterpreter_.getValue();
+         if (newAutoActivateValue != initialAutoUseProjectInterpreter_)
+         {
+            prefs_.pythonProjectEnvironmentAutomaticActivate().setGlobalValue(newAutoActivateValue);
+            requirement.setSessionRestartRequired(true);
+         }
+      }
       
       // check if the interpreter appears to have been set by the user
       boolean isValidInterpreterSet =
@@ -438,6 +447,7 @@ public abstract class PythonPreferencesPaneBase<T> extends PreferencesDialogPane
    protected final SimplePanel interpreterDescription_ = new SimplePanel();
    
    protected CheckBox cbAutoUseProjectInterpreter_;
+   protected boolean initialAutoUseProjectInterpreter_;
    
    protected String initialPythonPath_;
    protected PythonInterpreter interpreter_;
