@@ -36,6 +36,9 @@ public class ChunkOutputFrame extends DynamicIFrame
             loadUrl(url_, onCompleted_);
          }
       };
+
+      getElement().getStyle().setProperty("pointerEvents", "none");
+      getElement().getStyle().setProperty("opacity", "0.7");
    }
 
    void loadUrl(String url, Command onCompleted)
@@ -115,7 +118,7 @@ public class ChunkOutputFrame extends DynamicIFrame
       
       onRenderedTimer.schedule(100);
    }
-   
+
    private final Timer timer_;
    private String url_;
    private Command onCompleted_;
