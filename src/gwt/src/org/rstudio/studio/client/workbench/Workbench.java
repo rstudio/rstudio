@@ -402,7 +402,7 @@ public class Workbench implements BusyEvent.Handler,
       // compute path to public key
       String sshDir = session_.getSessionInfo().getDefaultSSHKeyDir();
       final String keyPath = FileSystemItem.createDir(sshDir).completePath(
-                                                               "id_rsa.pub");
+         pPrefs_.get().rsaKeyFile().getValue());
 
       // read it
       server_.gitSshPublicKey(keyPath, new ServerRequestCallback<String> () {
