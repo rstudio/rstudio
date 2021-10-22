@@ -25,6 +25,7 @@
 * Fixed a bug where Slurm Launcher jobs with standard error would never be written to the output file (#203)
 * Fixed a bug where Slurm Launcher jobs that exited due to a signal would not show the exit code as 128+signal (#203)
 * Fixed a bug where Launcher log files could be stuck being owned by the root user (#9728)
+* Fixed scrolling past long sub-content (like kables) in RMD files. User must interact with sub-content in order to scroll through it (#2202)
 
 ### Misc
 

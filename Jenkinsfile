@@ -6,7 +6,7 @@ properties([
                               artifactNumToKeepStr: '',
                               daysToKeepStr: '',
                               numToKeepStr: '100')),
-    parameters([string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version'),
+    parameters([string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '1', description: 'RStudio Patch Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
@@ -106,6 +106,23 @@ def s3_upload(type, flavor, os, arch) {
        def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
        sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
     }
+  }
+
+  // publish build to dailies page
+  withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+
+    // derive product
+    def product="${flavor}"
+    if (rstudioVersionSuffix.contains("pro")) {
+        if (product == "desktop") {
+            product = "desktop-pro"
+        } else if (product == "server") {
+            product = "workbench"
+        }
+    }
+
+    // publish the build
+    sh "docker/jenkins/publish-build.sh --build ${product}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_PAT} --file ${buildFolder}/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
   }
 
   // publish build to dailies page
