@@ -194,8 +194,6 @@ def trigger_external_build(build_name, wait = false) {
 messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>"
 
 try {
-    def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-    packageVersion = packageVersion.replace('+', '-')
 
     timestamps {
         def containers = [
@@ -382,6 +380,8 @@ try {
                 }
               }
               stage('sign') {
+                def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                packageVersion = packageVersion.replace('+', '-')
 
                 def packageName = "RStudio-${packageVersion}-RelWithDebInfo"
 
@@ -392,6 +392,8 @@ try {
                 }
               }
               stage('upload') {
+                def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                packageVersion = packageVersion.replace('+', '-')
 
                 def buildDest = "s3://rstudio-ide-build/desktop/windows"
                 def packageName = "RStudio-${packageVersion}"
