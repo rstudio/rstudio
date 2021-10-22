@@ -59,7 +59,7 @@ Error ActiveSessions::create(const std::string& project,
       return error;
 
    // write initial settings
-   ActiveSession activeSession(storage_, id, dir);
+   ActiveSession activeSession(id, dir);
    activeSession.setProject(project);
    activeSession.setWorkingDir(workingDir);
    activeSession.setInitial(initial);
@@ -148,9 +148,7 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
 {
    FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
    if (scratchPath.exists())
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(storage_,
-                                                                id,
-                                                                scratchPath));
+      return boost::shared_ptr<ActiveSession>(new ActiveSession(id, scratchPath));
    else
       return emptySession(id);
 }
@@ -158,7 +156,7 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
 
 boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(const std::string& id) const
 {
-   return boost::shared_ptr<ActiveSession>(new ActiveSession(storage_, id));
+   return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
 }
 
 std::vector<boost::shared_ptr<GlobalActiveSession> >

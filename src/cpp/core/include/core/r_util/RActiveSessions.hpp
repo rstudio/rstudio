@@ -39,24 +39,25 @@ class ActiveSession : boost::noncopyable
 private:
 
    friend class ActiveSessions;
-   explicit ActiveSession(std::shared_ptr<IActiveSessionStorage> storage) {}
-
-   ActiveSession(
-      std::shared_ptr<IActiveSessionStorage> storage,
-      const std::string& id) :
-         storage_(storage),
-         id_(id) 
+   explicit ActiveSession() 
    {
+      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
    }
 
    ActiveSession(
-      std::shared_ptr<IActiveSessionStorage> storage,
+      const std::string& id) :
+         id_(id) 
+   {
+      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
+   }
+
+   ActiveSession(
       const std::string& id,
       const FilePath& scratchPath) : 
-         storage_(storage),
          id_(id),
          scratchPath_(scratchPath)
    {
+      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
       core::Error error = scratchPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
