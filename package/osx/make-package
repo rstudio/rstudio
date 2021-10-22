@@ -140,12 +140,7 @@ if [ "${clean}" = "1" ]; then
 fi
 
 # set up MAKEFLAGS
-# don't use all CPUs on build machine (appears to cause hangs)
-if [ -n "${JENKINS_URL}" ]; then
-   MAKEFLAGS="${MAKEFLAGS} -j2"
-else
-   MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
-fi
+MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
 
 # perform an x86_64 build
 if [ -n "${build_x86_64}" ]; then
@@ -188,9 +183,13 @@ if [ -n "${build_x86_64}" ]; then
       "${PKG_DIR}/../.."
    info "Done!"
 
-   info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
-   arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
-   info "Done!"
+   if [ "${build_package}" != "1" ]; then
+      # don't need to build here, it will happen during the packaging step below,
+      # otherwise the lengthy GWT build will happen twice (it isn't incremental)
+      info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
+      arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
+      info "Done!"
+   fi
 
    # restore JAVA_HOME
    restore-java-home
@@ -265,7 +264,7 @@ if [ "${build_package}" = "1" ]; then
 
    # perform install
    cd "${BUILD_DIR_X86_64}"
-   "${CMAKE}" --build . --target install
+   "${CMAKE}" --build . --target install -- ${MAKEFLAGS}
 
    if [ "${build_dmg}" = "1" ]; then
 
