@@ -194,6 +194,8 @@ def trigger_external_build(build_name, wait = false) {
 messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>"
 
 try {
+    def packageVersion = "${rstudioVersionMjor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+    packageVersion = packageVersion.replace('+', '-')
 
     timestamps {
         def containers = [
@@ -381,7 +383,7 @@ try {
               }
               stage('sign') {
 
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}-RelWithDebInfo"
+                def packageName = "RStudio-${packageVersion}-RelWithDebInfo"
 
                 withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
                   bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
@@ -392,7 +394,7 @@ try {
               stage('upload') {
 
                 def buildDest = "s3://rstudio-ide-build/desktop/windows"
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                def packageName = "RStudio-${packageVersion}"
 
                 // strip unhelpful suffixes from filenames
                 bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
@@ -406,7 +408,7 @@ try {
 
               }
               stage ('publish') {
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                def packageName = "RStudio-${packageVersion}"
                 withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
                   // derive product
