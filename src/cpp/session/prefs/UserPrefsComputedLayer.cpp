@@ -71,7 +71,7 @@ Error UserPrefsComputedLayer::readPrefs()
    layer["have_rsa_key"] = rsaSshKeyPath.exists();
    layer["rsa_key_file"] = keyFile;
 
-      // Crash reporting --------------------------------------------------------
+   // Crash reporting --------------------------------------------------------
    layer[kSubmitCrashReports] = crash_handler::isHandlerEnabled();
 
    // R versions -------------------------------------------------------------
