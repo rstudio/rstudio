@@ -194,7 +194,7 @@ def trigger_external_build(build_name, wait = false) {
 messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>"
 
 try {
-    def packageVersion = "${rstudioVersionMjor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+    def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
     packageVersion = packageVersion.replace('+', '-')
 
     timestamps {
