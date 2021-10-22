@@ -60,7 +60,7 @@ Error UserPrefsComputedLayer::readPrefs()
    FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
 
    // Github recommends using ed25519, so look for that first
-   const char* keyFile = "id_ed25519";
+   std::string keyFile("id_ed25519");
    FilePath rsaSshKeyPath = sshKeyDir.completeChildPath(keyFile);
    if (!rsaSshKeyPath.exists())
    {
@@ -69,7 +69,9 @@ Error UserPrefsComputedLayer::readPrefs()
    }
    layer[kRsaKeyPath] = rsaSshKeyPath.getAbsolutePath();
    layer["have_rsa_key"] = rsaSshKeyPath.exists();
-   layer["rsa_key_file"] = keyFile;
+
+   // provide name of public key file
+   layer["rsa_key_file"] = keyFile + ".pub";
 
    // Crash reporting --------------------------------------------------------
    layer[kSubmitCrashReports] = crash_handler::isHandlerEnabled();
