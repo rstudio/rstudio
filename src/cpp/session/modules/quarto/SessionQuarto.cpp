@@ -130,7 +130,7 @@ void detectQuartoInstallation()
    const Version kQuartoRequiredVersion("0.2.214");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.2.214");
+   const Version kQuartoRecommendedVersion("0.2.229");
 
    // reset
    s_quartoPath = FilePath();
