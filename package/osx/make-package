@@ -211,9 +211,14 @@ if [ -n "${build_x86_64}" ]; then
       "${PKG_DIR}/../.."
    info "Done!"
 
-   info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
-   arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
-   info "Done!"
+
+   if [ "${build_package}" != "1" ]; then
+      # don't need to build here, it will happen during the packaging step below,
+      # otherwise the lengthy GWT build will happen twice (it isn't incremental)
+      info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
+      arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
+      info "Done!"
+   fi
 
    # restore JAVA_HOME
    restore-java-home
@@ -287,7 +292,7 @@ if [ "${build_package}" = "1" ]; then
 
    # perform install
    cd "${BUILD_DIR_X86_64}"
-   "${CMAKE}" --build . --target install
+   "${CMAKE}" --build . --target install -- ${MAKEFLAGS}
 
    if [ "${rstudio_target}" = "Electron" ]; then
       OLDPATH="${PATH}"

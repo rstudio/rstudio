@@ -128,6 +128,14 @@ public class Presentation2 extends BasePresenter
          event.getData().getEditorState(), event.getData().getSlideLevel()
       );
       
+      // if it's 0 and we have a slide index then reset to that
+      // (handles case of editing yaml to affect change in slides)
+      if (initialSlideIndex_ == 0)
+      {
+         if (activeSlideIndex_ != 0)
+            initialSlideIndex_ = activeSlideIndex_;
+      }
+      
       // activate pane
       display_.activate();
       
