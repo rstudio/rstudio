@@ -39,25 +39,31 @@ class ActiveSession : boost::noncopyable
 private:
 
    friend class ActiveSessions;
-   explicit ActiveSession(std::shared_ptr<IActiveSessionStorage> storage) {}
-
-   ActiveSession(
-      std::shared_ptr<IActiveSessionStorage> storage,
-      const std::string& id) :
-         storage_(storage),
-         id_(id) 
+   explicit ActiveSession() 
    {
+      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
    }
 
    ActiveSession(
-      std::shared_ptr<IActiveSessionStorage> storage,
+      const std::string& id) :
+         id_(id) 
+   {
+      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
+   }
+
+   ActiveSession(
       const std::string& id,
       const FilePath& scratchPath) : 
-         storage_(storage),
          id_(id),
          scratchPath_(scratchPath)
    {
+      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
       core::Error error = scratchPath_.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
+
+      propertiesPath_ = scratchPath_.completeChildPath("properites");
+      error = propertiesPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
    }
@@ -255,6 +261,15 @@ private:
       setLastUsed();
       setRunning(false);
       setExecuting(false);
+   }
+
+   uintmax_t suspendSize()
+   {
+      FilePath suspendPath = scratchPath_.completePath("suspended-session-data");
+      if (!suspendPath.exists())
+         return 0;
+
+      return suspendPath.getSizeRecursive();
    }
 
    core::Error destroy()
@@ -465,6 +480,11 @@ public:
 private:
    core::FilePath rootPath_;
 };
+
+void trackActiveSessionCount(const FilePath& rootStoragePath,
+                             const FilePath& userHomePath,
+                             bool projectSharingEnabled,
+                             boost::function<void(size_t)> onCountChanged);
 
 } // namespace r_util
 } // namespace core

@@ -85,8 +85,7 @@ namespace
         pValues->empty();
         for (const std::string &name : names)
         {
-            const std::string& fileName = getPropertyFileName(name);
-            FilePath readPath = getPropertyFile(id, fileName);
+            FilePath readPath = getPropertyFile(id, name);
             std::string value = "";
 
             if (readPath.exists())
@@ -143,6 +142,7 @@ namespace
         std::vector<FilePath> failedFiles{};
         for (const std::pair<std::string, std::string> &prop : properties)
         {
+
             FilePath writePath = getPropertyFile(id, prop.first);
             Error error = core::writeStringToFile(writePath, prop.second);
             if (error)
@@ -166,7 +166,8 @@ namespace
     FilePath FileActiveSessionStorage::getPropertyFile(const std::string& id, const std::string& name) const
     {
         FilePath propertiesDir = getPropertyDir(id);
-        return propertiesDir.completeChildPath(name);
+        const std::string& fileName = getPropertyFileName(name);
+        return propertiesDir.completeChildPath(fileName);
     }
 
     std::shared_ptr<IActiveSessionStorage> ActiveSessionStorageFactory::getActiveSessionStorage()
