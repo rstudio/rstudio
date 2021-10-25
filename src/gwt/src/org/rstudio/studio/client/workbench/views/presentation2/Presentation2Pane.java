@@ -165,7 +165,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    public void setFocus()
    {
-      if (frame_ != null)
+      if (frame_ != null && frame_.getIFrame() != null)
          frame_.getIFrame().setFocus();
       else
          super.setFocus();
