@@ -410,6 +410,9 @@ try {
 
               }
               stage ('publish') {
+                def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                packageVersion = packageVersion.replace('+', '-')
+
                 def packageName = "RStudio-${packageVersion}"
                 withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
