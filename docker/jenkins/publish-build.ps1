@@ -45,7 +45,7 @@ function URLize {
 $size = (Get-Item $file).length
 $filename = (Get-Item $file).Name
 $timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")
-$sha256 = (Get-FileHash -Algorithm SHA256 $file).Hash
+$sha256 = (Get-FileHash -Algorithm SHA256 $file).Hash.ToLower()
 
 # Compute path from script directory to version metadata directory
 $parent = Split-Path -Path $PSScriptRoot -Parent
