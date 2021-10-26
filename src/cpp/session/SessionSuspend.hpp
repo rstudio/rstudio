@@ -25,6 +25,7 @@ namespace suspend {
 enum SuspendBlockingOps
 {
    kChildProcess = 0,
+   kExecuting,
    kConnection,
    kOverlay,
    kExternalPointer,
@@ -42,12 +43,16 @@ enum SuspendBlockingOps
 };
 
 bool disallowSuspend();
+void resetSuspendTimeout();
 void addBlockingOp(SuspendBlockingOps op);
 void removeBlockingOp(SuspendBlockingOps op);
 bool checkBlockingOp(bool blocking, SuspendBlockingOps op);
+void clearBlockingOps(bool clearAndWrite = true);
 void sendBlockingOpsEvent();
+void resetSuspendState(const boost::function<bool()>& allowSuspend);
+void clearSuspendState();
 bool suspendSession(bool force, int status = EXIT_SUCCESS);
-void suspendIfRequested(const boost::function<bool()>& allowSuspend);
+void checkForSuspend(const boost::function<bool()>& allowSuspend);
 void handleUSR1(int unused);
 void handleUSR2(int unused);
 bool suspendedFromTimeout();

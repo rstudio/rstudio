@@ -107,6 +107,12 @@ boost::posix_time::ptime timeoutTimeFromNow(int minutes = -1)
    }
 }
 
+boost::posix_time::ptime timeoutTimeFromNowSeconds(int seconds)
+{
+   return boost::posix_time::second_clock::universal_time() +
+      boost::posix_time::seconds(seconds);
+}
+
 void processEvents()
 {
    if (!r::exec::isMainThread())
@@ -492,7 +498,8 @@ bool waitForMethod(const std::string& method,
    }
 
    // establish timeouts
-   boost::posix_time::ptime timeoutTime = timeoutTimeFromNow();
+   suspend::resetSuspendTimeout();
+   boost::posix_time::ptime notifyTimeout = timeoutTimeFromNowSeconds(1);
    boost::posix_time::time_duration connectionQueueTimeout =
                                    boost::posix_time::milliseconds(50);
 
@@ -500,58 +507,7 @@ bool waitForMethod(const std::string& method,
    while (true)
    {
       // suspend if necessary (does not return if a suspend occurs)
-      suspend::suspendIfRequested(allowSuspend);
-
-      // check for timeout
-      if (isTimedOut(timeoutTime))
-      {
-         if (allowSuspend())
-         {
-            // note that we timed out
-            suspend::setSuspendedFromTimeout(true);
-
-            if (!options().timeoutSuspend())
-            {
-               // configuration dictates that we should quit the
-               // session instead of suspending when timeout occurs
-               //
-               // the conditions for the quit must be the same as those
-               // for a regular suspend
-               rstudio::r::session::quit(false, EXIT_SUCCESS); // does not return
-               return false;
-            }
-
-            // attempt to suspend (does not return if it succeeds)
-            if (!suspend::suspendSession(false))
-            {
-               // reset timeout flag
-               suspend::setSuspendedFromTimeout(false);
-
-               // if it fails then reset the timeout timer so we don't keep
-               // hammering away on the failure case
-               timeoutTime = timeoutTimeFromNow();
-            }
-         }
-         else
-         {
-            // Notify client we're blocked from suspending and try checking
-            // again a minute from now
-            suspend::sendBlockingOpsEvent();
-            timeoutTime = timeoutTimeFromNow(1);
-         }
-      }
-
-      // if we have at least one async process running then this counts
-      // as "activity" and resets the timeout timer
-      if (main_process::haveActiveChildren())
-      {
-         timeoutTime = timeoutTimeFromNow();
-         suspend::addBlockingOp(suspend::SuspendBlockingOps::kChildProcess);
-      }
-      else
-      {
-         suspend::removeBlockingOp(suspend::SuspendBlockingOps::kChildProcess);
-      }
+      suspend::checkForSuspend(allowSuspend);
 
       // look for a connection (waiting for the specified interval)
       boost::shared_ptr<HttpConnection> ptrConnection =
@@ -623,7 +579,7 @@ bool waitForMethod(const std::string& method,
          }
 
          // since we got a connection we can reset the timeout time
-         timeoutTime = timeoutTimeFromNow();
+         suspend::resetSuspendTimeout();
 
          // after we've processed at least one waitForMethod it is now safe to
          // initialize the polledEventHandler (which is used to maintain rsession
@@ -639,6 +595,7 @@ bool waitForMethod(const std::string& method,
    }
 
    // satisfied the request
+   suspend::clearBlockingOps();
    return true;
 }
 

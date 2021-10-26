@@ -20,6 +20,7 @@
 #include "SessionConsoleInput.hpp"
 
 #include <session/SessionConstants.hpp>
+#include <session/SessionHttpConnectionListener.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionConstants.hpp>
@@ -45,10 +46,74 @@ bool s_suspendedFromTimeout = false;
 bool s_rSessionResumed = false;
 
 // keep track of what operations are blocking session from suspending
+enum SuspendTimeoutState
+{
+   kWaitingForTimeout,
+   kWaitingForNonBlocking
+};
+
 std::vector<bool> opsBlockingSuspend(kBlockingOpsCount, false);
 boost::posix_time::ptime lastSuspendCheck = boost::posix_time::second_clock::universal_time();
+bool reportingBlockingEventToUser = false;
+boost::posix_time::ptime s_suspendTimeoutTime = boost::posix_time::second_clock::universal_time();
+bool s_dirtyBlockingOps = false;
+SuspendTimeoutState s_timeoutState = kWaitingForTimeout;
 
 } // anonymous namespace
+
+boost::posix_time::ptime timeoutTimeFromNow(int minutes = -1)
+{
+   int timeoutMinutes = options().timeoutMinutes();
+   if (timeoutMinutes > 0)
+   {
+      if (minutes == -1)
+      {
+         return boost::posix_time::second_clock::universal_time() +
+                boost::posix_time::minutes(options().timeoutMinutes());
+      }
+      else
+      {
+         return boost::posix_time::second_clock::universal_time() +
+                boost::posix_time::minutes(minutes);
+      }
+   }
+   else
+   {
+      return boost::posix_time::ptime(boost::posix_time::not_a_date_time);
+   }
+}
+
+bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
+{
+   using namespace boost::posix_time;
+
+   // never time out in desktop mode
+   if (options().programMode() == kSessionProgramModeDesktop)
+      return false;
+
+   // check for an client disconnection based timeout
+   int disconnectedTimeoutMinutes = options().disconnectedTimeoutMinutes();
+   if (disconnectedTimeoutMinutes > 0)
+   {
+      ptime lastEventConnection =
+         httpConnectionListener().eventsConnectionQueue().lastConnectionTime();
+      if (!lastEventConnection.is_not_a_date_time())
+      {
+         if ( (lastEventConnection + minutes(disconnectedTimeoutMinutes)
+               < second_clock::universal_time()) )
+         {
+            return true;
+         }
+      }
+   }
+
+   // check for a foreground inactivity based timeout
+   if (timeoutTime.is_not_a_date_time())
+      return false;
+   else
+      return second_clock::universal_time() > timeoutTime;
+}
+
 
 // convenience function for disallowing suspend (note still doesn't override
 // the presence of s_forceSuspend = 1)
@@ -57,12 +122,19 @@ bool disallowSuspend()
    return false;
 }
 
+void resetSuspendTimeout()
+{
+   s_suspendTimeoutTime = timeoutTimeFromNow();
+}
+
 core::json::Object blockingOpsToJson()
 {
    core::json::Object blockingOps;
 
    if (opsBlockingSuspend[SuspendBlockingOps::kChildProcess])
       blockingOps.insert("active-child-process", core::json::Array());
+   if (opsBlockingSuspend[SuspendBlockingOps::kExecuting])
+      blockingOps.insert("executing", core::json::Array());
    if (opsBlockingSuspend[SuspendBlockingOps::kConnection])
       blockingOps.insert("active-connection", core::json::Array());
    if (opsBlockingSuspend[SuspendBlockingOps::kOverlay])
@@ -74,6 +146,17 @@ core::json::Object blockingOpsToJson()
    if (opsBlockingSuspend[SuspendBlockingOps::kCommandPrompt])
       blockingOps.insert("incomplete-command-prompt", core::json::Array());
 
+   if (opsBlockingSuspend[SuspendBlockingOps::kWaitingForEditCompletion])
+      blockingOps.insert("edit-completion", core::json::Array());
+   if (opsBlockingSuspend[SuspendBlockingOps::kWaitingForChooseFileCompletion])
+      blockingOps.insert("choose-file-completion", core::json::Array());
+   if (opsBlockingSuspend[SuspendBlockingOps::kWaitingForLocatorCompletion])
+      blockingOps.insert("locator-completion", core::json::Array());
+   if (opsBlockingSuspend[SuspendBlockingOps::kWaitingForUnsavedHandlerCompletion])
+      blockingOps.insert("unsaved-handler-completion", core::json::Array());
+   if (opsBlockingSuspend[SuspendBlockingOps::kWaitingForUserPromptCompletion])
+      blockingOps.insert("user-prompt-completion", core::json::Array());
+
    return blockingOps;
 }
 
@@ -81,12 +164,15 @@ void sendBlockingOpsEvent()
 {
    core::json::Object blockingOps = blockingOpsToJson();
    module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
+   reportingBlockingEventToUser = true;
 }
 
 void storeBlockingOps()
 {
    core::json::Object blockingOps = blockingOpsToJson();
    module_context::activeSession().setBlockingSuspend(blockingOps);
+   module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
+   s_dirtyBlockingOps = false;
 }
 
 void addBlockingOp(SuspendBlockingOps op)
@@ -96,7 +182,7 @@ void addBlockingOp(SuspendBlockingOps op)
       return;
 
    opsBlockingSuspend[op] = true;
-   storeBlockingOps();
+   s_dirtyBlockingOps = true;
 }
 
 void removeBlockingOp(SuspendBlockingOps op)
@@ -105,7 +191,7 @@ void removeBlockingOp(SuspendBlockingOps op)
       return;
 
    opsBlockingSuspend[op] = false;
-   storeBlockingOps();
+   s_dirtyBlockingOps = true;
 }
 
 /**
@@ -120,16 +206,36 @@ bool checkBlockingOp(bool blocking, SuspendBlockingOps op)
    if (opsBlockingSuspend[op] != blocking)
    {
       opsBlockingSuspend[op] = blocking;
-      storeBlockingOps();
+      s_dirtyBlockingOps = true;
    }
 
    return blocking;
 }
 
-void clearBlockingOps()
+void clearBlockingOps(bool store)
 {
    std::fill(opsBlockingSuspend.begin(), opsBlockingSuspend.end(), false);
-   storeBlockingOps();
+   if (store)
+      storeBlockingOps();
+
+}
+
+void resetSuspendState(const boost::function<bool()>& allowSuspend)
+{
+   reportingBlockingEventToUser = false;
+   clearBlockingOps(false);
+   allowSuspend();
+}
+
+void clearSuspendState()
+{
+   clearBlockingOps();
+
+   if (reportingBlockingEventToUser)
+   {
+      sendBlockingOpsEvent();
+   }
+   reportingBlockingEventToUser = false;
 }
 
 bool sessionResumed()
@@ -165,19 +271,64 @@ bool suspendSession(bool force, int status)
    return r::session::suspend(force, status, session::options().ephemeralEnvVars());
 }
 
-void suspendIfRequested(const boost::function<bool()>& allowSuspend)
+void checkForTimeout(const boost::function<bool()>& allowSuspend)
+{
+   if (s_timeoutState == kWaitingForTimeout)
+   {
+      if (isTimedOut(s_suspendTimeoutTime))
+      {
+         if (allowSuspend())
+         {
+            // note that we timed out
+            suspend::setSuspendedFromTimeout(true);
+
+            if (!options().timeoutSuspend())
+            {
+               // configuration dictates that we should quit the
+               // session instead of suspending when timeout occurs
+               //
+               // the conditions for the quit must be the same as those
+               // for a regular suspend
+               rstudio::r::session::quit(false, EXIT_SUCCESS); // does not return
+            }
+
+            // attempt to suspend (does not return if it succeeds)
+            if (!suspend::suspendSession(false))
+            {
+               // reset timeout flag
+               suspend::setSuspendedFromTimeout(false);
+
+               // if it fails then reset the timeout timer so we don't keep
+               // hammering away on the failure case
+               s_suspendTimeoutTime = timeoutTimeFromNow();
+            }
+         }
+         else
+         {
+            s_timeoutState = kWaitingForNonBlocking;
+         }
+      }
+   }
+
+   if (s_timeoutState == kWaitingForNonBlocking)
+   {
+      if (allowSuspend())
+      {
+         s_timeoutState = kWaitingForTimeout;
+         s_suspendTimeoutTime = timeoutTimeFromNow();
+      }
+      if (s_dirtyBlockingOps)
+      {
+         storeBlockingOps();
+      }
+   }
+}
+
+void checkForSuspend(const boost::function<bool()>& allowSuspend)
 {
    // never suspend in desktop mode
    if (options().programMode() == kSessionProgramModeDesktop)
       return;
-
-   // check what might be blocking suspension (and report it),
-   // but no more than once a second
-   if (lastSuspendCheck + boost::posix_time::seconds(1) < boost::posix_time::second_clock::universal_time())
-   {
-      lastSuspendCheck = boost::posix_time::second_clock::universal_time();
-      allowSuspend();
-   }
 
    // check for forced suspend request
    if (s_forceSuspend)
@@ -214,6 +365,9 @@ void suspendIfRequested(const boost::function<bool()>& allowSuspend)
       // errors will be logged/reported internally and we will move on
       suspendSession(false);
    }
+
+   // timeout suspend
+   checkForTimeout(allowSuspend);
 }
 
 // cooperative suspend -- the http server is forced to timeout and a flag 

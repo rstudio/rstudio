@@ -56,6 +56,9 @@ std::string s_lastPrompt;
 
 void setExecuting(bool executing)
 {
+   // Executing also prevents suspension
+   suspend::checkBlockingOp(executing, suspend::SuspendBlockingOps::kExecuting);
+
    s_rProcessingInput = executing;
    module_context::activeSession().setExecuting(executing);
 }
