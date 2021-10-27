@@ -24,7 +24,6 @@ import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
-import com.gargoylesoftware.htmlunit.javascript.host.Element;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
