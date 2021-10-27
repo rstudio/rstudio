@@ -22,6 +22,8 @@ namespace rstudio {
 namespace session {
 namespace suspend {
 
+// Types of operations that will prevent the session from
+// suspending due to inactivity
 enum SuspendBlockingOps
 {
    kChildProcess = 0,
@@ -47,10 +49,7 @@ void resetSuspendTimeout();
 void addBlockingOp(SuspendBlockingOps op);
 void removeBlockingOp(SuspendBlockingOps op);
 bool checkBlockingOp(bool blocking, SuspendBlockingOps op);
-void clearBlockingOps(bool clearAndWrite = true);
-void sendBlockingOpsEvent();
-void resetSuspendState(const boost::function<bool()>& allowSuspend);
-void clearSuspendState();
+
 bool suspendSession(bool force, int status = EXIT_SUCCESS);
 void checkForSuspend(const boost::function<bool()>& allowSuspend);
 void handleUSR1(int unused);

@@ -85,34 +85,6 @@ std::string s_nextSessionUrl;
 bool s_protocolDebugEnabled = false;
 bool s_sessionDebugLogCreated = false;
 
-boost::posix_time::ptime timeoutTimeFromNow(int minutes = -1)
-{
-   int timeoutMinutes = options().timeoutMinutes();
-   if (timeoutMinutes > 0)
-   {
-      if (minutes == -1)
-      {
-         return boost::posix_time::second_clock::universal_time() +
-                boost::posix_time::minutes(options().timeoutMinutes());
-      }
-      else
-      {
-         return boost::posix_time::second_clock::universal_time() +
-                boost::posix_time::minutes(minutes);
-      }
-   }
-   else
-   {
-      return boost::posix_time::ptime(boost::posix_time::not_a_date_time);
-   }
-}
-
-boost::posix_time::ptime timeoutTimeFromNowSeconds(int seconds)
-{
-   return boost::posix_time::second_clock::universal_time() +
-      boost::posix_time::seconds(seconds);
-}
-
 void processEvents()
 {
    if (!r::exec::isMainThread())
@@ -239,37 +211,6 @@ Error startHttpConnectionListener()
    }
 
    return Success();
-}
-
-bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
-{
-   using namespace boost::posix_time;
-
-   // never time out in desktop mode
-   if (options().programMode() == kSessionProgramModeDesktop)
-      return false;
-
-   // check for an client disconnection based timeout
-   int disconnectedTimeoutMinutes = options().disconnectedTimeoutMinutes();
-   if (disconnectedTimeoutMinutes > 0)
-   {
-      ptime lastEventConnection =
-         httpConnectionListener().eventsConnectionQueue().lastConnectionTime();
-      if (!lastEventConnection.is_not_a_date_time())
-      {
-         if ( (lastEventConnection + minutes(disconnectedTimeoutMinutes)
-               < second_clock::universal_time()) )
-         {
-            return true;
-         }
-      }
-   }
-
-   // check for a foreground inactivity based timeout
-   if (timeoutTime.is_not_a_date_time())
-      return false;
-   else
-      return second_clock::universal_time() > timeoutTime;
 }
 
 bool isWaitForMethodUri(const std::string& uri)
@@ -499,7 +440,6 @@ bool waitForMethod(const std::string& method,
 
    // establish timeouts
    suspend::resetSuspendTimeout();
-   boost::posix_time::ptime notifyTimeout = timeoutTimeFromNowSeconds(1);
    boost::posix_time::time_duration connectionQueueTimeout =
                                    boost::posix_time::milliseconds(50);
 
@@ -595,7 +535,6 @@ bool waitForMethod(const std::string& method,
    }
 
    // satisfied the request
-   suspend::clearBlockingOps();
    return true;
 }
 

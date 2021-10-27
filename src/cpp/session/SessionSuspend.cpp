@@ -53,29 +53,26 @@ enum SuspendTimeoutState
 };
 
 std::vector<bool> opsBlockingSuspend(kBlockingOpsCount, false);
-boost::posix_time::ptime lastSuspendCheck = boost::posix_time::second_clock::universal_time();
-bool reportingBlockingEventToUser = false;
 boost::posix_time::ptime s_suspendTimeoutTime = boost::posix_time::second_clock::universal_time();
 bool s_dirtyBlockingOps = false;
 SuspendTimeoutState s_timeoutState = kWaitingForTimeout;
 
 } // anonymous namespace
 
-boost::posix_time::ptime timeoutTimeFromNow(int minutes = -1)
+// convenience function for disallowing suspend (note still doesn't override
+// the presence of s_forceSuspend = 1)
+bool disallowSuspend()
+{
+   return false;
+}
+
+boost::posix_time::ptime timeoutTimeFromNow()
 {
    int timeoutMinutes = options().timeoutMinutes();
    if (timeoutMinutes > 0)
    {
-      if (minutes == -1)
-      {
-         return boost::posix_time::second_clock::universal_time() +
-                boost::posix_time::minutes(options().timeoutMinutes());
-      }
-      else
-      {
-         return boost::posix_time::second_clock::universal_time() +
-                boost::posix_time::minutes(minutes);
-      }
+      return boost::posix_time::second_clock::universal_time() +
+             boost::posix_time::minutes(options().timeoutMinutes());
    }
    else
    {
@@ -112,14 +109,6 @@ bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
       return false;
    else
       return second_clock::universal_time() > timeoutTime;
-}
-
-
-// convenience function for disallowing suspend (note still doesn't override
-// the presence of s_forceSuspend = 1)
-bool disallowSuspend() 
-{ 
-   return false;
 }
 
 void resetSuspendTimeout()
@@ -160,19 +149,15 @@ core::json::Object blockingOpsToJson()
    return blockingOps;
 }
 
-void sendBlockingOpsEvent()
+void storeBlockingOps(bool force = false)
 {
-   core::json::Object blockingOps = blockingOpsToJson();
-   module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
-   reportingBlockingEventToUser = true;
-}
-
-void storeBlockingOps()
-{
-   core::json::Object blockingOps = blockingOpsToJson();
-   module_context::activeSession().setBlockingSuspend(blockingOps);
-   module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
-   s_dirtyBlockingOps = false;
+   if (s_dirtyBlockingOps || force)
+   {
+      core::json::Object blockingOps = blockingOpsToJson();
+      module_context::activeSession().setBlockingSuspend(blockingOps);
+      module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
+      s_dirtyBlockingOps = false;
+   }
 }
 
 void addBlockingOp(SuspendBlockingOps op)
@@ -200,6 +185,8 @@ void removeBlockingOp(SuspendBlockingOps op)
  *
  * @param blocking True if this operation is blocking suspension. False otherwise
  * @param op The operation type that's blocking session suspension
+ *
+ * @return The original blocking value, as a convenience passthrough value
  */
 bool checkBlockingOp(bool blocking, SuspendBlockingOps op)
 {
@@ -212,30 +199,20 @@ bool checkBlockingOp(bool blocking, SuspendBlockingOps op)
    return blocking;
 }
 
+/**
+ * @brief Clears any tracking of blocking ops
+ *
+ * @param store Also stores the cleared results if set to true
+ */
 void clearBlockingOps(bool store)
 {
    std::fill(opsBlockingSuspend.begin(), opsBlockingSuspend.end(), false);
    if (store)
-      storeBlockingOps();
-
-}
-
-void resetSuspendState(const boost::function<bool()>& allowSuspend)
-{
-   reportingBlockingEventToUser = false;
-   clearBlockingOps(false);
-   allowSuspend();
-}
-
-void clearSuspendState()
-{
-   clearBlockingOps();
-
-   if (reportingBlockingEventToUser)
    {
-      sendBlockingOpsEvent();
+      // set to ensure blank info is written
+      storeBlockingOps(true);
    }
-   reportingBlockingEventToUser = false;
+
 }
 
 bool sessionResumed()
@@ -264,8 +241,9 @@ bool suspendSession(bool force, int status)
    // attemmpt to save it!
    r::session::ensureDeserialized();
 
-   // If we're suspending (forced or otherwise) then clear list of blocking ops
-   clearBlockingOps();
+   // If we're suspending then clear list of blocking ops
+   clearBlockingOps(true);
+   s_timeoutState = kWaitingForTimeout;
 
    // perform the suspend (does not return if successful)
    return r::session::suspend(force, status, session::options().ephemeralEnvVars());
@@ -273,6 +251,8 @@ bool suspendSession(bool force, int status)
 
 void checkForTimeout(const boost::function<bool()>& allowSuspend)
 {
+   // If there's no suspend-blocking activity, just wait
+   // for the inactivity timer to expire
    if (s_timeoutState == kWaitingForTimeout)
    {
       if (isTimedOut(s_suspendTimeoutTime))
@@ -300,7 +280,8 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
 
                // if it fails then reset the timeout timer so we don't keep
                // hammering away on the failure case
-               s_suspendTimeoutTime = timeoutTimeFromNow();
+               resetSuspendTimeout();
+               s_timeoutState = kWaitingForTimeout;
             }
          }
          else
@@ -310,17 +291,18 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
       }
    }
 
+   // If there is suspend-blocking activity, wait for it to end while also
+   // notifying user that the session is blocked from suspending
    if (s_timeoutState == kWaitingForNonBlocking)
    {
       if (allowSuspend())
       {
+         // reset the inactivity timeout before switching waiting modes
          s_timeoutState = kWaitingForTimeout;
-         s_suspendTimeoutTime = timeoutTimeFromNow();
+         resetSuspendTimeout();
       }
-      if (s_dirtyBlockingOps)
-      {
-         storeBlockingOps();
-      }
+
+      storeBlockingOps();
    }
 }
 
