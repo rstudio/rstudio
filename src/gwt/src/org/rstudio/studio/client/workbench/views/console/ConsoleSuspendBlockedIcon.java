@@ -14,13 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
-import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
 import org.rstudio.core.client.resources.ImageResource2x;
 import com.google.gwt.resources.client.ImageResource;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
 import org.rstudio.studio.client.common.filetypes.FileIconResources;
 
 public class ConsoleSuspendBlockedIcon
@@ -34,35 +31,15 @@ public class ConsoleSuspendBlockedIcon
 
       suspended_ = new Image(sus);
       suspendBlocked_ = new Image(blocked);
-
-//      events.addHandler(SessionSuspendBlockedEvent.TYPE, event ->
-//      {
-//         if (event.getBlocking().size() > 5)
-//         {
-//
-//         }
-//      });
    }
 
    public Image getSuspendBlocked()
    {
       return suspendBlocked_;
-//      if (data.size() > 5)
-//      {
-//         suspendBlocked_.setVisible(true);
-//
-//         return suspendBlocked_;
-//      }
-//      else
-//      {
-//         suspendBlocked_.setVisible(false);
-//         return suspendBlocked_;
-//      }
    }
 
    public Image getSuspended()
    {
-//      suspended_.setVisible(true);
       return suspended_;
    }
 

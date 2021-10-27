@@ -33,6 +33,7 @@ import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -123,6 +124,17 @@ public class ConsolePane extends WorkbenchPane
 
    @Override
    public IsWidget getSuspendBlockedIcon() { return consoleSuspendBlockedIcon_; }
+
+   @Override
+   public IsWidget setSuspendBlockedIcon(SessionSuspendBlockedEvent.Data data) {
+      if (data.isEmpty()) {
+         consoleSuspendBlockedIcon_.setVisible(false);
+      }
+      else
+         consoleSuspendBlockedIcon_.setVisible(true);
+
+      return consoleSuspendBlockedIcon_;
+   }
 
    @Override
    public IsWidget getSuspendedIcon() { return consoleSuspendedIcon_; }

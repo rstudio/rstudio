@@ -30,7 +30,6 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleClearButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptProfilerButton;
-import org.rstudio.studio.client.workbench.views.console.ConsoleSuspendBlockedIcon;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -495,7 +494,6 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private ConsoleClearButton consoleClearButton_;
    @SuppressWarnings("unused")
    private ConsoleInterpreterVersion consoleInterpreterVersion_;
-   private ConsoleSuspendBlockedIcon consoleSuspendBlockedIcon_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;
    private boolean consoleOnly_;

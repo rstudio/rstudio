@@ -17,23 +17,25 @@ package org.rstudio.studio.client.application.events;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
-import com.google.gwt.json.client.JSONObject;
-import org.rstudio.studio.client.application.model.SessionSerializationAction;
 
 public class SessionSuspendBlockedEvent extends GwtEvent<SessionSuspendBlockedEvent.Handler>
 {
    public static class Data extends JavaScriptObject
    {
       protected Data() {}
+
+      public final native Boolean isEmpty() /*-{
+         return Object.keys(this).length === 0;
+      }-*/;
    }
    public static final Type<Handler> TYPE = new Type<>();
 
-   public SessionSuspendBlockedEvent(JavaScriptObject data)
+   public SessionSuspendBlockedEvent(Data data)
    {
       data_ = data;
    }
 
-   public JavaScriptObject getBlocking()
+   public Data getBlocking()
    {
       return data_;
    }
@@ -50,7 +52,7 @@ public class SessionSuspendBlockedEvent extends GwtEvent<SessionSuspendBlockedEv
       return TYPE;
    }
 
-   private JavaScriptObject data_;
+   private final Data data_;
 
    public interface Handler extends EventHandler
    {

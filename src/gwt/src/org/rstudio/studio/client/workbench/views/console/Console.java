@@ -59,6 +59,7 @@ public class Console
       IsWidget getConsoleClearButton();
       IsWidget getProfilerInterruptButton();
       IsWidget getSuspendBlockedIcon();
+      IsWidget setSuspendBlockedIcon(SessionSuspendBlockedEvent.Data data);
       IsWidget getSuspendedIcon();
       void enterMode(ConsolePane.ConsoleMode mode);
       void leaveMode(ConsolePane.ConsoleMode mode);
@@ -194,14 +195,7 @@ public class Console
       });
 
       events.addHandler(SessionSuspendBlockedEvent.TYPE, event -> {
-         if (view.getSuspendBlockedIcon().asWidget().isVisible()) {
-            view.getSuspendBlockedIcon().asWidget().setVisible(false);
-            view.getSuspendedIcon().asWidget().setVisible(true);
-         }
-         else {
-            view.getSuspendBlockedIcon().asWidget().setVisible(true);
-            view.getSuspendedIcon().asWidget().setVisible(false);
-         }
+         view.setSuspendBlockedIcon(event.getBlocking());
       });
    }
 
