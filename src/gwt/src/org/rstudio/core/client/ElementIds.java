@@ -253,6 +253,15 @@ public class ElementIds
    public final static String MEMORY_TABLE_TITLE = "memory_table_title";
    public final static String MEMORY_DROPDOWN = "memory_dropdown";
 
+   // Hyperlink Label
+   public final static String HYPERLINKLABEL_SSH_SHOW_PUBLIC_KEY = "hll_ssh_show_public_key";
+
+   // TextBox
+   public final static String TEXTBOX_SSH_KEY_PATH = "textbox_ssh_key_path";
+
+   // Button
+   public final static String BUTTON_SSH_KEY_CREATE = "button_ssh_key_create";
+
    // TextBoxWithButton and subclasses -- prefixes for button/text/help, combined with suffixes
    public final static String TBB_TEXT = "tbb_text";
    public final static String TBB_BUTTON = "tbb_button";
@@ -347,6 +356,7 @@ public class ElementIds
 
    // Modal Dialogs
    public final static String DIALOG_GLOBAL_PREFS = "dialog_global_prefs";
+   public final static String DIALOG_CREATE_SSH_KEY = "dialog_create_ssh_key";
 
    // DataImport
    public final static String DATA_IMPORT_UI_OPTIONS = "data_import_ui_options";
