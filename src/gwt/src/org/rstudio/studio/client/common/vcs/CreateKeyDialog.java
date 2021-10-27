@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.vcs;
 
 import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
@@ -140,6 +141,8 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       rsaSshKeyPath_ = FileSystemItem.createDir(rsaSshKeyPath);
 
       setOkButtonCaption("Create");
+
+      ElementIds.assignElementId(this, ElementIds.DIALOG_CREATE_SSH_KEY);
    }
 
    @Override
