@@ -27,6 +27,39 @@ public class SessionSuspendBlockedEvent extends GwtEvent<SessionSuspendBlockedEv
       public final native Boolean isEmpty() /*-{
          return Object.keys(this).length === 0;
       }-*/;
+
+      public final native String getMsg() /*-{
+         let msg = 'Session unable to suspend:\n';
+
+         if (this.hasOwnProperty('active-child-process'))
+             msg += 'A child process is running\n';
+         if (this.hasOwnProperty('executing'))
+             msg += 'R is executing\n';
+         if (this.hasOwnProperty('active-connection'))
+             msg += 'A connection is active\n';
+         if (this.hasOwnProperty('overlay'))
+             msg += '\n';
+         if (this.hasOwnProperty('active-external-pointer'))
+             msg += '\n';
+         if (this.hasOwnProperty('active-job'))
+             msg += '\n';
+         if (this.hasOwnProperty('incomplete-command-prompt'))
+             msg += '\n';
+         if (this.hasOwnProperty('edit-completion'))
+             msg += '\n';
+         if (this.hasOwnProperty('choose-file-completion'))
+             msg += '\n';
+         if (this.hasOwnProperty('locator-completion'))
+             msg += '\n';
+         if (this.hasOwnProperty('unsaved-handler-completion'))
+             msg += '\n';
+         if (this.hasOwnProperty('user-prompt-completion'))
+             msg += '\n';
+      }-*/;
+
+      protected String getOverlay() {
+         return String(); // override for overlay explaination
+      };
    }
    public static final Type<Handler> TYPE = new Type<>();
 
