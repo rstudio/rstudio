@@ -1137,6 +1137,8 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
    if (error)
       return error;
 
+   std::reverse(files.begin(), files.end());
+
    for (const std::pair<SchemaVersion, FilePath>& migrationFile : files)
    {
 
