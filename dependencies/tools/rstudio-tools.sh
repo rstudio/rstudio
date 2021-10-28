@@ -14,6 +14,8 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
+set -x
+
 # Generic Tools ----
 
 section () {
@@ -422,7 +424,7 @@ is-ubuntu () {
 }
 
 is-jenkins () {
-	[ -n "${JOB_NAME}" ]
+	[ -n "${JENKINS_URL}" ]
 }
 
 # pick a default RSTUDIO_TOOLS_ROOT location
