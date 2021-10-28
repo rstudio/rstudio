@@ -422,7 +422,7 @@ is-ubuntu () {
 }
 
 is-jenkins () {
-	[ -n "${JENKINS_URL}" ]
+	[ -n "${JOB_NAME}" ]
 }
 
 # pick a default RSTUDIO_TOOLS_ROOT location
