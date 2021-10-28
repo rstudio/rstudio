@@ -18,6 +18,8 @@
 set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 
+printenv
+
 info "RSTUDIO_TOOLS_ROOT: ${RSTUDIO_TOOLS_ROOT}"
 
 if [ "$(arch)" = "arm64" ]; then
