@@ -297,4 +297,10 @@ public interface ThemeResources extends ClientBundle
    
    @Source("browsePackage_2x.png")
    ImageResource browsePackage2x();
+
+   @Source("suspended.png")
+   ImageResource suspended();
+
+   @Source("SuspendBlocked.png")
+   ImageResource suspendBlocked();
 }

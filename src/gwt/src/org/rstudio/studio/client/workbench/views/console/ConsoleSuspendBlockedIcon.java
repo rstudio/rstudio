@@ -14,11 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
 import org.rstudio.core.client.resources.ImageResource2x;
 import com.google.gwt.resources.client.ImageResource;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.core.client.theme.res.ThemeResources;
 
 public class ConsoleSuspendBlockedIcon
    extends Composite
@@ -26,11 +27,15 @@ public class ConsoleSuspendBlockedIcon
 {
    public ConsoleSuspendBlockedIcon()
    {
-      ImageResource sus = new ImageResource2x(FileIconResources.INSTANCE.iconPng2x());
-      ImageResource blocked = new ImageResource2x(FileIconResources.INSTANCE.iconCoffee2x());
+      ImageResource sus = new ImageResource2x(ThemeResources.INSTANCE.suspended());
+      ImageResource blocked = new ImageResource2x(ThemeResources.INSTANCE.suspendBlocked());
 
       suspended_ = new Image(sus);
+      suspended_.getElement().getStyle().setWidth(15, Style.Unit.PX);
+      suspended_.getElement().getStyle().setHeight(15, Style.Unit.PX);
       suspendBlocked_ = new Image(blocked);
+      suspendBlocked_.getElement().getStyle().setWidth(15, Style.Unit.PX);
+      suspendBlocked_.getElement().getStyle().setHeight(15, Style.Unit.PX);
    }
 
    public Image getSuspendBlocked()
