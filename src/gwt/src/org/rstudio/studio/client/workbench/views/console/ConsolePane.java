@@ -126,12 +126,9 @@ public class ConsolePane extends WorkbenchPane
    public IsWidget getSuspendBlockedIcon() { return consoleSuspendBlockedIcon_; }
 
    @Override
-   public IsWidget setSuspendBlockedIcon(SessionSuspendBlockedEvent.Data data) {
-      if (data.isEmpty()) {
-         consoleSuspendBlockedIcon_.setVisible(false);
-      }
-      else
-         consoleSuspendBlockedIcon_.setVisible(true);
+   public IsWidget setSuspendBlockedIcon(SessionSuspendBlockedEvent event) {
+      consoleSuspendBlockedIcon_.setVisible(event.isBlocked());
+      consoleSuspendBlockedIcon_.setTitle(event.getMsg());
 
       return consoleSuspendBlockedIcon_;
    }
@@ -173,6 +170,7 @@ public class ConsolePane extends WorkbenchPane
       consoleSuspendBlockedIcon_ = new ConsoleSuspendBlockedIcon().getSuspendBlocked();
       consoleSuspendBlockedIcon_.setVisible(false);
       consoleSuspendedIcon_ = new ConsoleSuspendBlockedIcon().getSuspended();
+      consoleSuspendedIcon_.setTitle("Session Suspended");
       consoleSuspendedIcon_.setVisible(false);
 
       toolbar.addRightWidget(consoleSuspendedIcon_);

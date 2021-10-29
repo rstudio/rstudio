@@ -59,7 +59,7 @@ public class Console
       IsWidget getConsoleClearButton();
       IsWidget getProfilerInterruptButton();
       IsWidget getSuspendBlockedIcon();
-      IsWidget setSuspendBlockedIcon(SessionSuspendBlockedEvent.Data data);
+      IsWidget setSuspendBlockedIcon(SessionSuspendBlockedEvent event);
       IsWidget getSuspendedIcon();
       void enterMode(ConsolePane.ConsoleMode mode);
       void leaveMode(ConsolePane.ConsoleMode mode);
@@ -195,7 +195,7 @@ public class Console
       });
 
       events.addHandler(SessionSuspendBlockedEvent.TYPE, event -> {
-         view.setSuspendBlockedIcon(event.getBlocking());
+         view.setSuspendBlockedIcon(event);
       });
    }
 

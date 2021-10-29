@@ -29,37 +29,34 @@ public class SessionSuspendBlockedEvent extends GwtEvent<SessionSuspendBlockedEv
       }-*/;
 
       public final native String getMsg() /*-{
-         let msg = 'Session unable to suspend:\n';
+         var msg = 'Session suspend timeout paused:';
 
          if (this.hasOwnProperty('active-child-process'))
-             msg += 'A child process is running\n';
+            msg += '\nA child process is running';
          if (this.hasOwnProperty('executing'))
-             msg += 'R is executing\n';
+            msg += '\nR is executing';
          if (this.hasOwnProperty('active-connection'))
-             msg += 'A connection is active\n';
-         if (this.hasOwnProperty('overlay'))
-             msg += '\n';
+            msg += '\nA connection is active';
          if (this.hasOwnProperty('active-external-pointer'))
-             msg += '\n';
+            msg += '\nActive external data pointer';
          if (this.hasOwnProperty('active-job'))
-             msg += '\n';
+            msg += '\nAn active job is running';
          if (this.hasOwnProperty('incomplete-command-prompt'))
-             msg += '\n';
-         if (this.hasOwnProperty('edit-completion'))
-             msg += '\n';
-         if (this.hasOwnProperty('choose-file-completion'))
-             msg += '\n';
-         if (this.hasOwnProperty('locator-completion'))
-             msg += '\n';
-         if (this.hasOwnProperty('unsaved-handler-completion'))
-             msg += '\n';
-         if (this.hasOwnProperty('user-prompt-completion'))
-             msg += '\n';
-      }-*/;
+            msg += '\nIncomplete command prompt entered';
 
-      protected String getOverlay() {
-         return String(); // override for overlay explaination
-      };
+         if (this.hasOwnProperty('edit-completion'))
+            msg += '\nWaiting for edit completion';
+         if (this.hasOwnProperty('choose-file-completion'))
+            msg += '\nWaiting for Choose File completion';
+         if (this.hasOwnProperty('locator-completion'))
+            msg += '\nWaiting for Locator completion';
+         if (this.hasOwnProperty('unsaved-handler-completion'))
+            msg += '\nWaiting for Unsaved Work Prompt completion';
+         if (this.hasOwnProperty('user-prompt-completion'))
+            msg += '\nWaiting for User Prompt completion';
+
+         return msg;
+      }-*/;
    }
    public static final Type<Handler> TYPE = new Type<>();
 
@@ -68,9 +65,13 @@ public class SessionSuspendBlockedEvent extends GwtEvent<SessionSuspendBlockedEv
       data_ = data;
    }
 
-   public Data getBlocking()
-   {
-      return data_;
+
+   public String getMsg() {
+      return data_.getMsg();
+   }
+
+   public Boolean isBlocked() {
+      return !data_.isEmpty();
    }
 
    @Override

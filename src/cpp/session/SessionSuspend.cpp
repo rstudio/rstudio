@@ -251,13 +251,15 @@ bool suspendSession(bool force, int status)
 
 void checkForTimeout(const boost::function<bool()>& allowSuspend)
 {
+   bool canSuspend = allowSuspend();
+
    // If there's no suspend-blocking activity, just wait
    // for the inactivity timer to expire
    if (s_timeoutState == kWaitingForTimeout)
    {
-      if (isTimedOut(s_suspendTimeoutTime))
+      if (canSuspend)
       {
-         if (allowSuspend())
+         if (isTimedOut(s_suspendTimeoutTime))
          {
             // note that we timed out
             suspend::setSuspendedFromTimeout(true);
@@ -284,10 +286,10 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
                s_timeoutState = kWaitingForTimeout;
             }
          }
-         else
-         {
-            s_timeoutState = kWaitingForNonBlocking;
-         }
+      }
+      else
+      {
+         s_timeoutState = kWaitingForNonBlocking;
       }
    }
 
@@ -295,7 +297,7 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
    // notifying user that the session is blocked from suspending
    if (s_timeoutState == kWaitingForNonBlocking)
    {
-      if (allowSuspend())
+      if (canSuspend)
       {
          // reset the inactivity timeout before switching waiting modes
          s_timeoutState = kWaitingForTimeout;
