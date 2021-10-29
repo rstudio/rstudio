@@ -269,10 +269,8 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
 
    private String getEngine(int row)
    {
-      String line = outerEditor_.getDocDisplay().getLine(row);
-      Map<String, String> options = RChunkHeaderParser.parse(line);
-      String engine = StringUtil.stringValue(options.get("engine"));
-      return engine;
+      return outerEditor_.getEngineForRow(row);
+   
    }
    
    private String getLabel(int row)
