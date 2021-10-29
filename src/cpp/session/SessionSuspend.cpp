@@ -25,6 +25,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionConstants.hpp>
 
+#include "shared_core/Error.hpp"
 #include <shared_core/json/Json.hpp>
 
 #include <r/session/RSession.hpp>
@@ -149,15 +150,60 @@ core::json::Object blockingOpsToJson()
    return blockingOps;
 }
 
+void addBlockingMetadata(core::json::Object blockingOps)
+{
+   module_context::activeSession().setBlockingSuspend(blockingOps);
+}
+
+void sendBlockingClientEvent(core::json::Object blockingOps)
+{
+   module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
+}
+
+void logBlockingOps(core::json::Object blockingOps)
+{
+   core::Error blocked("SessionTimeoutSuspendBlocked",
+                       -1,
+                       "Session attempted to suspend, due to timeout, but was blocked",
+                       ERROR_LOCATION);
+
+   blocked.addProperty("username", core::system::username());
+   blocked.addProperty("session_id", module_context::activeSession().id());
+   blocked.addProperty("suspend_timeout_minutes", options().timeoutMinutes());
+   blocked.addProperty("blocking_operations", blockingOps.writeFormatted());
+
+   core::log::logErrorAsWarning(blocked);
+}
+
+/**
+ * @brief Writes blocking OP metadata and creates an event, but only if
+ * current blocking OPs haven't already been reported
+ *
+ * @param force If true, will store metadata and create an event, even if
+ * the current blocking OPs have already been reported
+ */
 void storeBlockingOps(bool force = false)
 {
    if (s_dirtyBlockingOps || force)
    {
       core::json::Object blockingOps = blockingOpsToJson();
-      module_context::activeSession().setBlockingSuspend(blockingOps);
-      module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
+      addBlockingMetadata(blockingOps);
+      sendBlockingClientEvent(blockingOps);
       s_dirtyBlockingOps = false;
    }
+}
+
+/**
+ * @brief Stores blocking OP metadata, creates a client event, and logs
+ * a warning. Additionally marks current blocking OPs as being reported
+ */
+void storeAndLogBlockingOps()
+{
+   core::json::Object blockingOps = blockingOpsToJson();
+   addBlockingMetadata(blockingOps);
+   sendBlockingClientEvent(blockingOps);
+   logBlockingOps(blockingOps);
+   s_dirtyBlockingOps = false;
 }
 
 void addBlockingOp(SuspendBlockingOps op)
@@ -209,8 +255,9 @@ void clearBlockingOps(bool store)
    std::fill(opsBlockingSuspend.begin(), opsBlockingSuspend.end(), false);
    if (store)
    {
-      // set to ensure blank info is written
-      storeBlockingOps(true);
+      addBlockingMetadata(core::json::Object());
+      sendBlockingClientEvent(core::json::Object());
+      s_dirtyBlockingOps = false;
    }
 
 }
@@ -257,9 +304,9 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
    // for the inactivity timer to expire
    if (s_timeoutState == kWaitingForTimeout)
    {
-      if (canSuspend)
+      if (isTimedOut(s_suspendTimeoutTime))
       {
-         if (isTimedOut(s_suspendTimeoutTime))
+         if (canSuspend)
          {
             // note that we timed out
             suspend::setSuspendedFromTimeout(true);
@@ -286,10 +333,10 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
                s_timeoutState = kWaitingForTimeout;
             }
          }
-      }
-      else
-      {
-         s_timeoutState = kWaitingForNonBlocking;
+         else
+         {
+            s_timeoutState = kWaitingForNonBlocking;
+         }
       }
    }
 
