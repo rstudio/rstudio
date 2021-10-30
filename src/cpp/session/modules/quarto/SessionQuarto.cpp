@@ -124,6 +124,7 @@ void showQuartoVersionWarning(const Version& version, const Version& requiredVer
    module_context::enqueClientEvent(event);
 }
 
+
 void detectQuartoInstallation()
 {
    // required quarto version (quarto features don't work w/o it)
