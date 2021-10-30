@@ -127,10 +127,10 @@ void showQuartoVersionWarning(const Version& version, const Version& requiredVer
 void detectQuartoInstallation()
 {
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.2.214");
+   const Version kQuartoRequiredVersion("0.2.243");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.2.229");
+   const Version kQuartoRecommendedVersion("0.2.243");
 
    // reset
    s_quartoPath = FilePath();
@@ -480,7 +480,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
       {
           std::string type, outputDir;
           readQuartoProjectConfig(quartoConfig, &type, &outputDir);
-          if (type == kQuartoProjectBook || type == kQuartoProjectSite)
+          if (type == kQuartoProjectBook || type == kQuartoProjectWebsite)
           {
              FilePath configPath = quartoConfig.getParent();
              websiteDir = configPath.getAbsolutePath();
@@ -597,7 +597,7 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    // add some first run files
    using namespace module_context;
    std::vector<std::string> projFiles;
-   if (type == kQuartoProjectSite || type == kQuartoProjectBook)
+   if (type == kQuartoProjectWebsite || type == kQuartoProjectBook)
    {
       projFiles.push_back("index.qmd");
       projFiles.push_back("_quarto.yml");
@@ -761,7 +761,8 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    // if the current project is a site or book and this file is within it,
    // then initiate a preview (one might be already running)
    auto config = quartoConfig();
-   if ((config.project_type == kQuartoProjectSite || config.project_type == kQuartoProjectBook) &&
+   if ((config.project_type == kQuartoProjectWebsite ||
+        config.project_type == kQuartoProjectBook) &&
        sourceFile.isWithin(module_context::resolveAliasedPath(config.project_dir)))
    {
       // preview the doc (but schedule it for later so we can get out of the onCompleted
@@ -781,7 +782,7 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    {
       std::string type;
       readQuartoProjectConfig(configFile, &type);
-      if (type == kQuartoProjectSite || type == kQuartoProjectBook)
+      if (type == kQuartoProjectWebsite || type == kQuartoProjectBook)
          return true;
    }
 
@@ -791,7 +792,8 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
 
 const char* const kQuartoCrossrefScope = "quarto-crossref";
 const char* const kQuartoProjectDefault = "default";
-const char* const kQuartoProjectSite = "site";
+const char* const kQuartoProjectWebsite = "website";
+const char* const kQuartoProjectSite = "site"; // 'website' used to be 'site'
 const char* const kQuartoProjectBook = "book";
 
 
@@ -863,7 +865,7 @@ QuartoConfig quartoConfig(bool refresh)
             // provide default output dirs
             if (s_quartoConfig.project_output_dir.length() == 0)
             {
-               if (s_quartoConfig.project_type == kQuartoProjectSite)
+               if (s_quartoConfig.project_type == kQuartoProjectWebsite)
                   s_quartoConfig.project_output_dir = "_site";
                else if (s_quartoConfig.project_type == kQuartoProjectBook)
                   s_quartoConfig.project_output_dir = "_book";
@@ -981,7 +983,12 @@ void readQuartoProjectConfig(const FilePath& configFile,
                      std::string projKey = projIt->first.as<std::string>();
                      std::string projValue = projIt->second.Scalar();
                      if (projKey == "type")
+                     {
+                        // migrate 'site' to 'website'
+                        if (projValue == kQuartoProjectSite)
+                           projValue = kQuartoProjectWebsite;
                         *pType = projValue;
+                     }
                      else if (projKey == "output-dir" && pOutputDir != nullptr)
                         *pOutputDir = projValue;
                   }

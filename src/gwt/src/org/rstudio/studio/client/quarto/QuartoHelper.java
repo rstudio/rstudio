@@ -25,7 +25,7 @@ public class QuartoHelper
    public static boolean isQuartoWebsiteConfig(QuartoConfig config)
    {
       return config.is_project &&
-            (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_SITE ||
+            (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_WEBSITE ||
             config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK);
    }
    

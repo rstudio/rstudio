@@ -111,7 +111,7 @@ protected:
       const std::string type =
          quartoConfig().project_type == kQuartoProjectBook
             ? "Book"
-            : "Site";
+            : "Website";
       const std::string name = (render_ != kRenderNone ? "Render and " : "")  + std::string("Serve ") + type;
       return name;
    }

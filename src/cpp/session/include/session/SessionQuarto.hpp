@@ -34,6 +34,7 @@ namespace quarto {
 
 extern const char* const kQuartoCrossrefScope;
 extern const char* const kQuartoProjectDefault;
+extern const char* const kQuartoProjectWebsite;
 extern const char* const kQuartoProjectSite;
 extern const char* const kQuartoProjectBook;
 

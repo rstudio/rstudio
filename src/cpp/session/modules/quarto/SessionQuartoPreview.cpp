@@ -414,7 +414,7 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
    {
       std::string type;
       readQuartoProjectConfig(quartoConfig, &type);
-      canPreview = type != session::quarto::kQuartoProjectSite &&
+      canPreview = type != session::quarto::kQuartoProjectWebsite &&
                    type != session::quarto::kQuartoProjectBook;
    }
 
