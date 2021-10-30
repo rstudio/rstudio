@@ -144,14 +144,17 @@ void detectQuartoInstallation()
       if (!error)
       {
          Version pathVersion = readQuartoVersion(quartoPath);
-         if (pathVersion >= kQuartoRecommendedVersion)
+         if (!pathVersion.empty())
          {
-            s_quartoPath = quartoPath;
-            s_quartoVersion = pathVersion;
-         }
-         else
-         {
-            showQuartoVersionWarning(pathVersion, kQuartoRecommendedVersion);
+            if (pathVersion >= kQuartoRecommendedVersion)
+            {
+               s_quartoPath = quartoPath;
+               s_quartoVersion = pathVersion;
+            }
+            else
+            {
+               showQuartoVersionWarning(pathVersion, kQuartoRecommendedVersion);
+            }
          }
       }
       else
@@ -159,32 +162,30 @@ void detectQuartoInstallation()
          LOG_ERROR(error);
       }
    }
+
+   // embedded version of quarto (subject to required version)
+#ifndef WIN32
+   std::string target = "quarto";
+#else
+   std::string target = "quarto.exe";
+#endif
+   FilePath embeddedQuartoPath = session::options().quartoPath()
+      .completeChildPath("bin")
+      .completeChildPath(target);
+   auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
+   if (embeddedVersion >= kQuartoRequiredVersion)
+   {
+      s_quartoPath = embeddedQuartoPath;
+      s_quartoVersion = embeddedVersion;
+      // append to path
+      core::system::addToPath(
+         string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath()),
+         false
+      );
+   }
    else
    {
-      // embedded version of quarto (subject to required version)
-#ifndef WIN32
-      std::string target = "quarto";
-#else
-      std::string target = "quarto.exe";
-#endif
-      FilePath embeddedQuartoPath = session::options().quartoPath()
-         .completeChildPath("bin")
-         .completeChildPath(target);
-      auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
-      if (embeddedVersion >= kQuartoRequiredVersion)
-      {
-         s_quartoPath = embeddedQuartoPath;
-         s_quartoVersion = embeddedVersion;
-         // append to path
-         core::system::addToPath(
-            string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath()),
-            false
-         );
-      }
-      else
-      {
-         showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
-      }
+      showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
    }
 }
 
