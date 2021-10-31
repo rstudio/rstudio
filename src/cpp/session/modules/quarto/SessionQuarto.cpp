@@ -688,7 +688,7 @@ namespace quarto {
 
 json::Value quartoCapabilities()
 {
-   if (quartoConfig().installed)
+   if (quartoConfig().enabled)
    {
       core::system::ProcessResult result;
       Error error = quartoExec({ "capabilities" }, &result);
@@ -808,11 +808,11 @@ QuartoConfig quartoConfig(bool refresh)
       // detect installation
       detectQuartoInstallation();
       s_quartoConfig = QuartoConfig();
-      s_quartoConfig.installed = quartoIsInstalled();
+      s_quartoConfig.enabled = quartoIsInstalled();
       s_quartoConfig.version = s_quartoVersion;
 
       // if it's installed then detect bin and resources directories
-      if (s_quartoConfig.installed)
+      if (s_quartoConfig.enabled)
       {
          core::system::ProcessResult result;
          Error error = quartoExec({ "--paths" }, &result);
@@ -897,7 +897,7 @@ json::Object quartoConfigJSON(bool refresh)
 {
    QuartoConfig config = quartoConfig(refresh);
    json::Object quartoConfigJSON;
-   quartoConfigJSON["installed"] = config.installed;
+   quartoConfigJSON["enabled"] = config.enabled;
    quartoConfigJSON["version"] = config.version;
    quartoConfigJSON["is_project"] = config.is_project;
    quartoConfigJSON["project_dir"] = config.project_dir;

@@ -6987,7 +6987,7 @@ public class TextEditingTarget implements
    
    private String useQuartoPreview()
    {
-      if (session_.getSessionInfo().getQuartoConfig().installed &&
+      if (session_.getSessionInfo().getQuartoConfig().enabled &&
           (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) && 
           !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDoc())
       {  
