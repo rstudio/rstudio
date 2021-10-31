@@ -64,6 +64,7 @@ namespace {
 
 const char * const kQuartoXt = "quarto-document";
 
+FilePath s_userInstalledPath;
 FilePath s_quartoPath;
 std::string s_quartoVersion;
 
@@ -125,19 +126,8 @@ void showQuartoVersionWarning(const Version& version, const Version& requiredVer
 }
 
 
-void detectQuartoInstallation()
+std::tuple<FilePath,Version> userInstalledQuarto()
 {
-   // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.2.243");
-
-   // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.2.243");
-
-   // reset
-   s_quartoPath = FilePath();
-   s_quartoVersion = "";
-
-   // see if there is a version on the path (subject to recommended version)
    FilePath quartoPath = module_context::findProgram("quarto");
    if (!quartoPath.isEmpty())
    {
@@ -147,15 +137,7 @@ void detectQuartoInstallation()
          Version pathVersion = readQuartoVersion(quartoPath);
          if (!pathVersion.empty())
          {
-            if (pathVersion >= kQuartoRecommendedVersion)
-            {
-               s_quartoPath = quartoPath;
-               s_quartoVersion = pathVersion;
-            }
-            else
-            {
-               showQuartoVersionWarning(pathVersion, kQuartoRecommendedVersion);
-            }
+            return std::make_tuple(quartoPath, pathVersion);
          }
       }
       else
@@ -163,6 +145,54 @@ void detectQuartoInstallation()
          LOG_ERROR(error);
       }
    }
+   return std::make_tuple(FilePath(), Version());
+}
+
+void detectQuartoInstallation()
+{
+   // required quarto version (quarto features don't work w/o it)
+   const Version kQuartoRequiredVersion("0.2.243");
+
+   // recommended quarto version (a bit more pestery than required)
+   const Version kQuartoRecommendedVersion("0.2.243");
+
+   // reset
+   s_userInstalledPath = FilePath();
+   s_quartoPath = FilePath();
+   s_quartoVersion = "";
+
+   // detect user installed version
+   auto userInstalled = userInstalledQuarto();
+   s_userInstalledPath = std::get<0>(userInstalled);
+   s_quartoVersion = std::get<1>(userInstalled);
+
+   // see if the sysadmin or user has turned off quarto
+   if (session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledDisabled ||
+       session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledHidden)
+   {
+      return;
+   }
+
+   // always use user installed if it's there but subject to version check
+   if (!s_userInstalledPath.isEmpty())
+   {
+      if (std::get<1>(userInstalled) >= kQuartoRecommendedVersion)
+      {
+         s_quartoPath = std::get<0>(userInstalled);
+         s_quartoVersion = std::get<1>(userInstalled);
+      }
+      else
+      {
+         showQuartoVersionWarning(std::get<1>(userInstalled), kQuartoRecommendedVersion);
+      }
+      return;
+   }
+
+
+   // proceed to use embedded version only if the user has explicitly enabled quarto
+   // (i.e. "auto" mode never uses the emedded version)
+   if (session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledAuto)
+      return;
 
    // embedded version of quarto (subject to required version)
 #ifndef WIN32
@@ -808,6 +838,7 @@ QuartoConfig quartoConfig(bool refresh)
       // detect installation
       detectQuartoInstallation();
       s_quartoConfig = QuartoConfig();
+      s_quartoConfig.userInstalled = s_userInstalledPath;
       s_quartoConfig.enabled = quartoIsInstalled();
       s_quartoConfig.version = s_quartoVersion;
 
@@ -897,6 +928,10 @@ json::Object quartoConfigJSON(bool refresh)
 {
    QuartoConfig config = quartoConfig(refresh);
    json::Object quartoConfigJSON;
+   if (!config.userInstalled.isEmpty())
+      quartoConfigJSON["user_installed"] = module_context::createAliasedPath(config.userInstalled);
+   else
+      quartoConfigJSON["user_installed"] = "";
    quartoConfigJSON["enabled"] = config.enabled;
    quartoConfigJSON["version"] = config.version;
    quartoConfigJSON["is_project"] = config.is_project;

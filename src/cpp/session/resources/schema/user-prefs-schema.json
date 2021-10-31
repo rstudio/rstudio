@@ -1538,6 +1538,13 @@
             "title": "Check values in the Environment pane for null external pointers",
             "type": "boolean",
             "default": false
+        },
+         "quarto_enabled": {
+            "type": "string",
+            "enum": ["auto", "enabled", "disabled", "hidden"],
+            "default": "auto",
+            "title": "Enble Quarto features",
+            "description": "Enable IDE features for the Quarto publishing system."
         }
     }
 }

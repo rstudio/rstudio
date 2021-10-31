@@ -36,6 +36,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String themeInfobarShowing();
       String selectWidgetHelp();
       String smallerText();
+      String checkBoxAligned();
       String visualModeWrapSelectWidget();
       String userDictEditButton();
    }
@@ -54,6 +55,9 @@ public interface PreferencesDialogResources extends ClientBundle
 
    @Source("iconRMarkdown_2x.png")
    ImageResource iconRMarkdown2x();
+   
+   @Source("iconQuarto_2x.png")
+   ImageResource iconQuarto2x();
 
    @Source("iconTerminal_2x.png")
    ImageResource iconTerminal2x();

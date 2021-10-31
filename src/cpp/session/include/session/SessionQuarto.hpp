@@ -19,12 +19,12 @@
 #include <string>
 #include <vector>
 
+#include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
 class Error;
-class FilePath;
 } // namespace core
 } // namespace rstudio
 
@@ -44,6 +44,9 @@ struct QuartoConfig
 
    // is quarto enabled?
    bool enabled;
+
+   // is there a user installed version?
+   core::FilePath userInstalled;
 
    // active version info
    std::string version;
