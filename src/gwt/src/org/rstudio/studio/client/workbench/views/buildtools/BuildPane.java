@@ -501,9 +501,9 @@ public class BuildPane extends WorkbenchPane
       else if (type == SessionInfo.BUILD_TOOLS_QUARTO)
       {
          QuartoConfig config = sessionInfo.getQuartoConfig();
-         if (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_SITE)
+         if (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_WEBSITE)
          {
-            buildAllButton_.setText("Render Site");
+            buildAllButton_.setText("Render Website");
          }
          else if (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK)
          {

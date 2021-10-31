@@ -6,7 +6,7 @@ properties([
                               artifactNumToKeepStr: '',
                               daysToKeepStr: '',
                               numToKeepStr: '100')),
-    parameters([string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '0', description: 'RStudio Patch Version'),
+    parameters([string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '1', description: 'RStudio Patch Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
@@ -76,26 +76,28 @@ def s3_upload(type, flavor, os, arch) {
   ).trim().toLowerCase()
 
   def buildDest =  "s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
-
+  
   // copy installer to s3
   sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
 
+  // forward declare tarball filenames
+  def tarballFile = ""
+  def renamedTarballFile = ""
+  
   // add installer-less tarball if desktop
   if (flavor == "desktop") {
-    def tarballFile = sh (
+    tarballFile = sh (
       script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
       returnStdout: true
     ).trim()
 
-    def renamedTarballFile = sh (
+    renamedTarballFile = sh (
       script: "echo ${tarballFile} | sed 's/-relwithdebinfo//'",
       returnStdout: true
     ).trim()
 
     sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
-    tarballFile = renamedTarballFile
-
-    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildDest}"
+    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} ${buildDest}"
   }
 
   // update daily build redirect
@@ -123,6 +125,11 @@ def s3_upload(type, flavor, os, arch) {
 
     // publish the build
     sh "docker/jenkins/publish-build.sh --build ${product}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_PAT} --file ${buildFolder}/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+
+    // publish the installer-less version of the build if we made one
+    if (tarballFile) {
+      sh "docker/jenkins/publish-build.sh --build ${product}/${os}-xcopy --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${renamedTarballFile} --pat ${GITHUB_PAT} --file ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+    }
   }
 }
 
@@ -385,8 +392,10 @@ try {
                 }
               }
               stage('sign') {
+                def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                packageVersion = packageVersion.replace('+', '-')
 
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}-RelWithDebInfo"
+                def packageName = "RStudio-${packageVersion}-RelWithDebInfo"
 
                 withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
                   bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
@@ -395,9 +404,11 @@ try {
                 }
               }
               stage('upload') {
+                def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                packageVersion = packageVersion.replace('+', '-')
 
                 def buildDest = "s3://rstudio-ide-build/desktop/windows"
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                def packageName = "RStudio-${packageVersion}"
 
                 // strip unhelpful suffixes from filenames
                 bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
@@ -411,7 +422,10 @@ try {
 
               }
               stage ('publish') {
-                def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                packageVersion = packageVersion.replace('+', '-')
+
+                def packageName = "RStudio-${packageVersion}"
                 withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
                   // derive product
@@ -420,9 +434,12 @@ try {
                       product = "desktop-pro"
                   }
 
-                  // publish the build
+                  // publish the build (self installing exe)
                   def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
+                  println stdout
 
+                  // publish the build (installer-less zip)
+                  stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.zip -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.zip -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
                   println stdout
                 }
               }

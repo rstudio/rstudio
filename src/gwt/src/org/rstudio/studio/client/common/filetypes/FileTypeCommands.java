@@ -103,7 +103,7 @@ public class FileTypeCommands
          FileTypeRegistry.SQL,
          FileTypeRegistry.STAN
       ));
-      if (session_.getSessionInfo().getQuartoConfig().installed) 
+      if (session_.getSessionInfo().getQuartoConfig().enabled) 
       {
          fileTypes.add(fileTypes.indexOf(FileTypeRegistry.TEX), FileTypeRegistry.QUARTO);
       }

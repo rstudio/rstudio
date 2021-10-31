@@ -228,7 +228,7 @@ private:
          }
       }
 
-      if (output.find("Watching files for changes") != std::string::npos)
+      if (port_ > 0 && output.find("Watching files for changes") != std::string::npos)
       {
          // activate the console
          activateConsole();
@@ -414,7 +414,7 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
    {
       std::string type;
       readQuartoProjectConfig(quartoConfig, &type);
-      canPreview = type != session::quarto::kQuartoProjectSite &&
+      canPreview = type != session::quarto::kQuartoProjectWebsite &&
                    type != session::quarto::kQuartoProjectBook;
    }
 
@@ -423,7 +423,7 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
 
    if (canPreview)
    {
-      if (s_pPreview && s_pPreview->isRunning() &&
+      if (s_pPreview && s_pPreview->isRunning() && (s_pPreview->port() > 0) &&
           (s_pPreview->previewFile() == previewFilePath) &&
           (s_pPreview->format() == format &&
            !s_pPreview->hasModifiedProject()))

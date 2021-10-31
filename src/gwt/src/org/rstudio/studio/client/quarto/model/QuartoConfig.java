@@ -19,7 +19,8 @@ import jsinterop.annotations.JsType;
 @JsType
 public class QuartoConfig
 {
-   public boolean installed;
+   public String user_installed;
+   public boolean enabled;
    public String version;
    public boolean is_project;
    public String project_dir;

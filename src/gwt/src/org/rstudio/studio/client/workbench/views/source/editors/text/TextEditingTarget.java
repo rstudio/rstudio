@@ -158,6 +158,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
@@ -201,6 +202,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class TextEditingTarget implements
                                   EditingTarget,
@@ -6117,6 +6119,30 @@ public class TextEditingTarget implements
       status.append(" File name ").append(name);
       return status.toString();
    }
+   
+   public String getEngineForRow(int row)
+   {
+      String line = getDocDisplay().getLine(row);
+      Map<String, String> options = RChunkHeaderParser.parse(line);
+      String engine = StringUtil.stringValue(options.get("engine"));
+      return engine;
+   }
+   
+   private boolean hasREngineChunks()
+   {
+      JsArray<Scope> tree = docDisplay_.getScopeTree();
+      for (int i=0; i<tree.length(); i++) 
+      {
+         Scope scope = tree.get(i);
+         if (scope.isChunk())
+         {  
+            int row = scope.getPreamble().getRow();
+            if (getEngineForRow(row).toLowerCase().equals("r"))
+               return true;
+         }
+      }
+      return false;
+   }
 
    private boolean isRChunk(Scope scope)
    {
@@ -6133,6 +6159,7 @@ public class TextEditingTarget implements
       // collect those here.
       return engine.equals("r");
    }
+   
 
    private boolean isExecutableChunk(final Scope chunk)
    {
@@ -6826,23 +6853,42 @@ public class TextEditingTarget implements
             // see if we should be using quarto preview
             String quartoFormat = useQuartoPreview();
             if (quartoFormat != null)
-            {               
-               // quarto preview can reject the preview (e.g. if it turns
-               // out this file is part of a website or book project)
-               server_.quartoPreview(
-                  docUpdateSentinel_.getPath(), 
-                  quartoFormat, 
-                  isQuartoRevealJs(quartoFormat) ? presentationEditorLocation() : null,
-                  new SimpleRequestCallback<Boolean>() {
-                     @Override
-                     public void onResponseReceived(Boolean previewed)
-                     {
-                        if (!previewed) 
-                        {
-                           renderCmd.execute();
-                        }
-                     }
-                  });
+            {    
+               // command to execute quarto preview
+               Command quartoPreviewCmd = new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     // quarto preview can reject the preview (e.g. if it turns
+                     // out this file is part of a website or book project)
+                     server_.quartoPreview(
+                        docUpdateSentinel_.getPath(), 
+                        quartoFormat, 
+                        isQuartoRevealJs(quartoFormat) ? presentationEditorLocation() : null,
+                        new SimpleRequestCallback<Boolean>() {
+                           @Override
+                           public void onResponseReceived(Boolean previewed)
+                           {
+                              if (!previewed) 
+                              {
+                                 renderCmd.execute();
+                              }
+                           }
+                        });
+                     
+                  }
+               };
+               
+               // require rmarkdown if this document has R chunks
+               if (hasREngineChunks())
+               {
+                  rmarkdownHelper_.withRMarkdownPackage("Rendering Quarto Knitr Documents", 
+                                                        quartoPreviewCmd);
+               }
+               else
+               {
+                  quartoPreviewCmd.execute();
+               }
             }
             else
             {
@@ -6941,7 +6987,7 @@ public class TextEditingTarget implements
    
    private String useQuartoPreview()
    {
-      if (session_.getSessionInfo().getQuartoConfig().installed &&
+      if (session_.getSessionInfo().getQuartoConfig().enabled &&
           (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) && 
           !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDoc())
       {  

@@ -143,6 +143,17 @@ public class TextEditingTargetRMarkdownHelper
          return extendedType;
       }
    }
+   
+   public void withRMarkdownPackage(String userAction, final Command onReady)
+   {
+      withRMarkdownPackage(userAction, false,  new CommandWithArg<RMarkdownContext>() {
+         @Override
+         public void execute(RMarkdownContext arg)
+         {
+            onReady.execute();
+         }
+     });
+  }
 
    public void withRMarkdownPackage(
           final String userAction,

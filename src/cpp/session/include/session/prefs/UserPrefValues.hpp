@@ -393,6 +393,11 @@ namespace prefs {
 #define kSessionProtocolDebug "session_protocol_debug"
 #define kPythonProjectEnvironmentAutomaticActivate "python_project_environment_automatic_activate"
 #define kCheckNullExternalPointers "check_null_external_pointers"
+#define kQuartoEnabled "quarto_enabled"
+#define kQuartoEnabledAuto "auto"
+#define kQuartoEnabledEnabled "enabled"
+#define kQuartoEnabledDisabled "disabled"
+#define kQuartoEnabledHidden "hidden"
 
 class UserPrefValues: public Preferences
 {
@@ -1753,6 +1758,12 @@ public:
     */
    bool checkNullExternalPointers();
    core::Error setCheckNullExternalPointers(bool val);
+
+   /**
+    * Enable IDE features for the Quarto publishing system.
+    */
+   std::string quartoEnabled();
+   core::Error setQuartoEnabled(std::string val);
 
 };
 

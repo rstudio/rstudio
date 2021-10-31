@@ -82,7 +82,7 @@ public class NewDirectoryNavigationPage
       pages.add(new NewDirectoryPage());
       pages.add(new NewPackagePage());
       pages.add(new NewShinyAppPage());
-      if (sessionInfo.getQuartoConfig().installed) {
+      if (sessionInfo.getQuartoConfig().enabled) {
          pages.add(new NewQuartoDefaultProjectPage());
          pages.add(new NewQuartoWebsiteProjectPage());
          pages.add(new NewQuartoBookProjectPage());

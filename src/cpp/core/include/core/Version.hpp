@@ -62,6 +62,11 @@ public:
       pieces_.push_back(versionMinor);
       pieces_.push_back(versionPatch);
    }
+
+   bool empty() const
+   {
+      return pieces_.empty();
+   }
    
    int versionMajor() const
    {

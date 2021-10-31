@@ -55,7 +55,7 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
    @Override
    public boolean isActive(String path, String extendedType)
    {
-      if (config_.installed)
+      if (config_.enabled)
       {
          String filename = FileSystemItem.getNameFromPath(StringUtil.notNull(path));
          return SourceDocument.XT_QUARTO_DOCUMENT.equals(extendedType) ||

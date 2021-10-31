@@ -45,7 +45,7 @@ function URLize {
 $size = (Get-Item $file).length
 $filename = (Get-Item $file).Name
 $timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ss")
-$sha256 = (Get-FileHash -Algorithm SHA256 $file).Hash
+$sha256 = (Get-FileHash -Algorithm SHA256 $file).Hash.ToLower()
 
 # Compute path from script directory to version metadata directory
 $parent = Split-Path -Path $PSScriptRoot -Parent
@@ -103,3 +103,4 @@ $url = "https://api.github.com/repos/rstudio/latest-builds/contents/content/rstu
 # doesn't contain a working copy of IE (and, incredibly, without -UseBasicParsing, Invoke-WebRequest
 # has a dendency on the IE DOM engine).
 Invoke-WebRequest -Body $payload -Method 'PUT' -Headers $headers -Uri $url -UseBasicParsing
+
