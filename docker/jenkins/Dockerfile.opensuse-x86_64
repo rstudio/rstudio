@@ -1,6 +1,6 @@
 FROM opensuse/leap:15.3
 
-ENV OPERATING_SYSTEM=opensuse_leap15
+ENV OPERATING_SYSTEM=opensuse_leap153
 
 # needed to build RPMs
 RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Tumbleweed/systemsmanagement:wbem:deps.repo
