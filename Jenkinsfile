@@ -76,26 +76,28 @@ def s3_upload(type, flavor, os, arch) {
   ).trim().toLowerCase()
 
   def buildDest =  "s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
-
+  
   // copy installer to s3
   sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
 
+  // forward declare tarball filenames
+  def tarballFile = ""
+  def renamedTarballFile = ""
+  
   // add installer-less tarball if desktop
   if (flavor == "desktop") {
-    def tarballFile = sh (
+    tarballFile = sh (
       script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
       returnStdout: true
     ).trim()
 
-    def renamedTarballFile = sh (
+    renamedTarballFile = sh (
       script: "echo ${tarballFile} | sed 's/-relwithdebinfo//'",
       returnStdout: true
     ).trim()
 
     sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
-    tarballFile = renamedTarballFile
-
-    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildDest}"
+    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} ${buildDest}"
   }
 
   // update daily build redirect
@@ -118,6 +120,11 @@ def s3_upload(type, flavor, os, arch) {
 
     // publish the build
     sh "docker/jenkins/publish-build.sh --build ${product}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_PAT} --file ${buildFolder}/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+
+    // publish the installer-less version of the build if we made one
+    if (tarballFile) {
+      sh "docker/jenkins/publish-build.sh --build ${product}/${os}-xcopy --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${renamedTarballFile} --pat ${GITHUB_PAT} --file ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+    }
   }
 }
 
@@ -422,9 +429,12 @@ try {
                       product = "desktop-pro"
                   }
 
-                  // publish the build
+                  // publish the build (self installing exe)
                   def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
+                  println stdout
 
+                  // publish the build (installer-less zip)
+                  stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.zip -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.zip -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
                   println stdout
                 }
               }
