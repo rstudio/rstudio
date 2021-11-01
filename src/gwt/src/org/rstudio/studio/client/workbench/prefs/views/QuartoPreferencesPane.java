@@ -43,7 +43,7 @@ public class QuartoPreferencesPane extends PreferencesPane
       add(new Label("This version of RStudio includes a preview of Quarto, a new " + 
             "scientific and technical publishing system. ", true));
       
-      chkEnableQuarto_ = new CheckBox("Enable Quarto features in RStudio");
+      chkEnableQuarto_ = new CheckBox("Enable Quarto preview");
       add(spacedBefore(chkEnableQuarto_));
       lblQuartoVersion_ = new Label("", true);
       lblQuartoVersion_.setVisible(false);
