@@ -255,6 +255,9 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       }
       
       setSecondaryToolbarVisible(true);
+
+      // signal reveal that we are ready for more events
+      postRevealMessage("ready");
    }
 
    
