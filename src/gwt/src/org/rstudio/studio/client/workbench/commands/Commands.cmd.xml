@@ -2452,11 +2452,6 @@ Changes that do not require rebuilding the interfaces/properties files:
         menuLabel="_Quarto Doc..."
         desc="Create a blank Quarto document in current directory"
         rebindable="false"/>
-        
-   <cmd id="serveQuartoSite"
-        menuLabel="_Serve Site"
-        desc="Run development server for Quarto site in current directory"
-        rebindable="false"/>      
 
    <cmd id="touchRHTMLDoc"
         menuLabel="R _HTML"
