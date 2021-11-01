@@ -2,6 +2,13 @@
 
 This README describes the internationalization (i18n) development workflow and helper tools available.
 
+After making any change (even whitespace-only) to Commands.cmd.xml, you must run one of
+`ant`, `ant draft`, or `ant generate-i18n` and commit all modified files along with Commands.cmd.xml.
+Failure to do this will break the RStudio build.
+
+This workflow requires Python3 to be active, and the requirements in commands.cmd.xml/requirements.txt
+to have been installed (i.e. with `pip install -r requirements.txt`).
+
 # i18n in RStudio
 
 ## Implementation Details

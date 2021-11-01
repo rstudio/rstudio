@@ -1888,12 +1888,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Create a blank Quarto document in current directory") // $NON-NLS-1$
     String touchQuartoDocDesc();
     
-    // serveQuartoSite
-    @DefaultStringValue("_Serve Site") // $NON-NLS-1$
-    String serveQuartoSiteMenuLabel();
-    @DefaultStringValue("Run development server for Quarto site in current directory") // $NON-NLS-1$
-    String serveQuartoSiteDesc();
-    
     // touchRHTMLDoc
     @DefaultStringValue("R _HTML") // $NON-NLS-1$
     String touchRHTMLDocMenuLabel();
