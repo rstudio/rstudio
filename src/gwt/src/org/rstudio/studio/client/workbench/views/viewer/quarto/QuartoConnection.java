@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.viewer.quarto;
 
 
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
@@ -128,7 +129,7 @@ public class QuartoConnection
          setQuartoUrl(message.href, website_);
          
          // record current source file
-         srcFile_ = message.file;
+         srcFile_ = StringUtil.isNullOrEmpty(message.file) ? null : message.file;
          
          // let quarto know we can handle devhost requests
          postQuartoMessage("devhost-init", null);
