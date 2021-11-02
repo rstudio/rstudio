@@ -252,6 +252,7 @@
    <!-- verify if Commands.cmd.xml has changed -->
    <target name="i18n-checksum">
       <checksum file="${commands-xml-full-path}" verifyproperty="isMD5ok"/>
+      <echo message="Commands.cmd.xml i18n checksum matches: ${isMD5ok}"/>
    </target>
 
    <!-- determine what type of i18n generation is required (if any) -->
