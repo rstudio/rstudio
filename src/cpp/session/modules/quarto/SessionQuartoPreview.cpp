@@ -149,8 +149,8 @@ protected:
       if (formatIsRevealJs())
          args.push_back("--presentation");
 
-      // no automatic render and no browser
-      args.push_back("--no-render");
+      // no watching inputs and no browser
+      args.push_back("--no-watch-inputs");
       args.push_back("--no-browse");
 
       return args;
