@@ -118,12 +118,13 @@ protected:
 
    virtual std::vector<std::string> args()
    {
-      std::vector<std::string> args({"serve", "--no-browse"});
+      std::vector<std::string> args({"preview", "--no-browse"});
       if (render_ != kRenderNone)
       {
          args.push_back("--render");
          args.push_back(render_);
       }
+      args.push_back("--no-watch-inputs");
       return args;
    }
 
