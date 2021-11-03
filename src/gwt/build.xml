@@ -301,7 +301,7 @@
          <arg line="python ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; menu properties &quot;${menu-prop-full-path}&quot;"/>
       </exec>
       <!-- regenerate checksum -->
-      <checksum file="${commands-xml-full-path}"/>
+      <checksum file="${commands-xml-full-path}" forceOverwrite="yes"/>
    </target>
    <target name="i18n-unix" depends="i18n-unix-check" if="generate-i18n-unix">
       <!-- verify Python version -->
@@ -325,7 +325,7 @@
          <arg line="-c 'python ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; menu properties &quot;${menu-prop-full-path}&quot;'"/>
       </exec>
       <!-- regenerate checksum -->
-      <checksum file="${commands-xml-full-path}"/>
+      <checksum file="${commands-xml-full-path}" forceOverwrite="yes"/>
    </target>
 
    <target name="generate-i18n" depends="i18n-unix, i18n-windows" description="Generates i18n for Command and Menu constants" />

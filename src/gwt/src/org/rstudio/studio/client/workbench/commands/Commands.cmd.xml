@@ -5,8 +5,9 @@ well as menu structures (for main menu and popup menus).
 
 Changes to this file require that you refresh the i18n interfaces and
 possibly retranslate/refresh any affected translated properties files. Do 
-this either by running "ant", "ant draft", or "ant generate-i18n" and commit
-all modified files.  See `/src/gwt/tools/i18n-helpers/README.md`.
+this by running "ant generate-i18n" and commit all modified files.
+
+See `/src/gwt/tools/i18n-helpers/README.md`.
 
 <menu>
    Contains <menu>, <cmd>, <separator>
