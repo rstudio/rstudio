@@ -87,8 +87,6 @@ class I18NGwtConstantsInterfaceGenerator:
             name and default_value: Strings that define the name and the default value of the constant
             string: A String that is written out literally to the output (use this to intersperse comments between constants)
 
-        TODO: Finish this docstring
-
         :param constant:
         :param name:
         :param default_value:
