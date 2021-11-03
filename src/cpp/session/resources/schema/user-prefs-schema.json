@@ -1038,7 +1038,7 @@
         "global_theme": {
             "type": "string",
             "default": "default",
-            "enum": ["classic", "default", "alternate"],
+            "enum": ["default", "alternate"],
             "title": "Global theme",
             "description": "The theme to use for the main RStudio user interface."
         },

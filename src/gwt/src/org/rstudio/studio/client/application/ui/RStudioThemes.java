@@ -67,42 +67,27 @@ public class RStudioThemes
       document.getBody().removeClassName("rstudio-themes-light-menus");
       document.getBody().removeClassName("rstudio-themes-light-menus-disabled");
       
-      if (themeName == "default" || themeName == "dark-grey" || themeName == "alternate")
+      if (themeName.contains("dark"))
       {
-         document.getBody().addClassName("rstudio-themes-flat");
-         
-         if (themeName.contains("dark"))
-         {
-            document.getBody().addClassName("rstudio-themes-dark-menus");
-            element.addClassName("rstudio-themes-dark");
-         }
-         else
-         {
-            document.getBody().addClassName("rstudio-themes-light-menus");
-         }
-
-         if (usesScrollbars())
-         {
-            element.addClassName("rstudio-themes-scrollbars");
-         }
-            
-         element.addClassName("rstudio-themes-" + themeName);
-         element.setId("rstudio_container");
+         document.getBody().addClassName("rstudio-themes-dark-menus");
+         element.addClassName("rstudio-themes-dark");
       }
+      else
+      {
+         document.getBody().addClassName("rstudio-themes-light-menus");
+      }
+
+      if (usesScrollbars())
+      {
+         element.addClassName("rstudio-themes-scrollbars");
+      }
+         
+      element.addClassName("rstudio-themes-" + themeName);
+      element.setId("rstudio_container");
       
       activeTheme_ = themeName;
    }
 
-   public static boolean isFlat(UserPrefs prefs)
-   {
-      return prefs.globalTheme().getValue() != UserPrefs.GLOBAL_THEME_CLASSIC;
-   }
-   
-   public static boolean isFlat()
-   {
-      return Document.get().getBody().hasClassName("rstudio-themes-flat");
-   }
-   
    public static boolean isEditorDark()
    {
       return Document.get().getBody().hasClassName("editor_dark");
