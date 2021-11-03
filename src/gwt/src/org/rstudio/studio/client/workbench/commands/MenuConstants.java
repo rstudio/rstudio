@@ -24,9 +24,9 @@ public interface MenuConstants extends Constants {
     @DefaultStringValue("_File") // $NON-NLS-1$
     String main$_FileLabel();
     
-    // main$_File$New__File
-    @DefaultStringValue("New__File") // $NON-NLS-1$
-    String main$_File$New__FileLabel();
+    // main$_File$New_File
+    @DefaultStringValue("New_File") // $NON-NLS-1$
+    String main$_File$New_FileLabel();
     
     // main$_File$_Recent_Files
     @DefaultStringValue("_Recent_Files") // $NON-NLS-1$
@@ -68,9 +68,9 @@ public interface MenuConstants extends Constants {
     @DefaultStringValue("P_anes") // $NON-NLS-1$
     String main$_View$P_anesLabel();
     
-    // main$_View$Show_Other__Panes
-    @DefaultStringValue("Show_Other__Panes") // $NON-NLS-1$
-    String main$_View$Show_Other__PanesLabel();
+    // main$_View$Show_Other_Panes
+    @DefaultStringValue("Show_Other_Panes") // $NON-NLS-1$
+    String main$_View$Show_Other_PanesLabel();
     
     // main$_Plots
     @DefaultStringValue("_Plots") // $NON-NLS-1$
@@ -80,9 +80,9 @@ public interface MenuConstants extends Constants {
     @DefaultStringValue("_Session") // $NON-NLS-1$
     String main$_SessionLabel();
     
-    // main$_Session$Set__Working_Directory
-    @DefaultStringValue("Set__Working_Directory") // $NON-NLS-1$
-    String main$_Session$Set__Working_DirectoryLabel();
+    // main$_Session$Set_Working_Directory
+    @DefaultStringValue("Set_Working_Directory") // $NON-NLS-1$
+    String main$_Session$Set_Working_DirectoryLabel();
     
     // main$_Build
     @DefaultStringValue("_Build") // $NON-NLS-1$

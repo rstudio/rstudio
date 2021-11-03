@@ -200,6 +200,8 @@ class Menu(ElementParser):
     def label(self, value):
         # Replace any characters that cannot be in a java attribute name with underscores
         self._label = re.sub(r"[^0-9a-zA-Z_$]", "_", value)
+        # Collapse runs of underscores into a single underscore
+        self._label = re.sub(r"_+", "_", self._label)
 
     def _field_name_parser(self, field_name):
         return generate_name(self.name, field_name)
