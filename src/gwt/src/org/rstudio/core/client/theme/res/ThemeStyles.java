@@ -28,16 +28,6 @@ public interface ThemeStyles extends CssResource
 {
    public static ThemeStyles INSTANCE = ThemeResources.INSTANCE.themeStyles();
 
-   String NW();
-   String N();
-   String NE();
-   String W();
-   String C();
-   String E();
-   String SW();
-   String S();
-   String SE();
-
    String windowframe();
 
    String primaryWindowFrameHeader();

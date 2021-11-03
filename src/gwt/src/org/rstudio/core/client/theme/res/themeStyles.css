@@ -139,14 +139,6 @@
 @url DIALOGBOTTOMLEFT dialogBottomLeft;
 @url DIALOGBOTTOM dialogBottom;
 @url DIALOGBOTTOMRIGHT dialogBottomRight;
-@url PODTOPLEFT podTopLeft;
-@url PODTOP podTop;
-@url PODTOPRIGHT podTopRight;
-@url PODLEFT podLeft;
-@url PODRIGHT podRight;
-@url PODBOTTOMLEFT podBottomLeft;
-@url PODBOTTOM podBottom;
-@url PODBOTTOMRIGHT podBottomRight;
 @url HORIZONTALHANDLE horizontalHandle;
 @url VERTICALHANDLE verticalHandle;
 @url BACKGROUNDGRADIENT backgroundGradient;
@@ -950,26 +942,6 @@ table.header > tbody > tr > td {
 .macintosh #rstudio_console_input.ace_editor > textarea {
    z-index: 5;
 }
-
-.C  { background-color: white; }
-.N  { background-image: PODTOP; }
-.NE { background-image: PODTOPRIGHT; }
-.E  { background-image: PODRIGHT; }
-.SE { background-image: PODBOTTOMRIGHT; }
-.S  { background-image: PODBOTTOM; }
-.SW { background-image: PODBOTTOMLEFT; }
-.W  { background-image: PODLEFT; }
-.NW { background-image: PODTOPLEFT; }
-
-.rstudio-themes-flat .C  { display: none; }
-.rstudio-themes-flat .N  { display: none; }
-.rstudio-themes-flat .NE { display: none; }
-.rstudio-themes-flat .E  { display: none; }
-.rstudio-themes-flat .SE { display: none; }
-.rstudio-themes-flat .S  { display: none; }
-.rstudio-themes-flat .SW { display: none; }
-.rstudio-themes-flat .W  { display: none; }
-.rstudio-themes-flat .NW { display: none; }
 
 .minimizedWindow .left {
    width: 8px;

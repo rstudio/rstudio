@@ -44,23 +44,6 @@ public interface ThemeResources extends ClientBundle
    @Source("dialogBottomRight.png")
    DataResource dialogBottomRight();
 
-   @Source("podTopLeft.png")
-   DataResource podTopLeft();
-   @Source("podTop.png")
-   DataResource podTop();
-   @Source("podTopRight.png")
-   DataResource podTopRight();
-   @Source("podLeft.png")
-   DataResource podLeft();
-   @Source("podRight.png")
-   DataResource podRight();
-   @Source("podBottomLeft.png")
-   DataResource podBottomLeft();
-   @Source("podBottom.png")
-   DataResource podBottom();
-   @Source("podBottomRight.png")
-   DataResource podBottomRight();
-
    @Source("verticalHandle.png")
    DataResource verticalHandle();
 
