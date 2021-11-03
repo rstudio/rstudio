@@ -241,7 +241,8 @@ public class MenuEmitter
    /**
     * Replaces characters that cannot be in an interface name with "_"
     */
-   private String parse_label_for_i18n(String label) {
+   private String parse_label_for_i18n(String label)
+   {
       return label.replaceAll("[^0-9a-zA-Z_$]", "_");
    }
 

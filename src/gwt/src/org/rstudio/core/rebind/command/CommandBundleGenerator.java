@@ -322,7 +322,6 @@ class CommandBundleGeneratorHelper
       writer.println(name + "_ = new AppCommand();");
 
       setProperty(writer, name, commandProps_.get(name), "id");
-      setProperty(writer, name, commandProps_.get(name), "desc");
       setProperty(writer, name, commandProps_.get(name), "desc", true);
       setProperty(writer, name, commandProps_.get(name), "label", true);
       setProperty(writer, name, commandProps_.get(name), "buttonLabel", true);
@@ -380,7 +379,9 @@ class CommandBundleGeneratorHelper
          // Set as an i18n-managed string property
          String propertyCapitalized = Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
          value = i18n_constants_name + "." + name + propertyCapitalized + "()";
-      } else {
+      }
+      else
+      {
          // Set as a hard-coded string property
          value = "\"" + Generator.escape(props.getAttribute(propertyName)) + "\"";
       }
