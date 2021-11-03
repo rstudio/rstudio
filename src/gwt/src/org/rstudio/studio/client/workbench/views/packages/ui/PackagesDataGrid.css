@@ -1,4 +1,3 @@
-@external rstudio-themes-flat;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
 /* This is exposed to allow users to customize RStudio further with their rsthemes. */
@@ -29,14 +28,14 @@
    color: #b0b0b0;
 }
 
-.rstudio-themes-flat .rstudio-themes-default .dataGridHeader {
+.rstudio-themes-default .dataGridHeader {
    background: THEME_DEFAULT_BACKGROUND;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridHeader {
+.rstudio-themes-dark-grey .dataGridHeader {
    background: THEME_DARKGREY_BACKGROUND;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .dataGridHeader {
+.rstudio-themes-alternate .dataGridHeader {
    background: THEME_ALTERNATE_BACKGROUND;
 }

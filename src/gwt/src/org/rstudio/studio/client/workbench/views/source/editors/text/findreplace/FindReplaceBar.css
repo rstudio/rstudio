@@ -1,7 +1,7 @@
 @external gwt-CheckBox;
 @external macintosh, windows, ubuntu_mono;
 
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 
 .findReplaceBar div, .findReplaceBar td {
    white-space: nowrap;
@@ -28,10 +28,6 @@
 }
 
 .optionsPanel {
-   margin-top: 9px; 
-}
-
-.rstudio-themes-flat .optionsPanel {
    margin-top: 7px; 
 }
 
@@ -73,6 +69,6 @@
    outline: 0;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .checkboxLabel {
+.rstudio-themes-dark .checkboxLabel {
    color: white;
 }

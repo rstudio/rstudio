@@ -30,25 +30,22 @@
 }
 
 .right button {
+   margin-top: 1px;
    margin-left: 4px;
 }
 
-.rstudio-themes-flat .right button {
-   margin-top: 1px;
-}
-
-.rstudio-themes-flat .rstudio-themes-dark .shelf {
+.rstudio-themes-dark .shelf {
    color: #FFF;
 }
 
-.rstudio-themes-flat .rstudio-themes-default .shelf {
+.rstudio-themes-default .shelf {
    background: THEME_DEFAULT_BACKGROUND;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .shelf {
+.rstudio-themes-dark-grey .shelf {
    background: THEME_DARKGREY_BACKGROUND;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .shelf {
+.rstudio-themes-alternate .shelf {
    background: THEME_ALTERNATE_BACKGROUND;
 }
