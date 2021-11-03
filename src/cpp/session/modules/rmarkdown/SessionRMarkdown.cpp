@@ -589,9 +589,13 @@ private:
          std::string extraArgs;
          if (isQuarto_)
          {
-            std::string defaultFormat = session::quarto::quartoDefaultFormat(targetFile_);
-            if (!defaultFormat.empty())
-               extraArgs = "--to " + defaultFormat;
+            std::string to = format;
+            if (to.empty())
+            {
+               to = session::quarto::quartoDefaultFormat(targetFile_);
+            }
+            if (!to.empty())
+               extraArgs = "--to " + to;
          }
          r::sexp::Protect rProtect;
          SEXP renderFuncSEXP;

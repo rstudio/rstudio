@@ -235,17 +235,6 @@ bool isJobServeRunning()
    return s_pServe && s_pServe->isRunning();
 }
 
-long pkgServePort()
-{
-   // quarto package server
-   double port = 0;
-   Error error = r::exec::RFunction(".rs.quarto.servePort")
-         .call(&port);
-   if (error)
-      LOG_ERROR(error);
-   return std::lround(port);
-}
-
 
 void navigateToViewer(long port, const std::string& path, const std::string& jobId)
 {
@@ -278,10 +267,10 @@ bool isNewQuartoBuild(const std::string& renderOutput)
 
 namespace quarto {
 
-std::string quartoDefaultFormat(const core::FilePath& sourceFile)
+std::string quartoDefaultFormat(const core::FilePath& outputFile)
 {
     // if we have a running book preview then use that as the default format
-   if (isFileInSessionQuartoProject(sourceFile) &&
+   if (isFileInSessionQuartoProject(outputFile) &&
        isJobServeRunning() &&
        quartoConfig().project_type == kQuartoProjectBook)
    {
@@ -304,35 +293,39 @@ namespace quarto {
 namespace serve {
 
 
-void previewDoc(const std::string& renderOutput, const std::string& path)
+void previewDoc(const std::string& renderOutput, const std::string& path, const std::string& format)
 {
-   if (isJobServeRunning() && !isNewQuartoBuild(renderOutput))
+   if (isJobServeRunning() &&
+       (s_pServe->format() == format) &&
+       !isNewQuartoBuild(renderOutput))
    {
       navigateToViewer(s_pServe->port(), path, s_pServe->jobId());
    }
    else
    {
-       long port = pkgServePort();
-       if (port > 0)
-       {
-         navigateToViewer(port, path, s_pServe->jobId());
-       }
-       else
-       {
-          Error error = quartoServe(kFormatDefault, false, path);
-          if (error)
-             LOG_ERROR(error);
-       }
+      Error error = quartoServe(format, false, path);
+      if (error)
+         LOG_ERROR(error);
    }
 }
 
-void previewDocPath(const std::string& renderOutput, const core::FilePath& docPath)
+void previewDocPath(const std::string& renderOutput, const core::FilePath& outputPath)
 {
    std::string path;
-   if (quartoDefaultFormat(docPath) != "pdf")
-      path = pathForOutputFile(docPath);
+   std::string format;
 
-   previewDoc(renderOutput, path);
+   if (outputPath.getExtensionLowerCase() == ".pdf")
+   {
+      path = "web/viewer.html";
+      format = "pdf";
+   }
+   else
+   {
+      path = pathForOutputFile(outputPath);
+      format = kFormatDefault;
+   }
+
+   previewDoc(renderOutput, path, format);
 }
 
 Error initialize()

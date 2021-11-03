@@ -497,7 +497,7 @@ public class BuildPane extends WorkbenchPane
       else if (format == "pdf")
          return "PDF";
       else if (format == "docx")
-         return "DOCX";
+         return "MS Word";
       else if (format == "epub")
          return "EPUB";
       else

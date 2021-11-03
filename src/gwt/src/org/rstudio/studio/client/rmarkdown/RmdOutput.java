@@ -637,8 +637,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          final RmdRenderResult result, final Command onDownload)
    {
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO,
-            "R Markdown Render Completed",
-            "R Markdown has finished rendering " +
+            "Render Completed",
+            "RStudio has finished rendering " +
             result.getTargetFile() + " to " +
             result.getOutputFile() + ".",
             false,
