@@ -801,7 +801,7 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
       // handler this was called from -- launching a new process in the supervisor when
       // an old one is in the middle of executing onCompleted doesn't work
       module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
-                                          boost::bind(modules::quarto::serve::previewDoc,
+                                          boost::bind(modules::quarto::serve::previewDocPath,
                                                       renderOutput, outputFile),
                                           false);
       return true;

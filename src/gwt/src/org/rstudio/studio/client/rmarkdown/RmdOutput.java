@@ -565,7 +565,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private void displayRenderResult(final RmdRenderResult result)
    {
       // don't display anything if user doesn't want to
-      if (prefs_.rmdViewerType().getValue() == UserPrefs.RMD_VIEWER_TYPE_NONE)
+      if (prefs_.rmdViewerType().getValue() == UserPrefs.RMD_VIEWER_TYPE_NONE ||
+          result.getViewerType() == UserPrefs.RMD_VIEWER_TYPE_NONE)
          return;
 
       String extension = FileSystemItem.getExtensionFromPath(
