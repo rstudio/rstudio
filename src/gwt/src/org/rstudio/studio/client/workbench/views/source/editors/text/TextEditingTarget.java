@@ -267,7 +267,7 @@ public class TextEditingTarget implements
                             List<String> values,
                             List<String> extensions,
                             String selected);
-      void setQuartoFormatOptions(TextFileType fileType, boolean showRmdFormatMenu, List<String> formats);
+      void setQuartoFormatOptions(TextFileType fileType, boolean showRmdFormatMenu, List<String> formats, boolean isBook);
       HandlerRegistration addRmdFormatChangedHandler(
             RmdOutputFormatChangedEvent.Handler handler);
 
@@ -2011,9 +2011,20 @@ public class TextEditingTarget implements
          public void onRmdOutputFormatChanged(RmdOutputFormatChangedEvent event)
          {
             if (event.isQuarto())
-               setQuartoFormat(event.getFormat());
+            {
+               if (event.isQuartoBook())
+               {
+                  renderRmd(event.getFormat(), null);
+               }
+               else
+               {
+                  setQuartoFormat(event.getFormat());
+               }
+            }
             else
+            {
                setRmdFormat(event.getFormat());
+            }
          }
       });
 
@@ -4792,10 +4803,16 @@ public class TextEditingTarget implements
          {
             view_.setIsNotShinyFormat();
             
-            List<String> formats = getQuartoOutputFormats();
+            QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
+            boolean quartoBookDoc = QuartoHelper.isQuartoBookDoc(
+               docUpdateSentinel_.getPath(), 
+               quartoConfig
+            );
+            List<String> formats = quartoBookDoc ? Arrays.asList(quartoConfig.project_formats) : getQuartoOutputFormats();
             view_.setQuartoFormatOptions(fileType_, 
                                          getCustomKnit().length() == 0,
-                                         formats);
+                                         formats,
+                                         quartoBookDoc);
          }
         
       }
@@ -6802,8 +6819,13 @@ public class TextEditingTarget implements
    {
       renderRmd(null);
    }
-
+   
    void renderRmd(final String paramsFile)
+   {
+      renderRmd(null, paramsFile);
+   }
+
+   void renderRmd(final String format, final String paramsFile)
    {
       if (extendedType_ != SourceDocument.XT_QUARTO_DOCUMENT)
          events_.fireEvent(new RmdRenderPendingEvent(docUpdateSentinel_.getId()));
@@ -6836,7 +6858,7 @@ public class TextEditingTarget implements
                   rmarkdownHelper_.renderRMarkdown(
                      docUpdateSentinel_.getPath(),
                      docDisplay_.getCursorPosition().getRow() + 1,
-                     null,
+                     format,
                      docUpdateSentinel_.getEncoding(),
                      paramsFile,
                      asTempfile,

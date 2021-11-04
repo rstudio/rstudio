@@ -24,7 +24,7 @@ import org.rstudio.studio.client.server.Void;
 public interface QuartoServerOperations 
 {
    void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback);
-   void quartoServe(String render, ServerRequestCallback<Void> requestCallback);
+   void quartoServe(String format, boolean render, ServerRequestCallback<Void> requestCallback);
    void quartoPreview(String file, 
                       String format, 
                       PresentationEditorLocation editorState,

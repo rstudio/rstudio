@@ -6436,10 +6436,11 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void quartoServe(String render, ServerRequestCallback<Void> callback)
+   public void quartoServe(String format, boolean render, ServerRequestCallback<Void> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.isNullOrEmpty(render) ? "none" : render));
+      params.set(0, new JSONString(StringUtil.isNullOrEmpty(format) ? "default" : format));
+      params.set(1,  JSONBoolean.getInstance(render));
       sendRequest(RPC_SCOPE, QUARTO_SERVE, params, callback);
    }
    

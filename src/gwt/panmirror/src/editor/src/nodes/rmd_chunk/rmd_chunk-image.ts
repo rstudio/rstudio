@@ -102,6 +102,7 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
           }
 
           img.src = uiContext.mapResourceToURL(imagePath);
+          img.setAttribute('draggable', 'false');
 
           // watch for changes to the file
           const unsubscribe = uiContext.watchResource(imagePath, () => {

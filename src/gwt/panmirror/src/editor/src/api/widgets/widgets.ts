@@ -75,6 +75,7 @@ export function createImageButton(image: string, classes: string[], title: strin
   applyStyles(button, classes, style);
   const imageEl = window.document.createElement('img') as HTMLImageElement;
   imageEl.src = image;
+  imageEl.setAttribute('draggable', 'false');
   button.append(imageEl);
   return button;
 }

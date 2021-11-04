@@ -1,5 +1,5 @@
 /*
- * RmdOutputFormatChangedEvent.java
+ * BuildRenderSubTypeEvent.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,44 +12,27 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.views.buildtools.events;
 
-package org.rstudio.studio.client.rmarkdown.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RmdOutputFormatChangedEvent extends GwtEvent<RmdOutputFormatChangedEvent.Handler>
+public class BuildRenderSubTypeEvent extends GwtEvent<BuildRenderSubTypeEvent.Handler>
 {
    public interface Handler extends EventHandler
    {
-      void onRmdOutputFormatChanged(RmdOutputFormatChangedEvent event);
-   }
-   
-   public RmdOutputFormatChangedEvent(String format)
-   {
-      this(format, false, false);
+      void onBuildRenderSubType(BuildRenderSubTypeEvent event);
    }
 
-   public RmdOutputFormatChangedEvent(String format, boolean isQuarto, boolean isQuartoBook)
+   public BuildRenderSubTypeEvent(String type)
    {
-      format_ = format;
-      isQuarto_ = isQuarto;
-      isQuartoBook_ = isQuartoBook;
+      type_ = type;
    }
 
-   public String getFormat()
+   public String getSubType()
    {
-      return format_;
-   }
-   
-   public boolean isQuarto()
-   {
-      return isQuarto_;
-   }
-   
-   public boolean isQuartoBook()
-   {
-      return isQuartoBook_;
+      return type_;
    }
 
    @Override
@@ -61,12 +44,10 @@ public class RmdOutputFormatChangedEvent extends GwtEvent<RmdOutputFormatChanged
    @Override
    protected void dispatch(Handler handler)
    {
-      handler.onRmdOutputFormatChanged(this);
+      handler.onBuildRenderSubType(this);
    }
 
-   private final String format_;
-   private final boolean isQuarto_;
-   private final boolean isQuartoBook_;
+   private final String type_;
 
    public static final Type<Handler> TYPE = new Type<>();
 }

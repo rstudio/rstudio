@@ -591,7 +591,7 @@ public class ViewerPresenter extends BasePresenter
 
    private void manageCommands(boolean enable)
    {
-      manageCommands(enable, false, false, false, null);
+      manageCommands(enable, false, false, false, null, null);
    }
 
    private void manageCommands(boolean enable, ViewerNavigateEvent event)
@@ -600,6 +600,7 @@ public class ViewerPresenter extends BasePresenter
                      event.isHTMLWidget(),
                      event.getHasNext(),
                      event.getHasPrevious(),
+                     event.getURL(),
                      event.getQuartoNavigate());
    }
 
@@ -607,6 +608,7 @@ public class ViewerPresenter extends BasePresenter
                                boolean isHTMLWidget,
                                boolean hasNext,
                                boolean hasPrevious,
+                               String viewerUrl,
                                QuartoNavigate quartoNav)
    {
       commands_.viewerPopout().setEnabled(enable);
@@ -616,13 +618,15 @@ public class ViewerPresenter extends BasePresenter
 
       if (quartoNav != null)
       {
+         boolean pdf = (viewerUrl != null) && viewerUrl.endsWith("/web/viewer.html");
          boolean website = quartoNav.isWebsite();
+         boolean webnav = website && !pdf;
          commands_.viewerClearAll().setVisible(false);
-         commands_.viewerBack().setEnabled(website);
-         commands_.viewerBack().setVisible(website);
-         commands_.viewerForward().setEnabled(website);
-         commands_.viewerForward().setVisible(website);
-         commands_.viewerEditSource().setVisible(quartoNav.getSourceFile() != null);
+         commands_.viewerBack().setEnabled(webnav);
+         commands_.viewerBack().setVisible(webnav);
+         commands_.viewerForward().setEnabled(webnav);
+         commands_.viewerForward().setVisible(webnav);
+         commands_.viewerEditSource().setVisible(!pdf && quartoNav.getSourceFile() != null);
       }
       else
       {

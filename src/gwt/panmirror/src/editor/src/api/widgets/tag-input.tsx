@@ -221,6 +221,7 @@ const Tag: React.FC<TagProps> = props => {
         onKeyPress={onDeleteKeyPress}
         className="pm-tag-input-delete-image"
         tabIndex={0}
+        draggable="false"
       />
       <div className={`pm-tag-input-text ${props.tag.isEditable ? 'pm-tag-input-text-edittable' : undefined}`}>
         {!editing ? (
@@ -253,6 +254,7 @@ const Tag: React.FC<TagProps> = props => {
           onKeyPress={onEditKeyPress}
           tabIndex={0}
           ref={editImage}
+          draggable="false"
         />
       ) : (
         undefined
