@@ -52,9 +52,7 @@ public class RmdTemplateOptionsDialog
       super("Edit " + (isShiny ? "Shiny " : "R Markdown ") + 
             template.getName() + " Options", Roles.getDialogRole(), onSaved, onCancelled);
       setWidth("425px");
-      setHeight(
-         RStudioThemes.isFlat() ? "430px" : "450px"
-      );
+      setHeight("430px");
       templateOptions_ = new RmdTemplateOptionsWidget(!isShiny);
       templateOptions_.setDocument(document);
       templateOptions_.setTemplate(template, false, frontMatter);

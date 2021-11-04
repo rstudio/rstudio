@@ -117,7 +117,7 @@ public class HelpPane extends WorkbenchPane
          RES.editorStyles().getText(),
          null,
          false,
-         RStudioThemes.isFlat());
+         true);
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame");
       frame_.addStyleName("ace_editor_theme");
