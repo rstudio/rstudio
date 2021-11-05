@@ -22,7 +22,6 @@ import org.rstudio.studio.client.common.RetinaStyleInjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
@@ -35,14 +34,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlDocumentLinter;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -131,10 +129,10 @@ public class LintManager
       };
 
       // Background linting
-      docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
+      docDisplay_.addCursorChangedHandler(new CursorChangedEvent.Handler()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<Void> event)
+         public void onCursorChanged(CursorChangedEvent event)
          {
             if (!userPrefs_.backgroundDiagnostics().getValue())
                return;
@@ -157,7 +155,7 @@ public class LintManager
                   explicit_ = false;
                   timer_.schedule(defaultLintDelayMs());
                }
-            });
+            });  
          }
       });
       
@@ -211,7 +209,7 @@ public class LintManager
       if (context.showMarkers)
       {
          target_.saveThenExecute(null, false, new Command()
-         {
+         {   
             @Override
             public void execute()
             {
@@ -233,10 +231,10 @@ public class LintManager
    }
 
    private void performLintServerRequest(final LintContext context)
-   {
+   {      
       if (context.token.isInvalid())
          return;
-
+         
       if (userPrefs_.showDiagnosticsCpp().getValue() && (target_.getTextFileType().isCpp() || target_.getTextFileType().isC()))
          performCppLintServerRequest(context);
       else if (userPrefs_.showDiagnosticsR().getValue() && (target_.getTextFileType().isR() || target_.getTextFileType().isRmd()))
