@@ -25,19 +25,19 @@ public interface MenuConstants extends Constants {
     String main$_FileLabel();
     
     // main$_File$New_File
-    @DefaultStringValue("New_File") // $NON-NLS-1$
+    @DefaultStringValue("New _File") // $NON-NLS-1$
     String main$_File$New_FileLabel();
     
     // main$_File$_Recent_Files
-    @DefaultStringValue("_Recent_Files") // $NON-NLS-1$
+    @DefaultStringValue("_Recent Files") // $NON-NLS-1$
     String main$_File$_Recent_FilesLabel();
     
     // main$_File$Recent_Pro_jects
-    @DefaultStringValue("Recent_Pro_jects") // $NON-NLS-1$
+    @DefaultStringValue("Recent Pro_jects") // $NON-NLS-1$
     String main$_File$Recent_Pro_jectsLabel();
     
     // main$_File$_Import_Dataset
-    @DefaultStringValue("_Import_Dataset") // $NON-NLS-1$
+    @DefaultStringValue("_Import Dataset") // $NON-NLS-1$
     String main$_File$_Import_DatasetLabel();
     
     // main$_Edit
@@ -53,7 +53,7 @@ public interface MenuConstants extends Constants {
     String main$_CodeLabel();
     
     // main$_Code$Run_Regi_on
-    @DefaultStringValue("Run_Regi_on") // $NON-NLS-1$
+    @DefaultStringValue("Run Regi_on") // $NON-NLS-1$
     String main$_Code$Run_Regi_onLabel();
     
     // main$_Code$_Terminal
@@ -69,7 +69,7 @@ public interface MenuConstants extends Constants {
     String main$_View$P_anesLabel();
     
     // main$_View$Show_Other_Panes
-    @DefaultStringValue("Show_Other_Panes") // $NON-NLS-1$
+    @DefaultStringValue("Show Other _Panes") // $NON-NLS-1$
     String main$_View$Show_Other_PanesLabel();
     
     // main$_Plots
@@ -81,7 +81,7 @@ public interface MenuConstants extends Constants {
     String main$_SessionLabel();
     
     // main$_Session$Set_Working_Directory
-    @DefaultStringValue("Set_Working_Directory") // $NON-NLS-1$
+    @DefaultStringValue("Set _Working Directory") // $NON-NLS-1$
     String main$_Session$Set_Working_DirectoryLabel();
     
     // main$_Build
@@ -93,7 +93,7 @@ public interface MenuConstants extends Constants {
     String main$_DebugLabel();
     
     // main$_Debug$_On_Error
-    @DefaultStringValue("_On_Error") // $NON-NLS-1$
+    @DefaultStringValue("_On Error") // $NON-NLS-1$
     String main$_Debug$_On_ErrorLabel();
     
     // main$_Profile
@@ -105,7 +105,7 @@ public interface MenuConstants extends Constants {
     String main$_ToolsLabel();
     
     // main$_Tools$_Version_Control
-    @DefaultStringValue("_Version_Control") // $NON-NLS-1$
+    @DefaultStringValue("_Version Control") // $NON-NLS-1$
     String main$_Tools$_Version_ControlLabel();
     
     // main$_Tools$_Terminal
@@ -145,7 +145,7 @@ public interface MenuConstants extends Constants {
     String main$_Help$_Accessibility$_FocusLabel();
     
     // main$_Help$_Cheat_Sheets
-    @DefaultStringValue("_Cheat_Sheets") // $NON-NLS-1$
+    @DefaultStringValue("_Cheat Sheets") // $NON-NLS-1$
     String main$_Help$_Cheat_SheetsLabel();
     
     // main$_Help$Dia_gnostics

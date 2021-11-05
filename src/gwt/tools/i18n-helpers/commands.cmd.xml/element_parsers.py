@@ -146,9 +146,8 @@ class Menu(ElementParser):
 
         # Fields that could be translated
         self.translatable_fields = MENU_TRANSLATABLE_FIELDS
-        # Note that label is handled by a property with additional parsing logic
-        self._label = None
-
+        self.label = None
+ 
         self._ensure_translatable_fields_exist()
 
         self.parse()
@@ -190,18 +189,13 @@ class Menu(ElementParser):
         lineage = re.sub(r'/', lineage_delimiter, self.lineage)
         if lineage:
             lineage += lineage_delimiter
-        return lineage + self.label
 
-    @property
-    def label(self):
-        return self._label
-
-    @label.setter
-    def label(self, value):
         # Replace any characters that cannot be in a java attribute name with underscores
-        self._label = re.sub(r"[^0-9a-zA-Z_$]", "_", value)
+        label = re.sub(r"[^0-9a-zA-Z_$]", "_", self.label)
         # Collapse runs of underscores into a single underscore
-        self._label = re.sub(r"_+", "_", self._label)
+        label = re.sub(r"_+", "_", label)
+
+        return lineage + label
 
     def _field_name_parser(self, field_name):
         return generate_name(self.name, field_name)
