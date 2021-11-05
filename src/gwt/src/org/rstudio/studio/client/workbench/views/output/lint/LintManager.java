@@ -155,7 +155,7 @@ public class LintManager
                   explicit_ = false;
                   timer_.schedule(defaultLintDelayMs());
                }
-            });  
+            });
          }
       });
       
@@ -209,7 +209,7 @@ public class LintManager
       if (context.showMarkers)
       {
          target_.saveThenExecute(null, false, new Command()
-         {   
+         {
             @Override
             public void execute()
             {
@@ -231,10 +231,10 @@ public class LintManager
    }
 
    private void performLintServerRequest(final LintContext context)
-   {      
+   {
       if (context.token.isInvalid())
          return;
-         
+
       if (userPrefs_.showDiagnosticsCpp().getValue() && (target_.getTextFileType().isCpp() || target_.getTextFileType().isC()))
          performCppLintServerRequest(context);
       else if (userPrefs_.showDiagnosticsR().getValue() && (target_.getTextFileType().isR() || target_.getTextFileType().isRmd()))
