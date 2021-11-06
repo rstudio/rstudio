@@ -1050,11 +1050,8 @@ void onRemoveAll()
 
 SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
 {
-   if (!r::exec::isMainThread())
-   {
-      LOG_ERROR_MESSAGE("rs_getDocumentProperties called from non main thread");
-      return R_NilValue;
-   }
+   ASSERT_MAIN_THREAD;
+   
    Error error;
    FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP));
    bool includeContents = r::sexp::asLogical(includeContentsSEXP);

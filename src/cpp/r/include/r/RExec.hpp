@@ -302,9 +302,6 @@ bool interruptsPending();
 void setInterruptsPending(bool pending);
 void checkUserInterrupt();
 
-bool isMainThread();
-void initMainThread(MainThreadFunction f);
-
 class IgnoreInterruptsScope : boost::noncopyable
 {
 public:

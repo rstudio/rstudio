@@ -309,12 +309,17 @@ void onConsolePrompt(const std::string&)
 
 void onDetectChanges(module_context::ChangeSource source)
 {
+   ASSERT_MAIN_THREAD;
+   
    // check for libPaths changes if we're evaluating a change from the REPL at
    // the top-level (i.e. not while debugging, as we don't want to mutate any
    // state that might be under inspection)
-   if (source == module_context::ChangeSourceREPL && r::exec::isMainThread() &&
+   if (source == module_context::ChangeSourceREPL &&
+       core::thread::isMainThread() &&
        r::exec::atTopLevelContext())
+   {
       detectLibPathsChanges();
+   }
 }
 
 void onDeferredInit(bool /* newSession */)

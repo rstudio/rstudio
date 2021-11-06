@@ -17,8 +17,10 @@
 #include <r/RExec.hpp>
 
 #include <shared_core/FilePath.hpp>
+
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RErrorCategory.hpp>
@@ -39,6 +41,10 @@ LibExtern int UserBreak;
 #endif
 }
 
+// avoid TRUE, FALSE defines masking Rboolean TRUE, FALSE enum
+#undef FALSE
+#undef TRUE
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -49,8 +55,6 @@ namespace exec {
 namespace {
 
 bool s_wasInterrupted;
-
-MainThreadFunction s_mainThreadFunction;
 
 // create a scope for disabling any installed error handlers (e.g. recover)
 // we need to do this so that recover isn't invoked while we are running
@@ -126,20 +130,17 @@ enum EvalType {
    EvalTry,    // use R_tryEval
    EvalDirect  // use Rf_eval directly
 };
+
 Error evaluateExpressionsUnsafe(SEXP expr,
                                 SEXP envir,
                                 SEXP* pSEXP,
                                 sexp::Protect* pProtect,
                                 EvalType evalType)
 {
+   ASSERT_MAIN_THREAD;
+   
    // detect if an error occurred (only relevant for EvalTry)
    int errorOccurred = 0;
-
-   if (!isMainThread())
-   {
-      LOG_ERROR_MESSAGE("evaluateExpression called from thread other than main");
-      return rCodeExecutionError("Attempt to eval R on thread other than main", ERROR_LOCATION);
-   }
 
    // if we have an entire expression list, evaluate its contents one-by-one 
    // and return only the last one
@@ -237,11 +238,8 @@ void SEXPTopLevelExec(void *data)
    
 Error executeSafely(boost::function<void()> function)
 {
-   if (!isMainThread())
-   {
-      LOG_ERROR_MESSAGE("executeSafely called from thread other than main");
-      return rCodeExecutionError("execute function called from thread other than main", ERROR_LOCATION);
-   }
+   ASSERT_MAIN_THREAD;
+   
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
    DisableDebugScope disableStepInto(R_GlobalEnv);
@@ -321,11 +319,8 @@ Error evaluateString(const std::string& str,
                      sexp::Protect* pProtect,
                      EvalFlags flags)
 {
-   if (!isMainThread())
-   {
-      LOG_ERROR_MESSAGE("evaluateString called from thread other than main: " + str);
-      return rCodeExecutionError("Attempt to eval R off of main thread", ERROR_LOCATION);
-   }
+   ASSERT_MAIN_THREAD;
+   
    // refresh source if necessary (no-op in production)
    r::sourceManager().reloadIfNecessary();
    
@@ -373,20 +368,6 @@ Error evaluateString(const std::string& str,
 bool atTopLevelContext() 
 {
    return context::RCntxt::begin()->callflag() == CTXT_TOPLEVEL;
-}
-
-// Returns true for all threads unless initMainThread was called from the main one
-bool isMainThread()
-{
-   if (!s_mainThreadFunction)
-      return true; // Not determined
-   return s_mainThreadFunction();
-}
-
-// Call this from the main thread to enable main-thread diagnostic checks.
-void initMainThread(MainThreadFunction fun)
-{
-   s_mainThreadFunction = fun;
 }
 
 RFunction::RFunction(SEXP functionSEXP)
@@ -478,11 +459,8 @@ Error RFunction::call(SEXP evalNS,
       return error;
    }
    
-   if (!isMainThread())
-   {
-      LOG_ERROR_MESSAGE("Attempt to call R function: " + functionName_ + " on thread other than main");
-      return rCodeExecutionError("Attempt to call R function on thread other than main", ERROR_LOCATION);
-   }
+   // make sure we're on the main thread
+   ASSERT_MAIN_THREAD_BECAUSE(functionName_);
 
    // create the call object (LANGSXP) with the correct number of elements
    SEXP callSEXP;
@@ -494,8 +472,7 @@ Error RFunction::call(SEXP evalNS,
    
    // assign parameters to the subseqent elements of the call
    SEXP nextSlotSEXP = CDR(callSEXP);
-   for (std::vector<Param>::const_iterator 
-            it = params_.begin(); it != params_.end(); ++it)
+   for (auto it = params_.begin(); it != params_.end(); ++it)
    {
       SETCAR(nextSlotSEXP, it->valueSEXP);
       // parameters can optionally be named

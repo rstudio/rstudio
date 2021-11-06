@@ -31,6 +31,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <core/Thread.hpp>
+
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
@@ -101,17 +103,14 @@ boost::posix_time::ptime timeoutTimeFromNow()
 
 void processEvents()
 {
-   if (!r::exec::isMainThread())
-   {
-      LOG_ERROR_MESSAGE("processEvents() called from non-main thread");
-      return;
-   }
-    // execute safely since this can call arbitrary R code (and
-    // (can also cause jump_to_top if an interrupt is pending)
-    Error error = rstudio::r::exec::executeSafely(
-                rstudio::r::session::event_loop::processEvents);
-    if (error)
-        LOG_ERROR(error);
+   ASSERT_MAIN_THREAD;
+
+   // execute safely since this can call arbitrary R code (and
+   // (can also cause jump_to_top if an interrupt is pending)
+   Error error = rstudio::r::exec::executeSafely(
+            rstudio::r::session::event_loop::processEvents);
+   if (error)
+      LOG_ERROR(error);
 }
 
 bool parseAndValidateJsonRpcConnection(
@@ -284,11 +283,7 @@ void polledEventHandler()
       return;
    }
 
-   if (!r::exec::isMainThread())
-   {
-      LOG_ERROR_MESSAGE("polledEventHandler called from thread other than main");
-      return;
-   }
+   ASSERT_MAIN_THREAD;
 
    // static lastPerformed value used for throttling
    using namespace boost::posix_time;
@@ -477,11 +472,8 @@ bool waitForMethod(const std::string& method,
       LOG_ERROR_MESSAGE("Waiting for method " + method + " after fork");
       return false;
    }
-   if (!r::exec::isMainThread())
-   {
-      LOG_ERROR_MESSAGE("waitForMethod: " + method + " called from thread other than main");
-      return false;
-   }
+   
+   ASSERT_MAIN_THREAD;
 
    // establish timeouts
    boost::posix_time::ptime timeoutTime = timeoutTimeFromNow();

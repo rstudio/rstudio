@@ -76,8 +76,8 @@ namespace session {
 
 namespace {
 
-bool s_rmarkdownAvailable;
-bool s_rmarkdownAvailableInited;
+bool s_rmarkdownAvailable = false;
+bool s_rmarkdownAvailableInited = false;
 
 #ifdef _WIN32
 
@@ -166,7 +166,6 @@ bool haveMarkdownToHTMLOption()
 
 void initRmarkdownPackageAvailable()
 {
-   s_rmarkdownAvailableInited = true;
    if (!haveMarkdownToHTMLOption())
    {
       s_rmarkdownAvailable = r::util::hasRequiredVersion("3.0");
@@ -1678,13 +1677,11 @@ bool pptAvailable()
 
 bool rmarkdownPackageAvailable()
 {
+   ASSERT_MAIN_THREAD;
+   
    if (!s_rmarkdownAvailableInited)
    {
-      if (!r::exec::isMainThread())
-      {
-         LOG_WARNING_MESSAGE(" Accessing rmarkdownPackageAvailable() from thread other than main");
-         return false;
-      }
+      s_rmarkdownAvailableInited = true;
       initRmarkdownPackageAvailable();
    }
 

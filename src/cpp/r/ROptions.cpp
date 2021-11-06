@@ -18,9 +18,11 @@
 
 #include <boost/format.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
+
+#include <core/Log.hpp>
+#include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
@@ -78,11 +80,7 @@ int getBuildOptionWidth()
 
 SEXP getOption(const std::string& name)
 {
-   if (!r::exec::isMainThread())
-   {
-      LOG_ERROR_MESSAGE("R.getOption: " + name + " made from non-main thread");
-      return R_NilValue;
-   }
+   ASSERT_MAIN_THREAD_BECAUSE(name);
    return Rf_GetOption(Rf_install(name.c_str()), R_BaseEnv);
 }
 

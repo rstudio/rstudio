@@ -48,24 +48,19 @@ void updateReticulatePython(bool forInit)
    if (!forInit && s_pythonInitialized)
       return;
 
+   ASSERT_MAIN_THREAD;
+   
    s_reticulatePython = core::system::getenv("RETICULATE_PYTHON");
-   if (!r::exec::isMainThread())
+   if (s_reticulatePython.empty())
    {
-      if (!s_reticulatePythonInited)
-         LOG_WARNING_MESSAGE("reticulatePython needed for first time off main thread - value may not be accurate");
-   }
-   else
-   {
-      if (s_reticulatePython.empty())
-      {
-         Error error = r::exec::RFunction(".rs.inferReticulatePython")
-                 .call(&s_reticulatePython);
+      Error error = r::exec::RFunction(".rs.inferReticulatePython")
+            .call(&s_reticulatePython);
 
-         if (error)
-            LOG_ERROR(error);
-      }
-      s_reticulatePythonInited = true;
+      if (error)
+         LOG_ERROR(error);
    }
+   
+   s_reticulatePythonInited = true;
 }
 
 SEXP rs_reticulateInitialized()
