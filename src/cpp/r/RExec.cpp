@@ -102,11 +102,11 @@ private:
 Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
 {
    // string to parse
-   SEXP cv = sexp::create(str, pProtect);
+   SEXP strSEXP = sexp::create(str, pProtect);
 
    // do the parse and protect the result
    ParseStatus ps;
-   *pSEXP=R_ParseVector(cv, 1, &ps, R_NilValue);
+   *pSEXP = R_ParseVector(strSEXP, 1, &ps, R_NilValue);
    pProtect->add(*pSEXP);
 
    // check error/success
@@ -116,10 +116,8 @@ Error parseString(const std::string& str, SEXP* pSEXP, sexp::Protect* pProtect)
       error.addProperty("code", str);
       return error;
    }
-   else
-   {
-      return Success();
-   }
+   
+   return Success();
 }
 
 
