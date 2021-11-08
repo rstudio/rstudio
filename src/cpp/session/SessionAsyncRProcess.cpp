@@ -174,6 +174,9 @@ void AsyncRProcess::start(const char* rCommand,
    
    // update environment used for child process
    options.environment = childEnv;
+   
+   // require main thread
+   options.callbacksRequireMainThread = true;
 
    core::system::ProcessCallbacks cb;
    using namespace module_context;

@@ -62,8 +62,13 @@ public:
                  std::vector<core::FilePath>(),
               const std::string &input = std::string())
    {
-      start(rCommand, core::system::Options(), workingDir, rOptions, 
-            rSourceFiles, input);
+      start(
+               rCommand,
+               core::system::Options(),
+               workingDir,
+               rOptions, 
+               rSourceFiles,
+               input);
    }
 
    void start(const char* rCommand,
@@ -84,7 +89,6 @@ protected:
    virtual bool onContinue();
    virtual void onStdout(const std::string& output);
    virtual void onStderr(const std::string& output);
-
    virtual void onCompleted(int exitStatus) = 0;
 
 private:
