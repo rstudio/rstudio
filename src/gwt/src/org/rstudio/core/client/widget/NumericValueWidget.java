@@ -14,10 +14,12 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
+import org.rstudio.core.client.ClientConstants;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -122,8 +124,8 @@ public class NumericValueWidget extends Composite
          fireEvent(new EnsureVisibleEvent());
          textBox_.getElement().focus();
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               "Error",
-               label_ + " must be a valid number.",
+               constants_.errorCaption(),
+               label_ + " " + constants_.rStudioGinjectorErrorMessage() ,
                textBox_);
          return false;
       }
@@ -133,16 +135,16 @@ public class NumericValueWidget extends Composite
          if (minValue_ != null && intVal < minValue_)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Error",
-                  label_ + " must be greater than or equal to " + minValue_ + ".",
+                    constants_.errorCaption(),
+                  label_ + " " + constants_.rStudioGinjectorGreaterThanError()  + minValue_ + ".",
                   textBox_);
             return false;
          }
          if (maxValue_ != null && intVal > maxValue_)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Error",
-                  label_ + " must be less than or equal to " + maxValue_ + ".",
+                    constants_.errorCaption(),
+                  label_ + " " + constants_.rStudioGinjectorLessThanError() + maxValue_ + ".",
                   textBox_);
             return false;
          }
@@ -168,4 +170,5 @@ public class NumericValueWidget extends Composite
    private Integer minValue_;
    private Integer maxValue_;
    private String label_;
+   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
 }

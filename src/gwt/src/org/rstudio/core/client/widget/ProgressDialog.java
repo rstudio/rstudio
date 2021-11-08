@@ -33,11 +33,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.ui.*;
 
-import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.HandlerRegistrations;
-import org.rstudio.core.client.Size;
-import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomMetrics;
 
@@ -91,7 +87,7 @@ public abstract class ProgressDialog extends ModalDialogBase
       style.setWidth(width, Unit.PX);
       
       progressAnim_ = new Image(resources_.progress().getSafeUri());
-      stopButton_ = new ThemedButton("Stop");
+      stopButton_ = new ThemedButton(constants_.stopButtonText());
       centralWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
       ElementIds.assignElementId(label_, ElementIds.PROGRESS_TITLE_LABEL);
@@ -176,7 +172,7 @@ public abstract class ProgressDialog extends ModalDialogBase
       {
          operationStarted_ = false;
          announceCompletion(StringUtil.isNullOrEmpty(labelText_) ?
-            "Operation completed" : labelText_ + " completed");
+            constants_.operationCompletedText() : labelText_ + " " + constants_.completedText());
       }
       progressAnim_.getElement().getStyle().setDisplay(Style.Display.NONE);
    }
@@ -210,4 +206,5 @@ public abstract class ProgressDialog extends ModalDialogBase
    private String labelText_;
 
    private static final Resources resources_ = GWT.create(Resources.class);
+   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
 }

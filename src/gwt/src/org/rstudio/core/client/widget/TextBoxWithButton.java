@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -27,6 +28,7 @@ import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
 
+import org.rstudio.core.client.ClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -124,7 +126,7 @@ public class TextBoxWithButton extends Composite
       FlowPanel outer = new FlowPanel();
       if (label != null)
       {
-         assert existingLabel == null : "Invalid usage, cannot provide both label and existingLabel";
+         assert existingLabel == null : constants_.existingLabelMessage();
 
          lblCaption_ = new FormLabel(label, true);
          if (helpButton != null)
@@ -303,5 +305,6 @@ public class TextBoxWithButton extends Composite
    private String uniqueId_;
    private boolean useNativePlaceholder_;
    
-   private static final String USE_DEFAULT_PREFIX = "[Use Default]";
+   private final String USE_DEFAULT_PREFIX = constants_.useDefaultPrefix();
+   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
 }

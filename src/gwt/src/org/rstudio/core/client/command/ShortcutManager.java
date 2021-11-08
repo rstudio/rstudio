@@ -24,10 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.Pair;
-import org.rstudio.core.client.StringUtil;
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.KeyMap.CommandBinding;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.dom.DomUtils;
@@ -762,8 +760,7 @@ public class ShortcutManager implements NativePreviewHandler,
       reportShortcutBinding_ = report;
    }
 
-   private static final String REPORT_SHORTCUTS_MESSAGE =
-         "Type shortcuts to see if they are bound to a command. Close this message bar when done.";
+   private final String REPORT_SHORTCUTS_MESSAGE = constants_.reportShortCutMessage();
 
    @Handler
    void onShowShortcutCommand()
@@ -803,7 +800,7 @@ public class ShortcutManager implements NativePreviewHandler,
       if (reportShortcutBinding_)
       {
          reportedPending_ = true;
-         events_.fireEvent(new ReportShortcutBindingEvent("Multi-gesture shortcut pending"));
+         events_.fireEvent(new ReportShortcutBindingEvent(constants_.multiGestureMessage()));
       }
    }
 
@@ -812,7 +809,7 @@ public class ShortcutManager implements NativePreviewHandler,
       if (reportShortcutBinding_)
       {
          reportedPending_ = false;
-         events_.fireEvent(new ReportShortcutBindingEvent("Shortcut not bound"));
+         events_.fireEvent(new ReportShortcutBindingEvent(constants_.shortcutUnBoundMessage()));
       }
    }
 
@@ -839,5 +836,5 @@ public class ShortcutManager implements NativePreviewHandler,
    private AddinsCommandManager addins_;
    private EventBus events_;
    private Commands commands_;
-
+   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
 }

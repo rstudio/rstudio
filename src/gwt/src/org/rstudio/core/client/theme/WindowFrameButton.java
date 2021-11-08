@@ -15,6 +15,7 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -22,6 +23,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.ClassIds;
+import org.rstudio.core.client.ClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.layout.WindowState;
@@ -82,7 +84,7 @@ public class WindowFrameButton extends FocusWidget
    @Override
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
-      Debug.logWarning("WindowFrameButton: for keyboard support use setClickHandler instead of addClickHandler");
+      Debug.logWarning(constants_.addClickHandlerMessage());
       return super.addClickHandler(handler);
    }
 
@@ -146,20 +148,20 @@ public class WindowFrameButton extends FocusWidget
       switch (state)
       {
       case MINIMIZE:
-         return "Minimize";
+         return constants_.minimizeState();
 
       case MAXIMIZE:
-         return "Maximize";
+         return constants_.maximizeState();
 
       case NORMAL:
       default:
-         return "Restore";
+         return constants_.normalState();
 
       case HIDE:
-         return "Hide";
+         return constants_.hideState();
 
       case EXCLUSIVE:
-         return "Exclusive";
+         return constants_.exclusiveState();
       }
    }
 
@@ -173,4 +175,5 @@ public class WindowFrameButton extends FocusWidget
    private Command clickHandler_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private final DoubleClickState doubleClickState_ = new DoubleClickState();
+   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
 }

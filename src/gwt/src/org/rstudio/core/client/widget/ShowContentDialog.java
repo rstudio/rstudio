@@ -15,10 +15,12 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ClientConstants;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -57,7 +59,7 @@ public class ShowContentDialog extends ModalDialogBase
 
    protected void addButtons()
    {
-      ThemedButton closeButton = new ThemedButton("Close", clickEvent -> closeDialog());
+      ThemedButton closeButton = new ThemedButton(constants_.closeButtonText(), clickEvent -> closeDialog());
       addOkButton(closeButton);
    }
 
@@ -93,4 +95,5 @@ public class ShowContentDialog extends ModalDialogBase
    private final String styleName_;
    private final boolean isFixedFont_;
    private final Size preferredSize_;
+    private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
 }

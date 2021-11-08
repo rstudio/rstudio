@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.ClientConstants;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -60,7 +62,7 @@ public abstract class MonitoringMenuItem extends CheckableMenuItem
    public String getLabel()
    {
       return monitoredValue_
-            ? "Refresh Automatically"
+            ? constants_.refreshAutomaticallyLabel()
             : "Manual Refresh Only";
    }
 
@@ -83,5 +85,6 @@ public abstract class MonitoringMenuItem extends CheckableMenuItem
    private final ToolbarButton refreshButton_;
    private final ImageResource2x autoRefreshImage_;
    private final ImageResource2x manualRefreshImage_;
+   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
 }
 
