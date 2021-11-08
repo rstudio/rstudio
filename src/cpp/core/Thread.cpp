@@ -100,7 +100,6 @@ void assertMainThread(
    }
    
    core::log::logErrorMessage(errorMessage, errorLocation);
-   assert(errorMessage.c_str());
 }
 
 } // namespace thread
