@@ -1,4 +1,3 @@
-@external rstudio-themes-flat;
 @external editor_dark, ace_editor_theme;
 
 @eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
@@ -38,7 +37,7 @@
    background-color: #ccc;
 }
 
-.rstudio-themes-flat.editor_dark .ace_editor_theme .selectedRow {
+.editor_dark .ace_editor_theme .selectedRow {
    background-color: THEME_DARK_ROW_SELECTED;
 }
 
@@ -46,7 +45,7 @@
    background-color: rgb(146, 193, 240)
 }
 
-.rstudio-themes-flat.editor_dark .ace_editor_theme *:focus .selectedRow {
+.editor_dark .ace_editor_theme *:focus .selectedRow {
    background-color: THEME_DARK_ROW_FOCUSED;
 }
 

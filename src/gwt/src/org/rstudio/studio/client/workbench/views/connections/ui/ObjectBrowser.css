@@ -1,7 +1,7 @@
 
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 
 @eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
 
@@ -41,9 +41,6 @@
   font-weight: normal;
   margin-top: 0;
   padding: 2px 0px 2px 6px !important;
-}
-
-.rstudio-themes-flat .cellTreeTopItem {
   color: inherit;
 }
 
@@ -70,7 +67,7 @@
   background: white;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .cellTreeKeyboardSelectedItem {
+.rstudio-themes-dark .cellTreeKeyboardSelectedItem {
   background: THEME_DARK_ROW_SELECTED;
 }
 

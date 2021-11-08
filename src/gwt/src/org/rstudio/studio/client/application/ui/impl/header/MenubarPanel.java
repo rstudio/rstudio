@@ -37,18 +37,14 @@ public class MenubarPanel extends Composite
       @Source("MenubarPanel.css")
       Styles styles();
 
-      ImageResource menubarLeft();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
       ImageResource menubarTile();
-      ImageResource menubarRight();
    }
 
    interface Styles extends CssResource
    {
       String panel();
-      String left();
       String center();
-      String right();
    }
 
    interface MyUiBinder extends UiBinder<Widget, MenubarPanel> {}
