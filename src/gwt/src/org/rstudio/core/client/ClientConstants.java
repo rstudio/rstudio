@@ -1412,7 +1412,7 @@ public interface ClientConstants extends com.google.gwt.i18n.client.Constants {
      *
      * @return translated "Required attribute shortcut was missing \n"
      */
-    @DefaultStringValue("Required attribute shortcut was missing\\n")
+    @DefaultStringValue("Required attribute shortcut was missing\n")
     @Key("shortcutMissingLog")
     String shortcutMissingLog();
 
@@ -1431,7 +1431,7 @@ public interface ClientConstants extends com.google.gwt.i18n.client.Constants {
      * @return translated "'; expected one of "
      */
     @DefaultStringValue("'; expected one of ")
-    @Key("expectedOneOfLog")
+    @Key("expectedOneOfLog ")
     String expectedOneOfLog();
 
     /**
