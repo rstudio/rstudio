@@ -39,18 +39,10 @@ public class LeftRightToggleButton extends Widget
    {
       @Source("images/LeftToggleLeftOn.png")
       ImageResource leftToggleLeftOn();
-      @Source("images/LeftToggleRightOn.png")
-      ImageResource leftToggleRightOn();
       @Source("images/LeftToggleLeftOff.png")
       ImageResource leftToggleLeftOff();
-      @Source("images/LeftToggleRightOff.png")
-      ImageResource leftToggleRightOff();
-      @Source("images/RightToggleLeftOn.png")
-      ImageResource rightToggleLeftOn();
       @Source("images/RightToggleRightOn.png")
       ImageResource rightToggleRightOn();
-      @Source("images/RightToggleLeftOff.png")
-      ImageResource rightToggleLeftOff();
       @Source("images/RightToggleRightOff.png")
       ImageResource rightToggleRightOff();
 
@@ -62,8 +54,6 @@ public class LeftRightToggleButton extends Widget
    {
       String container();
       String leftLeft();
-      String leftRight();
-      String rightLeft();
       String rightRight();
       String leftOn();
       String rightOn();

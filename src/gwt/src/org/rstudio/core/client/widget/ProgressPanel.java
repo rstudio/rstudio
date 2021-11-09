@@ -122,8 +122,7 @@ public class ProgressPanel extends Composite implements IsHideableWidget
 
    private int getSpinnerColor()
    {
-      boolean isDark = Document.get().getBody().hasClassName("editor_dark") &&
-         Document.get().getBody().hasClassName("rstudio-themes-flat");
+      boolean isDark = Document.get().getBody().hasClassName("editor_dark");
 
       return isDark ? ProgressSpinner.COLOR_WHITE : ProgressSpinner.COLOR_BLACK;
    }
