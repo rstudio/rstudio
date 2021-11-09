@@ -226,6 +226,8 @@ public class TextEditingTarget implements
 
    public static final String SOFT_WRAP_LINES = "softWrapLines";
    public static final String USE_RAINBOW_PARENS = "useRainbowParens";
+   
+   public static final String QUARTO_PREVIEW_FORMAT = "quartoPreviewFormat";
 
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -4936,17 +4938,15 @@ public class TextEditingTarget implements
    
    private void setQuartoFormat(String formatName)
    {
-      // see if we need to change the format
-      List<String> outputFormats = getQuartoOutputFormats();
-      if (outputFormats.size() == 0 || !outputFormats.get(0).equals(formatName))
-      {
-         String yaml = rmarkdownHelper_.setOuartoOutputFormat(getRmdFrontMatter(), formatName);
-         if (yaml != null)
-            applyRmdFrontMatter(yaml);
-      }
-      
-      // render
-      renderRmd();
+      HashMap<String, String> props = new HashMap<>();
+      props.put(TextEditingTarget.QUARTO_PREVIEW_FORMAT, formatName);
+      docUpdateSentinel_.modifyProperties(props, new NullProgressIndicator() {
+         @Override
+         public void onCompleted()
+         {
+            renderRmd();
+         }
+      });
    }
    
 
@@ -6849,6 +6849,7 @@ public class TextEditingTarget implements
             {
                visualMode_.syncSourceOutlineLocation();
             }
+              
             
             // Command we can use to do an R Markdown render
             Command renderCmd = new Command() {
@@ -6858,7 +6859,7 @@ public class TextEditingTarget implements
                   rmarkdownHelper_.renderRMarkdown(
                      docUpdateSentinel_.getPath(),
                      docDisplay_.getCursorPosition().getRow() + 1,
-                     format,
+                     format != null ? format : quartoFormat(),
                      docUpdateSentinel_.getEncoding(),
                      paramsFile,
                      asTempfile,
@@ -7006,6 +7007,37 @@ public class TextEditingTarget implements
       }
    }
    
+   private String quartoFormat()
+   {
+      if (session_.getSessionInfo().getQuartoConfig().enabled &&
+         (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT))
+      {
+         List<String> outputFormats = getQuartoOutputFormats();
+         if (outputFormats.size() >= 1)
+         {
+            // see if there is a recorded override for this 
+            String previewFormat = docUpdateSentinel_.getProperty(TextEditingTarget.QUARTO_PREVIEW_FORMAT);          
+            if (previewFormat != null && outputFormats.contains(previewFormat))
+            {
+               return previewFormat;
+            }
+            else
+            {
+               return outputFormats.get(0);
+            }
+         }
+         else
+         {
+            return null;
+         }
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
+   
    
    private String useQuartoPreview()
    {
@@ -7013,14 +7045,13 @@ public class TextEditingTarget implements
           (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) && 
           !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDoc())
       {  
-         List<String> outputFormats = getQuartoOutputFormats();
-         if (outputFormats.size() == 0)
+         String format = quartoFormat();
+         if (format == null)
          {
             return "html";
          }
          else
          {
-            String format = outputFormats.get(0);
             final ArrayList<String> previewFormats = new ArrayList<String>(Arrays.asList(
                   QUARTO_PDF_FORMAT, 
                   QUARTO_BEAMER_FORMAT, 

@@ -149,6 +149,10 @@ protected:
       if (formatIsRevealJs())
          args.push_back("--presentation");
 
+      // format (or default if none specified)
+      args.push_back("--to");
+      args.push_back(!format_.empty() ? format_ : "default");
+
       // no watching inputs and no browser
       args.push_back("--no-watch-inputs");
       args.push_back("--no-browse");
