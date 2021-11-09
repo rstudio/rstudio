@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
@@ -164,5 +164,5 @@ public class TextEntryModalDialog extends ModalDialog<String>
    private final int selectionIndex_;
    private final int selectionLength_;
    private final int type_;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

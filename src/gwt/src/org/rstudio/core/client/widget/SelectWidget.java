@@ -17,7 +17,7 @@ package org.rstudio.core.client.widget;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -286,5 +286,5 @@ public class SelectWidget extends Composite
    private FlowPanel flowPanel_ = null;
    private FormLabel label_ = null;
    private final ListBox listBox_;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

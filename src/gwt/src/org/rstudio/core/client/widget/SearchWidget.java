@@ -49,7 +49,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.ValueBoxBase;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
@@ -382,5 +382,5 @@ public class SearchWidget extends Composite implements SearchDisplay
 
    private String lastValueSent_ = null;
    private final FocusTracker focusTracker_;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

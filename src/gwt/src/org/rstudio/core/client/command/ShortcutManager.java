@@ -836,5 +836,5 @@ public class ShortcutManager implements NativePreviewHandler,
    private AddinsCommandManager addins_;
    private EventBus events_;
    private Commands commands_;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

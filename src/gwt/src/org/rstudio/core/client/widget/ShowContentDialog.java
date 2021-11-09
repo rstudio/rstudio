@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -95,5 +95,5 @@ public class ShowContentDialog extends ModalDialogBase
    private final String styleName_;
    private final boolean isFixedFont_;
    private final Size preferredSize_;
-    private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

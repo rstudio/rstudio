@@ -15,7 +15,7 @@
 package org.rstudio.core.client.files;
 
 import com.google.gwt.core.client.GWT;
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
@@ -158,5 +158,5 @@ public abstract class PosixFileSystemContext implements FileSystemContext
    protected String workingDir_;
    protected FileSystemItem[] contents_;
    protected Callbacks callbacks_;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

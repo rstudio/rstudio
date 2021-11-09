@@ -16,7 +16,7 @@
 package org.rstudio.core.client.promise;
 
 import com.google.gwt.core.client.GWT;
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -67,5 +67,5 @@ public class PromiseWithProgress<V>
          }
       });
    }
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

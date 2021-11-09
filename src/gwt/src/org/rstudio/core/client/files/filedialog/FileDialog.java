@@ -18,7 +18,7 @@ import com.google.gwt.aria.client.DialogRole;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -236,5 +236,5 @@ public abstract class FileDialog extends FileSystemDialog
    protected boolean promptOnOverwrite_;
    protected boolean allowNonexistentFile_;
    private boolean attemptAcceptOnNextNavigate_ = false;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

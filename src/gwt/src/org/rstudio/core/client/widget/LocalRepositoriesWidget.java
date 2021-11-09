@@ -16,7 +16,7 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -167,5 +167,5 @@ public class LocalRepositoriesWidget extends Composite
    {
       RES.styles().ensureInjected();
    }
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

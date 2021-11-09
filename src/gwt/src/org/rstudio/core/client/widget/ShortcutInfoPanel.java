@@ -16,7 +16,7 @@ package org.rstudio.core.client.widget;
 
 import java.util.List;
 
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.ShortcutInfo;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -134,5 +134,5 @@ public class ShortcutInfoPanel extends Composite
    @UiField FocusPanel focusPanel;
    @UiField Anchor shortcutDocLink;
    @UiField Label headerLabel;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

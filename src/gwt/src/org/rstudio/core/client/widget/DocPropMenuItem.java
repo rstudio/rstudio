@@ -17,7 +17,7 @@ package org.rstudio.core.client.widget;
 import java.util.HashMap;
 
 import com.google.gwt.core.client.GWT;
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -125,5 +125,5 @@ public class DocPropMenuItem extends CheckableMenuItem
    private String propName_;
    private String targetValue_;
    private boolean default_;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

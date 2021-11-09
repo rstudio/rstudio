@@ -1423,5 +1423,5 @@ public class DocTabLayoutPanel
    private final ThemeStyles styles_;
    private Animation currentAnimation_;
    private final DragManager dragManager_;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

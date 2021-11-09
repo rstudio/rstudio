@@ -1504,5 +1504,5 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    static {
       RES.dataGridStyle().ensureInjected();
    }
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

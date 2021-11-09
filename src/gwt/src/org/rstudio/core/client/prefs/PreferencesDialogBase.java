@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
@@ -307,5 +307,5 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    private final SectionChooser sectionChooser_;
    private final String panelContainerStyle_;
    private final String panelContainerStyleNoChooser_;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

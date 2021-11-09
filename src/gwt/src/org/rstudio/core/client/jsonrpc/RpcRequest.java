@@ -21,7 +21,7 @@ import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
 import org.rstudio.studio.client.application.ApplicationCsrfToken;
@@ -296,5 +296,5 @@ public class RpcRequest
    final private boolean refreshCredentials_;
    private Request request_ = null;
    private RequestLogEntry requestLogEntry_ = null;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

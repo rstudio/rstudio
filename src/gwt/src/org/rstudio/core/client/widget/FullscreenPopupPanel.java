@@ -15,7 +15,7 @@
 
 package org.rstudio.core.client.widget;
 
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.resources.ImageResource2x;
 
 import com.google.gwt.core.client.GWT;
@@ -150,5 +150,5 @@ public class FullscreenPopupPanel extends ModalPopupPanel
    }
    
    private static final Resources RES = GWT.create(Resources.class);
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

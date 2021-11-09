@@ -23,7 +23,7 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.ClassIds;
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.layout.WindowState;
@@ -175,5 +175,5 @@ public class WindowFrameButton extends FocusWidget
    private Command clickHandler_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private final DoubleClickState doubleClickState_ = new DoubleClickState();
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

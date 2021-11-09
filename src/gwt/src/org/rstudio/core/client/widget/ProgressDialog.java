@@ -206,5 +206,5 @@ public abstract class ProgressDialog extends ModalDialogBase
    private String labelText_;
 
    private static final Resources resources_ = GWT.create(Resources.class);
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

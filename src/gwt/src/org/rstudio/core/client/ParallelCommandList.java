@@ -105,5 +105,5 @@ public class ParallelCommandList
    private final ArrayList<SerializedCommand> commands_ = new ArrayList<>();
    private final boolean log_;
    private final Command onCompleted_;
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

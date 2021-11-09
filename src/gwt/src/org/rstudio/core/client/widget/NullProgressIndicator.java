@@ -16,7 +16,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
-import org.rstudio.core.client.ClientConstants;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.studio.client.RStudioGinjector;
 
 public class NullProgressIndicator implements ProgressIndicator
@@ -48,5 +48,5 @@ public class NullProgressIndicator implements ProgressIndicator
    public void clearProgress()
    {
    }
-   private static final ClientConstants constants_ = GWT.create(ClientConstants.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

@@ -1,6 +1,6 @@
 package org.rstudio.core.client;
 
-public interface ClientConstants extends com.google.gwt.i18n.client.Constants {
+public interface CoreClientConstants extends com.google.gwt.i18n.client.Constants {
 
     /**
      * Translated "Cancel".
