@@ -76,13 +76,7 @@ td.valueCol
    text-overflow: ellipsis;
    overflow-x: hidden;
    padding-right: 20px;
-   background-color: #ffffff;
    padding-left: 5px;
-}
-
-.rstudio-themes-flat td.valueCol
-{
-   background-color: inherit;
 }
 
 .widthSettingRow td.expandCol,
