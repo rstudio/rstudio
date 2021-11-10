@@ -2112,8 +2112,8 @@ input[type="checkbox"]:checked:before {
    display: none;
 }
 
-.gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter,
-.rstheme_minimizedWindowObject table.rstheme_tabLayoutCenter {
+.gwt-TabLayoutPanelTabs .tabLayout table.rstheme_tabLayoutCenter,
+.rstheme_minimizedWindowObject .tabLayout  table.rstheme_tabLayoutCenter {
    background-image: none;
    background: THEME_DEFAULT_INACTIVE;
    border-right: solid 1px #d6dadc;
