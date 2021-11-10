@@ -30,6 +30,9 @@
    margin-right: -10px;
 }
 
+.wizardPageSelector {
+}
+
 @sprite .wizardBackButton {
    gwt-image: 'wizardBackButton2x';
    border: none;

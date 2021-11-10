@@ -871,7 +871,7 @@ table.header > tbody > tr > td {
    height: inherit !important;
 }
 
-..windowFrameObject.consoleOnlyWindowFrame {
+.windowFrameObject.consoleOnlyWindowFrame {
    border: solid 1px #d6dadc;
    border-radius: 3px 3px 0px 0px;
    left: 0px !important;
@@ -1186,7 +1186,7 @@ body.avoid-move-cursor .gwt-SplitLayoutPanel-VDragger {
    padding-top: 4px;
 }
 
-..rstudio-themes-dark .moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
+.rstudio-themes-dark .moduleTabPanel .gwt-TabLayoutPanelTab .gwt-Label {
    font-weight: 400;
 }
 
@@ -1433,7 +1433,7 @@ body.windows .toolbar {
    border-color: THEME_LIGHT_CONTROL_BORDER;
 }
 
-.rs.rstudio-themes-dark .toolbarButtonLatchable {
+.rstudio-themes-dark .toolbarButtonLatchable {
    border-color: THEME_DARK_CONTROL_BORDER;
 }
 
