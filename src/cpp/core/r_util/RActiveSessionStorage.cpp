@@ -85,7 +85,7 @@ namespace
         pValues->empty();
         for (const std::string &name : names)
         {
-            FilePath readPath = getPropertyFile(id, name);
+            FilePath readPath = getPropertyFile(name);
             std::string value = "";
 
             if (readPath.exists())
@@ -143,7 +143,7 @@ namespace
         for (const std::pair<std::string, std::string> &prop : properties)
         {
 
-            FilePath writePath = getPropertyFile(id, prop.first);
+            FilePath writePath = getPropertyFile(prop.first);
             Error error = core::writeStringToFile(writePath, prop.second);
             if (error)
                 failedFiles.push_back(writePath);
@@ -163,7 +163,7 @@ namespace
         return propertiesDir;
     }
 
-    FilePath FileActiveSessionStorage::getPropertyFile(const std::string& id, const std::string& name) const
+    FilePath FileActiveSessionStorage::getPropertyFile(const std::string& name) const
     {
         FilePath propertiesDir = getPropertyDir();
         const std::string& fileName = getPropertyFileName(name);

@@ -53,7 +53,7 @@ namespace r_util {
       const std::string propertiesDirName_ = "properites";
 
       FilePath getPropertyDir() const;
-      FilePath getPropertyFile(const std::string& id, const std::string& name) const;
+      FilePath getPropertyFile(const std::string& name) const;
       
       static const std::map<std::string, std::string> fileNames;
       
