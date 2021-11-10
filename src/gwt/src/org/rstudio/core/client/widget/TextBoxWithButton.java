@@ -304,7 +304,6 @@ public class TextBoxWithButton extends Composite
    private String useDefaultValue_;
    private String uniqueId_;
    private boolean useNativePlaceholder_;
-   
-   private final String USE_DEFAULT_PREFIX = constants_.useDefaultPrefix();
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
+   private static final String USE_DEFAULT_PREFIX = constants_.useDefaultPrefix();
 }
