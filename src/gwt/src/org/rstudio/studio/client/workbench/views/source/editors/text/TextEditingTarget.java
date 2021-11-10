@@ -101,6 +101,7 @@ import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
+import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
@@ -7043,7 +7044,7 @@ public class TextEditingTarget implements
    {
       if (session_.getSessionInfo().getQuartoConfig().enabled &&
           (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) && 
-          !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDoc())
+          !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDefaultHtmlDoc())
       {  
          String format = quartoFormat();
          if (format == null)
@@ -7084,10 +7085,28 @@ public class TextEditingTarget implements
       return format.startsWith(QUARTO_REVEALJS_FORMAT);
    }
    
-   private boolean isQuartoWebsiteDoc()
+ 
+   
+   private boolean isQuartoWebsiteDefaultHtmlDoc()
    {
       QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
-      return QuartoHelper.isQuartoWebsiteDoc(docUpdateSentinel_.getPath(), config);
+      boolean isWebsiteDoc = QuartoHelper.isQuartoWebsiteDoc(docUpdateSentinel_.getPath(), config);
+      if (isWebsiteDoc)
+      {
+         // if this in a website project and has either no format or a format that is part
+         // of the project foramts then use standard quarto website preview behavior 
+         // (call rmarkdown render and dispatch to quarto). if this returns false then 
+         // quarto_preview will be used (e.g. for pdfs, presentations, etc.)
+         String docFormat = quartoFormat();
+         return (docFormat == null || Arrays.asList(config.project_formats).contains(docFormat)) &&
+                config.project_type.equals(QuartoConstants.PROJECT_WEBSITE);
+                
+      }
+      else
+      {
+         return false;
+      }
+      
    }
    
 
