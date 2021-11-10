@@ -43,10 +43,10 @@ namespace
     }
 } // anonymous namespace
 
-    FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& activeSessionsDir) :
-        activeSessionsDir_ (activeSessionsDir)
+    FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& scratchPath) :
+        scratchPath_ (scratchPath)
     {
-        Error error = activeSessionsDir_.ensureDirectory();
+        Error error = scratchPath_.ensureDirectory();
         if(error)
             LOG_ERROR(error);
     }
@@ -85,7 +85,7 @@ namespace
         pValues->empty();
         for (const std::string &name : names)
         {
-            FilePath readPath = getPropertyFile(id, name);
+            FilePath readPath = getPropertyFile(name);
             std::string value = "";
 
             if (readPath.exists())
@@ -107,7 +107,7 @@ namespace
 
     Error FileActiveSessionStorage::readProperties(const std::string& id, std::map<std::string, std::string>* pValues)
     {
-        FilePath propertyDir = getPropertyDir(id);
+        FilePath propertyDir = getPropertyDir();
         std::vector<FilePath> files{};
         std::vector<FilePath> failedFiles{};
         pValues->empty();
@@ -143,7 +143,7 @@ namespace
         for (const std::pair<std::string, std::string> &prop : properties)
         {
 
-            FilePath writePath = getPropertyFile(id, prop.first);
+            FilePath writePath = getPropertyFile(prop.first);
             Error error = core::writeStringToFile(writePath, prop.second);
             if (error)
                 failedFiles.push_back(writePath);
@@ -156,29 +156,23 @@ namespace
                 failedFiles, ERROR_LOCATION);
     }
 
-    FilePath FileActiveSessionStorage::getPropertyDir(const std::string& id) const
+    FilePath FileActiveSessionStorage::getPropertyDir() const
     {
-        FilePath propertiesDir = activeSessionsDir_.completeChildPath(fileSessionDirPrefix_ + id + "/" + propertiesDirName_);
+        FilePath propertiesDir = scratchPath_.completeChildPath(propertiesDirName_);
         propertiesDir.ensureDirectory();
         return propertiesDir;
     }
 
-    FilePath FileActiveSessionStorage::getPropertyFile(const std::string& id, const std::string& name) const
+    FilePath FileActiveSessionStorage::getPropertyFile(const std::string& name) const
     {
-        FilePath propertiesDir = getPropertyDir(id);
+        FilePath propertiesDir = getPropertyDir();
         const std::string& fileName = getPropertyFileName(name);
         return propertiesDir.completeChildPath(fileName);
     }
 
-    std::shared_ptr<IActiveSessionStorage> ActiveSessionStorageFactory::getActiveSessionStorage()
+    std::shared_ptr<IActiveSessionStorage> ActiveSessionStorageFactory::getFileActiveSessionStorage(const FilePath& scratchPath)
     {
-        return getFileActiveSessionStorage();
-    }
-
-    std::shared_ptr<IActiveSessionStorage> ActiveSessionStorageFactory::getFileActiveSessionStorage()
-    {
-        FilePath dataDir = ActiveSessions::storagePath(core::system::xdg::userDataDir());
-        return std::make_shared<FileActiveSessionStorage>(FileActiveSessionStorage(dataDir));
+        return std::make_shared<FileActiveSessionStorage>(FileActiveSessionStorage(scratchPath));
     }
 } // namespace r_util
 } // namepsace core

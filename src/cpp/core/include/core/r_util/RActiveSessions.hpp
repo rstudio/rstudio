@@ -39,17 +39,6 @@ class ActiveSession : boost::noncopyable
 private:
 
    friend class ActiveSessions;
-   explicit ActiveSession() 
-   {
-      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
-   }
-
-   ActiveSession(
-      const std::string& id) :
-         id_(id) 
-   {
-      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
-   }
 
    ActiveSession(
       const std::string& id,
@@ -57,7 +46,6 @@ private:
          id_(id),
          scratchPath_(scratchPath)
    {
-      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
       core::Error error = scratchPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
@@ -66,6 +54,8 @@ private:
       error = propertiesPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
+
+      storage_ = ActiveSessionStorageFactory::getFileActiveSessionStorage(scratchPath_);
    }
 
    const std::string kExecuting = "executing";
@@ -395,7 +385,6 @@ public:
    explicit ActiveSessions(const FilePath& rootStoragePath)
    {
       storagePath_ = storagePath(rootStoragePath);
-      storage_ = ActiveSessionStorageFactory::getActiveSessionStorage();
       Error error = storagePath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
@@ -434,7 +423,6 @@ public:
 
 private:
    core::FilePath storagePath_;
-   std::shared_ptr<IActiveSessionStorage> storage_;
 };
 
 // active session as tracked by rserver processes
