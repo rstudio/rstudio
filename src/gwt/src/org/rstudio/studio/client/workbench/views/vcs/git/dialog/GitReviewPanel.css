@@ -42,7 +42,7 @@
 
 .toolbarWrapper {
    background: #f4f8f9;
-   border-bottom: solid 1px #000;
+   border-bottom: solid 1px;
    height: 25px;
 }
 
@@ -70,9 +70,9 @@
    height: 2px !important;
 }
 
-.rstudio-themes-default .toolbarWrapper,
-.rstudio-themes-default .splitPanelCommit .gwt-SplitLayoutPanel-HDragger,
-.rstudio-themes-default .splitPanel .gwt-SplitLayoutPanel-VDragger {
+.toolbarWrapper,
+.splitPanelCommit .gwt-SplitLayoutPanel-HDragger,
+.splitPanel .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_DEFAULT_BORDER;
 }
 
