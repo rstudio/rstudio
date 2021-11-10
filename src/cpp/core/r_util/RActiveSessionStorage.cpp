@@ -107,7 +107,7 @@ namespace
 
     Error FileActiveSessionStorage::readProperties(const std::string& id, std::map<std::string, std::string>* pValues)
     {
-        FilePath propertyDir = getPropertyDir(id);
+        FilePath propertyDir = getPropertyDir();
         std::vector<FilePath> files{};
         std::vector<FilePath> failedFiles{};
         pValues->empty();
@@ -156,7 +156,7 @@ namespace
                 failedFiles, ERROR_LOCATION);
     }
 
-    FilePath FileActiveSessionStorage::getPropertyDir(const std::string& id) const
+    FilePath FileActiveSessionStorage::getPropertyDir() const
     {
         FilePath propertiesDir = scratchPath_.completeChildPath(propertiesDirName_);
         propertiesDir.ensureDirectory();
@@ -165,7 +165,7 @@ namespace
 
     FilePath FileActiveSessionStorage::getPropertyFile(const std::string& id, const std::string& name) const
     {
-        FilePath propertiesDir = getPropertyDir(id);
+        FilePath propertiesDir = getPropertyDir();
         const std::string& fileName = getPropertyFileName(name);
         return propertiesDir.completeChildPath(fileName);
     }

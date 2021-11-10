@@ -52,7 +52,7 @@ namespace r_util {
       FilePath scratchPath_;
       const std::string propertiesDirName_ = "properites";
 
-      FilePath getPropertyDir(const std::string& id) const;
+      FilePath getPropertyDir() const;
       FilePath getPropertyFile(const std::string& id, const std::string& name) const;
       
       static const std::map<std::string, std::string> fileNames;
