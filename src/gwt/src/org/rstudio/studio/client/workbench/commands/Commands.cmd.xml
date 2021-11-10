@@ -3,6 +3,12 @@
 This file is intended to contain definitions for all commands in RStudio, as
 well as menu structures (for main menu and popup menus).
 
+Changes to this file require that you refresh the i18n interfaces and
+possibly retranslate/refresh any affected translated properties files. Do 
+this by running "ant generate-i18n" and commit all modified files.
+
+See `/src/gwt/tools/i18n-helpers/README.md`.
+
 <menu>
    Contains <menu>, <cmd>, <separator>
    @id (required): The method name for this menu on the command bundle interface
@@ -1121,7 +1127,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="serveQuartoSite"
         menuLabel="_Serve Site"
         desc="Run development server for Quarto site"
-        rebindable="false"/>      
+        rebindable="false"/>
 
    <cmd id="newRShinyApp"
         menuLabel="Shiny _Web App..."
@@ -2868,7 +2874,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="historyDismissContext"
         label="Dismiss History Context"
-        buttonLabel="&#x00AB; Back"
+        buttonLabel="Back"
         context="history"
         rebindable="false"/>
 

@@ -151,10 +151,10 @@ std::tuple<FilePath,Version> userInstalledQuarto()
 void detectQuartoInstallation()
 {
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.2.247");
+   const Version kQuartoRequiredVersion("0.2.265");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.2.247");
+   const Version kQuartoRecommendedVersion("0.2.265");
 
    // reset
    s_userInstalledPath = FilePath();
@@ -797,14 +797,21 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
         config.project_type == kQuartoProjectBook) &&
        sourceFile.isWithin(module_context::resolveAliasedPath(config.project_dir)))
    {
-      // preview the doc (but schedule it for later so we can get out of the onCompleted
-      // handler this was called from -- launching a new process in the supervisor when
-      // an old one is in the middle of executing onCompleted doesn't work
-      module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
-                                          boost::bind(modules::quarto::serve::previewDoc,
-                                                      renderOutput, outputFile),
-                                          false);
-      return true;
+      if (outputFile.hasExtensionLowerCase(".html") || outputFile.hasExtensionLowerCase(".pdf"))
+      {
+         // preview the doc (but schedule it for later so we can get out of the onCompleted
+         // handler this was called from -- launching a new process in the supervisor when
+         // an old one is in the middle of executing onCompleted doesn't work
+         module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
+                                             boost::bind(modules::quarto::serve::previewDocPath,
+                                                         renderOutput, outputFile),
+                                             false);
+         return true;
+      }
+      else
+      {
+         return false;
+      }
    }
 
    // if this file is within another quarto site or book project then no preview at all

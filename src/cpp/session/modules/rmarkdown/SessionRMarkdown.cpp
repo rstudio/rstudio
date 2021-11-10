@@ -586,13 +586,24 @@ private:
       // fallback for custom render function that isn't actually a function
       if (renderFunc != kStandardRenderFunc && renderFunc != kShinyRenderFunc)
       {
+         std::string extraArgs;
+         if (isQuarto_)
+         {
+            std::string to = format;
+            if (to.empty())
+            {
+               to = session::quarto::quartoDefaultFormat(targetFile_);
+            }
+            if (!to.empty())
+               extraArgs = "--to " + to;
+         }
          r::sexp::Protect rProtect;
          SEXP renderFuncSEXP;
          error = r::exec::evaluateString(renderFunc, &renderFuncSEXP, &rProtect);
          if (error || !r::sexp::isFunction((renderFuncSEXP)))
          {
-            boost::format fmt("(function(input, ...) { invisible(system(paste0('%1% \"', input, '\"'))) })");
-            renderFunc = boost::str(fmt % renderFunc);
+            boost::format fmt("(function(input, ...) { invisible(system(paste0('%1% \"', input, '\" ', '%2%'))) })");
+            renderFunc = boost::str(fmt % renderFunc % extraArgs);
          }
       }
 

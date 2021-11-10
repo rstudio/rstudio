@@ -73,6 +73,7 @@ export const CitationSourcePanelListItemDetailed = (props: ListChildComponentPro
               <img
                 className="pm-insert-citation-source-panel-item-detailed-adorn pm-block-border-color pm-background-color"
                 src={citationEntry.imageAdornment}
+                draggable="false"
               />
             ) : (
               undefined
@@ -80,6 +81,7 @@ export const CitationSourcePanelListItemDetailed = (props: ListChildComponentPro
             <img
               className="pm-insert-citation-source-panel-item-detailed-icon pm-block-border-color"
               src={citationEntry.image}
+              draggable="false"
             />
           </div>
           <div className="pm-insert-citation-source-panel-item-detailed-summary">

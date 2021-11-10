@@ -1403,7 +1403,8 @@ public class TextEditingTargetWidget
    @Override
    public void setQuartoFormatOptions(TextFileType fileType, 
                                       boolean showRmdFormatMenu,
-                                      List<String> formats)
+                                      List<String> formats,
+                                      boolean isBook)
    {
       showRmdFormatMenu = showRmdFormatMenu && formats.size() > 1;
       setRmdFormatButtonVisible(showRmdFormatMenu);
@@ -1414,12 +1415,26 @@ public class TextEditingTargetWidget
       {
          String format = formats.get(i);
          ScheduledCommand cmd = () -> handlerManager_.fireEvent(
-               new RmdOutputFormatChangedEvent(format, true));
+               new RmdOutputFormatChangedEvent(format, true, isBook));
          ImageResource img = fileTypeRegistry_.getIconForFilename("output." + format)
                .getImageResource();
-         MenuItem item = ImageMenuItem.create(img, "Render " + format, cmd, 2);
+         MenuItem item = ImageMenuItem.create(img, "Render " + formatName(format), cmd, 2);
          rmdFormatButton_.addMenuItem(item, format);
       }
+   }
+   
+   private String formatName(String format)
+   {
+      if (format == "html")
+         return "HTML";
+      else if (format == "pdf")
+         return "PDF";
+      else if (format == "docx")
+         return "MS Word";
+      else if (format == "epub")
+         return "EPUB";
+      else
+         return format;
    }
 
    private void addClearKnitrCacheMenu(ToolbarPopupMenuButton menuButton)

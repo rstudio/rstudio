@@ -149,6 +149,10 @@ protected:
       if (formatIsRevealJs())
          args.push_back("--presentation");
 
+      // format (or default if none specified)
+      args.push_back("--to");
+      args.push_back(!format_.empty() ? format_ : "default");
+
       // no watching inputs and no browser
       args.push_back("--no-watch-inputs");
       args.push_back("--no-browse");
@@ -406,16 +410,15 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
       return error;
    FilePath previewFilePath = module_context::resolveAliasedPath(previewFile);
 
-   // first check to see if this file is in a website or book project
-   // (if so then return false as preview will fail)
+   // first check to see if this file is in a book project (if so then fail and fall
+   // back on normal render)
    bool canPreview = true;
    FilePath quartoConfig = session::quarto::quartoProjectConfigFile(previewFilePath);
    if (!quartoConfig.isEmpty())
    {
       std::string type;
       readQuartoProjectConfig(quartoConfig, &type);
-      canPreview = type != session::quarto::kQuartoProjectWebsite &&
-                   type != session::quarto::kQuartoProjectBook;
+      canPreview = type != session::quarto::kQuartoProjectBook;
    }
 
    // set result

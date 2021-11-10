@@ -20,7 +20,7 @@
    <property name="test.dir" value="./test"/>      <!-- Java sources for tests -->
    <property name="www.dir" value="./www"/>        <!-- output folder for www artifacts (HTML, etc.) -->
    <property name="build.dir" value="./bin"/>      <!-- output folder for compiled classes -->
-   <property name="lib.dir" value="./lib"/>        <!-- libraries (GWT, GIN, etc. -->
+   <property name="lib.dir" value="./lib"/>        <!-- libraries (GWT, GIN, etc.) -->
    <property name="tools.dir" value="./tools"/>    <!-- other tools -->
    <property name="extras.dir" value="./extras"/>  <!-- extras: symbol maps, etc. -->
    <property name="gwt.xmx" value="-Xmx1536M"/>    <!-- set maximum Java heap size -->
@@ -183,6 +183,7 @@
    </target>
 
    <target name="draft" description="Compile using GWT's draft mode">
+      <antcall target="generate-i18n"/>
       <antcall target="gwtc">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDraft"/>
          <param name="gwt.extra.args" value="${gwt.extra.args} -draftCompile -Xnamespace NONE" />
@@ -190,6 +191,7 @@
    </target>
 
    <target name="desktop" description="Run desktop development mode">
+      <antcall target="generate-i18n"/>
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktopSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
@@ -197,6 +199,7 @@
    </target>
 
    <target name="devmode" description="Run server development mode">
+      <antcall target="generate-i18n"/>
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
          <param name="panmirror.target" value="ide-dev"/>
@@ -236,7 +239,98 @@
       </java>
    </target>
 
-   <target name="build" depends="gwtc" description="Build this project" />
+   <!-- configure props for i18n tasks -->
+   <property name="commands.dir" value="${src.dir}/org/rstudio/studio/client/workbench/commands"/> <!-- location of Commands.cmd.xml directory -->
+   <property name="python-executable-full-path" location="${tools.dir}/i18n-helpers/commands.cmd.xml/commands_xml_to_i18n.py"/> <!-- location of i18n script -->
+   <property name="python-check-version-full-path" location="${tools.dir}/i18n-helpers/python-check-version.py"/> <!-- location of script for python version check -->
+   <property name="commands-xml-full-path" location="${commands.dir}/Commands.cmd.xml"/> <!-- location of Commands & Menus definition file -->
+   <property name="command-constants-full-path" location="${commands.dir}/CmdConstants.java"/> <!-- location of CmdConstants.java -->
+   <property name="command-prop-full-path" location="${commands.dir}/CmdConstants_en.properties"/> <!-- location of CmdConstants en properties file -->
+   <property name="menu-constants-full-path" location="${commands.dir}/MenuConstants.java"/> <!-- location of MenuConstants.java -->
+   <property name="menu-prop-full-path" location="${commands.dir}/MenuConstants_en.properties"/> <!-- location of MenuConstants en properties file -->
+
+   <!-- verify if Commands.cmd.xml has changed -->
+   <target name="i18n-checksum">
+      <checksum file="${commands-xml-full-path}" verifyproperty="isMD5ok"/>
+      <echo message="Commands.cmd.xml i18n checksum matches: ${isMD5ok}"/>
+   </target>
+
+   <!-- determine what type of i18n generation is required (if any) -->
+   <target name="i18n-windows-check" depends="i18n-checksum">
+      <condition property="generate-i18n-windows">
+         <and>
+            <os family="windows"/>
+            <isfalse value="${isMD5ok}"/>
+         </and>
+      </condition>
+   </target>
+   <target name="i18n-unix-check" depends="i18n-checksum">
+      <condition property="generate-i18n-unix">
+         <and>
+            <os family="unix"/>
+            <isfalse value="${isMD5ok}"/>
+         </and>
+      </condition>
+   </target>
+
+   <!-- execute i18n tasks -->
+   <target name="i18n-windows" depends="i18n-windows-check" if="generate-i18n-windows">
+      <!-- verify Python version -->
+      <exec executable="cmd" failifexecutionfails="true" failonerror="true">
+         <arg value="/c"/>
+         <arg line="python ${python-check-version-full-path}"/>
+      </exec>
+       <!-- generate Commands interface -->
+      <exec executable="cmd" failifexecutionfails="true" failonerror="true">
+         <arg value="/c"/>
+         <arg line="python ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; cmd constant &quot;${command-constants-full-path}&quot; --package &quot;package org.rstudio.studio.client.workbench.commands;&quot;"/>
+      </exec>
+      <!-- generate Commands english property file -->
+      <exec executable="cmd" failifexecutionfails="true" failonerror="true">
+         <arg value="/c"/>
+         <arg line="python ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; cmd properties &quot;${command-prop-full-path}&quot;"/>
+      </exec>
+      <!-- generate Menu interface -->
+      <exec executable="cmd" failifexecutionfails="true" failonerror="true">
+         <arg value="/c"/>
+         <arg line="python ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; menu constant &quot;${menu-constants-full-path}&quot; --package &quot;package org.rstudio.studio.client.workbench.commands;&quot;"/>
+      </exec>
+      <!-- generate Menu english prop file -->
+      <exec executable="cmd" failifexecutionfails="true" failonerror="true">
+         <arg value="/c"/>
+         <arg line="python ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; menu properties &quot;${menu-prop-full-path}&quot;"/>
+      </exec>
+      <!-- regenerate checksum -->
+      <checksum file="${commands-xml-full-path}" forceOverwrite="yes"/>
+   </target>
+   <target name="i18n-unix" depends="i18n-unix-check" if="generate-i18n-unix">
+      <!-- verify Python version -->
+      <exec executable="/bin/sh" failifexecutionfails="true" failonerror="true">
+         <arg line="-c 'python ${python-check-version-full-path}'"/>
+      </exec>
+       <!-- generate Commands interface -->
+      <exec executable="/bin/sh" failifexecutionfails="true" failonerror="true">
+         <arg line="-c 'python ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; cmd constant &quot;${command-constants-full-path}&quot; --package &quot;package org.rstudio.studio.client.workbench.commands;&quot;'"/>
+      </exec>
+      <!-- generate Commands english property file -->
+      <exec executable="/bin/sh" failifexecutionfails="true" failonerror="true">
+         <arg line="-c 'python ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; cmd properties &quot;${command-prop-full-path}&quot;'"/>
+      </exec>
+      <!-- generate Menu interface -->
+      <exec executable="/bin/sh" failifexecutionfails="true" failonerror="true">
+         <arg line="-c 'python ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; menu constant &quot;${menu-constants-full-path}&quot; --package &quot;package org.rstudio.studio.client.workbench.commands;&quot;'"/>
+      </exec>
+      <!-- generate Menu english prop file -->
+      <exec executable="/bin/sh" failifexecutionfails="true" failonerror="true">
+         <arg line="-c 'python ${python-executable-full-path} &quot;${commands-xml-full-path}&quot; menu properties &quot;${menu-prop-full-path}&quot;'"/>
+      </exec>
+      <!-- regenerate checksum -->
+      <checksum file="${commands-xml-full-path}" forceOverwrite="yes"/>
+   </target>
+
+   <target name="generate-i18n" depends="i18n-unix, i18n-windows" description="Generates i18n for Command and Menu constants" />
+
+   <target name="build" depends="generate-i18n, gwtc" description="Build this project" />
 
    <target name="clean" description="Cleans this project">
       <delete dir="${build.dir}" failonerror="false" />

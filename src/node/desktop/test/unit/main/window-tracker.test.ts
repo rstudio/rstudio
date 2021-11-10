@@ -22,6 +22,7 @@ import { WindowTracker } from '../../../src/main/window-tracker';
 import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 import { GwtWindow } from '../../../src/main/gwt-window';
 import { clearCoreSingleton } from '../../../src/core/core-state';
+import { setTimeoutPromise } from '../../../src/core/wait-utils';
 
 class TestGwtWindow extends GwtWindow {
   onActivated(): void {
@@ -71,11 +72,12 @@ describe('window-tracker', () => {
     const result = tracker.getWindow('one');
     assert.deepEqual(result, twoWin);
   });
-  it('delete window removes it from map', () => {
+  it('delete window removes it from map', async function () {
     const tracker = new WindowTracker();
     const oneWin = new DesktopBrowserWindow(false, false, 'some name');
     tracker.addWindow('one', oneWin);
     oneWin.window.close();
+    await setTimeoutPromise(200); // TODO: yuck, find a better way to do this
     assert.equal(tracker.length(), 0);
   });
 });

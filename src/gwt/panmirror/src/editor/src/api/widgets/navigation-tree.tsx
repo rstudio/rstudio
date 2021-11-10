@@ -173,7 +173,7 @@ const NavigationTreeItem = (props: NavigationTreeItemProps) => {
       <div className={selectedClassName} style={indentLevel > 0 ? indentStyle : undefined}>
         {node.image ? (
           <div className="pm-navigation-tree-node-image-div">
-            <img src={node.image} alt={node.name} className="pm-navigation-tree-node-image" />
+            <img src={node.image} alt={node.name} className="pm-navigation-tree-node-image" draggable="false"/>
           </div>
         ) : null}
         <div className="pm-navigation-tree-node-label-div pm-text-color">{node.name}</div>
