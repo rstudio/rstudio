@@ -261,7 +261,6 @@ for (themeFile in themeFiles) {
             paste(
                ".ace_editor, ",
                ".ace_editor_theme .profvis-flamegraph, ",
-               ".ace_editor_theme, ", 
                ".ace_editor_theme {",
                sep = ""
             ),
