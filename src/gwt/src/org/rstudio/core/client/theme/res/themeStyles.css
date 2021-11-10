@@ -2157,7 +2157,7 @@ input[type="checkbox"]:checked:before {
    max-height: 16px;
 }
 
-.gwt-TabLayoutPanelTabs .rstheme_tabLayoutCenter div.docTabLabel {
+.gwt-TabLayoutPanelTabs .gwt-TabLayoutPanelTab .rstheme_tabLayoutCenter div.docTabLabel {
    padding-top: 4px;
 }
 
