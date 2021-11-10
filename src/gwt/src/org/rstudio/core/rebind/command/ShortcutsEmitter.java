@@ -14,13 +14,11 @@
  */
 package org.rstudio.core.rebind.command;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.ext.TreeLogger;
 import com.google.gwt.core.ext.TreeLogger.Type;
 import com.google.gwt.core.ext.UnableToCompleteException;
 import com.google.gwt.user.rebind.SourceWriter;
 
-import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -63,7 +61,7 @@ public class ShortcutsEmitter
          Element childEl = (Element)childNode;
          if (!childEl.getTagName().equals("shortcut"))
          {
-            logger_.log(Type.ERROR, constants_.unexpectedElementMessage() + elementToString(childEl));
+            logger_.log(Type.ERROR, "Unexpected element: " + elementToString(childEl));
             throw new UnableToCompleteException();
          }
 
@@ -79,7 +77,7 @@ public class ShortcutsEmitter
 
          if (shortcutValue.length() == 0)
          {
-            logger_.log(Type.ERROR, constants_.shortcutMissingLog() + elementToString(childEl));
+            logger_.log(Type.ERROR, "Required attribute shortcut was missing\n" + elementToString(childEl));
             throw new UnableToCompleteException();
          }
 
@@ -144,7 +142,7 @@ public class ShortcutsEmitter
             {
                logger_.log(
                      Type.ERROR,
-                     constants_.invalidModifierErrorLog() + m + constants_.expectedOneOfLog() +
+                "Invalid modifier '" + m + "'; expected one of " +
                      "'Ctrl', 'Alt', 'Shift', 'Meta'");
                
                throw new UnableToCompleteException();
@@ -214,7 +212,7 @@ public class ShortcutsEmitter
       {
          logger_.log(
                Type.ERROR,
-               constants_.invalidKeySequenceLog());
+          "Invalid key sequence: sequences must be of length 1 or 2");
          throw new UnableToCompleteException();
       }
       
@@ -314,7 +312,7 @@ public class ShortcutsEmitter
       if (val.equals("]"))
          return "221";
 
-      logger_.log(Type.WARN, constants_.returningNullLog() + val);
+      logger_.log(Type.WARN, "Returning null from toKeyCode for key " + val);
       return null;
    }
 
@@ -332,7 +330,7 @@ public class ShortcutsEmitter
       }
       catch (Exception e)
       {
-         logger_.log(Type.ERROR, constants_.errorStringifyLog(), e);
+         logger_.log(Type.ERROR, "Error attempting to stringify some XML", e);
          throw new UnableToCompleteException();
       }
    }
@@ -340,5 +338,4 @@ public class ShortcutsEmitter
    private final TreeLogger logger_;
    private final Element shortcutsEl_;
    private final String groupName_;
-   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }
