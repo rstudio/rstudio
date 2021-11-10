@@ -198,7 +198,10 @@ public class Presentation2 extends BasePresenter
    @Handler
    void onPresentation2Present()
    {
-      globalDisplay_.openWindow(activeSlideHref_);
+      // no longer offering "Present from Beginning" so we just 
+      // delegate to it from here
+      // globalDisplay_.openWindow(activeSlideHref_);
+      onPresentation2PresentFromBeginning();
    }
    
    @Handler
