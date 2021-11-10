@@ -17,12 +17,14 @@ package org.rstudio.studio.client.application;
 
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.studio.client.StudioClientConstants;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
@@ -200,7 +202,7 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
       showTerminationDialog(
             TERMINATION_CONSEQUENCE_MSG +
             "\n\n" +
-            "Are you sure you want to terminate R?");
+            constants_.terminateRMessage());
    }
 
    @Override
@@ -219,12 +221,12 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
    private void showInterruptUnresponsiveDialog()
    {
       showTerminationDialog(
-         "R is not responding to your request to interrupt processing so " +
-         "to stop the current operation you may need to terminate R entirely." +
+         constants_.terminationDialog() +
+         constants_.terminateCurrentOperationMessage() +
          "\n\n" +
          TERMINATION_CONSEQUENCE_MSG +
          "\n\n" +
-         "Do you want to terminate R now?");  
+         constants_.terminateRNowMessage());
    }
    
 
@@ -232,7 +234,7 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
    {  
       globalDisplay_.showYesNoMessage(
             MessageDialog.WARNING,
-            "Terminate R", 
+            constants_.terminateRCaption(),
             message,
             false, 
             new ProgressOperation() {
@@ -304,9 +306,9 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final ApplicationServerOperations server_;
    private final ErrorManager errorManager_;
-   
-   private final static String TERMINATION_CONSEQUENCE_MSG = 
-      "Terminating R will cause your R session to immediately abort. " +
-      "Active computations will be interrupted and unsaved source file " +
-      "changes and workspace objects will be discarded.";
+   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private final static String TERMINATION_CONSEQUENCE_MSG =
+      constants_.terminationConsequenceMessage() +
+      constants_.actionComputationsMessage() +
+      constants_.terminationDiscardedMessage();
 }

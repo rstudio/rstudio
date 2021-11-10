@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Timer;
@@ -27,6 +28,7 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.StudioClientConstants;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
@@ -94,7 +96,7 @@ public class ApplicationWindow extends Composite
       applicationPanel_.forceLayout();
       if (announce && showToolbar != currentVisibility)
          ariaLive_.announce(AriaLiveService.TOOLBAR_VISIBILITY,
-               showToolbar ? "Main toolbar visible" : "Main toolbar hidden",
+               showToolbar ? constants_.toolbarVisibleText() : constants_.toolbarHiddenText(),
                Timing.IMMEDIATE, Severity.STATUS);
    }
 
@@ -110,7 +112,7 @@ public class ApplicationWindow extends Composite
       if (!isToolbarShowing())
       {
          ariaLive_.announce(AriaLiveService.TOOLBAR_VISIBILITY,
-               "Toolbar hidden, unable to focus.",
+               constants_.focusToolbarText(),
                Timing.IMMEDIATE, Severity.STATUS);
          return;
       }
@@ -157,10 +159,10 @@ public class ApplicationWindow extends Composite
    {
       globalDisplay_.showMessage(
             GlobalDisplay.MSG_INFO,
-            "Application Updated",
-            "An updated version of RStudio is available. Your browser will " +
-            "now be refreshed with the new version. All current work and data " +
-            "will be preserved during the update.",
+              constants_.applicationUpdatedCaption(),
+            constants_.applicationUpdatedMessage() +
+            constants_.applicationRefreshMessage() +
+            constants_.applicationPreserved(),
             new Operation() {
                public void execute()
                {
@@ -191,7 +193,7 @@ public class ApplicationWindow extends Composite
       {
          warningBar_ = pWarningBar_.get();
          Roles.getContentinfoRole().set(warningBar_.getElement());
-         Roles.getContentinfoRole().setAriaLabelProperty(warningBar_.getElement(), "Warning bar");
+         Roles.getContentinfoRole().setAriaLabelProperty(warningBar_.getElement(), constants_.warningBarText());
          warningBar_.addCloseHandler(warningBarCloseEvent -> hideWarning());
          applicationPanel_.add(warningBar_);
          applicationPanel_.setWidgetBottomHeight(warningBar_,
@@ -272,10 +274,9 @@ public class ApplicationWindow extends Composite
    public void showSessionAbendWarning()
    {
       globalDisplay_.showErrorMessage(
-            "R Session Error",
-            "The previous R session was abnormally terminated due to " +
-            "an unexpected crash.\n\n" +
-            "You may have lost workspace data as a result of this crash.");
+            constants_.rSessionErrorCaption(), constants_.previousRSessionsMessage() +
+            constants_.unexpectedCrashText() +
+            constants_.lostWorkspaceDataMessage());
    }
 
    @Override
@@ -352,4 +353,5 @@ public class ApplicationWindow extends Composite
    private final Provider<UserPrefs> pPrefs_;
    private final AriaLiveService ariaLive_;
    private final Provider<WarningBar> pWarningBar_;
+   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
 }

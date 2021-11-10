@@ -14,11 +14,13 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry;
+import org.rstudio.studio.client.StudioClientConstants;
 
 public class RequestLogDetail extends Composite
 {
@@ -43,11 +45,11 @@ public class RequestLogDetail extends Composite
       panel.getElement().getStyle().setOverflow(Overflow.AUTO);
 
       HTML html = new HTML();
-      html.setText("Request ID: " + entry.getRequestId() + "\n\n"
-                   + "== REQUEST ======\n"
+      html.setText(constants_.requestIdText() + entry.getRequestId() + "\n\n"
+                   + constants_.requestText()
                    + tryPrettyJson(req)
                    + "\n\n"
-                   + "== RESPONSE ======\n"
+                   + constants_.responseText()
                    + tryPrettyJson(resp)
                    + "\n");
       html.getElement().getStyle().setProperty("whiteSpace", "pre-wrap");
@@ -57,4 +59,5 @@ public class RequestLogDetail extends Composite
 
       initWidget(panel);
    }
+   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
 }

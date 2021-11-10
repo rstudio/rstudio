@@ -15,13 +15,15 @@
 
 package org.rstudio.studio.client.application.model;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.StudioClientConstants;
 import org.rstudio.studio.client.application.Desktop;
 
 public class ProductEditionInfo
 {
    public String editionName()
    {
-      return "RStudio" + (Desktop.isDesktop() ? "" : " Server");
+      return "RStudio" + (Desktop.isDesktop() ? "" : " " + constants_.rStudioEditionName());
    }
    
    public boolean proLicense()
@@ -36,4 +38,5 @@ public class ProductEditionInfo
    public void showSessionServerOptionsDialog()
    {
    }
+   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
 }

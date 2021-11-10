@@ -32,6 +32,7 @@ import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JsObjectInjector;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.StudioClientConstants;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LauncherServerEvent;
 import org.rstudio.studio.client.application.events.MouseNavigateEvent;
@@ -201,8 +202,8 @@ public class DesktopHooks
    void promptToQuitR()
    {
       globalDisplay_.showYesNoMessage(MessageDialog.QUESTION,
-            "Close Remote Session",
-            "Do you want to close the remote session?",
+            constants_.closeRemoteSessionCaption(),
+            constants_.closeRemoteSessionMessage(),
             false,
             (Operation) () -> commands_.quitSession().execute(),
             (Operation) () -> Desktop.getFrame().onSessionQuit(),
@@ -231,10 +232,10 @@ public class DesktopHooks
    
    void licenseLost(String licenseMessage)
    {
-      String message = "Unable to obtain a license. Please restart RStudio to try again.";
+      String message = constants_.licenseLostMessage();
       if (!StringUtil.isNullOrEmpty(licenseMessage))
       {
-         message = message + "\n\nDetails: ";
+         message = message + "\n\n" + constants_.detailsMessage();
          message = message + licenseMessage;
       }
       globalDisplay_.showMessage(MessageDialog.WARNING, editionInfo_.editionName(), message,
@@ -285,4 +286,5 @@ public class DesktopHooks
    private final ProductEditionInfo editionInfo_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
+   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
 }
