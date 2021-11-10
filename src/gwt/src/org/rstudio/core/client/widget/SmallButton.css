@@ -9,11 +9,6 @@
    outline: none;
 }
 
-@sprite .buttonCenter {
-   gwt-image: 'smallButtonTile';
-
-}
-
 .buttonContent {
    font-size: 9px;
    color: black;
@@ -41,7 +36,6 @@ button.smallButton:active > table:first-child {
 }
 
 .buttonCenter {
-   background: none;
    font-size: 10px;
 }
 
