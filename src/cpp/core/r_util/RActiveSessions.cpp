@@ -156,7 +156,8 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
 
 boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(const std::string& id) const
 {
-   return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
+   FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
+   return boost::shared_ptr<ActiveSession>(new ActiveSession(id, scratchPath));
 }
 
 std::vector<boost::shared_ptr<GlobalActiveSession> >

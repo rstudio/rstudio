@@ -43,10 +43,10 @@ namespace
     }
 } // anonymous namespace
 
-    FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& activeSessionsDir) :
-        activeSessionsDir_ (activeSessionsDir)
+    FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& scratchPath) :
+        scratchPath_ (scratchPath)
     {
-        Error error = activeSessionsDir_.ensureDirectory();
+        Error error = scratchPath_.ensureDirectory();
         if(error)
             LOG_ERROR(error);
     }
@@ -158,7 +158,7 @@ namespace
 
     FilePath FileActiveSessionStorage::getPropertyDir(const std::string& id) const
     {
-        FilePath propertiesDir = activeSessionsDir_.completeChildPath(fileSessionDirPrefix_ + id + "/" + propertiesDirName_);
+        FilePath propertiesDir = scratchPath_.completeChildPath(propertiesDirName_);
         propertiesDir.ensureDirectory();
         return propertiesDir;
     }
@@ -170,15 +170,9 @@ namespace
         return propertiesDir.completeChildPath(fileName);
     }
 
-    std::shared_ptr<IActiveSessionStorage> ActiveSessionStorageFactory::getActiveSessionStorage()
+    std::shared_ptr<IActiveSessionStorage> ActiveSessionStorageFactory::getFileActiveSessionStorage(const FilePath& scratchPath)
     {
-        return getFileActiveSessionStorage();
-    }
-
-    std::shared_ptr<IActiveSessionStorage> ActiveSessionStorageFactory::getFileActiveSessionStorage()
-    {
-        FilePath dataDir = ActiveSessions::storagePath(core::system::xdg::userDataDir());
-        return std::make_shared<FileActiveSessionStorage>(FileActiveSessionStorage(dataDir));
+        return std::make_shared<FileActiveSessionStorage>(FileActiveSessionStorage(scratchPath));
     }
 } // namespace r_util
 } // namepsace core
