@@ -27,22 +27,10 @@ public interface ThemeResources extends ClientBundle
 
    ThemeStyles themeStyles();
 
-   @Source("dialogTopLeft.png")
-   DataResource dialogTopLeft();
    @Source("dialogTop.png")
    DataResource dialogTop();
-   @Source("dialogTopRight.png")
-   DataResource dialogTopRight();
-   @Source("dialogLeft.png")
-   DataResource dialogLeft();
-   @Source("dialogRight.png")
-   DataResource dialogRight();
-   @Source("dialogBottomLeft.png")
-   DataResource dialogBottomLeft();
    @Source("dialogBottom.png")
    DataResource dialogBottom();
-   @Source("dialogBottomRight.png")
-   DataResource dialogBottomRight();
 
    @Source("verticalHandle.png")
    DataResource verticalHandle();
