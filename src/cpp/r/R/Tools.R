@@ -389,14 +389,14 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 })
 
 # record an object to a file
-.rs.addFunction( "saveGraphics", function(filename)
+.rs.addFunction("saveGraphics", function(filename)
 {
-   plot = grDevices::recordPlot()
-   save(plot, file=filename)
+   plot <- grDevices::recordPlot()
+   save(plot, file = filename)
 })
 
 # restore an object from a file
-.rs.addFunction( "restoreGraphics", function(filename)
+.rs.addFunction("restoreGraphics", function(filename)
 {
    # load the 'plot' object
    envir <- new.env(parent = emptyenv())
@@ -454,7 +454,18 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    if (is.null(plotPid) || (plotPid != Sys.getpid()))
       attr(plot, "pid") <- Sys.getpid()
    
-   # we suppressWarnings so that R doesnt print a warning if we restore
+   # if this plot depends on the grid package, and we don't have a graphics
+   # device open, then we'll have to create a new one
+   # https://github.com/rstudio/rstudio/issues/2919
+   for (item in plot) {
+      name <- attr(item, "pkgName", exact = TRUE)
+      if (is.character(name) && name[[1L]] %in% c("grid", "ggplot2")) {
+         grid::grid.newpage()
+         break
+      }
+   }
+   
+   # we suppressWarnings so that R doesn't print a warning if we restore
    # a plot saved from a previous version of R (which will occur if we 
    # do a resume after upgrading the version of R on the server)
    suppressWarnings(grDevices::replayPlot(plot))
