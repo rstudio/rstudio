@@ -93,4 +93,8 @@ public class ClassIds
    public final static String ENV_LIST_DATA_HDR = "env_list_data_hdr";
    public final static String ENV_LIST_FUNCTIONS_HDR = "env_list_functions_hdr";
    public final static String ENV_LIST_VALUES_HDR = "env_list_values_hdr";
+
+   // VersionsPopupMenu
+   public final static String VERSIONS_POPUP_VALUE = "versions_popup_value";
+   public final static String VERSIONS_POPUP_CHECKED = "versions_popup_checked";
 }
