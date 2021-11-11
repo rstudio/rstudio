@@ -35,6 +35,7 @@
 
 ### Bugfixes
 
+* Fixed an issue that could cause calls to `grid` functions to fail after restart (#2919)
 * Fixed errors when uploading files/directory names with invalid characters (Pro #698)
 * Added error when rsession may be running a different version of R than expected (Pro #2477)
 * Fixed "No such file or directory" errors when auto-saving R Notebook chunks while running them (#9284)
