@@ -26,7 +26,6 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.StudioClientConstants;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
 import org.rstudio.studio.client.application.events.QuitInitiatedEvent;
@@ -753,5 +752,5 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;
    private final Provider<SessionOpener> pSessionOpener_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

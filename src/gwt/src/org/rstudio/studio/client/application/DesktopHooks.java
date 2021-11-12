@@ -32,7 +32,6 @@ import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JsObjectInjector;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.StudioClientConstants;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LauncherServerEvent;
 import org.rstudio.studio.client.application.events.MouseNavigateEvent;
@@ -286,5 +285,5 @@ public class DesktopHooks
    private final ProductEditionInfo editionInfo_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

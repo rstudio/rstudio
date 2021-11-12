@@ -16,7 +16,7 @@
 package org.rstudio.studio.client.application.model;
 
 import com.google.gwt.core.client.GWT;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 
 public class ProductEditionInfo
@@ -38,5 +38,5 @@ public class ProductEditionInfo
    public void showSessionServerOptionsDialog()
    {
    }
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

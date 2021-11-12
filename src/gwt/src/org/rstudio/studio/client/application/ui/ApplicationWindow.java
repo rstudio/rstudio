@@ -28,7 +28,7 @@ import com.google.inject.Singleton;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.core.client.widget.Operation;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ApplicationView;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
@@ -353,5 +353,5 @@ public class ApplicationWindow extends Composite
    private final Provider<UserPrefs> pPrefs_;
    private final AriaLiveService ariaLive_;
    private final Provider<WarningBar> pWarningBar_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

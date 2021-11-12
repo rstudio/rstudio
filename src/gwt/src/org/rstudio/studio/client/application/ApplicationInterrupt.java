@@ -24,7 +24,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperation;
-import org.rstudio.studio.client.StudioClientConstants;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.application.events.InterruptStatusEvent;
@@ -306,7 +305,7 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final ApplicationServerOperations server_;
    private final ErrorManager errorManager_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
    private final static String TERMINATION_CONSEQUENCE_MSG =
       constants_.terminationConsequenceMessage() +
       constants_.actionComputationsMessage() +

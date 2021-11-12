@@ -23,7 +23,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
@@ -296,5 +296,5 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private ProjectsServerOperations server_;
    private boolean allowSharedProjects_ = false;
    private ProductEditionInfo editionInfo_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

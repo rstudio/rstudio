@@ -21,7 +21,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -153,5 +153,5 @@ public class AboutDialogContents extends Composite
    @UiField InlineLabel supportNotice;
    @UiField Anchor gplLink;
    @UiField Label gplLinkLabel;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

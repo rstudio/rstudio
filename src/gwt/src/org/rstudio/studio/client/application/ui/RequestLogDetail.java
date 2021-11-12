@@ -20,7 +20,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 
 public class RequestLogDetail extends Composite
 {
@@ -59,5 +59,5 @@ public class RequestLogDetail extends Composite
 
       initWidget(panel);
    }
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

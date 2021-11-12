@@ -43,7 +43,7 @@ import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -357,5 +357,5 @@ public class RequestLogVisualization extends Composite
    private static final int PERIOD_MILLIS = 2000;
    private SimplePanel detail_;
    private HTML instructions_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

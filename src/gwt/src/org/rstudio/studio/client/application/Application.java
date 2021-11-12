@@ -52,7 +52,6 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.StudioClientConstants;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
@@ -1327,5 +1326,5 @@ public class Application implements ApplicationEventHandlers
 
    private ClientStateUpdater clientStateUpdaterInstance_;
    private RootLayoutPanel rootPanel_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

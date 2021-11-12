@@ -16,7 +16,7 @@ package org.rstudio.studio.client.application.model;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 
 import java.util.Date;
 
@@ -71,5 +71,5 @@ public class HttpLogEntry extends JavaScriptObject
       return this.ts;
    }-*/;
 
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

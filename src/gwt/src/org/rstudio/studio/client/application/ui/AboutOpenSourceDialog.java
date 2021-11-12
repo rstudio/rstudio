@@ -27,7 +27,7 @@ import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.model.ProductNotice;
 
 public class AboutOpenSourceDialog extends ModalDialogBase
@@ -74,5 +74,5 @@ public class AboutOpenSourceDialog extends ModalDialogBase
    @UiField HTML noticeHTML_;
 
    private final Widget mainWidget_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

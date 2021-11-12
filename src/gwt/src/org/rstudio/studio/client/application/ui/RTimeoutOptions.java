@@ -15,7 +15,7 @@
 
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 
 import com.google.gwt.core.client.GWT;
@@ -101,5 +101,5 @@ public class RTimeoutOptions extends Composite
    @UiField Button terminate_;
    @UiField Label status_;
    @UiField Label visibleMsg_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

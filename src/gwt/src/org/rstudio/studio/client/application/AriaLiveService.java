@@ -20,7 +20,6 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.StudioClientConstants;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
@@ -136,5 +135,5 @@ public class AriaLiveService
    // injected
    private final EventBus eventBus_;
    private final Provider<UserPrefs> pUserPrefs_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

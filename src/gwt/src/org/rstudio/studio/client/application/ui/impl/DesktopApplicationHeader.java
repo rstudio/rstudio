@@ -32,7 +32,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
@@ -605,5 +605,5 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    private boolean ignoredUpdatesDirty_ = false;
    private ApplicationQuit appQuit_;
    private WebApplicationHeaderOverlay overlay_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

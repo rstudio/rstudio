@@ -1,6 +1,6 @@
-package org.rstudio.studio.client;
+package org.rstudio.studio.client.application;
 
-public interface StudioClientConstants extends com.google.gwt.i18n.client.Constants {
+public interface StudioClientApplicationConstants extends com.google.gwt.i18n.client.Constants {
 
     /**
      * Translated "Loading session...".

@@ -56,6 +56,7 @@ import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.application.ApplicationAction;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ui.AboutDialogContents;
 import org.rstudio.studio.client.application.ui.RTimeoutOptions;
 import org.rstudio.studio.client.application.ui.LauncherSessionStatus;
@@ -506,5 +507,5 @@ public class RStudio implements EntryPoint
    private Timer showStatusTimer_;
    private LauncherSessionStatus sessionStatus_;
    private Label ariaLoadingMessage_;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

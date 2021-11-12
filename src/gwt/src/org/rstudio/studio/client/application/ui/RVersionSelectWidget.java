@@ -21,7 +21,7 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 
 import com.google.gwt.core.client.JsArray;
@@ -139,7 +139,7 @@ public class RVersionSelectWidget extends SelectWidget
       else
          return version.getVersion() + SEP + version.getRHome() + SEP + version.getLabel() + SEP + version.getModule();
    }
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
    private final static String USE_DEFAULT_VERSION = constants_.useSystemDefaultText();
    private final static String SEP = "::::";
 }

@@ -42,7 +42,7 @@ import org.rstudio.core.client.widget.CenterPanel;
 import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.ModalDialogTracker;
-import org.rstudio.studio.client.StudioClientConstants;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 
 public class ApplicationEndedPopupPanel extends PopupPanel
@@ -314,5 +314,5 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    SimplePanel content_;
 
    private boolean reloading_ = false;
-   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }
