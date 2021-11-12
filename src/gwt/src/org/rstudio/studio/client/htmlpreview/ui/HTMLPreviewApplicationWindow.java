@@ -86,6 +86,12 @@ public class HTMLPreviewApplicationWindow extends SatelliteWindow
       return this;
    }
 
+   @Override
+   public boolean supportsThemes()
+   {
+      return true;
+   }
+
    private final Provider<HTMLPreviewPresenter> pPresenter_;
    private final Provider<DesktopHooks> pDesktopHooks_;
    private HTMLPreviewPresenter presenter_;

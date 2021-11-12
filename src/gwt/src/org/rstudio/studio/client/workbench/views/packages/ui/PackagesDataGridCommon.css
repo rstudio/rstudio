@@ -60,6 +60,12 @@
    margin-top: 0px;
 }
 
+.dataGridEvenRow, .dataGridOddRow
+{
+
+   background-color: inherit;
+}
+
 .dataGridEvenRowCell
 {
    border: none;
