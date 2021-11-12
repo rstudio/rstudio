@@ -63,6 +63,7 @@ sudo apt-get -y install \
   p7zip-full \
   patchelf \
   python \
+  python3 \
   r-base \
   rrdtool \
   uuid-dev \

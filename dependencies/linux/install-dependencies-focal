@@ -63,6 +63,7 @@ sudo apt-get -y install \
   patchelf \
   pkg-config \
   python \
+  python3 \
   rrdtool \
   software-properties-common \
   unzip \
