@@ -75,6 +75,7 @@ choco install -y visualstudio2017buildtools --version 15.8.2.0
 choco install -y visualstudio2017-workload-vctools --version 1.3.0
 choco install -y nsis
 choco install -y activeperl
+choco install -y python
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
