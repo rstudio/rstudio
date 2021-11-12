@@ -48,6 +48,7 @@ RUN apt-get update && \
     patchelf \
     pkg-config \
     python \
+    python3 \
     r-base \
     rrdtool \
     software-properties-common \
