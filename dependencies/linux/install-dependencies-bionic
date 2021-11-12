@@ -63,6 +63,7 @@ sudo apt-get -y install \
   pkg-config \
   python \
   python3 \
+  python3-venv \
   rrdtool \
   software-properties-common \
   unzip \

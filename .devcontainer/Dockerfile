@@ -49,6 +49,7 @@ RUN apt-get update && \
     pkg-config \
     python \
     python3 \
+    python3-venv \
     r-base \
     rrdtool \
     software-properties-common \
