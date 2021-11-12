@@ -52,7 +52,7 @@ FORMULAS=(
 
 # Python only needed for developer builds
 if ! is-jenkins; then
-  if [ ! has-program python3; then
+  if ! has-program python3; then
     FORMULAS+=(python3)
   fi
 fi
