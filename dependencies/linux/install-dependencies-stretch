@@ -64,6 +64,7 @@ sudo apt-get -y install \
   patchelf \
   python \
   python3 \
+  python3-venv \
   r-base \
   rrdtool \
   uuid-dev \
