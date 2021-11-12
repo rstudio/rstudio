@@ -1443,6 +1443,319 @@ public interface StudioClientConstants extends com.google.gwt.i18n.client.Consta
     @Key("manageLicenseText")
     String manageLicenseText();
 
+    /**
+     * Translated "Addins".
+     *
+     * @return translated "Addins"
+     */
+    @DefaultStringValue("Addins")
+    @Key("addinsText")
+    String addinsText();
 
+    /**
+     * Translated "Search for addins".
+     *
+     * @return translated "Search for addins"
+     */
+    @DefaultStringValue("Search for addins")
+    @Key("searchForAddinsLabel")
+    String searchForAddinsLabel();
+
+    /**
+     * Translated "No addins found".
+     *
+     * @return translated "No addins found"
+     */
+    @DefaultStringValue("No addins found")
+    @Key("noAddinsFound")
+    String noAddinsFound();
+
+    /**
+     * Translated "R encountered a fatal error.".
+     *
+     * @return translated "R encountered a fatal error."
+     */
+    @DefaultStringValue("R encountered a fatal error.")
+    @Key("rFatalErrorMessage")
+    String rFatalErrorMessage();
+
+    /**
+     * Translated "R encountered a fatal error.".
+     *
+     * @return translated "The session was terminated."
+     */
+    @DefaultStringValue("The session was terminated.")
+    @Key("sessionTerminatedMessage")
+    String sessionTerminatedMessage();
+
+    /**
+     * Translated "This browser was disconnected from the R session because another ".
+     *
+     * @return translated "This browser was disconnected from the R session because another "
+     */
+    @DefaultStringValue("This browser was disconnected from the R session because another ")
+    @Key("browserDisconnectedMessage")
+    String browserDisconnectedMessage();
+
+    /**
+     * Translated "browser connected (only one browser at a time may be connected ".
+     *
+     * @return translated "browser connected (only one browser at a time may be connected "
+     */
+    @DefaultStringValue("browser connected (only one browser at a time may be connected ")
+    @Key("anotherBrowserConnectedMessage")
+    String anotherBrowserConnectedMessage();
+
+    /**
+     * Translated "to an RStudio session). You may reconnect using the button below.".
+     *
+     * @return translated "to an RStudio session). You may reconnect using the button below."
+     */
+    @DefaultStringValue("to an RStudio session). You may reconnect using the button below.")
+    @Key("reconnectBrowserMessage")
+    String reconnectBrowserMessage();
+
+    /**
+     * Translated "RStudio is temporarily offline due to system maintenance. We ".
+     *
+     * @return translated "RStudio is temporarily offline due to system maintenance. We "
+     */
+    @DefaultStringValue("RStudio is temporarily offline due to system maintenance. We ")
+    @Key("rStudioOfflineMessage")
+    String rStudioOfflineMessage();
+
+    /**
+     * Translated "apologize for the inconvenience, please try again in a few minutes.".
+     *
+     * @return translated "apologize for the inconvenience, please try again in a few minutes."
+     */
+    @DefaultStringValue("apologize for the inconvenience, please try again in a few minutes.")
+    @Key("offlineTryAgainMessage")
+    String offlineTryAgainMessage();
+
+    /**
+     * Translated "R Session Ended".
+     *
+     * @return translated "R Session Ended"
+     */
+    @DefaultStringValue("R Session Ended")
+    @Key("rSessionEndedCaption")
+    String rSessionEndedCaption();
+
+    /**
+     * Translated "Start New Session".
+     *
+     * @return translated "Start New Session"
+     */
+    @DefaultStringValue("Start New Session")
+    @Key("startNewSessionText")
+    String startNewSessionText();
+
+    /**
+     * Translated "R Session Aborted".
+     *
+     * @return translated "R Session Aborted"
+     */
+    @DefaultStringValue("R Session Aborted")
+    @Key("rSessionAbortedCaption")
+    String rSessionAbortedCaption();
+
+    /**
+     * Translated "R Session Disconnected".
+     *
+     * @return translated "R Session Disconnected"
+     */
+    @DefaultStringValue("R Session Disconnected")
+    @Key("rSessionDisconnectedCaption")
+    String rSessionDisconnectedCaption();
+
+    /**
+     * Translated "Reconnect".
+     *
+     * @return translated "Reconnect"
+     */
+    @DefaultStringValue("Reconnect")
+    @Key("reconnectButtonText")
+    String reconnectButtonText();
+
+    /**
+     * Translated "RStudio Temporarily Offline".
+     *
+     * @return translated "RStudio Temporarily Offline"
+     */
+    @DefaultStringValue("RStudio Temporarily Offline")
+    @Key("temporarilyOfflineCaption")
+    String temporarilyOfflineCaption();
+
+    /**
+     * Translated "Unknown mode ".
+     *
+     * @return translated "Unknown mode "
+     */
+    @DefaultStringValue("Unknown mode ")
+    @Key("unknownModeText")
+    String unknownModeText();
+
+    /**
+     * Translated "Sign out".
+     *
+     * @return translated "Sign out"
+     */
+    @DefaultStringValue("Sign out")
+    @Key("signOutButtonText")
+    String signOutButtonText();
+
+    /**
+     * Translated "Error Opening Devtools".
+     *
+     * @return translated "Error Opening Devtools"
+     */
+    @DefaultStringValue("Error Opening Devtools")
+    @Key("errorOpeningDevToolsCaption")
+    String errorOpeningDevToolsCaption();
+
+    /**
+     * Translated "The Chromium devtools server could not be activated.".
+     *
+     * @return translated "The Chromium devtools server could not be activated."
+     */
+    @DefaultStringValue("The Chromium devtools server could not be activated.")
+    @Key("cannotActivateDevtoolsMessage")
+    String cannotActivateDevtoolsMessage();
+
+    /**
+     * Translated "Error Checking for Updates".
+     *
+     * @return translated "Error Checking for Updates"
+     */
+    @DefaultStringValue("Error Checking for Updates")
+    @Key("errorCheckingUpdatesMessage")
+    String errorCheckingUpdatesMessage();
+
+    /**
+     * Translated "An error occurred while checking for updates: ".
+     *
+     * @return translated "An error occurred while checking for updates: "
+     */
+    @DefaultStringValue("An error occurred while checking for updates: ")
+    @Key("errorOccurredCheckingUpdatesMessage")
+    String errorOccurredCheckingUpdatesMessage();
+
+    /**
+     * Translated "Quit and Download...".
+     *
+     * @return translated "Quit and Download..."
+     */
+    @DefaultStringValue("Quit and Download...")
+    @Key("quitDownloadButtonLabel")
+    String quitDownloadButtonLabel();
+
+    /**
+     * Translated "Update RStudio".
+     *
+     * @return translated "Update RStudio"
+     */
+    @DefaultStringValue("Update RStudio")
+    @Key("updateRStudioCaption")
+    String updateRStudioCaption();
+
+    /**
+     * Translated "Remind Later".
+     *
+     * @return translated "Remind Later"
+     */
+    @DefaultStringValue("Remind Later")
+    @Key("remindLaterButtonLabel")
+    String remindLaterButtonLabel();
+
+    /**
+     * Translated "Ignore Update".
+     *
+     * @return translated "Ignore Update"
+     */
+    @DefaultStringValue("Ignore Update")
+    @Key("ignoreUpdateButtonLabel")
+    String ignoreUpdateButtonLabel();
+
+    /**
+     * Translated "Update Available".
+     *
+     * @return translated "Update Available"
+     */
+    @DefaultStringValue("Update Available")
+    @Key("updateAvailableCaption")
+    String updateAvailableCaption();
+
+    /**
+     * Translated "No Update Available".
+     *
+     * @return translated "No Update Available"
+     */
+    @DefaultStringValue("No Update Available")
+    @Key("noUpdateAvailableCaption")
+    String noUpdateAvailableCaption();
+
+    /**
+     * Translated "You're using the newest version of RStudio.".
+     *
+     * @return translated "You're using the newest version of RStudio."
+     */
+    @DefaultStringValue("You're using the newest version of RStudio.")
+    @Key("usingNewestVersionMessage")
+    String usingNewestVersionMessage();
+
+    /**
+     * Translated "RStudio Server Home".
+     *
+     * @return translated "RStudio Server Home"
+     */
+    @DefaultStringValue("RStudio Server Home")
+    @Key("rStudioServerHomeTitle")
+    String rStudioServerHomeTitle();
+
+    /**
+     * Translated "Your browser does not allow access to your".
+     *
+     * @return translated "Your browser does not allow access to your"
+     */
+    @DefaultStringValue("Your browser does not allow access to your")
+    @Key("browserNotAllowAccessLabel")
+    String browserNotAllowAccessLabel();
+
+    /**
+     * Translated "computer's clipboard. As a result you must".
+     *
+     * @return translated "computer's clipboard. As a result you must"
+     */
+    @DefaultStringValue("computer's clipboard. As a result you must")
+    @Key("computerClipBoardLabel")
+    String computerClipBoardLabel();
+
+    /**
+     * Translated "use keyboard shortcuts for:".
+     *
+     * @return translated "use keyboard shortcuts for:"
+     */
+    @DefaultStringValue("use keyboard shortcuts for:")
+    @Key("useKeyboardShortcutsLabel")
+    String useKeyboardShortcutsLabel();
+
+    /**
+     * Translated "Use Keyboard Shortcut".
+     *
+     * @return translated "Use Keyboard Shortcut"
+     */
+    @DefaultStringValue("Use Keyboard Shortcut")
+    @Key("useKeyboardShortcutCaption")
+    String useKeyboardShortcutCaption();
+
+    /**
+     * Translated "Sign out".
+     *
+     * @return translated "Sign out"
+     */
+    @DefaultStringValue("Sign out")
+    @Key("signOutTitle")
+    String signOutTitle();
 
 }
