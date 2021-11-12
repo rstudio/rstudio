@@ -37,15 +37,6 @@ public class LeftRightToggleButton extends Widget
 {
    interface Resources extends ClientBundle
    {
-      @Source("images/LeftToggleLeftOn.png")
-      ImageResource leftToggleLeftOn();
-      @Source("images/LeftToggleLeftOff.png")
-      ImageResource leftToggleLeftOff();
-      @Source("images/RightToggleRightOn.png")
-      ImageResource rightToggleRightOn();
-      @Source("images/RightToggleRightOff.png")
-      ImageResource rightToggleRightOff();
-
       @Source("LeftRightToggleButton.css")
       Styles styles();
    }

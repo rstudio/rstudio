@@ -21,15 +21,13 @@
    
 }
 
-@sprite tr .leftLeft {
-   gwt-image: 'leftToggleLeftOff';
+tr .leftLeft {
    width: auto;
    padding-left: 7px;
    padding-right: 4px;
 }
 
-@sprite .leftOn .leftLeft {
-   gwt-image: 'leftToggleLeftOn';
+.leftOn .leftLeft {
    width: auto;
 }
 
@@ -44,22 +42,18 @@
    outline: inherit;
 }
 
-@sprite tr .rightRight {
-   gwt-image: 'rightToggleRightOff';
+tr .rightRight {
    background-position: top right;
    width: auto;
    padding-left: 5px;
    padding-right: 9px;
 }
 
-@sprite .rightOn .rightRight {
-   gwt-image: 'rightToggleRightOn';
-   background-position: top right;
+.rightOn .rightRight {
    width: auto;
 }
 
 .rightOn {
-   height: 16px;
    border: solid 1px #FFF;
    border-radius: 3px;
    margin: 2px;
@@ -68,11 +62,9 @@
 
 .rightOn,
 .leftOn {
-   height: 16px;
    border: solid 1px THEME_LIGHT_CONTROL_BORDER;
    border-radius: 3px;
    margin: 2px;
-   margin-top: 3px;
    overflow: hidden;
 }
 
@@ -84,7 +76,7 @@
 .leftLeft,
 .rightRight {
    height: 16px;
-   background: THEME_LIGHT_CONTROL_BACKGROUND;
+   background: THEME_DEFAULT_BACKGROUND;
 }
 
 .rstudio-themes-dark .leftLeft,
@@ -100,9 +92,9 @@
    border-left: solid 1px THEME_DARK_CONTROL_BORDER;
 }
 
-.rstudio-themes-default .rightOn .leftLeft,
-.rstudio-themes-default .leftOn .rightRight {
-   background: THEME_DEFAULT_BACKGROUND;
+.rightOn .leftLeft,
+.leftOn .rightRight {
+   background: THEME_LIGHT_CONTROL_BACKGROUND;
 }
 
 .rstudio-themes-dark-grey .rightOn .leftLeft,
