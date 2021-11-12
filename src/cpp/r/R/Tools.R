@@ -460,7 +460,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    for (item in plot) {
       name <- attr(item, "pkgName", exact = TRUE)
       if (is.character(name) && name[[1L]] %in% c("grid", "ggplot2")) {
-         grid::grid.newpage()
+         if (requireNamespace("grid", quietly = TRUE))
+            grid::grid.newpage()
          break
       }
    }
