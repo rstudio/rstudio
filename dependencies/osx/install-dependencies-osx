@@ -105,3 +105,13 @@ if ! is-jenkins; then
    fi
 fi
 
+# ensure python requirements are installed
+if ! is-jenkins; then
+   if has-program python3; then
+     section "Installing python packages for i18n"
+     pushd ../../src/gwt/tools/i18n-helpers
+     python3 -m venv VENV
+     ./VENV/bin/pip install --disable-pip-version-check -r commands.cmd.xml/requirements.txt
+     popd
+   fi
+fi
