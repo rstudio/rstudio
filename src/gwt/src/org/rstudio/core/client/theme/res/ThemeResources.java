@@ -64,8 +64,6 @@ public interface ThemeResources extends ClientBundle
    @ImageOptions(repeatStyle = RepeatStyle.Both)
    ImageResource clear();
 
-   @Source("desktopGlobalToolbarBackground.png")
-   DataResource desktopGlobalToolbarBackground();
    @Source("webGlobalToolbarLeft.png")
    DataResource webGlobalToolbarLeft();
    @Source("webGlobalToolbarRight.png")

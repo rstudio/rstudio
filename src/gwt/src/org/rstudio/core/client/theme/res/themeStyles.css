@@ -148,7 +148,6 @@
 
 @url TABBACKGROUND tabBackground;
 
-@url DESKTOPGLOBALTOOLBARBACKGROUND desktopGlobalToolbarBackground;
 @url WEBGLOBALTOOLBARLEFT webGlobalToolbarLeft;
 @url WEBGLOBALTOOLBARRIGHT webGlobalToolbarRight;
 @url WEBGLOBALTOOLBARTILE webGlobalToolbarTile;
@@ -1531,10 +1530,6 @@ body.windows table.webGlobalToolbar {
       margin-left: 4px;
    }
  }
-
-.desktopGlobalToolbar {
-   background: DESKTOPGLOBALTOOLBARBACKGROUND bottom repeat-x;
-}
 
 .desktopGlobalToolbarWrapper {
    height: 24px;
