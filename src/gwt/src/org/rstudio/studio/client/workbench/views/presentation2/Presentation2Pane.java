@@ -77,8 +77,18 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    {
       toolbar_ = new Toolbar("Presentation Toolbar");
       
-
+      
       toolbar_.addLeftWidget(commands_.presentation2Present().createToolbarButton());
+      
+      ToolbarPopupMenu presentMenu = new ToolbarPopupMenu();
+      presentMenu.addItem(commands_.presentation2PresentFromBeginning().createMenuItem(false));
+      ToolbarMenuButton presentButton = new ToolbarMenuButton(ToolbarButton.NoText, "Present", presentMenu, true);
+      presentButton.setEnabled(commands_.presentation2PresentFromBeginning().isEnabled());
+      commands_.presentation2PresentFromBeginning().addEnabledChangedHandler(event -> {
+         presentButton.setEnabled(commands_.presentation2PresentFromBeginning().isEnabled());
+      });
+      toolbar_.addLeftWidget(presentButton);
+      
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.presentation2Print().createToolbarButton());
       toolbar_.addLeftSeparator();
