@@ -15,10 +15,12 @@
 package org.rstudio.core.client.widget;
 
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.user.client.ui.CheckBox;
+import org.rstudio.core.client.CoreClientConstants;
 
 public class FormCheckBox extends CheckBox
                           implements CanSetControlId
@@ -51,8 +53,9 @@ public class FormCheckBox extends CheckBox
             if (node.getNodeName().equalsIgnoreCase("input"))
                ((Element)node).setId(id);
             else if (node.getNodeName().equalsIgnoreCase("label"))
-               ((Element)node).setAttribute("for", id);
+               ((Element)node).setAttribute(constants_.forAttributeName(), id);
          }
       }
    }
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

@@ -111,10 +111,10 @@ public class RpcRequest
       {
          String requestString = request.toString();
          if (TRACE)
-            Debug.log("Request: " + requestString);
+            Debug.log(constants_.requestDebugLog() + requestString);
 
          requestLogEntry_ = RequestLog.log(requestId,
-                                           redactLog_ ? "[REDACTED]"
+                                           redactLog_ ? constants_.redactedText()
                                                       : requestString);
 
          request_ = builder.sendRequest(requestString, new RequestCallback() {
@@ -143,7 +143,7 @@ public class RpcRequest
                   {
                      String responseText = response.getText();
                      if (TRACE)
-                        Debug.log("Response: " + responseText);
+                        Debug.log(constants_.responseText() + responseText);
                      requestLogEntry_.logResponse(ResponseType.Normal,
                                                  responseText);
                      rpcResponse = RpcResponse.parseUnsafe(responseText);

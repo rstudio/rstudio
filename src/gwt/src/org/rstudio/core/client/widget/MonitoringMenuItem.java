@@ -63,7 +63,7 @@ public abstract class MonitoringMenuItem extends CheckableMenuItem
    {
       return monitoredValue_
             ? constants_.refreshAutomaticallyLabel()
-            : "Manual Refresh Only";
+            : constants_.manualRefreshLabel();
    }
 
    @Override

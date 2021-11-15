@@ -1398,4 +1398,160 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @Key("dialogInfoText")
     String dialogInfoText();
 
+    /**
+     * Translated "Directory Contents"
+     *
+     * @return translated "Directory Contents"
+     */
+    @DefaultStringValue("Directory Contents")
+    @Key("directoryContentsLabel")
+    String directoryContentsLabel();
+
+    /**
+     * Translated "New Folder"
+     *
+     * @return translated "New Folder"
+     */
+    @DefaultStringValue("New Folder")
+    @Key("newFolderTitle")
+    String newFolderTitle();
+
+    /**
+     * Translated "Folder name"
+     *
+     * @return translated "Folder name"
+     */
+    @DefaultStringValue("Folder name")
+    @Key("folderNameLabel")
+    String folderNameLabel();
+
+    /**
+     * Translated "for"
+     *
+     * @return translated "for"
+     */
+    @DefaultStringValue("for")
+    @Key("forAttributeName")
+    String forAttributeName();
+
+    /**
+     * Translated "spellcheck"
+     *
+     * @return translated "spellcheck"
+     */
+    @DefaultStringValue("spellcheck")
+    @Key("spellCheckAttribute")
+    String spellCheckAttribute();
+
+    /**
+     * Translated "Warning"
+     *
+     * @return translated "Warning"
+     */
+    @DefaultStringValue("Warning")
+    @Key("dialogWarningText")
+    String dialogWarningText();
+
+    /**
+     * Translated "Question"
+     *
+     * @return translated "Question"
+     */
+    @DefaultStringValue("Question")
+    @Key("dialogQuestionText")
+    String dialogQuestionText();
+
+    /**
+     * Translated "Popup Blocked"
+     *
+     * @return translated "Popup Blocked"
+     */
+    @DefaultStringValue("Popup Blocked")
+    @Key("dialogPopupBlockedText")
+    String dialogPopupBlockedText();
+
+    /**
+     * Translated "Error"
+     *
+     * @return translated "Error"
+     */
+    @DefaultStringValue("Error")
+    @Key("dialogErrorText")
+    String dialogErrorText();
+
+
+    /**
+     * Translated "minimized"
+     *
+     * @return translated "minimized"
+     */
+    @DefaultStringValue("minimized")
+    @Key("minimizedTabListRole")
+    String minimizedTabListRole();
+
+    /**
+     * Translated "No potentially focusable controls found in modal dialog"
+     *
+     * @return translated "No potentially focusable controls found in modal dialog"
+     */
+    @DefaultStringValue("No potentially focusable controls found in modal dialog")
+    @Key("noFocusableControlsLog")
+    String noFocusableControlsLog();
+
+    /**
+     * Translated "Manual Refresh Only"
+     *
+     * @return translated "Manual Refresh Only"
+     */
+    @DefaultStringValue("Manual Refresh Only")
+    @Key("manualRefreshLabel")
+    String manualRefreshLabel();
+
+    /**
+     * Translated "Can't create progress spinner (no HTML5 canvas support)"
+     *
+     * @return translated "Can't create progress spinner (no HTML5 canvas support)"
+     */
+    @DefaultStringValue("Can't create progress spinner (no HTML5 canvas support)")
+    @Key("progressSpinnerLog")
+    String progressSpinnerLog();
+
+    /**
+     * Translated "Busy"
+     *
+     * @return translated "Busy"
+     */
+    @DefaultStringValue("Busy")
+    @Key("busyLabel")
+    String busyLabel();
+
+    /**
+     * Translated "Request: "
+     *
+     * @return translated "Request: "
+     */
+    @DefaultStringValue("Request: ")
+    @Key("requestDebugLog")
+    String requestDebugLog();
+
+    /**
+     * Translated "[REDACTED]"
+     *
+     * @return translated "[REDACTED]"
+     */
+    @DefaultStringValue("[REDACTED]")
+    @Key("redactedText")
+    String redactedText();
+
+    /**
+     * Translated "Response: "
+     *
+     * @return translated "Response: "
+     */
+    @DefaultStringValue("Response: ")
+    @Key("responseText")
+    String responseText();
+
+
+
 }

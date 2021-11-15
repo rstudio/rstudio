@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.event.dom.client.HasKeyUpHandlers;
 import com.google.gwt.event.dom.client.KeyUpHandler;
@@ -24,6 +25,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.gwt.user.client.ui.TextBox;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.dom.DomUtils;
 
 /**
@@ -85,7 +87,7 @@ public class LabeledTextBox extends Composite
 
    public void setEnableSpellcheck(boolean enable)
    {
-      textBox_.getElement().setAttribute("spellcheck", enable ? "true" : "false");
+      textBox_.getElement().setAttribute(constants_.spellCheckAttribute(), enable ? "true" : "false");
    }
 
    /**
@@ -139,4 +141,5 @@ public class LabeledTextBox extends Composite
 
    FormLabel label_;
    TextBox textBox_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

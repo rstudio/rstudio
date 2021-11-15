@@ -781,7 +781,7 @@ public abstract class ModalDialogBase extends DialogBox
       ArrayList<Element> focusable = getFocusableElements();
       if (focusable.size() == 0)
       {
-         Debug.logWarning("No potentially focusable controls found in modal dialog");
+         Debug.logWarning(constants_.noFocusableControlsLog());
          return;
       }
       focus_.setFirst(focusable.get(0));
