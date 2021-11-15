@@ -132,7 +132,13 @@
       if (is.character(label))
          col_label <- label
       else if (idx <= length(colLabels))
+      {
+      # check if colLabels is a named vector, if yes, use the named value, if not use the idx'th element
+      if (!is.null(names(colLabels)))
+         col_label <- colLabels[[col_name]]
+      else
          col_label <- colLabels[[idx]]
+      }
       else 
          col_label <- ""
       
