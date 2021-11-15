@@ -1,6 +1,6 @@
 @def headerRowHeight 20px;
 
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
@@ -10,17 +10,12 @@
 .categoryHeaderRow
 {
    background-color: #f0f0f0;
-   font-weight: bold;
    height: headerRowHeight;
-}
-
-.rstudio-themes-flat .categoryHeaderRow
-{
    color: #000;
    font-weight: normal;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .categoryHeaderRow
+.rstudio-themes-dark .categoryHeaderRow
 {
    color: #FFF;
 }
@@ -81,13 +76,7 @@ td.valueCol
    text-overflow: ellipsis;
    overflow-x: hidden;
    padding-right: 20px;
-   background-color: #ffffff;
    padding-left: 5px;
-}
-
-.rstudio-themes-flat td.valueCol
-{
-   background-color: inherit;
 }
 
 .widthSettingRow td.expandCol,
@@ -104,11 +93,6 @@ td.valueCol
 .categoryHeaderText
 {
    padding-left: 5px;
-}
-
-.rstudio-themes-flat .categoryHeaderText
-{
-
 }
 
 .clickableCol
@@ -142,30 +126,30 @@ td.decoratedValueCol
    border-collapse: collapse;
 }
 
-.rstudio-themes-flat .rstudio-themes-default td.nameCol,
-.rstudio-themes-flat .rstudio-themes-default td.expandCol,
-.rstudio-themes-flat .rstudio-themes-default td.valueCol,
-.rstudio-themes-flat .rstudio-themes-default td.resizeCol,
-.rstudio-themes-flat .rstudio-themes-default .detailRow,
-.rstudio-themes-flat .rstudio-themes-default .categoryHeaderRow {
+.rstudio-themes-default td.nameCol,
+.rstudio-themes-default td.expandCol,
+.rstudio-themes-default td.valueCol,
+.rstudio-themes-default td.resizeCol,
+.rstudio-themes-default .detailRow,
+.rstudio-themes-default .categoryHeaderRow {
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey td.nameCol,
-.rstudio-themes-flat .rstudio-themes-dark-grey td.expandCol,
-.rstudio-themes-flat .rstudio-themes-dark-grey td.valueCol,
-.rstudio-themes-flat .rstudio-themes-dark-grey td.resizeCol,
-.rstudio-themes-flat .rstudio-themes-dark-grey .detailRow,
-.rstudio-themes-flat .rstudio-themes-dark-grey .categoryHeaderRow {
+.rstudio-themes-dark-grey td.nameCol,
+.rstudio-themes-dark-grey td.expandCol,
+.rstudio-themes-dark-grey td.valueCol,
+.rstudio-themes-dark-grey td.resizeCol,
+.rstudio-themes-dark-grey .detailRow,
+.rstudio-themes-dark-grey .categoryHeaderRow {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate td.nameCol,
-.rstudio-themes-flat .rstudio-themes-alternate td.expandCol,
-.rstudio-themes-flat .rstudio-themes-alternate td.valueCol,
-.rstudio-themes-flat .rstudio-themes-alternate td.resizeCol,
-.rstudio-themes-flat .rstudio-themes-alternate .detailRow,
-.rstudio-themes-flat .rstudio-themes-alternate .categoryHeaderRow {
+.rstudio-themes-alternate td.nameCol,
+.rstudio-themes-alternate td.expandCol,
+.rstudio-themes-alternate td.valueCol,
+.rstudio-themes-alternate td.resizeCol,
+.rstudio-themes-alternate .detailRow,
+.rstudio-themes-alternate .categoryHeaderRow {
    border-color: THEME_ALTERNATE_BORDER;
 }
 

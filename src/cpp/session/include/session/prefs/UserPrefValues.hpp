@@ -276,7 +276,6 @@ namespace prefs {
 #define kLatexPreviewOnCursorIdleAlways "always"
 #define kWrapTabNavigation "wrap_tab_navigation"
 #define kGlobalTheme "global_theme"
-#define kGlobalThemeClassic "classic"
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"

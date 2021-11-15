@@ -8,7 +8,7 @@
    <ui:style>
       @url SEPARATOR statusBarSeparator;
       @external gwt-Label;
-      @external rstudio-themes-flat, rstudio-themes-dark;
+      @external rstudio-themes-dark;
       @external windows;
 
       @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
@@ -24,7 +24,7 @@
          font-size: 11px;
          color: #3c474d;
       }
-      .rstudio-themes-flat .statusBar {
+      .statusBar {
          background-image: none;
          border-top: solid 1px #d6dadc;
       }
@@ -54,13 +54,6 @@
          cursor: default;
          padding-left: 5px;
          padding-right: 6px;
-         background-image: SEPARATOR;
-         background-position: right 0;
-         background-repeat: no-repeat;
-      }
-      .rstudio-themes-flat .statusBar .element {
-         background-image: none;
-         background: none;
          border-right: solid 1px #d6dadc;
       }
       .statusBar .element.pos {
@@ -70,22 +63,22 @@
       .statusBar .element.last {
          background-image: none;
       }
-      .rstudio-themes-flat .statusBar .element.last {
+      .statusBar .element.last {
          border-right: none;
       }
-      .rstudio-themes-flat .rstudio-themes-dark .statusBar {
+      .rstudio-themes-dark .statusBar {
          color: white;
       }
-      .rstudio-themes-flat .rstudio-themes-default .statusBar,
-      .rstudio-themes-flat .rstudio-themes-default .statusBar .element {
+      .rstudio-themes-default .statusBar,
+      .rstudio-themes-default .statusBar .element {
          border-color: THEME_DEFAULT_BORDER;
       }
-      .rstudio-themes-flat .rstudio-themes-dark-grey .statusBar,
-      .rstudio-themes-flat .rstudio-themes-dark-grey .statusBar .element {
+      .rstudio-themes-dark-grey .statusBar,
+      .rstudio-themes-dark-grey .statusBar .element {
          border-color: THEME_DARKGREY_BORDER;
       }
-      .rstudio-themes-flat .rstudio-themes-alternate .statusBar,
-      .rstudio-themes-flat .rstudio-themes-alternate .statusBar .element  {
+      .rstudio-themes-alternate .statusBar,
+      .rstudio-themes-alternate .statusBar .element  {
          border-color: THEME_ALTERNATE_BORDER;
       }
    </ui:style>

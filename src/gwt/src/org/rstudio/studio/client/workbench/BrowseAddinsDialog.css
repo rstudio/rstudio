@@ -1,20 +1,19 @@
-@external rstudio-themes-flat;
 
-.rstudio-themes-flat .dataGridCell {
+.dataGridCell {
    border: none;
    border-bottom: 1px solid #ddd;
 }
 
-.rstudio-themes-flat .dataGridWidget {
+.dataGridWidget {
    border: solid 1px #ddd;
    background: #FFF;
 }
 
-.rstudio-themes-flat .dataGridWidget table {
+.dataGridWidget table {
    border-collapse: collapse;
 }
 
-.rstudio-themes-flat .dataGridWidget .dataGridSelectedRow {
+.dataGridWidget .dataGridSelectedRow {
    background: #eeeff1
 }
 

@@ -1,7 +1,7 @@
 @def selectionBorderWidth 2px;
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 
 .cellTableCell input[type=checkbox] {
    margin-top: 0;
@@ -30,9 +30,5 @@
    margin-bottom: 5px;
    margin-left: 5px;
    font-size: 12px;
-   color: #3c474d;
 }
 
-.rstudio-themes-flat .libraryHeader h1 {
-   color: inherit;
-}

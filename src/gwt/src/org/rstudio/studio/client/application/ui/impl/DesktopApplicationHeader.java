@@ -126,8 +126,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       {
          final SessionInfo sessionInfo = session.getSessionInfo();
 
-         isFlatTheme_ = RStudioThemes.isFlat(pUIPrefs_.get());
-
          if (Desktop.isRemoteDesktop())
             addSignoutToolbar();
 
@@ -379,7 +377,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    public int getPreferredHeight()
    {
       if (toolbar_.isVisible())
-         return isFlatTheme_ ? 29 : 32;
+         return 29;
       else
          return 5;
    }
@@ -606,6 +604,5 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    private IgnoredUpdates ignoredUpdates_;
    private boolean ignoredUpdatesDirty_ = false;
    private ApplicationQuit appQuit_;
-   private Boolean isFlatTheme_ = false;
    private WebApplicationHeaderOverlay overlay_;
 }

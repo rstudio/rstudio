@@ -32,6 +32,7 @@
 * Use double indent for function parameters to align with Tidyverse style (#9766)
 * Recognize `id_ed25519` key file in Version Control options UI (#9991)
 * Updated Files Pane buttons to resize and remain visible at smaller widths (#9870)
+* Remove 'Classic' IDE theme (#9738)
 
 ### Bugfixes
 

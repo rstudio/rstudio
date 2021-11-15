@@ -73,6 +73,12 @@ public class RmdOutputWindow extends SatelliteWindow implements RmdOutputView
       return this;
    }
    
+   @Override
+   public boolean supportsThemes()
+   {
+      return true;
+   }
+
    private void showRenderResult(RmdPreviewParams params)
    {
       Window.setTitle(params.getOutputFile());

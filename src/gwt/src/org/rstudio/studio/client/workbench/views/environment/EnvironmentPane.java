@@ -270,10 +270,6 @@ public class EnvironmentPane extends WorkbenchPane
          }
       });
 
-      if (!RStudioThemes.isFlat(prefs_)) {
-         searchWidget.getElement().getStyle().setMarginTop(1, Unit.PX);
-      }
-
       toolbar.addRightWidget(searchWidget);
 
       secondaryToolbar_ = toolbar;
