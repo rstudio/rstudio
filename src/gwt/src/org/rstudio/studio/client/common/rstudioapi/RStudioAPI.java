@@ -28,6 +28,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.rstudioapi.events.RStudioAPIShowDialogEvent;
 import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -151,8 +152,8 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
                              String ok,
                              String cancel)
    {
-      if (StringUtil.isNullOrEmpty(ok)) ok = "OK";
-      if (StringUtil.isNullOrEmpty(cancel)) cancel = "Cancel";
+      if (StringUtil.isNullOrEmpty(ok)) ok = constants_.okTitle();
+      if (StringUtil.isNullOrEmpty(cancel)) cancel = constants_.cancelTitle();
 
       globalDisplay_.showYesNoMessage(
          MessageDialog.QUESTION, 
@@ -212,4 +213,5 @@ public class RStudioAPI implements RStudioAPIShowDialogEvent.Handler
    private EventBus events_;
    private GlobalDisplay globalDisplay_;
    private RStudioAPIServerOperations server_;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

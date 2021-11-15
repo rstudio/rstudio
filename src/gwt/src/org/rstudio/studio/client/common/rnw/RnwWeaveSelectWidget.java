@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.rnw;
 
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -22,6 +23,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -70,13 +72,13 @@ public class RnwWeaveSelectWidget extends SelectWidget
             {
                globalDisplay_.showYesNoMessage(
                   MessageDialog.QUESTION,
-                  "Confirm Change", 
-                  "The " + weave.getPackageName() + " package is required " +
-                  "for " + weave.getName() + " weaving, " +
-                  "however it is not currently installed. You should " +
-                  "ensure that " + weave.getPackageName() + " is installed " +
-                  "prior to compiling a PDF." +
-                  "\n\nAre you sure you want to change this option?",
+                  constants_.confirmChangeCaption(),
+                  constants_.theMessage() + weave.getPackageName() + " " + constants_.packageRequiredMessage() +
+                  constants_.forMessage() + weave.getName() + " " + constants_.weavingMessage() +
+                  constants_.notCurrentlyInstalledMessage() +
+                  constants_.ensureThatMessage() + weave.getPackageName() + " " + constants_.isInstalledMessage() +
+                  constants_.compilingPDFMessage() +
+                  "\n\n" + constants_.changeOptionMessage(),
                   false,
                   new Operation() { 
                      @Override
@@ -122,4 +124,5 @@ public class RnwWeaveSelectWidget extends SelectWidget
    
    public static final RnwWeaveRegistry rnwWeaveRegistry_ = 
                            RStudioGinjector.INSTANCE.getRnwWeaveRegistry();
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

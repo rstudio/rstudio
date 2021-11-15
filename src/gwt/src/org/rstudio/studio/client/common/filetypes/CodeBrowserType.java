@@ -14,21 +14,24 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
 public class CodeBrowserType extends EditableFileType
 {
    public CodeBrowserType()
    {
-      super("r_code_browser", "R Code Browser",
+      super("r_code_browser", constants_.rCodeBrowserLabel(),
             new ImageResource2x(FileIconResources.INSTANCE.iconRdoc2x()));
    }
 
    @Override
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
-      assert false : "CodeBrowserType doesn't operate on filesystem files";
+      assert false : constants_.openFileCodeBrowserMessage();
    }
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

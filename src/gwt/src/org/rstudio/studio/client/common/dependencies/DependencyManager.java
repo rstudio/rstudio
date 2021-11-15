@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -29,6 +30,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
@@ -571,7 +573,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    public void withDataImportMongo(String userAction, final Command command)
    {
      withDependencies(
-        "Preparing Import from Mongo DB",
+        constants_.withDataImportMongoProgressCaption(),
         userAction,
         getFeatureDescription("import_mongo"),
         getFeatureDependencies("import_mongo"),
@@ -678,18 +680,18 @@ public class DependencyManager implements InstallShinyEvent.Handler,
       if (useTestThat)
       {
          dependencies.addAll(getFeatureDependencies("testthat"));
-         message = "Using testthat";
+         message = constants_.testthatMessage();
       }
       else
       {
          dependencies.addAll(getFeatureDependencies("shinytest"));
-         message = "Using shinytest";
+         message = constants_.shinytestMessage();
       }
 
       withDependencies(
-         "Preparing Tests",
+         constants_.preparingTestsProgressCaption(),
          message,
-         "Testing Tools",
+         constants_.testingToolsContext(),
          dependencies,
          true, // update package if needed
          new CommandWithArg<Boolean>()
@@ -1238,8 +1240,8 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          Dependency dep = list.getPackage(packages.get(i));
          if (dep == null)
          {
-            Debug.logWarning("No dependency record found for package '" +
-                             packages.get(i) + "' (required by feature '" +
+            Debug.logWarning(constants_.noDependencyRecordFoundLog() +
+                             packages.get(i) + constants_.requiredByFeatureLog() +
                              feature + "')");
             continue;
          }
@@ -1259,4 +1261,5 @@ public class DependencyManager implements InstallShinyEvent.Handler,
    private final Session session_;
    private final Commands commands_;
    private final EventBus events_;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

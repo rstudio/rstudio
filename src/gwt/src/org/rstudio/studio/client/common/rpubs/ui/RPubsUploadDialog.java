@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.rpubs.RPubsUploader;
 import org.rstudio.studio.client.common.rpubs.model.RPubsServerOperations;
 import org.rstudio.studio.client.rsconnect.model.StaticHtmlGenerator;
@@ -58,7 +59,7 @@ public class RPubsUploadDialog extends ModalDialogBase
    {
       super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
-      setText("Publish to RPubs");
+      setText(constants_.publishToRPubs());
       title_ = title;
       htmlFile_ = htmlFile;
       rmdFile_ = rmdFile;
@@ -93,7 +94,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       headerPanel.addStyleName(styles.headerPanel());
       headerPanel.add(new DecorativeImage(new ImageResource2x(RESOURCES.publishLarge2x())));
       
-      Label headerLabel = new Label("Publish to RPubs");
+      Label headerLabel = new Label(constants_.publishToRPubs());
       headerLabel.addStyleName(styles.headerLabel());
       headerPanel.add(headerLabel);
       headerPanel.setCellVerticalAlignment(headerLabel,
@@ -104,15 +105,15 @@ public class RPubsUploadDialog extends ModalDialogBase
       String msg;
       if (!isPublished_ && uploadId_.isEmpty())
       {
-         msg = "RPubs is a free service from RStudio for sharing " +
-                       "documents on the web. Click Publish to get " +
-                       "started.";
+         msg = constants_.rPubsServiceMessage() +
+                       constants_.clickPublishMessage() +
+                       constants_.startedMessage();
       }
       else
       {
-         msg = "This document has already been published on RPubs. You can " +
-               "choose to either update the existing RPubs document, or " +
-               "create a new one.";
+         msg = constants_.alreadyPublishedRPubs() +
+               constants_.updateRPubsMessage() +
+               constants_.createNewRPub();
       }
       Label descLabel = new Label(msg);
       descLabel.addStyleName(styles.descLabel());
@@ -120,9 +121,9 @@ public class RPubsUploadDialog extends ModalDialogBase
       setARIADescribedBy(descLabel.getElement());
 
       HTML warningLabel =  new HTML(
-        "<strong>IMPORTANT: All documents published to RPubs are " +
-        "publicly visible.</strong> You should " +
-        "only publish documents that you wish to share publicly.");
+        "<strong>" + constants_.importantRPubsMessage() +
+         constants_.publiclyVisibleWarningLabel() + "</strong> " + constants_.youShouldMessage() +
+        constants_.publishDocumentsMessage());
       warningLabel.addStyleName(styles.warningLabel());
       verticalPanel.add(warningLabel);
         
@@ -139,7 +140,7 @@ public class RPubsUploadDialog extends ModalDialogBase
          
       });
 
-      continueButton_ = new ThemedButton("Publish", new ClickHandler() {
+      continueButton_ = new ThemedButton(constants_.publishButtonTitle(), new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
          {   
@@ -147,7 +148,7 @@ public class RPubsUploadDialog extends ModalDialogBase
          }
       });
 
-      updateButton_ = new ThemedButton("Update Existing", new ClickHandler()
+      updateButton_ = new ThemedButton(constants_.updateExistingButtonTitle(), new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -156,7 +157,7 @@ public class RPubsUploadDialog extends ModalDialogBase
          }
       });
 
-      createButton_ = new ThemedButton("Create New", new ClickHandler()
+      createButton_ = new ThemedButton(constants_.createNewButtonTitle(), new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -286,4 +287,5 @@ public class RPubsUploadDialog extends ModalDialogBase
    private EventBus eventBus_;
    private RPubsServerOperations server_;
    private RPubsUploader uploader_;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

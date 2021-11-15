@@ -16,12 +16,14 @@ package org.rstudio.studio.client.common.filetypes;
 
 import java.util.HashMap;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -40,6 +42,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class FileTypeRegistry
 {
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
    private static final FileIconResources ICONS = FileIconResources.INSTANCE;
 
    public static final TextFileType TEXT =
@@ -49,11 +52,11 @@ public class FileTypeRegistry
                           false, false, false, false, false, false, false, false, false, true, false, false);
 
    public static final TextFileType R =
-         new RFileType("r_source", "R Script", EditorLanguage.LANG_R, ".R",
+         new RFileType("r_source", constants_.rScriptLabel(), EditorLanguage.LANG_R, ".R",
                        new ImageResource2x(ICONS.iconRdoc2x()));
 
    public static final TextFileType RD =
-      new TextFileType("r_doc", "Rd File", EditorLanguage.LANG_RDOC, ".Rd",
+      new TextFileType("r_doc", constants_.rdFile(), EditorLanguage.LANG_RDOC, ".Rd",
                        new ImageResource2x(ICONS.iconRd2x()),
                        true, // word-wrap
                        true, // source on save aka preview on save
@@ -82,7 +85,7 @@ public class FileTypeRegistry
 
 
    public static final TextFileType NAMESPACE =
-     new TextFileType("r_namespace", "NAMESPACE", EditorLanguage.LANG_R, "",
+     new TextFileType("r_namespace", constants_.namespaceLabel(), EditorLanguage.LANG_R, "",
                       new ImageResource2x(ICONS.iconText2x()), false, false, false, false, false,
                       false, false, false, false, false, false, false, false);
 
@@ -95,16 +98,16 @@ public class FileTypeRegistry
                           new ImageResource2x(ICONS.iconTex2x()));
 
    public static final PlainTextFileType RHISTORY =
-      new PlainTextFileType("r_history", "R History", ".Rhistory",
+      new PlainTextFileType("r_history", constants_.rHistoryLabel(), ".Rhistory",
                             new ImageResource2x(ICONS.iconRhistory2x()),
                             true);
 
    public static final RWebContentFileType RMARKDOWN =
-         new RWebContentFileType("r_markdown", "R Markdown", EditorLanguage.LANG_RMARKDOWN,
+         new RWebContentFileType("r_markdown", constants_.rMarkdownLabel(), EditorLanguage.LANG_RMARKDOWN,
                               ".Rmd", new ImageResource2x(ICONS.iconRmarkdown2x()), true, true, true);
 
    public static final RWebContentFileType RNOTEBOOK =
-         new RWebContentFileType("r_notebook", "R Notebook", EditorLanguage.LANG_RMARKDOWN,
+         new RWebContentFileType("r_notebook", constants_.rNotebookLabel(), EditorLanguage.LANG_RMARKDOWN,
                                  ".nb.html", new ImageResource2x(ICONS.iconRnotebook2x()), true);
    
    public static final QuartoFileType QUARTO = new QuartoFileType();
@@ -112,7 +115,7 @@ public class FileTypeRegistry
    public static final RWebContentFileType RPRESENTATION = new RPresentationFileType();
 
    public static final WebContentFileType MARKDOWN =
-      new WebContentFileType("markdown", "Markdown", EditorLanguage.LANG_MARKDOWN,
+      new WebContentFileType("markdown", constants_.markdownLabel(), EditorLanguage.LANG_MARKDOWN,
                            ".md", new ImageResource2x(ICONS.iconMarkdown2x()), true, true);
 
 
@@ -497,9 +500,9 @@ public class FileTypeRegistry
                   else
                   {
                      globalDisplay_.showErrorMessage(
-                       "File Download Error",
-                       "Unable to show file because file downloads are " +
-                       "restricted on this server.\n");
+                       constants_.fileDownloadErrorCaption(),
+               constants_.fileDownloadErrorMessage() +
+                       constants_.restrictedOnServerMessage());
                   }
                }
             }
@@ -704,7 +707,7 @@ public class FileTypeRegistry
       }
       else
       {
-         assert filespec.indexOf("*") < 0 : "Unexpected filespec format";
+         assert filespec.indexOf("*") < 0 : constants_.unexpectedFormatMessage();
          fileTypesByFilename_.put(filespec.toLowerCase(), fileType);
          if (icon != null)
          {
@@ -719,7 +722,6 @@ public class FileTypeRegistry
    {
       iconsByFileExtension_.put(extension, icon);
    }
-
    private final HashMap<String, FileType> fileTypesByFileExtension_ = new HashMap<>();
    private final HashMap<String, FileType> fileTypesByFilename_ = new HashMap<>();
    private final HashMap<String, FileType> fileTypesByTypeName_ = new HashMap<>();

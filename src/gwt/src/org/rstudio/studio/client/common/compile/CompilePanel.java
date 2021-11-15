@@ -16,12 +16,14 @@
 
 package org.rstudio.studio.client.common.compile;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.widget.LeftRightToggleButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -57,11 +59,11 @@ public class CompilePanel extends Composite
    {
       Commands commands = RStudioGinjector.INSTANCE.getCommands();
       ImageResource stopImage = commands.interruptR().getImageResource();
-      stopButton_ = new ToolbarButton(ToolbarButton.NoText, "Stop", stopImage);
+      stopButton_ = new ToolbarButton(ToolbarButton.NoText, constants_.stopTitle(), stopImage);
       stopButton_.setVisible(false);
       toolbar.addRightWidget(stopButton_);
 
-      showOutputButton_ = new LeftRightToggleButton("Output", "Issues", false);
+      showOutputButton_ = new LeftRightToggleButton(constants_.outputLeftLabel(), constants_.issuesRightLabel(), false);
       showOutputButton_.setVisible(false);
       showOutputButton_.addClickHandler(new ClickHandler() {
          @Override
@@ -75,7 +77,7 @@ public class CompilePanel extends Composite
       });
       toolbar.addRightWidget(showOutputButton_);
 
-      showErrorsButton_ = new LeftRightToggleButton("Output", "Issues",  true);
+      showErrorsButton_ = new LeftRightToggleButton(constants_.outputLeftLabel(), constants_.issuesRightLabel(),  true);
       showErrorsButton_.setVisible(false);
       showErrorsButton_.addClickHandler(new ClickHandler() {
          @Override
@@ -218,4 +220,5 @@ public class CompilePanel extends Composite
    private CompileOutputDisplay outputDisplay_;
    private SourceMarkerList errorList_;
    private boolean canStop_ = true;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

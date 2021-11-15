@@ -15,7 +15,9 @@
 
 package org.rstudio.studio.client.common.synctex.model;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
 public class PdfLocation extends JavaScriptObject
 {
@@ -73,13 +75,14 @@ public class PdfLocation extends JavaScriptObject
    {
       StringBuilder str = new StringBuilder();
       str.append(getFile());
-      str.append("; Page ");
+      str.append(constants_.pdfPageText());
       str.append(getPage());
       str.append(" {" + (int)getX() + ", " + (int)getY() + ", " + 
                  (int)getWidth() + ", " + (int)getHeight() + "}");
       if (isFromClick())
-         str.append(" [From Click]");
+         str.append(" " + constants_.pdfFromClickText());
       return str.toString();
       
    }
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }
