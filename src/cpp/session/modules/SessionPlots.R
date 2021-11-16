@@ -17,14 +17,14 @@
 setHook(
   hookName = "before.plot.new", 
   value = function() { 
-    .Call("rs_emitBeforeNewPlot")
+    .Call("rs_emitBeforeNewPlot", PACKAGE = "(embedding)")
   },
   action = "append")
 
 setHook(
   hookName = "before.grid.newpage", 
   value = function() { 
-    .Call("rs_emitBeforeNewGridPage")
+    .Call("rs_emitBeforeNewGridPage", PACKAGE = "(embedding)")
   },
   action = "append")
 
@@ -32,7 +32,7 @@ setHook(
 setHook(
   hookName = "plot.new", 
   value = function() { 
-    .Call("rs_emitNewPlot")
+    .Call("rs_emitNewPlot", PACKAGE = "(embedding)")
   },
   action = "append")
 
