@@ -36,7 +36,7 @@ core::Error readSecureKeyFile(const FilePath& secureKeyPath,
    if (secureKeyPath.exists())
    {
       *pKeyPathUsed = secureKeyPath.getAbsolutePath();
-      LOG_DEBUG_MESSAGE("Using secure key file: \"" + *pKeyPathUsed + "\"");
+      LOG_DEBUG_MESSAGE("Using secure key file: " + *pKeyPathUsed);
 
       // read the key
       std::string secureKey;

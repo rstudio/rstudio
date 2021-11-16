@@ -255,7 +255,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       public ClientStateValue()
       {
          super("quarto",
-               "quarto-new-proj",
+               "quarto-new-proj-defaults",
                ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(),
                false);
