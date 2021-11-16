@@ -1127,4 +1127,77 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     @DefaultStringValue("View File Tab")
     @Key("viewFileTabLabel")
     String viewFileTabLabel();
+
+    /**
+     * Translated "at".
+     *
+     * @return translated "at"
+     */
+    @DefaultStringValue("at")
+    @Key("atText")
+    String atText();
+
+    /**
+     * Translated "This is a warning!".
+     *
+     * @return translated "This is a warning!"
+     */
+    @DefaultStringValue("This is a warning!")
+    @Key("warningMessage")
+    String warningMessage();
+
+    /**
+     * Translated "R Presentation".
+     *
+     * @return translated "R Presentation"
+     */
+    @DefaultStringValue("R Presentation")
+    @Key("rPresentationLabel")
+    String rPresentationLabel();
+
+    /**
+     * Translated "Satellite windows can't launch other satellites".
+     *
+     * @return translated "Satellite windows can't launch other satellites"
+     */
+    @DefaultStringValue("Satellite windows can't launch other satellites")
+    @Key("satelliteWindowsDebugLog")
+    String satelliteWindowsDebugLog();
+
+    /**
+     * Translated "Source Marker Item Table".
+     *
+     * @return translated "Source Marker Item Table"
+     */
+    @DefaultStringValue("Source Marker Item Table")
+    @Key("sourceMarkerItemTableList")
+    String sourceMarkerItemTableList();
+
+    /**
+     * Translated "Preview".
+     *
+     * @return translated "Preview"
+     */
+    @DefaultStringValue("Preview")
+    @Key("previewButtonText")
+    String previewButtonText();
+
+    /**
+     * Translated "Generic Content".
+     *
+     * @return translated "Generic Content"
+     */
+    @DefaultStringValue("Generic Content")
+    @Key("genericContentLabel")
+    String genericContentLabel();
+
+    /**
+     * Translated "urlcontent doesn't apply to filesystem files".
+     *
+     * @return translated "urlcontent doesn't apply to filesystem files"
+     */
+    @DefaultStringValue("urlcontent doesn't apply to filesystem files")
+    @Key("urlContentMessage")
+    String urlContentMessage();
+
 }

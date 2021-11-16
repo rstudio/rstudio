@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 
 import org.rstudio.core.client.FilePosition;
@@ -22,6 +23,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
@@ -286,7 +288,7 @@ public class TextFileType extends EditableFileType
    
    public String getPreviewButtonText()
    {
-      return "Preview";
+      return constants_.previewButtonText();
    }
    
    public String createPreviewCommand(String file)
@@ -565,4 +567,5 @@ public class TextFileType extends EditableFileType
    protected static Pattern reCommentType_ = Pattern.create("\\bcomment\\b");
    protected static Pattern reKeywordType_ = Pattern.create("\\bkeyword\\b");
    protected static Pattern reIdentifierType_ = Pattern.create("\\bidentifier\\b");
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }
