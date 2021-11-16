@@ -110,7 +110,7 @@ json::Object errorLocationToJson(const ErrorLocation& in_location)
    json::Object errorLocation;
    errorLocation["file"] = in_location.getFile();
    errorLocation["function"] = in_location.getFunction();
-   errorLocation["lineNumber"] = in_location.getLine();
+   errorLocation["lineNumber"] = static_cast<int64_t>(in_location.getLine());
    return errorLocation;
 }
 
