@@ -63,6 +63,8 @@ sudo apt-get -y install \
   patchelf \
   pkg-config \
   python \
+  python3 \
+  python3-venv \
   rrdtool \
   software-properties-common \
   unzip \
@@ -99,3 +101,10 @@ sudo ./install-crashpad bionic
 ./install-common focal
 cd ../linux
 
+# Python packages for i18n
+if [ -x "$(command -v python3)" ]; then
+  pushd ../../src/gwt/tools/i18n-helpers
+  python3 -m venv VENV
+  ./VENV/bin/pip install --disable-pip-version-check -r commands.cmd.xml/requirements.txt
+  popd
+fi 

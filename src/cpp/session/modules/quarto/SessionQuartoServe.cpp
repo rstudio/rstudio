@@ -278,11 +278,11 @@ std::string quartoDefaultFormat(const core::FilePath& outputFile)
      if (format != kFormatDefault)
         return format;
      else
-        return "";
+        return "default";
    }
    else
    {
-      return "";
+      return "default";
    }
 }
 

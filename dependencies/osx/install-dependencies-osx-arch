@@ -50,6 +50,13 @@ FORMULAS=(
    r
 )
 
+# Python only needed for developer builds
+if ! is-jenkins; then
+  if ! has-program python3; then
+    FORMULAS+=(python3)
+  fi
+fi
+
 HOMEBREW_PREFIX=$(brew --prefix)
 for FORMULA in "${FORMULAS[@]}"; do
    if [ -d "${HOMEBREW_PREFIX}/opt/${FORMULA}" ]; then
@@ -66,4 +73,3 @@ grep -qxF 'set startup-with-shell off' ~/.gdbinit || echo "set startup-with-shel
 cd ../common
 ./install-common
 cd ../osx
-

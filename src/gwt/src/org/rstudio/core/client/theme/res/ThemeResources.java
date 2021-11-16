@@ -27,39 +27,10 @@ public interface ThemeResources extends ClientBundle
 
    ThemeStyles themeStyles();
 
-   @Source("dialogTopLeft.png")
-   DataResource dialogTopLeft();
    @Source("dialogTop.png")
    DataResource dialogTop();
-   @Source("dialogTopRight.png")
-   DataResource dialogTopRight();
-   @Source("dialogLeft.png")
-   DataResource dialogLeft();
-   @Source("dialogRight.png")
-   DataResource dialogRight();
-   @Source("dialogBottomLeft.png")
-   DataResource dialogBottomLeft();
    @Source("dialogBottom.png")
    DataResource dialogBottom();
-   @Source("dialogBottomRight.png")
-   DataResource dialogBottomRight();
-
-   @Source("podTopLeft.png")
-   DataResource podTopLeft();
-   @Source("podTop.png")
-   DataResource podTop();
-   @Source("podTopRight.png")
-   DataResource podTopRight();
-   @Source("podLeft.png")
-   DataResource podLeft();
-   @Source("podRight.png")
-   DataResource podRight();
-   @Source("podBottomLeft.png")
-   DataResource podBottomLeft();
-   @Source("podBottom.png")
-   DataResource podBottom();
-   @Source("podBottomRight.png")
-   DataResource podBottomRight();
 
    @Source("verticalHandle.png")
    DataResource verticalHandle();
@@ -93,12 +64,6 @@ public interface ThemeResources extends ClientBundle
    @ImageOptions(repeatStyle = RepeatStyle.Both)
    ImageResource clear();
 
-   @Source("toolbarBackground.png")
-   DataResource toolbarBackground();
-   @Source("toolbarBackground2.png")
-   DataResource toolbarBackground2();
-   @Source("desktopGlobalToolbarBackground.png")
-   DataResource desktopGlobalToolbarBackground();
    @Source("webGlobalToolbarLeft.png")
    DataResource webGlobalToolbarLeft();
    @Source("webGlobalToolbarRight.png")

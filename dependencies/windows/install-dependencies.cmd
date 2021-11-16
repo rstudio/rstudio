@@ -26,7 +26,7 @@ set PANDOC_VERSION=2.14.2
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
-set QUARTO_VERSION=0.2.251
+set QUARTO_VERSION=0.2.281
 set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
 set LIBCLANG_VERSION=5.0.2
@@ -192,6 +192,12 @@ pushd ..\..\src\gwt\panmirror\src\editor
 call yarn install
 popd
 
+if exist C:\Windows\py.exe (
+  pushd ..\..\src\gwt\tools\i18n-helpers\
+  py -3 -m venv VENV
+  VENV\Scripts\pip install --disable-pip-version-check -r commands.cmd.xml\requirements.txt
+  popd
+)
 
 call install-packages.cmd
 

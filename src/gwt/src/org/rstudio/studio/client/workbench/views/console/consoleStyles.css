@@ -4,7 +4,6 @@
 @external popupContent;
 @external ace_sb, ace_cursor, ace_hidden;
 
-@external rstudio-themes-flat;
 @external rstudio-themes-dark-menus;
 @external js-focus-visible, focus-visible;
 
@@ -112,7 +111,7 @@
    background-color: rgb(190, 230, 255);
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .searchMatch
+.rstudio-themes-dark-menus .searchMatch
 {
    background-color: THEME_DARK_SEARCHRESULT_BACKGROUND;
 }
@@ -164,11 +163,11 @@
    padding: 3px;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .promptFullHelp {
+.rstudio-themes-dark-menus .promptFullHelp {
    background: #6f6f5f;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .selected {
+.rstudio-themes-dark-menus .selected {
    background-color: THEME_DARKGREY_MENU_SELECTED;
 }
 

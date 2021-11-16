@@ -151,10 +151,10 @@ std::tuple<FilePath,Version> userInstalledQuarto()
 void detectQuartoInstallation()
 {
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.2.251");
+   const Version kQuartoRequiredVersion("0.2.281");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.2.251");
+   const Version kQuartoRecommendedVersion("0.2.281");
 
    // reset
    s_userInstalledPath = FilePath();

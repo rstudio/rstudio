@@ -22,6 +22,7 @@ import { Extension } from '../api/extension';
 import { editingRootNode } from '../api/node';
 import { FixupContext } from '../api/fixup';
 import { trTransform } from '../api/transaction';
+import { isParagraphNode } from '../api/paragraph';
 
 const extension: Extension = {
   fixups: (schema: Schema) => {
@@ -70,15 +71,6 @@ function requiresTrailingP(selection: Selection) {
   const editingRoot = editingRootNode(selection);
   if (editingRoot) {
     return !isParagraphNode(editingRoot.node.lastChild) || isDisplayMathNode(editingRoot.node.lastChild);
-  } else {
-    return false;
-  }
-}
-
-function isParagraphNode(node: ProsemirrorNode | null | undefined) {
-  if (node) {
-    const schema = node.type.schema;
-    return node.type === schema.nodes.paragraph;
   } else {
     return false;
   }

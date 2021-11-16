@@ -126,6 +126,7 @@ public class ElementIds
    public final static String RSTUDIO_LOGO = "rstudio_logo";
    public final static String CONSOLE_INPUT = "console_input";
    public final static String CONSOLE_OUTPUT = "console_output";
+   public final static String CONSOLE_INTERPRETER_VERSION = "console_interpreter_version";
    public final static String DEPLOY_CONTENT = "deploy_content";
    public final static String FIND_REPLACE_BAR = "find_replace_bar";
    public final static String HELP_FRAME = "help_frame";
@@ -677,4 +678,8 @@ public class ElementIds
    public static String getKybrdShrtctsFilterWidget() { return getElementId(KYBRD_SHRTCTS_FILTER_WIDGET); }
    public final static String KYBRD_SHRTCTS_RESET_BUTTON = "kybrd_shrtcts_rst";
    public static String getKybrdShrtctsResetButton() { return getElementId(KYBRD_SHRTCTS_RESET_BUTTON); }
+
+   // VersionsPopupMenu
+   public final static String VERSIONS_POPUP_MENU = "versions_popup_menu";
+
 }

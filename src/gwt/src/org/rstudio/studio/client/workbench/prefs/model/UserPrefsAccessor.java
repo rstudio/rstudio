@@ -2176,14 +2176,12 @@ public class UserPrefsAccessor extends Prefs
          "Global theme", 
          "The theme to use for the main RStudio user interface.", 
          new String[] {
-            GLOBAL_THEME_CLASSIC,
             GLOBAL_THEME_DEFAULT,
             GLOBAL_THEME_ALTERNATE
          },
          "default");
    }
 
-   public final static String GLOBAL_THEME_CLASSIC = "classic";
    public final static String GLOBAL_THEME_DEFAULT = "default";
    public final static String GLOBAL_THEME_ALTERNATE = "alternate";
 

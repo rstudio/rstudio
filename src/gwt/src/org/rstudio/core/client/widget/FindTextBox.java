@@ -53,7 +53,6 @@ public class FindTextBox extends Composite implements HasValue<String>,
 
       Style style = getElement().getStyle();
       style.setPosition(Position.RELATIVE);
-      style.setTop(1, Unit.PX);
    }
 
    public HandlerRegistration addValueChangeHandler(

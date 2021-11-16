@@ -321,11 +321,8 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       int top = getAbsoluteTop();
       int left = getAbsoluteLeft();
-      int bottom = top + getOffsetHeight();
+      int bottom = top + getOffsetHeight() + 9;
       int width = getOffsetWidth();
-
-      if (RStudioThemes.isFlat())
-         bottom += 9;
 
       if (!help_.isShowing())
          help_.show();

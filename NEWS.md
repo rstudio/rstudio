@@ -32,9 +32,11 @@
 * Use double indent for function parameters to align with Tidyverse style (#9766)
 * Recognize `id_ed25519` key file in Version Control options UI (#9991)
 * Updated Files Pane buttons to resize and remain visible at smaller widths (#9870)
+* Remove 'Classic' IDE theme (#9738)
 
 ### Bugfixes
 
+* Fixed an issue that could cause calls to `grid` functions to fail after restart (#2919)
 * Fixed errors when uploading files/directory names with invalid characters (Pro #698)
 * Added error when rsession may be running a different version of R than expected (Pro #2477)
 * Fixed "No such file or directory" errors when auto-saving R Notebook chunks while running them (#9284)

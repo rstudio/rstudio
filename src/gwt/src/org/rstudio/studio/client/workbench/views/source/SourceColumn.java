@@ -46,10 +46,8 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
-import org.rstudio.studio.client.quarto.QuartoHelper;
-import org.rstudio.studio.client.quarto.model.QuartoConfig;
+import org.rstudio.studio.client.rmarkdown.model.RmdEditorMode;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
-import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -1298,24 +1296,19 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          if (textFile.isMarkdown())
          {   
             // default if there are no file or project level modes established
-            String mode = null;
-            String docMode = documentEditorMode(document);
-            String projectMode = projectEditorMode(document, sessionInfo);
-            if (docMode != null)
-               mode = docMode;
-            else if (projectMode != null)
-               mode = projectMode;
-            else if (newDoc && userPrefs.visualMarkdownEditingIsDefault().getValue())
-               mode = kEditorVisual;
+            String yaml = YamlFrontMatter.getFrontMatter(document.getContents());
+            String mode = RmdEditorMode.getEditorMode(document.getPath(), yaml, sessionInfo);
+            if ((mode == null) && newDoc && userPrefs.visualMarkdownEditingIsDefault().getValue())
+               mode = RmdEditorMode.VISUAL;
             
             if (mode != null)
             {
                HashMap<String,String> props = new HashMap<String,String>();
                props.put(TextEditingTarget.RMD_VISUAL_MODE,
-                  mode == kEditorVisual 
+                  mode == RmdEditorMode.VISUAL 
                      ? DocUpdateSentinel.PROPERTY_TRUE
                      : DocUpdateSentinel.PROPERTY_FALSE);
-               if (mode == kEditorVisual)
+               if (mode == RmdEditorMode.VISUAL)
                {
                   props.put(TextEditingTarget.RMD_VISUAL_MODE_WRAP_CONFIGURED,
                             DocUpdateSentinel.PROPERTY_TRUE);
@@ -1333,72 +1326,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       }
    }
    
-   
-   private static String projectEditorMode(SourceDocument document, SessionInfo sessionInfo)
-   {
-      QuartoConfig config = sessionInfo.getQuartoConfig();
-      String editor = config.project_editor;
-      if (StringUtil.isNullOrEmpty(editor))
-         editor = null;
-      
-      if (document.getPath() != null)
-      {
-         if (QuartoHelper.isWithinQuartoProjectDir(document.getPath(), config))
-            return asEditorMode(editor);
-         else
-            return null;
-      }
-      else
-      {
-         return editor;
-      }
-   }
-   
-   private static String documentEditorMode(SourceDocument document)
-   {
-      try
-      {  
-         String yaml = YamlFrontMatter.getFrontMatter(document.getContents());
-         if (yaml != null)
-         {
-            YamlTree yamlTree = new YamlTree(yaml);
-            String editor = yamlTree.getChildValue("editor", "type");
-            if (!StringUtil.isNullOrEmpty(asEditorMode(editor)))
-            {
-               return editor.trim();
-            } 
-            editor = yamlTree.getChildValue("editor", "mode");
-            if (!StringUtil.isNullOrEmpty(asEditorMode(editor)))
-            {
-               return editor.trim();
-            } 
-            editor = yamlTree.getKeyValue("editor");
-            if (!StringUtil.isNullOrEmpty(asEditorMode(editor)))
-            {
-               return editor.trim();
-            }  
-           
-         }
-      }
-      catch(Exception ex)
-      {
-         Debug.logException(ex);
-      }
-      
-      return null;
-   }
-   
-   private final static String kEditorVisual = "visual";
-   private final static String kEditorSource = "source";
-   
-   private static String asEditorMode(String mode)
-   {
-      if (mode == kEditorVisual || mode == kEditorSource)
-         return mode;
-      else
-         return null;
-   }
-
+  
    private void closeTabIndex(int idx, boolean closeDocument)
    {
       EditingTarget target = editors_.remove(idx);

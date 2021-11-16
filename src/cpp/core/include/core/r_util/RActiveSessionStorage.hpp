@@ -49,12 +49,11 @@ namespace r_util {
       Error writeProperties(const std::string& id, const std::map<std::string, std::string>& properties) override;
 
    private:
-      FilePath activeSessionsDir_;
+      FilePath scratchPath_;
       const std::string propertiesDirName_ = "properites";
-      const std::string fileSessionDirPrefix_ = "session-";
 
-      FilePath getPropertyDir(const std::string& id) const;
-      FilePath getPropertyFile(const std::string& id, const std::string& name) const;
+      FilePath getPropertyDir() const;
+      FilePath getPropertyFile(const std::string& name) const;
       
       static const std::map<std::string, std::string> fileNames;
       
@@ -84,8 +83,7 @@ namespace r_util {
    class ActiveSessionStorageFactory
    {
    public:
-      static std::shared_ptr<IActiveSessionStorage> getActiveSessionStorage();
-      static std::shared_ptr<IActiveSessionStorage> getFileActiveSessionStorage();
+      static std::shared_ptr<IActiveSessionStorage> getFileActiveSessionStorage(const FilePath& scratchPath);
    };
 
 } // namespace r_util

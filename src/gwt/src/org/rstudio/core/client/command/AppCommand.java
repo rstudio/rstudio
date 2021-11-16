@@ -480,7 +480,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       if (isCheckable)
       {
-         if (RStudioThemes.isFlat() && RStudioThemes.isEditorDark()) {
+         if (RStudioThemes.isEditorDark()) {
             return isChecked ?
                new ImageResource2x(ThemeResources.INSTANCE.menuCheckInverted2x()) :
                null;
