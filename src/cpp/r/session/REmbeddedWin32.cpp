@@ -22,6 +22,7 @@
 #define R_INTERNAL_FUNCTIONS
 #include <Rversion.h>
 #include <r/RInternal.hpp>
+#include <r/RUtil.hpp>
 #include <r/RVersionInfo.hpp>
 
 #define Win32
@@ -36,6 +37,7 @@
 #include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
+#include <core/Version.hpp>
 #include <core/system/LibraryLoader.hpp>
 
 #include <r/RInterface.hpp>
@@ -171,6 +173,12 @@ bool initializeMaxMemoryViaCmdLineOptions()
 
 void initializeMaxMemory(const core::FilePath& rHome)
 {
+   // no action required with newer versions of R
+   const char* dllVersion = getDLLVersion();
+   core::Version rVersion(dllVersion);
+   if (rVersion >= core::Version("4.2.0"))
+      return;
+
    initializeMaxMemoryDangerously() ||
          initializeMaxMemoryViaCmdLineOptions();
 }
