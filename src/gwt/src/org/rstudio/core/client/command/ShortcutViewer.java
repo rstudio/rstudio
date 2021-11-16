@@ -17,6 +17,7 @@ package org.rstudio.core.client.command;
 
 
 import com.google.inject.Provider;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.widget.ShortcutInfoPanel;
 import org.rstudio.core.client.widget.VimKeyInfoPanel;
 import org.rstudio.studio.client.application.AriaLiveService;
@@ -92,7 +93,7 @@ public class ShortcutViewer implements NativePreviewHandler
       if (pPrefs_.get().enableScreenReader().getValue())
       {
          pAriaLive_.get().announce(AriaLiveService.INACCESSIBLE_FEATURE,
-               "Vim keyboard shortcut help not screen reader accessible. Press any key to close.",
+               constants_.vimKeyboardShortcutHelpMessage(),
                Timing.IMMEDIATE,
                Severity.ALERT);
       }
@@ -157,4 +158,5 @@ public class ShortcutViewer implements NativePreviewHandler
    private final Provider<UserPrefs> pPrefs_;
    private final Provider<AriaLiveService> pAriaLive_;
    private final GlobalDisplay globalDisplay_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

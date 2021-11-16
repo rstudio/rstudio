@@ -1552,6 +1552,13 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @Key("responseText")
     String responseText();
 
-
+    /**
+     * Translated "Vim keyboard shortcut help not screen reader accessible. Press any key to close."
+     *
+     * @return translated "Vim keyboard shortcut help not screen reader accessible. Press any key to close."
+     */
+    @DefaultStringValue("Vim keyboard shortcut help not screen reader accessible. Press any key to close.")
+    @Key("vimKeyboardShortcutHelpMessage")
+    String vimKeyboardShortcutHelpMessage();
 
 }
