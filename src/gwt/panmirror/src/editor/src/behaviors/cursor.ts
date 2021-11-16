@@ -28,6 +28,7 @@ import { BaseKey, verticalArrowCanAdvanceWithinTextBlock } from '../api/basekeys
 import './cursor.css';
 import { ResolvedPos } from 'prosemirror-model';
 import { isList } from '../api/list';
+import { StateChangeEvent } from '../api/event-types';
 
 
 const extension: Extension = {
@@ -81,22 +82,28 @@ function gapArrowHandler(dir: 'up' | 'left') {
       }
 
       // check if we are in a div
-      const div = findParentNodeOfType(state.schema.nodes.div)(state.selection);
+      if (state.schema.nodes.div) {
+        const div = findParentNodeOfType(state.schema.nodes.div)(state.selection);
       
-      // if we are at the very top of a div then create a gap cursor
-      if (div) {
-        
-        const $divPos = state.doc.resolve(div.pos);
-        if ($head.index($head.depth - 1) === 0 && !(state.selection instanceof GapCursor)) {
-
-          // if we are in a list item the calculations about view.endOfTextblock will be off
-          if (findParentNode(isList)(state.selection)) {
-            return false;
-          }
-
-          return createGapCursor(state.doc.resolve($divPos.pos + 1));
-        } 
+        // if we are at the very top of a div then create a gap cursor
+        if (div) {
+          
+          const $divPos = state.doc.resolve(div.pos);
+          if ($head.index($head.depth - 1) === 0 && !(state.selection instanceof GapCursor)) {
+  
+            // if we are in a list item the calculations about view.endOfTextblock will be off
+            if (findParentNode(isList)(state.selection)) {
+              return false;
+            }
+  
+            return createGapCursor(state.doc.resolve($divPos.pos + 1));
+          // if we are between divs then create a gap cursor between them
+          } else if ($divPos.nodeBefore?.type === state.schema.nodes.div) {
+            return createGapCursor(state.doc.resolve($divPos.pos));
+          } 
+        }
       }
+     
 
       // if we are at the top of the document then create a gap cursor
       if (!$head.nodeBefore && ($head.pos <= 2)) {
@@ -154,6 +161,13 @@ function gapClickHandler(view: EditorView, event: Event): boolean {
             return createGapCursor();
           }
         }
+      }
+    }
+
+    // handle clicks between blocks
+    if (!clickPos.inside) {
+      if ($clickPos.nodeBefore?.isBlock && $clickPos.nodeAfter?.isBlock) {
+        return createGapCursor();
       }
     }
 
