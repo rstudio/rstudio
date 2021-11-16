@@ -185,6 +185,10 @@ is-verbose () {
 	[ -n "${VERBOSE}" ] && [ "${VERBOSE}" != "0" ]
 }
 
+is-m1-mac () {
+	[ "$(arch)" = "arm64" ]
+}
+
 # Download a single file
 download () {
 
