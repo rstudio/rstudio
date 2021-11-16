@@ -25,6 +25,8 @@
 
 #include <cassert>
 #include <sstream>
+#include <typeindex>
+#include <unordered_map>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/noncopyable.hpp>
@@ -35,6 +37,7 @@
 #include <shared_core/FileLogDestination.hpp>
 #include <shared_core/json/Json.hpp>
 #include <shared_core/ReaderWriterMutex.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <shared_core/StderrLogDestination.hpp>
 
 namespace rstudio {
@@ -90,12 +93,155 @@ std::ostream& operator<<(std::ostream& io_ostream, LogLevel in_logLevel)
    return io_ostream;
 }
 
+LogLevel logLevelFromStr(const std::string& in_str)
+{
+   if (in_str == "ERROR")
+      return LogLevel::ERR;
+   else if (in_str == "WARNING")
+      return LogLevel::WARN;
+   else if (in_str == "INFO")
+      return LogLevel::INFO;
+   else
+      return LogLevel::DEBUG;
+}
+
+json::Object errorLocationToJson(const ErrorLocation& in_location)
+{
+   json::Object errorLocation;
+   errorLocation["file"] = in_location.getFile();
+   errorLocation["function"] = in_location.getFunction();
+   errorLocation["lineNumber"] = in_location.getLine();
+   return errorLocation;
+}
+
+json::Object errorToJson(const Error& in_error)
+{
+   json::Object error;
+   if (in_error.hasCause())
+      error["cause"] = errorToJson(in_error.getCause());
+
+   error["code"] = in_error.getCode();
+
+   if (in_error.getLocation().hasLocation())
+      error["location"] = errorLocationToJson(in_error.getLocation());
+
+   error["message"] = in_error.getMessage();
+
+   if (!in_error.getName().empty())
+      error["type"] = in_error.getName();
+
+   const ErrorProperties& props = in_error.getProperties();
+   if (!props.empty())
+   {
+      json::Object properties;
+      for (const auto& prop : props)
+         properties[prop.first] = prop.second;
+      error["properties"] = properties;
+   }
+
+   return error;
+}
+
+std::unordered_map<std::type_index, boost::function<void(json::Object&, const std::pair<std::string, boost::any>&)>> s_logMessagePropertiesToJsonMap =
+{
+   {typeid(int), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<int>(prop.second);}},
+   {typeid(uint64_t), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<uint64_t>(prop.second);}},
+   {typeid(uint32_t), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<uint32_t>(prop.second);}},
+   {typeid(float), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<float>(prop.second);}},
+   {typeid(double), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<double>(prop.second);}},
+   {typeid(bool), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<bool>(prop.second);}},
+   {typeid(std::string), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<std::string>(prop.second);}},
+   {typeid(const char*), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<const char*>(prop.second);}},
+   {typeid(char*), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<char*>(prop.second);}},
+   {typeid(json::Object), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<json::Object>(prop.second);}},
+   {typeid(json::Array), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = boost::any_cast<json::Array>(prop.second);}},
+   {typeid(Error), [](json::Object& obj, const std::pair<std::string, boost::any>& prop){obj[prop.first] = errorToJson(boost::any_cast<Error>(prop.second));}}
+};
+
+json::Object logMessagePropertiesToJson(const LogMessageProperties& in_properties)
+{
+   json::Object obj;
+
+   for (const auto& prop : in_properties)
+   {
+      const std::type_info& tinfo = prop.second.type();
+      auto iter = s_logMessagePropertiesToJsonMap.find(std::type_index(tinfo));
+      if (iter != s_logMessagePropertiesToJsonMap.end())
+      {
+         try
+         {
+            iter->second(obj, prop);
+         }
+         catch (const boost::bad_any_cast&)
+         {
+            // an unsupported property type is being logged
+            BOOST_ASSERT(false);
+         }
+      }
+      else
+      {
+         // type does not match registered type converters
+         BOOST_ASSERT(false);
+      }
+   }
+
+   return obj;
+}
+
+std::unordered_map<std::type_index, boost::function<std::string(const std::pair<std::string, boost::any>&)>> s_logMessagePropertiesToStringMap =
+{
+   {typeid(int), [](const std::pair<std::string, boost::any>& prop){return safe_convert::numberToString(boost::any_cast<int>(prop.second));}},
+   {typeid(uint64_t), [](const std::pair<std::string, boost::any>& prop){return safe_convert::numberToString(boost::any_cast<uint64_t>(prop.second));}},
+   {typeid(uint32_t), [](const std::pair<std::string, boost::any>& prop){return safe_convert::numberToString(boost::any_cast<uint32_t>(prop.second));}},
+   {typeid(float), [](const std::pair<std::string, boost::any>& prop){return safe_convert::numberToString(boost::any_cast<float>(prop.second));}},
+   {typeid(double), [](const std::pair<std::string, boost::any>& prop){return safe_convert::numberToString(boost::any_cast<double>(prop.second));}},
+   {typeid(bool), [](const std::pair<std::string, boost::any>& prop){return boost::any_cast<bool>(prop.second) ? "true" : "false";}},
+   {typeid(std::string), [](const std::pair<std::string, boost::any>& prop){return boost::any_cast<std::string>(prop.second);}},
+   {typeid(const char*), [](const std::pair<std::string, boost::any>& prop){return boost::any_cast<const char*>(prop.second);}},
+   {typeid(char*), [](const std::pair<std::string, boost::any>& prop){return boost::any_cast<char*>(prop.second);}},
+   {typeid(json::Object), [](const std::pair<std::string, boost::any>& prop){return boost::any_cast<json::Object>(prop.second).write();}},
+   {typeid(json::Array), [](const std::pair<std::string, boost::any>& prop){return boost::any_cast<json::Array>(prop.second).write();}},
+   {typeid(Error), [](const std::pair<std::string, boost::any>& prop){return errorToJson(boost::any_cast<Error>(prop.second)).write();}}
+};
+
+std::string logMessagePropertiesToString(const LogMessageProperties& in_properties)
+{
+   std::vector<std::string> properties;
+   for (const auto& prop : in_properties)
+   {
+      const std::type_info& tinfo = prop.second.type();
+      auto iter = s_logMessagePropertiesToStringMap.find(std::type_index(tinfo));
+      if (iter != s_logMessagePropertiesToStringMap.end())
+      {
+         try
+         {
+            std::string val = iter->second(prop);
+            properties.push_back(prop.first + ": " + val);
+         }
+         catch (const boost::bad_any_cast&)
+         {
+            // an unsupported property type is being logged
+            BOOST_ASSERT(false);
+         }
+      }
+      else
+      {
+         // type does not match registered type converters
+         BOOST_ASSERT(false);
+      }
+   }
+
+   return "[" + boost::join(properties, ", ") + "]";
+}
+
 std::string formatLogMessage(
    LogLevel in_logLevel,
    const std::string& in_message,
    const std::string& in_programId,
    bool humanReadableFormat,
-   const ErrorLocation& in_loggedFrom = ErrorLocation())
+   const boost::optional<LogMessageProperties>& in_properties,
+   const ErrorLocation& in_loggedFrom = ErrorLocation(),
+   const Error& in_error = Success())
 {
    using namespace boost::posix_time;
    ptime time = microsec_clock::universal_time();
@@ -111,7 +257,16 @@ std::string formatLogMessage(
       oss << core::date_time::format(time, core::date_time::kIso8601Format)
           << " [" << in_programId << "] ";
 
-      oss << in_logLevel << " " << message;
+      if (in_error)
+         oss << in_logLevel << " " << in_error.asString();
+      else
+         oss << in_logLevel << " " << message;
+
+      if (in_properties)
+      {
+          std::string properties = logMessagePropertiesToString(in_properties.get());
+          oss << " " << properties;
+      }
 
       if (in_loggedFrom.hasLocation())
          oss << s_delim << " " << s_loggedFrom << ": " << cleanDelimiters(in_loggedFrom.asString());
@@ -130,7 +285,16 @@ std::string formatLogMessage(
       logLevel << in_logLevel;
       logObject["level"] = logLevel.str();
 
-      logObject["message"] = message;
+      if (in_error)
+         logObject["error"] = errorToJson(in_error);
+      else
+         logObject["message"] = message;
+
+      if (in_properties)
+      {
+         json::Object properties = logMessagePropertiesToJson(in_properties.get());
+         logObject["properties"] = properties;
+      }
 
       return logObject.write() + "\n";
    }
@@ -155,13 +319,43 @@ public:
     * @param in_logLevel        The log level of the message, which is passed to the destination for informational purposes.
     * @param in_message         The pre-formatted message.
     * @param in_section         The section to which to log this message.
+    * @param in_properties      The LogMessageProperties to log with the message.
     * @param in_loggedFrom      The location from which the error message was logged.
+    * @param in_error           The error (if any) to log.
     */
    void writeMessageToDestinations(
       LogLevel in_logLevel,
       const std::string& in_message,
       const std::string& in_section = std::string(),
-      const ErrorLocation& in_loggedFrom = ErrorLocation());
+      const boost::optional<LogMessageProperties>& in_properties = boost::none,
+      const ErrorLocation& in_loggedFrom = ErrorLocation(),
+      const Error& in_error = Success());
+
+   /**
+    * @brief Writes a message to all registered destinations by invoking an action if any configured loggers are of the right log level.
+    *
+    * @param in_logLevel        The log level of the message, which is passed to the destination for informational purposes.
+    * @param in_action          The action to generate the message.
+    * @param in_section         The section to which to log this message.
+    * @param in_properties      The LogMessageProperties to log with the message.
+    * @param in_loggedFrom      The location from which the error message was logged.
+    * @param in_error           The error (if any) to log.
+    */
+   void writeMessageToDestinations(
+      LogLevel in_logLevel,
+      const boost::function<std::string(boost::optional<LogMessageProperties>*)>& in_action,
+      const std::string& in_section = std::string(),
+      const ErrorLocation& in_loggedFrom = ErrorLocation(),
+      const Error& in_error = Success());
+
+   /**
+    * @brief Writes a fully formed log message that was previously logged by a different source to all registered destinations.
+    *
+    * @param in_source          The source of the fully formed log message.
+    * @param in_message         The full log message.
+    */
+   void writePassthroughMessageToDestinations(const std::string& in_source,
+                                              const std::string& in_message);
 
    /**
     * @brief Constructor to prevent multiple instances of Logger.
@@ -199,9 +393,31 @@ Logger& logger()
 
 void Logger::writeMessageToDestinations(
    LogLevel in_logLevel,
+   const boost::function<std::string(boost::optional<LogMessageProperties>*)>& in_action,
+   const std::string& in_section,
+   const ErrorLocation& in_loggedFrom,
+   const Error& in_error)
+{
+   READ_LOCK_BEGIN(Mutex)
+
+   // Don't log this message, it's too detailed for any of the logs.
+   if (in_logLevel > MaxLogLevel)
+      return;
+
+   RW_LOCK_END(false)
+
+   boost::optional<LogMessageProperties> props = boost::none;
+   std::string message = in_action(&props);
+   writeMessageToDestinations(in_logLevel, message, in_section, props, in_loggedFrom, in_error);
+}
+
+void Logger::writeMessageToDestinations(
+   LogLevel in_logLevel,
    const std::string& in_message,
    const std::string& in_section,
-   const ErrorLocation& in_loggedFrom)
+   const boost::optional<LogMessageProperties>& in_properties,
+   const ErrorLocation& in_loggedFrom,
+   const Error& in_error)
 {
    READ_LOCK_BEGIN(Mutex)
 
@@ -234,9 +450,9 @@ void Logger::writeMessageToDestinations(
 
    std::string prettyMessage, jsonMessage;
    if (prettyFormat)
-      prettyMessage = formatLogMessage(in_logLevel, in_message, ProgramId, true, in_loggedFrom);
+      prettyMessage = formatLogMessage(in_logLevel, in_message, ProgramId, true, in_properties, in_loggedFrom, in_error);
    if (jsonFormat)
-      jsonMessage = formatLogMessage(in_logLevel, in_message, ProgramId, false, in_loggedFrom);
+      jsonMessage = formatLogMessage(in_logLevel, in_message, ProgramId, false, in_properties, in_loggedFrom, in_error);
 
 
    for (auto iter = logMap->begin(); iter != destEnd; ++iter)
@@ -244,6 +460,64 @@ void Logger::writeMessageToDestinations(
       std::string& messageToWrite = iter->second->getLogMessageFormatType() == LogMessageFormatType::PRETTY ?
                prettyMessage : jsonMessage;
       iter->second->writeLog(in_logLevel, messageToWrite);
+   }
+
+   RW_LOCK_END(false)
+}
+
+void Logger::writePassthroughMessageToDestinations(const std::string& in_source,
+                                                   const std::string& in_message)
+{
+   std::string logMessage;
+   std::string logLevel;
+
+   // determine format of the log by attempting to parse it into json
+   json::Object jsonLogEntry;
+   if (!jsonLogEntry.parse(in_message))
+   {
+      // add the source as a parameter on the json
+      jsonLogEntry["logSource"] = in_source;
+      logMessage = jsonLogEntry.write() + "\n";
+
+      json::readObject(jsonLogEntry, "level", logLevel);
+
+      // if there's no log level defined for some reason, don't bother logging the message
+      if (logLevel.empty())
+         return;
+   }
+   else
+   {
+      // add the source immediately after the binary name
+      logMessage = in_message;
+      size_t braceIndex = logMessage.find(']');
+      if (braceIndex != std::string::npos)
+      {
+         logMessage.insert(braceIndex, ", log-source: " + in_source);
+
+         try
+         {
+            braceIndex = logMessage.find(']');
+            size_t spaceIndex = logMessage.find(' ', braceIndex + 2);
+            logLevel = logMessage.substr(braceIndex + 2, spaceIndex - braceIndex - 2);
+         }
+         catch (const std::out_of_range&)
+         {
+            // Since this is logging code and we're trying to relog a message from another source,
+            // just don't do anything if we cannot properly parse the log message
+            return;
+         }
+      }
+   }
+
+   LogLevel level = logLevelFromStr(logLevel);
+
+   READ_LOCK_BEGIN(Mutex)
+
+   LogMap* logMap = &DefaultLogDestinations;
+   const auto destEnd = logMap->end();
+   for (auto iter = logMap->begin(); iter != destEnd; ++iter)
+   {
+      iter->second->writeLog(level, logMessage);
    }
 
    RW_LOCK_END(false)
@@ -321,95 +595,118 @@ std::string cleanDelimiters(const std::string& in_str)
 void logError(const Error& in_error)
 {
    if (!in_error.isExpected())
-      logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString());
+      logger().writeMessageToDestinations(LogLevel::ERR, std::string(), std::string(), boost::none, ErrorLocation(), in_error);
 }
 
 void logError(const Error& in_error, const ErrorLocation& in_location)
 {
    if (!in_error.isExpected())
-      logger().writeMessageToDestinations(LogLevel::ERR, in_error.asString(), "", in_location);
+      logger().writeMessageToDestinations(LogLevel::ERR, std::string(), "", boost::none, in_location, in_error);
 }
 
 void logErrorAsWarning(const Error& in_error)
 {
    if (!in_error.isExpected())
-      logger().writeMessageToDestinations(LogLevel::WARN, in_error.asString());
+      logger().writeMessageToDestinations(LogLevel::WARN, std::string(), "", boost::none, ErrorLocation(), in_error);
 }
 
 void logErrorAsInfo(const Error& in_error)
 {
    if (!in_error.isExpected())
-      logger().writeMessageToDestinations(LogLevel::INFO, in_error.asString());
+      logger().writeMessageToDestinations(LogLevel::INFO, std::string(), "", boost::none, ErrorLocation(), in_error);
 }
 
 void logErrorAsDebug(const Error& in_error)
 {
    if (!in_error.isExpected())
-      logger().writeMessageToDestinations(LogLevel::DEBUG, in_error.asString());
+      logger().writeMessageToDestinations(LogLevel::DEBUG, std::string(), "", boost::none, ErrorLocation(), in_error);
 }
 
 void logErrorMessage(const std::string& in_message, const std::string& in_section)
 {
-   logErrorMessage(in_message, in_section, ErrorLocation());
+   logErrorMessage(in_message, in_section, boost::none, ErrorLocation());
 }
 
 void logErrorMessage(const std::string& in_message, const ErrorLocation& in_loggedFrom)
 {
-   logErrorMessage(in_message, "", in_loggedFrom);
+   logErrorMessage(in_message, "", boost::none, in_loggedFrom);
 }
 
-void logErrorMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom)
+void logErrorMessage(const std::string& in_message,
+                     const std::string& in_section,
+                     const boost::optional<LogMessageProperties>& in_properties,
+                     const ErrorLocation& in_loggedFrom)
 {
    Logger& log = logger();
    if (log.MaxLogLevel >= LogLevel::ERR)
-      log.writeMessageToDestinations(LogLevel::ERR, in_message, in_section, in_loggedFrom);
+      log.writeMessageToDestinations(LogLevel::ERR, in_message, in_section, in_properties, in_loggedFrom);
 }
 
 void logWarningMessage(const std::string& in_message, const std::string& in_section)
 {
-   logWarningMessage(in_message, in_section, ErrorLocation());
+   logWarningMessage(in_message, in_section, boost::none, ErrorLocation());
 }
 
 void logWarningMessage(const std::string& in_message, const ErrorLocation& in_loggedFrom)
 {
-   logWarningMessage(in_message, "", in_loggedFrom);
+   logWarningMessage(in_message, "", boost::none, in_loggedFrom);
 }
 
-void logWarningMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom)
+void logWarningMessage(const std::string& in_message,
+                       const std::string& in_section,
+                       const boost::optional<LogMessageProperties>& in_properties,
+                       const ErrorLocation& in_loggedFrom)
 {
    Logger& log = logger();
    if (log.MaxLogLevel >= LogLevel::WARN)
-      log.writeMessageToDestinations(LogLevel::WARN, in_message, in_section, in_loggedFrom);
+      log.writeMessageToDestinations(LogLevel::WARN, in_message, in_section, in_properties, in_loggedFrom);
 }
 
 void logDebugMessage(const std::string& in_message, const std::string& in_section)
 {
-   logDebugMessage(in_message, in_section, ErrorLocation());
+   logDebugMessage(in_message, in_section, boost::none, ErrorLocation());
 }
 
 void logDebugMessage(const std::string& in_message, const ErrorLocation& in_loggedFrom)
 {
-   logDebugMessage(in_message, "", in_loggedFrom);
+   logDebugMessage(in_message, "", boost::none, in_loggedFrom);
 }
 
-void logDebugMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom)
+void logDebugMessage(const std::string& in_message,
+                     const std::string& in_section,
+                     const boost::optional<LogMessageProperties>& in_properties,
+                     const ErrorLocation& in_loggedFrom)
 {
-   logger().writeMessageToDestinations(LogLevel::DEBUG, in_message, in_section, in_loggedFrom);
+   logger().writeMessageToDestinations(LogLevel::DEBUG, in_message, in_section, in_properties, in_loggedFrom);
+}
+
+void logDebugAction(const boost::function<std::string(boost::optional<LogMessageProperties>*)>& in_action,
+                     const std::string& in_section)
+{
+   logger().writeMessageToDestinations(LogLevel::DEBUG, in_action, in_section, ErrorLocation());
 }
 
 void logInfoMessage(const std::string& in_message, const std::string& in_section)
 {
-   logInfoMessage(in_message, in_section, ErrorLocation());
+   logInfoMessage(in_message, in_section, boost::none, ErrorLocation());
 }
 
 void logInfoMessage(const std::string& in_message, const ErrorLocation& in_loggedFrom)
 {
-   logInfoMessage(in_message, "", in_loggedFrom);
+   logInfoMessage(in_message, "", boost::none, in_loggedFrom);
 }
 
-void logInfoMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom)
+void logInfoMessage(const std::string& in_message,
+                    const std::string& in_section,
+                    const boost::optional<LogMessageProperties>& in_properties,
+                    const ErrorLocation& in_loggedFrom)
 {
-   logger().writeMessageToDestinations(LogLevel::INFO, in_message, in_section, in_loggedFrom);
+   logger().writeMessageToDestinations(LogLevel::INFO, in_message, in_section, in_properties, in_loggedFrom);
+}
+
+void logPassthroughMessage(const std::string& in_source, const std::string& in_message)
+{
+   logger().writePassthroughMessageToDestinations(in_source, in_message);
 }
 
 bool isLogLevel(LogLevel in_logLevel)
@@ -549,7 +846,7 @@ std::ostream& writeError(const Error& in_error, std::ostream& io_os)
 
 std::string writeError(const Error& in_error)
 {
-   return formatLogMessage(LogLevel::ERR, in_error.asString(), logger().ProgramId, true);
+   return formatLogMessage(LogLevel::ERR, in_error.asString(), logger().ProgramId, true, boost::none);
 }
 
 namespace {
