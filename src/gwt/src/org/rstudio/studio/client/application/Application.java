@@ -626,9 +626,9 @@ public class Application implements ApplicationEventHandlers
       String targetPath = action.getTargetPath();
       if (targetPath != null)
       {
-         String verb = " from ";
+         String verb = " " + constants_.fromText();
          if (action.getType() == SessionSerializationAction.SAVE_DEFAULT_WORKSPACE)
-            verb = " to ";
+            verb = " " + constants_.toText();
          return verb + targetPath + "...";
       }
       else
@@ -1091,7 +1091,7 @@ public class Application implements ApplicationEventHandlers
       if (!Desktop.hasDesktopFrame())
       {
          if (sessionInfo.getMultiSession())
-            commands_.newSession().setMenuLabel("New Session...");
+            commands_.newSession().setMenuLabel(constants_.newSessionMenuLabel());
          else
             commands_.newSession().remove();
       }

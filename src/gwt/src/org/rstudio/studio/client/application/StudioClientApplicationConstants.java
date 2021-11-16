@@ -1758,4 +1758,48 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     @Key("signOutTitle")
     String signOutTitle();
 
+    /**
+     * Translated "from ".
+     *
+     * @return translated "from "
+     */
+    @DefaultStringValue("from ")
+    @Key("fromText")
+    String fromText();
+
+    /**
+     * Translated "to ".
+     *
+     * @return translated "to "
+     */
+    @DefaultStringValue("to ")
+    @Key("toText")
+    String toText();
+
+    /**
+     * Translated "New Session...".
+     *
+     * @return translated "New Session..."
+     */
+    @DefaultStringValue("New Session...")
+    @Key("newSessionMenuLabel")
+    String newSessionMenuLabel();
+
+    /**
+     * Translated "Save".
+     *
+     * @return translated "Save"
+     */
+    @DefaultStringValue("Save")
+    @Key("saveYesLabel")
+    String saveYesLabel();
+
+    /**
+     * Translated "Don't Save".
+     *
+     * @return translated "Don't Save"
+     */
+    @DefaultStringValue("Don't Save")
+    @Key("saveNoLabel")
+    String saveNoLabel();
 }

@@ -277,8 +277,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                () -> quitContext.onReadyToQuit(true),
                () -> quitContext.onReadyToQuit(false),
                () -> {},
-               "Save",
-               "Don't Save",
+               constants_.saveYesLabel(),
+               constants_.saveNoLabel(),
                true);        
       }
       
