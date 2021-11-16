@@ -48,11 +48,11 @@ void updateReticulatePython(bool forInit)
    if (!forInit && s_pythonInitialized)
       return;
 
-   ASSERT_MAIN_THREAD()
+   if (!ASSERT_MAIN_THREAD())
    {
       return;
    }
-   
+
    s_reticulatePython = core::system::getenv("RETICULATE_PYTHON");
    if (s_reticulatePython.empty())
    {

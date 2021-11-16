@@ -309,7 +309,7 @@ void onConsolePrompt(const std::string&)
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-   ASSERT_MAIN_THREAD()
+   if (!ASSERT_MAIN_THREAD())
    {
       return;
    }

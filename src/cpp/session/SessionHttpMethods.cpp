@@ -103,7 +103,7 @@ boost::posix_time::ptime timeoutTimeFromNow()
 
 void processEvents()
 {
-   ASSERT_MAIN_THREAD()
+   if (!ASSERT_MAIN_THREAD())
    {
       return;
    }
@@ -287,7 +287,7 @@ void polledEventHandler()
       return;
    }
 
-   ASSERT_MAIN_THREAD()
+   if (!ASSERT_MAIN_THREAD())
    {
       return;
    }
@@ -480,7 +480,7 @@ bool waitForMethod(const std::string& method,
       return false;
    }
    
-   ASSERT_MAIN_THREAD()
+   if (!ASSERT_MAIN_THREAD(method))
    {
       return false;
    }

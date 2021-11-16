@@ -135,7 +135,7 @@ Error evaluateExpressionsUnsafe(SEXP expr,
                                 sexp::Protect* pProtect,
                                 EvalType evalType)
 {
-   ASSERT_MAIN_THREAD()
+   if (!ASSERT_MAIN_THREAD())
    {
       return rCodeExecutionError(
                "Attempted to evaluate R code on non-main thread",
@@ -241,7 +241,7 @@ void SEXPTopLevelExec(void *data)
    
 Error executeSafely(boost::function<void()> function)
 {
-   ASSERT_MAIN_THREAD()
+   if (!ASSERT_MAIN_THREAD())
    {
       return rCodeExecutionError(
                "Attempted to execute R code on non-main thread",
@@ -327,10 +327,10 @@ Error evaluateString(const std::string& str,
                      sexp::Protect* pProtect,
                      EvalFlags flags)
 {
-   ASSERT_MAIN_THREAD()
+   if (!ASSERT_MAIN_THREAD())
    {
       return rCodeExecutionError(
-               "Attempted to evaluate R code on non-main thread",
+               "Attempted to evaluate R code on non-main thread (" + str + ")",
                ERROR_LOCATION);
    }
    
@@ -474,7 +474,7 @@ Error RFunction::call(SEXP evalNS,
    
    // make sure we're on the main thread
    std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
-   ASSERT_MAIN_THREAD_BECAUSE("Executing function: " + functionName_)
+   if (!ASSERT_MAIN_THREAD("Executing function: " + functionName_))
    {
       return rCodeExecutionError(
                "Attempted to execute R function '" + functionName + "' on non-main thread",

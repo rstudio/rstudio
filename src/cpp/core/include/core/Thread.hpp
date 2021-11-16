@@ -51,17 +51,12 @@
    }                                                                           \
    CATCH_UNEXPECTED_EXCEPTION
 
-#define ASSERT_MAIN_THREAD()                                                   \
-   if (!::rstudio::core::thread::assertMainThread(                             \
-      std::string(),                                                           \
+#define ASSERT_MAIN_THREAD(__REASON__)                                         \
+   (::rstudio::core::thread::assertMainThread(                                 \
+      { __REASON__ },                                                          \
       BOOST_CURRENT_FUNCTION,                                                  \
       ERROR_LOCATION))
 
-#define ASSERT_MAIN_THREAD_BECAUSE(__REASON__)                                 \
-   if (!::rstudio::core::thread::assertMainThread(                             \
-      (__REASON__),                                                            \
-      BOOST_CURRENT_FUNCTION,                                                  \
-      ERROR_LOCATION))
 
 namespace rstudio {
 namespace core {

@@ -1050,7 +1050,7 @@ void onRemoveAll()
 
 SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
 {
-   ASSERT_MAIN_THREAD_BECAUSE("Reading document properties")
+   if (!ASSERT_MAIN_THREAD())
    {
       return R_NilValue;
    }

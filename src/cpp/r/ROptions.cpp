@@ -80,7 +80,7 @@ int getBuildOptionWidth()
 
 SEXP getOption(const std::string& name)
 {
-   ASSERT_MAIN_THREAD_BECAUSE("Reading R option: " + name)
+   if (!ASSERT_MAIN_THREAD("Reading R option: " + name))
    {
       return R_NilValue;
    }
