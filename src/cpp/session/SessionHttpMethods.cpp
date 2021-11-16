@@ -103,12 +103,16 @@ boost::posix_time::ptime timeoutTimeFromNow()
 
 void processEvents()
 {
-   ASSERT_MAIN_THREAD;
+   ASSERT_MAIN_THREAD()
+   {
+      return;
+   }
 
    // execute safely since this can call arbitrary R code (and
    // (can also cause jump_to_top if an interrupt is pending)
    Error error = rstudio::r::exec::executeSafely(
             rstudio::r::session::event_loop::processEvents);
+
    if (error)
       LOG_ERROR(error);
 }
@@ -283,7 +287,10 @@ void polledEventHandler()
       return;
    }
 
-   ASSERT_MAIN_THREAD;
+   ASSERT_MAIN_THREAD()
+   {
+      return;
+   }
 
    // static lastPerformed value used for throttling
    using namespace boost::posix_time;
@@ -473,7 +480,10 @@ bool waitForMethod(const std::string& method,
       return false;
    }
    
-   ASSERT_MAIN_THREAD;
+   ASSERT_MAIN_THREAD()
+   {
+      return false;
+   }
 
    // establish timeouts
    boost::posix_time::ptime timeoutTime = timeoutTimeFromNow();

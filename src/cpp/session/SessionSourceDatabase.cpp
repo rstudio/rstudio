@@ -1050,7 +1050,10 @@ void onRemoveAll()
 
 SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
 {
-   ASSERT_MAIN_THREAD;
+   ASSERT_MAIN_THREAD_BECAUSE("Reading document properties")
+   {
+      return R_NilValue;
+   }
    
    Error error;
    FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP));

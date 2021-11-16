@@ -135,7 +135,12 @@ Error evaluateExpressionsUnsafe(SEXP expr,
                                 sexp::Protect* pProtect,
                                 EvalType evalType)
 {
-   ASSERT_MAIN_THREAD;
+   ASSERT_MAIN_THREAD()
+   {
+      return rCodeExecutionError(
+               "Attempted to evaluate R code on non-main thread",
+               ERROR_LOCATION);
+   }
    
    // detect if an error occurred (only relevant for EvalTry)
    int errorOccurred = 0;
@@ -236,13 +241,18 @@ void SEXPTopLevelExec(void *data)
    
 Error executeSafely(boost::function<void()> function)
 {
-   ASSERT_MAIN_THREAD;
+   ASSERT_MAIN_THREAD()
+   {
+      return rCodeExecutionError(
+               "Attempted to execute R code on non-main thread",
+               ERROR_LOCATION);
+   }
    
    // disable custom error handlers while we execute code
    DisableErrorHandlerScope disableErrorHandler;
    DisableDebugScope disableStepInto(R_GlobalEnv);
 
-   Rboolean success = R_ToplevelExec(topLevelExec, (void*)&function);
+   Rboolean success = R_ToplevelExec(topLevelExec, (void*) &function);
    if (!success)
    {
       return rCodeExecutionError(getErrorMessage(), ERROR_LOCATION);
@@ -317,7 +327,12 @@ Error evaluateString(const std::string& str,
                      sexp::Protect* pProtect,
                      EvalFlags flags)
 {
-   ASSERT_MAIN_THREAD;
+   ASSERT_MAIN_THREAD()
+   {
+      return rCodeExecutionError(
+               "Attempted to evaluate R code on non-main thread",
+               ERROR_LOCATION);
+   }
    
    // refresh source if necessary (no-op in production)
    r::sourceManager().reloadIfNecessary();
@@ -458,7 +473,13 @@ Error RFunction::call(SEXP evalNS,
    }
    
    // make sure we're on the main thread
-   ASSERT_MAIN_THREAD_BECAUSE(functionName_);
+   std::string functionName = functionName_.empty() ? "<unknown>" : functionName_;
+   ASSERT_MAIN_THREAD_BECAUSE("Executing function: " + functionName_)
+   {
+      return rCodeExecutionError(
+               "Attempted to execute R function '" + functionName + "' on non-main thread",
+               ERROR_LOCATION);
+   }
 
    // create the call object (LANGSXP) with the correct number of elements
    SEXP callSEXP;

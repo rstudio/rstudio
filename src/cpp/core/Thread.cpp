@@ -70,19 +70,14 @@ bool isMainThread()
    return s_mainThreadId == boost::this_thread::get_id();
 }
 
-void assertMainThread(
+bool assertMainThread(
       const std::string& reason,
       const std::string& functionName,
       const core::ErrorLocation& errorLocation)
 {
    if (isMainThread())
-      return;
+      return true;
    
-#ifndef RSTUDIO_PACKAGE_BUILD
-   // print a backtrace in developer builds
-   core::backtrace::printBacktrace();
-#endif
-
    // log an error
    std::string errorMessage;
    if (reason.empty())
@@ -98,8 +93,15 @@ void assertMainThread(
                functionName.c_str(),
                reason.c_str());
    }
-   
+
    core::log::logErrorMessage(errorMessage, errorLocation);
+
+#ifndef RSTUDIO_PACKAGE_BUILD
+   // print a backtrace in developer builds
+   core::backtrace::printBacktrace();
+#endif
+
+   return false;
 }
 
 } // namespace thread

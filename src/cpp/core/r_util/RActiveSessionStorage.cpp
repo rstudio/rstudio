@@ -140,16 +140,15 @@ namespace
     Error FileActiveSessionStorage::writeProperties(const std::string& id, const std::map<std::string, std::string>& properties)
     {
         std::vector<FilePath> failedFiles{};
-        for (const std::pair<std::string, std::string> &prop : properties)
+        for (auto&& prop : properties)
         {
-
             FilePath writePath = getPropertyFile(id, prop.first);
             Error error = core::writeStringToFile(writePath, prop.second);
             if (error)
                 failedFiles.push_back(writePath);
         }
         
-        if(failedFiles.empty())
+        if (failedFiles.empty())
             return Success();
         else
             return createError("UnableToWriteFiles", "Failed to write to the following files ", 

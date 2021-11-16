@@ -309,7 +309,10 @@ void onConsolePrompt(const std::string&)
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-   ASSERT_MAIN_THREAD;
+   ASSERT_MAIN_THREAD()
+   {
+      return;
+   }
    
    // check for libPaths changes if we're evaluating a change from the REPL at
    // the top-level (i.e. not while debugging, as we don't want to mutate any

@@ -1677,7 +1677,10 @@ bool pptAvailable()
 
 bool rmarkdownPackageAvailable()
 {
-   ASSERT_MAIN_THREAD;
+   ASSERT_MAIN_THREAD()
+   {
+      return s_rmarkdownAvailable;
+   }
    
    if (!s_rmarkdownAvailableInited)
    {

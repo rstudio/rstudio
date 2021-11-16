@@ -80,7 +80,11 @@ int getBuildOptionWidth()
 
 SEXP getOption(const std::string& name)
 {
-   ASSERT_MAIN_THREAD_BECAUSE(name);
+   ASSERT_MAIN_THREAD_BECAUSE("Reading R option: " + name)
+   {
+      return R_NilValue;
+   }
+
    return Rf_GetOption(Rf_install(name.c_str()), R_BaseEnv);
 }
 

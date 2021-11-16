@@ -51,16 +51,17 @@
    }                                                                           \
    CATCH_UNEXPECTED_EXCEPTION
 
-#define ASSERT_MAIN_THREAD_BECAUSE(__REASON__)               \
-   do                                                        \
-   {                                                         \
-      ::rstudio::core::thread::assertMainThread(             \
-         __REASON__,                                         \
-         BOOST_CURRENT_FUNCTION,                             \
-         ERROR_LOCATION);                                    \
-   } while (0)
+#define ASSERT_MAIN_THREAD()                                                   \
+   if (!::rstudio::core::thread::assertMainThread(                             \
+      std::string(),                                                           \
+      BOOST_CURRENT_FUNCTION,                                                  \
+      ERROR_LOCATION))
 
-#define ASSERT_MAIN_THREAD ASSERT_MAIN_THREAD_BECAUSE("")
+#define ASSERT_MAIN_THREAD_BECAUSE(__REASON__)                                 \
+   if (!::rstudio::core::thread::assertMainThread(                             \
+      (__REASON__),                                                            \
+      BOOST_CURRENT_FUNCTION,                                                  \
+      ERROR_LOCATION))
 
 namespace rstudio {
 namespace core {
@@ -374,7 +375,7 @@ void initializeMainThreadId(boost::thread::id id);
 
 bool isMainThread();
 
-void assertMainThread(
+bool assertMainThread(
       const std::string& reason,
       const std::string& functionName,
       const core::ErrorLocation& errorLocation);
