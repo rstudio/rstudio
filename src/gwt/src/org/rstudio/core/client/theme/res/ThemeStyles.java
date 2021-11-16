@@ -53,7 +53,6 @@ public interface ThemeStyles extends CssResource
    String rstheme_secondaryToolbar();
    String secondaryToolbarPanel();
    String globalToolbar();
-   String desktopGlobalToolbar();
    String webGlobalToolbar();
    String webHeaderBarCommandsProjectMenu();
    String toolbarButton();

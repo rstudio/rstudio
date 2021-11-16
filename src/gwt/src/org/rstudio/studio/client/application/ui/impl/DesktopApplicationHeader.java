@@ -198,7 +198,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       toolbar_.getWrapper().addStyleName(styles.desktopGlobalToolbarWrapper());
-      toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }
 
    @Override
