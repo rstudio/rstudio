@@ -55,14 +55,14 @@ public class SshKeyWidget extends Composite
       HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.addStyleName(RES.styles().captionPanel());
       captionPanel.setWidth(textWidth);
-      FormLabel sshKeyPathLabel = new FormLabel("SSH RSA key:", txtSshKeyPath_);
+      FormLabel sshKeyPathLabel = new FormLabel(constants_.sshRSAKeyFormLabel(), txtSshKeyPath_);
       captionPanel.add(sshKeyPathLabel);
       captionPanel.setCellHorizontalAlignment(
             sshKeyPathLabel,
             HasHorizontalAlignment.ALIGN_LEFT);
 
       HorizontalPanel linkPanel = new HorizontalPanel();
-      publicKeyLink_ = new HyperlinkLabel("View public key", () -> viewPublicKey());
+      publicKeyLink_ = new HyperlinkLabel(constants_.viewPublicKeyCaption(), () -> viewPublicKey());
       publicKeyLink_.addStyleName(RES.styles().viewPublicKeyLink());
 
       ElementIds.assignElementId(publicKeyLink_, ElementIds.HYPERLINKLABEL_SSH_SHOW_PUBLIC_KEY);
@@ -80,7 +80,7 @@ public class SshKeyWidget extends Composite
       HorizontalPanel sshButtonPanel = new HorizontalPanel();
       sshButtonPanel.addStyleName(RES.styles().sshButtonPanel());
       SmallButton createKeyButton = new SmallButton();
-      createKeyButton.setText("Create RSA Key...");
+      createKeyButton.setText(constants_.createRSAKeyButtonLabel());
       createKeyButton.addClickHandler(event -> showCreateKeyDialog());
       
       ElementIds.assignElementId(createKeyButton, ElementIds.BUTTON_SSH_KEY_CREATE);
@@ -137,7 +137,7 @@ public class SshKeyWidget extends Composite
 
    private void viewPublicKey()
    {
-      progressIndicator_.onProgress("Reading public key...");
+      progressIndicator_.onProgress(constants_.readingPublicKeyProgressCaption());
 
       // compute path to public key
       FileSystemItem privKey = 

@@ -1200,4 +1200,94 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     @Key("urlContentMessage")
     String urlContentMessage();
 
+    /**
+     * Translated "Object Explorer".
+     *
+     * @return translated "Object Explorer"
+     */
+    @DefaultStringValue("Object Explorer")
+    @Key("objectExplorerLabel")
+    String objectExplorerLabel();
+
+    /**
+     * Translated "Object explorer doesn't operate on filesystem files".
+     *
+     * @return translated "Object explorer doesn't operate on filesystem files"
+     */
+    @DefaultStringValue("Object explorer doesn't operate on filesystem files")
+    @Key("objectExplorerOpenFileMessage")
+    String objectExplorerOpenFileMessage();
+
+    /**
+     * Translated "R Profiler".
+     *
+     * @return translated "R Profiler"
+     */
+    @DefaultStringValue("R Profiler")
+    @Key("rProfilerLabel")
+    String rProfilerLabel();
+
+    /**
+     * Translated "Check".
+     *
+     * @return translated "Check"
+     */
+    @DefaultStringValue("Check")
+    @Key("checkPreviewButtonText")
+    String checkPreviewButtonText();
+
+    /**
+     * Translated "Weave Rnw files using:".
+     *
+     * @return translated "Weave Rnw files using:"
+     */
+    @DefaultStringValue("Weave Rnw files using:")
+    @Key("weaveRnwLabel")
+    String weaveRnwLabel();
+
+    /**
+     * Translated "Help on weaving Rnw files".
+     *
+     * @return translated "Help on weaving Rnw files"
+     */
+    @DefaultStringValue("Help on weaving Rnw files")
+    @Key("weaveRnwHelpTitle")
+    String weaveRnwHelpTitle();
+
+    /**
+     * Translated "SSH RSA key:".
+     *
+     * @return translated "SSH RSA key:"
+     */
+    @DefaultStringValue("SSH RSA key:")
+    @Key("sshRSAKeyFormLabel")
+    String sshRSAKeyFormLabel();
+
+    /**
+     * Translated "View public key".
+     *
+     * @return translated "View public key"
+     */
+    @DefaultStringValue("View public key")
+    @Key("viewPublicKeyCaption")
+    String viewPublicKeyCaption();
+
+    /**
+     * Translated "Create RSA Key...".
+     *
+     * @return translated "Create RSA Key..."
+     */
+    @DefaultStringValue("Create RSA Key...")
+    @Key("createRSAKeyButtonLabel")
+    String createRSAKeyButtonLabel();
+
+    /**
+     * Translated "Reading public key...".
+     *
+     * @return translated "Reading public key..."
+     */
+    @DefaultStringValue("Reading public key...")
+    @Key("readingPublicKeyProgressCaption")
+    String readingPublicKeyProgressCaption();
+
 }

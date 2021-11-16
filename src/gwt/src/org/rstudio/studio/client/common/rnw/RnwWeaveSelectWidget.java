@@ -39,9 +39,9 @@ public class RnwWeaveSelectWidget extends SelectWidget
 {
    public RnwWeaveSelectWidget()
    { 
-      super("Weave Rnw files using:", rnwWeaveRegistry_.getTypeNames());
+      super(constants_.weaveRnwLabel(), rnwWeaveRegistry_.getTypeNames());
   
-      HelpButton.addHelpButton(this, "rnw_weave_method", "Help on weaving Rnw files");
+      HelpButton.addHelpButton(this, "rnw_weave_method", constants_.weaveRnwHelpTitle());
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
