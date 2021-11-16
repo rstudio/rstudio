@@ -309,10 +309,9 @@ void onConsolePrompt(const std::string&)
 
 void onDetectChanges(module_context::ChangeSource source)
 {
-   if (!ASSERT_MAIN_THREAD())
-   {
+   // silently drop attempts to call this from non-main thread
+   if (!core::thread::isMainThread())
       return;
-   }
    
    // check for libPaths changes if we're evaluating a change from the REPL at
    // the top-level (i.e. not while debugging, as we don't want to mutate any
