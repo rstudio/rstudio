@@ -16,51 +16,8 @@
 cmake_minimum_required(VERSION 3.4.3)
 project(ELECTRON_DESKTOP)
 
-if(NOT DEFINED RSTUDIO_NODE_VERSION)
-   set(RSTUDIO_NODE_VERSION "14.17.5")
-endif()
-if(DEFINED ENV{RSTUDIO_NODE_VERSION})
-   set(RSTUDIO_NODE_VERSION $ENV{RSTUDIO_NODE_VERSION})
-endif()
-
-# Detect node.js and yarn; prefer versions supplied by the dependency
-# scripts but fall back to whatever is found on path.
-find_program(NODEJS
-   NAMES node
-   NO_DEFAULT_PATH PATH_SUFFIXES "bin"
-   PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
-         "${CMAKE_CURRENT_SOURCE_DIR}/../../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
-
-if(NOT NODEJS)
-   # fall back on any available node.js
-   find_program(NODEJS NAMES node)
-endif()
-
-if(NODEJS)
-   message(STATUS "Using node.js: ${NODEJS}")
-else()
-   message(FATAL_ERROR "node.js not found (required)")
-endif()
-
-find_program(YARN
-    NAMES yarn
-    NO_DEFAULT_PATH
-    PATHS "$ENV{HOME}/.yarn/bin")
-if (NOT YARN)
-  find_program(YARN NAMES yarn)
-else()
-
-endif()
-
-if(YARN)
-   message(STATUS "Using yarn: ${YARN}")
-else()
-   message(STATUS "yarn not found (required for Electron)")
-   set(YARN yarn)
-endif()
-
-get_filename_component(NODEJS_PATH ${NODEJS} DIRECTORY CACHE)
-get_filename_component(YARN_PATH ${YARN} DIRECTORY CACHE)
+# defines NODEJS, NODEJS_PATH, YARN, YARN_PATH
+include("${CMAKE_CURRENT_LIST_DIR}/../../../../node/CMakeNodeTools.txt")
 
 # ensure yarn and node are on the path
 set(MODIFIED_PATH "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")
@@ -84,7 +41,7 @@ add_custom_command(
    TARGET electron_build
    PRE_BUILD
    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-   COMMAND ${CMAKE_COMMAND} -E env PATH="${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+   COMMAND ${CMAKE_COMMAND} -E env PATH="${MODIFIED_PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
       ${YARN}
       "install")
 
