@@ -357,7 +357,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(EditingTargetSource.class).to(EditingTargetSource.Impl.class);
 
       // Bind workbench views
-      bindPane(constants_.consolePaneName(), ConsolePane.class); // eager loaded
+      bindPane("Console", ConsolePane.class); // eager loaded
       bind(Source.Display.class).to(SourcePane.class);
       bind(TerminalTabPresenter.Display.class).to(TerminalPane.class);
       bind(History.Display.class).to(HistoryPane.class);
@@ -383,30 +383,30 @@ public class RStudioGinModule extends AbstractGinModule
       bind(JobProgressPresenter.Display.class).to(JobProgress.class);
       bind(LauncherJobsPresenter.Display.class).to(LauncherJobsPane.class);
       bind(DataOutputPresenter.Display.class).to(DataOutputPane.class);
-      bindTab(constants_.historyTabName(), HistoryTab.class);
-      bindTab(constants_.filesTabName(), FilesTab.class);
-      bindTab(constants_.plotTabName(), PlotsTab.class);
-      bindTab(constants_.packagesTabName(), PackagesTab.class);
-      bindTab(constants_.helpTabName(), HelpTab.class);
-      bindTab(constants_.vcsTabName(), VCSTab.class);
-      bindTab(constants_.buildTabName(), BuildTab.class);
-      bindTab(constants_.presentationTabName(), PresentationTab.class);
-      bindTab(constants_.presentationsTabName(), Presentation2Tab.class);
-      bindTab(constants_.environmentTabName(), EnvironmentTab.class);
-      bindTab(constants_.viewerTabName(), ViewerTab.class);
-      bindTab(constants_.connectionsTabName(), ConnectionsTab.class);
-      bindTab(constants_.compilePDFTabName(), CompilePdfOutputTab.class);
-      bindTab(constants_.rMarkdownTabName(), RenderRmdOutputTab.class);
-      bindTab(constants_.findTabName(), FindOutputTab.class);
-      bindTab(constants_.sourceCPPTabName(), SourceCppOutputTab.class);
-      bindTab(constants_.deployTabName(), RSConnectDeployOutputTab.class);
-      bindTab(constants_.markersTabName(), MarkersOutputTab.class);
-      bindTab(constants_.terminalTabName(), TerminalTab.class);
-      bindTab(constants_.testsTabName(), TestsOutputTab.class);
-      bindTab(constants_.jobsTabName(), JobsTab.class);
-      bindTab(constants_.launcherTabName(), LauncherJobsTab.class);
-      bindTab(constants_.dataOutputTabName(), DataOutputTab.class);
-      bindTab(constants_.tutorialTabName(), TutorialTab.class);
+      bindTab("History", HistoryTab.class);
+      bindTab("Files", FilesTab.class);
+      bindTab("Plots", PlotsTab.class);
+      bindTab("Packages", PackagesTab.class);
+      bindTab("Help", HelpTab.class);
+      bindTab("VCS", VCSTab.class);
+      bindTab("Build", BuildTab.class);
+      bindTab("Presentation", PresentationTab.class);
+      bindTab("Presentations", Presentation2Tab.class);
+      bindTab("Environment", EnvironmentTab.class);
+      bindTab("Viewer", ViewerTab.class);
+      bindTab("Connections", ConnectionsTab.class);
+      bindTab("Compile PDF", CompilePdfOutputTab.class);
+      bindTab("R Markdown", RenderRmdOutputTab.class);
+      bindTab("Find", FindOutputTab.class);
+      bindTab("Source Cpp", SourceCppOutputTab.class);
+      bindTab("Deploy", RSConnectDeployOutputTab.class);
+      bindTab("Markers", MarkersOutputTab.class);
+      bindTab("Terminal", TerminalTab.class);
+      bindTab("Tests", TestsOutputTab.class);
+      bindTab("Jobs", JobsTab.class);
+      bindTab("Launcher", LauncherJobsTab.class);
+      bindTab("Data Output", DataOutputTab.class);
+      bindTab("Tutorial", TutorialTab.class);
 
       bind(Shell.Display.class).to(ShellPane.class);
            
@@ -525,5 +525,5 @@ public class RStudioGinModule extends AbstractGinModule
    {
       bind(Widget.class).annotatedWith(Names.named(name)).to(clazz);
    }
-   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
+   //private final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }
