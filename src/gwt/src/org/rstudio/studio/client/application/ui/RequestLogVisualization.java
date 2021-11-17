@@ -209,7 +209,7 @@ public class RequestLogVisualization extends Composite
       if (method == null)
          method = entry.getRequestId();
       
-      html.setText(method + (active ? " (active)" : ""));
+      html.setText(method + (active ? " " + constants_.activeText() : ""));
       if (active)
          html.getElement().getStyle().setFontWeight(FontWeight.BOLD);
       String color;

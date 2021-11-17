@@ -1802,4 +1802,22 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     @DefaultStringValue("Don't Save")
     @Key("saveNoLabel")
     String saveNoLabel();
+
+    /**
+     * Translated "Console".
+     *
+     * @return translated "Console"
+     */
+    @DefaultStringValue("Console")
+    @Key("consolePaneName")
+    String consolePaneName();
+
+    /**
+     * Translated "(active)".
+     *
+     * @return translated "(active)"
+     */
+    @DefaultStringValue("(active)")
+    @Key("activeText")
+    String activeText();
 }
