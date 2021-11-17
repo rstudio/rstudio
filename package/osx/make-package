@@ -329,6 +329,10 @@ if [ "${build_package}" = "1" ]; then
       # create 'Applications' symlink
       ln -nfs /Applications Applications
 
+      echo "***** Gary *****"
+      ls -l ./RStudio.app/Contents/Frameworks/QtWebEngine.framework/Versions/5/QtWebEngine
+      echo "***** End Gary *****"
+
       # package into dmg
       info "Creating '${RSTUDIO_BUNDLE_NAME}.dmg ...'"
 
