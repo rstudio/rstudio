@@ -46,3 +46,4 @@
 * Fixed custom shortcuts not appearing correctly in menus (#9915)
 * Fixed custom shortcuts not appearing correctly in "Keyboard Shortcuts Help" and Electron menus. (#9953)
 * Fixed header scrolling in data viewer tables not following table contents in unfocused windows (#8208)
+* Fixed permissions on Mac Desktop application so all user accounts can launch it (#9945)
