@@ -26,7 +26,6 @@ NODE_ROOT="node"
 NODE_SUBDIR="${NODE_ROOT}/${NODE_VERSION}"
 NODE_BASE_URL="https://nodejs.org/dist/v${NODE_VERSION}/"
 
-
 # install node if we need it
 if [ ! -d "${NODE_SUBDIR}" ]; then
 
@@ -39,7 +38,13 @@ if [ ! -d "${NODE_SUBDIR}" ]; then
     ;;
 
   "Linux-64")
-    NODE_FILE="node-v${NODE_VERSION}-linux-x64"
+
+    case "$(arch)" in
+    aarch64) ARCH=arm64 ;;
+    *)       ARCH=x64 ;;
+    esac
+
+    NODE_FILE="node-v${NODE_VERSION}-linux-${ARCH}"
     ;;
 
   *)
@@ -76,7 +81,13 @@ DEPS_DIR=`pwd`
 NODE_BIN="${DEPS_DIR}/${NODE_SUBDIR}/bin"
 INSTALL_PATH="${NODE_BIN}:${PATH}"
 
-# install yarn if necessary
+# curl on Ubuntu 20.04 segfaults when using yarn installer
+if [ "$(arch)" = "aarch64" ] && [ "$(platform)" = "ubuntu" ] && [ "$(ubuntu-codename)" = "focal" ]; then
+  echo "Skipping yarn install (curl segfaults on Ubuntu Focal)"
+  echo "See https://bugs.launchpad.net/ubuntu/+source/openssl/+bug/1951279 for more details"
+  exit 0
+fi
+
 if [ ! -x "$(command -v yarn)" ]; then
   YARN_INSTALL_SCRIPT="yarn-install.sh"
   download "https://yarnpkg.com/install.sh" "${YARN_INSTALL_SCRIPT}"

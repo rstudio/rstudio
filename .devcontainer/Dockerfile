@@ -73,7 +73,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN add-apt-repository -y ppa:openjdk-r/ppa && \
     apt-get update && \
     apt-get install -y openjdk-8-jdk openjdk-11-jdk
-RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-$(dpkg --print-architecture)/jre/bin/java
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/linux

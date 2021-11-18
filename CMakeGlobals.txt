@@ -21,6 +21,11 @@ if(RSTUDIO_CMAKE_GLOBALS_INCLUDED)
 endif()
 set(RSTUDIO_CMAKE_GLOBALS_INCLUDED YES)
 
+# helper for detecting Linux
+if(UNIX AND NOT APPLE)
+   set(LINUX TRUE)
+endif()
+
 # version info
 if ("$ENV{RSTUDIO_VERSION_MAJOR}" STREQUAL "")
   string(TIMESTAMP CPACK_PACKAGE_VERSION_MAJOR "%Y")
