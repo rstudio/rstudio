@@ -23,7 +23,7 @@ if command -v lsb_release &> /dev/null; then
   platform_script="install-dependencies-$platform_codename"
   if [ -e $platform_script ] ; then
     ./$platform_script "$@"
-    exit 
+    exit
   fi
 fi
 

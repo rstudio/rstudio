@@ -72,10 +72,11 @@ sudo apt-get -y install \
   zlib1g-dev
 
 # Java 8 (not in official repo for bionic)
+arch=$(dpkg --print-architecture)
 sudo add-apt-repository -y ppa:openjdk-r/ppa
 sudo apt-get update
 sudo apt-get -y install openjdk-8-jdk
-sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+sudo update-alternatives --set java /usr/lib/jvm/java-8-openjdk-${arch}/jre/bin/java
 
 # R
 if ! [ -x "$(command -v R)" ]; then

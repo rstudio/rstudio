@@ -20,6 +20,11 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Pandoc"
 
+if [ "$(arch)" = "aarch64" ]; then
+  echo "Pandoc installer not yet available for aarch64"
+  exit 0
+fi
+
 # variables that control download + installation process
 PANDOC_VERSION="2.14.2"
 PANDOC_SUBDIR="pandoc/${PANDOC_VERSION}"

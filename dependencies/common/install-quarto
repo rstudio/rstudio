@@ -20,6 +20,11 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing Quarto"
 
+if [ "$(arch)" = "aarch64" ]; then
+  echo "install-quarto not yet available for aarch64"
+  exit 0
+fi
+
 # variables that control download + installation process
 QUARTO_VERSION="0.2.281"
 QUARTO_SUBDIR="quarto"
