@@ -57,7 +57,7 @@ std::string s_lastPrompt;
 void setExecuting(bool executing)
 {
    // Executing also prevents suspension
-   suspend::checkBlockingOp(executing, suspend::SuspendBlockingOps::kExecuting);
+   suspend::checkBlockingOp(executing, suspend::kExecuting);
 
    s_rProcessingInput = executing;
    module_context::activeSession().setExecuting(executing);
@@ -101,12 +101,12 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 bool canSuspend(const std::string& prompt)
 {
    bool suspendIsBlocked = false;
-   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveActiveChildren(), suspend::SuspendBlockingOps::kChildProcess);
-   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::SuspendBlockingOps::kConnection);
-   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::overlay::isSuspendable(), suspend::SuspendBlockingOps::kOverlay);
-   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::SuspendBlockingOps::kExternalPointer);
-   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::SuspendBlockingOps::kActiveJob);
-   suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::SuspendBlockingOps::kCommandPrompt);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveActiveChildren(), suspend::kChildProcess);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::overlay::isSuspendable(), suspend::kOverlay);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::kCommandPrompt);
 
    return !suspendIsBlocked;
 }

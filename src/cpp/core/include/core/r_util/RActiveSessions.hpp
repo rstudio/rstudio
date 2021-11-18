@@ -122,7 +122,7 @@ public:
       }
    }
 
-   void setBlockingSuspend(json::Object blocking)
+   void setBlockingSuspend(json::Array blocking)
    {
       if (!empty())
       {

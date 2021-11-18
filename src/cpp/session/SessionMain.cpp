@@ -837,13 +837,10 @@ int rEditFile(const std::string& file)
    // wait for edit_completed
    json::JsonRpcRequest request;
 
-   suspend::addBlockingOp(suspend::SuspendBlockingOps::kWaitingForEditCompletion);
    bool succeeded = http_methods::waitForMethod(kEditCompleted,
                                         editEvent,
                                         suspend::disallowSuspend,
                                         &request);
-   suspend::removeBlockingOp(suspend::SuspendBlockingOps::kWaitingForEditCompletion);
-
    if (!succeeded)
       return false;
 
@@ -889,13 +886,10 @@ FilePath rChooseFile(bool newFile)
    // wait for choose_file_completed
    json::JsonRpcRequest request;
 
-   suspend::addBlockingOp(suspend::SuspendBlockingOps::kWaitingForChooseFileCompletion);
    bool succeeded = http_methods::waitForMethod(kChooseFileCompleted,
                                         chooseFileEvent,
                                         suspend::disallowSuspend,
                                         &request);
-   suspend::removeBlockingOp(suspend::SuspendBlockingOps::kWaitingForChooseFileCompletion);
-
    if (!succeeded)
       return FilePath();
 
@@ -972,13 +966,10 @@ bool rLocator(double* x, double* y)
    // wait for locator_completed
    json::JsonRpcRequest request;
 
-   suspend::addBlockingOp(suspend::SuspendBlockingOps::kWaitingForLocatorCompletion);
    bool succeeded = http_methods::waitForMethod(kLocatorCompleted,
                                         locatorEvent,
                                         suspend::disallowSuspend,
                                         &request);
-   suspend::removeBlockingOp(suspend::SuspendBlockingOps::kWaitingForLocatorCompletion);
-
    if (!succeeded)
       return false;
 
@@ -1146,15 +1137,12 @@ bool rHandleUnsavedChanges()
    // wait for method
    json::JsonRpcRequest request;
 
-   suspend::addBlockingOp(suspend::SuspendBlockingOps::kWaitingForUnsavedHandlerCompletion);
    bool succeeded = http_methods::waitForMethod(
                         kHandleUnsavedChangesCompleted,
                         boost::bind(http_methods::waitForMethodInitFunction,
                                     event),
                         suspend::disallowSuspend,
                         &request);
-   suspend::removeBlockingOp(suspend::SuspendBlockingOps::kWaitingForUnsavedHandlerCompletion);
-
    if (!succeeded)
       return false;
 
@@ -1578,12 +1566,10 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
    // wait for user_prompt_completed
    json::JsonRpcRequest request;
 
-   suspend::addBlockingOp(suspend::SuspendBlockingOps::kWaitingForUserPromptCompletion);
    http_methods::waitForMethod(kUserPromptCompleted,
                        userPromptEvent,
                        suspend::disallowSuspend,
                        &request);
-   suspend::removeBlockingOp(suspend::SuspendBlockingOps::kWaitingForUserPromptCompletion);
 
    // read the response param
    int response;

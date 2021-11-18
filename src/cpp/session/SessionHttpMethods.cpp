@@ -443,6 +443,10 @@ bool waitForMethod(const std::string& method,
    boost::posix_time::time_duration connectionQueueTimeout =
                                    boost::posix_time::milliseconds(50);
 
+   // If this method (and the provided allowSuspend() function) blocks auto suspension,
+   // make sure to record it
+   suspend::addBlockingOp(method, suspend::disallowSuspend);
+
    // wait until we get the method we are looking for
    while (true)
    {
@@ -533,6 +537,8 @@ bool waitForMethod(const std::string& method,
                                                      polledEventHandler);
       }
    }
+
+   suspend::removeBlockingOp(method);
 
    // satisfied the request
    return true;

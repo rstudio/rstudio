@@ -24,34 +24,23 @@ namespace suspend {
 
 // Types of operations that will prevent the session from
 // suspending due to inactivity
-enum SuspendBlockingOps
-{
-   kChildProcess = 0,
-   kExecuting,
-   kConnection,
-   kOverlay,
-   kExternalPointer,
-   kActiveJob,
-   kCommandPrompt,
-
-   kWaitingForEditCompletion,
-   kWaitingForChooseFileCompletion,
-   kWaitingForLocatorCompletion,
-   kWaitingForUnsavedHandlerCompletion,
-   kWaitingForUserPromptCompletion,
-
-
-   kBlockingOpsCount // Always keep this at bottom of enum list
-};
+const char * const kChildProcess = "active-child-process";
+const char * const kExecuting = "executing";
+const char * const kConnection = "active-connection";
+const char * const kOverlay = "overlay";
+const char * const kExternalPointer = "active-external-pointer";
+const char * const kActiveJob = "active-job";
+const char * const kCommandPrompt = "incomplete-command-prompt";
 
 bool disallowSuspend();
 void resetSuspendTimeout();
-void addBlockingOp(SuspendBlockingOps op);
-void removeBlockingOp(SuspendBlockingOps op);
-bool checkBlockingOp(bool blocking, SuspendBlockingOps op);
+void addBlockingOp(std::string op);
+void addBlockingOp(const std::string& method, const boost::function<bool()>& allowSuspend);
+void removeBlockingOp(std::string op);
+bool checkBlockingOp(bool blocking, std::string op);
+void checkForSuspend(const boost::function<bool()>& allowSuspend);
 
 bool suspendSession(bool force, int status = EXIT_SUCCESS);
-void checkForSuspend(const boost::function<bool()>& allowSuspend);
 void handleUSR1(int unused);
 void handleUSR2(int unused);
 bool suspendedFromTimeout();

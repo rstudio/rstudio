@@ -15,6 +15,7 @@
 
 #include <cstdlib>
 #include <signal.h>
+#include <unordered_set>
 
 #include "SessionSuspend.hpp"
 #include "SessionConsoleInput.hpp"
@@ -53,7 +54,7 @@ enum SuspendTimeoutState
    kWaitingForInactivity
 };
 
-std::vector<bool> opsBlockingSuspend(kBlockingOpsCount, false);
+std::unordered_set<std::string> opsSet;
 boost::posix_time::ptime s_suspendTimeoutTime = boost::posix_time::second_clock::universal_time();
 boost::posix_time::ptime s_blockingTimestamp = boost::posix_time::second_clock::universal_time();
 bool s_dirtyBlockingOps = false;
@@ -130,51 +131,31 @@ bool shouldNotify()
    return s_blockingTimestamp + boost::posix_time::seconds(5) < boost::posix_time::second_clock::universal_time();
 }
 
-core::json::Object blockingOpsToJson()
+core::json::Array blockingOpsToJson()
 {
    core::json::Object blockingOps;
+   core::json::Array blockingOpss;
 
-   if (opsBlockingSuspend[SuspendBlockingOps::kChildProcess])
-      blockingOps.insert("active-child-process", core::json::Array());
-   if (opsBlockingSuspend[SuspendBlockingOps::kExecuting])
-      blockingOps.insert("executing", core::json::Array());
-   if (opsBlockingSuspend[SuspendBlockingOps::kConnection])
-      blockingOps.insert("active-connection", core::json::Array());
-   if (opsBlockingSuspend[SuspendBlockingOps::kOverlay])
-      blockingOps.insert("overlay", core::json::Array());
-   if (opsBlockingSuspend[SuspendBlockingOps::kExternalPointer])
-      blockingOps.insert("active-external-pointer", core::json::Array());
-   if (opsBlockingSuspend[SuspendBlockingOps::kActiveJob])
-      blockingOps.insert("active-job", core::json::Array());
-   if (opsBlockingSuspend[SuspendBlockingOps::kCommandPrompt])
-      blockingOps.insert("incomplete-command-prompt", core::json::Array());
+   for (const auto &op : opsSet)
+   {
+      blockingOpss.push_back(op);
+   }
 
-   if (opsBlockingSuspend[SuspendBlockingOps::kWaitingForEditCompletion])
-      blockingOps.insert("edit-completion", core::json::Array());
-   if (opsBlockingSuspend[SuspendBlockingOps::kWaitingForChooseFileCompletion])
-      blockingOps.insert("choose-file-completion", core::json::Array());
-   if (opsBlockingSuspend[SuspendBlockingOps::kWaitingForLocatorCompletion])
-      blockingOps.insert("locator-completion", core::json::Array());
-   if (opsBlockingSuspend[SuspendBlockingOps::kWaitingForUnsavedHandlerCompletion])
-      blockingOps.insert("unsaved-handler-completion", core::json::Array());
-   if (opsBlockingSuspend[SuspendBlockingOps::kWaitingForUserPromptCompletion])
-      blockingOps.insert("user-prompt-completion", core::json::Array());
-
-   return blockingOps;
+   return blockingOpss;
 }
 
-void addBlockingMetadata(core::json::Object blockingOps)
+void addBlockingMetadata(core::json::Array blockingOps)
 {
    module_context::activeSession().setBlockingSuspend(blockingOps);
 }
 
-void sendBlockingClientEvent(core::json::Object blockingOps)
+void sendBlockingClientEvent(core::json::Array blockingOps)
 {
    module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
    s_initialNotificationSent = true;
 }
 
-void logBlockingOps(core::json::Object blockingOps)
+void logBlockingOps(core::json::Array blockingOps)
 {
    core::Error blocked("SessionTimeoutSuspendBlocked",
                        -1,
@@ -201,7 +182,7 @@ void storeBlockingOps(bool force = false)
 {
    if (s_dirtyBlockingOps || force)
    {
-      core::json::Object blockingOps = blockingOpsToJson();
+      core::json::Array blockingOps = blockingOpsToJson();
       addBlockingMetadata(blockingOps);
       sendBlockingClientEvent(blockingOps);
       resetSuspendTimeout();
@@ -214,26 +195,35 @@ void storeBlockingOps(bool force = false)
  */
 void logBlockingOpsWarning()
 {
-   core::json::Object blockingOps = blockingOpsToJson();
+   core::json::Array blockingOps = blockingOpsToJson();
    logBlockingOps(blockingOps);
 }
 
-void addBlockingOp(SuspendBlockingOps op)
+void addBlockingOp(std::string op)
 {
    // If we're already tracking this op, nothing to do
-   if (opsBlockingSuspend[op])
+   if (opsSet.count(op))
       return;
 
-   opsBlockingSuspend[op] = true;
+   opsSet.insert(op);
    s_dirtyBlockingOps = true;
 }
 
-void removeBlockingOp(SuspendBlockingOps op)
+void addBlockingOp(const std::string& method, const boost::function<bool()>& allowSuspend)
 {
-   if (!opsBlockingSuspend[op])
+   // Only a blocking op if the allowSuspend() is actually the disallowSuspend() method
+   if (allowSuspend == disallowSuspend)
+   {
+      addBlockingOp(method);
+   }
+}
+
+void removeBlockingOp(std::string& op)
+{
+   if (opsSet.count(op) == 0)
       return;
 
-   opsBlockingSuspend[op] = false;
+   opsSet.erase(op);
    s_dirtyBlockingOps = true;
 }
 
@@ -246,11 +236,16 @@ void removeBlockingOp(SuspendBlockingOps op)
  *
  * @return The original blocking value, as a convenience passthrough value
  */
-bool checkBlockingOp(bool blocking, SuspendBlockingOps op)
+bool checkBlockingOp(bool blocking, std::string op)
 {
-   if (opsBlockingSuspend[op] != blocking)
+   if (opsSet.count(op) && !blocking)
    {
-      opsBlockingSuspend[op] = blocking;
+      opsSet.erase(op);
+      s_dirtyBlockingOps = true;
+   }
+   else if (opsSet.count(op) == 0 && blocking)
+   {
+      opsSet.insert(op);
       s_dirtyBlockingOps = true;
    }
 
@@ -264,11 +259,11 @@ bool checkBlockingOp(bool blocking, SuspendBlockingOps op)
  */
 void clearBlockingOps(bool store)
 {
-   std::fill(opsBlockingSuspend.begin(), opsBlockingSuspend.end(), false);
+   opsSet.clear();
    if (store)
    {
-      addBlockingMetadata(core::json::Object());
-      sendBlockingClientEvent(core::json::Object());
+      addBlockingMetadata(core::json::Array());
+      sendBlockingClientEvent(core::json::Array());
       s_dirtyBlockingOps = false;
    }
 }
