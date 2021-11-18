@@ -40,13 +40,11 @@ private:
 
    friend class ActiveSessions;
 
-   explicit ActiveSession(const std::string& id) 
-      : id_(id)
+   explicit ActiveSession(const std::string& id) : id_(id) 
    {
-
    }
 
-   ActiveSession(
+   explicit ActiveSession(
       const std::string& id,
       const FilePath& scratchPath) : 
          id_(id),
