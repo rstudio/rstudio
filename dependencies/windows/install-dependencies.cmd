@@ -6,6 +6,15 @@ call ..\tools\rstudio-tools.cmd
 
 set PATH=%CD%\tools;%PATH%
 
+REM Check for required tools on the PATH.
+for %%X in (R.exe 7z.exe cmake.exe) do (
+  where /q %%X
+  if ERRORLEVEL 1 (
+    echo ERROR: %%X is not available on the PATH; cannot proceed.
+    exit /b
+  )
+)
+
 set WGET_ARGS=-c --no-check-certificate
 set UNZIP_ARGS=-q
 
