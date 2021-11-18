@@ -17,11 +17,13 @@
 
 package org.rstudio.studio.client.panmirror.findreplace;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
 import com.google.gwt.core.client.Scheduler;
@@ -85,8 +87,8 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
          int replaced = find.replaceAll(text);
          RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
             GlobalDisplay.MSG_INFO,
-            "Find/Replace",
-            replaced + " occurrences replaced."
+            constants_.findReplaceTitle(),
+            constants_.rStudioGinjectorErrorMessage(replaced)
          );
       });
      
@@ -187,6 +189,6 @@ public class PanmirrorFindReplaceWidget extends FindReplaceBar implements HasFin
    
    private Container container_;
 
-  
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 
 }
