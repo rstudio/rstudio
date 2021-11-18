@@ -40,6 +40,12 @@ private:
 
    friend class ActiveSessions;
 
+   explicit ActiveSession(const std::string& id) 
+      : id_(id)
+   {
+
+   }
+
    ActiveSession(
       const std::string& id,
       const FilePath& scratchPath) : 
