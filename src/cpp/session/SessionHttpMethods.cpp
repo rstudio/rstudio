@@ -445,7 +445,7 @@ bool waitForMethod(const std::string& method,
 
    // If this method (and the provided allowSuspend() function) blocks auto suspension,
    // make sure to record it
-   suspend::addBlockingOp(method, suspend::disallowSuspend);
+   suspend::addBlockingOp(method, allowSuspend);
 
    // wait until we get the method we are looking for
    while (true)

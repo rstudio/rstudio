@@ -35,7 +35,7 @@ const char * const kCommandPrompt = "incomplete-command-prompt";
 bool disallowSuspend();
 void resetSuspendTimeout();
 void addBlockingOp(std::string op);
-void addBlockingOp(const std::string& method, const boost::function<bool()>& allowSuspend);
+void addBlockingOp(std::string method, const boost::function<bool()>& allowSuspend);
 void removeBlockingOp(std::string op);
 bool checkBlockingOp(bool blocking, std::string op);
 void checkForSuspend(const boost::function<bool()>& allowSuspend);

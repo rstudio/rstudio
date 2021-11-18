@@ -54,7 +54,7 @@ enum SuspendTimeoutState
    kWaitingForInactivity
 };
 
-std::unordered_set<std::string> opsSet;
+std::unordered_set<std::string> opsBlockingSuspend;
 boost::posix_time::ptime s_suspendTimeoutTime = boost::posix_time::second_clock::universal_time();
 boost::posix_time::ptime s_blockingTimestamp = boost::posix_time::second_clock::universal_time();
 bool s_dirtyBlockingOps = false;
@@ -133,15 +133,14 @@ bool shouldNotify()
 
 core::json::Array blockingOpsToJson()
 {
-   core::json::Object blockingOps;
-   core::json::Array blockingOpss;
+   core::json::Array opsBlockingSuspendJson;
 
-   for (const auto &op : opsSet)
+   for (const auto &op : opsBlockingSuspend)
    {
-      blockingOpss.push_back(op);
+      opsBlockingSuspendJson.push_back(op);
    }
 
-   return blockingOpss;
+   return opsBlockingSuspendJson;
 }
 
 void addBlockingMetadata(core::json::Array blockingOps)
@@ -202,14 +201,14 @@ void logBlockingOpsWarning()
 void addBlockingOp(std::string op)
 {
    // If we're already tracking this op, nothing to do
-   if (opsSet.count(op))
+   if (opsBlockingSuspend.count(op))
       return;
 
-   opsSet.insert(op);
+   opsBlockingSuspend.insert(op);
    s_dirtyBlockingOps = true;
 }
 
-void addBlockingOp(const std::string& method, const boost::function<bool()>& allowSuspend)
+void addBlockingOp(std::string method, const boost::function<bool()>& allowSuspend)
 {
    // Only a blocking op if the allowSuspend() is actually the disallowSuspend() method
    if (allowSuspend == disallowSuspend)
@@ -218,12 +217,12 @@ void addBlockingOp(const std::string& method, const boost::function<bool()>& all
    }
 }
 
-void removeBlockingOp(std::string& op)
+void removeBlockingOp(std::string op)
 {
-   if (opsSet.count(op) == 0)
+   if (opsBlockingSuspend.count(op) == 0)
       return;
 
-   opsSet.erase(op);
+   opsBlockingSuspend.erase(op);
    s_dirtyBlockingOps = true;
 }
 
@@ -238,14 +237,14 @@ void removeBlockingOp(std::string& op)
  */
 bool checkBlockingOp(bool blocking, std::string op)
 {
-   if (opsSet.count(op) && !blocking)
+   if (opsBlockingSuspend.count(op) && !blocking)
    {
-      opsSet.erase(op);
+      opsBlockingSuspend.erase(op);
       s_dirtyBlockingOps = true;
    }
-   else if (opsSet.count(op) == 0 && blocking)
+   else if (opsBlockingSuspend.count(op) == 0 && blocking)
    {
-      opsSet.insert(op);
+      opsBlockingSuspend.insert(op);
       s_dirtyBlockingOps = true;
    }
 
@@ -259,7 +258,7 @@ bool checkBlockingOp(bool blocking, std::string op)
  */
 void clearBlockingOps(bool store)
 {
-   opsSet.clear();
+   opsBlockingSuspend.clear();
    if (store)
    {
       addBlockingMetadata(core::json::Array());
