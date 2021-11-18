@@ -6,7 +6,7 @@ properties([
                               artifactNumToKeepStr: '',
                               daysToKeepStr: '',
                               numToKeepStr: '100')),
-    parameters([string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '1', description: 'RStudio Patch Version'),
+    parameters([string(name: 'RSTUDIO_VERSION_PATCH', defaultValue: '2', description: 'RStudio Patch Version'),
                 string(name: 'SLACK_CHANNEL', defaultValue: '#ide-builds', description: 'Slack channel to publish build message.'),
                 string(name: 'OS_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching OS'),
                 string(name: 'ARCH_FILTER', defaultValue: '', description: 'Pattern to limit builds by matching ARCH'),
