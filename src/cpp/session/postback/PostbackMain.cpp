@@ -28,6 +28,7 @@
 #include <shared_core/SafeConvert.hpp>
 
 #include <core/system/System.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -54,7 +55,10 @@ int main(int argc, char * const argv[])
    {
       // initialize log
       core::log::setProgramId("rpostback");
-      core::system::initializeLog("rpostback", core::log::LogLevel::WARN);
+      core::system::initializeLog("rpostback",
+                                  core::log::LogLevel::WARN,
+                                  core::system::xdg::userLogDir(),
+                                  true); // force log dir to be under user's home directory
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

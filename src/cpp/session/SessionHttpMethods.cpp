@@ -957,7 +957,7 @@ void initSessionDebugLog()
       return;
    s_sessionDebugLogCreated = true;
 
-   system::initFileLogDestination(log::LogLevel::DEBUG, core::system::xdg::userDataDir().completePath("log"));
+   system::initFileLogDestination(log::LogLevel::DEBUG, core::system::xdg::userLogDir());
 }
 
 void onUserPrefsChanged(const std::string& layer, const std::string& pref)

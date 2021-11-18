@@ -218,6 +218,11 @@ FilePath userDataDir(
    );
 }
 
+FilePath userLogDir()
+{
+   return userDataDir().completePath("log");
+}
+
 void verifyUserDirs(
    const boost::optional<std::string>& user,
    const boost::optional<FilePath>& homeDir)

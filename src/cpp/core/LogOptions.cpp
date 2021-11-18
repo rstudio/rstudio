@@ -205,6 +205,47 @@ struct LoggerOptionsVisitor : boost::static_visitor<>
    ConfigProfile& profile_;
 };
 
+// used to determine if file log directory has been programmatically forced
+// the logging directory can be forced programmatically, but all other
+// fields could still be overrideable via logging configuration
+struct ForcedFileLogOptionsVisitor : boost::static_visitor<bool>
+{
+   bool operator()(const StdErrLogOptions& options)
+   {
+      return false;
+   }
+
+   bool operator()(const SysLogOptions& options)
+   {
+      return false;
+   }
+
+   bool operator()(const FileLogOptions& options)
+   {
+      return options.getForceDirectory();
+   }
+};
+
+// if force log directory is set, we use this visitor to determine
+// which directory to force it to
+struct LogDirVisitor : boost::static_visitor<FilePath>
+{
+   FilePath operator()(const StdErrLogOptions& options)
+   {
+      return FilePath(kDefaultLogPath);
+   }
+
+   FilePath operator()(const SysLogOptions& options)
+   {
+      return FilePath(kDefaultLogPath);
+   }
+
+   FilePath operator()(const FileLogOptions& options)
+   {
+      return options.getDirectory();
+   }
+};
+
 } // anonymous namespace
 
 
@@ -400,7 +441,6 @@ LoggerOptions LogOptions::loggerOptions(const std::string& loggerName) const
          double maxSizeMb;
          int rotateDays, maxRotations, deleteDays;
 
-         profile_.getParam(kLogDir, &logDir, levels);
          profile_.getParam(kRotate, &rotate, levels);
          profile_.getParam(kMaxSizeMb, &maxSizeMb, levels);
          profile_.getParam(kLogFileIncludePid, &includePid, levels);
@@ -410,11 +450,26 @@ LoggerOptions LogOptions::loggerOptions(const std::string& loggerName) const
          profile_.getParam(kDeleteDays, &deleteDays, levels);
          profile_.getParam(kWarnSyslog, &warnSyslog, levels);
 
+         profile_.getParam(kLogDir, &logDir, levels);
+         FilePath loggingDir(logDir);
+
+         // determine if the log directory should be programatically forced, preventing
+         // it from being overrideable via conf file - note we still allow it to be overridden
+         // via environment variable as an escape hatch
+         ForcedFileLogOptionsVisitor forceVisitor;
+         bool forceLogDir = boost::apply_visitor(forceVisitor, defaultLoggerOptions_);
+         if (forceLogDir)
+         {
+            LogDirVisitor dirVisitor;
+            loggingDir = boost::apply_visitor(dirVisitor, defaultLoggerOptions_);
+         }
+
+         // override log dir via env var if present
          std::string logDirOverride = core::system::getenv(kLogDirEnvVar);
          if (!logDirOverride.empty())
-            logDir = logDirOverride;
+            loggingDir = FilePath(logDirOverride);
 
-         return FileLogOptions(FilePath(logDir), fileMode, maxSizeMb, rotateDays, maxRotations, deleteDays, rotate, includePid, warnSyslog);
+         return FileLogOptions(loggingDir, fileMode, maxSizeMb, rotateDays, maxRotations, deleteDays, rotate, includePid, warnSyslog, forceLogDir);
       }
 
       case LoggerType::kStdErr:

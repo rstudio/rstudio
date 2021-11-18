@@ -47,3 +47,4 @@
 * Fixed custom shortcuts not appearing correctly in "Keyboard Shortcuts Help" and Electron menus. (#9953)
 * Fixed header scrolling in data viewer tables not following table contents in unfocused windows (#8208)
 * Fixed permissions on Mac Desktop application so all user accounts can launch it (#9945)
+* Fixed logging directory permissions to be more restrictive (775 instead of 777) (#3099)

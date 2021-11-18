@@ -516,7 +516,8 @@ int main(int argc, char* argv[])
       // initialize log
       core::system::initializeLog("rdesktop",
                                   core::log::LogLevel::WARN,
-                                  desktop::userLogPath());
+                                  desktop::userLogPath(),
+                                  true);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

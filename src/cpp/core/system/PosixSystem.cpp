@@ -2441,7 +2441,8 @@ bool effectiveUserIsRoot()
    return ::geteuid() == 0;
 }
 
-Error temporarilyDropPriv(const std::string& newUsername)
+Error temporarilyDropPriv(const std::string& newUsername,
+                          bool chownLogDir)
 {
    // get user info
    User user;
@@ -2451,7 +2452,10 @@ Error temporarilyDropPriv(const std::string& newUsername)
 
    // before changing the process user, ensure it becomes the new
    // owner of any file logs so we can ensure that we can keep writing to them
-   core::log::refreshAllLogDestinations(core::log::RefreshParams{ user });
+   //
+   // also, we chown the log dir to the server user if specified to ensure that we
+   // can create new log files after giving up root privilege
+   core::log::refreshAllLogDestinations(core::log::RefreshParams{ user, chownLogDir });
 
    return posix::temporarilyDropPrivileges(user);
 }

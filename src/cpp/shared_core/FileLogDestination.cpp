@@ -52,7 +52,8 @@ FileLogOptions::FileLogOptions(FilePath in_directory) :
    m_deletionDays(s_defaultDeletionDays),
    m_doRotation(s_defaultDoRotation),
    m_includePid(s_defaultIncludePid),
-   m_warnSyslog(s_defaultWarnSyslog)
+   m_warnSyslog(s_defaultWarnSyslog),
+   m_forceDirectory(s_defaultForceDirectory)
 {
 }
 
@@ -66,7 +67,8 @@ FileLogOptions::FileLogOptions(FilePath in_directory,
    m_deletionDays(s_defaultDeletionDays),
    m_doRotation(s_defaultDoRotation),
    m_includePid(s_defaultIncludePid),
-   m_warnSyslog(in_warnSyslog)
+   m_warnSyslog(in_warnSyslog),
+   m_forceDirectory(s_defaultForceDirectory)
 {
 }
 
@@ -79,7 +81,8 @@ FileLogOptions::FileLogOptions(
    int in_deletionDays,
    bool in_doRotation,
    bool in_includePid,
-   bool in_warnSyslog) :
+   bool in_warnSyslog,
+   bool in_forceDirectory) :
       m_directory(std::move(in_directory)),
       m_fileMode(std::move(in_fileMode)),
       m_maxSizeMb(in_maxSizeMb),
@@ -88,7 +91,8 @@ FileLogOptions::FileLogOptions(
       m_deletionDays(in_deletionDays),
       m_doRotation(in_doRotation),
       m_includePid(in_includePid),
-      m_warnSyslog(in_warnSyslog)
+      m_warnSyslog(in_warnSyslog),
+      m_forceDirectory(in_forceDirectory)
 {
 }
 
@@ -105,6 +109,11 @@ const FilePath& FileLogOptions::getDirectory() const
 const std::string& FileLogOptions::getFileMode() const
 {
    return m_fileMode;
+}
+
+bool FileLogOptions::getForceDirectory() const
+{
+   return m_forceDirectory;
 }
 
 int FileLogOptions::getMaxRotations() const
@@ -152,6 +161,11 @@ void FileLogOptions::setFileMode(const std::string& in_fileMode)
    m_fileMode = in_fileMode;
 }
 
+void FileLogOptions::setForceDirectory(bool in_forceDirectory)
+{
+   m_forceDirectory = in_forceDirectory;
+}
+
 void FileLogOptions::setMaxRotations(int in_maxRotations)
 {
    m_maxRotations = in_maxRotations;
@@ -188,9 +202,9 @@ struct FileLogDestination::Impl
       if (!LogOptions.getDirectory().exists())
       {
          // Create each directory listed in the final desired logging directory
-         // with full permissions to ensure other process users can create logs
-         // in the directory as well (otherwise the directory could end up only
-         // writeable by root, for example)
+         // with 0775 permissions - this will ensure that regular users cannot
+         // access/modify the directory/contents and requires other RStudio products
+         // to create their subdirectory as root
          std::string pathStr = LogOptions.getDirectory().getAbsolutePath();
          std::vector<std::string> pathParts;
          boost::split(pathParts, pathStr, boost::is_any_of("/"));
@@ -211,7 +225,23 @@ struct FileLogDestination::Impl
                if (error)
                   return;
 
-               path.changeFileMode(FileMode::ALL_READ_WRITE_EXECUTE);
+               path.changeFileMode(FileMode::USER_READ_WRITE_EXECUTE_GROUP_READ_WRITE_EXECUTE_ALL_READ_EXECUTE);
+            }
+         }
+      }
+      else if (LogOptions.getDirectory().getAbsolutePath() == "/var/log/rstudio/rstudio-server")
+      {
+         // fix-up legacy log directory permissions
+         // the original release of standardized file-logging caused logging dirs
+         // to be created with 0777 permissions which is too permissive
+         FilePath paths[2] = {FilePath("/var/log/rstudio"), FilePath("/var/log/rstudio/rstudio-server")};
+         for (const FilePath& path : paths)
+         {
+            FileMode mode;
+            if (!path.getFileMode(mode))
+            {
+               if (mode == FileMode::ALL_READ_WRITE_EXECUTE)
+                  path.changeFileMode(FileMode::USER_READ_WRITE_EXECUTE_GROUP_READ_WRITE_EXECUTE_ALL_READ_EXECUTE);
             }
          }
       }
@@ -357,6 +387,11 @@ struct FileLogDestination::Impl
 
       // Now do the current chown for this file
       logFile.changeOwnership(user);
+   }
+
+   void setLogDirOwner(const core::system::User& user)
+   {
+      LogOptions.getDirectory().changeOwnership(user);
    }
 #endif
 
@@ -554,6 +589,9 @@ void FileLogDestination::refresh(const RefreshParams& in_refreshParams)
       // If we can, change the log owner to the currently running user id to ensure
       // that we can continue writing to the log if we just changed our running user
       m_impl->chownLogs(m_impl->LogFile, in_refreshParams.newUser.get());
+
+      if (in_refreshParams.chownLogDir)
+         m_impl->setLogDirOwner(in_refreshParams.newUser.get());
    }
 
    if (m_impl->SyslogDest)
