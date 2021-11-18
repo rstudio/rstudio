@@ -50,12 +50,15 @@ bool s_rSessionResumed = false;
 enum SuspendTimeoutState
 {
    kWaitingForTimeout,
-   kWaitingForNonBlocking
+   kWaitingForInactivity
 };
 
 std::vector<bool> opsBlockingSuspend(kBlockingOpsCount, false);
 boost::posix_time::ptime s_suspendTimeoutTime = boost::posix_time::second_clock::universal_time();
+boost::posix_time::ptime s_blockingTimestamp = boost::posix_time::second_clock::universal_time();
 bool s_dirtyBlockingOps = false;
+bool s_initialNotificationSent = false;
+bool s_timeoutLogSent = false;
 SuspendTimeoutState s_timeoutState = kWaitingForTimeout;
 
 } // anonymous namespace
@@ -117,6 +120,16 @@ void resetSuspendTimeout()
    s_suspendTimeoutTime = timeoutTimeFromNow();
 }
 
+void blockingTimestamp()
+{
+   s_blockingTimestamp = boost::posix_time::second_clock::universal_time();
+}
+
+bool shouldNotify()
+{
+   return s_blockingTimestamp + boost::posix_time::seconds(5) < boost::posix_time::second_clock::universal_time();
+}
+
 core::json::Object blockingOpsToJson()
 {
    core::json::Object blockingOps;
@@ -158,6 +171,7 @@ void addBlockingMetadata(core::json::Object blockingOps)
 void sendBlockingClientEvent(core::json::Object blockingOps)
 {
    module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
+   s_initialNotificationSent = true;
 }
 
 void logBlockingOps(core::json::Object blockingOps)
@@ -169,8 +183,9 @@ void logBlockingOps(core::json::Object blockingOps)
 
    blocked.addProperty("username", core::system::username());
    blocked.addProperty("session_id", module_context::activeSession().id());
-   blocked.addProperty("suspend_timeout_minutes", options().timeoutMinutes());
+   blocked.addProperty("suspend_timeout_minutes_setting", options().timeoutMinutes());
    blocked.addProperty("blocking_operations", blockingOps.writeFormatted());
+   blocked.addProperty("blocking_ops_start_time", boost::posix_time::to_simple_string(s_blockingTimestamp));
 
    core::log::logErrorAsWarning(blocked);
 }
@@ -189,21 +204,18 @@ void storeBlockingOps(bool force = false)
       core::json::Object blockingOps = blockingOpsToJson();
       addBlockingMetadata(blockingOps);
       sendBlockingClientEvent(blockingOps);
+      resetSuspendTimeout();
       s_dirtyBlockingOps = false;
    }
 }
 
 /**
- * @brief Stores blocking OP metadata, creates a client event, and logs
- * a warning. Additionally marks current blocking OPs as being reported
+ * @brief Logs a warning that auto/timeout suspend may be blocked
  */
-void storeAndLogBlockingOps()
+void logBlockingOpsWarning()
 {
    core::json::Object blockingOps = blockingOpsToJson();
-   addBlockingMetadata(blockingOps);
-   sendBlockingClientEvent(blockingOps);
    logBlockingOps(blockingOps);
-   s_dirtyBlockingOps = false;
 }
 
 void addBlockingOp(SuspendBlockingOps op)
@@ -259,7 +271,6 @@ void clearBlockingOps(bool store)
       sendBlockingClientEvent(core::json::Object());
       s_dirtyBlockingOps = false;
    }
-
 }
 
 bool sessionResumed()
@@ -304,9 +315,9 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
    // for the inactivity timer to expire
    if (s_timeoutState == kWaitingForTimeout)
    {
-      if (isTimedOut(s_suspendTimeoutTime))
+      if (canSuspend)
       {
-         if (canSuspend)
+         if (isTimedOut(s_suspendTimeoutTime))
          {
             // note that we timed out
             suspend::setSuspendedFromTimeout(true);
@@ -333,25 +344,42 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
                s_timeoutState = kWaitingForTimeout;
             }
          }
-         else
-         {
-            s_timeoutState = kWaitingForNonBlocking;
-         }
+      }
+      else
+      {
+         s_timeoutState = kWaitingForInactivity;
+         blockingTimestamp(); // Record when the blocking started
+         resetSuspendTimeout();
+         s_initialNotificationSent = false; // Set flag so at least one notification is sent to frontend
+         s_timeoutLogSent = false;
       }
    }
 
    // If there is suspend-blocking activity, wait for it to end while also
    // notifying user that the session is blocked from suspending
-   if (s_timeoutState == kWaitingForNonBlocking)
+   if (s_timeoutState == kWaitingForInactivity)
    {
       if (canSuspend)
       {
          // reset the inactivity timeout before switching waiting modes
          s_timeoutState = kWaitingForTimeout;
          resetSuspendTimeout();
+         clearBlockingOps(true);
+
+         return;
       }
 
-      storeBlockingOps();
+      // Send RPC warning user after a few seconds
+      if (shouldNotify())
+         storeBlockingOps(!s_initialNotificationSent);
+
+      // If we've been waiting for inactivity long enough that we
+      // would have normally suspended, create a single warning log
+      if (!s_timeoutLogSent && isTimedOut(s_suspendTimeoutTime))
+      {
+         logBlockingOpsWarning();
+         s_timeoutLogSent = true;
+      }
    }
 }
 
