@@ -84,6 +84,7 @@ INSTALL_PATH="${NODE_BIN}:${PATH}"
 # curl on Ubuntu 20.04 segfaults when using yarn installer
 if [ "$(arch)" = "aarch64" ] && [ "$(platform)" = "ubuntu" ] && [ "$(ubuntu-codename)" = "focal" ]; then
   echo "Skipping yarn install (curl segfaults on Ubuntu Focal)"
+  echo "See https://bugs.launchpad.net/ubuntu/+source/openssl/+bug/1951279 for more details"
   exit 0
 fi
 
