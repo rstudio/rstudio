@@ -1172,7 +1172,7 @@ FilePath findProgram(const std::string& name)
    // version seems to fork a process to call the shell's 'which'
    // Be careful of Windows there are two copies of the environment so
    // R's env might be out of sync with rsession's PATH.
-   if (!r::exec::isMainThread())
+   if (!core::thread::isMainThread())
    {
       FilePath resultPath;
       Error error = system::findProgramOnPath(name, &resultPath);

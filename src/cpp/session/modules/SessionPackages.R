@@ -1594,6 +1594,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       
       # we're done!
       packages
+      
    }
    
    # prepare directory for discovery of available packages

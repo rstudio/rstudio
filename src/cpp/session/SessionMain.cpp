@@ -1814,6 +1814,9 @@ int main(int argc, char * const argv[])
             boost::this_thread::sleep(boost::posix_time::seconds(sleepDuration));
          }
       }
+      
+      // initialize thread id
+      core::thread::initializeMainThreadId(boost::this_thread::get_id());
 
       // terminate immediately with given exit code (for testing/debugging)
       std::string exitOnStartup = core::system::getenv("RSTUDIO_SESSION_EXIT_ON_STARTUP");
