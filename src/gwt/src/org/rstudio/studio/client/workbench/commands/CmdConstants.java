@@ -3023,6 +3023,8 @@ public interface CmdConstants extends Constants {
     String viewerRefreshDesc();
     
     // viewerEditSource
+    @DefaultStringValue("Edit") // $NON-NLS-1$
+    String viewerEditSourceButtonLabel();
     @DefaultStringValue("Edit source file") // $NON-NLS-1$
     String viewerEditSourceDesc();
     
