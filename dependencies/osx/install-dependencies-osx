@@ -43,7 +43,7 @@ if [ "$(arch)" = "arm64" ]; then
 
    # install x86_64 dependencies
    PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
-   mkdir -p "${OLDROOT}/../x86_64"
+   mkdir-sudo-if-necessary "${OLDROOT}/../x86_64"
    RSTUDIO_TOOLS_ROOT=$(cd "${OLDROOT}/../x86_64"; pwd -P)
 
    section "Installing x86_64 Dependencies"
@@ -51,7 +51,7 @@ if [ "$(arch)" = "arm64" ]; then
 
    # install arm64 dependencies
    PATH="$(dirname "${BREW_ARM}"):${OLDPATH}"
-   mkdir -p "${OLDROOT}/../arm64"
+   mkdir-sudo-if-necessary "${OLDROOT}/../arm64"
    RSTUDIO_TOOLS_ROOT=$(cd "${OLDROOT}/../arm64"; pwd -P)
 
    section "Installing arm64 Dependencies"
@@ -73,7 +73,7 @@ else
    OLDROOT="${RSTUDIO_TOOLS_ROOT}"
 
    PATH="$(dirname "${BREW_X86}"):${OLDPATH}"
-   mkdir -p "${OLDROOT}/../x86_64"
+   mkdir-sudo-if-necessary "${OLDROOT}/../x86_64"
    RSTUDIO_TOOLS_ROOT=$(cd "${OLDROOT}/../x86_64"; pwd -P)
 
    ./install-dependencies-osx-arch
