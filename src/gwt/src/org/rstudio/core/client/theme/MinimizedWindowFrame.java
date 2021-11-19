@@ -60,7 +60,7 @@ public class MinimizedWindowFrame
       layout_.addStyleName(themeStyles.rstheme_minimizedWindowObject());
 
       Roles.getRegionRole().set(layout_.getElement());
-      Roles.getRegionRole().setAriaLabelProperty(layout_.getElement(), accessibleName + " " + constants_.minimizedTabListRole());
+      Roles.getRegionRole().setAriaLabelProperty(layout_.getElement(),  constants_.minimizedTabListRole("accessibleName_"));
 
       int leftPadding = title != null ? 8 : 4;
       layout_.addWest(createDiv(themeStyles.left()), leftPadding);

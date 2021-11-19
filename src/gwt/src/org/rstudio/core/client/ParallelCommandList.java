@@ -16,7 +16,6 @@ package org.rstudio.core.client;
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 
 /*
@@ -41,7 +40,7 @@ public class ParallelCommandList
    {
       if (running_)
       {
-         log(constants_.addCommandLabel());
+         log("cannot add - already running");
          return;
       }
 
@@ -52,7 +51,7 @@ public class ParallelCommandList
    {
       if (running_)
       {
-         log(constants_.runningLabel());
+         log("already running");
          return;
       }
       running_ = true;
@@ -69,7 +68,7 @@ public class ParallelCommandList
       {
          command.onExecute(() ->
          {
-            log(constants_.finishedCmdLabel());
+            log("finished cmd");
             countdown();
          });
       }
@@ -77,13 +76,13 @@ public class ParallelCommandList
 
    private void countdown()
    {
-      log(constants_.countdownLabel());
+      log("countdown");
 
       commandsRemaining--;
 
       if (commandsRemaining <= 0)
       {
-         log(constants_.doneLabel());
+         log("done");
          running_ = false;
          onCompleted_.execute();
          commands_.clear();
@@ -96,7 +95,7 @@ public class ParallelCommandList
    {
       if (log_)
       {
-         Debug.log(hashCode() + " " + label + " " + constants_.logSizeLabel() + commands_.size());
+         Debug.log(hashCode() + " " + label + " size=" + commands_.size());
       }
    }
 
@@ -105,5 +104,4 @@ public class ParallelCommandList
    private final ArrayList<SerializedCommand> commands_ = new ArrayList<>();
    private final boolean log_;
    private final Command onCompleted_;
-   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

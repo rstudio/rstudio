@@ -111,7 +111,7 @@ public class RpcRequest
       {
          String requestString = request.toString();
          if (TRACE)
-            Debug.log(constants_.requestDebugLog() + requestString);
+            Debug.log("Request: " + requestString);
 
          requestLogEntry_ = RequestLog.log(requestId,
                                            redactLog_ ? constants_.redactedText()
@@ -143,7 +143,7 @@ public class RpcRequest
                   {
                      String responseText = response.getText();
                      if (TRACE)
-                        Debug.log(constants_.responseText() + responseText);
+                        Debug.log("Response: " + responseText);
                      requestLogEntry_.logResponse(ResponseType.Normal,
                                                  responseText);
                      rpcResponse = RpcResponse.parseUnsafe(responseText);
@@ -166,19 +166,14 @@ public class RpcRequest
                   // ERROR: Non-200 response from server
                   
                   // default error message
-                  String message = constants_.onResponseStatusCodeMessage() +
-                                   Integer.toString(status) + 
-                                   " " + constants_.onResponseReturnedBy() +
-                                   (Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()) +
-                                   " " + constants_.whenExecutingMessage() +
-                                   getMethod() + "'";
+                  String message = constants_.rpcErrorMessage(Integer.toString(status),
+                          Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage(),
+                          getMethod());
                   
                   // override error message for status code 0
                   if (status == 0)
                   {
-                     message = constants_.statusCodeMessage() +
-                        (Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()) +
-                        " " + constants_.whenExecutingMessage() + getMethod() + "'";
+                     message = constants_.rpcOverrideErrorMessage((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()), getMethod());
                   }
 
                   requestLogEntry_.logResponse(ResponseType.Unknown,

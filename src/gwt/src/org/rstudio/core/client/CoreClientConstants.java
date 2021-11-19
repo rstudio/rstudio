@@ -1,3 +1,17 @@
+/*
+ * CoreClientConstants.java
+ *
+ * Copyright (C) 2021 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.core.client;
 
 public interface CoreClientConstants extends com.google.gwt.i18n.client.Constants {
@@ -66,69 +80,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     String popupBlockCaption();
 
     /**
-     * Translated "We attempted to open an external browser window, but".
-     *
-     * @return translated "We attempted to open an external browser window, but"
-     */
-    @DefaultStringValue("We attempted to open an external browser window, but")
-    @Key("popupBlockMessage")
-    String popupBlockMessage();
-
-    /**
-     * Translated "the action was prevented by your popup blocker. You".
-     *
-     * @return translated "the action was prevented by your popup blocker. You"
-     */
-    @DefaultStringValue("the action was prevented by your popup blocker. You")
-    @Key("popupBlockActionMessage")
-    String popupBlockActionMessage();
-
-    /**
-     * Translated "can attempt to open the window again by pressing the".
-     *
-     * @return translated "can attempt to open the window again by pressing the"
-     */
-    @DefaultStringValue("can attempt to open the window again by pressing the")
-    @Key("popupBlockAttemptMessage")
-    String popupBlockAttemptMessage();
-
-    /**
-     * Translated "Try Again" button below.\n\n".
-     *
-     * @return translated "can attempt Try Again" button below.\n\n"
-     */
-    @DefaultStringValue("Try Again\" button below.\\n\\n")
-    @Key("popupBlockTryAgainMessage")
-    String popupBlockTryAgainMessage();
-
-    /**
-     * Translated "NOTE: To prevent seeing this message in the future, you".
-     *
-     * @return translated "NOTE: To prevent seeing this message in the future, you"
-     */
-    @DefaultStringValue("NOTE: To prevent seeing this message in the future, you")
-    @Key("popupBlockNote")
-    String popupBlockNote();
-
-    /**
-     * Translated "should configure your browser to allow popup windows".
-     *
-     * @return translated "should configure your browser to allow popup windows"
-     */
-    @DefaultStringValue("should configure your browser to allow popup windows")
-    @Key("popupBlockAllowMessage")
-    String popupBlockAllowMessage();
-
-    /**
-     * Translated "for".
-     *
-     * @return translated "for"
-     */
-    @DefaultStringValue("for")
-    @Key("popupBlockFor")
-    String popupBlockFor();
-
-    /**
      * Translated "Try Again".
      *
      * @return translated "Try Again"
@@ -136,60 +87,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @DefaultStringValue("Try Again")
     @Key("popupBlockTryAgainLabel")
     String popupBlockTryAgainLabel();
-
-    /**
-     * Translated "cannot add - already running".
-     *
-     * @return translated "cannot add - already running"
-     */
-    @DefaultStringValue("cannot add - already running")
-    @Key("addCommandLabel")
-    String addCommandLabel();
-
-    /**
-     * Translated "already running".
-     *
-     * @return translated "already running"
-     */
-    @DefaultStringValue("already running")
-    @Key("runningLabel")
-    String runningLabel();
-
-    /**
-     * Translated "finished cmd".
-     *
-     * @return translated "finished cmd"
-     */
-    @DefaultStringValue("finished cmd")
-    @Key("finishedCmdLabel")
-    String finishedCmdLabel();
-
-    /**
-     * Translated "countdown".
-     *
-     * @return translated "countdown"
-     */
-    @DefaultStringValue("countdown")
-    @Key("countdownLabel")
-    String countdownLabel();
-
-    /**
-     * Translated "done".
-     *
-     * @return translated "done"
-     */
-    @DefaultStringValue("done")
-    @Key("doneLabel")
-    String doneLabel();
-
-    /**
-     * Translated "size=".
-     *
-     * @return translated "size="
-     */
-    @DefaultStringValue("size=")
-    @Key("logSizeLabel")
-    String logSizeLabel();
 
     /**
      * Translated "second".
@@ -307,15 +204,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @DefaultStringValue("File does not exist")
     @Key("nonexistentFileMessage")
     String nonexistentFileMessage();
-
-    /**
-     * Translated "This case should be covered by navigateIfDirectory".
-     *
-     * @return translated "This case should be covered by navigateIfDirectory"
-     */
-    @DefaultStringValue("This case should be covered by navigateIfDirectory")
-    @Key("navigateIfDirectoryMessage")
-    String navigateIfDirectoryMessage();
 
     /**
      * Translated "Open Project".
@@ -443,23 +331,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @Key("showOverwriteMessage")
     String showOverwriteMessage();
 
-    /**
-     * Translated "Status code ".
-     *
-     * @return translated "Status code "
-     */
-    @DefaultStringValue("Status code ")
-    @Key("onResponseStatusCodeMessage")
-    String onResponseStatusCodeMessage();
-
-    /**
-     * Translated "returned by ".
-     *
-     * @return translated "returned by "
-     */
-    @DefaultStringValue("returned by ")
-    @Key("onResponseReturnedBy")
-    String onResponseReturnedBy();
 
     /**
      * Translated "R session".
@@ -478,15 +349,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @DefaultStringValue("RStudio Server")
     @Key("rStudioServerMessage")
     String rStudioServerMessage();
-
-    /**
-     * Translated "when executing '".
-     *
-     * @return translated "when executing '"
-     */
-    @DefaultStringValue("when executing '")
-    @Key("whenExecutingMessage")
-    String whenExecutingMessage();
 
     /**
      * Translated "Unable to establish connection with ".
@@ -532,24 +394,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @DefaultStringValue("Restart Required")
     @Key("restartRequiredCaption")
     String restartRequiredCaption();
-
-    /**
-     * Translated "You need to restart RStudio in order for these changes to take effect. ".
-     *
-     * @return translated "You need to restart RStudio in order for these changes to take effect. "
-     */
-    @DefaultStringValue("You need to restart RStudio in order for these changes to take effect. ")
-    @Key("restartRequiredMessage")
-    String restartRequiredMessage();
-
-    /**
-     * Translated "Do you want to do this now?".
-     *
-     * @return translated "Do you want to do this now?"
-     */
-    @DefaultStringValue("Do you want to do this now?")
-    @Key("restartNowMessage")
-    String restartNowMessage();
 
     /**
      * Translated "Working...".
@@ -651,15 +495,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     String closeButtonText();
 
     /**
-     * Translated "tab".
-     *
-     * @return translated "tab"
-     */
-    @DefaultStringValue("tab")
-    @Key("closeAltTabText")
-    String closeAltTabText();
-
-    /**
      * Translated "WindowFrameButton: for keyboard support use setClickHandler instead of addClickHandler".
      *
      * @return translated "WindowFrameButton: for keyboard support use setClickHandler instead of addClickHandler"
@@ -667,51 +502,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @DefaultStringValue("WindowFrameButton: for keyboard support use setClickHandler instead of addClickHandler")
     @Key("addClickHandlerMessage")
     String addClickHandlerMessage();
-
-    /**
-     * Translated "Minimize".
-     *
-     * @return translated "Minimize"
-     */
-    @DefaultStringValue("Minimize")
-    @Key("minimizeState")
-    String minimizeState();
-
-    /**
-     * Translated "Maximize".
-     *
-     * @return translated "Maximize"
-     */
-    @DefaultStringValue("Maximize")
-    @Key("maximizeState")
-    String maximizeState();
-
-    /**
-     * Translated "Restore".
-     *
-     * @return translated "Restore"
-     */
-    @DefaultStringValue("Restore")
-    @Key("normalState")
-    String normalState();
-
-    /**
-     * Translated "Hide".
-     *
-     * @return translated "Hide"
-     */
-    @DefaultStringValue("Hide")
-    @Key("hideState")
-    String hideState();
-
-    /**
-     * Translated "Exclusive".
-     *
-     * @return translated "Exclusive"
-     */
-    @DefaultStringValue("Exclusive")
-    @Key("exclusiveState")
-    String exclusiveState();
 
     /**
      * Translated "Could Not Change Setting"
@@ -748,24 +538,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @DefaultStringValue("Unexpected empty response from server")
     @Key("onSubmitErrorMessage")
     String onSubmitErrorMessage();
-
-    /**
-     * Translated "Package ".
-     *
-     * @return translated "Package "
-     */
-    @DefaultStringValue("Package ")
-    @Key("packageMessage")
-    String packageMessage();
-
-    /**
-     * Translated "required but is not installed."
-     *
-     * @return translated "required but is not installed."
-     */
-    @DefaultStringValue("required but is not installed.")
-    @Key("packageNotInstalledMessage")
-    String packageNotInstalledMessage();
 
     /**
      * Translated "and "
@@ -839,14 +611,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @Key("showReadOnlyWarningGeneratedText")
     String showReadOnlyWarningGeneratedText();
 
-    /**
-     * Translated "others required but are not installed."
-     *
-     * @return translated "others required but are not installed."
-     */
-    @DefaultStringValue("others required but are not installed.")
-    @Key("packageRequiredMessage")
-    String packageRequiredMessage();
 
     /**
      * Translated "Add"
@@ -1526,15 +1290,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     String busyLabel();
 
     /**
-     * Translated "Request: "
-     *
-     * @return translated "Request: "
-     */
-    @DefaultStringValue("Request: ")
-    @Key("requestDebugLog")
-    String requestDebugLog();
-
-    /**
      * Translated "[REDACTED]"
      *
      * @return translated "[REDACTED]"
@@ -1543,14 +1298,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @Key("redactedText")
     String redactedText();
 
-    /**
-     * Translated "Response: "
-     *
-     * @return translated "Response: "
-     */
-    @DefaultStringValue("Response: ")
-    @Key("responseText")
-    String responseText();
 
     /**
      * Translated "Vim keyboard shortcut help not screen reader accessible. Press any key to close."
@@ -1561,4 +1308,138 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @Key("vimKeyboardShortcutHelpMessage")
     String vimKeyboardShortcutHelpMessage();
 
+    /**
+     * Translated "We attempted to open an external browser window, but the action was prevented by your popup blocker. You can attempt to open the window again by pressing the "Try Again" button below. NOTE: To prevent seeing this message in the future, you should configure your browser to allow popup windows for "
+     *
+     * @return translated "We attempted to open an external browser window, but the action was prevented by your popup blocker. You can attempt to open the window again by pressing the "Try Again" button below. NOTE: To prevent seeing this message in the future, you should configure your browser to allow popup windows for "
+     */
+    @DefaultStringValue("We attempted to open an external browser window, but the action was prevented by your popup blocker. You can attempt to open the window again by pressing the \"Try Again\" button below. NOTE: To prevent seeing this message in the future, you should configure your browser to allow popup windows for ")
+    @Key("showPopupBlockMessage")
+    String showPopupBlockMessage();
+
+    /**
+     * Translated "Status code {0} returned by {1} when executing '{2}'"
+     *
+     * @return translated "Status code {0} returned by {1} when executing '{2}'"
+     */
+    @DefaultStringValue("Status code {0} returned by {1} when executing '{2}'")
+    @Key("rpcErrorMessage")
+    String rpcErrorMessage(String statusCode, String desktop, String method);
+
+    /**
+     * Translated "Unable to establish connection with {0} when executing '{1}'"
+     *
+     * @return translated "Unable to establish connection with {0} when executing '{1}'"
+     */
+    @DefaultStringValue("Unable to establish connection with {0} when executing '{1}'")
+    @Key("rpcOverrideErrorMessage")
+    String rpcOverrideErrorMessage(String desktop, String method);
+
+    /**
+     * Translated "You need to restart RStudio in order for these changes to take effect. Do you want to do this now?"
+     *
+     * @return translated "You need to restart RStudio in order for these changes to take effect. Do you want to do this now?"
+     */
+    @DefaultStringValue("You need to restart RStudio in order for these changes to take effect. Do you want to do this now?")
+    @Key("restartRequiredMessage")
+    String restartRequiredMessage();
+
+    /**
+     * Translated "{0} minimized"
+     *
+     * @return translated "{0} minimized"
+     */
+    @DefaultStringValue("{0} minimized")
+    @Key("minimizedTabListRole")
+    String minimizedTabListRole(String accessibleName);
+
+    /**
+     * Translated "Close {0} tab"
+     *
+     * @return translated "Close {0} tab"
+     */
+    @DefaultStringValue("Close {0} tab")
+    @Key("closeButtonText")
+    String closeButtonText(String title);
+
+    /**
+     * Translated "Minimize {0}"
+     *
+     * @return translated "Minimize {0}"
+     */
+    @DefaultStringValue("Minimize {0}")
+    @Key("minimizeState")
+    String minimizeState(String name);
+
+    /**
+     * Translated "Maximize {0}"
+     *
+     * @return translated "Maximize {0}"
+     */
+    @DefaultStringValue("Maximize {0}")
+    @Key("maximizeState")
+    String maximizeState(String name);
+
+    /**
+     * Translated "Restore {0}"
+     *
+     * @return translated "Restore {0}"
+     */
+    @DefaultStringValue("Restore {0}")
+    @Key("normalState")
+    String normalState(String name);
+
+    /**
+     * Translated "Hide {0}"
+     *
+     * @return translated "Hide {0}"
+     */
+    @DefaultStringValue("Hide {0}")
+    @Key("hideState")
+    String hideState(String name);
+
+    /**
+     * Translated "Exclusive {0}"
+     *
+     * @return translated "Exclusive {0}"
+     */
+    @DefaultStringValue("Exclusive {0}")
+    @Key("exclusiveState")
+    String exclusiveState(String name);
+
+    /**
+     * Translated "Package {0} required but is not installed."
+     *
+     * @return translated "Package {0} required but is not installed."
+     */
+    @DefaultStringValue("Package {0} required but is not installed.")
+    @Key("package1Message")
+    String package1Message(String packages);
+
+    /**
+     * Translated "Package {0} and {1} required but are not installed."
+     *
+     * @return translated "Package {0} and {1} required but are not installed."
+     */
+    @DefaultStringValue("Package {0} and {1} required but are not installed.")
+    @Key("packages2Message")
+    String packages2Message(String package0, String package1);
+
+    /**
+     * Translated "Packages {0} , {1} , and {2} required but are not installed."
+     *
+     * @return translated "Packages {0} , {1} , and {2} required but are not installed."
+     */
+    @DefaultStringValue("Packages {0} , {1} , and {2} required but are not installed.")
+    @Key("packages3Message")
+    String packages3Message(String package0, String package1, String package2);
+
+    /**
+     * Translated "Packages {0} , {1} , and {2} others required but are not installed."
+     *
+     * @return translated "Packages {0} , {1} , and {2} others required but are not installed."
+     */
+    @DefaultStringValue("Packages {0} , {1} , and {2} others required but are not installed.")
+    @Key("otherPackagesMessage")
+    String otherPackagesMessage(String package0, String package1, String package2);
 }

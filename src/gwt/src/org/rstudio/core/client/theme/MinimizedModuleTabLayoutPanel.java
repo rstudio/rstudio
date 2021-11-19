@@ -46,7 +46,7 @@ public class MinimizedModuleTabLayoutPanel
       HorizontalPanel horiz = (HorizontalPanel) getExtraWidget();
       horiz.clear();
       Roles.getTablistRole().set(horiz.getElement());
-      Roles.getTablistRole().setAriaLabelProperty(horiz.getElement(), accessibleName_ + " " + constants_.minimizedTabListRole());
+      Roles.getTablistRole().setAriaLabelProperty(horiz.getElement(), constants_.minimizedTabListRole("accessibleName_"));
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       for (int i = 0; i < tabNames.length; i++)

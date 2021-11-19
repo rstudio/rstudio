@@ -145,7 +145,7 @@ public abstract class FileDialog extends FileSystemDialog
       {
          if (item.isDirectory())
          {
-            assert false : constants_.navigateIfDirectoryMessage();
+            assert false : "This case should be covered by navigateIfDirectory";
             return false;
          }
          else if (promptOnOverwrite_)

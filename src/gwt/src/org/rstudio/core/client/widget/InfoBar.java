@@ -123,19 +123,19 @@ public class InfoBar extends Composite
       int n = packages.size();
       if (n == 1)
       {
-         message = constants_.packageMessage() + packages.get(0) + " " + constants_.packageNotInstalledMessage();
+         message = constants_.package1Message(packages.get(0));
       }
       else if (n == 2)
       {
-         message = constants_.packageMessage() + packages.get(0) + " " + constants_.andText() + packages.get(1) + " " + constants_.packageNotInstalledMessage();
+         message = constants_.packages2Message(packages.get(0),packages.get(1));
       }
       else if (n == 3)
       {
-         message = constants_.packageMessage() + packages.get(0) + ", " + packages.get(1) + ", " + constants_.andText() + packages.get(2) + " " + constants_.packageNotInstalledMessage();
+         message = constants_.packages3Message(packages.get(0),packages.get(1),packages.get(2));
       }
       else
       {
-         message = constants_.packageMessage() + packages.get(0) + ", " + packages.get(1) + ", " + constants_.andText() + (n - 2) + " " + constants_.packageRequiredMessage();
+         message = constants_.otherPackagesMessage(packages.get(0),packages.get(1),packages.get(2));
       }
       
       setText(message);

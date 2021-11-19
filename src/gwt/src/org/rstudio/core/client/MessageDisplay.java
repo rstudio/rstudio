@@ -332,14 +332,8 @@ public abstract class MessageDisplay
    {
       showYesNoMessage(
             GlobalDisplay.MSG_POPUP_BLOCKED,
-            constants_.popupBlockCaption(),
-            constants_.popupBlockMessage() + " " +
-            constants_.popupBlockActionMessage() + " " +
-            constants_.popupBlockAttemptMessage() + " " +
-            constants_.popupBlockTryAgainMessage() +
-            constants_.popupBlockNote() + " " +
-            constants_.popupBlockAllowMessage() + " " +
-            constants_.popupBlockFor() + " " + Window.Location.getHostName() + ".",
+            constants_.popupBlockCaption(), constants_.showPopupBlockMessage() +
+            Window.Location.getHostName() + ".",
             false,
             yesOperation,
             () -> {},

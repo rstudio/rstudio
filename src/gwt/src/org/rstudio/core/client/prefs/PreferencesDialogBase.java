@@ -252,8 +252,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       globalDisplay.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
             constants_.restartRequiredCaption(),
-            constants_.restartRequiredMessage() +
-                  constants_.restartNowMessage(),
+            constants_.restartRequiredMessage(),
             () -> onRestart(quit, session),
             true);
    }
@@ -270,8 +269,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       display.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
             constants_.restartRequiredCaption(),
-              constants_.restartRequiredMessage() +
-                      constants_.restartNowMessage(),
+            constants_.restartRequiredMessage(),
             () -> onRestartSession(),
             true);
    }

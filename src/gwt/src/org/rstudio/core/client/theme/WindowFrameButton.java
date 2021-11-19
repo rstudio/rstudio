@@ -72,7 +72,7 @@ public class WindowFrameButton extends FocusWidget
       WindowState computedState = defaultState_;
       if (maximized_ || exclusive_)
          computedState = WindowState.NORMAL; // "restore"
-      Roles.getButtonRole().setAriaLabelProperty(getElement(), stateString(computedState) + " " + name_);
+      Roles.getButtonRole().setAriaLabelProperty(getElement(), stateString(computedState, name_));
    }
 
    public void setClickHandler(Command clickHandler)
@@ -84,7 +84,7 @@ public class WindowFrameButton extends FocusWidget
    @Override
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
-      Debug.logWarning(constants_.addClickHandlerMessage());
+      Debug.logWarning("WindowFrameButton: for keyboard support use setClickHandler instead of addClickHandler");
       return super.addClickHandler(handler);
    }
 
@@ -143,25 +143,25 @@ public class WindowFrameButton extends FocusWidget
       ClassIds.assignClassId(getElement(), classId + "_" + ClassIds.idSafeString(panelName));
    }
 
-   private String stateString(WindowState state)
+   private String stateString(WindowState state, String title)
    {
       switch (state)
       {
       case MINIMIZE:
-         return constants_.minimizeState();
+         return constants_.minimizeState(title);
 
       case MAXIMIZE:
-         return constants_.maximizeState();
+         return constants_.maximizeState(title);
 
       case NORMAL:
       default:
-         return constants_.normalState();
+         return constants_.normalState(title);
 
       case HIDE:
-         return constants_.hideState();
+         return constants_.hideState(title);
 
       case EXCLUSIVE:
-         return constants_.exclusiveState();
+         return constants_.exclusiveState(title);
       }
    }
 
