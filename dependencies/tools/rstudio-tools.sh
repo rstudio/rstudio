@@ -82,6 +82,20 @@ sudo-if-necessary-for () {
 
 }
 
+mkdir-sudo-if-necessary () {
+
+	# If the directory does not exist, try to create it without sudo
+	if ! [ -e "$1" ]; then
+		mkdir -p "$1" &> /dev/null || true
+	fi
+
+	# Still not there, create with sudo
+	if ! [ -e "$1" ]; then
+		sudo -E mkdir -p "$1"
+	fi
+
+}
+
 find-file () {
 
 	if [ "$#" -lt 2 ] || [ "$1" = "--help" ]; then
