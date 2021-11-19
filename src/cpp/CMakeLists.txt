@@ -647,9 +647,13 @@ else()
       # processing which we do in desktop
       add_subdirectory(session)
 
+      # desktop conf file used for dev-mode for both Qt desktop and Electron desktop
+      if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON OR RSTUDIO_DEVELOPMENT)
+         configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
+      endif()
+
       # configure desktop files
       if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
-         configure_file(conf/rdesktop-dev.conf ${CMAKE_CURRENT_BINARY_DIR}/conf/rdesktop-dev.conf)
          if(NOT WIN32)
             if(NOT APPLE)
                configure_file(rstudio-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-dev)
