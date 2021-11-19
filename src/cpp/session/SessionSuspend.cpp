@@ -437,16 +437,13 @@ std::string mostSignificantTimeAgo(boost::posix_time::ptime before, boost::posix
    if (before == boost::posix_time::not_a_date_time || after == boost::posix_time::not_a_date_time)
       return "";
 
-   boost::posix_time::time_duration diff;
-   if (after > before)
+   boost::posix_time::time_duration diff = after - before;
+   if (diff.is_negative())
    {
-       diff = after - before;
-   }
-   else
-   {
-       diff = before - after;
+       diff.invert_sign();
    }
 
+   // determine the most significant non-zero time resolution
    if (diff <= boost::posix_time::minutes(1))
       return ""; // Stay quiet if not enough time has passed
    if (diff < boost::posix_time::hours(1))
@@ -470,7 +467,7 @@ std::string getResumedMessage()
       std::string blockedTime = boost::posix_time::to_simple_string(s_blockingTimestamp);
       return "Welcome Back! Session has been running in the background since "
              + blockedTime
-             + " ("
+             + " UTC ("
              + xAmountOfTimeAgo
              + ")\n";
    }
@@ -482,9 +479,9 @@ std::string getResumedMessage()
          return "";
 
       std::string suspendedTime = boost::posix_time::to_simple_string(suspensionTimestamp);
-      return "Welcome back! Session restored from your saved work on "
+      return "Session restored from your saved work on "
              + suspendedTime
-            + " ("
+            + " UTC ("
             + xAmountOfTimeAgo
             + ")\n";
    }
@@ -494,6 +491,7 @@ std::string getResumedMessage()
 
 void initFromResume()
 {
+   // notify GWT to continue displaying suspend blocked info
    if (opsBlockingSuspend.size())
       sendBlockingClientEvent(blockingOpsToJson());
 }

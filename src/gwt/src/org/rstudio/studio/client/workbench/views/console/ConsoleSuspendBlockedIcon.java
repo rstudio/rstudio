@@ -34,9 +34,11 @@ public class ConsoleSuspendBlockedIcon
       suspended_ = new Image(sus);
       suspended_.getElement().getStyle().setWidth(15, Style.Unit.PX);
       suspended_.getElement().getStyle().setHeight(15, Style.Unit.PX);
+      suspended_.getElement().setId("r_session_suspended_console");
       suspendBlocked_ = new Image(blocked);
       suspendBlocked_.getElement().getStyle().setWidth(15, Style.Unit.PX);
       suspendBlocked_.getElement().getStyle().setHeight(15, Style.Unit.PX);
+      suspendBlocked_.getElement().setId("r_session_suspend_blocked_console");
 
       if (announce)
       {
