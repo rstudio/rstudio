@@ -1,5 +1,5 @@
 /*
- * LintPresenter.java
+ * LintManager.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.RetinaStyleInjector;
@@ -251,7 +252,7 @@ public class LintManager
                   server_.lintRSourceDocument(
                         source_.getId(),
                         source_.getPath(),
-                        source_.getCode(),
+                        StringUtil.notNull(source_.getCode()),
                         context.showMarkers,
                         context.explicit,
                         new ServerRequestCallback<JsArray<LintItem>>()
@@ -294,7 +295,7 @@ public class LintManager
       server_.lintRSourceDocument(
             source_.getId(),
             source_.getPath(),
-            source_.getCode(),
+            StringUtil.notNull(source_.getCode()),
             context.showMarkers,
             context.explicit,
             new ServerRequestCallback<JsArray<LintItem>>()
