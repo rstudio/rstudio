@@ -17,7 +17,7 @@ cmake_minimum_required(VERSION 3.4.3)
 project(ELECTRON_DESKTOP)
 
 # defines NODEJS, NODEJS_PATH, YARN, YARN_PATH
-include("${CMAKE_CURRENT_LIST_DIR}/../../../../node/CMakeNodeTools.txt")
+include("${CMAKE_CURRENT_LIST_DIR}/../CMakeNodeTools.txt")
 
 # ensure yarn and node are on the path
 set(MODIFIED_PATH "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")
