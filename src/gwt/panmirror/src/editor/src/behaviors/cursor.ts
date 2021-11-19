@@ -15,6 +15,7 @@
 
 import { PluginKey, Plugin, EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { ResolvedPos, Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { dropCursor } from 'prosemirror-dropcursor';
 import { gapCursor, GapCursor } from 'prosemirror-gapcursor';
@@ -24,11 +25,9 @@ import { findParentNodeOfTypeClosestToPos, findParentNodeOfType, findParentNode 
 
 import { Extension } from '../api/extension';
 import { BaseKey, verticalArrowCanAdvanceWithinTextBlock } from '../api/basekeys';
+import { isList } from '../api/list';
 
 import './cursor.css';
-import { ResolvedPos } from 'prosemirror-model';
-import { isList } from '../api/list';
-import { StateChangeEvent } from '../api/event-types';
 
 
 const extension: Extension = {
@@ -164,9 +163,20 @@ function gapClickHandler(view: EditorView, event: Event): boolean {
       }
     }
 
-    // handle clicks between blocks
+    // handle clicks between certain block types that don't have a natural text cursor
+    // for inserting additioanl content
+    const blockRequiresGap = (node: ProsemirrorNode | null | undefined) => {
+      if (node) {
+        return node.type === schema.nodes.div ||
+               node.type === schema.nodes.figure ||
+               node.type === schema.nodes.table ||
+               node.type === schema.nodes.code_block;
+      } else {
+        return false;
+      }
+    };
     if (!clickPos.inside) {
-      if ($clickPos.nodeBefore?.isBlock && $clickPos.nodeAfter?.isBlock) {
+      if (blockRequiresGap($clickPos.nodeBefore) && blockRequiresGap($clickPos.nodeAfter)) {
         return createGapCursor();
       }
     }
