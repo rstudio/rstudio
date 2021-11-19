@@ -782,11 +782,13 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    
    std::string documentId;
    std::string documentPath;
+   std::string content;
    bool showMarkersTab = false;
    bool isExplicit = false;
    Error error = json::readParams(request.params,
                                   &documentId,
                                   &documentPath,
+                                  &content,
                                   &showMarkersTab,
                                   &isExplicit);
    
@@ -812,11 +814,14 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    if (module_context::isUnmonitoredPackageSourceFile(origin))
       return Success();
    
-   // Extract R code from various R-code-containing filetypes.
-   std::string content;
-   error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &content);
-   if (error)
-      return error;
+   // Extract R code from various R-code-containing filetypes, unless we were
+   // given content in the argument
+   if (!content.empty())
+   {
+      error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &content);
+      if (error)
+         return error;
+   }
    
    ParseResults results = diagnostics::parse(
             string_utils::utf8ToWide(content),
@@ -1047,7 +1052,7 @@ core::Error initialize()
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionDiagnostics.R"))
          (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument));
-   
+
    return initBlock.execute();
 
 }
