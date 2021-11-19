@@ -58,9 +58,8 @@ public class Console
       IsWidget getConsoleInterruptButton();
       IsWidget getConsoleClearButton();
       IsWidget getProfilerInterruptButton();
-      IsWidget getSuspendBlockedIcon();
-      IsWidget setSuspendBlockedIcon(SessionSuspendBlockedEvent event);
-      IsWidget getSuspendedIcon();
+      void onSuspendedBlockedEvent(SessionSuspendBlockedEvent event);
+      void onSerializationEvent(SessionSerializationEvent event);
       void enterMode(ConsolePane.ConsoleMode mode);
       void leaveMode(ConsolePane.ConsoleMode mode);
       ConsolePane.ConsoleMode mode();
@@ -182,20 +181,11 @@ public class Console
       });
 
       events.addHandler(SessionSerializationEvent.TYPE, event -> {
-         if (event.getAction().getType() == SessionSerializationAction.SUSPEND_SESSION)
-         {
-            view.getSuspendBlockedIcon().asWidget().setVisible(false);
-            view.getSuspendedIcon().asWidget().setVisible(true);
-         }
-         else if (event.getAction().getType() == SessionSerializationAction.RESUME_SESSION)
-         {
-            view.getSuspendBlockedIcon().asWidget().setVisible(false);
-            view.getSuspendedIcon().asWidget().setVisible(false);
-         }
+         view.onSerializationEvent(event);
       });
 
       events.addHandler(SessionSuspendBlockedEvent.TYPE, event -> {
-         view.setSuspendBlockedIcon(event);
+         view.onSuspendedBlockedEvent(event);
       });
    }
 

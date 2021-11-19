@@ -301,6 +301,6 @@ public interface ThemeResources extends ClientBundle
    @Source("suspended.png")
    ImageResource suspended();
 
-   @Source("SuspendBlocked.png")
+   @Source("suspendBlocked.png")
    ImageResource suspendBlocked();
 }

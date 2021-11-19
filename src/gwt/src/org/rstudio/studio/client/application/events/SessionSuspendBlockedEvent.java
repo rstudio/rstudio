@@ -31,29 +31,10 @@ public class SessionSuspendBlockedEvent extends GwtEvent<SessionSuspendBlockedEv
       public final native String getMsg() /*-{
          var msg = 'Session suspend timeout paused:';
 
-         if (this.hasOwnProperty('active-child-process'))
-            msg += '\nA child process is running';
-         if (this.hasOwnProperty('executing'))
-            msg += '\nR is executing';
-         if (this.hasOwnProperty('active-connection'))
-            msg += '\nA connection is active';
-         if (this.hasOwnProperty('active-external-pointer'))
-            msg += '\nActive external data pointer';
-         if (this.hasOwnProperty('active-job'))
-            msg += '\nAn active job is running';
-         if (this.hasOwnProperty('incomplete-command-prompt'))
-            msg += '\nIncomplete command prompt entered';
-
-         if (this.hasOwnProperty('edit-completion'))
-            msg += '\nWaiting for edit completion';
-         if (this.hasOwnProperty('choose-file-completion'))
-            msg += '\nWaiting for Choose File completion';
-         if (this.hasOwnProperty('locator-completion'))
-            msg += '\nWaiting for Locator completion';
-         if (this.hasOwnProperty('unsaved-handler-completion'))
-            msg += '\nWaiting for Unsaved Work Prompt completion';
-         if (this.hasOwnProperty('user-prompt-completion'))
-            msg += '\nWaiting for User Prompt completion';
+         for (var e = 0; e < this.length; e++)
+         {
+             msg += '\n' + this[e];
+         }
 
          return msg;
       }-*/;

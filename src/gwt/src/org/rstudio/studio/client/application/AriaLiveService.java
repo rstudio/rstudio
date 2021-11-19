@@ -50,6 +50,7 @@ public class AriaLiveService
    public static final String TAB_KEY_MODE = "tab_key_mode";
    public static final String TOOLBAR_VISIBILITY = "toolbar_visibility";
    public static final String WARNING_BAR = "warning_bar";
+   public static final String SESSION_SUSPENDED = "session_suspended";
 
    // Announcement requested by a user, not controlled by a preference since it is on-demand.
    // Do not include in the announcements_ map.
@@ -82,6 +83,7 @@ public class AriaLiveService
       announcements_.put(TAB_KEY_MODE, "Tab key focus mode change");
       announcements_.put(TOOLBAR_VISIBILITY, "Toolbar visibility change");
       announcements_.put(WARNING_BAR, "Warning bars");
+      announcements_.put(SESSION_SUSPENDED, "Session suspension");
 
       alwaysEnabledAnnouncements_ = new HashSet<>();
       alwaysEnabledAnnouncements_.add(ON_DEMAND);

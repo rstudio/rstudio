@@ -126,6 +126,11 @@ void blockingTimestamp()
    s_blockingTimestamp = boost::posix_time::second_clock::universal_time();
 }
 
+void resetBlockingTimestamp()
+{
+   s_blockingTimestamp = boost::posix_time::not_a_date_time;
+}
+
 bool shouldNotify()
 {
    return s_blockingTimestamp + boost::posix_time::seconds(5) < boost::posix_time::second_clock::universal_time();
@@ -213,7 +218,7 @@ void addBlockingOp(std::string method, const boost::function<bool()>& allowSuspe
    // Only a blocking op if the allowSuspend() is actually the disallowSuspend() method
    if (allowSuspend == disallowSuspend)
    {
-      addBlockingOp(method);
+      addBlockingOp(kGenericMethod + method);
    }
 }
 
@@ -297,6 +302,9 @@ bool suspendSession(bool force, int status)
    clearBlockingOps(true);
    s_timeoutState = kWaitingForTimeout;
 
+   // record time of suspension
+   module_context::activeSession().setSuspensionTime();
+
    // perform the suspend (does not return if successful)
    return r::session::suspend(force, status, session::options().ephemeralEnvVars());
 }
@@ -358,6 +366,7 @@ void checkForTimeout(const boost::function<bool()>& allowSuspend)
          // reset the inactivity timeout before switching waiting modes
          s_timeoutState = kWaitingForTimeout;
          resetSuspendTimeout();
+         resetBlockingTimestamp();
          clearBlockingOps(true);
 
          return;
@@ -421,6 +430,72 @@ void checkForSuspend(const boost::function<bool()>& allowSuspend)
 
    // timeout suspend
    checkForTimeout(allowSuspend);
+}
+
+std::string mostSignificantTimeAgo(boost::posix_time::ptime before, boost::posix_time::ptime after = boost::posix_time::second_clock::universal_time())
+{
+   if (before == boost::posix_time::not_a_date_time || after == boost::posix_time::not_a_date_time)
+      return "";
+
+   boost::posix_time::time_duration diff;
+   if (after > before)
+   {
+       diff = after - before;
+   }
+   else
+   {
+       diff = before - after;
+   }
+
+   if (diff <= boost::posix_time::minutes(1))
+      return ""; // Stay quiet if not enough time has passed
+   if (diff < boost::posix_time::hours(1))
+      return std::to_string(diff.minutes()) + " minutes ago";
+   if (diff < boost::posix_time::hours(24))
+      return std::to_string(diff.hours()) + " hour(s) ago";
+   if (diff < boost::posix_time::hours(24 * 365))
+      return std::to_string(diff.hours() / 24l) + " day(s) ago";
+   else
+      return std::to_string(diff.hours() / (24l * 365l)) + " year(s) ago";
+}
+
+std::string getResumedMessage()
+{
+   if (s_timeoutState == kWaitingForInactivity)
+   {
+      std::string xAmountOfTimeAgo = mostSignificantTimeAgo(s_blockingTimestamp);
+      if (xAmountOfTimeAgo.empty())
+         return "";
+
+      std::string blockedTime = boost::posix_time::to_simple_string(s_blockingTimestamp);
+      return "Welcome Back! Session has been running in the background since "
+             + blockedTime
+             + " ("
+             + xAmountOfTimeAgo
+             + ")\n";
+   }
+   else
+   {
+      boost::posix_time::ptime suspensionTimestamp = module_context::activeSession().suspensionTime();
+      std::string xAmountOfTimeAgo = mostSignificantTimeAgo(suspensionTimestamp);
+      if (xAmountOfTimeAgo.empty())
+         return "";
+
+      std::string suspendedTime = boost::posix_time::to_simple_string(suspensionTimestamp);
+      return "Welcome back! Session restored from your saved work on "
+             + suspendedTime
+            + " ("
+            + xAmountOfTimeAgo
+            + ")\n";
+   }
+
+   return "";
+}
+
+void initFromResume()
+{
+   if (opsBlockingSuspend.size())
+      sendBlockingClientEvent(blockingOpsToJson());
 }
 
 // cooperative suspend -- the http server is forced to timeout and a flag 

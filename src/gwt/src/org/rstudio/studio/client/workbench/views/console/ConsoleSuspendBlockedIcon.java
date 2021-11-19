@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
@@ -25,7 +26,7 @@ public class ConsoleSuspendBlockedIcon
    extends Composite
 
 {
-   public ConsoleSuspendBlockedIcon()
+   public ConsoleSuspendBlockedIcon(boolean announce)
    {
       ImageResource sus = new ImageResource2x(ThemeResources.INSTANCE.suspended());
       ImageResource blocked = new ImageResource2x(ThemeResources.INSTANCE.suspendBlocked());
@@ -36,6 +37,12 @@ public class ConsoleSuspendBlockedIcon
       suspendBlocked_ = new Image(blocked);
       suspendBlocked_.getElement().getStyle().setWidth(15, Style.Unit.PX);
       suspendBlocked_.getElement().getStyle().setHeight(15, Style.Unit.PX);
+
+      if (announce)
+      {
+         Roles.getAlertRole().set(suspended_.getElement());
+         Roles.getAlertRole().set(suspendBlocked_.getElement());
+      }
    }
 
    public Image getSuspendBlocked()

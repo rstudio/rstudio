@@ -538,7 +538,7 @@ bool waitForMethod(const std::string& method,
       }
    }
 
-   suspend::removeBlockingOp(method);
+   suspend::removeBlockingOp(suspend::kGenericMethod + method);
 
    // satisfied the request
    return true;
