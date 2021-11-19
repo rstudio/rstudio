@@ -653,7 +653,7 @@ else()
       endif()
 
       # configure desktop files
-      if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
+      if(RSTUDIO_DESKTOP)
          if(NOT WIN32)
             if(NOT APPLE)
                configure_file(rstudio-dev.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-dev)
