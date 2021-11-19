@@ -23,6 +23,7 @@
 * Fixed a bug where Launcher log files could be stuck being owned by the root user (#9728)
 * Added `license-warning-days` setting to make it possible to adjust or disable the license warnings that appear two weeks prior to expiration (Pro #440)
 * When an R version defined in `r-versions` uses an environment module, the name of the module is displayed in the version select menus instead of the system R version name. (Pro #2687)
+* With the options `launcher-sessions-create-container-user`, and `launcher-sessions-container-forward-groups` enabled, RSW will now add a group to the user even if the group with a matching id exists but with a different name. (Pro #2971)
 
 ### Misc
 
