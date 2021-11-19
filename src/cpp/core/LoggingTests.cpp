@@ -879,6 +879,7 @@ test_context("Logging")
       REQUIRE(logFileContents.find("[1: 1, 2: Two]") != std::string::npos);
    }
 
+#ifndef _WIN32
    test_that("File logs are created with correct permissions")
    {
       FilePath tmpConfPath;
@@ -925,6 +926,7 @@ test_context("Logging")
       REQUIRE_FALSE(err3);
       REQUIRE(mode3 == FileMode::USER_READ_WRITE);
    }
+#endif
 
    test_that("Can force log directory")
    {
