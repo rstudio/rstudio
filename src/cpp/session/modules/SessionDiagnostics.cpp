@@ -798,16 +798,6 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
-   // Try to get the contents from the database
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
-   error = get(documentId, pDoc);
-   
-   // don't log on error here (it's possible that we might attempt to lint a
-   // document immediately after a suspend-resume, and so we fail to get the
-   // contents of that document)
-   if (error)
-      return error;
-   
    FilePath origin = module_context::resolveAliasedPath(documentPath);
    
    // Don't lint files that belong to unmonitored projects
@@ -818,6 +808,16 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    // given content in the argument
    if (content.empty())
    {
+      // Try to get the contents from the database
+      boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+      error = get(documentId, pDoc);
+
+      // don't log on error here (it's possible that we might attempt to lint a
+      // document immediately after a suspend-resume, and so we fail to get the
+      // contents of that document)
+      if (error)
+         return error;
+
       error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &content);
       if (error)
          return error;
@@ -835,7 +835,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    {
       using namespace module_context;
       SourceMarkerSet markers = asSourceMarkerSet(results.lint(),
-                                                  core::FilePath(pDoc->path()));
+                                                  core::FilePath(documentPath));
       showSourceMarkers(markers, MarkerAutoSelectNone);
    }
    
