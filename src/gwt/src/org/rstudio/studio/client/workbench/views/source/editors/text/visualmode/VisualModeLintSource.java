@@ -23,6 +23,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionC
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetSpelling;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 
 public class VisualModeLintSource implements LintSource
@@ -85,13 +86,32 @@ public class VisualModeLintSource implements LintSource
    @Override
    public void showLint(JsArray<LintItem> lint)
    {
+      // Lint results are mapped using chunk scope offsets, so we can't
+      // work without them.
+      if (chunk_.getScope() == null)
+         return;
+
+      int offset = chunk_.getScope().getPreamble().getRow();
+
+      // TODO: How the hell is the server mapping these back to the source doc?
+      for (int i = 0; i < lint.length(); i++)
+      {
+         LintItem item = lint.get(i);
+         item.setStartRow(item.getStartRow() - offset);
+         item.setEndRow(item.getEndRow() - offset);
+      }
+
       chunk_.showLint(lint);
    }
 
    @Override
    public String getCode()
    {
-      return chunk_.getAceInstance().getCode();
+      // The code to be linted is the contents of the chunk after the first
+      // line (which is, of course, the chunk header)
+      return chunk_.getAceInstance().getCode(
+         Position.create(1, 0),
+         chunk_.getAceInstance().getDocumentEnd());
    }
 
    private final VisualModeChunk chunk_;

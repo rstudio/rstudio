@@ -45,7 +45,11 @@ public class LintItem extends JavaScriptObject
    public final native int getStartRow() /*-{
       return this["start.row"];
    }-*/;
-   
+
+   public final native void setStartRow(int row) /*-{
+      this["start.row"] = row;
+   }-*/;
+
    public final native int getStartColumn() /*-{
       return this["start.column"];
    }-*/;
@@ -53,7 +57,11 @@ public class LintItem extends JavaScriptObject
    public final native int getEndRow() /*-{
       return this["end.row"];
    }-*/;
-   
+
+   public final native void setEndRow(int row) /*-{
+      this["end.row"] = row;
+   }-*/;
+
    public final native int getEndColumn() /*-{
       return this["end.column"];
    }-*/;
