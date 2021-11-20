@@ -931,6 +931,28 @@ bool isFileInSessionQuartoProject(const core::FilePath& file)
 
 }
 
+std::string urlPathForQuartoProjectOutputFile(const core::FilePath& outputFile)
+{
+   if (!outputFile.isEmpty())
+   {
+      FilePath quartoProjectDir = module_context::resolveAliasedPath(
+         quartoConfig().project_dir
+      );
+
+      FilePath quartoProjectOutputDir = quartoProjectDir.completeChildPath(
+         quartoConfig().project_output_dir
+      );
+      std::string path = outputFile.isWithin(quartoProjectOutputDir)
+                            ? outputFile.getRelativePath(quartoProjectOutputDir)
+                            :  std::string();
+      return path;
+   }
+   else
+   {
+      return "";
+   }
+}
+
 json::Object quartoConfigJSON(bool refresh)
 {
    QuartoConfig config = quartoConfig(refresh);

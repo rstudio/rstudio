@@ -316,8 +316,14 @@ private:
       // route to either viewer or presentation pane (for reveal)
       if (isReveal)
       {
+         std::string url = url_ports::mapUrlPorts(viewerUrl());
+         if (isFileInSessionQuartoProject(previewFile_))
+         {
+            url = url + urlPathForQuartoProjectOutputFile(outputFile_);
+         }
+
          json::Object eventData;
-         eventData["url"] = url_ports::mapUrlPorts(viewerUrl());
+         eventData["url"] = url;
          eventData["quarto_navigation"] = module_context::quartoNavigateAsJson(quartoNav);
          eventData["editor_state"] = editorState_;
          eventData["slide_level"] = slideLevel_;
