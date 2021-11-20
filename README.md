@@ -47,3 +47,4 @@ See also the following files included with the distribution:
 If you have problems or want to share feedback with us please visit our
 [community forum](https://community.rstudio.com/c/rstudio-ide). For other
 inquiries you can also email us at [info@rstudio.com](mailto:info@rstudio.com). 
+
