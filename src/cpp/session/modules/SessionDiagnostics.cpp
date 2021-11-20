@@ -816,7 +816,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    
    // Extract R code from various R-code-containing filetypes, unless we were
    // given content in the argument
-   if (!content.empty())
+   if (content.empty())
    {
       error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &content);
       if (error)

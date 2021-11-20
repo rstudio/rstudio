@@ -159,7 +159,8 @@ public class LintManager
             });
          }
       });
-      
+
+      // TODO: Do we need this for visual mode chunks?
       eventBus_.addHandler(
             SourceFileSaveCompletedEvent.TYPE,
             new SourceFileSaveCompletedEvent.Handler()

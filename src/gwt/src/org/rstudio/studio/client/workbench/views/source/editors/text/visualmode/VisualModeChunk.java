@@ -22,6 +22,7 @@ import java.util.Map;
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SpanElement;
@@ -42,6 +43,8 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkCallbacks;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -400,6 +403,9 @@ public class VisualModeChunk
       // lines.
       chunkEditor.setMaxLines(1000);
       chunkEditor.setMinLines(1);
+
+      // Begin linting the chunk
+      lintManager_ = new LintManager(new VisualModeLintSource(this));
 
       chunk_ = chunk;
    }
@@ -770,7 +776,35 @@ public class VisualModeChunk
          performWithSyncedSelection(command);
       });
    }
-   
+
+   /**
+    * Returns the parent editor.
+    *
+    * @return The parent text editing target.
+    */
+   public TextEditingTarget getParentEditingTarget()
+   {
+      return target_;
+   }
+
+   /**
+    * Shows lint results in the chunk.
+    *
+    * @param lint The lint results to show.
+    */
+   public void showLint(JsArray<LintItem> lint)
+   {
+      // Show damage in the editor itself
+      editor_.showLint(lint);
+
+      // When line numbers are enabled, gutter symbols show up in the editor itself representing linting issues.
+      // When they aren't, we need to show those symbols outside the chunk.
+      if (!RStudioGinjector.INSTANCE.getUserPrefs().visualMarkdownCodeEditorLineNumbers().getValue())
+      {
+         // TODO: draw symbols outside chunk
+      }
+   }
+
    private void performWithSyncedSelection(CommandWithArg<Position> command)
    {
       // Ensure we have a scope. This should always exist since we sync the
@@ -1073,6 +1107,7 @@ public class VisualModeChunk
    private final VisualModeEditorSync sync_;
    private final EditingTargetCodeExecution codeExecution_;
    private final VisualModeCollapseToggle collapse_;
+   private final LintManager lintManager_;
    private final DivElement summary_;
    private final Map<Integer,VisualModeChunkRowState> rowState_;
    private final TextEditingTarget target_;
