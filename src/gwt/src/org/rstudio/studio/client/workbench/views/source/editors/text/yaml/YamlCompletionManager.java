@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -96,9 +95,12 @@ public class YamlCompletionManager extends CompletionManagerBase
          String token = "";
          boolean cacheable = false;
         
+         ArrayList<Integer> types = new ArrayList<Integer>();
          ArrayList<String> values = new ArrayList<String>();
+         ArrayList<String> display = new ArrayList<String>();
          ArrayList<String> descriptions = new ArrayList<String>();
          ArrayList<Boolean> suggestOnAccept = new ArrayList<Boolean>();
+         ArrayList<Boolean> replaceToEnd = new ArrayList<Boolean>();
          
          // fill from result if we got one
          if (res != null)
@@ -108,9 +110,15 @@ public class YamlCompletionManager extends CompletionManagerBase
             for (int i=0; i<result.getCompletions().length(); i++)
             {
                YamlCompletion completion = result.getCompletions().get(i);
+               if ("key".equals(completion.getType()))
+                  types.add(RCompletionType.YAML_KEY);
+               else 
+                  types.add(RCompletionType.YAML_VALUE);
                values.add(completion.getValue());
+               display.add(completion.getDisplay());
                descriptions.add(completion.getDescription());
                suggestOnAccept.add(completion.getSuggestOnAccept());
+               replaceToEnd.add(completion.getReplaceToEnd());
             }
             cacheable = result.getCacheable();
          }
@@ -119,10 +127,12 @@ public class YamlCompletionManager extends CompletionManagerBase
          Completions response = Completions.createCompletions(
                token,
                JsUtil.toJsArrayString(values),
+               JsUtil.toJsArrayString(display),
                JsUtil.toJsArrayString(new ArrayList<>(values.size())),
                JsUtil.toJsArrayBoolean(new ArrayList<>(values.size())),
-               JsUtil.toJsArrayInteger(Collections.nCopies(values.size(), RCompletionType.YAML)),
+               JsUtil.toJsArrayInteger(types),
                JsUtil.toJsArrayBoolean(suggestOnAccept),
+               JsUtil.toJsArrayBoolean(replaceToEnd),
                JsUtil.toJsArrayString(descriptions),
                "",
                true,

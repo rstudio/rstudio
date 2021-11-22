@@ -31,6 +31,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <core/Thread.hpp>
+
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
@@ -87,17 +89,18 @@ bool s_sessionDebugLogCreated = false;
 
 void processEvents()
 {
-   if (!r::exec::isMainThread())
+   if (!ASSERT_MAIN_THREAD())
    {
-      LOG_ERROR_MESSAGE("processEvents() called from non-main thread");
       return;
    }
-    // execute safely since this can call arbitrary R code (and
-    // (can also cause jump_to_top if an interrupt is pending)
-    Error error = rstudio::r::exec::executeSafely(
-                rstudio::r::session::event_loop::processEvents);
-    if (error)
-        LOG_ERROR(error);
+
+   // execute safely since this can call arbitrary R code (and
+   // (can also cause jump_to_top if an interrupt is pending)
+   Error error = rstudio::r::exec::executeSafely(
+            rstudio::r::session::event_loop::processEvents);
+
+   if (error)
+      LOG_ERROR(error);
 }
 
 bool parseAndValidateJsonRpcConnection(
@@ -239,9 +242,8 @@ void polledEventHandler()
       return;
    }
 
-   if (!r::exec::isMainThread())
+   if (!ASSERT_MAIN_THREAD())
    {
-      LOG_ERROR_MESSAGE("polledEventHandler called from thread other than main");
       return;
    }
 
@@ -432,9 +434,9 @@ bool waitForMethod(const std::string& method,
       LOG_ERROR_MESSAGE("Waiting for method " + method + " after fork");
       return false;
    }
-   if (!r::exec::isMainThread())
+   
+   if (!ASSERT_MAIN_THREAD(method))
    {
-      LOG_ERROR_MESSAGE("waitForMethod: " + method + " called from thread other than main");
       return false;
    }
 
@@ -879,7 +881,7 @@ void initSessionDebugLog()
       return;
    s_sessionDebugLogCreated = true;
 
-   system::initFileLogDestination(log::LogLevel::DEBUG, core::system::xdg::userDataDir().completePath("log"));
+   system::initFileLogDestination(log::LogLevel::DEBUG, core::system::xdg::userLogDir());
 }
 
 void onUserPrefsChanged(const std::string& layer, const std::string& pref)

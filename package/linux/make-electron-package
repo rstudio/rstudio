@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -e
+
+# make Electron package
+./make-package Electron $1 $2 $3

@@ -64,6 +64,7 @@ namespace {
 
 const char * const kQuartoXt = "quarto-document";
 
+FilePath s_userInstalledPath;
 FilePath s_quartoPath;
 std::string s_quartoVersion;
 
@@ -124,19 +125,9 @@ void showQuartoVersionWarning(const Version& version, const Version& requiredVer
    module_context::enqueClientEvent(event);
 }
 
-void detectQuartoInstallation()
+
+std::tuple<FilePath,Version> userInstalledQuarto()
 {
-   // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.2.214");
-
-   // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.2.214");
-
-   // reset
-   s_quartoPath = FilePath();
-   s_quartoVersion = "";
-
-   // see if there is a version on the path (subject to recommended version)
    FilePath quartoPath = module_context::findProgram("quarto");
    if (!quartoPath.isEmpty())
    {
@@ -144,14 +135,9 @@ void detectQuartoInstallation()
       if (!error)
       {
          Version pathVersion = readQuartoVersion(quartoPath);
-         if (pathVersion >= kQuartoRecommendedVersion)
+         if (!pathVersion.empty())
          {
-            s_quartoPath = quartoPath;
-            s_quartoVersion = pathVersion;
-         }
-         else
-         {
-            showQuartoVersionWarning(pathVersion, kQuartoRecommendedVersion);
+            return std::make_tuple(quartoPath, pathVersion);
          }
       }
       else
@@ -159,32 +145,78 @@ void detectQuartoInstallation()
          LOG_ERROR(error);
       }
    }
-   else
+   return std::make_tuple(FilePath(), Version());
+}
+
+void detectQuartoInstallation()
+{
+   // required quarto version (quarto features don't work w/o it)
+   const Version kQuartoRequiredVersion("0.2.299");
+
+   // recommended quarto version (a bit more pestery than required)
+   const Version kQuartoRecommendedVersion("0.2.299");
+
+   // reset
+   s_userInstalledPath = FilePath();
+   s_quartoPath = FilePath();
+   s_quartoVersion = "";
+
+   // detect user installed version
+   auto userInstalled = userInstalledQuarto();
+   s_userInstalledPath = std::get<0>(userInstalled);
+   s_quartoVersion = std::get<1>(userInstalled);
+
+   // see if the sysadmin or user has turned off quarto
+   if (session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledDisabled ||
+       session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledHidden)
    {
-      // embedded version of quarto (subject to required version)
-#ifndef WIN32
-      std::string target = "quarto";
-#else
-      std::string target = "quarto.exe";
-#endif
-      FilePath embeddedQuartoPath = session::options().quartoPath()
-         .completeChildPath("bin")
-         .completeChildPath(target);
-      auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
-      if (embeddedVersion >= kQuartoRequiredVersion)
+      return;
+   }
+
+   // always use user installed if it's there but subject to version check
+   if (!s_userInstalledPath.isEmpty())
+   {
+      if (std::get<1>(userInstalled) >= kQuartoRecommendedVersion)
       {
-         s_quartoPath = embeddedQuartoPath;
-         s_quartoVersion = embeddedVersion;
-         // append to path
-         core::system::addToPath(
-            string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath()),
-            false
-         );
+         s_quartoPath = std::get<0>(userInstalled);
+         s_quartoVersion = std::get<1>(userInstalled);
       }
       else
       {
-         showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
+         showQuartoVersionWarning(std::get<1>(userInstalled), kQuartoRecommendedVersion);
       }
+      return;
+   }
+
+
+   // proceed to use embedded version only if the user has explicitly enabled quarto
+   // (i.e. "auto" mode never uses the emedded version)
+   if (session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledAuto)
+      return;
+
+   // embedded version of quarto (subject to required version)
+#ifndef WIN32
+   std::string target = "quarto";
+#else
+   std::string target = "quarto.cmd";
+#endif
+   FilePath embeddedQuartoPath = session::options().quartoPath()
+      .completeChildPath("bin")
+      .completeChildPath(target);
+   auto embeddedVersion = readQuartoVersion(embeddedQuartoPath);
+   if (embeddedVersion >= kQuartoRequiredVersion)
+   {
+      s_quartoPath = embeddedQuartoPath;
+      s_quartoVersion = embeddedVersion;
+      // append to path
+      core::system::addToPath(
+         string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath()),
+         false
+      );
+   }
+   else
+   {
+      showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
    }
 }
 
@@ -480,7 +512,7 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
       {
           std::string type, outputDir;
           readQuartoProjectConfig(quartoConfig, &type, &outputDir);
-          if (type == kQuartoProjectBook || type == kQuartoProjectSite)
+          if (type == kQuartoProjectBook || type == kQuartoProjectWebsite)
           {
              FilePath configPath = quartoConfig.getParent();
              websiteDir = configPath.getAbsolutePath();
@@ -597,7 +629,7 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    // add some first run files
    using namespace module_context;
    std::vector<std::string> projFiles;
-   if (type == kQuartoProjectSite || type == kQuartoProjectBook)
+   if (type == kQuartoProjectWebsite || type == kQuartoProjectBook)
    {
       projFiles.push_back("index.qmd");
       projFiles.push_back("_quarto.yml");
@@ -686,7 +718,7 @@ namespace quarto {
 
 json::Value quartoCapabilities()
 {
-   if (quartoConfig().installed)
+   if (quartoConfig().enabled)
    {
       core::system::ProcessResult result;
       Error error = quartoExec({ "capabilities" }, &result);
@@ -761,17 +793,25 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    // if the current project is a site or book and this file is within it,
    // then initiate a preview (one might be already running)
    auto config = quartoConfig();
-   if ((config.project_type == kQuartoProjectSite || config.project_type == kQuartoProjectBook) &&
+   if ((config.project_type == kQuartoProjectWebsite ||
+        config.project_type == kQuartoProjectBook) &&
        sourceFile.isWithin(module_context::resolveAliasedPath(config.project_dir)))
    {
-      // preview the doc (but schedule it for later so we can get out of the onCompleted
-      // handler this was called from -- launching a new process in the supervisor when
-      // an old one is in the middle of executing onCompleted doesn't work
-      module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
-                                          boost::bind(modules::quarto::serve::previewDoc,
-                                                      renderOutput, outputFile),
-                                          false);
-      return true;
+      if (outputFile.hasExtensionLowerCase(".html") || outputFile.hasExtensionLowerCase(".pdf"))
+      {
+         // preview the doc (but schedule it for later so we can get out of the onCompleted
+         // handler this was called from -- launching a new process in the supervisor when
+         // an old one is in the middle of executing onCompleted doesn't work
+         module_context::scheduleDelayedWork(boost::posix_time::milliseconds(10),
+                                             boost::bind(modules::quarto::serve::previewDocPath,
+                                                         renderOutput, outputFile),
+                                             false);
+         return true;
+      }
+      else
+      {
+         return false;
+      }
    }
 
    // if this file is within another quarto site or book project then no preview at all
@@ -781,7 +821,7 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
    {
       std::string type;
       readQuartoProjectConfig(configFile, &type);
-      if (type == kQuartoProjectSite || type == kQuartoProjectBook)
+      if (type == kQuartoProjectWebsite || type == kQuartoProjectBook)
          return true;
    }
 
@@ -791,7 +831,8 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
 
 const char* const kQuartoCrossrefScope = "quarto-crossref";
 const char* const kQuartoProjectDefault = "default";
-const char* const kQuartoProjectSite = "site";
+const char* const kQuartoProjectWebsite = "website";
+const char* const kQuartoProjectSite = "site"; // 'website' used to be 'site'
 const char* const kQuartoProjectBook = "book";
 
 
@@ -804,11 +845,12 @@ QuartoConfig quartoConfig(bool refresh)
       // detect installation
       detectQuartoInstallation();
       s_quartoConfig = QuartoConfig();
-      s_quartoConfig.installed = quartoIsInstalled();
+      s_quartoConfig.userInstalled = s_userInstalledPath;
+      s_quartoConfig.enabled = quartoIsInstalled();
       s_quartoConfig.version = s_quartoVersion;
 
       // if it's installed then detect bin and resources directories
-      if (s_quartoConfig.installed)
+      if (s_quartoConfig.enabled)
       {
          core::system::ProcessResult result;
          Error error = quartoExec({ "--paths" }, &result);
@@ -863,7 +905,7 @@ QuartoConfig quartoConfig(bool refresh)
             // provide default output dirs
             if (s_quartoConfig.project_output_dir.length() == 0)
             {
-               if (s_quartoConfig.project_type == kQuartoProjectSite)
+               if (s_quartoConfig.project_type == kQuartoProjectWebsite)
                   s_quartoConfig.project_output_dir = "_site";
                else if (s_quartoConfig.project_type == kQuartoProjectBook)
                   s_quartoConfig.project_output_dir = "_book";
@@ -889,11 +931,37 @@ bool isFileInSessionQuartoProject(const core::FilePath& file)
 
 }
 
+std::string urlPathForQuartoProjectOutputFile(const core::FilePath& outputFile)
+{
+   if (!outputFile.isEmpty())
+   {
+      FilePath quartoProjectDir = module_context::resolveAliasedPath(
+         quartoConfig().project_dir
+      );
+
+      FilePath quartoProjectOutputDir = quartoProjectDir.completeChildPath(
+         quartoConfig().project_output_dir
+      );
+      std::string path = outputFile.isWithin(quartoProjectOutputDir)
+                            ? outputFile.getRelativePath(quartoProjectOutputDir)
+                            :  std::string();
+      return path;
+   }
+   else
+   {
+      return "";
+   }
+}
+
 json::Object quartoConfigJSON(bool refresh)
 {
    QuartoConfig config = quartoConfig(refresh);
    json::Object quartoConfigJSON;
-   quartoConfigJSON["installed"] = config.installed;
+   if (!config.userInstalled.isEmpty())
+      quartoConfigJSON["user_installed"] = module_context::createAliasedPath(config.userInstalled);
+   else
+      quartoConfigJSON["user_installed"] = "";
+   quartoConfigJSON["enabled"] = config.enabled;
    quartoConfigJSON["version"] = config.version;
    quartoConfigJSON["is_project"] = config.is_project;
    quartoConfigJSON["project_dir"] = config.project_dir;
@@ -981,7 +1049,12 @@ void readQuartoProjectConfig(const FilePath& configFile,
                      std::string projKey = projIt->first.as<std::string>();
                      std::string projValue = projIt->second.Scalar();
                      if (projKey == "type")
+                     {
+                        // migrate 'site' to 'website'
+                        if (projValue == kQuartoProjectSite)
+                           projValue = kQuartoProjectWebsite;
                         *pType = projValue;
+                     }
                      else if (projKey == "output-dir" && pOutputDir != nullptr)
                         *pOutputDir = projValue;
                   }

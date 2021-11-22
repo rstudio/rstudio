@@ -1038,7 +1038,7 @@
         "global_theme": {
             "type": "string",
             "default": "default",
-            "enum": ["classic", "default", "alternate"],
+            "enum": ["default", "alternate"],
             "title": "Global theme",
             "description": "The theme to use for the main RStudio user interface."
         },
@@ -1215,6 +1215,10 @@
                 "label": {
                     "type": "string",
                     "description": "A free-form label for describing the R version."
+                },
+                "module": {
+                    "type": "string",
+                    "description": "The name of the environment module to load."
                 }
             },
             "description": "The R version to use by default."
@@ -1534,6 +1538,13 @@
             "title": "Check values in the Environment pane for null external pointers",
             "type": "boolean",
             "default": false
+        },
+         "quarto_enabled": {
+            "type": "string",
+            "enum": ["auto", "enabled", "disabled", "hidden"],
+            "default": "auto",
+            "title": "Enble Quarto features",
+            "description": "Enable IDE features for the Quarto publishing system."
         }
     }
 }

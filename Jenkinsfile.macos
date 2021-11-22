@@ -145,13 +145,12 @@ pipeline {
 
             // derive product
             def product="desktop"
-            if (rstudioVersionSuffix.contains("pro")) {
-                product = "desktop-pro"
-              }
+            if (params.RSTUDIO_VERSION_SUFFIX.contains("pro")) {
+              product = "desktop-pro"
             }
 
             // publish the build
-            sh "docker/jenkins/publish-build.sh --build ${product}/macos --url https://s3.amazonaws.com/rstudio-ide-build/desktop/macos/${packageFile} --pat ${GITHUB_PAT} --file package/osx/build/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+            sh "docker/jenkins/publish-build.sh --build ${product}/macos --url https://s3.amazonaws.com/rstudio-ide-build/desktop/macos/${packageFile} --pat ${GITHUB_PAT} --file package/osx/build/${packageFile} --version ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}${params.RSTUDIO_VERSION_SUFFIX}"
           }
 
         }

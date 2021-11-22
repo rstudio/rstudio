@@ -291,7 +291,7 @@ public class PaneManager
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
 
-      int splitterSize = RStudioThemes.isFlat(userPrefs) ? 7 : 3;
+      int splitterSize = 7;
 
       panes_ = createPanes(config);
       center_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);

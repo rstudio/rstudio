@@ -27,6 +27,11 @@ if [ "$RSTUDIO_DISABLE_CRASHPAD" == "1" ]; then
    exit 0
 fi
 
+if [ "$(arch)" == "aarch64" ]; then
+   echo "Skipping crashpad install (not yet supported on aarch64)"
+   exit 0
+fi
+
 # install dir
 INSTALL_DIR=$(pwd)
 

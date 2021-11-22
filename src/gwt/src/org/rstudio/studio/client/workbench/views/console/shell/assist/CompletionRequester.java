@@ -287,20 +287,24 @@ public class CompletionRequester
          ServerRequestCallback<CompletionResult> callback)
    {
       JsArrayString comp = response.getCompletions();
+      JsArrayString display = response.getCompletionsDisplay();
       JsArrayString pkgs = response.getPackages();
       JsArrayBoolean quote = response.getQuote();
       JsArrayInteger type = response.getType();
       JsArrayBoolean suggestOnAccept = response.getSuggestOnAccept();
+      JsArrayBoolean replaceToEnd = response.getReplaceToEnd();
       JsArrayString meta = response.getMeta();
       ArrayList<QualifiedName> newComp = new ArrayList<>();
       for (int i = 0; i < comp.length(); i++)
       {
          newComp.add(new QualifiedName(
             comp.get(i), 
+            display.get(i),
             pkgs.get(i), 
             quote.get(i), 
             type.get(i), 
             suggestOnAccept.get(i),  
+            replaceToEnd.get(i),
             meta.get(i), 
             response.getHelpHandler(), 
             response.getLanguage())
@@ -382,10 +386,12 @@ public class CompletionRequester
             String token = response.getToken();
 
             JsArrayString comp = response.getCompletions();
+            JsArrayString display = response.getCompletionsDisplay();
             JsArrayString pkgs = response.getPackages();
             JsArrayBoolean quote = response.getQuote();
             JsArrayInteger type = response.getType();
             JsArrayBoolean suggestOnAccept = response.getSuggestOnAccept();
+            JsArrayBoolean replaceToEnd = response.getReplaceToEnd();
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
@@ -396,10 +402,12 @@ public class CompletionRequester
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
+                     display.get(i),
                      pkgs.get(i), 
                      quote.get(i), 
                      type.get(i), 
                      suggestOnAccept.get(i), 
+                     replaceToEnd.get(i),
                      meta.get(i), 
                      response.getHelpHandler(), 
                      response.getLanguage()
@@ -428,10 +436,12 @@ public class CompletionRequester
                {
                   newComp.add(new QualifiedName(
                      comp.get(i), 
+                     display.get(i),
                      pkgs.get(i), 
                      quote.get(i), 
                      type.get(i), 
                      suggestOnAccept.get(i),
+                     replaceToEnd.get(i),
                      meta.get(i), 
                      response.getHelpHandler(), 
                      response.getLanguage()
@@ -733,9 +743,11 @@ public class CompletionRequester
             Completions response = Completions.createCompletions(
                   result.token,
                   result.completions,
+                  result.completions,
                   JsUtil.toJsArrayString(pkgNames),
                   JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayInteger(new ArrayList<>(result.completions.length())),
+                  JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayString(new ArrayList<>(result.completions.length())),
                   "",
@@ -810,29 +822,33 @@ public class CompletionRequester
                            int type,
                            boolean suggestOnAccept)
       {
-         this(name, source, shouldQuote, type, suggestOnAccept, "", null, "R");
+         this(name, name, source, shouldQuote, type, suggestOnAccept, false, "", null, "R");
       }
 
       public QualifiedName(String name,
                            String source)
       {
-         this(name, source, false, RCompletionType.UNKNOWN, false, "", null, "R");
+         this(name, name, source, false, RCompletionType.UNKNOWN, false, false, "", null, "R");
       }
-
+      
       public QualifiedName(String name,
+                           String display,
                            String source,
                            boolean shouldQuote,
                            int type,
                            boolean suggestOnAccept,
+                           boolean replaceToEnd,
                            String meta,
                            String helpHandler,
                            String language)
       {
          this.name = name;
+         this.display = display;
          this.source = source;
          this.shouldQuote = shouldQuote;
          this.type = type;
          this.suggestOnAccept = suggestOnAccept;
+         this.replaceToEnd = replaceToEnd;
          this.meta = meta;
          this.helpHandler = helpHandler;
          this.language = language;
@@ -842,9 +858,11 @@ public class CompletionRequester
       {
          return new QualifiedName(
                name,
+               name,
                "snippet",
                false,
                RCompletionType.SNIPPET,
+               false,
                false,
                "",
                null,
@@ -855,10 +873,12 @@ public class CompletionRequester
       {
          return new QualifiedName(
             this.name,
+            this.display,
             this.source,
             this.shouldQuote,
             this.type,
             true,
+            this.replaceToEnd,
             this.meta,
             this.helpHandler,
             this.language  
@@ -873,15 +893,19 @@ public class CompletionRequester
          // Get an icon for the completion
          // We use separate styles for file icons, so we can nudge them
          // a bit differently
-         String style = RES.styles().completionIcon();
-         if (RCompletionType.isFileType(type))
-            style = RES.styles().fileIcon();
+         ImageResource icon = getIcon();
+         if (icon != null)
+         {
+            String style = RES.styles().completionIcon();
+            if (RCompletionType.isFileType(type))
+               style = RES.styles().fileIcon();
 
-         SafeHtmlUtil.appendImage(
-               sb,
-               style,
-               getIcon());
-
+            SafeHtmlUtil.appendImage(
+                  sb,
+                  style,
+                  getIcon());
+         }
+        
          // Get the display name. Note that for file completions this requires
          // some munging of the 'name' and 'package' fields.
          addDisplayName(sb);
@@ -908,7 +932,7 @@ public class CompletionRequester
             SafeHtmlUtil.appendSpan(
                   sb,
                   RES.styles().completion(),
-                  name);
+                  display);
          }
          else
          {
@@ -920,11 +944,11 @@ public class CompletionRequester
                firstSlashIndex = slashIndices.get(
                      slashIndices.size() - 3);
 
-            String endName = name.substring(lastSlashIndex + 1);
+            String endName = display.substring(lastSlashIndex + 1);
             String startName = "";
             if (slashIndices.size() > 2)
                startName += "...";
-            startName += name.substring(firstSlashIndex, lastSlashIndex);
+            startName += display.substring(firstSlashIndex, lastSlashIndex);
 
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -945,7 +969,7 @@ public class CompletionRequester
          SafeHtmlUtil.appendSpan(
                sb,
                RES.styles().completion(),
-               name);
+               display);
 
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"
@@ -966,10 +990,11 @@ public class CompletionRequester
       {
          if (RCompletionType.isFunctionType(type))
             return new ImageResource2x(ICONS.function2x());
-
+         
          switch(type)
          {
          case RCompletionType.UNKNOWN:
+         case RCompletionType.YAML_VALUE:
             return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.VECTOR:
             return new ImageResource2x(ICONS.variable2x());
@@ -1002,9 +1027,8 @@ public class CompletionRequester
             return new ImageResource2x(ICONS.rPackage2x());
          case RCompletionType.KEYWORD:
             return new ImageResource2x(ICONS.keyword2x());
-         case RCompletionType.YAML:
-            return new ImageResource2x(ICONS.keyword2x());
          case RCompletionType.CONTEXT:
+         case RCompletionType.YAML_KEY:
             return new ImageResource2x(ICONS.context2x());
          case RCompletionType.SNIPPET:
             return new ImageResource2x(ICONS.snippet2x());
@@ -1070,10 +1094,12 @@ public class CompletionRequester
       }
 
       public final String name;
+      public final String display;
       public final String source;
       public final boolean shouldQuote;
       public final int type;
       public final boolean suggestOnAccept;
+      public final boolean replaceToEnd;
       public final String meta;
       public final String helpHandler;
       public final String language;

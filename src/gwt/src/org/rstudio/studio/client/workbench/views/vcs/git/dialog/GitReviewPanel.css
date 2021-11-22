@@ -3,7 +3,6 @@
 
 @external gwt-SplitLayoutPanel-VDragger, gwt-SplitLayoutPanel-HDragger;
 
-@external rstudio-themes-flat;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
@@ -28,6 +27,7 @@
 
 .toolbar {
    background-image: none !important;
+   border: none;
 }
 
 @sprite .toolbarWrapper {
@@ -40,55 +40,51 @@
    font-size: 11px;
 }
 
-.rstudio-themes-flat .toolbarWrapper {
+.toolbarWrapper {
    background: #f4f8f9;
-   border-bottom: solid 1px #000;
+   border-bottom: solid 1px;
    height: 25px;
 }
 
-.rstudio-themes-flat .toolbarInnerWrapper {
+.toolbarInnerWrapper {
    border: none;
 }
 
-.rstudio-themes-flat .toolbar {
+.diffToolbarInnerWrapper {
    border: none;
 }
 
-.rstudio-themes-flat .diffToolbarInnerWrapper {
-   border: none;
-}
-
-.rstudio-themes-flat .diffToolbarWrapper {
+.diffToolbarWrapper {
    height: 28px; 
 }
 
-.rstudio-themes-flat .splitPanelCommit .gwt-SplitLayoutPanel-HDragger {
+.splitPanelCommit .gwt-SplitLayoutPanel-HDragger {
    border-left: solid 1px #000;
    border-right: solid 1px #000;
    width: 2px !important;
 }
 
-.rstudio-themes-flat .splitPanel .gwt-SplitLayoutPanel-VDragger {
+.splitPanel .gwt-SplitLayoutPanel-VDragger {
    border-top: solid 1px #000;
    border-bottom: solid 1px #000;
    height: 2px !important;
 }
 
-.rstudio-themes-flat .rstudio-themes-default .toolbarWrapper,
-.rstudio-themes-flat .rstudio-themes-default .splitPanelCommit .gwt-SplitLayoutPanel-HDragger,
-.rstudio-themes-flat .rstudio-themes-default .splitPanel .gwt-SplitLayoutPanel-VDragger {
+.toolbarWrapper,
+.splitPanelCommit .gwt-SplitLayoutPanel-HDragger,
+.splitPanel .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .toolbarWrapper,
-.rstudio-themes-flat .rstudio-themes-dark-grey .splitPanelCommit .gwt-SplitLayoutPanel-HDragger,
-.rstudio-themes-flat .rstudio-themes-dark-grey .splitPanel .gwt-SplitLayoutPanel-VDragger {
+.rstudio-themes-dark-grey .toolbarWrapper,
+.rstudio-themes-dark-grey .splitPanelCommit .gwt-SplitLayoutPanel-HDragger,
+.rstudio-themes-dark-grey .splitPanel .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .toolbarWrapper,
-.rstudio-themes-flat .rstudio-themes-alternate .splitPanelCommit .gwt-SplitLayoutPanel-HDragger,
-.rstudio-themes-flat .rstudio-themes-alternate .splitPanel .gwt-SplitLayoutPanel-VDragger {
+.rstudio-themes-alternate .toolbarWrapper,
+.rstudio-themes-alternate .splitPanelCommit .gwt-SplitLayoutPanel-HDragger,
+.rstudio-themes-alternate .splitPanel .gwt-SplitLayoutPanel-VDragger {
    border-color: THEME_ALTERNATE_BORDER;
 }
 
@@ -139,10 +135,6 @@
 
 .commitButton {
    float: right;
-   margin-right: -1px;
-}
-
-.rstudio-themes-flat .commitButton {
    margin-right: 0;
 }
 

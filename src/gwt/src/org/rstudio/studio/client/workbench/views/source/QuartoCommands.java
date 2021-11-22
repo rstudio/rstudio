@@ -46,8 +46,8 @@ public class QuartoCommands
    public void onSessionInit(SessionInfo sessionInfo, Commands commands)
    {
       QuartoConfig quartoConfig = sessionInfo.getQuartoConfig();
-      commands.newQuartoDoc().setVisible(quartoConfig.installed);
-      commands.newQuartoPres().setVisible(quartoConfig.installed);
+      commands.newQuartoDoc().setVisible(quartoConfig.enabled);
+      commands.newQuartoPres().setVisible(quartoConfig.enabled);
    }
    
    public void newQuarto(boolean presentation)

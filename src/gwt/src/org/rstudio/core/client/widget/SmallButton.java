@@ -47,19 +47,12 @@ public class SmallButton extends FocusWidget
    {
       @Source("SmallButton.css")
       Styles styles();
-
-      ImageResource smallButtonLeft();
-      ImageResource smallButtonRight();
-      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      ImageResource smallButtonTile();
    }
 
    interface Styles extends CssResource
    {
       String smallButton();
-      String buttonLeft();
       String buttonCenter();
-      String buttonRight();
       String buttonContent();
    }
 

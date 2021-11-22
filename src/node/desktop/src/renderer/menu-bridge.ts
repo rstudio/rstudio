@@ -65,5 +65,9 @@ export function getMenuBridge() {
     setCommandShortcut: (commandId: string, shortcut: string) => {
       ipcRenderer.send('menu_set_command_shortcut', commandId, shortcut);
     },
+
+    commitCommandShortcuts: () => {
+      ipcRenderer.send('menu_commit_command_shortcuts');
+    },
   };
 }

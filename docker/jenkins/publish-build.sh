@@ -110,10 +110,14 @@ if [ -z "$pat" ]; then
 fi
 
 # Determine file size
-size=$(wc -c $file| awk '{print $1}')
+size=$(wc -c $file | awk '{print $1}')
 
 # Determine file SHA256 sum
-sha256=$(sha256sum $file| awk '{print $1}')
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  sha256=$(shasum -a 256 $file | awk '{print $1}')
+else
+  sha256=$(sha256sum $file | awk '{print $1}')
+fi
 
 # Form ISO 8601 timestamp
 timestamp=$(date +"%Y-%m-%dT%H:%M:%S%z")
@@ -127,6 +131,9 @@ flower="$(cat "$RSTUDIO_ROOT_DIR/version/RELEASE" | tr '[ ]' '-' | tr -d '[:spac
 pushd $RSTUDIO_ROOT_DIR
 commit=$(git rev-parse HEAD)
 popd
+
+# Escape + characters in URL (for versioning)
+url=$(echo $url | sed -e 's/+/%2B/g')
 
 # Create version stem. This is a very file-safe version of the version: first
 # we replace non-alphanumerics with dashes, then collapse multiple dashes to a
@@ -150,7 +157,11 @@ size: $size
 
 echo "Creating $flower/$build/$version_stem.md..."
 echo "$md_contents"
-base64_contents=$(echo "$md_contents" | base64)
+if [[ "$OSTYPE" == "darwin"* ]]; then
+  base64_contents=$(echo "$md_contents" | base64 --break=0)
+else
+  base64_contents=$(echo "$md_contents" | base64 --wrap=0)
+fi
 
 payload="{\"message\":\"Add $flower build $version in $build\",\"content\":\"$base64_contents\"}"
 echo "Sending to Github: $payload"

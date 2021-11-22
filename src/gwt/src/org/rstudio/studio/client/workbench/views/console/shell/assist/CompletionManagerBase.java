@@ -138,10 +138,12 @@ public abstract class CompletionManagerBase
       {
          names.add(new QualifiedName(
                completions.getCompletions().get(i),
+               completions.getCompletionsDisplay().get(i),
                completions.getPackages().get(i),
                false,
                completions.getType().get(i),
                completions.getSuggestOnAccept().get(i),
+               completions.getReplaceToEnd().get(i),
                completions.getMeta().get(i),
                completions.getHelpHandler(),
                completions.getLanguage()));
@@ -719,6 +721,10 @@ public abstract class CompletionManagerBase
          {
             Position replaceStart = range.getEnd().movedLeft(offset);
             Position replaceEnd = range.getEnd();
+            
+            if (completion.replaceToEnd)
+               replaceEnd.setColumn(docDisplay_.getLength(replaceEnd.getRow()));
+            
             docDisplay_.replaceRange(Range.fromPoints(replaceStart, replaceEnd), value);
          }
 
@@ -828,7 +834,8 @@ public abstract class CompletionManagerBase
    {
       if (completion.type == RCompletionType.SNIPPET)
          popup_.displaySnippetHelp(snippets_.getSnippetContents(completion.name));
-      else if (completion.type == RCompletionType.YAML)
+      else if (completion.type == RCompletionType.YAML_KEY ||
+               completion.type == RCompletionType.YAML_VALUE)
          popup_.displayYAMLHelp(completion.name, completion.meta);
       else
          helpStrategy_.showHelp(completion, popup_);
@@ -899,12 +906,14 @@ public abstract class CompletionManagerBase
                ignoreNextBlur_ = true;
             }),
             
-            popup_.addAttachHandler((AttachEvent event) -> {
-               docDisplay_.setPopupVisible(event.isAttached());
+            popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
+               docDisplay_.setPopupVisible(true);
+               onPopupSelection(event.getSelectedItem());
             }),
             
-            popup_.addSelectionHandler((SelectionEvent<QualifiedName> event) -> {
-               onPopupSelection(event.getSelectedItem());
+            popup_.addCloseHandler(event ->
+            {
+               Scheduler.get().scheduleDeferred(() -> docDisplay_.setPopupVisible(false));
             }),
             
             popup_.addSelectionCommitHandler((SelectionCommitEvent<QualifiedName> event) -> {

@@ -2961,6 +2961,19 @@ core::Error UserPrefValues::setCheckNullExternalPointers(bool val)
    return writePref("check_null_external_pointers", val);
 }
 
+/**
+ * Enable IDE features for the Quarto publishing system.
+ */
+std::string UserPrefValues::quartoEnabled()
+{
+   return readPref<std::string>("quarto_enabled");
+}
+
+core::Error UserPrefValues::setQuartoEnabled(std::string val)
+{
+   return writePref("quarto_enabled", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3190,6 +3203,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSessionProtocolDebug,
       kPythonProjectEnvironmentAutomaticActivate,
       kCheckNullExternalPointers,
+      kQuartoEnabled,
    });
 }
    

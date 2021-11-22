@@ -6,7 +6,7 @@
 
 
    <ui:style>
-      @external rstudio-themes-flat, rstudio-themes-dark-grey, gwt-Image;
+      @external rstudio-themes-dark-grey, gwt-Image;
       @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
       @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 
@@ -16,7 +16,7 @@
          background-color: #ffd;
          border-bottom: 1px solid #bcc1c5;
       }
-      .rstudio-themes-flat .rstudio-themes-dark-grey .outer {
+      .rstudio-themes-dark-grey .outer {
          background-color: THEME_DARKGREY_BACKGROUND !important;
          border-bottom: 1px solid THEME_DARKGREY_BORDER !important;
       }
@@ -29,7 +29,7 @@
          margin-top: 2px;
          color: #555;
       }
-      .rstudio-themes-flat .rstudio-themes-dark-grey .label {
+      .rstudio-themes-dark-grey .label {
          color: #FFF;
       }
       .dismiss {
@@ -44,7 +44,7 @@
          width: 9px;
          height: 9px;
       }
-      .rstudio-themes-flat .rstudio-themes-dark-grey .dismiss {
+      .rstudio-themes-dark-grey .dismiss {
          -webkit-filter: invert(100%);
             -moz-filter: invert(100%);
              -ms-filter: invert(100%);

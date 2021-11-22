@@ -1815,6 +1815,9 @@ int main(int argc, char * const argv[])
             boost::this_thread::sleep(boost::posix_time::seconds(sleepDuration));
          }
       }
+      
+      // initialize thread id
+      core::thread::initializeMainThreadId(boost::this_thread::get_id());
 
       // terminate immediately with given exit code (for testing/debugging)
       std::string exitOnStartup = core::system::getenv("RSTUDIO_SESSION_EXIT_ON_STARTUP");
@@ -1832,7 +1835,10 @@ int main(int argc, char * const argv[])
       // will get re-initialized below)
       std::string programId = "rsession-" + core::system::username();
       core::log::setProgramId(programId);
-      core::system::initializeLog(programId, core::log::LogLevel::WARN);
+      core::system::initializeLog(programId,
+                                  core::log::LogLevel::WARN,
+                                  core::system::xdg::userLogDir(),
+                                  true); // force log dir to be under user's home directory
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
@@ -1951,7 +1957,8 @@ int main(int argc, char * const argv[])
          {
             core::system::initializeLog(options.programIdentity(),
                                         core::log::LogLevel::WARN,
-                                        options.userLogPath());
+                                        options.userLogPath(),
+                                        true); // force log dir to be under user's home directory
          }
       }
 

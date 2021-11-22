@@ -8,8 +8,6 @@
    @external gwt-TabLayoutPanelContentContainer, gwt-TabLayoutPanelTabs;
    @external gwt-TabLayoutPanelContent;
 
-   @external rstudio-themes-flat;
-
    .formatPanel
    {
      padding: 6px;
@@ -104,7 +102,7 @@
      margin-bottom: 7px;
    }
 
-   .rstudio-themes-flat .optionsTabs .gwt-TabLayoutPanelTabs {
+   .optionsTabs .gwt-TabLayoutPanelTabs {
       margin-top: 16px;
    }
    </ui:style>

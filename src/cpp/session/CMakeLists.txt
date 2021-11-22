@@ -47,9 +47,14 @@ else()
 
 endif()
 
+# pandoc from quarto is used
+set(RSTUDIO_DEPENDENCIES_PANDOC_DIR       "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/bin")
+
+
 # validate our dependencies exist
 foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
             RSTUDIO_DEPENDENCIES_MATHJAX_DIR
+            RSTUDIO_DEPENDENCIES_PANDOC_DIR
             RSTUDIO_DEPENDENCIES_QUARTO_DIR)
 
    # validate existence

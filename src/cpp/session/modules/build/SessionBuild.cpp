@@ -1581,7 +1581,7 @@ private:
       if (!outputFile.isEmpty())
       {
          // it will be html if we did a sub-project render.
-         if (outputFile.hasExtensionLowerCase(".html"))
+         if (outputFile.hasExtensionLowerCase(".html") || outputFile.hasExtensionLowerCase("pdf"))
          {
             quarto::handleQuartoPreview(sourceFile, outputFile, output, false);
          }

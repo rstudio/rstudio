@@ -119,10 +119,9 @@ ENV="$ENV BUILD_ID=local"
 
 # infer make parallelism
 if hash sysctl 2>/dev/null; then
-    # macos; we could use `sysctl -n hw.ncpu` but that would likely be too
-    # high. Docker for Mac defaults to half that value. Instead, use -j2 
-    # to match what we currently do in the official build.
-    ENV="$ENV MAKEFLAGS=-j2"
+    # macos; Docker for Mac defaults to half of host's cores
+    JVALUE=$(( `sysctl -n hw.ncpu` / 2 ))
+    ENV="$ENV MAKEFLAGS=-j${JVALUE}"
 elif hash nproc 2>/dev/null; then
     # linux
     ENV="$ENV MAKEFLAGS=-j$(nproc --all)"

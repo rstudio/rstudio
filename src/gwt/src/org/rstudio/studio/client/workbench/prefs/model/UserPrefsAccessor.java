@@ -2176,14 +2176,12 @@ public class UserPrefsAccessor extends Prefs
          "Global theme", 
          "The theme to use for the main RStudio user interface.", 
          new String[] {
-            GLOBAL_THEME_CLASSIC,
             GLOBAL_THEME_DEFAULT,
             GLOBAL_THEME_ALTERNATE
          },
          "default");
    }
 
-   public final static String GLOBAL_THEME_CLASSIC = "classic";
    public final static String GLOBAL_THEME_DEFAULT = "default";
    public final static String GLOBAL_THEME_ALTERNATE = "alternate";
 
@@ -2546,6 +2544,10 @@ public class UserPrefsAccessor extends Prefs
 
       public final native String getLabel() /*-{
          return this && this.label || "";
+      }-*/;
+
+      public final native String getModule() /*-{
+         return this && this.module || "";
       }-*/;
 
    }
@@ -3195,6 +3197,29 @@ public class UserPrefsAccessor extends Prefs
          false);
    }
 
+   /**
+    * Enable IDE features for the Quarto publishing system.
+    */
+   public PrefValue<String> quartoEnabled()
+   {
+      return enumeration(
+         "quarto_enabled",
+         "Enble Quarto features", 
+         "Enable IDE features for the Quarto publishing system.", 
+         new String[] {
+            QUARTO_ENABLED_AUTO,
+            QUARTO_ENABLED_ENABLED,
+            QUARTO_ENABLED_DISABLED,
+            QUARTO_ENABLED_HIDDEN
+         },
+         "auto");
+   }
+
+   public final static String QUARTO_ENABLED_AUTO = "auto";
+   public final static String QUARTO_ENABLED_ENABLED = "enabled";
+   public final static String QUARTO_ENABLED_DISABLED = "disabled";
+   public final static String QUARTO_ENABLED_HIDDEN = "hidden";
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3649,6 +3674,8 @@ public class UserPrefsAccessor extends Prefs
          pythonProjectEnvironmentAutomaticActivate().setValue(layer, source.getBool("python_project_environment_automatic_activate"));
       if (source.hasKey("check_null_external_pointers"))
          checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
+      if (source.hasKey("quarto_enabled"))
+         quartoEnabled().setValue(layer, source.getString("quarto_enabled"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3879,6 +3906,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(sessionProtocolDebug());
       prefs.add(pythonProjectEnvironmentAutomaticActivate());
       prefs.add(checkNullExternalPointers());
+      prefs.add(quartoEnabled());
       return prefs;
    }
    

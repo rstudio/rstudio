@@ -140,9 +140,9 @@ public:
    
    // COPYING: boost::noncopyable
    
-   RFunction& addParam(SEXP param)
+   RFunction& addParam(SEXP paramSEXP)
    {
-      addParam(std::string(), param);
+      addParam(std::string(), paramSEXP);
       return *this;
    }
    
@@ -153,9 +153,10 @@ public:
       return *this;
    }
    
-   RFunction& addParam(const std::string& name, SEXP param)
+   RFunction& addParam(const std::string& name, SEXP paramSEXP)
    {
-      params_.push_back(Param(name, param));
+      preserver_.add(paramSEXP);
+      params_.push_back(Param(name, paramSEXP));
       return *this;
    }
                         
@@ -301,9 +302,6 @@ std::string getErrorMessage();
 bool interruptsPending();
 void setInterruptsPending(bool pending);
 void checkUserInterrupt();
-
-bool isMainThread();
-void initMainThread(MainThreadFunction f);
 
 class IgnoreInterruptsScope : boost::noncopyable
 {

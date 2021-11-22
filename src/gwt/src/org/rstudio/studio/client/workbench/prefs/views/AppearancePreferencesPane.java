@@ -82,25 +82,22 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       relaunchRequired_ = false;
 
-      // dark-grey theme used to be derived from default, now also applies to sky
-      if (StringUtil.equals(userPrefs_.globalTheme().getValue(), "dark-grey"))
+      // dark-grey theme and classic themes no longer exist; map them to defaults
+      if (StringUtil.equals(userPrefs_.globalTheme().getValue(), "dark-grey") ||
+          StringUtil.equals(userPrefs_.globalTheme().getValue(), "classic"))
         userPrefs_.globalTheme().setGlobalValue(UserPrefs.GLOBAL_THEME_DEFAULT);
 
       final String originalTheme = userPrefs_.globalTheme().getValue();
 
       flatTheme_ = new SelectWidget("RStudio theme:",
-                                new String[]{"Classic", "Modern", "Sky"},
+                                new String[]{"Modern", "Sky"},
                                 new String[]{
-                                      UserPrefs.GLOBAL_THEME_CLASSIC,
                                       UserPrefs.GLOBAL_THEME_DEFAULT,
                                       UserPrefs.GLOBAL_THEME_ALTERNATE
                                     },
                                 false);
       flatTheme_.addStyleName(res.styles().themeChooser());
       flatTheme_.getListBox().setWidth("95%");
-      flatTheme_.getListBox().addChangeHandler(event ->
-         relaunchRequired_ = (StringUtil.equals(originalTheme, "classic") && !StringUtil.equals(flatTheme_.getValue(), "classic")) ||
-            (StringUtil.equals(flatTheme_.getValue(), "classic") && !StringUtil.equals(originalTheme, "classic")));
 
       String themeAlias = userPrefs_.globalTheme().getGlobalValue();
       flatTheme_.setValue(themeAlias);

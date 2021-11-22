@@ -64,15 +64,16 @@ public:
    /**
     * @brief Constructor.
     *
-    * @param in_directory      The directory in which to create log files.
-    * @param in_fileMode       The permissions to set on log files.
-    * @param in_maxSizeMb      The maximum size of log files, in MB, before they are rotated and/or overwritten.
-    * @param in_rotationDays   The number of days a log file should be kept before being rotated.
-    * @param in_maxRotations   The maximum number of allowed rotated log files.
-    * @param in_deleteDays     The number of days a rotated log file should be kept before being deleted.
-    * @param in_doRotation     Whether to rotate log files or not.
-    * @param in_includePid     Whether to include the PID of the process in the log filename.
-    * @param in_warnSyslog     Whether or not to also send warn/error logs to syslog for admin visibility.
+    * @param in_directory         The directory in which to create log files.
+    * @param in_fileMode          The permissions to set on log files.
+    * @param in_maxSizeMb         The maximum size of log files, in MB, before they are rotated and/or overwritten.
+    * @param in_rotationDays      The number of days a log file should be kept before being rotated.
+    * @param in_maxRotations      The maximum number of allowed rotated log files.
+    * @param in_deleteDays        The number of days a rotated log file should be kept before being deleted.
+    * @param in_doRotation        Whether to rotate log files or not.
+    * @param in_includePid        Whether to include the PID of the process in the log filename.
+    * @param in_warnSyslog        Whether or not to also send warn/error logs to syslog for admin visibility.
+    * @param in_forceLogDirectory Whether or not the log directory is forced, preventing user override.
     */
    FileLogOptions(
       FilePath in_directory,
@@ -83,7 +84,8 @@ public:
       int in_deletionDays,
       bool in_doRotation,
       bool in_includePid,
-      bool in_warnSyslog);
+      bool in_warnSyslog,
+      bool in_forceLogDirectory);
 
    /**
     * @brief Gets the number of days a rotated log file should persist before being deleted.
@@ -105,6 +107,13 @@ public:
     * @return The permissions with which log files should be created.
     */
    const std::string& getFileMode() const;
+
+   /**
+    * @brief Gets whether or not the log directory is forced, preventing user override.
+    *
+    * @return Whether or not the log directory is forced, preventing user override.
+    */
+   bool getForceDirectory() const;
 
    /**
     * @brief Gets the maximum number of allowed rotated log files.
@@ -172,6 +181,14 @@ public:
    void setFileMode(const std::string& in_fileMode);
 
    /**
+    * @brief Sets whether or not the log directory is forced, preventing user override.
+    *
+    * @param in_forceDirectory  Whether or not the log directory is forced, preventing user override.
+    *
+    */
+   void setForceDirectory(bool in_forceDirectory);
+
+   /**
     * @brief Sets the maximum number of allowed rotated log files.
     *
     * @param in_maxRotations  The maximum number of allowed rotated log files.
@@ -224,6 +241,7 @@ private:
    static constexpr bool s_defaultDoRotation = true;
    static constexpr bool s_defaultIncludePid = false;
    static constexpr bool s_defaultWarnSyslog = true;
+   static constexpr bool s_defaultForceDirectory = false;
 
    // The directory where log files should be written.
    FilePath m_directory;
@@ -251,6 +269,9 @@ private:
 
    // Whether to also send warn/error logs to syslog for admin visibility.
    bool m_warnSyslog;
+
+   // Whether or not to force the directory to prevent user override.
+   bool m_forceDirectory;
 };
 
 /**

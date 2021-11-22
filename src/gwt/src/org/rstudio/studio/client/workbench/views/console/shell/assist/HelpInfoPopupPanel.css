@@ -3,7 +3,7 @@
 @external gwt-Image, gwt-Label;
 @external fixedWidthFont;
 
-@external rstudio-themes-flat, rstudio-themes-dark-menus, rstudio-themes-scrollbars;
+@external rstudio-themes-dark-menus, rstudio-themes-scrollbars;
 
 .helpPopup {
    color: #000023;
@@ -20,11 +20,11 @@
    margin-bottom: 4px;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .helpBodyText a {
+.rstudio-themes-dark-menus .helpBodyText a {
    color: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .helpBodyText span {
+.rstudio-themes-dark-menus .helpBodyText span {
    color: #bfbfbf !important;
 }
 
@@ -33,36 +33,36 @@
    white-space: pre-wrap;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .helpPopup {
+.rstudio-themes-dark-menus .helpPopup {
    color: #eaeaea;
    background: #5e5e4e;
    border: 1px solid #92968e;
 }
 
-.rstudio-themes-flat .helpPopup {
+.helpPopup {
    margin-left: 6px;
    margin-top: -3px;
 }
 
 @if user.agent safari {
-.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar {
+.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar {
    background: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-thumb {
+.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-thumb {
    border: solid 3px rgb(94, 94, 78);
    background: rgb(111, 111, 95);
    -webkit-border-radius: 10px;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track,
-.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-corner { 
+.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track,
+.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-corner { 
    background: rgb(94, 94, 78);
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track-piece {
+.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track-piece {
 }
 
-.rstudio-themes-flat.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track {
+.rstudio-themes-dark-menus .rstudio-themes-scrollbars.helpPopup *::-webkit-scrollbar-track {
 }
 }

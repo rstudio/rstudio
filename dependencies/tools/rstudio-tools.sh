@@ -82,6 +82,20 @@ sudo-if-necessary-for () {
 
 }
 
+mkdir-sudo-if-necessary () {
+
+	# If the directory does not exist, try to create it without sudo
+	if ! [ -e "$1" ]; then
+		mkdir -p "$1" &> /dev/null || true
+	fi
+
+	# Still not there, create with sudo
+	if ! [ -e "$1" ]; then
+		sudo -E mkdir -p "$1"
+	fi
+
+}
+
 find-file () {
 
 	if [ "$#" -lt 2 ] || [ "$1" = "--help" ]; then
@@ -183,6 +197,10 @@ require-program () {
 
 is-verbose () {
 	[ -n "${VERBOSE}" ] && [ "${VERBOSE}" != "0" ]
+}
+
+is-m1-mac () {
+	[ "$(arch)" = "arm64" ]
 }
 
 # Download a single file
@@ -439,3 +457,5 @@ fi
 
 export RSTUDIO_TOOLS_ROOT
 
+# version of node.js used for building
+export RSTUDIO_NODE_VERSION="14.17.5"

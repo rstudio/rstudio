@@ -52,7 +52,6 @@ public class YamlEditorContext extends JavaScriptObject
    {
       // determine file type
       String filetype = null;
-      boolean embedded = false;
       
       // yaml source file
       if (docDisplay.getFileType().isYaml())
@@ -67,8 +66,6 @@ public class YamlEditorContext extends JavaScriptObject
             filetype = FILETYPE_YAML;
          else
             filetype = FILETYPE_SCRIPT;
-         
-         embedded = true;
       }
       // otherwise we consider this markdown (i.e. a mixed mode document that 
       // may have embedded yaml front matter and embedded code chunks
@@ -80,7 +77,7 @@ public class YamlEditorContext extends JavaScriptObject
       return create(
         context.getPath(),
         filetype,
-        embedded,
+        docDisplay.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded,
         docDisplay.getCurrentLineUpToCursor(),
         docDisplay.getCode(),
         docDisplay.getCursorPosition()

@@ -126,12 +126,9 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
    @Inject
    public MainSplitPanel(EventBus events,
-                         Session session,
-                         UserPrefs uiPrefs)
+                         Session session)
    {
-      super(
-         RStudioThemes.isFlat(uiPrefs) ? 7 : 3,
-         events);
+      super(7, events);
       
       session_ = session;
       addSplitterResizedHandler(this);

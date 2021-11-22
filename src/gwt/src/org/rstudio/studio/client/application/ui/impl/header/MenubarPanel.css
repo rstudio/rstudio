@@ -1,4 +1,4 @@
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
@@ -12,66 +12,46 @@
 
 .panel {
    width: 100%;
-   padding: 0 7px 0 7px;
+   padding: 0 8px 0 8px;
    margin-top: 10px;
    overflow: visible;
-}
-
-.rstudio-themes-flat .panel {
-   padding: 0 8px 0 8px;
-}
-
-@sprite .left {
-   gwt-image: 'menubarLeft';
 }
 
 @sprite .center {
    gwt-image: 'menubarTile';
 }
 
-@sprite .right {
-   gwt-image: 'menubarRight';
-}
-
-.rstudio-themes-flat .center > table > tbody > tr > td {
+.center > table > tbody > tr > td {
    border-bottom: none;
 }
 
-.rstudio-themes-flat .left {
-   display: none;
-}
-
-.rstudio-themes-flat .right {
-   display: none;
-}
-
-.rstudio-themes-flat .center {
+.center {
    border-radius: 3px;
    border: solid 1px #000;
    height: 28px;
    padding: 0px;
 }
 
-.rstudio-themes-flat .center > table {
+.center > table {
    padding: 0px;
    height: 27px;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .center {
+.rstudio-themes-dark .center {
    color: white;
 }
 
-.rstudio-themes-flat .rstudio-themes-default .center {
+.rstudio-themes-default .center {
    background: THEME_DEFAULT_BACKGROUND;
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .center {
+.rstudio-themes-dark-grey .center {
    background: THEME_DARKGREY_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .center {
+.rstudio-themes-alternate .center {
    background: THEME_ALTERNATE_BACKGROUND;
    border-color: THEME_ALTERNATE_BORDER;
 }

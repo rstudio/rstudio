@@ -347,7 +347,7 @@ public class SessionInfo extends JavaScriptObject
       return this.is_distill_project;
    }-*/;
    
-   public final static String QUARTO_PROJECT_TYPE_SITE = "site";
+   public final static String QUARTO_PROJECT_TYPE_WEBSITE = "website";
    public final static String QUARTO_PROJECT_TYPE_BOOK = "book";
 
    

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -82,7 +83,8 @@ public class ConsoleInterpreterVersion
       label_.addStyleName(isTabbedView
             ? RES.styles().labelTabbed()
             : RES.styles().labelUntabbed());
-      
+      ElementIds.assignElementId(label_, ElementIds.CONSOLE_INTERPRETER_VERSION + (isTabbedView ? "_tabbed" : ""));
+
       if (isPythonActive())
       {
          container_.add(pythonLogo_);

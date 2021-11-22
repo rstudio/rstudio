@@ -27,6 +27,32 @@ set-java-home () {
       _OLD_JAVA_HOME="${JAVA_HOME}"
       JAVA_HOME="$1"
       export JAVA_HOME
+      info "Found Java: ${JAVA_HOME}"
+   fi
+}
+
+# Find and set the best JAVA_HOME for the build; on an M1 Mac, prefer a native M1
+# JDK even for Intel builds. The GWT build outputs JavaScript, not anything
+# processor-native, so can use the fastest tool for the job.
+find-java-home () {
+   if is-m1-mac; then
+      if [ -e "/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home" ]; then
+         # native M1 JDK11; see https://www.azul.com/downloads
+         set-java-home "/Library/Java/JavaVirtualMachines/zulu-11.jdk/Contents/Home"
+      elif [ -e "${HOME}/homebrew/arm64/opt/openjdk@11" ]; then
+         # see install-dependencies-osx-jenkins
+         set-java-home "${HOME}/homebrew/arm64/opt/openjdk@11"
+      elif [ -e "/opt/homebrew/opt/openjdk@11" ]; then
+         # default location for M1 homebrew
+         set-java-home "/opt/homebrew/opt/openjdk@11"
+      fi
+   else # Intel Mac
+      if [ -e "${HOME}/homebrew/x86_64/opt/openjdk@11" ]; then
+         # see install-dependencies-osx-jenkins
+         set-java-home "${HOME}/homebrew/x86_64/opt/openjdk@11"
+      elif [ -e "/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home" ]; then
+         set-java-home "/Library/Java/JavaVirtualMachines/adoptopenjdk-11.jdk/Contents/Home"
+      fi
    fi
 }
 
@@ -46,6 +72,7 @@ trap on-exit EXIT
 
 # build / install directories
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
+ELECTRON_SRC_DIR="${PKG_DIR}/../../src/node/desktop"
 
 BUILD_DIR_X86_64="${PKG_DIR}/build"
 BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
@@ -81,8 +108,17 @@ find-program ANT ant            \
    "${HOME}/homebrew/arm64/bin" \
    "${HOME}/opt/bin"
 
+# find node
+find-program NODE node \
+   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+ 
+# find yarn
+find-program YARN yarn \
+   "${HOME}/.yarn/bin"
+
 # determine architectures to build for
-if [ "$(arch)" = "arm64" ]; then
+if is-m1-mac; then
    arch=x86_64,arm64
 else
    arch=x86_64
@@ -96,9 +132,10 @@ clean=0
 copy_gwt=1
 install=0
 use_creds=0
+rstudio_target=Desktop
 
 # by default, use RStudio credentials for builds on Jenkins
-if [ -n "${JENKINS_URL}" ]; then
+if is-jenkins; then
    use_creds=1
 fi
 
@@ -106,21 +143,34 @@ fi
 for arg in "$@"; do
 
    case "$arg" in
-   clean)             clean=1 ;;
-   --arch=*)          arch=${arg#*=} ;;
-   --clean)           clean=1 ;;
-   --install)         install=1 ;;
-   --build-gwt=*)     build_gwt=${arg#*=} ;;
-   --copy-gwt=*)      copy_gwt=${arg#*=} ;;
-   --build-package=*) build_package=${arg#*=} ;;
-   --build-dmg=*)     build_dmg=${arg#*=} ;;
-   --use-creds=*)     use_creds=${arg#*=} ;;
+   clean)              clean=1 ;;
+   --arch=*)           arch=${arg#*=} ;;
+   --clean)            clean=1 ;;
+   --install)          install=1 ;;
+   --build-gwt=*)      build_gwt=${arg#*=} ;;
+   --copy-gwt=*)       copy_gwt=${arg#*=} ;;
+   --build-package=*)  build_package=${arg#*=} ;;
+   --build-dmg=*)      build_dmg=${arg#*=} ;;
+   --use-creds=*)      use_creds=${arg#*=} ;;
+   --rstudio-target=*) rstudio_target=${arg#*=} ;;
    esac
 
 done
 
-case "${arch}" in *arm64*)  build_arm64=1  ;; esac
-case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
+if [ "${rstudio_target}" != "Desktop" ] && [ "${rstudio_target}" != "Electron" ]
+then
+   echo "error: must specify --rstudio-target=Desktop|Electron (default Desktop)"
+   exit 1
+fi
+
+if [ "${rstudio_target}" = "Electron" ]
+then
+   # At the moment only support building Electron for Intel
+   build_x86_64=1
+else
+   case "${arch}" in *arm64*)  build_arm64=1  ;; esac
+   case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
+fi
 
 if [ "${clean}" = "1" ]; then
 
@@ -134,6 +184,10 @@ if [ "${clean}" = "1" ]; then
       "${ANT}" clean
    fi
 
+   # cleanup Electron project
+   rm -rf "${ELECTRON_SRC_DIR}/.webpack"
+   rm -rf "${ELECTRON_SRC_DIR}/out"
+
    # move back to package dir
    cd "${PKG_DIR}"
 
@@ -141,6 +195,9 @@ fi
 
 # set up MAKEFLAGS
 MAKEFLAGS="${MAKEFLAGS} -j$(sysctl -n hw.ncpu)"
+
+# set up JAVA_HOME if necessary
+find-java-home
 
 # perform an x86_64 build
 if [ -n "${build_x86_64}" ]; then
@@ -154,9 +211,6 @@ if [ -n "${build_x86_64}" ]; then
    CMAKE="${CMAKE_X86_64:-/usr/local/bin/cmake}"
    info "Using CMake '${CMAKE}' for x86_64 build"
 
-   # set up JAVA_HOME if necessary
-   set-java-home "${HOME}/homebrew/x86_64/opt/openjdk@11"
-
    # prepare for build
    mkdir -p "${BUILD_DIR_X86_64}"
    mkdir -p "${BUILD_DIR_X86_64}/gwt"
@@ -169,8 +223,8 @@ if [ -n "${build_x86_64}" ]; then
    arch -x86_64 "${CMAKE}"                                   \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                      \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                  \
-      -DCMAKE_INSTALL_PREFIX="${PKG_DIR}/install"            \
-      -DRSTUDIO_TARGET=Desktop                               \
+      -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"                \
+      -DRSTUDIO_TARGET=${rstudio_target}                     \
       -DRSTUDIO_PACKAGE_BUILD=1                              \
       -DRSTUDIO_CRASHPAD_ENABLED=0                           \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../x86_64" \
@@ -183,12 +237,14 @@ if [ -n "${build_x86_64}" ]; then
       "${PKG_DIR}/../.."
    info "Done!"
 
-   info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
-   arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
-   info "Done!"
 
-   # restore JAVA_HOME
-   restore-java-home
+   if [ "${build_package}" != "1" ]; then
+      # don't need to build here, it will happen during the packaging step below,
+      # otherwise the lengthy GWT build will happen twice (it isn't incremental)
+      info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
+      arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
+      info "Done!"
+   fi
 
 fi
 
@@ -204,9 +260,6 @@ if [ -n "${build_arm64}" ]; then
    CMAKE="${CMAKE_ARM64:-/opt/homebrew/bin/cmake}"
    info "Using CMake '${CMAKE}' for arm64 build"
 
-   # set up JAVA_HOME if necessary
-   set-java-home "${HOME}/homebrew/arm64/opt/openjdk@11"
-
    # prepare for build
    mkdir -p "${BUILD_DIR_ARM64}"
    mkdir -p "${BUILD_DIR_ARM64}/gwt"
@@ -220,7 +273,7 @@ if [ -n "${build_arm64}" ]; then
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                     \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                 \
       -DRSESSION_ALTERNATE_BUILD=1                          \
-      -DRSTUDIO_TARGET=Desktop                              \
+      -DRSTUDIO_TARGET=${rstudio_target}                    \
       -DRSTUDIO_PACKAGE_BUILD=1                             \
       -DRSTUDIO_CRASHPAD_ENABLED=0                          \
       -DRSTUDIO_TOOLS_ROOT="${RSTUDIO_TOOLS_ROOT}/../arm64" \
@@ -233,11 +286,7 @@ if [ -n "${build_arm64}" ]; then
    arch -arm64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
    info "Done!"
 
-   # restore JAVA_HOME
-   restore-java-home
-
 fi
-
 
 if [ "${build_package}" = "1" ]; then
 
@@ -253,17 +302,27 @@ if [ "${build_package}" = "1" ]; then
    rm -rf "${INSTALL_DIR}"
    mkdir -p "${INSTALL_DIR}"
 
-   # set up JAVA_HOME (strictly speaking, shouldn't be necessary
-   # at this step but we set it just in case we need to invoke
-   # ant or gwtc)
-   set-java-home "${HOME}/homebrew/arm64/opt/openjdk@11"
-
    # perform install
    cd "${BUILD_DIR_X86_64}"
-   "${CMAKE}" --build . --target install
+   "${CMAKE}" --build . --target install -- ${MAKEFLAGS}
 
-   if [ "${build_dmg}" = "1" ]; then
+   if [ "${rstudio_target}" = "Electron" ]; then
+      OLDPATH="${PATH}"
+      NODEPATH="$(dirname "${NODE}")"
+      YARNPATH="$(dirname "${YARN}")"
+      PATH="${NODEPATH}:${YARNPATH}:${OLDPATH}"
 
+      # Build and package the Electron app.
+      cd "${ELECTRON_SRC_DIR}"
+      yarn make
+      cd "${PKG_DIR}"
+      PATH="${OLDPATH}"
+
+      # move to expected location in build folder
+      # TODO
+      # mv "${PKG_DIR}/../../src/node/desktop/out/make/${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
+
+   elif [ "${build_dmg}" = "1" ]; then
       # move to target directory
       cd "${INSTALL_DIR}"
 
@@ -288,12 +347,11 @@ if [ "${build_package}" = "1" ]; then
 
    fi
 
-   # clean up JAVA_HOME
-   restore-java-home
-
    info "Done!"
-
 fi
+
+# clean up JAVA_HOME
+restore-java-home
 
 cd "${PKG_DIR}"
 

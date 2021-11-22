@@ -53,6 +53,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             EditingPreferencesPane source,
                             ConsolePreferencesPane console,
                             RMarkdownPreferencesPane rmarkdown,
+                            QuartoPreferencesPane quarto,
                             CompilePdfPreferencesPane compilePdf,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout,
@@ -73,6 +74,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
             res.styles().panelContainerNoChooser(),
             true,
             panes(
+                  userPrefs,
                   general,
                   source,
                   console,
@@ -80,6 +82,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                   paneLayout,
                   packages,
                   rmarkdown,
+                  quarto,
                   python,
                   compilePdf,
                   spelling,
@@ -167,12 +170,21 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    }
    
    @SafeVarargs
-   private static final List<PreferencesDialogPaneBase<UserPrefs>> panes(
+   private static final List<PreferencesDialogPaneBase<UserPrefs>> panes(UserPrefs prefs,
       PreferencesDialogPaneBase<UserPrefs>... paneList)
    {
       List<PreferencesDialogPaneBase<UserPrefs>> allPanes = new ArrayList<>();
       for (PreferencesDialogPaneBase<UserPrefs> pane : paneList)
+      {
+         // hide quarto prefs if necessary
+         if (pane.getName().equals(QuartoPreferencesPane.NAME) &&
+             prefs.quartoEnabled().getValue().equals(UserPrefs.QUARTO_ENABLED_HIDDEN))
+         {
+            continue;
+         }
+         
          allPanes.add(pane);
+      }
       return allPanes;
    }
    

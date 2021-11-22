@@ -62,6 +62,9 @@ FilePath userConfigDir(const boost::optional<std::string>& user = boost::none,
 // On Windows, this is 'FOLDERID_LocalAppData' (typically 'AppData/Local').
 FilePath userDataDir(const boost::optional<std::string>& user = boost::none,
                      const boost::optional<FilePath>& homeDir = boost::none);
+
+// Returns the user-specific logging directory underneath the userDataDir
+FilePath userLogDir();
                      
 // This function verifies that the userConfigDir() and userDataDir() exist and are owned by the running user.
 // 

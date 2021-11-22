@@ -19,10 +19,12 @@ import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
+import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.core.client.files.ConfigFileBacked;
 import org.rstudio.core.client.events.ExecuteAppCommandEvent;
 import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.rstudioapi.model.RStudioAPIServerOperations;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -213,6 +215,10 @@ public class ApplicationCommandManager
 
       // TODO: Set the bindings in the AppCommand keymap, removing any
       // previously registered bindings.
+
+      if (Desktop.hasDesktopFrame())
+         DesktopMenuCallback.commitCommandShortcuts();
+
       if (afterLoad != null)
          afterLoad.execute(bindings);
    }

@@ -1,11 +1,6 @@
 @CHARSET "UTF-8";
 
-@external rstudio-themes-flat;
-
 .searchWidget {
-   margin-left: 20px;
-}
-
-.rstudio-themes-flat .searchWidget {
    margin-top: -2px;
 }
+

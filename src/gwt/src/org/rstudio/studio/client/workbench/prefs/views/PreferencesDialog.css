@@ -80,6 +80,10 @@
    font-size: 0.9em;
 }
 
+.checkBoxAligned {
+   margin-left: 20px;
+}
+
 .visualModeWrapSelectWidget .gwt-Label {
    margin-bottom: 1px;
 }

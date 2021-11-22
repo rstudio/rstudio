@@ -23,11 +23,14 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <shared_core/FilePath.hpp>
+
+#include <core/StringUtils.hpp>
+#include <core/Thread.hpp>
+
 #include <core/system/ChildProcess.hpp>
 #include <core/system/System.hpp>
 #include <core/system/ShellUtils.hpp>
-#include <shared_core/FilePath.hpp>
-#include <core/StringUtils.hpp>
 
 #include "CriticalSection.hpp"
 
@@ -679,6 +682,11 @@ bool AsyncChildProcess::hasRecentOutput() const
 
 void AsyncChildProcess::poll()
 {
+   // skip polling if we're not on the main thread,
+   // and the process options request we run on the main thread only
+   if (options().callbacksRequireMainThread && !core::thread::isMainThread())
+      return;
+   
    // call onStarted if we haven't yet
    if (!(pAsyncImpl_->calledOnStarted_))
    {

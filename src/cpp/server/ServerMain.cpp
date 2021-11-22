@@ -822,7 +822,7 @@ int main(int argc, char * const argv[])
          if (!runAsUser.empty())
          {
             // drop root priv
-            error = core::system::temporarilyDropPriv(runAsUser);
+            error = core::system::temporarilyDropPriv(runAsUser, true);
             if (error)
                return core::system::exitFailure(error, ERROR_LOCATION);
          }

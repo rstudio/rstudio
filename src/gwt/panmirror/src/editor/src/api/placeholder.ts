@@ -65,6 +65,7 @@ export function iconAndTextPlaceholderDecoration(pos: number, icon: string, text
     const iconImg = window.document.createElement('img');
     iconImg.classList.add('pm-placeholder-icon');
     iconImg.setAttribute('src', icon);
+    iconImg.setAttribute('draggable', 'false');
 
     const message = window.document.createElement('span');
     message.classList.add('pm-placeholder-text-color');

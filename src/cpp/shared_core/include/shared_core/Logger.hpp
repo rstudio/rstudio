@@ -28,7 +28,10 @@
 #include <memory>
 #include <ostream>
 #include <string>
+#include <vector>
 
+#include <boost/any.hpp>
+#include <boost/function.hpp>
 #include <boost/optional.hpp>
 
 #include <shared_core/system/User.hpp>
@@ -70,6 +73,7 @@ struct RefreshParams
     *        changing process running user to ensure logs can still be written to.
     */
    boost::optional<core::system::User> newUser;
+   bool chownLogDir;
 #endif
 };
 
@@ -92,6 +96,14 @@ enum class LogLevel
 };
 
 /**
+ * @brief Convenience type for log message properties.
+ * Using a boost::any instead of a boost::variant allows access to json
+ * as it is currently impossible to include json types here because that
+ * would cause a circular dependency.
+ */
+typedef std::vector<std::pair<std::string, boost::any>> LogMessageProperties;
+
+/**
  * @enum LogMessageFormatType
  * @brief Enum which represents the format type for log messages.
  */
@@ -100,6 +112,22 @@ enum class LogMessageFormatType
    PRETTY = 0,   // A human-readable single line log message format
    JSON   = 1    // A JSON format, one JSON object per line
 };
+
+/**
+ * @brief Helper function which cleans the log delimiter character from a string.
+ *
+ * @param in_str    The string to be cleaned
+ *
+ * @return The cleaned string.
+ */
+std::string cleanDelimiters(const std::string& in_str);
+
+/**
+ * @brief Sets the program ID for the logger.
+ *
+ * @param in_programId       The ID of the program.
+ */
+void setProgramId(const std::string& in_programId);
 
 /**
  * @brief Adds an un-sectioned log destination to the logger.
@@ -124,15 +152,6 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination);
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, const std::string& in_section);
 
 /**
- * @brief Helper function which cleans the log delimiter character from a string.
- *
- * @param in_str    The string to be cleaned
- *
- * @return The cleaned string.
- */
-std::string cleanDelimiters(const std::string& in_str);
-
-/**
  * @brief Returns whether or not a file log destination is configured.
  *
  * @return Whether or not a file log destination is configured.
@@ -146,12 +165,21 @@ bool hasFileLogDestination();
  */
 bool hasStderrLogDestination();
 
-/** 
+/**
  * @brief Use to write code conditioned on whether logging is configured or not
- * 
+ *
  * @return true if log messages at this level will be displayed.
  */
 bool isLogLevel(log::LogLevel level);
+
+/**
+ * @brief Replaces logging delimiters with ' ' in the specified string.
+ *
+ * @param in_toClean    The string from which to clean logging delimiters.
+ *
+ * @return The cleaned string.
+ */
+std::string cleanDelims(const std::string& in_toClean);
 
 /**
  * @brief Logs an error to all registered destinations.
@@ -235,9 +263,13 @@ void logErrorMessage(const std::string& in_message, const ErrorLocation& in_logg
  *
  * @param in_message        The message to log as an error.
  * @param in_section        The section of the log that the message belongs in.
- * @param in_location       The location from which the error message was logged.
+ * @param in_properties     The log message properties to log.
+ * @param in_location       The location from which the message was logged.
  */
-void logErrorMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom);
+void logErrorMessage(const std::string& in_message,
+                     const std::string& in_section,
+                     const boost::optional<LogMessageProperties>& in_properties,
+                     const ErrorLocation& in_loggedFrom);
 
 /**
  * @brief Logs a warning message to all registered destinations.
@@ -269,9 +301,13 @@ void logWarningMessage(const std::string& in_message, const ErrorLocation& in_lo
  *
  * @param in_message      The message to log as a warning.
  * @param in_section      The section of the log that the message belongs in.
- * @param in_location     The location from which the error message was logged.
+ * @param in_properties   The log message properties to log.
+ * @param in_location     The location from which the message was logged.
  */
-void logWarningMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom);
+void logWarningMessage(const std::string& in_message,
+                       const std::string& in_section,
+                       const boost::optional<LogMessageProperties>& in_properties,
+                       const ErrorLocation& in_loggedFrom);
 
 /**
  * @brief Logs a debug message to all registered destinations.
@@ -303,9 +339,25 @@ void logDebugMessage(const std::string& in_message, const ErrorLocation& in_logg
  *
  * @param in_message      The message to log as a debug message.
  * @param in_section      The section of the log that the message belongs in.
- * @param in_location     The location from which the error message was logged.
+ * @param in_properties   The log message properties to log.
+ * @param in_location     The location from which the message was logged.
  */
-void logDebugMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom);
+void logDebugMessage(const std::string& in_message,
+                     const std::string& in_section,
+                     const boost::optional<LogMessageProperties>& in_properties,
+                     const ErrorLocation& in_loggedFrom);
+
+/**
+ * @brief Logs a debug message to all registered destinations by invoking an action.
+ *
+ * If no destinations are registered, no log will be written.
+ * If the configured log level is below LogLevel::DEBUG, no log will be written.
+ *
+ * @param in_action       The action that will construct the log message if a logger is configured with debug level.
+ * @param in_section      The section of the log that the message belongs in.
+ */
+void logDebugAction(const boost::function<std::string(boost::optional<LogMessageProperties>*)>& in_action,
+                    const std::string& in_section = std::string());
 
 /**
  * @brief Logs an info message to all registered destinations.
@@ -337,9 +389,23 @@ void logInfoMessage(const std::string& in_message, const ErrorLocation& in_logge
  *
  * @param in_message      The message to log as an info message.
  * @param in_section      The section of the log that the message belongs in.
+ * @param in_properties   The log message properties to log.
  * @param in_location     The location from which the error message was logged.
  */
-void logInfoMessage(const std::string& in_message, const std::string& in_section, const ErrorLocation& in_loggedFrom);
+void logInfoMessage(const std::string& in_message,
+                    const std::string& in_section,
+                    const boost::optional<LogMessageProperties>& in_properties,
+                    const ErrorLocation& in_loggedFrom);
+
+/**
+ * @brief Logs an entire log message as is with an annotation indicating it came from source.
+ *
+ * If no destinations are registered, no log will be written.
+ *
+ * @param in_source       The source of the log message.
+ * @param in_message      The log entire log message (as would be logged by the logging engine).
+ */
+void logPassthroughMessage(const std::string& in_source, const std::string& in_message);
 
 /**
  * @brief Refreshes all log destinations. May be used after fork to prevent stale file handles.
@@ -365,13 +431,6 @@ void removeLogDestination(const std::string& in_destinationId, const std::string
  *        and re-registered with the logger to update the desired changes to the logging system.
  */
 void removeReloadableLogDestinations();
-
-/**
- * @brief Sets the program ID for the logger.
- *
- * @param in_programId       The ID of the program.
- */
-void setProgramId(const std::string& in_programId);
 
 /**
  * @brief Writes an error to the specified output stream.

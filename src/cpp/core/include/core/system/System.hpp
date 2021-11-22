@@ -166,6 +166,7 @@ Error initializeStderrLog(const std::string& programIdentity,
 Error initializeLog(const std::string& programIdentity,
                     log::LogLevel logLevel,
                     const FilePath& logDir,
+                    bool forceLogDir,
                     bool enableConfigReload = true);
 
 Error initializeLog(const std::string& programIdentity,

@@ -53,8 +53,23 @@ public class ShortcutInfo
       List<String> shortcuts = new ArrayList<>();
       for (KeyboardShortcut shortcut: shortcuts_)
       {
-         shortcuts.add(shortcut.toString(true));
+         // if there is a command, then the shorcut must NOT match BOTH the
+         // custom shortcut AND the default shortcut for that command,
+         // Add to the list otherwise.
+         if (getCommand() == null) 
+            shortcuts.add(shortcut.toString(true));
+         else if ( 
+               !shortcut.equals(getCommand().getShortcut(false)) &&
+               !shortcut.equals(getCommand().getShortcut(true))
+               )
+            shortcuts.add(shortcut.toString(true));
       }
+
+      // if there is a command, add the shorcut here. This will choose the
+      // correct shorcut: the custom one if it exists, otherwise the default one
+      if (getCommand() != null) 
+         shortcuts.add(getCommand().getShortcut().toString(true));
+
       return shortcuts;
    }
 

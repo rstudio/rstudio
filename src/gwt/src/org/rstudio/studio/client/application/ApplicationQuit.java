@@ -42,7 +42,6 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.TimedProgressIndicator;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.projects.Projects;
-import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -557,6 +556,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       prepareForQuit("Quit R Session", false /*allowCancel*/, false /*forceSaveChanges*/,
             (boolean saveChanges) -> performQuit(null, saveChanges));
    }
+   
+
 
    public void doRestart(Session session)
    {
@@ -566,11 +567,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                String project = session.getSessionInfo().getActiveProjectFile();
                if (project == null)
                   project = Projects.NONE;
-
-               final String finalProject = project;
-               performQuit(null, saveChanges, () -> {
-                  eventBus_.fireEvent(new OpenProjectNewWindowEvent(finalProject, null));
-               });
+               performQuit(null, saveChanges, project);
             });
    }
 

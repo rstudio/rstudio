@@ -2,7 +2,18 @@
 
 setlocal
 
+call ..\tools\rstudio-tools.cmd
+
 set PATH=%CD%\tools;%PATH%
+
+REM Check for required tools on the PATH.
+for %%X in (R.exe 7z.exe cmake.exe) do (
+  where /q %%X
+  if ERRORLEVEL 1 (
+    echo ERROR: %%X is not available on the PATH; cannot proceed.
+    exit /b
+  )
+)
 
 set WGET_ARGS=-c --no-check-certificate
 set UNZIP_ARGS=-q
@@ -20,18 +31,18 @@ set OPENSSL_FILES=openssl-1.1.1i.zip
 set BOOST_FILES=boost-1.69.0-win-msvc141.zip
 set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
 
-set PANDOC_VERSION=2.14.2
+set PANDOC_VERSION=2.16.1
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
-set QUARTO_VERSION=0.2.214
+set QUARTO_VERSION=0.2.303
 set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
 set LIBCLANG_VERSION=5.0.2
 set LIBCLANG_NAME=libclang-windows-%LIBCLANG_VERSION%
 set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 
-set NODE_VERSION=14.17.5
+set NODE_VERSION=%RSTUDIO_NODE_VERSION%
 set NODE_ROOT=node
 set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
 set NODE_BASE_URL=https://nodejs.org/dist/v%NODE_VERSION%/
@@ -190,6 +201,12 @@ pushd ..\..\src\gwt\panmirror\src\editor
 call yarn install
 popd
 
+if exist C:\Windows\py.exe (
+  pushd ..\..\src\gwt\tools\i18n-helpers\
+  py -3 -m venv VENV
+  VENV\Scripts\pip install --disable-pip-version-check -r commands.cmd.xml\requirements.txt
+  popd
+)
 
 call install-packages.cmd
 

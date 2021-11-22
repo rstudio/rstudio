@@ -165,7 +165,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    public void setFocus()
    {
-      if (frame_ != null)
+      if (frame_ != null && frame_.getIFrame() != null)
          frame_.getIFrame().setFocus();
       else
          super.setFocus();
@@ -197,7 +197,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       int frameWidth = frame_.getOffsetWidth();
       if (frameWidth > 0)
       {
-         double ratio = (double)700 / 960;
+         double ratio = (double)700 / 1050;
          ensureHeight((int)(frameWidth * ratio) + getToolbarsHeight());
       }
       
@@ -255,6 +255,9 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       }
       
       setSecondaryToolbarVisible(true);
+
+      // signal reveal that we are ready for more events
+      postRevealMessage("ready");
    }
 
    

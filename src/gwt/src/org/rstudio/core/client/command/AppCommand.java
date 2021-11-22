@@ -480,7 +480,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       if (isCheckable)
       {
-         if (RStudioThemes.isFlat() && RStudioThemes.isEditorDark()) {
+         if (RStudioThemes.isEditorDark()) {
             return isChecked ?
                new ImageResource2x(ThemeResources.INSTANCE.menuCheckInverted2x()) :
                null;
@@ -705,6 +705,11 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    public KeyboardShortcut getShortcut()
    {
       return customShortcut_ != null ? customShortcut_ : shortcut_;
+   }
+
+   public KeyboardShortcut getShortcut(boolean custom)
+   {
+      return custom ? customShortcut_ : shortcut_;
    }
 
    public KeySequence getKeySequence()

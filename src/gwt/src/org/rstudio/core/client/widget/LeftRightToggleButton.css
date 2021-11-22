@@ -1,4 +1,4 @@
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
 @eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
@@ -21,15 +21,13 @@
    
 }
 
-@sprite tr .leftLeft {
-   gwt-image: 'leftToggleLeftOff';
+tr .leftLeft {
    width: auto;
    padding-left: 7px;
    padding-right: 4px;
 }
 
-@sprite .leftOn .leftLeft {
-   gwt-image: 'leftToggleLeftOn';
+.leftOn .leftLeft {
    width: auto;
 }
 
@@ -44,96 +42,67 @@
    outline: inherit;
 }
 
-@sprite .leftRight {
-   gwt-image: 'leftToggleRightOff';
-   width: value('leftToggleRightOff.getWidth', 'px');
-}
-
-@sprite .leftOn .leftRight {
-   gwt-image: 'leftToggleRightOn';
-}
-
-@sprite .rightLeft {
-   gwt-image: 'rightToggleLeftOff';
-   width: value('rightToggleLeftOff.getWidth', 'px');
-}
-
-@sprite .rightOn .rightLeft {
-   gwt-image: 'rightToggleLeftOn';
-}
-
-@sprite tr .rightRight {
-   gwt-image: 'rightToggleRightOff';
+tr .rightRight {
    background-position: top right;
    width: auto;
    padding-left: 5px;
    padding-right: 9px;
 }
 
-@sprite .rightOn .rightRight {
-   gwt-image: 'rightToggleRightOn';
-   background-position: top right;
+.rightOn .rightRight {
    width: auto;
 }
 
-.rstudio-themes-flat .rightOn {
-   height: 16px;
+.rightOn {
    border: solid 1px #FFF;
    border-radius: 3px;
    margin: 2px;
    overflow: hidden;
 }
 
-.rstudio-themes-flat .rightOn,
-.rstudio-themes-flat .leftOn {
-   height: 16px;
+.rightOn,
+.leftOn {
    border: solid 1px THEME_LIGHT_CONTROL_BORDER;
    border-radius: 3px;
    margin: 2px;
-   margin-top: 3px;
    overflow: hidden;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .rightOn,
-.rstudio-themes-flat .rstudio-themes-dark .leftOn {
+.rstudio-themes-dark .rightOn,
+.rstudio-themes-dark .leftOn {
    border: solid 1px THEME_DARK_CONTROL_BORDER;
 }
 
-.rstudio-themes-flat .leftLeft,
-.rstudio-themes-flat .rightRight {
+.leftLeft,
+.rightRight {
    height: 16px;
-   background: THEME_LIGHT_CONTROL_BACKGROUND;
-}
-
-.rstudio-themes-flat .rstudio-themes-dark .leftLeft,
-.rstudio-themes-flat .rstudio-themes-dark .rightRight {
-   background: THEME_DARK_CONTROL_BACKGROUND;
-}
-
-.rstudio-themes-flat .leftRight,
-.rstudio-themes-flat .rightLeft {
-   display: none;
-}
-
-.rstudio-themes-flat .rightRight {
-   border-left: solid 1px THEME_LIGHT_CONTROL_BORDER;
-}
-
-.rstudio-themes-flat .rstudio-themes-dark .rightRight {
-   border-left: solid 1px THEME_DARK_CONTROL_BORDER;
-}
-
-.rstudio-themes-flat .rstudio-themes-default .rightOn .leftLeft,
-.rstudio-themes-flat .rstudio-themes-default .leftOn .rightRight {
    background: THEME_DEFAULT_BACKGROUND;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .rightOn .leftLeft,
-.rstudio-themes-flat .rstudio-themes-dark-grey .leftOn .rightRight {
+.rstudio-themes-dark .leftLeft,
+.rstudio-themes-dark .rightRight {
+   background: THEME_DARK_CONTROL_BACKGROUND;
+}
+
+.rightRight {
+   border-left: solid 1px THEME_LIGHT_CONTROL_BORDER;
+}
+
+.rstudio-themes-dark .rightRight {
+   border-left: solid 1px THEME_DARK_CONTROL_BORDER;
+}
+
+.rightOn .leftLeft,
+.leftOn .rightRight {
+   background: THEME_LIGHT_CONTROL_BACKGROUND;
+}
+
+.rstudio-themes-dark-grey .rightOn .leftLeft,
+.rstudio-themes-dark-grey .leftOn .rightRight {
    background: THEME_DARKGREY_BACKGROUND;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .rightOn .leftLeft,
-.rstudio-themes-flat .rstudio-themes-alternate .leftOn .rightRight {
+.rstudio-themes-alternate .rightOn .leftLeft,
+.rstudio-themes-alternate .leftOn .rightRight {
    background: THEME_ALTERNATE_BACKGROUND;
 }

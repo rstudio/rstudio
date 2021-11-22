@@ -25,7 +25,7 @@ public class QuartoNewProjectOptions extends JavaScriptObject
    public final static QuartoNewProjectOptions createDefault()
    {
       return create(QuartoConstants.PROJECT_DEFAULT, QuartoConstants.ENGINE_KNITR, "python3", 
-                    "", "matplotlib pandas", QuartoConstants.EDITOR_VISUAL);
+                    "", "matplotlib pandas", QuartoConstants.EDITOR_SOURCE);
    }
    
    public native final static QuartoNewProjectOptions create(String type, String engine, String kernel, String venv, 

@@ -172,12 +172,25 @@ async function editNodeAttrs(
   const attrs = node.attrs;
   const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node, pandocExtensions));
   if (result) {
-    dispatch(
-      state.tr.setNodeMarkup(pos, node.type, {
+    
+    const tr = state.tr;
+    // if the node is different after the dialog completes
+    // then don't proceed (we've seen this a couple of tiems
+    // and it results in mauling of the document -- not sure 
+    // why this occurs but better to head it off w/ a no-op 
+    // than to let the doc get messed up. note it MAY occur 
+    // b/c the state has been transformed by some other 
+    // mechanism and the state we are operating on is no 
+    // longer valid. this is a general problem w/ our async 
+    // dialogs and a very good reason to move away from them
+    const targetNode = tr.doc.nodeAt(pos);
+    if (targetNode && targetNode.eq(node)) {
+      tr.setNodeMarkup(pos, node.type, {
         ...attrs,
         ...result.attr,
       }),
-    );
+      dispatch(tr);
+    }
   }
 }
 

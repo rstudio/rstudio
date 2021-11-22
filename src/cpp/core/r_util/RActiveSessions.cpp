@@ -14,6 +14,7 @@
  */
 
 #include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionStorage.hpp>
 
 #include <boost/bind/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -26,6 +27,8 @@
 
 #include <core/r_util/RSessionContext.hpp>
 
+#include <shared_core/SafeConvert.hpp>
+
 #define kSessionDirPrefix "session-"
 
 using namespace boost::placeholders;
@@ -33,42 +36,6 @@ using namespace boost::placeholders;
 namespace rstudio {
 namespace core {
 namespace r_util {
-
-namespace {
-
-
-} // anonymous namespace
-
-
-void ActiveSession::writeProperty(const std::string& name,
-                                 const std::string& value) const
-{
-   FilePath propertyFile = propertiesPath_.completeChildPath(name);
-   Error error = core::writeStringToFile(propertyFile, value);
-   if (error)
-      LOG_ERROR(error);
-}
-
-std::string ActiveSession::readProperty(const std::string& name) const
-{
-   using namespace rstudio::core;
-   FilePath readPath = propertiesPath_.completeChildPath(name);
-   if (readPath.exists())
-   {
-      std::string value;
-      Error error = core::readStringFromFile(readPath, &value);
-      if (error)
-      {
-         LOG_ERROR(error);
-         return std::string();
-      }
-      return boost::algorithm::trim_copy(value);
-   }
-   else
-   {
-      return std::string();
-   }
-}
 
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
@@ -181,17 +148,16 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
 {
    FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
    if (scratchPath.exists())
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(id,
-                                                                scratchPath));
+      return boost::shared_ptr<ActiveSession>(new ActiveSession(id, scratchPath));
    else
       return emptySession(id);
 }
 
 
-boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(
-      const std::string& id)
+boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(const std::string& id) const
 {
-   return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
+   FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
+   return boost::shared_ptr<ActiveSession>(new ActiveSession(id, scratchPath));
 }
 
 std::vector<boost::shared_ptr<GlobalActiveSession> >
@@ -229,8 +195,6 @@ GlobalActiveSessions::get(const std::string& id) const
 
    return boost::shared_ptr<GlobalActiveSession>(new GlobalActiveSession(sessionFile));
 }
-
-
 namespace {
 
 void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
@@ -275,6 +239,3 @@ void trackActiveSessionCount(const FilePath& rootStoragePath,
 } // namespace r_util
 } // namespace core
 } // namespace rstudio
-
-
-

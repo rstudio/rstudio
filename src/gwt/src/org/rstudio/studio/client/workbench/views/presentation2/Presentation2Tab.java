@@ -90,7 +90,7 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
    public boolean isSuppressed()
    {
       SessionInfo si = session_.getSessionInfo();
-      return !si.getQuartoConfig().installed ||
+      return !si.getQuartoConfig().enabled ||
              si.getPresentationState().isActive();
    }
    

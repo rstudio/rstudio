@@ -200,7 +200,8 @@ oop.inherits(Mode, MarkdownMode);
       if (mode === "r")
          return this.codeModel.getIndentForOpenBrace(openBracePos);
 
-      return this.$getIndent(openBracePos.row);
+      var line = this.$session.getLine(openBracePos.row1);
+      return this.$getIndent(line);
    };
 
    this.transformAction = function(state, action, editor, session, text)

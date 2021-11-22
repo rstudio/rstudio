@@ -23,8 +23,16 @@ public class YamlCompletion extends JavaScriptObject
    {
    }
    
+   public native final String getType() /*-{
+      return this.type;
+   }-*/;
+   
    public native final String getValue() /*-{
       return this.value;
+   }-*/;
+   
+   public native final String getDisplay() /*-{
+      return this.display || this.value;
    }-*/;
    
    public native final String getDescription() /*-{
@@ -33,6 +41,10 @@ public class YamlCompletion extends JavaScriptObject
    
    public native final boolean getSuggestOnAccept() /*-{
       return !!this.suggest_on_accept;
+   }-*/;
+   
+   public native final boolean getReplaceToEnd() /*-{
+      return !!this.replace_to_end;
    }-*/;
    
 }

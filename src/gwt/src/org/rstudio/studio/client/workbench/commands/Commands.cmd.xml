@@ -3,6 +3,12 @@
 This file is intended to contain definitions for all commands in RStudio, as
 well as menu structures (for main menu and popup menus).
 
+Changes to this file require that you refresh the i18n interfaces and
+possibly retranslate/refresh any affected translated properties files. Do 
+this by running "ant generate-i18n" and commit all modified files.
+
+See `/src/gwt/tools/i18n-helpers/README.md`.
+
 <menu>
    Contains <menu>, <cmd>, <separator>
    @id (required): The method name for this menu on the command bundle interface
@@ -877,7 +883,6 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="nextPlot" value="Cmd+Alt+F12" />
          <shortcut refid="logFocusedElement" value="Ctrl+Shift+`" />
          <shortcut refid="setWorkingDir" value="Ctrl+Shift+H" />
-         <shortcut refid="synctexSearch" value="Cmd+F8" />
          <shortcut refid="checkSpelling" value="F7" />
          <shortcut refid="refreshSuperDevMode" value="Cmd+Shift+F9"/>
          <shortcut refid="viewerSaveAllAndRefresh" value="Cmd+Shift+F5"/>
@@ -959,7 +964,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="layoutZoomBuild" value="Ctrl+Shift+F2"/>
          <shortcut refid="layoutZoomConnections" value="Ctrl+Shift+F5"/>
          <shortcut refid="layoutZoomTutorial" value="Ctrl+Shift+F6"/>
-         <shortcut refid="layoutZoomPresentation2" value="Ctrl+Shift+F8"/>
+         <shortcut refid="layoutZoomPresentation2" value="Ctrl+Shift+F7"/>
          <shortcut refid="layoutZoomLeftColumn" value="Ctrl+Alt+Shift+F12"/>
          <shortcut refid="layoutZoomRightColumn" value="Ctrl+Alt+Shift+F11"/>
       </shortcutgroup>
@@ -1122,7 +1127,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="serveQuartoSite"
         menuLabel="_Serve Site"
         desc="Run development server for Quarto site"
-        rebindable="false"/>      
+        rebindable="false"/>
 
    <cmd id="newRShinyApp"
         menuLabel="Shiny _Web App..."
@@ -1456,6 +1461,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="activatePresentation"
         label="Show Presentation Pane"
         menuLabel="Show Prese_ntation"
+        rebindable="false"
         windowMode="main"/>
         
    <cmd id="activatePresentation2"
@@ -2437,11 +2443,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="_Quarto Doc..."
         desc="Create a blank Quarto document in current directory"
         rebindable="false"/>
-        
-   <cmd id="serveQuartoSite"
-        menuLabel="_Serve Site"
-        desc="Run development server for Quarto site in current directory"
-        rebindable="false"/>      
 
    <cmd id="touchRHTMLDoc"
         menuLabel="R _HTML"
@@ -2779,6 +2780,7 @@ well as menu structures (for main menu and popup menus).
    <!--  Presentation2 -->
    <cmd id="refreshPresentation2"
         menuLabel="Refresh Presentation"
+        rebindable="false"
         desc="Refresh the presentation preview"/>
         
    <cmd id="presentation2Home"
@@ -2872,7 +2874,7 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="historyDismissContext"
         label="Dismiss History Context"
-        buttonLabel="&#x00AB; Back"
+        buttonLabel="Back"
         context="history"
         rebindable="false"/>
 
@@ -3407,6 +3409,7 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="viewerEditSource"
         desc="Edit source file"
+        buttonLabel="Edit"
         rebindable="false"
         context="viewer"/>
 

@@ -41,6 +41,7 @@ public class YamlDocumentLinter
       if (provider == null)
       {
          ready.execute(JsArray.createArray().cast());
+         return;
       }
       
       // request lint

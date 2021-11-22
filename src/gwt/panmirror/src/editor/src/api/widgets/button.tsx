@@ -83,7 +83,7 @@ export const ImageButton = React.forwardRef<HTMLButtonElement, ImageButtonProps>
       ref={ref}
       tabIndex={props.tabIndex}
     >
-      <img src={props.image} alt={props.title} />
+      <img src={props.image} alt={props.title} draggable="false"/>
     </button>
   );
 });

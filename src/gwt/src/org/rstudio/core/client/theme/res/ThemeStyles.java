@@ -28,16 +28,6 @@ public interface ThemeStyles extends CssResource
 {
    public static ThemeStyles INSTANCE = ThemeResources.INSTANCE.themeStyles();
 
-   String NW();
-   String N();
-   String NE();
-   String W();
-   String C();
-   String E();
-   String SW();
-   String S();
-   String SE();
-
    String windowframe();
 
    String primaryWindowFrameHeader();
@@ -63,7 +53,6 @@ public interface ThemeStyles extends CssResource
    String rstheme_secondaryToolbar();
    String secondaryToolbarPanel();
    String globalToolbar();
-   String desktopGlobalToolbar();
    String webGlobalToolbar();
    String webHeaderBarCommandsProjectMenu();
    String toolbarButton();

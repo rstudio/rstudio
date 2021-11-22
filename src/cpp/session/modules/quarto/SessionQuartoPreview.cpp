@@ -149,8 +149,12 @@ protected:
       if (formatIsRevealJs())
          args.push_back("--presentation");
 
-      // no automatic render and no browser
-      args.push_back("--no-render");
+      // format (or default if none specified)
+      args.push_back("--to");
+      args.push_back(!format_.empty() ? format_ : "default");
+
+      // no watching inputs and no browser
+      args.push_back("--no-watch-inputs");
       args.push_back("--no-browse");
 
       return args;
@@ -228,7 +232,7 @@ private:
          }
       }
 
-      if (output.find("Watching files for changes") != std::string::npos)
+      if (port_ > 0 && output.find("Watching files for changes") != std::string::npos)
       {
          // activate the console
          activateConsole();
@@ -312,8 +316,14 @@ private:
       // route to either viewer or presentation pane (for reveal)
       if (isReveal)
       {
+         std::string url = url_ports::mapUrlPorts(viewerUrl());
+         if (isFileInSessionQuartoProject(previewFile_))
+         {
+            url = url + urlPathForQuartoProjectOutputFile(outputFile_);
+         }
+
          json::Object eventData;
-         eventData["url"] = url_ports::mapUrlPorts(viewerUrl());
+         eventData["url"] = url;
          eventData["quarto_navigation"] = module_context::quartoNavigateAsJson(quartoNav);
          eventData["editor_state"] = editorState_;
          eventData["slide_level"] = slideLevel_;
@@ -322,7 +332,15 @@ private:
       }
       else
       {
-         module_context::viewer(viewerUrl(),  minHeight, quartoNav);
+         std::string url = viewerUrl();
+
+         if (outputFile_.getExtensionLowerCase() != ".pdf")
+         {
+            if (isFileInSessionQuartoProject(previewFile_))
+               url = url + urlPathForQuartoProjectOutputFile(outputFile_);
+         }
+
+         module_context::viewer(url,  minHeight, quartoNav);
       }
    }
 
@@ -406,16 +424,15 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
       return error;
    FilePath previewFilePath = module_context::resolveAliasedPath(previewFile);
 
-   // first check to see if this file is in a website or book project
-   // (if so then return false as preview will fail)
+   // first check to see if this file is in a book project (if so then fail and fall
+   // back on normal render)
    bool canPreview = true;
    FilePath quartoConfig = session::quarto::quartoProjectConfigFile(previewFilePath);
    if (!quartoConfig.isEmpty())
    {
       std::string type;
       readQuartoProjectConfig(quartoConfig, &type);
-      canPreview = type != session::quarto::kQuartoProjectSite &&
-                   type != session::quarto::kQuartoProjectBook;
+      canPreview = type != session::quarto::kQuartoProjectBook;
    }
 
    // set result
@@ -423,7 +440,7 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
 
    if (canPreview)
    {
-      if (s_pPreview && s_pPreview->isRunning() &&
+      if (s_pPreview && s_pPreview->isRunning() && (s_pPreview->port() > 0) &&
           (s_pPreview->previewFile() == previewFilePath) &&
           (s_pPreview->format() == format &&
            !s_pPreview->hasModifiedProject()))

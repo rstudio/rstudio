@@ -37,7 +37,7 @@ export const CompletionItemDetailedView: React.FC<CompletionItemDetailedViewProp
   return (
     <div className={className} style={style}>
       <div className={'pm-completion-detailed-item-type'}>
-        <img className={'pm-block-border-color'} src={props.image} />
+        <img className={'pm-block-border-color'} src={props.image} draggable="false"/>
       </div>
       <div className={'pm-completion-item-detailed-summary'}>
         <div className={'pm-completion-item-detailed-heading'}>{props.heading}</div>

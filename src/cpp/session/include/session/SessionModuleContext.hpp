@@ -105,6 +105,7 @@ core::json::Object createFileSystemItem(const core::FilePath& filePath);
 std::string rVersion();
 std::string rVersionLabel();
 std::string rHomeDir();
+std::string rVersionModule();
 
 // active sessions
 core::r_util::ActiveSession& activeSession();

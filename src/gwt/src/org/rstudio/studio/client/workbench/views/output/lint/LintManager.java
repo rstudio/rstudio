@@ -155,7 +155,7 @@ public class LintManager
                   showMarkers_ = false;
                   excludeCurrentStatement_ = true;
                   explicit_ = false;
-                  timer_.schedule(userPrefs_.backgroundDiagnosticsDelayMs().getValue());
+                  timer_.schedule(defaultLintDelayMs());
                }
             });
          }
@@ -180,7 +180,7 @@ public class LintManager
 
    public void relintAfterDelay(int delayMills)
    {
-      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? userPrefs_.backgroundDiagnosticsDelayMs().getValue() : delayMills);
+      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? defaultLintDelayMs() : delayMills);
    }
 
    @Inject
@@ -191,6 +191,15 @@ public class LintManager
       server_ = server;
       userPrefs_ = uiPrefs;
       eventBus_ = eventBus;
+   }
+   
+   private int defaultLintDelayMs()
+   {
+      // give pure yaml linting a shorter delay b/c its known to be high performance
+      if (target_.getTextFileType().isYaml())
+         return 1000;
+      else
+         return userPrefs_.backgroundDiagnosticsDelayMs().getValue();
    }
    
    private void lintActiveDocument(final LintContext context)

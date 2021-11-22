@@ -330,12 +330,17 @@ Error initializeStderrLog(const std::string& programIdentity,
 Error initializeLog(const std::string& programIdentity,
                     log::LogLevel logLevel,
                     const FilePath& logDir,
+                    bool forceLogDir,
                     bool enableConfigReload)
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       // create default file logger options
       log::FileLogOptions options(logDir);
+
+      // indicates whether or not the logging directory should be forcefully locked to a certain location
+      // otherwise, it is allowed to be overridden by logging config file
+      options.setForceDirectory(forceLogDir);
       s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kFile, log::LogMessageFormatType::PRETTY, options));
       s_programIdentity = programIdentity;
 
@@ -355,7 +360,7 @@ Error initializeLog(const std::string& programIdentity,
                     log::LogLevel logLevel,
                     bool enableConfigReload)
 {
-   return initializeLog(programIdentity, logLevel, log::LogOptions::defaultLogDirectory(), enableConfigReload);
+   return initializeLog(programIdentity, logLevel, log::LogOptions::defaultLogDirectory(), false, enableConfigReload);
 }
 
 void initFileLogDestination(log::LogLevel level, FilePath defaultLogDir)

@@ -22,7 +22,9 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+
 #include <core/FileSerializer.hpp>
+#include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -760,8 +762,13 @@ const double kDefaultDevicePixelRatio = 1.0;
    
 Error initialize(
             const FilePath& graphicsPath,
-            const boost::function<bool(double*,double*)>& locatorFunction)
-{      
+            const boost::function<bool(double*, double*)>& locatorFunction)
+{
+   // initialize tracing
+   std::string traceGraphicsDevice = core::system::getenv("RSTUDIO_TRACE_GRAPHICS_DEVICE");
+   if (core::string_utils::isTruthy(traceGraphicsDevice))
+      s_gdTracingEnabled = true;
+   
    // initialize shadow handler
    r::session::graphics::handler::installShadowHandler();
 

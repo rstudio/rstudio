@@ -651,6 +651,10 @@ Error FilePath::changeFileMode(FileMode in_fileMode, bool in_setStickyBit) const
          mode = S_IRWXU | S_IRWXG | S_IRWXO;
          break;
 
+      case FileMode::USER_READ_WRITE_EXECUTE_GROUP_READ_WRITE_EXECUTE_ALL_READ_EXECUTE:
+         mode = S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH;
+         break;
+
       default:
          return systemError(ENOTSUP, ERROR_LOCATION);
    }
@@ -1025,6 +1029,8 @@ Error FilePath::getFileMode(FileMode& out_fileMode) const
       out_fileMode = FileMode::ALL_READ_WRITE_EXECUTE;
    else if (mode == "rwxr-xr-x")
       out_fileMode = FileMode::USER_READ_WRITE_EXECUTE_ALL_READ_EXECUTE;
+   else if (mode == "rwxrwxr-x")
+      out_fileMode = FileMode::USER_READ_WRITE_EXECUTE_GROUP_READ_WRITE_EXECUTE_ALL_READ_EXECUTE;
    else
       return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
 
