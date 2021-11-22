@@ -800,14 +800,23 @@ public class VisualModeChunk
       // Show damage in the editor itself
       editor_.showLint(lint);
 
-      // Clear any old lint
+      // If there is any non-lint status, don't draw any lint markers. The row state also shows execution status
+      // and we want to avoid showing both at once.
       for (ChunkRowExecState state: rowState_.values())
       {
-         if (state.getState() == ChunkRowExecState.LINE_LINT)
+         if (state.getState() != ChunkRowExecState.LINE_LINT &&
+             state.getState() != ChunkRowExecState.LINE_NONE)
          {
-            // TODO
+            return;
          }
       }
+
+      // Clean out the row state in preparation for showing lint.
+      for (ChunkRowExecState state: rowState_.values())
+      {
+         state.detach();
+      }
+      rowState_.clear();
 
       // When line numbers are enabled, gutter symbols show up in the editor itself representing linting issues.
       // When they aren't, we need to show those symbols outside the chunk.
