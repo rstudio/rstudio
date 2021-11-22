@@ -206,4 +206,8 @@ public interface ThemeStyles extends CssResource
    String noLogo();
 
    String launcherJobRunButton();
+
+   String gutterInfo();
+   String gutterWarning();
+   String gutterError();
 }

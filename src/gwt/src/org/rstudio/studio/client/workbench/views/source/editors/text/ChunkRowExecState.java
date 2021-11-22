@@ -114,4 +114,7 @@ public abstract class ChunkRowExecState
    public final static int LINE_RESTING  = 2;
    public final static int LINE_ERROR    = 3;
    public final static int LINE_NONE     = 4;
+
+   // Only used for visual mode chunks
+   public final static int LINE_LINT     = 6;
 }

@@ -37,6 +37,7 @@ import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
@@ -44,6 +45,7 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkCallbacks;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
+import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -95,7 +97,8 @@ public class VisualModeChunk
    public interface Styles extends CssResource
    {
       String host();
-      String exec();
+      String gutter();
+      String gutterIcon();
       String summary();
       String editor();
       String editorHost();
@@ -173,7 +176,6 @@ public class VisualModeChunk
       // editors)
       editor_.setUseWrapMode(true);
       
-    
       // Special comment continuation
       releaseOnDismiss_.add(editor_.addKeyDownHandler(new KeyDownHandler()
       {
@@ -237,9 +239,9 @@ public class VisualModeChunk
 
       // Create an element to host all of the execution status widgets
       // (VisualModeChunkRowState).
-      execHost_ = Document.get().createDivElement();
-      execHost_.setClassName(style_.exec());
-      host_.appendChild(execHost_);
+      gutterHost_ = Document.get().createDivElement();
+      gutterHost_.setClassName(style_.gutter());
+      host_.appendChild(gutterHost_);
       
       if (output != null)
       {
@@ -569,14 +571,15 @@ public class VisualModeChunk
    }
    
    /**
-    * Sets the execution state of a range of lines in the chunk.
+    * Sets the row state of a range of lines in the chunk.
     * 
     * @param start The first line of the range, counting from the first line in
     *   the chunk
     * @param end The last line of the range
-    * @param state the execution state to apply
+    * @param state The state to apply
+    * @param clazz The CSS class to use to display the state, if any
     */
-   public void setLineExecState(int start, int end, int state)
+   public void setRowState(int start, int end, int state, String clazz)
    {
       for (int i = start; i <= end; i++)
       {
@@ -601,8 +604,8 @@ public class VisualModeChunk
                // Create a new state widget if we have a non-resting state to
                // draw
                VisualModeChunkRowState row = 
-                     new VisualModeChunkRowState(state, editor_, i);
-               row.attach(execHost_);
+                     new VisualModeChunkRowState(state, editor_, i, clazz);
+               row.attach(gutterHost_);
                rowState_.put(i, row);
             }
          }
@@ -797,11 +800,31 @@ public class VisualModeChunk
       // Show damage in the editor itself
       editor_.showLint(lint);
 
+      // Clear any old lint
+      for (ChunkRowExecState state: rowState_.values())
+      {
+         if (state.getState() == ChunkRowExecState.LINE_LINT)
+         {
+            // TODO
+         }
+      }
+
       // When line numbers are enabled, gutter symbols show up in the editor itself representing linting issues.
       // When they aren't, we need to show those symbols outside the chunk.
       if (!RStudioGinjector.INSTANCE.getUserPrefs().visualMarkdownCodeEditorLineNumbers().getValue())
       {
-         // TODO: draw symbols outside chunk
+         for (int i = 0; i < lint.length(); i++)
+         {
+            LintItem item = lint.get(i);
+            String clazz = style_.gutterIcon() + " ";
+            if (StringUtil.equals(item.getType(), "error"))
+               clazz += ThemeStyles.INSTANCE.gutterError();
+            else if (StringUtil.equals(item.getType(), "info"))
+               clazz += ThemeStyles.INSTANCE.gutterInfo();
+            else if (StringUtil.equals(item.getType(), "warning"))
+               clazz += ThemeStyles.INSTANCE.gutterInfo();
+            setRowState(item.getStartRow() + 1, item.getStartRow() + 1, ChunkRowExecState.LINE_LINT, clazz);
+         }
       }
    }
 
@@ -1095,8 +1118,8 @@ public class VisualModeChunk
    private final Element element_;
    private final DivElement outputHost_;
    private final DivElement host_;
-   private final DivElement execHost_;
    private final DivElement chunkHost_;
+   private final DivElement gutterHost_;
    private final DivElement editorHost_;
    private final PanmirrorUIChunkEditor chunk_;
    private final AceEditor editor_;

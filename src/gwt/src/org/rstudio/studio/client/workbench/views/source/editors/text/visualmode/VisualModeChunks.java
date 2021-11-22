@@ -267,7 +267,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
              end <= scope.getEnd().getRow())
          {
             int offset = scope.getPreamble().getRow();
-            chunk.setLineExecState(start - offset, end - offset, state);
+            chunk.setRowState(start - offset, end - offset, state, null);
             break;
          }
       }

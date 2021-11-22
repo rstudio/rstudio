@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -32,6 +33,11 @@ import com.google.gwt.user.client.Timer;
 public class VisualModeChunkRowState extends ChunkRowExecState
 {
    public VisualModeChunkRowState(int state, AceEditor editor, int row)
+   {
+      this(state, editor, row, null);
+   }
+
+   public VisualModeChunkRowState(int state, AceEditor editor, int row, String clazz)
    {
       super(state);
       
@@ -67,14 +73,26 @@ public class VisualModeChunkRowState extends ChunkRowExecState
          style.setProperty("height", lineStyle.getHeight());
          style.setProperty("position", "absolute");
       }
-      
-      addClazz(state);
+
+      if (StringUtil.isNullOrEmpty(clazz))
+      {
+         addClazz(state);
+      }
+      else
+      {
+         addClazz(state, clazz);
+      }
    }
 
    @Override
    protected void addClazz(int state)
    {
-      ele_.addClassName(getClazz(state));
+      addClazz(state, getClazz(state));
+   }
+
+   protected void addClazz(int state, String clazz)
+   {
+      ele_.addClassName(clazz);
       
       // When moving elements to a resting state, clean them up entirely shortly
       // thereafter (this gives the fadeout animation time to run)
