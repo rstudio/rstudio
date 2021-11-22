@@ -125,7 +125,7 @@ public class NumericValueWidget extends Composite
          textBox_.getElement().focus();
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                constants_.errorCaption(),
-               label_ + " " + constants_.rStudioGinjectorErrorMessage() ,
+               constants_.rStudioGinjectorErrorMessage(label_),
                textBox_);
          return false;
       }
@@ -135,17 +135,17 @@ public class NumericValueWidget extends Composite
          if (minValue_ != null && intVal < minValue_)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                    constants_.errorCaption(),
-                  label_ + " " + constants_.rStudioGinjectorGreaterThanError()  + minValue_ + ".",
-                  textBox_);
+               constants_.errorCaption(),
+               constants_.rStudioGinjectorGreaterThanError(label_, minValue_),
+               textBox_);
             return false;
          }
          if (maxValue_ != null && intVal > maxValue_)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                    constants_.errorCaption(),
-                  label_ + " " + constants_.rStudioGinjectorLessThanError() + maxValue_ + ".",
-                  textBox_);
+               constants_.errorCaption(),
+               constants_.rStudioGinjectorLessThanError(label_, maxValue_),
+               textBox_);
             return false;
          }
       }

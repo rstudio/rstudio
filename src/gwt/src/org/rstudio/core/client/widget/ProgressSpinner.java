@@ -62,7 +62,7 @@ public class ProgressSpinner extends Composite
       canvas_ = Canvas.createIfSupported();
       if (canvas_ == null)
       {
-         Debug.log(constants_.progressSpinnerLog());
+         Debug.log("Can't create progress spinner (no HTML5 canvas support)");
          initWidget(new HTMLPanel(""));
          return;
       }

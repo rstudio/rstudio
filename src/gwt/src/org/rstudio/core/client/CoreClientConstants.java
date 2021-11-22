@@ -98,6 +98,15 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     String secondLabel();
 
     /**
+     * Translated "seconds".
+     *
+     * @return translated "seconds"
+     */
+    @DefaultStringValue("seconds")
+    @Key("secondPluralLabel")
+    String secondPluralLabel();
+
+    /**
      * Translated "minute".
      *
      * @return translated "minute"
@@ -107,6 +116,15 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     String minuteLabel();
 
     /**
+     * Translated "minutes".
+     *
+     * @return translated "minutes"
+     */
+    @DefaultStringValue("minutes")
+    @Key("minutePluralLabel")
+    String minutePluralLabel();
+
+    /**
      * Translated "hour".
      *
      * @return translated "hour"
@@ -114,6 +132,15 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @DefaultStringValue("hour")
     @Key("hourLabel")
     String hourLabel();
+
+    /**
+     * Translated "hours".
+     *
+     * @return translated "hours"
+     */
+    @DefaultStringValue("hours")
+    @Key("hourPluralLabel")
+    String hourPluralLabel();
 
     /**
      * Translated "Type shortcuts to see if they are bound to a command. Close this message bar when done.".
@@ -749,24 +776,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     String resetKeyboardShortcutsCaption();
 
     /**
-     * Translated "Are you sure you want to reset keyboard shortcuts to their default values? "
-     *
-     * @return translated "Are you sure you want to reset keyboard shortcuts to their default values? "
-     */
-    @DefaultStringValue("Are you sure you want to reset keyboard shortcuts to their default values? ")
-    @Key("resetKeyboardShortcutsMessage")
-    String resetKeyboardShortcutsMessage();
-
-    /**
-     * Translated "This action cannot be undone."
-     *
-     * @return translated "This action cannot be undone."
-     */
-    @DefaultStringValue("This action cannot be undone.")
-    @Key("cannotUndoShortcutsMessage")
-    String cannotUndoShortcutsMessage();
-
-    /**
      * Translated "Resetting Keyboard Shortcuts..."
      *
      * @return translated "Resetting Keyboard Shortcuts..."
@@ -866,15 +875,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     String manualRefreshOnlyLabel();
 
     /**
-     * Translated "must be a valid number."
-     *
-     * @return translated "must be a valid number."
-     */
-    @DefaultStringValue("must be a valid number.")
-    @Key("rStudioGinjectorErrorMessage")
-    String rStudioGinjectorErrorMessage();
-
-    /**
      * Translated "must be greater than or equal to "
      *
      * @return translated "must be greater than or equal to "
@@ -900,24 +900,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @DefaultStringValue("Stop")
     @Key("stopButtonText")
     String stopButtonText();
-
-    /**
-     * Translated "Operation completed"
-     *
-     * @return translated "Operation completed"
-     */
-    @DefaultStringValue("Operation completed")
-    @Key("operationCompletedText")
-    String operationCompletedText();
-
-    /**
-     * Translated "completed"
-     *
-     * @return translated "completed"
-     */
-    @DefaultStringValue("completed")
-    @Key("completedText")
-    String completedText();
 
     /**
      * Translated "Secondary Window"
@@ -1309,13 +1291,13 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     String vimKeyboardShortcutHelpMessage();
 
     /**
-     * Translated "We attempted to open an external browser window, but the action was prevented by your popup blocker. You can attempt to open the window again by pressing the "Try Again" button below. NOTE: To prevent seeing this message in the future, you should configure your browser to allow popup windows for "
+     * Translated "We attempted to open an external browser window, but the action was prevented by your popup blocker. You can attempt to open the window again by pressing the "Try Again" button below. NOTE: To prevent seeing this message in the future, you should configure your browser to allow popup windows for {0}."
      *
-     * @return translated "We attempted to open an external browser window, but the action was prevented by your popup blocker. You can attempt to open the window again by pressing the "Try Again" button below. NOTE: To prevent seeing this message in the future, you should configure your browser to allow popup windows for "
+     * @return translated "We attempted to open an external browser window, but the action was prevented by your popup blocker. You can attempt to open the window again by pressing the "Try Again" button below. NOTE: To prevent seeing this message in the future, you should configure your browser to allow popup windows for {0}."
      */
-    @DefaultStringValue("We attempted to open an external browser window, but the action was prevented by your popup blocker. You can attempt to open the window again by pressing the \"Try Again\" button below. NOTE: To prevent seeing this message in the future, you should configure your browser to allow popup windows for ")
+    @DefaultStringValue("We attempted to open an external browser window, but the action was prevented by your popup blocker. You can attempt to open the window again by pressing the \"Try Again\" button below. NOTE: To prevent seeing this message in the future, you should configure your browser to allow popup windows for {0}.")
     @Key("showPopupBlockMessage")
-    String showPopupBlockMessage();
+    String showPopupBlockMessage(String hostName);
 
     /**
      * Translated "Status code {0} returned by {1} when executing '{2}'"
@@ -1442,4 +1424,58 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Constant
     @DefaultStringValue("Packages {0} , {1} , and {2} others required but are not installed.")
     @Key("otherPackagesMessage")
     String otherPackagesMessage(String package0, String package1, String package2);
+
+    /**
+     * Translated "Are you sure you want to reset keyboard shortcuts to their default values? This action cannot be undone."
+     *
+     * @return translated "Are you sure you want to reset keyboard shortcuts to their default values? This action cannot be undone."
+     */
+    @DefaultStringValue("Are you sure you want to reset keyboard shortcuts to their default values? This action cannot be undone.")
+    @Key("resetKeyboardShortcutsMessage")
+    String resetKeyboardShortcutsMessage();
+
+    /**
+     * Translated "{0} must be a valid number."
+     *
+     * @return translated "{0} must be a valid number."
+     */
+    @DefaultStringValue("{0} must be a valid number.")
+    @Key("rStudioGinjectorErrorMessage")
+    String rStudioGinjectorErrorMessage(String label);
+
+    /**
+     * Translated "{0} must be greater than or equal to {1}."
+     *
+     * @return translated "{0} must be greater than or equal to {1}."
+     */
+    @DefaultStringValue("{0} must be greater than or equal to {1}.")
+    @Key("rStudioGinjectorGreaterThanError")
+    String rStudioGinjectorGreaterThanError(String label, int minValue);
+
+    /**
+     * Translated "{0} must be less than or equal to {1}."
+     *
+     * @return translated "{0} must be less than or equal to {1}."
+     */
+    @DefaultStringValue("{0} must be less than or equal to {1}.")
+    @Key("rStudioGinjectorLessThanError")
+    String rStudioGinjectorLessThanError(String label, int maxValue);
+
+    /**
+     * Translated "Operation completed "
+     *
+     * @return translated "Operation completed "
+     */
+    @DefaultStringValue("Operation completed ")
+    @Key("operationCompletedText")
+    String operationCompletedText();
+
+    /**
+     * Translated "{0} completed"
+     *
+     * @return translated "{0} completed"
+     */
+    @DefaultStringValue("{0} completed")
+    @Key("completedText")
+    String completedText(String labelText);
 }

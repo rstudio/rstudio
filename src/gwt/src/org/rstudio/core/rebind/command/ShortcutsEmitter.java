@@ -142,7 +142,7 @@ public class ShortcutsEmitter
             {
                logger_.log(
                      Type.ERROR,
-                "Invalid modifier '" + m + "'; expected one of " +
+                     "Invalid modifier '" + m + "'; expected one of " +
                      "'Ctrl', 'Alt', 'Shift', 'Meta'");
                
                throw new UnableToCompleteException();
@@ -212,7 +212,7 @@ public class ShortcutsEmitter
       {
          logger_.log(
                Type.ERROR,
-          "Invalid key sequence: sequences must be of length 1 or 2");
+               "Invalid key sequence: sequences must be of length 1 or 2");
          throw new UnableToCompleteException();
       }
       

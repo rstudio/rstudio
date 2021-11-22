@@ -61,7 +61,14 @@ import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.ProvidesKey;
 import com.google.inject.Inject;
 
-import org.rstudio.core.client.*;
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.ParallelCommandList;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.SerializedCommandQueue;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.*;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBinding;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
@@ -365,7 +372,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          
       });
 
-      ElementIds.assignElementId(filterWidget_, ElementIds.KYBRD_SHRTCTS_FILTER_WIDGET); 
+      ElementIds.assignElementId(filterWidget_, ElementIds.KYBRD_SHRTCTS_FILTER_WIDGET);
       
       filterWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
       {
@@ -386,8 +393,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_QUESTION,
                   constants_.resetKeyboardShortcutsCaption(),
-                  constants_.resetKeyboardShortcutsMessage() +
-                  constants_.cannotUndoShortcutsMessage(),
+                  constants_.resetKeyboardShortcutsMessage(),
                   new ProgressOperation()
                   {
                      @Override

@@ -172,7 +172,7 @@ public abstract class ProgressDialog extends ModalDialogBase
       {
          operationStarted_ = false;
          announceCompletion(StringUtil.isNullOrEmpty(labelText_) ?
-            constants_.operationCompletedText() : labelText_ + " " + constants_.completedText());
+            constants_.operationCompletedText() : constants_.completedText(labelText_));
       }
       progressAnim_.getElement().getStyle().setDisplay(Style.Display.NONE);
    }

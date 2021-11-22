@@ -126,7 +126,7 @@ public class TextBoxWithButton extends Composite
       FlowPanel outer = new FlowPanel();
       if (label != null)
       {
-         assert existingLabel == null : constants_.existingLabelMessage();
+         assert existingLabel == null : "Invalid usage, cannot provide both label and existingLabel";
 
          lblCaption_ = new FormLabel(label, true);
          if (helpButton != null)
