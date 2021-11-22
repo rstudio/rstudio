@@ -332,7 +332,15 @@ private:
       }
       else
       {
-         module_context::viewer(viewerUrl(),  minHeight, quartoNav);
+         std::string url = viewerUrl();
+
+         if (outputFile_.getExtensionLowerCase() != ".pdf")
+         {
+            if (isFileInSessionQuartoProject(previewFile_))
+               url = url + urlPathForQuartoProjectOutputFile(outputFile_);
+         }
+
+         module_context::viewer(url,  minHeight, quartoNav);
       }
    }
 
