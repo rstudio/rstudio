@@ -23,8 +23,9 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionConstants.hpp>
 
-#include <r/session/RSession.hpp>
 #include <r/RExec.hpp>
+#include <r/session/RBusy.hpp>
+#include <r/session/RSession.hpp>
 
 namespace rstudio {
 namespace session {
@@ -141,7 +142,7 @@ void handleUSR2(int unused)
    // for launcher sessions, we only want to interrupt user code to fix
    // an excess logging issue caused by interrupting RStudio code that
    // takes longer to execute in docker containers
-   if (console_input::executing())
+   if (console_input::executing() || r::session::isBusy())
    {
       s_forceSuspendInterruptedR = 1;
       rstudio::r::exec::setInterruptsPending(true);
