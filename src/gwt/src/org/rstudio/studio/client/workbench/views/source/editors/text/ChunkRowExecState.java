@@ -76,7 +76,9 @@ public abstract class ChunkRowExecState
    protected abstract void addClazz(int state);
    
    protected abstract void removeClazz();
-   
+
+   protected abstract void setTitle(String title);
+
    // Private methods ---------------------------------------------------------
    
    private void scheduleDismiss()

@@ -45,7 +45,6 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkCallbacks;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
-import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -578,9 +577,12 @@ public class VisualModeChunk
     * @param end The last line of the range
     * @param state The state to apply
     * @param clazz The CSS class to use to display the state, if any
+    *
+    * @return A set of the row states that were created or modified
     */
-   public void setRowState(int start, int end, int state, String clazz)
+   public List<VisualModeChunkRowState> setRowState(int start, int end, int state, String clazz)
    {
+      ArrayList<VisualModeChunkRowState> states = new ArrayList<>();
       for (int i = start; i <= end; i++)
       {
          if (state == ChunkRowExecState.LINE_NONE)
@@ -598,6 +600,7 @@ public class VisualModeChunk
             {
                // Adding state to a widget we already track
                rowState_.get(i).setState(state);
+               states.add(rowState_.get(i));
             }
             else if (state != ChunkRowExecState.LINE_RESTING)
             {
@@ -606,10 +609,13 @@ public class VisualModeChunk
                VisualModeChunkRowState row = 
                      new VisualModeChunkRowState(state, editor_, i, clazz);
                row.attach(gutterHost_);
+               states.add(row);
                rowState_.put(i, row);
             }
          }
       }
+
+      return states;
    }
    
    /**
@@ -832,7 +838,17 @@ public class VisualModeChunk
                clazz += ThemeStyles.INSTANCE.gutterInfo();
             else if (StringUtil.equals(item.getType(), "warning"))
                clazz += ThemeStyles.INSTANCE.gutterInfo();
-            setRowState(item.getStartRow() + 1, item.getStartRow() + 1, ChunkRowExecState.LINE_LINT, clazz);
+            List<VisualModeChunkRowState> states = setRowState(
+               item.getStartRow() + 1,
+               item.getStartRow() + 1,
+               ChunkRowExecState.LINE_LINT,
+               clazz);
+
+            // Apply title to elements so lint text appears when hovered
+            for (VisualModeChunkRowState state: states)
+            {
+               state.setTitle(item.getText());
+            }
          }
       }
    }

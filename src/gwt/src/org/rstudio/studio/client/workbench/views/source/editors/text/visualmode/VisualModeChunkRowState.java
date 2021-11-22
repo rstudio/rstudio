@@ -113,7 +113,13 @@ public class VisualModeChunkRowState extends ChunkRowExecState
    {
       ele_.setAttribute("class", "");
    }
-   
+
+   @Override
+   protected void setTitle(String title)
+   {
+      ele_.setTitle(title);
+   }
+
    @Override
    public void detach()
    {
