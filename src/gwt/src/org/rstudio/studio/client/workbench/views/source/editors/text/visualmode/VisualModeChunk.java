@@ -123,6 +123,7 @@ public class VisualModeChunk
       markdownIndex_ = index;
       releaseOnDismiss_ = new ArrayList<>();
       destroyHandlers_ = new ArrayList<>();
+      lint_ = JsArray.createArray().cast();
 
       // Instantiate CSS style
       ChunkStyle style = GWT.create(ChunkStyle.class);
@@ -208,6 +209,19 @@ public class VisualModeChunk
                chunkEditor.setTabMovesFocus(movesFocus);
             }
          }));
+
+      // Track UI pref for line numbers. We need to redraw lint when this changes since showing line numbers causes
+      // Ace to draw lint markers inside the editor gutter.
+      releaseOnDismiss_.add(RStudioGinjector.INSTANCE.getUserPrefs().visualMarkdownCodeEditorLineNumbers().bind(
+         new CommandWithArg<Boolean>()
+         {
+            @Override
+            public void execute(Boolean showLineNumbers)
+            {
+               showLint(lint_);
+            }
+         }
+      ));
 
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
@@ -803,6 +817,9 @@ public class VisualModeChunk
     */
    public void showLint(JsArray<LintItem> lint)
    {
+      // Save lint so we can redraw it when necessary
+      lint_ = lint;
+
       // Show damage in the editor itself
       editor_.showLint(lint);
 
@@ -1139,6 +1156,7 @@ public class VisualModeChunk
    private boolean active_;
    private PanmirrorUIChunkCallbacks chunkCallbacks_;
    private Styles style_;
+   private JsArray<LintItem> lint_;
 
    private final Element element_;
    private final DivElement outputHost_;
