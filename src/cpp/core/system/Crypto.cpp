@@ -376,6 +376,7 @@ Error generateRsaCertAndKeyFiles(const std::string& in_certCommonName,
    if (res)
       return res;
 
+#ifndef _WIN32
    // change modes so public key is readable by all
    Error error = in_certPath.changeFileMode(core::FileMode::USER_READ_WRITE_ALL_READ);
    if (error)
@@ -385,6 +386,7 @@ Error generateRsaCertAndKeyFiles(const std::string& in_certCommonName,
    error = in_certKeyPath.changeFileMode(core::FileMode::USER_READ_WRITE);
    if (error)
       return error;
+#endif
 
    return Success();
 }
