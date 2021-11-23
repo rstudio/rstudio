@@ -500,9 +500,8 @@ public class FileTypeRegistry
                   else
                   {
                      globalDisplay_.showErrorMessage(
-                       constants_.fileDownloadErrorCaption(),
-               constants_.fileDownloadErrorMessage() +
-                       constants_.restrictedOnServerMessage());
+                     constants_.fileDownloadErrorCaption(),
+                     constants_.fileDownloadErrorMessage());
                   }
                }
             }
@@ -707,7 +706,7 @@ public class FileTypeRegistry
       }
       else
       {
-         assert filespec.indexOf("*") < 0 : constants_.unexpectedFormatMessage();
+         assert filespec.indexOf("*") < 0 : "Unexpected filespec format";
          fileTypesByFilename_.put(filespec.toLowerCase(), fileType);
          if (icon != null)
          {

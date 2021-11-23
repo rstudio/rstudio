@@ -31,7 +31,7 @@ public class DataFrameType extends EditableFileType
    @Override
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
-      assert false : constants_.openFileMessage();
+      assert false : "DataFrameType doesn't operate on filesystem files";
    }
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

@@ -81,7 +81,7 @@ public class ShellInteractionManager implements ShellOutputWriter
    {
       // show the error in the console then re-prompt
       display_.consoleWriteError(
-            constants_.consoleWriteError() + error + "\n");
+              constants_.consoleWriteError(error));
       if (lastPromptText_ != null)
          consolePrompt(lastPromptText_, false);
    }

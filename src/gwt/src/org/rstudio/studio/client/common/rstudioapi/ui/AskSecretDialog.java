@@ -114,9 +114,7 @@ public class AskSecretDialog extends ModalDialog<AskSecretDialogResult>
          );
 
          Label infoLabel = new Label(
-            constants_.keyringDesc() +
-            constants_.keyringCredentialStoreMessage() +
-            constants_.keyringSecureMessage()
+                 constants_.keyringDesc()
          );
 
          HTML questionHtml = new HTML(

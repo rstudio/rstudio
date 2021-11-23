@@ -252,9 +252,7 @@ public class Ignore
             gDisp.showMessage(
                   MessageDialog.ERROR,
                   constants_.multipleDirectoriesCaption(),
-                  constants_.selectedFilesNotInSameDirectoryMessage() +
-                  constants_.ignoreMultipleFilesMessage() +
-                  constants_.locatedInSameDirectoryMessage());
+                  constants_.selectedFilesNotInSameDirectoryMessage());
 
             return null;
          }

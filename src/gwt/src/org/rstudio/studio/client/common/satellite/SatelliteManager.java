@@ -18,7 +18,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
-import com.google.gwt.core.client.GWT;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
@@ -37,7 +36,6 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
-import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.satellite.events.AllSatellitesClosingEvent;
 import org.rstudio.studio.client.common.satellite.events.SatelliteClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
@@ -134,7 +132,7 @@ public class SatelliteManager implements CloseHandler<Window>
       // if we don't need to.
       if (isCurrentWindowSatellite())
       {
-         Debug.log(constants_.satelliteWindowsDebugLog());
+         Debug.log("Satellite windows can't launch other satellites");;
          assert false;
          return;
       }
@@ -715,5 +713,4 @@ public class SatelliteManager implements CloseHandler<Window>
    }
 
    private final Provider<UserPrefs> pUIPrefs_;
-   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

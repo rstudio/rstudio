@@ -104,8 +104,7 @@ public class RoxygenHelper
       {
          globalDisplay_.showErrorMessage(
              constants_.insertRoxygenSkeletonMessage(),
-             constants_.unableToInsertSkeletonMessage() +
-             constants_.rFunctionDefinitionMessage());
+             constants_.unableToInsertSkeletonMessage());
       }
    }
    
@@ -405,8 +404,7 @@ public class RoxygenHelper
          if (RE_ROXYGEN_NONLOCAL.test(block.get(i)))
          {
             view_.showWarningBar(
-                  constants_.cannotUpdateRoxygenMessage() +
-                  constants_.notSelfContainedMessage());
+                  constants_.cannotUpdateRoxygenMessage());
             return;
          }
       }

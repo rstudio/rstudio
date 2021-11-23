@@ -73,12 +73,7 @@ public class RnwWeaveSelectWidget extends SelectWidget
                globalDisplay_.showYesNoMessage(
                   MessageDialog.QUESTION,
                   constants_.confirmChangeCaption(),
-                  constants_.theMessage() + weave.getPackageName() + " " + constants_.packageRequiredMessage() +
-                  constants_.forMessage() + weave.getName() + " " + constants_.weavingMessage() +
-                  constants_.notCurrentlyInstalledMessage() +
-                  constants_.ensureThatMessage() + weave.getPackageName() + " " + constants_.isInstalledMessage() +
-                  constants_.compilingPDFMessage() +
-                  "\n\n" + constants_.changeOptionMessage(),
+                  constants_.packageRequiredMessage(weave.getPackageName(), weave.getName()),
                   false,
                   new Operation() { 
                      @Override

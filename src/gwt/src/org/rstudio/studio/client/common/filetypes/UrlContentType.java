@@ -31,7 +31,7 @@ public class UrlContentType extends EditableFileType
    @Override
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
-      assert false : constants_.urlContentMessage();
+      assert false : "urlcontent doesn't apply to filesystem files";
    }
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

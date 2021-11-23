@@ -105,15 +105,11 @@ public class RPubsUploadDialog extends ModalDialogBase
       String msg;
       if (!isPublished_ && uploadId_.isEmpty())
       {
-         msg = constants_.rPubsServiceMessage() +
-                       constants_.clickPublishMessage() +
-                       constants_.startedMessage();
+         msg = constants_.rPubsServiceMessage();
       }
       else
       {
-         msg = constants_.alreadyPublishedRPubs() +
-               constants_.updateRPubsMessage() +
-               constants_.createNewRPub();
+         msg = constants_.alreadyPublishedRPubs();
       }
       Label descLabel = new Label(msg);
       descLabel.addStyleName(styles.descLabel());
@@ -121,9 +117,7 @@ public class RPubsUploadDialog extends ModalDialogBase
       setARIADescribedBy(descLabel.getElement());
 
       HTML warningLabel =  new HTML(
-        "<strong>" + constants_.importantRPubsMessage() +
-         constants_.publiclyVisibleWarningLabel() + "</strong> " + constants_.youShouldMessage() +
-        constants_.publishDocumentsMessage());
+      constants_.importantRPubsMessage(constants_.importantMessage(),constants_.publishMessage()));
       warningLabel.addStyleName(styles.warningLabel());
       verticalPanel.add(warningLabel);
         

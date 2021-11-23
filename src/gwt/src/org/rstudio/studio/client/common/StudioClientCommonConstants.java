@@ -1,13 +1,27 @@
 package org.rstudio.studio.client.common;
+/*
+ * StudioClientCommonConstants.java
+ *
+ * Copyright (C) 2021 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 
-public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.Constants {
+public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
      * Translated "Error".
      *
      * @return translated "Error"
      */
-    @DefaultStringValue("Error")
+    @DefaultMessage("Error")
     @Key("errorCaption")
     String errorCaption();
 
@@ -16,7 +30,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Stop"
      */
-    @DefaultStringValue("Stop")
+    @DefaultMessage("Stop")
     @Key("stopTitle")
     String stopTitle();
 
@@ -25,7 +39,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Output"
      */
-    @DefaultStringValue("Output")
+    @DefaultMessage("Output")
     @Key("outputLeftLabel")
     String outputLeftLabel();
 
@@ -34,7 +48,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Issues"
      */
-    @DefaultStringValue("Issues")
+    @DefaultMessage("Issues")
     @Key("issuesRightLabel")
     String issuesRightLabel();
 
@@ -43,34 +57,16 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Clear All Breakpoints"
      */
-    @DefaultStringValue("Clear All Breakpoints")
+    @DefaultMessage("Clear All Breakpoints")
     @Key("clearAllBreakpointsCaption")
     String clearAllBreakpointsCaption();
-
-    /**
-     * Translated "Are you sure you want to remove all the breakpoints in this ".
-     *
-     * @return translated "Are you sure you want to remove all the breakpoints in this "
-     */
-    @DefaultStringValue("Are you sure you want to remove all the breakpoints in this ")
-    @Key("clearAllBreakpointsMessage")
-    String clearAllBreakpointsMessage();
-
-    /**
-     * Translated "project?".
-     *
-     * @return translated "project?"
-     */
-    @DefaultStringValue("project?")
-    @Key("projectText")
-    String projectText();
 
     /**
      * Translated "Hide Traceback".
      *
      * @return translated "Hide Traceback"
      */
-    @DefaultStringValue("Hide Traceback")
+    @DefaultMessage("Hide Traceback")
     @Key("hideTracebackText")
     String hideTracebackText();
 
@@ -79,7 +75,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Show Traceback"
      */
-    @DefaultStringValue("Show Traceback")
+    @DefaultMessage("Show Traceback")
     @Key("showTracebackText")
     String showTracebackText();
 
@@ -88,25 +84,16 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Converting Theme"
      */
-    @DefaultStringValue("Converting Theme")
+    @DefaultMessage("Converting Theme")
     @Key("convertingThemeProgressCaption")
     String convertingThemeProgressCaption();
-
-    /**
-     * Translated "No dependency record found for package '".
-     *
-     * @return translated "No dependency record found for package '"
-     */
-    @DefaultStringValue("No dependency record found for package '")
-    @Key("noDependencyRecordFoundLog")
-    String noDependencyRecordFoundLog();
 
     /**
      * Translated "' (required by feature '".
      *
      * @return translated "' (required by feature '"
      */
-    @DefaultStringValue("' (required by feature '")
+    @DefaultMessage("' (required by feature '")
     @Key("requiredByFeatureLog")
     String requiredByFeatureLog();
 
@@ -115,7 +102,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing Import from Mongo DB"
      */
-    @DefaultStringValue("Preparing Import from Mongo DB")
+    @DefaultMessage("Preparing Import from Mongo DB")
     @Key("withDataImportMongoProgressCaption")
     String withDataImportMongoProgressCaption();
 
@@ -124,7 +111,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Using testthat"
      */
-    @DefaultStringValue("Using testthat")
+    @DefaultMessage("Using testthat")
     @Key("testthatMessage")
     String testthatMessage();
 
@@ -133,7 +120,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Using shinytest"
      */
-    @DefaultStringValue("Using shinytest")
+    @DefaultMessage("Using shinytest")
     @Key("shinytestMessage")
     String shinytestMessage();
 
@@ -142,7 +129,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preparing Tests"
      */
-    @DefaultStringValue("Preparing Tests")
+    @DefaultMessage("Preparing Tests")
     @Key("preparingTestsProgressCaption")
     String preparingTestsProgressCaption();
 
@@ -151,7 +138,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Testing Tools"
      */
-    @DefaultStringValue("Testing Tools")
+    @DefaultMessage("Testing Tools")
     @Key("testingToolsContext")
     String testingToolsContext();
 
@@ -160,7 +147,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "No Files Selected"
      */
-    @DefaultStringValue("No Files Selected")
+    @DefaultMessage("No Files Selected")
     @Key("noFilesSelectedCaption")
     String noFilesSelectedCaption();
 
@@ -169,43 +156,16 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Please select one or more files to export."
      */
-    @DefaultStringValue("Please select one or more files to export.")
+    @DefaultMessage("Please select one or more files to export.")
     @Key("noFilesSelectedMessage")
     String noFilesSelectedMessage();
-
-    /**
-     * Translated "The ".
-     *
-     * @return translated "The "
-     */
-    @DefaultStringValue("The ")
-    @Key("theText")
-    String theText();
-
-    /**
-     * Translated "will be downloaded to your ".
-     *
-     * @return translated "will be downloaded to your "
-     */
-    @DefaultStringValue("will be downloaded to your ")
-    @Key("downloadedLabel")
-    String downloadedLabel();
-
-    /**
-     * Translated "computer. Please specify a name for the downloaded file:".
-     *
-     * @return translated "computer. Please specify a name for the downloaded file:"
-     */
-    @DefaultStringValue("computer. Please specify a name for the downloaded file:")
-    @Key("specifyDownloadFileLabel")
-    String specifyDownloadFileLabel();
 
     /**
      * Translated "Download".
      *
      * @return translated "Download"
      */
-    @DefaultStringValue("Download")
+    @DefaultMessage("Download")
     @Key("downloadButtonCaption")
     String downloadButtonCaption();
 
@@ -214,43 +174,25 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Code Browser"
      */
-    @DefaultStringValue("R Code Browser")
+    @DefaultMessage("R Code Browser")
     @Key("rCodeBrowserLabel")
     String rCodeBrowserLabel();
-
-    /**
-     * Translated "CodeBrowserType doesn't operate on filesystem files".
-     *
-     * @return translated "CodeBrowserType doesn't operate on filesystem files"
-     */
-    @DefaultStringValue("CodeBrowserType doesn't operate on filesystem files")
-    @Key("openFileCodeBrowserMessage")
-    String openFileCodeBrowserMessage();
 
     /**
      * Translated "R Data Frame".
      *
      * @return translated "R Data Frame"
      */
-    @DefaultStringValue("R Data Frame")
+    @DefaultMessage("R Data Frame")
     @Key("rDataFrameLabel")
     String rDataFrameLabel();
-
-    /**
-     * Translated "DataFrameType doesn't operate on filesystem files".
-     *
-     * @return translated "DataFrameType doesn't operate on filesystem files"
-     */
-    @DefaultStringValue("DataFrameType doesn't operate on filesystem files")
-    @Key("openFileMessage")
-    String openFileMessage();
 
     /**
      * Translated "Public Folder".
      *
      * @return translated "Public Folder"
      */
-    @DefaultStringValue("Public Folder")
+    @DefaultMessage("Public Folder")
     @Key("publicFolderDesc")
     String publicFolderDesc();
 
@@ -259,7 +201,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Folder"
      */
-    @DefaultStringValue("Folder")
+    @DefaultMessage("Folder")
     @Key("folderDesc")
     String folderDesc();
 
@@ -268,7 +210,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Text file"
      */
-    @DefaultStringValue("Text file")
+    @DefaultMessage("Text file")
     @Key("textFileDesc")
     String textFileDesc();
 
@@ -277,7 +219,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Image file"
      */
-    @DefaultStringValue("Image file")
+    @DefaultMessage("Image file")
     @Key("imageFileDesc")
     String imageFileDesc();
 
@@ -286,7 +228,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Parent folder"
      */
-    @DefaultStringValue("Parent folder")
+    @DefaultMessage("Parent folder")
     @Key("parentFolderDesc")
     String parentFolderDesc();
 
@@ -295,7 +237,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Explore object"
      */
-    @DefaultStringValue("Explore object")
+    @DefaultMessage("Explore object")
     @Key("exploreObjectDesc")
     String exploreObjectDesc();
 
@@ -304,7 +246,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R source viewer"
      */
-    @DefaultStringValue("R source viewer")
+    @DefaultMessage("R source viewer")
     @Key("rSourceViewerDesc")
     String rSourceViewerDesc();
 
@@ -313,7 +255,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Profiler"
      */
-    @DefaultStringValue("Profiler")
+    @DefaultMessage("Profiler")
     @Key("profilerDesc")
     String profilerDesc();
 
@@ -322,7 +264,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Script"
      */
-    @DefaultStringValue("R Script")
+    @DefaultMessage("R Script")
     @Key("rScriptLabel")
     String rScriptLabel();
 
@@ -331,7 +273,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Rd File"
      */
-    @DefaultStringValue("Rd File")
+    @DefaultMessage("Rd File")
     @Key("rdFile")
     String rdFile();
 
@@ -340,7 +282,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "NAMESPACE"
      */
-    @DefaultStringValue("NAMESPACE")
+    @DefaultMessage("NAMESPACE")
     @Key("namespaceLabel")
     String namespaceLabel();
 
@@ -349,7 +291,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R History"
      */
-    @DefaultStringValue("R History")
+    @DefaultMessage("R History")
     @Key("rHistoryLabel")
     String rHistoryLabel();
 
@@ -358,7 +300,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Markdown"
      */
-    @DefaultStringValue("R Markdown")
+    @DefaultMessage("R Markdown")
     @Key("rMarkdownLabel")
     String rMarkdownLabel();
 
@@ -367,7 +309,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Notebook"
      */
-    @DefaultStringValue("R Notebook")
+    @DefaultMessage("R Notebook")
     @Key("rNotebookLabel")
     String rNotebookLabel();
 
@@ -376,7 +318,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Markdown"
      */
-    @DefaultStringValue("Markdown")
+    @DefaultMessage("Markdown")
     @Key("markdownLabel")
     String markdownLabel();
 
@@ -385,43 +327,25 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "File Download Error"
      */
-    @DefaultStringValue("File Download Error")
+    @DefaultMessage("File Download Error")
     @Key("fileDownloadErrorCaption")
     String fileDownloadErrorCaption();
 
     /**
-     * Translated "Unable to show file because file downloads are ".
+     * Translated "Unable to show file because file downloads are restricted on this server.\n".
      *
-     * @return translated "Unable to show file because file downloads are "
+     * @return translated "Unable to show file because file downloads are restricted on this server.\n"
      */
-    @DefaultStringValue("Unable to show file because file downloads are ")
+    @DefaultMessage("Unable to show file because file downloads are restricted on this server.\\n")
     @Key("fileDownloadErrorMessage")
     String fileDownloadErrorMessage();
-
-    /**
-     * Translated "restricted on this server.\n".
-     *
-     * @return translated "restricted on this server.\n"
-     */
-    @DefaultStringValue("restricted on this server.\\n")
-    @Key("restrictedOnServerMessage")
-    String restrictedOnServerMessage();
-
-    /**
-     * Translated "Unexpected filespec format".
-     *
-     * @return translated "Unexpected filespec format"
-     */
-    @DefaultStringValue("Unexpected filespec format")
-    @Key("unexpectedFormatMessage")
-    String unexpectedFormatMessage();
 
     /**
      * Translated "Open".
      *
      * @return translated "Open"
      */
-    @DefaultStringValue("Open")
+    @DefaultMessage("Open")
     @Key("openLabel")
     String openLabel();
 
@@ -430,7 +354,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Save"
      */
-    @DefaultStringValue("Save")
+    @DefaultMessage("Save")
     @Key("saveLabel")
     String saveLabel();
 
@@ -439,7 +363,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Choose"
      */
-    @DefaultStringValue("Choose")
+    @DefaultMessage("Choose")
     @Key("chooseLabel")
     String chooseLabel();
 
@@ -448,7 +372,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "and "
      */
-    @DefaultStringValue("and ")
+    @DefaultMessage("and ")
     @Key("andText")
     String andText();
 
@@ -457,7 +381,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Typeset LaTeX into PDF using:"
      */
-    @DefaultStringValue("Typeset LaTeX into PDF using:")
+    @DefaultMessage("Typeset LaTeX into PDF using:")
     @Key("typesetLatexLabel")
     String typesetLatexLabel();
 
@@ -466,7 +390,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Help on customizing LaTeX options"
      */
-    @DefaultStringValue("Help on customizing LaTeX options")
+    @DefaultMessage("Help on customizing LaTeX options")
     @Key("latexHelpLinkLabel")
     String latexHelpLinkLabel();
 
@@ -475,7 +399,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error Setting CRAN Mirror"
      */
-    @DefaultStringValue("Error Setting CRAN Mirror")
+    @DefaultMessage("Error Setting CRAN Mirror")
     @Key("errorSettingCranMirror")
     String errorSettingCranMirror();
 
@@ -484,7 +408,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "The CRAN mirror could not be changed."
      */
-    @DefaultStringValue("The CRAN mirror could not be changed.")
+    @DefaultMessage("The CRAN mirror could not be changed.")
     @Key("cranMirrorCannotChange")
     String cranMirrorCannotChange();
 
@@ -493,169 +417,71 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Insert Roxygen Skeleton"
      */
-    @DefaultStringValue("Insert Roxygen Skeleton")
+    @DefaultMessage("Insert Roxygen Skeleton")
     @Key("insertRoxygenSkeletonMessage")
     String insertRoxygenSkeletonMessage();
 
     /**
-     * Translated "Unable to insert skeleton (the cursor is not currently ".
+     * Translated "Unable to insert skeleton (the cursor is not currently inside an R function definition).".
      *
-     * @return translated "Unable to insert skeleton (the cursor is not currently "
+     * @return translated "Unable to insert skeleton (the cursor is not currently inside an R function definition)."
      */
-    @DefaultStringValue("Unable to insert skeleton (the cursor is not currently ")
+    @DefaultMessage("Unable to insert skeleton (the cursor is not currently inside an R function definition).")
     @Key("unableToInsertSkeletonMessage")
     String unableToInsertSkeletonMessage();
 
     /**
-     * Translated "inside an R function definition).".
+     * Translated "Cannot automatically update roxygen blocks that are not self-contained.".
      *
-     * @return translated "inside an R function definition)."
+     * @return translated "Cannot automatically update roxygen blocks that are not self-contained."
      */
-    @DefaultStringValue("inside an R function definition).")
-    @Key("rFunctionDefinitionMessage")
-    String rFunctionDefinitionMessage();
-
-    /**
-     * Translated "Cannot automatically update roxygen blocks ".
-     *
-     * @return translated "Cannot automatically update roxygen blocks "
-     */
-    @DefaultStringValue("Cannot automatically update roxygen blocks ")
+    @DefaultMessage("Cannot automatically update roxygen blocks that are not self-contained.")
     @Key("cannotUpdateRoxygenMessage")
     String cannotUpdateRoxygenMessage();
-
-    /**
-     * Translated "that are not self-contained.".
-     *
-     * @return translated "that are not self-contained."
-     */
-    @DefaultStringValue("that are not self-contained.")
-    @Key("notSelfContainedMessage")
-    String notSelfContainedMessage();
 
     /**
      * Translated "Confirm Change".
      *
      * @return translated "Confirm Change"
      */
-    @DefaultStringValue("Confirm Change")
+    @DefaultMessage("Confirm Change")
     @Key("confirmChangeCaption")
     String confirmChangeCaption();
 
-    /**
-     * Translated "The ".
-     *
-     * @return translated "The "
-     */
-    @DefaultStringValue("The ")
-    @Key("theMessage")
-    String theMessage();
 
     /**
-     * Translated "package is required ".
+     * Translated "The {0} package is required for {1} weaving, however it is not currently installed. You should ensure that {0} is installed prior to compiling a PDF.\n\nAre you sure you want to change this option?".
      *
-     * @return translated "package is required "
+     * @return translated "The {0} package is required for {1} weaving, however it is not currently installed. You should ensure that {0} is installed prior to compiling a PDF.\n\nAre you sure you want to change this option?"
      */
-    @DefaultStringValue("package is required ")
+    @DefaultMessage("The {0} package is required for {1} weaving, however it is not currently installed. You should ensure that {0} is installed prior to compiling a PDF.\\n\\nAre you sure you want to change this option?")
     @Key("packageRequiredMessage")
-    String packageRequiredMessage();
-
-    /**
-     * Translated "for ".
-     *
-     * @return translated "for "
-     */
-    @DefaultStringValue("for ")
-    @Key("forMessage")
-    String forMessage();
-
-    /**
-     * Translated "weaving, ".
-     *
-     * @return translated "weaving, "
-     */
-    @DefaultStringValue("weaving, ")
-    @Key("weavingMessage")
-    String weavingMessage();
-
-    /**
-     * Translated "however it is not currently installed. You should ".
-     *
-     * @return translated "however it is not currently installed. You should "
-     */
-    @DefaultStringValue("however it is not currently installed. You should ")
-    @Key("notCurrentlyInstalledMessage")
-    String notCurrentlyInstalledMessage();
-
-    /**
-     * Translated "ensure that ".
-     *
-     * @return translated "ensure that "
-     */
-    @DefaultStringValue("ensure that ")
-    @Key("ensureThatMessage")
-    String ensureThatMessage();
-
-    /**
-     * Translated "is installed ".
-     *
-     * @return translated "is installed "
-     */
-    @DefaultStringValue("is installed ")
-    @Key("isInstalledMessage")
-    String isInstalledMessage();
-
-    /**
-     * Translated "prior to compiling a PDF.".
-     *
-     * @return translated "prior to compiling a PDF."
-     */
-    @DefaultStringValue("prior to compiling a PDF.")
-    @Key("compilingPDFMessage")
-    String compilingPDFMessage();
-
-    /**
-     * Translated "Are you sure you want to change this option?".
-     *
-     * @return translated "Are you sure you want to change this option?"
-     */
-    @DefaultStringValue("Are you sure you want to change this option?")
-    @Key("changeOptionMessage")
-    String changeOptionMessage();
+    String packageRequiredMessage(String packageName, String name);
 
     /**
      * Translated "Upload Error Occurred".
      *
      * @return translated "Upload Error Occurred"
      */
-    @DefaultStringValue("Upload Error Occurred")
+    @DefaultMessage("Upload Error Occurred")
     @Key("uploadErrorTitle")
     String uploadErrorTitle();
 
     /**
      * Translated "Unable to continue ".
      *
-     * @return translated "Unable to continue "
+     * @return translated "Unable to continue (another publish is currently running)"
      */
-    @DefaultStringValue("Unable to continue ")
+    @DefaultMessage("Unable to continue (another publish is currently running)")
     @Key("unableToContinueMessage")
     String unableToContinueMessage();
-
-    /**
-     * Translated "(another publish is currently running)".
-     *
-     * @return translated "(another publish is currently running)"
-     */
-    @DefaultStringValue("(another publish is currently running)")
-    @Key("currentlyRunningMessage")
-    String currentlyRunningMessage();
 
     /**
      * Translated "Uploading document to RPubs...".
      *
      * @return translated "Uploading document to RPubs..."
      */
-    @DefaultStringValue("Uploading document to RPubs...")
+    @DefaultMessage("Uploading document to RPubs...")
     @Key("uploadingDocumentRPubsMessage")
     String uploadingDocumentRPubsMessage();
 
@@ -664,106 +490,63 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Publish to RPubs"
      */
-    @DefaultStringValue("Publish to RPubs")
+    @DefaultMessage("Publish to RPubs")
     @Key("publishToRPubs")
     String publishToRPubs();
 
     /**
-     * Translated "RPubs is a free service from RStudio for sharing ".
+     * Translated "RPubs is a free service from RStudio for sharing documents on the web. Click Publish to get started.".
      *
-     * @return translated "RPubs is a free service from RStudio for sharing "
+     * @return translated "RPubs is a free service from RStudio for sharing documents on the web. Click Publish to get started."
      */
-    @DefaultStringValue("RPubs is a free service from RStudio for sharing ")
+    @DefaultMessage("RPubs is a free service from RStudio for sharing documents on the web. Click Publish to get started.")
     @Key("rPubsServiceMessage")
     String rPubsServiceMessage();
-
-    /**
-     * Translated "documents on the web. Click Publish to get ".
-     *
-     * @return translated "documents on the web. Click Publish to get "
-     */
-    @DefaultStringValue("documents on the web. Click Publish to get ")
-    @Key("clickPublishMessage")
-    String clickPublishMessage();
-
-    /**
-     * Translated "started.".
-     *
-     * @return translated "started."
-     */
-    @DefaultStringValue("started.")
-    @Key("startedMessage")
-    String startedMessage();
 
     /**
      * Translated "This document has already been published on RPubs. You can ".
      *
      * @return translated "This document has already been published on RPubs. You can "
      */
-    @DefaultStringValue("This document has already been published on RPubs. You can ")
+    @DefaultMessage("This document has already been published on RPubs. You can ")
     @Key("alreadyPublishedRPubs")
     String alreadyPublishedRPubs();
 
-    /**
-     * Translated "choose to either update the existing RPubs document, or ".
-     *
-     * @return translated "choose to either update the existing RPubs document, or "
-     */
-    @DefaultStringValue("choose to either update the existing RPubs document, or ")
-    @Key("updateRPubsMessage")
-    String updateRPubsMessage();
 
     /**
-     * Translated "create a new one.".
+     * Translated "IMPORTANT: All documents published to RPubs are publicly visible.".
      *
-     * @return translated "create a new one."
+     * @return translated "IMPORTANT: All documents published to RPubs are publicly visible."
      */
-    @DefaultStringValue("create a new one.")
-    @Key("createNewRPub")
-    String createNewRPub();
+    @DefaultMessage("IMPORTANT: All documents published to RPubs are publicly visible.")
+    @Key("importantMessage")
+    String importantMessage();
 
     /**
-     * Translated "IMPORTANT: All documents published to RPubs are ".
+     * Translated "You should only publish documents that you wish to share publicly.".
      *
-     * @return translated "IMPORTANT: All documents published to RPubs are "
+     * @return translated "You should only publish documents that you wish to share publicly."
      */
-    @DefaultStringValue("IMPORTANT: All documents published to RPubs are ")
+    @DefaultMessage("You should only publish documents that you wish to share publicly.")
+    @Key("publishMessage")
+    String publishMessage();
+
+    /**
+     * Translated "<strong>{0}</strong> {1}".
+     *
+     * @return translated "<strong>{0}</strong> {1}"
+     */
+    @DefaultMessage("<strong>{0}</strong> {1}")
     @Key("importantRPubsMessage")
-    String importantRPubsMessage();
+    String importantRPubsMessage(String importantMessage, String publishMessage);
 
-    /**
-     * Translated "publicly visible.".
-     *
-     * @return translated "publicly visible."
-     */
-    @DefaultStringValue("publicly visible.")
-    @Key("publiclyVisibleWarningLabel")
-    String publiclyVisibleWarningLabel();
-
-    /**
-     * Translated "You should ".
-     *
-     * @return translated "You should "
-     */
-    @DefaultStringValue("You should ")
-    @Key("youShouldMessage")
-    String youShouldMessage();
-
-    /**
-     * Translated "only publish documents that you wish to share publicly.".
-     *
-     * @return translated "only publish documents that you wish to share publicly."
-     */
-    @DefaultStringValue("only publish documents that you wish to share publicly.")
-    @Key("publishDocumentsMessage")
-    String publishDocumentsMessage();
 
     /**
      * Translated "Publish".
      *
      * @return translated "Publish"
      */
-    @DefaultStringValue("Publish")
+    @DefaultMessage("Publish")
     @Key("publishButtonTitle")
     String publishButtonTitle();
 
@@ -772,7 +555,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Update Existing"
      */
-    @DefaultStringValue("Update Existing")
+    @DefaultMessage("Update Existing")
     @Key("updateExistingButtonTitle")
     String updateExistingButtonTitle();
 
@@ -781,7 +564,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Create New"
      */
-    @DefaultStringValue("Create New")
+    @DefaultMessage("Create New")
     @Key("createNewButtonTitle")
     String createNewButtonTitle();
 
@@ -790,7 +573,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Cancel"
      */
-    @DefaultStringValue("Cancel")
+    @DefaultMessage("Cancel")
     @Key("cancelTitle")
     String cancelTitle();
 
@@ -799,7 +582,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "OK"
      */
-    @DefaultStringValue("OK")
+    @DefaultMessage("OK")
     @Key("okTitle")
     String okTitle();
 
@@ -808,43 +591,25 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Using Keyring"
      */
-    @DefaultStringValue("Using Keyring")
+    @DefaultMessage("Using Keyring")
     @Key("usingKeyringCaption")
     String usingKeyringCaption();
 
     /**
-     * Translated "Keyring is an R package that provides access to ".
+     * Translated "Keyring is an R package that provides access to the operating systems credential store to allow you to remember, securely, passwords and secrets. ".
      *
-     * @return translated "Keyring is an R package that provides access to "
+     * @return translated "Keyring is an R package that provides access to the operating systems credential store to allow you to remember, securely, passwords and secrets. "
      */
-    @DefaultStringValue("Keyring is an R package that provides access to ")
+    @DefaultMessage("Keyring is an R package that provides access to the operating systems credential store to allow you to remember, securely, passwords and secrets. ")
     @Key("keyringDesc")
     String keyringDesc();
-
-    /**
-     * Translated "the operating systems credential store to allow you ".
-     *
-     * @return translated "the operating systems credential store to allow you "
-     */
-    @DefaultStringValue("the operating systems credential store to allow you ")
-    @Key("keyringCredentialStoreMessage")
-    String keyringCredentialStoreMessage();
-
-    /**
-     * Translated "to remember, securely, passwords and secrets. ".
-     *
-     * @return translated "to remember, securely, passwords and secrets. "
-     */
-    @DefaultStringValue("to remember, securely, passwords and secrets. ")
-    @Key("keyringSecureMessage")
-    String keyringSecureMessage();
 
     /**
      * Translated "Would you like to install keyring?".
      *
      * @return translated "Would you like to install keyring?"
      */
-    @DefaultStringValue("Would you like to install keyring?")
+    @DefaultMessage("Would you like to install keyring?")
     @Key("installKeyringMessage")
     String installKeyringMessage();
 
@@ -853,7 +618,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Keyring"
      */
-    @DefaultStringValue("Keyring")
+    @DefaultMessage("Keyring")
     @Key("keyringCaption")
     String keyringCaption();
 
@@ -862,7 +627,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Install"
      */
-    @DefaultStringValue("Install")
+    @DefaultMessage("Install")
     @Key("installLabel")
     String installLabel();
 
@@ -871,7 +636,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "You must enter a value."
      */
-    @DefaultStringValue("You must enter a value.")
+    @DefaultMessage("You must enter a value.")
     @Key("enterValueMessage")
     String enterValueMessage();
 
@@ -880,25 +645,25 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Too much console output to announce."
      */
-    @DefaultStringValue("Too much console output to announce.")
+    @DefaultMessage("Too much console output to announce.")
     @Key("consoleOutputOverLimitMessage")
     String consoleOutputOverLimitMessage();
 
     /**
-     * Translated "Error: ".
+     * Translated "Error: {0}\n".
      *
-     * @return translated "Error: "
+     * @return translated "Error: {0}\n"
      */
-    @DefaultStringValue("Error: ")
+    @DefaultMessage("Error: {0}\\n")
     @Key("consoleWriteError")
-    String consoleWriteError();
+    String consoleWriteError(String error);
 
     /**
      * Translated "Line ".
      *
      * @return translated "Line "
      */
-    @DefaultStringValue("Line ")
+    @DefaultMessage("Line ")
     @Key("lineText")
     String lineText();
 
@@ -907,7 +672,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "View error or warning within the log file"
      */
-    @DefaultStringValue("View error or warning within the log file")
+    @DefaultMessage("View error or warning within the log file")
     @Key("viewErrorLogfile")
     String viewErrorLogfile();
 
@@ -917,7 +682,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Syncing..."
      */
-    @DefaultStringValue("Syncing...")
+    @DefaultMessage("Syncing...")
     @Key("getSyncProgressMessage")
     String getSyncProgressMessage();
 
@@ -926,7 +691,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "; Page ."
      */
-    @DefaultStringValue("; Page ")
+    @DefaultMessage("; Page ")
     @Key("pdfPageText")
     String pdfPageText();
 
@@ -935,7 +700,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "[From Click]"
      */
-    @DefaultStringValue("[From Click]")
+    @DefaultMessage("[From Click]")
     @Key("pdfFromClickText")
     String pdfFromClickText();
 
@@ -944,7 +709,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Password"
      */
-    @DefaultStringValue("Password")
+    @DefaultMessage("Password")
     @Key("passwordTitle")
     String passwordTitle();
 
@@ -953,34 +718,25 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Username"
      */
-    @DefaultStringValue("Username")
+    @DefaultMessage("Username")
     @Key("usernameTitle")
     String usernameTitle();
 
     /**
-     * Translated "Press ".
+     * Translated "Press {0} to copy the key to the clipboard".
      *
-     * @return translated "Press "
+     * @return translated "Press {0} to copy the key to the clipboard"
      */
-    @DefaultStringValue("Press ")
+    @DefaultMessage("Press {0} to copy the key to the clipboard")
     @Key("pressLabel")
-    String pressLabel();
-
-    /**
-     * Translated "to copy the key to the clipboard".
-     *
-     * @return translated "to copy the key to the clipboard"
-     */
-    @DefaultStringValue("to copy the key to the clipboard")
-    @Key("copyKeyToClipboardLabel")
-    String copyKeyToClipboardLabel();
+    String pressLabel(String cmdText);
 
     /**
      * Translated "Close".
      *
      * @return translated "Close"
      */
-    @DefaultStringValue("Close")
+    @DefaultMessage("Close")
     @Key("closeButtonLabel")
     String closeButtonLabel();
 
@@ -989,7 +745,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "(None)"
      */
-    @DefaultStringValue("(None)")
+    @DefaultMessage("(None)")
     @Key("noneLabel")
     String noneLabel();
 
@@ -998,7 +754,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Getting ignored files for path..."
      */
-    @DefaultStringValue("Getting ignored files for path...")
+    @DefaultMessage("Getting ignored files for path...")
     @Key("gettingIgnoredFilesProgressMessage")
     String gettingIgnoredFilesProgressMessage();
 
@@ -1007,7 +763,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Setting ignored files for path..."
      */
-    @DefaultStringValue("Setting ignored files for path...")
+    @DefaultMessage("Setting ignored files for path...")
     @Key("settingIgnoredFilesProgressMessage")
     String settingIgnoredFilesProgressMessage();
 
@@ -1016,43 +772,25 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Error: Multiple Directories"
      */
-    @DefaultStringValue("Error: Multiple Directories")
+    @DefaultMessage("Error: Multiple Directories")
     @Key("multipleDirectoriesCaption")
     String multipleDirectoriesCaption();
 
     /**
-     * Translated "The selected files are not all within the same directory ".
+     * Translated "The selected files are not all within the same directory you can only ignore multiple files in one operation if they are located within the same directory).".
      *
-     * @return translated "The selected files are not all within the same directory "
+     * @return translated "The selected files are not all within the same directory you can only ignore multiple files in one operation if they are located within the same directory)."
      */
-    @DefaultStringValue("The selected files are not all within the same directory ")
+    @DefaultMessage("The selected files are not all within the same directory (you can only ignore multiple files in one operation if they are located within the same directory).")
     @Key("selectedFilesNotInSameDirectoryMessage")
     String selectedFilesNotInSameDirectoryMessage();
-
-    /**
-     * Translated "(you can only ignore multiple files in one operation if ".
-     *
-     * @return translated "(you can only ignore multiple files in one operation if "
-     */
-    @DefaultStringValue("(you can only ignore multiple files in one operation if ")
-    @Key("ignoreMultipleFilesMessage")
-    String ignoreMultipleFilesMessage();
-
-    /**
-     * Translated "they are located within the same directory).".
-     *
-     * @return translated "they are located within the same directory)."
-     */
-    @DefaultStringValue("they are located within the same directory).")
-    @Key("locatedInSameDirectoryMessage")
-    String locatedInSameDirectoryMessage();
 
     /**
      * Translated "Directory:".
      *
      * @return translated "Directory:"
      */
-    @DefaultStringValue("Directory:")
+    @DefaultMessage("Directory:")
     @Key("directoryLabel")
     String directoryLabel();
 
@@ -1061,7 +799,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Ignored files"
      */
-    @DefaultStringValue("Ignored files")
+    @DefaultMessage("Ignored files")
     @Key("ignoredFilesLabel")
     String ignoredFilesLabel();
 
@@ -1070,7 +808,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Ignore:"
      */
-    @DefaultStringValue("Ignore:")
+    @DefaultMessage("Ignore:")
     @Key("ignoreCaption")
     String ignoreCaption();
 
@@ -1079,7 +817,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Specifying ignored files"
      */
-    @DefaultStringValue("Specifying ignored files")
+    @DefaultMessage("Specifying ignored files")
     @Key("specifyingIgnoredFilesHelpCaption")
     String specifyingIgnoredFilesHelpCaption();
 
@@ -1088,7 +826,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Loading file contents"
      */
-    @DefaultStringValue("Loading file contents")
+    @DefaultMessage("Loading file contents")
     @Key("loadingFileContentsProgressCaption")
     String loadingFileContentsProgressCaption();
 
@@ -1097,25 +835,25 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Save As"
      */
-    @DefaultStringValue("Save As")
+    @DefaultMessage("Save As")
     @Key("saveAsText")
     String saveAsText();
 
     /**
-     * Translated "Save File - ".
+     * Translated "Save File - {0}".
      *
-     * @return translated "Save File - "
+     * @return translated "Save File - {0}"
      */
-    @DefaultStringValue("Save File - ")
+    @DefaultMessage("Save File - {0}")
     @Key("saveFileCaption")
-    String saveFileCaption();
+    String saveFileCaption(String name);
 
     /**
      * Translated "Saving file...".
      *
      * @return translated "Saving file..."
      */
-    @DefaultStringValue("Saving file...")
+    @DefaultMessage("Saving file...")
     @Key("savingFileProgressCaption")
     String savingFileProgressCaption();
 
@@ -1124,7 +862,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "View File Tab"
      */
-    @DefaultStringValue("View File Tab")
+    @DefaultMessage("View File Tab")
     @Key("viewFileTabLabel")
     String viewFileTabLabel();
 
@@ -1133,7 +871,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "at"
      */
-    @DefaultStringValue("at")
+    @DefaultMessage("at")
     @Key("atText")
     String atText();
 
@@ -1142,7 +880,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "This is a warning!"
      */
-    @DefaultStringValue("This is a warning!")
+    @DefaultMessage("This is a warning!")
     @Key("warningMessage")
     String warningMessage();
 
@@ -1151,25 +889,16 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "R Presentation"
      */
-    @DefaultStringValue("R Presentation")
+    @DefaultMessage("R Presentation")
     @Key("rPresentationLabel")
     String rPresentationLabel();
-
-    /**
-     * Translated "Satellite windows can't launch other satellites".
-     *
-     * @return translated "Satellite windows can't launch other satellites"
-     */
-    @DefaultStringValue("Satellite windows can't launch other satellites")
-    @Key("satelliteWindowsDebugLog")
-    String satelliteWindowsDebugLog();
 
     /**
      * Translated "Source Marker Item Table".
      *
      * @return translated "Source Marker Item Table"
      */
-    @DefaultStringValue("Source Marker Item Table")
+    @DefaultMessage("Source Marker Item Table")
     @Key("sourceMarkerItemTableList")
     String sourceMarkerItemTableList();
 
@@ -1178,7 +907,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Preview"
      */
-    @DefaultStringValue("Preview")
+    @DefaultMessage("Preview")
     @Key("previewButtonText")
     String previewButtonText();
 
@@ -1187,43 +916,25 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Generic Content"
      */
-    @DefaultStringValue("Generic Content")
+    @DefaultMessage("Generic Content")
     @Key("genericContentLabel")
     String genericContentLabel();
-
-    /**
-     * Translated "urlcontent doesn't apply to filesystem files".
-     *
-     * @return translated "urlcontent doesn't apply to filesystem files"
-     */
-    @DefaultStringValue("urlcontent doesn't apply to filesystem files")
-    @Key("urlContentMessage")
-    String urlContentMessage();
 
     /**
      * Translated "Object Explorer".
      *
      * @return translated "Object Explorer"
      */
-    @DefaultStringValue("Object Explorer")
+    @DefaultMessage("Object Explorer")
     @Key("objectExplorerLabel")
     String objectExplorerLabel();
-
-    /**
-     * Translated "Object explorer doesn't operate on filesystem files".
-     *
-     * @return translated "Object explorer doesn't operate on filesystem files"
-     */
-    @DefaultStringValue("Object explorer doesn't operate on filesystem files")
-    @Key("objectExplorerOpenFileMessage")
-    String objectExplorerOpenFileMessage();
 
     /**
      * Translated "R Profiler".
      *
      * @return translated "R Profiler"
      */
-    @DefaultStringValue("R Profiler")
+    @DefaultMessage("R Profiler")
     @Key("rProfilerLabel")
     String rProfilerLabel();
 
@@ -1232,7 +943,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Check"
      */
-    @DefaultStringValue("Check")
+    @DefaultMessage("Check")
     @Key("checkPreviewButtonText")
     String checkPreviewButtonText();
 
@@ -1241,7 +952,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Weave Rnw files using:"
      */
-    @DefaultStringValue("Weave Rnw files using:")
+    @DefaultMessage("Weave Rnw files using:")
     @Key("weaveRnwLabel")
     String weaveRnwLabel();
 
@@ -1250,7 +961,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Help on weaving Rnw files"
      */
-    @DefaultStringValue("Help on weaving Rnw files")
+    @DefaultMessage("Help on weaving Rnw files")
     @Key("weaveRnwHelpTitle")
     String weaveRnwHelpTitle();
 
@@ -1259,7 +970,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "SSH RSA key:"
      */
-    @DefaultStringValue("SSH RSA key:")
+    @DefaultMessage("SSH RSA key:")
     @Key("sshRSAKeyFormLabel")
     String sshRSAKeyFormLabel();
 
@@ -1268,7 +979,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "View public key"
      */
-    @DefaultStringValue("View public key")
+    @DefaultMessage("View public key")
     @Key("viewPublicKeyCaption")
     String viewPublicKeyCaption();
 
@@ -1277,7 +988,7 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Create RSA Key..."
      */
-    @DefaultStringValue("Create RSA Key...")
+    @DefaultMessage("Create RSA Key...")
     @Key("createRSAKeyButtonLabel")
     String createRSAKeyButtonLabel();
 
@@ -1286,8 +997,35 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
      *
      * @return translated "Reading public key..."
      */
-    @DefaultStringValue("Reading public key...")
+    @DefaultMessage("Reading public key...")
     @Key("readingPublicKeyProgressCaption")
     String readingPublicKeyProgressCaption();
+
+    /**
+     * Translated "Are you sure you want to remove all the breakpoints in this project?".
+     *
+     * @return translated "Are you sure you want to remove all the breakpoints in this project?"
+     */
+    @DefaultMessage("Are you sure you want to remove all the breakpoints in this project?")
+    @Key("clearAllBreakpointsMessage")
+    String clearAllBreakpointsMessage();
+
+    /**
+     * Translated "{0}{1}".
+     *
+     * @return translated "{0}{1}"
+     */
+    @DefaultMessage("{0}{1}")
+    @Key("functionNameText")
+    String functionNameText(String functionName, String source);
+
+    /**
+     * Translated "{0}".
+     *
+     * @return translated "{0}"
+     */
+    @DefaultMessage("{0}")
+    @Key("showFileExportLabel")
+    String showFileExportLabel(String description);
 
 }

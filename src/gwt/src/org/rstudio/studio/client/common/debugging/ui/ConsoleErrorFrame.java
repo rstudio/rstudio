@@ -53,7 +53,7 @@ public class ConsoleErrorFrame extends Composite
       frame_ = frame;
 
       boolean hasSource = !frame.getFileName().isEmpty();
-      functionName.setText(frame.getFunctionName() + (hasSource ? " " + constants_.atText() : ""));
+      functionName.setText(constants_.functionNameText(frame.getFunctionName(), (hasSource ? " " + constants_.atText() : "")));
       frameNumber.setText((Integer.valueOf(number)).toString() + ".");
       if (hasSource)
       {

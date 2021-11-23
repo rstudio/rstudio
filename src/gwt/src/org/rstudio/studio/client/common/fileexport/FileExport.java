@@ -135,8 +135,7 @@ public class FileExport
    {
       globalDisplay_.promptForText(
             caption,
-            constants_.theText() + description + " " + constants_.downloadedLabel() +
-            constants_.specifyDownloadFileLabel(),
+            constants_.showFileExportLabel(description),
             defaultName + defaultExtension,
             -1, -1,
             constants_.downloadButtonCaption(),

@@ -358,7 +358,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
    private void saveFileAs()
    {
       fileDialogs_.saveFile(
-            constants_.saveFileCaption() + targetFile_.getName(),
+            constants_.saveFileCaption(targetFile_.getName()),
             fileContext_, 
             FileSystemItem.createFile(
                 session_.getSessionInfo().getActiveProjectDir()

@@ -33,7 +33,7 @@ public class ObjectExplorerFileType extends EditableFileType
    protected void openFile(FileSystemItem file, EventBus eventBus)
    {
       assert false :
-         constants_.objectExplorerOpenFileMessage();
+         "Object explorer doesn't operate on filesystem files";
    }
    
    public static final String ID = "object_explorer";

@@ -25,7 +25,6 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -309,5 +308,4 @@ public class RealtimeSpellChecker
 
    private SpellingService spellingService_;
    private UserPrefs userPrefs_;
-   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

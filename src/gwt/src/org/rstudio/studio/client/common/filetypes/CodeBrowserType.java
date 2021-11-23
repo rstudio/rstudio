@@ -31,7 +31,7 @@ public class CodeBrowserType extends EditableFileType
    @Override
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
-      assert false : constants_.openFileCodeBrowserMessage();
+      assert false : "CodeBrowserType doesn't operate on filesystem files";
    }
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

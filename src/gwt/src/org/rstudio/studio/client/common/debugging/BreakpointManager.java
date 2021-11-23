@@ -451,8 +451,7 @@ public class BreakpointManager
       globalDisplay_.showYesNoMessage(
             MessageDialog.QUESTION,
             constants_.clearAllBreakpointsCaption(),
-            constants_.clearAllBreakpointsMessage() +
-            constants_.projectText(),
+            constants_.clearAllBreakpointsMessage(),
             new Operation() {
                @Override
                public void execute()

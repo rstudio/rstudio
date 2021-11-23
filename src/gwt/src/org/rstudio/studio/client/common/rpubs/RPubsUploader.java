@@ -164,8 +164,7 @@ public class RPubsUploader
                   onUploadComplete(false);
                   globalDisplay_.showErrorMessage(
                          constants_.errorCaption(),
-                         constants_.unableToContinueMessage() +
-                         constants_.currentlyRunningMessage());
+                         constants_.unableToContinueMessage());
                }
             }
             
