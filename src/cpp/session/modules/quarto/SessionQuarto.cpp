@@ -151,10 +151,10 @@ std::tuple<FilePath,Version> userInstalledQuarto()
 void detectQuartoInstallation()
 {
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.2.291");
+   const Version kQuartoRequiredVersion("0.2.299");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.2.291");
+   const Version kQuartoRecommendedVersion("0.2.299");
 
    // reset
    s_userInstalledPath = FilePath();
@@ -929,6 +929,28 @@ bool isFileInSessionQuartoProject(const core::FilePath& file)
       return false;
    }
 
+}
+
+std::string urlPathForQuartoProjectOutputFile(const core::FilePath& outputFile)
+{
+   if (!outputFile.isEmpty())
+   {
+      FilePath quartoProjectDir = module_context::resolveAliasedPath(
+         quartoConfig().project_dir
+      );
+
+      FilePath quartoProjectOutputDir = quartoProjectDir.completeChildPath(
+         quartoConfig().project_output_dir
+      );
+      std::string path = outputFile.isWithin(quartoProjectOutputDir)
+                            ? outputFile.getRelativePath(quartoProjectOutputDir)
+                            :  std::string();
+      return path;
+   }
+   else
+   {
+      return "";
+   }
 }
 
 json::Object quartoConfigJSON(bool refresh)

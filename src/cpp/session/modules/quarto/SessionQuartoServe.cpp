@@ -50,24 +50,6 @@ FilePath quartoProjectDir()
    );
 }
 
-std::string pathForOutputFile(const core::FilePath& outputFile)
-{
-   if (!outputFile.isEmpty())
-   {
-      FilePath quartoProjectOutputDir = quartoProjectDir().completeChildPath(
-         quartoConfig().project_output_dir
-      );
-      std::string path = outputFile.isWithin(quartoProjectOutputDir)
-                            ? outputFile.getRelativePath(quartoProjectOutputDir)
-                            :  std::string();
-      return path;
-   }
-   else
-   {
-      return "";
-   }
-}
-
 std::string serverUrl(long port, const std::string& path = "")
 {
    // url w. port
@@ -321,7 +303,7 @@ void previewDocPath(const std::string& renderOutput, const core::FilePath& outpu
    }
    else
    {
-      path = pathForOutputFile(outputPath);
+      path = urlPathForQuartoProjectOutputFile(outputPath);
       format = kFormatDefault;
    }
 

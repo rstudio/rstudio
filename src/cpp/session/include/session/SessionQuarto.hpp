@@ -81,6 +81,7 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
 std::string quartoDefaultFormat(const core::FilePath& sourceFile);
 
 bool isFileInSessionQuartoProject(const core::FilePath& file);
+std::string urlPathForQuartoProjectOutputFile(const core::FilePath& outputFile);
 
 core::FilePath quartoBinary();
 

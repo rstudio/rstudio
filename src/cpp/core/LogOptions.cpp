@@ -69,7 +69,9 @@ namespace log {
 namespace {
 
 // pick default log path location
-#ifdef RSTUDIO_SERVER
+#if defined(__APPLE__)
+const FilePath kDefaultLogPath = core::system::xdg::userDataDir().completePath("log");
+#elif defined(RSTUDIO_SERVER)
 const FilePath kDefaultLogPath("/var/log/rstudio/rstudio-server");
 #else
 // desktop - store logs under user dir
