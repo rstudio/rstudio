@@ -59,7 +59,7 @@ public class ShowContentDialog extends ModalDialogBase
 
    protected void addButtons()
    {
-      ThemedButton closeButton = new ThemedButton(constants_.closeButtonText(), clickEvent -> closeDialog());
+      ThemedButton closeButton = new ThemedButton(constants_.closeText(), clickEvent -> closeDialog());
       addOkButton(closeButton);
    }
 

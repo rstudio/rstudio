@@ -70,7 +70,7 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
       toolsPanel.setStyleName(ThemeStyles.INSTANCE.miniDialogTools());
       ToolbarButton hideButton = new ToolbarButton(
             ToolbarButton.NoText,
-            constants_.closeButtonText(),
+            constants_.closeText(),
             new ImageResource2x(ThemeResources.INSTANCE.closeChevron2x()),
             new ClickHandler() { 
                public void onClick(ClickEvent event)
