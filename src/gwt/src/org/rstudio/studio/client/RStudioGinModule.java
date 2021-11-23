@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.gwt.inject.client.assistedinject.GinFactoryModuleBuilder;
 import com.google.gwt.user.client.ui.Widget;
@@ -24,7 +23,11 @@ import com.google.inject.name.Names;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.VirtualConsole.PreferencesImpl;
 import org.rstudio.core.client.VirtualConsoleFactory;
-import org.rstudio.studio.client.application.*;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
+import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.ApplicationView;
+import org.rstudio.studio.client.application.ApplicationVisibility;
+import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.events.FireEvents;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
@@ -525,5 +528,4 @@ public class RStudioGinModule extends AbstractGinModule
    {
       bind(Widget.class).annotatedWith(Names.named(name)).to(clazz);
    }
-   //private final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

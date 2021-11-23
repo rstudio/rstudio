@@ -69,9 +69,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    public static void showDisconnected()
    {
       String description =
-         constants_.browserDisconnectedMessage() +
-         constants_.anotherBrowserConnectedMessage() +
-         constants_.reconnectBrowserMessage();
+         constants_.browserDisconnectedMessage();
 
       asyncShow(DISCONNECTED, description, null);
    }
@@ -79,8 +77,7 @@ public class ApplicationEndedPopupPanel extends PopupPanel
    public static void showOffline()
    {
       String description =
-         constants_.rStudioOfflineMessage() +
-         constants_.offlineTryAgainMessage();
+         constants_.rStudioOfflineMessage();
 
       asyncShow(OFFLINE, description, null);
    }

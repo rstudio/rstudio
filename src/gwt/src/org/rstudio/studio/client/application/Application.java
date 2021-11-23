@@ -250,9 +250,7 @@ public class Application implements ApplicationEventHandlers
                // to allow the user to attempt to re-launch the session
                globalDisplay_.showGenericDialog(GlobalDisplay.MSG_ERROR,
                                               constants_.licensingLimitCaption(),
-                                              error.getUserMessage() + "\n\n" +
-                                                 constants_.quitRunningSessionsMessage() +
-                                                 constants_.contactAdminMessage(),
+                                              constants_.quitRunningSessionsMessage(error.getUserMessage()),
                                               buttonLabels, elementIds, buttonOperations, 0);
             }
             else if (StringUtil.equals(error.getUserMessage(), constants_.unableToConnectMessage()) ||
@@ -284,8 +282,7 @@ public class Application implements ApplicationEventHandlers
                });
                globalDisplay_.showGenericDialog(GlobalDisplay.MSG_ERROR,
                                               constants_.cannotConnectRCaption(),
-                                              constants_.cannotConnectRMessage() +
-                                              error.getUserMessage() + " (" + error.getCode() + ")",
+                                              constants_.cannotConnectRMessage(error.getUserMessage() , error.getCode()),
                                               buttonLabels, elementIds, buttonOperations, 0);
             }
             else

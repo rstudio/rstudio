@@ -146,7 +146,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             globalDisplay_.showYesNoMessage(
                   MessageDialog.QUESTION,
                   caption, 
-                  msg + " " + constants_.applicationQuitMessage(),
+                  constants_.applicationQuitMessage(msg),
                   () -> handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext),
                   true);
          }

@@ -109,15 +109,15 @@ public class RequestLogVisualization extends Composite
       detail_.getElement().getStyle().setBackgroundColor("#FFE");
 
       instructions_ = new HTML();
-      instructions_.setHTML("<p>"+ constants_.clickRequestText() +
-                            constants_.showInstructionsText() + "</p>" +
-                            "<h4>"+ constants_.availableCommandsText() + "</h4>" +
-                            "<ul>"+
-                            "<li>"+ constants_.escapeText() + "</li>" +
-                            "<li>"+ constants_.playPauseText() + "</li>" +
-                            "<li>"+ constants_.exportText() + "</li>" +
-                            "<li>"+ constants_.importText() + "</li>" +
-                            "<li>"+ constants_.zoomText() + "</li>" +
+      instructions_.setHTML("<p>Click on a request to see details. Click on the " +
+                            "background to show these instructions again.</p>" +
+                            "<h4>Available commands:</h4>" +
+                            "<ul>" +
+                            "<li>Esc: Close</li>" +
+                            "<li>P: Play/pause</li>" +
+                            "<li>E: Export</li>" +
+                            "<li>I: Import</li>" +
+                            "<li>+/-: Zoom in/out</li>" +
                             "</ul>");
       detail_.setWidget(instructions_);
 

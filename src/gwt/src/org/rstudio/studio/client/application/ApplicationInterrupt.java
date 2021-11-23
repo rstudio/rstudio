@@ -220,12 +220,7 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
    private void showInterruptUnresponsiveDialog()
    {
       showTerminationDialog(
-         constants_.terminationDialog() +
-         constants_.terminateCurrentOperationMessage() +
-         "\n\n" +
-         TERMINATION_CONSEQUENCE_MSG +
-         "\n\n" +
-         constants_.terminateRNowMessage());
+         constants_.terminationDialog(TERMINATION_CONSEQUENCE_MSG));
    }
    
 
@@ -306,8 +301,5 @@ public class ApplicationInterrupt implements ConsoleBusyEvent.Handler
    private final ApplicationServerOperations server_;
    private final ErrorManager errorManager_;
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
-   private final static String TERMINATION_CONSEQUENCE_MSG =
-      constants_.terminationConsequenceMessage() +
-      constants_.actionComputationsMessage() +
-      constants_.terminationDiscardedMessage();
+   private final static String TERMINATION_CONSEQUENCE_MSG = constants_.terminationConsequenceMessage();
 }

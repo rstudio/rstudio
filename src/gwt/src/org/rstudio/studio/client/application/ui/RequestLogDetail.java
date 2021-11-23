@@ -45,11 +45,11 @@ public class RequestLogDetail extends Composite
       panel.getElement().getStyle().setOverflow(Overflow.AUTO);
 
       HTML html = new HTML();
-      html.setText(constants_.requestIdText() + entry.getRequestId() + "\n\n"
-                   + constants_.requestText()
+      html.setText("Request ID: " + entry.getRequestId() + "\n\n"
+                   + "== REQUEST ======\n"
                    + tryPrettyJson(req)
                    + "\n\n"
-                   + constants_.responseText()
+                   + "== RESPONSE ======\n"
                    + tryPrettyJson(resp)
                    + "\n");
       html.getElement().getStyle().setProperty("whiteSpace", "pre-wrap");

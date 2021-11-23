@@ -159,10 +159,8 @@ public class ApplicationWindow extends Composite
    {
       globalDisplay_.showMessage(
             GlobalDisplay.MSG_INFO,
-              constants_.applicationUpdatedCaption(),
-            constants_.applicationUpdatedMessage() +
-            constants_.applicationRefreshMessage() +
-            constants_.applicationPreserved(),
+            constants_.applicationUpdatedCaption(),
+            constants_.applicationUpdatedMessage(),
             new Operation() {
                public void execute()
                {
@@ -274,9 +272,7 @@ public class ApplicationWindow extends Composite
    public void showSessionAbendWarning()
    {
       globalDisplay_.showErrorMessage(
-            constants_.rSessionErrorCaption(), constants_.previousRSessionsMessage() +
-            constants_.unexpectedCrashText() +
-            constants_.lostWorkspaceDataMessage());
+            constants_.rSessionErrorCaption(), constants_.previousRSessionsMessage());
    }
 
    @Override

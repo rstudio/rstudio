@@ -23,7 +23,7 @@ public class ProductEditionInfo
 {
    public String editionName()
    {
-      return "RStudio" + (Desktop.isDesktop() ? "" : " " + constants_.rStudioEditionName());
+      return constants_.rStudioEditionName(Desktop.isDesktop() ? "" : " " + constants_.serverLabel());
    }
    
    public boolean proLicense()
