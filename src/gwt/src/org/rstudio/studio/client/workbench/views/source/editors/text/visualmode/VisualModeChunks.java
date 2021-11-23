@@ -15,7 +15,9 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Timer;
@@ -23,6 +25,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunks;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList;
@@ -323,6 +326,62 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          saveCollapseTimer_.cancel();
       }
       saveCollapseTimer_.schedule(1000);
+   }
+
+   /**
+    * Shows lint items in the visual editor.
+    *
+    * @param lint An array of lint items.
+    */
+   public void showLint(JsArray<LintItem> lint)
+   {
+      // Accumulator for each chunk's lint
+      Map<VisualModeChunk, JsArray<LintItem>> chunkLint = new HashMap<>();
+
+      for (int i = 0; i < lint.length(); i++)
+      {
+         LintItem item = lint.get(i);
+         for (VisualModeChunk chunk: chunks_)
+         {
+            // Get the scope (editor position) associated with the chunk
+            Scope scope = chunk.getScope();
+            if (scope == null)
+               continue;
+
+            // Does this lint item begin within the chunk?
+            if (item.getStartRow() >= scope.getBodyStart().getRow() &&
+                item.getStartRow() <= scope.getEnd().getRow())
+            {
+               // Adjust the offsets of the lint item to correlate with the chunk editor
+               int offset = scope.getBodyStart().getRow();
+               item.setStartRow(item.getStartRow() - offset);
+               item.setEndRow(item.getEndRow() - offset);
+
+               // Create a key for this chunk if needed, then push the lint into the items for
+               // this chunk. We accumulate this instead of setting it right away since each
+               // time we call the chunk's setLint method it removes any previously set
+               // lint markers.
+               if (!chunkLint.containsKey(chunk))
+               {
+                  chunkLint.put(chunk, JsArray.createArray().cast());
+               }
+               chunkLint.get(chunk).push(item);
+
+               // Found the chunk, no need keep looking
+               break;
+            }
+         }
+      }
+
+      // Push the accumulated lint into each chunk
+      for (VisualModeChunk chunk: chunkLint.keySet())
+      {
+         JsArray<LintItem> items = chunkLint.get(chunk);
+         if (items != null && items.length() > 0)
+         {
+            chunk.showLint(items);
+         }
+      }
    }
 
    /**

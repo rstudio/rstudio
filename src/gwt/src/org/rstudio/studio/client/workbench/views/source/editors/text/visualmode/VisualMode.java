@@ -65,6 +65,7 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsSource;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -1084,6 +1085,16 @@ public class VisualMode implements VisualModeEditorSync,
          return null;
       }
       return chunk.getScope();
+   }
+
+   /**
+    * Shows lint items in the visual editor.
+    *
+    * @param lint An array of lint items.
+    */
+   public void showLint(JsArray<LintItem> lint)
+   {
+      visualModeChunks_.showLint(lint);
    }
    
    /**

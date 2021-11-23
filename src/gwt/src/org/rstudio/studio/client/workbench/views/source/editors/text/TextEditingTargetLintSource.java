@@ -86,7 +86,14 @@ public class TextEditingTargetLintSource implements LintSource
    @Override
    public void showLint(JsArray<LintItem> lint)
    {
-      target_.getDocDisplay().showLint(lint);
+      if (target_.isVisualEditorActive())
+      {
+         target_.getDocDisplay().showLint(lint);
+      }
+      else
+      {
+         target_.getVisualMode().showLint(lint);
+      }
    }
 
    @Override
