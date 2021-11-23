@@ -53,7 +53,8 @@
 {
     left: -18px;
     width: 16px;
-    background-position: 0px 0px;
+    margin-top: -1px;
+    background-position: 1px 0px;
 }
 
 /*
