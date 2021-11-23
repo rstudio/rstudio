@@ -43,7 +43,7 @@ public class VisualModeLintSource implements LintSource
    @Override
    public TextFileType getTextFileType()
    {
-      return parent_.getTextFileType();
+      return chunk_.getAceInstance().getFileType();
    }
 
    @Override
@@ -86,19 +86,12 @@ public class VisualModeLintSource implements LintSource
    @Override
    public void showLint(JsArray<LintItem> lint)
    {
-      // Lint results are mapped using chunk scope offsets, so we can't
-      // work without them.
-      if (chunk_.getScope() == null)
-         return;
-
-      int offset = chunk_.getScope().getPreamble().getRow();
-
-      // TODO: How the hell is the server mapping these back to the source doc?
+      // Adjust offsets to account for chunk header row
       for (int i = 0; i < lint.length(); i++)
       {
          LintItem item = lint.get(i);
-         item.setStartRow(item.getStartRow() - offset);
-         item.setEndRow(item.getEndRow() - offset);
+         item.setStartRow(item.getStartRow() + 1);
+         item.setEndRow(item.getEndRow() + 1);
       }
 
       chunk_.showLint(lint);
