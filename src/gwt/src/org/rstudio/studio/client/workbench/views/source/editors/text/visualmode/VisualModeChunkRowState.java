@@ -69,7 +69,11 @@ public class VisualModeChunkRowState extends ChunkRowExecState
       anchor_ = editor.createAnchor(Position.create(row, 0));
       anchor_.addOnChangeHandler(() ->
       {
-         reposition();
+         // If the text changes enough to move the anchor, just get rid of the indicator.
+         if (row_ != anchor_.getRow())
+         {
+            detach();
+         }
       });
 
       ele_ = Document.get().createDivElement();
