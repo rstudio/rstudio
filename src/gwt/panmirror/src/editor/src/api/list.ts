@@ -28,6 +28,7 @@ export interface ListCapabilities {
   fancy: boolean;
   example: boolean;
   order: boolean;
+  incremental: boolean;
 }
 
 export function isList(node: ProsemirrorNode | null | undefined) {

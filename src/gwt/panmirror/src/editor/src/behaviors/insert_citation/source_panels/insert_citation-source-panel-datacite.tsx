@@ -54,9 +54,6 @@ export function dataciteSourcePanel(
         expanded: true,
       };
     },
-    typeAheadSearch: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
-      return null;
-    },
     progressMessage: ui.context.translateText('Searching DataCite....'),
     placeHolderMessage: ui.context.translateText('Enter search terms to search DataCite'),
     search: async (searchTerm: string, _selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {

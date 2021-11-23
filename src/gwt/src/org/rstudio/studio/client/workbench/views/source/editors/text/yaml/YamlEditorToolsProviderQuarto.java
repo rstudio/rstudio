@@ -21,6 +21,7 @@ import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -47,15 +48,16 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
    }
    
    @Inject
-   void initialize(Session session)
+   void initialize(Session session, ApplicationServerOperations server)
    {
       config_ = session.getSessionInfo().getQuartoConfig();
+      server_ = server;
    }
    
    @Override
    public boolean isActive(String path, String extendedType)
    {
-      if (config_.installed)
+      if (config_.enabled)
       {
          String filename = FileSystemItem.getNameFromPath(StringUtil.notNull(path));
          return SourceDocument.XT_QUARTO_DOCUMENT.equals(extendedType) ||
@@ -73,7 +75,7 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
                               CommandWithArg<JsObject> ready)
    {
       withQuartoTools(() -> {
-         handleToolResult(QuartoYamlEditorTools.getCompletions(params), ready);
+         handleToolResult(QuartoYamlEditorTools.getCompletions(params, scriptUrl()), ready);
       }, ready);
    } 
    
@@ -81,9 +83,14 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
    public void getLint(YamlEditorContext params,  CommandWithArg<JsObject> ready)
    {
       withQuartoTools(() -> {
-         handleToolResult(QuartoYamlEditorTools.getLint(params), ready);
+         handleToolResult(QuartoYamlEditorTools.getLint(params, scriptUrl()), ready);
       }, ready);
    } 
+   
+   private String scriptUrl()
+   {
+      return server_.getApplicationURL(QuartoYamlEditorTools.SCRIPT_PATH);
+   }
    
    private void withQuartoTools(Command command, CommandWithArg<JsObject> ready)
    {
@@ -125,6 +132,7 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
    
    
    private QuartoConfig config_;
+   private ApplicationServerOperations server_;
 }
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL)
@@ -142,11 +150,16 @@ class QuartoYamlEditorTools
       return yamlToolsLoader.isLoaded();
    }
    
-   public static native Promise<JsObject> getCompletions(YamlEditorContext context);
+   public static native Promise<JsObject> getCompletions(YamlEditorContext context, String scriptUrl);
    
-   public static native Promise<JsObject> getLint(YamlEditorContext context);
+   public static native Promise<JsObject> getLint(YamlEditorContext context, String scriptUrl);
+   
+   @JsOverlay
+   public final static String SCRIPT_PATH = "quarto/resources/editor/tools/yaml/yaml.js";
  
    @JsOverlay
    private static final ExternalJavaScriptLoader yamlToolsLoader =
-     new ExternalJavaScriptLoader("quarto/resources/editor/tools/yaml/yaml.js");
+     new ExternalJavaScriptLoader(SCRIPT_PATH);
+   
+   
 }

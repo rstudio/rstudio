@@ -1,4 +1,34 @@
 module.exports = {
+  hooks: {
+    postPackage: async (forgeConfig, options) => {
+      // Run import-resources.ts script to copy all the non-Electron bits
+      // produced by the cmake build/install into the Electron package
+      const spin = options.spinner.start('Importing externally built dependencies');
+
+      const util = require('util');
+      const execFile = util.promisify(require('child_process').execFile);
+      var path = require('path');
+      const tsNode = path.join(__dirname, 'node_modules', '.bin', 'ts-node');
+      const script = path.join(__dirname, 'scripts', 'import-resources.ts');
+      const promise = execFile(tsNode, [script]);
+      promise.catch(function (e) {
+        spin.fail(e.message);
+      });
+      const child = promise.child;
+      child.stdout.on('data', function (data) {
+        spin.info(data);
+      });
+      child.stderr.on('data', function (data) {
+        spin.info(data);
+      });
+      child.on('close', function (code) {
+        if (code) {
+          spin.fail(`Import-resources exited with code: ${code}`);
+        }
+      });
+      return promise;
+    }
+  },
   packagerConfig: {
     icon: "./resources/icons/RStudio"
   },
@@ -12,7 +42,7 @@ module.exports = {
     {
       name: "@electron-forge/maker-zip",
       platforms: [
-        "darwin"
+        "linux", "win32"
       ]
     },
     {
@@ -22,6 +52,12 @@ module.exports = {
     {
       name: "@electron-forge/maker-rpm",
       config: {}
+    },
+    {
+      name: '@electron-forge/maker-dmg',
+      config: {
+        format: 'ULFO'
+      }
     }
   ],
   plugins: [

@@ -5,9 +5,7 @@
    <button class="{res.styles.smallButton}">
       <table ui:field="table_" cellpadding='0' cellspacing='0' border='0'>
          <tr>
-            <td class='{res.styles.buttonLeft}'></td>
             <td class='{res.styles.buttonCenter}'><div ui:field='content_' class='{res.styles.buttonContent}'></div></td>
-            <td class='{res.styles.buttonRight}'></td>
          </tr>
       </table>
    </button>

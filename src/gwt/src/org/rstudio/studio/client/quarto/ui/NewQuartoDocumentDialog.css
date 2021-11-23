@@ -1,0 +1,42 @@
+@charset "UTF-8";
+
+@external gwt-TextBox, gwt-CheckBox;
+
+.mainPanel {
+ 
+}
+
+
+.grid td {
+   vertical-align: top;
+}
+
+.grid fieldset {
+	border: none;
+	padding: 0;
+	margin: 0;
+}
+
+.spacedRow > td {
+   padding-top: 10px
+}
+
+.label {
+  padding-top: 2px;
+  min-width: 60px;
+}
+
+.listBox {
+  width: 200px;
+  padding: 4px;
+}
+
+.textBox, .textBox .gwt-TextBox {
+  width: 280px;
+  padding: 2px;
+  padding-left: 4px;
+}
+
+.mainPanel .gwt-CheckBox {
+  margin-left: -3px;
+}

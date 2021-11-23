@@ -102,7 +102,7 @@ public class LintManager
       target_ = target;
       cppCompletionContext_ = cppCompletionContext;
       docDisplay_ = target.getDocDisplay();
-      yamlLinter_ = new YamlDocumentLinter(target_, docDisplay_);
+      yamlLinter_ = new YamlDocumentLinter(target_.getRCompletionContext(), docDisplay_);
       showMarkers_ = false;
       explicit_ = false;
       invalidation_ = new Invalidation();
@@ -155,7 +155,7 @@ public class LintManager
                   showMarkers_ = false;
                   excludeCurrentStatement_ = true;
                   explicit_ = false;
-                  timer_.schedule(userPrefs_.backgroundDiagnosticsDelayMs().getValue());
+                  timer_.schedule(defaultLintDelayMs());
                }
             });
          }
@@ -180,7 +180,7 @@ public class LintManager
 
    public void relintAfterDelay(int delayMills)
    {
-      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? userPrefs_.backgroundDiagnosticsDelayMs().getValue() : delayMills);
+      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? defaultLintDelayMs() : delayMills);
    }
 
    @Inject
@@ -191,6 +191,15 @@ public class LintManager
       server_ = server;
       userPrefs_ = uiPrefs;
       eventBus_ = eventBus;
+   }
+   
+   private int defaultLintDelayMs()
+   {
+      // give pure yaml linting a shorter delay b/c its known to be high performance
+      if (target_.getTextFileType().isYaml())
+         return 1000;
+      else
+         return userPrefs_.backgroundDiagnosticsDelayMs().getValue();
    }
    
    private void lintActiveDocument(final LintContext context)
@@ -344,11 +353,16 @@ public class LintManager
    private void performYamlLintRequest(final LintContext context)
    {
       yamlLinter_.getLint(lint -> {
-         showLint(context, lint);
+         showLint(context, lint, false);
       });
    }
    
    private void showLint(LintContext context, JsArray<LintItem> lint)
+   {
+      showLint(context, lint, true);
+   }
+   
+   private void showLint(LintContext context, JsArray<LintItem> lint, boolean spellcheck)
    {
       if (docDisplay_.isPopupVisible())
          return;
@@ -367,7 +381,7 @@ public class LintManager
       else
          finalLint = lint;
 
-      if (userPrefs_.realTimeSpellchecking().getValue())
+      if (spellcheck && userPrefs_.realTimeSpellchecking().getValue())
       {
          target_.getSpellingTarget().getLint(new ServerRequestCallback<JsArray<LintItem>>()
          {

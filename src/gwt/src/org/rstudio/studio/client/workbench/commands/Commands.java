@@ -46,6 +46,7 @@ public abstract class
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
    public abstract AppCommand newQuartoDoc();
+   public abstract AppCommand newQuartoPres();
    public abstract AppCommand newRShinyApp();
    public abstract AppCommand newRHTMLDoc();
    public abstract AppCommand newRDocumentationDoc();
@@ -330,6 +331,18 @@ public abstract class
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand clearPresentationCache();
+   
+   // Presentation2
+   public abstract AppCommand activatePresentation2();
+   public abstract AppCommand layoutZoomPresentation2();
+   public abstract AppCommand presentation2Home();
+   public abstract AppCommand presentation2Next();
+   public abstract AppCommand presentation2Prev();
+   public abstract AppCommand presentation2Edit();
+   public abstract AppCommand presentation2Present();
+   public abstract AppCommand presentation2PresentFromBeginning();
+   public abstract AppCommand presentation2Print();
+   public abstract AppCommand refreshPresentation2();
 
    // View
    public abstract AppCommand showToolbar();

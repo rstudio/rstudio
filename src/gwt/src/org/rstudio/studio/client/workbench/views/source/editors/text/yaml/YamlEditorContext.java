@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
+import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
@@ -34,16 +35,20 @@ public class YamlEditorContext extends JavaScriptObject
    }
    
    public static native YamlEditorContext create(
-      String filetype, String line, String code, Position position) /*-{
+      String path, String filetype, boolean embedded,
+      String line, String code, Position position) /*-{
       return { 
+         path: path,
          filetype: filetype,
+         embedded: embedded,
          line: line, 
          code: code,
          position: position
       };
    }-*/;
    
-   public static YamlEditorContext fromDocDisplay(DocDisplay docDisplay)
+   public static YamlEditorContext create(CompletionContext context,
+                                          DocDisplay docDisplay)
    {
       // determine file type
       String filetype = null;
@@ -70,15 +75,25 @@ public class YamlEditorContext extends JavaScriptObject
       }
       
       return create(
+        context.getPath(),
         filetype,
+        docDisplay.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded,
         docDisplay.getCurrentLineUpToCursor(),
         docDisplay.getCode(),
         docDisplay.getCursorPosition()
       );
    }
    
+   public native final String getPath() /*-{
+      return this.path;
+   }-*/;
+   
    public native final String getFiletype() /*-{
       return this.filetype;
+   }-*/;
+   
+   public native final boolean getEmbedded() /*-{
+      return this.embedded;
    }-*/;
    
    public native final String getLine() /*-{

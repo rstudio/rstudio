@@ -173,7 +173,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
    {
       LOG_WARNING_MESSAGE("Client init request to " + ptrConnection->request().uri() + 
             " has missing or mismatched " kCSRFTokenCookie " cookie or " kCSRFTokenHeader " header");
-      ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
+      // Send an error that shows up in the alert box of the browser - if we send unauthorized here, it causes an infinite sign in loop
+      ptrConnection->sendJsonRpcError(Error("MissingCSRFToken", json::errc::ParamMissing, "Client /rpc/client_init request - missing " kCSRFTokenHeader " header", ERROR_LOCATION));
       return;
    }
 
@@ -525,6 +526,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    rVersionsJson["r_version"] = module_context::rVersion();
    rVersionsJson["r_version_label"] = module_context::rVersionLabel();
    rVersionsJson["r_home_dir"] = module_context::rHomeDir();
+   rVersionsJson["r_version_module"] = module_context::rVersionModule();
    sessionInfo["r_versions_info"] = rVersionsJson;
 
    sessionInfo["show_user_home_page"] = options.showUserHomePage();

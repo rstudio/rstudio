@@ -1,4 +1,4 @@
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 
 .simpleButton {
    display: block;
@@ -9,11 +9,11 @@
    outline: none;
 }
 
-.rstudio-themes-flat button.simpleButton {
+button.simpleButton {
    padding-bottom: 2px;
 }
 
-.rstudio-themes-flat button.simpleButton > table:first-child {
+button.simpleButton > table:first-child {
    border: solid 1px #bbbbbb;
    border-radius: 5px;
    background: #f6f5f7;
@@ -21,15 +21,15 @@
    overflow: hidden;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark button.simpleButton > table:first-child {
+.rstudio-themes-dark button.simpleButton > table:first-child {
    box-shadow: none;
 }
 
-.rstudio-themes-flat button.simpleButton:active > table:first-child {
+button.simpleButton:active > table:first-child {
    background: #eaeaea;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark button.simpleButton > table:first-child {
+.rstudio-themes-dark button.simpleButton > table:first-child {
    border-color: rgb(45,60,75);
    background: rgb(145,154,161);
 }

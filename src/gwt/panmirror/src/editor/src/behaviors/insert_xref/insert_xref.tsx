@@ -598,7 +598,7 @@ const XRefItem = (props: XRefItemProps) => {
   return (
     <div key={thisXref.id} style={props.style} className={selectedClassName} onClick={onItemClick} onDoubleClick={onItemDoubleClick}>
       <div className={`pm-xref-item-image-container ${thisXref.type}`}>
-        <img src={image} className={'pm-xref-item-image pm-border-color'} />
+        <img src={image} className={'pm-xref-item-image pm-border-color'} draggable="false"/>
       </div>
       <div className={'pm-xref-item-body pm-text-color'}>
         <div className="pm-xref-item-title">

@@ -1,0 +1,55 @@
+## Observable JS
+
+This Quarto document is made interactive using Observable JS. Interactive documents allow readers to modify parameters and see the results immediately. Learn more about OJS interactive documents at <https://quarto.org/docs/interactive/ojs/>.
+
+## Bubble Chart
+
+This example uses a D3 bubble chart imported from Observable HQ to analyze commits to GitHub repositories.
+
+Select a repository to analyze the commits of:
+
+```{ojs}
+//| echo: false
+//| panel: input
+viewof repo = Inputs.radio(
+  [
+    "pandas-dev/pandas",
+    "tidyverse/ggplot2",
+  ], 
+  { label: "Repository:", value: "pandas-dev/pandas"}
+)
+```
+
+Fetch the commits for the specified `repo` using the GitHub API:
+
+```{ojs}
+d3 = require('d3')
+contributors = await d3.json(
+  "https://api.github.com/repos/" + repo + "/stats/contributors"
+)
+commits = contributors.map(contributor => {
+  const author = contributor.author;
+  return {
+    name: author.login,
+    title: author.login,
+    group: author.type,
+    value: contributor.total
+  }
+})
+```
+
+Note that the `repo` variable is bound dynamically from the radio input defined above. If you change the input the contributors query will be automatically re-executed.
+
+View the commits sorted by most to least:
+
+```{ojs}
+Inputs.table(commits, { sort: "value", reverse: true })
+```
+
+Visualize using a D3 bubble chart imported from Observable HQ:
+
+```{ojs}
+import { chart } with { commits as data } 
+  from "@d3/d3-bubble-chart"
+chart
+```

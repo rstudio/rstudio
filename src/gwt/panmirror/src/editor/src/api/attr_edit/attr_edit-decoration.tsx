@@ -86,8 +86,6 @@ export function attrEditDecorationWidget(options: AttrEditDecorationOptions) {
       return decoration;
     },
     {
-      // re-use existing instance for same tags
-      key: `tags:${options.tags.join('/')}`,
       ignoreSelection: true,
       stopEvent: () => {
         return true;

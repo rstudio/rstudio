@@ -694,8 +694,15 @@
             "name": "external-pandoc-path",
             "type": "core::FilePath",
             "memberName": "pandocPath_",
-            "defaultValue": {"code": "kDefaultPandocPath", "description": "bin/pandoc"},
+            "defaultValue": {"code": "kDefaultPandocPath", "description": "bin/quarto/bin"},
             "description": "Specifies the path to pandoc binaries."
+         },
+         {
+            "name": "external-quarto-path",
+            "type": "core::FilePath",
+            "memberName": "quartoPath_",
+            "defaultValue": {"code": "kDefaultQuartoPath", "description": "bin/quarto"},
+            "description": "Specifies the path to quarto binaries."
          },
          {
             "name": "external-libclang-path",

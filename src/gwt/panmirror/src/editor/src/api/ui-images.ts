@@ -95,6 +95,12 @@ export interface EditorUIImages {
     rcpp_chunk_dark?: string;
     tabset?: string;
     tabset_dark?: string;
+    slide_columns?: string;
+    slide_columns_dark?: string;
+    slide_pause?: string;
+    slide_pause_dark?: string;
+    slide_notes?: string;
+    slide_notes_dark?: string;
   };
   citations?: {
     article?: string;
@@ -123,6 +129,7 @@ export interface EditorUIImages {
     web_dark?: string;
     zoteroOverlay?: string;
     local_sources?: string;
+    packages?: string;
     bibligraphy?: string;
     bibligraphy_folder?: string;
     zotero_library?: string;

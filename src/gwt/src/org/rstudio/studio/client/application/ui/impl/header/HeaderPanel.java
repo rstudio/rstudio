@@ -39,18 +39,14 @@ public class HeaderPanel extends Composite
       @Source("HeaderPanel.css")
       Styles styles();
 
-      ImageResource headerPanelLeft();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
       ImageResource headerPanelTile();
-      ImageResource headerPanelRight();
    }
 
    interface Styles extends CssResource
    {
       String panel();
-      String left();
       String center();
-      String right();
    }
 
    interface MyUiBinder extends UiBinder<Widget, HeaderPanel> {}

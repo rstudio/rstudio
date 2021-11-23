@@ -193,6 +193,17 @@ oop.inherits(Mode, MarkdownMode);
          return this.$outdent.autoOutdent(session, row);
    };
 
+   this.getIndentForOpenBrace = function(openBracePos)
+   {
+      var state = Utils.getPrimaryState(this.$session, openBracePos.row);
+      var mode = activeMode(state);
+      if (mode === "r")
+         return this.codeModel.getIndentForOpenBrace(openBracePos);
+
+      var line = this.$session.getLine(openBracePos.row1);
+      return this.$getIndent(line);
+   };
+
    this.transformAction = function(state, action, editor, session, text)
    {
       var mode = activeMode(state);

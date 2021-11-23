@@ -276,7 +276,6 @@ namespace prefs {
 #define kLatexPreviewOnCursorIdleAlways "always"
 #define kWrapTabNavigation "wrap_tab_navigation"
 #define kGlobalTheme "global_theme"
-#define kGlobalThemeClassic "classic"
 #define kGlobalThemeDefault "default"
 #define kGlobalThemeAlternate "alternate"
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
@@ -313,6 +312,7 @@ namespace prefs {
 #define kDefaultRVersionVersion "version"
 #define kDefaultRVersionRHome "r_home"
 #define kDefaultRVersionLabel "label"
+#define kDefaultRVersionModule "module"
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
@@ -392,6 +392,11 @@ namespace prefs {
 #define kSessionProtocolDebug "session_protocol_debug"
 #define kPythonProjectEnvironmentAutomaticActivate "python_project_environment_automatic_activate"
 #define kCheckNullExternalPointers "check_null_external_pointers"
+#define kQuartoEnabled "quarto_enabled"
+#define kQuartoEnabledAuto "auto"
+#define kQuartoEnabledEnabled "enabled"
+#define kQuartoEnabledDisabled "disabled"
+#define kQuartoEnabledHidden "hidden"
 
 class UserPrefValues: public Preferences
 {
@@ -1752,6 +1757,12 @@ public:
     */
    bool checkNullExternalPointers();
    core::Error setCheckNullExternalPointers(bool val);
+
+   /**
+    * Enable IDE features for the Quarto publishing system.
+    */
+   std::string quartoEnabled();
+   core::Error setQuartoEnabled(std::string val);
 
 };
 

@@ -105,6 +105,7 @@ core::json::Object createFileSystemItem(const core::FilePath& filePath);
 std::string rVersion();
 std::string rVersionLabel();
 std::string rHomeDir();
+std::string rVersionModule();
 
 // active sessions
 core::r_util::ActiveSession& activeSession();
@@ -761,24 +762,29 @@ struct QuartoNavigate
 {
    QuartoNavigate() : website(false) {}
    bool empty() const { return !website && source.empty(); }
-   static QuartoNavigate navWebsite()
+   static QuartoNavigate navWebsite(const std::string& jobId)
    {
       QuartoNavigate nav;
       nav.website = true;
+      nav.job_id = jobId;
       return nav;
    }
-   static QuartoNavigate navDoc(const std::string& source, const std::string& output)
+   static QuartoNavigate navDoc(const std::string& source, const std::string& output, const std::string& jobId)
    {
       QuartoNavigate nav;
       nav.website = false;
       nav.source = source;
       nav.output = output;
+      nav.job_id = jobId;
       return nav;
    }
    bool website;
    std::string source;
    std::string output;
+   std::string job_id;
 };
+
+core::json::Value quartoNavigateAsJson(const QuartoNavigate& quartoNav);
 
 
 void viewer(const std::string& url,

@@ -103,7 +103,8 @@ struct ProcessOptions
         rows(kDefaultRows),
         redirectStdErrToStdOut(false),
         reportHasSubprocs(false),
-        trackCwd(false)
+        trackCwd(false),
+        callbacksRequireMainThread(false)
 #else
       : terminateChildren(false),
         smartTerminal(false),
@@ -113,7 +114,8 @@ struct ProcessOptions
         redirectStdErrToStdOut(false),
         reportHasSubprocs(false),
         trackCwd(false),
-        threadSafe(false)
+        threadSafe(false),
+        callbacksRequireMainThread(false)
 #endif
    {
    }
@@ -185,6 +187,11 @@ struct ProcessOptions
    // consequently, many of the options are ignored in this mode as it is very strict
    // and cannot accomplish many things that the thread unsafe mode can
    bool threadSafe;
+   
+   // Does this process have callbacks which must be invoked on the main thread?
+   // Set this flag if the callbacks registered for this process should only
+   // be invoked on the main thread.
+   bool callbacksRequireMainThread;
 
    // If not empty, these two provide paths that stdout and stderr
    // (respectively) should be redirected to. Note that this ONLY works

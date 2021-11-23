@@ -80,9 +80,9 @@ public class BuildCommands
             projType = "Book";
          }
          if (sessionInfo.getQuartoConfig().project_type.equals(
-               SessionInfo.QUARTO_PROJECT_TYPE_SITE)) 
+               SessionInfo.QUARTO_PROJECT_TYPE_WEBSITE)) 
          {
-            projType = "Site";
+            projType = "Website";
          }
          commands.buildAll().setMenuLabel("_Render " + projType);
          commands.buildAll().setButtonLabel("Render " + projType);

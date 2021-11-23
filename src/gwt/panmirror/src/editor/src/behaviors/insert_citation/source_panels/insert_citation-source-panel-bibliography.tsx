@@ -33,6 +33,7 @@ import {
   CitationSourcePanelProps,
   CitationListEntry,
   CitationSourceListStatus,
+  CitationSourcePanelSearchResult,
 } from './insert_citation-source-panel';
 import { CitationSourceTypeheadSearchPanel } from './insert_citation-source-panel-typeahead-search';
 import { imageForType } from '../../../api/csl';
@@ -84,7 +85,7 @@ export function bibliographySourcePanel(
       };
     },
     warningMessage: bibliographyManager.warning(),
-    typeAheadSearch: (searchTerm: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
+    typeAheadSearch: (searchTerm: string, selectedNode: NavigationTreeNode, existingCitationIds: string[], onResults: (result: CitationSourcePanelSearchResult) => void) => {
       const providerForNode = (node: NavigationTreeNode): string | undefined => {
         // The node could be the root node, no provider
         return node.type === kAllLocalSourcesRootNodeType ? undefined : node.type;
@@ -106,17 +107,10 @@ export function bibliographySourcePanel(
       const uniqueSources = uniqby(sources, source => source.id);
 
       const citations = toCitationListEntries(uniqueSources, existingCitationIds, ui);
-      return {
+      onResults({
         citations,
         status: citations.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
         statusMessage: citations.length > 0 ? '' : ui.context.translateText('No items'),
-      };
-    },
-    search: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
-      return Promise.resolve({
-        citations: [],
-        status: CitationSourceListStatus.default,
-        statusMessage: '',
       });
     },
   };
@@ -131,8 +125,8 @@ export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationS
             {props.warningMessage}
           </div>
         ) : (
-          undefined
-        )}
+            undefined
+          )}
         <CitationSourceTypeheadSearchPanel
           height={props.height}
           citations={props.citations}

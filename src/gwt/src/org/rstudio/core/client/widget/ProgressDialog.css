@@ -1,21 +1,14 @@
 @external dialogTop, dialogContent;
 
-@external rstudio-themes-flat;
-
 .labelCell {
    padding-right: 6px;
 }
 
 .buttonCell button {
    position: relative;
-   left: 3px;
-   top: 2px;
-   margin-left: 0;
-}
-
-.rstudio-themes-flat .buttonCell button {
    top: 0px;
    left: 0px;
+   margin-left: 0;
 }
 
 .progressCell img {
@@ -40,9 +33,7 @@
    background-color: white;
    border: solid #CCC 1px !important;
    margin: 0;
+   margin-bottom: -6px;
    height: 250px;
 }
 
-.rstudio-themes-flat .displayWidget {
-   margin-bottom: -6px;
-}

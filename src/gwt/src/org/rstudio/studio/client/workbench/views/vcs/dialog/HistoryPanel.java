@@ -101,6 +101,7 @@ public class HistoryPanel extends Composite implements Display
       branchToolbarButton_ = branchToolbarButton;
       commitFilterToolbarButton_ = commitFilterToolbarButton;
       topToolbar_ = new Toolbar("History");
+      topToolbar_.getWrapper().addStyleName(styles.toolbarInnerWrapper());
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 

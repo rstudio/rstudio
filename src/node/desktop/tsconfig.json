@@ -1,18 +1,22 @@
 {
-  "extends": "@tsconfig/node14/tsconfig.json",
   "compilerOptions": {
     "incremental": true,
+    "module": "commonjs",
+    "target": "es2020",
     "sourceMap": true,
-    "outDir": "dist",
     "removeComments": true,
     "baseUrl": ".",
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
     "strict": true,
     "paths": {
       "*": ["node_modules/*"]
     },
     "lib": [
-      "DOM",
-    ],
+      "es2020",
+      "DOM"
+    ]
   },
   "include": [
     "src/**/*",

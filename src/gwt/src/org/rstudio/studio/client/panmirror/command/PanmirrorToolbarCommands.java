@@ -119,6 +119,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
      
       // insert
       add(PanmirrorCommands.OmniInsert, "Any...", icons.OMNI);
+      add(PanmirrorCommands.Table, "Table...", icons.TABLE);
       add(PanmirrorCommands.Link, "Link...", icons.LINK);
       add(PanmirrorCommands.RemoveLink, "Remove Link");
       add(PanmirrorCommands.Image, "Figure / Image...", icons.IMAGE);
@@ -150,6 +151,11 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.GoToPreviousSection, "Go to Previous Section");
       add(PanmirrorCommands.GoToNextChunk, "Go to Next Chunk");
       add(PanmirrorCommands.GoToPreviousChunk, "Go to Previous Chunk");
+      
+      // slides
+      add(PanmirrorCommands.InsertSlidePause, "Insert:::Slide Pause");
+      add(PanmirrorCommands.InsertSlideNotes, "Insert:::Slide Notes");
+      add(PanmirrorCommands.InsertSlideColumns, "Insert:::Slide Columns");
    }
    
    public PanmirrorCommandUI get(String id)

@@ -37,14 +37,11 @@ namespace rstudio {
 namespace session {
 
 using namespace quarto;
+using namespace modules::quarto;
 
-namespace modules {
-namespace quarto {
-namespace serve {
+namespace  {
 
-namespace {
-
-const char * const kRenderNone = "none";
+const char * const kFormatDefault = "default";
 
 FilePath quartoProjectDir()
 {
@@ -53,12 +50,8 @@ FilePath quartoProjectDir()
    );
 }
 
-std::string serverUrl(long port, const FilePath& outputFile = FilePath())
+std::string pathForOutputFile(const core::FilePath& outputFile)
 {
-   // url w. port
-   std::string url = "http://localhost:" + safe_convert::numberToString(port) + "/";
-
-   // append doc path if we have one
    if (!outputFile.isEmpty())
    {
       FilePath quartoProjectOutputDir = quartoProjectDir().completeChildPath(
@@ -67,21 +60,30 @@ std::string serverUrl(long port, const FilePath& outputFile = FilePath())
       std::string path = outputFile.isWithin(quartoProjectOutputDir)
                             ? outputFile.getRelativePath(quartoProjectOutputDir)
                             :  std::string();
-      url = url + path;
+      return path;
    }
+   else
+   {
+      return "";
+   }
+}
 
-   // return url
-   return url;
+std::string serverUrl(long port, const std::string& path = "")
+{
+   // url w. port
+   std::string url = "http://localhost:" + safe_convert::numberToString(port) + "/";
+   return url + path;
 }
 
 class QuartoServe : public QuartoJob
 {
 public:
-   static Error create(const std::string& render,
-                       const core::FilePath& initialDocPath,
+   static Error create(const std::string& format,
+                       bool render,
+                       const std::string& path,
                        boost::shared_ptr<QuartoServe>* pServe)
    {
-      pServe->reset(new QuartoServe(render, initialDocPath));
+      pServe->reset(new QuartoServe(format, render, path));
       return (*pServe)->start();
    }
 
@@ -89,15 +91,25 @@ public:
    {
    }
 
+   std::string format()
+   {
+      return format_;
+   }
+
    int port()
    {
       return port_;
    }
 
+   std::string jobId()
+   {
+      return pJob_->id();
+   }
+
 
 protected:
-   explicit QuartoServe(const std::string& render, const core::FilePath& initialDocPath)
-      : QuartoJob(), port_(0), render_(render), initialDocPath_(initialDocPath)
+   explicit QuartoServe(const std::string& format, bool render, const std::string& path)
+      : QuartoJob(), port_(0), format_(format), render_(render), path_(path)
    {
    }
 
@@ -106,19 +118,25 @@ protected:
       const std::string type =
          quartoConfig().project_type == kQuartoProjectBook
             ? "Book"
-            : "Site";
-      const std::string name = (render_ != kRenderNone ? "Render and " : "")  + std::string("Serve ") + type;
+            : "Website";
+      const std::string name = (render_ ? "Render and " : "")  + std::string("Serve ") + type;
       return name;
    }
 
    virtual std::vector<std::string> args()
    {
-      std::vector<std::string> args({"serve", "--no-browse"});
-      if (render_ != kRenderNone)
+      std::vector<std::string> args({"preview", "--no-browse"});
+      if (render_)
       {
          args.push_back("--render");
-         args.push_back(render_);
+         args.push_back(format_);
       }
+      else if (format_ != kFormatDefault)
+      {
+         args.push_back("--to");
+         args.push_back(format_);
+      }
+      args.push_back("--no-watch-inputs");
       return args;
    }
 
@@ -138,10 +156,14 @@ protected:
             // set port
             port_ = location.port;
 
+            // set path if we got one
+            if (!location.path.empty())
+               path_ = location.path;
+
             // launch viewer
-            module_context::viewer(serverUrl(port_, initialDocPath_),
+            module_context::viewer(serverUrl(port_, path_),
                                    -1,
-                                   module_context::QuartoNavigate::navWebsite());
+                                   module_context::QuartoNavigate::navWebsite(pJob_->id()));
 
             // now that the dev server is running restore the console tab
             ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
@@ -162,8 +184,9 @@ protected:
 
 private:
    int port_;
-   std::string render_;
-   FilePath initialDocPath_;
+   std::string format_;
+   bool render_;
+   std::string path_;
 };
 
 // serve singleton
@@ -183,26 +206,28 @@ void stopServer()
    }
 }
 
-Error quartoServe(const std::string& render = kRenderNone,
-                  const core::FilePath& docPath = FilePath())
+Error quartoServe(const std::string& format,
+                  bool render,
+                  const std::string& path = "")
 {
    // stop any running server
    stopServer();
 
    // start a new server
-   return QuartoServe::create(render, docPath, &s_pServe);
+   return QuartoServe::create(format, render, path, &s_pServe);
 }
 
 Error quartoServeRpc(const json::JsonRpcRequest& request,
                      json::JsonRpcResponse*)
 {
    // read params
-   std::string render;
-   Error error = json::readParams(request.params, &render);
+   std::string format;
+   bool render;
+   Error error = json::readParams(request.params, &format, &render);
    if (error)
       return error;
 
-   return quartoServe(render);
+   return quartoServe(format, render);
 }
 
 bool isJobServeRunning()
@@ -210,19 +235,8 @@ bool isJobServeRunning()
    return s_pServe && s_pServe->isRunning();
 }
 
-long pkgServePort()
-{
-   // quarto package server
-   double port = 0;
-   Error error = r::exec::RFunction(".rs.quarto.servePort")
-         .call(&port);
-   if (error)
-      LOG_ERROR(error);
-   return std::lround(port);
-}
 
-
-void navigateToViewer(long port, const core::FilePath& docPath)
+void navigateToViewer(long port, const std::string& path, const std::string& jobId)
 {
    // if the viewer is already on the site just activate it
    if (boost::algorithm::starts_with(
@@ -232,9 +246,11 @@ void navigateToViewer(long port, const core::FilePath& docPath)
    }
    else
    {
-      module_context::viewer(serverUrl(port, docPath),
-                             -1,
-                             module_context::QuartoNavigate::navWebsite());
+      module_context::viewer(
+          serverUrl(port, path),
+          -1,
+          module_context::QuartoNavigate::navWebsite(jobId)
+      );
    }
 }
 
@@ -245,28 +261,71 @@ bool isNewQuartoBuild(const std::string& renderOutput)
 }
 
 
+
 } // anonymous namespace
 
-void previewDoc(const std::string& renderOutput, const core::FilePath& docPath)
+
+namespace quarto {
+
+std::string quartoDefaultFormat(const core::FilePath& outputFile)
 {
-   if (isJobServeRunning() && !isNewQuartoBuild(renderOutput))
+    // if we have a running book preview then use that as the default format
+   if (isFileInSessionQuartoProject(outputFile) &&
+       isJobServeRunning() &&
+       quartoConfig().project_type == kQuartoProjectBook)
    {
-      navigateToViewer(s_pServe->port(), docPath);
+     std::string format = s_pServe->format();
+     if (format != kFormatDefault)
+        return format;
+     else
+        return "default";
    }
    else
    {
-       long port = pkgServePort();
-       if (port > 0)
-       {
-         navigateToViewer(port, docPath);
-       }
-       else
-       {
-          Error error = quartoServe(kRenderNone, docPath);
-          if (error)
-             LOG_ERROR(error);
-       }
+      return "default";
    }
+}
+
+} // namespace quarto
+
+namespace modules {
+namespace quarto {
+namespace serve {
+
+
+void previewDoc(const std::string& renderOutput, const std::string& path, const std::string& format)
+{
+   if (isJobServeRunning() &&
+       (s_pServe->format() == format) &&
+       !isNewQuartoBuild(renderOutput))
+   {
+      navigateToViewer(s_pServe->port(), path, s_pServe->jobId());
+   }
+   else
+   {
+      Error error = quartoServe(format, false, path);
+      if (error)
+         LOG_ERROR(error);
+   }
+}
+
+void previewDocPath(const std::string& renderOutput, const core::FilePath& outputPath)
+{
+   std::string path;
+   std::string format;
+
+   if (outputPath.getExtensionLowerCase() == ".pdf")
+   {
+      path = "web/viewer.html";
+      format = "pdf";
+   }
+   else
+   {
+      path = pathForOutputFile(outputPath);
+      format = kFormatDefault;
+   }
+
+   previewDoc(renderOutput, path, format);
 }
 
 Error initialize()

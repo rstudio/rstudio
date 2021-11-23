@@ -60,15 +60,7 @@ void viewerNavigate(const std::string& url,
    s_isHTMLWidget = isHTMLWidget;
 
    // create quarto nav object
-   json::Value quartoNav;
-   if (!quartoNavigate.empty())
-   {
-      json::Object quartoNavObj;
-      quartoNavObj["is_website"] = quartoNavigate.website;
-      quartoNavObj["source_file"] = quartoNavigate.source;
-      quartoNavObj["output_file"] = quartoNavigate.output;
-      quartoNav = quartoNavObj;
-   }
+   json::Value quartoNav = module_context::quartoNavigateAsJson(quartoNavigate);
 
    // enque the event
    json::Object dataJson;

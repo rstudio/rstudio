@@ -130,6 +130,7 @@ export interface EditorUIPrefs {
   darkMode: () => boolean;
   listSpacing: () => ListSpacing;
   equationPreview: () => boolean;
+  packageListingEnabled: () => boolean;
   tabKeyMoveFocus: () => boolean;
   emojiSkinTone: () => SkinTone;
   setEmojiSkinTone: (skinTone: SkinTone) => void;

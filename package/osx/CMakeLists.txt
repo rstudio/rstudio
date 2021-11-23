@@ -32,13 +32,14 @@ set(
    CACHE INTERNAL "")
 
 # developer-id code signing
-if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
+if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD AND NOT RSTUDIO_ELECTRON)
    configure_and_install("cmake/fix-library-paths.cmake")
    configure_and_install("cmake/codesign-package.cmake")
 endif()
 
 # package attributes
 set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}${RSTUDIO_PACKAGE_SUFFIX}${CPACK_PACKAGE_VERSION}")
+string(REPLACE "+" "-" CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
 
 # create drag and drop installer
 set(CPACK_BINARY_DRAGNDROP ON)

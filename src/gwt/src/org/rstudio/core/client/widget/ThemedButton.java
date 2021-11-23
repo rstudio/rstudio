@@ -42,58 +42,13 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
    {
       @Source("ThemedButton.css")
       Styles styles();
-
-      @Source("buttonLeftFocusEnabled.png")
-      DataResource buttonLeftFocusEnabled();
-      @Source("buttonLeftFocusSelected.png")
-      DataResource buttonLeftFocusSelected();
-      @Source("buttonLeftFocusPressed.png")
-      DataResource buttonLeftFocusPressed();
-      @Source("buttonLeftEnabled.png")
-      DataResource buttonLeftEnabled();
-      @Source("buttonLeftDisabled.png")
-      DataResource buttonLeftDisabled();
-      @Source("buttonLeftSelected.png")
-      DataResource buttonLeftSelected();
-      @Source("buttonLeftPressed.png")
-      DataResource buttonLeftPressed();
-      @Source("buttonRightFocusEnabled.png")
-      DataResource buttonRightFocusEnabled();
-      @Source("buttonRightFocusSelected.png")
-      DataResource buttonRightFocusSelected();
-      @Source("buttonRightFocusPressed.png")
-      DataResource buttonRightFocusPressed();
-      @Source("buttonRightEnabled.png")
-      DataResource buttonRightEnabled();
-      @Source("buttonRightDisabled.png")
-      DataResource buttonRightDisabled();
-      @Source("buttonRightSelected.png")
-      DataResource buttonRightSelected();
-      @Source("buttonRightPressed.png")
-      DataResource buttonRightPressed();
-      @Source("buttonTileFocusEnabled.png")
-      DataResource buttonTileFocusEnabled();
-      @Source("buttonTileFocusSelected.png")
-      DataResource buttonTileFocusSelected();
-      @Source("buttonTileFocusPressed.png")
-      DataResource buttonTileFocusPressed();
-      @Source("buttonTileEnabled.png")
-      DataResource buttonTileEnabled();
-      @Source("buttonTileDisabled.png")
-      DataResource buttonTileDisabled();
-      @Source("buttonTileSelected.png")
-      DataResource buttonTileSelected();
-      @Source("buttonTilePressed.png")
-      DataResource buttonTilePressed();
    }
 
    interface Styles extends CssResource
    {
       String themedButton();
       String left();
-      String buttonLeft();
       String buttonCenter();
-      String buttonRight();
       String buttonContent();
       String tight();
    }

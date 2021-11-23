@@ -178,6 +178,7 @@ import org.rstudio.studio.client.workbench.views.plots.model.PlotsState;
 import org.rstudio.studio.client.workbench.views.presentation.events.PresentationPaneRequestCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.events.ShowPresentationPaneEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
+import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationPreviewEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.ObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.RprofEvent;
 import org.rstudio.studio.client.workbench.views.source.events.AvailablePackagesReadyEvent;
@@ -1111,6 +1112,11 @@ public class ClientEventDispatcher
          {
             JobsActivateEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new JobsActivateEvent(data));
+         }
+         else if (type == ClientEvent.PresentationPreview)
+         {
+            PresentationPreviewEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new PresentationPreviewEvent(data));
          }
          else
          {

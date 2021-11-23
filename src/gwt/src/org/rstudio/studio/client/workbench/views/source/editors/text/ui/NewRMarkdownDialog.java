@@ -21,6 +21,8 @@ import com.google.gwt.aria.client.Roles;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.common.newdocument.NewDocumentResources;
+import org.rstudio.studio.client.common.newdocument.TemplateMenuItem;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -46,8 +48,6 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -156,32 +156,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    {
    }
    
-   public interface NewRmdStyle extends CssResource
-   {
-      String outputFormat();
-      String outputFormatName();
-      String outputFormatChoice();
-      String outputFormatDetails();
-      String outputFormatIcon();
-   }
-
-   public interface Resources extends ClientBundle
-   {
-      @Source("MarkdownPresentationIcon_2x.png")
-      ImageResource presentationIcon2x();
-
-      @Source("MarkdownDocumentIcon_2x.png")
-      ImageResource documentIcon2x();
-
-      @Source("MarkdownOptionsIcon_2x.png")
-      ImageResource optionsIcon2x();
-      
-      @Source("MarkdownTemplateIcon_2x.png")
-      ImageResource templateIcon2x();
-
-      @Source("MarkdownShinyIcon_2x.png")
-      ImageResource shinyIcon2x();
-   }
 
    public NewRMarkdownDialog(
          RMarkdownServerOperations server,
@@ -197,7 +171,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       formatOptions_ = new ArrayList<>();
-      style.ensureInjected();
+      resources.styles().ensureInjected();
       txtAuthor_.setText(author);
       txtTitle_.setText("Untitled");
       Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), "Templates");
@@ -439,19 +413,19 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private Widget createFormatOption(String name, String description)
    {
       HTMLPanel formatWrapper = new HTMLPanel("");
-      formatWrapper.setStyleName(style.outputFormat());
+      formatWrapper.setStyleName(resources.styles().outputFormat());
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
-      sb.appendHtmlConstant("<span class=\"" + style.outputFormatName() + 
+      sb.appendHtmlConstant("<span class=\"" + resources.styles().outputFormatName() + 
                             "\">");
       sb.appendEscaped(name);
       sb.appendHtmlConstant("</span>");
       RadioButton button = new RadioButton("DefaultOutputFormat", 
                                            sb.toSafeHtml().asString(), true);
-      button.addStyleName(style.outputFormatChoice());
+      button.addStyleName(resources.styles().outputFormatChoice());
       formatOptions_.add(button);
       formatWrapper.add(button);
       Label label = new Label(description);
-      label.setStyleName(style.outputFormatDetails());
+      label.setStyleName(resources.styles().outputFormatDetails());
       formatWrapper.add(label);
       return formatWrapper;
    }
@@ -459,8 +433,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiField TextBox txtAuthor_;
    @UiField TextBox txtTitle_;
    @UiField WidgetListBox<TemplateMenuItem> listTemplates_;
-   @UiField NewRmdStyle style;
-   @UiField Resources resources;
+   @UiField NewDocumentResources resources;
    @UiField HTMLPanel templateFormatPanel_;
    @UiField HTMLPanel newTemplatePanel_;
    @UiField HTMLPanel existingTemplatePanel_;

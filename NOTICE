@@ -51,6 +51,10 @@ used by these components are included below):
 - yaml-cpp
 - R logo (CC-BY-SA 4.0)
 - Python logo (GPL 2)
+- Quarto
+- Deno
+- Dart Sass
+- esbuild
 
 RStudio also includes a binary copy of libclang. This component is
 licensed to you under the University of Illinois/NCSA Open Source

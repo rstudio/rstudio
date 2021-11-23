@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -40,17 +41,35 @@ import com.google.inject.Inject;
 
 public class NewQuartoProjectPage extends NewDirectoryPage
 {
-   public NewQuartoProjectPage()
+   public NewQuartoProjectPage(String projectType,
+                               String title, 
+                               String subTitle, 
+                               String pageCaption, 
+                               ImageResource image,
+                               ImageResource largeImage)
    {
-      super("Quarto Project", 
-            "Create a new Quarto project",
-            "Create Quarto Project",
-            new ImageResource2x(NewProjectResources.INSTANCE.quartoIcon2x()),
-            new ImageResource2x(NewProjectResources.INSTANCE.quartoIconLarge2x()));
+      super(title, 
+            subTitle,
+            pageCaption,
+            image,
+            largeImage);
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       loadAndPersistClientState();
+      
+      // fixed projectType if requested
+      fixedProjectType_ = projectType;
+   }
+   
+   public NewQuartoProjectPage()
+   {
+      this(null,
+           "Quarto Project", 
+           "Create a new Quarto project",
+           "Create Quarto Project",
+            new ImageResource2x(NewProjectResources.INSTANCE.quartoIcon2x()),
+            new ImageResource2x(NewProjectResources.INSTANCE.quartoIconLarge2x()));
    }
    
    @Inject
@@ -59,7 +78,6 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       session_ = session;
    }
       
-   
    
    @Override
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
@@ -140,7 +158,15 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       super.initialize(input);
       
       // set type
-      projectTypeSelect_.setValue(lastOptions_.getType());
+      if (fixedProjectType_ != null)
+      {
+         projectTypeSelect_.setValue(fixedProjectType_);
+         projectTypeSelect_.setVisible(false);
+      }
+      else
+      {
+         projectTypeSelect_.setValue(lastOptions_.getType());
+      }
       
       // set engine
       engineSelect_.setValue(lastOptions_.getEngine());
@@ -188,6 +214,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
              quartoCaps_.getPythonCapabilities().getVenv();
    }
    
+   
  
    @Override
    protected QuartoNewProjectOptions getNewQuartoProjectOptions()
@@ -210,7 +237,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       super.onUnload();
       session_.persistClientState();
    }
-
+   
+   private String fixedProjectType_;
    private SelectWidget projectTypeSelect_;
    private SelectWidget engineSelect_;
    private SelectWidget kernelSelect_;
@@ -227,7 +255,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       public ClientStateValue()
       {
          super("quarto",
-               "quarto-new-proj",
+               "quarto-new-proj-defaults",
                ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(),
                false);

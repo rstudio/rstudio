@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
@@ -89,15 +88,19 @@ public class YamlCompletionManager extends CompletionManagerBase
          return false;
       
       // call for completions
-      YamlEditorContext editorContext = YamlEditorContext.fromDocDisplay(docDisplay_);
+      YamlEditorContext editorContext = YamlEditorContext.create(context_, docDisplay_);
       provider.getCompletions(editorContext, (res) -> {
          
          // default "empty" completion response
          String token = "";
          boolean cacheable = false;
-         boolean suggestOnAccept = false;
+        
+         ArrayList<Integer> types = new ArrayList<Integer>();
          ArrayList<String> values = new ArrayList<String>();
+         ArrayList<String> display = new ArrayList<String>();
          ArrayList<String> descriptions = new ArrayList<String>();
+         ArrayList<Boolean> suggestOnAccept = new ArrayList<Boolean>();
+         ArrayList<Boolean> replaceToEnd = new ArrayList<Boolean>();
          
          // fill from result if we got one
          if (res != null)
@@ -106,20 +109,30 @@ public class YamlCompletionManager extends CompletionManagerBase
             token = result.getToken();
             for (int i=0; i<result.getCompletions().length(); i++)
             {
-               values.add(result.getCompletions().get(i).getValue());
-               descriptions.add(result.getCompletions().get(i).getDescription());
+               YamlCompletion completion = result.getCompletions().get(i);
+               if ("key".equals(completion.getType()))
+                  types.add(RCompletionType.YAML_KEY);
+               else 
+                  types.add(RCompletionType.YAML_VALUE);
+               values.add(completion.getValue());
+               display.add(completion.getDisplay());
+               descriptions.add(completion.getDescription());
+               suggestOnAccept.add(completion.getSuggestOnAccept());
+               replaceToEnd.add(completion.getReplaceToEnd());
             }
             cacheable = result.getCacheable();
-            suggestOnAccept = result.getSuggestOnAccept();
          }
           
          // create and send back response
          Completions response = Completions.createCompletions(
                token,
                JsUtil.toJsArrayString(values),
+               JsUtil.toJsArrayString(display),
                JsUtil.toJsArrayString(new ArrayList<>(values.size())),
                JsUtil.toJsArrayBoolean(new ArrayList<>(values.size())),
-               JsUtil.toJsArrayInteger(Collections.nCopies(values.size(), RCompletionType.YAML)),
+               JsUtil.toJsArrayInteger(types),
+               JsUtil.toJsArrayBoolean(suggestOnAccept),
+               JsUtil.toJsArrayBoolean(replaceToEnd),
                JsUtil.toJsArrayString(descriptions),
                "",
                true,
@@ -128,7 +141,6 @@ public class YamlCompletionManager extends CompletionManagerBase
                null,
                null);         
          response.setCacheable(cacheable);
-         response.setSuggestOnAccept(suggestOnAccept);
          context.onResponseReceived(response); 
       });
       

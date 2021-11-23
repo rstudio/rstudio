@@ -82,6 +82,7 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.CopySourcePathEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.common.mathjax.MathJax;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.synctex.Synctex;
@@ -100,6 +101,7 @@ import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
+import org.rstudio.studio.client.quarto.model.QuartoConstants;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
@@ -157,6 +159,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceAfterCommandExecutedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Mode.InsertChunkInfo;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
@@ -200,6 +203,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 public class TextEditingTarget implements
                                   EditingTarget,
@@ -223,6 +227,8 @@ public class TextEditingTarget implements
 
    public static final String SOFT_WRAP_LINES = "softWrapLines";
    public static final String USE_RAINBOW_PARENS = "useRainbowParens";
+   
+   public static final String QUARTO_PREVIEW_FORMAT = "quartoPreviewFormat";
 
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -264,7 +270,7 @@ public class TextEditingTarget implements
                             List<String> values,
                             List<String> extensions,
                             String selected);
-      void setQuartoFormatOptions(TextFileType fileType, boolean showRmdFormatMenu, List<String> formats);
+      void setQuartoFormatOptions(TextFileType fileType, boolean showRmdFormatMenu, List<String> formats, boolean isBook);
       HandlerRegistration addRmdFormatChangedHandler(
             RmdOutputFormatChangedEvent.Handler handler);
 
@@ -521,8 +527,8 @@ public class TextEditingTarget implements
                                                   docDisplay_);
       jsHelper_ = new TextEditingTargetJSHelper(docDisplay_);
       sqlHelper_ = new TextEditingTargetSqlHelper(docDisplay_);
-      presentationHelper_ = new TextEditingTargetPresentationHelper(
-                                                                  docDisplay_);
+      presentationHelper_ = new TextEditingTargetPresentationHelper(docDisplay_);
+      presentation2Helper_ = new TextEditingTargetPresentation2Helper(docDisplay_);
       rHelper_ = new TextEditingTargetRHelper(docDisplay_);
       quartoHelper_ = new TextEditingTargetQuartoHelper(this, docDisplay_);
 
@@ -1254,6 +1260,22 @@ public class TextEditingTarget implements
          }
       }
 
+   }
+   
+   public void navigateToPresentationEditorLocation(PresentationEditorLocation location)
+   {
+      if (isVisualModeActivated())
+      {
+         ensureVisualModeActive(() -> {
+            Scheduler.get().scheduleDeferred(() -> {
+               visualMode_.navigateToPresentationEditorLocation(location);
+            });
+         });
+      }
+      else
+      {
+         presentation2Helper_.navigateToPresentationEditorLocation(location);
+      }
    }
 
    // the navigateToPosition methods are called by modules that explicitly
@@ -1992,9 +2014,20 @@ public class TextEditingTarget implements
          public void onRmdOutputFormatChanged(RmdOutputFormatChangedEvent event)
          {
             if (event.isQuarto())
-               setQuartoFormat(event.getFormat());
+            {
+               if (event.isQuartoBook())
+               {
+                  renderRmd(event.getFormat(), null);
+               }
+               else
+               {
+                  setQuartoFormat(event.getFormat());
+               }
+            }
             else
+            {
                setRmdFormat(event.getFormat());
+            }
          }
       });
 
@@ -4773,10 +4806,16 @@ public class TextEditingTarget implements
          {
             view_.setIsNotShinyFormat();
             
-            List<String> formats = getQuartoOutputFormats();
+            QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
+            boolean quartoBookDoc = QuartoHelper.isQuartoBookDoc(
+               docUpdateSentinel_.getPath(), 
+               quartoConfig
+            );
+            List<String> formats = quartoBookDoc ? Arrays.asList(quartoConfig.project_formats) : getQuartoOutputFormats();
             view_.setQuartoFormatOptions(fileType_, 
                                          getCustomKnit().length() == 0,
-                                         formats);
+                                         formats,
+                                         quartoBookDoc);
          }
         
       }
@@ -4900,17 +4939,15 @@ public class TextEditingTarget implements
    
    private void setQuartoFormat(String formatName)
    {
-      // see if we need to change the format
-      List<String> outputFormats = getQuartoOutputFormats();
-      if (outputFormats.size() == 0 || !outputFormats.get(0).equals(formatName))
-      {
-         String yaml = rmarkdownHelper_.setOuartoOutputFormat(getRmdFrontMatter(), formatName);
-         if (yaml != null)
-            applyRmdFrontMatter(yaml);
-      }
-      
-      // render
-      renderRmd();
+      HashMap<String, String> props = new HashMap<>();
+      props.put(TextEditingTarget.QUARTO_PREVIEW_FORMAT, formatName);
+      docUpdateSentinel_.modifyProperties(props, new NullProgressIndicator() {
+         @Override
+         public void onCompleted()
+         {
+            renderRmd();
+         }
+      });
    }
    
 
@@ -6100,6 +6137,30 @@ public class TextEditingTarget implements
       status.append(" File name ").append(name);
       return status.toString();
    }
+   
+   public String getEngineForRow(int row)
+   {
+      String line = getDocDisplay().getLine(row);
+      Map<String, String> options = RChunkHeaderParser.parse(line);
+      String engine = StringUtil.stringValue(options.get("engine"));
+      return engine;
+   }
+   
+   private boolean hasREngineChunks()
+   {
+      JsArray<Scope> tree = docDisplay_.getScopeTree();
+      for (int i=0; i<tree.length(); i++) 
+      {
+         Scope scope = tree.get(i);
+         if (scope.isChunk())
+         {  
+            int row = scope.getPreamble().getRow();
+            if (getEngineForRow(row).toLowerCase().equals("r"))
+               return true;
+         }
+      }
+      return false;
+   }
 
    private boolean isRChunk(Scope scope)
    {
@@ -6116,6 +6177,7 @@ public class TextEditingTarget implements
       // collect those here.
       return engine.equals("r");
    }
+   
 
    private boolean isExecutableChunk(final Scope chunk)
    {
@@ -6758,8 +6820,13 @@ public class TextEditingTarget implements
    {
       renderRmd(null);
    }
-
+   
    void renderRmd(final String paramsFile)
+   {
+      renderRmd(null, paramsFile);
+   }
+
+   void renderRmd(final String format, final String paramsFile)
    {
       if (extendedType_ != SourceDocument.XT_QUARTO_DOCUMENT)
          events_.fireEvent(new RmdRenderPendingEvent(docUpdateSentinel_.getId()));
@@ -6783,6 +6850,7 @@ public class TextEditingTarget implements
             {
                visualMode_.syncSourceOutlineLocation();
             }
+              
             
             // Command we can use to do an R Markdown render
             Command renderCmd = new Command() {
@@ -6792,7 +6860,7 @@ public class TextEditingTarget implements
                   rmarkdownHelper_.renderRMarkdown(
                      docUpdateSentinel_.getPath(),
                      docDisplay_.getCursorPosition().getRow() + 1,
-                     null,
+                     format != null ? format : quartoFormat(),
                      docUpdateSentinel_.getEncoding(),
                      paramsFile,
                      asTempfile,
@@ -6809,21 +6877,42 @@ public class TextEditingTarget implements
             // see if we should be using quarto preview
             String quartoFormat = useQuartoPreview();
             if (quartoFormat != null)
-            {
-               // quarto preview can reject the preview (e.g. if it turns
-               // out this file is part of a website or book project)
-               server_.quartoPreview(docUpdateSentinel_.getPath(), 
-                                     quartoFormat, 
-                                     new SimpleRequestCallback<Boolean>() {
+            {    
+               // command to execute quarto preview
+               Command quartoPreviewCmd = new Command() {
                   @Override
-                  public void onResponseReceived(Boolean previewed)
+                  public void execute()
                   {
-                     if (!previewed) 
-                     {
-                        renderCmd.execute();
-                     }
+                     // quarto preview can reject the preview (e.g. if it turns
+                     // out this file is part of a website or book project)
+                     server_.quartoPreview(
+                        docUpdateSentinel_.getPath(), 
+                        quartoFormat, 
+                        isQuartoRevealJs(quartoFormat) ? presentationEditorLocation() : null,
+                        new SimpleRequestCallback<Boolean>() {
+                           @Override
+                           public void onResponseReceived(Boolean previewed)
+                           {
+                              if (!previewed) 
+                              {
+                                 renderCmd.execute();
+                              }
+                           }
+                        });
+                     
                   }
-               });
+               };
+               
+               // require rmarkdown if this document has R chunks
+               if (hasREngineChunks())
+               {
+                  rmarkdownHelper_.withRMarkdownPackage("Rendering Quarto Knitr Documents", 
+                                                        quartoPreviewCmd);
+               }
+               else
+               {
+                  quartoPreviewCmd.execute();
+               }
             }
             else
             {
@@ -6871,6 +6960,21 @@ public class TextEditingTarget implements
       }
       return false;
    }
+   
+   
+   private PresentationEditorLocation presentationEditorLocation()
+   {
+      PresentationEditorLocation location;
+      if (isVisualEditorActive())
+      {
+         location = visualMode_.getPresentationEditorLocation();
+      }
+      else
+      {
+         location = presentation2Helper_.getPresentationEditorLocation();
+      } 
+      return location;
+   }
 
    private boolean isShinyDoc()
    {
@@ -6904,23 +7008,58 @@ public class TextEditingTarget implements
       }
    }
    
+   private String quartoFormat()
+   {
+      if (session_.getSessionInfo().getQuartoConfig().enabled &&
+         (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT))
+      {
+         List<String> outputFormats = getQuartoOutputFormats();
+         if (outputFormats.size() >= 1)
+         {
+            // see if there is a recorded override for this 
+            String previewFormat = docUpdateSentinel_.getProperty(TextEditingTarget.QUARTO_PREVIEW_FORMAT);          
+            if (previewFormat != null && outputFormats.contains(previewFormat))
+            {
+               return previewFormat;
+            }
+            else
+            {
+               return outputFormats.get(0);
+            }
+         }
+         else
+         {
+            return null;
+         }
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
+   
    
    private String useQuartoPreview()
    {
-      if (session_.getSessionInfo().getQuartoConfig().installed &&
+      if (session_.getSessionInfo().getQuartoConfig().enabled &&
           (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) && 
-          !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDoc())
+          !isShinyDoc() && !isRmdNotebook() && !isQuartoWebsiteDefaultHtmlDoc())
       {  
-         List<String> outputFormats = getQuartoOutputFormats();
-         if (outputFormats.size() == 0)
+         String format = quartoFormat();
+         if (format == null)
          {
             return "html";
          }
          else
          {
-            String format = outputFormats.get(0);
-            final ArrayList<String> previewFormats = new ArrayList<String>(
-                  Arrays.asList("pdf", "beamer", "html", "revealjs", "slidy"));
+            final ArrayList<String> previewFormats = new ArrayList<String>(Arrays.asList(
+                  QUARTO_PDF_FORMAT, 
+                  QUARTO_BEAMER_FORMAT, 
+                  QUARTO_HTML_FORMAT, 
+                  QUARTO_REVEALJS_FORMAT, 
+                  QUARTO_SLIDY_FORMAT)
+            );
             return previewFormats.stream()
                .filter(fmt -> format.startsWith(fmt))
                .findAny()
@@ -6935,10 +7074,39 @@ public class TextEditingTarget implements
      
    }
    
-   private boolean isQuartoWebsiteDoc()
+   private static final String QUARTO_PDF_FORMAT = "pdf";
+   private static final String QUARTO_BEAMER_FORMAT = "beamer";
+   private static final String QUARTO_HTML_FORMAT = "html";
+   private static final String QUARTO_SLIDY_FORMAT = "slidy";
+   private static final String QUARTO_REVEALJS_FORMAT = "revealjs";
+   
+   private boolean isQuartoRevealJs(String format)
+   {
+      return format.startsWith(QUARTO_REVEALJS_FORMAT);
+   }
+   
+ 
+   
+   private boolean isQuartoWebsiteDefaultHtmlDoc()
    {
       QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
-      return QuartoHelper.isQuartoWebsiteDoc(docUpdateSentinel_.getPath(), config);
+      boolean isWebsiteDoc = QuartoHelper.isQuartoWebsiteDoc(docUpdateSentinel_.getPath(), config);
+      if (isWebsiteDoc)
+      {
+         // if this in a website project and has either no format or a format that is part
+         // of the project foramts then use standard quarto website preview behavior 
+         // (call rmarkdown render and dispatch to quarto). if this returns false then 
+         // quarto_preview will be used (e.g. for pdfs, presentations, etc.)
+         String docFormat = quartoFormat();
+         return (docFormat == null || Arrays.asList(config.project_formats).contains(docFormat)) &&
+                config.project_type.equals(QuartoConstants.PROJECT_WEBSITE);
+                
+      }
+      else
+      {
+         return false;
+      }
+      
    }
    
 
@@ -8713,6 +8881,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetJSHelper jsHelper_;
    private final TextEditingTargetSqlHelper sqlHelper_;
    private final TextEditingTargetPresentationHelper presentationHelper_;
+   private final TextEditingTargetPresentation2Helper presentation2Helper_;
    private final TextEditingTargetRHelper rHelper_;
    private VisualMode visualMode_;
    private final TextEditingTargetQuartoHelper quartoHelper_;

@@ -126,6 +126,7 @@ public class ElementIds
    public final static String RSTUDIO_LOGO = "rstudio_logo";
    public final static String CONSOLE_INPUT = "console_input";
    public final static String CONSOLE_OUTPUT = "console_output";
+   public final static String CONSOLE_INTERPRETER_VERSION = "console_interpreter_version";
    public final static String DEPLOY_CONTENT = "deploy_content";
    public final static String FIND_REPLACE_BAR = "find_replace_bar";
    public final static String HELP_FRAME = "help_frame";
@@ -253,6 +254,15 @@ public class ElementIds
    public final static String MEMORY_TABLE_TITLE = "memory_table_title";
    public final static String MEMORY_DROPDOWN = "memory_dropdown";
 
+   // Hyperlink Label
+   public final static String HYPERLINKLABEL_SSH_SHOW_PUBLIC_KEY = "hll_ssh_show_public_key";
+
+   // TextBox
+   public final static String TEXTBOX_SSH_KEY_PATH = "textbox_ssh_key_path";
+
+   // Button
+   public final static String BUTTON_SSH_KEY_CREATE = "button_ssh_key_create";
+
    // TextBoxWithButton and subclasses -- prefixes for button/text/help, combined with suffixes
    public final static String TBB_TEXT = "tbb_text";
    public final static String TBB_BUTTON = "tbb_button";
@@ -347,6 +357,7 @@ public class ElementIds
 
    // Modal Dialogs
    public final static String DIALOG_GLOBAL_PREFS = "dialog_global_prefs";
+   public final static String DIALOG_CREATE_SSH_KEY = "dialog_create_ssh_key";
 
    // DataImport
    public final static String DATA_IMPORT_UI_OPTIONS = "data_import_ui_options";
@@ -554,6 +565,8 @@ public class ElementIds
    public static String getVisualMdCitationLocator() { return getElementId(VISUAL_MD_CITATION_LOCATOR); }
    public final static String VISUAL_MD_LIST_TYPE = "visual_md_list_type";
    public static String getVisualMdListType() { return getElementId(VISUAL_MD_LIST_TYPE); }
+   public final static String VISUAL_MD_LIST_INCREMENTAL = "visual_md_list_incremental";
+   public static String getVisualMdListIncremental() { return getElementId(VISUAL_MD_LIST_INCREMENTAL); }
    public final static String VISUAL_MD_LIST_ORDER = "visual_md_list_order";
    public static String getVisualMdListOrder() { return getElementId(VISUAL_MD_LIST_ORDER); }
    public final static String VISUAL_MD_LIST_NUMBER_STYLE = "visual_md_list_number_style";
@@ -659,4 +672,14 @@ public class ElementIds
    // ChooseEncodingDialog
    public final static String ENC_SHOW_ALL = "enc_show_all";
    public final static String ENC_SET_DEFAULT = "enc_set_default";
+
+   // Modify Keyboard Shortcuts Dialog
+   public final static String KYBRD_SHRTCTS_FILTER_WIDGET = "kybrd_shrtcts_fltr";
+   public static String getKybrdShrtctsFilterWidget() { return getElementId(KYBRD_SHRTCTS_FILTER_WIDGET); }
+   public final static String KYBRD_SHRTCTS_RESET_BUTTON = "kybrd_shrtcts_rst";
+   public static String getKybrdShrtctsResetButton() { return getElementId(KYBRD_SHRTCTS_RESET_BUTTON); }
+
+   // VersionsPopupMenu
+   public final static String VERSIONS_POPUP_MENU = "versions_popup_menu";
+
 }

@@ -32,6 +32,7 @@ public class PanmirrorServer
       this.zotero = new PanmirrorZoteroServer();
       this.xref = new PanmirrorXRefServer();
       this.doi = new PanmirrorDOIServer();
+      this.environment = new PanmirrorEnvironmentServer();
    }
    
    public PanmirrorPandocServer pandoc;
@@ -41,4 +42,5 @@ public class PanmirrorServer
    public PanmirrorZoteroServer zotero;
    public PanmirrorXRefServer xref;
    public PanmirrorDOIServer doi;
+   public PanmirrorEnvironmentServer environment;
 }

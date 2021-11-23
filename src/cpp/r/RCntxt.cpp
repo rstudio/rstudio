@@ -186,12 +186,20 @@ Error RCntxt::invokeFunctionOnCall(const char* rFunction,
 
 bool RCntxt::operator==(const RCntxt& other) const
 {
-   return other.pCntxt_ == pCntxt_;
+   // Equivalent if they refer to the same underlying object
+   if (other.pCntxt_ == pCntxt_)
+      return true;
+
+   // Also equivalent if they refer to the same call, at the same depth, on the stack
+   if (other.call() == call() && other.evaldepth() == evaldepth())
+      return true;
+
+   return false;
 }
 
 bool RCntxt::operator!=(const RCntxt& other) const
 {
-   return other.pCntxt_ != pCntxt_;
+   return !(*this == other);
 }
 
 RCntxt::iterator RCntxt::begin()

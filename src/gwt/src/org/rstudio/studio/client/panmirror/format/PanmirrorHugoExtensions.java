@@ -22,6 +22,11 @@ import jsinterop.annotations.JsType;
 public class PanmirrorHugoExtensions
 {    
    public boolean shortcodes;
+   
+   public static boolean areEqual(PanmirrorHugoExtensions a, PanmirrorHugoExtensions b)
+   {
+      return a.shortcodes == b.shortcodes;
+   }
 }
 
 

@@ -25,6 +25,7 @@ if ( (NOT RSTUDIO_SESSION_WIN32) AND
 endif()
 
 add_subdirectory(cpp)
+add_subdirectory(node)
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/CMakeOverlay.txt")
    include(CMakeOverlay.txt)

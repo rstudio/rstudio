@@ -826,6 +826,7 @@ const std::map<std::string, int>& SchemaVersion::versionMap()
          {
             versions[""] = 0;
             versions["Ghost Orchid"] = 1;
+            versions["Prairie Trillium"] = 2;
          }
       }
       END_LOCK_MUTEX
@@ -868,7 +869,6 @@ Error SchemaUpdater::migrationFiles(std::vector<std::pair<SchemaVersion, FilePat
                         const std::pair<SchemaVersion, FilePath>& b)
    { return a.first > b.first; };
    std::sort(pMigrationFiles->begin(), pMigrationFiles->end(), comparator);
-
    return Success();
 }
 
@@ -1020,6 +1020,7 @@ Error SchemaUpdater::isUpToDate(bool* pUpToDate)
       return error;
 
    *pUpToDate = version >= migrationVersion;
+
    return Success();
 }
 
@@ -1039,6 +1040,10 @@ Error SchemaUpdater::update()
 
       SchemaVersion currentVersion;
       error = databaseSchemaVersion(&currentVersion);
+
+      LOG_DEBUG_MESSAGE("Current Database Schema Version:\t\t" + currentVersion.Date + " : " + currentVersion.Flower);
+      LOG_DEBUG_MESSAGE("Highest Available Database Schema Version:\t" + migrationVersion.Date + " : " + migrationVersion.Flower);
+
       if (currentVersion < migrationVersion)
       {
          LOG_INFO_MESSAGE(
@@ -1132,8 +1137,15 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
    if (error)
       return error;
 
+   std::reverse(files.begin(), files.end());
+
    for (const std::pair<SchemaVersion, FilePath>& migrationFile : files)
    {
+
+      // Is the migration file from an update that predates the current version?
+      // If so, skip it
+      if(migrationFile.first <= currentVersion)
+         continue;
 
       bool applyMigration = false;
 
@@ -1156,6 +1168,8 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
       if (!applyMigration)
          continue;
 
+      LOG_DEBUG_MESSAGE("Applying database schema alter file " + migrationFile.second.getAbsolutePath());
+
       // we are clear to apply the migration
       // load the file and execute its SQL contents
       std::string fileContents;
@@ -1166,6 +1180,7 @@ Error SchemaUpdater::updateToVersion(const SchemaVersion& maxVersion)
       error = connection_->executeStr(fileContents);
       if (error)
          return error;
+
    }
 
    transaction.commit();

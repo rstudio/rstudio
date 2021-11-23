@@ -51,11 +51,17 @@
    }                                                                           \
    CATCH_UNEXPECTED_EXCEPTION
 
+#define ASSERT_MAIN_THREAD(__REASON__)                                         \
+   (::rstudio::core::thread::assertMainThread(                                 \
+      { __REASON__ },                                                          \
+      BOOST_CURRENT_FUNCTION,                                                  \
+      ERROR_LOCATION))
+
 
 namespace rstudio {
 namespace core {
 namespace thread {
-      
+
 template <typename T>
 class ThreadsafeValue : boost::noncopyable
 {
@@ -359,6 +365,15 @@ private:
 
 void safeLaunchThread(boost::function<void()> threadMain,
                       boost::thread* pThread = nullptr);
+
+void initializeMainThreadId(boost::thread::id id);
+
+bool isMainThread();
+
+bool assertMainThread(
+      const std::string& reason,
+      const std::string& functionName,
+      const core::ErrorLocation& errorLocation);
       
 } // namespace thread
 } // namespace core

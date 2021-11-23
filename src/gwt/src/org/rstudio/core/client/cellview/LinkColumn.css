@@ -1,4 +1,4 @@
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 @external editor_dark, ace_editor_theme;
 
 .link {
@@ -15,6 +15,6 @@
    text-decoration: underline;
 }
 
-.rstudio-themes-flat.editor_dark .ace_editor_theme .link {
+.editor_dark .ace_editor_theme .link {
    color: #b4b4d8;
 }

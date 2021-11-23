@@ -622,6 +622,261 @@ test_context("Logging")
             REQUIRE(boost::ends_with(logContents, logStr));
          }
       }
+
+      test_that("Can passthrough log")
+      {
+         FilePath tmpConfPath;
+         REQUIRE_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
+
+         std::string confFileContents =
+               "[*]\n"
+               "logger-type=file\n"
+               "log-level=INFO\n"
+               "log-dir=" + tmpConfPath.getParent().getAbsolutePath();
+
+         REQUIRE_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
+
+         clearLogEnvVars();
+         core::system::setenv("RS_LOG_CONF_FILE", tmpConfPath.getAbsolutePath());
+
+         std::string id = core::system::generateShortenedUuid();
+         REQUIRE_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
+         REQUIRE_FALSE(core::system::reinitLog());
+
+         LOG_INFO_MESSAGE("This is a message");
+
+         FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
+         REQUIRE(logFile.exists());
+
+         std::string logFileContents;
+         REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
+
+         boost::replace_all(logFileContents, "INFO", "DEBUG");
+         LOG_PASSTHROUGH_MESSAGE("mysource", logFileContents);
+
+         logFileContents.empty();
+         REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
+         REQUIRE(logFileContents.find("DEBUG") == std::string::npos);
+
+         boost::replace_all(logFileContents, "INFO", "WARNING");
+         boost::replace_all(logFileContents, "This is a message", "This is a passthrough message");
+         boost::replace_all(logFileContents, "[logging-tests-" + id + "]", "[subproc]");
+         LOG_PASSTHROUGH_MESSAGE("mysource", logFileContents);
+
+         logFileContents.empty();
+         REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
+
+         REQUIRE(logFileContents.find("WARNING") != std::string::npos);
+         REQUIRE(logFileContents.find("[subproc, log-source: mysource]") != std::string::npos);
+         REQUIRE(logFileContents.find("This is a passthrough message") != std::string::npos);
+      }
+
+      test_that("Can json log error")
+      {
+         FilePath tmpConfPath;
+         REQUIRE_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
+
+         std::string confFileContents =
+               "[*]\n"
+               "logger-type=file\n"
+               "log-message-format=json\n"
+               "log-level=debug\n"
+               "log-dir=" + tmpConfPath.getParent().getAbsolutePath();
+
+         REQUIRE_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
+
+         clearLogEnvVars();
+         core::system::setenv("RS_LOG_CONF_FILE", tmpConfPath.getAbsolutePath());
+
+         std::string id = core::system::generateShortenedUuid();
+         REQUIRE_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
+         REQUIRE_FALSE(core::system::reinitLog());
+
+         LOG_ERROR(systemError(boost::system::errc::no_such_file_or_directory, "Couldn't read the file", ERROR_LOCATION));
+
+         FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
+         REQUIRE(logFile.exists());
+
+         std::string logFileContents;
+         REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
+
+         json::Object logObj;
+         REQUIRE_FALSE(logObj.parse(logFileContents));
+
+         json::Object errorObj;
+         REQUIRE_FALSE(json::readObject(logObj,
+                                        "error", errorObj));
+
+         int code = 0;
+         std::string message, type;
+         json::Object errorProperties;
+         REQUIRE_FALSE(json::readObject(errorObj,
+                                        "code", code,
+                                        "message", message,
+                                        "type", type,
+                                        "properties", errorProperties));
+
+         REQUIRE(code == boost::system::errc::no_such_file_or_directory);
+         REQUIRE(message == "No such file or directory");
+         REQUIRE(type == "system");
+
+         std::string description;
+         REQUIRE_FALSE(json::readObject(errorProperties,
+                                        "description", description));
+
+         REQUIRE(description == "Couldn't read the file");
+      }
+
+      test_that("Can log LogMessageProperties")
+      {
+         FilePath tmpConfPath;
+         REQUIRE_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
+
+         std::string confFileContents =
+               "[*]\n"
+               "logger-type=file\n"
+               "log-message-format=pretty\n"
+               "log-level=debug\n"
+               "log-dir=" + tmpConfPath.getParent().getAbsolutePath();
+
+         REQUIRE_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
+
+         clearLogEnvVars();
+         core::system::setenv("RS_LOG_CONF_FILE", tmpConfPath.getAbsolutePath());
+
+         std::string id = core::system::generateShortenedUuid();
+         REQUIRE_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
+         REQUIRE_FALSE(core::system::reinitLog());
+
+         json::Object obj;
+         obj["first"] = 1;
+         obj["second"] = 2;
+         obj["third"] = 3;
+         json::Array arr;
+         arr.push_back(1);
+         arr.push_back(2);
+         arr.push_back(3);
+
+         Error err = systemError(boost::system::errc::no_such_file_or_directory,
+                                 "Couldn't find file",
+                                 ERROR_LOCATION);
+
+         uint_least64_t val = 1;
+         core::log::LogMessageProperties props = {{"prop1", val}, {"prop2", "2"}, {"prop3", 3.14}, {"prop4", obj}, {"prop5", arr}, {"prop6", err}};
+         LOG_DEBUG_MESSAGE_WITH_PROPS("Message 1", props);
+
+         FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
+         REQUIRE(logFile.exists());
+
+         std::string logFileContents;
+         REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
+
+         REQUIRE(logFileContents.find("Message 1") != std::string::npos);
+         REQUIRE(logFileContents.find("prop1: 1") != std::string::npos);
+         REQUIRE(logFileContents.find("prop2: 2") != std::string::npos);
+         REQUIRE(logFileContents.find("prop3: 3.14") != std::string::npos);
+         REQUIRE(logFileContents.find(", prop4: " + obj.write()) != std::string::npos);
+         REQUIRE(logFileContents.find(", prop5: " + arr.write()) != std::string::npos);
+         REQUIRE(logFileContents.find("Couldn't find file") != std::string::npos);
+         REQUIRE(logFileContents.find("No such file or directory") != std::string::npos);
+         REQUIRE(logFileContents.find("LoggingTests.cpp") != std::string::npos);
+
+         boost::replace_all(confFileContents, "pretty", "json");
+         REQUIRE_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
+
+         // reload logging configuration by sending SIGHUP to ourselves
+         // we also have to wait awhile because this is an asynchronous process handled by another thread
+         core::system::sendSignalToSelf(core::system::SigHup);
+         bool success = false;
+         for (int i = 0; i < 5; ++i)
+         {
+            boost::this_thread::sleep(boost::posix_time::milliseconds(250));
+
+            LOG_DEBUG_MESSAGE_WITH_PROPS("Message 1", props);
+
+            std::vector<std::string> logLines;
+            REQUIRE_FALSE(core::readStringVectorFromFile(logFile, &logLines));
+
+            const std::string& lastLine = logLines.at(logLines.size() - 1);
+            json::Object logObj;
+            Error err = logObj.parse(lastLine);
+            if (err)
+               continue;
+
+            std::string message;
+            json::Object properties;
+            err = json::readObject(logObj,
+                                   "message", message,
+                                   "properties", properties);
+            if (err)
+               continue;
+
+            int prop1 = 0;
+            std::string prop2;
+            double prop3;
+            json::Object prop4;
+            json::Array prop5;
+            json::Object prop6;
+
+            err = json::readObject(properties,
+                                   "prop1", prop1,
+                                   "prop2", prop2,
+                                   "prop3", prop3,
+                                   "prop4", prop4,
+                                   "prop5", prop5,
+                                   "prop6", prop6);
+            if (err)
+               continue;
+
+            success = prop1 == 1 &&
+                      prop2 == "2" &&
+                      prop3 == 3.14 &&
+                      prop4 == obj &&
+                      prop5 == arr;
+
+            if (success)
+               break;
+         }
+
+         REQUIRE(success);
+      }
+
+      test_that("Can debug action log")
+      {
+         FilePath tmpConfPath;
+         REQUIRE_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
+
+         std::string confFileContents =
+               "[*]\n"
+               "logger-type=file\n"
+               "log-message-format=pretty\n"
+               "log-level=debug\n"
+               "log-dir=" + tmpConfPath.getParent().getAbsolutePath();
+
+         REQUIRE_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
+
+         clearLogEnvVars();
+         core::system::setenv("RS_LOG_CONF_FILE", tmpConfPath.getAbsolutePath());
+
+         std::string id = core::system::generateShortenedUuid();
+         REQUIRE_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
+         REQUIRE_FALSE(core::system::reinitLog());
+
+         log::logDebugAction([&](boost::optional<log::LogMessageProperties>* pProps) {
+            log::LogMessageProperties props = {{"1", 1}, {"2", "Two"}};
+            *pProps = props;
+            return "This was an action log";
+         });
+
+         FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
+         REQUIRE(logFile.exists());
+
+         std::string logFileContents;
+         REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
+
+         REQUIRE(logFileContents.find("This was an action log") != std::string::npos);
+         REQUIRE(logFileContents.find("[1: 1, 2: Two]") != std::string::npos);
+      }
    }
 }
 

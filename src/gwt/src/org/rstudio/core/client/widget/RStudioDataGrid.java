@@ -62,7 +62,13 @@ public class RStudioDataGrid<T> extends DataGrid<T>
    
    private void hideMacHorizontalScrollbars()
    {
-      Element parent = getElement().getParentElement().getParentElement();
+      Element element = getElement();
+      Element elementParent = element.getParentElement();
+      if (elementParent == null)
+         return;
+      Element parent = elementParent.getParentElement();
+      if (parent == null)
+         return;
       
       // GWT's DataGrid also occasionally displays unwanted horizontal
       // scroll bars. Since we don't ever require horizontal scrolling

@@ -399,7 +399,8 @@ function gfmExtensions() {
     '+pipe_tables',
     '+strikeout',
     '+task_lists',
-    '+tex_math_dollars'
+    '+tex_math_dollars',
+    '+footnotes'
   ];
   return extensions;
 }

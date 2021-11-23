@@ -36,15 +36,16 @@
 #include <boost/bind/bind.hpp>
 
 #include <shared_core/Error.hpp>
+
 #include <core/Log.hpp>
+#include <core/PerformanceTimer.hpp>
+#include <core/Thread.hpp>
 #include <core/system/PosixChildProcess.hpp>
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/ProcessArgs.hpp>
 #include <core/system/ShellUtils.hpp>
-#include <core/Thread.hpp>
 
-#include <core/PerformanceTimer.hpp>
 
 using namespace boost::placeholders;
 
@@ -1014,6 +1015,11 @@ bool AsyncChildProcess::hasRecentOutput() const
 
 void AsyncChildProcess::poll()
 {
+   // skip polling if we're not on the main thread,
+   // and the process options request we run on the main thread only
+   if (options().callbacksRequireMainThread && !core::thread::isMainThread())
+      return;
+   
    // call onStarted if we haven't yet
    if (!(pAsyncImpl_->calledOnStarted_))
    {

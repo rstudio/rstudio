@@ -361,6 +361,9 @@ protected:
       ("external-pandoc-path",
       value<std::string>(&pandocPath_)->default_value(kDefaultPandocPath),
       "Specifies the path to pandoc binaries.")
+      ("external-quarto-path",
+      value<std::string>(&quartoPath_)->default_value(kDefaultQuartoPath),
+      "Specifies the path to quarto binaries.")
       ("external-libclang-path",
       value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
       "Specifies the path to the libclang shared library")
@@ -493,6 +496,7 @@ public:
    core::FilePath hunspellDictionariesPath() const { return core::FilePath(hunspellDictionariesPath_); }
    core::FilePath mathjaxPath() const { return core::FilePath(mathjaxPath_); }
    core::FilePath pandocPath() const { return core::FilePath(pandocPath_); }
+   core::FilePath quartoPath() const { return core::FilePath(quartoPath_); }
    core::FilePath libclangPath() const { return core::FilePath(libclangPath_); }
    core::FilePath libclangHeadersPath() const { return core::FilePath(libclangHeadersPath_); }
    core::FilePath winptyPath() const { return core::FilePath(winptyPath_); }
@@ -594,6 +598,7 @@ protected:
    std::string hunspellDictionariesPath_;
    std::string mathjaxPath_;
    std::string pandocPath_;
+   std::string quartoPath_;
    std::string libclangPath_;
    std::string libclangHeadersPath_;
    std::string winptyPath_;

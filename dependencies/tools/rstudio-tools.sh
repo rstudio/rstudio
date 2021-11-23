@@ -185,6 +185,10 @@ is-verbose () {
 	[ -n "${VERBOSE}" ] && [ "${VERBOSE}" != "0" ]
 }
 
+is-m1-mac () {
+	[ "$(arch)" = "arm64" ]
+}
+
 # Download a single file
 download () {
 
@@ -439,3 +443,5 @@ fi
 
 export RSTUDIO_TOOLS_ROOT
 
+# version of node.js used for building
+export RSTUDIO_NODE_VERSION="14.17.5"

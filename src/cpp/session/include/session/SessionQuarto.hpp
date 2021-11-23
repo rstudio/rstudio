@@ -19,12 +19,12 @@
 #include <string>
 #include <vector>
 
+#include <shared_core/FilePath.hpp>
 #include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
 class Error;
-class FilePath;
 } // namespace core
 } // namespace rstudio
 
@@ -34,16 +34,26 @@ namespace quarto {
 
 extern const char* const kQuartoCrossrefScope;
 extern const char* const kQuartoProjectDefault;
+extern const char* const kQuartoProjectWebsite;
 extern const char* const kQuartoProjectSite;
 extern const char* const kQuartoProjectBook;
 
 struct QuartoConfig
 {
-   QuartoConfig() : installed(false), is_project(false) {}
-   bool installed;
+   QuartoConfig() : enabled(false), is_project(false) {}
+
+   // is quarto enabled?
+   bool enabled;
+
+   // is there a user installed version?
+   core::FilePath userInstalled;
+
+   // active version info
    std::string version;
    std::string bin_path;
    std::string resources_path;
+
+   // project info
    bool is_project;
    std::string project_type;
    std::string project_dir;
@@ -67,6 +77,8 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
                          const std::string& renderOutput,
                          bool validateExtendedType);
+
+std::string quartoDefaultFormat(const core::FilePath& sourceFile);
 
 bool isFileInSessionQuartoProject(const core::FilePath& file);
 

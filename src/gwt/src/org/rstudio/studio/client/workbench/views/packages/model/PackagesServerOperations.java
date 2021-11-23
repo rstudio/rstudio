@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.packages.model;
 
 import java.util.List;
 
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 
@@ -59,4 +60,6 @@ public interface PackagesServerOperations extends PackratServerOperations
                         String packageName,
                         String libraryPath,
                         ServerRequestCallback<String> requestCallback);
+   
+   void getPackageCitations(String packageName, ServerRequestCallback<JavaScriptObject> requestCallback);
 }

@@ -31,7 +31,8 @@ namespace modules {
 namespace quarto {
 namespace serve {
 
-void previewDoc(const std::string& renderOutput, const core::FilePath& docPath);
+void previewDoc(const std::string& renderOutput, const std::string& path);
+void previewDocPath(const std::string& renderOutput, const core::FilePath& docPath);
 
 core::Error initialize();
    

@@ -32,6 +32,7 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
@@ -567,6 +568,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       PanmirrorEditingLocation previousLocation) 
    {
       editor_.setEditingLocation(outlineLocation, previousLocation);
+   }
+   
+   public PresentationEditorLocation getPresentationEditorLocation()
+   {
+      return editor_.getPresentationEditorLocation();
+   }
+   
+   public void navigateToPresentationEditorLocation(PresentationEditorLocation location)
+   {
+      editor_.navigateToPresentationEditorLocation(location);
    }
    
    public void focus()

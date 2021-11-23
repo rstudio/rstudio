@@ -56,6 +56,7 @@ import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
@@ -1353,6 +1354,18 @@ public class RemoteServer implements Server
 
       sendRequest(RPC_SCOPE, GET_PACKAGE_NEWS_URL, params, requestCallback);
    }
+   
+   @Override
+   public void getPackageCitations(String packageName,
+                                   ServerRequestCallback<JavaScriptObject> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(packageName)
+            .get();
+
+      sendRequest(RPC_SCOPE, GET_PACKAGE_CITATIONS, params, requestCallback);
+   }
+   
 
    public void setCRANMirror(CRANMirror mirror,
                              ServerRequestCallback<Void> requestCallback)
@@ -6412,19 +6425,22 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void quartoPreview(String file, String format, ServerRequestCallback<Boolean> requestCallback)
+   public void quartoPreview(String file, String format, PresentationEditorLocation editorState,
+                            ServerRequestCallback<Boolean> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(file));
       params.set(1,  new JSONString(format));
+      params.set(2,  editorState != null ? new JSONObject(editorState) : JSONNull.getInstance());
       sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
    }
    
    @Override
-   public void quartoServe(String render, ServerRequestCallback<Void> callback)
+   public void quartoServe(String format, boolean render, ServerRequestCallback<Void> callback)
    {
       JSONArray params = new JSONArray();
-      params.set(0, new JSONString(StringUtil.isNullOrEmpty(render) ? "none" : render));
+      params.set(0, new JSONString(StringUtil.isNullOrEmpty(format) ? "default" : format));
+      params.set(1,  JSONBoolean.getInstance(render));
       sendRequest(RPC_SCOPE, QUARTO_SERVE, params, callback);
    }
    
@@ -6569,6 +6585,7 @@ public class RemoteServer implements Server
    private static final String GET_CRAN_ACTIVES = "get_cran_actives";
    private static final String PACKAGE_SKELETON = "package_skeleton";
    private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
+   private static final String GET_PACKAGE_CITATIONS = "get_package_citations";
 
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic";
@@ -6984,6 +7001,6 @@ public class RemoteServer implements Server
    private static final String QUARTO_PREVIEW = "quarto_preview";
    private static final String QUARTO_SERVE = "quarto_serve";
    private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
-   
+  
 
 }

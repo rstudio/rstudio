@@ -117,6 +117,7 @@ import { editorSchema } from './editor-schema';
 // import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
+import { getPresentationEditorLocation, PresentationEditorLocation, positionForPresentationEditorLocation } from '../api/presentation';
 
 export interface EditorCode {
   code: string;
@@ -683,6 +684,17 @@ export class Editor {
       return yamlFrontMatter(this.view.state.doc);
     } else {
       return '';
+    }
+  }
+
+  public getPresentationEditorLocation() {
+    return getPresentationEditorLocation(this.state);
+  }
+
+  public navigateToPresentationEditorLocation(location: PresentationEditorLocation) {
+    const pos = positionForPresentationEditorLocation(this.state, location);
+    if (pos !== -1) {
+      this.navigate(NavigationType.Pos, String(pos));
     }
   }
 

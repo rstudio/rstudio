@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.vcs;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HyperlinkLabel;
@@ -48,6 +49,8 @@ public class SshKeyWidget extends Composite
       txtSshKeyPath_.setReadOnly(true);
       txtSshKeyPath_.setWidth(textWidth);
 
+      ElementIds.assignElementId(txtSshKeyPath_, ElementIds.TEXTBOX_SSH_KEY_PATH);
+
       // caption panel
       HorizontalPanel captionPanel = new HorizontalPanel();
       captionPanel.addStyleName(RES.styles().captionPanel());
@@ -61,6 +64,9 @@ public class SshKeyWidget extends Composite
       HorizontalPanel linkPanel = new HorizontalPanel();
       publicKeyLink_ = new HyperlinkLabel(constants_.publicKeyLinkCaption(), () -> viewPublicKey());
       publicKeyLink_.addStyleName(RES.styles().viewPublicKeyLink());
+
+      ElementIds.assignElementId(publicKeyLink_, ElementIds.HYPERLINKLABEL_SSH_SHOW_PUBLIC_KEY);
+
       linkPanel.add(publicKeyLink_);
       captionPanel.add(publicKeyLink_);
       captionPanel.setCellHorizontalAlignment(
@@ -76,6 +82,9 @@ public class SshKeyWidget extends Composite
       SmallButton createKeyButton = new SmallButton();
       createKeyButton.setText(constants_.createKeyButtonLabel());
       createKeyButton.addClickHandler(event -> showCreateKeyDialog());
+      
+      ElementIds.assignElementId(createKeyButton, ElementIds.BUTTON_SSH_KEY_CREATE);
+
       sshButtonPanel.add(createKeyButton);
       panel.add(sshButtonPanel);
 

@@ -5,7 +5,7 @@
 @external rstudio-themes-dark, rstudio-themes-dark-grey;
 
 /* Considered these for the light latch background color as well. Ended up with #e7e8ea which
-   is the value hard coded for .rstudio-themes-flat .gwt-TabLayoutPanelTabs in themeStyles.css
+   is the value hard coded for .gwt-TabLayoutPanelTabs in themeStyles.css
 
 @eval THEME_DEFAULT_INACTIVE org.rstudio.core.client.theme.ThemeColors.defaultInactiveBackground;
 @eval THEME_LIGHT_CONTROL_BORDER org.rstudio.core.client.theme.ThemeColors.lightControlBorder;

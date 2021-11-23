@@ -92,6 +92,28 @@ public class DesktopMenuCallback implements MenuCallback
       callbacks.setCommandChecked(commandId, checked);
    }-*/;
 
+   public static final void setCommandShortcut(String commandId, String shortcut)
+   {
+      setCommandShortcutImpl(commandId, shortcut, MENU_CALLBACKS);
+   }
+
+   private native static final void setCommandShortcutImpl(String commandId, String shortcut, JavaScriptObject callbacks)
+   /*-{
+      callbacks.setCommandShortcut(commandId, shortcut);
+   }-*/;
+
+   public static final void commitCommandShortcuts()
+   {
+      commitCommandShortcutsImpl(MENU_CALLBACKS);
+   }
+
+   private native static final void commitCommandShortcutsImpl(JavaScriptObject callbacks)
+   /*-{
+      // MAY NOT BE DEFINED
+      if (callbacks.commitCommandShortcuts)
+         callbacks.commitCommandShortcuts();
+   }-*/;
+
    public native static final void setMainMenuEnabled(boolean enabled)
    /*-{
        if ($wnd.desktopMenuCallback)

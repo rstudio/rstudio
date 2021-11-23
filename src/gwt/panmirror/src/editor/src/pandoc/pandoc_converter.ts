@@ -39,6 +39,7 @@ import { ExtensionManager } from '../editor/editor-extensions';
 
 import { pandocToProsemirror } from './pandoc_to_prosemirror';
 import { pandocFromProsemirror } from './pandoc_from_prosemirror';
+import { isParagraphNode } from '../api/paragraph';
 
 export type PandocLineWrapping = 'none' | 'column' | 'sentence';
 
@@ -240,7 +241,7 @@ function disabledFormatOptions(format: string, pandocFormat: PandocFormat, doc: 
   // if there are tables with inline R code then disable grid tables (as the inline
   // R code will mess up the column boundaries)
   if (haveTableCellsWithInlineRcode(doc) || 
-     (!haveMultiBlockTableCells(doc) && pandocFormat.extensions.pipe_tables)) {
+     (!gridTablesRequired(doc) && pandocFormat.extensions.pipe_tables)) {
     disabledTableTypes += '-grid_tables';
   }
 
@@ -255,10 +256,26 @@ function disabledFormatOptions(format: string, pandocFormat: PandocFormat, doc: 
   return disabledTableTypes;
 }
 
-function haveMultiBlockTableCells(doc: ProsemirrorNode) {
+function gridTablesRequired(doc: ProsemirrorNode) {
   const schema = doc.type.schema;
   const isTableCell = (node: ProsemirrorNode) => node.type === schema.nodes.table_cell || node.type === schema.nodes.table_header;
-  return findChildren(doc, isTableCell).some(cell => cell.node.childCount > 1);
+  return findChildren(doc, isTableCell).some(cell => {
+    // various things require grid tables (basically anyting that requires embedded newlines)
+
+    // multiple blocks
+    if (cell.node.childCount > 1) {
+      return true;
+    }
+
+    // non paragraph block
+    if (!isParagraphNode(cell.node.firstChild)) {
+      return true;
+    }
+
+    // paragraph with hard break
+    const paraNode = cell.node.firstChild!;
+    return findChildren(paraNode, node => node.type === schema.nodes.hard_break).length > 0;
+  }); 
 }
 
 function wrapOptions(options: PandocWriterOptions) {

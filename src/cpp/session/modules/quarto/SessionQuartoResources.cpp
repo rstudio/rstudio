@@ -50,7 +50,7 @@ void handleQuartoResources(const http::Request& request, http::Response* pRespon
 Error initialize()
 {
    QuartoConfig config = quartoConfig();
-   if (config.installed)
+   if (config.enabled)
    {
       return module_context::registerUriHandler(kQuartoResourcesPath, handleQuartoResources);
    }
