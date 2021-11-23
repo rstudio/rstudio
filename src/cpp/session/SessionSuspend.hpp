@@ -27,7 +27,6 @@ namespace suspend {
 const char * const kChildProcess = "A child process is running";
 const char * const kExecuting = "R is executing";
 const char * const kConnection = "A connection is active";
-const char * const kOverlay = "overlay";
 const char * const kExternalPointer = "Active external data pointer";
 const char * const kActiveJob = "An active job is running";
 const char * const kCommandPrompt = "Incomplete command prompt entered";
