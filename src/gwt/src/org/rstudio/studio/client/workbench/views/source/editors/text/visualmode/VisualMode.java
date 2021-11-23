@@ -714,13 +714,9 @@ public class VisualMode implements VisualModeEditorSync,
       
       // disable commands
       disableForVisualMode(
-        // Disabled since diagnostics aren't active in visual mode
-        commands_.showDiagnosticsActiveDocument(),
-
         // Disabled since we can't meaningfully select instances in several
         // embedded editors simultaneously
         commands_.findSelectAll(),
-
 
         // Disabled since we don't have line numbers in the visual editor
         commands_.goToLine()
