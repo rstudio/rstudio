@@ -444,7 +444,7 @@ std::string mostSignificantTimeAgo(boost::posix_time::ptime before, boost::posix
    }
 
    // determine the most significant non-zero time resolution
-   if (diff <= boost::posix_time::minutes(1))
+   if (diff < boost::posix_time::minutes(2))
       return ""; // Stay quiet if not enough time has passed
    if (diff < boost::posix_time::hours(1))
       return std::to_string(diff.minutes()) + " minutes ago";
