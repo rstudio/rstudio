@@ -13,17 +13,11 @@
  *
  */
 
-#include <r/RInterface.hpp>
+#include <r/RExec.hpp>
+#include <r/RSexp.hpp>
 
-extern "C" {
-
-typedef struct RCNTXT {
-   struct RCNTXT *nextcontext;
-} RCNTXT, *context;
-
-int Rf_framedepth(RCNTXT* pContext);
-
-} // extern "C"
+using namespace rstudio;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace r {
@@ -31,13 +25,11 @@ namespace session {
 
 bool isBusy()
 {
-   // sanity check
-   if (R_GlobalContext == NULL)
-      return false;
-
-   // are there any R frames in the global context?
-   // if so, conclude this is because R is busy
-   return Rf_framedepth((RCNTXT*) R_GlobalContext);
+   // sys.calls() will return NULL if there are no calls on the stack
+   r::sexp::Protect protect;
+   SEXP callsSEXP = R_NilValue;
+   Error error = r::exec::RFunction("sys.calls").call(&callsSEXP, &protect);
+   return callsSEXP != R_NilValue;
 }
 
 } // namespace session
