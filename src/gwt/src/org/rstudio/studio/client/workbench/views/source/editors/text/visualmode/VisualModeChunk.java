@@ -420,7 +420,7 @@ public class VisualModeChunk
       chunkEditor.setMinLines(1);
 
       // Begin linting the chunk
-      lintManager_ = new LintManager(new VisualModeLintSource(this));
+      lintManager_ = new LintManager(new VisualModeLintSource(this), releaseOnDismiss_);
 
       chunk_ = chunk;
    }

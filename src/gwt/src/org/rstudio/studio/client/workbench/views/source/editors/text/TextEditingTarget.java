@@ -518,7 +518,7 @@ public class TextEditingTarget implements
 
       docDisplay_ = docDisplay;
       dirtyState_ = new DirtyState(docDisplay_, false);
-      lintManager_ = new LintManager(new TextEditingTargetLintSource(this));
+      lintManager_ = new LintManager(new TextEditingTargetLintSource(this), releaseOnDismiss_);
       prefs_ = prefs;
       state_ = state;
       compilePdfHelper_ = new TextEditingTargetCompilePdfHelper(docDisplay_);

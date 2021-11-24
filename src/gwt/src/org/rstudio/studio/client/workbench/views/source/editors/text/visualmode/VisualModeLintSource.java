@@ -49,7 +49,10 @@ public class VisualModeLintSource implements LintSource
    @Override
    public void withSavedDocument(boolean fullSave, Command onComplete)
    {
-      // TODO: Do we need to save? Maybe not since we're providing code?
+      // The TextEditingTargetLintSource needs to save the document prior to linting because
+      // the server works with the saved copy in the source database. But this lint source
+      // works with unsaved (per-chunk) data, so we don't need to perform a save before
+      // triggering the lint.
       onComplete.execute();
    }
 

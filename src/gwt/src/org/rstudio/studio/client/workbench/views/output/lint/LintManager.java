@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint;
 
+import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
@@ -46,6 +47,8 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
+
+import java.util.List;
 
 public class LintManager
 {
@@ -95,7 +98,7 @@ public class LintManager
       return false;
    }
 
-   public LintManager(LintSource source)
+   public LintManager(LintSource source, List<HandlerRegistration> releaseOnDismiss)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       source_ = source;
@@ -160,8 +163,7 @@ public class LintManager
          }
       });
 
-      // TODO: Do we need this for visual mode chunks?
-      eventBus_.addHandler(
+      releaseOnDismiss.add(eventBus_.addHandler(
             SourceFileSaveCompletedEvent.TYPE,
             new SourceFileSaveCompletedEvent.Handler()
       {
@@ -175,7 +177,7 @@ public class LintManager
             if (userPrefs_.diagnosticsOnSave().getValue())
                lint(false, true, false);
          }
-      });
+      }));
    }
 
    public void relintAfterDelay(int delayMills)
