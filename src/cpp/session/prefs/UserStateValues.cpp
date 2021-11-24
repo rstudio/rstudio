@@ -348,6 +348,19 @@ core::Error UserStateValues::setQuartoWebsiteSyncEditor(bool val)
    return writePref("quarto_website_sync_editor", val);
 }
 
+/**
+ * Build Quarto editor tools (yaml.js) on the fly when requested.
+ */
+bool UserStateValues::quartoBuildEditorTools()
+{
+   return readPref<bool>("quarto_build_editor_tools");
+}
+
+core::Error UserStateValues::setQuartoBuildEditorTools(bool val)
+{
+   return writePref("quarto_build_editor_tools", val);
+}
+
 std::vector<std::string> UserStateValues::allKeys()
 {
    return std::vector<std::string>({
@@ -376,6 +389,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kZoteroApiKey,
       kZoteroDataDir,
       kQuartoWebsiteSyncEditor,
+      kQuartoBuildEditorTools,
    });
 }
    
