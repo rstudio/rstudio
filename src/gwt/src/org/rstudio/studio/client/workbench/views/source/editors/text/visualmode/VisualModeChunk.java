@@ -854,7 +854,7 @@ public class VisualModeChunk
             else if (StringUtil.equals(item.getType(), "info"))
                clazz += ThemeStyles.INSTANCE.gutterInfo();
             else if (StringUtil.equals(item.getType(), "warning"))
-               clazz += ThemeStyles.INSTANCE.gutterInfo();
+               clazz += ThemeStyles.INSTANCE.gutterWarning();
             List<VisualModeChunkRowState> states = setRowState(
                item.getStartRow() + 1,
                item.getStartRow() + 1,
