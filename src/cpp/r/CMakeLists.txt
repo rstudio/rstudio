@@ -33,6 +33,7 @@ set (R_SOURCE_FILES
    RSourceManager.cpp
    RUtil.cpp
    RVersionInfo.cpp
+   session/RBusy.cpp
    session/RClientMetrics.cpp
    session/RClientState.cpp
    session/RConsoleActions.cpp
