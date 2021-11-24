@@ -172,7 +172,7 @@ void logBlockingOps(core::json::Array blockingOps)
    blocked.addProperty("blocking_operations", blockingOps.writeFormatted());
    blocked.addProperty("blocking_ops_start_time", boost::posix_time::to_simple_string(s_blockingTimestamp));
 
-   core::log::logErrorAsWarning(blocked);
+   core::log::logErrorAsInfo(blocked);
 }
 
 /**
