@@ -73,18 +73,14 @@ namespace {
 FilePath defaultLogPathImpl()
 {
 #ifdef RSTUDIO_SERVER
-   // server: prefer user data directory if we're not running as root
    if (core::system::effectiveUserIsRoot())
    {
-      FilePath defaultPath("/var/log/rstudio/rstudio-server");
-      Error error = defaultPath.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-
-      return defaultPath;
+      // server: root uses default documented logging directory
+      return FilePath("/var/log/rstudio/rstudio-server");
    }
    else
    {
+      // server: prefer user data directory if we're not running as root
       return core::system::xdg::userDataDir().completePath("log");
    }
 #else
