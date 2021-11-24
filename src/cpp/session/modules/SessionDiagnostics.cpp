@@ -640,7 +640,8 @@ void setFileLocalParseOptions(const std::wstring& rCode,
 ParseResults parse(const std::wstring& rCode,
                    const FilePath& origin,
                    const std::string& documentId = std::string(),
-                   bool isExplicit = false)
+                   bool isExplicit = false,
+                   bool isFragment = false)
 {
    ParseResults results;
    ParseOptions options;
@@ -651,17 +652,22 @@ ParseResults parse(const std::wstring& rCode,
    options.setCheckArgumentsToRFunctionCalls(
             prefs::userPrefs().checkArgumentsToRFunctionCalls());
    
+   options.setRecordStyleLint(
+            prefs::userPrefs().styleDiagnostics());
+
    options.setCheckUnexpectedAssignmentInFunctionCall(
             prefs::userPrefs().checkUnexpectedAssignmentInFunctionCall());
    
-   options.setWarnIfVariableIsDefinedButNotUsed(
-            isExplicit && prefs::userPrefs().warnVariableDefinedButNotUsed());
-   
-   options.setWarnIfNoSuchVariableInScope(
-            prefs::userPrefs().warnIfNoSuchVariableInScope());
-   
-   options.setRecordStyleLint(
-            prefs::userPrefs().styleDiagnostics());
+   // Disable these options when linting code fragments, since we don't have enough 
+   // context to know whether the variable is defined or used elsewhere
+   if (!isFragment)
+   {
+      options.setWarnIfVariableIsDefinedButNotUsed(
+               isExplicit && prefs::userPrefs().warnVariableDefinedButNotUsed());
+      
+      options.setWarnIfNoSuchVariableInScope(
+               prefs::userPrefs().warnIfNoSuchVariableInScope());
+   }
    
    bool noLint = false;
    setFileLocalParseOptions(rCode, &options, &noLint);
@@ -785,6 +791,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    std::string content;
    bool showMarkersTab = false;
    bool isExplicit = false;
+   bool isFragment = false;
    Error error = json::readParams(request.params,
                                   &documentId,
                                   &documentPath,
@@ -822,12 +829,18 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       if (error)
          return error;
    }
+   else
+   {
+      // If we were given content, lint this as a fragment
+      isFragment = true;
+   }
    
    ParseResults results = diagnostics::parse(
             string_utils::utf8ToWide(content),
             origin,
             documentId,
-            isExplicit);
+            isExplicit,
+            isFragment);
    
    pResponse->setResult(lintAsJson(results.lint()));
    
