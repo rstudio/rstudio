@@ -25,11 +25,10 @@ namespace session {
 
 bool isBusy()
 {
-   // sys.calls() will return NULL if there are no calls on the stack
-   r::sexp::Protect protect;
-   SEXP callsSEXP = R_NilValue;
-   Error error = r::exec::RFunction("sys.calls").call(&callsSEXP, &protect);
-   return callsSEXP != R_NilValue;
+   // conclude that R is busy if there are R frames on the stack
+   int numFrames = 0;
+   Error error = r::exec::RFunction("base:::sys.nframe").call(&numFrames);
+   return numFrames != 0;
 }
 
 } // namespace session
