@@ -43,6 +43,11 @@
 
 #define kRStudioUserHomePage              "RSTUDIO_USER_HOME_PAGE"
 
+#define kSessionSslCertEnvVar             "RS_SESSION_SSL_CERT"
+#define kSessionSslCertKeyEnvVar          "RS_SESSION_SSL_CERT_KEY"
+#define kSessionSslCertPathEnvVar         "RS_SESSION_SSL_CERT_PATH"
+#define kSessionSslCertKeyPathEnvVar      "RS_SESSION_SSL_CERT_KEY_PATH"
+
 #define kProgramModeSessionOption         "program-mode"
 #define kRStudioProgramMode               "RSTUDIO_PROGRAM_MODE"
 #define kSessionProgramModeDesktop        "desktop"
@@ -75,6 +80,8 @@
 #define kWwwAddressSessionOption          "www-address"
 #define kWwwPortSessionOption             "www-port"
 #define kWwwResusePorts                   "www-reuse-ports"
+#define kSessionSslCertOption             "cert"
+#define kSessionSslCertKeyOption          "cert-key"
 #define kTerminalPortOption               "terminal-port"
 #define kSessionSuspendOnIncompleteStatement "session-suspend-on-incomplete-statement"
 #define kSessionAsyncRpcEnabled           "session-async-rpc-enabled"

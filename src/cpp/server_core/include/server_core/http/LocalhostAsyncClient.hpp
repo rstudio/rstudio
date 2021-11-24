@@ -59,8 +59,10 @@ class LocalhostAsyncClient : public core::http::TcpIpAsyncClient
 public:
    LocalhostAsyncClient(boost::asio::io_service& ioService,
                         const std::string& address,
-                        const std::string& port)
-      : core::http::TcpIpAsyncClient(ioService, address, port)
+                        const std::string& port,
+                        const boost::posix_time::time_duration& connectionTimeout =
+                                               boost::posix_time::time_duration(boost::posix_time::pos_infin))
+      : core::http::TcpIpAsyncClient(ioService, address, port, connectionTimeout)
    {
    }
 
@@ -82,8 +84,13 @@ public:
    LocalhostAsyncClientSsl(boost::asio::io_service& ioService,
                            const std::string& address,
                            const std::string& port,
-                           bool verifySslCerts)
-      : core::http::TcpIpAsyncClientSsl(ioService, address, port, verifySslCerts)
+                           bool verifySslCerts,
+                           const std::string& certificateAuthority = std::string(),
+                           const boost::posix_time::time_duration& connectionTimeout =
+                                      boost::posix_time::time_duration(boost::posix_time::pos_infin),
+                           const std::string& hostname = std::string(),
+                           const std::string& verifyAddress = std::string())
+      : core::http::TcpIpAsyncClientSsl(ioService, address, port, verifySslCerts, certificateAuthority, connectionTimeout, hostname, verifyAddress)
    {
    }
 

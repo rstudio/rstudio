@@ -69,14 +69,32 @@ namespace log {
 namespace {
 
 // pick default log path location
-#if defined(__APPLE__)
-const FilePath kDefaultLogPath = core::system::xdg::userDataDir().completePath("log");
-#elif defined(RSTUDIO_SERVER)
-const FilePath kDefaultLogPath("/var/log/rstudio/rstudio-server");
+
+FilePath defaultLogPathImpl()
+{
+#ifdef RSTUDIO_SERVER
+   if (core::system::effectiveUserIsRoot())
+   {
+      // server: root uses default documented logging directory
+      return FilePath("/var/log/rstudio/rstudio-server");
+   }
+   else
+   {
+      // server: prefer user data directory if we're not running as root
+      return core::system::xdg::userDataDir().completePath("log");
+   }
 #else
-// desktop - store logs under user dir
-const FilePath kDefaultLogPath = core::system::xdg::userDataDir().completePath("log");
+   // desktop: always stored in user data directory
+   return core::system::xdg::userDataDir().completePath("log");
 #endif
+}
+
+FilePath& defaultLogPath()
+{
+   static FilePath instance = defaultLogPathImpl();
+   return instance;
+}
+
 
 std::string logLevelToString(LogLevel logLevel)
 {
@@ -166,7 +184,7 @@ struct LoggerOptionsVisitor : boost::static_visitor<>
 
    void setDefaultFileLoggerOptions()
    {
-      FileLogOptions defaultOptions(kDefaultLogPath);
+      FileLogOptions defaultOptions(defaultLogPath());
       profile_.addParams(
          kLogDir, defaultOptions.getDirectory().getAbsolutePath(),
          kLogFileMode, defaultOptions.getFileMode(),
@@ -234,12 +252,12 @@ struct LogDirVisitor : boost::static_visitor<FilePath>
 {
    FilePath operator()(const StdErrLogOptions& options)
    {
-      return FilePath(kDefaultLogPath);
+      return FilePath(defaultLogPath());
    }
 
    FilePath operator()(const SysLogOptions& options)
    {
-      return FilePath(kDefaultLogPath);
+      return FilePath(defaultLogPath());
    }
 
    FilePath operator()(const FileLogOptions& options)
@@ -279,7 +297,7 @@ LogOptions::LogOptions(const std::string& executableName,
 
 FilePath LogOptions::defaultLogDirectory()
 {
-   return kDefaultLogPath;
+   return defaultLogPath();
 }
 
 void LogOptions::initProfile()

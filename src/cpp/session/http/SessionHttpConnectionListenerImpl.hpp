@@ -81,6 +81,11 @@ class HttpConnectionListenerImpl : public HttpConnectionListener,
 protected:
    HttpConnectionListenerImpl() : started_(false) {}
 
+   void setSslContext(boost::shared_ptr<boost::asio::ssl::context> context)
+   {
+      sslContext_ = context;
+   }
+
    // COPYING: boost::noncopyable
    
 public:
@@ -207,6 +212,7 @@ private:
       // create the connection
       ptrNextConnection_.reset( new HttpConnectionImpl<ProtocolType>(
             ioService(),
+            sslContext_,
             boost::bind(
                  &HttpConnectionListenerImpl<ProtocolType>::onHeadersParsed,
                  this,
@@ -404,6 +410,8 @@ private:
    bool started_;
    // Set when the first get_events request is received - ensure async rpc not used until client is ready to listen
    bool eventsActive_;
+
+   boost::shared_ptr<boost::asio::ssl::context> sslContext_;
 };
 
 } // namespace session

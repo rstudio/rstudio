@@ -525,6 +525,18 @@ public class UserStateAccessor extends Prefs
          false);
    }
 
+   /**
+    * Build Quarto editor tools (yaml.js) on the fly when requested.
+    */
+   public PrefValue<Boolean> quartoBuildEditorTools()
+   {
+      return bool(
+         "quarto_build_editor_tools",
+         "Build Quarto Editor Tools", 
+         "Build Quarto editor tools (yaml.js) on the fly when requested.", 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("context_id"))
@@ -577,6 +589,8 @@ public class UserStateAccessor extends Prefs
          zoteroDataDir().setValue(layer, source.getString("zotero_data_dir"));
       if (source.hasKey("quarto_website_sync_editor"))
          quartoWebsiteSyncEditor().setValue(layer, source.getBool("quarto_website_sync_editor"));
+      if (source.hasKey("quarto_build_editor_tools"))
+         quartoBuildEditorTools().setValue(layer, source.getBool("quarto_build_editor_tools"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -606,6 +620,7 @@ public class UserStateAccessor extends Prefs
       prefs.add(zoteroApiKey());
       prefs.add(zoteroDataDir());
       prefs.add(quartoWebsiteSyncEditor());
+      prefs.add(quartoBuildEditorTools());
       return prefs;
    }
    

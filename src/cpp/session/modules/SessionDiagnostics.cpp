@@ -40,6 +40,7 @@
 
 #include "shiny/SessionShiny.hpp"
 
+#include <boost/scope_exit.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/range/adaptor/map.hpp>
@@ -835,6 +836,30 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       isFragment = true;
    }
    
+   // detach .conflicts environment from the search path
+   // https://github.com/rstudio/rstudio/issues/10093
+   r::sexp::Protect protect;
+   SEXP envirsSEXP = R_NilValue;
+   Error detachError = r::exec::RFunction(".rs.detachConflicts")
+         .call(&envirsSEXP, &protect);
+   if (error)
+      LOG_ERROR(detachError);
+
+   // if this succeeded, then re-attach it after
+   BOOST_SCOPE_EXIT(&envirsSEXP)
+   {
+      if (envirsSEXP != R_NilValue)
+      {
+         Error attachError = r::exec::RFunction(".rs.attachConflicts")
+               .addParam(envirsSEXP)
+               .call();
+
+         if (attachError)
+            LOG_ERROR(attachError);
+      }
+   }
+   BOOST_SCOPE_EXIT_END
+
    ParseResults results = diagnostics::parse(
             string_utils::utf8ToWide(content),
             origin,

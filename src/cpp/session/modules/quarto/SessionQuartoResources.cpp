@@ -15,8 +15,12 @@
 
 #include "SessionQuartoResources.hpp"
 
+#include <core/PerformanceTimer.hpp>
+
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionQuarto.hpp>
+
+#include <session/prefs/UserState.hpp>
 
 #define kQuartoResourcesPath "/quarto/resources/"
 
@@ -41,7 +45,25 @@ void handleQuartoResources(const http::Request& request, http::Response* pRespon
    QuartoConfig config = quartoConfig();
    FilePath resourcesPath(config.resources_path);
    FilePath quartoResource = resourcesPath.completeChildPath(path);
-   pResponse->setCacheableFile(quartoResource, request);
+
+   // check for special quarto_build_editor_tools mode
+   if (prefs::userState().quartoBuildEditorTools())
+   {
+      // build yaml.js on the fly
+      if ((path == "editor/tools/yaml/yaml.js") &&
+          resourcesPath.completeChildPath("editor/tools/yaml/tree-sitter-yaml.wasm").exists())
+      {
+         quartoBuildjs();
+      }
+
+      // never cache quarto resources in build mode
+      pResponse->setNoCacheHeaders();
+      pResponse->setFile(quartoResource, request);
+   }
+   else
+   {
+      pResponse->setCacheableFile(quartoResource, request);
+   }
 }
 
 } // anonymous namespace
