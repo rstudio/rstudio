@@ -1989,42 +1989,45 @@ input[type="checkbox"]:checked:before {
    border-bottom-right-radius: 4px;
 }
 
-.ace_gutter-cell.ace_info {
+.ace_gutter-cell.ace_info, .gutterInfo {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: INFO;
    background-size: 16px 14px;
 }
 
-.ace_gutter-cell.ace_warning {
+.ace_gutter-cell.ace_warning, .gutterWarning {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: WARNING;
    background-size: 16px 14px;
 }
 
-.ace_gutter-cell.ace_error {
+.ace_gutter-cell.ace_error, .gutterError {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: ERROR;
    background-size: 16px 14px;
 }
 
-.editor_dark .ace_gutter-cell.ace_info {
+.editor_dark .ace_gutter-cell.ace_info,
+.editor_dark .gutterInfo {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: INFODARK;
    background-size: 16px 14px;
 }
 
-.editor_dark .ace_gutter-cell.ace_warning {
+.editor_dark .ace_gutter-cell.ace_warning,
+.editor_dark .gutterWarning {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: WARNINGDARK;
    background-size: 16px 14px;
 }
 
-.editor_dark .ace_gutter-cell.ace_error {
+.editor_dark .ace_gutter-cell.ace_error,
+.editor_dark .gutterWarning {
    background-repeat: no-repeat;
    background-position: 2px center;
    background-image: ERRORDARK;

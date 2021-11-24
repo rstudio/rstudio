@@ -641,7 +641,8 @@ void setFileLocalParseOptions(const std::wstring& rCode,
 ParseResults parse(const std::wstring& rCode,
                    const FilePath& origin,
                    const std::string& documentId = std::string(),
-                   bool isExplicit = false)
+                   bool isExplicit = false,
+                   bool isFragment = false)
 {
    ParseResults results;
    ParseOptions options;
@@ -652,17 +653,22 @@ ParseResults parse(const std::wstring& rCode,
    options.setCheckArgumentsToRFunctionCalls(
             prefs::userPrefs().checkArgumentsToRFunctionCalls());
    
+   options.setRecordStyleLint(
+            prefs::userPrefs().styleDiagnostics());
+
    options.setCheckUnexpectedAssignmentInFunctionCall(
             prefs::userPrefs().checkUnexpectedAssignmentInFunctionCall());
    
-   options.setWarnIfVariableIsDefinedButNotUsed(
-            isExplicit && prefs::userPrefs().warnVariableDefinedButNotUsed());
-   
-   options.setWarnIfNoSuchVariableInScope(
-            prefs::userPrefs().warnIfNoSuchVariableInScope());
-   
-   options.setRecordStyleLint(
-            prefs::userPrefs().styleDiagnostics());
+   // Disable these options when linting code fragments, since we don't have enough 
+   // context to know whether the variable is defined or used elsewhere
+   if (!isFragment)
+   {
+      options.setWarnIfVariableIsDefinedButNotUsed(
+               isExplicit && prefs::userPrefs().warnVariableDefinedButNotUsed());
+      
+      options.setWarnIfNoSuchVariableInScope(
+               prefs::userPrefs().warnIfNoSuchVariableInScope());
+   }
    
    bool noLint = false;
    setFileLocalParseOptions(rCode, &options, &noLint);
@@ -783,11 +789,14 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    
    std::string documentId;
    std::string documentPath;
+   std::string content;
    bool showMarkersTab = false;
    bool isExplicit = false;
+   bool isFragment = false;
    Error error = json::readParams(request.params,
                                   &documentId,
                                   &documentPath,
+                                  &content,
                                   &showMarkersTab,
                                   &isExplicit);
    
@@ -797,28 +806,36 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
-   // Try to get the contents from the database
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
-   error = get(documentId, pDoc);
-   
-   // don't log on error here (it's possible that we might attempt to lint a
-   // document immediately after a suspend-resume, and so we fail to get the
-   // contents of that document)
-   if (error)
-      return error;
-   
    FilePath origin = module_context::resolveAliasedPath(documentPath);
    
    // Don't lint files that belong to unmonitored projects
    if (module_context::isUnmonitoredPackageSourceFile(origin))
       return Success();
    
-   // Extract R code from various R-code-containing filetypes.
-   std::string content;
-   error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &content);
-   if (error)
-      return error;
+   // Extract R code from various R-code-containing filetypes, unless we were
+   // given content in the argument
+   if (content.empty())
+   {
+      // Try to get the contents from the database
+      boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+      error = get(documentId, pDoc);
 
+      // don't log on error here (it's possible that we might attempt to lint a
+      // document immediately after a suspend-resume, and so we fail to get the
+      // contents of that document)
+      if (error)
+         return error;
+
+      error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &content);
+      if (error)
+         return error;
+   }
+   else
+   {
+      // If we were given content, lint this as a fragment
+      isFragment = true;
+   }
+   
    // detach .conflicts environment from the search path
    // https://github.com/rstudio/rstudio/issues/10093
    r::sexp::Protect protect;
@@ -843,12 +860,12 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    }
    BOOST_SCOPE_EXIT_END
 
-
    ParseResults results = diagnostics::parse(
             string_utils::utf8ToWide(content),
             origin,
             documentId,
-            isExplicit);
+            isExplicit,
+            isFragment);
    
    pResponse->setResult(lintAsJson(results.lint()));
    
@@ -856,7 +873,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    {
       using namespace module_context;
       SourceMarkerSet markers = asSourceMarkerSet(results.lint(),
-                                                  core::FilePath(pDoc->path()));
+                                                  core::FilePath(documentPath));
       showSourceMarkers(markers, MarkerAutoSelectNone);
    }
    
@@ -1073,7 +1090,7 @@ core::Error initialize()
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionDiagnostics.R"))
          (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument));
-   
+
    return initBlock.execute();
 
 }

@@ -39,13 +39,22 @@
 }
 
 /*
- * Style for execution host (shows line by line execution status to left of chunk)
+ * Style for gutter host. The gutter host shows either line-by-line execution status (when code is running)
+ * or lint errors (when it isn't).
  */
-.exec
+.gutter
 {
     position: absolute;
     top: 3px;
     left: -2px;
+}
+
+.gutterIcon
+{
+    left: -18px;
+    width: 16px;
+    margin-top: -1px;
+    background-position: 1px 0px;
 }
 
 /*
@@ -68,7 +77,7 @@
 /*
  * Show/hide affected UI elements when chunk code is collaped
  */
-.pm-ace-collapsed .exec,
+.pm-ace-collapsed .gutter,
 .pm-ace-collapsed .toolbar
 {
     display: none;
