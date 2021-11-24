@@ -201,7 +201,7 @@ public class ChunkOutputGallery extends Composite
 
       if (StringUtil.isNullOrEmpty(htmlOutput))
          return;
-      final ChunkOutputFrame frame = new ChunkOutputFrame("Chunk Feedback");
+      final ChunkOutputFrame frame = new ChunkOutputFrame(constants_.chunkFeedback());
       callbackContent.add(frame);
       viewer_.add(callbackContent);
 
@@ -492,6 +492,7 @@ public class ChunkOutputGallery extends Composite
    private final ArrayList<ChunkOutputPage> pages_;
    private final ChunkOutputPresenter.Host host_;
    private final ChunkOutputSize chunkOutputSize_;
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 
    private ChunkConsolePage console_;
    private SimplePanel content_;
