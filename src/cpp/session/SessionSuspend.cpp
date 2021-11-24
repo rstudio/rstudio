@@ -17,14 +17,13 @@
 #include <signal.h>
 #include <unordered_set>
 
-#include "SessionSuspend.hpp"
 #include "SessionConsoleInput.hpp"
 
 #include <session/SessionConstants.hpp>
 #include <session/SessionHttpConnectionListener.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
-#include <session/SessionConstants.hpp>
+#include <session/SessionSuspend.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>

@@ -19,7 +19,6 @@
 #include "SessionHttpMethods.hpp"
 #include "SessionConsoleInput.hpp"
 #include "SessionMainProcess.hpp"
-#include "SessionSuspend.hpp"
 #include "SessionClientInit.hpp"
 #include "SessionInit.hpp"
 #include "SessionUriHandlers.hpp"
@@ -57,6 +56,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/SessionSuspend.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 

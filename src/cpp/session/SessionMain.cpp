@@ -116,7 +116,6 @@
 #include "SessionInit.hpp"
 #include "SessionMainProcess.hpp"
 #include "SessionRpc.hpp"
-#include "SessionSuspend.hpp"
 #include "SessionOfflineService.hpp"
 
 #include <session/SessionRUtil.hpp>
@@ -211,6 +210,7 @@
 #include "modules/SessionSVN.hpp"
 
 #include <session/SessionConsoleProcess.hpp>
+#include <session/SessionSuspend.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjects.hpp>

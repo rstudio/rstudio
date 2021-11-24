@@ -15,7 +15,6 @@
 
 #include "SessionClientInit.hpp"
 #include "SessionInit.hpp"
-#include "SessionSuspend.hpp"
 #include "SessionHttpMethods.hpp"
 #include "SessionDirs.hpp"
 
@@ -71,6 +70,7 @@
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionQuarto.hpp>
+#include <session/SessionSuspend.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>

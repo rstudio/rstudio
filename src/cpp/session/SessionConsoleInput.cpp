@@ -22,7 +22,6 @@
 #include "SessionInit.hpp"
 #include "SessionHttpMethods.hpp"
 #include "SessionMainProcess.hpp"
-#include "SessionSuspend.hpp"
 
 #include "modules/SessionConsole.hpp"
 #include "modules/SessionReticulate.hpp"
@@ -33,6 +32,7 @@
 #include "modules/overlay/SessionOverlay.hpp"
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionSuspend.hpp>
 
 #include <r/session/RSession.hpp>
 #include <r/ROptions.hpp>
