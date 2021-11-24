@@ -26,11 +26,12 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionConstants.hpp>
 
-#include "shared_core/Error.hpp"
+#include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 
-#include <r/session/RSession.hpp>
 #include <r/RExec.hpp>
+#include <r/session/RBusy.hpp>
+#include <r/session/RSession.hpp>
 
 namespace rstudio {
 namespace session {
@@ -509,23 +510,18 @@ void handleUSR1(int unused)
 // and the 'force' flag is set
 void handleUSR2(int unused)
 {
-   // note whether R was interrupted
-   if (console_input::executing())
-      s_forceSuspendInterruptedR = 1;
-
-   bool isLauncherSession = options().getBoolOverlayOption(kLauncherSessionOption);
-
-   if (!isLauncherSession || console_input::executing())
+   // if R is busy executing code, we'll need to interrupt and force suspend
+   //
+   // for launcher sessions, we only want to interrupt user code to fix
+   // an excess logging issue caused by interrupting RStudio code that
+   // takes longer to execute in docker containers
+   if (console_input::executing() || r::session::isBusy())
    {
-      // interrupt R
-      // for launcher sessions, we only want to interrupt user code to fix
-      // an excess logging issue caused by interrupting RStudio code that
-      // takes longer to execute in docker containers
-      // when not in launcher session mode, always interrupt
+      s_forceSuspendInterruptedR = 1;
       rstudio::r::exec::setInterruptsPending(true);
    }
 
-   // note that a suspend is being forced. 
+   // note that a suspend is being forced
    s_forceSuspend = 1;
 }
 

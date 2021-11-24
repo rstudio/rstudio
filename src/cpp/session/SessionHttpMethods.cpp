@@ -189,6 +189,7 @@ bool isMethod(boost::shared_ptr<HttpConnection> ptrConnection,
 Error startHttpConnectionListener()
 {
    initializeHttpConnectionListener();
+
    Error error = httpConnectionListener().start();
    if (error)
       return error;
@@ -200,8 +201,11 @@ Error startHttpConnectionListener()
             static_cast<TcpIpHttpConnectionListener&>(httpConnectionListener());
 
       boost::asio::ip::tcp::endpoint endpoint = listener.getLocalEndpoint();
+
+      std::string protocol = listener.isSsl() ? " https" : "";
+
       std::cout << "Listener bound to address " << endpoint.address().to_string()
-                << " port " << endpoint.port() << std::endl;
+                << " port " << endpoint.port() << protocol << std::endl;
 
       // set the standalone port so rpostback and others know how to
       // connect back into the session process

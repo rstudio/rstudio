@@ -92,6 +92,7 @@ namespace prefs {
 #define kZoteroApiKey "zotero_api_key"
 #define kZoteroDataDir "zotero_data_dir"
 #define kQuartoWebsiteSyncEditor "quarto_website_sync_editor"
+#define kQuartoBuildEditorTools "quarto_build_editor_tools"
 
 class UserStateValues: public Preferences
 {
@@ -246,6 +247,12 @@ public:
     */
    bool quartoWebsiteSyncEditor();
    core::Error setQuartoWebsiteSyncEditor(bool val);
+
+   /**
+    * Build Quarto editor tools (yaml.js) on the fly when requested.
+    */
+   bool quartoBuildEditorTools();
+   core::Error setQuartoBuildEditorTools(bool val);
 
 };
 

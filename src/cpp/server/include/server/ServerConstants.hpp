@@ -23,6 +23,8 @@
 #define kServerDataDirEnvVar          "RS_SERVER_DATA_DIR"
 #define kServerTmpDirEnvVar           "RS_SERVER_TMP_DIR"
 
+#define kServerSessionSslCertCommonName "RS_SESSION_CN"
+
 #include <core/http/AuthCookies.hpp>
 
 #endif // SERVER_CONSTANTS_HPP
