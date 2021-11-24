@@ -22,6 +22,7 @@ import java.util.Map;
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SpanElement;
@@ -36,12 +37,15 @@ import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkCallbacks;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -92,7 +96,8 @@ public class VisualModeChunk
    public interface Styles extends CssResource
    {
       String host();
-      String exec();
+      String gutter();
+      String gutterIcon();
       String summary();
       String editor();
       String editorHost();
@@ -118,6 +123,7 @@ public class VisualModeChunk
       markdownIndex_ = index;
       releaseOnDismiss_ = new ArrayList<>();
       destroyHandlers_ = new ArrayList<>();
+      lint_ = JsArray.createArray().cast();
 
       // Instantiate CSS style
       ChunkStyle style = GWT.create(ChunkStyle.class);
@@ -170,7 +176,6 @@ public class VisualModeChunk
       // editors)
       editor_.setUseWrapMode(true);
       
-    
       // Special comment continuation
       releaseOnDismiss_.add(editor_.addKeyDownHandler(new KeyDownHandler()
       {
@@ -205,6 +210,19 @@ public class VisualModeChunk
             }
          }));
 
+      // Track UI pref for line numbers. We need to redraw lint when this changes since showing line numbers causes
+      // Ace to draw lint markers inside the editor gutter.
+      releaseOnDismiss_.add(RStudioGinjector.INSTANCE.getUserPrefs().visualMarkdownCodeEditorLineNumbers().bind(
+         new CommandWithArg<Boolean>()
+         {
+            @Override
+            public void execute(Boolean showLineNumbers)
+            {
+               showLint(lint_);
+            }
+         }
+      ));
+
       // Provide the editor's container element
       host_ = Document.get().createDivElement();
       host_.setClassName(style_.host());
@@ -234,9 +252,9 @@ public class VisualModeChunk
 
       // Create an element to host all of the execution status widgets
       // (VisualModeChunkRowState).
-      execHost_ = Document.get().createDivElement();
-      execHost_.setClassName(style_.exec());
-      host_.appendChild(execHost_);
+      gutterHost_ = Document.get().createDivElement();
+      gutterHost_.setClassName(style_.gutter());
+      host_.appendChild(gutterHost_);
       
       if (output != null)
       {
@@ -401,6 +419,9 @@ public class VisualModeChunk
       chunkEditor.setMaxLines(1000);
       chunkEditor.setMinLines(1);
 
+      // Begin linting the chunk
+      lintManager_ = new LintManager(new VisualModeLintSource(this), releaseOnDismiss_);
+
       chunk_ = chunk;
    }
    
@@ -563,15 +584,19 @@ public class VisualModeChunk
    }
    
    /**
-    * Sets the execution state of a range of lines in the chunk.
+    * Sets the row state of a range of lines in the chunk.
     * 
     * @param start The first line of the range, counting from the first line in
     *   the chunk
     * @param end The last line of the range
-    * @param state the execution state to apply
+    * @param state The state to apply
+    * @param clazz The CSS class to use to display the state, if any
+    *
+    * @return A set of the row states that were created or modified
     */
-   public void setLineExecState(int start, int end, int state)
+   public List<VisualModeChunkRowState> setRowState(int start, int end, int state, String clazz)
    {
+      ArrayList<VisualModeChunkRowState> states = new ArrayList<>();
       for (int i = start; i <= end; i++)
       {
          if (state == ChunkRowExecState.LINE_NONE)
@@ -589,18 +614,22 @@ public class VisualModeChunk
             {
                // Adding state to a widget we already track
                rowState_.get(i).setState(state);
+               states.add(rowState_.get(i));
             }
             else if (state != ChunkRowExecState.LINE_RESTING)
             {
                // Create a new state widget if we have a non-resting state to
                // draw
                VisualModeChunkRowState row = 
-                     new VisualModeChunkRowState(state, editor_, i);
-               row.attach(execHost_);
+                     new VisualModeChunkRowState(state, editor_, i, clazz);
+               row.attach(gutterHost_);
+               states.add(row);
                rowState_.put(i, row);
             }
          }
       }
+
+      return states;
    }
    
    /**
@@ -770,7 +799,77 @@ public class VisualModeChunk
          performWithSyncedSelection(command);
       });
    }
-   
+
+   /**
+    * Returns the parent editor.
+    *
+    * @return The parent text editing target.
+    */
+   public TextEditingTarget getParentEditingTarget()
+   {
+      return target_;
+   }
+
+   /**
+    * Shows lint results in the chunk.
+    *
+    * @param lint The lint results to show.
+    */
+   public void showLint(JsArray<LintItem> lint)
+   {
+      // Save lint so we can redraw it when necessary
+      lint_ = lint;
+
+      // Show damage in the editor itself
+      editor_.showLint(lint);
+
+      // If there is any non-lint status, don't draw any lint markers. The row state also shows execution status
+      // and we want to avoid showing both at once.
+      for (ChunkRowExecState state: rowState_.values())
+      {
+         if (state.getState() != ChunkRowExecState.LINE_LINT &&
+             state.getState() != ChunkRowExecState.LINE_NONE)
+         {
+            return;
+         }
+      }
+
+      // Clean out the row state in preparation for showing lint.
+      for (ChunkRowExecState state: rowState_.values())
+      {
+         state.detach();
+      }
+      rowState_.clear();
+
+      // When line numbers are enabled, gutter symbols show up in the editor itself representing linting issues.
+      // When they aren't, we need to show those symbols outside the chunk.
+      if (!RStudioGinjector.INSTANCE.getUserPrefs().visualMarkdownCodeEditorLineNumbers().getValue())
+      {
+         for (int i = 0; i < lint.length(); i++)
+         {
+            LintItem item = lint.get(i);
+            String clazz = style_.gutterIcon() + " ";
+            if (StringUtil.equals(item.getType(), "error"))
+               clazz += ThemeStyles.INSTANCE.gutterError();
+            else if (StringUtil.equals(item.getType(), "info"))
+               clazz += ThemeStyles.INSTANCE.gutterInfo();
+            else if (StringUtil.equals(item.getType(), "warning"))
+               clazz += ThemeStyles.INSTANCE.gutterWarning();
+            List<VisualModeChunkRowState> states = setRowState(
+               item.getStartRow() + 1,
+               item.getStartRow() + 1,
+               ChunkRowExecState.LINE_LINT,
+               clazz);
+
+            // Apply title to elements so lint text appears when hovered
+            for (VisualModeChunkRowState state: states)
+            {
+               state.setTitle(item.getText());
+            }
+         }
+      }
+   }
+
    private void performWithSyncedSelection(CommandWithArg<Position> command)
    {
       // Ensure we have a scope. This should always exist since we sync the
@@ -1057,12 +1156,13 @@ public class VisualModeChunk
    private boolean active_;
    private PanmirrorUIChunkCallbacks chunkCallbacks_;
    private Styles style_;
+   private JsArray<LintItem> lint_;
 
    private final Element element_;
    private final DivElement outputHost_;
    private final DivElement host_;
-   private final DivElement execHost_;
    private final DivElement chunkHost_;
+   private final DivElement gutterHost_;
    private final DivElement editorHost_;
    private final PanmirrorUIChunkEditor chunk_;
    private final AceEditor editor_;
@@ -1073,6 +1173,7 @@ public class VisualModeChunk
    private final VisualModeEditorSync sync_;
    private final EditingTargetCodeExecution codeExecution_;
    private final VisualModeCollapseToggle collapse_;
+   private final LintManager lintManager_;
    private final DivElement summary_;
    private final Map<Integer,VisualModeChunkRowState> rowState_;
    private final TextEditingTarget target_;
