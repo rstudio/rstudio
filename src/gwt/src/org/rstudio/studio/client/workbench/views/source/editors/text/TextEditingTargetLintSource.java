@@ -88,11 +88,11 @@ public class TextEditingTargetLintSource implements LintSource
    {
       if (target_.isVisualEditorActive())
       {
-         target_.getDocDisplay().showLint(lint);
+         target_.getVisualMode().showLint(lint);
       }
       else
       {
-         target_.getVisualMode().showLint(lint);
+         target_.getDocDisplay().showLint(lint);
       }
    }
 

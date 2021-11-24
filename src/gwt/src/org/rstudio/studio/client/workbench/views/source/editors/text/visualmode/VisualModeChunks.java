@@ -353,7 +353,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
                 item.getStartRow() <= scope.getEnd().getRow())
             {
                // Adjust the offsets of the lint item to correlate with the chunk editor
-               int offset = scope.getBodyStart().getRow();
+               int offset = scope.getPreamble().getRow();
                item.setStartRow(item.getStartRow() - offset);
                item.setEndRow(item.getEndRow() - offset);
 
