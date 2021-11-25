@@ -25,6 +25,7 @@ import { Expected, ok, err } from '../core/expected';
 import { logger } from '../core/logger';
 import { Err, success, safeError } from '../core/err';
 import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
+import { createStandaloneErrorDialog } from './utils';
 
 let kLdLibraryPathVariable : string;
 if (process.platform === 'darwin') {
@@ -42,7 +43,7 @@ interface REnvironment {
 
 function showRNotFoundError(error?: Error): void {
   const message = error?.message ?? 'Could not locate an R installation on the system.';
-  dialog.showErrorBox('R not found', message);
+  void createStandaloneErrorDialog('R not found', message);
 }
 
 function executeCommand(command: string): Expected<string> {
