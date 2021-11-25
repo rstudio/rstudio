@@ -29,14 +29,14 @@ module.exports = {
     'no-empty-function': 1, // will only show a warning
     '@typescript-eslint/no-empty-function': 1,
 
-    "indent": ["error", 4, {"SwitchCase": 1}],
+    "indent": ["error", 2, {"SwitchCase": 1}],
     "quotes": ["error", "single"],
     "semi":   ["error", "always"],
     "max-len": [
       "error",
       {
-          "code": 90,
-          "tabWidth": 4,
+          "code": 120,
+          "tabWidth": 2,
           "ignoreUrls": true
       }
     ],
