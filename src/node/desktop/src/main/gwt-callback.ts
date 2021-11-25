@@ -14,8 +14,6 @@
  */
 
 // TODO clean this up
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
 
 import { ipcMain, dialog, BrowserWindow, webFrameMain, shell, screen } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';

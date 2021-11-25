@@ -18,7 +18,8 @@
     "testint": "mocha -c --config ./test/int/mocharc.json",
     "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json",
     "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
-    "win-package": "yarn run package && ts-node scripts/package-helper"
+    "win-package": "yarn run package && ts-node scripts/package-helper",
+    "format": "./scripts/create-prettier-ignore-file.sh && yarn prettier --write . --ignore-path .prettier_and_git_ignores"
   },
   "config": {
     "forge": "./forge.config.js"
@@ -46,15 +47,18 @@
     "electron": "^15.3.2",
     "electron-mocha": "^10.1.0",
     "eslint": "^8.2.0",
+    "eslint-config-prettier": "^8.3.0",
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.3",
     "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-promise": "^5.1.1",
     "fork-ts-checker-webpack-plugin": "^6.4.0",
     "mocha": "^8.4.0",
     "node-loader": "^2.0.0",
     "nyc": "^15.1.0",
     "playwright": "^1.16.3",
+    "prettier": "^2.4.1",
     "recursive-copy": "^2.0.13",
     "sinon": "^12.0.1",
     "style-loader": "^3.3.1",

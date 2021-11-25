@@ -16,7 +16,6 @@
 import { BrowserWindow } from 'electron';
 import { EventEmitter } from 'events';
 
-/* eslint-disable @typescript-eslint/no-empty-function */
 export class DesktopActivation extends EventEmitter {
   static LAUNCH_FIRST_SESSION = 'desktop-activation-launch_first_session';
   static LAUNCH_ERROR = 'desktop-activation-launch_error';

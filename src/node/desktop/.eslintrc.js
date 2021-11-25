@@ -22,13 +22,25 @@ module.exports = {
   "extends": [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
+    "prettier"
   ],
 
   "rules": {
+    'no-empty-function': 1, // will only show a warning
+    '@typescript-eslint/no-empty-function': 1,
 
-    "indent": ["error", 2],
+    "indent": ["error", 2, {"SwitchCase": 1}],
     "quotes": ["error", "single"],
     "semi":   ["error", "always"],
+    "max-len": [
+      "error",
+      {
+          "code": 120,
+          "tabWidth": 2,
+          "ignoreUrls": true
+      }
+    ],
+    "prettier/prettier": "warn",
 
     "@typescript-eslint/await-thenable": ["error"],
     "@typescript-eslint/no-base-to-string": ["error"],
