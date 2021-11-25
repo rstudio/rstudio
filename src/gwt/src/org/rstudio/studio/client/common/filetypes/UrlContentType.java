@@ -14,15 +14,17 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
 public class UrlContentType extends EditableFileType
 {
    public UrlContentType()
    {
-      super("urlcontent", "Generic Content",
+      super("urlcontent", constants_.genericContentLabel(),
             new ImageResource2x(FileIconResources.INSTANCE.iconText2x()));
    }
 
@@ -31,4 +33,5 @@ public class UrlContentType extends EditableFileType
    {
       assert false : "urlcontent doesn't apply to filesystem files";
    }
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }
