@@ -73,4 +73,3 @@ describe('file-serializer', () => {
     tmpFile.removeSync();
   });
 });
- 

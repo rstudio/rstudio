@@ -22,7 +22,6 @@ import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
 import { err, Expected, ok } from './expected';
 
-
 /** An Error containing 'path' that triggered the error */
 export class FilePathError extends Error {
   path: string;
@@ -49,9 +48,7 @@ function normalizeSeparatorsNative(path: string) {
  * regular file, etc.)
  */
 export class FilePath {
-
-  constructor(private path:string = '') {
-  }
+  constructor(private path: string = '') {}
 
   /**
    * Get string representation of object, for debugging purposes
@@ -63,7 +60,7 @@ export class FilePath {
   /**
    * Compare this object with another; returns true if they refer to the same
    * path (exact match).
-   * 
+   *
    * Note that paths which resolve to the same path, but are not stored the
    * same, are considered different -- for example, /a/b and /a/b/../b are
    * not considered identical.
@@ -76,7 +73,6 @@ export class FilePath {
    * Creates a path in which the user home path will be replaced by the ~ alias.
    */
   static createAliasedPath(filePath: FilePath, userHomePath: FilePath): string {
-
     // first, retrieve and normalize paths
     const file = filePath.getAbsolutePath();
     const home = userHomePath.getAbsolutePath();
@@ -95,7 +91,6 @@ export class FilePath {
     // we computed a relative path; prefix it with tilde
     const aliased = path.join(homePathLeafAlias, relative);
     return normalizeSeparators(aliased);
-
   }
 
   /**
@@ -117,19 +112,19 @@ export class FilePath {
 
   /**
    * Checks whether the specified path exists.
-   * 
+   *
    * Returns Promise<boolean>; do not use without 'await' or * .then().
-   * 
+   *
    * For example, this can give the WRONG result:
-   * 
+   *
    * if (FilePath.existsAync(file)) { WRONG USAGE always true, a Promise is truthy }
    *
    * Use either:
-   * 
+   *
    * if (await FilePath.existsAsync(file)) { ...}
-   * 
+   *
    * or
-   * 
+   *
    * if (FilePath.existsAsync(file).then((result) => { if (result) { ... } }
    */
   static async existsAsync(filePath: string): Promise<boolean> {
@@ -148,7 +143,7 @@ export class FilePath {
   }
 
   /**
-   * Checks whether the two provided files are equal, ignoring case. Two files are equal 
+   * Checks whether the two provided files are equal, ignoring case. Two files are equal
    * if their absolute paths are equal.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -233,7 +228,7 @@ export class FilePath {
     // revert to the specified path if it exists, otherwise
     // take the user home path from the system
     let safePath = revertToPath;
-    if (! await FilePath.existsAsync(safePath.path)) {
+    if (!(await FilePath.existsAsync(safePath.path))) {
       safePath = userHomePath();
     }
 
@@ -267,8 +262,7 @@ export class FilePath {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   changeFileMode(fileModeStr: string, setStickyBit = false): Err {
-    if (process.platform === 'win32')
-      return success(); // no-op on Windows
+    if (process.platform === 'win32') return success(); // no-op on Windows
 
     throw Error('changeFileMode is NYI');
   }
@@ -412,7 +406,7 @@ export class FilePath {
    * Creates this directory, if it does not exist.
    */
   async ensureDirectory(): Promise<Err> {
-    if (!await this.existsAsync()) {
+    if (!(await this.existsAsync())) {
       return this.createDirectory();
     } else {
       return success();
@@ -440,19 +434,19 @@ export class FilePath {
 
   /**
    * Checks whether this file path exists in the file system.
-   * 
+   *
    * Returns Promise<boolean>; do not use without 'await' or * .then().
-   * 
+   *
    * For example, this can give the WRONG result:
-   * 
+   *
    * if (file.existsAync()) { WRONG USAGE always true, a Promise is truthy }
    *
    * Use either:
-   * 
+   *
    * if (await file.existsAsync()) { ...}
-   * 
+   *
    * or
-   * 
+   *
    * if (file.existsAsync().then((result) => { if (result) { ... } }
    */
   async existsAsync(): Promise<boolean> {
@@ -504,7 +498,6 @@ export class FilePath {
    * canonical location on disk can be obtained.
    */
   async getCanonicalPath(): Promise<string> {
-    
     if (this.isEmpty()) {
       return '';
     }
@@ -516,7 +509,6 @@ export class FilePath {
     }
 
     return '';
-
   }
 
   /**
@@ -589,8 +581,7 @@ export class FilePath {
     try {
       const stats = fs.statSync(this.path);
       return stats.mtimeMs;
-    }
-    catch {
+    } catch {
       return 0;
     }
   }
@@ -648,7 +639,7 @@ export class FilePath {
     if (this.path.endsWith('/') || this.path.endsWith('\\')) {
       return '';
     }
-    
+
     const components = path.parse(this.path);
     return components.name;
   }
@@ -691,7 +682,7 @@ export class FilePath {
   }
 
   /**
-   * Checks whether this file path points to the same location in the filesystem as 
+   * Checks whether this file path points to the same location in the filesystem as
    * the specified file path.
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -750,15 +741,14 @@ export class FilePath {
    *  or if the two paths are equal; false otherwise.
    */
   isWithin(scopePath: FilePath): boolean {
-
     // Technically, we contain ourselves.
     if (this.equals(scopePath)) {
       return true;
     }
 
-    // Try to resolve scopePath within our parent 
+    // Try to resolve scopePath within our parent
     const parent = path.resolve(scopePath.path);
-    const child  = path.resolve(this.path);
+    const child = path.resolve(this.path);
 
     // Form relative path.
     const relative = path.relative(parent, child);
@@ -767,7 +757,6 @@ export class FilePath {
     }
 
     return !relative.startsWith('..') && !path.isAbsolute(relative);
-
   }
 
   /**

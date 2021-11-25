@@ -64,7 +64,7 @@ describe('FilePath', () => {
 
   describe('Constructor checks', () => {
     it('Should store and return the supplied path', () => {
-      const path1= 'hello/world';
+      const path1 = 'hello/world';
       const path2 = '~/foo';
       const path3 = '/once/upon/a/time';
       const path4 = '~';
@@ -144,7 +144,7 @@ describe('FilePath', () => {
       assert.isTrue(f.existsSync());
       assert.isNotEmpty(f.getCanonicalPathSync());
     });
-    it('getCanonicalPathSync should return an empty path for a path that doesn\'t exist', () => {
+    it("getCanonicalPathSync should return an empty path for a path that doesn't exist", () => {
       const f = new FilePath('/some/really/bogus/path');
       assert.isFalse(f.existsSync());
       assert.isEmpty(f.getCanonicalPathSync());
@@ -163,7 +163,7 @@ describe('FilePath', () => {
       assert.isTrue(await f.existsAsync());
       assert.isNotEmpty(await f.getCanonicalPath());
     });
-    it('getCanonicalPath should return an empty path for a path that doesn\'t exist', async () => {
+    it("getCanonicalPath should return an empty path for a path that doesn't exist", async () => {
       const f = new FilePath('/some/really/bogus/path');
       assert.isFalse(await f.existsAsync());
       const result = await f.getCanonicalPath();
@@ -211,7 +211,7 @@ describe('FilePath', () => {
       assert.equal(new FilePath('noExtension').getStem(), 'noExtension');
       assert.equal(new FilePath('.hiddenFile.txt').getStem(), '.hiddenFile');
       assert.equal(new FilePath('.hiddenFileNoExtension').getStem(), '.hiddenFileNoExtension');
-      
+
       // You could debate that this should only return 'file'. Including test here to show current behavior
       assert.equal(new FilePath('/path/to/file.extra.txt').getStem(), 'file.extra');
 
@@ -229,7 +229,7 @@ describe('FilePath', () => {
       assert.strictEqual(currentPath.getAbsolutePath(), cwd.getAbsolutePath());
       assert.strictEqual(realpathSync(cwd.getAbsolutePath()), realpathSync(process.cwd()));
     });
-    it('safeCurrentPathSync should change to supplied safe path if it exists if cwd doesn\'t exist', () => {
+    it("safeCurrentPathSync should change to supplied safe path if it exists if cwd doesn't exist", () => {
       const origDir = new FilePath(process.cwd());
       // create a temp folder, chdir to it, then delete it
       let testDir = getTestDir().getAbsolutePath();
@@ -238,9 +238,8 @@ describe('FilePath', () => {
       testDir = realpathSync(testDir);
       try {
         fs.rmdirSync(testDir);
-      }
-      catch (error: unknown) {
-        // On Windows, trying to remove current-working-directory may fail so can't 
+      } catch (error: unknown) {
+        // On Windows, trying to remove current-working-directory may fail so can't
         // execute rest of this test case; cleanup and exit
         assert.isTrue(process.platform === 'win32');
         assert.doesNotThrow(() => process.chdir(origDir.getAbsolutePath()));
@@ -252,7 +251,7 @@ describe('FilePath', () => {
       assert.strictEqual(realpathSync(origDir.getAbsolutePath()), realpathSync(process.cwd()));
       assert.strictEqual(realpathSync(currentPath.getAbsolutePath()), realpathSync(process.cwd()));
     });
-    it('safeCurrentPathSync should change to home folder when both cwd and revert paths don\'t exist', () => {
+    it("safeCurrentPathSync should change to home folder when both cwd and revert paths don't exist", () => {
       const origDir = new FilePath(process.cwd());
       // create a temp folder, chdir to it, then delete it
       let testDir = getTestDir().getAbsolutePath();
@@ -261,9 +260,8 @@ describe('FilePath', () => {
       testDir = realpathSync(testDir);
       try {
         fs.rmdirSync(testDir);
-      }
-      catch (error: unknown) {
-        // On Windows, trying to remove current-working-directory may fail so can't 
+      } catch (error: unknown) {
+        // On Windows, trying to remove current-working-directory may fail so can't
         // execute rest of this test case; cleanup and exit
         assert.isTrue(process.platform === 'win32');
         assert.doesNotThrow(() => process.chdir(origDir.getAbsolutePath()));
@@ -281,7 +279,7 @@ describe('FilePath', () => {
       assert.strictEqual(currentPath.getAbsolutePath(), cwd.getAbsolutePath());
       assert.strictEqual(await realpath(cwd.getAbsolutePath()), await realpath(process.cwd()));
     });
-    it('safeCurrentPath should change to supplied safe path if it exists if cwd doesn\'t exist', async () => {
+    it("safeCurrentPath should change to supplied safe path if it exists if cwd doesn't exist", async () => {
       const origDir = new FilePath(process.cwd());
       // create a temp folder, chdir to it, then delete it
       let testDir = getTestDir().getAbsolutePath();
@@ -290,9 +288,8 @@ describe('FilePath', () => {
       testDir = await realpath(testDir);
       try {
         await fsPromises.rmdir(testDir);
-      }
-      catch (error: unknown) {
-        // On Windows, trying to remove current-working-directory may fail so can't 
+      } catch (error: unknown) {
+        // On Windows, trying to remove current-working-directory may fail so can't
         // execute rest of this test case; cleanup and exit
         assert.isTrue(process.platform === 'win32');
         assert.doesNotThrow(() => process.chdir(origDir.getAbsolutePath()));
@@ -304,7 +301,7 @@ describe('FilePath', () => {
       assert.strictEqual(await realpath(origDir.getAbsolutePath()), await realpath(process.cwd()));
       assert.strictEqual(await realpath(currentPath.getAbsolutePath()), await realpath(process.cwd()));
     });
-    it('safeCurrentPath should change to home folder when both cwd and revert paths don\'t exist', async () => {
+    it("safeCurrentPath should change to home folder when both cwd and revert paths don't exist", async () => {
       const origDir = new FilePath(process.cwd());
       // create a temp folder, chdir to it, then delete it
       let testDir = getTestDir().getAbsolutePath();
@@ -313,9 +310,8 @@ describe('FilePath', () => {
       testDir = await realpath(testDir);
       try {
         await fsPromises.rmdir(testDir);
-      }
-      catch (error: unknown) {
-        // On Windows, trying to remove current-working-directory may fail so can't 
+      } catch (error: unknown) {
+        // On Windows, trying to remove current-working-directory may fail so can't
         // execute rest of this test case; cleanup and exit
         assert.isTrue(process.platform === 'win32');
         assert.doesNotThrow(() => process.chdir(origDir.getAbsolutePath()));
@@ -329,22 +325,22 @@ describe('FilePath', () => {
   });
 
   describe('Path existence checks', () => {
-    it('isEmpty should detect if this object\'s path is empty', () => {
+    it("isEmpty should detect if this object's path is empty", () => {
       assert.isTrue(new FilePath().isEmpty());
     });
-    it('existsSync should detect when object\'s path exists', () => {
+    it("existsSync should detect when object's path exists", () => {
       assert.isTrue(new FilePath(os.tmpdir()).existsSync());
     });
     it('existsSync should return false for empty path', () => {
       assert.isFalse(new FilePath('').existsSync());
     });
-    it('existsSync should detect when object\'s path doesn\'t exist', () => {
+    it("existsSync should detect when object's path doesn't exist", () => {
       assert.isFalse(new FilePath(bogusPath).existsSync());
     });
     it('existsSync should detect when a supplied path exists', () => {
       assert.isTrue(FilePath.existsSync(os.tmpdir()));
     });
-    it('existsSync should detect when a supplied path doesn\'t exist', () => {
+    it("existsSync should detect when a supplied path doesn't exist", () => {
       assert.isFalse(FilePath.existsSync(bogusPath));
     });
     it('existsSync should return false for existence of a null path', () => {
@@ -353,16 +349,16 @@ describe('FilePath', () => {
     it('exists should return false for empty path', async () => {
       assert.isFalse(await new FilePath().existsAsync());
     });
-    it('exists should detect when object\'s path exists', async () => {
+    it("exists should detect when object's path exists", async () => {
       assert.isTrue(await new FilePath(os.tmpdir()).existsAsync());
     });
-    it('exists should detect when object\'s path doesn\'t exist', async () => {
+    it("exists should detect when object's path doesn't exist", async () => {
       assert.isFalse(await new FilePath(bogusPath).existsAsync());
     });
     it('exists should detect when a supplied path exists', async () => {
       assert.isTrue(await FilePath.existsAsync(os.tmpdir()));
     });
-    it('exists should detect when a supplied path doesn\'t exist', async () => {
+    it("exists should detect when a supplied path doesn't exist", async () => {
       assert.isFalse(await FilePath.existsAsync(bogusPath));
     });
     it('exists should return false for existence of a null path', async () => {
@@ -565,12 +561,12 @@ describe('FilePath', () => {
       const result = FilePath.resolveAliasedPathSync('', home);
       assert.strictEqual(result.getAbsolutePath(), home.getAbsolutePath());
     });
-    it('resolveAliasedPathSync should resolve \'~\' as home', () => {
+    it("resolveAliasedPathSync should resolve '~' as home", () => {
       const home = userHomePath();
       const result = FilePath.resolveAliasedPathSync('~', home);
       assert.strictEqual(result.getAbsolutePath(), home.getAbsolutePath());
     });
-    it('resolveAliasedPathSync should replace \'~\' in path', () => {
+    it("resolveAliasedPathSync should replace '~' in path", () => {
       const start = '~/foo/bar';
       const result = FilePath.resolveAliasedPathSync(start, userHomePath());
       const resultStr = result.getAbsolutePath();
@@ -610,7 +606,6 @@ describe('FilePath', () => {
   });
 
   describe('Aliased paths', () => {
-
     it('Paths are aliased correctly', () => {
       const path = new FilePath('/Users/user/path/to/project');
       const home = new FilePath('/Users/user');
@@ -645,7 +640,6 @@ describe('FilePath', () => {
       const aliasedPath = FilePath.createAliasedPath(path, home);
       assert(new FilePath(aliasedPath).getAbsolutePath() === path.getAbsolutePath());
     });
-
   });
 
   describe('Remove file and folders', () => {
@@ -703,12 +697,12 @@ describe('FilePath', () => {
   });
 
   describe('enumerate children', () => {
-    it('getChildren returns error if it doesn\'t exist', () => {
+    it("getChildren returns error if it doesn't exist", () => {
       const testDir = getTestDir();
       const children: FilePath[] = [];
       assert(isFailure(testDir.getChildren(children)));
     });
-    it('getChildren returns error if it isn\' a directory', () => {
+    it("getChildren returns error if it isn' a directory", () => {
       const testDir = getTestDir();
       testDir.createDirectorySync();
       const fileName = testDir.completeChildPath(randomString());

@@ -19,9 +19,9 @@ import { saveAndClear, restore } from '../unit-utils';
 
 describe('detect-r', () => {
   const vars: Record<string, string> = {
-    RSTUDIO_WHICH_R: ''
+    RSTUDIO_WHICH_R: '',
   };
- 
+
   beforeEach(() => {
     saveAndClear(vars);
   });

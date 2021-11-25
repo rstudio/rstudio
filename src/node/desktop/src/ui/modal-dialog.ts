@@ -18,12 +18,10 @@ import { err, Expected, ok } from '../core/expected';
 import { safeError } from '../core/err';
 
 export abstract class ModalDialog<T> extends BrowserWindow {
-
   abstract onShowModal(): Promise<T>;
 
   private readonly widgetUrl: string;
   constructor(url: string, preload: string) {
-    
     super({
       minWidth: 400,
       minHeight: 400,
@@ -32,7 +30,7 @@ export abstract class ModalDialog<T> extends BrowserWindow {
       show: false,
       webPreferences: {
         preload: preload,
-      }
+      },
     });
 
     // initialize instance variables
@@ -43,23 +41,18 @@ export abstract class ModalDialog<T> extends BrowserWindow {
     this.setMinimizable(false);
     this.setMaximizable(false);
     this.setFullScreenable(false);
-
-
   }
 
   async showModal(): Promise<Expected<T>> {
-    
     try {
       const result = await this.showModalImpl();
       return ok(result);
     } catch (error: unknown) {
       return err(safeError(error));
     }
-
   }
 
   async showModalImpl(): Promise<T> {
-
     // load the associated HTML
     await this.loadURL(this.widgetUrl);
 
@@ -68,7 +61,5 @@ export abstract class ModalDialog<T> extends BrowserWindow {
 
     const result = await this.onShowModal();
     return result;
-
   }
-
 }

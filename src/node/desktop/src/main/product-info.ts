@@ -38,6 +38,6 @@ export function productInfo(): ProductInfo {
     RSTUDIO_R_PATCH_VERSION_REQUIRED: 1,
     RSTUDIO_PACKAGE_OS: 'Unknown OS',
     RSTUDIO_GIT_COMMIT: '6a2652d1273439fa3615c8608f38591016cd490b',
-    RSTUDIO_RELEASE_NAME: 'Prairie Trillium'
+    RSTUDIO_RELEASE_NAME: 'Prairie Trillium',
   };
 }

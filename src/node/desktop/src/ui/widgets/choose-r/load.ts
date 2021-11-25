@@ -19,9 +19,9 @@ import './styles.css';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare global {
-interface Window {
-  callbacks: Callbacks,
-}
+  interface Window {
+    callbacks: Callbacks;
+  }
 }
 
 // ensure that the custom select box is only enabled when the associated
@@ -43,7 +43,6 @@ const buttonCancel = document.getElementById('button-cancel') as HTMLButtonEleme
 const buttonBrowse = document.getElementById('button-browse') as HTMLButtonElement;
 
 buttonOk.addEventListener('click', () => {
-
   const useDefault32Radio = document.getElementById('use-default-32') as HTMLInputElement;
   if (useDefault32Radio.checked) {
     window.callbacks.useDefault32bit();
@@ -65,7 +64,6 @@ buttonOk.addEventListener('click', () => {
     window.callbacks.use(selection);
     window.close();
   }
-
 });
 
 buttonCancel.addEventListener('click', () => {

@@ -21,13 +21,13 @@ import EventEmitter from 'events';
  * after startup.
  */
 export function showPlaceholderMenu(): void {
-  const addPlaceholderMenuItem = function(mainMenu: Menu, label: string): void {
+  const addPlaceholderMenuItem = function (mainMenu: Menu, label: string): void {
     mainMenu.append(new MenuItem({ submenu: new Menu(), label: label }));
   };
 
   const mainMenuStub = new Menu();
   if (process.platform === 'darwin') {
-    mainMenuStub.append(new MenuItem({role: 'appMenu'}));
+    mainMenuStub.append(new MenuItem({ role: 'appMenu' }));
   }
   addPlaceholderMenuItem(mainMenuStub, 'File');
   addPlaceholderMenuItem(mainMenuStub, 'Edit');
@@ -79,7 +79,7 @@ export class MenuCallback extends EventEmitter {
     ipcMain.on('menu_begin_main', () => {
       this.mainMenu = new Menu();
       if (process.platform === 'darwin') {
-        this.mainMenu.append(new MenuItem({role: 'appMenu'}));
+        this.mainMenu.append(new MenuItem({ role: 'appMenu' }));
       }
     });
 
@@ -110,21 +110,22 @@ export class MenuCallback extends EventEmitter {
       this.menuStack.push(subMenu);
     });
 
-    ipcMain.on('menu_add_command', (event, cmdId: string, label: string, tooltip: string,
-      shortcut: string, checkable: boolean
-    ) => {
-      this.addCommand(cmdId, label, tooltip, shortcut, checkable);
-    });
+    ipcMain.on(
+      'menu_add_command',
+      (event, cmdId: string, label: string, tooltip: string, shortcut: string, checkable: boolean) => {
+        this.addCommand(cmdId, label, tooltip, shortcut, checkable);
+      },
+    );
 
     ipcMain.on('menu_add_separator', () => {
-      const separator = new MenuItem({type: 'separator'});
+      const separator = new MenuItem({ type: 'separator' });
       this.addToCurrentMenu(separator);
     });
 
     ipcMain.on('menu_end', () => {
       if (this.lastWasDiagnostics) {
         this.lastWasDiagnostics = false;
-        this.addToCurrentMenu(new MenuItem({role: 'toggleDevTools'}));
+        this.addToCurrentMenu(new MenuItem({ role: 'toggleDevTools' }));
       }
 
       this.menuStack.pop();
@@ -134,7 +135,7 @@ export class MenuCallback extends EventEmitter {
 
         // add the Window menu on mac
         if (process.platform === 'darwin') {
-          this.mainMenu?.append(new MenuItem({role: 'windowMenu'}));
+          this.mainMenu?.append(new MenuItem({ role: 'windowMenu' }));
         }
       }
     });
@@ -150,8 +151,7 @@ export class MenuCallback extends EventEmitter {
       if (item) {
         item.visible = visible;
         const template = this.menuItemTemplates.get(item);
-        if (template)
-          template.visible = visible;
+        if (template) template.visible = visible;
       }
     });
 
@@ -160,8 +160,7 @@ export class MenuCallback extends EventEmitter {
       if (item) {
         item.enabled = enabled;
         const template = this.menuItemTemplates.get(item);
-        if (template)
-          template.enabled = enabled;
+        if (template) template.enabled = enabled;
       }
     });
 
@@ -170,8 +169,7 @@ export class MenuCallback extends EventEmitter {
       if (item) {
         item.checked = checked;
         const template = this.menuItemTemplates.get(item);
-        if (template)
-          template.checked = checked;
+        if (template) template.checked = checked;
       }
     });
 
@@ -184,8 +182,7 @@ export class MenuCallback extends EventEmitter {
       if (item) {
         item.label = label;
         const template = this.menuItemTemplates.get(item);
-        if (template)
-          template.label = label;
+        if (template) template.label = label;
       }
     });
 
@@ -203,17 +200,14 @@ export class MenuCallback extends EventEmitter {
       //   if the "commit" event is not called before then
       const item = this.getMenuItemById(commandId);
       if (item) {
-
         const template = this.menuItemTemplates.get(item);
-        if (!template)
-          return;
+        if (!template) return;
 
         const accelerator = this.convertShortcut(shortcut);
         template.accelerator = accelerator;
         this.setShortcutQueue.add({ ...template, accelerator });
 
-        if (this.setShortcutDebounceId) 
-          clearTimeout(this.setShortcutDebounceId);
+        if (this.setShortcutDebounceId) clearTimeout(this.setShortcutDebounceId);
 
         this.setShortcutDebounceId = setTimeout(() => {
           this.updateMenus(Array.from(this.setShortcutQueue.values()));
@@ -223,8 +217,7 @@ export class MenuCallback extends EventEmitter {
     });
 
     ipcMain.on('menu_commit_command_shortcuts', () => {
-      if (this.setShortcutDebounceId) 
-        clearTimeout(this.setShortcutDebounceId);
+      if (this.setShortcutDebounceId) clearTimeout(this.setShortcutDebounceId);
 
       this.updateMenus(Array.from(this.setShortcutQueue.values()));
       this.setShortcutQueue.clear();
@@ -239,21 +232,20 @@ export class MenuCallback extends EventEmitter {
    */
   updateMenus(items: MenuItemConstructorOptions[]): void {
     const mainMenu = this.mainMenu;
-    if (!mainMenu)
-      return;
+    if (!mainMenu) return;
 
     const newMenu = new Menu();
 
     const recursiveCopy = (currentMenu: Menu, targetMenu: Menu) => {
       for (const item of currentMenu.items) {
         const itemTemplate = this.menuItemTemplates.get(item);
-        if (!itemTemplate)  {
+        if (!itemTemplate) {
           // no itemTemplate found (separators, for example)
           targetMenu.append(item);
           continue;
         }
 
-        const foundTemplate = items.find(item => item.id === itemTemplate.id);
+        const foundTemplate = items.find((item) => item.id === itemTemplate.id);
         const newItemTemplate = { ...itemTemplate, ...foundTemplate };
 
         // remove the current entry, as it will be replaced later
@@ -278,7 +270,6 @@ export class MenuCallback extends EventEmitter {
 
         this.menuItemTemplates.set(newMenuItem, newItemTemplate);
         targetMenu.append(newMenuItem);
-
       }
     };
 
@@ -291,9 +282,12 @@ export class MenuCallback extends EventEmitter {
   addCommand(cmdId: string, label: string, tooltip: string, shortcut: string, checkable: boolean): void {
     const menuItemOpts: MenuItemConstructorOptions = {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      label: label, id: cmdId, click: (menuItem, browserWindow, event) => {
+      label: label,
+      id: cmdId,
+      click: (menuItem, browserWindow, event) => {
         this.emit(MenuCallback.COMMAND_INVOKED, menuItem.id);
-      }};
+      },
+    };
 
     if (checkable) {
       menuItemOpts.checked = false;
@@ -352,17 +346,19 @@ export class MenuCallback extends EventEmitter {
    * Convert RStudio shortcut string to Electron Accelerator
    */
   convertShortcut(shortcut: string | null): string {
-    if (!shortcut)
-      return '';
+    if (!shortcut) return '';
 
-    return shortcut.split('+').map(key => {
-      if (key === 'Cmd') {
-        return 'CommandOrControl';
-      } else if (key === 'Meta') {
-        return 'Command';
-      } else {
-        return key;
-      }
-    }).join('+');
+    return shortcut
+      .split('+')
+      .map((key) => {
+        if (key === 'Cmd') {
+          return 'CommandOrControl';
+        } else if (key === 'Meta') {
+          return 'Command';
+        } else {
+          return key;
+        }
+      })
+      .join('+');
   }
 }

@@ -17,9 +17,9 @@ import path from 'path';
 import util from 'util';
 
 interface LaunchArgs {
-  args?: string[],
-  cwd?: string,
-  executablePath?: string,
+  args?: string[];
+  cwd?: string;
+  executablePath?: string;
 }
 
 // Find path to RStudio entrypoint
@@ -51,7 +51,7 @@ export const setTimeoutPromise = util.promisify(setTimeout);
  * @returns Array of window titles
  */
 export async function getWindowTitles(electronApp: ElectronApplication): Promise<string[]> {
-  return electronApp.evaluate(async ({ BrowserWindow } ): Promise<string[]> => {
+  return electronApp.evaluate(async ({ BrowserWindow }): Promise<string[]> => {
     const titles = Array<string>();
     const windows = BrowserWindow.getAllWindows();
     for (const window of windows) {

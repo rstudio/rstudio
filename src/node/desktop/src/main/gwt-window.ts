@@ -21,14 +21,9 @@ import { nextHighest, nextLowest } from '../core/array-utils';
 import { DesktopBrowserWindow } from './desktop-browser-window';
 import { DesktopOptions } from './desktop-options';
 
-
 export abstract class GwtWindow extends DesktopBrowserWindow {
-
   // initialize zoom levels (synchronize with AppearancePreferencesPane.java)
-  zoomLevels = [
-    0.25, 0.50, 0.75, 0.80, 0.90,
-    1.00, 1.10, 1.25, 1.50, 1.75,
-    2.00, 2.50, 3.00, 4.00, 5.00];
+  zoomLevels = [0.25, 0.5, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0, 5.0];
 
   constructor(
     showToolbar: boolean,
@@ -39,10 +34,9 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
     opener?: WebContents,
     isRemoteDesktop = false,
     addedCallbacks: string[] = [],
-    existingWindow?: BrowserWindow
+    existingWindow?: BrowserWindow,
   ) {
-    super(showToolbar, adjustTitle, name, baseUrl, parent,
-      opener, isRemoteDesktop, addedCallbacks, existingWindow);
+    super(showToolbar, adjustTitle, name, baseUrl, parent, opener, isRemoteDesktop, addedCallbacks, existingWindow);
 
     this.window.on('focus', this.onActivated.bind(this));
   }
@@ -82,13 +76,14 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
     this.executeJavaScript(
       `if (window.desktopHooks)
            window.desktopHooks.isCommandEnabled('closeSourceDoc');
-         else false`)
+         else false`,
+    )
       .then((closeSourceDocEnabled) => {
         if (!(closeSourceDocEnabled as boolean)) {
           this.window.close();
         }
       })
-      .catch(error => logger().logError(error));
+      .catch((error) => logger().logError(error));
   }
 
   private setWindowZoomLevel(zoomLevel: number): void {

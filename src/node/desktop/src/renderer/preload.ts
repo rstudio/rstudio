@@ -24,13 +24,13 @@ import { getDesktopBridge } from './desktop-bridge';
  * The preload script is run in the renderer before our GWT code and enables
  * setting up a bridge between the main process and the renderer process via
  * the contextBridge mechanism.
- * 
+ *
  * Preload code has access to powerful node.js and Electron APIs even though
  * the renderer itself is configured with node disabled and context isolation.
- * 
+ *
  * Be careful to only expose the exact APIs desired; DO NOT expose general-purpose
  * IPC objects, etc.
- * 
+ *
  * Actual implementation happens in the main process, reached via ipcRenderer.
  */
 
@@ -38,19 +38,19 @@ import { getDesktopBridge } from './desktop-bridge';
 const apiKeys = removeDups(process.argv.slice(-1)[0].split('|'));
 for (const apiKey of apiKeys) {
   switch (apiKey) {
-  case 'desktop':
-    contextBridge.exposeInMainWorld(apiKey, getDesktopBridge());
-    break;
-  case 'desktopInfo':
-    contextBridge.exposeInMainWorld(apiKey, getDesktopInfoBridge());
-    break;
-  case 'desktopMenuCallback':
-    contextBridge.exposeInMainWorld(apiKey, getMenuBridge());
-    break;
-  // case 'remoteDesktop':
-  //   // TODO: RDP-only
-  //   break;
-  default:
-    console.error(`Preload ignoring unsupported apiKey: ${apiKey}`);
+    case 'desktop':
+      contextBridge.exposeInMainWorld(apiKey, getDesktopBridge());
+      break;
+    case 'desktopInfo':
+      contextBridge.exposeInMainWorld(apiKey, getDesktopInfoBridge());
+      break;
+    case 'desktopMenuCallback':
+      contextBridge.exposeInMainWorld(apiKey, getMenuBridge());
+      break;
+    // case 'remoteDesktop':
+    //   // TODO: RDP-only
+    //   break;
+    default:
+      console.error(`Preload ignoring unsupported apiKey: ${apiKey}`);
   }
 }

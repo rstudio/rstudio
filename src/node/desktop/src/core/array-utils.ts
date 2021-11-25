@@ -23,7 +23,7 @@ export function nextHighest(val: number, choices: number[]): number {
   if (choices.length === 0) {
     return val;
   }
-  let nextVal = choices.find(x => x > val);
+  let nextVal = choices.find((x) => x > val);
   if (!nextVal) {
     nextVal = choices.slice(-1)[0];
   }
@@ -40,7 +40,7 @@ export function nextLowest(val: number, choices: number[]): number {
   if (choices.length === 0) {
     return val;
   }
-  let index = choices.findIndex(x => x >= val);
-  index = (index <= 0) ? 0 : --index;
+  let index = choices.findIndex((x) => x >= val);
+  index = index <= 0 ? 0 : --index;
   return choices[index];
 }
