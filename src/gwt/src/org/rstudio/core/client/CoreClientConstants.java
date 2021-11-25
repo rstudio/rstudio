@@ -89,58 +89,58 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String popupBlockTryAgainLabel();
 
     /**
-     * Translated "second".
+     * Translated "{0} second".
      *
-     * @return translated "second"
+     * @return translated "{0} second"
      */
-    @DefaultMessage("second")
+    @DefaultMessage("{0} second")
     @Key("secondLabel")
-    String secondLabel();
+    String secondLabel(int second);
 
     /**
-     * Translated "seconds".
+     * Translated "{0} seconds".
      *
-     * @return translated "seconds"
+     * @return translated "{0} seconds"
      */
-    @DefaultMessage("seconds")
+    @DefaultMessage("{0} seconds")
     @Key("secondPluralLabel")
-    String secondPluralLabel();
+    String secondPluralLabel(int seconds);
 
     /**
-     * Translated "minute".
+     * Translated "{0} minute".
      *
-     * @return translated "minute"
+     * @return translated "{0} minute"
      */
-    @DefaultMessage("minute")
+    @DefaultMessage("{0} minute")
     @Key("minuteLabel")
-    String minuteLabel();
+    String minuteLabel(int minute);
 
     /**
-     * Translated "minutes".
+     * Translated "{0} minutes".
      *
-     * @return translated "minutes"
+     * @return translated "{0} minutes"
      */
-    @DefaultMessage("minutes")
+    @DefaultMessage("{0} minutes")
     @Key("minutePluralLabel")
-    String minutePluralLabel();
+    String minutePluralLabel(int minutes);
 
     /**
-     * Translated "hour".
+     * Translated "{0} hour".
      *
-     * @return translated "hour"
+     * @return translated "{0} hour"
      */
-    @DefaultMessage("hour")
+    @DefaultMessage("{0} hour")
     @Key("hourLabel")
-    String hourLabel();
+    String hourLabel(int hour);
 
     /**
-     * Translated "hours".
+     * Translated "{0} hours".
      *
-     * @return translated "hours"
+     * @return translated "{0} hours"
      */
-    @DefaultMessage("hours")
+    @DefaultMessage("{0} hours")
     @Key("hourPluralLabel")
-    String hourPluralLabel();
+    String hourPluralLabel(int hours);
 
     /**
      * Translated "Type shortcuts to see if they are bound to a command. Close this message bar when done.".

@@ -40,7 +40,11 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import elemental2.dom.DomGlobal;
-import org.rstudio.core.client.*;
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.Point;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutManager.Handle;
 import org.rstudio.core.client.dom.DomUtils;

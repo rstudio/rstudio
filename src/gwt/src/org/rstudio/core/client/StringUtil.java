@@ -133,11 +133,11 @@ public class StringUtil
    public static String formatElapsedTime(int seconds)
    {
       if (seconds < 60)
-         return seconds + " " + (seconds == 1 ? constants_.secondLabel()  : constants_.secondPluralLabel());
+         return (seconds == 1 ? constants_.secondLabel(seconds)  : constants_.secondPluralLabel(seconds));
       else if (seconds < 3600)
-         return (seconds / 60) + " " + ((seconds / 60) == 1 ? constants_.minuteLabel() : constants_.minutePluralLabel());
+         return (seconds / 60) == 1 ? constants_.minuteLabel(seconds / 60) : constants_.minutePluralLabel(seconds / 60);
       else
-         return (seconds / 3600) + " " + ((seconds / 3600) == 1 ? constants_.hourLabel() : constants_.hourPluralLabel());
+         return (seconds / 3600) == 1 ? constants_.hourLabel(seconds / 3600) : constants_.hourPluralLabel(seconds / 3600);
    }
 
    /**
