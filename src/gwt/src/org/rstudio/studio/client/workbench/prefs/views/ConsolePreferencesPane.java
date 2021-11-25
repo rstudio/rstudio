@@ -72,6 +72,8 @@ public class ConsolePreferencesPane extends PreferencesPane
       spacedBefore(otherLabel);
       add(otherLabel);
       add(spaced(checkboxPref("Double-click to select words", prefs_.consoleDoubleClickSelect())));
+      add(spaced(checkboxPref("Warn when automatic session suspension is paused", prefs_.consoleSuspendBlockedNotice())));
+      add(indent(numericPref("Number of seconds to delay warning", prefs_.consoleSuspendBlockedNoticeDelay())));
    }
 
    @Override

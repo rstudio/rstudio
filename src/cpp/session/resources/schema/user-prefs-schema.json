@@ -1054,6 +1054,18 @@
             "title": "Double click to select in the Console",
             "description": "Whether double-clicking should select a word in the Console pane."
         },
+        "console_suspend_blocked_notice": {
+            "type": "boolean",
+            "default": false,
+            "title": "Warn when automatic session suspension is paused",
+            "description": "Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar."
+        },
+        "console_suspend_blocked_notice_delay": {
+            "type": "integer",
+            "default": 5,
+            "title": "Number of seconds to delay warning",
+            "description": "How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices."
+        },
         "new_proj_git_init": {
             "type": "boolean",
             "default": false,

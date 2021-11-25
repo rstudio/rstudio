@@ -1,5 +1,5 @@
 /*
- * ConsoleInterpreterVersion.java
+ * ConsoleSuspendBlockedIcon.java
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -18,6 +18,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Image;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.resources.ImageResource2x;
 import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -34,9 +35,9 @@ public class ConsoleSuspendBlockedIcon
       suspended_ = new Image(sus);
       suspended_.getElement().getStyle().setWidth(15, Style.Unit.PX);
       suspended_.getElement().getStyle().setHeight(15, Style.Unit.PX);
-      suspended_.getElement().setId("r_session_suspended_console");
+      suspended_.getElement().setId(ElementIds.CONSOLE_SESSION_SUSPENDED);
       suspendBlocked_ = new Image(blocked);
-      suspendBlocked_.getElement().setId("r_session_suspend_blocked_console");
+      suspendBlocked_.getElement().setId(ElementIds.CONSOLE_SESSION_SUSPEND_BLOCKED);
 
       if (announce)
       {

@@ -19,6 +19,7 @@
 
 #include "SessionConsoleInput.hpp"
 
+#include <session/prefs/UserPrefs.hpp>
 #include <session/SessionConstants.hpp>
 #include <session/SessionHttpConnectionListener.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -133,7 +134,13 @@ void resetBlockingTimestamp()
 
 bool shouldNotify()
 {
-   return s_blockingTimestamp + boost::posix_time::seconds(5) < boost::posix_time::second_clock::universal_time();
+   if (!prefs::userPrefs().consoleSuspendBlockedNotice())
+   {
+      return false;
+   }
+
+   auto delay = boost::posix_time::seconds(prefs::userPrefs().consoleSuspendBlockedNoticeDelay());
+   return s_blockingTimestamp + delay < boost::posix_time::second_clock::universal_time();
 }
 
 core::json::Array blockingOpsToJson()
@@ -148,18 +155,18 @@ core::json::Array blockingOpsToJson()
    return opsBlockingSuspendJson;
 }
 
-void addBlockingMetadata(core::json::Array blockingOps)
+void addBlockingMetadata(const core::json::Array& blockingOps)
 {
    module_context::activeSession().setBlockingSuspend(blockingOps);
 }
 
-void sendBlockingClientEvent(core::json::Array blockingOps)
+void sendBlockingClientEvent(const core::json::Array& blockingOps)
 {
    module_context::enqueClientEvent(ClientEvent(rstudio::session::client_events::kSuspendBlocked, blockingOps));
    s_initialNotificationSent = true;
 }
 
-void logBlockingOps(core::json::Array blockingOps)
+void logBlockingOps(const core::json::Array& blockingOps)
 {
    core::Error blocked("SessionTimeoutSuspendBlocked",
                        -1,

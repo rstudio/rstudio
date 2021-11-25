@@ -682,4 +682,7 @@ public class ElementIds
    // VersionsPopupMenu
    public final static String VERSIONS_POPUP_MENU = "versions_popup_menu";
 
+   // R Console Toolbar
+   public final static String CONSOLE_SESSION_SUSPENDED = "r_session_suspended_console";
+   public final static String CONSOLE_SESSION_SUSPEND_BLOCKED = "r_session_suspend_blocked_console";
 }

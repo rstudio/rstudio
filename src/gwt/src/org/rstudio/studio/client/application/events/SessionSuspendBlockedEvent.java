@@ -24,11 +24,13 @@ public class SessionSuspendBlockedEvent extends GwtEvent<SessionSuspendBlockedEv
    {
       protected Data() {}
 
-      public final native Boolean isEmpty() /*-{
+      public final native Boolean isEmpty()
+      /*-{
          return Object.keys(this).length === 0;
       }-*/;
 
-      public final native String getMsg() /*-{
+      public final native String getMsg()
+      /*-{
          var msg = 'Session suspend timeout paused:';
 
          for (var e = 0; e < this.length; e++)
@@ -47,11 +49,13 @@ public class SessionSuspendBlockedEvent extends GwtEvent<SessionSuspendBlockedEv
    }
 
 
-   public String getMsg() {
+   public String getMsg()
+   {
       return data_.getMsg();
    }
 
-   public Boolean isBlocked() {
+   public Boolean isBlocked()
+   {
       return !data_.isEmpty();
    }
 
