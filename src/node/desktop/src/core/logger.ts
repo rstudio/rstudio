@@ -42,8 +42,6 @@ export interface LogOptions {
   showDiagnostics: boolean;
 }
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
 export class NullLogger implements Logger {
   logError(err: unknown): void {
   }
