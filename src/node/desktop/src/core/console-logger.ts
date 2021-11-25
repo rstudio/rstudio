@@ -21,7 +21,6 @@ import { Logger, LogLevel, logLevel, showDiagnosticsOutput } from './logger';
  * A Logger using console.log()
  */
 export class ConsoleLogger implements Logger {
-
   logError(err: unknown): void {
     if (logLevel() >= LogLevel.ERR) {
       const safeErr = safeError(err);

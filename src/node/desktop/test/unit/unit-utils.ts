@@ -68,32 +68,35 @@ export function createSinonStubInstanceForSandbox<T>(
   return stub as unknown as StubbedClass<T>;
 }
 
-
 /**
  * Creates a random directory name located inside the temp directory
- * 
- * @param label A label, if any, to include inside the random name. Useful to 
- * identify the origin of any leftover directories from a unit test that weren't 
+ *
+ * @param label A label, if any, to include inside the random name. Useful to
+ * identify the origin of any leftover directories from a unit test that weren't
  * cleaned up properly
- * 
+ *
  * @returns The FilePath to the randomly generated directory
  */
 export function tempDirectory(label = ''): FilePath {
-  const tempName = label ? path.join(os.tmpdir(), label + '-' + randomString()) : path.join(os.tmpdir(), randomString());
+  const tempName = label
+    ? path.join(os.tmpdir(), label + '-' + randomString())
+    : path.join(os.tmpdir(), randomString());
   return new FilePath(tempName);
 }
 
 /**
  * Creates a random file name located in the tmp directory
- * 
+ *
  * @param extension The extension, if any, for the filename to have
- * @param label A label, if any, to include inside the random name. Useful to 
- * identify the origin of any leftover files from a unit test that weren't 
+ * @param label A label, if any, to include inside the random name. Useful to
+ * identify the origin of any leftover files from a unit test that weren't
  * cleaned up properly
- * 
+ *
  * @returns The FilePath to the randomly generated filename
  */
 export function tempFilename(extension = '', label = ''): FilePath {
-  const tempName = label ? path.join(os.tmpdir(), label + '-' + randomString()): path.join(os.tmpdir(), randomString());
+  const tempName = label
+    ? path.join(os.tmpdir(), label + '-' + randomString())
+    : path.join(os.tmpdir(), randomString());
   return new FilePath(extension ? tempName + '.' + extension : tempName);
 }

@@ -20,9 +20,9 @@ import { safeError } from './err';
 import { FilePath } from './file-path';
 
 // promisify line-reader
-const eachLine = async function(filename: string, iteratee: (line: string) => void): Promise<void> {
-  return new Promise(function(resolve, reject) {
-    lineReader.eachLine(filename, iteratee, function(err) {
+const eachLine = async function (filename: string, iteratee: (line: string) => void): Promise<void> {
+  return new Promise(function (resolve, reject) {
+    lineReader.eachLine(filename, iteratee, function (err) {
       if (err) {
         reject(err);
       } else {
@@ -34,16 +34,15 @@ const eachLine = async function(filename: string, iteratee: (line: string) => vo
 
 /**
  * Read lines from a text file into an array of strings.
- * 
+ *
  * @param filePath File to read
  * @param trimAndIgnoreBlankLines skip blank lines
  * @returns Array of strings containing each line
  */
 export async function readStringArrayFromFile(
   filePath: FilePath,
-  trimAndIgnoreBlankLines = true
+  trimAndIgnoreBlankLines = true,
 ): Promise<Expected<Array<string>>> {
-
   const result: string[] = [];
   try {
     await eachLine(filePath.getAbsolutePath(), (line: string) => {

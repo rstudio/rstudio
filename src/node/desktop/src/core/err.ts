@@ -18,9 +18,9 @@
  * to represent "no error" aka Success. Per existing pattern in RStudio code,
  * we expect an "Err" result to be falsy if there is no error, and truthy if
  * there is an error.
- * 
+ *
  * For example:
- * 
+ *
  * const error = doSomething();
  * if (error) {
  *   // log the error, or whatever

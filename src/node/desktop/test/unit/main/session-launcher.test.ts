@@ -31,7 +31,7 @@ function getNewLauncher(): SessionLauncher {
 
 describe('session-launcher', () => {
   const saveVars: Record<string, string> = {
-    RS_LOCAL_PEER: ''
+    RS_LOCAL_PEER: '',
   };
 
   beforeEach(() => {

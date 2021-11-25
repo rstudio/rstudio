@@ -19,7 +19,6 @@ import { ElectronApplication, Page } from 'playwright';
 import { launch, setTimeoutPromise } from './int-utils';
 import { clearConsole, typeConsoleCommand } from './console';
 
-
 describe('Session restart scenarios', () => {
   let electronApp: ElectronApplication;
   let window: Page;
@@ -36,10 +35,10 @@ describe('Session restart scenarios', () => {
 
   it('Restart current session', async function () {
     await clearConsole(window);
-    await typeConsoleCommand(window, '.rs.api.executeCommand(\'restartR\')');
+    await typeConsoleCommand(window, ".rs.api.executeCommand('restartR')");
     await setTimeoutPromise(900); // TODO: yuck, find a better way to do this
 
-    // TODO: figure out how to assert that 'Restarting R session...' is present in 
+    // TODO: figure out how to assert that 'Restarting R session...' is present in
     // the console output
   });
 });

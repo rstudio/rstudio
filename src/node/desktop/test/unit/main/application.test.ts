@@ -34,8 +34,7 @@ describe('Application', () => {
   });
 
   function testDir(): FilePath {
-    return new FilePath(
-      path.join(os.tmpdir(), 'temp-folder-for-Application-tests-' + randomString()));
+    return new FilePath(path.join(os.tmpdir(), 'temp-folder-for-Application-tests-' + randomString()));
   }
 
   describe('Command line switches', () => {
@@ -61,30 +60,29 @@ describe('Application', () => {
       app.generateNewPort();
       assert.notStrictEqual(origPort, app.port);
     });
-    it('returns default if scratch path not set or doesn\'t exist', () => {
+    it("returns default if scratch path not set or doesn't exist", () => {
       const app = new Application();
       const tmpDir = testDir();
       const result = app.scratchTempDir(tmpDir);
       assert.equal(result, tmpDir);
     });
-    it('returns set scratch path plus \'tmp\' if it exists', async () => {
+    it("returns set scratch path plus 'tmp' if it exists", async () => {
       const app = new Application();
       const tmpDir = testDir();
 
       app.setScratchTempDir(tmpDir);
       assert.isFalse(await tmpDir.existsAsync());
-      assert.isFalse(!! await tmpDir.ensureDirectory());
+      assert.isFalse(!!(await tmpDir.ensureDirectory()));
 
       const expectedDir = tmpDir.completeChildPath('tmp');
       assert.isFalse(await expectedDir.existsAsync());
 
-      // note, every testDir call returns different random path 
+      // note, every testDir call returns different random path
       const scratch = app.scratchTempDir(testDir());
       assert.equal(scratch.getAbsolutePath(), expectedDir.getAbsolutePath());
 
       await expectedDir.removeIfExists();
       await tmpDir.removeIfExists();
     });
-
   });
 });

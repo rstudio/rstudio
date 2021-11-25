@@ -1,9 +1,9 @@
 /**
- * 
+ *
  * desktop-options.ts
- * 
+ *
  * Copyright (C) 2021 by RStudio, PBC
- * 
+ *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
  * this program is licensed to you under the terms of version 3 of the
@@ -11,12 +11,12 @@
  * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
  * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
- * 
+ *
  */
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
- 
+
 const kProportionalFont = 'Font.ProportionalFont';
 const kFixWidthFont = 'Font.FixWidthFont';
 const kUseFontConfigDb = 'Font.UseFontConfigDb';
@@ -44,7 +44,7 @@ export const kDesktopOptionDefaults = {
   },
   View: {
     ZoomLevel: 1.0,
-    WindowBounds: {width: 1200, height: 900},
+    WindowBounds: { width: 1200, height: 900 },
     Accessibility: false,
   },
   Session: {
@@ -59,19 +59,19 @@ export const kDesktopOptionDefaults = {
   Platform: {
     Windows: {
       RBinDir: '',
-      PreferR64: true
-    }
-  }
+      PreferR64: true,
+    },
+  },
 };
- 
+
 let options: DesktopOptionsImpl | null = null;
- 
+
 /**
  * Creates or returns the DesktopOptions singleton
- * 
- * @param directory Intended for unit testing only. The directory to 
+ *
+ * @param directory Intended for unit testing only. The directory to
  * place the config.json
- * 
+ *
  * @returns The DesktopOptions singleton
  */
 export function DesktopOptions(directory = ''): DesktopOptionsImpl {
@@ -80,43 +80,45 @@ export function DesktopOptions(directory = ''): DesktopOptionsImpl {
   }
   return options;
 }
- 
+
 /**
-  * Clear the options singleton. For unit testing only
-  */
+ * Clear the options singleton. For unit testing only
+ */
 export function clearOptionsSingleton(): void {
   options = null;
 }
 
 /**
  * Check if one rectangle is inside (shared border inclusive) the other.
- * 
+ *
  * @param inner The rectangle assumed to be the smaller, inner rectangle
  * @param outer The rectangle assumed to be the larger, outer rectangle
- * 
- * @returns True if the inner rectangle is inside (shared border inclusive) 
+ *
+ * @returns True if the inner rectangle is inside (shared border inclusive)
  * the outer rectangle, false otherwise
  */
 export function firstIsInsideSecond(inner: Rectangle, outer: Rectangle): boolean {
-  return inner.x >= outer.x &&
-         inner.y >= outer.y &&
-         inner.x + inner.width <= outer.x + outer.width &&
-         inner.y + inner.height <= outer.y + outer.height;
+  return (
+    inner.x >= outer.x &&
+    inner.y >= outer.y &&
+    inner.x + inner.width <= outer.x + outer.width &&
+    inner.y + inner.height <= outer.y + outer.height
+  );
 }
- 
+
 /**
  * Desktop Options class for storing/restoring user desktop options.
- * 
+ *
  * Exported for unit testing only, use the DesktopOptions() function
  * for creating/getting a DesktopOptionsImpl instance
  */
 export class DesktopOptionsImpl {
-  private config = new Store({defaults: kDesktopOptionDefaults});
+  private config = new Store({ defaults: kDesktopOptionDefaults });
 
   // Directory exposed for unit testing
   constructor(directory = '') {
     if (directory.length != 0) {
-      this.config = new Store({defaults: kDesktopOptionDefaults, cwd: directory});
+      this.config = new Store({ defaults: kDesktopOptionDefaults, cwd: directory });
     }
   }
 
@@ -127,19 +129,19 @@ export class DesktopOptionsImpl {
   public proportionalFont(): string {
     return this.config.get(kProportionalFont);
   }
-  
+
   public setFixWidthFont(fixWidthFont: string): void {
     this.config.set(kFixWidthFont, fixWidthFont);
   }
-  
+
   public fixWidthFont(): string {
     return this.config.get(kFixWidthFont);
   }
-  
+
   public setUseFontConfigDb(useFontConfigDb: boolean): void {
     this.config.set(kUseFontConfigDb, useFontConfigDb);
   }
-  
+
   public useFontConfigDb(): boolean {
     return this.config.get(kUseFontConfigDb);
   }
@@ -162,7 +164,7 @@ export class DesktopOptionsImpl {
 
   // Note: screen can only be used after the 'ready' event has been emitted
   public restoreMainWindowBounds(mainWindow: BrowserWindow): void {
-    const savedBounds = this.windowBounds(); 
+    const savedBounds = this.windowBounds();
 
     // Check if saved bounds is still in one of the available displays
     const goodDisplays = screen.getAllDisplays().find((display) => {
@@ -174,75 +176,74 @@ export class DesktopOptionsImpl {
       mainWindow.setBounds(savedBounds);
     } else {
       const primaryBounds = screen.getPrimaryDisplay().bounds;
-      const newSize = {width: Math.min(kDesktopOptionDefaults.View.WindowBounds.width, primaryBounds.width), 
-        height: Math.min(kDesktopOptionDefaults.View.WindowBounds.height, primaryBounds.height)};
+      const newSize = {
+        width: Math.min(kDesktopOptionDefaults.View.WindowBounds.width, primaryBounds.width),
+        height: Math.min(kDesktopOptionDefaults.View.WindowBounds.height, primaryBounds.height),
+      };
 
       mainWindow.setSize(newSize.width, newSize.height);
-      
-      // window.center() doesn't consistently pick the primary display, 
+
+      // window.center() doesn't consistently pick the primary display,
       // so manually calculating the center of the primary display
       mainWindow.setPosition(
-        primaryBounds.x + ((primaryBounds.width - newSize.width) / 2), 
-        primaryBounds.y + ((primaryBounds.height - newSize.height) / 2));
+        primaryBounds.x + (primaryBounds.width - newSize.width) / 2,
+        primaryBounds.y + (primaryBounds.height - newSize.height) / 2,
+      );
     }
 
     // ensure a minimum size for the window on restore
     const currSize = mainWindow.getSize();
-    mainWindow.setSize(
-      Math.max(300, currSize[0]),
-      Math.max(200, currSize[1])
-    );
+    mainWindow.setSize(Math.max(300, currSize[0]), Math.max(200, currSize[1]));
   }
-  
+
   public setAccessibility(accessibility: boolean): void {
     this.config.set(kAccessibility, accessibility);
   }
-  
+
   public accessibility(): boolean {
     return this.config.get(kAccessibility);
   }
-  
+
   public setLastRemoteSessionUrl(lastRemoteSessionUrl: string): void {
     this.config.set(kLastRemoteSessionUrl, lastRemoteSessionUrl);
   }
-  
+
   public lastRemoteSessionUrl(): string {
     return this.config.get(kLastRemoteSessionUrl);
   }
-  
+
   public setAuthCookies(authCookies: string[]): void {
     this.config.set(kAuthCookies, authCookies);
   }
-  
-  public authCookies(): string[]
-  {
+
+  public authCookies(): string[] {
     return this.config.get(kAuthCookies);
   }
-  
+
   public setTempAuthCookies(tempAuthCookies: string[]): void {
     this.config.set(kTempAuthCookies, tempAuthCookies);
   }
-  
+
   public tempAuthCookies(): string[] {
     return this.config.get(kTempAuthCookies);
   }
-  
+
   public setIgnoredUpdateVersions(ignoredUpdateVersions: string[]): void {
     this.config.set(kIgnoredUpdateVersions, ignoredUpdateVersions);
   }
-  
+
   public ignoredUpdateVersions(): string[] {
     return this.config.get(kIgnoredUpdateVersions);
   }
-  
+
   public setClipboardMonitoring(clipboardMonitoring: boolean): void {
     this.config.set(kClipboardMonitoring, clipboardMonitoring);
   }
-  
+
   public clipboardMonitoring(): boolean {
     return this.config.get(kClipboardMonitoring);
   }
-  
+
   // Windows-only option
   public setRBinDir(rBinDir: string): void {
     if (process.platform !== 'win32') {
@@ -250,7 +251,7 @@ export class DesktopOptionsImpl {
     }
     this.config.set(kRBinDir, rBinDir);
   }
-  
+
   // Windows-only option
   public rBinDir(): string {
     if (process.platform !== 'win32') {

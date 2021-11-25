@@ -33,7 +33,6 @@ ipcRenderer.on('css', (event, data) => {
 
 // initialize select input
 ipcRenderer.on('initialize', (event, data) => {
-
   // cast received data
   const rInstalls = data as string[];
   console.log(rInstalls);
@@ -50,8 +49,7 @@ ipcRenderer.on('initialize', (event, data) => {
     return rhs.localeCompare(lhs);
   });
 
-  rInstalls.forEach(rInstall => {
-
+  rInstalls.forEach((rInstall) => {
     // normalize separators, etc
     rInstall = path.normalize(rInstall).replace(/[/\\]+$/g, '');
 
@@ -78,14 +76,11 @@ ipcRenderer.on('initialize', (event, data) => {
       optionEl.innerText = `[32-bit] ${rInstall}`;
       selectEl.appendChild(optionEl);
     }
-
   });
-
 });
 
 // export callbacks
 const callbacks: Callbacks = {
-
   useDefault32bit: () => {
     ipcRenderer.send('use-default-32bit');
   },
@@ -104,8 +99,7 @@ const callbacks: Callbacks = {
 
   browse: () => {
     ipcRenderer.send('browse');
-  }
-
+  },
 };
 
 contextBridge.exposeInMainWorld('callbacks', callbacks);

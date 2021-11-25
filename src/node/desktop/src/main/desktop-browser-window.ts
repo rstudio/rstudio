@@ -34,8 +34,8 @@ declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 /**
  * Base class for browser-based windows. Subclasses include GwtWindow, SecondaryWindow,
  * SatelliteWindow, and MainWindow.
- * 
- * Porting note: This corresponds to a combination of the QMainWindow/BrowserWindow and 
+ *
+ * Porting note: This corresponds to a combination of the QMainWindow/BrowserWindow and
  * QWebEngineView/WebView in the Qt desktop app.
  */
 export class DesktopBrowserWindow extends EventEmitter {
@@ -44,7 +44,7 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   window: BrowserWindow;
 
-  // if loading fails and emits `did-fail-load` it will be followed by a 
+  // if loading fails and emits `did-fail-load` it will be followed by a
   // 'did-finish-load'; use this bool to differentiate
   private failLoad = false;
 
@@ -57,14 +57,13 @@ export class DesktopBrowserWindow extends EventEmitter {
     private opener?: WebContents,
     private allowExternalNavigate = false,
     addApiKeys: string[] = [],
-    existingWindow?: BrowserWindow // attach to this window instead of creating a new one
+    existingWindow?: BrowserWindow, // attach to this window instead of creating a new one
   ) {
     super();
     const apiKeys = [['desktopInfo', ...addApiKeys].join('|')];
     if (existingWindow) {
       this.window = existingWindow;
     } else {
-
       let preload: string;
       try {
         preload = MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY;
@@ -82,15 +81,14 @@ export class DesktopBrowserWindow extends EventEmitter {
           sandbox: false,
           nativeWindowOpen: true,
           additionalArguments: apiKeys,
-          preload: preload
+          preload: preload,
         },
         show: false,
-        acceptFirstMouse: true
+        acceptFirstMouse: true,
       });
 
       // Uncomment to have all windows show dev tools by default
       // this.window.webContents.openDevTools();
-
     }
 
     // register context menu (right click) handler
@@ -110,7 +108,7 @@ export class DesktopBrowserWindow extends EventEmitter {
         return { action: 'deny' };
       }
 
-      // configure window creation; we'll associate the resulting BrowserWindow with our 
+      // configure window creation; we'll associate the resulting BrowserWindow with our
       // window wrapper type via 'did-create-window' below
       return appState().windowOpening();
     });
@@ -120,7 +118,6 @@ export class DesktopBrowserWindow extends EventEmitter {
     });
 
     this.window.webContents.on('will-navigate', (event, url) => {
-
       // TODO: this is a partial implementation of DesktopWebPage.cpp::acceptNavigationRequest;
       // all the other details need to be implemented
 
@@ -195,8 +192,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     if (!this.opener) {
       // if we don't know where we were opened from, check window.opener
       // (note that this could also be empty)
-      const cmd =
-        `if (window.opener && window.opener.unregisterDesktopChildWindow)
+      const cmd = `if (window.opener && window.opener.unregisterDesktopChildWindow)
            window.opener.unregisterDesktopChildWindow('${this.name}');`;
       this.executeJavaScript(cmd).catch((error) => {
         logger().logError(error);
@@ -204,8 +200,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     } else {
       // if we do know where we were opened from and it has the appropriate
       // handlers, let it know we're closing
-      const cmd =
-        `if (window.unregisterDesktopChildWindow)
+      const cmd = `if (window.unregisterDesktopChildWindow)
            window.unregisterDesktopChildWindow('${this.name}');`;
       this.executeJavaScript(cmd).catch((error) => {
         logger().logError(error);
@@ -232,8 +227,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       // TODO: Qt version sets up a tiny resize of the window here in response to the
       // window being shown on a different screen. Need to test if this is necessary.
 
-      const cmd =
-        `if (window.opener && window.opener.registerDesktopChildWindow)
+      const cmd = `if (window.opener && window.opener.registerDesktopChildWindow)
          window.opener.registerDesktopChildWindow('${this.name}', window);`;
       this.executeJavaScript(cmd).catch((error) => {
         logger().logError(error);
@@ -243,16 +237,17 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   avoidMoveCursorIfNecessary(): void {
     if (process.platform === 'darwin') {
-      this.executeJavaScript('document.body.className = document.body.className + \' avoid-move-cursor\'')
-        .catch((error) => {
+      this.executeJavaScript("document.body.className = document.body.className + ' avoid-move-cursor'").catch(
+        (error) => {
           logger().logError(error);
-        });
+        },
+      );
     }
   }
 
   /**
    * Execute javascript in this window's page
-   * 
+   *
    * @param cmd javascript to execute in this window
    * @returns promise with result of execution
    */

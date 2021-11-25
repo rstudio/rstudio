@@ -33,7 +33,6 @@ if (require('electron-squirrel-startup') as boolean) {
  * RStudio entrypoint
  */
 class RStudioMain {
-
   async main(): Promise<void> {
     try {
       await this.startup();
@@ -46,7 +45,6 @@ class RStudioMain {
   }
 
   private async startup(): Promise<void> {
-
     // NOTE: On Linux it looks like Electron prefers using ANGLE for GPU rendering;
     // however, we've seen in at least one case (Ubuntu 20.04 in Parallels VM) fails
     // to render in that case (we just get a white screen). Prefer 'desktop' by default,

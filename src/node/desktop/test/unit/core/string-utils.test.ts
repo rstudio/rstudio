@@ -1,8 +1,8 @@
 /*
  * string-utils.ts
- * 
+ *
  * Copyright (C) 2021 by RStudio, PBC
- * 
+ *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
  * this program is licensed to you under the terms of version 3 of the
@@ -46,24 +46,21 @@ describe('string-util', () => {
     assert.deepEqual(result, expected);
   });
   it('htmlEscape non-attr escapes expected characters', () => {
-    const source =
-      '6 is > 5 and < than 12. Time for some R&R. "Some" \'quotes\'. Don\'t /slash/ and burn!';
+    const source = "6 is > 5 and < than 12. Time for some R&R. \"Some\" 'quotes'. Don't /slash/ and burn!";
     const expected =
       '6 is &gt; 5 and &lt; than 12. Time for some R&amp;R. &quot;Some&quot; &#x27;quotes&#x27;. Don&#x27;t &#x2F;slash&#x2F; and burn!';
     const result = htmlEscape(source, false);
     assert.equal(result, expected);
   });
   it('htmlEscape attr escapes expected characters', () => {
-    const source =
-      '6 is > 5 and < than 12. Time for some R&R. "Some" \'quotes\'. Don\'t /slash/ and burn!';
+    const source = "6 is > 5 and < than 12. Time for some R&R. \"Some\" 'quotes'. Don't /slash/ and burn!";
     const expected =
       '6 is &gt; 5 and &lt; than 12. Time for some R&amp;R. &quot;Some&quot; &#x27;quotes&#x27;. Don&#x27;t &#x2F;slash&#x2F; and burn!';
     const result = htmlEscape(source, true);
     assert.equal(result, expected);
   });
   it('htmlEscape attr escapes line endings', () => {
-    const source =
-      '6 is > 5 and < than 12.\nTime for some R&R.\r"Some" \'quotes\'.';
+    const source = '6 is > 5 and < than 12.\nTime for some R&R.\r"Some" \'quotes\'.';
     const expected =
       '6 is &gt; 5 and &lt; than 12.&#10;Time for some R&amp;R.&#13;&quot;Some&quot; &#x27;quotes&#x27;.';
     const result = htmlEscape(source, true);
@@ -76,4 +73,3 @@ describe('string-util', () => {
     assert.equal(result, expected);
   });
 });
- 
