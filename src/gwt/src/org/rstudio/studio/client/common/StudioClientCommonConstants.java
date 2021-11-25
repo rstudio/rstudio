@@ -89,15 +89,6 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String convertingThemeProgressCaption();
 
     /**
-     * Translated "' (required by feature '".
-     *
-     * @return translated "' (required by feature '"
-     */
-    @DefaultMessage("' (required by feature '")
-    @Key("requiredByFeatureLog")
-    String requiredByFeatureLog();
-
-    /**
      * Translated "Preparing Import from Mongo DB".
      *
      * @return translated "Preparing Import from Mongo DB"

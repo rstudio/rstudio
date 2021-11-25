@@ -1241,7 +1241,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
          if (dep == null)
          {
             Debug.logWarning("No dependency record found for package '" +
-                             packages.get(i) + constants_.requiredByFeatureLog() +
+                             packages.get(i) + "' (required by feature '" +
                              feature + "')");
             continue;
          }

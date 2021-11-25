@@ -132,7 +132,7 @@ public class SatelliteManager implements CloseHandler<Window>
       // if we don't need to.
       if (isCurrentWindowSatellite())
       {
-         Debug.log("Satellite windows can't launch other satellites");;
+         Debug.log("Satellite windows can't launch other satellites");
          assert false;
          return;
       }
