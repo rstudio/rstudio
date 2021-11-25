@@ -136,4 +136,6 @@ package/
 # Electron-Forge
 out/
 
+.prettier_and_git_ignores
+
 # End of https://www.toptal.com/developers/gitignore/api/node
