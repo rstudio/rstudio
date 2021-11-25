@@ -14,8 +14,6 @@
  */
 
 // TODO clean this up
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
 
 import { ipcMain, dialog, BrowserWindow, webFrameMain, shell, screen } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
@@ -39,7 +37,7 @@ export enum PendingQuit {
   PendingQuitNone,
   PendingQuitAndExit,
   PendingQuitAndRestart,
-  PendingQuitRestartAndReload
+  PendingQuitRestartAndReload,
 }
 
 /**
@@ -65,89 +63,104 @@ export class GwtCallback extends EventEmitter {
       void shell.openExternal(url);
     });
 
-    ipcMain.handle('desktop_get_open_file_name', async (event, caption: string, label: string,
-      dir: string, filter: string, canChooseDirectories: boolean, focusOwner: boolean
-    ) => {
-      const openDialogOptions: OpenDialogOptions = {
-        title: caption,
-        defaultPath: dir,
-        buttonLabel: label,
-      };
+    ipcMain.handle(
+      'desktop_get_open_file_name',
+      async (
+        event,
+        caption: string,
+        label: string,
+        dir: string,
+        filter: string,
+        canChooseDirectories: boolean,
+        focusOwner: boolean,
+      ) => {
+        const openDialogOptions: OpenDialogOptions = {
+          title: caption,
+          defaultPath: dir,
+          buttonLabel: label,
+        };
 
-      openDialogOptions.properties = ['openFile'];
+        openDialogOptions.properties = ['openFile'];
 
-      // FileOpen dialog can't be both a file opener and a directory opener on Windows
-      // and Linux; so prefer the file opener (selecting a directory will just navigate into it
-      // without selecting it.
-      if (canChooseDirectories && process.platform === 'darwin') {
-        openDialogOptions.properties.push('openDirectory');
-      }
+        // FileOpen dialog can't be both a file opener and a directory opener on Windows
+        // and Linux; so prefer the file opener (selecting a directory will just navigate into it
+        // without selecting it.
+        if (canChooseDirectories && process.platform === 'darwin') {
+          openDialogOptions.properties.push('openDirectory');
+        }
 
-      if (filter) {
-        openDialogOptions.filters = filterFromQFileDialogFilter(filter);
-      }
+        if (filter) {
+          openDialogOptions.filters = filterFromQFileDialogFilter(filter);
+        }
 
-      let focusedWindow = BrowserWindow.getFocusedWindow();
-      if (focusOwner) {
-        focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
-      }
-      if (focusedWindow) {
-        return dialog.showOpenDialog(focusedWindow, openDialogOptions);
-      } else {
-        return dialog.showOpenDialog(openDialogOptions);
-      }
-    });
+        let focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusOwner) {
+          focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
+        }
+        if (focusedWindow) {
+          return dialog.showOpenDialog(focusedWindow, openDialogOptions);
+        } else {
+          return dialog.showOpenDialog(openDialogOptions);
+        }
+      },
+    );
 
-    ipcMain.handle('desktop_get_save_file_name', async (event, caption: string, label: string,
-      dir: string, defaultExtension: string, forceDefaultExtension: boolean,
-      focusOwner: boolean
-    ) => {
+    ipcMain.handle(
+      'desktop_get_save_file_name',
+      async (
+        event,
+        caption: string,
+        label: string,
+        dir: string,
+        defaultExtension: string,
+        forceDefaultExtension: boolean,
+        focusOwner: boolean,
+      ) => {
+        const resolvedDir = FilePath.resolveAliasedPathSync(dir, userHomePath()).toString();
 
-      const resolvedDir = FilePath.resolveAliasedPathSync(dir, userHomePath()).toString();
+        const saveDialogOptions: SaveDialogOptions = {
+          title: caption,
+          defaultPath: resolvedDir,
+          buttonLabel: label,
+        };
 
-      const saveDialogOptions: SaveDialogOptions = {
-        title: caption,
-        defaultPath: resolvedDir,
-        buttonLabel: label
-      };
+        if (defaultExtension) {
+          saveDialogOptions['filters'] = [{ name: '', extensions: [defaultExtension.replace('.', '')] }];
+        }
 
-      if (defaultExtension) {
-        saveDialogOptions['filters'] = [
-          {name: '', extensions: [defaultExtension.replace('.', '')]}
-        ];
-      }
+        let focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusOwner) {
+          focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
+        }
+        if (focusedWindow) {
+          return dialog.showSaveDialog(focusedWindow, saveDialogOptions);
+        } else {
+          return dialog.showSaveDialog(saveDialogOptions);
+        }
+      },
+    );
 
-      let focusedWindow = BrowserWindow.getFocusedWindow();
-      if (focusOwner) {
-        focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
-      }
-      if (focusedWindow) {
-        return dialog.showSaveDialog(focusedWindow, saveDialogOptions);
-      } else {
-        return dialog.showSaveDialog(saveDialogOptions);
-      }
-    });
+    ipcMain.handle(
+      'desktop_get_existing_directory',
+      async (event, caption: string, label: string, dir: string, focusOwner: boolean) => {
+        const openDialogOptions: OpenDialogOptions = {
+          title: caption,
+          defaultPath: dir,
+          buttonLabel: label,
+          properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
+        };
 
-    ipcMain.handle('desktop_get_existing_directory', async (event, caption: string, label: string,
-      dir: string, focusOwner: boolean
-    ) => {
-      const openDialogOptions: OpenDialogOptions = {
-        title: caption,
-        defaultPath: dir,
-        buttonLabel: label,
-        properties: ['openDirectory', 'createDirectory', 'promptToCreate']
-      };
-
-      let focusedWindow = BrowserWindow.getFocusedWindow();
-      if (focusOwner) {
-        focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
-      }
-      if (focusedWindow) {
-        return dialog.showOpenDialog(focusedWindow, openDialogOptions);
-      } else {
-        return dialog.showOpenDialog(openDialogOptions);
-      }
-    });
+        let focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusOwner) {
+          focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
+        }
+        if (focusedWindow) {
+          return dialog.showOpenDialog(focusedWindow, openDialogOptions);
+        } else {
+          return dialog.showOpenDialog(openDialogOptions);
+        }
+      },
+    );
 
     ipcMain.on('desktop_on_clipboard_selection_changed', () => {
       GwtCallback.unimpl('desktop_on_clipboard_selection_changed');
@@ -203,7 +216,7 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.handle('desktop_get_cursor_position', () => {
       const cursorPos = screen.getCursorScreenPoint();
-      return {x: cursorPos.x, y: cursorPos.y};
+      return { x: cursorPos.x, y: cursorPos.y };
     });
 
     ipcMain.handle('desktop_does_window_exist_at_cursor_position', () => {
@@ -212,8 +225,12 @@ export class GwtCallback extends EventEmitter {
       for (const window of windows) {
         if (window.isVisible()) {
           const windowPos = window.getBounds();
-          if ((cursorPos.x >= windowPos.x && cursorPos.x <= (windowPos.x + windowPos.width)) &&
-            (cursorPos.y >= windowPos.y && cursorPos.y <= (windowPos.y + windowPos.height))) {
+          if (
+            cursorPos.x >= windowPos.x &&
+            cursorPos.x <= windowPos.x + windowPos.width &&
+            cursorPos.y >= windowPos.y &&
+            cursorPos.y <= windowPos.y + windowPos.height
+          ) {
             return true;
           }
         }
@@ -227,10 +244,9 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
-      shell.openPath(path)
-        .catch((value) => {
-          logger().logErrorMessage(value);
-        });
+      shell.openPath(path).catch((value) => {
+        logger().logErrorMessage(value);
+      });
     });
 
     ipcMain.on('desktop_show_file', (event, file: string) => {
@@ -271,15 +287,16 @@ export class GwtCallback extends EventEmitter {
       return 1.0;
     });
 
-    ipcMain.on('desktop_open_minimal_window', (event: IpcMainEvent, name: string, url: string,
-      width: number, height: number
-    ) => {
-      const sender = this.getSender('desktop_open_minimal_window', event.processId, event.frameId);
-      const minimalWindow = openMinimalWindow(sender, name, url, width, height);
-      minimalWindow.window.once('ready-to-show', () => {
-        minimalWindow.window.show();
-      });
-    });
+    ipcMain.on(
+      'desktop_open_minimal_window',
+      (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
+        const sender = this.getSender('desktop_open_minimal_window', event.processId, event.frameId);
+        const minimalWindow = openMinimalWindow(sender, name, url, width, height);
+        minimalWindow.window.once('ready-to-show', () => {
+          minimalWindow.window.show();
+        });
+      },
+    );
 
     ipcMain.on('desktop_activate_minimal_window', (event, name: string) => {
       // we can only activate named windows
@@ -292,38 +309,44 @@ export class GwtCallback extends EventEmitter {
       activateWindow(name);
     });
 
-    ipcMain.handle('desktop_prepare_for_satellite_window', (event, name: string, x: number,
-      y: number, width: number, height: number
-    ) => {
-      appState().prepareForWindow({
-        type: 'satellite',
-        name: name,
-        mainWindow: this.mainWindow,
-        screenX: x, screenY: y, width: width, height: height,
-        allowExternalNavigate: this.mainWindow.isRemoteDesktop
-      });
-    });
+    ipcMain.handle(
+      'desktop_prepare_for_satellite_window',
+      (event, name: string, x: number, y: number, width: number, height: number) => {
+        appState().prepareForWindow({
+          type: 'satellite',
+          name: name,
+          mainWindow: this.mainWindow,
+          screenX: x,
+          screenY: y,
+          width: width,
+          height: height,
+          allowExternalNavigate: this.mainWindow.isRemoteDesktop,
+        });
+      },
+    );
 
-    ipcMain.handle('desktop_prepare_for_named_window', (event, name: string,
-      allowExternalNavigate: boolean, showToolbar: boolean
-    ) => {
-      appState().prepareForWindow({
-        type: 'secondary',
-        name: name,
-        allowExternalNavigate: allowExternalNavigate,
-        showToolbar: showToolbar
-      });
-    });
+    ipcMain.handle(
+      'desktop_prepare_for_named_window',
+      (event, name: string, allowExternalNavigate: boolean, showToolbar: boolean) => {
+        appState().prepareForWindow({
+          type: 'secondary',
+          name: name,
+          allowExternalNavigate: allowExternalNavigate,
+          showToolbar: showToolbar,
+        });
+      },
+    );
 
     ipcMain.on('desktop_close_named_window', (event, name: string) => {
       GwtCallback.unimpl('desktop_close_named_window');
     });
 
-    ipcMain.on('desktop_copy_page_region_to_clipboard', (event, left: number, top: number,
-      width: number, height: number
-    ) => {
-      GwtCallback.unimpl('desktop_copy_page_region_to_clipboard');
-    });
+    ipcMain.on(
+      'desktop_copy_page_region_to_clipboard',
+      (event, left: number, top: number, width: number, height: number) => {
+        GwtCallback.unimpl('desktop_copy_page_region_to_clipboard');
+      },
+    );
 
     ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
       GwtCallback.unimpl('desktop_export_page_region_to_file');
@@ -345,25 +368,26 @@ export class GwtCallback extends EventEmitter {
       return process.platform === 'win32';
     });
 
-    ipcMain.handle('desktop_show_message_box', async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
-      const openDialogOptions: MessageBoxOptions =
-      {
-        type: this.convertMessageBoxType(type),
-        title: caption,
-        message: message,
-        buttons: this.convertButtons(buttons),
-      };
+    ipcMain.handle(
+      'desktop_show_message_box',
+      async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
+        const openDialogOptions: MessageBoxOptions = {
+          type: this.convertMessageBoxType(type),
+          title: caption,
+          message: message,
+          buttons: this.convertButtons(buttons),
+        };
 
-      const focusedWindow = BrowserWindow.getFocusedWindow();
-      if (focusedWindow) {
-        return dialog.showMessageBox(focusedWindow, openDialogOptions);
-      } else {
-        return dialog.showMessageBox(openDialogOptions);
-      }
-    });
+        const focusedWindow = BrowserWindow.getFocusedWindow();
+        if (focusedWindow) {
+          return dialog.showMessageBox(focusedWindow, openDialogOptions);
+        } else {
+          return dialog.showMessageBox(openDialogOptions);
+        }
+      },
+    );
 
-    ipcMain.on('desktop_bring_main_frame_to_front', () => {
-    });
+    ipcMain.on('desktop_bring_main_frame_to_front', () => {});
 
     ipcMain.on('desktop_bring_main_frame_behind_active', () => {
       GwtCallback.unimpl('desktop_bring_main_frame_behind_active');
@@ -454,14 +478,11 @@ export class GwtCallback extends EventEmitter {
       this.getSender('desktop_zoom_actual_size', event.processId, event.frameId).zoomActualSize();
     });
 
-    ipcMain.on('desktop_set_background_color', (event, rgbColor) => {
-    });
+    ipcMain.on('desktop_set_background_color', (event, rgbColor) => {});
 
-    ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => {
-    });
+    ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => {});
 
-    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {
-    });
+    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {});
 
     ipcMain.handle('desktop_get_enable_accessibility', () => {
       GwtCallback.unimpl('desktop_get_enable_accessibility');
@@ -560,7 +581,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_set_tutorial_url', (event, url) => {
       GwtCallback.unimpl('desktop_set_tutorial_url');
     });
-  
+
     ipcMain.on('desktop_set_viewer_url', (event, url) => {
       this.getSender('desktop_set_viewer_url', event.processId, event.frameId).setViewerUrl(url);
     });
@@ -589,8 +610,7 @@ export class GwtCallback extends EventEmitter {
       return isCentOS();
     });
 
-    ipcMain.on('desktop_set_busy', (event, busy) => {
-    });
+    ipcMain.on('desktop_set_busy', (event, busy) => {});
 
     ipcMain.on('desktop_set_window_title', (event, title: string) => {
       this.mainWindow.window.setTitle(`${title} - RStudio`);
@@ -682,17 +702,16 @@ export class GwtCallback extends EventEmitter {
   }
 
   static unimpl(ipcName: string): void {
-
     const focusedWindow = BrowserWindow.getFocusedWindow();
     if (focusedWindow) {
       void dialog.showMessageBox(focusedWindow, {
         title: 'Unimplemented',
-        message: `${ipcName} callback NYI`
+        message: `${ipcName} callback NYI`,
       });
     } else {
       void dialog.showMessageBox({
         title: 'Unimplemented',
-        message: `${ipcName} callback NYI`
+        message: `${ipcName} callback NYI`,
       });
     }
   }
@@ -710,15 +729,15 @@ export class GwtCallback extends EventEmitter {
   convertMessageBoxType(type: number): string {
     // map QMessageBox types to Electron values
     switch (type) {
-    case 1:
-      return 'info';
-    case 2:
-      return 'warning';
-    case 3:
-      return 'error';
-    default:
-    case 4:
-      return 'question';
+      case 1:
+        return 'info';
+      case 2:
+        return 'warning';
+      case 3:
+        return 'error';
+      default:
+      case 4:
+        return 'question';
     }
   }
 
@@ -728,7 +747,7 @@ export class GwtCallback extends EventEmitter {
 
   /**
    * Register a GwtWindow as a possible GwtCallback recipient
-   * 
+   *
    * @param owner GwtWindow to register for GwtCallbacks
    */
   registerOwner(owner: GwtWindow): void {
@@ -737,7 +756,7 @@ export class GwtCallback extends EventEmitter {
 
   /**
    * Unregister a GwtWindow from receiving GwtCallbacks
-   * 
+   *
    * @param owner A GwtWindow that previously registered for GwtCallbacks
    */
   unregisterOwner(owner: GwtWindow): void {

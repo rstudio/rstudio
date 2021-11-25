@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Cursor;
@@ -42,6 +43,7 @@ import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ScrollPanelWithClick;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -207,7 +209,7 @@ public class RequestLogVisualization extends Composite
       if (method == null)
          method = entry.getRequestId();
       
-      html.setText(method + (active ? " (active)" : ""));
+      html.setText(method + (active ? " " + constants_.activeText() : ""));
       if (active)
          html.getElement().getStyle().setFontWeight(FontWeight.BOLD);
       String color;
@@ -291,7 +293,7 @@ public class RequestLogVisualization extends Composite
             for (RequestLogEntry entry : entries_)
                entry.toCsv(writer);
 
-            TextBoxDialog dialog = new TextBoxDialog("Export",
+            TextBoxDialog dialog = new TextBoxDialog(constants_.exportCaption(),
                                                      writer.getValue(),
                                                      null);
             dialog.showModal();
@@ -299,7 +301,7 @@ public class RequestLogVisualization extends Composite
          else if (keyCode == 'I')
          {
             TextBoxDialog dialog = new TextBoxDialog(
-                  "Import",
+                  constants_.importCaption(),
                   "",
                   new OperationWithInput<String>()
                   {
@@ -355,4 +357,5 @@ public class RequestLogVisualization extends Composite
    private static final int PERIOD_MILLIS = 2000;
    private SimplePanel detail_;
    private HTML instructions_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

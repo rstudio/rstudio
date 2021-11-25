@@ -23,7 +23,7 @@ import copy from 'recursive-copy';
 
 import { getPackageOutputDir, getProjectRootDir, getProgramFilesWindows, section, info } from './script-tools';
 
-blend().catch(err => console.error(err));
+blend().catch((err) => console.error(err));
 
 async function blend(): Promise<void> {
   if (!fs.existsSync(getProjectRootDir())) {
@@ -64,8 +64,7 @@ async function packageWin32(): Promise<number> {
   const appDest = path.join(packageDir, 'resources/app');
 
   console.log(info('Copying binary files'));
-  await copy(
-    path.join(rstudioInstallDir, 'bin'), path.join(appDest, 'bin'), {
+  await copy(path.join(rstudioInstallDir, 'bin'), path.join(appDest, 'bin'), {
     filter: [
       '**/*',
       '!Qt5*',
@@ -75,8 +74,8 @@ async function packageWin32(): Promise<number> {
       '!rstudio.exe',
       '!d3dcompiler_47.dll',
       '!libEGL.dll',
-      '!libGLESV2.dll'
-    ]
+      '!libGLESV2.dll',
+    ],
   });
 
   console.log(info('Copying R resources'));
@@ -86,7 +85,9 @@ async function packageWin32(): Promise<number> {
   console.log(info('Copying www-symbolmaps files'));
   await copy(path.join(rstudioInstallDir, 'www-symbolmaps'), path.join(appDest, 'www-symbolmaps'));
   console.log(info('Copying misc resources'));
-  await copy(path.join(rstudioInstallDir, 'resources'), path.join(appDest, 'resources'), { filter: ['**/*', '!html/*'] });
+  await copy(path.join(rstudioInstallDir, 'resources'), path.join(appDest, 'resources'), {
+    filter: ['**/*', '!html/*'],
+  });
 
   return 0;
 }
@@ -102,4 +103,3 @@ async function packageDarwin(): Promise<number> {
   console.error('Error: not supported on this platform.');
   return 1;
 }
-

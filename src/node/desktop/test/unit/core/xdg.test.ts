@@ -179,7 +179,7 @@ describe('Xdg', () => {
         const expectedLocalAppData = `C:\\Users\\${user}\\AppData\\Local`;
         const expectedProgramData = 'C:\\ProgramData';
         const expectedRoamingAppData = `C:\\Users\\${user}\\AppData\\Roaming`;
-        
+
         let result = SHGetKnownFolderPath(WinFolderID.FOLDERID_LocalAppData);
         assert.strictEqual(result, expectedLocalAppData);
         result = SHGetKnownFolderPath(WinFolderID.FOLDERID_ProgramData);
@@ -195,7 +195,7 @@ describe('Xdg', () => {
   describe('NYI placeholders', () => {
     it('sync methods should throw exception', () => {
       assert.throws(() => Xdg.verifyUserDirs());
-      assert.throws(() => Xdg.forwardXdgEnvVars({'FOO': 'bar'}));
+      assert.throws(() => Xdg.forwardXdgEnvVars({ FOO: 'bar' }));
     });
   });
 });

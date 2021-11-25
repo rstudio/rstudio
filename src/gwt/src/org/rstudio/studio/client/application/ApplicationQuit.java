@@ -130,11 +130,11 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       if (busy)
       {
          if (workbenchContext_.isServerBusy() && !terminalHelper_.warnBeforeClosing(busyMode))
-            msg = "The R session is currently busy.";
+            msg = constants_.rSessionCurrentlyBusyMessage();
          else if (workbenchContext_.isServerBusy() && terminalHelper_.warnBeforeClosing(busyMode))
-            msg = "The R session and the terminal are currently busy.";
+            msg = constants_.rSessionTerminalBusyMessage();
          else 
-            msg = "The terminal is currently busy.";
+            msg = constants_.terminalCurrentlyBusyMessage();
       }
 
       eventBus_.fireEvent(new QuitInitiatedEvent());
@@ -146,7 +146,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             globalDisplay_.showYesNoMessage(
                   MessageDialog.QUESTION,
                   caption, 
-                  msg + " Are you sure you want to quit?",
+                  constants_.applicationQuitMessage(msg),
                   () -> handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext),
                   true);
          }
@@ -251,7 +251,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                   MessageDialog.QUESTION,
                   caption,
-                  "Are you sure you want to quit the R session?",
+                  constants_.quitRSessionsMessage(),
                   quitOperation,
                   true);
          }
@@ -267,7 +267,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       if (unsavedSourceDocs.size() == 0 && workbenchContext != null) 
       {        
          // confirm quit and do it
-         String prompt = "Save workspace image to " + 
+         String prompt = constants_.saveWorkspaceImageMessage() +
                          workbenchContext.getREnvironmentPath() + "?";
          RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                GlobalDisplay.MSG_QUESTION,
@@ -277,8 +277,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                () -> quitContext.onReadyToQuit(true),
                () -> quitContext.onReadyToQuit(false),
                () -> {},
-               "Save",
-               "Don't Save",
+               constants_.saveYesLabel(),
+               constants_.saveNoLabel(),
                true);        
       }
       
@@ -457,7 +457,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       else if (unsavedSourceDocs.size() > 1)
       {
          new UnsavedChangesDialog(
-               "Quit R Session",
+               constants_.quitRSessionTitle(),
                unsavedSourceDocs,
                new OperationWithInput<UnsavedChangesDialog.Result>() {
                   @Override
@@ -493,7 +493,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                   eventBus_.fireEvent(new SuspendAndRestartEvent(
                         SuspendOptions.createSaveMinimal(saveChanges),
                         null));
-               }, "Restart R", "Terminal jobs will be terminated. Are you sure?",
+               }, constants_.restartRCaption(), constants_.terminalJobTerminatedQuestion(),
                   pUserPrefs_.get().busyDetection().getValue());
             }
          });
@@ -515,8 +515,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       setPendingQuit(DesktopFrame.PENDING_QUIT_AND_RESTART);
       
       final TimedProgressIndicator progress = new TimedProgressIndicator(
-            globalDisplay_.getProgressIndicator("Error"));
-      progress.onTimedProgress("Restarting R...", 1000);
+            globalDisplay_.getProgressIndicator(constants_.progressErrorCaption()));
+      progress.onTimedProgress(constants_.restartingRMessage(), 1000);
       
       final Operation onRestartComplete = () -> {
          suspendingAndRestarting_ = false;
@@ -547,13 +547,13 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    @Handler
    public void onQuitSession()
    {
-      prepareForQuit("Quit R Session", (boolean saveChanges) -> performQuit(null, saveChanges));
+      prepareForQuit(constants_.quitRSessionCaption(), (boolean saveChanges) -> performQuit(null, saveChanges));
    }
 
    @Handler
    public void onForceQuitSession()
    {
-      prepareForQuit("Quit R Session", false /*allowCancel*/, false /*forceSaveChanges*/,
+      prepareForQuit(constants_.quitRSessionCaption(), false /*allowCancel*/, false /*forceSaveChanges*/,
             (boolean saveChanges) -> performQuit(null, saveChanges));
    }
    
@@ -562,7 +562,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    public void doRestart(Session session)
    {
       prepareForQuit(
-            "Restarting RStudio",
+            constants_.restartRStudio(),
             saveChanges -> {
                String project = session.getSessionInfo().getActiveProjectFile();
                if (project == null)
@@ -588,7 +588,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       @Override
       public String getTitle()
       {
-         return "Workspace image (.RData)";
+         return constants_.studioClientTitle();
       }
 
       @Override
@@ -602,9 +602,9 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    private String buildSwitchMessage(String switchToProject)
    {
       String msg = switchToProject != "none" ?
-        "Switching to project " + 
+        constants_.switchingToProjectMessage() +
            FileSystemItem.createFile(switchToProject).getParentPathString() :
-        "Closing project";
+        constants_.closingProjectMessage();
       return msg + "...";
    }
    
@@ -633,7 +633,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
          {
             msg = switchToProject_ != null ? 
                                     buildSwitchMessage(switchToProject_) :
-                                    "Quitting R Session...";
+                                    constants_.quitRSessionMessage();
          }
          final GlobalProgressDelayer progress = new GlobalProgressDelayer(
                                                                globalDisplay_,
@@ -687,7 +687,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                      }
                      else
                      {
-                        onFailedToQuit("server quitSession responded false");
+                        onFailedToQuit(constants_.serverQuitSession());
                      }
                   }
 
@@ -752,4 +752,5 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;
    private final Provider<SessionOpener> pSessionOpener_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

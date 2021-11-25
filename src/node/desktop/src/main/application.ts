@@ -21,7 +21,13 @@ import { generateRandomPort } from '../core/system';
 import { logger, enableDiagnosticsOutput } from '../core/logger';
 
 import { productInfo } from './product-info';
-import { createStandaloneErrorDialog, findComponents, initializeLang, initializeSharedSecret, raiseAndActivateWindow } from './utils';
+import {
+  createStandaloneErrorDialog,
+  findComponents,
+  initializeLang,
+  initializeSharedSecret,
+  raiseAndActivateWindow,
+} from './utils';
 import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
@@ -69,7 +75,6 @@ export class Application implements AppState {
    * Startup code run before app 'ready' event.
    */
   async beforeAppReady(): Promise<ProgramStatus> {
-
     const status = this.initCommandLine(process.argv);
     if (status.exit) {
       return status;
@@ -102,7 +107,6 @@ export class Application implements AppState {
    * Invoked when Electron app is 'ready'
    */
   async run(): Promise<ProgramStatus> {
-
     // prepare application for launch
     this.appLaunch = ApplicationLaunch.init();
 
@@ -118,7 +122,10 @@ export class Application implements AppState {
         return exitFailure();
       }
       if (!this.sessionPath.existsSync()) {
-        await createStandaloneErrorDialog('Dev Mode Config', `rsession: ${this.sessionPath.getAbsolutePath()} not found.'`);
+        await createStandaloneErrorDialog(
+          'Dev Mode Config',
+          `rsession: ${this.sessionPath.getAbsolutePath()} not found.'`,
+        );
         return exitFailure();
       }
     }
@@ -138,10 +145,12 @@ export class Application implements AppState {
 
     // on Windows, ask the user what version of R they'd like to use
     if (process.platform === 'win32') {
-
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
-        await createStandaloneErrorDialog('Error Finding R', 'RStudio failed to find any R installations on the system.');
+        await createStandaloneErrorDialog(
+          'Error Finding R',
+          'RStudio failed to find any R installations on the system.',
+        );
         console.log(preflightError);
         return exitFailure();
       }
@@ -150,7 +159,6 @@ export class Application implements AppState {
       if (path == null) {
         return exitFailure();
       }
-
     }
 
     // prepare the R environment
@@ -247,8 +255,9 @@ export class Application implements AppState {
     this.pendingWindows.push(pendingWindow);
   }
 
-  windowOpening(): { action: 'deny' } | { action: 'allow', overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined } {
-
+  windowOpening():
+    | { action: 'deny' }
+    | { action: 'allow'; overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined } {
     // no additional config if pending window is a satellite
     for (const pendingWindow of this.pendingWindows) {
       if (pendingWindow.type === 'satellite') {
@@ -267,15 +276,10 @@ export class Application implements AppState {
   /**
    * Configures new Secondary or Satellite window
    */
-  windowCreated(
-    newWindow: BrowserWindow,
-    owner: WebContents,
-    baseUrl?: string): void {
-
+  windowCreated(newWindow: BrowserWindow, owner: WebContents, baseUrl?: string): void {
     // check if we have a pending window waiting to come up
     const pendingWindow = this.pendingWindows.shift();
     if (pendingWindow) {
-
       // check for an existing window of this name
       const existingWindow = this.windowTracker.getWindow(pendingWindow.name)?.window;
       if (existingWindow) {
@@ -293,7 +297,10 @@ export class Application implements AppState {
       // No pending window, make it a generic secondary window
       configureSecondaryWindow(
         { type: 'secondary', name: '', allowExternalNavigate: false, showToolbar: true },
-        newWindow, owner, baseUrl);
+        newWindow,
+        owner,
+        baseUrl,
+      );
     }
   }
 }

@@ -41,7 +41,9 @@ export interface AppState {
   sessionStartDelaySeconds: number;
   sessionEarlyExitCode: number;
   prepareForWindow(pendingWindow: PendingWindow): void;
-  windowOpening(): { action: 'deny' } | { action: 'allow', overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined };
+  windowOpening():
+    | { action: 'deny' }
+    | { action: 'allow'; overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined };
   windowCreated(newWindow: BrowserWindow, owner: WebContents, baseUrl?: string): void;
 }
 
@@ -73,4 +75,3 @@ export function setApplication(app: Application): void {
 export function clearApplicationSingleton(): void {
   rstudio = null;
 }
-

@@ -23,8 +23,8 @@ import { getDpiZoomScaling, raiseAndActivateWindow } from './utils';
 export function configureSatelliteWindow(
   pendingSatellite: PendingSatelliteWindow,
   newWindow: BrowserWindow,
-  owner: WebContents): void {
-
+  owner: WebContents,
+): void {
   // get width and height, and adjust for high DPI
   const dpiZoomScaling = getDpiZoomScaling();
   const width = pendingSatellite.width * dpiZoomScaling;
@@ -39,7 +39,6 @@ export function configureSatelliteWindow(
     // if the window specified its location, use it
     window.window.setPosition(x, y);
   } else if (pendingSatellite.name !== 'pdf') {
-
     // window location was left for us to determine; try to tile the window
     // (but leave pdf window alone since it is so large)
 
@@ -56,7 +55,7 @@ export function configureSatelliteWindow(
     }
 
     // x is based on centering over main window
-    const moveX = currentX + (currentWidth / 2) - (width / 2);
+    const moveX = currentX + currentWidth / 2 - width / 2;
 
     // perform move
     window.window.setPosition(Math.trunc(moveX), Math.trunc(moveY));
@@ -72,8 +71,8 @@ export function configureSecondaryWindow(
   pendingSecondary: PendingSecondaryWindow,
   newWindow: BrowserWindow,
   owner: WebContents,
-  baseUrl?: string): void {
-
+  baseUrl?: string,
+): void {
   const window = new SecondaryWindow(
     pendingSecondary.showToolbar,
     pendingSecondary.name,
@@ -81,7 +80,8 @@ export function configureSecondaryWindow(
     undefined,
     owner,
     pendingSecondary.allowExternalNavigate,
-    newWindow);
+    newWindow,
+  );
 
   // TODO
   // allow for Ctrl + W to close window (NOTE: Ctrl means Meta on macOS)
@@ -104,5 +104,5 @@ export function activateWindow(name: string): void {
       raiseAndActivateWindow(win);
       return;
     }
-  } 
+  }
 }

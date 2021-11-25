@@ -58,52 +58,49 @@ describe('Environment', () => {
   });
   describe('Expand variables in a string using environment', () => {
     it('Should return original string if it contained no variables', () => {
-      const environment = { 'FOO': 'bar', 'ZOOM': 'car' };
+      const environment = { FOO: 'bar', ZOOM: 'car' };
       const input = '~/.local/share';
       const result = env.expandEnvVars(environment, input);
       assert.strictEqual(result, input);
     });
     it('Should return original string if environment contains no matching variables', () => {
-      const environment = { 'FOO': 'bar', 'ZOOM': 'car' };
+      const environment = { FOO: 'bar', ZOOM: 'car' };
       const input = '$HOME/.local/share';
       const result = env.expandEnvVars(environment, input);
       assert.strictEqual(result, input);
     });
     it('Should substitute value from environment using bare form ($FOO)', () => {
-      const environment = { 'FOO': 'bar', 'ZOOM': 'car' };
+      const environment = { FOO: 'bar', ZOOM: 'car' };
 
       const input = 'C:\\HELLO\\$FOO';
       const result = env.expandEnvVars(environment, input);
       assert.strictEqual(result, 'C:\\HELLO\\bar');
     });
     it('Should substitute multiple values from environment using bare form ($FOO)', () => {
-      const environment = { 'FOO': 'bar', 'ZOOM': 'car' };
+      const environment = { FOO: 'bar', ZOOM: 'car' };
       const input = '/usr/HELLO/$ZOOM/misc/$FOO/etc/';
       const result = env.expandEnvVars(environment, input);
       assert.strictEqual(result, '/usr/HELLO/car/misc/bar/etc/');
     });
     it('Should substitute value from environment using curly brace form (${FOO})', () => {
-      const environment = { 'FOO': 'bar', 'ZOOM': 'car' };
+      const environment = { FOO: 'bar', ZOOM: 'car' };
       const input = 'C:\\HELLO\\${FOO}';
       const result = env.expandEnvVars(environment, input);
       assert.strictEqual(result, 'C:\\HELLO\\bar');
     });
     it('Should expand all instances of a variable', () => {
       const environment = {
-        'VAR1': 'foo',
-        'VAR2': 'bar',
-        'VAR3': 'baz',
+        VAR1: 'foo',
+        VAR2: 'bar',
+        VAR3: 'baz',
       };
-      const input =
-        'Metasyntactic variables include $VAR1, $VAR2, and $VAR3, ' +
-        'but $VAR1 is used most often.';
-      const expanded =
-        'Metasyntactic variables include foo, bar, and baz, ' + 'but foo is used most often.';
+      const input = 'Metasyntactic variables include $VAR1, $VAR2, and $VAR3, ' + 'but $VAR1 is used most often.';
+      const expanded = 'Metasyntactic variables include foo, bar, and baz, ' + 'but foo is used most often.';
       const result = env.expandEnvVars(environment, input);
       assert.strictEqual(result, expanded);
     });
     it('Should not expand partially matching variables', () => {
-      const environment = { 'VAR': 'foo' };
+      const environment = { VAR: 'foo' };
       const input = 'I think $VAR is a nice name for a $VARIABLE.';
       const expanded = 'I think foo is a nice name for a $VARIABLE.';
       const result = env.expandEnvVars(environment, input);

@@ -19,10 +19,9 @@ export const kRStudioInitialWorkingDir = 'RS_INITIAL_WD';
 export const kRStudioInitialEnvironment = 'RS_INITIAL_ENV';
 export const kRStudioInitialProject = 'RS_INITIAL_PROJECT';
 
-export enum SessionType
-{
-   SessionTypeDesktop = 0,
-   SessionTypeServer = 1
+export enum SessionType {
+  SessionTypeDesktop = 0,
+  SessionTypeServer = 1,
 }
 
 /**
@@ -30,7 +29,7 @@ export enum SessionType
  * (usually ~/.rstudio) to its XDG-compliant home in RStudio 1.4 and later
  * (~/.local/share/rstudio or $XDG_DATA_HOME).
  *
- * This is a one-time migration that cleans up the old folder. 
+ * This is a one-time migration that cleans up the old folder.
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function migrateUserStateIfNecessary(sessionType: SessionType): Err {

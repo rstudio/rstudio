@@ -37,7 +37,7 @@ export function exitFailure(): ProgramStatus {
 
 /**
  * Operate on a ProgramStatus result, exiting if requested.
- * 
+ *
  * @param result result to check
  * @returns true if app should continue
  */

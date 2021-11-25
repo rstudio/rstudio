@@ -37,6 +37,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.ImageButton;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -85,7 +86,7 @@ public class WarningBar extends Composite
       dismiss_.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       dismiss_.addClickHandler(event -> CloseEvent.fire(WarningBar.this, WarningBar.this));
       moreButton_.setVisible(false);
-      moreButton_.setText("Manage License...");
+      moreButton_.setText(constants_.manageLicenseText());
       moreButton_.addClickHandler(event -> Desktop.getFrame().showLicenseDialog());
       A11y.setARIAHidden(label_);
       if (!ariaLive.isDisabled(AriaLiveService.WARNING_BAR))
@@ -156,4 +157,5 @@ public class WarningBar extends Composite
    }
    
    private final EventBus events_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

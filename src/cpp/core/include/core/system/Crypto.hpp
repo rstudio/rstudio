@@ -57,6 +57,14 @@ core::Error generateRsaKeyPair(std::string* pOutPublicKey,
 core::Error generateRsaKeyFiles(const FilePath& publicKeyPath,
                                 const FilePath& privateKeyPath);
 
+core::Error generateRsaCertAndKeyPair(const std::string& in_certCommonName,
+                                      std::string& out_cert,
+                                      std::string& out_privateKey);
+
+core::Error generateRsaCertAndKeyFiles(const std::string& in_certCommonName,
+                                       const FilePath& in_certPath,
+                                       const FilePath& in_certKeyPath);
+
 void rsaPublicKey(std::string* pExponent, std::string* pModulo);
 
 core::Error rsaPrivateDecrypt(const std::string& pCipherText, std::string* pPlainText);

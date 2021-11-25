@@ -19,7 +19,6 @@ import { assert } from 'chai';
 import { nextLowest, nextHighest } from '../../../src/core/array-utils';
 
 describe('array-util', () => {
-
   const choices = [1, 3, 9, 11, 17];
 
   describe('nextLowest', () => {
@@ -62,4 +61,3 @@ describe('array-util', () => {
     });
   });
 });
- 

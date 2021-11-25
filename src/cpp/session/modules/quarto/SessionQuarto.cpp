@@ -747,6 +747,19 @@ json::Value quartoCapabilities()
    }
 }
 
+void quartoBuildjs()
+{
+   core::system::ProcessResult result;
+   Error error = runQuarto({"build-js"}, FilePath(), &result);
+   if (error)
+      LOG_ERROR(error);
+
+   if (result.exitStatus != EXIT_SUCCESS)
+   {
+      LOG_ERROR_MESSAGE(result.stdErr);
+   }
+}
+
 // Given a path to a Quarto file (usually .qmd), attempt to inspect it
 Error quartoInspect(const std::string& path,
                     json::Object *pResultObject)

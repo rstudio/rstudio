@@ -1245,6 +1245,51 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    Sys.setenv(PATH = newPath)
 })
 
+.rs.addFunction("callSafely", function(call, args)
+{
+   call <- match.fun(call)
+   args <- args[intersect(names(formals(call)), names(args))]
+   envir <- parent.frame()
+   do.call(call, args, envir = envir)
+})
+
+.rs.addFunction("attachConflicts", function(envirs)
+{
+   for (envir in envirs)
+   {
+      # read position
+      pos <- attr(envir, "pos", exact = TRUE)
+      attr(envir, "pos") <- NULL
+      
+      .rs.callSafely(attach, list(
+         what = envir,
+         name = ".conflicts",
+         pos = pos,
+         warn.conflicts = FALSE
+      ))
+   }
+})
+
+.rs.addFunction("detachConflicts", function()
+{
+   # check for .conflicts on the search path
+   pos <- which(search() == ".conflicts")
+   if (length(pos) == 0)
+      return(NULL)
+   
+   # get references to each environment
+   envirs <- lapply(pos, as.environment)
+   for (i in seq_along(envirs))
+      attr(envirs[[i]], "pos") <- pos[[i]]
+   
+   # now detach those from the search path
+   for (i in rev(seq_along(pos)))
+      detach(pos = pos[[i]])
+   
+   # return the environments
+   envirs
+})
+
 .rs.addFunction("initTools", function()
 {
    ostype <- .Platform$OS.type

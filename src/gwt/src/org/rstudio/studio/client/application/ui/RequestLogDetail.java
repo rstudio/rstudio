@@ -14,11 +14,13 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 
 public class RequestLogDetail extends Composite
 {
@@ -57,4 +59,5 @@ public class RequestLogDetail extends Composite
 
       initWidget(panel);
    }
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

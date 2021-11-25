@@ -80,6 +80,12 @@ public class ChunkRowAceExecState extends ChunkRowExecState
          onRemoved_.execute();
    }
 
+   @Override
+   public void setTitle(String title)
+   {
+      // Not supported for Ace markers
+   }
+
    protected void addClazz(int state)
    {
       editor_.getRenderer().addGutterDecoration(getRow() - 1, getClazz(state));

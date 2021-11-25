@@ -1,5 +1,5 @@
 /*
- * AboutDialogConstants.java
+ * RBusy.cpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,14 +12,25 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.ui;
 
-import com.google.gwt.i18n.client.Constants;
+#include <r/RExec.hpp>
+#include <r/RSexp.hpp>
 
-public interface AboutDialogConstants extends Constants {
-    @DefaultStringValue("OK")
-    String okBtn();
+using namespace rstudio;
+using namespace rstudio::core;
 
-    @DefaultStringValue("Manage License...")
-    String manageLicenseBtn();
+namespace rstudio {
+namespace r {
+namespace session {
+
+bool isBusy()
+{
+   // conclude that R is busy if there are R frames on the stack
+   int numFrames = 0;
+   Error error = r::exec::RFunction("base:::sys.nframe").call(&numFrames);
+   return numFrames != 0;
 }
+
+} // namespace session
+} // namespace r
+} // namespace rstudio

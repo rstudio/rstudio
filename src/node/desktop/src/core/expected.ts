@@ -13,7 +13,7 @@
  *
  */
 
-export type Expected<T> = [ T, Error | null ];
+export type Expected<T> = [T, Error | null];
 
 export function ok<T>(value: T): Expected<T> {
   return [value, null];

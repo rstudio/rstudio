@@ -25,7 +25,7 @@ describe('wait-utils', () => {
       numCalls++;
       return Promise.resolve(new WaitResult('WaitContinue'));
     };
-    
+
     const error = await waitWithTimeout(neverSucceeds, 1, 2, 1);
     assert.isTrue(isFailure(error));
     assert.isAbove(numCalls, 0);
@@ -36,7 +36,7 @@ describe('wait-utils', () => {
       numCalls++;
       return Promise.resolve(new WaitResult('WaitSuccess'));
     };
-    
+
     const error = await waitWithTimeout(immediatelySucceeds, 1, 2, 1);
     assert.isTrue(isSuccessful(error));
     assert.equal(numCalls, 1);
@@ -47,7 +47,7 @@ describe('wait-utils', () => {
       numCalls++;
       return Promise.resolve(new WaitResult(numCalls == 2 ? 'WaitSuccess' : 'WaitContinue'));
     };
-    
+
     const error = await waitWithTimeout(eventuallySucceeds, 1, 2, 1);
     assert.isTrue(isSuccessful(error));
     assert.equal(numCalls, 2);

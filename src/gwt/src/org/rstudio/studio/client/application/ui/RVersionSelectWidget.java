@@ -17,9 +17,11 @@ package org.rstudio.studio.client.application.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 
 import com.google.gwt.core.client.JsArray;
@@ -29,7 +31,7 @@ public class RVersionSelectWidget extends SelectWidget
 {
    public RVersionSelectWidget(JsArray<RVersionSpec> rVersions)
    {
-      this("Default version of R:", rVersions, true, true, false);
+      this(constants_.defaultVersionRCaption(), rVersions, true, true, false);
    }
    
    public RVersionSelectWidget(String caption,
@@ -46,7 +48,7 @@ public class RVersionSelectWidget extends SelectWidget
             false,
             fillContainer);
       if (includeHelpButton)
-         HelpButton.addHelpButton(this, "multiple_r_versions", "Help on R versions");
+         HelpButton.addHelpButton(this, "multiple_r_versions", constants_.helpOnRVersionsTitle());
    }
    
    public void setRVersion(RVersionSpec version)
@@ -83,9 +85,9 @@ public class RVersionSelectWidget extends SelectWidget
          StringBuilder choice = new StringBuilder();
 
          if (module)
-            choice.append("Module " + version.getModule());
+            choice.append(constants_.moduleText() + version.getModule());
          else
-            choice.append("R version " + version.getVersion());
+            choice.append(constants_.rVersionText() + version.getVersion());
          if (disambiguate)
             choice.append(" (" + version.getRHome() + ")");
          if (!version.getLabel().isEmpty())
@@ -137,7 +139,7 @@ public class RVersionSelectWidget extends SelectWidget
       else
          return version.getVersion() + SEP + version.getRHome() + SEP + version.getLabel() + SEP + version.getModule();
    }
-
-   private final static String USE_DEFAULT_VERSION = "(Use System Default)";
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
+   private final static String USE_DEFAULT_VERSION = constants_.useSystemDefaultText();
    private final static String SEP = "::::";
 }

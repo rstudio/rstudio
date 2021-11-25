@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
@@ -26,6 +27,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
@@ -44,7 +46,7 @@ public class GlobalToolbar extends Toolbar
    public GlobalToolbar(Commands commands,
                         Provider<CodeSearch> pCodeSearch)
    {
-      super("Main");
+      super(constants_.mainLabel());
 
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
@@ -79,7 +81,7 @@ public class GlobalToolbar extends Toolbar
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
       newButton_ = new ToolbarMenuButton(ToolbarButton.NoText,
-                                                          "New File",
+                                                          constants_.newFileTitle(),
                                                           new ImageResource2x(icons.stock_new2x()),
                                                           newMenu_);
       ElementIds.assignElementId(newButton_, ElementIds.NEW_FILE_MENUBUTTON);
@@ -112,7 +114,7 @@ public class GlobalToolbar extends Toolbar
       mruMenu.addItem(commands.clearRecentFiles().createMenuItem(false));
 
       ToolbarMenuButton mruButton = new ToolbarMenuButton(ToolbarButton.NoText,
-                                                          "Open recent files",
+                                                          constants_.openRecentFilesTitle(),
                                                           mruMenu,
                                                           false);
       ElementIds.assignElementId(mruButton, ElementIds.OPEN_MRU_MENUBUTTON);
@@ -187,7 +189,7 @@ public class GlobalToolbar extends Toolbar
 
          ToolbarMenuButton vcsButton = new ToolbarMenuButton(
                ToolbarButton.NoText,
-               "Version control",
+               constants_.versionControlTitle(),
                vcsIcon,
                vcsMenu);
          ElementIds.assignElementId(vcsButton, ElementIds.VCS_MENUBUTTON);
@@ -224,7 +226,7 @@ public class GlobalToolbar extends Toolbar
       ImageResource paneLayoutIcon = new ImageResource2x(ThemeResources.INSTANCE.paneLayoutIcon2x());
       ToolbarMenuButton paneLayoutButton = new ToolbarMenuButton(
             ToolbarButton.NoText,
-            "Workspace Panes",
+            constants_.workspacePanesTitle(),
             paneLayoutIcon,
             paneLayoutMenu);
       ElementIds.assignElementId(paneLayoutButton, ElementIds.PANELAYOUT_MENUBUTTON);
@@ -269,4 +271,5 @@ public class GlobalToolbar extends Toolbar
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

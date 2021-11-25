@@ -15,11 +15,13 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -44,7 +46,7 @@ public class MinimizedModuleTabLayoutPanel
       HorizontalPanel horiz = (HorizontalPanel) getExtraWidget();
       horiz.clear();
       Roles.getTablistRole().set(horiz.getElement());
-      Roles.getTablistRole().setAriaLabelProperty(horiz.getElement(), accessibleName_ + " minimized");
+      Roles.getTablistRole().setAriaLabelProperty(horiz.getElement(), constants_.minimizedTabListRole("accessibleName_"));
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       for (int i = 0; i < tabNames.length; i++)
@@ -74,4 +76,5 @@ public class MinimizedModuleTabLayoutPanel
    }
 
    private final String accessibleName_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

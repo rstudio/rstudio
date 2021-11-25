@@ -209,7 +209,7 @@ public:
       {
          boost::shared_ptr<core::http::StreamWriter<SocketType> > pWriter(
                   new core::http::StreamWriter<SocketType>(
-                     *socket_,
+                     socket(), // using socket(), not *socket in case of SSL connection
                      response_,
                      boost::bind(&AsyncConnectionImpl<SocketType>::onStreamComplete,
                                  AsyncConnectionImpl<SocketType>::shared_from_this()),

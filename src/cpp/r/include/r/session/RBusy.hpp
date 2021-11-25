@@ -1,5 +1,5 @@
 /*
- * AboutDialogMessages.java
+ * RBusy.hpp
  *
  * Copyright (C) 2021 by RStudio, PBC
  *
@@ -12,11 +12,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.ui;
 
-import com.google.gwt.i18n.client.Messages;
+#ifndef R_SESSION_BUSY_HPP
+#define R_SESSION_BUSY_HPP
 
-public interface AboutDialogMessages extends Messages {
-    @DefaultMessage("About {0}")
-    String title(String version);
-}
+namespace rstudio {
+namespace r {
+namespace session {
+
+// is the R session busy?
+// here, busy implies that the R session is executing some R code,
+// even if that wasn't explicitly executed by the user
+// (e.g. this captured code executed in the background by RStudio)
+bool isBusy();
+
+} // namespace session
+} // namespace r
+} // namespace rstudio
+
+#endif // R_SESSION_BUSY_HPP
