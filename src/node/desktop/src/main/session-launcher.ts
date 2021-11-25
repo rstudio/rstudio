@@ -31,7 +31,13 @@ import { DesktopActivation } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
-import { finalPlatformInitialize, getCurrentlyUniqueFolderName, userLogPath, waitForUrlWithTimeout } from './utils';
+import {
+  createStandaloneErrorDialog,
+  finalPlatformInitialize,
+  getCurrentlyUniqueFolderName,
+  userLogPath,
+  waitForUrlWithTimeout,
+} from './utils';
 import { productInfo } from './product-info';
 import { DesktopOptions } from './desktop-options';
 
@@ -507,13 +513,21 @@ export class SessionLauncher {
   }
 
   onLaunchError(message: string): void {
+    const exitFn = () => {
+      if (this.mainWindow) {
+        this.mainWindow.window.close();
+      } else {
+        app.exit(EXIT_FAILURE);
+      }
+    };
     if (message) {
-      dialog.showErrorBox(appState().activation().editionName(), message);
-    }
-    if (this.mainWindow) {
-      this.mainWindow.window.close();
+      createStandaloneErrorDialog(appState().activation().editionName(), message)
+        .then(() => exitFn())
+        .catch((error) =>
+          console.error('[session-launcher.ts] [onLaunchError] Error when creating Standalone Error Dialog: ', error),
+        );
     } else {
-      app.exit(EXIT_FAILURE);
+      exitFn();
     }
   }
 

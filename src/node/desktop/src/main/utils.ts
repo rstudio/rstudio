@@ -17,7 +17,7 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import { app, BrowserWindow, FileFilter, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, FileFilter, MessageBoxOptions, WebContents } from 'electron';
 import http from 'http';
 
 import { Xdg } from '../core/xdg';
@@ -374,5 +374,51 @@ export function initializeLang(): void {
 
     setenv('LANG', lang);
     setenv('LC_CTYPE', lang);
+  }
+}
+
+/**
+ * Create an Error Dialog.
+ * You can pass in a custom window.
+ * If so, you must pass shouldCloseWindow = true as well.
+ *
+ * @export
+ * @param {string} title
+ * @param {string} message
+ * @param {{
+ *     window: BrowserWindow;
+ *     shouldCloseWindow: boolean;
+ *   }} [options={
+ *     window = new BrowserWindow({ width: 0, height: 0 }),
+ *     shouldCloseWindow: false,
+ *   }]
+ */
+export async function createStandaloneErrorDialog(
+  title: string,
+  message: string,
+  options: {
+    window: BrowserWindow;
+    shouldCloseWindow: boolean;
+  } = {
+    window: new BrowserWindow({ width: 0, height: 0 }),
+    shouldCloseWindow: false,
+  },
+) {
+  try {
+    const dialogContent: MessageBoxOptions = {
+      message: '',
+      type: 'error',
+      buttons: ['OK'],
+    };
+
+    dialogContent[process.platform === 'win32' ? 'title' : 'message'] = title;
+    dialogContent[process.platform === 'win32' ? 'message' : 'detail'] = message;
+
+    await dialog.showMessageBox(options.window, dialogContent);
+
+    if (options.shouldCloseWindow) window.close();
+    // eslint-disable-next-line @typescript-eslint/no-implicit-any-catch
+  } catch (error: any) {
+    console.error('[utils.ts] [createStandaloneErrorDialog] Error when creating Standalone Error Dialog: ', error);
   }
 }

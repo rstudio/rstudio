@@ -15,6 +15,7 @@
 
 import { BrowserWindow, clipboard, dialog, Menu } from 'electron';
 import path from 'path';
+import { createStandaloneErrorDialog } from './utils';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
@@ -26,7 +27,7 @@ function showContextMenuImageTemplate(
     // Save Image As...
     {
       label: 'Save Image As...',
-      click: () => {
+      click: async () => {
         // ask the user for a download file path.  in theory, we could let the
         // default download handler do this, but Electron appears to barf if the
         // user cancels that dialog

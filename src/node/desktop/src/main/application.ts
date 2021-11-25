@@ -21,7 +21,13 @@ import { generateRandomPort } from '../core/system';
 import { logger, enableDiagnosticsOutput } from '../core/logger';
 
 import { productInfo } from './product-info';
-import { findComponents, initializeLang, initializeSharedSecret, raiseAndActivateWindow } from './utils';
+import {
+  createStandaloneErrorDialog,
+  findComponents,
+  initializeLang,
+  initializeSharedSecret,
+  raiseAndActivateWindow,
+} from './utils';
 import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
 import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
@@ -112,11 +118,14 @@ export class Application implements AppState {
     if (!app.isPackaged) {
       // sanity checking for dev config
       if (!confPath.existsSync()) {
-        dialog.showErrorBox('Dev Mode Config', `conf: ${confPath.getAbsolutePath()} not found.'`);
+        await createStandaloneErrorDialog('Dev Mode Config', `conf: ${confPath.getAbsolutePath()} not found.'`);
         return exitFailure();
       }
       if (!this.sessionPath.existsSync()) {
-        dialog.showErrorBox('Dev Mode Config', `rsession: ${this.sessionPath.getAbsolutePath()} not found.'`);
+        await createStandaloneErrorDialog(
+          'Dev Mode Config',
+          `rsession: ${this.sessionPath.getAbsolutePath()} not found.'`,
+        );
         return exitFailure();
       }
     }
@@ -138,7 +147,10 @@ export class Application implements AppState {
     if (process.platform === 'win32') {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
-        dialog.showErrorBox('Error Finding R', 'RStudio failed to find any R installations on the system.');
+        await createStandaloneErrorDialog(
+          'Error Finding R',
+          'RStudio failed to find any R installations on the system.',
+        );
         console.log(preflightError);
         return exitFailure();
       }
@@ -152,7 +164,7 @@ export class Application implements AppState {
     // prepare the R environment
     const prepareError = prepareEnvironment();
     if (prepareError) {
-      dialog.showErrorBox('Error Finding R', 'RStudio failed to find any R installations on the system.');
+      await createStandaloneErrorDialog('Error Finding R', 'RStudio failed to find any R installations on the system.');
       console.log(prepareError);
       return exitFailure();
     }

@@ -1,5 +1,13 @@
 # RStudio "Electron" Release Notes
 
+## Error Dialogs
+
+To show error dialogs please use the `createStandaloneErrorDialog` function by importing it with
+
+`import { createStandaloneErrorDialog } from './utils';`
+
+Instead of using the `showErrorBox` function from the `electron` module.
+
 ## Formatting
 
 To format the entire project just run `yarn format`. You are encouraged to run this before every commit to avoid unecessary merge conflicts in the future.
