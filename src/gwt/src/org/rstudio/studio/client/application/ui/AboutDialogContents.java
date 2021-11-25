@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.Anchor;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -63,7 +64,7 @@ public class AboutDialogContents extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
       versionMajorLabel.setText(info.version_major + "." + info.version_minor + "." + info.version_patch);
-      versionBuildLabel.setText("Build " + info.version_suffix.split("\\+")[1]);
+      versionBuildLabel.setText(constants_.versionBuildLabel() + info.version_suffix.split("\\+")[1]);
 
       // a11y
       productInfo.getElement().setId("productinfo");
@@ -74,18 +75,18 @@ public class AboutDialogContents extends Composite
             Window.Navigator.getUserAgent());
       buildLabel.setText(
            "\"" + info.release_name + "\" " + info.build_type + " (" + info.commit.substring(0, 8) + ", " +
-           info.date + ") for " + info.os);
+           info.date + constants_.buildLabelForText() + info.os);
       productName.setText(editionInfo.editionName());
       copyrightYearLabel.setText("2009-" + info.copyright_year);
 
       // Warn that dailies and previews aren't supported
       if (!info.build_type.equals("Release")) {
          supportNotice.setText(
-            "This " +
+            constants_.buildTypeThisText() +
             info.build_type +
-            " build of " +
+            " " + constants_.buildOfText() +
             editionInfo.editionName() +
-            " is provided by RStudio, PBC for testing purposes only and is not an officially supported release."
+            " " + constants_.supportNoticeText()
          );
       }
       else
@@ -123,7 +124,7 @@ public class AboutDialogContents extends Composite
             licenseBox.setVisibleLines(3);
             licenseLabel.setVisible(true);
             licenseBox.setVisible(true);
-            licenseBox.setText("Loading...");
+            licenseBox.setText(constants_.licenseBoxLoadingText());
             Desktop.getFrame().getLicenseStatusMessage(licenseStatus ->
             {
                licenseBox.setText(licenseStatus);
@@ -152,4 +153,5 @@ public class AboutDialogContents extends Composite
    @UiField InlineLabel supportNotice;
    @UiField Anchor gplLink;
    @UiField Label gplLinkLabel;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }
