@@ -26,7 +26,9 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -35,15 +37,16 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpreter>
 {
-   private static final String LABEL_SYSTEM  = "System";
-   private static final String LABEL_VIRTUAL = "Virtual Environments";
-   private static final String LABEL_CONDA   = "Conda Environments";
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+   private static final String LABEL_SYSTEM  = constants_.system();
+   private static final String LABEL_VIRTUAL = constants_.virtualEnvironmentPlural();
+   private static final String LABEL_CONDA   = constants_.condaEnvironmentPlural();
    
    public PythonInterpreterSelectionDialog(final JsArray<PythonInterpreter> interpreters,
                                            final OperationWithInput<PythonInterpreter> operation)
    {
-      super("Python Interpreters", Roles.getDialogRole(), operation);
-      setOkButtonCaption("Select");
+      super(constants_.pythonInterpreterPlural(), Roles.getDialogRole(), operation);
+      setOkButtonCaption(constants_.select());
       
       // initialize widget list boxes
       widgets_ = new HashMap<>();
@@ -53,7 +56,7 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
          listBox.setSize("598px", "468px");
          listBox.setAriaLabel(label);
          
-         listBox.setEmptyText("(None available)");
+         listBox.setEmptyText(constants_.noneAvailableParentheses());
          
          // allow double-click to select the requested interpreter
          listBox.addDoubleClickHandler((DoubleClickEvent event) ->
@@ -102,7 +105,7 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
       }
  
       // initialize tab panel
-      tabPanel_ = new DialogTabLayoutPanel("General");
+      tabPanel_ = new DialogTabLayoutPanel(constants_.general());
       tabPanel_.setSize("620px", "520px");
       for (Map.Entry<String, WidgetListBox<PythonInterpreterListEntryUi>> entry : widgets_.entrySet())
       {
@@ -134,4 +137,5 @@ public class PythonInterpreterSelectionDialog extends ModalDialog<PythonInterpre
    
    PythonInterpreterListEntryUi selectedItem_;
    ThemedButton useDefaultBtn_;
+
 }
