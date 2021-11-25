@@ -40,6 +40,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import elemental2.dom.DomGlobal;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
@@ -490,7 +491,7 @@ public abstract class ModalDialogBase extends DialogBox
          {
             clearProgress();
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Error", message);
+                  constants_.errorCaption(), message);
          }
 
          @Override
@@ -849,4 +850,5 @@ public abstract class ModalDialogBase extends DialogBox
    
    public static final String ALLOW_ENTER_KEY_CLASS = "__rstudio_modal_allow_enter_key";
    public static final String ALLOW_ESCAPE_KEY_CLASS = "__rstudio_modal_allow_escape_key";
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

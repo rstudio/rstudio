@@ -49,6 +49,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.TextBoxBase;
 import com.google.gwt.user.client.ui.ValueBoxBase;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
@@ -138,7 +139,7 @@ public class SearchWidget extends Composite implements SearchDisplay
 
       initWidget(uiBinder.createAndBindUi(this));
       clearFilter_.setVisible(false);
-      clearFilter_.setDescription("Clear text");
+      clearFilter_.setDescription(constants_.searchWidgetClearText());
       if (!StringUtil.isNullOrEmpty(label))
       {
          hiddenLabel_.setInnerText(label);
@@ -381,4 +382,5 @@ public class SearchWidget extends Composite implements SearchDisplay
 
    private String lastValueSent_ = null;
    private final FocusTracker focusTracker_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

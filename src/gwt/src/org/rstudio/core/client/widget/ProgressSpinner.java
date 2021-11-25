@@ -15,10 +15,12 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 
 import org.rstudio.core.client.ColorUtil;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 
@@ -72,7 +74,7 @@ public class ProgressSpinner extends Composite
       canvas_.setCoordinateSpaceHeight(COORD_SIZE);
 
       Roles.getImgRole().set(canvas_.getElement());
-      Roles.getImgRole().setAriaLabelProperty(canvas_.getElement(), "Busy");
+      Roles.getImgRole().setAriaLabelProperty(canvas_.getElement(), constants_.busyLabel());
    }
    
    @Override
@@ -189,4 +191,5 @@ public class ProgressSpinner extends Composite
    private int frame_ = 0;
    private boolean isAnimating_ = false;
    private boolean requestStopAnimating_ = false;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

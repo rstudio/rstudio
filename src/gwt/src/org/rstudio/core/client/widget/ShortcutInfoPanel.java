@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import java.util.List;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.ShortcutInfo;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -71,7 +72,7 @@ public class ShortcutInfoPanel extends Composite
    
    protected String getHeaderText()
    {
-      return "Keyboard Shortcut Quick Reference";
+      return constants_.shortcutHeaderText();
    }
    
    protected Widget getShortcutContent()
@@ -80,10 +81,10 @@ public class ShortcutInfoPanel extends Composite
       List<ShortcutInfo> shortcuts = 
             ShortcutManager.INSTANCE.getActiveShortcutInfo();
       String[][] groupNames = { 
-            new String[] { "Tabs", "Panes", "Files", "Main Menu (Server)" },
-            new String[] { "Source Navigation", "Execute" },
-            new String[] { "Source Editor", "Debug", "Accessibility" }, 
-            new String[] { "Source Control", "Build", "Console", "Terminal", "Other" }
+            new String[] { constants_.tabsGroupName(), constants_.panesGroupName(), constants_.filesGroupName(), constants_.mainMenuGroupName() },
+            new String[] { constants_.sourceNavigationGroupName(), constants_.executeGroupName() },
+            new String[] { constants_.sourceEditorGroupName(), constants_.debugGroupName(), constants_.accessibilityGroupName() },
+            new String[] { constants_.sourceControlGroupName(), constants_.buildGroupName(), constants_.consoleGroupName(), constants_.terminalGroupName(), constants_.otherGroupName() }
       };
       int pctWidth = 100 / groupNames.length;
       sb.appendHtmlConstant("<table width='100%'><tr>");
@@ -114,7 +115,7 @@ public class ShortcutInfoPanel extends Composite
             sb.appendHtmlConstant("</table>");
             if (colGroupName == "Panes")
             {
-               sb.appendHtmlConstant("<p>Add Shift to zoom (maximize) pane.</p>");
+               sb.appendHtmlConstant("<p>"+ constants_.addShiftPTag() + "</p>");
             }
          }
          sb.appendHtmlConstant("</td>");
@@ -133,4 +134,5 @@ public class ShortcutInfoPanel extends Composite
    @UiField FocusPanel focusPanel;
    @UiField Anchor shortcutDocLink;
    @UiField Label headerLabel;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

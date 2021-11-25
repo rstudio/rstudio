@@ -17,6 +17,7 @@ package org.rstudio.core.client.files.filedialog;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.SelectedValue;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.dom.client.TableRowElement;
@@ -31,6 +32,7 @@ import com.google.gwt.user.client.ui.FlexTable;
 import com.google.gwt.user.client.ui.HTMLTable;
 import com.google.gwt.user.client.ui.impl.FocusImpl;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
@@ -90,7 +92,7 @@ public class DirectoryContentsWidget
 
       // presented to screen readers as a single-select listbox
       Roles.getListboxRole().set(table_.getElement());
-      Roles.getListboxRole().setAriaLabelProperty(table_.getElement(), "Directory Contents");
+      Roles.getListboxRole().setAriaLabelProperty(table_.getElement(), constants_.directoryContentsLabel());
 
       scrollPanel_ = new ScrollPanelWithClick(table_);
       scrollPanel_.setSize("100%", "100%");
@@ -529,4 +531,5 @@ public class DirectoryContentsWidget
 
    private final FocusImpl focusImpl_ = FocusImpl.getFocusImplForPanel();
    private final FileSystemContext context_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }
