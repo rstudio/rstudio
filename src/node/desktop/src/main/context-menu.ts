@@ -15,6 +15,7 @@
 
 import { BrowserWindow, clipboard, dialog, Menu } from 'electron';
 import path from 'path';
+import { createStandaloneErrorDialog } from './utils';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
@@ -25,7 +26,7 @@ function showContextMenuImageTemplate(event: Electron.IpcMainEvent, params: Elec
     // Save Image As...
     {
       label: 'Save Image As...',
-      click: () => {
+      click: async () => {
 
         // ask the user for a download file path.  in theory, we could let the
         // default download handler do this, but Electron appears to barf if the
@@ -55,12 +56,12 @@ function showContextMenuImageTemplate(event: Electron.IpcMainEvent, params: Elec
             switch (state) {
 
             case 'cancelled': {
-              dialog.showErrorBox('Error Downloading Image', 'The download was cancelled.');
+              void createStandaloneErrorDialog('Error Downloading Image', 'The download was cancelled.');
               break;
             }
 
             case 'interrupted': {
-              dialog.showErrorBox('Error Downloading Image', 'The download was interrupted.');
+              void createStandaloneErrorDialog('Error Downloading Image', 'The download was interrupted.');
               break;
             }
 
