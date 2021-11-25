@@ -392,11 +392,32 @@ export function initializeLang(): void {
   }
 }
 
+/**
+ * Create an Error Dialog.
+ * You can pass in a custom window.
+ * If so, you must pass shouldCloseWindow = true as well.
+ *
+ * @export
+ * @param {string} title
+ * @param {string} message
+ * @param {{
+*     window: BrowserWindow;
+*     shouldCloseWindow: boolean;
+*   }} [options={
+*     window = new BrowserWindow({ width: 0, height: 0 }),
+*     shouldCloseWindow: false,
+*   }]
+*/
 export async function createStandaloneErrorDialog(
   title: string,
   message: string,
-  window = new BrowserWindow({ width: 0, height: 0 }),
-  shouldCloseWindow = false
+  options: {
+    window: BrowserWindow;
+    shouldCloseWindow: boolean;
+  } = {
+    window: new BrowserWindow({ width: 0, height: 0 }),
+    shouldCloseWindow: false,
+  }
 ) {
   try {
     const dialogContent: MessageBoxOptions = {
@@ -409,9 +430,9 @@ export async function createStandaloneErrorDialog(
     dialogContent[process.platform === 'win32' ? 'message' : 'detail'] =
       message;
 
-    await dialog.showMessageBox(window, dialogContent);
+    await dialog.showMessageBox(options.window, dialogContent);
 
-    if (shouldCloseWindow) window.close();
+    if (options.shouldCloseWindow) window.close();
     // eslint-disable-next-line @typescript-eslint/no-implicit-any-catch
   } catch (error: any) {
     console.error(
