@@ -51,6 +51,7 @@
     "eslint-config-standard": "^16.0.3",
     "eslint-plugin-import": "^2.25.3",
     "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-promise": "^5.1.1",
     "fork-ts-checker-webpack-plugin": "^6.4.0",
     "mocha": "^8.4.0",
