@@ -1628,7 +1628,7 @@ public class TextEditingTarget implements
       };
 
       dependencyManager_.withTinyTeX(
-            constants_.installTinyTeX(),
+            constants_.installTinytexLowercase(),
             constants_.installTinyTeX(),
             onInstall);
    }

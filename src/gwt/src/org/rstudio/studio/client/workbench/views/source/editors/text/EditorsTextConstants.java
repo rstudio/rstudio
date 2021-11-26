@@ -17,8 +17,6 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.i18n.client.Messages;
 
-//public interface EditorsTextConstants extends com.google.gwt.i18n.client.Constants {
-//Replaced DefaultStringValue with DefaultMessage
 public interface EditorsTextConstants extends com.google.gwt.i18n.client.Messages {
     /**
      * Translated "R Console".
@@ -34,7 +32,7 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "Chunk Feedback"
      */
-    @DefaultMessage("Chunk Feedback.")
+    @DefaultMessage("Chunk Feedback")
     @Key("chunkFeedback")
     String chunkFeedback();
 
@@ -68,9 +66,9 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     /**
      * Translated "(No image at path {0})".
      *
-     * @return translated "(No image at path {0}"
+     * @return translated "(No image at path {0})"
      */
-    @DefaultMessage("(No image at path {0}")
+    @DefaultMessage("(No image at path {0})")
     @Key("noImageLabel")
     String noImageLabel(String path);
 
@@ -856,6 +854,15 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("Installing TinyTeX")
     @Key("installTinyTeX")
     String installTinyTeX();
+
+    /**
+     * Translated "Installing tinytex".
+     *
+     * @return translated "Installing tinytex"
+     */
+    @DefaultMessage("Installing tinytex")
+    @Key("installTinytexLowercase")
+    String installTinytexLowercase();
 
     /**
      * Translated "Debug lines may not match because the file contains unsaved changes.".
