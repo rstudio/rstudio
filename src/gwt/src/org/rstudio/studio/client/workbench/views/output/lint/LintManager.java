@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOpe
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintSource;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -309,9 +310,11 @@ public class LintManager
                   if (context.token.isInvalid())
                      return;
                   
-                  // if this is an rmd file then also look for yaml lint
-                  if (docDisplay_.getFileType().isRmd() && 
-                      userPrefs_.showDiagnosticsYaml().getValue())
+                  // lint yaml for rmd files and R chunks within rmd files
+                  boolean isRmd = docDisplay_.getFileType().isRmd();
+                  boolean isRmdRChunk = docDisplay_.getEditorBehavior().equals(EditorBehavior.AceBehaviorEmbedded) &&
+                        docDisplay_.getFileType().isR();                  
+                  if ((isRmd || isRmdRChunk) && userPrefs_.showDiagnosticsYaml().getValue())
                   {
                      yamlLinter_.getLint(yamlLint -> {
                         JsArray<LintItem> allLint = JsArray.createArray().cast();
@@ -320,7 +323,7 @@ public class LintManager
                         for (int i = 0; i < yamlLint.length(); i++)
                            allLint.push(yamlLint.get(i));
                         showLint(context, allLint);
-                     });
+                     });               
                   }
                   else
                   {
