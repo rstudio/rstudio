@@ -152,10 +152,10 @@ async function createCalloutDiv(ui: EditorUI, state: EditorState, dispatch: (tr:
     wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
       // set div props from callout
       const attr = result.attr as any;
-      pandocAttrEnsureClass(attr, `callout-${props.callout.type}`);
+      pandocAttrEnsureClass(attr, `callout-${result.callout.type}`);
       attr.keyvalue = attr.keyvalue || [];
       if (result.callout?.appearance !== "default") {
-        attr.keyvalue.push(["appearance", props.callout.appearance]);
+        attr.keyvalue.push(["appearance", result.callout.appearance]);
       }
       if (result.callout?.icon === false) {
         attr.keyvalue.push(["icon", "false"]);
