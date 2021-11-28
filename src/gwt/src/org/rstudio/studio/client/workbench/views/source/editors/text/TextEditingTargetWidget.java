@@ -31,6 +31,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
+import com.google.gwt.core.client.GWT;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
@@ -88,6 +89,8 @@ public class TextEditingTargetWidget
       extends ResizeComposite
       implements Display, RequiresVisibilityChanged
 {
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
+
    public TextEditingTargetWidget(final TextEditingTarget target,
                                   DocUpdateSentinel docUpdateSentinel,
                                   Commands commands,
@@ -113,7 +116,7 @@ public class TextEditingTargetWidget
       extendedType_ = extendedType;
       events_ = events;
       sourceOnSave_ = new CheckBox();
-      srcOnSaveLabel_ = new CheckboxLabel(sourceOnSave_, "Source on Save").getLabel();
+      srcOnSaveLabel_ = new CheckboxLabel(sourceOnSave_, constants_.sourceOnSave()).getLabel();
       statusBar_ = new StatusBarWidget();
       shinyViewerMenu_ = RStudioGinjector.INSTANCE.getShinyViewerTypePopupMenu();
       shinyTestMenu_ = RStudioGinjector.INSTANCE.getShinyTestPopupMenu();
@@ -196,7 +199,7 @@ public class TextEditingTargetWidget
 
       editor.addFocusHandler(event -> initWidgetSize());
 
-      editor_.setTextInputAriaLabel("Text editor");
+      editor_.setTextInputAriaLabel(constants_.textEditor());
 
       initWidget(panel_);
 
@@ -283,7 +286,7 @@ public class TextEditingTargetWidget
    {
       SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
       compareTestButton_ = new ToolbarButton(
-            "Compare Results",
+            constants_.compareResults(),
             ToolbarButton.NoTitle,
             commands_.shinyCompareTest().getImageResource(),
             event -> {
@@ -296,7 +299,7 @@ public class TextEditingTargetWidget
       compareTestButton_.setVisible(false);
 
       testThatButton_ = new ToolbarButton(
-            "Run Tests",
+            constants_.runTests(),
             ToolbarButton.NoTitle,
             commands_.testTestthatFile().getImageResource(),
             event -> {
@@ -309,7 +312,7 @@ public class TextEditingTargetWidget
       testThatButton_.setVisible(false);
 
       testShinyButton_ = new ToolbarButton(
-            "Run Tests",
+            constants_.runTests(),
             ToolbarButton.NoTitle,
             commands_.testShinytestFile().getImageResource(),
             event -> {
@@ -352,7 +355,7 @@ public class TextEditingTargetWidget
       String cmdText =
         new KeyCombination("K", 'K', mod + KeyboardShortcut.SHIFT).toString(true);
       cmdText = DomUtils.htmlToText(cmdText);
-      notebookToolbarButton_.setTitle("Compile Report (" + cmdText + ")");
+      notebookToolbarButton_.setTitle(constants_.compileReport(cmdText));
 
       texSeparatorWidget_ = toolbar.addLeftSeparator();
       toolbar.addLeftWidget(texToolbarButton_ = createLatexFormatButton());
@@ -374,18 +377,18 @@ public class TextEditingTargetWidget
       if (fileType.canKnitToHTML()) {
          shinyLaunchButton_ = new ToolbarMenuButton(
                ToolbarButton.NoText,
-               "Shiny test options",
+               constants_.shinyTestOptions(),
                shinyTestMenu, true);
          toolbar.addLeftWidget(shinyLaunchButton_);
       }
 
       toolbar.addLeftWidget(compilePdfButton_ =
          mgr.getSourceCommand(commands_.compilePDF(), column_).createToolbarButton());
-      rmdFormatButton_ = new ToolbarPopupMenuButton("Knit options", false, true);
+      rmdFormatButton_ = new ToolbarPopupMenuButton(constants_.knitOptions(), false, true);
       rmdFormatButton_.getMenu().setAutoOpen(true);
       toolbar.addLeftWidget(rmdFormatButton_);
 
-      runDocumentMenuButton_ = new ToolbarPopupMenuButton("Run document options", false, true);
+      runDocumentMenuButton_ = new ToolbarPopupMenuButton(constants_.runDocumentOptions(), false, true);
       addClearKnitrCacheMenu(runDocumentMenuButton_);
       runDocumentMenuButton_.addSeparator();
       runDocumentMenuButton_.addMenuItem(mgr.getSourceCommand(commands_.clearPrerenderedOutput(),
@@ -457,9 +460,9 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(goToNextButton_ = 
          mgr.getSourceCommand(commands_.goToNextSection(), column_).createUnsyncedToolbarButton());
       toolbar.addRightSeparator();
-      final String SOURCE_BUTTON_TITLE = "Source the active document";
+      final String SOURCE_BUTTON_TITLE = constants_.sourceButtonTitle();
       sourceButton_ = new ToolbarButton(
-            "Source",
+            constants_.source(),
             SOURCE_BUTTON_TITLE,
             commands_.sourceActiveDocument().getImageResource(),
             event -> {
@@ -484,7 +487,7 @@ public class TextEditingTargetWidget
       userPrefs_.sourceWithEcho().addValueChangeHandler(
             event -> {
                if (event.getValue())
-                  sourceButton_.setTitle(SOURCE_BUTTON_TITLE + " (with echo)");
+                  sourceButton_.setTitle(constants_.sourceButtonTitleWithEcho(SOURCE_BUTTON_TITLE));
                else
                   sourceButton_.setTitle(SOURCE_BUTTON_TITLE);
             });
@@ -500,7 +503,7 @@ public class TextEditingTargetWidget
       sourceMenu.addItem(
          mgr.getSourceCommand(commands_.sourceAsJob(), column_).createMenuItem());
 
-      sourceMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText, "Source options", sourceMenu, true);
+      sourceMenuButton_ = new ToolbarMenuButton(ToolbarButton.NoText, constants_.sourceOptions(), sourceMenu, true);
       toolbar.addRightWidget(sourceMenuButton_);
 
       //toolbar.addRightSeparator();
@@ -517,7 +520,7 @@ public class TextEditingTargetWidget
       chunksMenu.addItem(
          mgr.getSourceCommand(commands_.executeSetupChunk(), column_).createMenuItem());
       chunksMenu.addItem(runSetupChunkOptionMenu_= new UserPrefMenuItem<>(
-            userPrefs_.autoRunSetupChunk(), true, "Run Setup Chunk Automatically",
+            userPrefs_.autoRunSetupChunk(), true, constants_.runSetupChunkAuto(),
             userPrefs_));
       chunksMenu.addSeparator();
       chunksMenu.addItem(
@@ -538,7 +541,7 @@ public class TextEditingTargetWidget
       chunksMenu.addItem(
          mgr.getSourceCommand(commands_.executeAllCode(), column_).createMenuItem());
       chunksButton_ = new ToolbarMenuButton(
-                       "Run",
+                       constants_.run(),
                        ToolbarButton.NoTitle,
                        commands_.executeCode().getImageResource(),
                        chunksMenu,
@@ -549,7 +552,7 @@ public class TextEditingTargetWidget
       if (!fileType.canKnitToHTML()) {
          shinyLaunchButton_ = new ToolbarMenuButton(
                ToolbarButton.NoText,
-               "Run app options",
+               constants_.runAppOptions(),
                shinyLaunchMenu,
                true);
          toolbar.addRightWidget(shinyLaunchButton_);
@@ -558,7 +561,7 @@ public class TextEditingTargetWidget
 
       plumberLaunchButton_ = new ToolbarMenuButton(
             ToolbarButton.NoText,
-            "Run API options",
+            constants_.runApiOptions(),
             plumberViewerMenu_,
             true);
       toolbar.addRightWidget(plumberLaunchButton_);
@@ -598,9 +601,9 @@ public class TextEditingTargetWidget
                // Update tooltip ('Show'/'Hide' depending on current visibility)
                String title = toggleDocOutlineButton_.getTitle();
                if (destination != 0)
-                  title = title.replace("Show ", "Hide ");
+                  title = title.replace(constants_.show(), constants_.hide());
                else
-                  title = title.replace("Hide ", "Show ");
+                  title = title.replace(constants_.hide(), constants_.show());
                toggleDocOutlineButton_.setTitle(title);
 
                setDocOutlineLatchState(destination != 0);
@@ -640,8 +643,8 @@ public class TextEditingTargetWidget
             mgr.setActive(column_);
             String title = commands_.toggleDocumentOutline().getTooltip();
             title = editorPanel_.getWidgetSize(docOutlineWidget_) > 0
-                  ? title.replace("Show ", "Hide ")
-                  : title.replace("Hide ", "Show ");
+                  ? title.replace(constants_.show(), constants_.hide())
+                  : title.replace(constants_.hide(), constants_.show());
             toggleDocOutlineButton_.setTitle(title);
             setDocOutlineLatchState(docOutlineWidget_.getOffsetWidth() > 0);
          }
@@ -654,7 +657,7 @@ public class TextEditingTargetWidget
       toolbar.addRightSeparator();
       toolbar.addRightWidget(createVisualModeToggleButton());
 
-      showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace");
+      showWhitespaceCharactersCheckbox_ = new CheckBox(constants_.showWhitespace());
       showWhitespaceCharactersCheckbox_.setVisible(false);
       showWhitespaceCharactersCheckbox_.setValue(userPrefs_.showInvisibles().getValue());
       showWhitespaceCharactersCheckbox_.addValueChangeHandler((ValueChangeEvent<Boolean> event) ->
@@ -701,9 +704,9 @@ public class TextEditingTargetWidget
    {
       toggleRmdVisualModeButton_.setLatched(latched);
       if (!latched)
-         toggleRmdVisualModeButton_.setTitle("Switch to visual markdown editor");
+         toggleRmdVisualModeButton_.setTitle(constants_.switchToVisualMarkdownEditor());
       else
-         toggleRmdVisualModeButton_.setTitle("Switch to source editor");
+         toggleRmdVisualModeButton_.setTitle(constants_.switchToSourceEditor());
    }
 
    private void addVisualModeOutlineButton(Toolbar toolbar)
@@ -736,7 +739,7 @@ public class TextEditingTargetWidget
       boolean visible = target_.getPreferredOutlineWidgetVisibility();
       toggleVisualModeOutlineButton_.setLatched(visible);
       String title = commands_.toggleDocumentOutline().getTooltip();
-      title = visible ? title.replace("Show ", "Hide ") : title.replace("Hide ", "Show ");
+      title = visible ? title.replace(constants_.show(), constants_.hide()) : title.replace(constants_.hide(), constants_.show());
       toggleVisualModeOutlineButton_.setTitle(title);
    }
 
@@ -753,7 +756,7 @@ public class TextEditingTargetWidget
                                                                       userPrefs_);
 
       ToolbarMenuButton texButton = new ToolbarMenuButton(
-                           "Format",
+                           constants_.format(),
                            ToolbarButton.NoTitle,
                            fileTypeRegistry_.getIconForFilename("foo.tex").getImageResource(),
                            texMenu,
@@ -805,7 +808,7 @@ public class TextEditingTargetWidget
          menu.addSeparator();
          menu.addItem(
          mgr.getSourceCommand(commands_.profileCode(), column_).createMenuItem());
-         codeTransform_ = new ToolbarMenuButton(ToolbarButton.NoText, "Code Tools", icon, menu);
+         codeTransform_ = new ToolbarMenuButton(ToolbarButton.NoText, constants_.codeTools(), icon, menu);
       }
 
       return codeTransform_;
@@ -869,7 +872,7 @@ public class TextEditingTargetWidget
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
       String action = getSourceOnSaveAction();
-      srcOnSaveLabel_.setText(action + " on Save");
+      srcOnSaveLabel_.setText(constants_.actionOnSave(action));
       codeTransform_.setVisible(
             (canExecuteCode && !isScript && !fileType.canAuthorContent()) ||
             fileType.isC() || fileType.isStan());
@@ -1017,7 +1020,7 @@ public class TextEditingTargetWidget
    public void setAccessibleName(String name)
    {
       if (StringUtil.isNullOrEmpty(name))
-         name = "Untitled Text editor";
+         name = constants_.untitledTextEditor();
       Roles.getTabpanelRole().setAriaLabelProperty(panel_.getElement(), name);
    }
 
@@ -1049,15 +1052,15 @@ public class TextEditingTargetWidget
 
       
       
-      texToolbarButton_.setText(width >= 520, "Format");
-      runButton_.setText(((width >= 480) && !isShinyFile()), "Run");
-      compilePdfButton_.setText(width >= 450, "Compile PDF");
+      texToolbarButton_.setText(width >= 520, constants_.format());
+      runButton_.setText(((width >= 480) && !isShinyFile()), constants_.run());
+      compilePdfButton_.setText(width >= 450, constants_.compilePdf());
       previewHTMLButton_.setText(width >= 450, previewCommandText_);
       knitDocumentButton_.setText(width >= 450, knitCommandText_);
       quartoRenderButton_.setText(width >= 450, quartoCommandText_);
 
       String action = getSourceOnSaveAction();
-      srcOnSaveLabel_.setText(width < 450 ? action : action + " on Save");
+      srcOnSaveLabel_.setText(width < 450 ? action : constants_.actionOnSave(action));
       sourceButton_.setText(width >= 400, sourceCommandText_);
       
       goToNextButton_.setVisible(commands_.goToNextChunk().isVisible() && width >= 650);
@@ -1081,7 +1084,7 @@ public class TextEditingTargetWidget
       }
       else
       {
-         return "Source";
+         return constants_.source();
       }
    }
    
@@ -1122,14 +1125,14 @@ public class TextEditingTargetWidget
             deps.add(Dependency.cranPackage(pkg));
 
          String scriptName = StringUtil.isNullOrEmpty(docUpdateSentinel_.getPath()) ?
-            "R Script" :
+            constants_.rScript() :
             FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath());
 
          // Install them using the dependency manager; provide a "prompt"
          // function that just accepts the list (since the user has already been
          // prompted here in the editor)
          RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
-               "Install " + scriptName + " dependencies",
+               constants_.showRequiredPackagesMissingWarningCaption(scriptName),
                (String dependencies, CommandWithArg<Boolean> result) -> result.execute(true),
                deps, false, null);
          hideWarningBar();
@@ -1334,7 +1337,7 @@ public class TextEditingTargetWidget
       // setFormatText(selectedOption);
       setFormatText("");
 
-      String prefix = fileType.isPlainMarkdown() ? "Preview " : "Knit to ";
+      String prefix = fileType.isPlainMarkdown() ? constants_.preview() : constants_.knitTo();
 
       for (int i = 0; i < Math.min(options.size(), values.size()); i++)
       {
@@ -1345,7 +1348,7 @@ public class TextEditingTargetWidget
          final String valueName = values.get(i);
          ScheduledCommand cmd = () -> handlerManager_.fireEvent(
                new RmdOutputFormatChangedEvent(valueName));
-         String text = ext == ".nb.html" ? "Preview Notebook" :
+         String text = ext == ".nb.html" ? constants_.previewNotebook() :
             prefix + options.get(i);
 
          MenuItem item = ImageMenuItem.create(img, text, cmd, 2);
@@ -1367,21 +1370,21 @@ public class TextEditingTargetWidget
       {
          MenuBar knitDirMenu = new MenuBar(true);
          DocPropMenuItem knitInDocDir = new DocShadowPropMenuItem(
-               "Document Directory",
+               constants_.documentDirectory(),
                docUpdateSentinel_,
                userPrefs_.knitWorkingDir(),
                RenderRmdEvent.WORKING_DIR_PROP,
                UserPrefs.KNIT_WORKING_DIR_DEFAULT);
          knitDirMenu.addItem(knitInDocDir);
          DocPropMenuItem knitInProjectDir = new DocShadowPropMenuItem(
-               "Project Directory",
+               constants_.projectDirectory(),
                docUpdateSentinel_,
                userPrefs_.knitWorkingDir(),
                RenderRmdEvent.WORKING_DIR_PROP,
                UserPrefs.KNIT_WORKING_DIR_PROJECT);
          knitDirMenu.addItem(knitInProjectDir);
          DocPropMenuItem knitInCurrentDir = new DocShadowPropMenuItem(
-               "Current Working Directory",
+               constants_.currentWorkingDirectory(),
                docUpdateSentinel_,
                userPrefs_.knitWorkingDir(),
                RenderRmdEvent.WORKING_DIR_PROP,
@@ -1389,7 +1392,7 @@ public class TextEditingTargetWidget
          knitDirMenu.addItem(knitInCurrentDir);
 
          rmdFormatButton_.addSeparator();
-         rmdFormatButton_.addMenuItem(knitDirMenu, "Knit Directory");
+         rmdFormatButton_.addMenuItem(knitDirMenu, constants_.knitDirectory());
       }
 
       addClearKnitrCacheMenu(rmdFormatButton_);
@@ -1418,7 +1421,7 @@ public class TextEditingTargetWidget
                new RmdOutputFormatChangedEvent(format, true, isBook));
          ImageResource img = fileTypeRegistry_.getIconForFilename("output." + format)
                .getImageResource();
-         MenuItem item = ImageMenuItem.create(img, "Render " + formatName(format), cmd, 2);
+         MenuItem item = ImageMenuItem.create(img, constants_.renderFormatName(formatName(format)), cmd, 2);
          rmdFormatButton_.addMenuItem(item, format);
       }
    }
@@ -1457,17 +1460,16 @@ public class TextEditingTargetWidget
 
       showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, true);
 
-      String docType = isPresentation ? "Presentation" : "Document";
+      String docType = isPresentation ? constants_.presentation() : constants_.document();
 
       if (!isPresentation && !isShinyPrerendered) {
          shinyLaunchButton_.setVisible(true);
       }
 
-      knitCommandText_ = "Run " + docType;
-      knitDocumentButton_.setTitle("View the current " + docType.toLowerCase() +
-            " with Shiny (" +
+      knitCommandText_ = constants_.setIsShinyFormatKnitCommandText(docType);
+      knitDocumentButton_.setTitle(constants_.setIsShinyFormatKnitDocumentButtonTitle(docType.toLowerCase(),
             DomUtils.htmlToText(
-                  commands_.knitDocument().getShortcutPrettyHtml()) + ")");
+                  commands_.knitDocument().getShortcutPrettyHtml())));
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(new ImageResource2x(StandardIcons.INSTANCE.run2x()));
       
@@ -1492,10 +1494,10 @@ public class TextEditingTargetWidget
    @Override
    public void setIsNotebookFormat()
    {
-      knitCommandText_ = "Preview";
-      knitDocumentButton_.setTitle("Preview the notebook (" +
+      knitCommandText_ = constants_.preview();
+      knitDocumentButton_.setTitle(constants_.setIsNotebookFormatButtonTitle(
             DomUtils.htmlToText(
-                  commands_.knitDocument().getShortcutPrettyHtml()) + ")");
+                  commands_.knitDocument().getShortcutPrettyHtml())));
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(
             commands_.newRNotebook().getImageResource());
@@ -1577,8 +1579,8 @@ public class TextEditingTargetWidget
          // widget) but in case it does let the user know why nothing's
          // happening.
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               "Content not publishable",
-               "This item cannot be published.");
+               constants_.invokePublishCaption(),
+               constants_.invokePublishMessage());
       }
       else
       {
@@ -1590,17 +1592,17 @@ public class TextEditingTargetWidget
    {
       if (text.length() > 0)
          text = " " + text;
-      knitCommandText_ = "Knit" + text;
+      knitCommandText_ = constants_.setFormatTextKnitCommandText(text);
       knitDocumentButton_.setText(knitCommandText_);
       knitDocumentButton_.setLeftImage(
             commands_.knitDocument().getImageResource());
       knitDocumentButton_.setTitle(commands_.knitDocument().getTooltip());
-      quartoCommandText_ = "Render";
+      quartoCommandText_ = constants_.setFormatTextQuartoCommandText();
       quartoRenderButton_.setText(quartoCommandText_);
       quartoRenderButton_.setLeftImage(
             commands_.quartoRenderDocument().getImageResource());
       quartoRenderButton_.setTitle(commands_.quartoRenderDocument().getTooltip());
-      previewCommandText_ = "Preview" + text;
+      previewCommandText_ = constants_.setFormatTextPreviewCommandText(text);
       previewHTMLButton_.setText(previewCommandText_);
    }
    
@@ -1612,22 +1614,22 @@ public class TextEditingTargetWidget
       String sourceCommandDesc = commands_.sourceActiveDocument().getDesc();
       if (fileType.isPython())
       {
-         sourceCommandText_ = "Source Script";
-         sourceCommandDesc = "Save changes and source the current script";
+         sourceCommandText_ = constants_.sourceScript();
+         sourceCommandDesc = constants_.setSourceButtonFromScriptStatePythonDesc();
          sourceButton_.setLeftImage(
                            commands_.debugContinue().getImageResource());
       }
       else if (fileType.isScript())
       {
-         sourceCommandText_ = "Run Script";
-         sourceCommandDesc = "Save changes and run the current script";
+         sourceCommandText_ = constants_.runScript();
+         sourceCommandDesc = constants_.setSourceButtonFromScriptStateDesc();
          sourceButton_.setLeftImage(
                            commands_.debugContinue().getImageResource());
       }
       else if (canPreviewFromR)
       {
          sourceCommandText_ = previewButtonText;
-         sourceCommandDesc = "Save changes and preview";
+         sourceCommandDesc = constants_.setSourceButtonFromScriptStateSavePreview();
          sourceButton_.setLeftImage(
                            commands_.debugContinue().getImageResource());
       }
@@ -1646,15 +1648,15 @@ public class TextEditingTargetWidget
       {
          if (shinyAppState_ == ShinyApplicationParams.STATE_STARTED)
          {
-            sourceCommandText_ = "Reload App";
-            sourceCommandDesc = "Save changes and reload the Shiny application";
+            sourceCommandText_ = constants_.reloadApp();
+            sourceCommandDesc = constants_.saveChangesAndReload();
             sourceButton_.setLeftImage(
                   commands_.reloadShinyApp().getImageResource());
          }
          else if (shinyAppState_ == ShinyApplicationParams.STATE_STOPPED)
          {
-            sourceCommandText_ = "Run App";
-            sourceCommandDesc = "Run the Shiny application";
+            sourceCommandText_ = constants_.runApp();
+            sourceCommandDesc = constants_.runTheShinyApp();
             sourceButton_.setLeftImage(
                   commands_.debugContinue().getImageResource());
          }
@@ -1672,14 +1674,14 @@ public class TextEditingTargetWidget
       {
          if (plumberAPIState_ == PlumberAPIParams.STATE_STARTED)
          {
-            sourceCommandText_ = "Reload API";
-            sourceCommandDesc = "Save changes and reload the Plumber API";
+            sourceCommandText_ = constants_.reloadApi();
+            sourceCommandDesc = constants_.saveChangesReloadPlumberApi();
             sourceButton_.setLeftImage(commands_.reloadPlumberAPI().getImageResource());
          }
          else if (plumberAPIState_ == PlumberAPIParams.STATE_STOPPED)
          {
-            sourceCommandText_ = "Run API";
-            sourceCommandDesc = "Run the Plumber API";
+            sourceCommandText_ = constants_.runApi();
+            sourceCommandDesc = constants_.runPlumberApi();
             sourceButton_.setLeftImage(commands_.debugContinue().getImageResource());
          }
       }
@@ -1737,17 +1739,17 @@ public class TextEditingTargetWidget
          rmdViewerPaneMenuItem_ = new UserPrefMenuItem<>(
             userPrefs_.rmdViewerType(),
             UserPrefs.RMD_VIEWER_TYPE_PANE,
-            "Preview in Viewer Pane", userPrefs_);
+            constants_.previewInViewerPane(), userPrefs_);
       if (rmdViewerWindowMenuItem_ == null)
          rmdViewerWindowMenuItem_ = new UserPrefMenuItem<>(
             userPrefs_.rmdViewerType(),
             UserPrefs.RMD_VIEWER_TYPE_WINDOW,
-            "Preview in Window", userPrefs_);
+            constants_.previewInWindow(), userPrefs_);
       if (rmdViewerNoPreviewMenuItem_ == null)
          rmdViewerNoPreviewMenuItem_ = new UserPrefMenuItem<>(
             userPrefs_.rmdViewerType(),
             UserPrefs.RMD_VIEWER_TYPE_NONE,
-            "(No Preview)", userPrefs_);
+            constants_.noPreviewParentheses(), userPrefs_);
 
 
       ToolbarPopupMenu menu = rmdOptionsButton_.getMenu();
@@ -1755,7 +1757,7 @@ public class TextEditingTargetWidget
 
       boolean visualMode = isVisualMode();
       DocPropMenuItem visualModeMenu = new DocPropMenuItem(
-         "Use Visual Editor", true, docUpdateSentinel_,
+         constants_.useVisualEditor(), true, docUpdateSentinel_,
          visualMode,
          TextEditingTarget.RMD_VISUAL_MODE,
          DocUpdateSentinel.PROPERTY_TRUE
@@ -1794,14 +1796,14 @@ public class TextEditingTargetWidget
       {
          String pref = userPrefs_.latexPreviewOnCursorIdle().getValue();
          menu.addItem(new DocPropMenuItem(
-            "Preview Images and Equations", docUpdateSentinel_,
+            constants_.previewImagesEquations(), docUpdateSentinel_,
             docUpdateSentinel_.getBoolProperty(
                TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
                pref != UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER),
             TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
             DocUpdateSentinel.PROPERTY_TRUE));
          menu.addItem(new DocPropMenuItem(
-            "Show Previews Inline", docUpdateSentinel_,
+            constants_.showPreviewsInline(), docUpdateSentinel_,
             docUpdateSentinel_.getBoolProperty(
                TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE,
                pref == UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS),
@@ -1814,12 +1816,12 @@ public class TextEditingTargetWidget
       {
          boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
          menu.addItem(new DocPropMenuItem(
-            "Chunk Output Inline", docUpdateSentinel_,
+            constants_.chunkOutputInline(), docUpdateSentinel_,
             inline,
             TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
             TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
          menu.addItem(new DocPropMenuItem(
-            "Chunk Output in Console", docUpdateSentinel_,
+            constants_.chunkOutputInConsole(), docUpdateSentinel_,
             !inline,
             TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
             TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
@@ -2028,9 +2030,9 @@ public class TextEditingTargetWidget
 
    private String shinyAppState_ = ShinyApplicationParams.STATE_STOPPED;
    private String plumberAPIState_ = PlumberAPIParams.STATE_STOPPED;
-   private String sourceCommandText_ = "Source";
-   private String knitCommandText_ = "Knit";
-   private String quartoCommandText_ = "Render";
-   private String previewCommandText_ = "Preview";
+   private String sourceCommandText_ = constants_.source();
+   private String knitCommandText_ = constants_.knit();
+   private String quartoCommandText_ = constants_.render();
+   private String previewCommandText_ = constants_.preview();
 
 }

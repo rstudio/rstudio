@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FixedRatioWidget;
 import org.rstudio.studio.client.rmarkdown.model.NotebookHtmlMetadata;
@@ -54,7 +55,7 @@ public class ChunkHtmlPage extends ChunkOutputPage
          url += "?";
       url += "viewer_pane=1&capabilities=1";
 
-      frame_ = new ChunkOutputFrame("Chunk HTML Page Output Frame");
+      frame_ = new ChunkOutputFrame(constants_.chunkHtmlPageOutputFrame());
       
       if (chunkOutputSize != ChunkOutputSize.Full) {
          content_ = new FixedRatioWidget(frame_, 
@@ -156,4 +157,5 @@ public class ChunkHtmlPage extends ChunkOutputPage
    final private Widget content_;
    private Colors themeColors_ = null;
    private Command afterRender_;
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

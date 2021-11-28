@@ -207,7 +207,7 @@ public class ImagePreviewer
       // construct placeholder for image
       final SimplePanel container = new SimplePanel();
       container.addStyleName(RES.styles().container());
-      final Label noImageLabel = new Label("(No image at path " + href + ")");
+      final Label noImageLabel = new Label(constants_.noImageLabel(href));
       
       // resize command (used by various routines that need to respond
       // to width / height change events)
@@ -352,7 +352,7 @@ public class ImagePreviewer
                
                // set new src location (load handler will replace label as needed)
                container.setWidget(new SimplePanel());
-               noImageLabel.setText("(No image at path " + href_ + ")");
+               noImageLabel.setText(constants_.noImageLabel(href_));
                image.getElement().setAttribute("src", imgSrcPathFromHref(
                      sentinel, href_));
                
@@ -596,5 +596,5 @@ public class ImagePreviewer
    
    private static final Resources RES = GWT.create(Resources.class);
    static { RES.styles().ensureInjected(); }
-   
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }
