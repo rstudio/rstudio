@@ -35,7 +35,7 @@ export interface BibliographyResult {
   etag: string;
   bibliography: Bibliography;
 }
-export const kLocalBiliographyProviderKey = 'E06068FE-45DA-4D88-ABDA-0DF290624950';
+export const kLocalBibliographyProviderKey = 'E06068FE-45DA-4D88-ABDA-0DF290624950';
 
 export class BibliographyDataProviderLocal implements BibliographyDataProvider {
   private etag: string;
@@ -47,7 +47,7 @@ export class BibliographyDataProviderLocal implements BibliographyDataProvider {
     this.etag = '';
   }
   public name: string = 'Bibliography';
-  public key: string = kLocalBiliographyProviderKey;
+  public key: string = kLocalBibliographyProviderKey;
   public requiresWritable: boolean = false;
 
   // Always enabled;

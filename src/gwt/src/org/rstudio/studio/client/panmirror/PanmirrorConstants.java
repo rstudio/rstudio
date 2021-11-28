@@ -1896,11 +1896,11 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     String readingBibliographyProgressText();
 
     /**
-     * Translated "Saving biliography...".
+     * Translated "Saving bibliography...".
      *
-     * @return translated "Saving biliography..."
+     * @return translated "Saving bibliography..."
      */
-    @DefaultMessage("Saving biliography...")
+    @DefaultMessage("Saving bibliography...")
     @Key("savingBibliographyProgressText")
     String savingBibliographyProgressText();
 

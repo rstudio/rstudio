@@ -130,7 +130,7 @@ export function sanitizeForCiteproc(csl: CSL): CSL {
   }
 
   // Pubmed and others may included license information (including date ranges and more)
-  // which will not be properly parsed by Pandoc (when writing to the bibiliography). Remove
+  // which will not be properly parsed by Pandoc (when writing to the bibliography). Remove
   if (cslAny.license) {
     delete cslAny.license;
   }
