@@ -20,6 +20,8 @@ import java.util.List;
 
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.studio.client.palette.ui.CommandPaletteCommand;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
+import com.google.gwt.core.client.GWT;
 
 public class PanmirrorCommandPaletteEntry extends CommandPaletteCommand
 {
@@ -46,7 +48,7 @@ public class PanmirrorCommandPaletteEntry extends CommandPaletteCommand
    @Override
    public String getContext()
    {
-      return "Visual Editor";
+      return constants_.visualEditorText();
    }
 
    @Override
@@ -65,4 +67,5 @@ public class PanmirrorCommandPaletteEntry extends CommandPaletteCommand
          keys.add(keySequence);
       return keys;
    }
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 }

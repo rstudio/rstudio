@@ -29,13 +29,14 @@ import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 
 
 public class PanmirrorEditMathDialog extends ModalDialog<String>
 {
    public PanmirrorEditMathDialog(String id, OperationWithInput<String> operation)
    {
-      super("Edit Equation ID", Roles.getDialogRole(), operation, () -> {
+      super(constants_.editEquationCaption(), Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
@@ -69,8 +70,8 @@ public class PanmirrorEditMathDialog extends ModalDialog<String>
       if (!input.isEmpty() && !input.startsWith("eq-"))
       {
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-            "Invalid ID", 
-            "Equation IDs must start with eq-", 
+            constants_.invalidIDCaption(),
+            constants_.invalidIDMessage(),
             id_);
          return false;
       } else {
@@ -78,7 +79,7 @@ public class PanmirrorEditMathDialog extends ModalDialog<String>
       }
    }
 
-
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 
    interface Binder extends UiBinder<Widget, PanmirrorEditMathDialog> {}
    
