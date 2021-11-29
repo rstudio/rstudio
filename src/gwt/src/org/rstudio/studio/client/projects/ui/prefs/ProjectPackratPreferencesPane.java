@@ -125,7 +125,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         lessSpaced(chkVcsIgnoreSrc_);
         add(chkVcsIgnoreSrc_);
 
-        chkUseCache_ = new CheckBox("Use global cache for installed packages");
+        chkUseCache_ = new CheckBox(constants_.chkUseCacheLabel());
         chkUseCache_.setValue(packratOptions.getUseCache());
         spaced(chkUseCache_);
         add(chkUseCache_);

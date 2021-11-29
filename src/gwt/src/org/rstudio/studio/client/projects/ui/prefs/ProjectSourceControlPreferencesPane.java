@@ -105,7 +105,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Git/SVN";
+      return constants_.gitLabel();
    }
 
    @Override

@@ -91,8 +91,8 @@ public class NewPackagePage extends NewDirectoryPage
    @Override 
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
-      String[] labels = {"Package"};
-      String[] values = {"package"};
+      String[] labels = {constants_.packageLabel()};
+      String[] values = {constants_.packageValue()};
       listProjectType_ = new SelectWidget(constants_.typeLabel(),
                                           labels,
                                           values,

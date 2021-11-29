@@ -2086,4 +2086,57 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @Key("projectBuildToolsLabel")
     String projectBuildToolsLabel();
 
+    /**
+     * Translated "Package".
+     *
+     * @return translated "Package"
+     */
+    @DefaultMessage("Package")
+    @Key("packageLabel")
+    String packageLabel();
+
+    /**
+     * Translated "package".
+     *
+     * @return translated "package"
+     */
+    @DefaultMessage("package")
+    @Key("packageValue")
+    String packageValue();
+
+    /**
+     * Translated "Git/SVN".
+     *
+     * @return translated "Git/SVN"
+     */
+    @DefaultMessage("Git/SVN")
+    @Key("gitLabel")
+    String gitLabel();
+
+    /**
+     * Translated "Close Project".
+     *
+     * @return translated "Close Project"
+     */
+    @DefaultMessage("Close Project")
+    @Key("closeProjectLabel")
+    String closeProjectLabel();
+
+    /**
+     * Translated "placeholder".
+     *
+     * @return translated "placeholder"
+     */
+    @DefaultMessage("placeholder")
+    @Key("placeholderLabel")
+    String placeholderLabel();
+
+    /**
+     * Translated "Use global cache for installed packages".
+     *
+     * @return translated "Use global cache for installed packages"
+     */
+    @DefaultMessage("Use global cache for installed packages")
+    @Key("chkUseCacheLabel")
+    String chkUseCacheLabel();
 }

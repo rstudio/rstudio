@@ -811,7 +811,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
    {
       // first resolve the quit context (potentially saving edited documents
       // and determining whether to save the R environment on exit)
-      applicationQuit_.prepareForQuit("Close Project", new ApplicationQuit.QuitContext() {
+      applicationQuit_.prepareForQuit(constants_.closeProjectLabel(), new ApplicationQuit.QuitContext() {
          public void onReadyToQuit(final boolean saveChanges)
          {
             applicationQuit_.performQuit(null, saveChanges, NONE);
