@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.dom.DomUtils;
@@ -61,6 +62,7 @@ public class VisualModeChunkRowState extends ChunkRowExecState
       attached_ = false;
       editor_ = editor;
       row_ = -1;
+      registrations_ = new HandlerRegistrations();
       
       // Convert to zero-based row
       row = row - 1;
@@ -75,6 +77,16 @@ public class VisualModeChunkRowState extends ChunkRowExecState
             detach();
          }
       });
+
+      // If the user edits the line containing this indicator, remove the indicator.
+      registrations_.add(editor.addDocumentChangedHandler((evt) ->
+      {
+         if (row_ >= evt.getEvent().start.getRow() &&
+             row_ <= evt.getEvent().end.getRow())
+         {
+            detach();
+         }
+      }));
 
       ele_ = Document.get().createDivElement();
 
@@ -147,6 +159,9 @@ public class VisualModeChunkRowState extends ChunkRowExecState
       {
          anchor_.detach();
       }
+
+      // Remove all event handlers
+      registrations_.removeHandler();
    }
    
    public void attach(Element parent)
@@ -243,4 +258,5 @@ public class VisualModeChunkRowState extends ChunkRowExecState
 
    private final Anchor anchor_;
    private final AceEditor editor_;
+   private final HandlerRegistrations registrations_;
 }
