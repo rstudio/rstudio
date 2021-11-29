@@ -58,8 +58,14 @@ else
   INSTALL_DIR=rstudio-server
 fi
 
+if [ -z $CMAKE_GENERATOR ] && [ has-program ninja ]
+then 
+   CMAKE_GENERATOR="Ninja"
+else
+   CMAKE_GENERATOR="Unix Makefiles"
+fi
+
 : ${CMAKE_INSTALL_PREFIX="/usr/lib/${INSTALL_DIR}"}
-: ${CMAKE_GENERATOR="Unix Makefiles"}
 
 PKG_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo $PKG_DIR
