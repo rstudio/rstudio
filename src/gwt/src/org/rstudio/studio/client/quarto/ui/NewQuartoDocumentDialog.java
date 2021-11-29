@@ -74,7 +74,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
                       QuartoConstants.ENGINE_KNITR, 
                       "python3", 
                       "python", 
-                      QuartoConstants.EDITOR_SOURCE,
+                      QuartoConstants.EDITOR_VISUAL,
                       false);
       }
 
@@ -529,7 +529,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       public NewQuartoDocumentClientState()
       {
          super("quarto",
-               "new-document-defaults",
+               "new-document",
                ClientState.PERSISTENT,
                session_.getSessionInfo().getClientState(),
                false);
