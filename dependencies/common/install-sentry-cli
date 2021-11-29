@@ -22,7 +22,9 @@ section "Installing Sentry CLI"
 
 # set INSTALL_DIR if /usr/local/bin is not writable
 if ! [ -w /usr/local/bin ]; then
-	export INSTALL_DIR="$HOME/opt/bin"
+	INSTALL_DIR="${HOME}/opt/bin"
+	mkdir -p "${INSTALL_DIR}"
+	export INSTALL_DIR
 fi
 
 curl -sL https://sentry.io/get-cli/ | bash || true
