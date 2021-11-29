@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 
@@ -24,7 +25,7 @@ public class BuildToolsCustomPanel extends BuildToolsPanel
 {
    public BuildToolsCustomPanel()
    {
-      pathSelector_ = new FileSelector("Custom build script:", ElementIds.TextBoxButtonId.BUILD_SCRIPT);
+      pathSelector_ = new FileSelector(constants_.pathSelectorLabel(), ElementIds.TextBoxButtonId.BUILD_SCRIPT);
       pathSelector_.setTextWidth("250px");
       add(pathSelector_);
    }
@@ -50,12 +51,13 @@ public class BuildToolsCustomPanel extends BuildToolsPanel
       if (!valid)
       {
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                  "Script Not Specified", 
-                  "You must specify a path to the custom build script.");
+                  constants_.validateScriptCaption(),
+                  constants_.validateScriptMessage());
       }
       
       return valid;
    }
 
    private PathSelector pathSelector_;
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
 }

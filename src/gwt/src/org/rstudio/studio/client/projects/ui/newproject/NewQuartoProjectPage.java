@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -22,6 +23,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoConstants;
@@ -65,9 +67,9 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    public NewQuartoProjectPage()
    {
       this(null,
-           "Quarto Project", 
-           "Create a new Quarto project",
-           "Create Quarto Project",
+           constants_.quartoProjectTitle(),
+           constants_.quartoProjectSubTitle(),
+           constants_.quartoProjectPageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.quartoIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.quartoIconLarge2x()));
    }
@@ -82,8 +84,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    @Override
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
-      projectTypeSelect_ = new SelectWidget("Type:",
-            new String[] {"(Default)", "Website", "Book" },
+      projectTypeSelect_ = new SelectWidget(constants_.typeText(),
+            new String[] {constants_.projectTypeDefault(), constants_.projectTypeWebsite(), constants_.projectTypeBook() },
             new String[] {
                   QuartoConstants.PROJECT_DEFAULT,
                   QuartoConstants.PROJECT_WEBSITE,
@@ -105,8 +107,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       
       HorizontalPanel panel = new HorizontalPanel();     
       
-      engineSelect_ = new SelectWidget("Engine:", 
-            new String[] {"(None)", "Knitr", "Jupyter"},
+      engineSelect_ = new SelectWidget(constants_.engineLabel(),
+            new String[] {constants_.engineSelectNone(), "Knitr", "Jupyter"},
             new String[] {
               QuartoConstants.ENGINE_MARKDOWN, 
               QuartoConstants.ENGINE_KNITR, 
@@ -117,7 +119,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       panel.add(engineSelect_);
       
       
-      kernelSelect_ = new SelectWidget("Kernel:");
+      kernelSelect_ = new SelectWidget(constants_.kernelLabel());
       kernelSelect_.getElement().addClassName(
             NewProjectResources.INSTANCE.styles().quartoEngineSelect());
       panel.add(kernelSelect_);
@@ -131,12 +133,12 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    {
       // venv
       venvPanel_ = new HorizontalPanel();
-      chkUseVenv_ = new CheckBox("Use venv with packages: ");
+      chkUseVenv_ = new CheckBox(constants_.chkUseVenvLabel());
       ElementIds.assignElementId(chkUseVenv_,
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_VENV));
       venvPanel_.add(chkUseVenv_);
       txtVenvPackages_ = new TextBox();
-      txtVenvPackages_.getElement().setAttribute("placeholder", "(none)");
+      txtVenvPackages_.getElement().setAttribute("placeholder", constants_.txtVenvPackagesNone());
       txtVenvPackages_.addStyleName(NewProjectResources.INSTANCE.styles().quartoVenvPackages());
       DomUtils.disableSpellcheck(txtVenvPackages_);
       FontSizer.applyNormalFontSize(txtVenvPackages_.getElement());
@@ -267,9 +269,9 @@ public class NewQuartoProjectPage extends NewDirectoryPage
          lastOptions_ = (value == null) ?
             QuartoNewProjectOptions.createDefault() :
                QuartoNewProjectOptions.create(
-                        value.getString("type"),
-                        value.getString("engine"),
-                        value.getString("kernel"),
+                        value.getString(constants_.quartoProjectTypeOption()),
+                        value.getString(constants_.quartoProjectEngineOption()),
+                        value.getString(constants_.quartoProjectKernelOption()),
                         value.getString("venv"),
                         value.getString("packages"),
                         value.getString("editor")
@@ -290,5 +292,6 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    }
    private static ClientStateValue clientStateValue_;
    private static QuartoNewProjectOptions lastOptions_ = QuartoNewProjectOptions.createDefault();
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 
 }
