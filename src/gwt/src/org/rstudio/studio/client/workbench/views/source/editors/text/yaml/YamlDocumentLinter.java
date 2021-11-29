@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 
@@ -48,9 +49,25 @@ public class YamlDocumentLinter
       YamlEditorContext editorContext = YamlEditorContext.create(context_, docDisplay_);
       provider.getLint(editorContext, (res) -> {
          if (res != null)
-            ready.execute(Js.uncheckedCast(res));
+         {
+            JsArray<LintItem> items = Js.uncheckedCast(res);
+            // if this was for an embedded editor then offset results by -1 to account
+            // for client assumptions about not sending the preamble (```)
+            if (docDisplay_.getEditorBehavior().equals(EditorBehavior.AceBehaviorEmbedded))
+            {
+               for (int i=0; i<items.length(); i++)
+               {
+                  items.get(i).setStartRow(items.get(i).getStartRow() - 1);
+                  items.get(i).setEndRow(items.get(i).getEndRow() - 1);
+               }
+            }
+            
+            ready.execute(items);
+         }
          else
+         {
             ready.execute(JsArray.createArray().cast());
+         }
       });
          
    }
