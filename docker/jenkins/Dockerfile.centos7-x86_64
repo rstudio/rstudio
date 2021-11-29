@@ -33,6 +33,7 @@ RUN yum install -y \
     lsof \
     make \
     mariadb-libs \
+    ninja-build \
     openssl-devel \
     p7zip \
     p7zip-plugins \
