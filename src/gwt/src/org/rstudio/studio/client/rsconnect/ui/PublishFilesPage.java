@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
@@ -31,7 +33,7 @@ public class PublishFilesPage
    public PublishFilesPage(String title, String subTitle, ImageResource icon,
          RSConnectPublishInput input, boolean asMultiple, boolean asStatic)
    {
-      super(title, subTitle, "Publish", icon, null);
+      super(title, subTitle, constants_.publish(), icon, null);
       
       // createWidget is called by super() above
       if (contents_ != null)
@@ -126,4 +128,5 @@ public class PublishFilesPage
    }
    
    private RSConnectDeploy contents_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }
