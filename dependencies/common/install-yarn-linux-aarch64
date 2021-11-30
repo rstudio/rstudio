@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 #
-# install-yarn
+# install-yarn-linux-aarch64
 #
-# Copyright (C) 2009-20 by RStudio, Inc.
+# Copyright (C) 2009-21 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -18,32 +18,16 @@
 set -e
 
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
-section "Installing yarn"
+section "Installing yarn (aarch64)"
 
-# determine node bin path then prepend to installation path
-DEPS_DIR="$(pwd)"
-NODE_BIN="${DEPS_DIR}/${NODE_SUBDIR}/bin"
-INSTALL_PATH="${NODE_BIN}:${PATH}"
+# try to ensure node is on the PATH
+PATH="$(pwd)/${NODE_SUBDIR}/bin:${PATH}"
 
-# check for yarn installation
-# TODO: do we want to allow yarn installs from other PATH locations?
-if command -v yarn 2> /dev/null; then
-	echo "yarn ${YARN_VERSION} already installed at '${NODE_BIN}/yarn'"
-	exit 0
-fi
-
-# download the yarn installer
-YARN_INSTALL_URL="https://yarnpkg.com/install.sh"
-YARN_INSTALL_SCRIPT="yarn-install.sh"
-curl "${YARN_INSTALL_URL}" -o "${YARN_INSTALL_SCRIPT}"
-
-# run the installer script
-chmod +x "${YARN_INSTALL_SCRIPT}"
-PATH=${INSTALL_PATH} ./"${YARN_INSTALL_SCRIPT}"
-rm "${YARN_INSTALL_SCRIPT}"
+# install via node
+npm install -g yarn
 
 # update INSTALL_PATH
-INSTALL_PATH="${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin:${INSTALL_PATH}"
+INSTALL_PATH="${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin:${PATH}"
 
 # install panmirror dependencies
 if [ -d "/opt/rstudio-tools/panmirror" ]; then

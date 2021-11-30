@@ -20,18 +20,6 @@ set -e
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
 section "Installing node"
 
-# variables that control download + installation process
-NODE_VERSION="${RSTUDIO_NODE_VERSION}"
-NODE_ROOT="node"
-NODE_SUBDIR="${NODE_ROOT}/${NODE_VERSION}"
-NODE_BASE_URL="https://nodejs.org/dist/v${NODE_VERSION}/"
-
-# bail if NODE_VERSION is unset
-if [ -z "${NODE_VERSION}" ]; then
-	echo "internal error: RSTUDIO_NODE_VERSION is not set"
-	exit 1
-fi
-
 # if we already have node, nothing to do
 if [ -d "${NODE_SUBDIR}" ]; then
 	echo "node is already installed at '${NODE_SUBDIR}'"

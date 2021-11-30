@@ -126,6 +126,9 @@ endif()
 if(NOT DEFINED RSTUDIO_DESKTOP)
    if(RSTUDIO_TARGET STREQUAL "Electron")
       set(RSTUDIO_ELECTRON TRUE)
+   elseif(LINUX AND UNAME_M STREQUAL aarch64)
+      message(STATUS "Desktop builds not currently supported on aarch64; disabling RSTUDIO_DESKTOP")
+      set(RSTUDIO_DESKTOP FALSE)
    elseif(APPLE AND UNAME_M STREQUAL arm64)
       message(STATUS "Desktop builds not currently supported on arm64; disabling RSTUDIO_DESKTOP")
       set(RSTUDIO_DESKTOP FALSE)
@@ -200,7 +203,19 @@ if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
    endif()
 endif()
 
+# pandoc version
 set(PANDOC_VERSION "2.16.1" CACHE INTERNAL "Pandoc version")
+
+# quarto support
+if(LINUX AND UNAME_M STREQUAL aarch64)
+   # disabled on linux aarch64
+   message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
+   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+else()
+   # enable by default
+   set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
+   add_definitions(-DQUARTO_ENABLED)
+endif()
 
 # install freedesktop integration files if we are installing into /usr
 if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)

@@ -15,5 +15,27 @@
 #
 #
 
-./install-npm
-./install-yarn
+set -e
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+
+# ensure RSTUDIO_NODE_VERSION is set
+if [ -z "${RSTUDIO_NODE_VERSION}" ]; then
+	echo "internal error: RSTUDIO_NODE_VERSION is not set"
+	exit 1
+fi
+
+# set up node variables common to scripts
+export NODE_VERSION="${RSTUDIO_NODE_VERSION}"
+export NODE_ROOT="node"
+export NODE_SUBDIR="${NODE_ROOT}/${NODE_VERSION}"
+export NODE_BASE_URL="https://nodejs.org/dist/v${NODE_VERSION}/"
+
+# install node
+./install-node
+
+# install yarn
+case "$(uname -sm)" in
+"Linux aarch64") ./install-yarn-linux-aarch64 ;;
+*)               ./install-yarn               ;;
+esac
+
