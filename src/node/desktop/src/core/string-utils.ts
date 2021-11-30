@@ -21,17 +21,26 @@ const nonAttrHtml = /[<>&'"/]/g;
 const attrHtml = /[<>&'"/\r\n]/g;
 
 export function htmlEscape(str: string, isAttributeValue: boolean): string {
-  return str.replace(isAttributeValue ? attrHtml : nonAttrHtml, match => {
+  return str.replace(isAttributeValue ? attrHtml : nonAttrHtml, (match) => {
     switch (match) {
-    case '<': return '&lt;';
-    case '>': return '&gt;';
-    case '&': return '&amp;';
-    case '\'': return '&#x27;';
-    case '"': return '&quot;';
-    case '/': return '&#x2F;';
-    case '\r': return '&#13;';
-    case '\n': return '&#10;';
-    default: return match;
+      case '<':
+        return '&lt;';
+      case '>':
+        return '&gt;';
+      case '&':
+        return '&amp;';
+      case "'":
+        return '&#x27;';
+      case '"':
+        return '&quot;';
+      case '/':
+        return '&#x2F;';
+      case '\r':
+        return '&#13;';
+      case '\n':
+        return '&#10;';
+      default:
+        return match;
     }
   });
 }
@@ -39,15 +48,22 @@ export function htmlEscape(str: string, isAttributeValue: boolean): string {
 const jsLiteral = /[\\'"\r\n<]/g;
 
 export function jsLiteralEscape(str: string): string {
-  return str.replace(jsLiteral, match => {
+  return str.replace(jsLiteral, (match) => {
     switch (match) {
-    case '\\': return '\\\\';
-    case '\'': return '\\\'';
-    case '"': return '\\"';
-    case '\r': return '\\r';
-    case '\n': return '\\n';
-    case '<': return '\\074';
-    default: return match;
+      case '\\':
+        return '\\\\';
+      case "'":
+        return "\\'";
+      case '"':
+        return '\\"';
+      case '\r':
+        return '\\r';
+      case '\n':
+        return '\\n';
+      case '<':
+        return '\\074';
+      default:
+        return match;
     }
   });
 }

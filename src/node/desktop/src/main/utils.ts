@@ -17,7 +17,7 @@ import fs, { existsSync } from 'fs';
 import os from 'os';
 import path from 'path';
 import { sep } from 'path';
-import { app, BrowserWindow, FileFilter, WebContents } from 'electron';
+import { app, BrowserWindow, dialog, FileFilter, MessageBoxOptions, WebContents } from 'electron';
 import http from 'http';
 
 import { Xdg } from '../core/xdg';
@@ -53,7 +53,7 @@ export function randomString(): string {
   return Math.trunc(Math.random() * 2147483647).toString();
 }
 
-export interface VersionInfo  {
+export interface VersionInfo {
   electron: string;
   rstudio?: string;
   node: string;
@@ -121,12 +121,10 @@ export function rsessionExeName(): string {
 
 // used to help find built C++ sources in developer configurations
 function findBuildRoot(): string {
-
   // look for the project root directory. note that the current
   // working directory may differ depending on how we are launched
   // (e.g. unit tests will have their parent folder as the working directory)
-  for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir))
-  {
+  for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir)) {
     // check for release file
     const releaseFile = path.join(dir, 'version', 'RELEASE');
     if (existsSync(releaseFile)) {
@@ -135,20 +133,14 @@ function findBuildRoot(): string {
   }
 
   throw rsessionNotFoundError();
-
 }
 
 function findBuildRootImpl(rootDir: string): string {
-
   // array of discovered build directories
   const buildDirs = [];
 
   // root directories to search
-  const buildDirParents = [
-    `${rootDir}`,
-    `${rootDir}/src`,
-    `${rootDir}/src/cpp`
-  ];
+  const buildDirParents = [`${rootDir}`, `${rootDir}/src`, `${rootDir}/src/cpp`];
 
   // list all files + directories in root folder
   for (const buildDirParent of buildDirParents) {
@@ -178,26 +170,24 @@ function findBuildRootImpl(rootDir: string): string {
   const buildRoot = buildDirs[0].path;
   logger().logDebug(`Using build root: ${buildRoot}`);
   return buildRoot;
-
 }
 
 function rsessionNotFoundError(): Error {
-  
   const message =
     'Could not find rsession executable. ' +
     'Try setting the "RSTUDIO_CPP_BUILD_OUTPUT" environment variable ' +
     'to the location where src/cpp was built.\n' +
-    '(Working directory: ' + process.cwd() + ')';
+    '(Working directory: ' +
+    process.cwd() +
+    ')';
 
   return Error(message);
-
 }
 
 /**
  * @returns Paths to config file, rsession, and desktop scripts.
  */
 export function findComponents(): [FilePath, FilePath, FilePath] {
-
   // determine paths to config file, rsession, and desktop scripts
   let confPath: FilePath = new FilePath();
   let sessionPath: FilePath = new FilePath();
@@ -241,7 +231,6 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
 
   // we found a build root, but not rsession -- throw an error
   throw rsessionNotFoundError();
-
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -258,10 +247,10 @@ export async function executeJavaScript(web: WebContents, cmd: string): Promise<
 /**
  * Return a "probably unique" folder name in the system tempdir, with a user-provided
  * prefix string followed by a randomly generated component.
- * 
+ *
  * The folder is not created by this call so possible someone else could create it, thus the
  * "probably unique" nature of this call.
- * 
+ *
  * @param folderPrefix Custom prefix string to include at the beginning of the folder name.
  * @returns A fully qualified path in the temporary folder (not actually created).
  */
@@ -301,7 +290,7 @@ export function filterFromQFileDialogFilter(qtFilters: string): FileFilter[] {
 
     // remove the name and opening ' (*.'
     let extensions = filter.substring(extopen + 4);
-   
+
     // remove the trailing ')'
     const extclose = extensions.lastIndexOf(')');
     if (extclose === -1) {
@@ -324,18 +313,19 @@ export async function waitForUrlWithTimeout(
   url: string,
   initialWaitMs: number,
   incrementWaitMs: number,
-  maxWaitSec: number
+  maxWaitSec: number,
 ): Promise<Err> {
-
   const checkReady: WaitTimeoutFn = async () => {
     return new Promise((resolve) => {
-      http.get(url, (res) => {
-        res.resume(); // consume response data to free up memory
-        resolve(new WaitResult('WaitSuccess'));
-      }).on('error', (e) => {
-        logger().logDebug(`Connection to ${url} failed: ${e.message}`);
-        resolve(new WaitResult('WaitContinue'));
-      });
+      http
+        .get(url, (res) => {
+          res.resume(); // consume response data to free up memory
+          resolve(new WaitResult('WaitSuccess'));
+        })
+        .on('error', (e) => {
+          logger().logDebug(`Connection to ${url} failed: ${e.message}`);
+          resolve(new WaitResult('WaitContinue'));
+        });
     });
   };
 
@@ -361,12 +351,7 @@ export function getDpiZoomScaling(): number {
  * Determine if given host is considered safe to load in an IDE window.
  */
 export function isSafeHost(host: string): boolean {
-  const safeHosts = [
-    '.youtube.com',
-    '.vimeo.com',
-    '.c9.ms',
-    '.google.com'
-  ];
+  const safeHosts = ['.youtube.com', '.vimeo.com', '.c9.ms', '.google.com'];
 
   for (const safeHost of safeHosts) {
     if (host.endsWith(safeHost)) {
@@ -389,5 +374,51 @@ export function initializeLang(): void {
 
     setenv('LANG', lang);
     setenv('LC_CTYPE', lang);
+  }
+}
+
+/**
+ * Create an Error Dialog.
+ * You can pass in a custom window.
+ * If so, you must pass shouldCloseWindow = true as well.
+ *
+ * @export
+ * @param {string} title
+ * @param {string} message
+ * @param {{
+ *     window: BrowserWindow;
+ *     shouldCloseWindow: boolean;
+ *   }} [options={
+ *     window = new BrowserWindow({ width: 0, height: 0 }),
+ *     shouldCloseWindow: false,
+ *   }]
+ */
+export async function createStandaloneErrorDialog(
+  title: string,
+  message: string,
+  options: {
+    window: BrowserWindow;
+    shouldCloseWindow: boolean;
+  } = {
+    window: new BrowserWindow({ width: 0, height: 0 }),
+    shouldCloseWindow: false,
+  },
+) {
+  try {
+    const dialogContent: MessageBoxOptions = {
+      message: '',
+      type: 'error',
+      buttons: ['OK'],
+    };
+
+    dialogContent[process.platform === 'win32' ? 'title' : 'message'] = title;
+    dialogContent[process.platform === 'win32' ? 'message' : 'detail'] = message;
+
+    await dialog.showMessageBox(options.window, dialogContent);
+
+    if (options.shouldCloseWindow) window.close();
+    // eslint-disable-next-line @typescript-eslint/no-implicit-any-catch
+  } catch (error: any) {
+    console.error('[utils.ts] [createStandaloneErrorDialog] Error when creating Standalone Error Dialog: ', error);
   }
 }

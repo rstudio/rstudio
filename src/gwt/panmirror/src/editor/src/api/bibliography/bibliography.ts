@@ -22,7 +22,7 @@ import { EditorUI } from '../ui';
 import { ParsedYaml, parseYamlNodes } from '../yaml';
 import { CSL } from '../csl';
 import { ZoteroServer } from '../zotero';
-import { BibliographyDataProviderLocal, kLocalBiliographyProviderKey } from './bibliography-provider_local';
+import { BibliographyDataProviderLocal, kLocalBibliographyProviderKey } from './bibliography-provider_local';
 import { BibliographyDataProviderZotero } from './bibliography-provider_zotero';
 import { toBibTeX } from './bibDB';
 import { joinPaths, isAbsolute } from '../path';
@@ -193,7 +193,7 @@ export class BibliographyManager {
     if (this.sources && this.allowsWrites()) {
       return this.sources;
     } else {
-      return this.sources?.filter(source => source.providerKey === kLocalBiliographyProviderKey) || [];
+      return this.sources?.filter(source => source.providerKey === kLocalBibliographyProviderKey) || [];
     }
     return [];
   }
@@ -207,7 +207,7 @@ export class BibliographyManager {
   }
 
   public localSources(): BibliographySourceWithCollections[] {
-    return this.allSources().filter(source => source.providerKey === kLocalBiliographyProviderKey);
+    return this.allSources().filter(source => source.providerKey === kLocalBibliographyProviderKey);
   }
 
   public allowsWrites(): boolean {
@@ -341,7 +341,7 @@ export class BibliographyManager {
       // Filter out any non local items if this isn't a writable bibliography
       const filteredItems = this.allowsWrites()
         ? items
-        : items.filter(item => item.provider === kLocalBiliographyProviderKey);
+        : items.filter(item => item.provider === kLocalBibliographyProviderKey);
       return filteredItems;
     } else {
       return [];

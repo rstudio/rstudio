@@ -23,6 +23,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.core.client.GWT;
 
 public class ChunkConsolePage extends ChunkOutputPage
                               implements ChunkOutputPresenter.Host
@@ -129,7 +130,7 @@ public class ChunkConsolePage extends ChunkOutputPage
          content_ = panel_;
       }
 
-      thumbnail_ = new ChunkOutputThumbnail("R Console", "", preview_, 
+      thumbnail_ = new ChunkOutputThumbnail(constants_.rConsole(), "", preview_,
             ChunkOutputWidget.getEditorColors());
    }
 
@@ -144,4 +145,5 @@ public class ChunkConsolePage extends ChunkOutputPage
    public final static int CONSOLE_ERROR  = 2;
 
    private final ChunkOutputSize chunkOutputSize_;
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

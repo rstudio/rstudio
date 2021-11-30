@@ -16,7 +16,6 @@
 import { BrowserWindow } from 'electron';
 import { EventEmitter } from 'events';
 
-/* eslint-disable @typescript-eslint/no-empty-function */
 export class DesktopActivation extends EventEmitter {
   static LAUNCH_FIRST_SESSION = 'desktop-activation-launch_first_session';
   static LAUNCH_ERROR = 'desktop-activation-launch_error';
@@ -46,12 +45,11 @@ export class DesktopActivation extends EventEmitter {
     return '';
   }
 
-  /** 
-    * Set main window, so we can supply it as default parent of message boxes
-    */
+  /**
+   * Set main window, so we can supply it as default parent of message boxes
+   */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  setMainWindow(window: BrowserWindow): void {
-  }
+  setMainWindow(window: BrowserWindow): void {}
 
   /**
    * @returns Name of product edition, for use in UI
@@ -63,15 +61,13 @@ export class DesktopActivation extends EventEmitter {
   /**
    * license has been lost while using the program
    */
-  emitLicenseLostSignal(): void {
-  }
+  emitLicenseLostSignal(): void {}
 
   /**
    * no longer need to show a license warning bar
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  emitUpdateLicenseWarningBarSignal(message: string): void {
-  }
+  emitUpdateLicenseWarningBarSignal(message: string): void {}
 
   /**
    * start a session after validating initial license
@@ -91,6 +87,5 @@ export class DesktopActivation extends EventEmitter {
   /**
    * detect (or re-detect) license status
    */
-  emitDetectLicense(): void {
-  }
+  emitDetectLicense(): void {}
 }

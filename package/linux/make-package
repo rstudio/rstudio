@@ -2,6 +2,9 @@
 
 set -e
 
+PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
+
 # remember cwd for later restoration
 PREV_WD=$(pwd)
 
@@ -58,8 +61,18 @@ else
   INSTALL_DIR=rstudio-server
 fi
 
+set +x
+
+if has-program ninja
+then 
+   CMAKE_GENERATOR="Ninja"
+else
+   CMAKE_GENERATOR="Unix Makefiles"
+fi
+
 : ${CMAKE_INSTALL_PREFIX="/usr/lib/${INSTALL_DIR}"}
-: ${CMAKE_GENERATOR="Unix Makefiles"}
+
+echo "Building and packing with CMake Generator: $CMAKE_GENERATOR"
 
 PKG_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo $PKG_DIR

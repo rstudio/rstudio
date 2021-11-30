@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.quarto.model.QuartoConstants;
@@ -48,6 +49,7 @@ public class QuartoCommands
       QuartoConfig quartoConfig = sessionInfo.getQuartoConfig();
       commands.newQuartoDoc().setVisible(quartoConfig.enabled);
       commands.newQuartoPres().setVisible(quartoConfig.enabled);
+      sessionInfo_ = sessionInfo;
    }
    
    public void newQuarto(boolean presentation)
@@ -107,15 +109,25 @@ public class QuartoCommands
                      template = "default.qmd";
                   }
                   
+                  // check project level config and use that to lean down the yaml we generate
+                  QuartoConfig config = sessionInfo_.getQuartoConfig();
+                  boolean isWebsite = QuartoHelper.isQuartoWebsiteConfig(config);
+                  boolean isBook = QuartoHelper.isQuartoBookConfig(config);
                   
                   // generate preamble
                   lines.add("---");
                   lines.add("title: \"" + result.getTitle() + "\"");
                   if (!StringUtil.isNullOrEmpty(result.getAuthor()))
                      lines.add("author: \"" + result.getAuthor() + "\"");
-                  lines.add("format: " + format);
                   
-                  if (visualEditor)
+                  if (!isBook &&
+                      (config.project_formats.length == 0 || 
+                      !config.project_formats[0].equals(format)))
+                  {
+                     lines.add("format: " + format);
+                  }
+                  
+                  if (visualEditor && !QuartoConstants.EDITOR_VISUAL.equals(config.project_editor))
                      lines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
                   
                   if (result.getFormat().equals(QuartoConstants.INTERACTIVE_SHINY))
@@ -142,22 +154,31 @@ public class QuartoCommands
                         @Override
                         public String transform(String input)
                         {         
-                           // remove bit about visual editor if we aren't using
-                           // the visual editor
-                           if (!visualEditor)
-                              input = removeVisualEditorLine(input); 
-                           
-                           // was this a built-in template?
-                           boolean builtIn = input.startsWith("## Quarto");
-                           
-                           // if it was built in and not interactive then do some
-                           // language fixups
-                           if (builtIn && !interactive)
+                           // if this is a website then we don't even use the template
+                           if (isWebsite)
                            {
-                              input = updateLanguage(input, result.getLanguage());
+                              return preamble + "\n";
                            }
-                           
-                           return preamble + "\n" + input;
+                           else
+                           {
+                              
+                              // remove bit about visual editor if we aren't using
+                              // the visual editor
+                              if (!visualEditor)
+                                 input = removeVisualEditorLine(input); 
+                              
+                              // was this a built-in template?
+                              boolean builtIn = input.startsWith("## Quarto");
+                              
+                              // if it was built in and not interactive then do some
+                              // language fixups
+                              if (builtIn && !interactive)
+                              {
+                                 input = updateLanguage(input, result.getLanguage());
+                              }
+                              
+                              return preamble + "\n" + input;
+                           }
                         }
                      });
                   
@@ -218,4 +239,5 @@ public class QuartoCommands
 
    private final SourceColumnManager columnManager_;
    private final QuartoServerOperations server_;
+   private SessionInfo sessionInfo_;
 }

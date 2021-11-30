@@ -15,18 +15,19 @@
 
 import { BrowserWindow, clipboard, dialog, Menu } from 'electron';
 import path from 'path';
+import { createStandaloneErrorDialog } from './utils';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
-function showContextMenuImageTemplate(event: Electron.IpcMainEvent, params: Electron.ContextMenuParams): ContextMenuItem[] {
-
+function showContextMenuImageTemplate(
+  event: Electron.IpcMainEvent,
+  params: Electron.ContextMenuParams,
+): ContextMenuItem[] {
   return [
-
     // Save Image As...
     {
       label: 'Save Image As...',
-      click: () => {
-
+      click: async () => {
         // ask the user for a download file path.  in theory, we could let the
         // default download handler do this, but Electron appears to barf if the
         // user cancels that dialog
@@ -45,34 +46,28 @@ function showContextMenuImageTemplate(event: Electron.IpcMainEvent, params: Elec
 
         // set up a download handler
         event.sender.session.once('will-download', (event, item) => {
-
           // set the download path (so Electron doesn't try to prompt)
           item.setSavePath(downloadPath);
 
           // check for failure on completion
           item.once('done', (event, state) => {
-
             switch (state) {
+              case 'cancelled': {
+                dialog.showErrorBox('Error Downloading Image', 'The download was cancelled.');
+                break;
+              }
 
-            case 'cancelled': {
-              dialog.showErrorBox('Error Downloading Image', 'The download was cancelled.');
-              break;
-            }
-
-            case 'interrupted': {
-              dialog.showErrorBox('Error Downloading Image', 'The download was interrupted.');
-              break;
-            }
-
+              case 'interrupted': {
+                dialog.showErrorBox('Error Downloading Image', 'The download was interrupted.');
+                break;
+              }
             }
           });
-
         });
 
         // initiate the actual download
         event.sender.downloadURL(params.srcURL);
-
-      }
+      },
     },
 
     // Copy Image
@@ -80,7 +75,7 @@ function showContextMenuImageTemplate(event: Electron.IpcMainEvent, params: Elec
       label: 'Copy Image',
       click: () => {
         event.sender.copyImageAt(params.x, params.y);
-      }
+      },
     },
 
     // Copy Image Address
@@ -88,17 +83,17 @@ function showContextMenuImageTemplate(event: Electron.IpcMainEvent, params: Elec
       label: 'Copy Image Address',
       click: () => {
         clipboard.writeText(params.srcURL);
-      }
+      },
     },
 
     // Separator
     {
-      type: 'separator'
+      type: 'separator',
     },
 
     // Reload
     {
-      role: 'reload'
+      role: 'reload',
     },
 
     // Inspect Element
@@ -106,15 +101,15 @@ function showContextMenuImageTemplate(event: Electron.IpcMainEvent, params: Elec
       label: 'Inspect Element',
       click: () => {
         event.sender.inspectElement(params.x, params.y);
-      }
-    }
-
+      },
+    },
   ];
-
 }
 
-function showContextMenuTextTemplate(event: Electron.IpcMainEvent, params: Electron.ContextMenuParams): ContextMenuItem[] {
-
+function showContextMenuTextTemplate(
+  event: Electron.IpcMainEvent,
+  params: Electron.ContextMenuParams,
+): ContextMenuItem[] {
   // We would like to just always use the already-existing roles for clipboard
   // actions, but https://www.electronjs.org/docs/api/menu-item has:
   //
@@ -123,7 +118,7 @@ function showContextMenuTextTemplate(event: Electron.IpcMainEvent, params: Elect
   // Lowercase role, e.g. toggledevtools, is still supported.
   //
   // so we have to do some extra gymnastics. As is tradition.
-  const template : ContextMenuItem[] = [];
+  const template: ContextMenuItem[] = [];
 
   if (params.editFlags.canCut) {
     template.push({ role: 'cut' });
@@ -157,23 +152,20 @@ function showContextMenuTextTemplate(event: Electron.IpcMainEvent, params: Elect
     label: 'Inspect Element',
     click: () => {
       event.sender.inspectElement(params.x, params.y);
-    }
+    },
   });
 
   return template;
-
 }
 
 export function showContextMenu(event: Electron.IpcMainEvent, params: Electron.ContextMenuParams): void {
-
   let template: ContextMenuItem[] = [];
   if (params.hasImageContents) {
     template = showContextMenuImageTemplate(event, params);
   } else {
     template = showContextMenuTextTemplate(event, params);
   }
- 
+
   const menu = Menu.buildFromTemplate(template);
   menu.popup();
-
 }

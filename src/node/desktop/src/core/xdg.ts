@@ -42,7 +42,7 @@ import { FilePath } from './file-path';
 export enum WinFolderID {
   FOLDERID_RoamingAppData,
   FOLDERID_LocalAppData,
-  FOLDERID_ProgramData
+  FOLDERID_ProgramData,
 }
 
 /**
@@ -52,15 +52,15 @@ export enum WinFolderID {
 export function SHGetKnownFolderPath(folderId: WinFolderID): string {
   let envVar = '';
   switch (folderId) {
-  case WinFolderID.FOLDERID_RoamingAppData:
-    envVar = 'APPDATA';
-    break;
-  case WinFolderID.FOLDERID_LocalAppData:
-    envVar = 'LOCALAPPDATA';
-    break;
-  case WinFolderID.FOLDERID_ProgramData:
-    envVar = 'ProgramData';
-    break;
+    case WinFolderID.FOLDERID_RoamingAppData:
+      envVar = 'APPDATA';
+      break;
+    case WinFolderID.FOLDERID_LocalAppData:
+      envVar = 'LOCALAPPDATA';
+      break;
+    case WinFolderID.FOLDERID_ProgramData:
+      envVar = 'ProgramData';
+      break;
   }
   return getenv(envVar);
 }
@@ -72,8 +72,7 @@ let hostname = '';
  * Returns the hostname from the operating system
  */
 function getHostname(): string {
-  if (!hostname)
-    hostname = os.hostname();
+  if (!hostname) hostname = os.hostname();
   return hostname;
 }
 
@@ -82,17 +81,17 @@ function getHostname(): string {
  *
  * `rstudioEnvVer` The RStudio-specific environment variable specifying
  *   the directory (given precedence)
- * 
+ *
  * `xdgEnvVar` The XDG standard environment variable
- * 
+ *
  * `defaultDir` Fallback default directory if neither environment variable
  *   is present
- * 
+ *
  * `windowsFolderId` The ID of the Windows folder to resolve against
- * 
+ *
  * `user` Optionally, the user to return a directory for; if omitted the
  *   current user is used
- * 
+ *
  * `homeDir` Optionally, the home directory to resolve against; if omitted
  *   the current user's home directory is used
  */
@@ -102,7 +101,7 @@ function resolveXdgDir(
   windowsFolderId: WinFolderID,
   defaultDir: string,
   user?: string,
-  homeDir?: FilePath
+  homeDir?: FilePath,
 ): FilePath {
   let xdgHome = new FilePath();
   let finalPath = true;
@@ -139,16 +138,15 @@ function resolveXdgDir(
 
   // expand HOME, USER, and HOSTNAME if given
   const environment: Environment = {
-    'HOME': homeDir ? homeDir.getAbsolutePath() : userHomePath().getAbsolutePath(),
-    'USER': user ? user : username()
+    HOME: homeDir ? homeDir.getAbsolutePath() : userHomePath().getAbsolutePath(),
+    USER: user ? user : username(),
   };
-  
+
   // check for manually specified hostname in environment variable
   let hostname = getenv('HOSTNAME');
 
   // when omitted, look up the hostname using a system call
-  if (!hostname)
-    hostname = getHostname();
+  if (!hostname) hostname = getHostname();
 
   environment.HOSTNAME = hostname;
 
@@ -158,8 +156,7 @@ function resolveXdgDir(
   xdgHome = FilePath.resolveAliasedPathSync(expanded, homeDir ? homeDir : userHomePath());
 
   // If this is the final path, we can return it as-is
-  if (finalPath)
-    return xdgHome;
+  if (finalPath) return xdgHome;
 
   // Otherwise, it's a root folder in which we need to create our own subfolder
   const folderName = process.platform === 'win32' ? 'RStudio' : 'rstudio';
@@ -167,10 +164,9 @@ function resolveXdgDir(
 }
 
 export class Xdg {
-
   /**
    * Returns the RStudio XDG user config directory.
-   * 
+   *
    * On Unix-alikes, this is `~/.config/rstudio`, or `XDG_CONFIG_HOME`.
    * On Windows, this is `FOLDERID_RoamingAppData` (typically `AppData/Roaming`).
    */
@@ -181,7 +177,7 @@ export class Xdg {
       WinFolderID.FOLDERID_RoamingAppData,
       '~/.config',
       user,
-      homeDir
+      homeDir,
     );
   }
 
@@ -198,14 +194,14 @@ export class Xdg {
       WinFolderID.FOLDERID_LocalAppData,
       '~/.local/share',
       user,
-      homeDir
+      homeDir,
     );
   }
 
   /**
    * This function verifies that the `userConfigDir()` and `userDataDir()` exist and are
    * owned by the running user.
-   * 
+   *
    * It should be invoked once. Any issues with these directories will be emitted to the
    * session log.
    */
@@ -213,11 +209,10 @@ export class Xdg {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     user?: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    homeDir?: FilePath
+    homeDir?: FilePath,
   ): void {
     throw Error('Xdg.verifyUserDirs is NYI');
   }
-
 
   /**
    * Returns the RStudio XDG system config directory.
@@ -248,8 +243,8 @@ export class Xdg {
       'XDG_CONFIG_DIRS',
       WinFolderID.FOLDERID_ProgramData,
       '/etc',
-      undefined,  // no specific user
-      undefined   // no home folder resolution
+      undefined, // no specific user
+      undefined, // no home folder resolution
     );
   }
 

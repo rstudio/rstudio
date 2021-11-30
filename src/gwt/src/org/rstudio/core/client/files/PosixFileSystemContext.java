@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.files;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 
@@ -108,13 +110,13 @@ public abstract class PosixFileSystemContext implements FileSystemContext
    public String validatePathElement(String name, boolean forCreation)
    {
       if (name == null || name.length() == 0)
-         return "Name is empty";
+         return constants_.nameEmptyMessage();
       if (name.startsWith(" ") || name.endsWith(" "))
-         return "Names should not start or end with spaces";
+         return constants_.nameStartWithMessage();
       if (name.contains("/"))
-         return "Illegal character: /";
+         return constants_.nameIllegalCharacterMessage();
       if (forCreation && (name.equals(".") || name.equals("..")))
-         return "Illegal name";
+         return constants_.illegalNameMessage();
 
       return null;
    }
@@ -156,4 +158,5 @@ public abstract class PosixFileSystemContext implements FileSystemContext
    protected String workingDir_;
    protected FileSystemItem[] contents_;
    protected Callbacks callbacks_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

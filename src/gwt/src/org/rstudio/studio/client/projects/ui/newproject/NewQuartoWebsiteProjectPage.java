@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.quarto.model.QuartoConstants;
 
 public class NewQuartoWebsiteProjectPage extends NewQuartoProjectPage
@@ -22,11 +24,12 @@ public class NewQuartoWebsiteProjectPage extends NewQuartoProjectPage
    public NewQuartoWebsiteProjectPage()
    {
       super(QuartoConstants.PROJECT_WEBSITE,
-           "Quarto Website", 
-           "Create a new Quarto website project",
-           "Create Quarto Website",
+           constants_.quartoWebsiteTitle(),
+           constants_.quartoWebsiteSubTitle(),
+           constants_.quartoWebsitePageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.quartoWebsiteIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.quartoWebsiteIconLarge2x()));
    }
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 
 }

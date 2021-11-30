@@ -22,6 +22,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -37,19 +38,19 @@ public class AboutDialog extends ModalDialogBase
       super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      setText(messages_.title(editionInfo_.editionName()));
+      setText(constants_.title(editionInfo_.editionName()));
 
-      ThemedButton copyVersionButton = new ThemedButton("Copy Version", (ClickEvent) ->
+      ThemedButton copyVersionButton = new ThemedButton(constants_.copyVersionButtonTitle(), (ClickEvent) ->
       {
          DomUtils.copyToClipboard("RStudio " + info.version + " " +
             "\"" + info.release_name + "\" " + info.build_type +
             " (" + info.commit + ", " + info.date + ") " +
-            "for " + info.os + "\n" +
+            constants_.forText() + info.os + "\n" +
             Window.Navigator.getUserAgent());
-         RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(GlobalDisplay.MSG_INFO, "Version Copied",
-            "Version information copied to clipboard.");
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(GlobalDisplay.MSG_INFO, constants_.versionCopiedText(),
+                 constants_.versionInformationCopiedText());
       });
-      addButton(copyVersionButton, "Copy Version");
+      addButton(copyVersionButton, constants_.copyVersionButton());
 
       ThemedButton OKButton = new ThemedButton(constants_.okBtn(), (ClickEvent) -> closeDialog());
       addOkButton(OKButton);
@@ -88,7 +89,5 @@ public class AboutDialog extends ModalDialogBase
 
    private AboutDialogContents contents_;
    private ProductEditionInfo editionInfo_;
-
-   private AboutDialogConstants constants_ = GWT.create(AboutDialogConstants.class);
-   private AboutDialogMessages messages_ = GWT.create(AboutDialogMessages.class);
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

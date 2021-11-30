@@ -15,11 +15,13 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCalloutEditProps;
@@ -200,18 +202,18 @@ public class PanmirrorDialogs {
    
    public Promise<PanmirrorAttrEditResult> editAttr(PanmirrorAttrProps attr, String idHint)
    {
-      return editPanmirrorAttr("Edit Attributes", null, idHint, attr);
+      return editPanmirrorAttr(constants_.editAttributesCaption(), null, idHint, attr);
    }
 
    
    public Promise<PanmirrorAttrEditResult> editSpan(PanmirrorAttrProps attr)
    {
-      return editPanmirrorAttr("Span Attributes", "Unwrap Span", null, attr);
+      return editPanmirrorAttr(constants_.spanAttributesCaption(), constants_.unwrapSpanRemoveButtonCaption(), null, attr);
    }
    
    public Promise<PanmirrorAttrEditResult> editDiv(PanmirrorAttrProps attr, boolean removeEnabled)
    {
-      return editPanmirrorAttr("Div Attributes", removeEnabled ? "Unwrap Div" : null, null, attr);
+      return editPanmirrorAttr(constants_.divAttributesCaption(), removeEnabled ? constants_.unwrapSpanRemoveButtonCaption() : null, null, attr);
    }
    
 
@@ -327,6 +329,7 @@ public class PanmirrorDialogs {
    
    private GlobalDisplay globalDisplay_; 
    private PanmirrorUIContext uiContext_;
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 }
 
 

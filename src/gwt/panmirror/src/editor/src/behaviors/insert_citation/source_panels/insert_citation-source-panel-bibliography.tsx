@@ -26,7 +26,7 @@ import {
   BibliographySource,
 } from '../../../api/bibliography/bibliography';
 import { kZoteroProviderKey } from '../../../api/bibliography/bibliography-provider_zotero';
-import { kLocalBiliographyProviderKey } from '../../../api/bibliography/bibliography-provider_local';
+import { kLocalBibliographyProviderKey } from '../../../api/bibliography/bibliography-provider_local';
 import { formatAuthors, formatIssuedDate, createUniqueCiteId } from '../../../api/cite';
 import {
   CitationSourcePanelProvider,
@@ -95,7 +95,7 @@ export function bibliographySourcePanel(
         // The node could be a provider root or a collection
         return node.type !== kAllLocalSourcesRootNodeType &&
           node.key !== kZoteroProviderKey &&
-          node.key !== kLocalBiliographyProviderKey
+          node.key !== kLocalBibliographyProviderKey
           ? node.key
           : undefined;
       };
@@ -152,7 +152,7 @@ function rootImageForProvider(providerKey: string, ui: EditorUI) {
   switch (providerKey) {
     case kZoteroProviderKey:
       return ui.images.citations?.zotero_root;
-    case kLocalBiliographyProviderKey:
+    case kLocalBibliographyProviderKey:
       return ui.images.citations?.bibligraphy;
   }
 }
@@ -165,7 +165,7 @@ function folderImageForProvider(providerKey: string, hasParent: boolean, ui: Edi
       } else {
         return ui.images.citations?.zotero_library;
       }
-    case kLocalBiliographyProviderKey:
+    case kLocalBibliographyProviderKey:
       return ui.images.citations?.bibligraphy_folder;
   }
 }
@@ -227,7 +227,7 @@ function toCitationListEntries(
   return sources.map(source => {
     return {
       id:
-        source.providerKey === kLocalBiliographyProviderKey || useBetterBibTex
+        source.providerKey === kLocalBibliographyProviderKey || useBetterBibTex
           ? source.id
           : createUniqueCiteId(existingCitationIds, source.id),
       isIdEditable: source.providerKey === kZoteroProviderKey && !useBetterBibTex,

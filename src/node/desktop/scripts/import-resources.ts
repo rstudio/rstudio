@@ -13,14 +13,14 @@
  *
  */
 
-// Copies resources such as rsession from the build output folder into the packaged 
+// Copies resources such as rsession from the build output folder into the packaged
 // RStudio Electron app.
 
 import path from 'path';
 import * as tools from './script-tools';
 
 // Run the script!
-main().catch(err => console.error(err));
+main().catch((err) => console.error(err));
 async function main(): Promise<void> {
   switch (process.platform) {
     case 'win32':
@@ -89,7 +89,6 @@ async function packageLinux(): Promise<number> {
  * Mac implementation
  */
 async function packageDarwin(): Promise<number> {
-
   const makePackageDir = tools.getMakePackageDir();
   const packageDir = tools.getForgePlatformOutputDir();
 
@@ -97,7 +96,6 @@ async function packageDarwin(): Promise<number> {
 
   try {
     await tools.copyFiles(['**/*'], path.join(makePackageDir, 'install'), appDest);
-
   } catch (e) {
     console.error(e.message);
     return 1;

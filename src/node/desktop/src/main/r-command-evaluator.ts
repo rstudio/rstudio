@@ -17,9 +17,9 @@ import { jsLiteralEscape } from '../core/string-utils';
 import { MainWindow } from './main-window';
 
 export class RCommandEvaluator {
-  static window: MainWindow|null;
-  
-  static setMainWindow(window: MainWindow|null): void {
+  static window: MainWindow | null;
+
+  static setMainWindow(window: MainWindow | null): void {
     RCommandEvaluator.window = window;
   }
 

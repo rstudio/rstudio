@@ -19,14 +19,15 @@ import { assert } from 'chai';
 import { NullLogger, logger, LogLevel, parseCommandLineLogLevel, setLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 
-
 describe('Logger', () => {
   beforeEach(() => {
     clearCoreSingleton();
   });
 
   it('throws if unset', () => {
-    assert.throws(() => { logger(); });
+    assert.throws(() => {
+      logger();
+    });
   });
   it('can be set and fetched', () => {
     const f = new NullLogger();

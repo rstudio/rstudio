@@ -35,6 +35,7 @@ RUN yum install -y \
     llvm-devel \
     lsof \
     make \
+    ninja-build \
     mesa-libGL-devel \
     openssl-devel \
     p7zip \

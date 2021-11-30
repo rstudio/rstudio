@@ -31,7 +31,13 @@ import { DesktopActivation } from './activation-overlay';
 import { EXIT_FAILURE } from './program-status';
 import { closeAllSatellites, MainWindow } from './main-window';
 import { PendingQuit } from './gwt-callback';
-import { finalPlatformInitialize, getCurrentlyUniqueFolderName, userLogPath, waitForUrlWithTimeout } from './utils';
+import {
+  createStandaloneErrorDialog,
+  finalPlatformInitialize,
+  getCurrentlyUniqueFolderName,
+  userLogPath,
+  waitForUrlWithTimeout,
+} from './utils';
 import { productInfo } from './product-info';
 import { DesktopOptions } from './desktop-options';
 
@@ -44,7 +50,7 @@ export interface LaunchContext {
   host: string;
   port: number;
   url: string;
-  argList: string[]
+  argList: string[];
 }
 
 let fallbackInstance: string | null = null;
@@ -64,16 +70,16 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     // on macOS with the hardened runtime, we can no longer rely on dyld
     // to lazy-load symbols from libR.dylib; to resolve this, we use
     // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
-    // launch 
+    // launch
     const rHome = new FilePath(getenv('R_HOME'));
     const rLib = rHome.completePath('lib/libR.dylib');
     if (rLib.existsSync()) {
       setenv('DYLD_INSERT_LIBRARIES', rLib.getAbsolutePath());
     }
-   
+
     // Create fallback library path (use TMPDIR so it's user-specific):
     // Reticulate needs to do some DYLD_FALLBACK_LIBRARY_PATH shenanigans to work with Anaconda Python;
-    // the solution is to have RStudio launch with a special DYLD_FALLBACK_LIBRARY_PATH, and let 
+    // the solution is to have RStudio launch with a special DYLD_FALLBACK_LIBRARY_PATH, and let
     // reticulate set the associated path to a symlink of its choosing on load.
     const libraryPath = fallbackLibraryPath();
 
@@ -81,11 +87,10 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     setenv('RSTUDIO_FALLBACK_LIBRARY_PATH', libraryPath);
 
     // and ensure it's placed on the fallback library path
-    const dyldFallbackLibraryPath =
-      `${getenv('DYLD_FALLBACK_LIBRARY_PATH')}:${libraryPath}`;
+    const dyldFallbackLibraryPath = `${getenv('DYLD_FALLBACK_LIBRARY_PATH')}:${libraryPath}`;
     setenv('DYLD_FALLBACK_LIBRARY_PATH', dyldFallbackLibraryPath);
   }
-   
+
   if (!appState().runDiagnostics) {
     return spawn(absPath.getAbsolutePath(), argList);
   } else {
@@ -111,8 +116,8 @@ export class SessionLauncher {
     private sessionPath: FilePath,
     private confPath: FilePath,
     private filename: FilePath,
-    private appLaunch: ApplicationLaunch
-  ) { }
+    private appLaunch: ApplicationLaunch,
+  ) {}
 
   launchFirstSession(): void {
     appState().activation().on(DesktopActivation.LAUNCH_FIRST_SESSION, this.onLaunchFirstSession.bind(this));
@@ -155,7 +160,7 @@ export class SessionLauncher {
       return safeError(err);
     }
 
-    logger().logDiagnostic( `\nR session launched, attempting to connect on port ${launchContext.port}...`);
+    logger().logDiagnostic(`\nR session launched, attempting to connect on port ${launchContext.port}...`);
 
     this.mainWindow = new MainWindow(launchContext.url);
     this.mainWindow.sessionLauncher = this;
@@ -191,7 +196,6 @@ export class SessionLauncher {
     // pMainWindow_->connect(&activation(), &DesktopActivation::updateLicenseWarningBar,
     //                       pMainWindow_, &MainWindow::onUpdateLicenseWarningBar);
 
-
     // show the window (but don't if we are doing a --run-diagnostics)
     if (!appState().runDiagnostics) {
       finalPlatformInitialize(this.mainWindow);
@@ -200,10 +204,9 @@ export class SessionLauncher {
       });
       appState().activation().setMainWindow(this.mainWindow.window);
       this.appLaunch.activateWindow();
-      this.mainWindow.loadUrl(launchContext.url)
-        .catch((reason) => {
-          logger().logErrorMessage(`Failed to load ${launchContext.url}: ${reason}`);
-        });
+      this.mainWindow.loadUrl(launchContext.url).catch((reason) => {
+        logger().logErrorMessage(`Failed to load ${launchContext.url}: ${reason}`);
+      });
     }
 
     return success();
@@ -256,7 +259,7 @@ export class SessionLauncher {
         return [logFile, logContents];
       }
     }
- 
+
     // No logs found
     return ['Log File', '[No logs available]'];
   }
@@ -269,8 +272,7 @@ export class SessionLauncher {
     const gitCommit = info.RSTUDIO_GIT_COMMIT.substr(0, 8);
 
     // Create version string
-    const ss =
-      `RStudio ${info.RSTUDIO_VERSION} "${info.RSTUDIO_RELEASE_NAME} " (${gitCommit}, ${info.RSTUDIO_BUILD_DATE}) for ${info.RSTUDIO_PACKAGE_OS}`;
+    const ss = `RStudio ${info.RSTUDIO_VERSION} "${info.RSTUDIO_RELEASE_NAME} " (${gitCommit}, ${info.RSTUDIO_BUILD_DATE}) for ${info.RSTUDIO_PACKAGE_OS}`;
     vars.set('version', ss);
 
     // Collect message from the abnormal end log path
@@ -311,7 +313,8 @@ export class SessionLauncher {
     vars.set('log_content', logContent);
 
     appState().gwtCallback?.setErrorPageInfo(vars);
-    this.mainWindow?.loadUrl(ERROR_WINDOW_WEBPACK_ENTRY)
+    this.mainWindow
+      ?.loadUrl(ERROR_WINDOW_WEBPACK_ENTRY)
       .then(() => {
         if (this.mainWindow) {
           this.mainWindow.setErrorDisplayed();
@@ -333,14 +336,12 @@ export class SessionLauncher {
 
     // if there was no pending quit set then this is a crash
     if (pendingQuit === PendingQuit.PendingQuitNone) {
-
       this.closeAllSatellites();
 
-      this.mainWindow?.window.webContents.executeJavaScript('window.desktopHooks.notifyRCrashed()')
-        .catch(() => {
-          // The above can throw if the window has no desktop hooks; this is normal
-          // if we haven't loaded the initial session.
-        });
+      this.mainWindow?.window.webContents.executeJavaScript('window.desktopHooks.notifyRCrashed()').catch(() => {
+        // The above can throw if the window has no desktop hooks; this is normal
+        // if we haven't loaded the initial session.
+      });
 
       if (!this.mainWindow?.workbenchInitialized) {
         // If the R session exited without initializing the workbench, treat it as
@@ -355,7 +356,6 @@ export class SessionLauncher {
 
     // otherwise this is a restart so we need to launch the next session
     else {
-
       // TODO
       // if (!activation().allowProductUsage())
       // {
@@ -375,7 +375,7 @@ export class SessionLauncher {
       // }
 
       // close all satellite windows if we are reloading
-      const reload = (pendingQuit === PendingQuit.PendingQuitRestartAndReload);
+      const reload = pendingQuit === PendingQuit.PendingQuitRestartAndReload;
       if (reload) {
         this.closeAllSatellites();
       }
@@ -397,7 +397,6 @@ export class SessionLauncher {
   }
 
   launchNextSession(reload: boolean): Err {
-
     // unset the initial project environment variable it this doesn't
     // pollute future sessions
     unsetenv(kRStudioInitialProject);
@@ -446,10 +445,9 @@ export class SessionLauncher {
 
   onReloadFrameForNextSession(): void {
     if (this.nextSessionUrl) {
-      this.mainWindow?.loadUrl(this.nextSessionUrl)
-        .catch((reason) => {
-          logger().logErrorMessage(`Failed to load ${this.nextSessionUrl}: ${reason}`);
-        });
+      this.mainWindow?.loadUrl(this.nextSessionUrl).catch((reason) => {
+        logger().logErrorMessage(`Failed to load ${this.nextSessionUrl}: ${reason}`);
+      });
       this.nextSessionUrl = undefined;
     }
   }
@@ -515,13 +513,21 @@ export class SessionLauncher {
   }
 
   onLaunchError(message: string): void {
+    const exitFn = () => {
+      if (this.mainWindow) {
+        this.mainWindow.window.close();
+      } else {
+        app.exit(EXIT_FAILURE);
+      }
+    };
     if (message) {
-      dialog.showErrorBox(appState().activation().editionName(), message);
-    }
-    if (this.mainWindow) {
-      this.mainWindow.window.close();
+      createStandaloneErrorDialog(appState().activation().editionName(), message)
+        .then(() => exitFn())
+        .catch((error) =>
+          console.error('[session-launcher.ts] [onLaunchError] Error when creating Standalone Error Dialog: ', error),
+        );
     } else {
-      app.exit(EXIT_FAILURE);
+      exitFn();
     }
   }
 
@@ -548,7 +554,8 @@ export class SessionLauncher {
 
     // check for R version mismatch
     if (abendLogMessage.includes('arguments passed to .Internal')) {
-      errMsg = errMsg +
+      errMsg =
+        errMsg +
         '\n\nThis error was very likely caused ' +
         'by R attempting to load packages from a different ' +
         'incompatible version of R on your system. Please remove ' +
@@ -606,7 +613,7 @@ export class SessionLauncher {
       host: this.host,
       port: appState().port,
       url: `http://${this.host}:${portStr}`,
-      argList
+      argList,
     };
   }
 }

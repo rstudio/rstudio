@@ -19,11 +19,11 @@ import { coreState } from './core-state';
  * Enum representing logging detail level
  */
 export enum LogLevel {
-  OFF = 0,       // No messages will be logged
-  ERR = 1,       // Error messages will be logged
-  WARN = 2,      // Warning and error messages will be logged
-  INFO = 3,      // Info, warning, and error messages will be logged
-  DEBUG = 4      // All messages will be logged
+  OFF = 0, // No messages will be logged
+  ERR = 1, // Error messages will be logged
+  WARN = 2, // Warning and error messages will be logged
+  INFO = 3, // Info, warning, and error messages will be logged
+  DEBUG = 4, // All messages will be logged
 }
 
 export interface Logger {
@@ -42,23 +42,14 @@ export interface LogOptions {
   showDiagnostics: boolean;
 }
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
 export class NullLogger implements Logger {
-  logError(err: unknown): void {
-  }
-  logErrorMessage(message: string): void {
-  }
-  logInfo(message: string): void {
-  }
-  logWarning(warning: string): void {
-  }
-  logDebug(message: string): void {
-  }
-  logDiagnostic(message: string): void {
-  }
-  logDiagnosticEnvVar(name: string): void {
-  }
+  logError(err: unknown): void {}
+  logErrorMessage(message: string): void {}
+  logInfo(message: string): void {}
+  logWarning(warning: string): void {}
+  logDebug(message: string): void {}
+  logDiagnostic(message: string): void {}
+  logDiagnosticEnvVar(name: string): void {}
 }
 
 export function logger(): Logger {
@@ -97,25 +88,25 @@ export function setLoggerLevel(level: LogLevel): void {
 
 /**
  * Convert a string log level (e.g. 'WARN') to LogLevel enum.
- * 
+ *
  * @param level String representation of log level
  * @param defaultLevel Default logging level if unable to parse input
- * @returns LogLevel enum value 
+ * @returns LogLevel enum value
  */
 export function parseCommandLineLogLevel(level: string, defaultLevel: LogLevel): LogLevel {
   level = level.toUpperCase();
   switch (level) {
-  case 'OFF':
-    return LogLevel.OFF;
-  case 'ERR':
-    return LogLevel.ERR;
-  case 'WARN':
-    return LogLevel.WARN;
-  case 'INFO':
-    return LogLevel.INFO;
-  case 'DEBUG':
-    return LogLevel.DEBUG;
-  default:
-    return defaultLevel;
+    case 'OFF':
+      return LogLevel.OFF;
+    case 'ERR':
+      return LogLevel.ERR;
+    case 'WARN':
+      return LogLevel.WARN;
+    case 'INFO':
+      return LogLevel.INFO;
+    case 'DEBUG':
+      return LogLevel.DEBUG;
+    default:
+      return defaultLevel;
   }
 }

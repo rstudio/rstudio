@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.sourcemarkers;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -39,6 +40,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ScrollPanel;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
 public class SourceMarkerList extends Composite
                   implements HasSelectionCommitHandlers<CodeNavigationTarget>
@@ -56,7 +58,7 @@ public class SourceMarkerList extends Composite
             res_.styles().selectedRow(),
             true,
             false,
-            "Source Marker Item Table");
+            constants_.sourceMarkerItemTableList());
       setWidths();
       errorTable_.setStyleName(res_.styles().table());
       errorTable_.setSize("100%", "100%");
@@ -212,4 +214,5 @@ public class SourceMarkerList extends Composite
    private final SourceMarkerItemCodec codec_;
    private final FastSelectTable<SourceMarker, CodeNavigationTarget, CodeNavigationTarget> errorTable_;
    private final SourceMarkerListResources res_ = SourceMarkerListResources.INSTANCE;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

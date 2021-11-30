@@ -14,7 +14,9 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.CoreClientConstants;
 
 public class VimKeyInfoPanel extends ShortcutInfoPanel
 {
@@ -26,7 +28,7 @@ public class VimKeyInfoPanel extends ShortcutInfoPanel
    @Override
    protected String getHeaderText()
    {
-      return "Vim Keyboard Shortcuts";
+      return constants_.vimKeyboardShortcutsText();
    }
    
    @Override
@@ -34,4 +36,5 @@ public class VimKeyInfoPanel extends ShortcutInfoPanel
    {
      return new VimKeyInfo();
    }
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

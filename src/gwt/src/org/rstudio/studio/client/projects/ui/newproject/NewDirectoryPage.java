@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
@@ -50,9 +52,9 @@ public class NewDirectoryPage extends NewProjectWizardPage
 {
    public NewDirectoryPage()
    {
-      this("New Project", 
-           "Create a new project in an empty directory",
-           "Create New Project",
+      this(constants_.newProjectTitle(),
+           constants_.newProjectSubTitle(),
+           constants_.createNewProjectPageCaption(),
            new ImageResource2x(NewProjectResources.INSTANCE.newProjectDirectoryIcon2x()),
            new ImageResource2x(NewProjectResources.INSTANCE.newProjectDirectoryIconLarge2x()));
    }
@@ -112,7 +114,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       
       // project dir
       newProjectParent_ = new DirectoryChooserTextBox(
-            "Create project as subdirectory of:",
+            constants_.newProjectParentLabel(),
             ElementIds.TextBoxButtonId.PROJECT_PARENT,
             txtProjectName_);
       addWidget(newProjectParent_);
@@ -128,7 +130,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
       if (getOptionsSideBySide())
          optionsPanel = new HorizontalPanel();
       
-      chkGitInit_ = new CheckBox("Create a git repository");
+      chkGitInit_ = new CheckBox(constants_.createGitRepoLabel());
       chkGitInit_.addStyleName(styles.wizardCheckbox());
       ElementIds.assignElementId(chkGitInit_,
          ElementIds.idSafeString(getTitle()) + "_" + ElementIds.NEW_PROJECT_GIT_REPO);
@@ -148,14 +150,14 @@ public class NewDirectoryPage extends NewProjectWizardPage
       }
       
       // Initialize project with renv
-      chkRenvInit_ = new CheckBox("Use renv with this project");
+      chkRenvInit_ = new CheckBox(constants_.chkRenvInitLabel());
       chkRenvInit_.setValue(userPrefs.newProjUseRenv().getValue());
       ElementIds.assignElementId(chkRenvInit_,
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_RENV));
       chkRenvInit_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
          if (event.getValue())
          {
-            dependencyManager_.withRenv("Using renv", (Boolean success) -> {
+            dependencyManager_.withRenv(constants_.chkRenvInitUserAction(), (Boolean success) -> {
                chkRenvInit_.setValue(success);
             });
          }
@@ -187,7 +189,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
 
    protected String getDirNameLabel()
    {
-      return "Directory name:";
+      return constants_.directoryNameLabel();
    }
 
    protected boolean getOptionsSideBySide()
@@ -259,8 +261,8 @@ public class NewDirectoryPage extends NewProjectWizardPage
       {
          globalDisplay_.showMessage(
                MessageDialog.WARNING,
-               "Error", 
-               "You must specify a name for the new project directory.",
+               constants_.errorCaption(),
+               constants_.specifyProjectDirectoryName(),
                txtProjectName_);
          
          return false;
@@ -323,5 +325,5 @@ public class NewDirectoryPage extends NewProjectWizardPage
    // Injected ----
    private Session session_;
    private DependencyManager dependencyManager_;
-
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

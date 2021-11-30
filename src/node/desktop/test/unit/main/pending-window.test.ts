@@ -21,7 +21,6 @@ import { createSinonStubInstance } from '../unit-utils';
 import { PendingWindow } from '../../../src/main/pending-window';
 import { MainWindow } from '../../../src/main/main-window';
 
-
 describe('PendingWindow', () => {
   afterEach(() => {
     sinon.restore();
@@ -34,31 +33,34 @@ describe('PendingWindow', () => {
       type: 'satellite',
       name: 'sputnik',
       mainWindow: mainWindowStub,
-      screenX: 1, screenY: 2, width: 3, height: 4,
-      allowExternalNavigate: false
+      screenX: 1,
+      screenY: 2,
+      width: 3,
+      height: 4,
+      allowExternalNavigate: false,
     });
 
     pendingWindows.push({
       type: 'secondary',
       name: 'moon',
       allowExternalNavigate: false,
-      showToolbar: true
+      showToolbar: true,
     });
 
     let foundSatellite = false;
     let foundSecondary = false;
     for (const pending of pendingWindows) {
       switch (pending.type) {
-      case 'satellite':
-        assert.deepEqual(pending.name, 'sputnik');
-        assert.equal(pending.width, 3);
-        foundSatellite = true;
-        break;
-      case 'secondary':
-        assert.deepEqual(pending.name, 'moon');
-        assert.isTrue(pending.showToolbar);
-        foundSecondary = true;
-        break;
+        case 'satellite':
+          assert.deepEqual(pending.name, 'sputnik');
+          assert.equal(pending.width, 3);
+          foundSatellite = true;
+          break;
+        case 'secondary':
+          assert.deepEqual(pending.name, 'moon');
+          assert.isTrue(pending.showToolbar);
+          foundSecondary = true;
+          break;
       }
     }
 

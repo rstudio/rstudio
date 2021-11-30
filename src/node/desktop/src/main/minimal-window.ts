@@ -26,13 +26,13 @@ class MinimalWindow extends DesktopBrowserWindow {
     baseUrl?: string,
     parent?: DesktopBrowserWindow,
     opener?: WebContents,
-    allowExternalNavigate = false
+    allowExternalNavigate = false,
   ) {
     super(false, adjustTitle, name, baseUrl, parent, opener, allowExternalNavigate);
 
     // ensure minimal windows can be closed with Ctrl+W (Cmd+W on macOS)
     this.window.webContents.on('before-input-event', (event, input) => {
-      const ctrlOrMeta = (process.platform === 'darwin') ? input.meta : input.control;
+      const ctrlOrMeta = process.platform === 'darwin' ? input.meta : input.control;
       if (ctrlOrMeta && input.key.toLowerCase() === 'w') {
         event.preventDefault();
         this.window.close();
@@ -59,27 +59,27 @@ export function openMinimalWindow(
   name: string,
   url: string,
   width: number,
-  height: number
+  height: number,
 ): DesktopBrowserWindow {
-
   const named = !!name && name !== '_blank';
 
-  let browser: DesktopBrowserWindow|undefined = undefined;
+  let browser: DesktopBrowserWindow | undefined = undefined;
   if (named) {
     browser = appState().windowTracker.getWindow(name);
   }
 
   if (!browser) {
-    const isViewerZoomWindow = (name === '_rstudio_viewer_zoom');
+    const isViewerZoomWindow = name === '_rstudio_viewer_zoom';
 
-    // pass along our own base URL so that the new window's WebProfile knows how to 
+    // pass along our own base URL so that the new window's WebProfile knows how to
     // apply the appropriate headers
     browser = new MinimalWindow(
       !isViewerZoomWindow,
       name,
       '', // TODO pMainWindow_->webView()->baseUrl()
       sender,
-      undefined /* opener */);
+      undefined /* opener */,
+    );
 
     if (named) {
       appState().windowTracker.addWindow(name, browser);

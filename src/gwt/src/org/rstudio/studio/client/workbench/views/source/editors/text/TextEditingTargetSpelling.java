@@ -114,7 +114,7 @@ public class TextEditingTargetSpelling extends SpellingContext
                   Position wordStart = docDisplay_.positionFromIndex(r.start);
                   Position wordEnd = docDisplay_.positionFromIndex(r.end);
 
-                  lint.push(LintItem.create(wordStart.getRow(), wordStart.getColumn(), wordEnd.getRow(), wordEnd.getColumn(), "Spellcheck", "spelling"));
+                  lint.push(LintItem.create(wordStart.getRow(), wordStart.getColumn(), wordEnd.getRow(), wordEnd.getColumn(), constants_.spellcheck(), "spelling"));
                }
             }
 
@@ -216,7 +216,7 @@ public class TextEditingTargetSpelling extends SpellingContext
                                 if (response.length() > 0)
                                    menu.addSeparator();
 
-                                MenuItem ignoreItem = new MenuItem(AppCommand.formatMenuLabel(null, "Ignore word", ""), true, () ->
+                                MenuItem ignoreItem = new MenuItem(AppCommand.formatMenuLabel(null, constants_.ignoreWord(), ""), true, () ->
                                 {
                                    spellChecker().addIgnoredWord(replaceWord);
                                    docDisplay_.removeMarkersAtCursorPosition();
@@ -225,7 +225,7 @@ public class TextEditingTargetSpelling extends SpellingContext
                                 menu.addItem(ignoreItem);
                                 menu.addSeparator();
 
-                                MenuItem addToDictionaryItem = new MenuItem(AppCommand.formatMenuLabel(RES.addToDictIcon(), "Add to user dictionary", ""), true, () ->
+                                MenuItem addToDictionaryItem = new MenuItem(AppCommand.formatMenuLabel(RES.addToDictIcon(), constants_.addToUserDictionary(), ""), true, () ->
                                 {
                                    spellChecker().addToUserDictionary(replaceWord);
                                    docDisplay_.removeMarkersAtCursorPosition();
@@ -292,6 +292,6 @@ public class TextEditingTargetSpelling extends SpellingContext
    private final DocDisplay docDisplay_;
    private final LintManager lintManager_;
    private final UserPrefs prefs_;
-  
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 
 }

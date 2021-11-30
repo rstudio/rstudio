@@ -14,16 +14,18 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 
 public class GitPage extends VersionControlPage
 {
    public GitPage()
    {
       super("Git", 
-            "Clone a project from a Git repository",
-            "Clone Git Repository",
+            constants_.cloneGitRepo(),
+            constants_.cloneGitRepoPageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.gitIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.gitIconLarge2x()));
    }
@@ -64,4 +66,5 @@ public class GitPage extends VersionControlPage
       url = url.trim();
       return url;
    }
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

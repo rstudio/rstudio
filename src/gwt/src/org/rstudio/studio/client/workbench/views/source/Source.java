@@ -1100,17 +1100,7 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onNewQuartoDoc()
    {
-      // if we are in a quarto website or book project just create a 
-      // blank document with only a title
-      if (QuartoHelper.isQuartoWebsiteConfig(session_.getSessionInfo().getQuartoConfig()))
-      {
-         String contents = "---\ntitle: \"Untitled\"\n---\n\n";
-         columnManager_.newDoc(FileTypeRegistry.QUARTO, contents, null);
-      }
-      else
-      {
-         columnManager_.newQuartoDoc();
-      }
+      columnManager_.newQuartoDoc();
    }
    
    @Handler

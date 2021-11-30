@@ -130,7 +130,8 @@ describe('Utils', () => {
     const expected: FileFilter[] = [
       { name: 'Images', extensions: ['png', 'xpm', 'jpg'] },
       { name: 'Text files', extensions: ['txt'] },
-      { name: 'XML files', extensions: ['xml']} ];
+      { name: 'XML files', extensions: ['xml'] },
+    ];
     const result = Utils.filterFromQFileDialogFilter(input);
     assert.deepEqual(expected, result);
   });

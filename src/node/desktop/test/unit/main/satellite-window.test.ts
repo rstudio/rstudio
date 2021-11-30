@@ -37,7 +37,7 @@ describe('SatelliteWindow', () => {
 
   it('construction creates a hidden BrowserWindow', () => {
     const mainWindowStub = createSinonStubInstance(MainWindow);
-    const browserWin = new BrowserWindow({show: false});
+    const browserWin = new BrowserWindow({ show: false });
     const win = new SatelliteWindow(mainWindowStub, 'satellite window', browserWin.webContents);
     assert.isObject(win, 'failed isObject test');
     assert.isObject(win.window, 'failed has window test');
