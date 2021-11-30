@@ -586,7 +586,7 @@ private:
       if (renderFunc != kStandardRenderFunc && renderFunc != kShinyRenderFunc)
       {
          std::string extraArgs;
-         if (isQuarto_)
+         if (isQuarto_ && !isShiny_)
          {
             std::string to = format;
             if (to.empty())
