@@ -77,6 +77,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -200,10 +201,8 @@ public class RSConnect implements SessionInitEvent.Handler,
             !StringUtil.isNullOrEmpty(event.getFromPrevious().getBundleId()) &&
             StringUtil.isNullOrEmpty(event.getHtmlFile()))
       {
-         display_.showErrorMessage("Republish Document",
-               "Only rendered documents can be republished to RPubs. " +
-               "To republish this document, click Knit or Preview to render it to HTML, then " +
-               "click the Republish button above the rendered document.");
+         display_.showErrorMessage(constants_.republishDocument(),
+               constants_.republishDocumentMessage());
          return;
       }
 
@@ -219,7 +218,7 @@ public class RSConnect implements SessionInitEvent.Handler,
          return;
       }
 
-      String ctx = "Publish " + contentTypeDesc(event.getContentType());
+      String ctx = constants_.publishRpubTitle(contentTypeDesc(event.getContentType()));
       RPubsUploadDialog dlg = new RPubsUploadDialog(
             "Publish Wizard",
             ctx,
@@ -430,9 +429,8 @@ public class RSConnect implements SessionInitEvent.Handler,
             else if (!input.isSelfContained())
             {
                // we should generally hide the button in this case
-               display_.showErrorMessage("Content Not Publishable",
-                     "Only self-contained documents can currently be " +
-                     "published to RPubs.");
+               display_.showErrorMessage(constants_.contentNotPublishable(),
+                     constants_.contentNotPublishableMessage());
             }
             else
             {
@@ -450,8 +448,8 @@ public class RSConnect implements SessionInitEvent.Handler,
       {
          if (!input.isConnectUIEnabled())
          {
-            display_.showErrorMessage("API Not Publishable",
-                     "Publishing to RStudio Connect is disabled in the Publishing options.");
+            display_.showErrorMessage(constants_.apiNotPublishable(),
+                     constants_.apiNotPublishableMessage());
          }
          else
          {
@@ -598,10 +596,8 @@ public class RSConnect implements SessionInitEvent.Handler,
             if (results.getErrorMessage().length() > 0)
             {
                display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                     "Lint Failed",
-                     "The content you tried to publish could not be checked " +
-                     "for errors. Do you want to proceed? \n\n" +
-                     results.getErrorMessage(), false,
+                     constants_.lintFailed(),
+                     constants_.lintFailedMessage(results.getErrorMessage()), false,
                      new ProgressOperation()
                      {
                         @Override
@@ -621,15 +617,13 @@ public class RSConnect implements SessionInitEvent.Handler,
                            indicator.onCompleted();
                         }
                      },
-                     "Publish Anyway", "Cancel", false);
+                     constants_.publishAnyway(), constants_.cancel(), false);
             }
             else if (results.hasLint())
             {
                display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                     "Publish Content Issues Found",
-                     "Some issues were found in your content, which may " +
-                     "prevent it from working correctly after publishing. " +
-                     "Do you want to review these issues or publish anyway? "
+                     constants_.publishContentIssuesFound(),
+                     constants_.publishContentIssuesMessage()
                      , false,
                      new ProgressOperation()
                      {
@@ -650,7 +644,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                            indicator.onCompleted();
                         }
                      },
-                     "Review Issues", "Publish Anyway", true);
+                     constants_.reviewIssues(), constants_.publishAnyway(), true);
             }
             else
             {
@@ -685,9 +679,8 @@ public class RSConnect implements SessionInitEvent.Handler,
          RSConnectDeploymentCancelledEvent event)
    {
       display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-            "Stop deployment?",
-            "Do you want to stop the deployment process? If the server has already " +
-            "received the content, it will still be published.",
+            constants_.stopDeploymentQuestion(),
+            constants_.onRSConnectDeploymentCancelledMessage(),
             false, // include cancel
             () -> {
                 server_.cancelPublish(new ServerRequestCallback<Boolean>()
@@ -695,7 +688,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                   @Override
                   public void onError(ServerError error)
                   {
-                     display_.showErrorMessage("Error Stopping Deployment",
+                     display_.showErrorMessage(constants_.errorStoppingDeployment(),
                            error.getMessage());
                   }
 
@@ -704,16 +697,16 @@ public class RSConnect implements SessionInitEvent.Handler,
                   {
                      if (!result)
                      {
-                       display_.showErrorMessage("Could not cancel deployment",
-                             "The deployment could not be cancelled; it is not running, or termination failed.");
+                       display_.showErrorMessage(constants_.couldNotCancelDeployment(),
+                             constants_.deploymentNotCancelledMessage());
                      }
                   }
                 });
             },
             null,
             null,
-            "Stop deployment",
-            "Cancel",
+            constants_.stopDeployment(),
+            constants_.cancel(),
             false);
    }
 
@@ -741,8 +734,8 @@ public class RSConnect implements SessionInitEvent.Handler,
          @Override
          protected Widget createMainWidget()
          {
-            setText("Publish Failed");
-            addOkButton(new ThemedButton("OK", new ClickHandler()
+            setText(constants_.publishFailed());
+            addOkButton(new ThemedButton(constants_.okCapitalized(), new ClickHandler()
             {
                @Override
                public void onClick(ClickEvent arg0)
@@ -756,16 +749,9 @@ public class RSConnect implements SessionInitEvent.Handler,
             errorImage.getElement().getStyle().setMarginTop(1, Unit.EM);
             errorImage.getElement().getStyle().setMarginRight(1, Unit.EM);
             panel.add(errorImage);
-            panel.add(new HTML("<p>Your content could not be published because " +
-                  "of a problem on the server.</p>" +
-                  "<p>More information may be available on the server's home " +
-                  "page:</p>" +
-                  "<p><a href=\"" + serverUrl + "\">" + serverUrl + "</a>" +
-                  "</p>" +
-                  "<p>If the error persists, contact the server's "  +
-                  "administrator.</p>" +
-                  "<p><small>Error code: " + event.getData().getHttpStatus() +
-                  "</small></p>"));
+            panel.add(new HTML(constants_.onRSConnectDeploymentFailedHtml(constants_.onRSConnectDeploymentFailedHtmlP1(),
+                    constants_.onRSConnectDeploymentFailedHtmlP2(), serverUrl, constants_.onRSConnectDeploymentFailedHtmlP3(),
+                    constants_.onRSConnectDeploymentFailedHtmlP4(), event.getData().getHttpStatus())));
             return panel;
          }
       }.showModal();
@@ -853,23 +839,23 @@ public class RSConnect implements SessionInitEvent.Handler,
       {
       case RSConnect.CONTENT_TYPE_APP:
       case RSConnect.CONTENT_TYPE_APP_SINGLE:
-         return "Application";
+         return constants_.application();
       case RSConnect.CONTENT_TYPE_PLOT:
-         return "Plot";
+         return constants_.plot();
       case RSConnect.CONTENT_TYPE_HTML:
-         return "HTML";
+         return constants_.html();
       case RSConnect.CONTENT_TYPE_DOCUMENT:
-         return "Document";
+         return constants_.document();
       case RSConnect.CONTENT_TYPE_PRES:
-         return "Presentation";
+         return constants_.presentation();
       case RSConnect.CONTENT_TYPE_WEBSITE:
-         return "Website";
+         return constants_.website();
       case RSConnect.CONTENT_TYPE_PLUMBER_API:
-         return "API";
+         return constants_.api();
       case RSConnect.CONTENT_TYPE_QUARTO_WEBSITE:
-         return "Quarto Website";
+         return constants_.quartoWebsite();
       }
-      return "Content";
+      return constants_.content();
    }
 
    public void fireRSConnectPublishEvent(RSConnectPublishResult result,
@@ -904,10 +890,8 @@ public class RSConnect implements SessionInitEvent.Handler,
          // a dialog to guide the user there
          if (!Desktop.hasDesktopFrame())
          {
-            display_.showMessage(GlobalDisplay.MSG_INFO, "Deployment Started",
-                  "RStudio is deploying " + result.getAppName() + ". " +
-                  "Check the Deploy console tab in the main window for " +
-                  "status updates. ");
+            display_.showMessage(GlobalDisplay.MSG_INFO, constants_.deploymentStarted(),
+                    constants_.rstudioDeployingApp(result.getAppName()));
          }
       }
       else
@@ -925,10 +909,8 @@ public class RSConnect implements SessionInitEvent.Handler,
    // Private methods ---------------------------------------------------------
    private void showUnsupportedRPubsFormatMessage()
    {
-      display_.showErrorMessage("Unsupported Document Format",
-            "Only documents rendered to HTML can be published to RPubs. " +
-            "To publish this document, click Knit or Preview to render it to HTML, then " +
-            "click the Publish button above the rendered document.");
+      display_.showErrorMessage(constants_.unsupportedDocumentFormat(),
+            constants_.showUnsupportedRPubsFormatMessageError());
    }
 
    private void uploadToRPubs(RSConnectPublishInput input,
@@ -939,10 +921,8 @@ public class RSConnect implements SessionInitEvent.Handler,
       {
          if (!input.hasDocOutput())
          {
-            display_.showErrorMessage("Publish Document",
-                  "Only rendered documents can be published to RPubs. " +
-                  "To publish this document, click Knit or Preview to render it to HTML, then " +
-                  "click the Publish button above the rendered document.");
+            display_.showErrorMessage(constants_.publishDocument(),
+                  constants_.uploadToRPubsErrorMessage());
             indicator.onCompleted();
             return;
          }
@@ -957,7 +937,7 @@ public class RSConnect implements SessionInitEvent.Handler,
       RPubsUploader uploader = new RPubsUploader(rpubsServer_, display_,
             events_, "rpubs-" + rpubsCount_++);
       String contentType = contentTypeDesc(input.getContentType());
-      indicator.onProgress("Uploading " + contentType);
+      indicator.onProgress(constants_.uploadingContent(contentType));
       uploader.setOnUploadComplete(new CommandWithArg<Boolean>()
       {
          @Override
@@ -1027,19 +1007,16 @@ public class RSConnect implements SessionInitEvent.Handler,
             }
             else
             {
-               display_.showErrorMessage("Deployment In Progress",
-                     "Another deployment is currently in progress; only one " +
-                     "deployment can be performed at a time.");
+               display_.showErrorMessage(constants_.deploymentInProgress(),
+                     constants_.onlyOneDeploymentAtATime());
             }
          }
 
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error Deploying Application",
-                  "Could not deploy application '" +
-                  event.getRecord().getName() +
-                  "': " + error.getMessage());
+            display_.showErrorMessage(constants_.errorDeployingApplication(),
+                  constants_.couldNotDeployApplication(event.getRecord().getName(), error.getMessage()));
          }
       });
    }
@@ -1060,9 +1037,8 @@ public class RSConnect implements SessionInitEvent.Handler,
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error Configuring Application",
-                  "Could not determine application deployments for '" +
-                   dir + "':" + error.getMessage());
+            display_.showErrorMessage(constants_.errorConfiguringApplication(),
+                  constants_.couldNotDetermineAppDeployments(dir,error.getMessage()));
          }
       });
    }
@@ -1073,8 +1049,8 @@ public class RSConnect implements SessionInitEvent.Handler,
    {
       if (records.length() == 0)
       {
-         display_.showMessage(GlobalDisplay.MSG_INFO, "No Deployments Found",
-               "No application deployments were found for '" + dir + "'");
+         display_.showMessage(GlobalDisplay.MSG_INFO, constants_.noDeploymentsFound(),
+               constants_.noApplicationDeploymentsFound(dir));
          return;
       }
 
@@ -1114,7 +1090,7 @@ public class RSConnect implements SessionInitEvent.Handler,
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error Listing Applications",
+            display_.showErrorMessage(constants_.errorListingApplications(),
                   error.getMessage());
          }
       });
@@ -1140,8 +1116,7 @@ public class RSConnect implements SessionInitEvent.Handler,
          }
       }
       display_.showMessage(GlobalDisplay.MSG_INFO,
-            "No Running Deployments Found", "No applications deployed from '" +
-             dir + "' appear to be running.");
+            constants_.noRunningDeploymentsFound(), constants_.noApplicationDeploymentsFrom(dir));
    }
 
    private final native void exportNativeCallbacks() /*-{
@@ -1207,8 +1182,8 @@ public class RSConnect implements SessionInitEvent.Handler,
       {
          // Quarto metadata lookup can take a couple of seconds; ensure the
          // user can see some progress while we're doing it
-         final ProgressIndicator indicator = display_.getProgressIndicator("Error");
-         indicator.onProgress("Preparing for Publish...");
+         final ProgressIndicator indicator = display_.getProgressIndicator(constants_.error());
+         indicator.onProgress(constants_.preparingForPublish());
 
          server_.quartoPublishDetails(
             docPath,
@@ -1287,7 +1262,7 @@ public class RSConnect implements SessionInitEvent.Handler,
                   // this is unlikely since the RPC does little work, but
                   // we can't offer the right choices in the wizard if we
                   // don't know what we're working with.
-                  display_.showErrorMessage("Could Not Publish",
+                  display_.showErrorMessage(constants_.couldNotPublish(),
                      error.getMessage());
                   onComplete.execute(null);
                }
@@ -1354,4 +1329,5 @@ public class RSConnect implements SessionInitEvent.Handler,
    public final static String CONTENT_CATEGORY_PLOT = "plot";
    public final static String CONTENT_CATEGORY_SITE = "site";
    public final static String CONTENT_CATEGORY_API = "api";
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }
