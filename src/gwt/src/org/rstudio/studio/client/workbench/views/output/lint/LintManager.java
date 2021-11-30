@@ -200,7 +200,7 @@ public class LintManager
    {
       // give pure yaml linting a shorter delay b/c its known to be high performance
       if (source_.getTextFileType().isYaml())
-         return 1000;
+         return 500;
       else
          return userPrefs_.backgroundDiagnosticsDelayMs().getValue();
    }

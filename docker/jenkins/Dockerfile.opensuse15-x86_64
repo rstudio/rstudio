@@ -30,6 +30,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libXrandr-devel \
     lsof \
     make \
+    ninja \
     openssl-devel \
     p7zip \
     pam-devel \

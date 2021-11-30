@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewShinyAppOptions;
 
@@ -25,9 +27,9 @@ public class NewShinyAppPage extends NewDirectoryPage
 {
    public NewShinyAppPage()
    {
-      super("Shiny Application", 
-            "Create a new Shiny application",
-            "Create Shiny Application",
+      super(constants_.shinyApplicationTitle(),
+            constants_.shinyApplicationSubTitle(),
+            constants_.shinyApplicationPageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.shinyAppIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.shinyAppIconLarge2x()));
    }
@@ -56,4 +58,5 @@ public class NewShinyAppPage extends NewDirectoryPage
    {
       return NewShinyAppOptions.create();
    }
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

@@ -130,14 +130,21 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
 
    public final boolean isHtmlPresentation()
    {
-      return (isShinyDocument() || isHtml()) && getFormatName().endsWith(
-                  RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX);
+      return (isShinyDocument() || isHtml()) && 
+              (getFormatName().endsWith(RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX) ||
+               isRevealjsPresentation());
+   }
+   
+   public final boolean isRevealjsPresentation()
+   {
+      return getFormatName().contains("revealjs");
    }
    
    public final boolean isHtmlDashboard()
    {
-      return (isShinyDocument() || isHtml()) && getFormatName().endsWith(
-            RmdOutputFormat.OUTPUT_DASHBOARD_SUFFIX);
+      return (isShinyDocument() || isHtml()) && 
+              (getFormatName().endsWith(RmdOutputFormat.OUTPUT_DASHBOARD_SUFFIX) ||
+               getFormatName().contains("dashboard"));
    }
    
    public final boolean getRestoreAnchor()

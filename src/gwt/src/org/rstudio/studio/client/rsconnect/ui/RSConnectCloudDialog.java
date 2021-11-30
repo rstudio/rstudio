@@ -15,9 +15,11 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 
 import com.google.gwt.user.client.ui.Widget;
@@ -28,7 +30,7 @@ public class RSConnectCloudDialog extends ModalDialog<NewRSConnectAccountResult>
          ProgressOperationWithInput<NewRSConnectAccountResult> operation,
          Operation cancelOperation)
    {
-      super("Connecting your ShinyApps Account", Roles.getDialogRole(), operation, cancelOperation);
+      super(constants_.connectingShinyAppsAccount(), Roles.getDialogRole(), operation, cancelOperation);
       setWidth("400px");
    }
 
@@ -53,4 +55,5 @@ public class RSConnectCloudDialog extends ModalDialog<NewRSConnectAccountResult>
    }
 
    RSConnectCloudAccount contents_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

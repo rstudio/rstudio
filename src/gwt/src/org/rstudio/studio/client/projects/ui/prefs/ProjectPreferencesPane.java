@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.events.SwitchToProjectEvent;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -57,9 +59,8 @@ public abstract class ProjectPreferencesPane
    {
       globalDisplay_.showYesNoMessage(
          MessageDialog.QUESTION,
-         "Confirm Restart RStudio", 
-         "You need to restart RStudio in order for this change to take " +
-         "effect. Do you want to do this now?",
+         constants_.restartRStudioCaption(),
+         constants_.restartRStudioMessage(),
          new Operation()
          {
             @Override
@@ -84,7 +85,8 @@ public abstract class ProjectPreferencesPane
    
    protected static final ProjectPreferencesDialogResources RESOURCES =
                            ProjectPreferencesDialogResources.INSTANCE;
-   
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
+
    private GlobalDisplay globalDisplay_;
    private Session session_;
    private EventBus eventBus_;

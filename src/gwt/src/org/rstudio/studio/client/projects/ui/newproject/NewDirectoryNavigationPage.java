@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.WizardProjectTemplatePage;
 import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.events.ButtonClickManager;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.projects.model.ProjectTemplateDescription;
@@ -56,9 +57,9 @@ public class NewDirectoryNavigationPage
 
    public NewDirectoryNavigationPage(SessionInfo sessionInfo)
    {
-      super("New Directory", 
-            "Start a project in a brand new working directory",
-            "Project Type",
+      super(constants_.newDirectoryTitle(),
+            constants_.newDirectorySubTitle(),
+            constants_.newDirectoryPageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.newProjectDirectoryIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.newProjectDirectoryIconLarge2x()),
             createPages(sessionInfo),
@@ -181,7 +182,7 @@ public class NewDirectoryNavigationPage
          
          Label mainLabel = new Label(page.getTitle());
          mainLabel.addStyleName(styles.wizardPageSelectorItemLabel());
-         mainLabel.getElement().setAttribute("title", page.getSubTitle());
+         mainLabel.getElement().setAttribute(constants_.titleName(), page.getSubTitle());
          panel.add(mainLabel);
 
          clickManager_ = new ButtonClickManager(panel, handler);
@@ -204,4 +205,5 @@ public class NewDirectoryNavigationPage
 
    private static Resources RES = GWT.create(Resources.class);
    static { RES.styles().ensureInjected(); }
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

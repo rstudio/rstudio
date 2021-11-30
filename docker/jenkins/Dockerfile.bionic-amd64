@@ -49,6 +49,7 @@ RUN apt-get update && \
     libxml2-dev \
     libxslt1-dev \
     lsof \
+    ninja-build \
     openjdk-8-jdk \
     p7zip-full \
     pkg-config \
