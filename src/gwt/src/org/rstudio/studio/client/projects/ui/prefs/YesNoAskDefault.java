@@ -1,15 +1,17 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import com.google.gwt.user.client.ui.ListBox;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 
 class YesNoAskDefault extends ListBox
 {
-   static final String USE_DEFAULT = "(Default)";
-   static final String YES = "Yes";
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
+   static final String USE_DEFAULT = constants_.projectTypeDefault();
+   static final String YES = constants_.yesLabel();
    static final int YES_VALUE = 1;
-   static final String NO = "No";
+   static final String NO = constants_.noLabel();
    static final int NO_VALUE = 2;
-   static final String ASK ="Ask";
+   static final String ASK =constants_.askLabel();
    
    public YesNoAskDefault(boolean includeAsk)
    {

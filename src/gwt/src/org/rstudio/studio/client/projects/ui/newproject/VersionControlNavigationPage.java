@@ -16,9 +16,11 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
@@ -27,9 +29,9 @@ public class VersionControlNavigationPage
 {
    public VersionControlNavigationPage()
    {
-      super("Version Control", 
-            "Checkout a project from a version control repository",
-            "Create Project from Version Control",
+      super(constants_.versionControlTitle(),
+            constants_.versionControlSubTitle(),
+            constants_.versionControlPageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.projectFromRepositoryIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.projectFromRepositoryIconLarge2x()),
             createPages());
@@ -44,4 +46,5 @@ public class VersionControlNavigationPage
       
       return pages;
    }
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

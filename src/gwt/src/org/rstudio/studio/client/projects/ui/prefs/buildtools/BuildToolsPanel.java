@@ -24,6 +24,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 
@@ -61,7 +62,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
                           final String emptyLabel,
                           ElementIds.TextBoxButtonId uniqueId)
       {
-         super(label, emptyLabel, "Browse...", null, uniqueId, true, null);
+         super(label, emptyLabel, constants_.browseLabel(), null, uniqueId, true, null);
       }
       
       
@@ -84,7 +85,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
    {
       public DirectorySelector(String label)
       {
-         super(label, "(Project Root)", ElementIds.TextBoxButtonId.PROJECT_ROOT);
+         super(label, constants_.projectRootLabel(), ElementIds.TextBoxButtonId.PROJECT_ROOT);
          
          addStyleName(RES.styles().directorySelector());
          
@@ -97,7 +98,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
             public void onChange(ChangeEvent event)
             {
                if (getTextBox().getText().length() == 0)
-                  getTextBox().setText("(Project Root)");
+                  getTextBox().setText(constants_.projectRootLabel());
             }
             
          });  
@@ -111,7 +112,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
                      getSession().getSessionInfo().getActiveProjectDir();
            
                RStudioGinjector.INSTANCE.getFileDialogs().chooseFolder(
-                 "Choose Directory",
+                 constants_.chooseDirectoryCaption(),
                  RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
                  projDir,
                  new ProgressOperationWithInput<FileSystemItem>()
@@ -146,7 +147,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
    {
       public FileSelector(String label, ElementIds.TextBoxButtonId uniqueId)
       {
-         super(label, "(None)", uniqueId);
+         super(label, constants_.noneFileSelectorLabel(), uniqueId);
          
          addClickHandler(new ClickHandler() {
 
@@ -157,7 +158,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
                      getSession().getSessionInfo().getActiveProjectDir();
            
                RStudioGinjector.INSTANCE.getFileDialogs().openFile(
-                 "Choose File",
+                 constants_.chooseFileCaption(),
                  RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
                  projDir,
                  new ProgressOperationWithInput<FileSystemItem>()
@@ -223,4 +224,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
    
    protected static ProjectPreferencesDialogResources RES = 
          ProjectPreferencesDialogResources.INSTANCE;
+
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
+
 }

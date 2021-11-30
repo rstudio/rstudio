@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.quarto.model.QuartoConstants;
 
 public class NewQuartoBookProjectPage extends NewQuartoProjectPage
@@ -22,11 +24,12 @@ public class NewQuartoBookProjectPage extends NewQuartoProjectPage
    public NewQuartoBookProjectPage()
    {
       super(QuartoConstants.PROJECT_BOOK,
-           "Quarto Book", 
-           "Create a new Quarto book project",
-           "Create Quarto Book",
+           constants_.quartoBookTitle(),
+           constants_.quartoBookSubTitle(),
+           constants_.quartoBookPageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.quartoBookIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.quartoBookIconLarge2x()));
    }
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 
 }

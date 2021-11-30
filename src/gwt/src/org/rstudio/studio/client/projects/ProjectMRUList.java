@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -119,9 +120,9 @@ public class ProjectMRUList extends MRUList
    {
       return DuplicateHelper.getPathLabels(mruEntries, true);
    }
-   
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
+
    private static boolean openInNewWindow_ = false;
-   
-   public final static String NEW_SESSION_DESC = 
-         "Open project in a new R session";
+
+   public final static String NEW_SESSION_DESC = constants_.openProjectLabel();
 }

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.ui.prefs;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.prefs.PreferencesDialogBase;
 import org.rstudio.core.client.prefs.PreferencesDialogPaneBase;
 import org.rstudio.core.client.prefs.RestartRequirement;
@@ -25,6 +26,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -75,7 +77,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    Provider<ApplicationQuit> pQuit,
                                    Provider<GlobalDisplay> pGlobalDisplay)
    {
-      super("Project Options",
+      super(constants_.projectOptionsCaption(),
             RES.styles().panelContainer(),
             RES.styles().panelContainerNoChooser(),
             false,
@@ -246,6 +248,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    private static final ProjectPreferencesDialogResources RES =
                                  ProjectPreferencesDialogResources.INSTANCE;
 
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 
 
 }
