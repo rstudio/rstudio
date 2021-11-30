@@ -90,7 +90,7 @@ export function attrEditCommandFn(
         if (mark) {
           await editMarkAttrs(mark, state, dispatch, ui);
         } else {
-          await editNodeAttrs(node!, pos, state, dispatch, ui, pandocExtensions);
+          await editNodeAttrs(pos, state, dispatch, ui, pandocExtensions);
         }
         if (view) {
           view.focus();
@@ -123,7 +123,7 @@ export function attrEditNodeCommandFn(nodeWithPos: NodeWithPos,
     // generic editor
     async function asyncEditAttrs() {
       if (dispatch) {
-        await editNodeAttrs(node!, pos, state, dispatch, ui, pandocExtensions);
+        await editNodeAttrs(pos, state, dispatch, ui, pandocExtensions);
         if (view) {
           view.focus();
         }
@@ -162,34 +162,26 @@ async function editMarkAttrs(
 }
 
 async function editNodeAttrs(
-  node: ProsemirrorNode,
   pos: number,
   state: EditorState,
   dispatch: (tr: Transaction<any>) => void,
   ui: EditorUI,
   pandocExtensions: PandocExtensions,
 ): Promise<void> {
-  const attrs = node.attrs;
-  const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node, pandocExtensions));
-  if (result) {
-    
-    const tr = state.tr;
-    // if the node is different after the dialog completes
-    // then don't proceed (we've seen this a couple of tiems
-    // and it results in mauling of the document -- not sure 
-    // why this occurs but better to head it off w/ a no-op 
-    // than to let the doc get messed up. note it MAY occur 
-    // b/c the state has been transformed by some other 
-    // mechanism and the state we are operating on is no 
-    // longer valid. this is a general problem w/ our async 
-    // dialogs and a very good reason to move away from them
-    const targetNode = tr.doc.nodeAt(pos);
-    if (targetNode && targetNode.eq(node)) {
-      tr.setNodeMarkup(pos, node.type, {
-        ...attrs,
-        ...result.attr,
-      }),
-      dispatch(tr);
+  const node = state.doc.nodeAt(pos);
+  if (node) {
+    const attrs = node.attrs;
+    const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node, pandocExtensions));
+    if (result) {
+      const tr = state.tr;
+      const targetNode = tr.doc.nodeAt(pos);
+      if (targetNode) {
+        tr.setNodeMarkup(pos, targetNode.type, {
+          ...attrs,
+          ...result.attr,
+        }),
+        dispatch(tr);
+      }
     }
   }
 }
