@@ -24,7 +24,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.quarto.model.QuartoJupyterKernel;
 import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
 import org.rstudio.studio.client.quarto.ui.QuartoVisualEditorCheckBox;
@@ -85,9 +85,9 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       projectTypeSelect_ = new SelectWidget("Type:",
             new String[] {"(Default)", "Website", "Book" },
             new String[] {
-                  QuartoConstants.PROJECT_DEFAULT,
-                  QuartoConstants.PROJECT_WEBSITE,
-                  QuartoConstants.PROJECT_BOOK
+                  QuartoCommandConstants.PROJECT_DEFAULT,
+                  QuartoCommandConstants.PROJECT_WEBSITE,
+                  QuartoCommandConstants.PROJECT_BOOK
             },
             false);  
       projectTypeSelect_.getListBox().getElement().addClassName(
@@ -108,9 +108,9 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       engineSelect_ = new SelectWidget("Engine:", 
             new String[] {"(None)", "Knitr", "Jupyter"},
             new String[] {
-              QuartoConstants.ENGINE_MARKDOWN, 
-              QuartoConstants.ENGINE_KNITR, 
-              QuartoConstants.ENGINE_JUPYTER
+              QuartoCommandConstants.ENGINE_MARKDOWN,
+              QuartoCommandConstants.ENGINE_KNITR,
+              QuartoCommandConstants.ENGINE_JUPYTER
             }, false, true, false);
       engineSelect_.getElement().addClassName(
          NewProjectResources.INSTANCE.styles().quartoEngineSelect());
@@ -192,7 +192,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       chkUseVenv_.setValue(canUseVenv() && !StringUtil.isNullOrEmpty(lastOptions_.getVenv()));
       txtVenvPackages_.setValue(lastOptions_.getPackages());
       
-      chkVisualEditor_.setValue(lastOptions_.getEditor().equals(QuartoConstants.EDITOR_VISUAL));
+      chkVisualEditor_.setValue(lastOptions_.getEditor().equals(QuartoCommandConstants.EDITOR_VISUAL));
       
       manageControls();
       
@@ -200,8 +200,8 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    
    private void manageControls()
    {
-      boolean isKnitr =  engineSelect_.getValue().equals(QuartoConstants.ENGINE_KNITR);
-      boolean isJupyter = engineSelect_.getValue().equals(QuartoConstants.ENGINE_JUPYTER);
+      boolean isKnitr =  engineSelect_.getValue().equals(QuartoCommandConstants.ENGINE_KNITR);
+      boolean isJupyter = engineSelect_.getValue().equals(QuartoCommandConstants.ENGINE_JUPYTER);
       kernelSelect_.setVisible(isJupyter);
       venvPanel_.setVisible(isJupyter && canUseVenv());
       setUseRenvVisible(isKnitr);
@@ -225,7 +225,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
             kernelSelect_.getValue(), 
             chkUseVenv_.getValue() ? "venv" : "",
             txtVenvPackages_.getText().trim(),
-            chkVisualEditor_.getValue() ? QuartoConstants.EDITOR_VISUAL : ""
+            chkVisualEditor_.getValue() ? QuartoCommandConstants.EDITOR_VISUAL : ""
       );
       
       return lastOptions_;

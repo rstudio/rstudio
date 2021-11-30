@@ -27,6 +27,7 @@ import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.SatelliteFramePanel;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.shiny.ShinyConstants;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
@@ -57,7 +58,7 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
 
       ToolbarButton popoutButton = 
             commands.viewerPopout().createToolbarButton();
-      popoutButton.setText("Open in Browser");
+      popoutButton.setText(constants_.openInBrowserButtonText());
       toolbar.addLeftWidget(popoutButton);
 
       
@@ -121,11 +122,13 @@ public class ShinyApplicationPanel extends SatelliteFramePanel<RStudioFrame>
    @Override
    protected RStudioFrame createFrame(String url)
    {
-      return new RStudioFrame("Shiny Application", url);
+      return new RStudioFrame(constants_.shinyApplicationTitle(), url);
    }
 
    private Label urlBox_;
    private ShinyApplicationParams appParams_;
    private RSConnectPublishButton publishButton_;
    private ToolbarButton refreshButton_;
+
+   private static final ShinyConstants constants_ = GWT.create(ShinyConstants.class);
 }

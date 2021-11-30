@@ -15,8 +15,8 @@
 
 package org.rstudio.studio.client.quarto;
 
-import java.util.ArrayList;
-
+import com.google.gwt.core.client.GWT;
+import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -24,12 +24,12 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.quarto.ui.NewQuartoDocumentDialog;
 import org.rstudio.studio.client.server.ServerError;
 
-import com.google.inject.Inject;
+import java.util.ArrayList;
 
 public class QuartoNewDocument
 {
@@ -49,11 +49,11 @@ public class QuartoNewDocument
    public void newDocument(boolean presentation, CommandWithArg<String> onResult)
    {
       final ProgressIndicator indicator =
-            globalDisplay_.getProgressIndicator("Error");
+            globalDisplay_.getProgressIndicator(constants_.progressIndicatorErrorCaption());
          indicator.onProgress(
-            "New Quarto " + 
-            (presentation ? "Presentation" : "Document") + 
-            "...");
+                 constants_.newQuartoItemMessage(
+                         presentation ? constants_.presentationLabel() : constants_.documentLabel()
+                 );
    
          server_.quartoCapabilities(
             new SimpleRequestCallback<QuartoCapabilities>() {
@@ -82,52 +82,44 @@ public class QuartoNewDocument
    {
       ArrayList<String> lines = new ArrayList<String>();
       lines.add("---");
-      lines.add("title: \"" + result.getTitle() + "\"");
+      lines.add(constants_.newDocTitleLabel(result.getTitle()));
       if (!StringUtil.isNullOrEmpty(result.getAuthor()))
-         lines.add("author: \"" + result.getAuthor() + "\"");
+         lines.add(constants_.newDocAuthorLabel(result.getAuthor()));
    
-      lines.add("format: " + result.getFormat());
+      lines.add(constants_.newDocFormatLabel(result.getFormat()));
       
-      if (result.getEditor().equals(QuartoConstants.EDITOR_VISUAL));
-         lines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
+      if (result.getEditor().equals(QuartoCommandConstants.EDITOR_VISUAL));
+         lines.add(constants_.newDocEditorLabel(QuartoCommandConstants.EDITOR_VISUAL));
       
-      if (result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
+      if (result.getEngine().equals(QuartoCommandConstants.ENGINE_JUPYTER))
          lines.add("jupyter: " + result.getKernel());
       lines.add("---");
       lines.add("");
       
-      if (result.getEditor().equals(QuartoConstants.EDITOR_VISUAL))
+      if (result.getEditor().equals(QuartoCommandConstants.EDITOR_VISUAL))
       {
-         lines.add("This document uses the Quarto [visual markdown editor]" +
-                   "(https://quarto.org/docs/visual-editor/). Use the button " + 
-                   "at the far right of the editor toolbar to switch between " +
-                   "visual and source code mode.");
+         lines.add(constants_.newDocVisualEditorMsg());
          lines.add("");
       }
             
-      if (!result.getEngine().equals(QuartoConstants.ENGINE_MARKDOWN) && 
+      if (!result.getEngine().equals(QuartoCommandConstants.ENGINE_MARKDOWN) &&
           result.getLanguage() != null)
       {
-         lines.add("This is an executable code chunk (click the run button on " + 
-                   "the right to execute it):");   
+         lines.add(constants_.newDocEngineMarkdownLine1());
          lines.add("");
          lines.add("```{" + result.getLanguage() + "}");
          lines.add("1 + 1");
          lines.add("```");
          lines.add("");
-         lines.add("Insert additional code chunks using the insert chunk " +
-                   "toolbar button (or **Insert** menu).");
+         lines.add(constants_.newDocEngineMarkdownLine2());
          lines.add("");
       }
       
-      lines.add("Use the toolbar menus (**Format**, **Insert**, **Reference**, " +
-                "and **Table**) to apply formatting and insert various content " + 
-                "types (e.g. images, links, references, math, tables, etc.).");
+      lines.add(constants_.newDocToolbarMenuInstruction());
       lines.add("");
-      lines.add("Click the **Render** button on the editor toolbar to create an " + 
-                "output document from this file.");
+      lines.add(constants_.newDocRenderButtonInstructions());
       lines.add("");
-      lines.add("Learn more about Quarto at <https://quarto.org>.");
+      lines.add(constants_.newDocLearnMoreLink());
       
       lines.add("");
       lines.add("");
@@ -138,5 +130,7 @@ public class QuartoNewDocument
    
    private QuartoServerOperations server_;
    private GlobalDisplay globalDisplay_;
+
+   private static final QuartoConstants constants_ = GWT.create(QuartoConstants.class);
 }
 

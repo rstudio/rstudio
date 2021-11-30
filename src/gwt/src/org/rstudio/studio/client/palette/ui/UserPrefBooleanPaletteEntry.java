@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.palette.ui;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.palette.PaletteConstants;
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.BooleanValue;
@@ -93,9 +95,11 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
 
    private void syncLabel()
    {
-      checkbox_.setText(checkbox_.getValue() ? "On" : "Off");
+      checkbox_.setText(checkbox_.getValue() ? constants_.checkboxLabelOn() : constants_.checkboxLabelOff());
    }
 
    private final CheckBox checkbox_;
    private final UserPrefPaletteItem prefItem_;
+
+   private static final PaletteConstants constants_ = GWT.create(PaletteConstants.class);
 }

@@ -15,13 +15,13 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 
 public class NewQuartoWebsiteProjectPage extends NewQuartoProjectPage
 {
    public NewQuartoWebsiteProjectPage()
    {
-      super(QuartoConstants.PROJECT_WEBSITE,
+      super(QuartoCommandConstants.PROJECT_WEBSITE,
            "Quarto Website", 
            "Create a new Quarto website project",
            "Create Quarto Website",

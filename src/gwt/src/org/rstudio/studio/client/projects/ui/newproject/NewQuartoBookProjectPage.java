@@ -15,13 +15,13 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 
 public class NewQuartoBookProjectPage extends NewQuartoProjectPage
 {
    public NewQuartoBookProjectPage()
    {
-      super(QuartoConstants.PROJECT_BOOK,
+      super(QuartoCommandConstants.PROJECT_BOOK,
            "Quarto Book", 
            "Create a new Quarto book project",
            "Create Quarto Book",
