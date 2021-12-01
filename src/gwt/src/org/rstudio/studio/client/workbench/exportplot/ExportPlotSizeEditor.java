@@ -44,7 +44,6 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.GlassPanel;
 import org.rstudio.core.client.widget.ResizeGripper;
 import org.rstudio.core.client.widget.ThemedButton;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 
 public class ExportPlotSizeEditor extends Composite 
 {  
@@ -524,5 +523,5 @@ public class ExportPlotSizeEditor extends Composite
    
    private final int MIN_SIZE = 100;
    private LayoutPanel previewPanel_;
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 }

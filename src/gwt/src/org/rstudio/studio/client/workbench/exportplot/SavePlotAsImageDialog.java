@@ -21,7 +21,6 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 
@@ -133,5 +132,5 @@ public class SavePlotAsImageDialog extends ExportPlotDialog
    private final SavePlotAsImageOperation saveOperation_;
    private SavePlotAsImageTargetEditor saveAsTarget_;
    private CheckBox viewAfterSaveCheckBox_;
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 }

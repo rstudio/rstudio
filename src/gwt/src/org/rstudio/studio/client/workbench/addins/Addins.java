@@ -18,7 +18,6 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
@@ -196,5 +195,5 @@ public class Addins
    
    private static final String DELIMITER = "|||";
    private static final String PATTERN = "\\|\\|\\|";
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final AddinsConstants constants_ = GWT.create(AddinsConstants.class);
 }

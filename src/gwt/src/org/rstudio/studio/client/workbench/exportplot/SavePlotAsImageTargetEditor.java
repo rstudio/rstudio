@@ -26,7 +26,6 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageFormat;
 
@@ -170,5 +169,5 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
    
    private final FileDialogs fileDialogs_ = 
       RStudioGinjector.INSTANCE.getFileDialogs();
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 }

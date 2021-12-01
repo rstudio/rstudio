@@ -28,7 +28,6 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -51,6 +50,7 @@ import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
+import org.rstudio.studio.client.workbench.ui.UIConstants;
 
 public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Result>
 {
@@ -293,5 +293,5 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
 
    private final String alwaysSaveOption_;
    private CheckBox chkAlwaysSave_;
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final UIConstants constants_ = GWT.create(UIConstants.class);
 }

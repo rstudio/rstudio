@@ -21,7 +21,7 @@ import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
+import org.rstudio.studio.client.workbench.views.ViewConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 
@@ -171,5 +171,5 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    private Connection connection_ = null;
    
    private EventBus eventBus_;
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
 }

@@ -20,8 +20,8 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.TextBoxWithCue;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
+import org.rstudio.studio.client.workbench.codesearch.CodeSearchConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchOracle;
 
 import com.google.gwt.user.client.ui.SuggestBox;
@@ -67,5 +67,5 @@ public class CodeSearchWidget extends SearchWidget
    }
    
    private final CodeSearchOracle oracle_;
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final CodeSearchConstants constants_ = GWT.create(CodeSearchConstants.class);
 }

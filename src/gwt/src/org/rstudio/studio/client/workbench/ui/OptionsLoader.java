@@ -22,7 +22,6 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
@@ -131,5 +130,5 @@ public class OptionsLoader
    private final Commands commands_;
    private final UserPrefs uiPrefs_;
    private final Provider<PreferencesDialog> pPrefDialog_;
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final UIConstants constants_ = GWT.create(UIConstants.class);
 }

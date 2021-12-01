@@ -50,11 +50,11 @@ import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.ViewConstants;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildRenderSubTypeEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildServeSubTypeEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
@@ -520,5 +520,5 @@ public class BuildPane extends WorkbenchPane
 
    private final HandlerManager handlers_ = new HandlerManager(this);
 
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
 }

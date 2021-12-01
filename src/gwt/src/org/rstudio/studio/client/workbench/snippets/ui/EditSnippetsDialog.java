@@ -39,7 +39,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
@@ -315,6 +314,6 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    private FontSizeManager fontSizeManager_;
    private UserPrefs uiPrefs_;
    private LintServerOperations server_;
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final SnippetsConstants constants_ = GWT.create(SnippetsConstants.class);
 
 }

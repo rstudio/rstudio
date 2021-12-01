@@ -19,7 +19,7 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.Timers;
-import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotConstants;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
@@ -127,5 +127,5 @@ public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboar
    
    private RadioButton copyAsBitmapRadioButton_;
    private RadioButton copyAsMetafileRadioButton_;
-   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
+   private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 }
