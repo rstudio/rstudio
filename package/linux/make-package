@@ -104,9 +104,9 @@ cmake --build . --target all -- ${MAKEFLAGS}
 
 if [ "$2" != "DEB" ]
 then
-   fakeroot cpack -G "$2"
+   fakeroot cpack --verbose --debug -G "$2"
 else
-   cpack -G $2
+   cpack --verbose --debug -G $2
 
    # Fix permissions for non-development builds
    if [ -z "${RSTUDIO_DEVELOPMENT_BUILD}" ]
