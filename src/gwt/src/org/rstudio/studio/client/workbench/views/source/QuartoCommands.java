@@ -127,7 +127,7 @@ public class QuartoCommands
                      lines.add("format: " + format);
                   }
                   
-                  if (visualEditor && !QuartoConstants.EDITOR_VISUAL.equals(config.project_editor))
+                  if (visualEditor && !QuartoCommandConstants.EDITOR_VISUAL.equals(config.project_editor))
                      lines.add("editor: " + QuartoCommandConstants.EDITOR_VISUAL);
                   
                   if (result.getFormat().equals(QuartoCommandConstants.INTERACTIVE_SHINY))
