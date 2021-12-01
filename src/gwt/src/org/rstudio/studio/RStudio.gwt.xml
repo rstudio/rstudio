@@ -152,8 +152,8 @@
    <!-- Set order of precidence for locale settings -->
    <set-configuration-property name="locale.searchorder" value="queryparam,cookie,useragent,meta"/>
    <!-- Set only locale and default locale to en to ensure English content only -->
-   <extend-property name="locale" values="dev"/>
-   <set-property name="locale" value="dev"/>
-   <set-property-fallback name="locale" value="dev"/>
+   <extend-property name="locale" values="en"/>
+   <set-property name="locale" value="en"/>
+   <set-property-fallback name="locale" value="en"/>
 
 </module>
