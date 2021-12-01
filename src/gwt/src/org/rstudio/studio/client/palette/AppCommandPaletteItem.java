@@ -86,7 +86,7 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
          catch(Exception e)
          {
             display.showErrorMessage(constants_.commandExecutionFailedCaption(),
-                    constants_.commandExecutionFailedMessage(label_, StringUtil.notNull(e.getMessage()));
+                    constants_.commandExecutionFailedMessage(label_, StringUtil.notNull(e.getMessage())));
             Debug.logException(e);
          }
       }

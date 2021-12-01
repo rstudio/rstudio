@@ -409,7 +409,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
          templateFormatPanel_.add(createFormatOption(
             QuartoCommandConstants.FORMAT_PPTX,
             constants_.powerPointFormatText(),
-            constants_.powerPointFormatDesc());
+            constants_.powerPointFormatDesc()));
       }
       else if (selectedTemplate.equals(TEMPLATE_INTERACTIVE))
       {

@@ -53,7 +53,7 @@ public class QuartoNewDocument
          indicator.onProgress(
                  constants_.newQuartoItemMessage(
                          presentation ? constants_.presentationLabel() : constants_.documentLabel()
-                 );
+                 ));
    
          server_.quartoCapabilities(
             new SimpleRequestCallback<QuartoCapabilities>() {

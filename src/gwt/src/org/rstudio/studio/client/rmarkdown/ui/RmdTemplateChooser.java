@@ -125,7 +125,7 @@ public class RmdTemplateChooser extends Composite
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                   constants_.templatesNotFoundErrorCaption(),
-                  constants_.templatesNotFoundErrorMsg(error.getMessage());
+                  constants_.templatesNotFoundErrorMsg(error.getMessage()));
             
          }
       });

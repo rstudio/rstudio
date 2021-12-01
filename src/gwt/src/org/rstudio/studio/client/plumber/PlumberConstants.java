@@ -55,21 +55,4 @@ public interface PlumberConstants extends Constants {
     @Key("openInBrowserButtonText")
     String openInBrowserButtonText();
 
-    /**
-     * Translate "".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("")
-    @Key("commandNotAvailableCaption")
-    String commandNotAvailableCaption();
-
-    /**
-     * Translate "".
-     *
-     * @return the translated value
-     */
-    @DefaultStringValue("")
-    @Key("commandNotAvailableCaption")
-    String commandNotAvailableCaption();
 }

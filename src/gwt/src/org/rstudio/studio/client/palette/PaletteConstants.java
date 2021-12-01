@@ -83,11 +83,11 @@ public interface PaletteConstants extends Messages {
     String cmdPaletteClearedCaption();
 
     /**
-     * Translate ""The Command Palette's list of recently used items has been cleared.".
+     * Translate "The Command Palette's list of recently used items has been cleared.".
      *
      * @return the translated value
      */
-    @DefaultMessage("The Command Palette's list of recently used items has been cleared.")
+    @DefaultMessage("The Command Palette''s list of recently used items has been cleared.")
     @Key("cmdPaletteClearedMessage")
     String cmdPaletteClearedMessage();
 
