@@ -17,9 +17,14 @@
 
 package org.rstudio.studio.client.panmirror.dialogs.model;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
+
 public class PanmirrorListIncremental
 {
-   public static String Default = "default";
-   public static String Incremental = "incremental";
-   public static String Nonincremental = "nonincremental";
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
+
+   public static String Default = constants_.defaultLabel();
+   public static String Incremental = constants_.incrementalLabel();
+   public static String Nonincremental = constants_.nonincrementalLabel();
 }

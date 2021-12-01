@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -58,10 +59,10 @@ public class ProjectOpener
                                                  .getMultiSession())
       {
          dialogs.openFile(
-            "Open Project",
+            constants_.openProjectCaption(),
             fsContext,
             FileSystemItem.createDir(defaultLocation),
-            "R Projects (*.Rproj)",
+            constants_.projectFilter(),
             true,
             new ProgressOperationWithInput<FileSystemItem>()
             {
@@ -135,4 +136,5 @@ public class ProjectOpener
    // Injected ----
    private boolean initialized_;
    private ProjectsServerOperations server_;
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

@@ -37,6 +37,7 @@ import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
 {
@@ -69,7 +70,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             UserPrefs userPrefs,
                             UserState userState)
    {
-      super("Options",
+      super(constants_.options(),
             res.styles().panelContainer(),
             res.styles().panelContainerNoChooser(),
             true,
@@ -194,4 +195,5 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    private final UserState state_;
    private final ApplicationQuit quit_;
    private final GlobalDisplay globalDisplay_;
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

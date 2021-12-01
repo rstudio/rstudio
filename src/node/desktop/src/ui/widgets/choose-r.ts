@@ -22,7 +22,6 @@ declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
 export class ChooseRModalWindow extends ModalDialog<string | null> {
-
   private rInstalls: string[];
 
   constructor(rInstalls: string[]) {
@@ -31,13 +30,11 @@ export class ChooseRModalWindow extends ModalDialog<string | null> {
   }
 
   async onShowModal(): Promise<string | null> {
-
     // initialize the select widget
     this.webContents.send('initialize', this.rInstalls);
 
     // listen for messages from the window
     return new Promise((resolve) => {
-
       ipcMain.on('use-default-32bit', () => {
         const path = findDefault32Bit();
         logger().logDebug(`Using default 32-bit R (${path})`);
@@ -56,20 +53,16 @@ export class ChooseRModalWindow extends ModalDialog<string | null> {
       });
 
       ipcMain.on('browse', () => {
-        
         const response = dialog.showOpenDialogSync(this, {
           title: 'Choose R Executable',
           properties: ['openFile'],
-          filters: [
-            { name: 'R Executable', extensions: ['exe']}
-          ],
+          filters: [{ name: 'R Executable', extensions: ['exe'] }],
         });
 
         if (response) {
           logger().logDebug(`Using user-selected version of R (${response[0]})`);
           return resolve(response[0]);
         }
-
       });
 
       ipcMain.on('cancel', () => {
@@ -79,9 +72,6 @@ export class ChooseRModalWindow extends ModalDialog<string | null> {
       this.on('closed', () => {
         return resolve(null);
       });
-
     });
-
   }
-
 }

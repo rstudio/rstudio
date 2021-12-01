@@ -42,6 +42,7 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.core.client.GWT;
 
 import java.util.function.BiPredicate;
 import java.util.function.Consumer;
@@ -1444,7 +1445,7 @@ public class AceEditor implements DocDisplay,
    {
       public PrintIFrame(String code, double fontSize)
       {
-         super("Print Frame");
+         super(constants_.printFrame());
          code_ = code;
          fontSize_ = fontSize;
 
@@ -4707,5 +4708,5 @@ public class AceEditor implements DocDisplay,
    private static AceEditor s_lastFocusedEditor = null;
 
    private final List<HandlerRegistration> editorEventListeners_;
-
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

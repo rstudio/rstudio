@@ -31,7 +31,7 @@ let coreStateInstanceCounter = 0;
  */
 export function coreState(): CoreState {
   if (!core) {
-    core = new CoreStateImpl;
+    core = new CoreStateImpl();
   }
   return core;
 }

@@ -1,7 +1,7 @@
 @external rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
-@external ace_editor_theme;
+@external editor_dark, ace_editor_theme;
 
 @eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
 @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
@@ -71,14 +71,14 @@ span.status img:first-child {
    border-color: THEME_ALTERNATE_BORDER;
 }
 
-.ace_editor_theme .cellTableSelectedRow {
+.editor_dark .ace_editor_theme .cellTableSelectedRow {
    background-color: THEME_DARK_ROW_SELECTED;
 }
 
-.ace_editor_theme .cellTableHoveredRow {
+.editor_dark .ace_editor_theme .cellTableHoveredRow {
    background-color: THEME_DARK_ROW_HOVERED;
 }
 
-.ace_editor_theme .cellTableSelectedRow.cellTableHoveredRow {
+.editor_dark .ace_editor_theme .cellTableSelectedRow.cellTableHoveredRow {
    background-color: THEME_DARK_ROW_SELECTED;
 }

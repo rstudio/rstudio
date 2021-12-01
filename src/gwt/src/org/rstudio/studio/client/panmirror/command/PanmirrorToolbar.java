@@ -17,10 +17,12 @@ package org.rstudio.studio.client.panmirror.command;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -35,7 +37,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
 {
    public PanmirrorToolbar()
    {
-      super(false, "Panmirror Editor Toolbar");
+      super(false, constants_.panMirrorToolbarLabel());
       getElement().getStyle().setHeight(getHeight(), Unit.PX);
    }
    
@@ -83,18 +85,18 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       
       
       PanmirrorToolbarMenu formatMenu = new PanmirrorToolbarMenu(commands_, menus_.format);
-      addLeftTextMenu(new ToolbarMenuButton("Format", "Format", null, formatMenu, false));
+      addLeftTextMenu(new ToolbarMenuButton(constants_.formatText(), constants_.formatTitle(), null, formatMenu, false));
             
       addLeftSeparator();
       
       PanmirrorToolbarMenu insertMenu = new PanmirrorToolbarMenu(commands_, menus_.insert);
-      addLeftTextMenu(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false)); 
+      addLeftTextMenu(new ToolbarMenuButton(constants_.insertText(), constants_.insertTitle(), null, insertMenu, false));
       
       if (menus_.reference.length > 0)
       {
          addLeftSeparator();
          PanmirrorToolbarMenu referenceMenu = new PanmirrorToolbarMenu(commands_, menus_.reference);
-         addLeftTextMenu(new ToolbarMenuButton("Reference", "Reference", null, referenceMenu, false)); 
+         addLeftTextMenu(new ToolbarMenuButton(constants_.referenceText(), constants_.referenceTitle(), null, referenceMenu, false));
         
       }
       
@@ -102,7 +104,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       {
          addLeftSeparator();
          PanmirrorToolbarMenu tableMenu = new PanmirrorToolbarMenu(commands_, menus_.table);
-         addLeftTextMenu(new ToolbarMenuButton("Table", "Table", null, tableMenu, false));
+         addLeftTextMenu(new ToolbarMenuButton(constants_.tableText(), constants_.tableTitle(), null, tableMenu, false));
       }
              
       if (findReplace != null)
@@ -110,7 +112,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          addLeftSeparator();
          findReplaceButton_ = new ToolbarButton(
             ToolbarButton.NoText,
-            "Find/Replace",
+            constants_.findReplaceTitle(),
             FindReplaceBar.getFindIcon(),
             new ClickHandler() {
                public void onClick(ClickEvent event)
@@ -166,7 +168,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
    
    private PanmirrorToolbarRadioMenu createBlockMenu()
    {
-      PanmirrorToolbarRadioMenu blockMenu = new PanmirrorToolbarRadioMenu("Normal", "Block Format", commands_);
+      PanmirrorToolbarRadioMenu blockMenu = new PanmirrorToolbarRadioMenu(constants_.panmirrorBlockMenuDefaultText(), constants_.panMirrorBlockMenuTitle(), commands_);
       blockMenu.addCommand(PanmirrorCommands.Paragraph);
       blockMenu.addSeparator();
       blockMenu.addCommand(PanmirrorCommands.Heading1);
@@ -237,4 +239,5 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
    private PanmirrorToolbarCommands commands_ = null;
    private PanmirrorMenus menus_ = null;
    private ArrayList<PanmirrorCommandUIObject> commandObjects_ = new ArrayList<>();
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 }

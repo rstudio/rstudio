@@ -18,19 +18,21 @@ package org.rstudio.studio.client.panmirror.dialogs;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 
 public class PanmirrorRawFormatSelect extends SelectWidget
 {
    public PanmirrorRawFormatSelect()
    {
-      super("Format:", new String[] {}, new String[] {}, false);
+      super(constants_.formatLabel(), new String[] {}, new String[] {}, false);
    }
    
    public void setFormats(String[] formats, String value)
    {
       this.setChoices(
-         getFormatList("(Choose Format)", formats, value),
+         getFormatList(constants_.chooseFormatLabel(), formats, value),
          getFormatList("", formats, value)
       );
    }
@@ -44,5 +46,6 @@ public class PanmirrorRawFormatSelect extends SelectWidget
          options.add(value);
       return options.toArray(new String[]{});
    }
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 
 }

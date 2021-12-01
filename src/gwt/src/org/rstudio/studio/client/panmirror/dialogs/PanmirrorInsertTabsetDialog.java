@@ -22,6 +22,7 @@ import com.google.gwt.aria.client.Roles;
 import java.util.ArrayList;
 import java.util.stream.Collectors;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -30,6 +31,7 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertTabsetResult;
 
@@ -41,7 +43,7 @@ public class PanmirrorInsertTabsetDialog extends ModalDialog<PanmirrorInsertTabs
 {
    public PanmirrorInsertTabsetDialog(OperationWithInput<PanmirrorInsertTabsetResult> operation)
    {
-      super("Insert Tabset", Roles.getDialogRole(), operation, () -> {
+      super(constants_.insertTabsetCaption(), Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
@@ -49,7 +51,7 @@ public class PanmirrorInsertTabsetDialog extends ModalDialog<PanmirrorInsertTabs
       // tabs tab
       VerticalTabPanel tabsTab = new VerticalTabPanel(ElementIds.VISUAL_MD_INSERT_TABSET_TABS);
       tabsTab.addStyleName(RES.styles().dialog());
-      tabsTab.add(new FormLabel("Tab names:"));
+      tabsTab.add(new FormLabel(constants_.tabNamesFormLabel()));
       tabs_.add(addTabCaptionInput(tabsTab, 1, true, false));
       tabs_.add(addTabCaptionInput(tabsTab, 2, true, false));
       tabs_.add(addTabCaptionInput(tabsTab, 3, false));
@@ -69,10 +71,10 @@ public class PanmirrorInsertTabsetDialog extends ModalDialog<PanmirrorInsertTabs
       attributesTab.add(editAttr_);
 
       // create tab panel and set as main widget
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Image");
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.imageTabListLabel());
       tabPanel.addStyleName(RES.styles().insertTabsetDialogTabs());
-      tabPanel.add(tabsTab, "Tabs", tabsTab.getBasePanelId());
-      tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
+      tabPanel.add(tabsTab, constants_.tabsText(), tabsTab.getBasePanelId());
+      tabPanel.add(attributesTab, constants_.attributesText(), attributesTab.getBasePanelId());
       tabPanel.selectTab(0);
       mainWidget_ = tabPanel;
    }
@@ -107,7 +109,7 @@ public class PanmirrorInsertTabsetDialog extends ModalDialog<PanmirrorInsertTabs
       if (input.tabs.length < 2)
       {
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               "Insert Tabset", "You must specify at least two tab names", tabs_.get(0));
+               constants_.insertTabsetCaption(), constants_.tabSetErrorMessage(), tabs_.get(0));
          return false;
       } 
       else
@@ -126,12 +128,12 @@ public class PanmirrorInsertTabsetDialog extends ModalDialog<PanmirrorInsertTabs
    {
       TextBox textBox = PanmirrorDialogsUtil.addTextBox(tabsTab, ElementIds.VISUAL_MD_INSERT_TABSET_TAB + "_" + index, "");
       if (placeholder)
-         DomUtils.setPlaceholder(textBox, "(Tab " + index + (!required ? " - Optional" : "") + ")");
+         DomUtils.setPlaceholder(textBox,constants_.addTabCaptionInput(index, (!required ? " " + constants_.optionalText() : "")));
       return textBox;
    }
 
    private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
-
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
    
    private final Widget mainWidget_; 
    private final PanmirrorEditAttrWidget editAttr_;

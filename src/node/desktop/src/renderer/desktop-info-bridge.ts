@@ -86,6 +86,5 @@ PTMono-Bold`,
       zoomLevel: 1.0,
       chromiumDevtoolsPort: 0,
     };
-
   }
 }

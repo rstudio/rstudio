@@ -14,16 +14,18 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 
 public class SvnPage extends VersionControlPage
 {
    public SvnPage()
    {
-      super("Subversion", 
-            "Checkout a project from a Subversion repository",
-            "Checkout Subversion Repository",
+      super(constants_.svnPageTitle(),
+            constants_.svnPageSubTitle(),
+            constants_.svnPagePageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.svnIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.svnIconLarge2x()));
    }
@@ -62,4 +64,5 @@ public class SvnPage extends VersionControlPage
       return url;
      
    }
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

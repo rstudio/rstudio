@@ -68,7 +68,7 @@ export class MainWindow extends GwtWindow {
   private sessionProcess?: ChildProcess;
   private isErrorDisplayed = false;
 
-  // if loading fails and emits `did-fail-load` it will be followed by a 
+  // if loading fails and emits `did-fail-load` it will be followed by a
   // 'did-finish-load'; use this bool to differentiate
   private mainFailLoad = false;
 
@@ -126,7 +126,7 @@ export class MainWindow extends GwtWindow {
 
     // connect(webView(), &WebView::urlChanged,
     //         this, &MainWindow::onUrlChanged);
-   
+
     this.window.webContents.on('did-finish-load', () => {
       if (!this.mainFailLoad) {
         this.onLoadFinished(true);
@@ -176,12 +176,11 @@ export class MainWindow extends GwtWindow {
     if (error) {
       logger().logError(error);
 
-      dialog.showMessageBoxSync(this.window,
-        {
-          message: 'The R session failed to start.',
-          type: 'error',
-          title: appState().activation().editionName(),
-        });
+      dialog.showMessageBoxSync(this.window, {
+        message: 'The R session failed to start.',
+        type: 'error',
+        title: appState().activation().editionName(),
+      });
       this.quit();
     }
   }
@@ -211,7 +210,7 @@ export class MainWindow extends GwtWindow {
     this.workbenchInitialized = true;
 
     this.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
-      .then(projectDir => {
+      .then((projectDir) => {
         if (projectDir.length > 0) {
           this.window.setTitle(`${projectDir} - RStudio`);
         } else {
@@ -242,11 +241,11 @@ export class MainWindow extends GwtWindow {
   async loadUrl(url: string): Promise<void> {
     // pass along the shared secret with every request
     const filter = {
-      urls: [`${url}/*`]
+      urls: [`${url}/*`],
     };
     session.defaultSession.webRequest.onBeforeSendHeaders(filter, (details, callback) => {
       details.requestHeaders['X-Shared-Secret'] = process.env.RS_SHARED_SECRET ?? '';
-      callback({ requestHeaders: details.requestHeaders});
+      callback({ requestHeaders: details.requestHeaders });
     });
 
     this.window.loadURL(url).catch((reason) => {
@@ -274,10 +273,9 @@ export class MainWindow extends GwtWindow {
     } else {
       cmd = `window.desktopHooks.invokeCommand("${cmdId}")`;
     }
-    this.executeJavaScript(cmd)
-      .catch((error) => {
-        logger().logError(error);
-      });
+    this.executeJavaScript(cmd).catch((error) => {
+      logger().logError(error);
+    });
   }
 
   onSessionQuit(): void {
@@ -336,9 +334,11 @@ export class MainWindow extends GwtWindow {
 
     const close: CloseServerSessions = 'Always'; // TODO sessionServerSettings().closeServerSessionsOnExit();
 
-    if (this.quitConfirmed || (!this.isRemoteDesktop && !this.sessionProcess) ||
-      (!this.isRemoteDesktop && (!this.sessionProcess || this.sessionProcess.exitCode !== null))) {
-
+    if (
+      this.quitConfirmed ||
+      (!this.isRemoteDesktop && !this.sessionProcess) ||
+      (!this.isRemoteDesktop && (!this.sessionProcess || this.sessionProcess.exitCode !== null))
+    ) {
       closeAllSatellites(this.window);
       return;
     }
@@ -360,20 +360,20 @@ export class MainWindow extends GwtWindow {
           // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
           if (!this.isRemoteDesktop || close === 'Always') {
             this.executeJavaScript('window.desktopHooks.quitR()')
-              .then(() => this.quitConfirmed = true)
+              .then(() => (this.quitConfirmed = true))
               .catch(logger().logError);
           } else if (close === 'Never') {
             quit();
           } else {
             this.executeJavaScript('window.desktopHooks.promptToQuitR()')
-              .then(() => this.quitConfirmed = true)
+              .then(() => (this.quitConfirmed = true))
               .catch(logger().logError);
           }
         }
       })
       .catch(logger().logError);
   }
- 
+
   collectPendingQuitRequest(): PendingQuit {
     return appState().gwtCallback?.collectPendingQuitRequest() ?? PendingQuit.PendingQuitNone;
   }

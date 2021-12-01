@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.ElementIds;
@@ -21,6 +22,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 
@@ -30,9 +32,9 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
 {
    public ExistingDirectoryPage()
    {
-      super("Existing Directory", 
-            "Associate a project with an existing working directory",
-            "Create Project from Existing Directory",
+      super(constants_.existingDirectoryTitle(),
+            constants_.existingDirectorySubTitle(),
+            constants_.existingDirectoryPageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.existingDirectoryIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.existingDirectoryIconLarge2x()));
       
@@ -44,7 +46,7 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
    {
    
       existingProjectDir_ = new DirectoryChooserTextBox(
-            "Project working directory:", ElementIds.TextBoxButtonId.EXISTING_PROJECT_DIR, null);
+            constants_.projectWorkingDirectoryTitle(), ElementIds.TextBoxButtonId.EXISTING_PROJECT_DIR, null);
       addWidget(existingProjectDir_);
    }
    
@@ -77,9 +79,8 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
       {
          globalDisplay_.showMessage(
                MessageDialog.WARNING,
-               "Error", 
-               "You must specify an existing working directory to " +
-               "create the new project within.");
+               constants_.errorCaption(),
+               constants_.validateMessage());
          
          return false;
       }
@@ -89,9 +90,8 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
       {
          globalDisplay_.showMessage(
                MessageDialog.WARNING,
-               "Error", 
-               "Your home directory cannot be treated as an RStudio Project; " +
-               "select a different directory.");
+               constants_.errorCaption(),
+               constants_.homeDirectoryErrorMessage());
          
          return false;
       }
@@ -108,6 +108,6 @@ public class ExistingDirectoryPage extends NewProjectWizardPage
       existingProjectDir_.focusButton();
    }
 
-   
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
    private DirectoryChooserTextBox existingProjectDir_;
 }

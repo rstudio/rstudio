@@ -25,8 +25,9 @@ import { Expected, ok, err } from '../core/expected';
 import { logger } from '../core/logger';
 import { Err, success, safeError } from '../core/err';
 import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
+import { createStandaloneErrorDialog } from './utils';
 
-let kLdLibraryPathVariable : string;
+let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
   kLdLibraryPathVariable = 'DYLD_FALLBACK_LIBRARY_PATH';
 } else {
@@ -34,30 +35,27 @@ if (process.platform === 'darwin') {
 }
 
 interface REnvironment {
-  rScriptPath: string,
-  version: string,
-  envVars: Environment,
-  ldLibraryPath: string
+  rScriptPath: string;
+  version: string;
+  envVars: Environment;
+  ldLibraryPath: string;
 }
 
 function showRNotFoundError(error?: Error): void {
   const message = error?.message ?? 'Could not locate an R installation on the system.';
-  dialog.showErrorBox('R not found', message);
+  void createStandaloneErrorDialog('R not found', message);
 }
 
 function executeCommand(command: string): Expected<string> {
-
   try {
     const output = execSync(command, { encoding: 'utf-8' });
     return ok(output.trim());
   } catch (error: unknown) {
     return err(safeError(error));
   }
-
 }
 
 export async function promptUserForR(): Promise<Expected<string | null>> {
-
   // nothing to do if RSTUDIO_WHICH_R is set
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
@@ -85,29 +83,25 @@ export async function promptUserForR(): Promise<Expected<string | null>> {
   // set RSTUDIO_WHICH_R to signal which version of R to be used
   setenv('RSTUDIO_WHICH_R', path);
   return ok(path);
-
 }
 
 /**
  * Detect R and prepare environment for launching the rsession process.
- * 
+ *
  * This entails setting environment variables relevant to R on startup
  * // (for example, R_HOME) and other platform-specific work required
  * for R to launch.
  */
 export function prepareEnvironment(): Err {
-
   try {
     return prepareEnvironmentImpl();
   } catch (error: unknown) {
     logger().logError(error);
     return safeError(error);
   }
-
 }
 
 function prepareEnvironmentImpl(): Err {
-
   // attempt to detect R environment
   const [rEnvironment, error] = detectREnvironment();
   if (error) {
@@ -132,11 +126,9 @@ function prepareEnvironmentImpl(): Err {
   }
 
   return success();
-
 }
 
 function detectREnvironment(): Expected<REnvironment> {
-
   // scan for R
   const [R, scanError] = scanForR();
   if (scanError) {
@@ -158,38 +150,29 @@ function detectREnvironment(): Expected<REnvironment> {
     encoding: 'utf-8',
     input: rQueryScript,
   });
-  
+
   if (result.error) {
     return err(result.error);
   }
 
   // unwrap query results
-  const [
-    rVersion,
-    rHome,
-    rDocDir,
-    rIncludeDir,
-    rShareDir,
-    rLdLibraryPath,
-  ] = result.stdout.split(EOL);
+  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rLdLibraryPath] = result.stdout.split(EOL);
 
   // put it all together
   return ok({
     rScriptPath: R,
     version: rVersion,
     envVars: {
-      R_HOME:        rHome,
-      R_DOC_DIR:     rDocDir,
+      R_HOME: rHome,
+      R_DOC_DIR: rDocDir,
       R_INCLUDE_DIR: rIncludeDir,
-      R_SHARE_DIR:   rShareDir,
+      R_SHARE_DIR: rShareDir,
     },
     ldLibraryPath: rLdLibraryPath,
   });
-
 }
 
 function scanForR(): Expected<string> {
-
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
@@ -203,11 +186,9 @@ function scanForR(): Expected<string> {
   } else {
     return scanForRPosix();
   }
-
 }
 
 function scanForRPosix(): Expected<string> {
-
   // first, look for R on the PATH
   const [rLocation, error] = executeCommand('/usr/bin/which R');
   if (!error && rLocation) {
@@ -216,11 +197,7 @@ function scanForRPosix(): Expected<string> {
   }
 
   // otherwise, look in some hard-coded locations
-  const defaultLocations = [
-    '/opt/local/bin/R',
-    '/usr/local/bin/R',
-    '/usr/bin/R',
-  ];
+  const defaultLocations = ['/opt/local/bin/R', '/usr/local/bin/R', '/usr/bin/R'];
 
   // also check framework directory for macOS
   if (process.platform === 'darwin') {
@@ -236,12 +213,10 @@ function scanForRPosix(): Expected<string> {
 
   // nothing found
   return err();
-
 }
 
 function findRInstallationsWin32() {
-
-  const rInstallations : string[] = [];
+  const rInstallations: string[] = [];
 
   // list all installed versions from registry
   const keyName = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core';
@@ -265,7 +240,6 @@ function findRInstallationsWin32() {
   }
 
   return rInstallations;
-
 }
 
 function isValidInstallationWin32(installPath: string): boolean {
@@ -274,7 +248,6 @@ function isValidInstallationWin32(installPath: string): boolean {
 }
 
 function findDefaultInstallPathWin32(version: string): string {
-
   // query registry for R install path
   const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core\\${version}`;
   const regQueryCommand = `reg query ${keyName} /v InstallPath`;
@@ -295,11 +268,9 @@ function findDefaultInstallPathWin32(version: string): string {
   }
 
   return '';
-
 }
 
 function scanForRWin32(): Expected<string> {
-
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
@@ -328,7 +299,6 @@ function scanForRWin32(): Expected<string> {
   // nothing found; return empty filepath
   logger().logDebug('Failed to discover R');
   return err();
-
 }
 
 export function findDefault32Bit(): string {

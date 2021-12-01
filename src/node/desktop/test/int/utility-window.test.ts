@@ -20,7 +20,6 @@ import { ElectronApplication, Page } from 'playwright';
 import { getWindowTitles, launch, setTimeoutPromise } from './int-utils';
 import { typeConsoleCommand } from './console';
 
-
 describe('Display secondary utility windows', () => {
   let electronApp: ElectronApplication;
   let window: Page;
@@ -36,7 +35,7 @@ describe('Display secondary utility windows', () => {
   });
 
   it('Shows GPU utility window', async function () {
-    await typeConsoleCommand(window, '.rs.api.executeCommand(\'showGpuDiagnostics\')');
+    await typeConsoleCommand(window, ".rs.api.executeCommand('showGpuDiagnostics')");
     await setTimeoutPromise(500); // TODO: yuck, find a better way to do this
     const windows = electronApp.windows();
     assert.equal(windows.length, 2);

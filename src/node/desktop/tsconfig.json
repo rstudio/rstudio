@@ -13,18 +13,10 @@
     "paths": {
       "*": ["node_modules/*"]
     },
-    "lib": [
-      "es2020",
-      "DOM"
-    ]
+    "lib": ["es2020", "DOM"]
   },
-  "include": [
-    "src/**/*",
-    "test/**/*"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules"],
   "ts-node": {
     "transpileOnly": true
   }

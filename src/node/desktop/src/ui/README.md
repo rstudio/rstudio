@@ -1,4 +1,3 @@
-
 # RStudio Electron UI
 
 This README documents the structure of custom widgets used in RStudio.
@@ -69,4 +68,3 @@ if (error) {
     // handle error
 }
 ```
-

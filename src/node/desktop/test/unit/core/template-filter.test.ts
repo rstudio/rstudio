@@ -20,39 +20,31 @@ import { resolveTemplateVar } from '../../../src/core/template-filter';
 
 describe('template-filter', () => {
   it('resolveTemplateVar replaces single simple variable', () => {
-    const vars = new Map<string, string>([
-      ['world', 'People of Earth']
-    ]);
+    const vars = new Map<string, string>([['world', 'People of Earth']]);
     const expected = 'People of Earth';
 
     const result = resolveTemplateVar('world', vars);
     assert.equal(expected, result);
   });
   it('resolveTemplateVar HTML-encodes variable', () => {
-    const vars = new Map<string, string>([
-      ['world', '<my test>']
-    ]);
+    const vars = new Map<string, string>([['world', '<my test>']]);
     const expected = '&lt;my test&gt;';
 
     const result = resolveTemplateVar('world', vars);
     assert.equal(expected, result);
   });
   it('resolveTemplateVar passes through raw variable', () => {
-    const vars = new Map<string, string>([
-      ['world', '<my test>']
-    ]);
+    const vars = new Map<string, string>([['world', '<my test>']]);
     const expected = '<my test>';
 
     const result = resolveTemplateVar('!world', vars);
     assert.equal(expected, result);
   });
   it('resolveTemplateVar js-encodes variable', () => {
-    const vars = new Map<string, string>([
-      ['world', '"hello"']
-    ]);
+    const vars = new Map<string, string>([['world', '"hello"']]);
     const expected = '\\"hello\\"';
 
-    const result = resolveTemplateVar('\'world', vars);
+    const result = resolveTemplateVar("'world", vars);
     assert.equal(expected, result);
   });
-}); 
+});

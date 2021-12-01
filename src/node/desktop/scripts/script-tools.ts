@@ -79,9 +79,9 @@ export function getMakePackageDir(): string {
 }
 
 // promisify line-reader
-const eachLine = async function(filename: string, iteratee: (line: string) => void): Promise<void> {
-  return new Promise(function(resolve, reject) {
-    lineReader.eachLine(filename, iteratee, function(err) {
+const eachLine = async function (filename: string, iteratee: (line: string) => void): Promise<void> {
+  return new Promise(function (resolve, reject) {
+    lineReader.eachLine(filename, iteratee, function (err) {
       if (err) {
         reject(err);
       } else {
@@ -93,31 +93,31 @@ const eachLine = async function(filename: string, iteratee: (line: string) => vo
 
 /**
  * Load properties from a CMakeCache.txt-formatted file.
- * 
+ *
  * Syntax:
  *   - lines starting with '#' or '//' are ignored (comments) as are blank lines
  *   - VAR:TYPE=value
  *       - the TYPE is ignored and everything is returned as a string
  *   - VAR:TYPE=
  *       - variables with no value are ignored
- * 
+ *
  * @param file full path to CMakeCache.txt-formatted file (including filename)
  * @returns name/values
  */
 export async function loadCMakeVars(file: string): Promise<Map<string, string>> {
   const results = new Map<string, string>();
 
-    await eachLine(file, (line: string) => {
-      line = line.trim();
-      if (line.length > 0) {
-        if (!line.startsWith('//') && !line.startsWith('#')) {
-          const match = /^(.+):.+=(.+)/.exec(line);
-          if (match) {
-            results.set(match[1], match[2]);
-          }
+  await eachLine(file, (line: string) => {
+    line = line.trim();
+    if (line.length > 0) {
+      if (!line.startsWith('//') && !line.startsWith('#')) {
+        const match = /^(.+):.+=(.+)/.exec(line);
+        if (match) {
+          results.set(match[1], match[2]);
         }
       }
-    });
+    }
+  });
   return results;
 }
 
@@ -136,21 +136,21 @@ export async function isDirectory(path): Promise<boolean> {
 
 /**
  * Copy files. Throws an exception on error.
- * 
+ *
  * @param files file(s) to copy
  * @param sourceDir source directory
  * @param destDir destination directory
  */
 export async function copyFiles(files: Array<string>, sourceDir: string, destDir: string): Promise<void> {
-  await copy(
-    sourceDir,
-    destDir, {
-    filter: files, dot: true,
-  }).on(copy.events.COPY_FILE_COMPLETE, function (copyOperation) {
-    // Too verbose normally but helpful when debugging
-    // console.log('Copied to ' + copyOperation.dest);
-  }).on(copy.events.ERROR, function (error: Error, info: CopyErrorInfo) {
-    throw error;
-  });
+  await copy(sourceDir, destDir, {
+    filter: files,
+    dot: true,
+  })
+    .on(copy.events.COPY_FILE_COMPLETE, function (copyOperation) {
+      // Too verbose normally but helpful when debugging
+      // console.log('Copied to ' + copyOperation.dest);
+    })
+    .on(copy.events.ERROR, function (error: Error, info: CopyErrorInfo) {
+      throw error;
+    });
 }
-
