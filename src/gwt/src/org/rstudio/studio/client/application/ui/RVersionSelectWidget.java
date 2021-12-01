@@ -117,7 +117,7 @@ public class RVersionSelectWidget extends SelectWidget
       if (str != null)
       {
          JsArrayString values = StringUtil.split(str, SEP);
-         if (values.length() == 3)
+         if (values.length() >= 3)
          {
             String version = values.get(0);
             String rHomeDir = values.get(1);
