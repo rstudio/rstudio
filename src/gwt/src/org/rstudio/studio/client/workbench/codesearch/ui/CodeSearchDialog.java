@@ -15,8 +15,10 @@
 package org.rstudio.studio.client.workbench.codesearch.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 
 import com.google.gwt.core.client.Scheduler;
@@ -37,7 +39,7 @@ public class CodeSearchDialog extends ModalDialogBase
       setGlassEnabled(false);
       setAutoHideEnabled(true);
       
-      setText("Go to File/Function");
+      setText(constants_.fileFunctionLabel());
       
       pCodeSearch_ = pCodeSearch;
    }
@@ -101,6 +103,5 @@ public class CodeSearchDialog extends ModalDialogBase
   
    Provider<CodeSearch> pCodeSearch_;
    CodeSearch codeSearch_;
-   
-   
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }

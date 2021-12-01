@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.choosefile;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.views.choosefile.events.ChooseFileEvent;
@@ -57,12 +59,12 @@ public class ChooseFile implements ChooseFileEvent.Handler
             String message, path;
             if (input != null)
             {
-               message = "Saving...";
+               message = constants_.savingMessage();
                path = input.getPath();
             }
             else
             {
-               message = "Cancelling...";
+               message = constants_.cancellingMessage();
                path = null;
             }
 
@@ -77,7 +79,7 @@ public class ChooseFile implements ChooseFileEvent.Handler
       if (event.getNewFile())
       {
          fileDialogs_.saveFile(
-               "Choose File",
+               constants_.chooseFileCaption(),
                fsContext_,
                workbenchContext_.getCurrentWorkingDir(),
                "",
@@ -87,7 +89,7 @@ public class ChooseFile implements ChooseFileEvent.Handler
       else
       {
          fileDialogs_.openFile(
-               "Choose File",
+               constants_.chooseFileCaption(),
                fsContext_,
                workbenchContext_.getCurrentWorkingDir(),
                operation);
@@ -98,4 +100,5 @@ public class ChooseFile implements ChooseFileEvent.Handler
    private final RemoteFileSystemContext fsContext_;
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }

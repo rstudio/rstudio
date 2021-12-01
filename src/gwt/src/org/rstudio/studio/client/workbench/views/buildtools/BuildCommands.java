@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
@@ -44,9 +46,9 @@ public class BuildCommands
                            new ImageResource2x(
                               BuildPaneResources.INSTANCE.iconBuild2x()
                            ));
-         commands.buildAll().setMenuLabel("_Build All");
-         commands.buildAll().setButtonLabel("Build All");
-         commands.buildAll().setDesc("Build all");
+         commands.buildAll().setMenuLabel("_" + constants_.buildAllLabel());
+         commands.buildAll().setButtonLabel(constants_.buildAllLabel());
+         commands.buildAll().setDesc(constants_.buildAllDesc());
          
       }
       
@@ -72,24 +74,24 @@ public class BuildCommands
       
       if (type == SessionInfo.BUILD_TOOLS_QUARTO)
       {
-         String projType = "Project";
+         String projType = constants_.projectTypeText();
          
          if (sessionInfo.getQuartoConfig().project_type.equals(
                       SessionInfo.QUARTO_PROJECT_TYPE_BOOK)) 
          {
-            projType = "Book";
+            projType = constants_.bookText();
          }
          if (sessionInfo.getQuartoConfig().project_type.equals(
                SessionInfo.QUARTO_PROJECT_TYPE_WEBSITE)) 
          {
-            projType = "Website";
+            projType = constants_.projectWebsiteText();
          }
-         commands.buildAll().setMenuLabel("_Render " + projType);
-         commands.buildAll().setButtonLabel("Render " + projType);
-         commands.buildAll().setDesc("Render " + projType.toLowerCase());
+         commands.buildAll().setMenuLabel("_" + constants_.renderLabel() + projType);
+         commands.buildAll().setButtonLabel(constants_.renderLabel() + projType);
+         commands.buildAll().setDesc(constants_.renderLabel() + projType.toLowerCase());
          commands.buildAll().setImageResource(commands.quartoRenderDocument().getImageResource());
-         commands.serveQuartoSite().setMenuLabel("_Serve " + projType);
-         commands.serveQuartoSite().setButtonLabel("Serve " + projType);
+         commands.serveQuartoSite().setMenuLabel("_" + constants_.serveLabel() + projType);
+         commands.serveQuartoSite().setButtonLabel(constants_.serveLabel() + projType);
       }
       
       // remove all other commands if there are no build tools
@@ -104,4 +106,5 @@ public class BuildCommands
          commands.clearBuild().remove();
       }
    }
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }

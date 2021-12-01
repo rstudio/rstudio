@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.AsyncShim;
@@ -21,6 +22,7 @@ import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
@@ -84,13 +86,13 @@ public class OptionsLoader
          prefsDialog.addCloseHandler(popupPanelCloseEvent ->
          {
             boolean notified = notifyIfNecessary(
-                                 "weaving Rnw files",
+                                 constants_.weavingRnwFilesText(),
                                  previousRnwWeaveMethod_,
                                  uiPrefs_.defaultSweaveEngine());
 
             if (!notified)
             {
-               notifyIfNecessary("LaTeX typesetting",
+               notifyIfNecessary(constants_.latexTypesettingText(),
                                  previousLatexProgram_,
                                  uiPrefs_.defaultLatexProgram());
             }
@@ -106,12 +108,8 @@ public class OptionsLoader
          {
             globalDisplay_.showYesNoMessage(
                   MessageDialog.WARNING,
-                  "Project Option Unchanged",
-                  "You changed the global option for " + valueName  + " to " +
-                  pref.getGlobalValue() + ", however the current project is " +
-                  "still configured to use " + pref.getValue() + ".\n\n" +
-                  "Do you want to edit the options for the current " +
-                  "project as well?",
+                  constants_.projectOptionUnchangedCaption(),
+                  constants_.projectOptionUnchangedMessage(valueName, pref.getGlobalValue(), pref.getValue()),
                   () -> commands_.projectSweaveOptions().execute(),
                   true);
 
@@ -133,4 +131,5 @@ public class OptionsLoader
    private final Commands commands_;
    private final UserPrefs uiPrefs_;
    private final Provider<PreferencesDialog> pPrefDialog_;
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }

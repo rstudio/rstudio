@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.FilePosition;
@@ -30,6 +31,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.CodeSearchResults;
 import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
@@ -339,7 +341,7 @@ public class CodeSearchOracle extends SuggestOracle
                if (error.getCode() != ServerError.TRANSMISSION)
                {
                   RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                        "Code Search Error", error.getUserMessage());
+                        constants_.codeSearchError(), error.getUserMessage());
                }
                
             }
@@ -467,6 +469,7 @@ public class CodeSearchOracle extends SuggestOracle
       private final String query_;
       private final ArrayList<CodeSearchSuggestion> suggestions_;
       private final boolean moveAvailable_;
+
    }
-   
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }

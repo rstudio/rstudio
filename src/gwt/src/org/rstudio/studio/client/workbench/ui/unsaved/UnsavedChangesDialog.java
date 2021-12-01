@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
+import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 
 import com.google.gwt.cell.client.AbstractCell;
@@ -99,9 +100,9 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       alwaysSaveOption_ = StringUtil.notNull(alwaysSaveOption);
       targets_ = dirtyTargets;
 
-      setOkButtonCaption("Save Selected");
+      setOkButtonCaption(constants_.saveSelectedCaption());
 
-      addLeftButton(new ThemedButton("Don't Save", event -> {
+      addLeftButton(new ThemedButton(constants_.dontSaveButtonText(), event -> {
          closeDialog();
          saveOperation.execute(new Result(new ArrayList<>(), false));
       }), ElementIds.DIALOG_NO_BUTTON);
@@ -156,8 +157,8 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       VerticalPanel panel = new VerticalPanel();
       Label captionLabel = new Label(
          targets_.size() == 1 ?
-            "The following file has unsaved changes:" :
-            "The following " + targets_.size() + " files have unsaved changes:");
+            constants_.fileUnsavedChangesText() :
+            constants_.filesUnsavedChangesText(targets_.size()));
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
 
@@ -292,4 +293,5 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
 
    private final String alwaysSaveOption_;
    private CheckBox chkAlwaysSave_;
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }

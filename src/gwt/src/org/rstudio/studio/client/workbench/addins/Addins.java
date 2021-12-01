@@ -1,5 +1,6 @@
 package org.rstudio.studio.client.workbench.addins;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -17,6 +18,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
@@ -133,9 +135,8 @@ public class Addins
             {
                globalDisplay_.showMessage(
                   MessageDialog.WARNING, 
-                  addin.getName(),   
-                  "Unable to execute " + addin.getName() + 
-                  " addin\n(R session is currently busy)");
+                  addin.getName(),
+                  constants_.isServerBusyMessage(addin.getName()));
             }
             else
             {
@@ -179,7 +180,7 @@ public class Addins
          {
             server_.executeRAddinNonInteractively(
                   addin.getId(),
-                  new SimpleRequestCallback<>("Error Executing Addin", true));
+                  new SimpleRequestCallback<>(constants_.executingAddinError(), true));
          }
       }
       
@@ -195,4 +196,5 @@ public class Addins
    
    private static final String DELIMITER = "|||";
    private static final String PATTERN = "\\|\\|\\|";
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }

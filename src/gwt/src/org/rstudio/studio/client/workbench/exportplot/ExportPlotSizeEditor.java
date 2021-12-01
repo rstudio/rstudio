@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.IFrameElementEx;
 
@@ -43,6 +44,7 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.GlassPanel;
 import org.rstudio.core.client.widget.ResizeGripper;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.workbench.ClientWorkbenchConstants;
 
 public class ExportPlotSizeEditor extends Composite 
 {  
@@ -145,7 +147,7 @@ public class ExportPlotSizeEditor extends Composite
       // image height
       widthAndHeightPanel.add(new HTML("&nbsp;&nbsp;"));
       heightTextBox_ = createImageSizeTextBox();
-      FormLabel heightLabel = createImageOptionLabel("Height:", heightTextBox_);
+      FormLabel heightLabel = createImageOptionLabel(constants_.heightText(), heightTextBox_);
       widthAndHeightPanel.add(heightLabel);
       heightTextBox_.addChangeHandler(new ChangeHandler() {
          @Override
@@ -181,7 +183,7 @@ public class ExportPlotSizeEditor extends Composite
       keepRatioCheckBox_ = new CheckBox();
       keepRatioCheckBox_.addStyleName(resources.styles().maintainAspectRatioCheckBox());
       keepRatioCheckBox_.setValue(keepRatio);
-      keepRatioCheckBox_.setText("Maintain aspect ratio");
+      keepRatioCheckBox_.setText(constants_.maintainAspectRatioText());
       optionsPanel.add(keepRatioCheckBox_);
       
       // image and sizer in layout panel (create now so we can call
@@ -190,7 +192,7 @@ public class ExportPlotSizeEditor extends Composite
      
       
       // update button
-      ThemedButton updateButton = new ThemedButton("Update Preview", 
+      ThemedButton updateButton = new ThemedButton(constants_.updatePreviewTitle(),
                                                     new ClickHandler(){
          public void onClick(ClickEvent event) 
          {
@@ -522,4 +524,5 @@ public class ExportPlotSizeEditor extends Composite
    
    private final int MIN_SIZE = 100;
    private LayoutPanel previewPanel_;
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }
