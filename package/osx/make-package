@@ -314,6 +314,7 @@ if [ "${build_package}" = "1" ]; then
 
       # Build and package the Electron app.
       cd "${ELECTRON_SRC_DIR}"
+      ./update_json_version.sh "$RSTUDIO_VERSION_FULL"
       yarn make
       cd "${PKG_DIR}"
       PATH="${OLDPATH}"
