@@ -1,5 +1,9 @@
 # RStudio "Electron" Release Notes
 
+## Version Number Update:
+
+To update the version number, just run `./scripts/update-json-version.sh "1.2.3"`
+
 ## Error Dialogs
 
 To show error dialogs please use the `createStandaloneErrorDialog` function by importing it with
