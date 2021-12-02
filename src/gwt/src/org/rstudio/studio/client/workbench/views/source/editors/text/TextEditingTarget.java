@@ -101,7 +101,7 @@ import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
@@ -7065,7 +7065,7 @@ public class TextEditingTarget implements
          // quarto_preview will be used (e.g. for pdfs, presentations, etc.)
          String docFormat = quartoFormat();
          return (docFormat == null || Arrays.asList(config.project_formats).contains(docFormat)) &&
-                config.project_type.equals(QuartoConstants.PROJECT_WEBSITE);
+                config.project_type.equals(QuartoCommandConstants.PROJECT_WEBSITE);
                 
       }
       else
