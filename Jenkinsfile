@@ -295,6 +295,7 @@ try {
               checkout scm
               withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
                 def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
+                def image_tag = "windows-${rstudioReleaseBranch}"
                 pullBuildPush(image_name: 'jenkins/ide',
                   dockerfile: "docker/jenkins/Dockerfile.windows",
                   image_tag: image_tag,
