@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
@@ -276,12 +278,11 @@ public class VisualModePanmirrorFormat
       
       if (isXaringanDocument())
       {
-         invalid = "Xaringan presentations cannot be edited in visual mode.";
+         invalid = constants_.xaringanPresentationsVisualMode();
       }
       else if (hasVcsConflictMarkers())
       {
-         invalid = "Version control conflict markers detected. " + 
-                   "Please resolve them before editing in visual mode.";
+         invalid = constants_.versionControlConflict();
       }
       
       return invalid;
@@ -505,4 +506,5 @@ public class VisualModePanmirrorFormat
 
    private final static Pattern VCS_CONFLICT_PATTERN = 
          Pattern.create("^[\\+\\-]?([\\<\\>|=])\\1{6}.*?$", "gm");
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

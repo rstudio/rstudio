@@ -58,9 +58,11 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RadioButton;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 {
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
    public static class RmdNewDocument
    {  
       public RmdNewDocument(String template, String author, String title, 
@@ -164,7 +166,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          String author,
          OperationWithInput<Result> operation)
    {
-      super("New R Markdown", Roles.getDialogRole(), operation);
+      super(constants_.newRMarkdown(), Roles.getDialogRole(), operation);
       server_ = server;
       context_ = context;
       templateChooser_ = new RmdTemplateChooser(server_);
@@ -173,8 +175,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       formatOptions_ = new ArrayList<>();
       resources.styles().ensureInjected();
       txtAuthor_.setText(author);
-      txtTitle_.setText("Untitled");
-      Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), "Templates");
+      txtTitle_.setText(constants_.untitledCapitalized());
+      Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), constants_.templatesCapitalized());
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -237,7 +239,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       updateOptions(getSelectedTemplate());
       
       // Add option to create empty document
-      ThemedButton emptyDoc = new ThemedButton("Create Empty Document", evt ->
+      ThemedButton emptyDoc = new ThemedButton(constants_.createEmptyDocument(), evt ->
       {
          closeDialog();
          if (operation != null)
@@ -250,7 +252,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiFactory
    public HelpLink makeHelpCaption()
    {
-      return new HelpLink("Using Shiny with R Markdown",
+      return new HelpLink(constants_.usingShinyWithRMarkdown(),
                           "using_rmarkdown_shiny");
    }
    
@@ -354,9 +356,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       if (shiny)
       {
          templateFormatPanel_.add(createFormatOption(SHINY_DOC_NAME, 
-               "Create an HTML document with interactive Shiny components."));
+               constants_.shinyDocNameDescription()));
          templateFormatPanel_.add(createFormatOption(SHINY_PRESENTATION_NAME, 
-               "Create an IOSlides presentation with interactive Shiny components."));
+               constants_.shinyPresentationNameDescription()));
       }
       else 
       {
@@ -449,8 +451,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private final RMarkdownContext context_;
    private final RMarkdownServerOperations server_;
    
-   private final static String TEMPLATE_CHOOSE_EXISTING = "From Template";
-   private final static String TEMPLATE_SHINY = "Shiny";
-   private final static String SHINY_DOC_NAME = "Shiny Document";
-   private final static String SHINY_PRESENTATION_NAME = "Shiny Presentation";
+   private final static String TEMPLATE_CHOOSE_EXISTING = constants_.fromTemplate();
+   private final static String TEMPLATE_SHINY = constants_.shinyCapitalized();
+   private final static String SHINY_DOC_NAME = constants_.shinyDocument();
+   private final static String SHINY_PRESENTATION_NAME = constants_.shinyPresentation();
 }

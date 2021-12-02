@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -646,7 +647,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private String getNextDefaultName(String defaultNamePrefix)
    {
       if (StringUtil.isNullOrEmpty(defaultNamePrefix))
-         defaultNamePrefix = "Untitled";
+         defaultNamePrefix = constants_.untitled();
 
       int max = manager_.getUntitledNum(defaultNamePrefix);
       return defaultNamePrefix + (max + 1);
@@ -799,10 +800,10 @@ public class SourceColumn implements BeforeShowEvent.Handler,
       if (cmdEnabled)
       {
          String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
-         commands_.vcsFileDiff().setMenuLabel("_Diff \"" + name + "\"");
-         commands_.vcsFileLog().setMenuLabel("_Log of \"" + name +"\"");
+         commands_.vcsFileDiff().setMenuLabel(constants_.diffName(name));
+         commands_.vcsFileLog().setMenuLabel(constants_.logOfName(name));
 
-         commands_.vcsFileRevert().setMenuLabel("_Revert \"" + name + "\"...");
+         commands_.vcsFileRevert().setMenuLabel(constants_.revertName(name));
       }
 
       boolean isGithubRepo = manager_.getSession().getSessionInfo().isGithubRepository();
@@ -813,12 +814,12 @@ public class SourceColumn implements BeforeShowEvent.Handler,
          commands_.vcsViewOnGitHub().setVisible(true);
          commands_.vcsViewOnGitHub().setEnabled(true);
          commands_.vcsViewOnGitHub().setMenuLabel(
-                 "_View \"" + name + "\" on GitHub");
+                 constants_.viewNameOnGithub(name));
 
          commands_.vcsBlameOnGitHub().setVisible(true);
          commands_.vcsBlameOnGitHub().setEnabled(true);
          commands_.vcsBlameOnGitHub().setMenuLabel(
-                 "_Blame \"" + name + "\" on GitHub");
+                 constants_.blameOnGithub(name));
       }
       else
       {
@@ -891,14 +892,14 @@ public class SourceColumn implements BeforeShowEvent.Handler,
             {
                if (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX))
                {
-                  deployLabel = "Publish Application...";
+                  deployLabel = constants_.publishApplication();
                } else if (activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API)
                {
-                  deployLabel = "Publish Plumber API...";
+                  deployLabel = constants_.publishPlumberApi();
                }
             }
             if (deployLabel == null)
-               deployLabel = "Publish Document...";
+               deployLabel = constants_.publishDocument();
 
             commands_.rsconnectDeploy().setLabel(deployLabel);
          }
@@ -1068,7 +1069,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
             contents,
             JsObject.createJsObject(),
             new SimpleRequestCallback<SourceDocument>(
-                  "Error Creating New Document")
+                  constants_.errorCreatingNewDocument())
             {
                @Override
                public void onResponseReceived(SourceDocument newDoc)
@@ -1396,5 +1397,5 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private Provider<Session> pSession_;
 
    private SourceColumnManager manager_;
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

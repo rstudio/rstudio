@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.explorer;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -26,6 +27,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.view.ObjectExplorerEditingTargetWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
@@ -155,7 +157,7 @@ public class ObjectExplorerEditingTarget
    @Override
    public String getCurrentStatus()
    {
-      return "Object Explorer displayed";
+      return constants_.objectExplorerDisplayed();
    }
 
    // Private methods ----
@@ -176,9 +178,9 @@ public class ObjectExplorerEditingTarget
    private void setAccessibleName(String accessibleName)
    {
       if (StringUtil.isNullOrEmpty(accessibleName))
-         accessibleName = "Untitled Object Explorer";
-      Roles.getTabpanelRole().setAriaLabelProperty(progressPanel_.getElement(), accessibleName +
-            " Object Explorer");
+         accessibleName = constants_.untitledObjectExplorer();
+      Roles.getTabpanelRole().setAriaLabelProperty(progressPanel_.getElement(),
+              constants_.accessibleNameObjectExplorer(accessibleName));
    }
 
    private SimplePanelWithProgress progressPanel_;
@@ -186,4 +188,5 @@ public class ObjectExplorerEditingTarget
    private final EventBus events_;
    private final FileType fileType_;
    private boolean isActive_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

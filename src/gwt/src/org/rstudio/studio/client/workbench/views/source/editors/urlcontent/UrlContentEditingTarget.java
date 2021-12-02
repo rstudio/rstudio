@@ -45,6 +45,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -427,7 +428,7 @@ public class UrlContentEditingTarget implements EditingTarget
 
    protected Display createDisplay()
    {
-      return new UrlContentEditingTargetWidget("URL Browser",
+      return new UrlContentEditingTargetWidget(constants_.urlBrowser(),
             commands_,
             getContentUrl(),
             column_);
@@ -493,7 +494,7 @@ public class UrlContentEditingTarget implements EditingTarget
    @Override
    public String getCurrentStatus()
    {
-      return "URL Viewer displayed";
+      return constants_.urlViewerDisplayed();
    }
 
    private ContentItem getContentItem()
@@ -514,4 +515,5 @@ public class UrlContentEditingTarget implements EditingTarget
    private Value<String> name_ = new Value<>(null);
 
    private static final MyBinder binder_ = GWT.create(MyBinder.class);
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

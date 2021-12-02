@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -38,6 +39,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleHistoryAddedEvent;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -208,7 +210,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       {
          List<ChunkExecUnit> chunks = new ArrayList<>();
          chunks.add(chunk);
-         executeChunks("Run Chunk", chunks);
+         executeChunks(constants_.runChunk(), chunks);
       }
    }
    
@@ -623,8 +625,8 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       if (requiresPython)
       {
          RStudioGinjector.INSTANCE.getDependencyManager().withReticulate(
-               "Executing chunks",
-               "Executing Python chunks",
+               constants_.executingChunks(),
+               constants_.executingPythonChunks(),
                command);
       }
       else
@@ -650,7 +652,7 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
             public void onError(ServerError error)
             {
                RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                     "Can't execute " + queue_.getJobDesc(), error.getMessage());
+                     constants_.cantExecuteJobDesc(queue_.getJobDesc()), error.getMessage());
             }
          });
       });
@@ -716,4 +718,5 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
    private int charWidth_;
    private static int executingQueues_ = 0;
    public NotebookQueueUnit executingUnit_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

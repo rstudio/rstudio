@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
@@ -59,6 +60,7 @@ import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOper
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkRowExecState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -409,10 +411,8 @@ public class TextEditingTargetNotebook
       if (queue_.isExecuting())
       {
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               jobDesc + ": Chunks Currently Executing",
-               "RStudio cannot execute '" + jobDesc + "' because this " +
-               "notebook is already executing code. Interrupt R, or wait " +
-               "for execution to complete.");
+               constants_.jobChunkCurrentlyExecuting(jobDesc),
+               constants_.rStudioCannotExecuteJob(jobDesc));
          return;
       }
       docUpdateSentinel_.withSavedDoc(new Command()
@@ -471,7 +471,7 @@ public class TextEditingTargetNotebook
                      NotebookQueueUnit.EXEC_MODE_BATCH));
                chunks.add(new ChunkExecUnit(chunk,
                      NotebookQueueUnit.EXEC_MODE_SINGLE));
-               queue_.executeChunks("Run Chunks", chunks);
+               queue_.executeChunks(constants_.runChunks(), chunks);
             }
             else
             {
@@ -567,9 +567,8 @@ public class TextEditingTargetNotebook
       {
          RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                GlobalDisplay.MSG_INFO,
-               "Chunks Currently Running",
-               "Output can't be cleared because there are still chunks " +
-               "running. Do you want to interrupt them?",
+               constants_.chunksCurrentlyRunning(),
+               constants_.outputCantBeClearedBecauseChunks(),
                false,
                new Operation()
                {
@@ -586,8 +585,8 @@ public class TextEditingTargetNotebook
                },
                null,
                null,
-               "Interrupt and Clear Output",
-               "Cancel",
+               constants_.interruptAndClearOutput(),
+               constants_.cancel(),
                false);
       }
    }
@@ -679,7 +678,7 @@ public class TextEditingTargetNotebook
                NotebookQueueUnit.EXEC_MODE_BATCH));
          chunks.add(new ChunkExecUnit(event.getScope(), event.getRange(),
                NotebookQueueUnit.EXEC_MODE_SINGLE, event.getExecScope()));
-         queue_.executeChunks("Run Chunks", chunks);
+         queue_.executeChunks(constants_.runChunks(), chunks);
       }
       else
       {
@@ -991,7 +990,7 @@ public class TextEditingTargetNotebook
          // update that silently if needed
          if (initialChunkDefs_.length() > 0)
          {
-            dependencyManager_.withRMarkdown("R Notebook",
+            dependencyManager_.withRMarkdown(constants_.rNotebook(),
                null, new CommandWithArg<Boolean>()
                {
                   @Override
@@ -1760,9 +1759,8 @@ public class TextEditingTargetNotebook
       // if we do have inline output, offer to clean it up
       RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
-            "Remove Inline Chunk Output",
-            "Do you want to clear all the existing chunk output from your " +
-            "notebook?", false,
+            constants_.removeInlineChunkOutput(),
+            constants_.clearExistingChunkOutputMessage(), false,
             new Operation()
             {
                @Override
@@ -1780,8 +1778,8 @@ public class TextEditingTargetNotebook
                }
             },
             null,
-            "Remove Output",
-            "Keep Output",
+            constants_.removeOutput(),
+            constants_.keepOutput(),
             false);
    }
 
@@ -2170,5 +2168,6 @@ public class TextEditingTargetNotebook
 
    public final static int MODE_COMMITTED   = 0;
    public final static int MODE_UNCOMMITTED = 1;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
 

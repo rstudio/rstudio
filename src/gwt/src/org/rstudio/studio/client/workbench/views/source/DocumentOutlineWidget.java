@@ -64,7 +64,7 @@ public class DocumentOutlineWidget extends Composite
    {
       public EmptyPlaceholder()
       {
-         add(new Label("No outline available"));
+         add(new Label(constants_.noOutlineAvailable()));
          addStyleName(RES.styles().emptyPlaceholder());
       }
    }
@@ -151,7 +151,7 @@ public class DocumentOutlineWidget extends Composite
          }
          else if (node.isYaml())
          {
-            text = "Title";
+            text = constants_.title();
          }
          else
          {
@@ -247,7 +247,7 @@ public class DocumentOutlineWidget extends Composite
 
       tree_ = new Tree();
       tree_.addStyleName(RES.styles().tree());
-      Roles.getTreeRole().setAriaLabelProperty(tree_.getElement(), "Document Outline");
+      Roles.getTreeRole().setAriaLabelProperty(tree_.getElement(), constants_.documentOutline());
 
       panel_ = new FlowPanel();
       panel_.addStyleName(RES.styles().panel());
@@ -561,5 +561,5 @@ public class DocumentOutlineWidget extends Composite
    static {
       RES.styles().ensureInjected();
    }
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

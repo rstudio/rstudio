@@ -14,10 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.*;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
@@ -608,7 +605,7 @@ public class Source implements InsertSourceEvent.Handler,
       else
       {
          String alwaysSaveOption = !userPrefs_.saveFilesBeforeBuild().getValue() ?
-                                    "Always save files before build" : null;
+                                    constants_.alwaysSaveFilesBeforeBuild() : null;
 
          ArrayList<UnsavedChangesTarget> unsavedSourceDocs = getUnsavedChanges(TYPE_FILE_BACKED);
 
@@ -764,7 +761,7 @@ public class Source implements InsertSourceEvent.Handler,
             FileTypeRegistry.URLCONTENT.getTypeId(),
             null,
             (JsObject) content.cast(),
-            new SimpleRequestCallback<SourceDocument>("Show")
+            new SimpleRequestCallback<SourceDocument>(constants_.show())
             {
                @Override
                public void onResponseReceived(SourceDocument response)
@@ -827,7 +824,7 @@ public class Source implements InsertSourceEvent.Handler,
             public void onError(ServerError error)
             {
                Debug.logError(error);
-               globalDisplay_.showErrorMessage("Source Document Error", error.getUserMessage());
+               globalDisplay_.showErrorMessage(constants_.sourceDocumentError(), error.getUserMessage());
             }
          });
       }
@@ -841,7 +838,7 @@ public class Source implements InsertSourceEvent.Handler,
                   htmlPath,
                   htmlLocalPath,
                   event.getCreateProfile()).cast(),
-            new SimpleRequestCallback<SourceDocument>("Show Profiler")
+            new SimpleRequestCallback<SourceDocument>(constants_.showProfiler())
             {
                @Override
                public void onResponseReceived(SourceDocument response)
@@ -853,7 +850,7 @@ public class Source implements InsertSourceEvent.Handler,
                public void onError(ServerError error)
                {
                   Debug.logError(error);
-                  globalDisplay_.showErrorMessage("Source Document Error", error.getUserMessage());
+                  globalDisplay_.showErrorMessage(constants_.sourceDocumentError(), error.getUserMessage());
                }
             });
       }
@@ -874,7 +871,7 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onNewRNotebook()
    {
-      dependencyManager_.withRMarkdown("R Notebook",
+      dependencyManager_.withRMarkdown(constants_.rNotebook(),
          "Create R Notebook", new CommandWithArg<Boolean>()
          {
             @Override
@@ -882,9 +879,8 @@ public class Source implements InsertSourceEvent.Handler,
             {
                if (!succeeded)
                {
-                  globalDisplay_.showErrorMessage("Notebook Creation Failed",
-                        "One or more packages required for R Notebook " +
-                        "creation were not installed.");
+                  globalDisplay_.showErrorMessage(constants_.notebookCreationFailed(),
+                        constants_.rNotebookCreationFailedPackagesNotInstalled());
                   return;
                }
 
@@ -1003,8 +999,8 @@ public class Source implements InsertSourceEvent.Handler,
 
 
       dependencyManager_.withStan(
-            "Creating Stan script",
-            "Creating Stan scripts",
+            constants_.creatingStanScript(),
+            constants_.creatingStanScriptPlural(),
             onStanInstalled);
    }
 
@@ -1044,7 +1040,7 @@ public class Source implements InsertSourceEvent.Handler,
 
       // show progress
       final ProgressIndicator indicator = new GlobalProgressDelayer(
-            globalDisplay_, 500, "Creating new document...").getIndicator();
+            globalDisplay_, 500, constants_.creatingNewDocument()).getIndicator();
 
       // get the template
       server_.getSourceTemplate("",
@@ -1116,7 +1112,7 @@ public class Source implements InsertSourceEvent.Handler,
             result.getAppName(),
             result.getAppType(),
             result.getAppDir(),
-            new SimpleRequestCallback<JsArrayString>("Error Creating Shiny Application", true)
+            new SimpleRequestCallback<JsArrayString>(constants_.errorCreatingShinyApplication(), true)
             {
                @Override
                public void onResponseReceived(JsArrayString createdFiles)
@@ -1151,7 +1147,7 @@ public class Source implements InsertSourceEvent.Handler,
       server_.createPlumberAPI(
             result.getAPIName(),
             result.getAPIDir(),
-            new SimpleRequestCallback<JsArrayString>("Error Creating Plumber API", true)
+            new SimpleRequestCallback<JsArrayString>(constants_.errorCreatingPlumberApi(), true)
             {
                @Override
                public void onResponseReceived(JsArrayString createdFiles)
@@ -1222,7 +1218,7 @@ public class Source implements InsertSourceEvent.Handler,
          public void execute()
          {
             NewShinyWebApplication widget = new NewShinyWebApplication(
-                  "New Shiny Web Application",
+                  constants_.newShinyWebApplication(),
                   new OperationWithInput<NewShinyWebApplication.Result>()
                   {
                      @Override
@@ -1312,7 +1308,7 @@ public class Source implements InsertSourceEvent.Handler,
             public void execute()
             {
                fileDialogs_.saveFile(
-                  "New R Presentation",
+                  constants_.newRPresentation(),
                   fileContext_,
                   workbenchContext_.getDefaultFileDialogDir(),
                   ".Rpres",
@@ -1329,7 +1325,7 @@ public class Source implements InsertSourceEvent.Handler,
                            return;
                         }
 
-                        indicator.onProgress("Creating Presentation...");
+                        indicator.onProgress(constants_.creatingPresentation());
 
                         server_.createNewPresentation(
                           input.getPath(),
@@ -1464,9 +1460,8 @@ public class Source implements InsertSourceEvent.Handler,
                 @Override
                 public void onError(ServerError error)
                 {
-                   globalDisplay_.showErrorMessage("Document Tab Move Failed",
-                       "Couldn't move the tab to this window: \n" +
-                           error.getMessage());
+                   globalDisplay_.showErrorMessage(constants_.documentTabMoveFailed(),
+                       constants_.couldntMoveTabToWindowError(error.getMessage()));
                 }
              });
       }
@@ -1541,13 +1536,13 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onCloseAllSourceDocs()
    {
-      closeAllSourceDocs("Close All", null, null);
+      closeAllSourceDocs(constants_.closeAll(), null, null);
    }
 
    @Handler
    public void onCloseOtherSourceDocs()
    {
-      closeAllSourceDocs("Close Other", null, columnManager_.getActiveDocId());
+      closeAllSourceDocs(constants_.closeOther(), null, columnManager_.getActiveDocId());
    }
 
    /**
@@ -1688,7 +1683,7 @@ public class Source implements InsertSourceEvent.Handler,
    public void openSourceDoc(Command onCancelled, Command onCompleted)
    {
       fileDialogs_.openFile(
-            "Open File",
+            constants_.openFile(),
             fileContext_,
             workbenchContext_.getDefaultFileDialogDir(),
             new ProgressOperationWithInput<FileSystemItem>()
@@ -1807,7 +1802,7 @@ public class Source implements InsertSourceEvent.Handler,
       }
       else
       {
-         dependencyManager_.withRMarkdown("R Notebook",
+         dependencyManager_.withRMarkdown(constants_.rNotebook(),
                                           "Create R Notebook",
                                           newDocCommand);
       }
@@ -1834,7 +1829,7 @@ public class Source implements InsertSourceEvent.Handler,
          public void execute()
          {
             NewPlumberAPI widget = new NewPlumberAPI(
-                  "New Plumber API",
+                  constants_.newPlumberApi(),
                   new OperationWithInput<NewPlumberAPI.Result>()
                   {
                      @Override
@@ -2117,9 +2112,8 @@ public class Source implements InsertSourceEvent.Handler,
             @Override
             public void onError(ServerError error)
             {
-               globalDisplay_.showErrorMessage("Document Tab Move Failed",
-                     "Couldn't move the tab to this window: \n" +
-                      error.getMessage());
+               globalDisplay_.showErrorMessage(constants_.documentTabMoveFailed(),
+                     constants_.couldntMoveTabToWindowError(error.getMessage()));
             }
          });
          return;
@@ -2981,7 +2975,7 @@ public class Source implements InsertSourceEvent.Handler,
    @Override
    public void onCloseAllSourceDocsExcept(CloseAllSourceDocsExceptEvent closeAllExceptEvent)
    {
-      closeAllSourceDocs("Close All Others", null, closeAllExceptEvent.getKeepDocId());
+      closeAllSourceDocs(constants_.closeAllOthers(), null, closeAllExceptEvent.getKeepDocId());
    }
 
    private void onRStudioApiRequestImpl(RStudioApiRequestEvent requestEvent)
@@ -3181,5 +3175,5 @@ public class Source implements InsertSourceEvent.Handler,
    public final static int TYPE_UNTITLED    = 1;
    public final static int OPEN_INTERACTIVE = 0;
    public final static int OPEN_REPLAY      = 1;
-  
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

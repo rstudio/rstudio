@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TransformerCommand;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -55,11 +56,9 @@ public class QuartoCommands
    public void newQuarto(boolean presentation)
    {
       final ProgressIndicator indicator = 
-         RStudioGinjector.INSTANCE.getGlobalDisplay().getProgressIndicator("Error");
-      indicator.onProgress(
-         "New Quarto " + 
-         (presentation ? "Presentation" : "Document") + 
-         "...");
+         RStudioGinjector.INSTANCE.getGlobalDisplay().getProgressIndicator(constants_.errorCapitalized());
+      indicator.onProgress(constants_.newQuatroProgressIndicator(
+         presentation ? constants_.presentationCapitalized() : constants_.documentCapitalized()));
 
       server_.quartoCapabilities(
          new SimpleRequestCallback<QuartoCapabilities>() {
@@ -116,24 +115,24 @@ public class QuartoCommands
                   
                   // generate preamble
                   lines.add("---");
-                  lines.add("title: \"" + result.getTitle() + "\"");
+                  lines.add(constants_.titleParameterColon(result.getTitle()));
                   if (!StringUtil.isNullOrEmpty(result.getAuthor()))
-                     lines.add("author: \"" + result.getAuthor() + "\"");
+                     lines.add(constants_.authorParameterColon(result.getAuthor()));
                   
                   if (!isBook &&
                       (config.project_formats.length == 0 || 
                       !config.project_formats[0].equals(format)))
                   {
-                     lines.add("format: " + format);
+                     lines.add(constants_.formatParameterColon(format));
                   }
                   
                   if (visualEditor && !QuartoConstants.EDITOR_VISUAL.equals(config.project_editor))
-                     lines.add("editor: " + QuartoConstants.EDITOR_VISUAL);
+                     lines.add(constants_.editorParameterColon(QuartoConstants.EDITOR_VISUAL));
                   
                   if (result.getFormat().equals(QuartoConstants.INTERACTIVE_SHINY))
-                     lines.add("server: shiny");
+                     lines.add(constants_.serverShiny());
                   else if (!interactive && result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
-                     lines.add("jupyter: " + result.getKernel());
+                     lines.add(constants_.jupyterParameterColon(result.getKernel()));
                   
                   lines.add("---");
                   lines.add("");
@@ -240,4 +239,5 @@ public class QuartoCommands
    private final SourceColumnManager columnManager_;
    private final QuartoServerOperations server_;
    private SessionInfo sessionInfo_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

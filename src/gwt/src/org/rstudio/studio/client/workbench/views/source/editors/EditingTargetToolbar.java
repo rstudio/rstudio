@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -25,6 +26,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class EditingTargetToolbar extends Toolbar
 {
@@ -36,7 +38,7 @@ public class EditingTargetToolbar extends Toolbar
    public EditingTargetToolbar(Commands commands, boolean includePopout,
                                SourceColumn column, String id)
    {
-      super("Code Editor Tab");
+      super(constants_.codeEditorTab());
 
       // Buttons are unique to a source column so require SourceAppCommands
       SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
@@ -94,4 +96,5 @@ public class EditingTargetToolbar extends Toolbar
    }
 
    private final String id_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

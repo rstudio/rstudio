@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 
 public class ProfilerEditingTargetWidget extends Composite
@@ -47,7 +49,7 @@ public class ProfilerEditingTargetWidget extends Composite
    {
       VerticalPanel panel = new VerticalPanel();
       Roles.getTabpanelRole().set(panel.getElement());
-      Roles.getTabpanelRole().setAriaLabelProperty(panel.getElement(), title + " Profile View");
+      Roles.getTabpanelRole().setAriaLabelProperty(panel.getElement(), constants_.titleProfileView(title));
 
       column_ = column;
       PanelWithToolbars mainPanel = new PanelWithToolbars(
@@ -199,4 +201,5 @@ public class ProfilerEditingTargetWidget extends Composite
    
    private RSConnectPublishButton publishButton_;
    private SourceColumn column_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

@@ -108,6 +108,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                                             DocumentCloseEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
+    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
   public interface CPSEditingTargetCommand
    {
       void execute(EditingTarget editingTarget, Command continuation);
@@ -682,7 +683,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    {
       if (hasActiveEditor())
          return activeColumn_.getActiveEditor().getCurrentStatus();
-      return "No document tabs open";
+      return constants_.noDocumentTabsOpen();
    }
 
    public Synctex getSynctex()
@@ -935,7 +936,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          FileTypeRegistry.OBJECT_EXPLORER.getTypeId(),
          null,
          (JsObject) handle.cast(),
-         new SimpleRequestCallback<SourceDocument>("Show Object Explorer")
+         new SimpleRequestCallback<SourceDocument>(constants_.showObjectExplorer())
          {
             @Override
             public void onResponseReceived(SourceDocument response)
@@ -974,7 +975,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          FileTypeRegistry.DATAFRAME.getTypeId(),
          null,
          (JsObject) data.cast(),
-         new SimpleRequestCallback<SourceDocument>("Show Data Frame")
+         new SimpleRequestCallback<SourceDocument>(constants_.showDataFrame())
          {
             @Override
             public void onResponseReceived(SourceDocument response)
@@ -1245,9 +1246,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             public void execute(final String content)
             {
                if (content.length() == 0)
-                  globalDisplay_.showErrorMessage("Template Content Missing",
-                     "The template at " + template.getTemplatePath() +
-                        " is missing.");
+                  globalDisplay_.showErrorMessage(constants_.templateContentMissing(),
+                     constants_.templateAtPathMissing(template.getTemplatePath()));
                newDoc(FileTypeRegistry.RMARKDOWN, content, null);
             }
          });
@@ -1351,7 +1351,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       final TransformerCommand<String> contentTransformer)
    {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
-         globalDisplay_, 500, "Creating new document...").getIndicator();
+         globalDisplay_, 500, constants_.creatingNewDocument()).getIndicator();
 
       server_.getSourceTemplate(name,
          template,
@@ -1666,9 +1666,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                      @Override
                      public void onError(ServerError error)
                      {
-                        globalDisplay_.showErrorMessage("Document Tab Move Failed",
-                           "Couldn't move the tab to this window: \n" +
-                              error.getMessage());
+                        globalDisplay_.showErrorMessage(constants_.documentTabMoveFailed(),
+                           constants_.couldntMoveTabToWindowError(error.getMessage()));
                      }
                   });
             }
@@ -1936,7 +1935,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                }
 
                globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
-                  "Error while opening file",
+                  constants_.errorWhileOpeningFile(),
                   message);
 
                processNextEntry.execute();
@@ -2049,8 +2048,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                   if (target instanceof TextEditingTarget)
                   {
                      ((TextEditingTarget) target).showWarningMessage(
-                        "This notebook has the same name as an R Markdown " +
-                           "file, but doesn't match it.");
+                        constants_.openNotebookWarningMessage());
                   }
                   resultCallback.onSuccess(target);
                }
@@ -2059,11 +2057,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                public void onError(ServerError error)
                {
                   globalDisplay_.showErrorMessage(
-                     "Notebook Open Failed",
-                     "This notebook could not be opened. " +
-                        "If the error persists, try removing the " +
-                        "accompanying R Markdown file. \n\n" +
-                        error.getMessage());
+                     constants_.notebookOpenFailed(),
+                     constants_.notebookOpenFailedMessage(error.getMessage()));
                   resultCallback.onFailure(error);
                }
             });
@@ -2354,7 +2349,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       };
 
-      dependencyManager_.withRMarkdown("R Notebook", "Using R Notebooks", extractRmdCommand);
+      dependencyManager_.withRMarkdown(constants_.rNotebook(), "Using R Notebooks", extractRmdCommand);
    }
 
    private void openNotebook(final FileSystemItem rnbFile,
@@ -2384,9 +2379,8 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                @Override
                public void onFailure(ServerError error)
                {
-                  globalDisplay_.showErrorMessage("Notebook Open Failed",
-                        "This notebook could not be opened. \n\n" +
-                        error.getMessage());
+                  globalDisplay_.showErrorMessage(constants_.notebookOpenFailed(),
+                        constants_.notebookCouldNotBeOpenedMessage(error.getMessage()));
                   resultCallback.onFailure(error);
                }
             });
@@ -2408,7 +2402,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
       final Command dismissProgress = globalDisplay_.showProgress(
-                                                         "Opening file...");
+                                                         constants_.openingFile());
 
       server_.openDocument(
             file.getPath(),
@@ -2483,30 +2477,21 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private void showFileTooLargeWarning(FileSystemItem file,
                                         long sizeLimit)
    {
-      StringBuilder msg = new StringBuilder();
-      msg.append("The file '" + file.getName() + "' is too ");
-      msg.append("large to open in the source editor (the file is ");
-      msg.append(StringUtil.formatFileSize(file.getLength()) + " and the ");
-      msg.append("maximum file size is ");
-      msg.append(StringUtil.formatFileSize(sizeLimit) + ")");
-
       globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
-                                 "Selected File Too Large",
-                                 msg.toString());
+                                 constants_.selectedFileTooLarge(),
+                                 constants_.showFileTooLargeWarningMsg(file.getName(),
+                                         StringUtil.formatFileSize(file.getLength()),
+                                                 StringUtil.formatFileSize(sizeLimit)));
    }
 
    private void confirmOpenLargeFile(FileSystemItem file,
                                      Operation openOperation,
                                      Operation noOperation)
    {
-      StringBuilder msg = new StringBuilder();
-      msg.append("The source file '" + file.getName() + "' is large (");
-      msg.append(StringUtil.formatFileSize(file.getLength()) + ") ");
-      msg.append("and may take some time to open. ");
-      msg.append("Are you sure you want to continue opening it?");
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
-                                      "Confirm Open",
-                                      msg.toString(),
+                                      constants_.confirmOpen(),
+                                      constants_.confirmOpenLargeFileMsg(file.getName(),
+                                              StringUtil.formatFileSize(file.getLength())),
                                       false, // Don't include cancel
                                       openOperation,
                                       noOperation,
@@ -2805,7 +2790,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
 
    private String computeAccessibleName()
    {
-      return "Source Column " + sourceColumnCounter_++;
+      return constants_.sourceColumn(sourceColumnCounter_++);
    }
 
    private State columnState_;
@@ -2840,7 +2825,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
    private final SourceNavigationHistory sourceNavigationHistory_ =
        new SourceNavigationHistory(30);
 
-   public final static String COLUMN_PREFIX = "Source";
+   public final static String COLUMN_PREFIX = constants_.source();
    public final static String MAIN_SOURCE_NAME = COLUMN_PREFIX;
    static int sourceColumnCounter_ = 1;
 }

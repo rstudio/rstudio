@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.Window;
@@ -80,7 +81,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
          title = "";
       else
          title += " - ";
-      title += "RStudio Source Editor";
+      title += constants_.rstudioSourceEditor();
       Window.setTitle(title);
 
       // set up the source window
@@ -140,4 +141,5 @@ public class SourceSatelliteWindow extends SatelliteWindow
    private final Provider<Source> pSource_;
    @SuppressWarnings("unused") private final Provider<FileMRUList> pFileMRUList_;
    @SuppressWarnings("unused") private final Provider<ProjectMRUList> pProjectMRUList_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
