@@ -294,30 +294,10 @@ try {
               checkout scm
               withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
                 def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
-                def dockerfile = "-f docker/jenkins/Dockerfile.windows"
-                def container
-                // the following is adapted from pullBuildPush with the
-                // omission of Unix-isms
-                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                  def image_cache
-                  def image_name = "jenkins/ide"
-                  def image_tag = "windows-${rstudioReleaseBranch}"
-                  def cache_tag = image_tag
-                  def build_args = github_args
-                  def docker_context = '.'
-                  try {
-                    image_cache = docker.image(image_name + ':' + cache_tag)
-                    image_cache.pull()
-                  } catch(e) { // docker.image throws a generic exception.
-                    echo 'Windows container image not found; expect build to take a bit longer.'
-                  }
-
-                  echo 'Building Windows container image'
-                  container = docker.build(image_name + ':' + image_tag, "--cache-from ${image_cache.imageName()} ${build_args} ${dockerfile} ${docker_context}")
-
-                  echo 'Pushing Windows container'
-                  container.push()
-                }
+                pullBuildPush(image_name: 'jenkins/ide',
+                  dockerfile: "docker/jenkins/Dockerfile.windows",
+                  image_tag: image_tag,
+                  build_args: github_args + " " + jenkins_user_build_args())
               }
             }
           }
