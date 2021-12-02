@@ -1,4 +1,3 @@
-package org.rstudio.studio.client.projects;
 /*
  * StudioClientProjectConstants.java
  *
@@ -13,6 +12,9 @@ package org.rstudio.studio.client.projects;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+package org.rstudio.studio.client.projects;
+
 public interface StudioClientProjectConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
