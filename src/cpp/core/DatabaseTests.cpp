@@ -41,10 +41,10 @@ core::database::PostgresqlConnectionOptions postgresConnectionOptions()
 {
    PostgresqlConnectionOptions options;
    options.connectionTimeoutSeconds = 10;
-   options.database = "rstudio-test";
+   options.database = "rstudio_test";
    options.host = "localhost";
-   options.username = "postgres";
-   options.password = "postgres";
+   options.username = "rstudio";
+   options.password = "rstudio";
 
    return options;
 }
@@ -327,7 +327,7 @@ TEST_CASE("Database", "[.database]")
          )"";
 
       FilePath workingDir = core::system::currentWorkingDir(core::system::currentProcessId());
-      FilePath outFile1 = workingDir.completeChildPath("1_InitialTables.sql");
+      FilePath outFile1 = workingDir.completeChildPath("createTables.sql");
       FilePath outFile2Sqlite = workingDir.completeChildPath("2_ConstraintsForInitialTables.sqlite");
       FilePath outFile2Postgresql = workingDir.completeChildPath("2_ConstraintsForInitialTables.postgresql");
       FilePath outFile3Sqlite = workingDir.completeChildPath("3_AddAccountCreationTime.sqlite");
@@ -530,6 +530,58 @@ TEST_CASE("Database", "[.database]")
       CHECK(connectionStr == "host='[fd9a:3b89:ca91:43a2:0:0:0:0]' port='2345' user='joe' dbname='rstudio-test'");
       CHECK(password == "12345");
    }
+}
+
+TEST_CASE("Database Upgrade", "[.database]")
+{
+   GIVEN("A Juliet Rose SQLite Database")
+   {
+      // ensure that the test databases do not exist
+      FilePath sqliteDbPath("/tmp/rstudio-test-db");
+      sqliteDbPath.removeIfExists();
+      boost::shared_ptr<IConnection> sqliteConnection;
+      REQUIRE_FALSE(connect(sqliteConnectionOptions(), &sqliteConnection));
+
+      std::string jrRestore;
+      FilePath jrBackup("test-sqlite.sql");
+      core::readStringFromFile(jrBackup, &jrRestore);
+      sqliteConnection->executeStr(jrRestore);
+
+      WHEN("The Schema Updater is constructed")
+      {
+         FilePath pathToMigrations("../../../../src/cpp/server/db/");
+         database::SchemaUpdater updater = {sqliteConnection, pathToMigrations};
+
+         THEN("The Schema is not up to date")
+         {
+            bool isUpToDate = false;
+            REQUIRE_FALSE(updater.isUpToDate(&isUpToDate));
+            REQUIRE_FALSE(isUpToDate);
+            SchemaVersion initialVersion;
+            REQUIRE_FALSE(updater.databaseSchemaVersion(&initialVersion));
+
+            AND_THEN("Running update does not fail")
+            {
+               REQUIRE_FALSE(updater.update());
+
+               AND_THEN("The Schema is up to date")
+               {
+                  bool isNowUpToDate = false;
+                  REQUIRE_FALSE(updater.isUpToDate(&isNowUpToDate));
+                  REQUIRE(isNowUpToDate);
+                  SchemaVersion finalVersion;
+                  REQUIRE_FALSE(updater.databaseSchemaVersion(&finalVersion));
+                  REQUIRE(initialVersion < finalVersion);
+               }
+            }
+         }
+      }
+   }
+
+   // GIVEN("A Juliet Rose Postgres Database")
+   // {
+
+   // }
 }
 
 } // namespace unit_tests
