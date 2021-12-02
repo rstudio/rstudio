@@ -100,7 +100,7 @@ public class DataTable
       if (isPreview)
       {
          ToolbarLabel label = 
-            new ToolbarLabel("");
+            new ToolbarLabel(constants_.toolbarLabel());
          label.addStyleName(ThemeStyles.INSTANCE.toolbarInfoLabel());
          toolbar.addRightWidget(label);
       }
