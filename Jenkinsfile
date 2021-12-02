@@ -228,7 +228,7 @@ try {
             stage('set up versioning') {
                 prepareWorkspace()
 
-                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args())
+                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args(), retry_image_pull: 5)
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
@@ -279,7 +279,8 @@ try {
                               pullBuildPush(image_name: 'jenkins/ide',
                                 dockerfile: "docker/jenkins/Dockerfile.${current_image.os}-${current_image.arch}",
                                 image_tag: image_tag,
-                                build_args: github_args + " " + jenkins_user_build_args())
+                                build_args: github_args + " " + jenkins_user_build_args(),
+                                retry_image_pull: 5)
                             }
                         }
                     }
@@ -297,7 +298,8 @@ try {
                 pullBuildPush(image_name: 'jenkins/ide',
                   dockerfile: "docker/jenkins/Dockerfile.windows",
                   image_tag: image_tag,
-                  build_args: github_args + " " + jenkins_user_build_args())
+                  build_args: github_args + " " + jenkins_user_build_args()),
+                  retry_image_pull: 5
               }
             }
           }
