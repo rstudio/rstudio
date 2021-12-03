@@ -14,10 +14,13 @@
  */
 package org.rstudio.studio.client.shiny;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
@@ -26,8 +29,8 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -56,11 +59,8 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
 @Singleton
 public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
@@ -356,9 +356,8 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                            @Override
                            public void onError(ServerError error)
                            {
-                              display_.showErrorMessage("Failed to reload",
-                                 "Could not reload the Shiny application.\n\n" +
-                                    error.getMessage());
+                              display_.showErrorMessage(constants_.reloadFailErrorCaption(),
+                                 constants_.reloadFailErrorMsg(error.getMessage()));
                            }
                         });
                      // Clean up event handler
@@ -372,7 +371,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       }
       
       // Nothing else running, start this app.
-      dependencyManager_.withShiny("Running Shiny applications",
+      dependencyManager_.withShiny(constants_.runningShinyUserAction(),
             new Command() {
                @Override
                public void execute()
@@ -485,9 +484,8 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
             @Override
             public void onError(ServerError error)
             {
-               display_.showErrorMessage("Failed to Stop",
-                  "Could not stop the Shiny application.\n\n" +
-                     error.getMessage());
+               display_.showErrorMessage(constants_.failedToStopErrorCaption(),
+                  constants_.failedToStopErrorMsg(error.getMessage()));
             }
          });
    }
@@ -567,7 +565,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                   @Override
                   public void onError(ServerError error)
                   {
-                     display_.showErrorMessage("Shiny App Launch Failed", 
+                     display_.showErrorMessage(constants_.launchFailedErrorCaption(),
                                                error.getMessage());
                   }
                });
@@ -586,7 +584,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                   @Override
                   public void onError(ServerError error)
                   {
-                     display_.showErrorMessage("Shiny App Background Launch Failed", 
+                     display_.showErrorMessage(constants_.backgroundLaunchFailedErrorCaption(),
                                                error.getMessage());
                   }
                });
@@ -672,4 +670,6 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
 
    public static final String FOREGROUND_APP = "foreground";
    public static final String BACKGROUND_APP = "background";
+
+   private static final ShinyConstants constants_ = GWT.create(ShinyConstants.class);
 }

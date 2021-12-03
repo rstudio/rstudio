@@ -62,6 +62,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
       {
          rVersionSelector_ = new RVersionSelectWidget(
            "",
+           ElementIds.SelectWidgetId.R_VER_NEW_PROJ_WIZ,
            rVersions.getAvailableRVersions(),
            false,
            false,

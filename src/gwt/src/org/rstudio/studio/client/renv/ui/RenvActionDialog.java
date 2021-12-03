@@ -14,9 +14,11 @@
  */
 package org.rstudio.studio.client.renv.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.renv.RenvConstants;
 import org.rstudio.studio.client.workbench.projects.RenvAction;
 
 import com.google.gwt.aria.client.Roles;
@@ -30,7 +32,7 @@ public class RenvActionDialog extends ModalDialog<Void>
                            final OperationWithInput<Void> operation)
    {
       super(
-            action + " Library",
+            action + constant_.libraryCaption(),
             Roles.getDialogRole(),
             operation);
       
@@ -54,5 +56,7 @@ public class RenvActionDialog extends ModalDialog<Void>
    
    
    private final RenvActionDialogContents widget_;
+
+   private static final RenvConstants constant_ = GWT.create(RenvConstants.class);
 
 }

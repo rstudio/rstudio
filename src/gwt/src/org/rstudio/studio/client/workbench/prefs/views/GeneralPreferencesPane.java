@@ -113,6 +113,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (versionsInfo.isMultiVersion())
       {
          rServerRVersion_ = new RVersionSelectWidget(
+                                       ElementIds.SelectWidgetId.R_VER_GEN_PREF_PANE,
                                        versionsInfo.getAvailableRVersions());
          basic.add(tight(rServerRVersion_));
 
