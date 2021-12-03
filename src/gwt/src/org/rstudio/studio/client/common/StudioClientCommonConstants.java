@@ -1,4 +1,3 @@
-package org.rstudio.studio.client.common;
 /*
  * StudioClientCommonConstants.java
  *
@@ -13,6 +12,8 @@ package org.rstudio.studio.client.common;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+package org.rstudio.studio.client.common;
 
 public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.Messages {
 

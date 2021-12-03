@@ -12,6 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 package org.rstudio.studio.client.common.vcs;
 
 public class VCSConstants

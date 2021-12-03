@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rmarkdown;
 import java.util.Map;
 import java.util.HashMap;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -521,9 +522,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
             @Override
             public void onError(ServerError error)
             {
-               globalDisplay_.showErrorMessage("Shiny Terminate Failed",
-                     "The Shiny document " + shinyDoc_.getFile() + " needs to " +
-                     "be stopped before the document can be rendered.");
+               globalDisplay_.showErrorMessage(constants_.shinyTerminalErrorCaption(),
+                     constants_.shinyTerminalErrorMsg(shinyDoc_.getFile()));
             }
          });
       }
@@ -637,10 +637,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
          final RmdRenderResult result, final Command onDownload)
    {
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_INFO,
-            "Render Completed",
-            "RStudio has finished rendering " +
-            result.getTargetFile() + " to " +
-            result.getOutputFile() + ".",
+            constants_.renderCompletedCaption(),
+              constants_.renderCompletedMsg(result.getTargetFile(), result.getOutputFile()),
             false,
             new ProgressOperation()
             {
@@ -652,8 +650,8 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                }
             },
             null,
-            "Download File",
-            "OK",
+              constants_.yesLabel(),
+              constants_.noLabel(),
             false);
    }
 
@@ -876,4 +874,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    public final static int TYPE_STATIC   = 0;
    public final static int TYPE_SHINY    = 1;
    public final static int TYPE_NOTEBOOK = 2;
+
+   private static final RMarkdownConstants constants_ = GWT.create(RMarkdownConstants.class);
 }

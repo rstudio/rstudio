@@ -32,9 +32,10 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.newdocument.NewDocumentResources;
 import org.rstudio.studio.client.common.newdocument.TemplateMenuItem;
+import org.rstudio.studio.client.quarto.QuartoConstants;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.quarto.model.QuartoJupyterKernel;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
@@ -70,11 +71,11 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       public static final Result createDefault()
       {
          return create("", "", 
-                      QuartoConstants.FORMAT_HTML, 
-                      QuartoConstants.ENGINE_KNITR, 
+                      QuartoCommandConstants.FORMAT_HTML,
+                      QuartoCommandConstants.ENGINE_KNITR,
                       "python3", 
                       "python", 
-                      QuartoConstants.EDITOR_VISUAL,
+                      QuartoCommandConstants.EDITOR_VISUAL,
                       false);
       }
 
@@ -133,12 +134,12 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
                                   boolean presentation,
                                   OperationWithInput<Result> operation)
    {
-      super("New Quarto Document", Roles.getDialogRole(), operation);
+      super(constants_.newQuartoDocumentCaption(), Roles.getDialogRole(), operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       loadAndPersistClientState();
       
-      setOkButtonCaption("Create");
+      setOkButtonCaption(constants_.createDocButtonCaption());
       
       caps_ = caps;
 
@@ -148,9 +149,9 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       formatNames_ = new ArrayList<>();
       resources.styles().ensureInjected();
       
-      txtTitle_.setText("Untitled");
-      DomUtils.setPlaceholder(txtAuthor_, "(optional)");
-      Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), "Templates");
+      txtTitle_.setText(constants_.newDocTitleText());
+      DomUtils.setPlaceholder(txtAuthor_, constants_.newDocAuthorPlaceholderText());
+      Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), constants_.templateAriaLabelValue());
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -175,18 +176,18 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       if (presentation)
          listTemplates_.setSelectedIndex(1);
       
-      Label engineLabel = createLabel("Engine:");
+      Label engineLabel = createLabel(constants_.engineLabelCaption());
       engineSelect_ = createListBox(
-         new String[] {"(None)", "Knitr", "Jupyter"},
+         new String[] {constants_.engineSelectNoneLabel(), "Knitr", "Jupyter"},
          new String[] {
-           QuartoConstants.ENGINE_MARKDOWN, 
-           QuartoConstants.ENGINE_KNITR, 
-           QuartoConstants.ENGINE_JUPYTER
+           QuartoCommandConstants.ENGINE_MARKDOWN,
+           QuartoCommandConstants.ENGINE_KNITR,
+           QuartoCommandConstants.ENGINE_JUPYTER
          }
       );
       setListBoxValue(engineSelect_, lastResult_.getEngine());
             
-      Label kernelLabel = createLabel("Kernel:");
+      Label kernelLabel = createLabel(constants_.kernelLabelCaption());
       JsArray<QuartoJupyterKernel> kernels = caps.jupyterKernels();
       
       String[] kernelNames = new String[kernels.length()];
@@ -208,7 +209,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       String editor = config.project_editor;
       if (StringUtil.isNullOrEmpty(editor))
          editor = lastResult_.getEditor();
-      editorCheckBox_.setValue(editor.equals(QuartoConstants.EDITOR_VISUAL));
+      editorCheckBox_.setValue(editor.equals(QuartoCommandConstants.EDITOR_VISUAL));
       
       // Add them to parent
       grid_.getElement().getStyle().setMarginTop(4, Unit.PX);
@@ -232,19 +233,19 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       rowFmt.addStyleName(ROW_ENGINE, RES.styles().spacedRow());
       rowFmt.addStyleName(ROW_EDITOR, RES.styles().spacedRow());
       
-      quartoHelpLink_ = addHelpLink("Learn more about Quarto",
+      quartoHelpLink_ = addHelpLink(constants_.learnMoreLinkCaption(),
                                     "https://quarto.org");
       quartoPresentationsHelpLink_ = addHelpLink(
-         "Learn more about Quarto presentations",
+         constants_.learnMorePresentationsLinkCaption(),
          "https:/quarto.org/docs/presentations/");
       quartoInteractiveHelpLink_ = addHelpLink(
-         "Learn more about Quarto interactive documents",
+         constants_.learnMoreInteractiveDocsLinkCaption(),
          "https://quarto.org/docs/interactive/");
       
       updateOptions(getSelectedTemplate());
             
       // Add option to create empty document
-      ThemedButton emptyDoc = new ThemedButton("Create Empty Document", evt -> {
+      ThemedButton emptyDoc = new ThemedButton(constants_.createEmptyDocButtonTitle(), evt -> {
          closeDialog();
          if (operation != null)
             operation.execute(getResult(true));
@@ -283,8 +284,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       String engine = engineSelect_.getSelectedValue();
       String kernel = kernelSelect_.getSelectedValue();
       String editor = editorCheckBox_.getValue() 
-                         ? QuartoConstants.EDITOR_VISUAL : 
-                           QuartoConstants.EDITOR_SOURCE;
+                         ? QuartoCommandConstants.EDITOR_VISUAL :
+                           QuartoCommandConstants.EDITOR_SOURCE;
       
       // determine language
       String language = null;
@@ -324,8 +325,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       if (StringUtil.isNullOrEmpty(title))
       {
          globalDisplay_.showErrorMessage(
-            "Title Required", 
-            "You must provide a title for the document", 
+            constants_.titleRequiredErrorCaption(),
+            constants_.titleRequiredErrorMessage(),
             txtTitle_);
          return false;
       }
@@ -376,19 +377,19 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
          quartoHelpLink_.setVisible(true);
          
          templateFormatPanel_.add(createFormatOption(
-            QuartoConstants.FORMAT_HTML, 
-            "HTML",
-            "Recommended format for authoring (you can switch to PDF or Word output anytime).")
+            QuartoCommandConstants.FORMAT_HTML,
+            constants_.htmlFormatText(),
+            constants_.htmlFormatDesc())
          );
          templateFormatPanel_.add(createFormatOption(
-            QuartoConstants.FORMAT_PDF, 
-            "PDF",
-            "PDF output requires a LaTeX installation (e.g. https://yihui.org/tinytex/)")
+            QuartoCommandConstants.FORMAT_PDF,
+            constants_.pdfFormatText(),
+            constants_.pdfFormatDesc())
          );
          templateFormatPanel_.add(createFormatOption(
-            QuartoConstants.FORMAT_DOCX, 
-            "Word",
-            "Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux).")
+            QuartoCommandConstants.FORMAT_DOCX,
+            constants_.wordFormatText(),
+            constants_.wordFormatDesc())
          );
       }
       else if (selectedTemplate.equals(TEMPLATE_PRESENTATION))
@@ -396,34 +397,33 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
          quartoPresentationsHelpLink_.setVisible(true);
          
          templateFormatPanel_.add(createFormatOption(
-            QuartoConstants.FORMAT_REVEALJS, 
-            "Reveal JS",
-            "HTML presentation viewable with any browser (you can also print to PDF with Chrome).")
+            QuartoCommandConstants.FORMAT_REVEALJS,
+            constants_.jsFormatText(),
+            constants_.jsFormatDesc())
          );
          templateFormatPanel_.add(createFormatOption(
-            QuartoConstants.FORMAT_BEAMER, 
-            "Beamer",
-            "PDF output requires a LaTeX installation (e.g. https://yihui.org/tinytex/)")
+            QuartoCommandConstants.FORMAT_BEAMER,
+            constants_.beamerFormatText(),
+            constants_.beamerFormatDesc())
          );
          templateFormatPanel_.add(createFormatOption(
-            QuartoConstants.FORMAT_PPTX, 
-            "PowerPoint",
-            "PowerPoint previewing requires an installation of PowerPoint or OpenOffice.")
-         );
+            QuartoCommandConstants.FORMAT_PPTX,
+            constants_.powerPointFormatText(),
+            constants_.powerPointFormatDesc()));
       }
       else if (selectedTemplate.equals(TEMPLATE_INTERACTIVE))
       {
          quartoInteractiveHelpLink_.setVisible(true);
          
          templateFormatPanel_.add(createFormatOption(
-            QuartoConstants.INTERACTIVE_SHINY, 
+            QuartoCommandConstants.INTERACTIVE_SHINY,
             "Shiny",
-            "Create an interactive HTML document with Shiny components.")
+            constants_.shinyFormatDesc())
          );
          templateFormatPanel_.add(createFormatOption(
-            QuartoConstants.INTERACTIVE_OJS, 
+            QuartoCommandConstants.INTERACTIVE_OJS,
             "Observable JS",
-            "Create an interactive HTML document with Observable JS components.")
+            constants_.observableJSFormatDesc())
          );
       }
       // select the first visible format by default
@@ -464,7 +464,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       // kernel only shows for jupyter
       rowFmt.setVisible(ROW_ENGINE, !getSelectedTemplate().equals(TEMPLATE_INTERACTIVE));
       rowFmt.setVisible(ROW_KERNEL, !getSelectedTemplate().equals(TEMPLATE_INTERACTIVE) &&
-                                    engineSelect_.getSelectedValue().equals(QuartoConstants.ENGINE_JUPYTER));
+                                    engineSelect_.getSelectedValue().equals(QuartoCommandConstants.ENGINE_JUPYTER));
       rowFmt.setVisible(ROW_EDITOR, !getSelectedTemplate().equals(TEMPLATE_INTERACTIVE));
    }
    
@@ -627,8 +627,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       RES.styles().ensureInjected();
    }
 
-   private final static String TEMPLATE_DOCUMENT = "Document";
-   private final static String TEMPLATE_PRESENTATION = "Presentation";
-   private final static String TEMPLATE_INTERACTIVE = "Interactive";
-
+   private static final QuartoConstants constants_ = GWT.create(QuartoConstants.class);
+   private static final String TEMPLATE_DOCUMENT = constants_.documentLabel();
+   private static final String TEMPLATE_PRESENTATION = constants_.presentationLabel();
+   private static final String TEMPLATE_INTERACTIVE = constants_.interactiveLabel();
 }

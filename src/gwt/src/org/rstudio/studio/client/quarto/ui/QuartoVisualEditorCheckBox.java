@@ -16,6 +16,7 @@
 
 package org.rstudio.studio.client.quarto.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.HelpButton;
 
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -26,15 +27,16 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 
 import elemental2.dom.URL;
+import org.rstudio.studio.client.quarto.QuartoConstants;
 
 public class QuartoVisualEditorCheckBox extends Composite implements HasValue<Boolean>
 {
    public QuartoVisualEditorCheckBox()
    {
-      chkVisualEditor_ = new CheckBox("Use visual markdown editor");
+      chkVisualEditor_ = new CheckBox(constants_.chkVisualEditorLabel());
       
       HorizontalPanel editorPanel = HelpButton.checkBoxWithHelp(chkVisualEditor_,
-            new HelpButton(new URL("https://quarto.org/docs/visual-editor/"), "About the Quarto visual editor"));
+            new HelpButton(new URL("https://quarto.org/docs/visual-editor/"), constants_.aboutHelpButtonTitle()));
       
       initWidget(editorPanel);
    }
@@ -65,4 +67,6 @@ public class QuartoVisualEditorCheckBox extends Composite implements HasValue<Bo
    }
    
    private CheckBox chkVisualEditor_;
+
+   private static final QuartoConstants constants_ = GWT.create(QuartoConstants.class);
 }
