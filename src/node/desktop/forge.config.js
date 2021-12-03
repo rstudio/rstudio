@@ -1,3 +1,7 @@
+const { createFullPackageFileName } = require('./scripts/create-full-package-file-name.js');
+// This function makes sure that the correct filename is created and saved for the final DMG file.
+createFullPackageFileName();
+
 module.exports = {
   hooks: {
     postPackage: async (forgeConfig, options) => {
@@ -55,6 +59,7 @@ module.exports = {
       name: '@electron-forge/maker-dmg',
       config: {
         format: 'ULFO',
+        name: 'Rstudio-electron-app',
       },
     },
   ],
