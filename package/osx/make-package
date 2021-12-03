@@ -320,9 +320,8 @@ if [ "${build_package}" = "1" ]; then
       PATH="${OLDPATH}"
 
       # move to expected location in build folder
-      # TODO
-      # mv "${PKG_DIR}/../../src/node/desktop/out/make/${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
-
+      mv "${PKG_DIR}/../../src/node/desktop/out/make/*" "${BUILD_DIR_X86_64}/"
+      
    elif [ "${build_dmg}" = "1" ]; then
       # move to target directory
       cd "${INSTALL_DIR}"
