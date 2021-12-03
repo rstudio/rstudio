@@ -94,7 +94,7 @@ pipeline {
 
           // extract name of package to publish
           def packageFile = sh (
-            script: "basename `ls src/node/desktop/out/make/RStudio-*.dmg`",
+            script: "basename `ls src/node/desktop/out/make/RStudio-electron-*.dmg`",
             returnStdout: true
           ).trim()
 
