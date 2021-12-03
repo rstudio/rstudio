@@ -1,4 +1,3 @@
-package org.rstudio.studio.client.workbench.addins;
 /*
  * AddinsConstants.java
  *
@@ -13,6 +12,8 @@ package org.rstudio.studio.client.workbench.addins;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.addins;
+
 public interface AddinsConstants extends com.google.gwt.i18n.client.Messages {
 
     /**

@@ -53,7 +53,6 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.ViewConstants;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
@@ -620,5 +619,5 @@ public class ConnectionsPresenter extends BasePresenter
    
    private static boolean installersUpdated_ = false;
    private static String installersWarning_ = null;
-   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

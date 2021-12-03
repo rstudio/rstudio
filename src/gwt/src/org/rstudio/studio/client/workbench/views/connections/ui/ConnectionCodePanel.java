@@ -22,7 +22,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
-import org.rstudio.studio.client.workbench.views.ViewConstants;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget.TabKeyMode;
@@ -222,5 +222,5 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    private final Command updateConnectViaUI_;
 
    private static NewConnectionShinyHost.Resources RES = NewConnectionShinyHost.RES;
-   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

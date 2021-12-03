@@ -56,7 +56,6 @@ import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
-import org.rstudio.studio.client.workbench.views.ViewConstants;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
@@ -571,5 +570,5 @@ public class BuildPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;
-   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
+   private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
 }

@@ -18,7 +18,6 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.views.ViewConstants;
 import org.rstudio.studio.client.workbench.views.buildtools.ui.BuildPaneResources;
 
 public class BuildCommands
@@ -106,5 +105,5 @@ public class BuildCommands
          commands.clearBuild().remove();
       }
    }
-   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
+   private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
 }

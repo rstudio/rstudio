@@ -25,7 +25,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.ViewConstants;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionOpenedEvent;
@@ -95,5 +94,5 @@ public class ConnectionsTab extends DelayLoadWorkbenchTab<ConnectionsPresenter>
 
    private Session session_;
    private EventBus eventBus_;
-   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

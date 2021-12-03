@@ -69,7 +69,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.ViewConstants;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ExecuteConnectionActionEvent;
@@ -645,5 +645,5 @@ public class ConnectionsPane extends WorkbenchPane
       else
          installConnectionsToolbar();
    }
-   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

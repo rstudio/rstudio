@@ -21,7 +21,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardIntermediatePage;
-import org.rstudio.studio.client.workbench.views.ViewConstants;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
@@ -139,5 +139,5 @@ public class NewConnectionInstallOdbcPage
    private NewConnectionInstallOdbcHost contents_;
    private NewConnectionInfo info_;
    private ConnectionOptions options_;
-   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

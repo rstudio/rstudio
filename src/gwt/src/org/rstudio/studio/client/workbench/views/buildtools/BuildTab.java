@@ -27,7 +27,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.ViewConstants;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 
 public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
@@ -106,5 +105,5 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
    }
 
    private final Session session_;
-   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
+   private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
 }

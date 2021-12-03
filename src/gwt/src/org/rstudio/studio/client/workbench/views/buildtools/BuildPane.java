@@ -54,7 +54,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
-import org.rstudio.studio.client.workbench.views.ViewConstants;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildRenderSubTypeEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildServeSubTypeEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
@@ -520,5 +519,5 @@ public class BuildPane extends WorkbenchPane
 
    private final HandlerManager handlers_ = new HandlerManager(this);
 
-   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
+   private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
 }

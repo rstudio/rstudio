@@ -1,4 +1,3 @@
-package org.rstudio.studio.client.workbench.codesearch;
 /*
  * CodeSearchConstants.java
  *
@@ -13,6 +12,8 @@ package org.rstudio.studio.client.workbench.codesearch;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.codesearch;
+
 public interface CodeSearchConstants extends com.google.gwt.i18n.client.Messages {
 
     /**

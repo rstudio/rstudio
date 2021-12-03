@@ -30,6 +30,7 @@ import org.rstudio.core.client.widget.WizardResources;
 import org.rstudio.core.client.widget.events.ButtonClickManager;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
@@ -62,7 +63,7 @@ public class NewConnectionNavigationPage
    {
       super(title, 
             subTitle,
-            "Connect to Existing Data Sources",
+            constants_.connectExistingDataSourceCaption(),
             icon,
             null, 
             createPages(context),
@@ -255,4 +256,5 @@ public class NewConnectionNavigationPage
 
    private static Resources RES = GWT.create(Resources.class);
    static { RES.styles().ensureInjected(); }
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

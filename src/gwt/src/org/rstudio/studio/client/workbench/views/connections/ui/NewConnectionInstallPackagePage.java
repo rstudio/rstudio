@@ -28,7 +28,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.views.ViewConstants;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
@@ -143,5 +143,5 @@ public class NewConnectionInstallPackagePage
    private DependencyManager dependencyManager_;
    private Commands commands_;
    private ConnectionsServerOperations server_;
-   private static final ViewConstants constants_ = GWT.create(ViewConstants.class);
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

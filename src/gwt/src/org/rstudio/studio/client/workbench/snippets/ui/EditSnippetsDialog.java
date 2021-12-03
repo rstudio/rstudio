@@ -41,6 +41,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.snippets.SnippetsConstants;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;

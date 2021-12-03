@@ -1,5 +1,3 @@
-
-package org.rstudio.studio.client.workbench.exportplot;
 /*
  * ExportPlotConstants.java
  *
@@ -14,6 +12,8 @@ package org.rstudio.studio.client.workbench.exportplot;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.exportplot;
+
 public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages {
 
     /**

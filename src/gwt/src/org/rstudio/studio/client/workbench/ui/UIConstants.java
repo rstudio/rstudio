@@ -1,4 +1,3 @@
-package org.rstudio.studio.client.workbench.ui;
 /*
  * UIConstants.java
  *
@@ -13,6 +12,8 @@ package org.rstudio.studio.client.workbench.ui;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.ui;
+
 public interface UIConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
