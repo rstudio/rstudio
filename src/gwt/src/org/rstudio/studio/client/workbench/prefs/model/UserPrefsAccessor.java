@@ -2218,7 +2218,7 @@ public class UserPrefsAccessor extends Prefs
          "console_suspend_blocked_notice",
          "Warn when automatic session suspension is paused", 
          "Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar.", 
-         false);
+         true);
    }
 
    /**
@@ -2228,7 +2228,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "console_suspend_blocked_notice_delay",
-         "Number of seconds to delay before warning", 
+         "Number of seconds to delay warning", 
          "How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices.", 
          5);
    }
