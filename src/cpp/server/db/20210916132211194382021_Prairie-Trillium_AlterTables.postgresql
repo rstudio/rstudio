@@ -17,10 +17,7 @@ CREATE TABLE IF NOT EXISTS licensed_users(
    user_id integer NOT NULL DEFAULT -1,
 
    /* Auto incrementing ID for each user for internal FK relationships. */
-   id integer NOT NULL,
-
-   /* Add Primary Key */
-   PRIMARY KEY(id)
+   id SERIAL PRIMARY KEY
 
 );
 
