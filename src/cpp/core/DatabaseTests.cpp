@@ -549,7 +549,7 @@ TEST_CASE("Database Upgrade", "[.database]")
 
       WHEN("The Schema Updater is constructed")
       {
-         FilePath pathToMigrations("../../../../src/cpp/server/db/");
+         FilePath pathToMigrations("./db/");
          database::SchemaUpdater updater = {sqliteConnection, pathToMigrations};
 
          THEN("The Schema is not up to date")
