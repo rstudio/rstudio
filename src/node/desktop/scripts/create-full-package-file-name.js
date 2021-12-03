@@ -49,7 +49,10 @@ exports.createFullPackageFileName = () => {
       process.exit(1);
   }
 
-  const dmgName = `${package.productName}-electron-${platformName}-${archName}-${package.version}`;
+  const dmgName = `${package.productName}-electron-${platformName}-${archName}-${package.version}`.replace(
+    new RegExp('+', 'g'),
+    '-',
+  );
 
   const outDir = `${__dirname}/../out/`;
   const filenameExtension = 'filename';
