@@ -153,15 +153,14 @@ public class SshKeyWidget extends Composite
          {
             progressIndicator_.onCompleted();
             
-            new ShowPublicKeyDialog("Public Key",
+            new ShowPublicKeyDialog(constants_.showPublicKeyDialogCaption(),
                                     publicKeyContents).showModal();
          }
 
          @Override
          public void onError(ServerError error)
          {
-            String msg = "Error attempting to read key '" + keyPath + "' (" +
-                         error.getUserMessage() + ")";
+            String msg = constants_.onSSHErrorMessage(keyPath,error.getUserMessage());
             progressIndicator_.onError(msg);
          }
       });
