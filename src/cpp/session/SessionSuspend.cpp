@@ -472,7 +472,7 @@ std::string getResumedMessage()
          return "";
 
       std::string blockedTime = boost::posix_time::to_simple_string(s_blockingTimestamp);
-      return "Welcome Back! Session has been running in the background since "
+      return "Connected to your session in progress, last used "
              + blockedTime
              + " UTC ("
              + xAmountOfTimeAgo
