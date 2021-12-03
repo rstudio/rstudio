@@ -8150,6 +8150,26 @@ public class TextEditingTarget implements
       public String getExtendedFileType()
       {
          return extendedType_;
+      }
+
+      @Override
+      public String[] getDocumentOutputFormats()
+      {
+         return getQuartoOutputFormats().toArray(new String[] {});
+      }
+
+      @Override
+      public String[] getProjectOutputFormats()
+      {
+         QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
+         if (quartoConfig.is_project && quartoConfig.project_formats != null)
+         {
+            return quartoConfig.project_formats;
+         }
+         else
+         {
+            return new String[] {};
+         }
       }      
    };
 

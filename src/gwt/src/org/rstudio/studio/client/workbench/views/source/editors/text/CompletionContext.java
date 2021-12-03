@@ -20,4 +20,7 @@ public interface CompletionContext
    String getId();
    String getPath();
    String getExtendedFileType();
+   String[] getDocumentOutputFormats();
+   String[] getProjectOutputFormats();
+   
 }
