@@ -1056,7 +1056,7 @@
         },
         "console_suspend_blocked_notice": {
             "type": "boolean",
-            "default": false,
+            "default": true,
             "title": "Warn when automatic session suspension is paused",
             "description": "Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar."
         },
