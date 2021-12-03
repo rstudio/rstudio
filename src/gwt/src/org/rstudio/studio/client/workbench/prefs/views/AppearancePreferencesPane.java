@@ -87,6 +87,7 @@ public class AppearancePreferencesPane extends PreferencesPane
           StringUtil.equals(userPrefs_.globalTheme().getValue(), "classic"))
         userPrefs_.globalTheme().setGlobalValue(UserPrefs.GLOBAL_THEME_DEFAULT);
 
+      @SuppressWarnings("unused")
       final String originalTheme = userPrefs_.globalTheme().getValue();
 
       flatTheme_ = new SelectWidget("RStudio theme:",
