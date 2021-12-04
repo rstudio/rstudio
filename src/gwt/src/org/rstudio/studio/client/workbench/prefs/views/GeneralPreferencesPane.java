@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -44,6 +45,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -56,6 +58,8 @@ import com.google.inject.Inject;
 
 public class GeneralPreferencesPane extends PreferencesPane
 {
+   private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+
    @Inject
    public GeneralPreferencesPane(RemoteFileSystemContext fsContext,
                                  FileDialogs fileDialogs,
@@ -72,13 +76,13 @@ public class GeneralPreferencesPane extends PreferencesPane
       RVersionsInfo versionsInfo = context.getRVersionsInfo();
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.GENERAL_BASIC_PREFS);
 
-      basic.add(headerLabel("R Sessions"));
+      basic.add(headerLabel(constants_.rSessionsTitle()));
       if (BrowseCap.isWindowsDesktop())
       {
          rVersion_ = new TextBoxWithButton(
-               "R version:",
+               constants_.rVersionTitle(),
                "",
-               "Change...",
+               constants_.rVersionChangeTitle(),
                null,
                ElementIds.TextBoxButtonId.R_VERSION,
                true,
@@ -94,15 +98,14 @@ public class GeneralPreferencesPane extends PreferencesPane
                            rVersion_.setText(ver);
 
                            globalDisplay.showMessage(MessageDialog.INFO,
-                                 "Change R Version",
-                                 "You need to quit and re-open RStudio " +
-                                       "in order for this change to take effect.");
+                                   constants_.rChangeVersionMessage(),
+                                   constants_.rQuitReOpenMessage());
                         }
                      });
                   }
                });
          rVersion_.setWidth("100%");
-         rVersion_.setText("Loading...");
+         rVersion_.setText(constants_.rVersionLoadingText());
          rVersion_.getElement().getStyle().setMarginLeft(2, Unit.PX);
          Desktop.getFrame().getRVersion(version -> {
             rVersion_.setText(version);
@@ -118,7 +121,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(tight(rServerRVersion_));
 
          rememberRVersionForProjects_ =
-                        new CheckBox("Restore last used R version for projects");
+                        new CheckBox(constants_.rRestoreLabel());
 
          rememberRVersionForProjects_.setValue(true);
          Style style = rememberRVersionForProjects_.getElement().getStyle();
@@ -128,7 +131,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
 
       dirChooser_ = new DirectoryChooserTextBox(
-            "Default working directory (when not in a project):",
+            constants_.rDefaultDirectoryTitle(),
             ElementIds.TextBoxButtonId.DEFAULT_WORKING_DIR,
             null,
             fileDialogs_,
@@ -139,27 +142,27 @@ public class GeneralPreferencesPane extends PreferencesPane
       textBoxWithChooser(dirChooser_);
       basic.add(dirChooser_);
 
-      restoreLastProject_ = new CheckBox("Restore most recently opened project at startup");
+      restoreLastProject_ = new CheckBox(constants_.rRestorePreviousTitle());
       lessSpaced(restoreLastProject_);
       basic.add(restoreLastProject_);
 
-      basic.add(checkboxPref("Restore previously open source documents at startup", prefs_.restoreSourceDocuments()));
+        basic.add(checkboxPref(constants_.rRestorePreviousOpenTitle(), prefs_.restoreSourceDocuments()));
 
-      rProfileOnResume_ = new CheckBox("Run Rprofile when resuming suspended session");
+      rProfileOnResume_ = new CheckBox(constants_.rRunProfileTitle());
       if (!Desktop.isDesktop())
          basic.add(rProfileOnResume_);
 
-      basic.add(spacedBefore(headerLabel("Workspace")));
-      basic.add(loadRData_ = new CheckBox("Restore .RData into workspace at startup"));
+      basic.add(spacedBefore(headerLabel(constants_.workspaceCaption())));
+      basic.add(loadRData_ = new CheckBox(constants_.workspaceLabel()));
       lessSpaced(loadRData_);
 
       saveWorkspace_ = new SelectWidget(
-            "Save workspace to .RData on exit:",
+              constants_.saveWorkSpaceLabel(),
             new String[]
             {
-               "Always",
-               "Never",
-               "Ask"
+               constants_.saveWorkAlways(),
+               constants_.saveWorkNever(),
+               constants_.saveWorkAsk()
             },
             new String[]
             {
@@ -170,20 +173,20 @@ public class GeneralPreferencesPane extends PreferencesPane
       spaced(saveWorkspace_);
       basic.add(saveWorkspace_);
 
-      basic.add(headerLabel("History"));
+      basic.add(headerLabel(constants_.historyCaption()));
       alwaysSaveHistory_ = new CheckBox(
-            "Always save history (even when not saving .RData)");
+              constants_.alwaysSaveHistoryLabel());
       lessSpaced(alwaysSaveHistory_);
       basic.add(alwaysSaveHistory_);
 
       removeHistoryDuplicates_ = new CheckBox(
-                                 "Remove duplicate entries in history");
+                                constants_.removeDuplicatesLabel());
       basic.add(removeHistoryDuplicates_);
 
-      basic.add(spacedBefore(headerLabel("Other")));
+        basic.add(spacedBefore(headerLabel(constants_.otherCaption())));
 
       basic.add(checkboxPref(
-            "Wrap around when navigating to previous/next tab",
+            constants_.otherWrapAroundLabel(),
             prefs_.wrapTabNavigation(),
             true /*defaultSpaced*/));
 
@@ -192,12 +195,12 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (Desktop.isDesktop() &&
           !session.getSessionInfo().getDisableCheckForUpdates())
       {
-         basic.add(checkboxPref("Automatically notify me of updates to RStudio",
+         basic.add(checkboxPref(constants_.otherNotifyMeLabel(),
                    prefs_.checkForUpdates(), true /*defaultSpaced*/));
       }
 
       // crash reporting - only show in desktop mode
-      enableCrashReporting_ = checkboxPref("Send automated crash reports to RStudio",
+      enableCrashReporting_ = checkboxPref(constants_.otherSendReportsLabel(),
             prefs_.submitCrashReports());
       if (Desktop.isDesktop())
       {
@@ -209,16 +212,16 @@ public class GeneralPreferencesPane extends PreferencesPane
       VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);
 
       initializeGraphicsBackendWidget();
-      graphics.add(headerLabel("Graphics Device"));
+      graphics.add(headerLabel(constants_.graphicsDeviceCaption()));
       graphics.add(graphicsBackend_);
 
       graphicsAntialias_ = new SelectWidget(
-            "Antialiasing:",
+            constants_.graphicsAntialiasingLabel(),
             new String[] {
-                  "(Default)",
-                  "None",
-                  "Gray",
-                  "Subpixel"
+                  constants_.antialiasingDefaultOption(),
+                  constants_.antialiasingNoneOption(),
+                  constants_.antialiasingGrayOption(),
+                  constants_.antialiasingSubpixelOption()
             },
             new String[] {
                   UserPrefs.GRAPHICS_ANTIALIASING_DEFAULT,
@@ -235,22 +238,22 @@ public class GeneralPreferencesPane extends PreferencesPane
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.GENERAL_ADVANCED_PREFS);
 
       showServerHomePage_ = new SelectWidget(
-            "Show server home page:",
+              constants_.serverHomePageLabel(),
             new String[] {
-                  "Multiple active sessions",
-                  "Always",
-                  "Never"
+                  constants_.serverHomePageActiveSessionsOption(),
+                  constants_.serverHomePageAlwaysOption(),
+                  constants_.serverHomePageNeverOption()
             },
             new String[] {
-                 "sessions",
-                 "always",
-                 "never"
+                  constants_.serverHomePageSessions(),
+                  constants_.serverHomePageAlways(),
+                  constants_.serverHomePageNever()
             },
             false,
             true,
             false);
 
-      reuseSessionsForProjectLinks_ = new CheckBox("Re-use idle sessions for project links");
+      reuseSessionsForProjectLinks_ = new CheckBox(constants_.reUseIdleSessionLabel());
       lessSpaced(reuseSessionsForProjectLinks_);
       boolean firstHeader = true;
 
@@ -259,7 +262,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          if (session_.getSessionInfo().getShowUserHomePage() ||
              session_.getSessionInfo().getMultiSession())
          {
-            Label homePageLabel = headerLabel("Home Page");
+            Label homePageLabel = headerLabel(constants_.desktopCaption());
             spacedBefore(homePageLabel);
             advanced.add(homePageLabel);
             firstHeader = false;
@@ -273,7 +276,7 @@ public class GeneralPreferencesPane extends PreferencesPane
             advanced.add(reuseSessionsForProjectLinks_);
       }
 
-     Label debuggingLabel = headerLabel("Debugging");
+     Label debuggingLabel = headerLabel(constants_.advancedDebuggingCaption());
      if (!firstHeader)
      {
         spacedBefore(debuggingLabel);
@@ -281,23 +284,23 @@ public class GeneralPreferencesPane extends PreferencesPane
      }
      advanced.add(debuggingLabel);
      advanced.add(checkboxPref(
-           "Use debug error handler only when my code contains errors",
+           constants_.advancedDebuggingLabel(),
            prefs_.handleErrorsInUserCodeOnly()));
 
       if (Desktop.hasDesktopFrame())
       {
-         Label osLabel = headerLabel("OS Integration");
+         Label osLabel = headerLabel(constants_.advancedOsIntegrationCaption());
          spacedBefore(osLabel);
          advanced.add(osLabel);
 
-         renderingEngineWidget_ = new SelectWidget("Rendering engine:", new String[] {});
-         renderingEngineWidget_.addChoice("Auto-detect (recommended)", ENGINE_AUTO);
-         renderingEngineWidget_.addChoice("Desktop OpenGL", ENGINE_DESKTOP);
+         renderingEngineWidget_ = new SelectWidget(constants_.advancedRenderingEngineLabel(), new String[] {});
+         renderingEngineWidget_.addChoice(constants_.renderingEngineAutoDetectOption(), ENGINE_AUTO);
+         renderingEngineWidget_.addChoice(constants_.renderingEngineDesktopOption(), ENGINE_DESKTOP);
          if (BrowseCap.isLinuxDesktop())
          {
-            renderingEngineWidget_.addChoice("OpenGL for Embedded Systems", ENGINE_GLES);
+            renderingEngineWidget_.addChoice(constants_.renderingEngineLinuxDesktopOption(), ENGINE_GLES);
          }
-         renderingEngineWidget_.addChoice("Software", ENGINE_SOFTWARE);
+         renderingEngineWidget_.addChoice(constants_.renderingEngineSoftwareOption(), ENGINE_SOFTWARE);
          advanced.add(spaced(renderingEngineWidget_));
 
          Desktop.getFrame().desktopRenderingEngine((String engine) -> {
@@ -307,14 +310,14 @@ public class GeneralPreferencesPane extends PreferencesPane
             renderingEngine_ = engine;
          });
 
-         useGpuExclusions_ = new CheckBox("Use GPU exclusion list (recommended)");
+         useGpuExclusions_ = new CheckBox(constants_.useGpuExclusionListLabel());
          advanced.add(lessSpaced(useGpuExclusions_));
          Desktop.getFrame().getIgnoreGpuExclusionList((Boolean ignore) -> {
             desktopIgnoreGpuExclusions_ = ignore;
             useGpuExclusions_.setValue(!ignore);
          });
 
-         useGpuDriverBugWorkarounds_ = new CheckBox("Use GPU driver bug workarounds (recommended)");
+         useGpuDriverBugWorkarounds_ = new CheckBox(constants_.useGpuDriverBugWorkaroundsLabel());
          advanced.add(lessSpaced(useGpuDriverBugWorkarounds_));
          Desktop.getFrame().getDisableGpuDriverBugWorkarounds((Boolean disable) -> {
             desktopDisableGpuDriverBugWorkarounds_ = disable;
@@ -323,7 +326,7 @@ public class GeneralPreferencesPane extends PreferencesPane
 
          if (BrowseCap.isLinuxDesktop())
          {
-            clipboardMonitoring_ = new CheckBox("Enable X11 clipboard monitoring");
+            clipboardMonitoring_ = new CheckBox(constants_.clipboardMonitoringLabel());
             advanced.add(lessSpaced(clipboardMonitoring_));
             Desktop.getFrame().getClipboardMonitoring(monitoring ->
             {
@@ -332,15 +335,15 @@ public class GeneralPreferencesPane extends PreferencesPane
             });
          }
 
-         fullPathInTitle_ = new CheckBox("Show full path to project in window title");
+         fullPathInTitle_ = new CheckBox(constants_.clipboardMonitoringLabel());
          advanced.add(lessSpaced(fullPathInTitle_));
       }
 
-      Label otherLabel = headerLabel("Other");
+      Label otherLabel = headerLabel(constants_.otherLabel());
       spacedBefore(otherLabel);
       advanced.add(otherLabel);
 
-      showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
+      showLastDotValue_ = new CheckBox(constants_.otherShowLastDotValueLabel());
       lessSpaced(showLastDotValue_);
       advanced.add(showLastDotValue_);
 
@@ -349,7 +352,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       for (int i = 0; i < labels.length; i++)
          values[i] = Double.parseDouble(labels[i]) + "";
 
-      helpFontSize_ = new SelectWidget("Help panel font size:",
+      helpFontSize_ = new SelectWidget(constants_.helpFontSizeLabel(),
                                        labels,
                                        values,
                                        false, /* Multi select */
@@ -370,11 +373,11 @@ public class GeneralPreferencesPane extends PreferencesPane
       showLastDotValue_.setEnabled(false);
       restoreLastProject_.setEnabled(false);
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("General");
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.generalTablistLabel());
       tabPanel.setSize("435px", "533px");
-      tabPanel.add(basic, "Basic", basic.getBasePanelId());
-      tabPanel.add(graphics, "Graphics", graphics.getBasePanelId());
-      tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
+      tabPanel.add(basic, constants_.generalTablListBasicOption(), basic.getBasePanelId());
+      tabPanel.add(graphics, constants_.generalTablListGraphicsOption(), graphics.getBasePanelId());
+      tabPanel.add(advanced, constants_.generalTabListAdvancedOption(), advanced.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -553,7 +556,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "General";
+      return constants_.generalTablListGraphicsOption();
    }
 
    @SuppressWarnings("unused")
@@ -577,12 +580,12 @@ public class GeneralPreferencesPane extends PreferencesPane
    private void initializeGraphicsBackendWidget()
    {
       Map<String, String> valuesToLabelsMap = new HashMap<>();
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_DEFAULT, " (Default)");
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_QUARTZ,    "Quartz");
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_WINDOWS,   "Windows");
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO,     "Cairo");
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO_PNG, "Cairo PNG");
-      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_RAGG,      "AGG");
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_DEFAULT, constants_.graphicsBackEndDefaultOption());
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_QUARTZ, constants_.graphicsBackEndQuartzOption());
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_WINDOWS, constants_.graphicsBackEndWindowsOption());
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO, constants_.graphicsBackEndCairoOption());
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO_PNG, constants_.graphicsBackEndCairoPNGOption());
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_RAGG, constants_.graphicsBackEndAGGOption());
 
       JsArrayString supportedBackends =
             session_.getSessionInfo().getGraphicsBackends();
@@ -597,7 +600,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          labels[i] = valuesToLabelsMap.get(values[i]);
 
       graphicsBackend_ =
-            new SelectWidget("Backend:", labels, values, false, true, false);
+            new SelectWidget(constants_.graphicsBackendLabel(), labels, values, false, true, false);
 
       graphicsBackend_.addChangeHandler((ChangeEvent event) ->
       {
@@ -605,7 +608,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          if (StringUtil.equals(backend, UserPrefs.GRAPHICS_BACKEND_RAGG))
          {
             RStudioGinjector.INSTANCE.getDependencyManager().withRagg(
-                  "Using the AGG renderer",
+                  constants_.graphicsBackendUserAction(),
                   (Boolean succeeded) ->
                   {
                      if (!succeeded)
@@ -617,10 +620,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       });
    }
 
-   private static final String ENGINE_AUTO        = "auto";
-   private static final String ENGINE_DESKTOP     = "desktop";
+   private static final String ENGINE_AUTO        = constants_.engineAutoValue();
+   private static final String ENGINE_DESKTOP     = constants_.engineDesktopValue();
    private static final String ENGINE_GLES        = "gles";
-   private static final String ENGINE_SOFTWARE    = "software";
+   private static final String ENGINE_SOFTWARE    = constants_.engineSoftwareValue();
 
    private boolean desktopMonitoring_ = false;
    private boolean desktopIgnoreGpuExclusions_ = false;
