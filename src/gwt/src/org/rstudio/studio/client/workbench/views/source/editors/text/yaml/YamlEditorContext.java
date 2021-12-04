@@ -65,8 +65,9 @@ public class YamlEditorContext extends JavaScriptObject
         context.getPath(),
         filetype,
         docDisplay.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded,
-        context.getDocumentOutputFormats(),
-        context.getProjectOutputFormats(),
+        context.getQuartoFormats(),
+        context.getQuartoProjectFormats(),
+        context.getQuartoEngine(),
         docDisplay.getCurrentLineUpToCursor(),
         docDisplay.getCode(),
         docDisplay.getCursorPosition()
@@ -75,7 +76,7 @@ public class YamlEditorContext extends JavaScriptObject
    
    private static native YamlEditorContext create(
      String path, String filetype, boolean embedded,
-     String[] formats, String[] projectFormats,
+     String[] formats, String[] projectFormats, String engine,
      String line, String code, Position position) /*-{
      return { 
         path: path,
@@ -83,6 +84,7 @@ public class YamlEditorContext extends JavaScriptObject
         embedded: embedded,
         formats: formats,
         project_formats: projectFormats,
+        engine: engine,
         line: line, 
         code: code,
         position: position

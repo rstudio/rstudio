@@ -170,6 +170,8 @@ public class RmdFrontMatter extends JavaScriptObject
    public final static String RUNTIME_KEY = "runtime";
    public final static String SERVER_KEY = "server";
    public final static String KNIT_KEY = "knit";
+   public final static String ENGINE_KEY = "engine";
+   public final static String JUPYTER_KEY = "jupyter";
 
    public final static String DEFAULT_FORMAT = "default";
    public final static String SHINY_RUNTIME = "shiny";
