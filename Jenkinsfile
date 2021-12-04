@@ -299,7 +299,7 @@ try {
                 pullBuildPush(image_name: 'jenkins/ide',
                   dockerfile: "docker/jenkins/Dockerfile.windows",
                   image_tag: image_tag,
-                  build_args: github_args + " " + jenkins_user_build_args()),
+                  build_args: github_args + " " + jenkins_user_build_args(),
                   retry_image_pull: 5
               }
             }
