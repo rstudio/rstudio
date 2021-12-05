@@ -19,6 +19,8 @@ import { BlockCommand, EditorCommandId, ProsemirrorCommand } from '../api/comman
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
 import { insertParagraph } from '../api/paragraph';
+import { emptyNodePlaceholderPlugin } from '../api/placeholder';
+import { selectionWithinLastBodyParagraph } from '../api/selection';
 
 const extension: Extension = {
   nodes: [
@@ -51,6 +53,22 @@ const extension: Extension = {
       new BlockCommand(EditorCommandId.Paragraph, ['Mod-Alt-0'], schema.nodes.paragraph, schema.nodes.paragraph),
       new InsertParagraphCommand(),
     ];
+  },
+
+  plugins: (schema: Schema) => {
+    let hintShown = false;
+    return [emptyNodePlaceholderPlugin(schema.nodes.paragraph, node => "/ to insert block", tr => {
+      if (!hintShown) {
+        if (selectionWithinLastBodyParagraph(tr.selection)) {
+          hintShown = true;
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    })];
   },
 };
 

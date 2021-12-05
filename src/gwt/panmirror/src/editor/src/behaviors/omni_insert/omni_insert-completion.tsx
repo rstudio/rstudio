@@ -25,7 +25,7 @@ import { OmniInserter, omniInsertGroupCompare, omniInsertPriorityCompare } from 
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 
 import { EditorUI } from '../../api/ui';
-import { placeholderDecoration, emptyNodePlaceholderPlugin } from '../../api/placeholder';
+import { placeholderDecoration } from '../../api/placeholder';
 import { kAddToHistoryTransaction } from '../../api/transaction';
 
 import './omni_insert-completion.css';
@@ -97,7 +97,7 @@ export function omniInsertCompletionHandler(
       key: command => command.id,
       width: 320,
       height: 46,
-      maxVisible: 5,
+      maxVisible: 6,
     },
   };
 }

@@ -21,7 +21,7 @@ import { findParentNode } from 'prosemirror-utils';
 
 import { EditorUI } from './ui';
 
-export function emptyNodePlaceholderPlugin(nodeType: NodeType, placeholder: (node: ProsemirrorNode) => string) {
+export function emptyNodePlaceholderPlugin(nodeType: NodeType, placeholder: (node: ProsemirrorNode) => string, filter?: (tr: Transaction) => boolean) {
   const pluginKey = new PluginKey(nodeType.name + '-empty-placeholder');
 
   return new Plugin<DecorationSet>({
@@ -33,7 +33,7 @@ export function emptyNodePlaceholderPlugin(nodeType: NodeType, placeholder: (nod
       apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
         // check for empty parent of our type
         const emptyNode = findParentNode(node => node.type === nodeType && node.childCount === 0)(tr.selection);
-        if (emptyNode) {
+        if (emptyNode && (!filter || filter(tr))) {
           const decoration = placeholderDecoration(emptyNode.pos + 1, placeholder(emptyNode.node));
           return DecorationSet.create(tr.doc, [decoration]);
         } else {
