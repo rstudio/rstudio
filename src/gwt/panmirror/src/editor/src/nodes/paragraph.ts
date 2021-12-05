@@ -21,6 +21,7 @@ import { PandocOutput, PandocTokenType } from '../api/pandoc';
 import { insertParagraph } from '../api/paragraph';
 import { emptyNodePlaceholderPlugin } from '../api/placeholder';
 import { selectionWithinLastBodyParagraph } from '../api/selection';
+import { kAddToHistoryTransaction } from '../api/transaction';
 
 const extension: Extension = {
   nodes: [
@@ -56,13 +57,16 @@ const extension: Extension = {
   },
 
   plugins: (schema: Schema) => {
-    const kMaxHints = 2;
-    let hintCount = 0;
+    let showHint = true;
     return [emptyNodePlaceholderPlugin(schema.nodes.paragraph, node => " type / to insert a block (code, math, figure, div, etc.)", tr => {
-      if (hintCount < kMaxHints) {
+      if (showHint !== false) {
         if (selectionWithinLastBodyParagraph(tr.selection)) {
-          hintCount++;
-          return true;
+          if (tr.docChanged) {
+            showHint = false;
+            return false;
+          } else {
+            return true;
+          }
         } else {
           return false;
         }
