@@ -84,9 +84,9 @@ export function omniInsertCompletionHandler(
           view.dispatch(tr);
         }
 
-        // if this is a dismiss of an omni_insert mark then the command
-        // isn't part of 'natural' typing into the document, so remove it
-      } else if (isOmniInsertCommandActive(view.state.selection)) {
+      // the activation of omni_insert wasn't part of 'natural' typing
+      // in the document so remove it
+      } else {
         removeCommandText();
       }
       return Promise.resolve();

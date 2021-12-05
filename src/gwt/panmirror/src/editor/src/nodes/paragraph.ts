@@ -56,11 +56,12 @@ const extension: Extension = {
   },
 
   plugins: (schema: Schema) => {
-    let hintShown = false;
-    return [emptyNodePlaceholderPlugin(schema.nodes.paragraph, node => "/ to insert block", tr => {
-      if (!hintShown) {
+    const kMaxHints = 2;
+    let hintCount = 0;
+    return [emptyNodePlaceholderPlugin(schema.nodes.paragraph, node => " type / to insert a block (code, math, figure, div, etc.)", tr => {
+      if (hintCount < kMaxHints) {
         if (selectionWithinLastBodyParagraph(tr.selection)) {
-          hintShown = true;
+          hintCount++;
           return true;
         } else {
           return false;
