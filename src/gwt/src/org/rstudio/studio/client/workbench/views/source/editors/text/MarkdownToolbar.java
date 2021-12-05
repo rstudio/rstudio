@@ -19,13 +19,17 @@ import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.resources.client.ClientBundle;
+import com.google.gwt.resources.client.CssResource;
 
 public class MarkdownToolbar extends SecondaryToolbar
 {
    public MarkdownToolbar(Commands commands, ClickHandler visualModeClickHandler)
    {
       super(true, "Markdown editing tools");
+      addStyleName(RES.styles().markdownToolbar());
       
       visualMode_ = new LatchingToolbarButton(
          "Visual Editor", 
@@ -59,4 +63,18 @@ public class MarkdownToolbar extends SecondaryToolbar
    
    private LatchingToolbarButton visualMode_;
    private LatchingToolbarButton sourceMode_;
+   
+   interface Styles extends CssResource
+   {
+      String markdownToolbar();
+   }
+   
+   interface Resources extends ClientBundle
+   {
+      @Source("MarkdownToolbar.css")
+      Styles styles();
+   }
+   
+   private static final Resources RES = GWT.create(Resources.class);
+   static { RES.styles().ensureInjected(); }
 }

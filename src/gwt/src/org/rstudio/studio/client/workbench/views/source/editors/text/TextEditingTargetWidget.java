@@ -592,7 +592,7 @@ public class TextEditingTargetWidget
       toggleDocOutlineButton_ = new LatchingToolbarButton(
             ToolbarButton.NoText,
             ToolbarButton.NoTitle,
-            true, /* textIndicatesState */
+            false, /* textIndicatesState */
             new ImageResource2x(StandardIcons.INSTANCE.outline2x()),
             event -> {
                final double initialSize = editorPanel_.getWidgetSize(docOutlineWidget_);
@@ -704,7 +704,7 @@ public class TextEditingTargetWidget
       // expected that the whole 'visual mode' concept will go away in v1.5
       AppCommand cmdOutline = commands_.toggleDocumentOutline();
       toggleVisualModeOutlineButton_ = new LatchingToolbarButton(cmdOutline.getButtonLabel(),
-            ToolbarButton.NoTitle, true, /* textIndicatesState */
+            ToolbarButton.NoTitle, false, /* textIndicatesState */
             new ImageResource2x(StandardIcons.INSTANCE.outline2x()), event -> {
                target_.setPreferredOutlineWidgetVisibility(
                      !target_.getPreferredOutlineWidgetVisibility());

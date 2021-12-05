@@ -1,0 +1,21 @@
+
+@external rstudio-themes-inverts;
+@external rstudio-themes-dark;
+
+.markdownToolbar button.rstudio-themes-inverts {
+  color: #494949;
+}
+
+.rstudio-themes-dark .markdownToolbar button.rstudio-themes-inverts {
+  color: #efefef;
+}
+
+.markdownToolbar button.rstudio-themes-inverts[aria-pressed="true"] {
+  background-color: transparent;
+}
+
+
+.rstudio-themes-dark .markdownToolbar button.rstudio-themes-inverts[aria-pressed="true"] {
+  background-color: rgb(108,121,131);
+}
+   
