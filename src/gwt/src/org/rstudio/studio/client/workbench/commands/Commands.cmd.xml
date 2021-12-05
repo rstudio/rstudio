@@ -2177,6 +2177,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="toggleDocumentOutline"
         label="Toggle Document Outline"
+        buttonLabel="Outline"
         menuLabel="_Show Document Outline"
         desc="Show document outline"/>
 

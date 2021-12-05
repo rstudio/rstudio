@@ -293,6 +293,7 @@ public class TextEditingTarget implements
       void manageCommandUI();
 
       void addVisualModeFindReplaceButton(ToolbarButton findReplaceButton);
+      void showVisualModeFindReplaceButton(boolean show);
       
       SourceColumn getSourceColumn();
    }

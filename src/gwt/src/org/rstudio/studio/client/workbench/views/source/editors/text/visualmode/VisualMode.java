@@ -1272,8 +1272,8 @@ public class VisualMode implements VisualModeEditorSync,
                panmirror_.showOutline(establishOutlineVisible(), getOutlineWidth());
                
                // show find replace button
-               findReplaceButton_.setVisible(true);
-               
+               view_.showVisualModeFindReplaceButton(true);
+                  
                // activate widget
                editorContainer.activateWidget(panmirror_, focus);
                
@@ -1331,7 +1331,7 @@ public class VisualMode implements VisualModeEditorSync,
             unmanageCommands();
             
             // hide find replace button
-            findReplaceButton_.setVisible(false);
+            view_.showVisualModeFindReplaceButton(false);
             
             editorContainer.activateEditor(focus); 
             

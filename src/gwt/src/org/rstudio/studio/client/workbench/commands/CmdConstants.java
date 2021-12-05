@@ -1531,6 +1531,8 @@ public interface CmdConstants extends Constants {
     // toggleDocumentOutline
     @DefaultStringValue("Toggle Document Outline") // $NON-NLS-1$
     String toggleDocumentOutlineLabel();
+    @DefaultStringValue("Outline") // $NON-NLS-1$
+    String toggleDocumentOutlineButtonLabel();
     @DefaultStringValue("_Show Document Outline") // $NON-NLS-1$
     String toggleDocumentOutlineMenuLabel();
     @DefaultStringValue("Show document outline") // $NON-NLS-1$
