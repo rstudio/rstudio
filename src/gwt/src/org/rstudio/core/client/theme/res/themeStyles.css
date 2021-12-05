@@ -1434,6 +1434,11 @@ body.windows .toolbar {
    margin-left: 3px;
 }
 
+.tallerToolbarWrapper .toolbarButtonLatchable {
+  margin-top: 1px;
+}
+
+
 .toolbarButtonLatched {
   /*
    -moz-border-image: -moz-linear-gradient(top, #bfc8d0 0%, #cfd4d8 100%);
@@ -1445,6 +1450,11 @@ body.windows .toolbar {
    border-radius: 2px;
    background-color: #e3e7e9;
    border: 1px solid #bfc8d0;
+}
+
+.rstudio-themes-dark .toolbarButtonLatched {
+   background-color: THEME_DARK_CONTROL_BACKGROUND;
+   border-color: THEME_DARK_CONTROL_BORDER;
 }
 
 .globalToolbar {

@@ -27,7 +27,7 @@ public class MarkdownToolbar extends SecondaryToolbar
       super(true, "Markdown editing tools");
       
       visualMode_ = new LatchingToolbarButton(
-         "Visual editor", 
+         "Visual Editor", 
          "Switch to visual mode",
          false,
          null,
@@ -39,7 +39,7 @@ public class MarkdownToolbar extends SecondaryToolbar
       
 
       sourceMode_ = new LatchingToolbarButton(
-         "Source editor", 
+         "Source Editor", 
          "Switch to source mode",
          false,
          null,
@@ -55,15 +55,6 @@ public class MarkdownToolbar extends SecondaryToolbar
       visualMode_.setLatched(visualMode);
       sourceMode_.setLatched(!visualMode);
    }
-   
-   
-   
-   @Override
-   public int getHeight()
-   {
-      return 23;
-   }
-
    
    private LatchingToolbarButton visualMode_;
    private LatchingToolbarButton sourceMode_;
