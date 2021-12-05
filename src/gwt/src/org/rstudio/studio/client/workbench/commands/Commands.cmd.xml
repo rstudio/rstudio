@@ -2184,7 +2184,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="toggleRmdVisualMode"
         label="Toggle Visual Markdown Editor"
         menuLabel="_Use Visual Editor"
-        desc="Toggle visual markdown editor"/>
+        desc="Switch markdown editing mode"/>
 
    <cmd id="enableProsemirrorDevTools"
         label="Enable Prosemirror DevTools"

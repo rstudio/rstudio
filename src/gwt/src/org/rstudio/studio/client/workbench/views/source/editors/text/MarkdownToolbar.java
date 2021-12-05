@@ -17,18 +17,19 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.widget.LatchingToolbarButton;
 import org.rstudio.core.client.widget.SecondaryToolbar;
+import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.event.dom.client.ClickHandler;
 
 public class MarkdownToolbar extends SecondaryToolbar
 {
-   public MarkdownToolbar(ClickHandler visualModeClickHandler)
+   public MarkdownToolbar(Commands commands, ClickHandler visualModeClickHandler)
    {
       super(true, "Markdown editing tools");
       
       visualMode_ = new LatchingToolbarButton(
          "Visual Editor", 
-         "Switch to visual mode",
+         commands.toggleRmdVisualMode().getTooltip(),
          false,
          null,
          visualModeClickHandler
@@ -40,7 +41,7 @@ public class MarkdownToolbar extends SecondaryToolbar
 
       sourceMode_ = new LatchingToolbarButton(
          "Source Editor", 
-         "Switch to source mode",
+         commands.toggleRmdVisualMode().getTooltip(),
          false,
          null,
          visualModeClickHandler

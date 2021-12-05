@@ -525,7 +525,7 @@ public class VisualMode implements VisualModeEditorSync,
                       */
                      if (JsObject.keys(result.unparsed_meta).length > 0)
                      {
-                        view_.showWarningBar("Unable to activate visual mode (unsupported front matter format or non top-level YAML block)");
+                        view_.showWarningBar("Unable to activate visual editor (unsupported front matter format or non top-level YAML block)");
                         allDone.execute(false);
                         return;
                      }
@@ -533,7 +533,7 @@ public class VisualMode implements VisualModeEditorSync,
                      // if we failed to extract a source capsule then don't switch (as the user will have lost data)
                      if (hasSourceCapsule(result.canonical))
                      {
-                        view_.showWarningBar("Unable to activate visual mode (error parsing code chunks out of document)");
+                        view_.showWarningBar("Unable to activate visual editor (error parsing code chunks out of document)");
                         allDone.execute(false);
                         return;
                      }
@@ -541,7 +541,7 @@ public class VisualMode implements VisualModeEditorSync,
                      // if we have example lists then don't switdch
                      if (result.example_lists)
                      {
-                        view_.showWarningBar("Unable to activate visual mode (document contains example lists which are not currently supported)");
+                        view_.showWarningBar("Unable to activate visual editor (document contains example lists which are not currently supported)");
                         allDone.execute(false);
                         return;
                      }

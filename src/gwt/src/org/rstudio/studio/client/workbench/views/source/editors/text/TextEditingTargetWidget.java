@@ -680,7 +680,7 @@ public class TextEditingTargetWidget
    
    private MarkdownToolbar initMarkdownToolbar()
    {
-      markdownToolbar_ = new MarkdownToolbar(event -> {
+      markdownToolbar_ = new MarkdownToolbar(commands_, event -> {
          toggleRmdVisualMode();
       });
       docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
