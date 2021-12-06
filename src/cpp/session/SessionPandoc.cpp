@@ -70,8 +70,10 @@ Error runAsync(const std::string& executablePath,
 }
 
 std::vector<std::string> prependStackSize(const std::vector<std::string>& args)
-{
-   std::string size = r::options::getOption<std::string>("pandoc.editor.stack.size", "128m", false);
+{  
+   // hard code stack size because this code can *unexpectedly* run on a background thread
+   // std::string size = r::options::getOption<std::string>("pandoc.editor.stack.size", "128m", false);
+   std::string size = "128m";
    std::vector<std::string> newArgs = { "+RTS", "-K" + size, "-RTS" };
    std::copy(args.begin(), args.end(), std::back_inserter(newArgs));
    return newArgs;
