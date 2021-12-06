@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # This should be run after the dmg is created, and after create-full-package-file-name.js also runs from inside forge.config.js
 
 OUT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)/../out"
