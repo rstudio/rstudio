@@ -35,18 +35,18 @@ module.exports = {
   },
   packagerConfig: {
     icon: './resources/icons/RStudio',
-    appBundleId: "org.rstudio.RStudio",
-    // osxSign: {
-    //   'identity': 'Developer ID Application: Felix Rieseberg (LT94ZKYDCJ)',
-    //   'hardened-runtime': true,
-    //   'entitlements': 'entitlements.plist',
-    //   'entitlements-inherit': 'entitlements.plist',
-    //   'signature-flags': 'library',
-    // },
-    // osxNotarize: {
-    //   appleId: 'felix@felix.fun',
-    //   appleIdPassword: 'my-apple-id-password',
-    // },
+    appBundleId: 'org.rstudio.RStudio',
+    osxSign: {
+      'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
+      'hardened-runtime': true,
+      'entitlements': '../../../package/osx/entitlements.plist',
+      'entitlements-inherit': '../../../package/osx/entitlements.plist',
+      'signature-flags': 'library',
+    },
+    osxNotarize: {
+      appleId: provess.env.APPLE_ID,
+      appleIdPassword: provess.env.APPLE_ID_PASSWORD,
+    },
   },
   makers: [
     {
