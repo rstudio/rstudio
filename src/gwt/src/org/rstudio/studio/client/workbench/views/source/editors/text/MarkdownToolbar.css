@@ -11,7 +11,7 @@
 }
 
 .markdownToolbar button.rstudio-themes-inverts[aria-pressed="true"] {
-  background-color: transparent;
+  background-color: rgb(238, 238, 238);
 }
 
 
