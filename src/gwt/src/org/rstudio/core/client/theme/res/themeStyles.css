@@ -1430,13 +1430,11 @@ body.windows .toolbar {
 }
 
 .toolbarButtonLatchable .toolbarButtonLabel {
-   margin-top: 1px;
+   margin-top: 0;
    margin-left: 3px;
 }
 
-.tallerToolbarWrapper .toolbarButtonLatchable {
-  margin-top: 1px;
-}
+
 
 
 .toolbarButtonLatched {
