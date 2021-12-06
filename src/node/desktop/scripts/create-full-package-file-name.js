@@ -50,7 +50,7 @@ exports.createFullPackageFileName = () => {
   }
 
   const dmgName = `${package.productName}-electron-${platformName}-${archName}-${package.version}`.replace(
-    new RegExp('+', 'g'),
+    new RegExp('\\+', 'g'),
     '-',
   );
 
