@@ -3,11 +3,37 @@
 #include <core/system/System.hpp>
 #include <core/FileSerializer.hpp>
 #include <boost/filesystem.hpp>
+#include "ServerDatabaseDataset.h"
 
+#include <map>
 #include <iostream>
 
 using namespace rstudio::core;
 using namespace rstudio::core::database;
+
+namespace rstudio {
+namespace server {
+namespace db {
+
+//Forward Declare Overlay
+namespace overlay {
+    void overlayDatasetPath(std::map<DatasetVersion, std::map<DatasetType, std::string>>& datasetPath);
+}
+
+std::map<DatasetVersion, std::map<DatasetType, std::string>> datasetPath {
+    {
+        JulietRose, {
+            {Sqlite, "db/test/juliet-rose-1.4.1717.sqlite.sql"},
+            {Postgres, "db/test/juliet-rose-1.4.1717.postgresql"}
+        }
+    },
+    {
+        GhostOrchid, {
+            {Sqlite, "db/test/ghost-orchid-2021.09.1-372.sqlite.sql"},
+            {Postgres, "db/test/ghost-orchid-2021.09.1-372.postgresql"}
+        }
+    }
+};
 
 SqliteConnectionOptions sqliteConnectionOptions()
 {
@@ -31,6 +57,7 @@ PostgresqlConnectionOptions postgresConnectionOptions()
 
 TEST_CASE("Upgrading Sqlite Database","[.database][.integration][.upgrade][.sqlite]")
 {
+    overlay::overlayDatasetPath(datasetPath);
     GIVEN("An Empty Sqlite Database")
     {
         FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
@@ -85,7 +112,7 @@ TEST_CASE("Upgrading Sqlite Database","[.database][.integration][.upgrade][.sqli
         REQUIRE_FALSE(connect(options, &connection));
 
         std::string dbDump;
-        FilePath julietRoseDumpPath = workingDir.completeChildPath("db/test/juliet-rose-1.4.1717.sqlite.sql");
+        FilePath julietRoseDumpPath = workingDir.completeChildPath(datasetPath[JulietRose][Sqlite]);
         REQUIRE_FALSE(readStringFromFile(julietRoseDumpPath, &dbDump));
         REQUIRE_FALSE(connection->executeStr(dbDump));
 
@@ -126,7 +153,7 @@ TEST_CASE("Upgrading Sqlite Database","[.database][.integration][.upgrade][.sqli
         REQUIRE_FALSE(connect(options, &connection));
 
         std::string dbDump;
-        FilePath julietRoseDumpPath = workingDir.completeChildPath("db/test/ghost-orchid-2021.09.1-372.sqlite.sql");
+        FilePath julietRoseDumpPath = workingDir.completeChildPath(datasetPath[GhostOrchid][Sqlite]);
         REQUIRE_FALSE(readStringFromFile(julietRoseDumpPath, &dbDump));
         REQUIRE_FALSE(connection->executeStr(dbDump));
 
@@ -156,7 +183,7 @@ TEST_CASE("Upgrading Sqlite Database","[.database][.integration][.upgrade][.sqli
 
 TEST_CASE("Upgrading Postgres Database", "[.database][.integration][.upgrade][.postgres]")
 {
-
+    overlay::overlayDatasetPath(datasetPath);
     GIVEN("An empty Postgres Database")
     {
         FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
@@ -224,7 +251,7 @@ TEST_CASE("Upgrading Postgres Database", "[.database][.integration][.upgrade][.p
         connection->executeStr(queryStr);
 
         std::string dbDump;
-        FilePath julietRoseDumpPath = workingDir.completeChildPath("db/test/juliet-rose-1.4.1717.postgresql");
+        FilePath julietRoseDumpPath = workingDir.completeChildPath(datasetPath[JulietRose][Postgres]);
         REQUIRE_FALSE(readStringFromFile(julietRoseDumpPath, &dbDump));
         REQUIRE_FALSE(connection->executeStr(dbDump));
         
@@ -273,7 +300,7 @@ TEST_CASE("Upgrading Postgres Database", "[.database][.integration][.upgrade][.p
         connection->executeStr(queryStr);
 
         std::string dbDump;
-        FilePath julietRoseDumpPath = workingDir.completeChildPath("db/test/ghost-orchid-2021.09.1-372.postgresql");
+        FilePath julietRoseDumpPath = workingDir.completeChildPath(datasetPath[GhostOrchid][Postgres]);
         REQUIRE_FALSE(readStringFromFile(julietRoseDumpPath, &dbDump));
         dbDump = "BEGIN;\n" + dbDump +"\nCOMMIT;";
         REQUIRE_FALSE(connection->executeStr(dbDump));
@@ -303,4 +330,8 @@ TEST_CASE("Upgrading Postgres Database", "[.database][.integration][.upgrade][.p
             }
         }
     }
+}
+
+}
+}
 }
