@@ -51,6 +51,7 @@ core::system::ProcessOptions withPandocDefaultOptions(core::system::ProcessOptio
 #else
    options.terminateChildren = true;
 #endif
+   options.callbacksRequireMainThread = true;
    return options;
 }
 
