@@ -55,8 +55,9 @@ pipeline {
           def env = "RSTUDIO_VERSION_MAJOR=${params.RSTUDIO_VERSION_MAJOR} RSTUDIO_VERSION_MINOR=${params.RSTUDIO_VERSION_MINOR} RSTUDIO_VERSION_PATCH=${params.RSTUDIO_VERSION_PATCH} RSTUDIO_VERSION_SUFFIX=${params.RSTUDIO_VERSION_SUFFIX}"
 
           // build rstudio
-          sh 'cd package/osx && ${env} ./make-package clean --rstudio-target=Electron && cd ../..'
-
+          withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
+            sh 'cd package/osx && ${env} ./make-package clean --rstudio-target=Electron && cd ../..'
+          }
         }
       }
 
@@ -105,9 +106,9 @@ pipeline {
 
           def buildDest =  "s3://rstudio-ide-build/electron/macos/"
 
-          withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
-            sh "docker/jenkins/notarize-release.sh src/node/desktop/out/make/${packageFile}"
-          }
+          // withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
+          //   sh "docker/jenkins/notarize-release.sh src/node/desktop/out/make/${packageFile}"
+          // }
 
           // this job is going to run on a macOS slave, which cannot use an instance-profile
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
