@@ -146,9 +146,9 @@ pipeline {
           withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
             // derive product
-            def product="desktop"
+            def product="electron"
             if (params.RSTUDIO_VERSION_SUFFIX.contains("pro")) {
-              product = "desktop-pro"
+              product = "electron-pro"
             }
 
             // publish the build
