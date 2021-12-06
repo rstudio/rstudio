@@ -106,6 +106,7 @@ def s3_upload(type, flavor, os, arch) {
     // for the last linux build, on OS only we also update windows to avoid the need for publish-daily-binary.bat
     if (flavor == "desktop" && os == "centos8") {
        def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+       packageName = packageNmae.replace('+', '-')
        sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
     }
   }
