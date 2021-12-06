@@ -65,7 +65,7 @@ export class InsertSymbolPlugin extends Plugin<boolean> {
         destroy: () => {
           this.closePopup();
           this.scrollUnsubscribe();
-          window.document.removeEventListener('focusin', this.focusChanged);
+          window.document.removeEventListener('onfocus', this.focusChanged);
         },
       }),
     });
@@ -76,7 +76,7 @@ export class InsertSymbolPlugin extends Plugin<boolean> {
     this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.closePopup);
 
     this.focusChanged = this.focusChanged.bind(this);
-    window.document.addEventListener('focusin', this.focusChanged);
+    window.document.addEventListener('onfocus', this.focusChanged);
   }
 
   public showPopup(view: EditorView) {
