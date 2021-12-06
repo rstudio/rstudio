@@ -44,8 +44,8 @@ module.exports = {
       'signature-flags': 'library',
     },
     osxNotarize: {
-      appleId: provess.env.APPLE_ID,
-      appleIdPassword: provess.env.APPLE_ID_PASSWORD,
+      appleId: process.env.APPLE_ID,
+      appleIdPassword: process.env.APPLE_ID_PASSWORD,
     },
   },
   makers: [
