@@ -39,9 +39,9 @@ public class MarkdownToolbar extends SecondaryToolbar
          visualModeClickHandler
       );
       visualMode_.addStyleName("rstudio-themes-inverts");
+      visualMode_.addStyleName(RES.styles().editorModeButton());
       addLeftWidget(visualMode_);
       visualMode_.setLatched(true);
-      
 
       sourceMode_ = new LatchingToolbarButton(
          "Source Editor", 
@@ -51,6 +51,7 @@ public class MarkdownToolbar extends SecondaryToolbar
          visualModeClickHandler
       );
       sourceMode_.addStyleName("rstudio-themes-inverts");
+      sourceMode_.addStyleName(RES.styles().editorModeButton());
       addLeftWidget(sourceMode_);
             
    }
@@ -67,6 +68,7 @@ public class MarkdownToolbar extends SecondaryToolbar
    interface Styles extends CssResource
    {
       String markdownToolbar();
+      String editorModeButton();
    }
    
    interface Resources extends ClientBundle
