@@ -112,8 +112,9 @@ TEST_CASE("Upgrading Sqlite Database","[.database][.integration][.upgrade][.sqli
         REQUIRE_FALSE(connect(options, &connection));
 
         std::string dbDump;
-        FilePath julietRoseDumpPath = workingDir.completeChildPath(datasetPath[JulietRose][Sqlite]);
-        REQUIRE_FALSE(readStringFromFile(julietRoseDumpPath, &dbDump));
+        FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[JulietRose][Sqlite]);
+        REQUIRE(dbDumpPath.exists());
+        REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
         REQUIRE_FALSE(connection->executeStr(dbDump));
 
         FilePath migrationPath = workingDir.completeChildPath("db");
@@ -153,8 +154,9 @@ TEST_CASE("Upgrading Sqlite Database","[.database][.integration][.upgrade][.sqli
         REQUIRE_FALSE(connect(options, &connection));
 
         std::string dbDump;
-        FilePath julietRoseDumpPath = workingDir.completeChildPath(datasetPath[GhostOrchid][Sqlite]);
-        REQUIRE_FALSE(readStringFromFile(julietRoseDumpPath, &dbDump));
+        FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[GhostOrchid][Sqlite]);
+        REQUIRE(dbDumpPath.exists());
+        REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
         REQUIRE_FALSE(connection->executeStr(dbDump));
 
         FilePath migrationPath = workingDir.completeChildPath("db");
@@ -251,8 +253,9 @@ TEST_CASE("Upgrading Postgres Database", "[.database][.integration][.upgrade][.p
         connection->executeStr(queryStr);
 
         std::string dbDump;
-        FilePath julietRoseDumpPath = workingDir.completeChildPath(datasetPath[JulietRose][Postgres]);
-        REQUIRE_FALSE(readStringFromFile(julietRoseDumpPath, &dbDump));
+        FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[JulietRose][Postgres]);
+        REQUIRE(dbDumpPath.exists());
+        REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
         REQUIRE_FALSE(connection->executeStr(dbDump));
         
         //Reconnect to fix a search path problem regarding the public schema
@@ -300,8 +303,9 @@ TEST_CASE("Upgrading Postgres Database", "[.database][.integration][.upgrade][.p
         connection->executeStr(queryStr);
 
         std::string dbDump;
-        FilePath julietRoseDumpPath = workingDir.completeChildPath(datasetPath[GhostOrchid][Postgres]);
-        REQUIRE_FALSE(readStringFromFile(julietRoseDumpPath, &dbDump));
+        FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[GhostOrchid][Postgres]);
+        REQUIRE(dbDumpPath.exists());
+        REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
         dbDump = "BEGIN;\n" + dbDump +"\nCOMMIT;";
         REQUIRE_FALSE(connection->executeStr(dbDump));
         
