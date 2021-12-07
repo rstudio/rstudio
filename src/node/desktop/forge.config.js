@@ -2,7 +2,11 @@ const { createFullPackageFileName } = require('./scripts/create-full-package-fil
 // This function makes sure that the correct filename is created and saved for the final DMG file.
 createFullPackageFileName();
 
-module.exports = {
+const { loadCMakeVars } = require('./scripts/fix-library-paths.js');
+
+loadCMakeVars(__dirname + '/../../build/CMakeCache.txt');
+
+const config = {
   hooks: {
     postPackage: async (forgeConfig, options) => {
       // Run import-resources.ts script to copy all the non-Electron bits
@@ -31,21 +35,6 @@ module.exports = {
         }
       });
       return promise;
-    },
-  },
-  packagerConfig: {
-    icon: './resources/icons/RStudio',
-    appBundleId: 'org.rstudio.RStudio',
-    osxSign: {
-      'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
-      'hardened-runtime': true,
-      'entitlements': '../../../package/osx/entitlements.plist',
-      'entitlements-inherit': '../../../package/osx/entitlements.plist',
-      'signature-flags': 'library',
-    },
-    osxNotarize: {
-      appleId: process.env.APPLE_ID,
-      appleIdPassword: process.env.APPLE_ID_PASSWORD,
     },
   },
   makers: [
@@ -119,3 +108,44 @@ module.exports = {
     ],
   ],
 };
+
+if (
+  process.env.APPLE_ID !== undefined &&
+  process.env.APPLE_ID_PASSWORD !== undefined &&
+  process.env.APPLE_ID !== '' &&
+  process.env.APPLE_ID_PASSWORD !== ''
+) {
+  config.packagerConfig = {
+    icon: './resources/icons/RStudio',
+    appBundleId: 'org.rstudio.RStudio',
+    osxSign: {
+      'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
+      'hardened-runtime': true,
+      'entitlements': '../../../package/osx/entitlements.plist',
+      'entitlements-inherit': '../../../package/osx/entitlements.plist',
+      'signature-flags': 'library',
+    },
+    osxNotarize: {
+      appleId: process.env.APPLE_ID,
+      appleIdPassword: process.env.APPLE_ID_PASSWORD,
+    },
+  };
+}
+
+config.packagerConfig = {
+  icon: './resources/icons/RStudio',
+  appBundleId: 'org.rstudio.RStudio',
+  osxSign: {
+    'identity': 'Developer ID Application: Matheus Tavares (QM39MZ3QRV)',
+    'hardened-runtime': true,
+    'entitlements': '../../../package/osx/entitlements.plist',
+    'entitlements-inherit': '../../../package/osx/entitlements.plist',
+    'signature-flags': 'library',
+  },
+  osxNotarize: {
+    appleId: 'contact@tavapps.com',
+    appleIdPassword: 'Dso1234xx',
+  },
+};
+
+module.exports = config;
