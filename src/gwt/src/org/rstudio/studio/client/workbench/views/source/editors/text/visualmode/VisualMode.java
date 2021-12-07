@@ -535,7 +535,7 @@ public class VisualMode implements VisualModeEditorSync,
                      // visual editor source capsules get tripped up on verbatim chunks
                      if(hasVerbatimChunk(result.canonical))
                      {
-                        view_.showWarningBar("Unavle to activate visual editor (verbatim chunks are not compatible with visual mode)");
+                        view_.showWarningBar(constants_.unableToActivateVisualEditorVerbatim());
                         allDone.execute(false);
                         return;
                      }
@@ -1835,11 +1835,6 @@ public class VisualMode implements VisualModeEditorSync,
       // (note that this constant is also defined in rmd_chunk-capsule.ts)
       final String kRmdBlockCapsuleType = "f3175f2a-e8a0-4436-be12-b33925b6d220".toLowerCase();
       return markdown.contains(kRmdBlockCapsuleType);
-   }
-   
-   private boolean hasVerbatimChunk(String markdown)
-   {
-      return markdown.contains("\n```{verbatim}");
    }
    
    private boolean hasVerbatimChunk(String markdown)

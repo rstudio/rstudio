@@ -2349,6 +2349,15 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String unableToActivateVisualModeParsingCode();
 
     /**
+     * Translated "Unable to activate visual editor (verbatim chunks are not compatible with visual mode)".
+     *
+     * @return translated "Unable to activate visual editor (verbatim chunks are not compatible with visual mode)"
+     */
+    @DefaultMessage("Unable to activate visual editor (verbatim chunks are not compatible with visual mode)")
+    @Key("unableToActivateVisualEditorVerbatim")
+    String unableToActivateVisualEditorVerbatim();
+
+    /**
      * Translated "Unable to activate visual mode (document contains example lists which are not currently supported)".
      *
      * @return translated "Unable to activate visual mode (document contains example lists which are not currently supported)"

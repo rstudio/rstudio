@@ -126,12 +126,12 @@ public class QuartoCommands
                      lines.add(constants_.formatParameterColon(format));
                   }
                   
-                  if (visualEditor && !QuartoConstants.EDITOR_VISUAL.equals(config.project_editor))
-                     lines.add(constants_.editorParameterColon(QuartoConstants.EDITOR_VISUAL));
+                  if (visualEditor && !QuartoCommandConstants.EDITOR_VISUAL.equals(config.project_editor))
+                     lines.add(constants_.editorParameterColon(QuartoCommandConstants.EDITOR_VISUAL));
                   
-                  if (result.getFormat().equals(QuartoConstants.INTERACTIVE_SHINY))
+                  if (result.getFormat().equals(QuartoCommandConstants.INTERACTIVE_SHINY))
                      lines.add(constants_.serverShiny());
-                  else if (!interactive && result.getEngine().equals(QuartoConstants.ENGINE_JUPYTER))
+                  else if (!interactive && result.getEngine().equals(QuartoCommandConstants.ENGINE_JUPYTER))
                      lines.add(constants_.jupyterParameterColon(result.getKernel()));
                   
                   lines.add("---");
