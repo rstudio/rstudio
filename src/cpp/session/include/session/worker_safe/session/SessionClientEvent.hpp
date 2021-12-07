@@ -211,6 +211,7 @@ extern const int kCommandCallbacksChanged;
 extern const int kConsoleActivate;
 extern const int kJobsActivate;
 extern const int kPresentationPreview;
+extern const int kSuspendBlocked;
 }
    
 class ClientEvent

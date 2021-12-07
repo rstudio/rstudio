@@ -74,6 +74,8 @@ public class ConsolePreferencesPane extends PreferencesPane
       spacedBefore(otherLabel);
       add(otherLabel);
       add(spaced(checkboxPref(constants_.otherDoubleClickLabel(), prefs_.consoleDoubleClickSelect())));
+      add(spaced(checkboxPref(constants_.warnAutoSuspendPausedLabel(), prefs_.consoleSuspendBlockedNotice())));
+      add(indent(numericPref(constants_.numSecondsToDelayWarningLabel(), prefs_.consoleSuspendBlockedNoticeDelay())));
    }
 
    @Override

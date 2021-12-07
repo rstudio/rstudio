@@ -201,6 +201,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ConsoleActivate = "console_activate";
    public static final String JobsActivate = "jobs_activate";
    public static final String PresentationPreview = "presentation_preview";
+   public static final String SuspendBlocked = "session_suspend_blocked";
    
    protected ClientEvent()
    {

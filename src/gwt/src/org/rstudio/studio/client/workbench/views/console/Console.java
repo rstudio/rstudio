@@ -27,6 +27,9 @@ import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.FocusContext;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
@@ -55,6 +58,8 @@ public class Console
       IsWidget getConsoleInterruptButton();
       IsWidget getConsoleClearButton();
       IsWidget getProfilerInterruptButton();
+      void onSuspendedBlockedEvent(SessionSuspendBlockedEvent event);
+      void onSerializationEvent(SessionSerializationEvent event);
       void enterMode(ConsolePane.ConsoleMode mode);
       void leaveMode(ConsolePane.ConsoleMode mode);
       ConsolePane.ConsoleMode mode();
@@ -173,6 +178,14 @@ public class Console
          }
          else
             view.leaveMode(ConsoleMode.Job);
+      });
+
+      events.addHandler(SessionSerializationEvent.TYPE, event -> {
+         view.onSerializationEvent(event);
+      });
+
+      events.addHandler(SessionSuspendBlockedEvent.TYPE, event -> {
+         view.onSuspendedBlockedEvent(event);
       });
    }
 
