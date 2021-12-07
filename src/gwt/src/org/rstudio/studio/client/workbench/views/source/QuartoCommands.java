@@ -27,7 +27,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.quarto.ui.NewQuartoDocumentDialog;
 import org.rstudio.studio.client.server.ServerError;
@@ -72,32 +72,32 @@ public class QuartoCommands
                   String template = "default.qmd";
                   String format = "html";
                   final boolean interactive = 
-                     (result.getFormat().equals(QuartoConstants.INTERACTIVE_SHINY) ||
-                      result.getFormat().equals(QuartoConstants.INTERACTIVE_OJS));
+                     (result.getFormat().equals(QuartoCommandConstants.INTERACTIVE_SHINY) ||
+                      result.getFormat().equals(QuartoCommandConstants.INTERACTIVE_OJS));
                   
-                  final boolean visualEditor = result.getEditor().equals(QuartoConstants.EDITOR_VISUAL) &&
+                  final boolean visualEditor = result.getEditor().equals(QuartoCommandConstants.EDITOR_VISUAL) &&
                                                !interactive;
                  
                   // select appropriate template
                   format = result.getFormat();
-                  if (format.equals(QuartoConstants.FORMAT_HTML) ||
-                      format.equals(QuartoConstants.FORMAT_PDF) ||
-                      format.equals(QuartoConstants.FORMAT_DOCX))
+                  if (format.equals(QuartoCommandConstants.FORMAT_HTML) ||
+                      format.equals(QuartoCommandConstants.FORMAT_PDF) ||
+                      format.equals(QuartoCommandConstants.FORMAT_DOCX))
                   {
                      template = "document.qmd";
                   }
-                  else if (format.equals(QuartoConstants.FORMAT_REVEALJS) ||
-                           format.equals(QuartoConstants.FORMAT_BEAMER) ||
-                           format.equals(QuartoConstants.FORMAT_PPTX))
+                  else if (format.equals(QuartoCommandConstants.FORMAT_REVEALJS) ||
+                           format.equals(QuartoCommandConstants.FORMAT_BEAMER) ||
+                           format.equals(QuartoCommandConstants.FORMAT_PPTX))
                   {
                      template = "presentation.qmd";
                   }
-                  else if (format.equals(QuartoConstants.INTERACTIVE_SHINY))
+                  else if (format.equals(QuartoCommandConstants.INTERACTIVE_SHINY))
                   {
                      format = "html";
                      template = "shiny.qmd";
                   }
-                  else if (format.equals(QuartoConstants.INTERACTIVE_OJS))
+                  else if (format.equals(QuartoCommandConstants.INTERACTIVE_OJS))
                   {
                      format = "html";
                      template = "ojs.qmd";
@@ -112,15 +112,15 @@ public class QuartoCommands
                   QuartoConfig config = sessionInfo_.getQuartoConfig();
                   boolean isWebsite = QuartoHelper.isQuartoWebsiteConfig(config);
                   boolean isBook = QuartoHelper.isQuartoBookConfig(config);
-                  
+
                   // generate preamble
                   lines.add("---");
                   lines.add(constants_.titleParameterColon(result.getTitle()));
                   if (!StringUtil.isNullOrEmpty(result.getAuthor()))
                      lines.add(constants_.authorParameterColon(result.getAuthor()));
-                  
+
                   if (!isBook &&
-                      (config.project_formats.length == 0 || 
+                      (config.project_formats.length == 0 ||
                       !config.project_formats[0].equals(format)))
                   {
                      lines.add(constants_.formatParameterColon(format));
@@ -143,7 +143,7 @@ public class QuartoCommands
    
                   columnManager_.newSourceDocWithTemplate(FileTypeRegistry.QUARTO,
                      "",
-                     result.getEmpty() || result.getEngine().equals(QuartoConstants.ENGINE_MARKDOWN) 
+                     result.getEmpty() || result.getEngine().equals(QuartoCommandConstants.ENGINE_MARKDOWN)
                         ? "default.qmd" 
                         : template,
                      Position.create(1, 0),
@@ -160,22 +160,22 @@ public class QuartoCommands
                            }
                            else
                            {
-                              
+
                               // remove bit about visual editor if we aren't using
                               // the visual editor
                               if (!visualEditor)
-                                 input = removeVisualEditorLine(input); 
-                              
+                                 input = removeVisualEditorLine(input);
+
                               // was this a built-in template?
                               boolean builtIn = input.startsWith("## Quarto");
-                              
+
                               // if it was built in and not interactive then do some
                               // language fixups
                               if (builtIn && !interactive)
                               {
                                  input = updateLanguage(input, result.getLanguage());
                               }
-                              
+
                               return preamble + "\n" + input;
                            }
                         }

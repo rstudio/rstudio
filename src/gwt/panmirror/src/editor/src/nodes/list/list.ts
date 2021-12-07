@@ -391,8 +391,8 @@ function bulletListOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Bullet List'),
     description: ui.context.translateText('List using bullets for items'),
-    group: OmniInsertGroup.Lists,
-    priority: 5,
+    group: OmniInsertGroup.Common,
+    priority: 4,
     image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.bullet_list_dark! : ui.images.omni_insert?.bullet_list!),
   };
 }
@@ -401,8 +401,8 @@ function orderedListOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Numbered List'),
     description: ui.context.translateText('List using numbers for items'),
-    group: OmniInsertGroup.Lists,
-    priority: 4,
+    group: OmniInsertGroup.Common,
+    priority: 3,
     image: () =>
       ui.prefs.darkMode() ? ui.images.omni_insert?.ordered_list_dark! : ui.images.omni_insert?.ordered_list!,
   };

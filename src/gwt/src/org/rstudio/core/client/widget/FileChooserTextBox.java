@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -71,7 +73,7 @@ public class FileChooserTextBox extends TextBoxWithButton
                               final Focusable focusAfter,
                               final Command onChosen)
    {
-      super(label, existingLabel, emptyLabel, "Browse...",
+      super(label, existingLabel, emptyLabel, constants_.fileChooserTextBoxBrowseLabel(),
             null, /* helpButton */
             uniqueId,
             true, /* readOnly */
@@ -97,7 +99,7 @@ public class FileChooserTextBox extends TextBoxWithButton
          public void onClick(ClickEvent event)
          {
             RStudioGinjector.INSTANCE.getFileDialogs().openFile(
-                  "Choose File",
+                    constants_.chooseFileCaption(),
                   RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
                   FileSystemItem.createFile(getText()),
                   new ProgressOperationWithInput<FileSystemItem>()
@@ -119,5 +121,7 @@ public class FileChooserTextBox extends TextBoxWithButton
          }
       });
       
-   }    
+   }
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
+
 }

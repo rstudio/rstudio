@@ -34,19 +34,6 @@ public class YamlEditorContext extends JavaScriptObject
    {
    }
    
-   public static native YamlEditorContext create(
-      String path, String filetype, boolean embedded,
-      String line, String code, Position position) /*-{
-      return { 
-         path: path,
-         filetype: filetype,
-         embedded: embedded,
-         line: line, 
-         code: code,
-         position: position
-      };
-   }-*/;
-   
    public static YamlEditorContext create(CompletionContext context,
                                           DocDisplay docDisplay)
    {
@@ -78,11 +65,31 @@ public class YamlEditorContext extends JavaScriptObject
         context.getPath(),
         filetype,
         docDisplay.getEditorBehavior() == EditorBehavior.AceBehaviorEmbedded,
+        context.getQuartoFormats(),
+        context.getQuartoProjectFormats(),
+        context.getQuartoEngine(),
         docDisplay.getCurrentLineUpToCursor(),
         docDisplay.getCode(),
         docDisplay.getCursorPosition()
       );
    }
+   
+   private static native YamlEditorContext create(
+     String path, String filetype, boolean embedded,
+     String[] formats, String[] projectFormats, String engine,
+     String line, String code, Position position) /*-{
+     return { 
+        path: path,
+        filetype: filetype,
+        embedded: embedded,
+        formats: formats,
+        project_formats: projectFormats,
+        engine: engine,
+        line: line, 
+        code: code,
+        position: position
+     };
+  }-*/;
    
    public native final String getPath() /*-{
       return this.path;

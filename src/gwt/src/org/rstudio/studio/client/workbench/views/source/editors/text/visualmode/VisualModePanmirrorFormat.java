@@ -142,7 +142,7 @@ public class VisualModePanmirrorFormat
                format.pandocMode = "markdown";
                if (!isQuartoDocument())
                { 
-                  format.pandocExtensions = "+autolink_bare_uris";
+                  format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
                }
                if (formatComment.extensions != null)
                   format.pandocExtensions += formatComment.extensions;

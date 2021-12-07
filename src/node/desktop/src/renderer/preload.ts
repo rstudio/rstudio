@@ -19,6 +19,7 @@ import { removeDups } from '../core/string-utils';
 import { getDesktopInfoBridge } from './desktop-info-bridge';
 import { getMenuBridge } from './menu-bridge';
 import { getDesktopBridge } from './desktop-bridge';
+import { firstStartingWith } from '../core/array-utils';
 
 /**
  * The preload script is run in the renderer before our GWT code and enables
@@ -34,8 +35,8 @@ import { getDesktopBridge } from './desktop-bridge';
  * Actual implementation happens in the main process, reached via ipcRenderer.
  */
 
-// Last argument contains list of apiKeys to expose, separated by '|'.
-const apiKeys = removeDups(process.argv.slice(-1)[0].split('|'));
+// --apiKeys= argument contains list of apiKeys to expose, separated by '|'.
+const apiKeys = removeDups(firstStartingWith(process.argv, '--apiKeys=').split('|'));
 for (const apiKey of apiKeys) {
   switch (apiKey) {
     case 'desktop':

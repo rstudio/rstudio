@@ -1175,6 +1175,7 @@ public class VisualModeChunk
    private final VisualModeEditorSync sync_;
    private final EditingTargetCodeExecution codeExecution_;
    private final VisualModeCollapseToggle collapse_;
+   @SuppressWarnings("unused")
    private final LintManager lintManager_;
    private final DivElement summary_;
    private final Map<Integer,VisualModeChunkRowState> rowState_;

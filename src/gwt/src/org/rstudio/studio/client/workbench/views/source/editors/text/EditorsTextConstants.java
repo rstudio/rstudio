@@ -15,8 +15,6 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
-import com.google.gwt.i18n.client.Messages;
-
 public interface EditorsTextConstants extends com.google.gwt.i18n.client.Messages {
     /**
      * Translated "R Console".

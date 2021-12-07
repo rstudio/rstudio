@@ -106,7 +106,9 @@ def s3_upload(type, flavor, os, arch) {
     // for the last linux build, on OS only we also update windows to avoid the need for publish-daily-binary.bat
     if (flavor == "desktop" && os == "centos8") {
        def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+       packageName = packageName.replace('+', '-')
        sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
+       sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/mac/${packageName}.exe ${wwwRstudioOrgPem}"
     }
   }
 
@@ -228,7 +230,7 @@ try {
             stage('set up versioning') {
                 prepareWorkspace()
 
-                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args())
+                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args(), retry_image_pull: 5)
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
@@ -279,7 +281,8 @@ try {
                               pullBuildPush(image_name: 'jenkins/ide',
                                 dockerfile: "docker/jenkins/Dockerfile.${current_image.os}-${current_image.arch}",
                                 image_tag: image_tag,
-                                build_args: github_args + " " + jenkins_user_build_args())
+                                build_args: github_args + " " + jenkins_user_build_args(),
+                                retry_image_pull: 5)
                             }
                         }
                     }
@@ -307,7 +310,9 @@ try {
                   def docker_context = '.'
                   try {
                     image_cache = docker.image(image_name + ':' + cache_tag)
-                    image_cache.pull()
+                    retry(5) {
+                      image_cache.pull()
+                    }
                   } catch(e) { // docker.image throws a generic exception.
                     echo 'Windows container image not found; expect build to take a bit longer.'
                   }

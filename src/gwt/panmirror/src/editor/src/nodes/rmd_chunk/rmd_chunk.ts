@@ -133,6 +133,7 @@ class RmdChunkCommand extends ProsemirrorCommand {
     lang: string,
     placeholder: string,
     image: () => string,
+    group = OmniInsertGroup.Chunks,
     rowOffset = 1,
     colOffset = 0,
     selectionOffset?: number,
@@ -140,7 +141,7 @@ class RmdChunkCommand extends ProsemirrorCommand {
     super(id, keymap, insertRmdChunk(placeholder, rowOffset, colOffset), {
       name: `${lang} ${ui.context.translateText('Code Chunk')}`,
       description: `${ui.context.translateText('Executable')} ${lang} ${ui.context.translateText('chunk')}`,
-      group: OmniInsertGroup.Chunks,
+      group,
       priority,
       selectionOffset: selectionOffset || colOffset || placeholder.length,
       image,
@@ -152,6 +153,7 @@ class RChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
     super(ui, EditorCommandId.RCodeChunk, ['Mod-Alt-i'], 10, 'R', '{r}\n', () =>
       ui.prefs.darkMode() ? ui.images.omni_insert!.r_chunk_dark! : ui.images.omni_insert!.r_chunk!,
+      OmniInsertGroup.Common
     );
   }
 }
@@ -166,6 +168,7 @@ class PythonChunkCommand extends RmdChunkCommand {
       'Python',
       '{python}\n',
       () => ui.images.omni_insert!.python_chunk!,
+      OmniInsertGroup.Common
     );
   }
 }
@@ -196,6 +199,7 @@ class SQLChunkCommand extends RmdChunkCommand {
       'SQL',
       '{sql connection=}\n',
       () => ui.images.omni_insert!.sql_chunk!,
+      OmniInsertGroup.Chunks,
       0,
       16,
     );
@@ -204,7 +208,7 @@ class SQLChunkCommand extends RmdChunkCommand {
 
 class D3ChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(ui, EditorCommandId.D3CodeChunk, [], 4, 'D3', '{d3 data=}\n', () => ui.images.omni_insert!.d3_chunk!, 0, 9);
+    super(ui, EditorCommandId.D3CodeChunk, [], 4, 'D3', '{d3 data=}\n', () => ui.images.omni_insert!.d3_chunk!, OmniInsertGroup.Chunks, 0, 9);
   }
 }
 
@@ -218,6 +222,7 @@ class StanChunkCommand extends RmdChunkCommand {
       'Stan',
       '{stan output.var=}\n',
       () => ui.images.omni_insert!.stan_chunk!,
+      OmniInsertGroup.Chunks,
       0,
       17,
     );

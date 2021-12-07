@@ -15,7 +15,7 @@
 
 package org.rstudio.studio.client.quarto.model;
 
-public class QuartoConstants
+public class QuartoCommandConstants
 {
    public final static String FORMAT_HTML = "html";
    public final static String FORMAT_PDF = "pdf";

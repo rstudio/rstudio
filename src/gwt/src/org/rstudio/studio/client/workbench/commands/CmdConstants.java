@@ -1531,6 +1531,8 @@ public interface CmdConstants extends Constants {
     // toggleDocumentOutline
     @DefaultStringValue("Toggle Document Outline") // $NON-NLS-1$
     String toggleDocumentOutlineLabel();
+    @DefaultStringValue("Outline") // $NON-NLS-1$
+    String toggleDocumentOutlineButtonLabel();
     @DefaultStringValue("_Show Document Outline") // $NON-NLS-1$
     String toggleDocumentOutlineMenuLabel();
     @DefaultStringValue("Show document outline") // $NON-NLS-1$
@@ -1541,7 +1543,7 @@ public interface CmdConstants extends Constants {
     String toggleRmdVisualModeLabel();
     @DefaultStringValue("_Use Visual Editor") // $NON-NLS-1$
     String toggleRmdVisualModeMenuLabel();
-    @DefaultStringValue("Toggle visual markdown editor") // $NON-NLS-1$
+    @DefaultStringValue("Switch markdown editing mode") // $NON-NLS-1$
     String toggleRmdVisualModeDesc();
     
     // enableProsemirrorDevTools

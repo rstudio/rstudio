@@ -86,6 +86,11 @@ RUN cd /tmp && \
     make && \
     make install
 
+RUN cd /tmp && \
+    wget https://github.com/ninja-build/ninja/releases/download/v1.10.2/ninja-linux.zip && \
+    unzip ninja-linux.zip && \
+    mv ninja /usr/bin
+
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN

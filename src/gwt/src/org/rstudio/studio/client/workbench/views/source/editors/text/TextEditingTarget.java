@@ -101,7 +101,7 @@ import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.ConvertToShinyDocEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
@@ -293,6 +293,7 @@ public class TextEditingTarget implements
       void manageCommandUI();
 
       void addVisualModeFindReplaceButton(ToolbarButton findReplaceButton);
+      void showVisualModeFindReplaceButton(boolean show);
       
       SourceColumn getSourceColumn();
    }
@@ -7065,7 +7066,7 @@ public class TextEditingTarget implements
          // quarto_preview will be used (e.g. for pdfs, presentations, etc.)
          String docFormat = quartoFormat();
          return (docFormat == null || Arrays.asList(config.project_formats).contains(docFormat)) &&
-                config.project_type.equals(QuartoConstants.PROJECT_WEBSITE);
+                config.project_type.equals(QuartoCommandConstants.PROJECT_WEBSITE);
                 
       }
       else
@@ -8150,7 +8151,109 @@ public class TextEditingTarget implements
       public String getExtendedFileType()
       {
          return extendedType_;
-      }      
+      }
+
+      @Override
+      public String[] getQuartoFormats()
+      {
+         if (SourceDocument.XT_QUARTO_DOCUMENT.equals(extendedType_))
+         {
+            return getQuartoOutputFormats().toArray(new String[] {});
+         }
+         else
+         {
+            return new String[] {};
+         }
+      }
+
+      @Override
+      public String[] getQuartoProjectFormats()
+      {
+         QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
+         if (quartoConfig.is_project && quartoConfig.project_formats != null)
+         {
+            return quartoConfig.project_formats;
+         }
+         else
+         {
+            return new String[] {};
+         }
+      }   
+      
+      @Override 
+      public String getQuartoEngine()
+      {
+         if (SourceDocument.XT_QUARTO_DOCUMENT.equals(extendedType_))
+         {
+            String yaml = getRmdFrontMatter();
+            if (yaml != null)
+            {
+               // see if we can use a cached parse
+               YamlTree tree = null;   
+               if (lastYaml_ != null && yaml.equals(lastYaml_))
+               {
+                  tree = lastTree_;
+               }
+               else
+               {
+                  try
+                  {
+                     tree = new YamlTree(yaml);
+                     lastYaml_ = yaml;
+                     lastTree_ = tree;
+                  }
+                  catch(Exception ex)
+                  {
+                     Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
+                  }
+               }
+               
+               // determine engine
+               String engine = tree.getKeyValue(RmdFrontMatter.ENGINE_KEY);
+               if (engine.length() > 0)
+                  return engine;
+               if (tree.getKeyValue(RmdFrontMatter.JUPYTER_KEY).length() > 0)
+                  return "jupyter";
+
+               // scan chunk engines
+               HashSet<String> chunkEngines = new HashSet<String>();
+               JsArray<Scope> scopeTree = docDisplay_.getScopeTree();
+               for (int i=0; i<scopeTree.length(); i++) 
+               {
+                  Scope scope = scopeTree.get(i);
+                  if (scope.isChunk())
+                  {  
+                     int row = scope.getPreamble().getRow();
+                     chunkEngines.add(getEngineForRow(row).toLowerCase());
+                  }
+               }
+               
+               // work out engine
+               if (chunkEngines.contains("r"))
+               {
+                  return "knitr";
+               }
+               else if (chunkEngines.size() == 1 && chunkEngines.contains("ojs"))
+               {
+                  return "markdown";
+               }
+               else if (chunkEngines.size() > 0)
+               {
+                  return "jupyter";
+               }
+               else
+               {
+                  return "markdown";
+               }               
+            }
+         }
+         
+         return null;   
+      }
+      
+      // cache front matter parse
+      String lastYaml_ = null;
+      YamlTree lastTree_ = null;
    };
 
    public CompletionContext getRCompletionContext()
