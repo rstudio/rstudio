@@ -215,8 +215,6 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             "warning");
       panel_.add(showWarningsInOutputCb_);
 
-      // TODO these 'option's seem to be used later(marked with TODO), do these need translations?
-      // also seems to be referenced in SetupChunkOptionsPopupPanel
       showMessagesInOutputCb_ = makeTriStateToggle(
             constants_.showMessages(),
             "message");
@@ -537,7 +535,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
             if (has("warning"))
                showWarningsInOutputCb_.setValue(getBoolean("warning"));
 
-            if (has("message")) //TODO here is where the 'option' seem to be used
+            if (has("message"))
                showMessagesInOutputCb_.setValue(getBoolean("message"));
 
             if (has("paged.print"))
@@ -593,7 +591,7 @@ public abstract class ChunkOptionsPopupPanel extends MiniPopupPanel
          return 10;
       else if (key == "echo")
          return 9;
-      else if (key == "warning" || key == "error" || key == "message") //TODO here is where the 'option' seem to be used
+      else if (key == "warning" || key == "error" || key == "message")
          return 8;
       else if (key.startsWith("fig."))
          return 8;

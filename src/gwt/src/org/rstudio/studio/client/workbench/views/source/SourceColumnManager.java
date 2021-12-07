@@ -108,7 +108,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
                                             DocumentCloseEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
-    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
+  private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
   public interface CPSEditingTargetCommand
    {
       void execute(EditingTarget editingTarget, Command continuation);

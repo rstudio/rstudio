@@ -1,4 +1,3 @@
-package org.rstudio.studio.client.rsconnect;
 /*
  * RsconnectConstants.java
  *
@@ -13,6 +12,9 @@ package org.rstudio.studio.client.rsconnect;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+package org.rstudio.studio.client.rsconnect;
+
 public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     /**
      * Translated "Could Not Publish".

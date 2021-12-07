@@ -1,4 +1,3 @@
-package org.rstudio.studio.client.workbench.views.source;
 /*
  * ViewsSourceConstants.java
  *
@@ -13,6 +12,9 @@ package org.rstudio.studio.client.workbench.views.source;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+package org.rstudio.studio.client.workbench.views.source;
+
 public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Messages{
     /**
      * Translated "(No documents)".
