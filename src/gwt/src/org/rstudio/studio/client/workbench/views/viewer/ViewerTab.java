@@ -37,7 +37,7 @@ public class ViewerTab extends DelayLoadWorkbenchTab<ViewerPresenter>
    @Inject
    public ViewerTab(Shim shim, Session session, EventBus eventBus)
    {
-      super("Viewer", shim);
+      super(constants_.viewerTitle(), shim);
       session_ = session;
 
       eventBus.addHandler(ViewerNavigateEvent.TYPE, shim);
@@ -49,4 +49,5 @@ public class ViewerTab extends DelayLoadWorkbenchTab<ViewerPresenter>
 
    @SuppressWarnings("unused")
    private Session session_;
+   private static final ViewerConstants constants_ = com.google.gwt.core.client.GWT.create(ViewerConstants.class);
 }

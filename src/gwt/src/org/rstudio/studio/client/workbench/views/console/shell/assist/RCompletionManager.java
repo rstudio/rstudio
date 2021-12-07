@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
@@ -49,6 +50,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.ObjectDefinition;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.CompletionResult;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
@@ -238,7 +240,7 @@ public class RCompletionManager implements CompletionManager
 
       server_.getHelpAtCursor(
             linePos.getLine(), linePos.getPosition(),
-            new SimpleRequestCallback<>("Help"));
+            new SimpleRequestCallback<>(constants_.helpCaption()));
    }
    
    public void goToDefinition()
@@ -306,7 +308,7 @@ public class RCompletionManager implements CompletionManager
       
       // delayed progress indicator
       final GlobalProgressDelayer progress = new GlobalProgressDelayer(
-            globalDisplay_, 1000, "Searching for definition...");
+            globalDisplay_, 1000, constants_.searchingForDefinitionMessage());
       
       server_.getObjectDefinition(
          lineWithPos.getLine(),
@@ -374,7 +376,7 @@ public class RCompletionManager implements CompletionManager
             {
                progress.dismiss();
                
-               globalDisplay_.showErrorMessage("Error Searching for Function",
+               globalDisplay_.showErrorMessage(constants_.errorSearchingForFunctionMessage(),
                                                error.getUserMessage());
             }
          });
@@ -1798,7 +1800,7 @@ public class RCompletionManager implements CompletionManager
             if (canAutoAccept_)
             {
                popup_.showErrorMessage(
-                     "(No matches)", 
+                     constants_.noMatchesLabel(),
                      new PopupPositioner(input_.getCursorBounds(), popup_));
             }
             else
@@ -2246,4 +2248,5 @@ public class RCompletionManager implements CompletionManager
    }
    
    private final HandlerRegistrations handlers_;
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

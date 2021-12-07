@@ -375,4 +375,267 @@ public interface ConnectionsConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("Connect to Existing Data Sources")
     @Key("connectExistingDataSourceCaption")
     String connectExistingDataSourceCaption();
+
+    /**
+     * Translated "{0} via {1}".
+     *
+     * @return translated "{0} via {1}"
+     */
+    @DefaultMessage("{0} via {1}")
+    @Key("connectionInfoSubTitle")
+    String connectionInfoSubTitle(String name, String source);
+
+    /**
+     * Translated "title".
+     *
+     * @return translated "title"
+     */
+    @DefaultMessage("title")
+    @Key("titleText")
+    String titleText();
+
+    /**
+     * Translated "The {0} driver is currently not installed. ".
+     *
+     * @return translated "The {0} driver is currently not installed. "
+     */
+    @DefaultMessage("The {0} driver is currently not installed. ")
+    @Key("driverLabelText")
+    String driverLabelText(String name);
+
+    /**
+     * Translated "{0} Installation".
+     *
+     * @return translated "{0} Installation"
+     */
+    @DefaultMessage("{0} Installation")
+    @Key("installOdbcCaption")
+    String installOdbcCaption(String name);
+
+    /**
+     * Translated "Connecting to ".
+     *
+     * @return translated "Connecting to "
+     */
+    @DefaultMessage("Connecting to ")
+    @Key("connectionUserActionLabel")
+    String connectionUserActionLabel();
+
+    /**
+     * Translated "Shiny Mini UI".
+     *
+     * @return translated "Shiny Mini UI"
+     */
+    @DefaultMessage("Shiny Mini UI")
+    @Key("shinyMiniUITitle")
+    String shinyMiniUITitle();
+
+
+    /**
+     * Translated "{0} Connection".
+     *
+     * @return translated "{0} Connection"
+     */
+    @DefaultMessage("{0} Connection")
+    @Key("newConnectionPage")
+    String newConnectionPage(String name);
+
+    /**
+     * Translated "Using {0}".
+     *
+     * @return translated "Using {0}"
+     */
+    @DefaultMessage("Using {0}")
+    @Key("connectionHelpLink")
+    String connectionHelpLink(String name);
+
+    /**
+     * Translated "Advanced Options".
+     *
+     * @return translated "Advanced Options"
+     */
+    @DefaultMessage("Advanced Options")
+    @Key("advancedOptionsCaption")
+    String advancedOptionsCaption();
+
+    /**
+     * Translated "Configure".
+     *
+     * @return translated "Configure"
+     */
+    @DefaultMessage("Configure")
+    @Key("configureButtonLabel")
+    String configureButtonLabel();
+
+    /**
+     * Translated "Using {0}".
+     *
+     * @return translated "Using {0}"
+     */
+    @DefaultMessage("Using {0}")
+    @Key("newConnectionInfoCaption")
+    String newConnectionInfoCaption(String name);
+
+    /**
+     * Translated "<b>Success!</b> The given parameters can be used to connect and disconnect correctly.".
+     *
+     * @return translated "<b>Success!</b> The given parameters can be used to connect and disconnect correctly."
+     */
+    @DefaultMessage("<b>Success!</b> The given parameters can be used to connect and disconnect correctly.")
+    @Key("newConnectionSuccessHTML")
+    String newConnectionSuccessHTML();
+
+    /**
+     * Translated "Test Results".
+     *
+     * @return translated "Test Results"
+     */
+    @DefaultMessage("Test Results")
+    @Key("testResultsCaption")
+    String testResultsCaption();
+
+    /**
+     * Translated "OK".
+     *
+     * @return translated "OK"
+     */
+    @DefaultMessage("OK")
+    @Key("okLabel")
+    String okLabel();
+
+    /**
+     * Translated "<b>Failure.</b> ".
+     *
+     * @return translated "<b>Failure.</b> "
+     */
+    @DefaultMessage("<b>Failure.</b> ")
+    @Key("failureHTML")
+    String failureHTML();
+
+    /**
+     * Translated "Test".
+     *
+     * @return translated "Test"
+     */
+    @DefaultMessage("Test")
+    @Key("testButtonLabel")
+    String testButtonLabel();
+
+    /**
+     * Translated "Testing Connection...".
+     *
+     * @return translated "Testing Connection..."
+     */
+    @DefaultMessage("Testing Connection...")
+    @Key("testingConnectionProgressMessage")
+    String testingConnectionProgressMessage();
+
+    /**
+     * Translated "Options...".
+     *
+     * @return translated "Options..."
+     */
+    @DefaultMessage("Options...")
+    @Key("optionsButtonLabel")
+    String optionsButtonLabel();
+
+    /**
+     * Translated "Uninstall...".
+     *
+     * @return translated "Uninstall..."
+     */
+    @DefaultMessage("Uninstall...")
+    @Key("uninstallButton")
+    String uninstallButton();
+
+    /**
+     * Translated "Uninstall {0} Driver".
+     *
+     * @return translated "Uninstall {0} Driver"
+     */
+    @DefaultMessage("Uninstall {0} Driver")
+    @Key("uninstallDriverCaption")
+    String uninstallDriverCaption(String name);
+
+    /**
+     * Translated "Uninstall the {0} driver by removing files and registration entries?".
+     *
+     * @return translated "Uninstall the {0} driver by removing files and registration entries?"
+     */
+    @DefaultMessage("Uninstall the {0} driver by removing files and registration entries?")
+    @Key("uninstallDriverMessage")
+    String uninstallDriverMessage(String name);
+
+    /**
+     * Translated "Uninstallation failed".
+     *
+     * @return translated "Uninstallation failed"
+     */
+    @DefaultMessage("Uninstallation failed")
+    @Key("uninstallationFailedCaption")
+    String uninstallationFailedCaption();
+
+    /**
+     * Translated "Uninstallation complete".
+     *
+     * @return translated "Uninstallation complete"
+     */
+    @DefaultMessage("Uninstallation complete")
+    @Key("uninstallationCompleteCaption")
+    String uninstallationCompleteCaption();
+
+    /**
+     * Translated "Driver {0} was successfully uninstalled.".
+     *
+     * @return translated "Driver {0} was successfully uninstalled."
+     */
+    @DefaultMessage("Driver {0} was successfully uninstalled.")
+    @Key("driverUninstalledSuccess")
+    String driverUninstalledSuccess(String name);
+
+    /**
+     * Translated "Uninstallation failed".
+     *
+     * @return translated "Uninstallation failed"
+     */
+    @DefaultMessage("Uninstallation failed")
+    @Key("uninstalledFailedMessage")
+    String uninstalledFailedMessage();
+
+    /**
+     * Translated "New Connection".
+     *
+     * @return translated "New Connection"
+     */
+    @DefaultMessage("New Connection")
+    @Key("newConnectionCaption")
+    String newConnectionCaption();
+
+    /**
+     * Translated "Using RStudio Connections".
+     *
+     * @return translated "Using RStudio Connections"
+     */
+    @DefaultMessage("Using RStudio Connections")
+    @Key("rstudioConnectionsCaption")
+    String rstudioConnectionsCaption();
+
+    /**
+     * Translated "Loading objects".
+     *
+     * @return translated "Loading objects"
+     */
+    @DefaultMessage("Loading objects")
+    @Key("loadingObjectsMessage")
+    String loadingObjectsMessage();
+
+    /**
+     * Translated ""View table (up to 1,000 records)"".
+     *
+     * @return translated ""View table (up to 1,000 records)""
+     */
+    @DefaultMessage("\"View table (up to 1,000 records)\"")
+    @Key("viewTableHTML")
+    String viewTableHTML();
+
 }

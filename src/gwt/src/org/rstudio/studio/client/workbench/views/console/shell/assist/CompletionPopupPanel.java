@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -44,6 +45,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
@@ -60,7 +62,7 @@ public class CompletionPopupPanel extends ThemedPopupPanel
       help_ = new HelpInfoPopupPanel();
       help_.setWidth("400px");
 
-      truncated_ = new Label("... Not all items shown");
+      truncated_ = new Label(constants_.notAllItemsShownText());
       truncated_.setStylePrimaryName(styles_.truncatedLabel());
 
       setStylePrimaryName(styles_.completionPopup());
@@ -473,5 +475,6 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    private final NativePreviewHandler handler_;
    private HandlerRegistration handlerRegistration_;
    private ShortcutManager.Handle handle_;
-   
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
+
 }

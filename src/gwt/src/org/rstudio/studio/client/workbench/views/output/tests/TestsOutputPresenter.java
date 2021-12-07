@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEv
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildOutputEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildStartedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
@@ -53,8 +54,8 @@ public class TestsOutputPresenter extends BusyPresenter
                                Commands commands,
                                EventBus events)
    {
-      super(outputFactory.create("Tests",
-                                 "View test results"));
+      super(outputFactory.create(constants_.testsTaskName(),
+                                 constants_.viewTestResultsTitle()));
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
       server_ = server;
@@ -139,15 +140,15 @@ public class TestsOutputPresenter extends BusyPresenter
    private void terminateTests()
    {
       server_.terminateBuild(new DelayedProgressRequestCallback<Boolean>(
-                                                       "Terminating Tests..."){
+                                                       constants_.terminatingTestsProgressMessage()){
          @Override
          protected void onSuccess(Boolean response)
          {
             if (!response)
             {
                globalDisplay_.showErrorMessage(
-                  "Error Terminating Tests",
-                  "Unable to terminate tests. Please try again.");
+                  constants_.errorTerminatingTestsCaption(),
+                  constants_.errorTerminatingTestsMessage());
             }
          }
       });
@@ -157,4 +158,5 @@ public class TestsOutputPresenter extends BusyPresenter
    private final CompileOutputPaneDisplay view_;
    private final GlobalDisplay globalDisplay_;
    private final PaneManager paneManager_;
+   private static final OutputConstants constants_ = com.google.gwt.core.client.GWT.create(OutputConstants.class);
 }

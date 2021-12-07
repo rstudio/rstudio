@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -30,6 +31,7 @@ import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.CompletionContext;
@@ -174,7 +176,7 @@ public abstract class CompletionManagerBase
          if (data.autoAcceptSingleCompletionResult())
          {
             popup_.showErrorMessage(
-                  "(No matches)",
+                  constants_.noMatchesLabel(),
                   new PopupPositioner(docDisplay_.getCursorBounds(), popup_));
          }
          else
@@ -1024,4 +1026,5 @@ public abstract class CompletionManagerBase
    
    protected EventBus events_;
    protected UserPrefs userPrefs_;
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

@@ -61,8 +61,8 @@ public class TerminalHelper
 
       globalDisplay_.showYesNoMessage(
             MessageDialog.QUESTION,
-            caption, 
-            "The terminal is currently busy. " + question,
+            caption,
+            constants_.terminalBusyMessage(question),
             command::execute,
             true);
    }
@@ -72,4 +72,5 @@ public class TerminalHelper
    // Injected ----  
    private GlobalDisplay globalDisplay_;
    private EventBus events_;
- }
+   private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
+}

@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.FastSelectTable;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.history.HasHistory;
+import org.rstudio.studio.client.workbench.views.history.HistoryConstants;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryEntryItemCodec.TimestampMode;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane.Resources;
@@ -50,7 +51,7 @@ public class HistoryTable extends FastSelectTable<HistoryEntry, String, Long>
             selectedClassName,
             true,
             true,
-            "History Entry Table");
+            constants_.historyEntryTableText());
 
       searchResult_ = timestampMode == TimestampMode.ITEM;
       
@@ -127,4 +128,5 @@ public class HistoryTable extends FastSelectTable<HistoryEntry, String, Long>
 
    private TableColElement lastCol_;
    private boolean searchResult_;
+   private static final HistoryConstants constants_ = GWT.create(HistoryConstants.class);
 }

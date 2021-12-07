@@ -186,7 +186,7 @@ public class Presentation extends BasePresenter
    
    public void onShowPresentationPane(ShowPresentationPaneEvent event)
    {
-      globalDisplay_.showProgress("Opening Presentation...");
+      globalDisplay_.showProgress(constants_.openingPresentationProgressMessage());
       reloadWorkbench();
    }
    
@@ -633,4 +633,5 @@ public class Presentation extends BasePresenter
    private FileSystemItem saveAsStandaloneDefaultPath_ = null;
    
    private HandlerManager handlerManager_ = new HandlerManager(this);
+   private static final PresentationConstants constants_ = com.google.gwt.core.client.GWT.create(PresentationConstants.class);
 }

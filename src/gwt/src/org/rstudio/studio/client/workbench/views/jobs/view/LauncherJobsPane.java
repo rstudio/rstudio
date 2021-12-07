@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.LauncherJobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
@@ -33,7 +35,7 @@ public class LauncherJobsPane extends WorkbenchPane
    public LauncherJobsPane(UserPrefs uiPrefs,
                            LauncherJobsPaneWidgets widgets)
    {
-      super("Launcher");
+      super(constants_.launcherTitle());
       
       uiPrefs_ = uiPrefs;
       widgets_ = widgets;
@@ -116,4 +118,5 @@ public class LauncherJobsPane extends WorkbenchPane
    // injected
    private final UserPrefs uiPrefs_;
    private final LauncherJobsPaneWidgets widgets_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

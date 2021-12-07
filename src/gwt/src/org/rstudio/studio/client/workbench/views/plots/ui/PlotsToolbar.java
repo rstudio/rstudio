@@ -25,12 +25,13 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.plots.PlotsConstants;
 
 public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
 {    
    public PlotsToolbar(Commands commands, RSConnectPublishButton publishButton)
    {
-      super("Plots Pane");
+      super(constants_.plotsPaneLabel());
       commands_ = commands;
       publishButton_ = publishButton;
       installStandardUI();
@@ -67,7 +68,7 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
       exportMenu.addItem(commands_.copyPlotToClipboard().createMenuItem(false));
       
       ToolbarMenuButton exportButton = new ToolbarMenuButton(
-            "Export", ToolbarButton.NoTitle, 
+            constants_.exportText(), ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
       ElementIds.assignElementId(exportButton, ElementIds.MB_PLOTS_EXPORT);
@@ -94,4 +95,5 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
    
    private final Commands commands_;   
    private final RSConnectPublishButton publishButton_;
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }

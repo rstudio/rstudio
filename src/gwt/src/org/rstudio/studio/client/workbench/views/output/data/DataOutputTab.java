@@ -27,6 +27,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCompletedEvent;
 
 public class DataOutputTab
@@ -49,7 +50,7 @@ public class DataOutputTab
                         Commands commands,
                         final Session session)
    {
-      super("SQL Results", shim);
+      super(constants_.sqlResultsTitle(), shim);
       shim_ = shim;
 
       GWT.<Binder>create(Binder.class).bind(commands, shim);
@@ -69,4 +70,5 @@ public class DataOutputTab
    }
 
    private final Shim shim_;
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

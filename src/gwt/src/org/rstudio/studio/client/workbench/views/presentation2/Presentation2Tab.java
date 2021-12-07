@@ -60,7 +60,7 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
       // This should always be title "Presentation" (rather than the name of the underlying
       // tab "Presentations". The proper name is "Presentation", we just used
       // "Presentations" so the configurations wouldn't conflict.
-      super("Presentation", shim);
+      super(constants_.presentationTitle(), shim);
       session_ = session;
       binder.bind(commands, shim);
       eventBus.addHandler(PresentationPreviewEvent.TYPE, shim);
@@ -95,4 +95,5 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
    }
    
    private final Session session_;
+   private static final Presentation2Constants constants_ = com.google.gwt.core.client.GWT.create(Presentation2Constants.class);
 }

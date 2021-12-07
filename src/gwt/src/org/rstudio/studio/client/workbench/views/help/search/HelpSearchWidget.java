@@ -15,11 +15,13 @@
 package org.rstudio.studio.client.workbench.views.help.search;
 
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.SearchDisplay;
 import org.rstudio.core.client.widget.SearchWidget;
 
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.help.HelpConstants;
 
 
 public class HelpSearchWidget extends SearchWidget 
@@ -28,7 +30,7 @@ public class HelpSearchWidget extends SearchWidget
    @Inject
    public HelpSearchWidget(HelpSearchOracle oracle)
    {
-      super("Search help", oracle);
+      super(constants_.searchHelpLabel(), oracle);
       ElementIds.assignElementId(this, ElementIds.SW_HELP);
    }
 
@@ -37,4 +39,5 @@ public class HelpSearchWidget extends SearchWidget
    {
       return this;
    }
+   private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
 }

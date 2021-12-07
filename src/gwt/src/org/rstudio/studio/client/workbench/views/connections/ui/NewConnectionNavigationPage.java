@@ -80,7 +80,7 @@ public class NewConnectionNavigationPage
          if (!connectionInfo.getLicensed() || 
              RStudioGinjector.INSTANCE.getSession().getSessionInfo().getSupportDriverLicensing()) {
 
-            String subTitle = connectionInfo.getName() + " via " + connectionInfo.getSource();
+            String subTitle = constants_.connectionInfoSubTitle(connectionInfo.getName(),connectionInfo.getSource());
 
             if (connectionInfo.getType() == "Shiny") {
                pages.add(new NewConnectionShinyPage(connectionInfo, subTitle));
@@ -222,7 +222,7 @@ public class NewConnectionNavigationPage
          
          Label mainLabel = new Label(page.getTitle());
          mainLabel.addStyleName(WizardResources.INSTANCE.styles().wizardPageSelectorItemLabel());
-         mainLabel.getElement().setAttribute("title", page.getSubTitle());
+         mainLabel.getElement().setAttribute(constants_.titleText(), page.getSubTitle());
          panel.add(mainLabel);
 
          clickManager_ = new ButtonClickManager(panel, handler);

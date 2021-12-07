@@ -27,6 +27,7 @@ import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight
 import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.model.SourceCppState;
 
 public class SourceCppOutputPane extends WorkbenchPane
@@ -35,7 +36,7 @@ public class SourceCppOutputPane extends WorkbenchPane
    @Inject
    public SourceCppOutputPane()
    {
-      super("Source Cpp");
+      super(constants_.sourceCppTitle());
       compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
       ensureWidget();
    }
@@ -49,7 +50,7 @@ public class SourceCppOutputPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("C++ Tab");
+      Toolbar toolbar = new Toolbar(constants_.cPlusPlusTabTitle());
       fileLabel_ = new ToolbarFileLabel(toolbar, 200);
       compilePanel_.connectToolbar(toolbar);
       return toolbar;
@@ -101,4 +102,5 @@ public class SourceCppOutputPane extends WorkbenchPane
  
    private ToolbarFileLabel fileLabel_;
    private CompilePanel compilePanel_;
+   private static final OutputConstants constants_ = com.google.gwt.core.client.GWT.create(OutputConstants.class);
 }

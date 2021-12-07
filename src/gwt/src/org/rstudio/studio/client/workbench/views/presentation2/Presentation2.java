@@ -30,6 +30,7 @@ import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
+import org.rstudio.studio.client.workbench.views.plots.PlotsConstants;
 import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationHashChangeEvent;
 import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationInitEvent;
 import org.rstudio.studio.client.workbench.views.presentation2.events.PresentationPreviewEvent;
@@ -248,4 +249,5 @@ public class Presentation2 extends BasePresenter
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;
    private final ApplicationServerOperations server_;
+   private static final PlotsConstants Presentation2Constants = com.google.gwt.core.client.GWT.create(Presentation2Constants.class);
 }

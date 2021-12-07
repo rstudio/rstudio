@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobElapsedTickEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobInitEvent;
@@ -183,14 +185,14 @@ public class JobManager implements JobRefreshEvent.Handler,
    {
       display_.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
-            "Remove Completed Local Jobs",
-            "Are you sure you want to remove completed local jobs from the list of jobs?\n\nOnce removed, local jobs cannot be recovered.",
+            constants_.removeCompletedLocalJobsCaption(),
+            constants_.removeCompletedLocalJobsMessage(),
             false, // include cancel
             () ->  server_.clearJobs(new VoidServerRequestCallback()),
             null,  // do nothing on No
             null,  // do nothing on Cancel
-            "Remove jobs",
-            "Cancel",
+            constants_.removeJobsLabel(),
+            constants_.cancelLabel(),
             false // yes is not default
             );
    }
@@ -295,7 +297,7 @@ public class JobManager implements JobRefreshEvent.Handler,
       if (idxFirst == idxLast)
          name = jobs.get(idxFirst).name;
       else
-         name =  numJobs + " jobs";
+         name =  constants_.numJobsLabel(numJobs);
 
       // compute total progress units and longest running job
       int progress = 0;
@@ -381,7 +383,7 @@ public class JobManager implements JobRefreshEvent.Handler,
 
    private void showJobLauncherDialog(FileSystemItem path, FileSystemItem workingDir, String code)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog("Run Selection as Job",
+      JobLauncherDialog dialog = new JobLauncherDialog(constants_.runSelectionAsJobCaption(),
             JobLauncherDialog.JobSource.Selection,
             path,
             workingDir,
@@ -397,7 +399,7 @@ public class JobManager implements JobRefreshEvent.Handler,
 
    private void showJobLauncherDialog(FileSystemItem path)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog("Run Script as Local Job",
+      JobLauncherDialog dialog = new JobLauncherDialog(constants_.runScriptAsLocalJobCaption(),
             JobLauncherDialog.JobSource.Script,
             path,
             spec ->
@@ -464,4 +466,5 @@ public class JobManager implements JobRefreshEvent.Handler,
    private final JobsServerOperations server_;
    private final Provider<SourceWindowManager> pSourceManager_;
    private final GlobalDisplay display_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

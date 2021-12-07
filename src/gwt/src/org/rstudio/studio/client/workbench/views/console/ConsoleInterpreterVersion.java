@@ -171,7 +171,7 @@ public class ConsoleInterpreterVersion
    
    private String rVersionLabel()
    {
-      String version = "(unknown)";
+      String version = constants_.unknownLabel();
       
       try
       {
@@ -245,5 +245,6 @@ public class ConsoleInterpreterVersion
    {
       RES.styles().ensureInjected();
    }
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 
 }

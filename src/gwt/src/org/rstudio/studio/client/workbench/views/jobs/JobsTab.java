@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -52,7 +53,7 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
                         Commands commands,
                         EventBus events)
    {
-      super("Jobs", shim);
+      super(constants_.jobsTitle(), shim);
       shim_ = shim;
       
       binder.bind(commands, shim);
@@ -89,4 +90,5 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
    }
    
    final Shim shim_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

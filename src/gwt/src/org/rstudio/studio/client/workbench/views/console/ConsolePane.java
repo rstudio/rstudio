@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.console;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
@@ -78,7 +79,7 @@ public class ConsolePane extends WorkbenchPane
       // has tabs (e.g. at least one other pane is being shown, such as Terminal), but
       // having it always marked with that role is fine
       Roles.getTabpanelRole().set(this.getElement());
-      Roles.getTabpanelRole().setAriaLabelProperty(this.getElement(), "Console");
+      Roles.getTabpanelRole().setAriaLabelProperty(this.getElement(), constants_.consoleLabel());
 
       // console is interacted with immediately so we make sure it
       // is always created during startup
@@ -129,7 +130,7 @@ public class ConsolePane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Console Tab");
+      Toolbar toolbar = new Toolbar(constants_.consoleTabLabel());
       
       consoleInterpreterVersion_ = new ConsoleInterpreterVersion(true);
       toolbar.addLeftWidget(consoleInterpreterVersion_);
@@ -163,7 +164,7 @@ public class ConsolePane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      secondaryToolbar_ = new SecondaryToolbar(true, "Console Tab Second");
+      secondaryToolbar_ = new SecondaryToolbar(true, constants_.consoleTabSecondLabel());
       secondaryToolbar_.getWrapper().addStyleName(ThemeStyles.INSTANCE.tallerToolbarWrapper());
        
       return secondaryToolbar_;
@@ -177,7 +178,7 @@ public class ConsolePane extends WorkbenchPane
       syncSecondaryToolbar();
 
       shell_ = consoleProvider_.get();
-      shell_.getDisplay().setTextInputAriaLabel("Console");
+      shell_.getDisplay().setTextInputAriaLabel(constants_.consoleLabel());
       return (Widget) shell_.getDisplay();
    }
 
@@ -274,11 +275,11 @@ public class ConsolePane extends WorkbenchPane
    {
       if (language == Language.R)
       {
-         consoleInterruptButton_.setTitle("Interrupt R");
+         consoleInterruptButton_.setTitle(constants_.interruptRTitle());
       }
       else if (language == Language.PYTHON)
       {
-         consoleInterruptButton_.setTitle("Interrupt Python");
+         consoleInterruptButton_.setTitle(constants_.interruptPythonTitle());
       }
    }
    
@@ -313,7 +314,7 @@ public class ConsolePane extends WorkbenchPane
 
    private void initDebugToolbar()
    {
-      secondaryToolbar_.setLabel("Console Tab Debug");
+      secondaryToolbar_.setLabel(constants_.consoleTabDebugLabel());
       secondaryToolbar_.addLeftWidget(commands_.debugStep().createToolbarButton()); 
       if (session_.getSessionInfo().getHaveAdvancedStepCommands())
       {
@@ -330,14 +331,14 @@ public class ConsolePane extends WorkbenchPane
 
    private void initProfilerToolbar()
    {
-      secondaryToolbar_.setLabel("Console Tab Profiler");
+      secondaryToolbar_.setLabel(constants_.consoleTabProfilerLabel());
       secondaryToolbar_.addLeftWidget(commands_.stopProfiler().createToolbarButton()); 
    }
 
    private void initJobToolbar()
    {
       progress_ = progressProvider_.get();
-      secondaryToolbar_.setLabel("Console Tab Job Progress");
+      secondaryToolbar_.setLabel(constants_.consoleJobProgress());
       secondaryToolbar_.addLeftWidget(progress_.asWidget());
       secondaryToolbar_.setLeftWidgetWidth(progress_.asWidget(), "100%");
 
@@ -359,4 +360,5 @@ public class ConsolePane extends WorkbenchPane
    private Image profilerInterruptButton_;
    private Stack<ConsoleMode> mode_;
    private SecondaryToolbar secondaryToolbar_;
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.output.find;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dev.shell.Icons;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -24,6 +25,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 
@@ -48,7 +50,7 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
                         Commands commands,
                         final Session session)
    {
-      super("Find in Files", shim);
+      super(constants_.findInFilesCaption(), shim);
       shim_ = shim;
 
       events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
@@ -75,4 +77,5 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
    }
 
    private final Shim shim_;
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

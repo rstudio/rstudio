@@ -363,8 +363,8 @@ public class ViewerPresenter extends BasePresenter
       display_.bringToFront();
 
       final ProgressIndicator indicator =
-         globalDisplay_.getProgressIndicator("Error");
-      indicator.onProgress("Preparing to export plot...");
+         globalDisplay_.getProgressIndicator(constants_.errorCaption());
+      indicator.onProgress(constants_.preparingToExportPlotMessage());
 
       // get the default directory
       FileSystemItem defaultDir = ExportPlotUtils.getDefaultSaveDirectory(
@@ -407,13 +407,13 @@ public class ViewerPresenter extends BasePresenter
       if (saveAsWebPageDefaultPath_ == null)
          saveAsWebPageDefaultPath_ = workbenchContext_.getCurrentWorkingDir();
 
-      dependencyManager_.withRMarkdown("Saving standalone web pages",
+      dependencyManager_.withRMarkdown(constants_.savingStandaloneWebPagesMessage(),
                                        new Command() {
          @Override
          public void execute()
          {
             fileDialogs_.saveFile(
-                  "Save As Web Page",
+                  constants_.saveAsWebPageCaption(),
                   fileSystemContext_,
                   saveAsWebPageDefaultPath_,
                   ".html",
@@ -430,7 +430,7 @@ public class ViewerPresenter extends BasePresenter
                            return;
                         }
 
-                        indicator.onProgress("Saving as web page...");
+                        indicator.onProgress(constants_.savingAsWebPageMessage());
 
                         server_.viewerSaveAsWebPage(
                               targetFile.getPath(),
@@ -486,14 +486,14 @@ public class ViewerPresenter extends BasePresenter
       // confirm
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
 
-         "Clear Viewer",
+         constants_.clearViewerCaption(),
 
-         "Are you sure you want to clear all of the items in the history?",
+         constants_.clearViewerMessage(),
 
          new ProgressOperation() {
             public void execute(final ProgressIndicator indicator)
             {
-               indicator.onProgress("Clearing viewer...");
+               indicator.onProgress(constants_.clearingViewerMessage());
                stop(false, true, indicator);
             }
          },
@@ -695,5 +695,5 @@ public class ViewerPresenter extends BasePresenter
    private Size zoomWindowDefaultSize_ = null;
 
    private HtmlMessageListener htmlMessageListener_;
-
+   private static final ViewerConstants constants_ = com.google.gwt.core.client.GWT.create(ViewerConstants.class);
 }

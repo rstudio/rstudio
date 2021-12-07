@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.files.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
 import com.google.gwt.event.logical.shared.ResizeEvent;
@@ -29,13 +30,14 @@ import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.files.FilesConstants;
 
 public class FileCommandToolbar extends Toolbar
 {
    @Inject
    public FileCommandToolbar(Commands commands, UserPrefs prefs)
    {
-      super("File Commands");
+      super(constants_.fileCommandsLabel());
       StandardIcons icons = StandardIcons.INSTANCE;
 
       newFolderButton_ = commands.newFolder().createToolbarButton();
@@ -64,8 +66,8 @@ public class FileCommandToolbar extends Toolbar
       newFileMenu.addItem(commands.touchRHTMLDoc().createMenuItem(false));
 
       newFileButton_ = new ToolbarMenuButton(
-            "New Blank File",
-            "Create a new blank file in current directory",
+            constants_.newBlankFileText(),
+            constants_.createNewBlankFileText(),
             new ImageResource2x(icons.stock_new2x()),
             newFileMenu);
       ElementIds.assignElementId(newFileButton_, ElementIds.MB_FILES_TOUCH_FILE);
@@ -100,17 +102,17 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addItem(commands.setAsWorkingDir().createMenuItem(false));
       moreMenu.addItem(commands.goToWorkingDir().createMenuItem(false));
       moreMenu.addItem(new UserPrefMenuItem<>(prefs.syncFilesPaneWorkingDir(), true,
-         "Synchronize Working Directory", prefs));
+         constants_.synchronizeWorkingDirectoryLabel(), prefs));
       moreMenu.addSeparator();
       moreMenu.addItem(commands.openNewTerminalAtFilePaneLocation().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands.showFolder().createMenuItem(false));
       moreMenu.addSeparator();
-      moreMenu.addItem(new UserPrefMenuItem<>(prefs.showHiddenFiles(), true, "Show Hidden Files", prefs));
+      moreMenu.addItem(new UserPrefMenuItem<>(prefs.showHiddenFiles(), true, constants_.showHiddenFilesLabel(), prefs));
 
       moreButton_ = new ToolbarMenuButton(
-            "More",
-            "More file commands",
+            constants_.moreText(),
+            constants_.moreFileCommandsLabel(),
             new ImageResource2x(icons.more_actions2x()),
             moreMenu);
       ElementIds.assignElementId(moreButton_, ElementIds.MB_FILES_MORE);
@@ -144,21 +146,21 @@ public class FileCommandToolbar extends Toolbar
       }
       else if (width < 540)
       {
-         newFolderButton_.setText("Folder");
-         newFileButton_.setText("Blank File");
-         uploadButton_.setText("Upload");
-         deleteButton_.setText("Delete");
-         renameButton_.setText("Rename");
+         newFolderButton_.setText(constants_.folderText());
+         newFileButton_.setText(constants_.blankFileText());
+         uploadButton_.setText(constants_.uploadText());
+         deleteButton_.setText(constants_.deleteText());
+         renameButton_.setText(constants_.renameText());
          moreButton_.setText("");
       }
       else
       {
-         newFolderButton_.setText("New Folder");
-         newFileButton_.setText("New Blank File");
-         uploadButton_.setText("Upload");
-         deleteButton_.setText("Delete");
-         renameButton_.setText("Rename");
-         moreButton_.setText("More");
+         newFolderButton_.setText(constants_.newFolderText());
+         newFileButton_.setText(constants_.newBlankFileText());
+         uploadButton_.setText(constants_.uploadText());
+         deleteButton_.setText(constants_.deleteText());
+         renameButton_.setText(constants_.renameText());
+         moreButton_.setText(constants_.moreText());
       }
    }
 
@@ -168,4 +170,5 @@ public class FileCommandToolbar extends Toolbar
    private ToolbarButton deleteButton_;
    private ToolbarButton renameButton_;
    private ToolbarMenuButton moreButton_;
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

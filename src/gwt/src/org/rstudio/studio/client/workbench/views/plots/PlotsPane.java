@@ -51,7 +51,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    public PlotsPane(Commands commands, EventBus events, PlotsServerOperations server,
          DependencyManager dependencies)
    {
-      super("Plots", events);
+      super(constants_.plotsTitle(), events);
       commands_ = commands;
       server_ = server;
       dependencies_ = dependencies;
@@ -68,14 +68,14 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
          @Override
          public String getTitle()
          {
-            return "Current Plot";
+            return constants_.currentPlotTitle();
          }
 
          @Override
          public void generatePublishHtml(
                final CommandWithArg<String> onComplete)
          {
-            dependencies_.withRMarkdown("Publishing plots", new Command()
+            dependencies_.withRMarkdown(constants_.publishingPlotsLabel(), new Command()
             {
                @Override
                public void execute()
@@ -85,7 +85,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
                        new Size(400, 350),
                        new Size(800, 700));
                   server_.plotsCreateRPubsHtml(
-                     "Plot",
+                     constants_.plotText(),
                      "",
                      size.width,
                      size.height,
@@ -249,5 +249,6 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
          plotsToolbar_.removeCustomToolbar();
       }
    };
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 
 }

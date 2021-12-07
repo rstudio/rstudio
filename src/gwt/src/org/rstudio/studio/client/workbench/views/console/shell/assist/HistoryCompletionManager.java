@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -29,6 +30,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.KeyDownPreviewHandler;
 import org.rstudio.studio.client.workbench.views.console.shell.KeyPressPreviewHandler;
@@ -263,7 +265,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          if (resp.length() == 0)
          {
             popup_ = new CompletionListPopupPanel<>(new HistoryMatch[0]);
-            popup_.setText("(No matching commands)");
+            popup_.setText(constants_.noMatchingCommandsText());
             mode_ = PopupMode.PopupNoResults;
          }
          else
@@ -384,4 +386,5 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
    private final InputEditorDisplay input_;
    private final HistoryServerOperations server_;
    private final Invalidation historyRequestInvalidation_ = new Invalidation();
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

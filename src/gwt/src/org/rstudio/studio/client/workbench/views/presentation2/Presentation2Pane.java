@@ -63,7 +63,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       // This should always be title "Presentation" (rather than the name of the underlying
       // tab "Presentations". The proper name is "Presentation", we just used
       // "Presentations" so the configurations wouldn't conflict.
-      super("Presentation");
+      super(constants_.presentationTitle());
       commands_ = commands;
       server_ = server;
       ensureWidget();
@@ -75,14 +75,14 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar("Presentation Toolbar");
+      toolbar_ = new Toolbar(constants_.presentationToolbarLabel());
       
       
       toolbar_.addLeftWidget(commands_.presentation2Present().createToolbarButton());
       
       ToolbarPopupMenu presentMenu = new ToolbarPopupMenu();
       presentMenu.addItem(commands_.presentation2PresentFromBeginning().createMenuItem(false));
-      ToolbarMenuButton presentButton = new ToolbarMenuButton(ToolbarButton.NoText, "Present", presentMenu, true);
+      ToolbarMenuButton presentButton = new ToolbarMenuButton(ToolbarButton.NoText, constants_.presentTitle(), presentMenu, true);
       presentButton.setEnabled(commands_.presentation2PresentFromBeginning().isEnabled());
       commands_.presentation2PresentFromBeginning().addEnabledChangedHandler(event -> {
          presentButton.setEnabled(commands_.presentation2PresentFromBeginning().isEnabled());
@@ -110,7 +110,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar("Presentation Slides Toolbar");
+      SecondaryToolbar toolbar = new SecondaryToolbar(constants_.presentationSlidesToolbarLabel());
       toolbar.addLeftWidget(commands_.presentation2Prev().createToolbarButton());
       toolbar.addLeftWidget(commands_.presentation2Next().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -130,7 +130,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame("Presentation Preview");
+      frame_ = new RStudioFrame(constants_.presentationPreviewTitle());
       frame_.addStyleName("ace_editor_theme");
       frame_.setSize("100%", "100%");
       frame_.setUrl(URIConstants.ABOUT_BLANK);
@@ -448,4 +448,5 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    private RStudioFrame frame_;
   
    private HandlerManager handlerManager_ = new HandlerManager(this);
+   private static final Presentation2Constants constants_ = com.google.gwt.core.client.GWT.create(Presentation2Constants.class);
 }
