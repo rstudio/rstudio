@@ -4,7 +4,7 @@ createFullPackageFileName();
 
 const { loadCMakeVars } = require('./scripts/fix-library-paths.js');
 
-loadCMakeVars(__dirname + '/../../build/CMakeCache.txt');
+loadCMakeVars(__dirname + '/../../../package/osx/build/CMakeCache.txt');
 
 const config = {
   hooks: {
