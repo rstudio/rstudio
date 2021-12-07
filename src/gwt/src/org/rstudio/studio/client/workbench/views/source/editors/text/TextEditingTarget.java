@@ -8217,10 +8217,10 @@ public class TextEditingTarget implements
 
                // scan chunk engines
                HashSet<String> chunkEngines = new HashSet<String>();
-               JsArray<Scope> scopeTree = docDisplay_.getScopeTree();
-               for (int i=0; i<scopeTree.length(); i++) 
+               ScopeList scopeList = new ScopeList(docDisplay_);
+               for (int i=0; i<scopeList.size(); i++) 
                {
-                  Scope scope = scopeTree.get(i);
+                  Scope scope = scopeList.get(i);
                   if (scope.isChunk())
                   {  
                      int row = scope.getPreamble().getRow();

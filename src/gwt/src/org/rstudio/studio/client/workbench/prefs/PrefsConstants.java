@@ -1275,6 +1275,24 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String otherDoubleClickLabel();
 
     /**
+     * Translated "Warn when automatic session suspension is paused".
+     *
+     * @return translated "Warn when automatic session suspension is paused"
+     */
+    @DefaultMessage("Warn when automatic session suspension is paused")
+    @Key("WarnAutomaticSuspensionPaused")
+    String warnAutoSuspendPausedLabel();
+
+    /**
+     * Translated "Number of seconds to delay warning".
+     *
+     * @return translated "Number of seconds to delay warning"
+     */
+    @DefaultMessage("Number of seconds to delay warning")
+    @Key("numberOfSecondsToDelayWarning")
+    String numSecondsToDelayWarningLabel();
+
+    /**
      * Translated "R Sessions".
      *
      * @return translated "R Sessions"

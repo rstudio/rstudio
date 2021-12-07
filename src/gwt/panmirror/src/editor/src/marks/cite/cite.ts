@@ -114,48 +114,6 @@ const extension = (context: ExtensionContext): Extension | null => {
   return {
     marks: [
       {
-        name: 'cite_id',
-        noSpelling: true,
-        spec: {
-          attrs: {},
-          inclusive: true,
-          parseDOM: [
-            {
-              tag: "span[class*='cite-id']",
-            },
-          ],
-          toDOM(mark: Mark) {
-            return ['span', { class: 'cite-id pm-link-text-color pm-fixedwidth-font' }];
-          },
-        },
-        pandoc: {
-          readers: [],
-          writer: {
-            priority: 13,
-            write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
-              const idText = fragmentText(parent);
-              // only write as a citation id (i.e. don't escape @) if it is still
-              // a valid citation id. note that this in principle is also taken care
-              // of by the application of splitInvalidatedMarks below (as the
-              // mark would have been broken by this if it wasn't valid). this
-              // code predates that, and we leave it in for good measure in case that
-              // code is removed or changes in another unexpected way.
-              if (idText.match(kInTextCiteRegex)) {
-                const prefixMatch = idText.match(/^-?@/);
-                if (prefixMatch) {
-                  output.writeRawMarkdown(prefixMatch.input!);
-                  output.writeInlines(parent.cut(prefixMatch.input!.length));
-                } else {
-                  output.writeInlines(parent);
-                }
-              } else {
-                output.writeInlines(parent);
-              }
-            },
-          },
-        },
-      },
-      {
         name: 'cite',
         spec: {
           attrs: {},
@@ -163,6 +121,11 @@ const extension = (context: ExtensionContext): Extension | null => {
           parseDOM: [
             {
               tag: "span[class*='cite']",
+              // use priority to ensure that cite_id is parsed before cite
+              // when reading the DOM for the clipboard. we need this because
+              // 'cite' is first in the mark order (so that @ witin a cite
+              // properly triggers the input rule)
+              priority: 5
             },
           ],
           toDOM(mark: Mark) {
@@ -241,6 +204,53 @@ const extension = (context: ExtensionContext): Extension | null => {
                 } else {
                   output.writeInlines(parent);
                 }
+              }
+            },
+          },
+        },
+      },
+      {
+        name: 'cite_id',
+        noSpelling: true,
+        spec: {
+          attrs: {},
+          inclusive: true,
+          parseDOM: [
+            {
+              tag: "span[class*='cite-id']",
+              // use priority to ensure that cite_id is parsed before cite
+              // when reading the DOM for the clipboard. we need this because
+              // 'cite' is first in the mark order (so that @ witin a cite
+              // properly triggers the input rule)
+              priority: 10
+            },
+          ],
+          toDOM(mark: Mark) {
+            return ['span', { class: 'cite-id pm-link-text-color pm-fixedwidth-font' }];
+          },
+        },
+        pandoc: {
+          readers: [],
+          writer: {
+            priority: 13,
+            write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
+              const idText = fragmentText(parent);
+              // only write as a citation id (i.e. don't escape @) if it is still
+              // a valid citation id. note that this in principle is also taken care
+              // of by the application of splitInvalidatedMarks below (as the
+              // mark would have been broken by this if it wasn't valid). this
+              // code predates that, and we leave it in for good measure in case that
+              // code is removed or changes in another unexpected way.
+              if (idText.match(kInTextCiteRegex)) {
+                const prefixMatch = idText.match(/^-?@/);
+                if (prefixMatch) {
+                  output.writeRawMarkdown(prefixMatch.input!);
+                  output.writeInlines(parent.cut(prefixMatch.input!.length));
+                } else {
+                  output.writeInlines(parent);
+                }
+              } else {
+                output.writeInlines(parent);
               }
             },
           },

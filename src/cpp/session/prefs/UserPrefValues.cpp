@@ -2026,6 +2026,32 @@ core::Error UserPrefValues::setConsoleDoubleClickSelect(bool val)
 }
 
 /**
+ * Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar.
+ */
+bool UserPrefValues::consoleSuspendBlockedNotice()
+{
+   return readPref<bool>("console_suspend_blocked_notice");
+}
+
+core::Error UserPrefValues::setConsoleSuspendBlockedNotice(bool val)
+{
+   return writePref("console_suspend_blocked_notice", val);
+}
+
+/**
+ * How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices.
+ */
+int UserPrefValues::consoleSuspendBlockedNoticeDelay()
+{
+   return readPref<int>("console_suspend_blocked_notice_delay");
+}
+
+core::Error UserPrefValues::setConsoleSuspendBlockedNoticeDelay(int val)
+{
+   return writePref("console_suspend_blocked_notice_delay", val);
+}
+
+/**
  * Whether a git repo should be initialized inside new projects by default.
  */
 bool UserPrefValues::newProjGitInit()
@@ -3131,6 +3157,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGlobalTheme,
       kGitDiffIgnoreWhitespace,
       kConsoleDoubleClickSelect,
+      kConsoleSuspendBlockedNotice,
+      kConsoleSuspendBlockedNoticeDelay,
       kNewProjGitInit,
       kNewProjUseRenv,
       kRootDocument,

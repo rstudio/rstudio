@@ -37,6 +37,7 @@
 * Add *New Blank File* command to Files pane to create empty files of selected type in the directory (#1564)
 * Rename CSRF token header `X-CSRF-Token` and cookie `csrf-token` to `X-RS-CSRF-Token` and `rs-csrf-token`, respectively, to avoid clashing with similarly named headers and cookies in other services (#7319)
 * Use double indent for function parameters to align with Tidyverse style (#9766)
+* Sessions that attempt to automatically suspend, but were blocked by some operation, will report what's blocking suspension in the IDE in the R Console toolbar (pro #2618)
 * Recognize `id_ed25519` key file in Version Control options UI (#9991)
 * Updated Files Pane buttons to resize and remain visible at smaller widths (#9870)
 * Remove 'Classic' IDE theme (#9738)

@@ -766,6 +766,15 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String warningBarsAnnouncement();
 
     /**
+     * Translated "Session suspension"
+     *
+     * @return translated "Session suspension"
+     */
+    @DefaultMessage("Session suspension")
+    @Key("sessionSuspendAnnouncement")
+    String sessionSuspendAnnouncement();
+
+    /**
      * Translated "Unregistered live announcement: ".
      *
      * @return translated "Unregistered live announcement: "

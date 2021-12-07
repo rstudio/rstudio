@@ -36,6 +36,7 @@ export interface EditorRmdChunk {
   lang: string;
   meta: string;
   code: string;
+  delimiter: string;
 }
 
 export type ExecuteRmdChunkFn = (chunk: EditorRmdChunk) => void;
@@ -154,18 +155,34 @@ export function rmdChunk(code: string): EditorRmdChunk | null {
     const matchLang = meta.match(/\w+/);
     const lang = matchLang ? matchLang[0] : '';
 
-    // remove lines, other than the first, which are chunk delimiters (start
-    // with ```). these are generally unintended but can be accidentally
-    // introduced by e.g., pasting a chunk with its delimiters into visual mode,
-    // where delimiters are implicit. if these lines aren't removed, they create
-    // nested chunks that break parsing and can corrupt the document (see case
-    // 8452)
-    lines = lines.filter((line, idx) => {
-      if (idx === 0) {
-        return true;
+    const isContainerChunk = ["verbatim", "asis", "comment"].includes(lang);
+
+    // for container chunks, delimiter is one backtick greater than the most 
+    // ticks we've found starting a line (otherwise is ```)
+    const delimiter = isContainerChunk ? lines.reduce((ticks: string, line: string) => {
+      const match = line.match(/^```+/);
+      if (match && (match[0].length >= ticks.length)) {
+        ticks = match[0] + "`";
       }
-      return !line.startsWith("```");
-    });
+      return ticks;
+    }, "```") : "```";
+
+    // filter out stray ``` if this isn't a container chunk
+    if (!isContainerChunk) {
+       // remove lines, other than the first, which are chunk delimiters (start
+      // with ```). these are generally unintended but can be accidentally
+      // introduced by e.g., pasting a chunk with its delimiters into visual mode,
+      // where delimiters are implicit. if these lines aren't removed, they create
+      // nested chunks that break parsing and can corrupt the document (see case
+      // 8452)
+      lines = lines.filter((line, idx) => {
+        if (idx === 0) {
+          return true;
+        }
+        return !line.startsWith("```");
+      });
+    }
+   
 
     // a completely empty chunk (no second line) should be returned
     // as such. if it's not completely empty then append a newline
@@ -176,6 +193,7 @@ export function rmdChunk(code: string): EditorRmdChunk | null {
       lang,
       meta,
       code: chunkCode,
+      delimiter
     };
   } else {
     return null;
