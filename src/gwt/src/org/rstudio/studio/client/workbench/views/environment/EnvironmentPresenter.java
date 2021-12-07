@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.environment;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.Debug;
@@ -440,7 +441,7 @@ public class EnvironmentPresenter extends BasePresenter
          @Override
          public void execute(Boolean includeHidden, ProgressIndicator indicator)
          {
-            indicator.onProgress("Removing objects...");
+            indicator.onProgress(constants_.removingObjectsEllipses());
             if (objectNames.size() == 0)
             {
                server_.removeAllObjects(
@@ -490,7 +491,7 @@ public class EnvironmentPresenter extends BasePresenter
                         : "save.image";
 
                   consoleDispatcher_.saveFileAsThenExecuteCommand(
-                        "Save Workspace As",
+                        constants_.saveWorkspaceAs(),
                         ".RData",
                         true,
                         code);
@@ -502,7 +503,7 @@ public class EnvironmentPresenter extends BasePresenter
                   Debug.logError(error);
 
                   consoleDispatcher_.saveFileAsThenExecuteCommand(
-                        "Save Workspace As",
+                        constants_.saveWorkspaceAs(),
                         ".RData",
                         true,
                         "save.image");
@@ -514,14 +515,14 @@ public class EnvironmentPresenter extends BasePresenter
    void onLoadWorkspace()
    {
       view_.bringToFront();
-      consoleDispatcher_.chooseFileThenExecuteCommand("Load Workspace", "load");
+      consoleDispatcher_.chooseFileThenExecuteCommand(constants_.loadWorkspace(), "load");
    }
 
    void onImportDatasetFromFile()
    {
       view_.bringToFront();
       fileDialogs_.openFile(
-              "Select File to Import",
+              constants_.selectFileToImport(),
               fsContext_,
               workbenchContext_.getCurrentWorkingDir(),
               new ProgressOperationWithInput<FileSystemItem>()
@@ -544,13 +545,13 @@ public class EnvironmentPresenter extends BasePresenter
    {
       view_.bringToFront();
       globalDisplay_.promptForText(
-              "Import from Web URL" ,
-              "Please enter the URL to import data from:",
+              constants_.importFromWebURL() ,
+              constants_.pleaseEnterURLToImportDataFrom(),
               "",
               new ProgressOperationWithInput<String>(){
                  public void execute(String input, final ProgressIndicator indicator)
                  {
-                    indicator.onProgress("Downloading data...");
+                    indicator.onProgress(constants_.downloadingDataEllipses());
                     server_.downloadDataFile(input.trim(),
                         new ServerRequestCallback<DownloadInfo>(){
 
@@ -616,8 +617,8 @@ public class EnvironmentPresenter extends BasePresenter
       if (Pattern.create("[.]rds$", "i").test(dataFilePath))
       {
          globalDisplay_.promptForText(
-               "Load R Object",
-               "Load '" + dataFilePath + "' into an R object named:",
+               constants_.loadRObject(),
+               constants_.loadDataIntoAnRObject(dataFilePath),
                FilePathUtils.fileNameSansExtension(dataFilePath),
                new ProgressOperationWithInput<String>()
                {
@@ -637,10 +638,9 @@ public class EnvironmentPresenter extends BasePresenter
       else
       {
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-              "Confirm Load RData",
+              constants_.confirmLoadRData(),
 
-              "Do you want to load the R data file \"" + dataFilePath + "\" " +
-              "into your global environment?",
+              constants_.loadRDataFileIntoGlobalEnv(dataFilePath),
 
               new ProgressOperation() {
                  public void execute(ProgressIndicator indicator)
@@ -726,7 +726,7 @@ public class EnvironmentPresenter extends BasePresenter
       if (contextDepth > 0 &&
           contextDepth_ == 0)
       {
-         eventBus_.fireEvent(new ActivatePaneEvent("Environment"));
+         eventBus_.fireEvent(new ActivatePaneEvent(constants_.environmentCapitalized()));
          debugCommander_.enterDebugMode(DebugMode.Function);
          enteringDebugMode = true;
       }
@@ -967,7 +967,7 @@ public class EnvironmentPresenter extends BasePresenter
             if (!workbenchContext_.isRestartInProgress() &&
                 (error.getCode() != ServerError.TRANSMISSION))
             {
-               globalDisplay_.showErrorMessage("Error Listing Objects",
+               globalDisplay_.showErrorMessage(constants_.errorListingObjects(),
                                                error.getUserMessage());
             }
             view_.setProgress(false);
@@ -983,7 +983,7 @@ public class EnvironmentPresenter extends BasePresenter
               sourceServer_,
               input,
               varname,
-              "Import Dataset",
+              constants_.importDataset(),
               new OperationWithInput<ImportFileSettingsDialogResult>()
               {
                  public void execute(
@@ -1094,4 +1094,5 @@ public class EnvironmentPresenter extends BasePresenter
    private SearchPathFunctionDefinition searchFunction_;
 
    final String dataImportDependecyUserAction_ = "Preparing data import";
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

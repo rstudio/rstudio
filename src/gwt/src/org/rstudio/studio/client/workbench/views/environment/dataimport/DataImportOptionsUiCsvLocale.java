@@ -33,9 +33,11 @@ import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 
 public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsCsvLocale>
 {
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
    interface Binder extends UiBinder<Widget, DataImportOptionsUiCsvLocale> {}
    
    public interface DataImportOptionsUiCsvLocaleStyle extends CssResource
@@ -53,7 +55,7 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       OperationWithInput<DataImportOptionsCsvLocale> operation,
       DataImportOptionsCsvLocale locale)
    {
-      super("Configure Locale", Roles.getDialogRole(), operation);
+      super(constants_.configureLocale(), Roles.getDialogRole(), operation);
       widget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
       initialLocale_ = locale;
 
@@ -95,10 +97,10 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
       
       assignLocale(initialLocale_);
 
-      setOkButtonCaption("Configure");
+      setOkButtonCaption(constants_.configureCapitalized());
 
       HelpLink helpLink = new HelpLink(
-         "Locales in readr",
+         constants_.localesInReadr(),
          "readr_locales",
          false);
       addLeftWidget(helpLink);   
@@ -161,8 +163,8 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
             if (encoding_.getSelectedItemText() == otherLabel)
             {
                globalDisplay_.promptForText(
-                  "Encoding Identifier",
-                  "Please enter an encoding identifier. For a list of valid encodings run iconvlist().",
+                  constants_.encodingIdentifier(),
+                  constants_.enterAnEncodingIdentifier(),
                   encoding_.getSelectedValue(),
                   new OperationWithInput<String>()
                   {
@@ -216,5 +218,5 @@ public class DataImportOptionsUiCsvLocale extends ModalDialog<DataImportOptionsC
    private DataImportOptionsCsvLocale initialLocale_;
    private GlobalDisplay globalDisplay_;
 
-   private final String otherLabel = "Other...";
+   private final String otherLabel = constants_.otherEllipses();
 }
