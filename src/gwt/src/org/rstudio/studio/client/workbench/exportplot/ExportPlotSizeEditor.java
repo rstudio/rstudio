@@ -115,7 +115,7 @@ public class ExportPlotSizeEditor extends Composite
           
       // image width
       widthTextBox_ = createImageSizeTextBox();
-      FormLabel widthLabel = createImageOptionLabel("Width:", widthTextBox_);
+      FormLabel widthLabel = createImageOptionLabel(constants_.widthText(), widthTextBox_);
       widthAndHeightPanel.add(widthLabel);
       widthTextBox_.addChangeHandler(new ChangeHandler() {
          @Override

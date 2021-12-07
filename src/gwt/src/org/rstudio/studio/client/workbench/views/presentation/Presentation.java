@@ -265,7 +265,7 @@ public class Presentation extends BasePresenter
       }
             
       fileDialogs_.saveFile(
-         "Save Presentation As", 
+          constants_.savePresentationAsCaption(),
           fileSystemContext_, 
           saveAsStandaloneDefaultPath_, 
           ".html",
@@ -282,7 +282,7 @@ public class Presentation extends BasePresenter
                   return;
                }
                
-               indicator.onProgress("Saving Presentation...");
+               indicator.onProgress(constants_.savingPresentationProgressMessage());
    
                server_.createStandalonePresentation(
                   targetFile.getPath(), 
@@ -316,18 +316,15 @@ public class Presentation extends BasePresenter
    {
       globalDisplay_.showYesNoMessage(
             MessageDialog.INFO, 
-            "Clear Knitr Cache", 
-            "Clearing the Knitr cache will discard previously cached " +
-            "output and re-run all of the R code chunks within the " +
-            "presentation.\n\n" +
-            "Are you sure you want to clear the cache now?",
+            constants_.clearKnitrCacheCaption(),
+            constants_.clearKnitrCacheMessage(),
             false,
             new ProgressOperation() {
 
                @Override
                public void execute(final ProgressIndicator indicator)
                {
-                  indicator.onProgress("Clearing Knitr Cache...");
+                  indicator.onProgress(constants_.clearingKnitrCaption());
                   server_.clearPresentationCache(
                         new ServerRequestCallback<Void>() {
                            @Override
@@ -342,7 +339,7 @@ public class Presentation extends BasePresenter
                            {
                               indicator.onCompleted();
                               globalDisplay_.showErrorMessage(
-                                                "Error Clearing Cache",
+                                                constants_.errorClearingCache(),
                                                  getErrorMessage(error));
                            }
                         });
@@ -398,7 +395,7 @@ public class Presentation extends BasePresenter
       final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
             0,
-            "Closing Presentation...").getIndicator();
+            constants_.closingPresentationProgressMessage()).getIndicator();
       
       server_.closePresentationPane(new ServerRequestCallback<Void>(){
          @Override

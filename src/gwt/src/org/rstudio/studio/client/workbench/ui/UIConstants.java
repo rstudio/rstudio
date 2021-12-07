@@ -88,4 +88,31 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
     @Key("filesUnsavedChangesText")
     String filesUnsavedChangesText(int size);
 
+    /**
+     * Translated "Cannot Add Column".
+     *
+     * @return translated "Cannot Add Column"
+     */
+    @DefaultMessage("Cannot Add Column")
+    @Key("cannotAddColumnText")
+    String cannotAddColumnText();
+
+    /**
+     * Translated "You can't add more than {0} columns.".
+     *
+     * @return translated "You can't add more than {0} columns."
+     */
+    @DefaultMessage("You can't add more than {0} columns.")
+    @Key("cannotAddMoreColumnsText")
+    String cannotAddMoreColumnsText(int maxColumnCount);
+
+    /**
+     * Translated "Console".
+     *
+     * @return translated "Console"
+     */
+    @DefaultMessage("Console")
+    @Key("consoleText")
+    String consoleText();
+
 }

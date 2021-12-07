@@ -33,4 +33,14 @@ public interface ModelConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Could not allocate a new session.")
     @Key("createSessionMessage")
     String createSessionMessage();
+
+    /**
+     * Translated "Presentation".
+     *
+     * @return translated "Presentation"
+     */
+    @DefaultMessage("Presentation")
+    @Key("presentationCaption")
+    String presentationCaption();
+
 }

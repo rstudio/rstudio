@@ -161,7 +161,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       // filename field
       fileUpload_ = new FileUpload();
       fileUpload_.setStyleName(ThemeStyles.INSTANCE.fileUploadField());
-      fileUpload_.setName("file");
+      fileUpload_.setName(constants_.fileText());
       FormLabel uploadLabel = new FormLabel(constants_.fileToUploadLabel(), fileUpload_);
       uploadLabel.addStyleName(ThemeStyles.INSTANCE.fileUploadLabel());
       panel.add(uploadLabel);

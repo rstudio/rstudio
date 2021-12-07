@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
@@ -779,8 +780,8 @@ public class PaneManager
    {
       if (additionalSourceCount_ >= MAX_COLUMN_COUNT)
       {
-         pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
-            "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
+         pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, constants_.cannotAddColumnText(),
+            constants_.cannotAddMoreColumnsText(MAX_COLUMN_COUNT));
          return false;
       }
       return true;
@@ -1723,7 +1724,7 @@ public class PaneManager
 
    private LogicalWindow createConsole()
    {
-      String frameName = "Console";
+      String frameName = constants_.consoleText();
       
       PrimaryWindowFrame frame = new PrimaryWindowFrame(frameName, null);
       frame.setTitleWidget(new ConsoleInterpreterVersion());
@@ -2091,4 +2092,5 @@ public class PaneManager
 
    private int additionalSourceCount_; // this does not include the main source
    public final static int MAX_COLUMN_COUNT = 3;
+   private static final UIConstants constants_ = GWT.create(UIConstants.class);
 }

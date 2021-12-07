@@ -112,7 +112,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       panel_.addStyleName("ace_editor_theme");
       panel_.setSize("100%", "100%");
 
-      frame_ = new ImageFrame("Plots Pane");
+      frame_ = new ImageFrame(constants_.plotsPaneLabel());
       frame_.setStyleName("rstudio-HelpFrame");
       frame_.setMarginWidth(0);
       frame_.setMarginHeight(0);

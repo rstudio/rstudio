@@ -187,4 +187,14 @@ public interface ExportPlotConstants extends com.google.gwt.i18n.client.Messages
     @DefaultMessage("Right click on the plot image above to copy to the clipboard.")
     @Key("rightClickPlotImageText")
     String rightClickPlotImageText();
+
+    /**
+     * Translated "Width:".
+     *
+     * @return translated "Width:"
+     */
+    @DefaultMessage("Width:")
+    @Key("widthText")
+    String widthText();
+
 }

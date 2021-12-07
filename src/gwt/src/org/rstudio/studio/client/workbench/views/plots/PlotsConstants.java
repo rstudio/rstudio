@@ -439,4 +439,13 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("showPlotManipulatorTitle")
     String showPlotManipulatorTitle();
 
+    /**
+     * Translated "Manipulate".
+     *
+     * @return translated "Manipulate"
+     */
+    @DefaultMessage("Manipulate")
+    @Key("manipulateTitle")
+    String manipulateTitle();
+
 }

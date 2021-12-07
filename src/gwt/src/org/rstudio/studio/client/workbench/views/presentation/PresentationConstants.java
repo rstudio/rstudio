@@ -107,4 +107,67 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
     @Key("presentationLabel")
     String presentationLabel(String title);
 
+    /**
+     * Translated "Save Presentation As".
+     *
+     * @return translated "Save Presentation As"
+     */
+    @DefaultMessage("Save Presentation As")
+    @Key("savePresentationAsCaption")
+    String savePresentationAsCaption();
+
+    /**
+     * Translated "Saving Presentation...".
+     *
+     * @return translated "Saving Presentation..."
+     */
+    @DefaultMessage("Saving Presentation...")
+    @Key("savingPresentationProgressMessage")
+    String savingPresentationProgressMessage();
+
+    /**
+     * Translated "Clear Knitr Cache".
+     *
+     * @return translated "Clear Knitr Cache"
+     */
+    @DefaultMessage("Clear Knitr Cache")
+    @Key("clearKnitrCacheCaption")
+    String clearKnitrCacheCaption();
+
+    /**
+     * Translated "Clearing the Knitr cache will discard previously cached output and re-run all of the R code chunks within the presentation.\n\nAre you sure you want to clear the cache now?".
+     *
+     * @return translated "Clearing the Knitr cache will discard previously cached output and re-run all of the R code chunks within the presentation.\n\nAre you sure you want to clear the cache now?"
+     */
+    @DefaultMessage("Clearing the Knitr cache will discard previously cached output and re-run all of the R code chunks within the presentation.\\n\\nAre you sure you want to clear the cache now?")
+    @Key("clearKnitrCacheMessage")
+    String clearKnitrCacheMessage();
+
+    /**
+     * Translated "Clearing Knitr Cache...".
+     *
+     * @return translated "Clearing Knitr Cache..."
+     */
+    @DefaultMessage("Clearing Knitr Cache...")
+    @Key("clearingKnitrCaption")
+    String clearingKnitrCaption();
+
+    /**
+     * Translated "Error Clearing Cache".
+     *
+     * @return translated "Error Clearing Cache"
+     */
+    @DefaultMessage("Error Clearing Cache")
+    @Key("errorClearingCache")
+    String errorClearingCache();
+
+    /**
+     * Translated "Closing Presentation...".
+     *
+     * @return translated "Closing Presentation..."
+     */
+    @DefaultMessage("Closing Presentation...")
+    @Key("closingPresentationProgressMessage")
+    String closingPresentationProgressMessage();
+
 }

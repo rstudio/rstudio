@@ -763,4 +763,14 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("<b>TIP</b>: To upload multiple files or a directory, create a zip file. The zip file will be automatically expanded after upload.")
     @Key("tipHTML")
     String tipHTML();
+
+    /**
+     * Translated "fileText".
+     *
+     * @return translated "fileText"
+     */
+    @DefaultMessage("fileText")
+    @Key("fileText")
+    String fileText();
+
 }
