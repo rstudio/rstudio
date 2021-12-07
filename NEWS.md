@@ -26,6 +26,7 @@
 * Fixed a bug where Launcher log files could be stuck being owned by the root user (#9728)
 * Added `license-warning-days` setting to make it possible to adjust or disable the license warnings that appear two weeks prior to expiration (Pro #440)
 * When an R version defined in `r-versions` uses an environment module, the name of the module is displayed in the version select menus instead of the system R version name. (Pro #2687)
+* Clicking on a session entry in the RSW homepage will always attempt to launch it -- the title is no longer a link. Clicking on "Info" will always show info. (Pro #3082)
 * With the options `launcher-sessions-create-container-user`, and `launcher-sessions-container-forward-groups` enabled, RSW will now add a group to the user even if the group with a matching id exists but with a different name. (Pro #2971)
 * Added SSL communication between RSW and remote sessions (using the job launcher). It's enabled by default and can be disabled in rserver.conf by setting session-ssl-enabled=0. Certificates are generated for each job by default or can be manually configured. (Pro #3026)
 
@@ -36,6 +37,7 @@
 * Add *New Blank File* command to Files pane to create empty files of selected type in the directory (#1564)
 * Rename CSRF token header `X-CSRF-Token` and cookie `csrf-token` to `X-RS-CSRF-Token` and `rs-csrf-token`, respectively, to avoid clashing with similarly named headers and cookies in other services (#7319)
 * Use double indent for function parameters to align with Tidyverse style (#9766)
+* Sessions that attempt to automatically suspend, but were blocked by some operation, will report what's blocking suspension in the IDE in the R Console toolbar (pro #2618)
 * Recognize `id_ed25519` key file in Version Control options UI (#9991)
 * Updated Files Pane buttons to resize and remain visible at smaller widths (#9870)
 * Remove 'Classic' IDE theme (#9738)

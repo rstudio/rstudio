@@ -1,4 +1,3 @@
-package org.rstudio.studio.client.application;
 /*
  * StudioClientApplicationConstants.java
  *
@@ -13,6 +12,9 @@ package org.rstudio.studio.client.application;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+package org.rstudio.studio.client.application;
+
 public interface StudioClientApplicationConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
@@ -762,6 +764,15 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     @DefaultMessage("Warning bars")
     @Key("warningBarsAnnouncement")
     String warningBarsAnnouncement();
+
+    /**
+     * Translated "Session suspension"
+     *
+     * @return translated "Session suspension"
+     */
+    @DefaultMessage("Session suspension")
+    @Key("sessionSuspendAnnouncement")
+    String sessionSuspendAnnouncement();
 
     /**
      * Translated "Unregistered live announcement: ".

@@ -137,8 +137,8 @@ const extension = (context: ExtensionContext) : Extension | null => {
         new DivCommand(EditorCommandId.InsertDiv, ui, false, {
           name: ui.context.translateText('Div...'),
           description: ui.context.translateText('Block containing other content'),
-          group: OmniInsertGroup.Blocks,
-          priority: 1,
+          group: OmniInsertGroup.Common,
+          priority: 6,
           image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.div_dark! : ui.images.omni_insert?.div!),
         }),
       ];

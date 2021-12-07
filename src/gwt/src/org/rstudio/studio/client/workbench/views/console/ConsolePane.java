@@ -33,7 +33,11 @@ import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.SessionSerializationEvent;
+import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
+import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -58,7 +62,8 @@ public class ConsolePane extends WorkbenchPane
                       Provider<JobProgressPresenter> progressProvider,
                       EventBus events,
                       Commands commands,
-                      Session session)
+                      Session session,
+                      AriaLiveService ariaLive)
    {
       // We pass null in place of events here to prevent ActivePaneEvent from being called.
       // ActivatePaneEvent isn't necessary and causes an exception for the Console Pane.
@@ -68,6 +73,7 @@ public class ConsolePane extends WorkbenchPane
       progressProvider_ = progressProvider;
       commands_ = commands;
       session_ = session;
+      ariaLive_ = ariaLive;
 
       // the secondary toolbar can have several possible states that obscure
       // each other; we keep track of the stack here
@@ -122,6 +128,27 @@ public class ConsolePane extends WorkbenchPane
       return profilerInterruptButton_;
    }
 
+   @Override
+   public void onSerializationEvent(SessionSerializationEvent event) {
+      int eventType = event.getAction().getType();
+      switch (eventType) {
+         case SessionSerializationAction.SUSPEND_SESSION:
+            consoleSuspendBlockedIcon_.setVisible(false);
+            consoleSuspendedIcon_.setVisible(true);
+            break;
+         case SessionSerializationAction.RESUME_SESSION:
+            consoleSuspendBlockedIcon_.setVisible(false);
+            consoleSuspendedIcon_.setVisible(false);
+            break;
+      }
+   }
+
+   @Override
+   public void onSuspendedBlockedEvent(SessionSuspendBlockedEvent event) {
+      consoleSuspendBlockedIcon_.setVisible(event.isBlocked());
+      consoleSuspendBlockedIcon_.setTitle(event.getMsg());
+   }
+
    public int getCharacterWidth()
    {
       return shell_.getDisplay().getCharacterWidth();
@@ -152,8 +179,16 @@ public class ConsolePane extends WorkbenchPane
 
       profilerInterruptButton_ = ConsoleInterruptProfilerButton.CreateProfilerButton();
       profilerInterruptButton_.setVisible(false);
-      
 
+      boolean announce = !ariaLive_.isDisabled(AriaLiveService.SESSION_SUSPENDED);
+      consoleSuspendBlockedIcon_ = new ConsoleSuspendBlockedIcon(announce).getSuspendBlocked();
+      consoleSuspendBlockedIcon_.setVisible(false);
+      consoleSuspendedIcon_ = new ConsoleSuspendBlockedIcon(announce).getSuspended();
+      consoleSuspendedIcon_.setTitle("Session Suspended");
+      consoleSuspendedIcon_.setVisible(false);
+
+      toolbar.addRightWidget(consoleSuspendedIcon_);
+      toolbar.addRightWidget(consoleSuspendBlockedIcon_);
       toolbar.addRightWidget(profilerInterruptButton_);
       toolbar.addRightWidget(consoleInterruptButton_);
       toolbar.addRightWidget(consoleClearButton_);
@@ -353,11 +388,14 @@ public class ConsolePane extends WorkbenchPane
    private final Commands commands_;
    private Shell shell_;
    private Session session_;
+   private AriaLiveService ariaLive_;
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
    private ToolbarButton consoleClearButton_;
    private ConsoleInterpreterVersion consoleInterpreterVersion_;
    private Image profilerInterruptButton_;
+   private Image consoleSuspendBlockedIcon_;
+   private Image consoleSuspendedIcon_;
    private Stack<ConsoleMode> mode_;
    private SecondaryToolbar secondaryToolbar_;
    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);

@@ -17,7 +17,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 
 public class NewQuartoDefaultProjectPage extends NewQuartoProjectPage
 {
@@ -25,7 +25,7 @@ public class NewQuartoDefaultProjectPage extends NewQuartoProjectPage
    
    public NewQuartoDefaultProjectPage()
    {
-      super(QuartoConstants.PROJECT_DEFAULT,
+      super(QuartoCommandConstants.PROJECT_DEFAULT,
            constants_.quartoProjectTitle(),
            constants_.quartoProjectSubTitle(),
            constants_.quartoProjectPageCaption(),

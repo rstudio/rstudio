@@ -26,6 +26,8 @@
 #include <core/DateTime.hpp>
 #include <shared_core/SafeConvert.hpp>
 
+#include <shared_core/json/Json.hpp>
+
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RActiveSessionStorage.hpp>
@@ -146,6 +148,49 @@ private:
    {
       std::string value = safe_convert::numberToString(initial);
       writeProperty(kInitial, value);
+   }
+
+   void setBlockingSuspend(json::Array blocking)
+   {
+      if (!empty())
+      {
+         writeProperty("blocking-suspend", blocking.writeFormatted());
+      }
+   }
+
+   void setSuspensionTime()
+   {
+      if (!empty())
+      {
+         std::string suspendTime = boost::posix_time::to_iso_extended_string(
+                                    boost::posix_time::second_clock::universal_time());
+         writeProperty("suspend-timestamp", suspendTime);
+      }
+   }
+
+   boost::posix_time::ptime suspensionTime()
+   {
+      if (!empty())
+      {
+         try
+         {
+            std::string value = readProperty("suspend-timestamp");
+            if (value.empty())
+               return boost::posix_time::not_a_date_time;
+
+            boost::posix_time::ptime retVal = boost::posix_time::from_iso_extended_string(value);
+
+            if (retVal.is_not_a_date_time())
+               return boost::posix_time::not_a_date_time;
+
+            return retVal;
+         }
+         catch (std::exception const& e)
+         {
+            LOG_ERROR_MESSAGE("Failed to read session suspend timestamp: " + std::string(e.what()));
+         }
+      }
+      return boost::posix_time::not_a_date_time;
    }
 
    double lastUsed() const

@@ -1430,9 +1430,12 @@ body.windows .toolbar {
 }
 
 .toolbarButtonLatchable .toolbarButtonLabel {
-   margin-top: 1px;
+   margin-top: 0;
    margin-left: 3px;
 }
+
+
+
 
 .toolbarButtonLatched {
   /*
@@ -1445,6 +1448,11 @@ body.windows .toolbar {
    border-radius: 2px;
    background-color: #e3e7e9;
    border: 1px solid #bfc8d0;
+}
+
+.rstudio-themes-dark .toolbarButtonLatched {
+   background-color: THEME_DARK_CONTROL_BACKGROUND;
+   border-color: THEME_DARK_CONTROL_BORDER;
 }
 
 .globalToolbar {

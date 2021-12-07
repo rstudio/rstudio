@@ -32,6 +32,7 @@
 #include "modules/overlay/SessionOverlay.hpp"
 
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionSuspend.hpp>
 
 #include <r/session/RSession.hpp>
 #include <r/ROptions.hpp>
@@ -55,6 +56,9 @@ std::string s_lastPrompt;
 
 void setExecuting(bool executing)
 {
+   // Executing also prevents suspension
+   suspend::checkBlockingOp(executing, suspend::kExecuting);
+
    s_rProcessingInput = executing;
    module_context::activeSession().setExecuting(executing);
 }
@@ -96,12 +100,15 @@ void consolePrompt(const std::string& prompt, bool addToHistory)
 
 bool canSuspend(const std::string& prompt)
 {
-   return !main_process::haveActiveChildren() && 
-          modules::connections::isSuspendable() &&
-          modules::overlay::isSuspendable() &&
-          modules::environment::isSuspendable() &&
-          modules::jobs::isSuspendable() &&
-          rstudio::r::session::isSuspendable(prompt);
+   bool suspendIsBlocked = false;
+   suspendIsBlocked |= session::suspend::checkBlockingOp(main_process::haveActiveChildren(), suspend::kChildProcess);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::connections::isSuspendable(), suspend::kConnection);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::environment::isSuspendable(), suspend::kExternalPointer);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!modules::jobs::isSuspendable(), suspend::kActiveJob);
+   suspendIsBlocked |= session::suspend::checkBlockingOp(!rstudio::r::session::isSuspendable(prompt), suspend::kCommandPrompt);
+   suspendIsBlocked |= !modules::overlay::isSuspendable();
+
+   return !suspendIsBlocked;
 }
 
 } // anonymous namespace

@@ -20,4 +20,8 @@ public interface CompletionContext
    String getId();
    String getPath();
    String getExtendedFileType();
+   String[] getQuartoFormats();
+   String[] getQuartoProjectFormats();
+   String getQuartoEngine();
+   
 }

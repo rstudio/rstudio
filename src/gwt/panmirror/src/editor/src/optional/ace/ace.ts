@@ -517,7 +517,7 @@ export class AceNodeView implements NodeView {
     }
 
     // call host factory to instantiate editor
-    this.chunk = this.ui.chunks.createChunkEditor('ace', this.dom, this.node.attrs.md_index, {
+    this.chunk = this.ui.chunks.createChunkEditor('ace', this.dom, this.node.attrs.md_index, this.node.attrs.classes, {
       getPos: () => this.getPos(),
       scrollIntoView: ele => this.scrollIntoView(ele),
       scrollCursorIntoView: () => this.scrollCursorIntoView(),

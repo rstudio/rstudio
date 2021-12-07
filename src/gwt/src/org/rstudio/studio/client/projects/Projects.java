@@ -63,7 +63,7 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialog;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -1024,7 +1024,7 @@ public class Projects implements OpenProjectFileEvent.Handler,
       return newProject.getUseRenv() &&
              (newProject.getNewQuartoProjectOptions() == null ||
              newProject.getNewQuartoProjectOptions().getEngine()
-                .equals(QuartoConstants.ENGINE_KNITR));
+                .equals(QuartoCommandConstants.ENGINE_KNITR));
    }
    
    private void showOpenProjectDialog(

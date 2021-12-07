@@ -66,6 +66,7 @@ set +x
 if has-program ninja
 then 
    CMAKE_GENERATOR="Ninja"
+   MAKEFLAGS="-w dupbuild=warn ${MAKEFLAGS}"
 else
    CMAKE_GENERATOR="Unix Makefiles"
 fi
@@ -99,13 +100,13 @@ cmake -G"${CMAKE_GENERATOR}"                           \
       -DGWT_BUILD="$GWT_BUILD"                         \
       $PKG_DIR/../..
 
-cmake --build . --target all
+cmake --build . --target all -- ${MAKEFLAGS}
 
 if [ "$2" != "DEB" ]
 then
-   fakeroot cpack -G "$2"
+   fakeroot cpack --verbose --debug -G "$2"
 else
-   cpack -G $2
+   cpack --verbose --debug -G $2
 
    # Fix permissions for non-development builds
    if [ -z "${RSTUDIO_DEVELOPMENT_BUILD}" ]

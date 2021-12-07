@@ -18,6 +18,8 @@ package org.rstudio.studio.client.application.ui;
 import java.util.ArrayList;
 
 import com.google.gwt.core.client.GWT;
+
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -29,18 +31,20 @@ import com.google.gwt.core.client.JsArrayString;
 
 public class RVersionSelectWidget extends SelectWidget
 {
-   public RVersionSelectWidget(JsArray<RVersionSpec> rVersions)
+   public RVersionSelectWidget(ElementIds.SelectWidgetId uniqueId, JsArray<RVersionSpec> rVersions)
    {
-      this(constants_.defaultVersionRCaption(), rVersions, true, true, false);
+      this(constants_.defaultVersionRCaption(), uniqueId, rVersions, true, true, false);
    }
    
    public RVersionSelectWidget(String caption,
+                               ElementIds.SelectWidgetId uniqueId,
                                JsArray<RVersionSpec> rVersions,
                                boolean includeSystemDefault,
                                boolean includeHelpButton,
                                boolean fillContainer)
    {
       super(caption,
+            uniqueId,
             rVersionChoices(rVersions, includeSystemDefault),
             rVersionValues(rVersions, includeSystemDefault),
             false, 
@@ -117,7 +121,7 @@ public class RVersionSelectWidget extends SelectWidget
       if (str != null)
       {
          JsArrayString values = StringUtil.split(str, SEP);
-         if (values.length() == 3)
+         if (values.length() >= 3)
          {
             String version = values.get(0);
             String rHomeDir = values.get(1);

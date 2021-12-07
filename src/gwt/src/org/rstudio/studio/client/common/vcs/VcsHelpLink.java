@@ -16,11 +16,14 @@
 package org.rstudio.studio.client.common.vcs;
 
 import org.rstudio.studio.client.common.HelpLink;
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
 public class VcsHelpLink extends HelpLink
 {
    public VcsHelpLink()
    {
-      super("Using Version Control with RStudio", "using_version_control");
+      super(constants_.vCSHelpLink(), "using_version_control");
    }
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

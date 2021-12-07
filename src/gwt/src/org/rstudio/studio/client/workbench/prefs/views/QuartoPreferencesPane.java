@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.resources.client.ImageResource;
@@ -29,7 +31,8 @@ import com.google.inject.Inject;
 
 public class QuartoPreferencesPane extends PreferencesPane
 {
-   public static final String NAME = "Quarto";
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+   public static final String NAME = constants_.name();
    
    @Inject
    public QuartoPreferencesPane(PreferencesDialogResources res, Session session)
@@ -38,12 +41,11 @@ public class QuartoPreferencesPane extends PreferencesPane
       session_ = session;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
-      add(headerLabel("Quarto"));
+      add(headerLabel(constants_.name()));
       
-      add(new Label("This version of RStudio includes a preview of Quarto, a new " + 
-            "scientific and technical publishing system. ", true));
+      add(new Label(constants_.quartoPreviewLabel(), true));
       
-      chkEnableQuarto_ = new CheckBox("Enable Quarto preview");
+      chkEnableQuarto_ = new CheckBox(constants_.enableQuartoPreviewCheckboxLabel());
       add(spacedBefore(chkEnableQuarto_));
       lblQuartoVersion_ = new Label("", true);
       lblQuartoVersion_.setVisible(false);
@@ -55,7 +57,7 @@ public class QuartoPreferencesPane extends PreferencesPane
 
       lblQuartoPath_.setVisible(false);
       
-      HelpLink helpLink = new HelpLink("Learn more about Quarto", "https://quarto.org", false, false);
+      HelpLink helpLink = new HelpLink(constants_.helpLinkCaption(), "https://quarto.org", false, false);
       nudgeRight(helpLink);
       helpLink.addStyleName(res_.styles().newSection());
       add(helpLink);

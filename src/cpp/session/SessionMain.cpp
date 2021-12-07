@@ -116,7 +116,6 @@
 #include "SessionInit.hpp"
 #include "SessionMainProcess.hpp"
 #include "SessionRpc.hpp"
-#include "SessionSuspend.hpp"
 #include "SessionOfflineService.hpp"
 
 #include <session/SessionRUtil.hpp>
@@ -211,6 +210,7 @@
 #include "modules/SessionSVN.hpp"
 
 #include <session/SessionConsoleProcess.hpp>
+#include <session/SessionSuspend.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -836,11 +836,11 @@ int rEditFile(const std::string& file)
 
    // wait for edit_completed
    json::JsonRpcRequest request;
+
    bool succeeded = http_methods::waitForMethod(kEditCompleted,
                                         editEvent,
                                         suspend::disallowSuspend,
                                         &request);
-
    if (!succeeded)
       return false;
 
@@ -885,11 +885,11 @@ FilePath rChooseFile(bool newFile)
 
    // wait for choose_file_completed
    json::JsonRpcRequest request;
+
    bool succeeded = http_methods::waitForMethod(kChooseFileCompleted,
                                         chooseFileEvent,
                                         suspend::disallowSuspend,
                                         &request);
-
    if (!succeeded)
       return FilePath();
 
@@ -965,11 +965,11 @@ bool rLocator(double* x, double* y)
 
    // wait for locator_completed
    json::JsonRpcRequest request;
+
    bool succeeded = http_methods::waitForMethod(kLocatorCompleted,
                                         locatorEvent,
                                         suspend::disallowSuspend,
                                         &request);
-
    if (!succeeded)
       return false;
 
@@ -1136,13 +1136,13 @@ bool rHandleUnsavedChanges()
 
    // wait for method
    json::JsonRpcRequest request;
+
    bool succeeded = http_methods::waitForMethod(
                         kHandleUnsavedChangesCompleted,
                         boost::bind(http_methods::waitForMethodInitFunction,
                                     event),
                         suspend::disallowSuspend,
                         &request);
-
    if (!succeeded)
       return false;
 
@@ -1565,6 +1565,7 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
 
    // wait for user_prompt_completed
    json::JsonRpcRequest request;
+
    http_methods::waitForMethod(kUserPromptCompleted,
                        userPromptEvent,
                        suspend::disallowSuspend,
