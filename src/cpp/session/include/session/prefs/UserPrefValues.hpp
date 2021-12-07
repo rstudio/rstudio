@@ -280,6 +280,8 @@ namespace prefs {
 #define kGlobalThemeAlternate "alternate"
 #define kGitDiffIgnoreWhitespace "git_diff_ignore_whitespace"
 #define kConsoleDoubleClickSelect "console_double_click_select"
+#define kConsoleSuspendBlockedNotice "console_suspend_blocked_notice"
+#define kConsoleSuspendBlockedNoticeDelay "console_suspend_blocked_notice_delay"
 #define kNewProjGitInit "new_proj_git_init"
 #define kNewProjUseRenv "new_proj_use_renv"
 #define kRootDocument "root_document"
@@ -1325,6 +1327,18 @@ public:
     */
    bool consoleDoubleClickSelect();
    core::Error setConsoleDoubleClickSelect(bool val);
+
+   /**
+    * Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar.
+    */
+   bool consoleSuspendBlockedNotice();
+   core::Error setConsoleSuspendBlockedNotice(bool val);
+
+   /**
+    * How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices.
+    */
+   int consoleSuspendBlockedNoticeDelay();
+   core::Error setConsoleSuspendBlockedNoticeDelay(int val);
 
    /**
     * Whether a git repo should be initialized inside new projects by default.
