@@ -41,7 +41,7 @@ const extension = (context: ExtensionContext): Extension => {
     inputRules: () => {
       if (fencedAttributes) {
         return [
-          new InputRule(/^```{$/, (state: EditorState, match: string[], start: number, end: number) => {
+          new InputRule(/^```+{$/, (state: EditorState, match: string[], start: number, end: number) => {
             if (!canApplyCodeBlockInputRule(state)) {
               return null;
             }
@@ -71,7 +71,7 @@ function codeBlockInputRuleEnter(pandocExtensions: PandocExtensions, fencedAttri
 
     // full text of parent must meet the pattern
     // eslint-disable-next-line no-useless-escape
-    const match = $head.parent.textContent.match(/^```(?:(\w+)|\{([\.=]?[^\}]+)\})?$/);
+    const match = $head.parent.textContent.match(/^```+(?:(\w+)|\{([\.=]?[^\}]+)\})?$/);
     if (!match) {
       return false;
     }

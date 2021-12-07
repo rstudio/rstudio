@@ -91,7 +91,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             output.writeToken(PandocTokenType.Para, () => {
               const parts = rmdChunk(node.textContent);
               if (parts) {
-                output.writeRawMarkdown('```{' + parts.meta + '}\n' + parts.code + '```\n');
+                output.writeRawMarkdown(parts.delimiter + '{' + parts.meta + '}\n' + parts.code + parts.delimiter + '\n');
               }
             });
           },
