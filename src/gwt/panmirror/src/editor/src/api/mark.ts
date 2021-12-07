@@ -141,6 +141,15 @@ export function splitInvalidatedMarks(
 ) {
   const hasMarkType = (nd: ProsemirrorNode) => markType.isInSet(nd.marks);
   const markedNodes = findChildrenByMark(node, markType, true);
+
+  const remove = (from: number, to: number, type: MarkType) => {
+    if (removeMark) {
+      removeMark(from, to);
+    } else {
+      tr.removeMark(from, to, type);
+    }
+  };
+
   markedNodes.forEach(markedNode => {
     const mark = hasMarkType(markedNode.node);
     if (mark) {
@@ -148,13 +157,21 @@ export function splitInvalidatedMarks(
       const markRange = getMarkRange(tr.doc.resolve(from), markType);
       if (markRange) {
         const text = tr.doc.textBetween(markRange.from, markRange.to);
-        const length = validLength(text);
+
+        // Trim any leading space and count how much we trimmed
+        const trimmedText = text.trimStart();
+        const countSpace = text.length - trimmedText.length;
+
+        // Remove the mark from any trimmed space at the start
+        if (countSpace > 0) {
+          remove(markRange.from, markRange.from + countSpace, markType);
+        }
+
+        // find the valid length of the text and remove the mark from 
+        // anything after the end of the valid length
+        const length = validLength(trimmedText);
         if (length > -1 && length !== text.length) {
-          if (removeMark) {
-            removeMark(markRange.from + length, markRange.to);
-          } else {
-            tr.removeMark(markRange.from + length, markRange.to, markType);
-          }
+          remove(markRange.from + length + countSpace, markRange.to, markType);
         }
       }
     }
