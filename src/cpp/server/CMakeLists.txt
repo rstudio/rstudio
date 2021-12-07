@@ -281,7 +281,10 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
                    ${CMAKE_CURRENT_BINARY_DIR}/${SERVER_DB_FILE})
   endforeach()
 
-  file(GLOB_RECURSE SERVER_TEST_FILES "*Tests.cpp")
+  set(SERVER_TEST_FILES
+     ServerEnvVarsTests.cpp
+     ServerDatabaseMigrationTests.cpp
+     ServerDatabaseMigrationOverlayTests.cpp)
 
   list(APPEND SERVER_SOURCE_FILES ${SERVER_TEST_FILES})
 
