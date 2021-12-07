@@ -23,6 +23,7 @@ import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.SpanElement;
@@ -108,6 +109,7 @@ public class VisualModeChunk
    public VisualModeChunk(Element element,
                           int index,
                           boolean isExpanded,
+                          JsArrayString classes,
                           PanmirrorUIChunkCallbacks chunkCallbacks,
                           DocUpdateSentinel sentinel,
                           TextEditingTarget target,
@@ -124,6 +126,7 @@ public class VisualModeChunk
       releaseOnDismiss_ = new ArrayList<>();
       destroyHandlers_ = new ArrayList<>();
       lint_ = JsArray.createArray().cast();
+      classes_ = classes;
 
       // Instantiate CSS style
       ChunkStyle style = GWT.create(ChunkStyle.class);
@@ -1069,9 +1072,19 @@ public class VisualModeChunk
             }
             else
             {
+               // By convention, the first class in a non-executable chunk is its language.
+               // Use that as the "engine" unless another is explicitly specified.
+               Map<String, String> options = new HashMap<>();
+               if (classes_ != null &&
+                   classes_.length() > 0 &&
+                   !StringUtil.isNullOrEmpty(classes_.get(0)))
+               {
+                  engine = classes_.get(0);
+               }
+
                // This is the first line in the chunk (its header). Parse it, reintroducing
                // the backticks since they aren't present in the embedded editor.
-               Map<String, String> options = RChunkHeaderParser.parse("```" + line);
+               RChunkHeaderParser.parse("```" + line, engine, options);
 
                // Check for the "engine" (language) option; extract it if specified
                String optionEngine = options.get("engine");
@@ -1154,6 +1167,7 @@ public class VisualModeChunk
    private Scope scope_;
    private ChunkContextPanmirrorUi toolbar_;
    private boolean active_;
+   private JsArrayString classes_;
    private PanmirrorUIChunkCallbacks chunkCallbacks_;
    private Styles style_;
    private JsArray<LintItem> lint_;

@@ -29,11 +29,11 @@ public class RChunkHeaderParser
    public static Map<String, String> parse(String line)
    {
       Map<String, String> options = new HashMap<>();
-      parse(line, options);
+      parse(line, "r", options);
       return options;
    }
    
-   public static final void parse(String line, Map<String, String> options)
+   public static final void parse(String line, String defaultEngine, Map<String, String> options)
    {
       // set up state
       Mutable<String> key = new Mutable<>();
@@ -71,9 +71,9 @@ public class RChunkHeaderParser
       
       TextCursor cursor = new TextCursor(line);
       
-      // force default R engine
-      options.put("engine", ensureQuoted("r"));
-      
+      // force default engine
+      options.put("engine", ensureQuoted(defaultEngine));
+
       // for R Markdown documents, we need to also parse
       // an engine and an optional label, which adds a bit
       // of extra work for the parser
