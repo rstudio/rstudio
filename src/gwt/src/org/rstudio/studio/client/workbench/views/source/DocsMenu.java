@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.FontStyle;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
@@ -80,7 +81,7 @@ public class DocsMenu extends AppMenuBar
 
       if (icons.length == 0)
       {
-         addItem(new DisabledMenuItem("(No documents)"));
+         addItem(new DisabledMenuItem(constants_.noDocumentsParentheses()));
       }
 
       for (int i = 0; i < icons.length; i++)
@@ -200,4 +201,5 @@ public class DocsMenu extends AppMenuBar
    private ArrayList<MenuItem> menuItems_ = new ArrayList<>();
    private EventBus events_;
    private PopupPanel panel_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

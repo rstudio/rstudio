@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -1204,10 +1205,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                @Override
                public void onError(ServerError error)
                {
-                  display_.showErrorMessage("Can't Move Doc",
-                        "The document could not be " +
-                        "moved to a different window: \n" +
-                        error.getMessage());
+                  display_.showErrorMessage(constants_.cantMoveDoc(),
+                        constants_.cantMoveDocMessage(error.getMessage()));
                }
             });
    }
@@ -1445,4 +1444,5 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private boolean mainWindowFocused_ = true;
 
    public final static String SOURCE_WINDOW_ID = "source_window_id";
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

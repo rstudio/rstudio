@@ -15,12 +15,14 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -184,9 +186,8 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    {
       RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
             GlobalDisplay.MSG_QUESTION, 
-            "Chunk Pending Execution", 
-            "The code in this chunk is scheduled to run later, when other " +
-            "chunks have finished executing.", 
+            constants_.chunkPendingExecution(),
+            constants_.chunkPendingExecutionMessage(),
             false, // include cancel
             null,  // yes operation,
             new Operation() 
@@ -198,8 +199,8 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
                }
             }, 
             null,  // cancel operation 
-            "OK", 
-            "Don't Run", true);
+            constants_.okFullyCapitalized(),
+            constants_.dontRun(), true);
    }
 
    @Override
@@ -300,4 +301,5 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
 
    private boolean isSetup_;
    private String engine_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

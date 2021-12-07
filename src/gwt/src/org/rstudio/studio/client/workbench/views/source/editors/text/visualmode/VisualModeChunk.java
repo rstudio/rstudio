@@ -47,6 +47,7 @@ import org.rstudio.studio.client.panmirror.ui.PanmirrorUIChunkEditor;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
@@ -1126,7 +1127,8 @@ public class VisualModeChunk
       }
 
       // Summarize engine and line count
-      summary += engine + ", " + lines + " line" + (lines > 1 ? "s" : "");
+      summary += (lines > 1 ? constants_.visualModeChunkSummaryPlural(engine, lines) :
+              constants_.visualModeChunkSummary(engine, lines));
 
       SpanElement spanSummary = Document.get().createSpanElement();
       spanSummary.setInnerText(summary);
@@ -1193,4 +1195,5 @@ public class VisualModeChunk
    private final Map<Integer,VisualModeChunkRowState> rowState_;
    private final TextEditingTarget target_;
    private final int markdownIndex_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

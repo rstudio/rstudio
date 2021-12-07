@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource.EditingTargetNameProvider;
@@ -234,7 +235,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
          server_.modifyDocumentProperties(
                doc_.getId(),
                props,
-               new SimpleRequestCallback<Void>("Error")
+               new SimpleRequestCallback<Void>(constants_.errorCapitalized())
                {
                   @Override
                   public void onResponseReceived(Void response)
@@ -438,7 +439,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public String getTabTooltip()
    {
-      return "R Source Viewer";
+      return constants_.rSourceViewer();
    }
 
    @Override
@@ -765,8 +766,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
       docDisplay_.highlightDebugLocation(startPos, endPos, executing);
       if (!shownWarningBar_)
       {
-         view_.showWarningBar("Debug location is approximate because the " +
-                              "source is not available.");
+         view_.showWarningBar(constants_.debugLocationIsApproximate());
          shownWarningBar_ = true;
       }
    }
@@ -797,7 +797,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Override
    public String getCurrentStatus()
    {
-      return "Code Browser displayed";
+      return constants_.codeBrowserDisplayed();
    }
 
    @Override
@@ -831,7 +831,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
                name,
                namespace,
                new SimpleRequestCallback<SearchPathFunctionDefinition>(
-                        "Error Reading Function Definition") {
+                        constants_.errorReadingFunctionDefinition()) {
                   @Override
                   public void onResponseReceived(
                                     SearchPathFunctionDefinition functionDef)
@@ -860,11 +860,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    private Display view_;
    private HandlerRegistration commandReg_;
    private boolean shownWarningBar_ = false;
-   private final Value<String> name_ = new Value<>("Source Viewer");
+   private final Value<String> name_ = new Value<>(constants_.sourceViewer());
    private DocDisplay docDisplay_;
    private EditingTargetCodeExecution codeExecution_;
 
    private SearchPathFunctionDefinition currentFunction_ = null;
 
    private static final MyBinder binder_ = GWT.create(MyBinder.class);
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -46,6 +47,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
@@ -174,9 +176,7 @@ public class DocUpdateSentinel
             public void onWindowClosing(ClosingEvent event)
             {
                if (changesPending_)
-                  event.setMessage("Some of your source edits are still being " +
-                        "backed up. If you continue, your latest " +
-                        "changes may be lost. Do you want to continue?");
+                  event.setMessage(constants_.editsStillBeingBackedUp());
             }
          });
       }
@@ -307,14 +307,13 @@ public class DocUpdateSentinel
                {
                   // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
                   // when attempting to save files that are being backed up by external software
-                  if (!message.contains("The process cannot access the file because it is being used by another process"))
+                  if (!message.contains(constants_.processStillBeingUsedTextEditingTarget()))
                   {
                      loggedAutosaveError_ = true;
 
                      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                           "Error Autosaving File",
-                           "RStudio was unable to autosave this file. You may need " +
-                                 "to restart RStudio.");
+                           constants_.errorAutosavingFile(),
+                           constants_.rStudioUnableToAutosave());
                   }
                }
 
@@ -442,8 +441,7 @@ public class DocUpdateSentinel
          // report error to progress indicator if present
          if (progress != null)
          {
-            progress.onError("Could not save " + path + ": " +
-                             ex.getMessage());
+            progress.onError(constants_.couldNotSavePathPlusMessage(path, ex.getMessage()));
          }
       }
 
@@ -558,8 +556,7 @@ public class DocUpdateSentinel
                   if (progress != null)
                   {
                      String errorMessage =
-                           "Error saving " + path + ": " +
-                                 error.getUserMessage();
+                           constants_.errorSavingPathPlusMessage(path, error.getUserMessage());
 
                      progress.onError(errorMessage);
                   }
@@ -992,6 +989,6 @@ public class DocUpdateSentinel
 
    public final static String PROPERTY_TRUE = "true";
    public final static String PROPERTY_FALSE = "false";
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 
 }

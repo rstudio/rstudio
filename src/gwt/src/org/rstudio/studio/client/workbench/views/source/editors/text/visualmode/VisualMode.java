@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
@@ -67,6 +68,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -201,7 +203,7 @@ public class VisualMode implements VisualModeEditorSync,
    {
       findReplaceButton_ = new ToolbarButton(
          ToolbarButton.NoText,
-         "Find/Replace",
+         constants_.findOrReplace(),
          FindReplaceBar.getFindIcon(),
          (event) -> {
             HasFindReplace findReplace = getFindReplace();
@@ -525,7 +527,7 @@ public class VisualMode implements VisualModeEditorSync,
                       */
                      if (JsObject.keys(result.unparsed_meta).length > 0)
                      {
-                        view_.showWarningBar("Unable to activate visual editor (unsupported front matter format or non top-level YAML block)");
+                        view_.showWarningBar(constants_.unableToActivateVisualModeYAML());
                         allDone.execute(false);
                         return;
                      }
@@ -533,7 +535,7 @@ public class VisualMode implements VisualModeEditorSync,
                      // if we failed to extract a source capsule then don't switch (as the user will have lost data)
                      if (hasSourceCapsule(result.canonical))
                      {
-                        view_.showWarningBar("Unable to activate visual editor (error parsing code chunks out of document)");
+                        view_.showWarningBar(constants_.unableToActivateVisualModeParsingCode());
                         allDone.execute(false);
                         return;
                      }
@@ -541,7 +543,7 @@ public class VisualMode implements VisualModeEditorSync,
                      // if we have example lists then don't switdch
                      if (result.example_lists)
                      {
-                        view_.showWarningBar("Unable to activate visual editor (document contains example lists which are not currently supported)");
+                        view_.showWarningBar(constants_.unableToActivateVisualModeDocumentContains());
                         allDone.execute(false);
                         return;
                      }
@@ -601,15 +603,16 @@ public class VisualMode implements VisualModeEditorSync,
                               PanmirrorPandocFormat format = panmirror_.getPandocFormat();
                               if (result.unrecognized.length > 0) 
                               {
-                                 view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
+                                 view_.showWarningBar(constants_.unrecognizedPandocTokens(String.join(", ", result.unrecognized)));
                               } 
                               else if (format.warnings.invalidFormat.length() > 0)
                               {
-                                 view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+                                 view_.showWarningBar(constants_.invalidPandocFormat(format.warnings.invalidFormat));
                               }
                               else if (format.warnings.invalidOptions.length > 0)
                               {
-                                 view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
+                                 view_.showWarningBar(constants_.unsupportedExtensionsForMarkdown(
+                                         String.join(", ", format.warnings.invalidOptions)));;
                               }
                            });         
                         }, 
@@ -645,7 +648,7 @@ public class VisualMode implements VisualModeEditorSync,
                // ensure that no source capsules have snuck in
                if (hasSourceCapsule(markdown))
                {
-                  view_.showWarningBar("Unable to parse markdown (please report at https://github.com/rstudio/rstudio/issues/new)");
+                  view_.showWarningBar(constants_.unableToParseMarkdownPleaseReport());
                   completed.execute(null);  
                }
                /*
@@ -1138,7 +1141,7 @@ public class VisualMode implements VisualModeEditorSync,
          
          if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
          {
-            label.appendEscaped("Chunk " + item.sequence);
+            label.appendEscaped(constants_.chunkSequence(item.sequence));
             if (!StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
             {
                label.appendEscaped(": " + item.title);
@@ -1440,7 +1443,7 @@ public class VisualMode implements VisualModeEditorSync,
          //
          // We also show this when beneath the top level YAML metadata region,
          // if present.
-         target_.updateStatusBarLocation("(Top Level)", StatusBar.SCOPE_TOP_LEVEL);
+         target_.updateStatusBarLocation(constants_.topLevelParentheses(), StatusBar.SCOPE_TOP_LEVEL);
       }
       else
       {
@@ -1454,7 +1457,7 @@ public class VisualMode implements VisualModeEditorSync,
          else if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
          {
             type = StatusBar.SCOPE_CHUNK;
-            title = "Chunk " + item.sequence;
+            title = constants_.chunkSequence(item.sequence);
             if (!StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
             {
                title += ": " + item.title;
@@ -1799,7 +1802,7 @@ public class VisualMode implements VisualModeEditorSync,
    { 
       if (this.docDisplay_.hasActiveCollabSession())
       {
-         return "You cannot enter visual mode while using realtime collaboration.";
+         return constants_.cantEnterVisualModeUsingRealtime();
       }
       else
       {
@@ -1945,7 +1948,8 @@ public class VisualMode implements VisualModeEditorSync,
    
    // priority task queue for expensive calls to panmirror_.setMarkdown
    // (currently active tab bumps itself up in priority)
-   private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);     
+   private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
 
 

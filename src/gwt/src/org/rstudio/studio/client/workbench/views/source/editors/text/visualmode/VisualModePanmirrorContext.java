@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -42,6 +43,7 @@ import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ImagePreviewer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
@@ -253,7 +255,7 @@ public class VisualModePanmirrorContext
             if (unresolvedUris.length() > 0)
             {
                FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
-               String imagesDir = resourceDir.completePath("images");
+               String imagesDir = resourceDir.completePath(constants_.images());
                server_.rmdImportImages(unresolvedUris, imagesDir, new SimpleRequestCallback<JsArrayString>() {
                   @Override
                   public void onResponseReceived(JsArrayString importedUris)
@@ -435,4 +437,5 @@ public class VisualModePanmirrorContext
    private SessionInfo sessionInfo_;
    private EventBus events_;
    private RMarkdownServerOperations server_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
