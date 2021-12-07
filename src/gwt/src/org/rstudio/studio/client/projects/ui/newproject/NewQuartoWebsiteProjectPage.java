@@ -17,13 +17,13 @@ package org.rstudio.studio.client.projects.ui.newproject;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
-import org.rstudio.studio.client.quarto.model.QuartoConstants;
+import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 
 public class NewQuartoWebsiteProjectPage extends NewQuartoProjectPage
 {
    public NewQuartoWebsiteProjectPage()
    {
-      super(QuartoConstants.PROJECT_WEBSITE,
+      super(QuartoCommandConstants.PROJECT_WEBSITE,
            constants_.quartoWebsiteTitle(),
            constants_.quartoWebsiteSubTitle(),
            constants_.quartoWebsitePageCaption(),

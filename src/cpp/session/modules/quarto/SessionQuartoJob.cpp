@@ -46,6 +46,7 @@ Error QuartoJob::start()
    options.terminateChildren = true;
 #endif
    options.workingDir = workingDir();
+   options.callbacksRequireMainThread = true;
 
    // set environment variables
    core::system::Options env;

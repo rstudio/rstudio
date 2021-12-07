@@ -53,7 +53,7 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
          String defaultType,
          final OperationWithInput<CompileNotebookOptions> operation)
    {
-      super("Compile Report from R Script", Roles.getDialogRole(), operation);
+      super(constants_.compileNotebookOptionsDialogCaption(), Roles.getDialogRole(), operation);
       docId_ = docId;
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -202,4 +202,6 @@ public class CompileNotebookOptionsDialog extends ModalDialog<CompileNotebookOpt
    private boolean showTypes_;
 
    private Widget widget_;
+
+   private static final NotebookConstants constants_ = GWT.create(NotebookConstants.class);
 }

@@ -257,6 +257,36 @@ public class ElementIds
    // Hyperlink Label
    public final static String HYPERLINKLABEL_SSH_SHOW_PUBLIC_KEY = "hll_ssh_show_public_key";
 
+   // SelectWidget
+   public final static String SELECT_WIDGET_LIST_BOX = "select_list_box";
+   public final static String SELECT_WIDGET_LABEL = "select_label";
+
+   // SelectWidget and subclasses -- unique suffix added to list box and label;
+   // only has to be unique within this enum
+   public enum SelectWidgetId
+   {
+      // RVersionSelectWidgets
+      R_VER_GEN_PREF_PANE("r_ver_gen_pref_pane"),
+      R_VER_JOB_LAUNCH("r_ver_job_launcher"),
+      R_VER_NEW_PROJ_WIZ("r_ver_new_proj_wiz"),
+      R_VER_WB_NEW_SES_DIA("r_ver_new_ses_dia"),
+
+      DEFAULT("");
+
+      SelectWidgetId(String value)
+      {
+         value_ = value;
+      }
+
+      @Override
+      public String toString()
+      {
+         return value_;
+      }
+
+      private final String value_;
+   }
+
    // TextBox
    public final static String TEXTBOX_SSH_KEY_PATH = "textbox_ssh_key_path";
 

@@ -75,6 +75,7 @@ public class MinimizedModuleTabLayoutPanel
       return addHandler(handler, SelectionEvent.getType());
    }
 
+   @SuppressWarnings("unused")
    private final String accessibleName_;
    private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

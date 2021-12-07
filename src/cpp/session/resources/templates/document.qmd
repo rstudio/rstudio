@@ -2,8 +2,6 @@
 
 Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
-This document uses the Quarto [visual markdown editor](https://quarto.org/docs/visual-editor/). Use the button at the far right of the editor toolbar to switch between visual and source code mode.
-
 ## Running Code
 
 When you click the **Render** button a document will be generated that includes both content as well as the output of any embedded code within the document. You can embed code like this:
@@ -12,15 +10,4 @@ When you click the **Render** button a document will be generated that includes 
 1 + 1
 ```
 
-Use the **Insert** menu to create additional code chunks and to add links, images, equations, and more to your document.
 
-## Plot Output
-
-You can also include plots, for example:
-
-```{r}
-#| echo: false
-plot(pressure)
-```
-
-Note that the `echo: false` option is added (within a special comment) to prevent printing of the code that generated the plot.

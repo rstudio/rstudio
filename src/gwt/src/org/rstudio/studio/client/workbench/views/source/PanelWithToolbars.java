@@ -47,6 +47,7 @@ public class PanelWithToolbars extends ResizeComposite
       panel_.addNorth(toolbar, toolbar.getHeight());
       
       if (secondaryToolbar != null) {
+         secondaryToolbar_ = secondaryToolbar;
          panel_.addNorth(secondaryToolbar, secondaryToolbar.getHeight());
          secondaryToolbar.getWrapper().addStyleName(ThemeStyles.INSTANCE.tallerToolbarWrapper());
       }
@@ -74,6 +75,12 @@ public class PanelWithToolbars extends ResizeComposite
          panel_.setWidgetHidden(statusBarWidget_, !show);
    }
    
+   public void showSecondaryToolbar(boolean show)
+   {
+      if (secondaryToolbar_ != null)
+         panel_.setWidgetHidden(secondaryToolbar_, !show);
+   }
+   
 
    public void insertNorth(Widget widget, double size, Widget before) 
    {
@@ -91,5 +98,6 @@ public class PanelWithToolbars extends ResizeComposite
 
    private DockLayoutPanel panel_;
    private Widget mainWidget_;
+   private Toolbar secondaryToolbar_ = null;
    private Widget statusBarWidget_ = null;
 }

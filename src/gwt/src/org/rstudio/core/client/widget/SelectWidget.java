@@ -18,6 +18,7 @@ import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -71,13 +72,14 @@ public class SelectWidget extends Composite
                        boolean horizontalLayout,
                        boolean listOnLeft)
    {
-      this(label, options, values, isMultipleSelect,
+      this(label, ElementIds.SelectWidgetId.DEFAULT, options, values, isMultipleSelect,
            horizontalLayout, listOnLeft, false);
    }
 
    /**
     * @param label label text, or empty string (supplied later via setLabel), or ExternalLabel if
     *              a label will be associated outside this control
+    * @param uniqueId
     * @param options
     * @param values
     * @param isMultipleSelect
@@ -86,6 +88,7 @@ public class SelectWidget extends Composite
     * @param fillContainer
     */
    public SelectWidget(String label,
+                       ElementIds.SelectWidgetId uniqueId,
                        String[] options,
                        String[] values,
                        boolean isMultipleSelect,
@@ -98,6 +101,14 @@ public class SelectWidget extends Composite
 
       listBox_ = new ListBox();
       listBox_.setMultipleSelect(isMultipleSelect);
+
+      // set the element ID if one is provided, otherwise let it get auto generated
+      if (uniqueId != ElementIds.SelectWidgetId.DEFAULT)
+      {
+         uniqueId_ = "_" + uniqueId;
+         ElementIds.assignElementId(listBox_, ElementIds.SELECT_WIDGET_LIST_BOX + uniqueId_);
+      }
+
       if (options == null)
       {
          listBox_.addItem(constants_.selectWidgetListBoxNone(), constants_.selectWidgetListBoxNone());
@@ -149,6 +160,8 @@ public class SelectWidget extends Composite
          panel = flowPanel_;
          panel.add(listBox_);
       }
+      if (!StringUtil.isNullOrEmpty(uniqueId_))
+         ElementIds.assignElementId(label_, ElementIds.SELECT_WIDGET_LABEL + uniqueId_);
 
       initWidget(panel);
 
@@ -282,6 +295,7 @@ public class SelectWidget extends Composite
       Roles.getListboxRole().setAriaDescribedbyProperty(listBox_.getElement(), Id.of(id));
    }
 
+   private String uniqueId_;
    private HorizontalPanel horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
    private FormLabel label_ = null;

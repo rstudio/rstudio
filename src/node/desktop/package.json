@@ -54,6 +54,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-promise": "^5.1.1",
     "fork-ts-checker-webpack-plugin": "^6.4.0",
+    "json": "^11.0.0",
     "mocha": "^8.4.0",
     "node-loader": "^2.0.0",
     "nyc": "^15.1.0",
