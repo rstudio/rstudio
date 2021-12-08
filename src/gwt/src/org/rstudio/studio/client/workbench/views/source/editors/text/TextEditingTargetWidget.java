@@ -614,12 +614,13 @@ public class TextEditingTargetWidget
 
                setDocOutlineLatchState(destination != 0);
 
-               int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
+               int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 400);
                new Animation()
                {
                   @Override
                   protected void onUpdate(double progress)
                   {
+                     progress = interpolate(progress);
                      double size =
                            destination * progress +
                            initialSize * (1 - progress);
@@ -958,8 +959,8 @@ public class TextEditingTargetWidget
          if (toolbar_.removeRightWidget(toggleDocOutlineButton_))
          {
             markdownToolbar_.addRightWidget(toggleDocOutlineButton_);
-            toggleDocOutlineButton_.setText(commands_.toggleDocumentOutline().getButtonLabel());
          }
+         toggleDocOutlineButton_.setText(commands_.toggleDocumentOutline().getButtonLabel());         
       }
       else
       {
@@ -971,6 +972,7 @@ public class TextEditingTargetWidget
       }
 
       toggleVisualModeOutlineButton_.setVisible(visualRmdMode);
+      
       
       // update modes for filetype
       syncWrapMode();
@@ -1053,6 +1055,24 @@ public class TextEditingTargetWidget
       if (width == 0)
          return;
 
+      
+      if (editor_.getFileType().isMarkdown())
+      {
+         toggleDocOutlineButton_.setText(
+          (!isVisualMode() || width >= 675) 
+             ? commands_.toggleDocumentOutline().getButtonLabel() 
+             : ToolbarButton.NoText
+         );
+         toggleVisualModeOutlineButton_.setText(width > 675 
+             ? commands_.toggleDocumentOutline().getButtonLabel() 
+             : ToolbarButton.NoText
+         );
+      }
+      else
+      {
+         toggleDocOutlineButton_.setText(ToolbarButton.NoText);
+         toggleVisualModeOutlineButton_.setText(ToolbarButton.NoText);
+      }
       
       
       texToolbarButton_.setText(width >= 520, constants_.format());
@@ -1709,6 +1729,12 @@ public class TextEditingTargetWidget
       if (findReplaceButton_ != null)
          findReplaceButton_.setVisible(!show);
    }
+   
+   @Override
+   public MarkdownToolbar getMarkdownToolbar()
+   {
+      return markdownToolbar_;
+   }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)
    {
@@ -2050,4 +2076,5 @@ public class TextEditingTargetWidget
    private String quartoCommandText_ = constants_.render();
    private String previewCommandText_ = constants_.preview();
 
+  
 }

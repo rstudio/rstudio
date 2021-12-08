@@ -261,65 +261,65 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     String normalMenuText();
 
     /**
-     * Translated "Heading 1".
+     * Translated "Header 1".
      *
-     * @return translated "Heading 1"
+     * @return translated "Header 1"
      */
-    @DefaultMessage("Heading 1")
+    @DefaultMessage("Header 1")
     @Key("heading1MenuText")
     String heading1MenuText();
 
     /**
-     * Translated "Heading 2".
+     * Translated "Header 2".
      *
-     * @return translated "Heading 2"
+     * @return translated "Header 2"
      */
-    @DefaultMessage("Heading 2")
+    @DefaultMessage("Header 2")
     @Key("heading2MenuText")
     String heading2MenuText();
 
     /**
-     * Translated "Heading 3".
+     * Translated "Header 3".
      *
-     * @return translated "Heading 3"
+     * @return translated "Header 3"
      */
-    @DefaultMessage("Heading 3")
+    @DefaultMessage("Header 3")
     @Key("heading3MenuText")
     String heading3MenuText();
 
     /**
-     * Translated "Heading 4".
+     * Translated "Header 4".
      *
-     * @return translated "Heading 4"
+     * @return translated "Header 4"
      */
-    @DefaultMessage("Heading 4")
+    @DefaultMessage("Header 4")
     @Key("heading4MenuText")
     String heading4MenuText();
 
     /**
-     * Translated "Heading 5".
+     * Translated "Header 5".
      *
-     * @return translated "Heading 5"
+     * @return translated "Header 5"
      */
-    @DefaultMessage("Heading 5")
+    @DefaultMessage("Header 5")
     @Key("heading5MenuText")
     String heading5MenuText();
 
     /**
-     * Translated "Heading 6".
+     * Translated "Header 6".
      *
-     * @return translated "Heading 6"
+     * @return translated "Header 6"
      */
-    @DefaultMessage("Heading 6")
+    @DefaultMessage("Header 6")
     @Key("heading6MenuText")
     String heading6MenuText();
 
     /**
-     * Translated "Code Block".
+     * Translated "Code".
      *
-     * @return translated "Code Block"
+     * @return translated "Code"
      */
-    @DefaultMessage("Code Block")
+    @DefaultMessage("Code")
     @Key("codeBlockMenuText")
     String codeBlockMenuText();
 

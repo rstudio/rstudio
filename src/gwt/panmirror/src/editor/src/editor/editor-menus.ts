@@ -20,7 +20,6 @@ import { EditorCommandId, EditorCommand } from '../api/command';
 export interface EditorMenus {
   format: EditorMenuItem[];
   insert: EditorMenuItem[];
-  reference: EditorMenuItem[];
   table: EditorMenuItem[];
 }
 
@@ -28,7 +27,6 @@ export function editorMenus(ui: EditorUI, commands: EditorCommand[]) {
   return {
     format: formatMenu(ui, commands),
     insert: insertMenu(ui, commands),
-    reference: haveReferenceMenu(commands) ? referenceMenu() : [],
     table: tableMenu(true, ui),
   };
 }
@@ -128,6 +126,13 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.Image },
     { command: EditorCommandId.Link },
     { command: EditorCommandId.Shortcode },
+    ...(haveAnyOf(commands, EditorCommandId.Citation, EditorCommandId.CrossReference, EditorCommandId.Footnote)
+    ? [
+      { separator: true },
+      { command: EditorCommandId.Citation },
+      { command: EditorCommandId.CrossReference },
+      { command: EditorCommandId.Footnote },
+    ] : []),
     ...(haveAnyOf(commands, EditorCommandId.InsertSlideNotes, EditorCommandId.InsertSlidePause, EditorCommandId.InsertSlideColumns)
     ? [
       { separator: true },
@@ -198,13 +203,6 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
   ];
 }
 
-function referenceMenu() {
-  return [
-    { command: EditorCommandId.Citation },
-    { command: EditorCommandId.CrossReference },
-    { command: EditorCommandId.Footnote },
-  ];
-}
 
 function haveReferenceMenu(commands: EditorCommand[]) {
   return haveAnyOf(commands, 

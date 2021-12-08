@@ -22,6 +22,5 @@ public class PanmirrorMenus
 {
    public PanmirrorMenuItem[] format;
    public PanmirrorMenuItem[] insert;
-   public PanmirrorMenuItem[] reference;
    public PanmirrorMenuItem[] table;
 }

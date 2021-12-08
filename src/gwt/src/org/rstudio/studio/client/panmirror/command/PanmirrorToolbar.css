@@ -32,7 +32,12 @@
 }
 
 .toolbarTextMenuButton {
-   margin-top: -2px;
+   margin-top: -1px;
+   color: #393939;
+}
+
+.rstudio-themes-dark .toolbarTextMenuButton {
+   color: #efefef
 }
 
 .toolbarSeparator {
@@ -40,7 +45,7 @@
 }
 
 .toolbarPopupMenu .gwt-MenuItem {
-   min-width: 190px;
+   min-width: 185px;
 }
 
 .toolbarPopupSubmenu .gwt-MenuItem {
