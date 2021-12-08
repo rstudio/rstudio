@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.model;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 
 public class MemoryStat extends JavaScriptObject
 {
@@ -34,11 +36,11 @@ public class MemoryStat extends JavaScriptObject
       {
          default:
          case MEMORY_PROVIDER_UNKNOWN:
-            return "Unknown";
+            return constants_.unknownCapitalized();
          case MEMORY_PROVIDER_MACOS:
-            return "MacOS System";
+            return constants_.macOsSystem();
          case MEMORY_PROVIDER_WINDOWS:
-            return "Windows System";
+            return constants_.windowsSystem();
          case MEMORY_PROVIDER_LINUX_CGROUPS:
             return "cgroup";
          case MEMORY_PROVIDER_LINUX_ULIMIT:
@@ -57,4 +59,5 @@ public class MemoryStat extends JavaScriptObject
    public final static int MEMORY_PROVIDER_LINUX_ULIMIT      = 4;
    public final static int MEMORY_PROVIDER_LINUX_PROCFS      = 5;
    public final static int MEMORY_PROVIDER_LINUX_PROCMEMINFO = 6;
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

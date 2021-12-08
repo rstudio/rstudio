@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 
 @Singleton
 public class DataImportPresenter
@@ -69,7 +71,7 @@ public class DataImportPresenter
             dataImportDependecyUserAction_, 
             getImportDatasetCommandFromMode(
                   DataImportModes.Text,
-                  "Import Text Data",
+                  constants_.importTextData(),
                   path)
       );
    }
@@ -80,7 +82,7 @@ public class DataImportPresenter
             dataImportDependecyUserAction_, 
             getImportDatasetCommandFromMode(
                   DataImportModes.SAV,
-                  "Import Statistical Data",
+                  constants_.importStatisticalData(),
                   path)
       );
    }
@@ -91,7 +93,7 @@ public class DataImportPresenter
             dataImportDependecyUserAction_, 
             getImportDatasetCommandFromMode(
                   DataImportModes.SAS,
-                  "Import Statistical Data",
+                  constants_.importStatisticalData(),
                   path)
       );
    }
@@ -102,7 +104,7 @@ public class DataImportPresenter
             dataImportDependecyUserAction_, 
             getImportDatasetCommandFromMode(
                   DataImportModes.Stata,
-                  "Import Statistical Data",
+                  constants_.importStatisticalData(),
                   path)
       );
    }
@@ -113,7 +115,7 @@ public class DataImportPresenter
             dataImportDependecyUserAction_, 
             getImportDatasetCommandFromMode(
                   DataImportModes.XLS,
-                  "Import Excel Data",
+                  constants_.importExcelData(),
                   path)
       );
    }
@@ -122,4 +124,5 @@ public class DataImportPresenter
    private DependencyManager dependencyManager_;
    
    final String dataImportDependecyUserAction_ = "Preparing data import";
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }
