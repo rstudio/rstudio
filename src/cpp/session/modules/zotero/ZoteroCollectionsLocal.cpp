@@ -723,12 +723,12 @@ FilePath defaultZoteroDataDir()
    return homeDir.completeChildPath("Zotero");
 }
 
-FilePath profileRelativePath(std::string sectionPath, FilePath profilesDir)
+FilePath platformProfileDir(FilePath profilePath)
 {
 #if defined(_WIN32) || defined(__APPLE__)
-    return profilesDir.getParent().completeChildPath(sectionPath);
+    return profilePath.getParent();
 #else
-    return profilesDir.completeChildPath(sectionPath);
+    return profilePath;
 #endif
 }
 
@@ -736,7 +736,7 @@ FilePath defaultProfileDir()
 {
    // read the lines
    FilePath profilesDir = zoteroProfilesDir();
-   FilePath profileIni = profilesDir.getParent().completeChildPath("profiles.ini");
+   FilePath profileIni = platformProfileDir(profilesDir).completeChildPath("profiles.ini");
    if (profileIni.exists())
    {
 
@@ -778,7 +778,7 @@ FilePath defaultProfileDir()
           if (sectionIsDefault && !sectionPath.empty())
           {
              if (sectionPathIsRelative)
-                return profileRelativePath(sectionPath, profilesDir);
+                return platformProfileDir(profilesDir).completeChildPath(sectionPath);
              else
                 return FilePath(sectionPath);
           }
