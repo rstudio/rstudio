@@ -3,7 +3,7 @@
 #include <core/system/System.hpp>
 #include <core/FileSerializer.hpp>
 #include <boost/filesystem.hpp>
-#include "ServerDatabaseDataset.h"
+#include "ServerDatabaseDataset.hpp"
 
 #include <map>
 #include <iostream>

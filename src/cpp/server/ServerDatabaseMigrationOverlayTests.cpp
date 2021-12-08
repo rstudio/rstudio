@@ -1,6 +1,6 @@
 #include <map>
 #include <iostream>
-#include "ServerDatabaseDataset.h"
+#include "ServerDatabaseDataset.hpp"
 namespace rstudio {
 namespace server {
 namespace db {
