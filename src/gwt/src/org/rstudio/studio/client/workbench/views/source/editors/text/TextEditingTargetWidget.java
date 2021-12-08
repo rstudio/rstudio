@@ -1054,6 +1054,24 @@ public class TextEditingTargetWidget
          return;
 
       
+      if (editor_.getFileType().isMarkdown())
+      {
+         toggleDocOutlineButton_.setText(
+          (!isVisualMode() && width >= 675) 
+             ? commands_.toggleDocumentOutline().getButtonLabel() 
+             : ToolbarButton.NoText
+         );
+         toggleVisualModeOutlineButton_.setText(width > 675 
+             ? commands_.toggleDocumentOutline().getButtonLabel() 
+             : ToolbarButton.NoText
+         );
+      }
+      else
+      {
+         toggleDocOutlineButton_.setText(ToolbarButton.NoText);
+         toggleVisualModeOutlineButton_.setText(ToolbarButton.NoText);
+      }
+      
       
       texToolbarButton_.setText(width >= 520, constants_.format());
       runButton_.setText(((width >= 480) && !isShinyFile()), constants_.run());
@@ -1708,6 +1726,12 @@ public class TextEditingTargetWidget
          visualModeFindReplaceButton_.setVisible(show);
       if (findReplaceButton_ != null)
          findReplaceButton_.setVisible(!show);
+   }
+   
+   @Override
+   public Toolbar getMarkdownToolbar()
+   {
+      return markdownToolbar_;
    }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleEvent.Handler handler)

@@ -1,6 +1,9 @@
 
 @external rstudio-themes-inverts;
-@external rstudio-themes-dark;
+@external rstudio-themes-dark, rstudio-themes-dark-grey;
+
+@eval THEME_DARKGREY_MENU_SELECTED org.rstudio.core.client.theme.ThemeColors.darkGreyMenuSelected;
+
 
 .markdownToolbar button.rstudio-themes-inverts {
   color: #393939;
@@ -13,23 +16,13 @@
 
 
 .markdownToolbar button.rstudio-themes-inverts[aria-pressed="true"] {
-  background-color: rgb(237, 237, 237);
+  background-color: #e7e8ea;
 }
 
 .rstudio-themes-dark .markdownToolbar button.rstudio-themes-inverts[aria-pressed="true"] {
-  background-color: rgb(60, 66, 76);
+  background-color: THEME_DARKGREY_MENU_SELECTED;
 }
-   
-   
-.markdownToolbar button.rstudio-themes-inverts {
-  border-style: none;
-  border-radius: 0;
-  height: 21px;
-  margin-top: -2px;
-  margin-bottom: -4px;
-  margin-right: 0;
-  padding-left: 8px;
-}
+
 
 @if rstudio.desktop true {
 .markdownToolbar button.rstudio-themes-inverts div {
@@ -37,10 +30,9 @@
 }
 }
 
+
 .markdownToolbar button.rstudio-themes-inverts.editorModeButton {
-  margin-left: -6px;
-  margin-right: 8px;
-  padding-left: 4px;
+  margin-right: 3px;
 }
 
 

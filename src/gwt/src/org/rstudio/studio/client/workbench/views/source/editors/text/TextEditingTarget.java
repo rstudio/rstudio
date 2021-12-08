@@ -289,6 +289,8 @@ public class TextEditingTarget implements
       void setAccessibleName(String name);
 
       TextEditorContainer editorContainer();
+      
+      Toolbar getMarkdownToolbar();
 
       void manageCommandUI();
 

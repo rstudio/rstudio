@@ -1510,8 +1510,8 @@ public class VisualMode implements VisualModeEditorSync,
          PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
          PanmirrorWidget.FormatSource formatSource = visualModeFormat_.formatSource();
-         PanmirrorWidget.create(context, formatSource, 
-                                options, widgetOptions, kCreationProgressDelayMs, (panmirror) -> {
+         PanmirrorWidget.create(context, formatSource, options, widgetOptions, view_.getMarkdownToolbar(), kCreationProgressDelayMs, 
+            (panmirror) -> {
          
             // save reference to panmirror
             panmirror_ = panmirror;

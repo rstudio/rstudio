@@ -23,16 +23,28 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.ui.RequiresResize;
 
-public class MarkdownToolbar extends SecondaryToolbar
+public class MarkdownToolbar extends SecondaryToolbar implements RequiresResize
 {
    public MarkdownToolbar(Commands commands, ClickHandler visualModeClickHandler)
    {
       super(true, "Markdown editing tools");
       addStyleName(RES.styles().markdownToolbar());
       
+      sourceMode_ = new LatchingToolbarButton(
+            "Source", 
+            commands.toggleRmdVisualMode().getTooltip(),
+            false,
+            null,
+            visualModeClickHandler
+         );
+         sourceMode_.addStyleName("rstudio-themes-inverts");
+         sourceMode_.addStyleName(RES.styles().editorModeButton());
+         addLeftWidget(sourceMode_);
+      
       visualMode_ = new LatchingToolbarButton(
-         "Visual Editor", 
+         "Visual", 
          commands.toggleRmdVisualMode().getTooltip(),
          false,
          null,
@@ -42,17 +54,7 @@ public class MarkdownToolbar extends SecondaryToolbar
       visualMode_.addStyleName(RES.styles().editorModeButton());
       addLeftWidget(visualMode_);
       visualMode_.setLatched(true);
-
-      sourceMode_ = new LatchingToolbarButton(
-         "Source Editor", 
-         commands.toggleRmdVisualMode().getTooltip(),
-         false,
-         null,
-         visualModeClickHandler
-      );
-      sourceMode_.addStyleName("rstudio-themes-inverts");
-      sourceMode_.addStyleName(RES.styles().editorModeButton());
-      addLeftWidget(sourceMode_);
+            
             
    }
    
