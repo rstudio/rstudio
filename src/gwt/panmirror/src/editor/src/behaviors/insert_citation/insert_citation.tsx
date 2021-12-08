@@ -499,12 +499,15 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           .search(searchTerm, insertCitationPanelState.selectedNode, existingCitationIds)
           .then(searchResult => {
             if (!searchCanceled.current) {
+              // If only a single result is returned, select that by default
+              const selectedIndex = searchResult?.citations.length === 1 ? 0 : -1;
+
               updateState({
                 searchTerm,
                 citations: searchResult?.citations,
                 status: searchResult?.status,
                 statusMessage: searchResult?.statusMessage,
-                selectedIndex: -1,
+                selectedIndex,
               });
             }
           });
