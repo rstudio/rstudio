@@ -193,7 +193,7 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
                                                   string(name: 'GIT_REVISION', value: "${rstudioBuildCommit}"),
                                                   string(name: 'BRANCH_NAME', value: "${rstudioReleaseBranch}"),
-                                                  string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
+                                                  string(name: 'SLACK_CHANNEL', value: params.get('SLACK_CHANNEL', '#ide-builds'))]
 }
 
 
