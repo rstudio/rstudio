@@ -1,5 +1,4 @@
 #include <map>
-#include <iostream>
 #include "ServerDatabaseDataset.hpp"
 namespace rstudio {
 namespace server {

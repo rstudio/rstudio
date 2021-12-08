@@ -6,7 +6,6 @@
 #include "ServerDatabaseDataset.hpp"
 
 #include <map>
-#include <iostream>
 
 using namespace rstudio::core;
 using namespace rstudio::core::database;
