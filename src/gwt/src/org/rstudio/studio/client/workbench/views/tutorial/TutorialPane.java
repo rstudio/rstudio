@@ -73,7 +73,7 @@ public class TutorialPane
                           DependencyManager dependencies,
                           TutorialServerOperations server)
    {
-      super(constants_.tutorialTitle(), events);
+      super("Tutorial", events);
 
       globalDisplay_ = globalDisplay;
       commands_      = commands;

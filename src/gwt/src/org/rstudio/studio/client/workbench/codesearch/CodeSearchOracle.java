@@ -340,7 +340,6 @@ public class CodeSearchOracle extends SuggestOracle
                if (error.getCode() != ServerError.TRANSMISSION)
                {
                   RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-
                           constants_.codeSearchError(), error.getUserMessage());
                }
                
@@ -469,7 +468,6 @@ public class CodeSearchOracle extends SuggestOracle
       private final String query_;
       private final ArrayList<CodeSearchSuggestion> suggestions_;
       private final boolean moveAvailable_;
-
    }
    private static final CodeSearchConstants constants_ = GWT.create(CodeSearchConstants.class);
 }

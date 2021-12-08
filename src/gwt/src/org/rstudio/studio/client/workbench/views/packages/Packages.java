@@ -214,7 +214,7 @@ public class Packages
             else
             {
                globalDisplay_.showYesNoMessage(MessageDialog.QUESTION,
-                       constants_.createPackageLibraryCaption(),
+                 constants_.createPackageLibraryCaption(),
                  constants_.createPackageLibraryMessage(installContext.getDefaultUserLibraryPath()),
                  false,
                  new Operation() // Yes operation

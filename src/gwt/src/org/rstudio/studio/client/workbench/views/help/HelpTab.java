@@ -68,7 +68,7 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
                   EventBus events,
                   final Session session)
    {
-      super(constants_.helpText(), shim);
+      super("Help", shim);
       binder.bind(commands, shim);
       events.addHandler(ShowHelpEvent.TYPE, shim);
       events.addHandler(ActivateHelpEvent.TYPE, shim);

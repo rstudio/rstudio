@@ -431,7 +431,7 @@ public class BuildPresenter extends BasePresenter
          {
             terminalHelper_.warnBusyTerminalBeforeCommand(() ->
                   executeBuildNoBusyCheck(type, subType),
-                  constants_.buildText(), constants_.terminalTerminatedQuestion(),
+                  "Build", constants_.terminalTerminatedQuestion(),
                   userPrefs_.busyDetection().getValue());
          }
       });

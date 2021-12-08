@@ -1723,7 +1723,7 @@ public class PaneManager
 
    private LogicalWindow createConsole()
    {
-      String frameName = constants_.consoleText();
+      String frameName = "Console";
       
       PrimaryWindowFrame frame = new PrimaryWindowFrame(frameName, null);
       frame.setTitleWidget(new ConsoleInterpreterVersion());

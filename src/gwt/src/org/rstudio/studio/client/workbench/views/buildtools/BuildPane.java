@@ -73,7 +73,7 @@ public class BuildPane extends WorkbenchPane
                     FileTypeRegistry fileTypeRegistry,
                     BuildServerOperations server)
    {
-      super(constants_.buildText(), events);
+      super("Build", events);
       ((BuildPane.Binder) GWT.create(BuildPane.Binder.class)).bind(commands, this);
 
       commands_ = commands;

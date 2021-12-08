@@ -36,7 +36,7 @@ public class SourceCppOutputPane extends WorkbenchPane
    @Inject
    public SourceCppOutputPane()
    {
-      super(constants_.sourceCppTitle());
+      super("Source Cpp");
       compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
       ensureWidget();
    }

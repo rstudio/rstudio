@@ -27,7 +27,7 @@ public class TutorialTab extends DelayLoadWorkbenchTab<TutorialPresenter>
    @Inject
    public TutorialTab(Shim shim)
    {
-      super(constants_.tutorialTitle(), shim);
+      super("Tutorial", shim);
       shim_ = shim;
    }
    

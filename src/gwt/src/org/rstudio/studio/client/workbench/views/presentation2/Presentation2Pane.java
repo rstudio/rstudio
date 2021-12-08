@@ -63,7 +63,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       // This should always be title "Presentation" (rather than the name of the underlying
       // tab "Presentations". The proper name is "Presentation", we just used
       // "Presentations" so the configurations wouldn't conflict.
-      super(constants_.presentationTitle());
+      super("Presentation");
       commands_ = commands;
       server_ = server;
       ensureWidget();

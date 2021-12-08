@@ -88,7 +88,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                        GlobalDisplay display,
                        EventBus events)
    {
-      super(constants_.packagesTitle(), events);
+      super("Packages", events);
       commands_ = commands;
       session_ = session;
       display_ = display;

@@ -18,15 +18,6 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
 
 
     /**
-     * Translated "Tutorial".
-     *
-     * @return translated "Tutorial"
-     */
-    @DefaultMessage("Tutorial")
-    @Key("tutorialTitle")
-    String tutorialTitle();
-
-    /**
      * Translated "Error Loading Tutorial".
      *
      * @return translated "Error Loading Tutorial"

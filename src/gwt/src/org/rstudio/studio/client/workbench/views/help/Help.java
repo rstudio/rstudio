@@ -195,7 +195,7 @@ public class Help extends BasePresenter implements ShowHelpEvent.Handler
 
    public void bringToFront()
    {
-      events_.fireEvent(new ActivatePaneEvent(constants_.helpText()));
+      events_.fireEvent(new ActivatePaneEvent("Help"));
    }
 
    private void home()

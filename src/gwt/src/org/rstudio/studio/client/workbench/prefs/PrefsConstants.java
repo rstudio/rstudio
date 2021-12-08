@@ -1959,15 +1959,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingEditShortcuts();
 
     /**
-     * Translated "Edit Snippets...".
-     *
-     * @return translated "Edit Snippets..."
-     */
-    @DefaultMessage("Edit Snippets...")
-    @Key("editingEditSnippets")
-    String editingEditSnippets();
-
-    /**
      * Translated "Execution".
      *
      * @return translated "Execution"
@@ -4719,15 +4710,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingEditSnippetsCaption();
 
     /**
-     * Translated "Using Code Snippets".
-     *
-     * @return translated "Using Code Snippets"
-     */
-    @DefaultMessage("Using Code Snippets")
-    @Key("editingSnippetHelpLink")
-    String editingSnippetHelplink();
-
-    /**
      * Translated "Save".
      *
      * @return translated "Save"
@@ -4735,15 +4717,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Save")
     @Key("editingSaveButtonLabel")
     String editingSaveButtonLabel();
-
-    /**
-     * Translated "Error Applying Snippets ({0})".
-     *
-     * @return translated "Error Applying Snippets ({0})"
-     */
-    @DefaultMessage("Error Applying Snippets ({0})")
-    @Key("errorApplyingSnippetsCaption")
-    String errorApplyingSnippetsCaption(String fileTypeLabel);
 
     /**
      * Translated "Confirm Remove".

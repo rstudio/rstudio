@@ -322,14 +322,6 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
     @Key("sessionCreatedText")
     String sessionCreatedText();
 
-    /**
-     * Translated "Terminal".
-     *
-     * @return translated "Terminal"
-     */
-    @DefaultMessage("Terminal")
-    @Key("terminalTitle")
-    String terminalTitle();
 
     /**
      * Translated "Terminal Tab".

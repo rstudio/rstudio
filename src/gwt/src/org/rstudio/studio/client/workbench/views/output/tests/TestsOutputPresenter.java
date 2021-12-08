@@ -54,7 +54,7 @@ public class TestsOutputPresenter extends BusyPresenter
                                Commands commands,
                                EventBus events)
    {
-      super(outputFactory.create(constants_.testsTaskName(),
+      super(outputFactory.create("Tests",
                                  constants_.viewTestResultsTitle()));
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);

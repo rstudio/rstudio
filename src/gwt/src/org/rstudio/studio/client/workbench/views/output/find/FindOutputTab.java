@@ -50,7 +50,7 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
                         Commands commands,
                         final Session session)
    {
-      super(constants_.findInFilesCaption(), shim);
+      super("Find in Files", shim);
       shim_ = shim;
 
       events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->

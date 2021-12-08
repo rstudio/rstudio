@@ -16,14 +16,6 @@ package org.rstudio.studio.client.workbench.views.help;
 
 public interface HelpConstants extends com.google.gwt.i18n.client.Messages {
 
-    /**
-     * Translated "Help".
-     *
-     * @return translated "Help"
-     */
-    @DefaultMessage("Help")
-    @Key("helpText")
-    String helpText();
 
     /**
      * Translated "Help Pane".

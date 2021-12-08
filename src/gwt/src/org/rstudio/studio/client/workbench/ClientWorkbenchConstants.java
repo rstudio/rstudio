@@ -1,4 +1,3 @@
-package org.rstudio.studio.client.workbench;
 /*
  * ClientWorkbenchConstants.java
  *
@@ -13,6 +12,7 @@ package org.rstudio.studio.client.workbench;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench;
 public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Messages {
 
     /**

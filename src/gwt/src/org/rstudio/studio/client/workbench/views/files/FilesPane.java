@@ -71,7 +71,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                     Provider<FileCommandToolbar> pFileCommandToolbar,
                     Provider<UserPrefs> pPrefs)
    {
-      super(constants_.filesTitle(), events);
+      super("Files", events);
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       fileDialogs_ = fileDialogs;

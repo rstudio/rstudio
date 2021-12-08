@@ -61,7 +61,7 @@ public class RSConnectDeployOutputTab
                              Commands commands,
                              final Session session)
    {
-      super(constants_.deployTitle(), shim);
+      super("Deploy", shim);
       shim_ = shim;
       GWT.<Binder>create(Binder.class).bind(commands, shim);
 

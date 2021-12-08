@@ -52,14 +52,6 @@ public interface PresentationConstants extends com.google.gwt.i18n.client.Messag
     @Key("presentationFrameTitle")
     String presentationFrameTitle();
 
-    /**
-     * Translated "Presentation".
-     *
-     * @return translated "Presentation"
-     */
-    @DefaultMessage("Presentation")
-    @Key("presentationTitle")
-    String presentationTitle();
 
     /**
      * Translated "Presentation Tab".

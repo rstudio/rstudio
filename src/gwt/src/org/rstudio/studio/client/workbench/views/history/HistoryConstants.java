@@ -115,14 +115,6 @@ public interface HistoryConstants extends com.google.gwt.i18n.client.Messages {
     @Key("clearingHistoryProgressMessage")
     String clearingHistoryProgressMessage();
 
-    /**
-     * Translated "History".
-     *
-     * @return translated "History"
-     */
-    @DefaultMessage("History")
-    @Key("historyTitle")
-    String historyTitle();
 
     /**
      * Translated "Show command in original context".

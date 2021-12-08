@@ -34,7 +34,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
-import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
 
 public class CompilePdfOutputTab
@@ -63,7 +62,7 @@ public class CompilePdfOutputTab
                               Commands commands,
                               final Session session)
    {
-      super(constants_.compilePDFCaption(), shim);
+      super("Compile PDF", shim);
       shim_ = shim;
 
       events.addHandler(CompilePdfEvent.TYPE, shim);
@@ -101,6 +100,4 @@ public class CompilePdfOutputTab
    }
 
    private final Shim shim_;
-   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
-
 }

@@ -98,7 +98,7 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
                    Commands commands,
                    PlotsServerOperations server)
    {
-      super(constants_.plotsTitle(), shim);
+      super("Plots", shim);
       binder.bind(commands, shim);
       commands_ = commands;
       shim_ = shim;
