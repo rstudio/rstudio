@@ -29,7 +29,6 @@ import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.DockPanelSidebarDragHandler;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.IsHideableWidget;
-import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -66,6 +65,7 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.views.source.editors.text.MarkdownToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
@@ -124,7 +124,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                              FormatSource formatSource,
                              PanmirrorOptions options,
                              Options widgetOptions,
-                             Toolbar toolbar,
+                             MarkdownToolbar toolbar,
                              int progressDelay,
                              CommandWithArg<PanmirrorWidget> completed) {
       
@@ -148,7 +148,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
        });  
    }
    
-   private PanmirrorWidget(Options options, Toolbar toolbarHost)
+   private PanmirrorWidget(Options options, MarkdownToolbar toolbarHost)
    {
       super(Style.Unit.PX);
       setSize("100%", "100%");   
@@ -462,7 +462,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          outline_.setAriaVisible(show);
          if (animate)
          {
-            int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
+            int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 400);
             animate(duration, new AnimationCallback() {
                @Override
                public void onAnimationComplete()
@@ -739,7 +739,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private EventBus events_ = null;
    
    private PanmirrorToolbar toolbar_ = null;
-   private Toolbar toolbarHost_ = null;
+   private MarkdownToolbar toolbarHost_ = null;
    private boolean findReplaceShowing_ = false;
    private PanmirrorFindReplaceWidget findReplace_ = null;
    private PanmirrorOutlineWidget outline_ = null;

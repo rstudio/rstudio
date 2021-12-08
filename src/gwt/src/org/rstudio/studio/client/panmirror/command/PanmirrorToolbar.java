@@ -20,23 +20,19 @@ import java.util.ArrayList;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 
-import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarSeparator;
 import org.rstudio.studio.client.panmirror.PanmirrorConstants;
+import org.rstudio.studio.client.workbench.views.source.editors.text.MarkdownToolbar;
 
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
-// TODO: hide (+separator) when in source mode
-// TODO: consider whether we should bring back Heading 1, etc. (change min size of drop down)
-// TODO: outline button text
-
 public class PanmirrorToolbar implements RequiresResize
 {
-   public void init(PanmirrorToolbarCommands commands, PanmirrorMenus menus, Toolbar toolbar)
+   public void init(PanmirrorToolbarCommands commands, PanmirrorMenus menus, MarkdownToolbar toolbar)
    {
 
       commands_ = commands;
@@ -46,11 +42,13 @@ public class PanmirrorToolbar implements RequiresResize
 
       if (toolbarPanel_ == null)
       {
-         toolbarPanel_ = new HorizontalPanel();
          Widget sep = toolbar_.addLeftSeparator();
          sep.addStyleName(RES.styles().toolbarSeparator());
-         sep.getElement().getStyle().setMarginLeft(5, Unit.PX);
-         toolbar_.addLeftWidget(toolbarPanel_);
+         sep.getElement().getStyle().setMarginLeft(7, Unit.PX);
+         sep.getElement().getStyle().setMarginRight(7, Unit.PX);
+         toolbar_.addVisualModeTools(sep);
+         toolbarPanel_ = new HorizontalPanel();
+         toolbar_.addVisualModeTools(toolbarPanel_);
       }
 
       for (int i = toolbarPanel_.getWidgetCount() - 1; i >= 0; i--)
@@ -89,7 +87,7 @@ public class PanmirrorToolbar implements RequiresResize
                null, tableMenu, false));
       }
    }
-
+   
    public void sync(boolean images)
    {
       commandObjects_.forEach((object) -> object.sync(images));
@@ -131,8 +129,6 @@ public class PanmirrorToolbar implements RequiresResize
       blockMenu.addCommand(PanmirrorCommands.Heading4);
       blockMenu.addCommand(PanmirrorCommands.Heading5);
       blockMenu.addCommand(PanmirrorCommands.Heading6);
-      blockMenu.addSeparator();
-      blockMenu.addCommand(PanmirrorCommands.CodeBlock);
       return blockMenu;
    }
 
@@ -183,7 +179,7 @@ public class PanmirrorToolbar implements RequiresResize
 
    private static final PanmirrorToolbarResources RES = PanmirrorToolbarResources.INSTANCE;
 
-   private Toolbar toolbar_;
+   private MarkdownToolbar toolbar_;
    private HorizontalPanel toolbarPanel_;
 
    private HorizontalPanel formatWidgets_ = null;

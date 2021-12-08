@@ -290,7 +290,7 @@ public class TextEditingTarget implements
 
       TextEditorContainer editorContainer();
       
-      Toolbar getMarkdownToolbar();
+      MarkdownToolbar getMarkdownToolbar();
 
       void manageCommandUI();
 
