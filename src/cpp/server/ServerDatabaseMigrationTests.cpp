@@ -45,12 +45,17 @@ SqliteConnectionOptions sqliteConnectionOptions()
 
 PostgresqlConnectionOptions postgresConnectionOptions()
 {
+
    PostgresqlConnectionOptions options;
    options.connectionTimeoutSeconds = 10;
-   options.database = "rstudio_test";
-   options.host = "localhost";
-   options.username = "postgres";
-   options.password = "postgres";
+   const char* dbName = std::getenv("RSTUDIO_TEST_DB_NAME");
+   options.database = (dbName) ? dbName : "rstudio_test";
+   const char* dbHost = std::getenv("RSTUDIO_TEST_DB_HOST");
+   options.host = (dbHost) ? dbHost : "localhost";
+   const char* dbUser = std::getenv("RSTUDIO_TEST_DB_USER");
+   options.username = (dbUser) ? dbUser : "postgres";
+   const char* dbPass = std::getenv("RSTUDIO_TEST_DB_PASS");
+   options.password = (dbPass) ? dbPass : "postgres";
 
    return options;
 }
