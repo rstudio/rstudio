@@ -32,6 +32,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.LineTableView;
 
 public class DiffFrame extends Composite
@@ -93,7 +94,7 @@ public class DiffFrame extends Composite
          
          viewFileHyperlink_.setClickHandler(viewFileClickHandler);
          viewFileHyperlink_.setAlwaysUnderline(false);
-         viewFileHyperlink_.setText("View file @ " + commitId.substring(0, 8));
+         viewFileHyperlink_.setText(constants_.viewFileAtString(commitId.substring(0, 8)));
          viewFileHyperlink_.addStyleName(RES.styles().viewFileHyperlink());
       }
       
@@ -117,4 +118,5 @@ public class DiffFrame extends Composite
    HyperlinkLabel viewFileHyperlink_;
    
    private static final Resources RES = GWT.create(Resources.class);
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

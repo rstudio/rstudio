@@ -187,6 +187,7 @@ public class UnifiedParser implements DiffParser
 
    private boolean isNewFileLine(String nextLine)
    {
+      //TODO unsure about this check with Gary. I did change some SizeWarningWidgets to use `constants_`
       return nextLine.startsWith("diff ") || nextLine.startsWith("Index: ");
    }
 

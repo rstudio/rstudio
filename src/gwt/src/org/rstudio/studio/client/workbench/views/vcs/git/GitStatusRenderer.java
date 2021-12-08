@@ -98,6 +98,7 @@ public class GitStatusRenderer implements SafeHtmlRenderer<String>
    {
       switch (c)
       {
+         // TODO Unsure about these 'case's, might need to leave be for the time
          case 'A':
             return "Added";
          case 'M':

@@ -92,6 +92,7 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
       
       switch (c)
       {
+         // TODO Similar to GitStatusRender unsure about cases
          case 'A':
             return "Added";
          case 'C':

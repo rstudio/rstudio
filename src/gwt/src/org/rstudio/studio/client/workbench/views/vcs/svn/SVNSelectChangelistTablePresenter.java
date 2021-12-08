@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
 import com.google.gwt.cell.client.FieldUpdater;
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -22,6 +23,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.vcs.ProcessResult;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.svn.model.SVNState;
 
 import java.util.ArrayList;
@@ -78,9 +80,8 @@ public class SVNSelectChangelistTablePresenter extends SVNChangelistTablePresent
                {
                   globalDisplay.showYesNoMessage(
                         GlobalDisplay.MSG_WARNING,
-                        "File Conflict",
-                        "This file has a conflict. Would you like to mark it " +
-                        "as resolved now?",
+                        constants_.fileConflictCapitalized(),
+                        constants_.fileConflictMarkAsResolved(),
                         new Operation()
                         {
                            @Override
@@ -131,4 +132,5 @@ public class SVNSelectChangelistTablePresenter extends SVNChangelistTablePresent
    }
 
    private final SVNSelectChangelistTable view_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }
