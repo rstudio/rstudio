@@ -112,7 +112,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    {
       if (toolbarButton_ == null)
       {
-         String buttonText = "Terminal";
+         String buttonText = constants_.terminalText();
 
          toolbarButton_ = new ToolbarMenuButton(
                 buttonText,
@@ -195,7 +195,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
     */
    public void setNoActiveTerminal()
    {
-      setActiveTerminal("Terminal", null);
+      setActiveTerminal(constants_.terminalText(), null);
    }
 
    /**
@@ -238,7 +238,7 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    private String addBusyIndicator(String caption, boolean busy)
    {
       if (busy)
-         return caption + " (busy)";
+         return constants_.busyCaption(caption);
       else
          return caption;
    }
@@ -311,4 +311,5 @@ public class TerminalPopupMenu extends ToolbarPopupMenu
    private Commands commands_;
    private EventBus eventBus_;
    private WorkbenchServerOperations server_;
+   private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }

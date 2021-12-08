@@ -95,4 +95,5 @@ public class Presentation2Tab extends DelayLoadWorkbenchTab<Presentation2>
    }
    
    private final Session session_;
+   private static final Presentation2Constants constants_ = com.google.gwt.core.client.GWT.create(Presentation2Constants.class);
 }

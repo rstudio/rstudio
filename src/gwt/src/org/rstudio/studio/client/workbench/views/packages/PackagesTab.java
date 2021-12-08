@@ -70,4 +70,5 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
 
    private final UserPrefs uiPrefs_;
    private final Session session_;
+   private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 }

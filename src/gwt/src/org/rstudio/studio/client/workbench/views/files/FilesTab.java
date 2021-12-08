@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.files;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
@@ -55,4 +56,5 @@ public class FilesTab extends DelayLoadWorkbenchTab<Files>
       events.addHandler(DirectoryNavigateEvent.TYPE, shim);
       events.addHandler(RenameSourceFileEvent.TYPE, shim);
    }
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

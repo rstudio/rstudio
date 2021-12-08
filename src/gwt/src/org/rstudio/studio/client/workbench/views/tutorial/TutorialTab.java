@@ -34,4 +34,5 @@ public class TutorialTab extends DelayLoadWorkbenchTab<TutorialPresenter>
    
    @SuppressWarnings("unused")
    private final Shim shim_;
+   private static final TutorialConstants constants_ = com.google.gwt.core.client.GWT.create(TutorialConstants.class);
 }

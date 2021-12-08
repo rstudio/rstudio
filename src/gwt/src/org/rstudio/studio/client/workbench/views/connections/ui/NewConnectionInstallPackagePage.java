@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResourceUrl;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
@@ -42,7 +44,7 @@ public class NewConnectionInstallPackagePage
 {
    public NewConnectionInstallPackagePage(final NewConnectionInfo info)
    {
-      super(info.getName(), "", info.getName() + " Connection",
+      super(info.getName(), "", constants_.connectionNameLabel(info.getName()),
             StringUtil.isNullOrEmpty(info.iconData()) ? null
                   : new ImageResourceUrl(new SafeUri()
                   {
@@ -141,4 +143,5 @@ public class NewConnectionInstallPackagePage
    private DependencyManager dependencyManager_;
    private Commands commands_;
    private ConnectionsServerOperations server_;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

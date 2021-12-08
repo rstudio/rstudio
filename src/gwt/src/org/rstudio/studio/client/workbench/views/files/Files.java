@@ -377,15 +377,15 @@ public class Files
    void onNewFolder()
    {
       globalDisplay_.promptForText(
-            "New Folder",
-            "Please enter the new folder name",
+              constants_.newFolderTitle(),
+              constants_.newFolderNameLabel(),
             null,
             new ProgressOperationWithInput<String>()
             {
                public void execute(String input,
                                    final ProgressIndicator progress)
                {
-                  progress.onProgress("Creating folder...");
+                  progress.onProgress(constants_.creatingFolderProgressLabel());
 
                   String folderPath = currentPath_.completePath(input);
                   FileSystemItem folder = FileSystemItem.createDir(folderPath);
@@ -482,8 +482,8 @@ public class Files
       if (selectedFiles.size() > 1)
       {
          globalDisplay_.showErrorMessage(
-                           "Multiple Items Selected",
-                           "Please select a single file or folder to copy");
+                           constants_.multipleItemsSelectedCaption(),
+                           constants_.multipleItemsSelectedMessage());
          return;
       }
 
@@ -492,7 +492,7 @@ public class Files
          initialFile = initialFile.getParentPath();
 
       view_.showFilePicker(
-                        "Choose Destination",
+              constants_.chooseDestinationTitle(),
                         fileSystemContext_,
                         initialFile,
                         new ProgressOperationWithInput<FileSystemItem>() {
@@ -539,7 +539,7 @@ public class Files
          return;
 
       view_.showFolderPicker(
-                        "Choose Folder",
+                        constants_.chooseFolderTitle(),
                         fileSystemContext_,
                         currentPath_,
                         new ProgressOperationWithInput<FileSystemItem>() {
@@ -561,12 +561,12 @@ public class Files
                if (file.getPath() == targetDir.getPath() ||
                    fileParent.getPath() == targetDir.getPath())
                {
-                  progress.onError("Invalid target folder");
+                  progress.onError(constants_.invalidTargetFolderErrorMessage());
                   return;
                }
             }
 
-            progress.onProgress("Moving files...");
+            progress.onProgress(constants_.movingFilesLabel());
 
             view_.selectNone();
 
@@ -581,8 +581,8 @@ public class Files
    @Handler
    void onExportFiles()
    {
-      pFileExport_.get().export("Export Files",
-                                "selected file(s)",
+      pFileExport_.get().export(constants_.exportFilesCaption(),
+                                constants_.selectedFilesCaption(),
                                 currentPath_,
                                 view_.getSelectedFiles());
    }
@@ -597,8 +597,8 @@ public class Files
       if (selectedFiles.size() != 1)
       {
          globalDisplay_.showErrorMessage(
-               "Invalid Selection",
-               "Please select a single file to rename.");
+               constants_.invalidSelectionCaption(),
+               constants_.invalidSelectionMessage());
          return;
       }
 
@@ -618,7 +618,7 @@ public class Files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
 
       // validation: some selection exists
-      String message = "Are you sure you want to permanently delete ";
+      String message = constants_.permanentDeleteMessage();
       if (selectedFiles.size() == 0)
       {
          return;
@@ -629,9 +629,9 @@ public class Files
       }
       else
       {
-         message += "the " + selectedFiles.size() + " selected files";
+         message += constants_.selectedFilesMessage(selectedFiles.size());
       }
-      message += "?\n\nThis cannot be undone.";
+      message += constants_.cannotBeUndoneMessage();
 
 
       // validation -- not prohibited move of public folder
@@ -641,12 +641,12 @@ public class Files
       // confirm delete then execute it
       globalDisplay_.showYesNoMessage(
                         GlobalDisplay.MSG_QUESTION,
-                        "Confirm Delete",
+                        constants_.confirmDeleteCaption(),
                         message,
                         new ProgressOperation() {
                            public void execute(final ProgressIndicator progress)
                            {
-                              progress.onProgress("Deleting files...");
+                              progress.onProgress(constants_.deletingFilesLabel());
 
                               view_.selectNone();
 
@@ -668,8 +668,8 @@ public class Files
             if (file.isPublicFolder())
             {
                globalDisplay_.showErrorMessage(
-                     "Error",
-                     "The Public folder cannot be " + verb + ".");
+                     constants_.errorCaption(),
+                     constants_.publicFolderMessage(verb));
                return false;
             }
          }
@@ -715,9 +715,9 @@ public class Files
          {
             if (errors.size() > 0)
             {
-               String caption = "Error Opening Files";
-               String errorMsg = errors.size() + " RNotebook files were unable to be processed and opened.";
-               errorMsg += "\n\nErrors:";
+               String caption = constants_.errorOpeningFilesCaption();
+               String errorMsg = constants_.fileErrorMessage(errors.size());
+               errorMsg += constants_.errorMessage();
                for (String err : errors) 
                {
                   errorMsg += "\n" + err;
@@ -780,8 +780,7 @@ public class Files
                         @Override
                         public void onFailure(ServerError error)
                         {
-                           String message = "\"" + notebook.getName() + "\" failed to open\n" +
-                              error.getUserMessage() + "\n";
+                           String message = constants_.failedToOpenMessage(notebook.getName(), error.getUserMessage());
                            errors.add(message);
                            continuation.execute();
                         }
@@ -1090,8 +1089,8 @@ public class Files
       inputPending_ = true;
 
       // prompt for new file name then execute the operation
-      globalDisplay_.promptForText("Create a New " + formattedExt + " File in Current Directory",
-                                   "Please enter the new file name:",
+      globalDisplay_.promptForText(constants_.createNewFileTitle(formattedExt),
+                                   constants_.enterFileNameLabel(),
                                    newTempFile.getName(),
                                    0,
                                    newTempFile.getStem().length(),
@@ -1103,7 +1102,7 @@ public class Files
             // no longer waiting for user to input
             inputPending_ = false;
 
-            progress.onProgress("Creating file...");
+            progress.onProgress(constants_.creatingFileLabel());
 
             String path = currentPath_.completePath(input);
             final FileSystemItem newFile = FileSystemItem.createFile(path);
@@ -1122,11 +1121,8 @@ public class Files
                @Override
                public void onError(ServerError error)
                {
-                  String errCaption = "Blank File Creation Failed";
-                  String errMsg =
-                     "A blank " + fileType.getDefaultExtension() + " file named \"" + input + "\" was unable to be created.\n\n" +
-                     "The server failed with the following error: \n" +
-                     error.getUserMessage();
+                  String errCaption = constants_.blankFileFailedCaption();
+                  String errMsg = constants_.blankFileFailedMessage(fileType.getDefaultExtension(), input, error.getUserMessage());
                   globalDisplay_.showErrorMessage(errCaption, errMsg);
                   progress.onCompleted();
                }
@@ -1149,8 +1145,8 @@ public class Files
       inputPending_ = true;
 
       // prompt for new file name then execute the rename
-      globalDisplay_.promptForText("Rename File",
-                                   "Please enter the new file name:",
+      globalDisplay_.promptForText(constants_.renameFileTitle(),
+                                   constants_.renameFileCaption(),
                                    file.getName(),
                                    0,
                                    file.getStem().length(),
@@ -1162,7 +1158,7 @@ public class Files
             // no longer waiting for user to rename
             inputPending_ = false;
 
-            progress.onProgress("Renaming file...");
+            progress.onProgress(constants_.renamingFileProgressMessage());
 
             String path = file.getParentPath().completePath(input);
             final FileSystemItem target =
@@ -1248,4 +1244,5 @@ public class Files
    private boolean inputPending_ = false;
 
    private final PaneManager paneManager_;
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

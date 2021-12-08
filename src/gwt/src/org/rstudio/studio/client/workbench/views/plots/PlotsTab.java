@@ -186,4 +186,5 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final PlotsShim shim_;
    private Commands commands_;
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }

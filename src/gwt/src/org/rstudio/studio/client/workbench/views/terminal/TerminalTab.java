@@ -194,4 +194,5 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
    private final Shim shim_;
 
    private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
+   private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }

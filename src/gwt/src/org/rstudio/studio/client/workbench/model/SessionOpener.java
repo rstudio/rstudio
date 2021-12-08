@@ -131,8 +131,8 @@ public class SessionOpener
          {
             Debug.logError(error);
             pDisplay_.get().showErrorMessage(
-                  "Create Session",
-                  "Could not allocate a new session." +
+                  constants_.createSessionCaption(),
+                  constants_.createSessionMessage() +
                         (!StringUtil.isNullOrEmpty(error.getMessage()) ?
                         "\n\n" + error.getMessage() : ""));
          }
@@ -269,4 +269,5 @@ public class SessionOpener
    protected final Provider<GlobalDisplay> pDisplay_;
    protected final Provider<ApplicationServerOperations> pServer_;
    protected final Provider<EventBus> pEventBus_;
+   private static final ModelConstants constants_ = GWT.create(ModelConstants.class);
 }

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.jobs;
 
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -119,12 +120,10 @@ public class JobsPresenter extends BasePresenter
       
       if (running > 0)
       {
-         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, 
-               "Local Jobs Still Running", 
-               "The Jobs tab cannot be closed while there " +
-               (running > 1 ?
-                  "are unfinished local jobs" : "is an unfinished local job") + "." +
-               "\n\nWait until all local jobs have completed.");
+         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
+               constants_.localJobsRunningCaption(),
+               constants_.localJobsRunningMessage(running > 1 ?
+               constants_.localJobsUnfinished() : constants_.localJobUnfinished()));
          return;
       }
       
@@ -148,5 +147,5 @@ public class JobsPresenter extends BasePresenter
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;
    private final Provider<JobManager> pJobManager_;
-  
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

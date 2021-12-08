@@ -16,11 +16,13 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
@@ -38,7 +40,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       vpanel_.setWidth("100%");
       outer.add(scrollPanel_);
       
-      f1prompt_ = new Label("Press F1 for additional help");
+      f1prompt_ = new Label(constants_.f1prompt());
       f1prompt_.setStylePrimaryName(consoleStyles_.promptFullHelp());
       outer.add(f1prompt_);
 
@@ -194,5 +196,5 @@ public class HelpInfoPopupPanel extends PopupPanel
    static {
       RES.styles().ensureInjected();
    }
-   
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

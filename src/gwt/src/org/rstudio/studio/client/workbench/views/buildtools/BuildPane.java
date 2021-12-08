@@ -87,7 +87,7 @@ public class BuildPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Build Tab");
+      Toolbar toolbar = new Toolbar(constants_.buildTabLabel());
 
       SessionInfo sessionInfo =  session_.getSessionInfo();
       String type = sessionInfo.getBuildToolsType();
@@ -103,8 +103,8 @@ public class BuildPane extends WorkbenchPane
       {
          ToolbarPopupMenu bookBuildMenu = new QuartoBookBuildPopupMenu();
          buildAllButton_ = new ToolbarMenuButton(
-               "Build Book", 
-               "Build Book", 
+               constants_.buildBookText(),
+               constants_.buildBookText(),
                commands_.quartoRenderDocument().getImageResource(),
                bookBuildMenu);
          toolbar.addLeftWidget(buildAllButton_);
@@ -117,11 +117,11 @@ public class BuildPane extends WorkbenchPane
          {
             if (sessionInfo.getBuildToolsBookdownWebsite())
             {
-               buildAllButton_.setText("Build Book");
+               buildAllButton_.setText(constants_.buildBookText());
             }
             else
             {
-               buildAllButton_.setText("Build Website");
+               buildAllButton_.setText(constants_.buildWebsiteText());
             }
          }
          toolbar.addLeftWidget(buildAllButton_);
@@ -131,7 +131,7 @@ public class BuildPane extends WorkbenchPane
          {
             ToolbarPopupMenu bookBuildMenu = new BookdownBuildPopupMenu();
             ToolbarMenuButton buildMenuButton = new ToolbarMenuButton(ToolbarButton.NoText,
-                  "Build book options", bookBuildMenu, true);
+                  constants_.buildBookOptionsText(), bookBuildMenu, true);
             ElementIds.assignElementId(buildMenuButton, ElementIds.BUILD_BOOKDOWN_MENUBUTTON);
             toolbar.addLeftWidget(buildMenuButton);  
          }
@@ -150,8 +150,8 @@ public class BuildPane extends WorkbenchPane
          {
             ToolbarPopupMenu bookServeMenu = new QuartoBookServePopupMenu();
             ToolbarMenuButton menuButton =  new ToolbarMenuButton(
-                  "Serve Book", 
-                  "Serve Book", 
+                  constants_.serveBookText(),
+                  constants_.serveBookText(),
                   commands_.serveQuartoSite().getImageResource(), 
                   bookServeMenu
             );
@@ -206,7 +206,7 @@ public class BuildPane extends WorkbenchPane
 
          // add more menu
          ToolbarMenuButton moreButton = new ToolbarMenuButton(
-               "More",
+               constants_.moreText(),
                ToolbarButton.NoTitle,
                new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
                moreMenu);
@@ -247,7 +247,7 @@ public class BuildPane extends WorkbenchPane
                String defaultFormat = formats.getOutputFormat();
                JsArrayString allFormats = formats.getAllOututFormats();
                MenuItem allMenu = new FormatMenuItem(
-                  "all", "All Formats", defaultFormat == "all");
+                  "all", constants_.allFormatsLabel(), defaultFormat == "all");
                addItem(allMenu);
                addSeparator();
                for (int i = 0; i < allFormats.length(); i++)
@@ -313,7 +313,7 @@ public class BuildPane extends WorkbenchPane
       {
          String allFormats = AppCommand.formatMenuLabel(
                commands_.quartoRenderDocument().getImageResource(), 
-               "All Formats", 
+               constants_.allFormatsLabel(),
                commands_.buildAll().getShortcut().toString(true)
             );
          MenuItem allMenu = new MenuItem(allFormats, true, new Command() {
@@ -332,7 +332,7 @@ public class BuildPane extends WorkbenchPane
             ImageResource img = fileTypeRegistry_.getIconForFilename("output." + format)
                   .getImageResource();
             String menuLabel = AppCommand.formatMenuLabel(
-                  img, formatName(format) + " Format", null);
+                  img, constants_.formatMenuLabel(formatName(format)), null);
             addItem(new MenuItem(menuLabel, true, new Command() {
                @Override
                public void execute()
@@ -358,7 +358,7 @@ public class BuildPane extends WorkbenchPane
                ImageResource img = fileTypeRegistry_.getIconForFilename("output." + format)
                      .getImageResource();
                String menuLabel = AppCommand.formatMenuLabel(
-                     img, formatName(format) + " Format", null);
+                     img, constants_.formatMenuLabel(formatName(format)), null);
                addItem(new MenuItem(menuLabel, true, new Command() {
                   @Override
                   public void execute()
@@ -464,11 +464,11 @@ public class BuildPane extends WorkbenchPane
       {
          if (sessionInfo.getBuildToolsBookdownWebsite())
          {
-            buildAllButton_.setText("Build Book");
+            buildAllButton_.setText(constants_.buildBookText());
          }
          else 
          {
-            buildAllButton_.setText("Build Website");
+            buildAllButton_.setText(constants_.buildWebsiteText());
          }
       }
       else if (type == SessionInfo.BUILD_TOOLS_QUARTO)
@@ -476,15 +476,15 @@ public class BuildPane extends WorkbenchPane
          QuartoConfig config = sessionInfo.getQuartoConfig();
          if (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_WEBSITE)
          {
-            buildAllButton_.setText("Render Website");
+            buildAllButton_.setText(constants_.renderWebsiteText());
          }
          else if (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK)
          {
-            buildAllButton_.setText("Render Book");
+            buildAllButton_.setText(constants_.renderBookText());
          }
          else
          {
-            buildAllButton_.setText("Render Project");
+            buildAllButton_.setText(constants_.renderProjectText());
          }
       }
    }
@@ -519,5 +519,5 @@ public class BuildPane extends WorkbenchPane
 
    private final HandlerManager handlers_ = new HandlerManager(this);
 
-  
+   private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
 }

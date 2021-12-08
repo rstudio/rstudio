@@ -15,6 +15,7 @@ package org.rstudio.studio.client.workbench.views.connections;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -270,7 +271,7 @@ public class ConnectionsPresenter extends BasePresenter
 
    private void showError(String errorMessage)
    {
-      globalDisplay_.showErrorMessage("Error", errorMessage);
+      globalDisplay_.showErrorMessage(constants_.errorCaption(), errorMessage);
    }
    
    public void onNewConnection()
@@ -278,8 +279,7 @@ public class ConnectionsPresenter extends BasePresenter
       // if r session busy, fail
       if (commands_.interruptR().isEnabled()) {
          showError(
-            "The R session is currently busy. Wait for completion or " +
-            "interrupt the current session and retry.");
+            constants_.newConnectionError());
          return;
       }
 
@@ -288,7 +288,7 @@ public class ConnectionsPresenter extends BasePresenter
          installersUpdated_ = true;
          server_.updateOdbcInstallers(
             new DelayedProgressRequestCallback<ConnectionUpdateResult>(
-               "Checking for Updates...") {
+               constants_.checkingForUpdatesProgress()) {
 
                @Override
                public void onSuccess(ConnectionUpdateResult result)
@@ -301,7 +301,7 @@ public class ConnectionsPresenter extends BasePresenter
                public void onError(ServerError error)
                {
                   Debug.logError(error);
-                  globalDisplay_.showErrorMessage("Failed to check for updates", error.getMessage());
+                  globalDisplay_.showErrorMessage(constants_.failedToCheckUpdatesError(), error.getMessage());
                }
             }
          );  
@@ -314,7 +314,7 @@ public class ConnectionsPresenter extends BasePresenter
    private void showWizard()
    {
        server_.getNewConnectionContext(
-          new DelayedProgressRequestCallback<NewConnectionContext>("Preparing Connections...") {
+          new DelayedProgressRequestCallback<NewConnectionContext>(constants_.preparingConnectionsProgressMessage()) {
    
              @Override
              protected void onSuccess(final NewConnectionContext context)
@@ -359,7 +359,7 @@ public class ConnectionsPresenter extends BasePresenter
          eventBus_.fireEvent(
                new SendToConsoleEvent(connectCode, true));
          
-         display_.showConnectionProgress("Connecting");
+         display_.showConnectionProgress(constants_.connectingLabel());
       }
       else if (connectVia == ConnectionOptions.CONNECT_NEW_R_SCRIPT ||
                connectVia == ConnectionOptions.CONNECT_NEW_R_NOTEBOOK)
@@ -394,7 +394,7 @@ public class ConnectionsPresenter extends BasePresenter
          eventBus_.fireEvent(
             new NewDocumentWithCodeEvent(type, code, cursorPosition, true));
          
-         display_.showConnectionProgress("Connecting");
+         display_.showConnectionProgress(constants_.connectingLabel());
       }
    }
    
@@ -405,7 +405,7 @@ public class ConnectionsPresenter extends BasePresenter
          return;
       
       GlobalProgressDelayer progress = new GlobalProgressDelayer(
-                              globalDisplay_, 100, "Previewing table...");
+                              globalDisplay_, 100, constants_.previewTableProgressMessage());
       
       server_.connectionPreviewObject(
          exploredConnection_.getId(), 
@@ -425,8 +425,8 @@ public class ConnectionsPresenter extends BasePresenter
       
       globalDisplay_.showYesNoMessage(
          MessageDialog.QUESTION,
-         "Remove Connection",
-         "Are you sure you want to remove this connection from the connection history?",
+         constants_.removeConnectionCaption(),
+         constants_.removeConnectionQuestion(),
          false /* includeCancel */,
          () -> {
             server_.removeConnection(
@@ -478,10 +478,10 @@ public class ConnectionsPresenter extends BasePresenter
       if (prompt)
       {
          StringBuilder builder = new StringBuilder();
-         builder.append("Are you sure you want to disconnect?");
+         builder.append(constants_.disconnectQuestion());
          globalDisplay_.showYesNoMessage(
                MessageDialog.QUESTION,
-               "Disconnect",
+               constants_.disconnectCaption(),
                builder.toString(),
                connectOperation,
                true);  
@@ -619,4 +619,5 @@ public class ConnectionsPresenter extends BasePresenter
    
    private static boolean installersUpdated_ = false;
    private static String installersWarning_ = null;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

@@ -22,6 +22,7 @@ import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
+import org.rstudio.studio.client.workbench.views.history.HistoryConstants;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.history.view.HistoryPane.Resources;
 
@@ -79,7 +80,7 @@ public class HistoryEntryItemCodec extends HeaderBreaksItemCodec<HistoryEntry, S
       td.setVAlign("middle");
 
       DivElement div = Document.get().createDivElement();
-      div.setTitle("Show command in original context");
+      div.setTitle(constants_.showCommandTitle());
       div.setClassName(res_.styles().disclosure());
       div.addClassName(ThemeStyles.INSTANCE.handCursor());
 
@@ -188,4 +189,5 @@ public class HistoryEntryItemCodec extends HeaderBreaksItemCodec<HistoryEntry, S
    private final TimestampMode timestampMode_;
    private final boolean disclosureButton_;
    private Resources res_;
+   private static final HistoryConstants constants_ = GWT.create(HistoryConstants.class);
 }

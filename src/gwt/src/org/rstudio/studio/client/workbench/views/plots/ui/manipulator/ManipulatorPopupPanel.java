@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.plots.ui.manipulator;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.widget.FocusHelper;
 import org.rstudio.core.client.widget.MiniDialogPopupPanel;
+import org.rstudio.studio.client.workbench.views.plots.PlotsConstants;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
 import com.google.gwt.core.client.JsArrayString;
@@ -37,7 +38,7 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
       changedHandler_ = changedHandler;
       
       
-      setCaption("Manipulate");
+      setCaption(constants_.manipulateTitle());
    
        
       
@@ -181,5 +182,6 @@ public class ManipulatorPopupPanel extends MiniDialogPopupPanel
    private VerticalPanel mainPanel_;
    private ManipulatorControl firstControl_;
    private final ManipulatorChangedHandler changedHandler_;
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 
 }

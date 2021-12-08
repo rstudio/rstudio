@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.help;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
@@ -80,4 +81,5 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
          }
       });
    }
+   private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
 }

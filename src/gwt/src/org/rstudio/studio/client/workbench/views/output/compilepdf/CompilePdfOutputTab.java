@@ -100,5 +100,4 @@ public class CompilePdfOutputTab
    }
 
    private final Shim shim_;
-
 }

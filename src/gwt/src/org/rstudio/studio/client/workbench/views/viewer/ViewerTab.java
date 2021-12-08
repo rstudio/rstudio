@@ -49,4 +49,5 @@ public class ViewerTab extends DelayLoadWorkbenchTab<ViewerPresenter>
 
    @SuppressWarnings("unused")
    private Session session_;
+   private static final ViewerConstants constants_ = com.google.gwt.core.client.GWT.create(ViewerConstants.class);
 }

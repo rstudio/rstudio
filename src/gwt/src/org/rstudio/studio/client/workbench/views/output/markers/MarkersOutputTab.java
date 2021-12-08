@@ -26,6 +26,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.markers.events.MarkersChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
@@ -87,4 +88,5 @@ public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresent
 
 
    private final Shim shim_;
+   private static final OutputConstants constants_ = com.google.gwt.core.client.GWT.create(OutputConstants.class);
 }

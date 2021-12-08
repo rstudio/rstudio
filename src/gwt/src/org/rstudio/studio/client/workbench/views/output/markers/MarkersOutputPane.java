@@ -28,6 +28,7 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarkerList;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersSet;
 import org.rstudio.studio.client.workbench.views.output.markers.model.MarkersState;
 
@@ -42,7 +43,7 @@ public class MarkersOutputPane extends WorkbenchPane
       markerList_ = new SourceMarkerList();
       clearButton_ = new ToolbarButton(
             ToolbarButton.NoText,
-            "Clear markers",
+            constants_.clearMarkersTitle(),
             commands.clearPlots().getImageResource());
       ensureWidget();
    }
@@ -76,7 +77,7 @@ public class MarkersOutputPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Markers Tab");
+      Toolbar toolbar = new Toolbar(constants_.markersTabLabel());
       toolbar.addLeftWidget(markerSetsToolbarButton_);
       
       toolbar.addRightWidget(clearButton_);
@@ -131,4 +132,5 @@ public class MarkersOutputPane extends WorkbenchPane
    private SourceMarkerList markerList_;
    private MarkerSetsToolbarButton markerSetsToolbarButton_;
    private ToolbarButton clearButton_;
+   private static final OutputConstants constants_ = com.google.gwt.core.client.GWT.create(OutputConstants.class);
 }

@@ -57,6 +57,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -266,7 +267,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       // clear output
       view_.clearOutput();
 
-      ariaLive_.announce(AriaLiveService.CONSOLE_CLEARED, "Console cleared",
+      ariaLive_.announce(AriaLiveService.CONSOLE_CLEARED, constants_.consoleClearedMessage(),
             Timing.IMMEDIATE, Severity.STATUS);
 
       // notify server
@@ -283,8 +284,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (prefs_.limitVisibleConsole().getValue())
       {
          ariaLive_.announce(AriaLiveService.INACCESSIBLE_FEATURE,
-            "Warning: Focus console output command unavailable when " +
-               prefs_.limitVisibleConsole().getTitle() + " option is enabled.",
+            constants_.focusConsoleWarningMessage(prefs_.limitVisibleConsole().getTitle()),
             Timing.IMMEDIATE, Severity.STATUS);
          return;
       }
@@ -318,7 +318,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          public void onError(ServerError error)
          {
             // show the error in the console then re-prompt
-            view_.consoleWriteError("Error: " + error.getUserMessage() + "\n");
+            view_.consoleWriteError(constants_.errorString(error.getUserMessage()));
             if (lastPromptText_ != null)
                consolePrompt(lastPromptText_, false);
          }
@@ -421,8 +421,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (StringUtil.equals(event.getLanguage(), "Python"))
       {
          dependencyManager_.withReticulate(
-               "Executing Python code",
-               "Executing Python code",
+               constants_.executingPythonCodeProgressCaption(),
+               constants_.executingPythonCodeProgressCaption(),
                () -> {
                   onSendToConsoleImpl(event);
                });
@@ -869,4 +869,5 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    private boolean restoreFocus_ = true;
    private boolean debugging_ = false;
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }
