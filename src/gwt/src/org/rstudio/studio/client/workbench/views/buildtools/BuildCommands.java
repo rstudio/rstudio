@@ -89,8 +89,8 @@ public class BuildCommands
          commands.buildAll().setButtonLabel(constants_.renderLabel() + projType);
          commands.buildAll().setDesc(constants_.renderLabel() + projType.toLowerCase());
          commands.buildAll().setImageResource(commands.quartoRenderDocument().getImageResource());
-         commands.serveQuartoSite().setMenuLabel("_" + constants_.serveLabel() + projType);
-         commands.serveQuartoSite().setButtonLabel(constants_.serveLabel() + projType);
+         commands.serveQuartoSite().setMenuLabel("_" + constants_.serveLabel() + " " + projType);
+         commands.serveQuartoSite().setButtonLabel(constants_.serveLabel() + " " + projType);
       }
       
       // remove all other commands if there are no build tools
