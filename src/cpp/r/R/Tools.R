@@ -1316,15 +1316,16 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       if (is.null(rstudioInfo$edition)) "Open Source" else toupper(rstudioInfo$edition)
    )
    
-   rInfo <- local({
-      op <- options(width = 78)
-      on.exit(options(op), add = TRUE)
-      utils::sessionInfo()
-   })
-   
+   rInfo <- utils::sessionInfo()
    rVersion <- rInfo$R.version$version.string
    rVersion <- sub("^R version", "", rVersion, fixed = TRUE)
    osVersion <- rInfo$running
+   
+   rInfoText <- local({
+      op <- options(width = 78)
+      on.exit(options(op), add = TRUE)
+      paste(capture.output(print(rInfo)), collapse = "\n")
+   })
    
    # create issue template and fill in the pieces
    template <- .rs.heredoc("
@@ -1354,7 +1355,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       </details>
    ")
    
-   rInfoText <- paste(capture.output(print(rInfo)), collapse = "\n")
    rendered <- sprintf(template, rstudioVersion, rstudioEdition, osVersion, rVersion, rInfoText)
    
    # try to copy the text to the clipboard, or print it out and tell the user
