@@ -1331,10 +1331,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    template <- .rs.heredoc("
       ### System details
 
-      RStudio Edition : %s
-      RStudio Version : %s
-      OS Version : %s
-      R Version : %s
+      RStudio Edition: %s
+      RStudio Version: %s
+      OS Version: %s
+      R Version: %s
   
       ### Steps to reproduce the problem
       
