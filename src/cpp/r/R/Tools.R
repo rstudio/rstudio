@@ -1333,8 +1333,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
       RStudio Edition : %s
       RStudio Version : %s
-      OS Version      : %s
-      R Version       : %s
+      OS Version : %s
+      R Version : %s
   
       ### Steps to reproduce the problem
       
