@@ -1331,10 +1331,10 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    template <- .rs.heredoc("
       ### System details
 
-      RStudio Edition: %s
-      RStudio Version: %s
-      OS Version: %s
-      R Version: %s
+          RStudio Edition : %s
+          RStudio Version : %s
+          OS Version      : %s
+          R Version       : %s
   
       ### Steps to reproduce the problem
       
@@ -1368,8 +1368,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          *
       "))
    } else {
-      header <- "<!-- Please copy and paste this text to the GitHub issue page. -->"
-      text <- c(header, rendered)
+      
+      header <- .rs.heredoc("
+         <!--
+         Please copy the following text to your clipboard,
+         and then click 'Cancel' to close the dialog.
+         -->
+      ")
+      
+      text <- c(header, "", rendered)
       file <- tempfile("rstudio-bug-report-", fileext = ".html")
       on.exit(unlink(file), add = TRUE)
       writeLines(text, con = file)
