@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.vcs.git;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -35,6 +36,7 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.common.vcs.ignore.Ignore;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -131,7 +133,7 @@ public class GitPresenterCore
          @Override
          public String getDialogCaption()
          {
-            return "Git Ignore";
+            return constants_.gitIgnoreCapitalized();
          }
 
          @Override
@@ -186,4 +188,5 @@ public class GitPresenterCore
    private final GitServerOperations server_;
    private final GitState gitState_;
    private final Provider<Ignore> pIgnore_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }
