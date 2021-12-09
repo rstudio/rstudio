@@ -1245,3 +1245,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
    invisible(path)
 })
 
+.rs.addApiFunction("bugReport", function()
+{
+   .rs.bugReport(pro = FALSE)
+})
