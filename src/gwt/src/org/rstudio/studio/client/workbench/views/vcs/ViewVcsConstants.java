@@ -270,7 +270,7 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
 
     /**
      * Translated "{0} selection".
-     *
+     * Empty String so there can be leading space
      * @return translated "{0} selection"
      */
     @DefaultMessage("{0} selection")
@@ -279,7 +279,7 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
 
     /**
      * Translated "{0} line".
-     *
+     * Empty String so there can be leading space
      * @return translated "{0} line"
      */
     @DefaultMessage("{0} line")
@@ -288,7 +288,7 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
 
     /**
      * Translated "{0} chunk".
-     *
+     * Empty String so there can be leading space
      * @return translated "{0} chunk"
      */
     @DefaultMessage("{0} chunk")
@@ -1185,4 +1185,121 @@ public interface ViewVcsConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("diff")
     @Key("diff")
     String diff();
+
+    /**
+     * Translated "Added".
+     *
+     * @return translated "Added"
+     */
+    @DefaultMessage("Added")
+    @Key("addedCapitalized")
+    String addedCapitalized();
+
+    /**
+     * Translated "Modified".
+     *
+     * @return translated "Modified"
+     */
+    @DefaultMessage("Modified")
+    @Key("modifiedCapitalized")
+    String modifiedCapitalized();
+
+    /**
+     * Translated "Deleted".
+     *
+     * @return translated "Deleted"
+     */
+    @DefaultMessage("Deleted")
+    @Key("deletedCapitalized")
+    String deletedCapitalized();
+
+    /**
+     * Translated "Renamed".
+     *
+     * @return translated "Renamed"
+     */
+    @DefaultMessage("Renamed")
+    @Key("renamedCapitalized")
+    String renamedCapitalized();
+
+    /**
+     * Translated "Copied".
+     *
+     * @return translated "Copied"
+     */
+    @DefaultMessage("Copied")
+    @Key("copiedCapitalized")
+    String copiedCapitalized();
+
+    /**
+     * Translated "Untracked".
+     *
+     * @return translated "Untracked"
+     */
+    @DefaultMessage("Untracked")
+    @Key("untrackedCapitalized")
+    String untrackedCapitalized();
+
+    /**
+     * Translated "Unmerged".
+     *
+     * @return translated "Unmerged"
+     */
+    @DefaultMessage("Unmerged")
+    @Key("unmergedCapitalized")
+    String unmergedCapitalized();
+
+    /**
+     * Translated "Conflicted".
+     *
+     * @return translated "Conflicted"
+     */
+    @DefaultMessage("Conflicted")
+    @Key("conflictedCapitalized")
+    String conflictedCapitalized();
+
+    /**
+     * Translated "External".
+     *
+     * @return translated "External"
+     */
+    @DefaultMessage("External")
+    @Key("externalCapitalized")
+    String externalCapitalized();
+
+    /**
+     * Translated "Ignored".
+     *
+     * @return translated "Ignored"
+     */
+    @DefaultMessage("Ignored")
+    @Key("ignoredCapitalized")
+    String ignoredCapitalized();
+
+    /**
+     * Translated "Missing".
+     *
+     * @return translated "Missing"
+     */
+    @DefaultMessage("Missing")
+    @Key("missingCapitalized")
+    String missingCapitalized();
+
+    /**
+     * Translated "Obstructed".
+     *
+     * @return translated "Obstructed"
+     */
+    @DefaultMessage("Obstructed")
+    @Key("obstructedCapitalized")
+    String obstructedCapitalized();
+
+    /**
+     * Translated "Unversioned".
+     *
+     * @return translated "Unversioned"
+     */
+    @DefaultMessage("Unversioned")
+    @Key("unversionedCapitalized")
+    String unversionedCapitalized();
 }
