@@ -16,7 +16,7 @@
 
 
 .markdownToolbar button.rstudio-themes-inverts[aria-pressed="true"] {
-  background-color: #e7e8ea;
+  background-color: rgb(237, 237, 237);
 }
 
 .rstudio-themes-dark .markdownToolbar button.rstudio-themes-inverts[aria-pressed="true"] {
