@@ -1,6 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:style>
    .validateError
    {
@@ -12,9 +15,8 @@
    <g:HTMLPanel>
    <g:TextBox ui:field="appTitle_"></g:TextBox>
    <g:HTMLPanel visible="false" ui:field="nameValidatePanel_">
-     <g:Label styleName="{style.validateError}" 
-              ui:field="error_"
-              text="Valid names contain 4 to 64 alphanumeric characters, dashes, and underscores.">
+     <g:Label styleName="{style.validateError}" ui:field="error_">
+               <ui:msg key="validNameText">Valid names contain 4 to 64 alphanumeric characters, dashes, and underscores.</ui:msg>
      </g:Label>
    </g:HTMLPanel>
    </g:HTMLPanel>
