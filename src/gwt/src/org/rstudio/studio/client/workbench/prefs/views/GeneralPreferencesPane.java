@@ -556,7 +556,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return constants_.generalTablListGraphicsOption();
+      return constants_.generalTablistLabel();
    }
 
    @SuppressWarnings("unused")
