@@ -27,6 +27,7 @@ import { isList } from './list';
 import { OmniInsert } from './omni_insert';
 import { EditorUIPrefs, kListSpacingTight } from './ui';
 import { selectionIsWithinRange, selectionHasRange } from './selection';
+import { requiresTrailingP, insertTrailingP } from './trailing_p';
 
 export enum EditorCommandId {
   // text editing
@@ -372,14 +373,22 @@ export function toggleWrap(type: NodeType, attrs?: { [key: string]: any }): Comm
   };
 }
 
-export function insertNode(nodeType: NodeType, attrs = {}): CommandFn {
+export function insertNode(nodeType: NodeType, attrs = {}, selectAfter = false): CommandFn {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void) => {
     if (!canInsertNode(state, nodeType)) {
       return false;
     }
 
     if (dispatch) {
-      dispatch(state.tr.replaceSelectionWith(nodeType.create(attrs)));
+      const tr = state.tr;
+      tr.replaceSelectionWith(nodeType.create(attrs));
+      if (selectAfter) {
+        if (requiresTrailingP(tr.selection)) {
+          insertTrailingP(tr);
+          setTextSelection(tr.selection.to + 1, 1)(tr);
+        }
+      }
+      dispatch(tr);
     }
 
     return true;
