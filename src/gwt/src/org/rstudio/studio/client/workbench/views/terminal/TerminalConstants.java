@@ -17,11 +17,11 @@ package org.rstudio.studio.client.workbench.views.terminal;
 public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
-     * Translated "The terminal is currently busy. ".
+     * Translated "The terminal is currently busy {0}. ".
      *
-     * @return translated "The terminal is currently busy. "
+     * @return translated "The terminal is currently busy {0}. "
      */
-    @DefaultMessage("The terminal is currently busy. ")
+    @DefaultMessage("The terminal is currently busy. {0}")
     @Key("terminalBusyMessage")
     String terminalBusyMessage(String question);
 
