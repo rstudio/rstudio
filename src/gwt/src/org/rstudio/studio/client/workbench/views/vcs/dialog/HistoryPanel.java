@@ -34,6 +34,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.HistoryBranchToolbarButton;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitListDisplay;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.Display;
@@ -100,7 +101,7 @@ public class HistoryPanel extends Composite implements Display
       pager_ = strategy.getPager();
       branchToolbarButton_ = branchToolbarButton;
       commitFilterToolbarButton_ = commitFilterToolbarButton;
-      topToolbar_ = new Toolbar("History");
+      topToolbar_ = new Toolbar(constants_.historyCapitalized());
       topToolbar_.getWrapper().addStyleName(styles.toolbarInnerWrapper());
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
@@ -110,7 +111,7 @@ public class HistoryPanel extends Composite implements Display
 
       topToolbar_.addStyleName(styles.toolbar());
 
-      switchViewButton_ = new LeftRightToggleButton("Changes", "History", false);
+      switchViewButton_ = new LeftRightToggleButton(constants_.changesCapitalized(), constants_.historyCapitalized(), false);
       topToolbar_.addLeftWidget(switchViewButton_);
       topToolbar_.addLeftWidget(branchToolbarButton_);
 
@@ -125,9 +126,9 @@ public class HistoryPanel extends Composite implements Display
                                  (ClickHandler) null);
       topToolbar_.addLeftWidget(refreshButton_); 
       
-      searchText_ = new SearchWidget("Search version control history", 
+      searchText_ = new SearchWidget(constants_.searchVersionControlHistory(),
                                      new MultiWordSuggestOracle(),
-                                     new TextBoxWithCue("Search"),
+                                     new TextBoxWithCue(constants_.searchCapitalized()),
                                      null);
       topToolbar_.addRightWidget(searchText_);
       topToolbar_.addRightSeparator();
@@ -262,4 +263,5 @@ public class HistoryPanel extends Composite implements Display
    private ToolbarButton refreshButton_;
    private final HistoryBranchToolbarButton branchToolbarButton_;
    private final CommitFilterToolbarButton commitFilterToolbarButton_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

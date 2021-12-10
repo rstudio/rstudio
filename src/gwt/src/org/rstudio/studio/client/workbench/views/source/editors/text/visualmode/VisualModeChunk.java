@@ -1057,6 +1057,15 @@ public class VisualModeChunk
       String engine = "R";
       String label = "";
 
+      // By convention, the first class in a non-executable chunk is its language.
+      // Use that as the "engine" unless another is explicitly specified.
+      if (classes_ != null &&
+         classes_.length() > 0 &&
+         !StringUtil.isNullOrEmpty(classes_.get(0)))
+      {
+         engine = StringUtil.capitalize(classes_.get(0));
+      }
+
       // Quarto chunks use this syntax, which must be parsed separately
       String quartoLabel = "#| label:";
 
@@ -1073,18 +1082,9 @@ public class VisualModeChunk
             }
             else
             {
-               // By convention, the first class in a non-executable chunk is its language.
-               // Use that as the "engine" unless another is explicitly specified.
-               Map<String, String> options = new HashMap<>();
-               if (classes_ != null &&
-                   classes_.length() > 0 &&
-                   !StringUtil.isNullOrEmpty(classes_.get(0)))
-               {
-                  engine = classes_.get(0);
-               }
-
                // This is the first line in the chunk (its header). Parse it, reintroducing
                // the backticks since they aren't present in the embedded editor.
+               Map<String, String> options = new HashMap<>();
                RChunkHeaderParser.parse("```" + line, engine, options);
 
                // Check for the "engine" (language) option; extract it if specified
