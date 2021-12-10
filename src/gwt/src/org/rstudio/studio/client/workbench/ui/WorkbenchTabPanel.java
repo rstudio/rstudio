@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -188,7 +189,7 @@ class WorkbenchTabPanel
                final ToolbarPopupMenu menu = new ToolbarPopupMenu();
                final NativeEvent nativeEvent = contextMenuEvent.getNativeEvent();
 
-               menu.addItem(ElementIds.TAB_CLOSE, new MenuItem("Close", () ->
+               menu.addItem(ElementIds.TAB_CLOSE, new MenuItem(constants_.closeText(), () ->
                {
                   tab.confirmClose(() -> tab.ensureHidden());
                }));
@@ -357,4 +358,5 @@ class WorkbenchTabPanel
    private boolean neverVisible_ = false;
    private LayoutPanel panel_;
    private HTML utilPanel_;
+   private static final UIConstants constants_ = GWT.create(UIConstants.class);
 }

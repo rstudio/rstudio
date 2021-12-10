@@ -207,7 +207,7 @@ public class FilesList extends Composite
             }
          };
       nameColumn.setSortable(true);
-      filesDataGrid_.addColumn(nameColumn, "Name");
+      filesDataGrid_.addColumn(nameColumn, constants_.nameHeaderText());
 
       sortHandler_.setComparator(nameColumn, new FilesListComparator() {
          @Override

@@ -765,4 +765,13 @@ public interface FilesConstants extends com.google.gwt.i18n.client.Messages {
     @Key("fileText")
     String fileText();
 
+    /**
+     * Translated "Name".
+     *
+     * @return translated "Name"
+     */
+    @DefaultMessage("Name")
+    @Key("nameHeaderText")
+    String nameHeaderText();
+
 }

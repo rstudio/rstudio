@@ -277,4 +277,13 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("End: ")
     @Key("endText")
     String endText();
+
+    /**
+     * Translated "Session Suspended".
+     *
+     * @return translated "Session Suspended"
+     */
+    @DefaultMessage("Session Suspended")
+    @Key("sessionSuspendedTitle")
+    String sessionSuspendedTitle();
 }

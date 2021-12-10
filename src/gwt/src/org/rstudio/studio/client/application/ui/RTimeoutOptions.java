@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Button;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 
 public class RTimeoutOptions extends Composite
 {
@@ -46,7 +47,7 @@ public class RTimeoutOptions extends Composite
 
       reload_.addClickHandler((click) ->
       {
-         setStatus("Reloading...");
+         setStatus(constants_.reloadingText());
          observer_.onReload();
       });
 
@@ -59,14 +60,14 @@ public class RTimeoutOptions extends Composite
       {
          safeMode_.addClickHandler((click) ->
          {
-            setStatus("Retrying in Safe Mode...");
+            setStatus(constants_.retryInSafeModeText());
             observer_.onSafeMode();
          });
       }
       
       terminate_.addClickHandler((click) ->
       {
-         setStatus("Terminating R...");
+         setStatus(constants_.terminatingRText());
          observer_.onTerminate();
       });
    }
@@ -100,4 +101,5 @@ public class RTimeoutOptions extends Composite
    @UiField Button terminate_;
    @UiField Label status_;
    @UiField Label visibleMsg_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }
