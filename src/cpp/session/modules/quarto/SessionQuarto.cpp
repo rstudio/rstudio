@@ -148,6 +148,15 @@ std::tuple<FilePath,Version> userInstalledQuarto()
    return std::make_tuple(FilePath(), Version());
 }
 
+#ifndef QUARTO_ENABLED
+
+void detectQuartoInstallation()
+{
+   return;
+}
+
+#else
+
 void detectQuartoInstallation()
 {
    // required quarto version (quarto features don't work w/o it)
@@ -219,6 +228,8 @@ void detectQuartoInstallation()
       showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
    }
 }
+
+#endif
 
 bool quartoIsInstalled()
 {
