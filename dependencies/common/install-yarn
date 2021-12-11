@@ -35,7 +35,7 @@ fi
 # download the yarn installer
 YARN_INSTALL_URL="https://yarnpkg.com/install.sh"
 YARN_INSTALL_SCRIPT="yarn-install.sh"
-curl "${YARN_INSTALL_URL}" -o "${YARN_INSTALL_SCRIPT}"
+download "${YARN_INSTALL_URL}" "${YARN_INSTALL_SCRIPT}"
 
 # run the installer script
 chmod +x "${YARN_INSTALL_SCRIPT}"
