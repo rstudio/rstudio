@@ -76,6 +76,7 @@ public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
      *
      * @return translated "Installing learnr..."
      */
+    @DefaultMessage("Installing learnr...")
     @Key("installingLearnrCaption")
     String installingLearnrCaption();
 

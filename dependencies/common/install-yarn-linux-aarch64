@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+
+#
+# install-yarn-linux-aarch64
+#
+# Copyright (C) 2009-21 by RStudio, Inc.
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing yarn (aarch64)"
+
+# try to ensure node is on the PATH
+PATH="$(pwd)/${NODE_SUBDIR}/bin:${PATH}"
+
+# install via node
+npm install -g yarn
+
+# update INSTALL_PATH
+INSTALL_PATH="${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin:${PATH}"
+
+# install panmirror dependencies
+if [ -d "/opt/rstudio-tools/panmirror" ]; then
+  # install dependencies from /opt/rstudio-tools if present
+  pushd /opt/rstudio-tools/panmirror
+else
+  # otherwise, use source tree
+  pushd ../../src/gwt/panmirror/src/editor
+fi
+
+PATH=${INSTALL_PATH} yarn config set ignore-engines true
+PATH=${INSTALL_PATH} yarn install
+
+popd
+
+

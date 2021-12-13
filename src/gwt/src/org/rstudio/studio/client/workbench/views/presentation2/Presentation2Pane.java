@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.presentation2;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -93,6 +94,12 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       toolbar_.addLeftWidget(commands_.presentation2Print().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.presentation2Edit().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      
+      ToolbarButton openExternalButton = commands_.presentation2Present().createToolbarButton();
+      openExternalButton.setLeftImage(commands_.viewerPopout().getImageResource());
+      openExternalButton.setText("");
+      toolbar_.addLeftWidget(openExternalButton);
       
       // publish
       publishButton_ = new RSConnectPublishButton(

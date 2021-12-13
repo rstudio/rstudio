@@ -197,12 +197,8 @@ public class LintManager
    }
    
    private int defaultLintDelayMs()
-   {
-      // give pure yaml linting a shorter delay b/c its known to be high performance
-      if (source_.getTextFileType().isYaml())
-         return 500;
-      else
-         return userPrefs_.backgroundDiagnosticsDelayMs().getValue();
+   { 
+      return userPrefs_.backgroundDiagnosticsDelayMs().getValue();
    }
    
    private void lintActiveDocument(final LintContext context)

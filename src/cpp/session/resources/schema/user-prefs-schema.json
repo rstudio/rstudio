@@ -202,7 +202,7 @@
                     "TabSet2",
                     "HiddenTabSet"],
                 "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentation"],
-                "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
+                "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer", "Presentations"],
                 "hiddenTabSet": [],
                 "console_left_on_top": false,
                 "console_right_on_top": true,
@@ -386,11 +386,17 @@
             "title": "Show diagnostics in C++ code",
             "description": "Whether to show diagnostic messages for C++ code as you type."
         },
+        "show_diagnostics_yaml": {
+            "type": "boolean",
+            "default": true,
+            "title": "Show diagnostics in YAML code",
+            "description": "Whether to show diagnostic messages for YAML code as you type."
+        },
         "show_diagnostics_other": {
             "type": "boolean",
             "default": false,
             "title": "Show diagnostics in other languages",
-            "description": "Whether to show diagnostic messages for other types of code (not R or C++)."
+            "description": "Whether to show diagnostic messages for other types of code (not R, C++, or YAML)."
         },
         "style_diagnostics": {
             "type": "boolean",
@@ -992,6 +998,12 @@
             "title": "Sort file names naturally in Files pane",
             "description": "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R"
         },
+        "sync_files_pane_working_dir": {
+            "type": "boolean",
+            "default": false,
+            "title": "Synchronize the Files pane with the current working directory",
+            "description": "Whether to change the directory in the Files pane automatically when the working directory in R changes."
+        },
         "jobs_tab_visibility": {
             "type": "string",
             "enum": ["closed", "shown", "default"],
@@ -1012,14 +1024,14 @@
         },
         "busy_detection": {
             "type": "string",
-            "enum": ["always", "never", "whitelist"],
+            "enum": ["always", "never", "list"],
             "default": "always",
             "description": "How to detect busy status in the Terminal."
         },
-        "busy_whitelist": {
+        "busy_exclusion_list": {
             "type": "array",
             "default": ["tmux", "screen"],
-            "description": "A whitelist of apps that should not be considered busy in the Terminal."
+            "description": "A list of apps that should not be considered busy in the Terminal."
         },
         "knit_working_dir": {
             "type": "string",
@@ -1051,7 +1063,7 @@
         "global_theme": {
             "type": "string",
             "default": "default",
-            "enum": ["classic", "default", "alternate"],
+            "enum": ["default", "alternate"],
             "title": "Global theme",
             "description": "The theme to use for the main RStudio user interface."
         },
@@ -1067,11 +1079,29 @@
             "title": "Double click to select in the Console",
             "description": "Whether double-clicking should select a word in the Console pane."
         },
+        "console_suspend_blocked_notice": {
+            "type": "boolean",
+            "default": true,
+            "title": "Warn when automatic session suspension is paused",
+            "description": "Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar."
+        },
+        "console_suspend_blocked_notice_delay": {
+            "type": "integer",
+            "default": 5,
+            "title": "Number of seconds to delay warning",
+            "description": "How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices."
+        },
         "new_proj_git_init": {
             "type": "boolean",
             "default": false,
             "title": "Create a Git repo in new projects",
             "description": "Whether a git repo should be initialized inside new projects by default."
+        },
+        "new_proj_use_renv": {
+            "type": "boolean",
+            "default": false,
+            "title": "Create an renv environment in new projects",
+            "description": "Whether an renv environment should be created inside new projects by default."
         },
         "root_document": {
             "type": "string",
@@ -1222,6 +1252,10 @@
                 "label": {
                     "type": "string",
                     "description": "A free-form label for describing the R version."
+                },
+                "module": {
+                    "type": "string",
+                    "description": "The name of the environment module to load."
                 }
             },
             "description": "The R version to use by default."
@@ -1363,6 +1397,12 @@
             "default": false,
             "title": "Show margin in visual mode code blocks",
             "description": "Whether to show the margin guide in the visual mode code blocks."
+        },
+        "visual_markdown_code_editor_line_numbers": {
+            "type": "boolean",
+            "default": false,
+            "title": "Show line numbers in visual mode code blocks",
+            "description": "Whether to show line numbers in the code editors used in visual mode"
         },
         "visual_markdown_editing_font_size_points": {
             "type": "integer",
@@ -1512,6 +1552,37 @@
             "title": "Interval for requerying memory stats (seconds)",
             "type": "integer",
             "default": 10
+        },
+        "terminal_python_integration": {
+            "description": "Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.",
+            "title": "Enable terminal Python integration",
+            "type": "boolean",
+            "default": true
+        },
+        "session_protocol_debug": {
+            "description": "Enable session protocol debug logging showing all session requests and events",
+            "title": "Session protocol debug logging",
+            "type": "boolean",
+            "default": false
+        },
+        "python_project_environment_automatic_activate": {
+            "description": "When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.",
+            "title": "Automatically activate project Python environments",
+            "type": "boolean",
+            "default": true
+        },
+        "check_null_external_pointers": {
+            "description": "When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.",
+            "title": "Check values in the Environment pane for null external pointers",
+            "type": "boolean",
+            "default": false
+        },
+         "quarto_enabled": {
+            "type": "string",
+            "enum": ["auto", "enabled", "disabled", "hidden"],
+            "default": "auto",
+            "title": "Enble Quarto features",
+            "description": "Enable IDE features for the Quarto publishing system."
         }
     }
 }

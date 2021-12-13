@@ -59,7 +59,7 @@ const extension = (context: ExtensionContext) => {
         new ProsemirrorCommand(
           EditorCommandId.HorizontalRule,
           [],
-          insertNode(schema.nodes.horizontal_rule),
+          insertNode(schema.nodes.horizontal_rule, {}, true),
           hrOmniInsert(ui),
         ),
       ];
@@ -85,6 +85,7 @@ const extension = (context: ExtensionContext) => {
 function hrOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Horizontal Rule'),
+    keywords: ["hr"],
     description: ui.context.translateText('Line that spans across the page'),
     group: OmniInsertGroup.Content,
     priority: 1,
