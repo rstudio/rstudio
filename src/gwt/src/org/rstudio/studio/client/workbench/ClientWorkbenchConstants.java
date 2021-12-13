@@ -106,11 +106,11 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
     String descTextHeader();
 
     /**
-     * Translated "Description".
+     * Translated "Found {0} addins matching {1}".
      *
-     * @return translated "Description"
+     * @return translated "Found {0} addins matching {1}"
      */
-    @DefaultMessage("Description")
+    @DefaultMessage("Found {0} addins matching {1}")
     @Key("foundAddinsMessage")
     String foundAddinsMessage(int size, String query);
 

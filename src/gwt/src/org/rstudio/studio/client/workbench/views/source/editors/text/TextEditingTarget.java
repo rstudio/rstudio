@@ -7066,10 +7066,15 @@ public class TextEditingTarget implements
          // of the project foramts then use standard quarto website preview behavior 
          // (call rmarkdown render and dispatch to quarto). if this returns false then 
          // quarto_preview will be used (e.g. for pdfs, presentations, etc.)
-         String docFormat = quartoFormat();
-         return (docFormat == null || Arrays.asList(config.project_formats).contains(docFormat)) &&
-                config.project_type.equals(QuartoCommandConstants.PROJECT_WEBSITE);
-                
+         if (config.project_type.equals(QuartoCommandConstants.PROJECT_WEBSITE))
+         {
+            String docFormat = quartoFormat();
+            return docFormat == null || docFormat.startsWith(QUARTO_HTML_FORMAT);
+         }
+         else
+         {
+            return false;
+         }     
       }
       else
       {
