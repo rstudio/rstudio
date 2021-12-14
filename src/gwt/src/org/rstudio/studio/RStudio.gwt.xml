@@ -135,9 +135,6 @@
       </all>
    </replace-with>
 
-   <!-- Use native compiler stack by default -->
-   <set-property name="compiler.stackMode" value="native"/>
-
    <!--<set-configuration-property name="CssResource.style" value="pretty" />-->
    <set-configuration-property name="UiBinder.useSafeHtmlTemplates" value="true" />
 
@@ -159,6 +156,7 @@
    <set-property-fallback name="locale" value="en"/>
 
    <!-- Collapse properties -->
-   <collapse-all-properties />
+   <set-property name="compiler.useSymbolMaps" value="true" />
+   <collapse-all-properties/>
 
 </module>

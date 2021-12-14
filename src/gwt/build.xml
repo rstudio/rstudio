@@ -165,6 +165,7 @@
          <arg line="-gen gen"/>
          <!--<arg line="-style PRETTY"/>-->
          <arg line="-extra ${extras.dir}"/>
+         <arg line="-deploy ${extras.dir}"/>
          <arg line="${gwt.extra.args}"/>
          <arg value="-generateJsInteropExports"/>
          <!-- Additional arguments like -logLevel DEBUG -->

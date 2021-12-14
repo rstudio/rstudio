@@ -25,6 +25,14 @@ then
    exit 1
 fi
 
+# set up GWT module
+if [ "$1" = "Desktop" ] || [ "$1" == "Electron" ]; then
+   GWT_MAIN_MODULE=RStudioDesktop
+else
+   GWT_MAIN_MODULE=RStudioServer
+fi
+export GWT_MAIN_MODULE
+
 if test -z "$BUILD_DIR"
 then
    # set build type( if necessary) and build dir
