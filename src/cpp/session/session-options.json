@@ -95,7 +95,7 @@
             "name": "www-symbol-maps-path",
             "memberName": "wwwSymbolMapsPath_",
             "type": "core::FilePath",
-            "defaultValue": "www-symbolmaps",
+            "defaultValue": "www/WEB-INF/deploy/rstudio/symbolMaps",
             "isHidden": true,
             "description": "The relative path from the RStudio installation directory, or absolute path, where symbol maps are stored."
          },

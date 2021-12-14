@@ -115,8 +115,6 @@ if(GWT_COPY)
    # installation rules
    install(DIRECTORY www DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
    install(DIRECTORY "${GWT_WWW_DIR}" DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
-   install(DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
-           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)
 
 endif()
 
