@@ -379,6 +379,7 @@
 
    # create a temporary copy of the file for conversion
    inputFile <- tempfile(tmpdir = dirname(input), fileext = ".html")
+   on.exit(unlink(inputFile), add=TRUE)
    inputLines <- readLines(con = input, warn = FALSE)
 
    # write all the lines from the input except the DOCTYPE declaration, which pandoc will not treat
