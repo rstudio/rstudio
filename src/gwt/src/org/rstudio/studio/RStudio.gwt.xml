@@ -48,9 +48,9 @@
    ]]></property-provider>
 
 
-   <!-- Set the user agent. Because we no longer support older IE / Firefox, we just use Safari. -->
-   <!-- In practice, this property should be relatively unused. -->
-   <set-property name="user.agent" value="safari" />
+   <!-- Set the user agent. Note that we no longer support older IE. -->
+   <!-- Note that 'safari' here is effectively an alias for modern browsers. -->
+   <set-property name="user.agent" value="safari,gecko1_8" />
 
    <!-- Define unit tests -->
    <define-property name="rstudio.unittests" values="true,false"/>
