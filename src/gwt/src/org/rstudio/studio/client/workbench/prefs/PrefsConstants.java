@@ -4736,4 +4736,40 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("confirmRemoveMessage")
     String confirmRemoveMessage(String repo);
 
+    /**
+     * Translated "Modern".
+     *
+     * @return translated "Modern"
+     */
+    @DefaultMessage("Modern")
+    @Key("modernThemeLabel")
+    String modernThemeLabel();
+
+    /**
+     * Translated "Sky".
+     *
+     * @return translated "Sky"
+     */
+    @DefaultMessage("Sky")
+    @Key("skyThemeLabel")
+    String skyThemeLabel();
+
+    /**
+     * Translated "General".
+     *
+     * @return translated "General"
+     */
+    @DefaultMessage("General")
+    @Key("generalHeaderLabel")
+    String generalHeaderLabel();
+
+    /**
+     * Translated "Edit Snippets...".
+     *
+     * @return translated "Edit Snippets..."
+     */
+    @DefaultMessage("Edit Snippets...")
+    @Key("editSnippetsButtonLabel")
+    String editSnippetsButtonLabel();
+
 }

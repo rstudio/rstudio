@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -47,6 +48,7 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
@@ -66,7 +68,7 @@ public class EditingPreferencesPane extends PreferencesPane
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
-      editingPanel.add(headerLabel("General"));
+      editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref(1, UserPrefs.MAX_TAB_WIDTH, prefs_.numSpacesForTab())));
       tabWidth_.setWidth("36px");
@@ -93,7 +95,7 @@ public class EditingPreferencesPane extends PreferencesPane
       editorMode_.getElement().getStyle().setMarginBottom(0, Unit.PX);
 
       keyboardPanel.add(editorMode_);
-      SmallButton editShortcuts = new SmallButton("Modify Keyboard Shortcuts...");
+      SmallButton editShortcuts = new SmallButton(constants_.editingEditShortcuts());
       editShortcuts.getElement().getStyle().setMarginLeft(15, Unit.PX);
       editShortcuts.addClickHandler(new ClickHandler() {
          @Override
@@ -108,7 +110,7 @@ public class EditingPreferencesPane extends PreferencesPane
       lessSpaced(keyboardPanel);
       editingPanel.add(keyboardPanel);
 
-      Label executionLabel = headerLabel("Execution");
+      Label executionLabel = headerLabel(constants_.editingExecutionLabel());
       editingPanel.add(executionLabel);
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       editingPanel.add(checkboxPref(prefs_.focusConsoleAfterExec()));
@@ -124,7 +126,7 @@ public class EditingPreferencesPane extends PreferencesPane
       executionBehavior_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       editingPanel.add(executionBehavior_);
 
-      Label snippetsLabel = headerLabel("Snippets");
+      Label snippetsLabel = headerLabel(constants_.editingSnippetsLabel());
       snippetsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       editingPanel.add(snippetsLabel);
 
@@ -132,7 +134,7 @@ public class EditingPreferencesPane extends PreferencesPane
       CheckBox enableSnippets = checkboxPref(prefs_.enableSnippets());
       panel.add(enableSnippets);
 
-      SmallButton editSnippets = new SmallButton("Edit Snippets...");
+      SmallButton editSnippets = new SmallButton(constants_.editSnippetsButtonLabel());
       editSnippets.getElement().getStyle().setMarginTop(1, Unit.PX);
       editSnippets.getElement().getStyle().setMarginLeft(5, Unit.PX);
       editSnippets.addClickHandler(new ClickHandler() {
@@ -144,7 +146,7 @@ public class EditingPreferencesPane extends PreferencesPane
       });
       panel.add(editSnippets);
 
-      HelpButton snippetHelp = new HelpButton("code_snippets", "Help on code snippets");
+      HelpButton snippetHelp = new HelpButton("code_snippets", constants_.editingSnippetHelpTitle());
       snippetHelp.getElement().getStyle().setMarginTop(2, Unit.PX);
       snippetHelp.getElement().getStyle().setMarginLeft(6, Unit.PX);
       panel.add(snippetHelp);
@@ -152,7 +154,7 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(panel);
 
       VerticalTabPanel displayPanel = new VerticalTabPanel(ElementIds.EDIT_DISPLAY_PREFS);
-      displayPanel.add(headerLabel("General"));
+      displayPanel.add(headerLabel(constants_.generalHeaderLabel()));
       displayPanel.add(checkboxPref(prefs_.highlightSelectedWord()));
       displayPanel.add(checkboxPref(prefs_.highlightSelectedLine()));
       displayPanel.add(checkboxPref(prefs_.showLineNumbers()));
@@ -176,12 +178,12 @@ public class EditingPreferencesPane extends PreferencesPane
 
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
 
-      savePanel.add(headerLabel("General"));
+      savePanel.add(headerLabel(constants_.generalHeaderLabel()));
       savePanel.add(checkboxPref(prefs_.autoAppendNewline()));
       savePanel.add(checkboxPref(prefs_.stripTrailingWhitespace()));
       savePanel.add(checkboxPref(prefs_.restoreSourceDocumentCursorPosition()));
 
-      Label serializationLabel = headerLabel("Serialization");
+      Label serializationLabel = headerLabel(constants_.editingSerializationLabel());
       serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
       savePanel.add(serializationLabel);
 
@@ -194,7 +196,7 @@ public class EditingPreferencesPane extends PreferencesPane
       savePanel.add(lessSpaced(encoding_ = new TextBoxWithButton(
             prefs_.defaultEncoding().getTitle(),
             "",
-            "Change...",
+            constants_.editingSavePanelAction(),
             null,
             ElementIds.TextBoxButtonId.TEXT_ENCODING,
             true,
@@ -233,7 +235,7 @@ public class EditingPreferencesPane extends PreferencesPane
       spaced(encoding_);
       setEncoding(prefs_.defaultEncoding().getGlobalValue());
 
-      savePanel.add(spacedBefore(headerLabel("Auto-save")));
+      savePanel.add(spacedBefore(headerLabel(constants_.editingSavePanelAutosave())));
       savePanel.add(checkboxPref(prefs_.saveBeforeSourcing()));
       savePanel.add(checkboxPref(prefs_.autoSaveOnBlur()));
       autoSaveOnIdle_ = new SelectWidget((Prefs.EnumValue) prefs_.autoSaveOnIdle(),
@@ -270,7 +272,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
       VerticalTabPanel completionPanel = new VerticalTabPanel(ElementIds.EDIT_COMPLETION_PREFS);
 
-      completionPanel.add(headerLabel("R and C/C++"));
+      completionPanel.add(headerLabel(constants_.editingCompletionPanel()));
 
       showCompletions_ = new SelectWidget((Prefs.EnumValue) prefs_.codeCompletion(),
             false,
@@ -313,7 +315,7 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(checkboxPref(prefs_.tabMultilineCompletion()));
 
 
-      Label otherLabel = headerLabel("Other Languages");
+      Label otherLabel = headerLabel(constants_.editingDiagOtherLabel());
       otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       completionPanel.add(otherLabel);
 
@@ -323,14 +325,12 @@ public class EditingPreferencesPane extends PreferencesPane
             false);
       completionPanel.add(showCompletionsOther_);
 
-      Label otherTip = new Label(
-              "Keyword and text-based completions are supported for several other " +
-                      "languages including JavaScript, HTML, CSS, Python, and SQL.");
+      Label otherTip = new Label(constants_.editingOtherTip());
       otherTip.addStyleName(baseRes.styles().infoLabel());
       completionPanel.add(nudgeRightPlus(otherTip));
 
 
-      Label delayLabel = headerLabel("Completion Delay");
+      Label delayLabel = headerLabel(constants_.editingHeaderLabel());
       delayLabel.getElement().getStyle().setMarginTop(14, Unit.PX);
       completionPanel.add(delayLabel);
 
@@ -341,7 +341,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
 
       VerticalTabPanel diagnosticsPanel = new VerticalTabPanel(ElementIds.EDIT_DIAGNOSTICS_PREFS);
-      diagnosticsPanel.add(headerLabel("R Diagnostics"));
+      diagnosticsPanel.add(headerLabel(constants_.editingDiagnosticsPanel()));
       final CheckBox chkShowRDiagnostics = checkboxPref(prefs_.showDiagnosticsR());
       diagnosticsPanel.add(chkShowRDiagnostics);
 
@@ -364,12 +364,12 @@ public class EditingPreferencesPane extends PreferencesPane
       diagnosticsPanel.add(rOptionsPanel);
       diagnosticsPanel.add(checkboxPref(prefs_.autoDiscoverPackageDependencies()));
 
-      Label diagOtherLabel = headerLabel("Other Languages");
+      Label diagOtherLabel = headerLabel(constants_.editingOtherLabel());
       diagnosticsPanel.add(spacedBefore(diagOtherLabel));
       diagnosticsPanel.add(checkboxPref(prefs_.showDiagnosticsCpp()));
       diagnosticsPanel.add(checkboxPref(prefs_.showDiagnosticsOther()));
 
-      Label diagShowLabel = headerLabel("Show Diagnostics");
+      Label diagShowLabel = headerLabel(constants_.editingDiagShowLabel());
       diagnosticsPanel.add(spacedBefore(diagShowLabel));
       diagnosticsPanel.add(checkboxPref(prefs_.diagnosticsOnSave()));
       diagnosticsPanel.add(tight(checkboxPref(prefs_.backgroundDiagnostics(), false /*defaultSpace*/)));
@@ -382,13 +382,13 @@ public class EditingPreferencesPane extends PreferencesPane
       diagnosticsPanel.add(diagnosticsHelpLink);
 
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Editing");
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.editingTabPanel());
       tabPanel.setSize("435px", "533px");
-      tabPanel.add(editingPanel, "Editing", editingPanel.getBasePanelId());
-      tabPanel.add(displayPanel, "Display", displayPanel.getBasePanelId());
-      tabPanel.add(savePanel, "Saving", savePanel.getBasePanelId());
-      tabPanel.add(completionPanel, "Completion", completionPanel.getBasePanelId());
-      tabPanel.add(diagnosticsPanel, "Diagnostics", diagnosticsPanel.getBasePanelId());
+      tabPanel.add(editingPanel, constants_.editingTabPanel(), editingPanel.getBasePanelId());
+      tabPanel.add(displayPanel, constants_.editingTabPanelDisplayPanel(), displayPanel.getBasePanelId());
+      tabPanel.add(savePanel, constants_.editingTabPanelSavePanel(), savePanel.getBasePanelId());
+      tabPanel.add(completionPanel, constants_.editingTabPanelCompletionPanel(), completionPanel.getBasePanelId());
+      tabPanel.add(diagnosticsPanel, constants_.editingTabPanelDiagnosticsPanel(), diagnosticsPanel.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -445,7 +445,7 @@ public class EditingPreferencesPane extends PreferencesPane
       // default) if they've managed to load something invalid.
       if (!autoSaveIdleMs_.setValue(prefs_.autoSaveIdleMs().getValue().toString()))
       {
-         autoSaveIdleMs_.setValue("1000"); //$NON-NLS-1$
+         autoSaveIdleMs_.setValue("1000");
       }
    }
 
@@ -538,4 +538,6 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget autoSaveIdleMs_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
+
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }
