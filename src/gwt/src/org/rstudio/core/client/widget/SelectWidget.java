@@ -21,6 +21,7 @@ import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
 
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -42,6 +43,19 @@ public class SelectWidget extends Composite
       this(ExternalLabel);
    }
 
+   /**
+    * Infers SelectWidget title, values, and default text from PrevValue
+    * @param enumValue
+    */
+   public SelectWidget(EnumValue enumValue,
+                       boolean isMultipleSelect,
+                       boolean horizontalLayout,
+                       boolean listOnLeft)
+   {
+      this(enumValue.getTitle(), enumValue.getReadableValues(), enumValue.getAllowedValues(),
+         isMultipleSelect, horizontalLayout, listOnLeft);
+   }
+
    public SelectWidget(String label)
    {
       this(label, null, false);
@@ -55,6 +69,13 @@ public class SelectWidget extends Composite
    public SelectWidget(String label, String[] options, boolean listOnLeft)
    {
       this(label, options, null, false, true, listOnLeft);
+   }
+
+   public SelectWidget(String label,
+                       String[] options,
+                       String[] values)
+   {
+      this(label, options, values, false, false, false);
    }
 
    public SelectWidget(String label,
