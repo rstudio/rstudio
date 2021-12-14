@@ -17,6 +17,7 @@ package org.rstudio.studio.client.application;
 
 import java.util.ArrayList;
 
+import com.gargoylesoftware.htmlunit.javascript.host.event.ClipboardEvent;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Document;
@@ -158,7 +159,8 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(FileUploadEvent.TYPE, this);
       events.addHandler(AriaLiveStatusEvent.TYPE, this);
-
+      events.addHandler(ClipboardActionEvent.TYPE, this);
+      
       // register for uncaught exceptions
       uncaughtExHandler.register();
    }
@@ -431,7 +433,21 @@ public class Application implements ApplicationEventHandlers
       if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs, event.getSeverity()))
          view_.reportStatus(event.getMessage(), delayMs, event.getSeverity());
    }
-
+   
+   @Override
+   public void onClipboardAction(ClipboardActionEvent event)
+   {
+      ClipboardActionEvent.Data data = event.getData();
+      if (StringUtil.equals(data.getType(), "copy"))
+      {
+         DomUtils.copyToClipboard(data.getText());
+      }
+      else
+      {
+         Debug.log("Unimplemented clipboard action '" + data.getText() + "'");
+      }
+   }
+   
    @Override
    public void onServerOffline(ServerOfflineEvent event)
    {

@@ -352,7 +352,7 @@ public class ConnectionsPresenter extends BasePresenter
      
       if (connectVia == ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD)
       {
-         DomUtils.copyCodeToClipboard(connectCode);
+         DomUtils.copyToClipboard(connectCode);
       }
       else if (connectVia == ConnectionOptions.CONNECT_R_CONSOLE)
       {

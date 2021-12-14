@@ -1047,18 +1047,6 @@ public class DomUtils
          el.setSelectionRange(start, end);
    }-*/;
 
-   public static final native void copyCodeToClipboard(String text) /*-{
-      var copyElem = document.createElement('pre');
-      copyElem.contentEditable = true;
-      document.body.appendChild(copyElem);
-      copyElem.innerHTML = text;
-      copyElem.unselectable = "off";
-      copyElem.focus();
-      document.execCommand('SelectAll');
-      document.execCommand("Copy", false, null);
-      document.body.removeChild(copyElem);
-   }-*/;
-
    public static final String extractCssValue(String className,
          String propertyName)
    {
@@ -1343,27 +1331,41 @@ public class DomUtils
    }-*/;
 
    public static final native void copyToClipboard(String text)
-   /*-{
-      if (window.clipboardData && window.clipboardData.setData) {
-         // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
-         clipboardData.setData("Text", text);
+   /*-{ 
+      
+      // Use newer clipboard APIs if available.
+      var clipboard = ($wnd.navigator || {}).clipboard;
+      if (clipboard != null) {
+         try {
+            clipboard.writeText(text);
+         } catch (e) {
+            console.warn("Copy to clipboard failed: ", e);
+         }
+         return;
       }
-      else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-         var textarea = document.createElement("textarea");
+      
+      // Use 'document.execCommand()' for older browsers.
+      if ($doc.queryCommandSupported && $doc.queryCommandSupported("copy")) {
+      
+         // prepare text area for copy
+         var textarea = $doc.createElement("textarea");
          textarea.textContent = text;
          textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in Microsoft Edge.
-         document.body.appendChild(textarea);
+         $doc.body.appendChild(textarea);
          textarea.select();
+         
+         // Security exception may be thrown by some browsers. 
          try {
-            document.execCommand("copy");  // Security exception may be thrown by some browsers.
+            $doc.execCommand("copy");
          }
          catch (ex) {
             console.warn("Copy to clipboard failed.", ex);
          }
          finally {
-            document.body.removeChild(textarea);
+            $doc.body.removeChild(textarea);
          }
       }
+      
    }-*/;
 
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;

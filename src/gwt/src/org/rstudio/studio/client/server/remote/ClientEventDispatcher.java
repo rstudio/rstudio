@@ -1123,6 +1123,11 @@ public class ClientEventDispatcher
             SessionSuspendBlockedEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new SessionSuspendBlockedEvent(data));
          }
+         else if (type == ClientEvent.ClipboardAction)
+         {
+            ClipboardActionEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ClipboardActionEvent(data));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);

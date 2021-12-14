@@ -686,7 +686,7 @@ public class Files
 
    void onCopyFilesPaneCurrentDirectory()
    {
-      DomUtils.copyCodeToClipboard(currentPath_.getPath());
+      DomUtils.copyToClipboard(currentPath_.getPath());
    }
 
    /**

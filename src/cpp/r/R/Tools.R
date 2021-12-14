@@ -1357,31 +1357,9 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
    rendered <- sprintf(template, rstudioVersion, rstudioEdition, osVersion, rVersion, rInfoText)
    
-   # try to copy the text to the clipboard, or print it out and tell the user
-   # to do so
-   if (rstudioInfo$mode == "desktop" && requireNamespace("clipr", quietly = TRUE)) {
-      clipr::write_clip(rendered)
-      writeLines(.rs.heredoc("
-         * The bug report template has been written to the clipboard.
-         * Please paste the clipboard contents into the issue comment section,
-         * and then fill out the rest of the issue details.
-         *
-      "))
-   } else {
-      
-      header <- .rs.heredoc("
-         <!--
-         Please copy the following text to your clipboard,
-         and then click 'Cancel' to close the dialog.
-         -->
-      ")
-      
-      text <- c(header, "", rendered)
-      file <- tempfile("rstudio-bug-report-", fileext = ".html")
-      on.exit(unlink(file), add = TRUE)
-      writeLines(text, con = file)
-      utils::file.edit(file)
-   }
+   # try to copy the text to the clipboard
+   text <- paste(rendered, collapse = "\n")
+   .Call("rs_clipboardCopy", text, PACKAGE = "(embedding)")
    
    # if 'pro' wasn't supplied, then try to guess based on the running edition
    if (is.null(pro))
@@ -1394,8 +1372,15 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       "https://github.com/rstudio/rstudio/issues/new"
    }
    
-   # let the user know we're about to navigate away
-   fmt <- "* Navigating to '%s' in 3 seconds ..."
+   # notify the user
+   fmt <- .rs.heredoc("
+      * The bug report template has been written to the clipboard.
+      * Please paste the clipboard contents into the issue comment section,
+      * and then fill out the rest of the issue details.
+      *
+      * Navigating to '%s' in 3 seconds ...
+   ")
+   
    msg <- sprintf(fmt, url)
    writeLines(msg)
    Sys.sleep(3)

@@ -259,7 +259,7 @@ public class DataImport extends Composite
          dataImportResources_.copyImage2x()));
       btn.addClickHandler(clickEvent ->
       {
-         DomUtils.copyCodeToClipboard(codePreview_);
+         DomUtils.copyToClipboard(codePreview_);
       });
       return btn;
    }
