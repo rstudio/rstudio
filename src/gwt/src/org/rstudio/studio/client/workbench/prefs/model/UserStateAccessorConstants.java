@@ -25,194 +25,210 @@ public interface UserStateAccessorConstants extends Constants {
    /**
     * A unique identifier representing the user and machine.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String contextIdTitle();
-   @DefaultStringValue("@dA unique identifier representing the user and machine.")
+   @DefaultStringValue("A unique identifier representing the user and machine.")
    String contextIdDescription();
 
    /**
     * Whether we have automatically created an .Rprofile for this user.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String autoCreatedProfileTitle();
-   @DefaultStringValue("@dWhether we have automatically created an .Rprofile for this user.")
+   @DefaultStringValue("Whether we have automatically created an .Rprofile for this user.")
    String autoCreatedProfileDescription();
 
    /**
     * The color theme to apply.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String themeTitle();
-   @DefaultStringValue("@dThe color theme to apply.")
+   @DefaultStringValue("The color theme to apply.")
    String themeDescription();
 
    /**
     * The directory path under which to place new projects by default. Shadows a uipref.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String defaultProjectLocationTitle();
-   @DefaultStringValue("@dThe directory path under which to place new projects by default. Shadows a uipref.")
+   @DefaultStringValue("The directory path under which to place new projects by default. Shadows a uipref.")
    String defaultProjectLocationDescription();
 
    /**
     * Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String clearHiddenTitle();
-   @DefaultStringValue("@dWhether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.")
+   @DefaultStringValue("Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.")
    String clearHiddenDescription();
 
    /**
     * The most recently used plot export options.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String exportPlotOptionsTitle();
-   @DefaultStringValue("@dThe most recently used plot export options.")
+   @DefaultStringValue("The most recently used plot export options.")
    String exportPlotOptionsDescription();
 
    /**
     * The most recently used viewer export options.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String exportViewerOptionsTitle();
-   @DefaultStringValue("@dThe most recently used viewer export options.")
+   @DefaultStringValue("The most recently used viewer export options.")
    String exportViewerOptionsDescription();
 
    /**
     * The most recently used options for saving a plot as a PDF.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String savePlotAsPdfOptionsTitle();
-   @DefaultStringValue("@dThe most recently used options for saving a plot as a PDF.")
+   @DefaultStringValue("The most recently used options for saving a plot as a PDF.")
    String savePlotAsPdfOptionsDescription();
 
    /**
     * Most recently used settings for compiling a notebook from an R script.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String compileRNotebookPrefsTitle();
-   @DefaultStringValue("@dMost recently used settings for compiling a notebook from an R script.")
+   @DefaultStringValue("Most recently used settings for compiling a notebook from an R script.")
    String compileRNotebookPrefsDescription();
 
    /**
     * Most recently used settings for compiling a notebook using R Markdown.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String compileRMarkdownNotebookPrefsTitle();
-   @DefaultStringValue("@dMost recently used settings for compiling a notebook using R Markdown.")
+   @DefaultStringValue("Most recently used settings for compiling a notebook using R Markdown.")
    String compileRMarkdownNotebookPrefsDescription();
 
    /**
     * Whether to show UI for publishing content.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String showPublishUiTitle();
-   @DefaultStringValue("@dWhether to show UI for publishing content.")
+   @DefaultStringValue("Whether to show UI for publishing content.")
    String showPublishUiDescription();
 
    /**
     * Whether to show UI for publishing content to RStudio Connect.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String enableRsconnectPublishUiTitle();
-   @DefaultStringValue("@dWhether to show UI for publishing content to RStudio Connect.")
+   @DefaultStringValue("Whether to show UI for publishing content to RStudio Connect.")
    String enableRsconnectPublishUiDescription();
 
    /**
     * The default (last) account used for publishing
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String publishAccountTitle();
-   @DefaultStringValue("@dThe default (last) account used for publishing")
+   @DefaultStringValue("The default (last) account used for publishing")
    String publishAccountDescription();
 
    /**
     * The preferred width, in pixels, of the document outline pane.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String documentOutlineWidthTitle();
-   @DefaultStringValue("@dThe preferred width, in pixels, of the document outline pane.")
+   @DefaultStringValue("The preferred width, in pixels, of the document outline pane.")
    String documentOutlineWidthDescription();
 
    /**
     * How to create new connections to data sources.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String connectViaTitle();
-   @DefaultStringValue("@dHow to create new connections to data sources.")
+   @DefaultStringValue("How to create new connections to data sources.")
    String connectViaDescription();
 
    /**
     * The kind of handler to invoke when errors occur.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String errorHandlerTypeTitle();
-   @DefaultStringValue("@dThe kind of handler to invoke when errors occur.")
+   @DefaultStringValue("The kind of handler to invoke when errors occur.")
    String errorHandlerTypeDescription();
 
    /**
     * Whether or not the MinGW compiler with GCC 4.9 is used.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String usingMingwGcc49Title();
-   @DefaultStringValue("@dWhether or not the MinGW compiler with GCC 4.9 is used.")
+   @DefaultStringValue("Whether or not the MinGW compiler with GCC 4.9 is used.")
    String usingMingwGcc49Description();
 
    /**
     * Whether or not the use of Visual Mode has been confirmed.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String visualModeConfirmedTitle();
-   @DefaultStringValue("@dWhether or not the use of Visual Mode has been confirmed.")
+   @DefaultStringValue("Whether or not the use of Visual Mode has been confirmed.")
    String visualModeConfirmedDescription();
 
    /**
     * The default type for new bibliographies.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String bibliographyDefaultTypeTitle();
-   @DefaultStringValue("@dThe default type for new bibliographies.")
+   @DefaultStringValue("The default type for new bibliographies.")
    String bibliographyDefaultTypeDescription();
 
    /**
     * The default style for inserting citations.
     */
-   @DefaultStringValue("@d")
+   @DefaultStringValue("")
    String citationDefaultInTextTitle();
-   @DefaultStringValue("@dThe default style for inserting citations.")
+   @DefaultStringValue("The default style for inserting citations.")
    String citationDefaultInTextDescription();
 
    /**
     * Zotero connection type (local or web)
     */
-   @DefaultStringValue("@dZotero connection type")
+   @DefaultStringValue("Zotero connection type")
    String zoteroConnectionTypeTitle();
-   @DefaultStringValue("@dZotero connection type (local or web)")
+   @DefaultStringValue("Zotero connection type (local or web)")
    String zoteroConnectionTypeDescription();
 
    /**
     * Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies
     */
-   @DefaultStringValue("@dUse Better BibTeX for citation keys and BibTeX export")
+   @DefaultStringValue("Use Better BibTeX for citation keys and BibTeX export")
    String zoteroUseBetterBibtexTitle();
-   @DefaultStringValue("@dWhether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies")
+   @DefaultStringValue("Whether to use Better BibTeX when suggesting citation keys and writing citations to BibTeX bibliographies")
    String zoteroUseBetterBibtexDescription();
 
    /**
     * Key for making Zotero API calls
     */
-   @DefaultStringValue("@dZotero API Key")
+   @DefaultStringValue("Zotero API Key")
    String zoteroApiKeyTitle();
-   @DefaultStringValue("@dKey for making Zotero API calls")
+   @DefaultStringValue("Key for making Zotero API calls")
    String zoteroApiKeyDescription();
 
    /**
     * Directory containing Zotero data files
     */
-   @DefaultStringValue("@dZotero Data Directory")
+   @DefaultStringValue("Zotero Data Directory")
    String zoteroDataDirTitle();
-   @DefaultStringValue("@dDirectory containing Zotero data files")
+   @DefaultStringValue("Directory containing Zotero data files")
    String zoteroDataDirDescription();
+
+   /**
+    * Sync source editor to Quarto website preview navigation.
+    */
+   @DefaultStringValue("Quarto Website Sync Editor")
+   String quartoWebsiteSyncEditorTitle();
+   @DefaultStringValue("Sync source editor to Quarto website preview navigation.")
+   String quartoWebsiteSyncEditorDescription();
+
+   /**
+    * Build Quarto editor tools (yaml.js) on the fly when requested.
+    */
+   @DefaultStringValue("Build Quarto Editor Tools")
+   String quartoBuildEditorToolsTitle();
+   @DefaultStringValue("Build Quarto editor tools (yaml.js) on the fly when requested.")
+   String quartoBuildEditorToolsDescription();
 
 
 

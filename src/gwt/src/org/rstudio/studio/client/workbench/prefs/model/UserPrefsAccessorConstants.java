@@ -435,11 +435,19 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showDiagnosticsCppDescription();
 
    /**
-    * Whether to show diagnostic messages for other types of code (not R or C++).
+    * Whether to show diagnostic messages for YAML code as you type.
+    */
+   @DefaultStringValue("Show diagnostics in YAML code")
+   String showDiagnosticsYamlTitle();
+   @DefaultStringValue("Whether to show diagnostic messages for YAML code as you type.")
+   String showDiagnosticsYamlDescription();
+
+   /**
+    * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
     */
    @DefaultStringValue("Show diagnostics in other languages")
    String showDiagnosticsOtherTitle();
-   @DefaultStringValue("Whether to show diagnostic messages for other types of code (not R or C++).")
+   @DefaultStringValue("Whether to show diagnostic messages for other types of code (not R, C++, or YAML).")
    String showDiagnosticsOtherDescription();
 
    /**
@@ -1205,6 +1213,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String sortFileNamesNaturallyDescription();
 
    /**
+    * Whether to change the directory in the Files pane automatically when the working directory in R changes.
+    */
+   @DefaultStringValue("Synchronize the Files pane with the current working directory")
+   String syncFilesPaneWorkingDirTitle();
+   @DefaultStringValue("Whether to change the directory in the Files pane automatically when the working directory in R changes.")
+   String syncFilesPaneWorkingDirDescription();
+
+   /**
     * The visibility of the Jobs tab.
     */
    @DefaultStringValue("Jobs tab visibility")
@@ -1237,12 +1253,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String busyDetectionDescription();
 
    /**
-    * A whitelist of apps that should not be considered busy in the Terminal.
+    * A list of apps that should not be considered busy in the Terminal.
     */
    @DefaultStringValue("")
-   String busyWhitelistTitle();
-   @DefaultStringValue("A whitelist of apps that should not be considered busy in the Terminal.")
-   String busyWhitelistDescription();
+   String busyExclusionListTitle();
+   @DefaultStringValue("A list of apps that should not be considered busy in the Terminal.")
+   String busyExclusionListDescription();
 
    /**
     * The working directory to use when knitting R Markdown documents.
@@ -1301,12 +1317,36 @@ public interface UserPrefsAccessorConstants extends Constants {
    String consoleDoubleClickSelectDescription();
 
    /**
+    * Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar.
+    */
+   @DefaultStringValue("Warn when automatic session suspension is paused")
+   String consoleSuspendBlockedNoticeTitle();
+   @DefaultStringValue("Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar.")
+   String consoleSuspendBlockedNoticeDescription();
+
+   /**
+    * How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices.
+    */
+   @DefaultStringValue("Number of seconds to delay warning")
+   String consoleSuspendBlockedNoticeDelayTitle();
+   @DefaultStringValue("How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices.")
+   String consoleSuspendBlockedNoticeDelayDescription();
+
+   /**
     * Whether a git repo should be initialized inside new projects by default.
     */
    @DefaultStringValue("Create a Git repo in new projects")
    String newProjGitInitTitle();
    @DefaultStringValue("Whether a git repo should be initialized inside new projects by default.")
    String newProjGitInitDescription();
+
+   /**
+    * Whether an renv environment should be created inside new projects by default.
+    */
+   @DefaultStringValue("Create an renv environment in new projects")
+   String newProjUseRenvTitle();
+   @DefaultStringValue("Whether an renv environment should be created inside new projects by default.")
+   String newProjUseRenvDescription();
 
    /**
     * The root document to use when compiling PDF documents.
@@ -1683,6 +1723,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String visualMarkdownEditingShowMarginDescription();
 
    /**
+    * Whether to show line numbers in the code editors used in visual mode
+    */
+   @DefaultStringValue("Show line numbers in visual mode code blocks")
+   String visualMarkdownCodeEditorLineNumbersTitle();
+   @DefaultStringValue("Whether to show line numbers in the code editors used in visual mode")
+   String visualMarkdownCodeEditorLineNumbersDescription();
+
+   /**
     * The default visual editing mode font size, in points
     */
    @DefaultStringValue("Font size for visual editing mode")
@@ -1833,6 +1881,46 @@ public interface UserPrefsAccessorConstants extends Constants {
    String memoryQueryIntervalSecondsTitle();
    @DefaultStringValue("How many seconds to wait between automatic requeries of memory statistics (0 to disable)")
    String memoryQueryIntervalSecondsDescription();
+
+   /**
+    * Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.
+    */
+   @DefaultStringValue("Enable terminal Python integration")
+   String terminalPythonIntegrationTitle();
+   @DefaultStringValue("Enable Python terminal hooks. When enabled, the RStudio-configured version of Python will be placed on the PATH.")
+   String terminalPythonIntegrationDescription();
+
+   /**
+    * Enable session protocol debug logging showing all session requests and events
+    */
+   @DefaultStringValue("Session protocol debug logging")
+   String sessionProtocolDebugTitle();
+   @DefaultStringValue("Enable session protocol debug logging showing all session requests and events")
+   String sessionProtocolDebugDescription();
+
+   /**
+    * When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.
+    */
+   @DefaultStringValue("Automatically activate project Python environments")
+   String pythonProjectEnvironmentAutomaticActivateTitle();
+   @DefaultStringValue("When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.")
+   String pythonProjectEnvironmentAutomaticActivateDescription();
+
+   /**
+    * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+    */
+   @DefaultStringValue("Check values in the Environment pane for null external pointers")
+   String checkNullExternalPointersTitle();
+   @DefaultStringValue("When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.")
+   String checkNullExternalPointersDescription();
+
+   /**
+    * Enable IDE features for the Quarto publishing system.
+    */
+   @DefaultStringValue("Enble Quarto features")
+   String quartoEnabledTitle();
+   @DefaultStringValue("Enable IDE features for the Quarto publishing system.")
+   String quartoEnabledDescription();
 
 
 
