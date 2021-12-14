@@ -216,8 +216,21 @@ generate <- function (schemaPath, className) {
       javaProperties <- paste0(javaProperties,
          commentProperties,
          camel, "Title = ", prefixProperties, prefTitle, "\n",
-         camel, "Description = ", prefixProperties, def[["description"]], "\n",
-         "\n")
+         camel, "Description = ", prefixProperties, def[["description"]], "\n")
+
+      if (!is.null(def[["enumReadable"]]))
+      {
+         javaProperties <- paste0(javaProperties,
+                                  paste0(mapply(function (enumVal, enumReadable) {
+                                     paste0(
+                                        camel, "Enum_", gsub("[^A-Za-z0-9_]", "_", enumVal), "=", prefixProperties, enumReadable
+                                     )
+                                  }, def[["enum"]], def[["enumReadable"]]), collapse = "\n"
+                                  ), "\n"
+         )
+      }
+
+      javaProperties <- paste0(javaProperties, "\n")
 
       # DEBUG: Add entry here for the java constants and properties files.  Then change perfTitle to
       #        always cite them, with the constnats/properties having the "" if null.
