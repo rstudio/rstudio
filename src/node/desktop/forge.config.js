@@ -121,8 +121,8 @@ if (
     osxSign: {
       'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
       'hardened-runtime': true,
-      'entitlements': __dirname + '/../../../package/osx/entitlements.plist',
-      'entitlements-inherit': __dirname + '/../../../package/osx/entitlements.plist',
+      'entitlements': __dirname + '/resources/electron-entitlements.mac.plist',
+      'entitlements-inherit': __dirname + '/resources/electron-entitlements.mac.plist',
       'signature-flags': 'library',
     },
     osxNotarize: {
