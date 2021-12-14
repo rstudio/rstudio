@@ -2,9 +2,9 @@ const { createFullPackageFileName } = require('./scripts/create-full-package-fil
 // This function makes sure that the correct filename is created and saved for the final DMG file.
 createFullPackageFileName();
 
-const { loadCMakeVars } = require('./scripts/fix-library-paths.js');
+// const { loadCMakeVars } = require('./scripts/fix-library-paths.js');
 
-loadCMakeVars(__dirname + '/../../../package/osx/build/CMakeCache.txt');
+// loadCMakeVars(__dirname + '/../../../package/osx/build/CMakeCache.txt');
 
 const config = {
   hooks: {
@@ -121,8 +121,8 @@ if (
     osxSign: {
       'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
       'hardened-runtime': true,
-      'entitlements': '../../../package/osx/entitlements.plist',
-      'entitlements-inherit': '../../../package/osx/entitlements.plist',
+      'entitlements': __dirname + '/../../../package/osx/entitlements.plist',
+      'entitlements-inherit': __dirname + '/../../../package/osx/entitlements.plist',
       'signature-flags': 'library',
     },
     osxNotarize: {
@@ -131,21 +131,5 @@ if (
     },
   };
 }
-
-config.packagerConfig = {
-  icon: './resources/icons/RStudio',
-  appBundleId: 'org.rstudio.RStudio',
-  osxSign: {
-    'identity': 'Developer ID Application: Matheus Tavares (QM39MZ3QRV)',
-    'hardened-runtime': true,
-    'entitlements': '../../../package/osx/entitlements.plist',
-    'entitlements-inherit': '../../../package/osx/entitlements.plist',
-    'signature-flags': 'library',
-  },
-  osxNotarize: {
-    appleId: 'contact@tavapps.com',
-    appleIdPassword: 'Dso1234xx',
-  },
-};
 
 module.exports = config;
