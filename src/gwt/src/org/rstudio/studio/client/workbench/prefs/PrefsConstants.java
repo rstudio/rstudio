@@ -4772,4 +4772,76 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("editSnippetsButtonLabel")
     String editSnippetsButtonLabel();
 
+    /**
+     * Translated "tight".
+     *
+     * @return translated "tight"
+     */
+    @DefaultMessage("tight")
+    @Key("listSpacingTight")
+    String listSpacingTight();
+
+    /**
+     * Translated "spaced".
+     *
+     * @return translated "spaced"
+     */
+    @DefaultMessage("spaced")
+    @Key("listSpacingSpaced")
+    String listSpacingSpaced();
+
+    /**
+     * Translated "(none)".
+     *
+     * @return translated "(none)"
+     */
+    @DefaultMessage("(none)")
+    @Key("editingWrapNone")
+    String editingWrapNone();
+
+    /**
+     * Translated "(column)".
+     *
+     * @return translated "(column)"
+     */
+    @DefaultMessage("(column)")
+    @Key("editingWrapColumn")
+    String editingWrapColumn();
+
+    /**
+     * Translated "(sentence)".
+     *
+     * @return translated "(sentence)"
+     */
+    @DefaultMessage("(sentence)")
+    @Key("editingWrapSentence")
+    String editingWrapSentence();
+
+    /**
+     * Translated "block".
+     *
+     * @return translated "block"
+     */
+    @DefaultMessage("block")
+    @Key("refLocationBlock")
+    String refLocationBlock();
+
+    /**
+     * Translated "section".
+     *
+     * @return translated "section"
+     */
+    @DefaultMessage("section")
+    @Key("refLocationSection")
+    String refLocationSection();
+
+    /**
+     * Translated "document"".
+     *
+     * @return translated "document"
+     */
+    @DefaultMessage("document")
+    @Key("refLocationDocument")
+    String refLocationDocument();
+
 }

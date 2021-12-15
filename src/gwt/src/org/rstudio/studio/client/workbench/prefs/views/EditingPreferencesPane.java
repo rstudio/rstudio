@@ -506,7 +506,7 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Code";
+      return constants_.codePaneLabel();
    }
 
    private void setEncoding(String encoding)
