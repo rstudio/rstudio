@@ -841,8 +841,8 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      * @return translated "documents"
      */
     @DefaultMessage("documents")
-    @Key("documentsLowercase")
-    String documentsLowercase();
+    @Key("documentsLowercasePlural")
+    String documentsLowercasePlural();
 
     /**
      * Translated "document".

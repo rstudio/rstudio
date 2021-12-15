@@ -1077,7 +1077,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      * @return translated "Subversion"
      */
     @DefaultMessage("Subversion")
-    @Key("SvnPageTitle")
+    @Key("svnPageTitle")
     String svnPageTitle();
 
     /**
@@ -1086,7 +1086,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      * @return translated "Checkout a project from a Subversion repository"
      */
     @DefaultMessage("Checkout a project from a Subversion repository")
-    @Key("SvnPageSubTitle")
+    @Key("svnPageSubTitle")
     String svnPageSubTitle();
 
     /**
@@ -1095,7 +1095,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      * @return translated "Checkout Subversion Repository"
      */
     @DefaultMessage("Checkout Subversion Repository")
-    @Key("SvnPagePageCaption")
+    @Key("svnPagePageCaption")
     String svnPagePageCaption();
 
     /**
@@ -1941,7 +1941,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      * @return translated "Check Package &mdash; R CMD check additional options:"
      */
     @DefaultMessage("Build Source Package &mdash; R CMD build additional options:")
-    @Key("checkPackageMdashArgument")
+    @Key("buildSourceMdashArgument")
     String buildSourceMdashArgument();
 
     /**
