@@ -132,7 +132,7 @@ if (
       appleId: process.env.APPLE_ID,
       appleIdPassword: process.env.APPLE_ID_PASSWORD,
       appBundleId: 'org.rstudio.RStudio',
-      ascProvider: 'FYF2F5GFX4',
+      // ascProvider: 'FYF2F5GFX4',
     },
   };
 } else {
