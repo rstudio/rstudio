@@ -1380,11 +1380,13 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          -->
       ")
       
+      # write generated text to file, then open it in an editor
       text <- c(header, "", rendered)
       file <- tempfile("rstudio-bug-report-", fileext = ".html")
       on.exit(unlink(file), add = TRUE)
       writeLines(text, con = file)
       utils::file.edit(file)
+
    }
    
    # if 'pro' wasn't supplied, then try to guess based on the running edition
@@ -1399,14 +1401,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
    
    # notify the user
-   fmt <- .rs.heredoc("
-      * The bug report template has been written to the clipboard.
-      * Please paste the clipboard contents into the issue comment section,
-      * and then fill out the rest of the issue details.
-      *
-      * Navigating to '%s' in 3 seconds ...
-   ")
-   
+   fmt <- " * Navigating to '%s' in 3 seconds ... "
    msg <- sprintf(fmt, url)
    writeLines(msg)
    Sys.sleep(3)
