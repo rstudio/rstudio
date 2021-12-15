@@ -57,6 +57,7 @@ endif()
 
 if(GWT_BUILD)
    message(STATUS "Configured to build GWT")
+   message(STATUS "Using GWT module: org.rstudio.studio.${GWT_MAIN_MODULE}")
    set(GWT_COPY Yes)
 
    find_program(ANT
