@@ -41,6 +41,7 @@
 * Recognize `id_ed25519` key file in Version Control options UI (#9991)
 * Updated Files Pane buttons to resize and remain visible at smaller widths (#9870)
 * Remove 'Classic' IDE theme (#9738)
+* Added support for Amazon Linux 2 (Pro #2474)
 
 ### Fixed
 
