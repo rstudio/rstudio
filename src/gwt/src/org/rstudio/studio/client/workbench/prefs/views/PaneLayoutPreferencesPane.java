@@ -149,7 +149,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          ArrayList<String> value = new ArrayList<>();
          for (CheckBox checkBox : checkBoxes_)
          {
-            if (checkBox.getValue())
+            if (checkBox.getValue() && checkBox.getText() != "Presentation")
                value.add(checkBox.getText());
          }
          return value;
