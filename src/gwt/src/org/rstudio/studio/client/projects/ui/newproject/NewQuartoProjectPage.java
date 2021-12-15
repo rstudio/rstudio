@@ -162,7 +162,6 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       // set type
       if (fixedProjectType_ != null)
       {
-         projectTypeSelect_.setValue(fixedProjectType_);
          projectTypeSelect_.setVisible(false);
       }
       else
@@ -222,7 +221,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    protected QuartoNewProjectOptions getNewQuartoProjectOptions()
    {
       lastOptions_ = QuartoNewProjectOptions.create(
-            projectTypeSelect_.getValue(), 
+            fixedProjectType_ != null ? fixedProjectType_ : projectTypeSelect_.getValue(), 
             engineSelect_.getValue(), 
             kernelSelect_.getValue(), 
             chkUseVenv_.getValue() ? "venv" : "",

@@ -1018,6 +1018,33 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String quartoProjectKernelOption();
 
     /**
+     * Translated "Quarto Blog".
+     *
+     * @return translated "Quarto Blog"
+     */
+    @DefaultMessage("Quarto Blog")
+    @Key("quartoBlogTitle")
+    String quartoBlogTitle();
+
+    /**
+     * Translated "Create a new Quarto blog project".
+     *
+     * @return translated "Create a new Quarto blog project"
+     */
+    @DefaultMessage("Create a new Quarto blog project")
+    @Key("quartoBlogSubTitle")
+    String quartoBlogSubTitle();
+
+    /**
+     * Translated "Create Quarto Blog".
+     *
+     * @return translated "Create Quarto Blog"
+     */
+    @DefaultMessage("Create Quarto Blog")
+    @Key("quartoBlogPageCaption")
+    String quartoBlogPageCaption();
+    
+    /**
      * Translated "Quarto Website".
      *
      * @return translated "Quarto Website"

@@ -82,6 +82,12 @@ public interface NewProjectResources extends ClientBundle
 
    @Source("quartoWebsiteIconLarge_2x.png")
    ImageResource quartoWebsiteIconLarge2x();
+   
+   @Source("quartoBlogIcon_2x.png")
+   ImageResource quartoBlogIcon2x();
+
+   @Source("quartoBlogIconLarge_2x.png")
+   ImageResource quartoBlogIconLarge2x();
 
    @Source("plumberAppIcon_2x.png")
    ImageResource plumberAppIcon2x();

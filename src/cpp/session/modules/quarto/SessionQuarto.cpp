@@ -640,7 +640,8 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    // add some first run files
    using namespace module_context;
    std::vector<std::string> projFiles;
-   if (type == kQuartoProjectWebsite || type == kQuartoProjectBook)
+   if (boost::algorithm::starts_with(type, kQuartoProjectWebsite) ||
+       boost::algorithm::starts_with(type, kQuartoProjectBook))
    {
       projFiles.push_back("index.qmd");
       projFiles.push_back("_quarto.yml");
