@@ -712,8 +712,8 @@ export class Editor {
     (this.view.dom as HTMLElement).blur();
   }
 
-  public insertChunk(chunkPlaceholder: string, rowOffset: number, colOffset: number) {
-    const insertCmd = insertRmdChunk(chunkPlaceholder, rowOffset, colOffset);
+  public insertChunk(chunkPlaceholder: string) {
+    const insertCmd = insertRmdChunk(chunkPlaceholder);
     insertCmd(this.view.state, this.view.dispatch, this.view);
     this.focus();
   }
