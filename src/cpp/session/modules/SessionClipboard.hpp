@@ -16,8 +16,6 @@
 #ifndef SESSION_CLIPBOARD_HPP
 #define SESSION_CLIPBOARD_HPP
 
-#include <string>
-
 namespace rstudio {
 namespace core {
 class Error;
