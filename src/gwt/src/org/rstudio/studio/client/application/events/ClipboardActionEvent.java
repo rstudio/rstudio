@@ -22,12 +22,23 @@ public class ClipboardActionEvent extends GwtEvent<ClipboardActionEvent.Handler>
 {
    public static class Data extends JavaScriptObject
    {
+      public enum Type
+      {
+         SET
+      }
+      
       protected Data()
       {
       }
+      
+      public final Type getType()
+      {
+         String type = getTypeImpl();
+         return Type.valueOf(type.toUpperCase());
+      }
 
-      public final native String getType() /*-{ return this["type"] || ""; }-*/;
-      public final native String getText() /*-{ return this["text"] || ""; }-*/;
+      public final native String getTypeImpl() /*-{ return this["type"] || ""; }-*/;
+      public final native String getText()     /*-{ return this["text"] || ""; }-*/;
    }
 
    public ClipboardActionEvent(Data data)

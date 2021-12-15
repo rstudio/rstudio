@@ -1330,43 +1330,6 @@ public class DomUtils
       return el.getBoundingClientRect();
    }-*/;
 
-   public static final native void copyToClipboard(String text)
-   /*-{ 
-      
-      // Use newer clipboard APIs if available.
-      var clipboard = ($wnd.navigator || {}).clipboard;
-      if (clipboard != null) {
-         try {
-            clipboard.writeText(text);
-         } catch (e) {
-            console.warn("Copy to clipboard failed: ", e);
-         }
-         return;
-      }
-      
-      // Use 'document.execCommand()' for older browsers.
-      if ($doc.queryCommandSupported && $doc.queryCommandSupported("copy")) {
-      
-         // prepare text area for copy
-         var textarea = $doc.createElement("textarea");
-         textarea.textContent = text;
-         textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in Microsoft Edge.
-         $doc.body.appendChild(textarea);
-         textarea.select();
-         
-         // Security exception may be thrown by some browsers. 
-         try {
-            $doc.execCommand("copy");
-         }
-         catch (ex) {
-            console.warn("Copy to clipboard failed.", ex);
-         }
-         finally {
-            $doc.body.removeChild(textarea);
-         }
-      }
-      
-   }-*/;
 
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;

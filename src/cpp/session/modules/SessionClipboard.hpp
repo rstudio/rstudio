@@ -30,7 +30,6 @@ namespace session {
 namespace modules {
 namespace clipboard {
 
-void clipboardCopy(const std::string& text);
 core::Error initialize();
 
 } // end namespace clipboard

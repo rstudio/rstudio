@@ -17,7 +17,6 @@ package org.rstudio.studio.client.application;
 
 import java.util.ArrayList;
 
-import com.gargoylesoftware.htmlunit.javascript.host.event.ClipboardEvent;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Document;
@@ -47,6 +46,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DocumentEx;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -438,13 +438,21 @@ public class Application implements ApplicationEventHandlers
    public void onClipboardAction(ClipboardActionEvent event)
    {
       ClipboardActionEvent.Data data = event.getData();
-      if (StringUtil.equals(data.getType(), "copy"))
+      
+      switch (data.getType())
       {
-         DomUtils.copyToClipboard(data.getText());
+      
+      case SET:
+      {
+         Clipboard.setText(data.getText());
+         return;
       }
-      else
+      
+      default:
       {
          Debug.log("Unimplemented clipboard action '" + data.getText() + "'");
+      }
+      
       }
    }
    

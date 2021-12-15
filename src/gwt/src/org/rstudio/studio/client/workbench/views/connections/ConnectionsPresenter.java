@@ -30,6 +30,7 @@ import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -352,7 +353,7 @@ public class ConnectionsPresenter extends BasePresenter
      
       if (connectVia == ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD)
       {
-         DomUtils.copyToClipboard(connectCode);
+         Clipboard.setText(connectCode);
       }
       else if (connectVia == ConnectionOptions.CONNECT_R_CONSOLE)
       {

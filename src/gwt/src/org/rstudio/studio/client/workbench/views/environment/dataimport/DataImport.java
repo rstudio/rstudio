@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -259,7 +260,7 @@ public class DataImport extends Composite
          dataImportResources_.copyImage2x()));
       btn.addClickHandler(clickEvent ->
       {
-         DomUtils.copyToClipboard(codePreview_);
+         Clipboard.setText(codePreview_);
       });
       return btn;
    }

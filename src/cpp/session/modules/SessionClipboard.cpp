@@ -20,6 +20,7 @@
 #include <r/RRoutines.hpp>
 #include <r/RSexp.hpp>
 
+#include <session/SessionOptions.hpp>
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -30,26 +31,30 @@ namespace session {
 namespace modules {
 namespace clipboard {
 
-void clipboardCopy(const std::string& text)
+void clipboardSetText(const std::string& text)
 {
+   // not supported on RStudio Server
+   if (options().programMode() == kSessionProgramModeServer)
+      return;
+   
    json::Object payload;
-   payload["type"] = "copy";
+   payload["type"] = "set";
    payload["text"] = text;
    
    ClientEvent event(client_events::kClipboardAction, payload);
    module_context::enqueClientEvent(event);
 }
 
-SEXP rs_clipboardCopy(SEXP textSEXP)
+SEXP rs_clipboardSetText(SEXP textSEXP)
 {
    std::string text = r::sexp::asString(textSEXP);
-   clipboardCopy(text);
+   clipboardSetText(text);
    return R_NilValue;
 }
 
 Error initialize()
 {
-   RS_REGISTER_CALL_METHOD(rs_clipboardCopy);
+   RS_REGISTER_CALL_METHOD(rs_clipboardSetText);
    return Success();
 }
 

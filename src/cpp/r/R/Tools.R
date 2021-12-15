@@ -1357,9 +1357,35 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
    rendered <- sprintf(template, rstudioVersion, rstudioEdition, osVersion, rVersion, rInfoText)
    
-   # try to copy the text to the clipboard
-   text <- paste(rendered, collapse = "\n")
-   .Call("rs_clipboardCopy", text, PACKAGE = "(embedding)")
+   if (rstudioInfo$mode == "desktop") {
+      
+      # on desktop, we copy the text directly to the clipboard
+      text <- paste(rendered, collapse = "\n")
+      .Call("rs_clipboardSetText", text, PACKAGE = "(embedding)")
+      
+      writeLines(.rs.heredoc("
+         * The bug report template has been written to the clipboard.
+         * Please paste the clipboard contents into the issue comment section,
+         * and then fill out the rest of the issue details.
+         *
+      "))
+      
+   } else {
+      
+      # on server, we ask the user to copy the text to the clipboard
+      header <- .rs.heredoc("
+         <!--
+         Please copy the following text to your clipboard,
+         and then click 'Cancel' to close the dialog.
+         -->
+      ")
+      
+      text <- c(header, "", rendered)
+      file <- tempfile("rstudio-bug-report-", fileext = ".html")
+      on.exit(unlink(file), add = TRUE)
+      writeLines(text, con = file)
+      utils::file.edit(file)
+   }
    
    # if 'pro' wasn't supplied, then try to guess based on the running edition
    if (is.null(pro))

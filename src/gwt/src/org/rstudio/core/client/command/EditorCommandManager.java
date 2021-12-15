@@ -22,6 +22,7 @@ import java.util.Set;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.ConfigFileBacked;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -154,7 +155,7 @@ public class EditorCommandManager
             // natively understand "~"
             path = files_.resolveAliasedPath(FileSystemItem.createFile(path));
          }
-         DomUtils.copyToClipboard(path);
+         Clipboard.setText(path);
       });
    }
 
