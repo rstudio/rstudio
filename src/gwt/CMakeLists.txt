@@ -106,16 +106,32 @@ if(GWT_COPY)
    message(STATUS "Configured to install GWT")
 
    # create test script and copy to binary directory with executable permissions
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gwt-unit-tests.sh.in
-                  ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh)
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/gwt-unit-tests.sh.in
+      ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh)
+
    file(COPY ${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/gwt-unit-tests.sh
              DESTINATION ${CMAKE_CURRENT_BINARY_DIR}
              FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
              GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
    
-   # installation rules
-   install(DIRECTORY www DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
-   install(DIRECTORY "${GWT_WWW_DIR}" DESTINATION ${RSTUDIO_INSTALL_SUPPORTING})
+   # install local web resources
+   # we exclude WEB-INF here just in case a prior GWT build updated this
+   install(
+      DIRECTORY www
+      DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
+      PATTERN "WEB-INF" EXCLUDE)
+
+   # install compiled GWT artefacts
+   install(
+      DIRECTORY "${GWT_WWW_DIR}"
+      DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}"
+      PATTERN "WEB-INF" EXCLUDE)
+
+   # copy symbol maps
+   install(
+      DIRECTORY "${GWT_EXTRAS_DIR}/rstudio/symbolMaps/"
+      DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/www-symbolmaps)
 
 endif()
 
