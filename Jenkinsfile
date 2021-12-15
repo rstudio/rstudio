@@ -108,7 +108,6 @@ def s3_upload(type, flavor, os, arch) {
        def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
        packageName = packageName.replace('+', '-')
        sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
-       sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/macos/${packageName}.dmg ${wwwRstudioOrgPem}"
     }
   }
 
