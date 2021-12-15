@@ -161,8 +161,8 @@ set(SESSION_SOURCE_FILES
    modules/SessionCodeSearch.cpp
    modules/SessionConfigFile.cpp
    modules/SessionCRANMirrors.cpp
+   modules/SessionClipboard.cpp
    modules/SessionCrashHandler.cpp
-   modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
    modules/SessionDependencyList.cpp
@@ -217,6 +217,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionSVN.cpp
    modules/SessionSystemResources.cpp
    modules/SessionUpdates.cpp
+   modules/SessionUserCommands.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionUserPrefs.cpp
