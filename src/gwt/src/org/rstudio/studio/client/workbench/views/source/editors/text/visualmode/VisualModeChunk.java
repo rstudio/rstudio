@@ -727,6 +727,7 @@ public class VisualModeChunk
          editor.setFileType(FileTypeRegistry.C);
          break;
       case "cpp":
+      case "rcpp":
          editor.setFileType(FileTypeRegistry.CPP);
          break;
       case "sql":
