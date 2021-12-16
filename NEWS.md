@@ -43,6 +43,10 @@
 * Remove 'Classic' IDE theme (#9738)
 * Added support for Amazon Linux 2 (Pro #2474)
 
+#### R
+
+* Preliminary support for R graphics engine version 15 in R 4.2.0. (#10058)
+
 ### Fixed
 
 * Fixed an issue that could cause calls to `grid` functions to fail after restart (#2919)
