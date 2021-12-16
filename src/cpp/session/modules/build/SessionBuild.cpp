@@ -681,12 +681,17 @@ private:
       if (type == kTestFile)
       {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.getParent()));
+         if (module_context::isPackageInstalled("testthat")) {
+            parsers.add(testthatErrorParser(packagePath.getParent()));
+         }
+         
       }
       else if (type == kTestPackage)
       {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat")));
+         if (module_context::isPackageInstalled("testthat")) {
+            parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat")));
+         }
       }
 
       initErrorParser(packagePath, parsers);
