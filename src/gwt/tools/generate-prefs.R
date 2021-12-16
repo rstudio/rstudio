@@ -84,8 +84,8 @@ generate <- function (schemaPath, className) {
    hpp <- ""    # The contents of the C++ header file we'll be creating
 
    # DEBUG: Text prepended to all i18n outputs (so we can spot which is being displayed, if any)
-   prefixDefault <- "@d"
-   prefixProperties <- "@en"
+   prefixDefault <- ""
+   prefixProperties <- ""
 
    # Components
 
