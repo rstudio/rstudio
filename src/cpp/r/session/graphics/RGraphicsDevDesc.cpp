@@ -1377,8 +1377,6 @@ void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd)
 
 SEXP capabilities(SEXP cap)
 {
-    int engineVersion = ::R_GE_getVersion();
-
     SEXP (*callback)(SEXP cap) = nullptr;
 
     if (callback != nullptr)
