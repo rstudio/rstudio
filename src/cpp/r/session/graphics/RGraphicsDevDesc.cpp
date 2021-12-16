@@ -367,7 +367,7 @@ void setDeviceAttributes(pDevDesc pDev, pDevDesc pShadow)
    default:
    {
       setCommonDeviceAttributes((DevDescVersion15*) pDev, (DevDescVersion15*) pShadow);
-      
+
       auto* pLhs = (DevDescVersion15*) pDev;
       auto* pRhs = (DevDescVersion15*) pShadow;
       
@@ -1380,14 +1380,6 @@ SEXP capabilities(SEXP cap)
     int engineVersion = ::R_GE_getVersion();
 
     SEXP (*callback)(SEXP cap) = nullptr;
-
-    switch (engineVersion)
-    {
-        case 15:
-        default:
-            callback = ((DevDescVersion15*)dd)->capabilities;
-        break;
-    }
 
     if (callback != nullptr)
     return callback(cap);
