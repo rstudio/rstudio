@@ -240,25 +240,6 @@ public class EnvironmentObjects extends ResizeComposite
    public void setCallFrames(JsArray<CallFrame> frameList, boolean autoSize)
    {
       callFramePanel_.setCallFrames(frameList, contextDepth_);
-
-      // if not auto-sizing we're done
-      if (!autoSize)
-         return;
-
-      // if the parent panel has layout information, auto-size the call frame
-      // panel (let GWT go first so the call frame panel visibility has
-      // taken effect)
-      if (splitPanel.getOffsetHeight() > 0)
-      {
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               autoSizeCallFramePanel();
-            }
-         });
-      }
    }
 
    public void setEnvironmentName(String environmentName)
