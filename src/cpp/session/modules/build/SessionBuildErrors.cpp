@@ -433,9 +433,11 @@ CompileErrorParser rErrorParser(const FilePath& basePath)
    return boost::bind(parseRErrors, basePath, _1);
 }
 
-CompileErrorParser testthatErrorParser(const FilePath& basePath,
-                                       const core::Version& testthatVersion)
+CompileErrorParser testthatErrorParser(const FilePath& basePath)
 {
+   core::Version testthatVersion;
+   module_context::packageVersion("testthat", &testthatVersion);
+
    return boost::bind(parseTestThatErrors, basePath, _1, testthatVersion);
 }
 
