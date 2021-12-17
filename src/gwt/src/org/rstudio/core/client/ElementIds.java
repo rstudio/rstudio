@@ -369,6 +369,10 @@ public class ElementIds
    public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";
    public final static String BUILD_BOOKDOWN_MENUBUTTON = "build_bookdown_menubutton";
 
+   // JobLauncherPane
+   public final static String JOB_LAUNCHER_JOB_VIEW = "job_launcher_job_view";
+   public final static String JOB_LAUNCHER_OUTPUT_PANEL = "job_launcher_output_panel";
+
    // JobLauncherDialog
    public final static String JOB_LAUNCHER_ENVIRONMENT = "job_launcher_environment";
    public static String getJobLauncherEnvironment() { return getElementId(JOB_LAUNCHER_ENVIRONMENT); }
