@@ -1380,7 +1380,7 @@ SEXP capabilities(SEXP cap)
     SEXP (*callback)(SEXP cap) = nullptr;
 
     if (callback != nullptr)
-    return callback(cap);
+        return callback(cap);
 
     return R_NilValue;
 }
