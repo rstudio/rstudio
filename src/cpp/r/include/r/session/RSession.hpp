@@ -64,7 +64,7 @@ struct ROptions
 {
    ROptions() :
          useInternet2(true),
-         rCompatibleGraphicsEngineVersion(14),
+         rCompatibleGraphicsEngineVersion(15),
          serverMode(false),
          autoReloadSource(false),
          restoreWorkspace(true),

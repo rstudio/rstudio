@@ -26,7 +26,7 @@
 
 #include "RGraphicsDevDescVersions.hpp"
 
-typedef DevDescVersion14 RSDevDesc;
+typedef DevDescVersion15 RSDevDesc;
 
 namespace rstudio {
 namespace r {
@@ -83,7 +83,15 @@ void releaseClipPath(SEXP ref, pDevDesc dd);
 SEXP setMask(SEXP path, SEXP ref, pDevDesc dd);
 void releaseMask(SEXP ref, pDevDesc dd);
 
+SEXP defineGroup(SEXP source, int op, SEXP destination, pDevDesc dd);
+void useGroup(SEXP ref, SEXP trans, pDevDesc dd);
+void releaseGroup(SEXP ref, pDevDesc dd);
 
+void stroke(SEXP path, const pGEcontext gc, pDevDesc dd);
+void fill(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
+void fillStroke(SEXP path, int rule, const pGEcontext gc, pDevDesc dd);
+
+SEXP capabilities(SEXP cap);
 
 } // namespace dev_desc
 } // namespace handler
