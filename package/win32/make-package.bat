@@ -18,6 +18,9 @@ for %%F in (ant cmake) do (
 
 setlocal
 
+REM Build for desktop
+set GWT_MAIN_MODULE=RStudioDesktop
+
 REM Remove system Rtools from PATH
 call set PATH=%PATH:C:\Rtools\bin=%
 call set PATH=%PATH:C:\Rtools\gcc-4.6.3\bin=%

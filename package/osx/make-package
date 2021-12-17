@@ -20,6 +20,10 @@ set +H
 PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
 
+# use RStudioDesktop as GWT main module
+GWT_MAIN_MODULE=RStudioDesktop
+export GWT_MAIN_MODULE
+
 # used to ensure JAVA_HOME points at a version of Java compatible
 # with the version of GWT sources we use for compilation
 set-java-home () {
