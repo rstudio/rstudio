@@ -15,6 +15,8 @@
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import com.google.gwt.user.client.ui.VerticalPanel;
+
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import java.util.ArrayList;
@@ -35,6 +37,8 @@ public class JobsListViewImpl
       if (hasJob(item.getJob().id))
          return false;
 
+      ElementIds.assignElementId(item.asWidget(),
+         ElementIds.JOB_LAUNCHER_JOB_VIEW + "_" + item.getJob().id);
       jobs_.put(item.getJob().id, item);
       list_.insert(item, 0);
       return true;
@@ -52,6 +56,8 @@ public class JobsListViewImpl
          if (((JobItemView)list_.getWidget(i)).getJob().recorded <= item.getJob().recorded)
             break;
       }
+      ElementIds.assignElementId(item.asWidget(),
+         ElementIds.JOB_LAUNCHER_JOB_VIEW + "_" + item.getJob().id);
       insertJobAt(item, i);
       return true;
    }
