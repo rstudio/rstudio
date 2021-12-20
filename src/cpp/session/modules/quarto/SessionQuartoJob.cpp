@@ -56,6 +56,7 @@ Error QuartoJob::start()
 
    // callbacks
    core::system::ProcessCallbacks cb;
+   cb.onStarted = boost::bind(&QuartoJob::onStarted, QuartoJob::shared_from_this(), _1);
    cb.onContinue = boost::bind(&QuartoJob::onContinue,
                                QuartoJob::shared_from_this());
    cb.onStdout = boost::bind(&QuartoJob::onStdOut,
