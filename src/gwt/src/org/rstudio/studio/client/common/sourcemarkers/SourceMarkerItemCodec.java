@@ -15,8 +15,11 @@
 package org.rstudio.studio.client.common.sourcemarkers;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.*;
-
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableRowElement;
+import com.google.gwt.user.client.ui.HTML;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
@@ -92,9 +95,11 @@ public class SourceMarkerItemCodec
 
       TableCellElement tdMsg = Document.get().createTDElement();
       tdMsg.setClassName(resources_.styles().messageCell());
-      tdMsg.setInnerHTML(entry.getMessage().trim());
+
+      String unescapedMessage = new HTML(entry.getMessage().trim()).getText();
+      tdMsg.setInnerHTML(unescapedMessage);
       tr.appendChild(tdMsg);
-      
+
       TableCellElement tdDiscButton = maybeCreateDisclosureButton(entry);
       if (tdDiscButton != null)
          tr.appendChild(tdDiscButton);
