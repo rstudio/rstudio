@@ -81,7 +81,6 @@ public:
    ShellCommand& operator<<(EscapeMode escapeMode);
    ShellCommand& operator<<(const std::string& arg);
    ShellCommand& operator<<(int arg);
-   ShellCommand& operator<<(PidType pid);
    ShellCommand& operator<<(const FilePath& path);
    ShellCommand& operator<<(const std::vector<std::string> args);
    ShellCommand& operator<<(const std::vector<FilePath> args);
@@ -110,7 +109,6 @@ public:
    ShellArgs& operator<<(EncodingMode mode);
    ShellArgs& operator<<(const std::string& arg);
    ShellArgs& operator<<(int arg);
-   ShellArgs& operator<<(PidType pid);
    ShellArgs& operator<<(const FilePath& path);
    ShellArgs& operator<<(const std::vector<std::string> args);
    ShellArgs& operator<<(const std::vector<FilePath> args);

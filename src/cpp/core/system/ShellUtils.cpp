@@ -55,13 +55,6 @@ ShellCommand& ShellCommand::operator<<(int arg)
    return *this;
 }
 
-ShellCommand& ShellCommand::operator<<(PidType arg)
-{
-   output_.push_back(' ');
-   output_.append(safe_convert::numberToString(arg));
-   return *this;
-}
-
 ShellCommand& ShellCommand::operator<<(const FilePath& path)
 {
    output_.push_back(' ');
@@ -109,13 +102,6 @@ ShellArgs& ShellArgs::operator<<(int arg)
    args_.push_back(safe_convert::numberToString(arg));
    return *this;
 }
-
-ShellArgs& ShellArgs::operator<<(PidType arg)
-{
-   args_.push_back(safe_convert::numberToString(arg));
-   return *this;
-}
-
 
 ShellArgs& ShellArgs::operator<<(const FilePath& path)
 {

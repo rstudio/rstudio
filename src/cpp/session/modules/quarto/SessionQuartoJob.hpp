@@ -22,6 +22,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Types.hpp>
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
@@ -66,7 +67,7 @@ public:
       if (pid_ > 0)
       {
          ShellCommand cmd("taskkill");
-         cmd << "/F" << "/T" << "/PID" << pid_;
+         cmd << "/F" << "/T" << "/PID" << core::safe_convert::numberToString(pid_);
          core::system::ProcessOptions options;
          core::system::ProcessResult result;
          core::Error error = core::system::runCommand(cmd, options, &result);
