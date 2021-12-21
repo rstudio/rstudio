@@ -137,6 +137,10 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       ElementIds.assignElementId(chkUseVenv_,
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_VENV));
       venvPanel_.add(chkUseVenv_);
+      chkUseCondaenv_ = new CheckBox("Use condaenv with packages:");
+      ElementIds.assignElementId(chkUseCondaenv_,
+            ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_CONDAENV));
+      venvPanel_.add(chkUseCondaenv_);
       txtVenvPackages_ = new TextBox();
       txtVenvPackages_.getElement().setAttribute(constants_.placeholderLabel(), constants_.txtVenvPackagesNone());
       txtVenvPackages_.addStyleName(NewProjectResources.INSTANCE.styles().quartoVenvPackages());
@@ -191,6 +195,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       kernelSelect_.setValue(lastOptions_.getKernel());
    
       chkUseVenv_.setValue(canUseVenv() && !StringUtil.isNullOrEmpty(lastOptions_.getVenv()));
+      chkUseCondaenv_.setValue(canUseCondaenv() && !StringUtil.isNullOrEmpty(lastOptions_.getCondaenv()));
       txtVenvPackages_.setValue(lastOptions_.getPackages());
       
       chkVisualEditor_.setValue(lastOptions_.getEditor().equals(QuartoCommandConstants.EDITOR_VISUAL));
@@ -204,7 +209,9 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       boolean isKnitr =  engineSelect_.getValue().equals(QuartoCommandConstants.ENGINE_KNITR);
       boolean isJupyter = engineSelect_.getValue().equals(QuartoCommandConstants.ENGINE_JUPYTER);
       kernelSelect_.setVisible(isJupyter);
-      venvPanel_.setVisible(isJupyter && canUseVenv());
+      venvPanel_.setVisible(isJupyter && (canUseVenv() || canUseCondaenv()));
+      chkUseVenv_.setVisible(isJupyter && canUseVenv());
+      chkUseCondaenv_.setVisible(isJupyter && canUseCondaenv());
       setUseRenvVisible(isKnitr);
    }
    
@@ -213,6 +220,13 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       return quartoCaps_ != null &&
              quartoCaps_.getPythonCapabilities() != null &&
              quartoCaps_.getPythonCapabilities().getVenv();
+   }
+   
+   private boolean canUseCondaenv()
+   {
+      return quartoCaps_ != null &&
+             quartoCaps_.getPythonCapabilities() != null &&
+             quartoCaps_.getPythonCapabilities().getConda();
    }
    
    
@@ -225,6 +239,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
             engineSelect_.getValue(), 
             kernelSelect_.getValue(), 
             chkUseVenv_.getValue() ? "venv" : "",
+            chkUseCondaenv_.getValue() ? "condaenv" : "",
             txtVenvPackages_.getText().trim(),
             chkVisualEditor_.getValue() ? QuartoCommandConstants.EDITOR_VISUAL : ""
       );
@@ -244,6 +259,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    private SelectWidget engineSelect_;
    private SelectWidget kernelSelect_;
    private CheckBox chkUseVenv_;
+   private CheckBox chkUseCondaenv_;
    private TextBox txtVenvPackages_;
    private HorizontalPanel venvPanel_;
    private QuartoVisualEditorCheckBox chkVisualEditor_;
@@ -272,6 +288,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
                         value.getString(constants_.quartoProjectEngineOption()),
                         value.getString(constants_.quartoProjectKernelOption()),
                         value.getString("venv"),
+                        value.getString("condaenv"),
                         value.getString("packages"),
                         value.getString("editor")
                   );

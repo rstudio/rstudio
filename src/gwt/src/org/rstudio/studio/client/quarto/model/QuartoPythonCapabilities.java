@@ -66,5 +66,9 @@ public class QuartoPythonCapabilities extends JavaScriptObject
    public final native boolean getVenv() /*-{
       return this.venv === true;
    }-*/;
+   
+   public final native boolean getConda() /*-{
+      return this.conda === true;
+   }-*/;
 
 }

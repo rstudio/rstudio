@@ -623,12 +623,13 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string type, engine, kernel, venv, packages, editor;
+   std::string type, engine, kernel, venv, condaenv, packages, editor;
    error = json::readObject(projectOptionsJson,
                             "type", type,
                             "engine", engine,
                             "kernel", kernel,
                             "venv", venv,
+                            "condaenv", condaenv,
                             "packages", packages,
                             "editor", editor);
    if (error)
@@ -685,9 +686,12 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    }
 
    // create venv (optional)
-   if (engine == "jupyter" && !venv.empty())
+   if (engine == "jupyter" && (!venv.empty() || !condaenv.empty()))
    {
-      args.push_back("--with-venv");
+      if (!venv.empty())
+         args.push_back("--with-venv");
+      else
+         args.push_back("--with-condaenv");
       if (!packages.empty())
       {
          std::vector<std::string> pkgVector;

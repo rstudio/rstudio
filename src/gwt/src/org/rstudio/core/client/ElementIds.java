@@ -191,6 +191,7 @@ public class ElementIds
    public final static String NEW_PROJECT_GIT_REPO = "git_repo";
    public final static String NEW_PROJECT_RENV = "use_renv";
    public final static String NEW_PROJECT_VENV = "use_venv";
+   public final static String NEW_PROJECT_CONDAENV = "use_condaenv";
    public final static String NEW_PROJECT_VENV_PACKAGES = "use_venv_packages";
    public final static String NEW_PROJECT_SOURCE_FILES = "source_files";
    public final static String NEW_PROJECT_NEW_SESSION = "new_session";
