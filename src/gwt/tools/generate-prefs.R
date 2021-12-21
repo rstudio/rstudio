@@ -232,11 +232,6 @@ generate <- function (schemaPath, className) {
 
       javaProperties <- paste0(javaProperties, "\n")
 
-      # DEBUG: Add entry here for the java constants and properties files.  Then change perfTitle to
-      #        always cite them, with the constnats/properties having the "" if null.
-
-      # Add a Java accessor for the preference, and an entry for syncing it with another copy
-
       prefTitle <- paste0("_constants.", camel, "Title()")
       prefDescription <- paste0("_constants.", camel, "Description()")
       java <- paste0(java,
