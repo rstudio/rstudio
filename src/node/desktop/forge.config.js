@@ -107,36 +107,39 @@ const config = {
       },
     ],
   ],
+  packagerConfig: {
+    icon: './resources/icons/RStudio',
+  },
 };
 
-if (
-  process.env.APPLE_ID !== undefined &&
-  process.env.APPLE_ID_PASSWORD !== undefined &&
-  process.env.APPLE_ID !== '' &&
-  process.env.APPLE_ID_PASSWORD !== ''
-) {
-  config.packagerConfig = {
-    icon: './resources/icons/RStudio',
-    appBundleId: 'org.rstudio.RStudio',
-    osxSign: {
-      'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
-      'hardened-runtime': true,
-      'entitlements': 'resources/electron-entitlements.mac.plist',
-      'entitlements-inherit': 'resources/electron-entitlements.mac.plist',
-      'signature-flags': 'library',
-      'hardenedRuntime': true,
-      'gatekeeper-assess': false,
-      'signature-flags': 'library',
-    },
-    osxNotarize: {
-      appleId: process.env.APPLE_ID,
-      appleIdPassword: process.env.APPLE_ID_PASSWORD,
-      appBundleId: 'org.rstudio.RStudio',
-      // ascProvider: 'FYF2F5GFX4',
-    },
-  };
-} else {
-  console.warn('Should be notarizing, but environment variables APPLE_ID or APPLE_ID_PASSWORD are missing!');
-}
+// if (
+//   process.env.APPLE_ID !== undefined &&
+//   process.env.APPLE_ID_PASSWORD !== undefined &&
+//   process.env.APPLE_ID !== '' &&
+//   process.env.APPLE_ID_PASSWORD !== ''
+// ) {
+//   config.packagerConfig = {
+//     ...config.packagerConfig,
+//     appBundleId: 'org.rstudio.RStudio',
+//     osxSign: {
+//       'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
+//       'hardened-runtime': true,
+//       'entitlements': 'resources/electron-entitlements.mac.plist',
+//       'entitlements-inherit': 'resources/electron-entitlements.mac.plist',
+//       'signature-flags': 'library',
+//       'hardenedRuntime': true,
+//       'gatekeeper-assess': false,
+//       'signature-flags': 'library',
+//     },
+//     osxNotarize: {
+//       appleId: process.env.APPLE_ID,
+//       appleIdPassword: process.env.APPLE_ID_PASSWORD,
+//       appBundleId: 'org.rstudio.RStudio',
+//       // ascProvider: 'FYF2F5GFX4',
+//     },
+//   };
+// } else {
+//   console.warn('Should be notarizing, but environment variables APPLE_ID or APPLE_ID_PASSWORD are missing!');
+// }
 
 module.exports = config;
