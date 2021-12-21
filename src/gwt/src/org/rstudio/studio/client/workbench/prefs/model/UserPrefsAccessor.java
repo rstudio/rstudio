@@ -19,18 +19,16 @@
 
 package org.rstudio.studio.client.workbench.prefs.model;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.JsArray;
-import org.rstudio.core.client.JsArrayUtil;
-
 import java.util.ArrayList;
 import java.util.List;
-
-import com.google.gwt.core.client.GWT;
 
 
 /**
@@ -1343,18 +1341,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to initialize new projects with a Git repo by default.
-    */
-   public PrefValue<Boolean> newProjectGitInit()
-   {
-      return bool(
-         "new_project_git_init",
-         _constants.newProjectGitInitTitle(), 
-         _constants.newProjectGitInitDescription(), 
-         false);
-   }
-
-   /**
     * The default engine to use when processing Sweave documents.
     */
    public PrefValue<String> defaultSweaveEngine()
@@ -1509,30 +1495,6 @@ public class UserPrefsAccessor extends Prefs
          _constants.ignoreWordsWithNumbersTitle(), 
          _constants.ignoreWordsWithNumbersDescription(), 
          true);
-   }
-
-   /**
-    * The maximum number of spelling words to check at once.
-    */
-   public PrefValue<Integer> maxSpellcheckWords()
-   {
-      return integer(
-         "max_spellcheck_words",
-         _constants.maxSpellcheckWordsTitle(), 
-         _constants.maxSpellcheckWordsDescription(), 
-         500);
-   }
-
-   /**
-    * The maximum number of spelling correction suggestions to prefetch.
-    */
-   public PrefValue<Integer> maxSpellcheckPrefetch()
-   {
-      return integer(
-         "max_spellcheck_prefetch",
-         _constants.maxSpellcheckPrefetchTitle(), 
-         _constants.maxSpellcheckPrefetchDescription(), 
-         20);
    }
 
    /**
@@ -3502,8 +3464,6 @@ public class UserPrefsAccessor extends Prefs
          defaultProjectLocation().setValue(layer, source.getString("default_project_location"));
       if (source.hasKey("source_with_echo"))
          sourceWithEcho().setValue(layer, source.getBool("source_with_echo"));
-      if (source.hasKey("new_project_git_init"))
-         newProjectGitInit().setValue(layer, source.getBool("new_project_git_init"));
       if (source.hasKey("default_sweave_engine"))
          defaultSweaveEngine().setValue(layer, source.getString("default_sweave_engine"));
       if (source.hasKey("default_latex_program"))
@@ -3528,10 +3488,6 @@ public class UserPrefsAccessor extends Prefs
          ignoreUppercaseWords().setValue(layer, source.getBool("ignore_uppercase_words"));
       if (source.hasKey("ignore_words_with_numbers"))
          ignoreWordsWithNumbers().setValue(layer, source.getBool("ignore_words_with_numbers"));
-      if (source.hasKey("max_spellcheck_words"))
-         maxSpellcheckWords().setValue(layer, source.getInteger("max_spellcheck_words"));
-      if (source.hasKey("max_spellcheck_prefetch"))
-         maxSpellcheckPrefetch().setValue(layer, source.getInteger("max_spellcheck_prefetch"));
       if (source.hasKey("real_time_spellchecking"))
          realTimeSpellchecking().setValue(layer, source.getBool("real_time_spellchecking"));
       if (source.hasKey("navigate_to_build_error"))
@@ -3879,7 +3835,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(toolbarVisible());
       prefs.add(defaultProjectLocation());
       prefs.add(sourceWithEcho());
-      prefs.add(newProjectGitInit());
       prefs.add(defaultSweaveEngine());
       prefs.add(defaultLatexProgram());
       prefs.add(useRoxygen());
@@ -3892,8 +3847,6 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(documentLoadLintDelay());
       prefs.add(ignoreUppercaseWords());
       prefs.add(ignoreWordsWithNumbers());
-      prefs.add(maxSpellcheckWords());
-      prefs.add(maxSpellcheckPrefetch());
       prefs.add(realTimeSpellchecking());
       prefs.add(navigateToBuildError());
       prefs.add(packagesPaneEnabled());

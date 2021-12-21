@@ -1207,19 +1207,6 @@ core::Error UserPrefValues::setSourceWithEcho(bool val)
 }
 
 /**
- * Whether to initialize new projects with a Git repo by default.
- */
-bool UserPrefValues::newProjectGitInit()
-{
-   return readPref<bool>("new_project_git_init");
-}
-
-core::Error UserPrefValues::setNewProjectGitInit(bool val)
-{
-   return writePref("new_project_git_init", val);
-}
-
-/**
  * The default engine to use when processing Sweave documents.
  */
 std::string UserPrefValues::defaultSweaveEngine()
@@ -1373,32 +1360,6 @@ bool UserPrefValues::ignoreWordsWithNumbers()
 core::Error UserPrefValues::setIgnoreWordsWithNumbers(bool val)
 {
    return writePref("ignore_words_with_numbers", val);
-}
-
-/**
- * The maximum number of spelling words to check at once.
- */
-int UserPrefValues::maxSpellcheckWords()
-{
-   return readPref<int>("max_spellcheck_words");
-}
-
-core::Error UserPrefValues::setMaxSpellcheckWords(int val)
-{
-   return writePref("max_spellcheck_words", val);
-}
-
-/**
- * The maximum number of spelling correction suggestions to prefetch.
- */
-int UserPrefValues::maxSpellcheckPrefetch()
-{
-   return readPref<int>("max_spellcheck_prefetch");
-}
-
-core::Error UserPrefValues::setMaxSpellcheckPrefetch(int val)
-{
-   return writePref("max_spellcheck_prefetch", val);
 }
 
 /**
@@ -3133,7 +3094,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kToolbarVisible,
       kDefaultProjectLocation,
       kSourceWithEcho,
-      kNewProjectGitInit,
       kDefaultSweaveEngine,
       kDefaultLatexProgram,
       kUseRoxygen,
@@ -3146,8 +3106,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kDocumentLoadLintDelay,
       kIgnoreUppercaseWords,
       kIgnoreWordsWithNumbers,
-      kMaxSpellcheckWords,
-      kMaxSpellcheckPrefetch,
       kRealTimeSpellchecking,
       kNavigateToBuildError,
       kPackagesPaneEnabled,

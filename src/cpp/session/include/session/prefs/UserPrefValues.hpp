@@ -170,7 +170,6 @@ namespace prefs {
 #define kToolbarVisible "toolbar_visible"
 #define kDefaultProjectLocation "default_project_location"
 #define kSourceWithEcho "source_with_echo"
-#define kNewProjectGitInit "new_project_git_init"
 #define kDefaultSweaveEngine "default_sweave_engine"
 #define kDefaultLatexProgram "default_latex_program"
 #define kUseRoxygen "use_roxygen"
@@ -188,8 +187,6 @@ namespace prefs {
 #define kDocumentLoadLintDelay "document_load_lint_delay"
 #define kIgnoreUppercaseWords "ignore_uppercase_words"
 #define kIgnoreWordsWithNumbers "ignore_words_with_numbers"
-#define kMaxSpellcheckWords "max_spellcheck_words"
-#define kMaxSpellcheckPrefetch "max_spellcheck_prefetch"
 #define kRealTimeSpellchecking "real_time_spellchecking"
 #define kNavigateToBuildError "navigate_to_build_error"
 #define kPackagesPaneEnabled "packages_pane_enabled"
@@ -954,12 +951,6 @@ public:
    core::Error setSourceWithEcho(bool val);
 
    /**
-    * Whether to initialize new projects with a Git repo by default.
-    */
-   bool newProjectGitInit();
-   core::Error setNewProjectGitInit(bool val);
-
-   /**
     * The default engine to use when processing Sweave documents.
     */
    std::string defaultSweaveEngine();
@@ -1030,18 +1021,6 @@ public:
     */
    bool ignoreWordsWithNumbers();
    core::Error setIgnoreWordsWithNumbers(bool val);
-
-   /**
-    * The maximum number of spelling words to check at once.
-    */
-   int maxSpellcheckWords();
-   core::Error setMaxSpellcheckWords(int val);
-
-   /**
-    * The maximum number of spelling correction suggestions to prefetch.
-    */
-   int maxSpellcheckPrefetch();
-   core::Error setMaxSpellcheckPrefetch(int val);
 
    /**
     * Whether to enable real-time spellchecking by default.

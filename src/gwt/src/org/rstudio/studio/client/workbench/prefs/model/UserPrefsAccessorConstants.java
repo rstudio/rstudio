@@ -783,14 +783,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String sourceWithEchoDescription();
 
    /**
-    * Whether to initialize new projects with a Git repo by default.
-    */
-   @DefaultStringValue("Initialize new projects with Git")
-   String newProjectGitInitTitle();
-   @DefaultStringValue("Whether to initialize new projects with a Git repo by default.")
-   String newProjectGitInitDescription();
-
-   /**
     * The default engine to use when processing Sweave documents.
     */
    @DefaultStringValue("Default Sweave engine")
@@ -885,22 +877,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String ignoreWordsWithNumbersTitle();
    @DefaultStringValue("Whether to ignore words with numbers in them when spell checking.")
    String ignoreWordsWithNumbersDescription();
-
-   /**
-    * The maximum number of spelling words to check at once.
-    */
-   @DefaultStringValue("Maximum number of words to spell check")
-   String maxSpellcheckWordsTitle();
-   @DefaultStringValue("The maximum number of spelling words to check at once.")
-   String maxSpellcheckWordsDescription();
-
-   /**
-    * The maximum number of spelling correction suggestions to prefetch.
-    */
-   @DefaultStringValue("Number of words to prefetch for spell check")
-   String maxSpellcheckPrefetchTitle();
-   @DefaultStringValue("The maximum number of spelling correction suggestions to prefetch.")
-   String maxSpellcheckPrefetchDescription();
 
    /**
     * Whether to enable real-time spellchecking by default.
