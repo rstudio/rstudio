@@ -107,6 +107,15 @@ generate <- function (schemaPath, className) {
       # Convert the preference name from camel case to snake case
       camel <- gsub("_(.)", "\\U\\1\\E", pref, perl = TRUE)
       def <- prefs[[pref]]
+
+      # Prefs with enumReadable values must have valid enum entry of equal length
+      if (!is.null(def[["enumReadable"]]) &&
+          (is.null(def[["enum"]]) || length(def[["enumReadable"]]) != length(def[["enum"]]))) {
+
+         warningMsg <- sprintf("\nPreference \"%s\" does not have [[enum]] and [[enumReadable]] of equal length and will be skipped (not generated)", pref)
+         cat(warningMsg)
+         next
+      }
       
       # Convert JSON schema type to corresponding Java type
       type <- def[["type"]]
