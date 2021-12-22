@@ -116,6 +116,7 @@ public class PathBreadcrumbWidget
 
          projIcon.addClickHandler(event -> SelectionCommitEvent.fire(PathBreadcrumbWidget.this, projDir));
          projIcon.getImage().addStyleName(RES.styles().project());
+         projIcon.setTitle(constants_.projectIconDesc());
 
          eastFrame_.insert(projIcon, 0);
 
