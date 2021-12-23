@@ -15,6 +15,8 @@
 * Fix issue with unicode characters in citekeys (#9754)
 * Fix issue with delay showing newly added Zotero references when inserting citations (#9800)
 * Add ability to insert citation for R Packages (#8921)
+* Fixed BetterBibTeX detection on Linux (#10007)
+* Fixed DT tables being squashed in the viewer pane (#10276)
 
 #### RStudio Workbench
 
@@ -42,6 +44,8 @@
 * Updated Files Pane buttons to resize and remain visible at smaller widths (#9870)
 * Remove 'Classic' IDE theme (#9738)
 * Added support for Amazon Linux 2 (Pro #2474)
+* Treat Alt and Caption fields differently depending on file type (#9713)
+* Fixed shortcut conflict on German keyboard (#9276)
 
 #### R
 
@@ -58,7 +62,7 @@
 * Fixed custom shortcuts not appearing correctly in menus (#9915)
 * Fixed custom shortcuts not appearing correctly in "Keyboard Shortcuts Help" and Electron menus. (#9953)
 * Fixed header scrolling in data viewer tables not following table contents in unfocused windows (#8208)
-* Fixed permissions on Mac Desktop application so all user accounts can launch it (#9945)
+* Fixed permissions on Mac Desktop application so all user accounts can launch it (#9945, #10267)
 * Fixed logging directory permissions to be more restrictive (775 instead of 777) (#3099)
 
 ### Breaking
