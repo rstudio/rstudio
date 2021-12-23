@@ -17,11 +17,23 @@ if [ -n "${_RS_CONDA_PREFIX}" ]; then
 	# be on the PATH for 'conda install' to function
 	case "$(uname -s)" in
 	MINGW32*)
+		
 		_CONDA_PREFIX=$(cygpath "${CONDA_PREFIX}")
-		for SUFFIX in bin Scripts Library/bin Library/usr/bin /Library/mingw-w64/bin; do
-			PATH="${_CONDA_PREFIX}/${SUFFIX}:${PATH}"
+		_CONDA_SUFFIXES=(
+			bin
+			Scripts
+			Library/bin
+			Library/usr/bin
+			Library/mingw-w64/bin
+		)
+		
+		for _CONDA_SUFFIX in ${_CONDA_SUFFIXES[@]}; do
+			PATH="${_CONDA_PREFIX}/${_CONDA_SUFFIX}:${PATH}"
 		done
+
 		unset _CONDA_PREFIX
+		unset _CONDA_SUFFIX
+		unset _CONDA_SUFFIXES
 	;;
 	esac
 
