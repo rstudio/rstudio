@@ -1,0 +1,96 @@
+<html>
+<head>
+  <script type="text/javascript" src="../src/org/rstudio/studio/client/workbench/views/source/editors/text/ace/ace-uncompressed.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/rainbow_paren_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/auto_brace_insert.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/doc_comment_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/tex_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_cursor.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/token_utils.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_matching_brace_outdent.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_scope_tree.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/r_code_model.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/sql_highlight_rules.js"></script>
+  <script type="text/javascript" src="../acesupport/acemode/sql.js"></script>
+  <style type="text/css">
+  pre {
+    margin-bottom: 30px;
+    padding: 3px;
+    border: 1px solid #999;
+  }
+  .error {
+    position: absolute;
+    background-color: #D77;
+  }
+  .pass {
+    position: absolute;
+    background-color: #3A3;
+  }
+
+
+  </style>
+</head>
+<body>
+
+  <h2>SQL Highlight Tester</h2>
+  <div id="editor" style="position: aboluste; width: 600px; height: 600px; border: 1px solid #999"></div>
+
+  <script type="text/javascript">
+
+  var SqlMode = require("mode/sql").Mode;
+  var Range = require("ace/range").Range;
+
+  var tokenMap = new Map();
+  tokenMap.set("--", "comment");
+  tokenMap.set("/*", "comment.start");
+  tokenMap.set("*/", "comment.end");
+  tokenMap.set("#", "comment");
+  tokenMap.set("select", "keyword");
+  console.log(tokenMap);
+
+  var text = Array.from(tokenMap.keys()).join("\n");
+
+  var editor = ace.edit("editor");
+  var session = editor.getSession();
+  session.setMode(new SqlMode(false, session));
+
+  editor.insert(text);
+
+  var markers = [];
+  var n = session.getLength();
+  var count = n;
+  for (var i = 0; i < n; i++) {
+    var tokens = session.getTokens(i);
+    console.log(tokens);
+    if (tokens.length > 0) {
+      tokens.forEach((token) => {
+        console.log(tokenMap.get(token.value));
+        if (tokenMap.get(token.value) !== token.type) {
+          count--;
+          session.addMarker(
+              new Range(i, 0, i, session.getLine(i).length),
+              "error",
+              "fullLine"
+              );
+        } else {
+          session.addMarker(
+            new Range(i, 0, i, session.getLine(i).length),
+              "pass",
+              "fullLine"
+          )
+        }
+      })
+    }
+  }
+
+  var div = document.createElement("div");
+  div.innerHTML = "Passed " + count + " of " + n + " tests.";
+  document.body.appendChild(div);
+
+  </script>
+
+</body>
+
+</html>
