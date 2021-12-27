@@ -67,7 +67,7 @@ module.exports = {
       name: '@electron-forge/maker-dmg',
       config: {
         format: 'ULFO',
-        background: './resources/background/dmg-background.png',
+        background: './resources/background/dmg-background.tiff',
         icon: './resources/icons/RStudio.icns',
         iconSize,
         additionalDMGOptions: {
