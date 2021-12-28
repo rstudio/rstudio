@@ -2292,15 +2292,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String useSecurePackageDownloadTitle();
 
     /**
-     * Translated "secure_download".
-     *
-     * @return translated "secure_download"
-     */
-    @DefaultMessage("secure_download")
-    @Key("useSecurePackageTopic")
-    String useSecurePackageTopic();
-
-    /**
      * Translated "Help on secure package downloads for R".
      *
      * @return translated "Help on secure package downloads for R"

@@ -958,7 +958,7 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      * @return translated "{0} is configured to weave {1} however the {2} package is not installed."
      */
     @DefaultMessage("{0} is configured to weave {1} however the {2} package is not installed.")
-    @Key("{0} is configured to weave {1} however the {2} package is not installed.")
+    @Key("checkCompilersRnWPackageNotInstalled")
     String checkCompilersRnWPackageNotInstalled(String fRnWname, String forcontext, String fRnWPackage);
 
     /**
@@ -1012,7 +1012,7 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Unknown Rnw weave method ''{0}'' specified (valid types are {1})"
      */
     @DefaultMessage("Unknown Rnw weave method ''{0}'' specified (valid types are {1})")
-    @Key("Unknown Rnw weave method ''{0}'' specified (valid types are {1})")
+    @Key("checkCompilersRnWWeaveTypeError")
     String checkCompilersRnWWeaveTypeError(String directiveName, String typeNames);
 
     /**

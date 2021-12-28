@@ -13,7 +13,6 @@
  *
  */
 
-
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.GWT;
@@ -144,7 +143,7 @@ public class PackagesPreferencesPane extends PreferencesPane
               constants_.useSecurePackageDownloadTitle());
       HorizontalPanel secureDownloadPanel = HelpButton.checkBoxWithHelp(
                         useSecurePackageDownload_,
-                        new HelpButton(constants_.useSecurePackageTopic(), constants_.useSecurePackageTitle()));
+                        new HelpButton("secure_download", constants_.useSecurePackageTitle()));
       lessSpaced(secureDownloadPanel);
       management.add(secureDownloadPanel);
 

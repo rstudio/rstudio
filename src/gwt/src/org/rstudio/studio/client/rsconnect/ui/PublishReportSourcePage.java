@@ -50,7 +50,7 @@ public class PublishReportSourcePage
       
       String descriptor = constants_.documentLowercase();
       if (asMultiple)
-         descriptor = constants_.documentsLowercase();
+         descriptor = constants_.documentsLowercasePlural();
       if (input.isWebsiteRmd())
          descriptor = constants_.websiteLowercase();
       
