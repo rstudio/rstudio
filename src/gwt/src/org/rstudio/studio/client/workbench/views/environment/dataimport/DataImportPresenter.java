@@ -123,6 +123,6 @@ public class DataImportPresenter
    private EventBus eventBus_;
    private DependencyManager dependencyManager_;
    
-   final String dataImportDependecyUserAction_ = "Preparing data import";
+   final String dataImportDependecyUserAction_ = constants_.preparingDataImportText();
    private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

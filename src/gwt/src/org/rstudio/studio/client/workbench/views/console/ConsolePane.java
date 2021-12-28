@@ -184,7 +184,7 @@ public class ConsolePane extends WorkbenchPane
       consoleSuspendBlockedIcon_ = new ConsoleSuspendBlockedIcon(announce).getSuspendBlocked();
       consoleSuspendBlockedIcon_.setVisible(false);
       consoleSuspendedIcon_ = new ConsoleSuspendBlockedIcon(announce).getSuspended();
-      consoleSuspendedIcon_.setTitle("Session Suspended");
+      consoleSuspendedIcon_.setTitle(constants_.sessionSuspendedTitle());
       consoleSuspendedIcon_.setVisible(false);
 
       toolbar.addRightWidget(consoleSuspendedIcon_);

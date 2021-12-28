@@ -20,15 +20,6 @@ import com.google.gwt.i18n.client.Messages;
 public interface QuartoConstants extends Messages {
 
     /**
-     * Translate "Error".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("Error")
-    @Key("progressIndicatorErrorCaption")
-    String progressIndicatorErrorCaption();
-
-    /**
      * Translate "Presentation".
      *
      * @return the translated value
@@ -54,16 +45,6 @@ public interface QuartoConstants extends Messages {
     @DefaultMessage("Interactive")
     @Key("interactiveLabel")
     String interactiveLabel();
-
-    /**
-     * Translate "New Quarto {0}...".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("New Quarto {0}...")
-    @Key("newQuartoItemMessage")
-    String newQuartoItemMessage(String item);
-
 
     /**
      * Translate "New Quarto Document".
@@ -334,4 +315,13 @@ public interface QuartoConstants extends Messages {
     @DefaultMessage("About the Quarto visual editor")
     @Key("aboutHelpButtonTitle")
     String aboutHelpButtonTitle();
+
+    /**
+     * Translate "Editor:".
+     *
+     * @return the translated value
+     */
+    @DefaultMessage("Editor:")
+    @Key("editorText")
+    String editorText();
 }

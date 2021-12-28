@@ -145,4 +145,14 @@ public interface HtmlPreviewConstants extends Constants {
     @Key("showLogDialogCaption")
     String showLogDialogCaption();
 
+    /**
+     * Translate "Close".
+     *
+     * @return the translated value
+     */
+    @DefaultStringValue("Close")
+    @Key("closeText")
+    String closeText();
+
+
 }

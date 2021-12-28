@@ -144,4 +144,13 @@ public interface PaletteConstants extends Messages {
     @DefaultMessage("Off")
     @Key("checkboxLabelOff")
     String checkboxLabelOff();
+
+    /**
+     * Translate "Setting".
+     *
+     * @return the translated value
+     */
+    @DefaultMessage("Setting")
+    @Key("settingText")
+    String settingText();
 }

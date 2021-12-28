@@ -59,7 +59,7 @@ public class RmdTemplateChooser extends Composite
 
    public RmdTemplateChooser(RMarkdownServerOperations server)
    {
-      dirLocation_ = new DirectoryChooserTextBox("Location:", 
+      dirLocation_ = new DirectoryChooserTextBox(constants_.locationLabel(),
             ElementIds.TextBoxButtonId.RMD_TEMPLATE_DIR);
       initWidget(uiBinder.createAndBindUi(this));
       server_ = server;

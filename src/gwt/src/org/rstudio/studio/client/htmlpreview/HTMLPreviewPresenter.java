@@ -309,7 +309,7 @@ public class HTMLPreviewPresenter implements IsWidget
                      return;
                   }
                   
-                  indicator.onProgress("Saving File...");
+                  indicator.onProgress(constants_.savingFileCaption());
       
                   server_.copyFile(sourceFile, 
                                    targetFile, 
