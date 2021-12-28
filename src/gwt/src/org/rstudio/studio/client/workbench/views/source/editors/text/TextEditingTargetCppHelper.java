@@ -71,7 +71,7 @@ public class TextEditingTargetCppHelper
                   
                   // do a prompted install of the build tools
                   server_.installBuildTools(
-                           "Compiling C/C++ code for R",
+                           constants_.compilingCode(),
                            new SimpleRequestCallback<Boolean>() {
                               @Override
                               public void onResponseReceived(Boolean confirmed)

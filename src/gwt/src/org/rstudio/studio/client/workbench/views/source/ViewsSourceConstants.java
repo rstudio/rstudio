@@ -2733,4 +2733,53 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("The {0} is {1}-based line wrapping")
     @Key("defaultConfiguredBasedLineWrapping")
     String defaultConfiguredBasedLineWrapping(String current, String configuredLineWrapping);
+
+    /**
+     * Translated "Create R Notebook".
+     * @return translated "Create R Notebook"
+     */
+    @DefaultMessage("Create R Notebook")
+    @Key("createRNotebookText")
+    String createRNotebookText();
+
+
+    /**
+     * Translated "Creating Shiny applications".
+     * @return translated "Creating Shiny applications"
+     */
+    @DefaultMessage("Creating Shiny applications")
+    @Key("creatingShinyApplicationsText")
+    String creatingShinyApplicationsText();
+
+    /**
+     * Translated "Authoring R Presentations".
+     * @return translated "Authoring R Presentations"
+     */
+    @DefaultMessage("Authoring R Presentations")
+    @Key("authoringRPresentationsText")
+    String authoringRPresentationsText();
+
+    /**
+     * Translated "Creating R Plumber API".
+     * @return translated "Creating R Plumber API"
+     */
+    @DefaultMessage("Creating R Plumber API")
+    @Key("creatingRPlumberAPIText")
+    String creatingRPlumberAPIText();
+
+    /**
+     * Translated "Using R Notebooks".
+     * @return translated "Using R Notebooks"
+     */
+    @DefaultMessage("Using R Notebooks")
+    @Key("usingRNotebooksText")
+    String usingRNotebooksText();
+
+    /**
+     * Translated "The profiler".
+     * @return translated "The profiler"
+     */
+    @DefaultMessage("The profiler")
+    @Key("theProfilerText")
+    String theProfilerText();
 }

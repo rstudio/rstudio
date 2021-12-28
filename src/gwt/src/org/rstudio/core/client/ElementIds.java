@@ -191,6 +191,7 @@ public class ElementIds
    public final static String NEW_PROJECT_GIT_REPO = "git_repo";
    public final static String NEW_PROJECT_RENV = "use_renv";
    public final static String NEW_PROJECT_VENV = "use_venv";
+   public final static String NEW_PROJECT_CONDAENV = "use_condaenv";
    public final static String NEW_PROJECT_VENV_PACKAGES = "use_venv_packages";
    public final static String NEW_PROJECT_SOURCE_FILES = "source_files";
    public final static String NEW_PROJECT_NEW_SESSION = "new_session";
@@ -368,6 +369,10 @@ public class ElementIds
    // BuildPane
    public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";
    public final static String BUILD_BOOKDOWN_MENUBUTTON = "build_bookdown_menubutton";
+
+   // JobLauncherPane
+   public final static String JOB_LAUNCHER_JOB_VIEW = "job_launcher_job_view";
+   public final static String JOB_LAUNCHER_OUTPUT_PANEL = "job_launcher_output_panel";
 
    // JobLauncherDialog
    public final static String JOB_LAUNCHER_ENVIRONMENT = "job_launcher_environment";

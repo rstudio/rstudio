@@ -678,18 +678,20 @@ private:
       type_ = type;
 
       // add testthat and shinytest result parsers
-      core::Version testthatVersion;
-      module_context::packageVersion("testthat", &testthatVersion);
-      
       if (type == kTestFile)
       {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.getParent(), testthatVersion));
+         if (module_context::isPackageInstalled("testthat")) {
+            parsers.add(testthatErrorParser(packagePath.getParent()));
+         }
+         
       }
       else if (type == kTestPackage)
       {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat"), testthatVersion));
+         if (module_context::isPackageInstalled("testthat")) {
+            parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat")));
+         }
       }
 
       initErrorParser(packagePath, parsers);

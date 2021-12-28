@@ -190,8 +190,11 @@ bool RCntxt::operator==(const RCntxt& other) const
    if (other.pCntxt_ == pCntxt_)
       return true;
 
-   // Also equivalent if they refer to the same call, at the same depth, on the stack
-   if (other.call() == call() && other.evaldepth() == evaldepth())
+   // Also equivalent if they refer to the same call at the same stack position and have the same
+   // source references
+   if (other.call() == call() && 
+       other.evaldepth() == evaldepth() &&
+       other.srcref() == srcref())
       return true;
 
    return false;

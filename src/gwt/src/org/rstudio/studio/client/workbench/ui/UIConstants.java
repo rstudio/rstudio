@@ -106,5 +106,14 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
     @Key("cannotAddMoreColumnsText")
     String cannotAddMoreColumnsText(int maxColumnCount);
 
+    /**
+     * Translated "Close".
+     *
+     * @return translated "Close"
+     */
+    @DefaultMessage("Close")
+    @Key("closeText")
+    String closeText();
+
 
 }

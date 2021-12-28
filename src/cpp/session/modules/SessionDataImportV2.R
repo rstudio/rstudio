@@ -427,7 +427,7 @@
          options[["na"]] <- dataImportOptions$na
          options[["comment"]] <- dataImportOptions$comments
          options[["skip"]] <- dataImportOptions$skip
-         options[["n_max"]] <- dataImportOptions$maxRows
+         options[["guess_max"]] <- dataImportOptions$maxRows
          options[["col_types"]] <- dataImportOptions$columnDefinitions
 
          # set special parameter types
@@ -794,7 +794,7 @@
       data <- suppressWarnings(
          eval(parse(text=importInfo$previewCode))
       )
-
+      
       parsingErrors <- parsingErrorsFromMode(dataImportOptions$mode, data)
 
       preparedData <- .rs.prepareViewerData(

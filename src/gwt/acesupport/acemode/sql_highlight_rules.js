@@ -61,6 +61,9 @@ define("mode/sql_highlight_rules", ["require", "exports", "module"], function(re
             start : "/\\*",
             end : "\\*/"
         }, {
+            token: "comment",
+            regex: "#.*$"
+        }, {
           token : "comment.doc.tag",
           regex : "\\?[a-zA-Z_][a-zA-Z0-9_$]*"
         }, {

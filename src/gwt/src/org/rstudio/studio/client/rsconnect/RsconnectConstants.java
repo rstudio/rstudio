@@ -1428,4 +1428,22 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("Reconnect Account")
     @Key("reconnectAccount")
     String reconnectAccount();
+
+    /**
+     * Translated "Publishing content".
+     *
+     * @return translated "Publishing content"
+     */
+    @DefaultMessage("Publishing content")
+    @Key("publishingContentLabel")
+    String publishingContentLabel();
+
+    /**
+     * Translated "Publish Wizard".
+     *
+     * @return translated "Publish Wizard"
+     */
+    @DefaultMessage("Publish Wizard")
+    @Key("publishWizardLabel")
+    String publishWizardLabel();
 }

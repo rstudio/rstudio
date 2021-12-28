@@ -207,4 +207,13 @@ public interface RMarkdownConstants extends Messages {
     @DefaultMessage("No")
     @Key("noButtonText")
     String noButtonText();
+
+    /**
+     * Translate "Location:".
+     *
+     * @return the translated value
+     */
+    @DefaultMessage("Location:")
+    @Key("locationLabel")
+    String locationLabel();
 }

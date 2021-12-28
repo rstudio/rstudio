@@ -24,6 +24,7 @@
 #include <shared_core/FilePath.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
+#include <core/system/System.hpp>
 
 namespace rstudio {
 namespace core {

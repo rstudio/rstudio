@@ -22,7 +22,10 @@
 #include <boost/enable_shared_from_this.hpp>
 
 #include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Types.hpp>
+#include <core/system/ShellUtils.hpp>
+#include <core/system/Process.hpp>
 
 #include <session/jobs/JobsApi.hpp>
 
@@ -56,6 +59,28 @@ public:
    void stop()
    {
       stopRequested_ = true;
+
+      // on windows we need to be a bit more aggressive (as we've seen cases where
+      // the 'stop' doesn't actually work esp. when deno is running a web server
+#ifdef _WIN32
+      using namespace core::shell_utils;
+      if (pid_ > 0)
+      {
+         ShellCommand cmd("taskkill");
+         cmd << "/F" << "/T" << "/PID" << core::safe_convert::numberToString(pid_);
+         core::system::ProcessOptions options;
+         core::system::ProcessResult result;
+         core::Error error = core::system::runCommand(cmd, options, &result);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
+         else if (result.exitStatus != EXIT_SUCCESS)
+         {
+            LOG_ERROR_MESSAGE("Error killing quarto job: " + result.stdErr);
+         }
+      }
+#endif
    }
 
    void remove()
@@ -68,7 +93,7 @@ public:
 
 protected:
    explicit QuartoJob()
-      : stopRequested_(false)
+      : stopRequested_(false), pid_(0)
    {
    }
 
@@ -92,6 +117,11 @@ protected:
    }
 
    virtual core::Error start();
+
+   virtual void onStarted(core::system::ProcessOperations& process)
+   {
+      pid_ = process.getPid();
+   }
 
    virtual bool onContinue()
    {
@@ -131,6 +161,7 @@ protected:
 
 private:
    bool stopRequested_;
+   PidType pid_;
 };
 
 struct ParsedServerLocation

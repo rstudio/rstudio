@@ -2349,7 +2349,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
          }
       };
 
-      dependencyManager_.withRMarkdown(constants_.rNotebook(), "Using R Notebooks", extractRmdCommand);
+      dependencyManager_.withRMarkdown(constants_.rNotebook(), constants_.usingRNotebooksText(), extractRmdCommand);
    }
 
    private void openNotebook(final FileSystemItem rnbFile,

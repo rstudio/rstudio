@@ -201,7 +201,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       kernelSelect_ = createListBox(kernelDisplayNames, kernelNames);
       setListBoxValue(kernelSelect_, lastResult_.getKernel());
       
-      Label editorLabel = createLabel("Editor:");
+      Label editorLabel = createLabel(constants_.editorText());
       editorCheckBox_ = new QuartoVisualEditorCheckBox();
       
       // use project default if available, otherwise use last result

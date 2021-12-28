@@ -61,7 +61,7 @@ export function canInsertRmdChunk(state: EditorState) {
   return true;
 }
 
-export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffset = 0) {
+export function insertRmdChunk(chunkPlaceholder: string) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     const schema = state.schema;
 
@@ -80,11 +80,6 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
     }
 
     if (dispatch) {
-      // compute offset
-      const lines = chunkPlaceholder.split(/\r?\n/);
-      const lineChars = lines.slice(0, rowOffset).reduce((count, line) => count + line.length + 1, 1);
-      const offsetChars = lineChars + colOffset;
-
       // perform insert
       const tr = state.tr;
       const rmdText = schema.text(chunkPlaceholder);
@@ -93,10 +88,8 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
       if (prevListItemPos) {
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
       } else {
-        const from = tr.selection.from;
         tr.replaceSelectionWith(rmdNode);
-        const selPos = from + offsetChars;
-        setTextSelection(selPos)(tr);
+        setTextSelection(tr.selection.from - 2)(tr);
       }
 
       dispatch(tr);

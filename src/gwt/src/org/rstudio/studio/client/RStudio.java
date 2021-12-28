@@ -201,7 +201,7 @@ public class RStudio implements EntryPoint
          {
             public void run()
             {
-               ariaLoadingMessage_.setText("Loading session...");
+               ariaLoadingMessage_.setText(constants_.loadingSessionsText());
             }
          };
          showStatusTimer_.schedule(3000);
@@ -326,7 +326,7 @@ public class RStudio implements EntryPoint
          public void onFailure(Throwable reason)
          {
             dismissProgressAnimation_.execute();
-            Window.alert("Error: " + reason.getMessage());
+            Window.alert(constants_.errorText(reason.getMessage()));
          }
       });
    }
@@ -506,4 +506,5 @@ public class RStudio implements EntryPoint
    private Timer showStatusTimer_;
    private LauncherSessionStatus sessionStatus_;
    private Label ariaLoadingMessage_;
+   private static final StudioClientConstants constants_ = GWT.create(StudioClientConstants.class);
 }

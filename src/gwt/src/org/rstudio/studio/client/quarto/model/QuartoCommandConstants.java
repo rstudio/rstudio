@@ -31,6 +31,8 @@ public class QuartoCommandConstants
    public final static String PROJECT_WEBSITE = "website";
    public final static String PROJECT_BOOK = "book";
    
+   public final static String PROJECT_WEBSITE_BLOG = "website:blog";
+   
    public final static String ENGINE_MARKDOWN = "markdown";
    public final static String ENGINE_KNITR = "knitr";
    public final static String ENGINE_JUPYTER = "jupyter";
