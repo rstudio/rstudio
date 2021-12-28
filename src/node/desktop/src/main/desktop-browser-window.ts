@@ -87,6 +87,22 @@ export class DesktopBrowserWindow extends EventEmitter {
         acceptFirstMouse: true,
       });
 
+      const customStyles =
+        // eslint-disable-next-line max-len
+        '.gwt-SplitLayoutPanel-HDragger{cursor:ew-resize !important;} .gwt-SplitLayoutPanel-VDragger{cursor:ns-resize !important;}';
+
+      this.window.webContents
+        .insertCSS(customStyles, {
+          cssOrigin: 'author',
+        })
+        .then((result) => {
+          console.log('Custom Styles Added Successfully');
+        })
+        .catch((error) => {
+          console.log('Error when adding custom styles');
+          console.log(error);
+        });
+
       // Uncomment to have all windows show dev tools by default
       // this.window.webContents.openDevTools();
     }
