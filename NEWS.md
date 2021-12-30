@@ -31,6 +31,7 @@
 * Clicking on a session entry in the RSW homepage will always attempt to launch it -- the title is no longer a link. Clicking on "Info" will always show info. (Pro #3082)
 * With the options `launcher-sessions-create-container-user`, and `launcher-sessions-container-forward-groups` enabled, RSW will now add a group to the user even if the group with a matching id exists but with a different name. (Pro #2971)
 * Added SSL communication between RSW and remote sessions (using the job launcher). It's enabled by default and can be disabled in rserver.conf by setting session-ssl-enabled=0. Certificates are generated for each job by default or can be manually configured. (Pro #3026)
+* Disable session SSL for Code Server 3.9.3 and support auth changes in Code Server 3.11.0 (Pro #3111)
 
 #### Misc
 
