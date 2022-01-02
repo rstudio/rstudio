@@ -25,6 +25,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -34,7 +35,7 @@ public class CaptionWithHelp extends Composite
 {
    public CaptionWithHelp(String caption, String helpCaption, Widget forWidget)
    {
-      this(caption, helpCaption, null, forWidget);
+      this(caption, helpCaption, (String)null, forWidget);
    }
    
    public CaptionWithHelp(String caption, 
@@ -42,9 +43,18 @@ public class CaptionWithHelp extends Composite
                           final String rstudioLinkName,
                           Widget forWidget)
    {
+      this(caption, helpCaption, (Command)null, forWidget);
+      rstudioLinkName_ = rstudioLinkName;
+   }
+   
+   public CaptionWithHelp(String caption, 
+                          String helpCaption,
+                          Command linkHandler,
+                          Widget forWidget)
+   {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      rstudioLinkName_ = rstudioLinkName;
+    
       
       HorizontalPanel panel = new HorizontalPanel();
       panel.setWidth("100%");
@@ -54,11 +64,18 @@ public class CaptionWithHelp extends Composite
       DecorativeImage helpImage = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.setStylePrimaryName(styles.helpImage());
       helpPanel_.add(helpImage);
-      HyperlinkLabel link = new HyperlinkLabel(helpCaption, () ->
-      {
-         if (rstudioLinkName_ != null)
-            globalDisplay_.openRStudioLink(rstudioLinkName_,
-                                           includeVersionInfo_);
+      
+      HyperlinkLabel link = new HyperlinkLabel(helpCaption, () ->  {
+         if (linkHandler != null)
+         {
+            linkHandler.execute();
+         }
+         else
+         {
+            if (rstudioLinkName_ != null)
+               globalDisplay_.openRStudioLink(rstudioLinkName_,
+                                              includeVersionInfo_);
+         }
       });
       link.addStyleName(styles.helpLink());
       helpPanel_.add(link);

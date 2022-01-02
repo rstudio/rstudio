@@ -16,9 +16,12 @@ package org.rstudio.studio.client.quarto.model;
 
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
+import org.rstudio.studio.client.rmarkdown.model.RmdDocumentTemplate;
 import org.rstudio.studio.client.rsconnect.model.QmdPublishDetails;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+
+import com.google.gwt.core.client.JsArray;
 
 
 public interface QuartoServerOperations 
@@ -33,4 +36,6 @@ public interface QuartoServerOperations
                             QuartoNewProjectOptions options, 
                             ServerRequestCallback<ConsoleProcess> requestCallback);
    void quartoPublishDetails(String target, ServerRequestCallback<QmdPublishDetails> resultCallback);
+   void quartoGetTemplates(ServerRequestCallback<JsArray<RmdDocumentTemplate>> requestCallback);
+   
 }

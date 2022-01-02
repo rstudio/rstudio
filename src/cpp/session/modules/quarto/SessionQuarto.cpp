@@ -52,6 +52,7 @@
 #include "SessionQuartoServe.hpp"
 #include "SessionQuartoXRefs.hpp"
 #include "SessionQuartoResources.hpp"
+#include "SessionQuartoTemplates.hpp"
 
 using namespace rstudio::core;
 
@@ -1222,6 +1223,7 @@ Error initialize()
      (boost::bind(quarto::serve::initialize))
      (boost::bind(quarto::xrefs::initialize))
      (boost::bind(quarto::resources::initialize))
+     (boost::bind(quarto::templates::initialize))
    ;
    return initBlock.execute();
 }

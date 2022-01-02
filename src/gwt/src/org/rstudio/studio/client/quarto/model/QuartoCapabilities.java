@@ -33,6 +33,10 @@ public class QuartoCapabilities extends JavaScriptObject
       return this.themes;
    }-*/;
    
+   public final native boolean getTemplates() /*-{
+      return !!this.templates;
+   }-*/;
+   
    
    public final native QuartoPythonCapabilities getPythonCapabilities() /*-{
       return this.python;

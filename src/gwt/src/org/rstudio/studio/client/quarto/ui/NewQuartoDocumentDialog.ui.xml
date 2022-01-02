@@ -1,7 +1,9 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
-   xmlns:rc="urn:import:org.rstudio.studio.client.common">
+   xmlns:rc="urn:import:org.rstudio.studio.client.common"
+   xmlns:quarto="urn:import:org.rstudio.studio.client.quarto.ui">
+   
 
    <ui:with field="resources" type="org.rstudio.studio.client.common.newdocument.NewDocumentResources" />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
@@ -40,7 +42,10 @@
              </rw:LayoutGrid>
            </g:HTMLPanel>
         </g:HTMLPanel>
-        
+         <g:HTMLPanel ui:field="existingTemplatePanel_">
+            <quarto:QuartoTemplateChooser ui:field="templateChooser_">
+            </quarto:QuartoTemplateChooser>
+        </g:HTMLPanel>
        
      </g:HTMLPanel>
    </g:HorizontalPanel>

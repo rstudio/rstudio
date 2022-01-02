@@ -37,6 +37,8 @@ import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.quarto.model.QuartoJupyterKernel;
+import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
+import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateChooser;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -142,9 +144,11 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       setOkButtonCaption(constants_.createDocButtonCaption());
       
       caps_ = caps;
+      
+      templateChooser_ = new QuartoTemplateChooser(server_);
 
       mainWidget_ = GWT.<Binder> create(Binder.class).createAndBindUi(this);
-      
+       
       formatOptions_ = new ArrayList<>();
       formatNames_ = new ArrayList<>();
       resources.styles().ensureInjected();
@@ -172,6 +176,15 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       TemplateMenuItem appTemplate = new TemplateMenuItem(TEMPLATE_INTERACTIVE);
       appTemplate.addIcon(new ImageResource2x(resources.shinyIcon2x()));
       listTemplates_.addItem(appTemplate);
+      
+      // Add the "From Template" item at the end of the list
+      TemplateMenuItem templateItem = 
+            new TemplateMenuItem(TEMPLATE_CHOOSE_EXISTING);
+      templateItem.addIcon(new ImageResource2x(resources.templateIcon2x()));
+      listTemplates_.addItem(templateItem);
+   
+      
+      
       
       if (presentation)
          listTemplates_.setSelectedIndex(1);
@@ -255,10 +268,11 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    }
    
    @Inject
-   private void initialize(Session session, GlobalDisplay globalDisplay)
+   private void initialize(Session session, GlobalDisplay globalDisplay, QuartoServerOperations server)
    {
       session_ = session;
       globalDisplay_ = globalDisplay;
+      server_ = server;
    }
 
 
@@ -340,6 +354,11 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    {
       return mainWidget_;
    }
+   
+   private void populateTemplates()
+   {
+      templateChooser_.populateTemplates();
+   }
 
    private String getSelectedTemplate()
    {
@@ -364,13 +383,26 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
 
    private void updateOptions(String selectedTemplate)
    {
-     
+      boolean existing = selectedTemplate == TEMPLATE_CHOOSE_EXISTING;
+      newTemplatePanel_.setVisible(!existing);
+      existingTemplatePanel_.setVisible(existing);
+      
+      
       templateFormatPanel_.clear();
       formatNames_.clear();
       formatOptions_.clear();
       quartoHelpLink_.setVisible(false);
       quartoPresentationsHelpLink_.setVisible(false);
       quartoInteractiveHelpLink_.setVisible(false);
+      
+      if (selectedTemplate.equals(TEMPLATE_CHOOSE_EXISTING))
+      {
+         if (templateChooser_.getState() == RmdTemplateChooser.STATE_EMPTY)
+         {
+            populateTemplates();
+         }
+         return;
+      }
 
       if (selectedTemplate.equals(TEMPLATE_DOCUMENT))
       {
@@ -584,6 +616,8 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    HTMLPanel templateFormatPanel_;
    @UiField
    HTMLPanel newTemplatePanel_;
+   @UiField HTMLPanel existingTemplatePanel_;
+   @UiField(provided=true) QuartoTemplateChooser templateChooser_;
    @UiField
    LayoutGrid grid_;
    
@@ -603,6 +637,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    
    private Session session_;
    private GlobalDisplay globalDisplay_;
+   private QuartoServerOperations server_;
    
  // Styles ----
    
@@ -628,6 +663,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    }
 
    private static final QuartoConstants constants_ = GWT.create(QuartoConstants.class);
+   private static final String TEMPLATE_CHOOSE_EXISTING = "From Template";
    private static final String TEMPLATE_DOCUMENT = constants_.documentLabel();
    private static final String TEMPLATE_PRESENTATION = constants_.presentationLabel();
    private static final String TEMPLATE_INTERACTIVE = constants_.interactiveLabel();
