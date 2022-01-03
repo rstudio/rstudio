@@ -1338,6 +1338,15 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     String lockRatioText();
 
     /**
+     * Translated "Default".
+     *
+     * @return translated "Default"
+     */
+    @DefaultMessage("default")
+    @Key("defaultAlignLabel")
+    String defaultAlignLabel();
+    
+    /**
      * Translated "Left".
      *
      * @return translated "Left"
