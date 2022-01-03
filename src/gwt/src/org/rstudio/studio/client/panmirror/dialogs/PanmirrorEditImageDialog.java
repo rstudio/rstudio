@@ -190,7 +190,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       }
       
       // alignment
-      alignDefault = new RadioButton("align", constants_.defaultLabel());
+      alignDefault = new RadioButton("align", constants_.defaultAlignLabel());
       alignLeft_ = new RadioButton("align", constants_.leftLabel());
       alignCenter_ = new RadioButton("align", constants_.centerLabel());
       alignRight_ = new RadioButton("align", constants_.rightLabel());

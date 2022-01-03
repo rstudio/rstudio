@@ -2046,8 +2046,8 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      *
      * @return translated "visual"
      */
-    @DefaultMessage("visual")
-    @Key("visual")
+    @DefaultMessage("Visual")
+    @Key("Visual")
     String visual();
 
     /**
