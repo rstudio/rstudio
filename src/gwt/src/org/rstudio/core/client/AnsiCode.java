@@ -18,8 +18,6 @@ package org.rstudio.core.client;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-import com.google.gwt.core.client.GWT;
-
 import org.rstudio.core.client.regex.Pattern;
 
 /**
