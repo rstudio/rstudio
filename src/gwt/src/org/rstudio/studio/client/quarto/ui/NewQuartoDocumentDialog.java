@@ -17,9 +17,11 @@ package org.rstudio.studio.client.quarto.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.LayoutGrid;
@@ -39,6 +41,7 @@ import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.quarto.model.QuartoJupyterKernel;
 import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateChooser;
+import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
@@ -183,7 +186,13 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       templateItem.addIcon(new ImageResource2x(resources.templateIcon2x()));
       listTemplates_.addItem(templateItem);
    
-      
+      // Save templates to the current project directory if available, and the
+      // current working directory if not
+      FileSystemItem dir = workbench_.getActiveProjectDir();
+      if (dir == null)
+         dir = workbench_.getCurrentWorkingDir();
+      templateChooser_.setTargetDirectory(dir.getPath());
+
       
       
       if (presentation)
@@ -268,9 +277,13 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    }
    
    @Inject
-   private void initialize(Session session, GlobalDisplay globalDisplay, QuartoServerOperations server)
+   private void initialize(Session session, 
+                           WorkbenchContext workbench,
+                           GlobalDisplay globalDisplay, 
+                           QuartoServerOperations server)
    {
       session_ = session;
+      workbench_ = workbench;
       globalDisplay_ = globalDisplay;
       server_ = server;
    }
@@ -638,6 +651,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
    private Session session_;
    private GlobalDisplay globalDisplay_;
    private QuartoServerOperations server_;
+   private WorkbenchContext workbench_;
    
  // Styles ----
    

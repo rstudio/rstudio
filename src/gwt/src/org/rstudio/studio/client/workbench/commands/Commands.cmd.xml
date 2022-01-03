@@ -52,11 +52,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <menu label="New _File">
             <cmd refid="newSourceDoc"/>
             <separator/>
-            <cmd refid="newRNotebook"/>
-            <cmd refid="newRMarkdownDoc"/>
-            <separator/>
             <cmd refid="newQuartoDoc"/>
             <cmd refid="newQuartoPres"/>
+            <separator/>
+            <cmd refid="newRNotebook"/>
+            <cmd refid="newRMarkdownDoc"/>
             <separator/>
             <cmd refid="newRShinyApp"/>
             <cmd refid="newRPlumberDoc"/>

@@ -73,13 +73,10 @@
    </g:HTMLPanel>
 
    <g:HTMLPanel ui:field="templateOptionsPanel_" visible="false">
-     <g:HTML styleName="{style.createNote}">
-        This template contains multiple files. Create a new directory for
-        these files:
-     </g:HTML>
-     <rs:LabeledTextBox textBoxId="{ElementIds.getRmdTemplateChooserName}" labelText="Name:" 
+     <rs:LabeledTextBox textBoxId="{ElementIds.getRmdTemplateChooserName}" labelText="Document directory:" 
                         styleName="{style.controlLabel} {style.interiorControlLabel}" 
-                        ui:field="txtName_" text="Untitled"></rs:LabeledTextBox>
+                        ui:field="txtName_" text="">
+     </rs:LabeledTextBox>
 
      <rs:DirectoryChooserTextBox width="100%" addStyleNames="{style.directoryChooser} {style.directoryChooserInner}" ui:field="dirLocation_">
      </rs:DirectoryChooserTextBox>
