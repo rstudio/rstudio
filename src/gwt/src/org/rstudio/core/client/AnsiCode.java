@@ -18,6 +18,8 @@ package org.rstudio.core.client;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.google.gwt.core.client.GWT;
+
 import org.rstudio.core.client.regex.Pattern;
 
 /**
@@ -740,6 +742,13 @@ public class AnsiCode
 
    // Match partial potential ANSI SGR escape sequences
    public static final Pattern SGR_PARTIAL_ESCAPE_PATTERN = Pattern.create(SGR_PARTIAL_REGEX);
+
+   // RegEx to match hyperlinks escape codes
+   public static final String HYPERLINK_REGEX = 
+      "\u001b\\]8;([^;]*);(.*)\\a([^\u001b]*)\u001b\\]8;;";
+
+   // Match hyperlink
+   public static final Pattern HYPERLINK_PATTERN = Pattern.create(HYPERLINK_REGEX);
 
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();

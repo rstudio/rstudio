@@ -31,6 +31,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -580,8 +581,23 @@ public class VirtualConsole
                // we don't support. Tricky part is we might get codes split across
                // submit calls.
 
+               // match hyperlink
+               Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(data, pos);
+               if (hyperlinkMatch != null){
+                  // from this hyperlink match, we can retrieve:
+                  // - the parameters: 
+                  GWT.log("match group 1: " + hyperlinkMatch.getGroup(1));
+                  
+                  // The url
+                  GWT.log("match group 2: " + hyperlinkMatch.getGroup(2));
+
+                  // The text
+                  GWT.log("match group 3: " + hyperlinkMatch.getGroup(3));
+               } 
+
                // match complete SGR codes
                Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
+
                if (sgrMatch == null)
                {
                   if (StringUtil.equals(data.substring(tail), "["))
