@@ -206,6 +206,14 @@ void handleClientInit(const boost::function<void()>& initFunction,
       // header value (complements RSTUDIO_USER_IDENTITY)
       core::system::setenv("RSTUDIO_USER_IDENTITY_DISPLAY", 
             userIdentityDisplay(ptrConnection->request()));
+
+      // read display name from upstream if set
+      std::string displayName = ptrConnection->request().headerValue(
+            kRStudioUserIdentityDisplay);
+      if (!displayName.empty())
+      {
+         persistentState().setUserDisplayName(displayName);
+      }
    }
 
    // prepare session info 

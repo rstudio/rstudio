@@ -26,6 +26,13 @@ public class ProjectUser extends JavaScriptObject
       return this.username;
    }-*/;
    
+   public final native String getDisplayName() /*-{
+      // This data comes from a persisted file that can be missing
+      // the display_name field if written from earlier versions of
+      // RStudio Workbench, so use the username as a fallback.
+      return this.display_name || this.username;
+   }-*/;
+
    public final native String getSessionId() /*-{
       return this.session_id;
    }-*/;
