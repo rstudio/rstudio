@@ -2918,8 +2918,6 @@ std::vector<FilePath> ignoreContentDirs()
          std::string outputDir = module_context::websiteOutputDir();
          if (!outputDir.empty())
             ignoreDirs.push_back(buildTargetPath.completeChildPath(outputDir));
-         else
-            ignoreDirs.push_back(buildTargetPath);
       }
 
    }
