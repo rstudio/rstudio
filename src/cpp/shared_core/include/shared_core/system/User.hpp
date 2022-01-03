@@ -220,6 +220,14 @@ public:
    const std::string& getShell() const;
 
    /**
+    * @brief Returns the user's real name ("John Doe", not "jdoe")
+    *
+    * @return The real name of this user. Not available on all systems and configurations;
+    *   an empty string is returned if the value is not known.
+    */
+   const std::string& getRealName() const;
+
+   /**
     * @brief Gets the ID of this user.
     *
     * @return The ID of this user.

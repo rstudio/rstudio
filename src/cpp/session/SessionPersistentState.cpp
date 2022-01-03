@@ -209,5 +209,15 @@ void PersistentState::setReusedSessionProxyPort(const std::string& port)
       sessionSettings_.set("reusedSessionProxyPort", port);
 }
 
+std::string PersistentState::userDisplayName() const
+{
+   return settings_.get("displayName", "");
+}
+
+void PersistentState::setUserDisplayName(const std::string& name)
+{
+   settings_.set("displayName", name);
+}
+
 } // namespace session
 } // namespace rstudio

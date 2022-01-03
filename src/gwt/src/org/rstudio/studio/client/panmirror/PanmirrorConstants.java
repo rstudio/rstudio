@@ -1101,14 +1101,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     @Key("unwrapDivTitle")
     String unwrapDivTitle();
 
-    /**
-     * Translated "remove".
-     *
-     * @return translated "remove"
-     */
-    @DefaultMessage("remove")
-    @Key("removeActionText")
-    String removeActionText();
 
     /**
      * Translated "Type: ".
@@ -1119,50 +1111,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     @Key("typeLabel")
     String typeLabel();
 
-    /**
-     * Translated "note".
-     *
-     * @return translated "note"
-     */
-    @DefaultMessage("note")
-    @Key("noteLabel")
-    String noteLabel();
-
-    /**
-     * Translated "tip".
-     *
-     * @return translated "tip"
-     */
-    @DefaultMessage("tip")
-    @Key("tipLabel")
-    String tipLabel();
-
-    /**
-     * Translated "important".
-     *
-     * @return translated "important"
-     */
-    @DefaultMessage("important")
-    @Key("importantLabel")
-    String importantLabel();
-
-    /**
-     * Translated "caution".
-     *
-     * @return translated "caution"
-     */
-    @DefaultMessage("caution")
-    @Key("cautionLabel")
-    String cautionLabel();
-
-    /**
-     * Translated "warning".
-     *
-     * @return translated "warning"
-     */
-    @DefaultMessage("warning")
-    @Key("warningLabel")
-    String warningLabel();
 
 
     /**
@@ -1173,33 +1121,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     @DefaultMessage("Appearance: ")
     @Key("appearanceLabel")
     String appearanceLabel();
-
-    /**
-     * Translated "default".
-     *
-     * @return translated "default"
-     */
-    @DefaultMessage("default")
-    @Key("defaultLabel")
-    String defaultLabel();
-
-    /**
-     * Translated "simple".
-     *
-     * @return translated "simple"
-     */
-    @DefaultMessage("simple")
-    @Key("simpleLabel")
-    String simpleLabel();
-
-    /**
-     * Translated "minimal".
-     *
-     * @return translated "minimal"
-     */
-    @DefaultMessage("minimal")
-    @Key("minimalLabel")
-    String minimalLabel();
 
     /**
      * Translated "Show icon".
@@ -1859,23 +1780,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     @Key("chooseFormatLabel")
     String chooseFormatLabel();
 
-    /**
-     * Translated "incremental".
-     *
-     * @return translated "incremental"
-     */
-    @DefaultMessage("incremental")
-    @Key("incrementalLabel")
-    String incrementalLabel();
-
-    /**
-     * Translated "incremental".
-     *
-     * @return translated "incremental"
-     */
-    @DefaultMessage("nonincremental")
-    @Key("nonincrementalLabel")
-    String nonincrementalLabel();
 
     /**
      * Translated "{0} occurrences replaced.".

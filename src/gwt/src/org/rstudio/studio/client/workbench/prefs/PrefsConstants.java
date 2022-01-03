@@ -3791,11 +3791,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String markdownPerFileOptionsHelpLink();
 
     /**
-     * Translated "Citation features are available within R Markdown visual mode.".
+     * Translated "Citation features are available within visual editing mode.".
      *
-     * @return translated "Citation features are available within R Markdown visual mode."
+     * @return translated "Citation features are available within visual editing mode."
      */
-    @DefaultMessage("Citation features are available within R Markdown visual mode.")
+    @DefaultMessage("Citation features are available within visual editing mode.")
     @Key("citationsLabel")
     String citationsLabel();
 
@@ -3888,6 +3888,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Citations")
     @Key("tabPanelCitations")
     String tabPanelCitations();
+    
 
     /**
      * Translated "(None)".

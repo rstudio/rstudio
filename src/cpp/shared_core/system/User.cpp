@@ -82,6 +82,23 @@ struct User::Impl
          Name = pwd.pw_name;
          HomeDirectory = FilePath(pwd.pw_dir);
          Shell = pwd.pw_shell;
+
+         // Default to empty real name unless specified in the GECOS field
+         RealName = "";
+         if (pwd.pw_gecos != nullptr)
+         {
+            std::string gecos(pwd.pw_gecos);
+            if (!gecos.empty())
+            {
+               // The GECOS field is comma delimited; the first value is the user's real name.
+               std::vector<std::string> fields;
+               boost::algorithm::split(fields, gecos, boost::algorithm::is_any_of(","));
+               if (fields.size() > 0)
+               {
+                  RealName = fields[0];
+               }
+            }
+         }
       }
 
       return Success();
@@ -90,6 +107,7 @@ struct User::Impl
    UidType UserId;
    GidType GroupId;
    std::string Name;
+   std::string RealName;
    FilePath HomeDirectory;
    std::string Shell;
 };
@@ -239,6 +257,11 @@ UidType User::getUserId() const
 const std::string& User::getUsername() const
 {
    return m_impl->Name;
+}
+
+const std::string& User::getRealName() const
+{
+   return m_impl->RealName;
 }
 
 const std::string& User::getShell() const
