@@ -77,6 +77,10 @@ public:
    std::string reusedSessionProxyPort() const;
    void setReusedSessionProxyPort(const std::string& port);
 
+   // the active user's display name, if it has been explicitly set upstream from proxy auth
+   std::string userDisplayName() const;
+   void setUserDisplayName(const std::string& name);
+
    // get underlying settings
    core::Settings& settings() { return settings_; }
 
