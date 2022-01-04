@@ -30,11 +30,10 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
@@ -470,6 +469,33 @@ public class VirtualConsole
       cursor_ += text.length();
    }
 
+   private void link(String text, String url, String clazz) {
+      if (newText_ != null)
+         newText_.append(text);
+
+      int start = cursor_;
+      int end = cursor_ + text.length();
+
+      // real-time output if we have a parent
+      if (parent_ != null)
+      {
+         // FIXME: this is temporary, and does not play well with the 
+         //        ClassRange stack stuff, maybe ClassRange should be also able
+         //        to emit AnchorElement. 
+
+         AnchorElement anchor = Document.get().createAnchorElement();
+
+         // maybe this should rather use <span onclick=""> rather than <a>
+         anchor.setHref(url);
+         anchor.setInnerText(text);
+         anchor.setTitle(url);
+         appendChild(anchor);
+      }
+
+      output_.replace(start, end, text);
+      cursor_ += text.length();
+   }
+
    public void submit(String data)
    {
       submit(data, null);
@@ -550,8 +576,11 @@ public class VirtualConsole
          // character, add it.
          if (tail != pos)
          {
-            text(data.substring(tail, pos), currentClazz, forceNewRange);
-
+            if (url_ != null) {
+               link(data.substring(tail, pos), url_, currentClazz);
+            } else {
+               text(data.substring(tail, pos), currentClazz, forceNewRange);
+            }
             // once we've started a new range, rest of output for this submit
             // call should share that range (e.g. a multi-line error message)
             forceNewRange = false;
@@ -581,24 +610,26 @@ public class VirtualConsole
                // we don't support. Tricky part is we might get codes split across
                // submit calls.
 
-               // match hyperlink
+               // match hyperlink, either start or end (if [url] is empty
+               // <ESC> ] 8 ; [params] ; [url] \7
                Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(data, pos);
-               if (hyperlinkMatch != null){
-                  // from this hyperlink match, we can retrieve:
-                  // - the parameters: 
-                  GWT.log("match group 1: " + hyperlinkMatch.getGroup(1));
-                  
-                  // The url
-                  GWT.log("match group 2: " + hyperlinkMatch.getGroup(2));
-
-                  // The text
-                  GWT.log("match group 3: " + hyperlinkMatch.getGroup(3));
-               } 
 
                // match complete SGR codes
                Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
 
-               if (sgrMatch == null)
+               if (hyperlinkMatch != null){
+                  String url = hyperlinkMatch.getGroup(2);
+                  if (url == null) {
+                     // anchor end, forget url_
+                     url_ = null;
+                  } else {
+                     // anchor start, remember url_
+                     url_ = url;
+                  }
+
+                  // discard either start or end anchor code
+                  tail = pos + hyperlinkMatch.getValue().length();
+               } else if (sgrMatch == null)
                {
                   if (StringUtil.equals(data.substring(tail), "["))
                   {
@@ -668,6 +699,9 @@ public class VirtualConsole
 
          match = match.nextMatch();
       }
+
+      // forget url_
+      url_ = null;
 
       Entry<Integer, ClassRange> last = class_.lastEntry();
       if (last != null)
@@ -800,6 +834,7 @@ public class VirtualConsole
    private AnsiCode ansi_;
    private String partialAnsiCode_;
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
+   private String url_;
 
    // Elements added by last submit call (only if forceNewRange was true)
    private boolean captureNewElements_ = false;
