@@ -3,7 +3,7 @@
 #
 # rstudio-tools.sh -- Bash toolkit used in dependency scripts
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
