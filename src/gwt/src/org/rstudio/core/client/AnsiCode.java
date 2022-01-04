@@ -742,8 +742,9 @@ public class AnsiCode
    public static final Pattern SGR_PARTIAL_ESCAPE_PATTERN = Pattern.create(SGR_PARTIAL_REGEX);
 
    // RegEx to match hyperlinks escape codes
+   // OSC 8 ; [params] ; [url] ; \7
    public static final String HYPERLINK_REGEX = 
-      "\u001b\\]8;([^;]*);(.*)\\a([^\u001b]*)\u001b\\]8;;";
+      "\u001b\\]8;([^;]*);([^\7]*)\7";
 
    // Match hyperlink
    public static final Pattern HYPERLINK_PATTERN = Pattern.create(HYPERLINK_REGEX);
