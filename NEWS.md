@@ -34,6 +34,11 @@
 * Disable session SSL for Code Server 3.9.3 and support auth changes in Code Server 3.11.0 (Pro #3111)
 * Show user's full name, or proxied auth display name, in Project Sharing presence indicator (Pro #3121)
 
+#### R
+
+* Preliminary support for R graphics engine version 15 in R 4.2.0. (#10058)
+* Default file download method in Windows for R 4.2 and above changed from `wininet` to `libcurl` (#10301)
+
 #### Misc
 
 * Add commands to open selected files in columns or active editor (#7920)
