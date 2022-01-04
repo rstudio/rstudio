@@ -233,6 +233,27 @@ public:
       return obj;
    }
 
+   std::vector<module_context::SourceMarker> findMarkers(std::string path) const
+   {
+      std::vector<module_context::SourceMarker> markers;
+      // replace home alias to home path
+      core::FilePath resolvedPath = core::FilePath::resolveAliasedPath(
+          path, system::User::getUserHomePath());
+
+      for (module_context::SourceMarkerSet markerSet : markerSets_)
+      {
+         for (module_context::SourceMarker marker : markerSet.markers)
+         {
+            if (marker.path == resolvedPath)
+            {
+               markers.push_back(marker);
+            }
+         }
+      }
+
+      return markers;
+   }
+
 private:
    typedef std::vector<module_context::SourceMarkerSet> MarkerSets;
    MarkerSets::const_iterator findSetByName(const std::string& name) const
@@ -469,6 +490,11 @@ void writeSourceMarkers(bool terminatedNormally)
 json::Object markersStateAsJson()
 {
    return sourceMarkers().stateAsJson();
+}
+
+std::vector<module_context::SourceMarker> markersForFile(std::string path)
+{
+   return sourceMarkers().findMarkers(path);
 }
 
 Error initialize()

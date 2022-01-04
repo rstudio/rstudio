@@ -20,8 +20,9 @@
 
 #include "SessionDiagnostics.hpp"
 
-#include "SessionCodeSearch.hpp"
 #include "SessionAsyncPackageInformation.hpp"
+#include "SessionCodeSearch.hpp"
+#include "SessionMarkers.hpp"
 #include "SessionRParser.hpp"
 
 #include <set>
@@ -866,12 +867,45 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
             documentId,
             isExplicit,
             isFragment);
-   
-   pResponse->setResult(lintAsJson(results.lint()));
-   
+
+   std::vector<module_context::SourceMarker> markers =
+       modules::markers::markersForFile(documentPath);
+   LintItems lintItems = results.lint();
+
+   using namespace module_context;
+   for (SourceMarker marker : markers)
+   {
+      LintType markerLintType;
+      switch (marker.type)
+      {
+      case SourceMarker::Type::Error:
+         markerLintType = LintTypeError;
+         break;
+      case SourceMarker::Type::Warning:
+         markerLintType = LintTypeWarning;
+         break;
+      case SourceMarker::Type::Info:
+         markerLintType = LintTypeInfo;
+         break;
+      case SourceMarker::Type::Style:
+         markerLintType = LintTypeStyle;
+         break;
+      default:
+         markerLintType = LintTypeInfo;
+      }
+
+      lintItems.add(marker.line - 1,
+                    marker.column,
+                    marker.line,
+                    marker.column,
+                    markerLintType,
+                    marker.message.text());
+   }
+
+   pResponse->setResult(lintAsJson(lintItems));
+
    if (showMarkersTab)
    {
-      using namespace module_context;
       SourceMarkerSet markers = asSourceMarkerSet(results.lint(),
                                                   core::FilePath(documentPath));
       showSourceMarkers(markers, MarkerAutoSelectNone);
