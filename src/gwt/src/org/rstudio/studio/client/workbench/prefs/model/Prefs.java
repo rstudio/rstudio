@@ -364,7 +364,6 @@ public abstract class Prefs
          super(name, title, description, defaultValue);
          allowedValues_ = values;
          readableValues_ = readableValues;  // Human readable text describing the readable values
-         assert(allowedValues_.length == readableValues_.length);  // DEBUG: Is this a good idea to validate like this?  Probably need to do an explicit throw instead?
       }
 
       @Override
