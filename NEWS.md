@@ -66,9 +66,10 @@
 * Fixed header scrolling in data viewer tables not following table contents in unfocused windows (#8208)
 * Fixed permissions on Mac Desktop application so all user accounts can launch it (#9945, #10267)
 * Fixed logging directory permissions to be more restrictive (775 instead of 777) (#3099)
+* Fixed Duplicate --session-collab-server when launching R session (pro #3106)
 
 ### Breaking
-There are no breaking changes in this release.
+* Remove --session-collab-server and filebase-path (pro #3181)
 
 ### Deprecated / Removed
 There is no deprecated or removed functionality in this release.
