@@ -36,6 +36,7 @@
 
 #### R
 
+* RStudio now supports the experimental UTF-8 UCRT builds of R (#9824)
 * Preliminary support for R graphics engine version 15 in R 4.2.0. (#10058)
 * Default file download method in Windows for R 4.2 and above changed from `wininet` to `libcurl` (#10301)
 
@@ -52,11 +53,6 @@
 * Added support for Amazon Linux 2 (Pro #2474)
 * Treat Alt and Caption fields differently depending on file type (#9713)
 * Fixed shortcut conflict on German keyboard (#9276)
-
-#### R
-
-* RStudio now supports the experimental UTF-8 UCRT builds of R (#9824)
-* Preliminary support for R graphics engine version 15 in R 4.2.0. (#10058)
 
 ### Fixed
 
