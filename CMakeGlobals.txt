@@ -3,7 +3,7 @@
 #
 # CMakeGlobals.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -143,8 +143,13 @@ if(RSTUDIO_NO_DESKTOP)
 endif()
 
 # set session32 if specified
-if(RSTUDIO_TARGET STREQUAL "SessionWin32")
-   set(RSTUDIO_SESSION_WIN32 TRUE)
+if(WIN32)
+   if(RSTUDIO_TARGET STREQUAL "SessionWin32")
+      set(RSTUDIO_SESSION_WIN32 TRUE)
+      add_definitions(-D_X86_)
+   else()
+      add_definitions(-D_AMD64_)
+   endif()
 endif()
 
 # record git revision hash (cache it since we don't use this in development
