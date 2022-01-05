@@ -248,7 +248,7 @@ public class VirtualConsole
       else
       {
          // create a new output range with this class
-         final ClassRange newRange = new ClassRange(cursor_, clazz, text, url_);
+         final ClassRange newRange = new ClassRange(cursor_, clazz, text, hyperlink_);
          appendChild(newRange.element);
          class_.put(cursor_, newRange);
       }
@@ -463,7 +463,7 @@ public class VirtualConsole
          if (cursor_ == output_.length() && !class_.isEmpty())
             appendText(text, clazz, forceNewRange);
          else
-            insertText(new ClassRange(start, clazz, text, url_));
+            insertText(new ClassRange(start, clazz, text, hyperlink_));
       }
 
       output_.replace(start, end, text);
@@ -542,8 +542,7 @@ public class VirtualConsole
       }
 
       int tail = 0;
-      url_ = null;
-
+      
       boolean hyperlink_code = false;
       while (match != null)
       {
@@ -593,13 +592,11 @@ public class VirtualConsole
                Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(data.substring(pos), 0);
                
                if (hyperlinkMatch != null){
-                  String url = hyperlinkMatch.getGroup(2); // group1 is [params] currently unused
-                  if (StringUtil.equals(url, "")) {
-                     // anchor end, forget url_
-                     url_ = null;
+                  String url = hyperlinkMatch.getGroup(2);
+                  if (!StringUtil.equals(url, "")) {
+                     hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1));
                   } else {
-                     // anchor start, remember url_
-                     url_ = url;
+                     hyperlink_ = null;   
                   }
 
                   // discard either start or end anchor code
@@ -723,19 +720,29 @@ public class VirtualConsole
             submit("\n");
       }
    }
+   private class Hyperlink
+   {
+      public Hyperlink(String url, String params) {
+         url_ = url;
+         params_ = params;
+      }
+
+      public String url_;
+      public String params_;
+   }
    private class ClassRange
    {
-      public ClassRange(int pos, String className, String text, String url)
+      public ClassRange(int pos, String className, String text, Hyperlink hyperlink)
       {
          clazz  = className;
          start = pos;
          length = text.length();
-         url_ = url;
+         hyperlink_ = hyperlink;
          element = Document.get().createSpanElement();
-         if (url_ != null) 
+         if (hyperlink_ != null) 
          {
             // for now until we can hook some real behavior
-            element.setAttribute("onclick", "console.log('url = "+url_+"')");
+            element.setAttribute("onclick", "console.log('url = <" + hyperlink_.url_ + ">, params = <" + hyperlink_.params_+ ">')");
 
             // for now, perhaps a dedicated style would be better
             element.addClassName("xtermUnderline");
@@ -807,7 +814,7 @@ public class VirtualConsole
       public int length;
       public int start;
       public final SpanElement element;
-      public final String url_;
+      public final Hyperlink hyperlink_;
    }
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
@@ -823,7 +830,7 @@ public class VirtualConsole
    private AnsiCode ansi_;
    private String partialAnsiCode_;
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
-   private String url_;
+   private Hyperlink hyperlink_;
 
    // Elements added by last submit call (only if forceNewRange was true)
    private boolean captureNewElements_ = false;
