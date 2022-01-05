@@ -39,7 +39,6 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
-import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
