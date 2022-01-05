@@ -14,16 +14,17 @@
  */
 package org.rstudio.studio.client.palette.ui;
 
-import java.util.List;
-
-import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.command.KeyCombination;
-import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
-
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.command.KeyCombination;
+import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.studio.client.palette.PaletteConstants;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+
+import java.util.List;
 
 public abstract class CommandPaletteCommand extends CommandPaletteEntry
 {
@@ -43,13 +44,13 @@ public abstract class CommandPaletteCommand extends CommandPaletteEntry
             {
                KeyCombination combo = combos.get(i);
                if (combo.isCtrlPressed())
-                  appendKey(b, "Ctrl");
+                  appendKey(b, constants_.commandCtrl());
                if (combo.isAltPressed())
-                  appendKey(b, "Alt");
+                  appendKey(b, constants_.commandAlt());
                if (combo.isShiftPressed())
-                  appendKey(b, "Shift");
+                  appendKey(b, constants_.commandShift());
                if (combo.isMetaPressed())
-                  appendKey(b, BrowseCap.hasMetaKey() ? "&#8984;" : "Cmd");
+                  appendKey(b, BrowseCap.hasMetaKey() ? "&#8984;" : constants_.commandCmd());
                appendKey(b, combo.key());
                
                // Is this a multi-key sequence?
@@ -92,6 +93,8 @@ public abstract class CommandPaletteCommand extends CommandPaletteEntry
       b.appendHtmlConstant(key);
       b.appendHtmlConstant("</span>");
    }
+
+   private static final PaletteConstants constants_ = GWT.create(PaletteConstants.class);
 
    private final List<KeySequence> keys_;
    
