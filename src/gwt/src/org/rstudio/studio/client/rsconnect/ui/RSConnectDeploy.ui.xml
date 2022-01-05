@@ -28,23 +28,28 @@
              </g:VerticalPanel>
            </g:ScrollPanel>
            <g:HorizontalPanel>
-               <!--Cannot use ui:msg for ThemedButton-->
                <rw:ThemedButton ui:field="checkUncheckAllButton_"
-                               text="Uncheck All"></rw:ThemedButton>
+                               text="Uncheck All">
+                                <ui:attribute ui:name="text" key="uncheckAllButtonText"/>
+               </rw:ThemedButton>
               <rw:ThemedButton ui:field="addFileButton_" 
                                text="Add More..."
-                               visible="false"></rw:ThemedButton>
+                               visible="false">
+                  <ui:attribute ui:name="text" key="addMoreButtonText"/>
+              </rw:ThemedButton>
            </g:HorizontalPanel>
          </g:VerticalPanel>
          <g:VerticalPanel ui:field="descriptionPanel_"
                           visible="false">
-            <g:Label><ui:msg key="publishText">Publish: </ui:msg></g:Label>
+             <g:Label text="Publish: ">
+                 <ui:attribute name="text" key="publishText"/>
+             </g:Label>
             <g:HTMLPanel styleName="{res.style.fileList} {res.style.descriptionPanel}">
                <rw:DecorativeImage ui:field="descriptionImage_"/>
             </g:HTMLPanel>
-             <!--Cannot use ui:msg for ThemedButton-->
             <rw:ThemedButton ui:field="previewButton_"
                              text="Preview...">
+                <ui:attribute ui:name="text" key="previewText"/>
             </rw:ThemedButton>
          </g:VerticalPanel>
        </g:HTMLPanel>
@@ -53,29 +58,33 @@
       <g:HTMLPanel>
          <g:HorizontalPanel width="100%" ui:field="publishFromPanel_">
             <rw:FormLabel styleName="{res.style.firstControlLabel}"
-                     elementId="{ElementIds.getRscAccountListLabel}"
+                          text="Publish From Account:"
+                          elementId="{ElementIds.getRscAccountListLabel}"
                      ui:field="accountListLabel_">
-                     <ui:msg key="publishFromAccountText">Publish From Account:</ui:msg>
+                <ui:attribute ui:name="text" key="publishFromAccountText"/>
             </rw:FormLabel>
             <rw:HyperlinkLabel styleName="rstudio-HyperlinkLabel {res.style.accountAnchor}"
-                               ui:field="addAccountAnchor_"><ui:msg key="addNewAccountText">Add New Account</ui:msg>
+                               ui:field="addAccountAnchor_" text="Add New Account">
+                <ui:attribute ui:name="text" key="addNewAccountText"/>
             </rw:HyperlinkLabel>
          </g:HorizontalPanel>
          <rsc:RSConnectAccountList styleName="{res.style.accountList}" 
                                    ui:field="accountList_" elementId="{ElementIds.getRscAccountList}">
          </rsc:RSConnectAccountList>
          <g:Label styleName="{res.style.firstControlLabel}"
+                  text="Publish To Account:"
                   ui:field="publishToLabel_">
-                  <ui:msg key="publishToAccountText">Publish To Account:</ui:msg>
+             <ui:attribute name="text" key="publishToAccountText"/>
          </g:Label>
          <g:HTMLPanel styleName="{res.style.accountEntry}" ui:field="accountEntryPanel_">
             <rsc:RSConnectAccountEntry ui:field="accountEntry_">
             </rsc:RSConnectAccountEntry>
          </g:HTMLPanel>
          <g:HTMLPanel ui:field="newAppPanel_">
-            <rw:FormLabel styleName="{res.style.controlLabel}" ui:field="nameLabel_">
-                <ui:msg key="titleText">Title:</ui:msg></rw:FormLabel>
-            <rsc:AppNameTextbox styleName="{res.style.gridControl}" 
+            <rw:FormLabel styleName="{res.style.controlLabel}" ui:field="nameLabel_" text="Title:">
+                <ui:attribute ui:name="text" key="titleText"/>
+            </rw:FormLabel>
+            <rsc:AppNameTextbox styleName="{res.style.gridControl}"
                                 ui:field="appName_">
             </rsc:AppNameTextbox>
          </g:HTMLPanel>
@@ -83,12 +92,12 @@
                       ui:field="appInfoPanel_">
             <g:HorizontalPanel width="100%"
                                styleName="{res.style.controlLabel}">
-               <g:Label>
-                   <ui:msg key="updateText">Update:</ui:msg>
+                <g:Label text="Update:">
+                    <ui:attribute name="text" key="updateText"/>
                </g:Label>
                <rw:HyperlinkLabel stylePrimaryName="rstudio-HyperlinkLabel {res.style.accountAnchor}" 
                                   ui:field="createNewAnchor_" text="Create New">
-                   <ui:msg key="createNewText">Create New</ui:msg>
+                  <ui:attribute ui:name="text" key="createNewText"/>
                </rw:HyperlinkLabel>
             </g:HorizontalPanel>
             <g:HTMLPanel ui:field="appDetailsPanel_" 
@@ -101,7 +110,9 @@
             </g:HTMLPanel>
             <g:HTMLPanel styleName="{res.style.progressPanel}" 
                          ui:field="appProgressPanel_" visible="false">
-               <g:InlineLabel><ui:msg key="lookingUpDetailsText">Looking up details for </ui:msg></g:InlineLabel>
+                <g:InlineLabel text="Looking up details for ">
+                    <ui:attribute name="text" key="lookingUpDetailsText"/>
+                </g:InlineLabel>
                <g:InlineLabel styleName="{res.style.statusLabel}" 
                               ui:field="appProgressName_"></g:InlineLabel>
                <g:InlineLabel text="..."></g:InlineLabel>

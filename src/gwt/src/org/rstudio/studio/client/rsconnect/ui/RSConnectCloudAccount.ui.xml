@@ -32,7 +32,8 @@
          <p><ui:msg key="showTokenText">Click <b>Show</b> on the token you want to use, then <b>Show Secret</b> and <b>Copy to Clipboard.</b> Paste the result here:</ui:msg></p>
      </g:HTML>
      <rw:FormTextArea styleName="{style.accountInfo} {style.spaced}"
-                 ui:field="accountInfo" visibleLines="5" ariaLabel="ShinyApps Token and Secret">  <!--This label cannot use <ui:msg>-->
+                 ui:field="accountInfo" visibleLines="5" ariaLabel="ShinyApps Token and Secret">
+         <ui:attribute ui:name="ariaLabel" key="shinyAppsAriaLabelText"/>
      </rw:FormTextArea>
      <g:HTML>
         <small>

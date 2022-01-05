@@ -18,8 +18,9 @@
    </ui:style>
    <g:HTMLPanel>
      <g:HTMLPanel ui:field="waitingPanel_">
-        <g:Label styleName="{style.headerLabel}">
-            <ui:msg key="waitingAuthenticationText">Waiting for Authentication</ui:msg>
+         <g:Label styleName="{style.headerLabel}"
+                  text="Waiting for Authentication">
+             <ui:attribute name="text" key="waitingAuthenticationText"/>
         </g:Label>
          <g:HTML>
             <p>
@@ -29,8 +30,9 @@
          <g:Anchor ui:field="claimLink_" target="_blank"></g:Anchor>
       </g:HTMLPanel>
      <g:HTMLPanel ui:field="successPanel_" visible="false">
-        <g:Label styleName="{style.headerLabel}">
-            <ui:msg key="accountVerifiedText">Account Verified</ui:msg>
+        <g:Label styleName="{style.headerLabel}"
+                 text="Account Verified">
+            <ui:attribute name="text" key="accountVerifiedText" />
         </g:Label>
          <g:HTML>
             <p>
@@ -43,9 +45,9 @@
                  ui:field="errorHeader_"></g:Label>
         <g:Label styleName="{style.spaced}" 
                  ui:field="errorMessage_"></g:Label>
-         <!--Cannot use ui:msg for ThemedButton-->
         <rs:ThemedButton ui:field="tryAgainButton_" 
                          text="Try Again">
+            <ui:attribute ui:name="text" key="tryAgainText"/>
         </rs:ThemedButton>
       </g:HTMLPanel>
    </g:HTMLPanel>

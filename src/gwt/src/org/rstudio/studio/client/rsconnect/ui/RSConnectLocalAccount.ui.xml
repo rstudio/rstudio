@@ -34,14 +34,18 @@
     </ui:style>
     <g:HTMLPanel>
         <g:VerticalPanel>
-         <rsw:FormLabel for="{ElementIds.getRscServerUrl}"> <ui:msg key="enterPublicURLText">Enter the public URL of the RStudio Connect server:</ui:msg></rsw:FormLabel>
+         <rsw:FormLabel for="{ElementIds.getRscServerUrl}"
+                        text="Enter the public URL of the RStudio Connect server:">
+             <ui:attribute ui:name="text" key="enterPublicURLText"/>
+         </rsw:FormLabel>
          <rsw:TextBoxWithCue styleName="{style.textControl}"
                              cueText="servername.com:3939"
                              width="250px"
                              elementId="{ElementIds.getRscServerUrl}" 
                              ui:field="serverUrl_"/>
-         <g:Label styleName="{style.spaced} {style.explanatoryText}">
-             <ui:msg key="contactAdminText">Contact your RStudio Connect server administrator if you need its URL.</ui:msg>
+         <g:Label styleName="{style.spaced} {style.explanatoryText}"
+             text="Contact your RStudio Connect server administrator if you need its URL.">
+             <ui:attribute name="text" key="contactAdminText"/>
          </g:Label>
          <rsc:HelpLink caption="About RStudio Connect" 
                        link="rstudio_connect"
