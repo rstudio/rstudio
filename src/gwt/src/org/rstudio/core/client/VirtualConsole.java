@@ -31,7 +31,6 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -737,6 +736,9 @@ public class VirtualConsole
          {
             // for now until we can hook some real behavior
             element.setAttribute("onclick", "console.log('url = "+url_+"')");
+
+            // for now, perhaps a dedicated style would be better
+            element.addClassName("xtermUnderline");
          }
          
          if (className != null)
