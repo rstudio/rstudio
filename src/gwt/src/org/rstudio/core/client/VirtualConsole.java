@@ -31,10 +31,12 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
 
@@ -741,8 +743,10 @@ public class VirtualConsole
          element = Document.get().createSpanElement();
          if (hyperlink_ != null) 
          {
-            // for now until we can hook some real behavior
-            element.setAttribute("onclick", "console.log('url = <" + hyperlink_.url_ + ">, params = <" + hyperlink_.params_+ ">')");
+            Event.sinkEvents(element, Event.ONCLICK);
+            Event.setEventListener(element, event -> {
+               GWT.log("!!! url = <" + hyperlink_.url_ + ">, params = <" + hyperlink_.params_+ ">'");
+            });
 
             // for now, perhaps a dedicated style would be better
             element.addClassName("xtermUnderline");
