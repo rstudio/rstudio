@@ -2554,7 +2554,8 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addJsonRpcHandler("console_follow_hyperlink", function(url, link_params){
+.rs.addJsonRpcHandler("console_follow_hyperlink", function(url, linkParams)
+{
    utils::browseURL(url)
 })
 
