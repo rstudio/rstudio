@@ -30,10 +30,11 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
@@ -248,7 +249,7 @@ public class VirtualConsole
       else
       {
          // create a new output range with this class
-         final ClassRange newRange = new ClassRange(cursor_, clazz, text);
+         final ClassRange newRange = new ClassRange(cursor_, clazz, text, url_);
          appendChild(newRange.element);
          class_.put(cursor_, newRange);
       }
@@ -401,7 +402,8 @@ public class VirtualConsole
                ClassRange remainder = new ClassRange(
                      end,
                      overlap.clazz,
-                     text.substring((text.length() - (amountTrimmed - range.length))));
+                     text.substring((text.length() - (amountTrimmed - range.length))), 
+                     null); // TODO: not sure about this
                insertions.add(remainder);
                if (parent_ != null)
                   range.element.getParentElement().insertAfter(remainder.element, range.element);
@@ -462,34 +464,7 @@ public class VirtualConsole
          if (cursor_ == output_.length() && !class_.isEmpty())
             appendText(text, clazz, forceNewRange);
          else
-            insertText(new ClassRange(start, clazz, text));
-      }
-
-      output_.replace(start, end, text);
-      cursor_ += text.length();
-   }
-
-   private void link(String text, String url, String clazz) {
-      if (newText_ != null)
-         newText_.append(text);
-
-      int start = cursor_;
-      int end = cursor_ + text.length();
-
-      // real-time output if we have a parent
-      if (parent_ != null)
-      {
-         // FIXME: this is temporary, and does not play well with the 
-         //        ClassRange stack stuff, maybe ClassRange should be also able
-         //        to emit AnchorElement. 
-
-         AnchorElement anchor = Document.get().createAnchorElement();
-
-         // maybe this should rather use <span onclick=""> rather than <a>
-         anchor.setHref(url);
-         anchor.setInnerText(text);
-         anchor.setTitle(url);
-         appendChild(anchor);
+            insertText(new ClassRange(start, clazz, text, url_));
       }
 
       output_.replace(start, end, text);
@@ -568,22 +543,25 @@ public class VirtualConsole
       }
 
       int tail = 0;
+      url_ = null;
+
+      boolean hyperlink_code = false;
       while (match != null)
       {
          int pos = match.getIndex();
-
          // If we passed over any plain text on the way to this control
          // character, add it.
          if (tail != pos)
          {
-            if (url_ != null) {
-               link(data.substring(tail, pos), url_, currentClazz);
-            } else {
-               text(data.substring(tail, pos), currentClazz, forceNewRange);
-            }
+            // force a new range when an hyperlink opens or closes
+            if (hyperlink_code) forceNewRange = true;
+
+            text(data.substring(tail, pos), currentClazz, forceNewRange);
+
             // once we've started a new range, rest of output for this submit
             // call should share that range (e.g. a multi-line error message)
-            forceNewRange = false;
+            // unless the previous code is hyperlink (open or close)
+            if (!hyperlink_code) forceNewRange = false;
          }
 
          tail = pos + 1;
@@ -612,14 +590,12 @@ public class VirtualConsole
 
                // match hyperlink, either start or end (if [url] is empty
                // <ESC> ] 8 ; [params] ; [url] \7
-               Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(data, pos);
-
-               // match complete SGR codes
-               Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
-
+               
+               Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(data.substring(pos), 0);
+               
                if (hyperlinkMatch != null){
-                  String url = hyperlinkMatch.getGroup(2);
-                  if (url == null) {
+                  String url = hyperlinkMatch.getGroup(2); // group1 is [params] currently unused
+                  if (StringUtil.equals(url, "")) {
                      // anchor end, forget url_
                      url_ = null;
                   } else {
@@ -629,7 +605,13 @@ public class VirtualConsole
 
                   // discard either start or end anchor code
                   tail = pos + hyperlinkMatch.getValue().length();
-               } else if (sgrMatch == null)
+                  hyperlink_code = true;
+                  break;
+               }
+               
+               // match complete SGR codes
+               Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
+               if (sgrMatch == null)
                {
                   if (StringUtil.equals(data.substring(tail), "["))
                   {
@@ -700,9 +682,6 @@ public class VirtualConsole
          match = match.nextMatch();
       }
 
-      // forget url_
-      url_ = null;
-
       Entry<Integer, ClassRange> last = class_.lastEntry();
       if (last != null)
       {
@@ -713,7 +692,7 @@ public class VirtualConsole
       // If there was any plain text after the last control character, add it
       if (tail < data.length())
          text(data.substring(tail), currentClazz, forceNewRange);
-
+         
       if (wasAtBottom && isVirtualized())
          VirtualScrollerManager.scrollToBottom(parent_.getParentElement());
    }
@@ -747,12 +726,19 @@ public class VirtualConsole
    }
    private class ClassRange
    {
-      public ClassRange(int pos, String className, String text)
+      public ClassRange(int pos, String className, String text, String url)
       {
          clazz  = className;
          start = pos;
          length = text.length();
+         url_ = url;
          element = Document.get().createSpanElement();
+         if (url_ != null) 
+         {
+            // for now until we can hook some real behavior
+            element.setAttribute("onclick", "console.log('url = "+url_+"')");
+         }
+         
          if (className != null)
             element.addClassName(clazz);
          element.setInnerText(text);
@@ -819,6 +805,7 @@ public class VirtualConsole
       public int length;
       public int start;
       public final SpanElement element;
+      public final String url_;
    }
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
