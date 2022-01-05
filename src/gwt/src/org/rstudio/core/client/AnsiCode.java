@@ -744,7 +744,7 @@ public class AnsiCode
    // RegEx to match hyperlinks escape codes
    // OSC 8 ; [params] ; [url] ; \7
    public static final String HYPERLINK_REGEX = 
-      "\u001b\\]8;([^;]*);([^\7]*)\7";
+      "^\u001b\\]8;([^;]*);([^\7]*)\7";
 
    // Match hyperlink
    public static final Pattern HYPERLINK_PATTERN = Pattern.create(HYPERLINK_REGEX);
