@@ -1,7 +1,7 @@
 /*
  * EditorsTextConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -958,7 +958,7 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      * @return translated "{0} is configured to weave {1} however the {2} package is not installed."
      */
     @DefaultMessage("{0} is configured to weave {1} however the {2} package is not installed.")
-    @Key("{0} is configured to weave {1} however the {2} package is not installed.")
+    @Key("checkCompilersRnWPackageNotInstalled")
     String checkCompilersRnWPackageNotInstalled(String fRnWname, String forcontext, String fRnWPackage);
 
     /**
@@ -1012,7 +1012,7 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
      * @return translated "Unknown Rnw weave method ''{0}'' specified (valid types are {1})"
      */
     @DefaultMessage("Unknown Rnw weave method ''{0}'' specified (valid types are {1})")
-    @Key("Unknown Rnw weave method ''{0}'' specified (valid types are {1})")
+    @Key("checkCompilersRnWWeaveTypeError")
     String checkCompilersRnWWeaveTypeError(String directiveName, String typeNames);
 
     /**
@@ -2040,4 +2040,76 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("Print Frame")
     @Key("printFrame")
     String printFrame();
+
+    /**
+     * Translated "visual".
+     *
+     * @return translated "visual"
+     */
+    @DefaultMessage("Visual")
+    @Key("Visual")
+    String visual();
+
+    /**
+     * Translated "Markdown editing tools".
+     *
+     * @return translated "Markdown editing tools"
+     */
+    @DefaultMessage("Markdown editing tools")
+    @Key("markdownEditingTools")
+    String markdownEditingTools();
+
+    /**
+     * Translated "Compiling C/C++ code for R".
+     *
+     * @return translated "Compiling C/C++ code for R"
+     */
+    @DefaultMessage("Compiling C/C++ code for R")
+    @Key("compilingCode")
+    String compilingCode();
+
+    /**
+     * Translated "Running shiny documents".
+     *
+     * @return translated "Running shiny documents"
+     */
+    @DefaultMessage("Running shiny documents")
+    @Key("runningShinyDocuments")
+    String runningShinyDocuments();
+
+    /**
+     * Translated "Compiling notebooks from R scripts".
+     *
+     * @return translated "Compiling notebooks from R scripts"
+     */
+    @DefaultMessage("Compiling notebooks from R scripts")
+    @Key("compilingNotebooks")
+    String compilingNotebooks();
+
+    /**
+     * Translated "Rendering R Markdown documents".
+     *
+     * @return translated "Rendering R Markdown documents"
+     */
+    @DefaultMessage("Rendering R Markdown documents")
+    @Key("renderingR")
+    String renderingR();
+
+    /**
+     * Translated "Specifying Knit parameters".
+     *
+     * @return translated "Specifying Knit parameters"
+     */
+    @DefaultMessage("Specifying Knit parameters")
+    @Key("specifyingKnit")
+    String specifyingKnit();
+
+    /**
+     * Translated "Creating R Markdown documents".
+     *
+     * @return translated "Creating R Markdown documents"
+     */
+    @DefaultMessage("Creating R Markdown documents")
+    @Key("creatingRMarkdown")
+    String creatingRMarkdown();
 }

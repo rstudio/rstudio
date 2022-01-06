@@ -1,7 +1,7 @@
 /*
  * FilesList.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -207,7 +207,7 @@ public class FilesList extends Composite
             }
          };
       nameColumn.setSortable(true);
-      filesDataGrid_.addColumn(nameColumn, "Name");
+      filesDataGrid_.addColumn(nameColumn, constants_.nameHeaderText());
 
       sortHandler_.setComparator(nameColumn, new FilesListComparator() {
          @Override

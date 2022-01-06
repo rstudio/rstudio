@@ -1,7 +1,7 @@
 /*
  * VisualModeChunk.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -727,6 +727,7 @@ public class VisualModeChunk
          editor.setFileType(FileTypeRegistry.C);
          break;
       case "cpp":
+      case "rcpp":
          editor.setFileType(FileTypeRegistry.CPP);
          break;
       case "sql":

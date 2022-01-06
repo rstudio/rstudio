@@ -49,12 +49,6 @@
    background-color: THEME_DARK_ROW_FOCUSED;
 }
 
-@if user.agent ie8 {
-   .selectedRow {
-      background-color: rgb(146, 193, 240)
-   }
-}
-
 .headerRow td {
    font-weight: bold;
    padding: 2px 2px 2px 3px;

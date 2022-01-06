@@ -1,7 +1,7 @@
 /*
  * link-auto.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,10 +28,35 @@ export function linkInputRules(autoLink: boolean, headingLink: boolean) {
       markInputRule(/(?:(?:^|[^`])<)(https?:\/\/[^>]+)(?:>)$/, schema.marks.link, filter, (match: string[]) => ({
         href: match[1],
       })),
-      // full markdown link
-      markInputRule(/(?:\[)([^\]]+)(?:\]\()([^)]+)(?:\))$/, schema.marks.link, filter, (match: string[]) => ({
-        href: match[2],
-      })),
+       // full markdown link
+      new InputRule(/(?:\[)([^\]]+)(?:\]\()([^)]+)(?:\))$/, (state: EditorState, match: string[], start: number, end: number) => {
+        if (!filter(state, start, end)) {
+          return null;
+        }
+    
+        // remove any leading delimter (modulo spaces)
+        const textIndex = match[0].indexOf(match[1]);
+        const prefix = match[0].substring(0, textIndex).replace(/^\s/, "");
+        const delimStart = start + textIndex - prefix.length;
+        const tr = state.tr;
+        tr.delete(delimStart, delimStart + prefix.length);
+    
+        // create mark
+        const attrs = { href: match[2] };
+        const mark = schema.marks.link.create(attrs);
+    
+        // apply it to the matching core text
+        const markStart = start + textIndex - prefix.length;
+        tr.addMark(markStart, markStart + match[1].length, mark);
+        tr.removeStoredMark(mark); // Do not continue with mark.
+    
+        // remove any remaining text
+        const remainStart = markStart + match[1].length;
+        tr.delete(remainStart, end);
+        setTextSelection(remainStart)(tr);
+    
+        return tr;
+      })
     ];
 
     if (autoLink) {

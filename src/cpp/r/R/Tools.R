@@ -1,7 +1,7 @@
 #
 # Tools.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -1357,18 +1357,22 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
    rendered <- sprintf(template, rstudioVersion, rstudioEdition, osVersion, rVersion, rInfoText)
    
-   # try to copy the text to the clipboard, or print it out and tell the user
-   # to do so
-   if (rstudioInfo$mode == "desktop" && requireNamespace("clipr", quietly = TRUE)) {
-      clipr::write_clip(rendered)
+   if (rstudioInfo$mode == "desktop") {
+      
+      # on desktop, we copy the text directly to the clipboard
+      text <- paste(rendered, collapse = "\n")
+      .Call("rs_clipboardSetText", text, PACKAGE = "(embedding)")
+      
       writeLines(.rs.heredoc("
          * The bug report template has been written to the clipboard.
          * Please paste the clipboard contents into the issue comment section,
          * and then fill out the rest of the issue details.
          *
       "))
+      
    } else {
       
+      # on server, we ask the user to copy the text to the clipboard
       header <- .rs.heredoc("
          <!--
          Please copy the following text to your clipboard,
@@ -1376,11 +1380,13 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
          -->
       ")
       
+      # write generated text to file, then open it in an editor
       text <- c(header, "", rendered)
       file <- tempfile("rstudio-bug-report-", fileext = ".html")
       on.exit(unlink(file), add = TRUE)
       writeLines(text, con = file)
       utils::file.edit(file)
+
    }
    
    # if 'pro' wasn't supplied, then try to guess based on the running edition
@@ -1394,8 +1400,8 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       "https://github.com/rstudio/rstudio/issues/new"
    }
    
-   # let the user know we're about to navigate away
-   fmt <- "* Navigating to '%s' in 3 seconds ..."
+   # notify the user
+   fmt <- " * Navigating to '%s' in 3 seconds ... "
    msg <- sprintf(fmt, url)
    writeLines(msg)
    Sys.sleep(3)

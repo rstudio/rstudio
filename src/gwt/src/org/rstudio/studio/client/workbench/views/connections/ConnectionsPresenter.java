@@ -1,7 +1,7 @@
 /*
  * ConnectionsPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -30,6 +30,7 @@ import org.rstudio.core.client.ListUtil;
 import org.rstudio.core.client.ListUtil.FilterPredicate;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -352,7 +353,7 @@ public class ConnectionsPresenter extends BasePresenter
      
       if (connectVia == ConnectionOptions.CONNECT_COPY_TO_CLIPBOARD)
       {
-         DomUtils.copyCodeToClipboard(connectCode);
+         Clipboard.setText(connectCode);
       }
       else if (connectVia == ConnectionOptions.CONNECT_R_CONSOLE)
       {

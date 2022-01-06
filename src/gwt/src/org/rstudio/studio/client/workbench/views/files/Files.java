@@ -1,7 +1,7 @@
 /*
  * Files.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -686,7 +687,7 @@ public class Files
 
    void onCopyFilesPaneCurrentDirectory()
    {
-      DomUtils.copyCodeToClipboard(currentPath_.getPath());
+      Clipboard.setText(currentPath_.getPath());
    }
 
    /**

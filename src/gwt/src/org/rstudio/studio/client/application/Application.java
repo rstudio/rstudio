@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,6 +46,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DocumentEx;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -158,7 +159,8 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(FileUploadEvent.TYPE, this);
       events.addHandler(AriaLiveStatusEvent.TYPE, this);
-
+      events.addHandler(ClipboardActionEvent.TYPE, this);
+      
       // register for uncaught exceptions
       uncaughtExHandler.register();
    }
@@ -431,7 +433,29 @@ public class Application implements ApplicationEventHandlers
       if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs, event.getSeverity()))
          view_.reportStatus(event.getMessage(), delayMs, event.getSeverity());
    }
-
+   
+   @Override
+   public void onClipboardAction(ClipboardActionEvent event)
+   {
+      ClipboardActionEvent.Data data = event.getData();
+      
+      switch (data.getType())
+      {
+      
+      case SET:
+      {
+         Clipboard.setText(data.getText());
+         return;
+      }
+      
+      default:
+      {
+         Debug.log("Unimplemented clipboard action '" + data.getText() + "'");
+      }
+      
+      }
+   }
+   
    @Override
    public void onServerOffline(ServerOfflineEvent event)
    {

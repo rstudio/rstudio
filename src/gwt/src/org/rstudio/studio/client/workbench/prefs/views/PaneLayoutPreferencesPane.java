@@ -1,7 +1,7 @@
 /*
  * PaneLayoutPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -149,7 +149,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          ArrayList<String> value = new ArrayList<>();
          for (CheckBox checkBox : checkBoxes_)
          {
-            if (checkBox.getValue())
+            if (checkBox.getValue() && !StringUtil.equals(checkBox.getText(), "Presentation"))
                value.add(checkBox.getText());
          }
          return value;

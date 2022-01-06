@@ -1,7 +1,7 @@
 /*
  * UIConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -105,6 +105,15 @@ public interface UIConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("You can''t add more than {0} columns.")
     @Key("cannotAddMoreColumnsText")
     String cannotAddMoreColumnsText(int maxColumnCount);
+
+    /**
+     * Translated "Close".
+     *
+     * @return translated "Close"
+     */
+    @DefaultMessage("Close")
+    @Key("closeText")
+    String closeText();
 
 
 }

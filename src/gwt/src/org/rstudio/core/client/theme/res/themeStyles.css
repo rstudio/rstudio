@@ -1473,6 +1473,10 @@ body.windows .toolbar {
    margin-left: 1px;
 }
 
+.rstudio-themes-dark .header .toolbarButtonMenu .toolbarButtonInfoLabel {
+   color: #DDD;
+}
+
 .emptyProjectMenu .toolbarButtonRightImage {
    margin-left: 4px;
 }

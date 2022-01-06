@@ -1,7 +1,7 @@
 /*
  * NewQuartoDocumentDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -201,7 +201,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       kernelSelect_ = createListBox(kernelDisplayNames, kernelNames);
       setListBoxValue(kernelSelect_, lastResult_.getKernel());
       
-      Label editorLabel = createLabel("Editor:");
+      Label editorLabel = createLabel(constants_.editorText());
       editorCheckBox_ = new QuartoVisualEditorCheckBox();
       
       // use project default if available, otherwise use last result

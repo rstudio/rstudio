@@ -1,7 +1,7 @@
 /*
  * DataImport.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -259,7 +260,7 @@ public class DataImport extends Composite
          dataImportResources_.copyImage2x()));
       btn.addClickHandler(clickEvent ->
       {
-         DomUtils.copyCodeToClipboard(codePreview_);
+         Clipboard.setText(codePreview_);
       });
       return btn;
    }

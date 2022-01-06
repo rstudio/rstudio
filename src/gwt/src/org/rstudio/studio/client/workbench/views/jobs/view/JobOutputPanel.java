@@ -1,7 +1,7 @@
 /*
  * JobOutputPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
 import org.rstudio.studio.client.common.compile.CompilePanel;
@@ -37,6 +38,7 @@ public class JobOutputPanel extends Composite
    {
       output_ = new CompilePanel(new CompileOutputBufferWithHighlight());
       output_.setHeight("100%");
+      ElementIds.assignElementId(output_.asWidget(), ElementIds.JOB_LAUNCHER_OUTPUT_PANEL);
 
       initWidget(uiBinder.createAndBindUi(this));
       

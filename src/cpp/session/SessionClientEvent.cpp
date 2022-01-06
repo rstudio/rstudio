@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -211,6 +211,7 @@ const int kConsoleActivate = 193;
 const int kJobsActivate = 194;
 const int kPresentationPreview = 195;
 const int kSuspendBlocked = 196;
+const int kClipboardAction = 197;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -588,6 +589,8 @@ std::string ClientEvent::typeName() const
          return "presentation_preview";
       case client_events::kSuspendBlocked:
          return "session_suspend_blocked";
+	  case client_events::kClipboardAction:
+		 return "clipboard_action";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

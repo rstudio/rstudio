@@ -1,7 +1,7 @@
 /*
  * RsconnectConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -841,8 +841,8 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
      * @return translated "documents"
      */
     @DefaultMessage("documents")
-    @Key("documentsLowercase")
-    String documentsLowercase();
+    @Key("documentsLowercasePlural")
+    String documentsLowercasePlural();
 
     /**
      * Translated "document".
@@ -1428,4 +1428,22 @@ public interface RsconnectConstants extends com.google.gwt.i18n.client.Messages{
     @DefaultMessage("Reconnect Account")
     @Key("reconnectAccount")
     String reconnectAccount();
+
+    /**
+     * Translated "Publishing content".
+     *
+     * @return translated "Publishing content"
+     */
+    @DefaultMessage("Publishing content")
+    @Key("publishingContentLabel")
+    String publishingContentLabel();
+
+    /**
+     * Translated "Publish Wizard".
+     *
+     * @return translated "Publish Wizard"
+     */
+    @DefaultMessage("Publish Wizard")
+    @Key("publishWizardLabel")
+    String publishWizardLabel();
 }

@@ -3,7 +3,7 @@
 #
 # build.xml
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -165,6 +165,7 @@
          <arg line="-gen gen"/>
          <!--<arg line="-style PRETTY"/>-->
          <arg line="-extra ${extras.dir}"/>
+         <arg line="-deploy ${extras.dir}"/>
          <arg line="${gwt.extra.args}"/>
          <arg value="-generateJsInteropExports"/>
          <!-- Additional arguments like -logLevel DEBUG -->

@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -875,7 +875,7 @@ public class Source implements InsertSourceEvent.Handler,
    public void onNewRNotebook()
    {
       dependencyManager_.withRMarkdown(constants_.rNotebook(),
-         "Create R Notebook", new CommandWithArg<Boolean>()
+         constants_.createRNotebookText(), new CommandWithArg<Boolean>()
          {
             @Override
             public void execute(Boolean succeeded)
@@ -1215,7 +1215,7 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onNewRShinyApp()
    {
-      dependencyManager_.withShiny("Creating Shiny applications", new Command()
+      dependencyManager_.withShiny(constants_.creatingShinyApplicationsText(), new Command()
       {
          @Override
          public void execute()
@@ -1306,7 +1306,7 @@ public class Source implements InsertSourceEvent.Handler,
    public void onNewRPresentationDoc()
    {
       dependencyManager_.withRMarkdown(
-         "Authoring R Presentations", new Command() {
+         constants_.authoringRPresentationsText(), new Command() {
             @Override
             public void execute()
             {
@@ -1806,7 +1806,7 @@ public class Source implements InsertSourceEvent.Handler,
       else
       {
          dependencyManager_.withRMarkdown(constants_.rNotebook(),
-                                          "Create R Notebook",
+                                          constants_.createRNotebookText(),
                                           newDocCommand);
       }
    }
@@ -1826,7 +1826,7 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onNewRPlumberDoc()
    {
-      dependencyManager_.withRPlumber("Creating R Plumber API", new Command()
+      dependencyManager_.withRPlumber(constants_.creatingRPlumberAPIText(), new Command()
       {
          @Override
          public void execute()

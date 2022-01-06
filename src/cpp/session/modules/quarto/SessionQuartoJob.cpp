@@ -1,7 +1,7 @@
 /*
  * SessionQuartoJob.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,6 +56,7 @@ Error QuartoJob::start()
 
    // callbacks
    core::system::ProcessCallbacks cb;
+   cb.onStarted = boost::bind(&QuartoJob::onStarted, QuartoJob::shared_from_this(), _1);
    cb.onContinue = boost::bind(&QuartoJob::onContinue,
                                QuartoJob::shared_from_this());
    cb.onStdout = boost::bind(&QuartoJob::onStdOut,

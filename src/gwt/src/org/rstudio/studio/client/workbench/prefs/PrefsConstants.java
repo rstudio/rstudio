@@ -1,7 +1,7 @@
 /*
  * PrefsConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -2292,15 +2292,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String useSecurePackageDownloadTitle();
 
     /**
-     * Translated "secure_download".
-     *
-     * @return translated "secure_download"
-     */
-    @DefaultMessage("secure_download")
-    @Key("useSecurePackageTopic")
-    String useSecurePackageTopic();
-
-    /**
      * Translated "Help on secure package downloads for R".
      *
      * @return translated "Help on secure package downloads for R"
@@ -3800,11 +3791,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String markdownPerFileOptionsHelpLink();
 
     /**
-     * Translated "Citation features are available within R Markdown visual mode.".
+     * Translated "Citation features are available within visual editing mode.".
      *
-     * @return translated "Citation features are available within R Markdown visual mode."
+     * @return translated "Citation features are available within visual editing mode."
      */
-    @DefaultMessage("Citation features are available within R Markdown visual mode.")
+    @DefaultMessage("Citation features are available within visual editing mode.")
     @Key("citationsLabel")
     String citationsLabel();
 
@@ -3897,6 +3888,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Citations")
     @Key("tabPanelCitations")
     String tabPanelCitations();
+    
 
     /**
      * Translated "(None)".

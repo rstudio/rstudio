@@ -22,12 +22,6 @@
    background-color: THEME_DARK_ROW_FOCUSED;
 }
 
-@if user.agent ie8 {
-   .selected {
-      background-color: rgb(146, 193, 240)
-   }
-}
-
 .historyTable:focus {
    outline: none;
 }

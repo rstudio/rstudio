@@ -1,7 +1,7 @@
 /*
  * MarkdownToolbar.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,11 +32,11 @@ public class MarkdownToolbar extends SecondaryToolbar implements RequiresResize
 {
    public MarkdownToolbar(Commands commands, ClickHandler visualModeClickHandler)
    {
-      super(true, "Markdown editing tools");
+      super(true, constants_.markdownEditingTools());
       addStyleName(RES.styles().markdownToolbar());
       
       sourceMode_ = new LatchingToolbarButton(
-            "Source", 
+            constants_.source(),
             commands.toggleRmdVisualMode().getTooltip(),
             false,
             null,
@@ -47,7 +47,7 @@ public class MarkdownToolbar extends SecondaryToolbar implements RequiresResize
          addLeftWidget(sourceMode_);
       
       visualMode_ = new LatchingToolbarButton(
-         "Visual", 
+         constants_.visual(),
          commands.toggleRmdVisualMode().getTooltip(),
          false,
          null,
@@ -93,4 +93,5 @@ public class MarkdownToolbar extends SecondaryToolbar implements RequiresResize
    
    private static final Resources RES = GWT.create(Resources.class);
    static { RES.styles().ensureInjected(); }
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

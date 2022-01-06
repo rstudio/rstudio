@@ -1,7 +1,7 @@
 /*
  * NewDirectoryNavigationPage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -86,6 +86,8 @@ public class NewDirectoryNavigationPage
       if (sessionInfo.getQuartoConfig().enabled) {
          pages.add(new NewQuartoDefaultProjectPage());
          pages.add(new NewQuartoWebsiteProjectPage());
+         // blog commented out until quarto blogs are available in cll
+         // pages.add(new NewQuartoBlogProjectPage());
          pages.add(new NewQuartoBookProjectPage());
       }
       

@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -128,6 +128,7 @@
 #include "modules/SessionAuthoring.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionHTMLPreview.hpp"
+#include "modules/SessionClipboard.hpp"
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
@@ -551,6 +552,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::crypto::initialize)
 #endif
       (modules::code_search::initialize)
+      (modules::clipboard::initialize)
       (modules::clang::initialize)
       (modules::connections::initialize)
       (modules::files::initialize)

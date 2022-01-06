@@ -1,7 +1,7 @@
 /*
  * SessionPersistentState.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -207,6 +207,16 @@ void PersistentState::setReusedSessionProxyPort(const std::string& port)
 {
    if (session::options().getBoolOverlayOption(kLauncherSessionOption))
       sessionSettings_.set("reusedSessionProxyPort", port);
+}
+
+std::string PersistentState::userDisplayName() const
+{
+   return settings_.get("displayName", "");
+}
+
+void PersistentState::setUserDisplayName(const std::string& name)
+{
+   settings_.set("displayName", name);
 }
 
 } // namespace session

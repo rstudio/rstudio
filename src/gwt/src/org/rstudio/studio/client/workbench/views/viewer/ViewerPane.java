@@ -1,7 +1,7 @@
 /*
  * ViewerPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -238,7 +238,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public void previewQuarto(String url, QuartoNavigate quartoNav)
    {
       rmdPreviewParams_ = null;
-      navigate(url, false);
+      navigate(url, false, false);
       quartoConnection_.setQuartoUrl(url, quartoNav.isWebsite());
       publishButton_.setManuallyHidden(false);
       if (quartoNav.isWebsite())
@@ -428,6 +428,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
    private void navigate(String url, boolean useRawURL)
    {
+      navigate(url, useRawURL, !useRawURL);
+   }
+   
+   private void navigate(String url, boolean useRawURL, boolean viewerPaneParam)
+   {
       // save the unmodified URL for pop-out
       unmodifiedUrl_ = url;
 
@@ -452,9 +457,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
           !unmodifiedUrl_.equals(URIConstants.ABOUT_BLANK) &&
           !useRawURL)
       {
-         String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_,
-                                                   "viewer_pane",
-                                                   "1");
+         String viewerUrl = unmodifiedUrl_;
+         if (viewerPaneParam)
+         {
+            viewerUrl = URIUtils.addQueryParam(viewerUrl, "viewer_pane", "1");
+         }
 
          viewerUrl = URIUtils.addQueryParam(viewerUrl,
                                             "capabilities",

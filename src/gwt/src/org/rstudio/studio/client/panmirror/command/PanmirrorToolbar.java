@@ -1,7 +1,7 @@
 /*
  * PanmirrorToolbar.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,14 +54,14 @@ public class PanmirrorToolbar implements RequiresResize
       for (int i = toolbarPanel_.getWidgetCount() - 1; i >= 0; i--)
          toolbarPanel_.remove(i);
 
-      PanmirrorToolbarRadioMenu blockMenu = createBlockMenu();
-      addLeftTextMenu(addRadioMenu(blockMenu));
-
-      addLeftSeparator();
 
       formatWidgets_ = addWidgetGroup(addLeftButton(PanmirrorCommands.Strong),
             addLeftButton(PanmirrorCommands.Em), addLeftButton(PanmirrorCommands.Code),
             addLeftSeparator());
+      
+      PanmirrorToolbarRadioMenu blockMenu = createBlockMenu();
+      addLeftTextMenu(addRadioMenu(blockMenu));
+      addLeftSeparator();
 
       blockWidgets_ = addWidgetGroup(addLeftButton(PanmirrorCommands.BulletList),
             addLeftButton(PanmirrorCommands.OrderedList), addLeftSeparator());

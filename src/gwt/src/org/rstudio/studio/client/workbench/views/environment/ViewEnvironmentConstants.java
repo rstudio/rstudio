@@ -1,7 +1,7 @@
 /*
  * ViewEnvironmentConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1221,5 +1221,134 @@ public interface ViewEnvironmentConstants extends com.google.gwt.i18n.client.Mes
     @DefaultMessage("Empty pie chart depicting no memory usage")
     @Key("emptyPieChartNoMemoryUsage")
     String emptyPieChartNoMemoryUsage();
+
+    /**
+     * Translated "include".
+     *
+     * @return translated "include"
+     */
+    @DefaultMessage("include")
+    @Key("includeMenuItem")
+    String includeMenuItem();
+
+    /**
+     * Translated "skip".
+     *
+     * @return translated "skip"
+     */
+    @DefaultMessage("skip")
+    @Key("skipMenuItem")
+    String skipMenuItem();
+
+    /**
+     * Translated "only".
+     *
+     * @return translated "only"
+     */
+    @DefaultMessage("only")
+    @Key("onlyMenuItem")
+    String onlyMenuItem();
+
+    /**
+     * Translated "guess".
+     *
+     * @return translated "guess"
+     */
+    @DefaultMessage("guess")
+    @Key("guessMenuItem")
+    String guessMenuItem();
+
+    /**
+     * Translated "character".
+     *
+     * @return translated "character"
+     */
+    @DefaultMessage("character")
+    @Key("characterMenuItem")
+    String characterMenuItem();
+
+    /**
+     * Translated "double".
+     *
+     * @return translated "double"
+     */
+    @DefaultMessage("double")
+    @Key("doubleMenuItem")
+    String doubleMenuItem();
+
+    /**
+     * Translated "integer".
+     *
+     * @return translated "integer"
+     */
+    @DefaultMessage("integer")
+    @Key("integerMenuItem")
+    String integerMenuItem();
+
+    /**
+     * Translated "numeric".
+     *
+     * @return translated "numeric"
+     */
+    @DefaultMessage("numeric")
+    @Key("numericMenuItem")
+    String numericMenuItem();
+
+    /**
+     * Translated "logical".
+     *
+     * @return translated "logical"
+     */
+    @DefaultMessage("logical")
+    @Key("logicalMenuItem")
+    String logicalMenuItem();
+
+    /**
+     * Translated "date".
+     *
+     * @return translated "date"
+     */
+    @DefaultMessage("date")
+    @Key("dateMenuItem")
+    String dateMenuItem();
+
+    /**
+     * Translated "time".
+     *
+     * @return translated "time"
+     */
+    @DefaultMessage("time")
+    @Key("timeMenuItem")
+    String timeMenuItem();
+
+    /**
+     * Translated "dateTime".
+     *
+     * @return translated "dateTime"
+     */
+    @DefaultMessage("dateTime")
+    @Key("dateTimeMenuItem")
+    String dateTimeMenuItem();
+
+    /**
+     * Translated "factor".
+     *
+     * @return translated "factor"
+     */
+    @DefaultMessage("factor")
+    @Key("factorMenuItem")
+    String factorMenuItem();
+
+    /**
+     * Translated "Preparing data import".
+     *
+     * @return translated "Preparing data import"
+     */
+    @DefaultMessage("Preparing data import")
+    @Key("preparingDataImportText")
+    String preparingDataImportText();
+
+
+
 }
 
