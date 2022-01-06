@@ -112,26 +112,26 @@ def s3_upload(type, flavor, os, arch) {
   }
 
   // publish build to dailies page
-  withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+  // withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
-    // derive product
-    def product="${flavor}"
-    if (rstudioVersionSuffix.contains("pro")) {
-        if (product == "desktop") {
-            product = "desktop-pro"
-        } else if (product == "server") {
-            product = "workbench"
-        }
-    }
+  //   // derive product
+  //   def product="${flavor}"
+  //   if (rstudioVersionSuffix.contains("pro")) {
+  //       if (product == "desktop") {
+  //           product = "desktop-pro"
+  //       } else if (product == "server") {
+  //           product = "workbench"
+  //       }
+  //   }
 
-    // publish the build
-    sh "docker/jenkins/publish-build.sh --build ${product}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_PAT} --file ${buildFolder}/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+  //   // publish the build
+  //   sh "docker/jenkins/publish-build.sh --build ${product}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} --pat ${GITHUB_PAT} --file ${buildFolder}/${packageFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
 
-    // publish the installer-less version of the build if we made one
-    if (tarballFile) {
-      sh "docker/jenkins/publish-build.sh --build ${product}/${os}-xcopy --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${renamedTarballFile} --pat ${GITHUB_PAT} --file ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-    }
-  }
+  //   // publish the installer-less version of the build if we made one
+  //   if (tarballFile) {
+  //     sh "docker/jenkins/publish-build.sh --build ${product}/${os}-xcopy --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${renamedTarballFile} --pat ${GITHUB_PAT} --file ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} --version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+  //   }
+  // }
 }
 
 def sentry_upload(type, flavor) {
