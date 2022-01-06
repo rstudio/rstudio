@@ -29,6 +29,8 @@ import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.GWT;
@@ -39,6 +41,7 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
+import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -94,7 +97,14 @@ public class VirtualConsole
       prefs_ = prefs;
       parent_ = parent;
 
+      RStudioGinjector.INSTANCE.injectMembers(this);
+
       VirtualScrollerManager.init();
+   }
+
+   @Inject 
+   private void initialize(ConsoleServerOperations server) {
+      server_ = server;
    }
 
    public void clear()
@@ -745,8 +755,7 @@ public class VirtualConsole
          {
             Event.sinkEvents(element, Event.ONCLICK);
             Event.setEventListener(element, event -> {
-               // TODO: call the RemoteServer.consoleFollowHyperlink([url], [params]) method
-               GWT.log("!!! url = <" + hyperlink_.url_ + ">, params = <" + hyperlink_.params_+ ">'");
+               server_.consoleFollowHyperlink(hyperlink_.url_, text, hyperlink_.params_, new VoidServerRequestCallback());
             });
 
             // for now, perhaps a dedicated style would be better
@@ -845,4 +854,5 @@ public class VirtualConsole
 
    // Injected ----
    private final Preferences prefs_;
+   private ConsoleServerOperations server_;
 }
