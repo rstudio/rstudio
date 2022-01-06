@@ -989,12 +989,21 @@ void RSourceIndexes::update(const boost::shared_ptr<SourceDocument>& pDoc)
    if (!pDoc->canContainRCode())
       return;
 
+   if (!core::thread::isMainThread())
+   {
+      module_context::scheduleDelayedWork(
+                           boost::posix_time::milliseconds(1),
+                           boost::bind(&RSourceIndexes::update, this, pDoc),
+                           false);
+      return;
+   }
+
    // index the source
    std::string code;
    Error error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &code);
    if (error)
    {
-      LOG_ERROR(error);
+      LOG_DEBUG_MESSAGE("Error extracting R code from file: " + error.asString());
       return;
    }
    

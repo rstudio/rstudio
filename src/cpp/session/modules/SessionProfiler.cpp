@@ -80,6 +80,31 @@ void handleProfilerResourceResReq(const http::Request& request,
    pResponse->setCacheableFile(profilerResource, request);
 }
 
+void clearRProfile(const std::string& path, const std::string& htmlLocalPath)
+{
+   if (core::thread::isMainThread())
+   {
+      Error error = r::exec::RFunction(".rs.rpc.clear_profile")
+            .addUtf8Param(path)
+            .addUtf8Param(htmlLocalPath)
+            .call();
+
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+   }
+   else
+   {
+      module_context::scheduleDelayedWork(
+                           boost::posix_time::milliseconds(1),
+                           boost::bind(clearRProfile, path, htmlLocalPath),
+                           false);
+
+   }
+}
+
+
 void onDocPendingRemove(
         boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
@@ -89,16 +114,7 @@ void onDocPendingRemove(
    if (htmlLocalPath.empty() && path.empty())
       return;
 
-   Error error = r::exec::RFunction(".rs.rpc.clear_profile")
-         .addUtf8Param(path)
-         .addUtf8Param(htmlLocalPath)
-         .call();
-
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
+   clearRProfile(path, htmlLocalPath);
 }
 
 Error initialize()

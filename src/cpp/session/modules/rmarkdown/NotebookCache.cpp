@@ -308,6 +308,17 @@ void onDocRenamed(const std::string& oldPath,
 
 void onDocAdded(const std::string& id)
 {
+   if (!core::thread::isMainThread())
+   {
+     // Run later on the main thread since it may need the R runtime to access or hydrate the notebook cache
+      module_context::scheduleDelayedWork(
+                           boost::posix_time::milliseconds(100),
+                           boost::bind(onDocAdded, id),
+                           false);
+
+      return;
+   }
+
    std::string path;
    Error error = source_database::getPath(id, &path);
    if (error)
