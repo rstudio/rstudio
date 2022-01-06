@@ -1,7 +1,7 @@
 /*
  * NewConnectionInstallOdbcPage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,14 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardIntermediatePage;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
@@ -34,7 +36,7 @@ public class NewConnectionInstallOdbcPage
       super(
          info.getName(),
          subTitle,
-         info.getName() + " Installation",
+         constants_.installationPageCaption(info.getName()),
          StringUtil.isNullOrEmpty(info.iconData()) ? null : new ImageResourceUrl(
             new SafeUri()
             {
@@ -137,4 +139,5 @@ public class NewConnectionInstallOdbcPage
    private NewConnectionInstallOdbcHost contents_;
    private NewConnectionInfo info_;
    private ConnectionOptions options_;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * SourceControlPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
@@ -45,6 +46,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class SourceControlPreferencesPane extends PreferencesPane
@@ -61,7 +63,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       res_ = res;
 
       chkVcsEnabled_ = new CheckBox(
-            "Enable version control interface for RStudio projects");
+            constants_.chkVcsEnabledLabel());
       extraSpaced(chkVcsEnabled_);
       add(chkVcsEnabled_);
       chkVcsEnabled_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -72,8 +74,8 @@ public class SourceControlPreferencesPane extends PreferencesPane
 
             globalDisplay.showMessage(
                MessageDialog.INFO,
-               (event.getValue() ? "Enable" : "Disable") + " Version Control",
-               "You must restart RStudio for this change to take effect.");
+               constants_.globalDisplayVC(event.getValue() ? constants_.globalDisplayEnable() : constants_.globalDisplayDisable()),
+               constants_.globalDisplayVCMessage());
          }
       });
 
@@ -89,22 +91,20 @@ public class SourceControlPreferencesPane extends PreferencesPane
                String gitExePath = gitExePathChooser_.getText();
                if (!gitExePath.endsWith("git.exe"))
                {
-                  String message = "The program '" + gitExePath + "'" +
-                     " is unlikely to be a valid git executable.\n" +
-                     "Please select a git executable called 'git.exe'.";
+                  String message = constants_.gitExePathMessage(gitExePath);
 
                   globalDisplay.showMessage(
                         GlobalDisplay.MSG_WARNING,
-                        "Invalid Git Executable",
+                          constants_.gitGlobalDisplay(),
                         message);
                }
             }
          }
       };
 
-      gitExePathLabel_ = new FormLabel("Git executable:");
+      gitExePathLabel_ = new FormLabel(constants_.gitExePathLabel());
       gitExePathChooser_ = new FileChooserTextBox(gitExePathLabel_,
-                                                  "(Not Found)",
+                                                  constants_.gitExePathNotFoundLabel(),
                                                   ElementIds.TextBoxButtonId.GIT,
                                                   false,
                                                   null,
@@ -114,9 +114,9 @@ public class SourceControlPreferencesPane extends PreferencesPane
          addTextBoxChooser(gitExePathLabel_, gitExePathChooser_);
 
       // svn exe path chooser
-      svnExePathLabel_ = new FormLabel("SVN executable:");
+      svnExePathLabel_ = new FormLabel(constants_.svnExePathLabel());
       svnExePathChooser_ = new FileChooserTextBox(svnExePathLabel_,
-                                                  "(Not Found)",
+                                                  constants_.gitExePathNotFoundLabel(),
                                                   ElementIds.TextBoxButtonId.SVN,
                                                   false,
                                                   null,
@@ -125,9 +125,9 @@ public class SourceControlPreferencesPane extends PreferencesPane
          addTextBoxChooser(svnExePathLabel_, svnExePathChooser_);
 
       // terminal path
-      terminalPathLabel_ = new FormLabel("Terminal executable:");
+      terminalPathLabel_ = new FormLabel(constants_.terminalPathLabel());
       terminalPathChooser_ = new FileChooserTextBox(terminalPathLabel_,
-                                                    "(Not Found)",
+                                                    constants_.gitExePathNotFoundLabel(),
                                                     ElementIds.TextBoxButtonId.VCS_TERMINAL,
                                                     false,
                                                     null,
@@ -187,7 +187,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Git/SVN";
+      return constants_.gitSVNPaneHeader();
    }
 
    @Override
@@ -252,4 +252,5 @@ public class SourceControlPreferencesPane extends PreferencesPane
    private FormLabel terminalPathLabel_;
    private TextBoxWithButton terminalPathChooser_;
    private SshKeyWidget sshKeyWidget_;
+   private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

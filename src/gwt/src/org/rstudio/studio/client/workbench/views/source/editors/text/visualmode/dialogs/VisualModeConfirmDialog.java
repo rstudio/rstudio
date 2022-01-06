@@ -1,7 +1,7 @@
 /*
  * VisualModeConfirmDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,13 +28,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class VisualModeConfirmDialog extends ModalDialog<Boolean>
 {
    public VisualModeConfirmDialog(OperationWithInput<Boolean> onConfirm,
                                   Operation onCancel)
    {
-      super("Switch to Visual Mode",
+      super(constants_.switchToVisualMode(),
             Roles.getDialogRole(),
             onConfirm,
             onCancel);
@@ -42,9 +43,9 @@ public class VisualModeConfirmDialog extends ModalDialog<Boolean>
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       mainWidget_.addStyleName(VisualModeDialogsResources.INSTANCE.styles().confirmDialog());
 
-      setOkButtonCaption("Use Visual Mode");
+      setOkButtonCaption(constants_.useVisualMode());
 
-      chkDontShowAgain_ = new CheckBox("Don't show this message again");
+      chkDontShowAgain_ = new CheckBox(constants_.dontShowMessageAgain());
       chkDontShowAgain_.setValue(true);
       addLeftWidget(chkDontShowAgain_);
    }
@@ -77,5 +78,5 @@ public class VisualModeConfirmDialog extends ModalDialog<Boolean>
    private Widget mainWidget_;
 
    private CheckBox chkDontShowAgain_;
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

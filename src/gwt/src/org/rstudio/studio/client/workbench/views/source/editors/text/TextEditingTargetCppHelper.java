@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetCppHelper.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -71,7 +71,7 @@ public class TextEditingTargetCppHelper
                   
                   // do a prompted install of the build tools
                   server_.installBuildTools(
-                           "Compiling C/C++ code for R",
+                           constants_.compilingCode(),
                            new SimpleRequestCallback<Boolean>() {
                               @Override
                               public void onResponseReceived(Boolean confirmed)

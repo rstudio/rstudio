@@ -1,7 +1,7 @@
 /*
  * PathBreadcrumbWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -116,6 +116,7 @@ public class PathBreadcrumbWidget
 
          projIcon.addClickHandler(event -> SelectionCommitEvent.fire(PathBreadcrumbWidget.this, projDir));
          projIcon.getImage().addStyleName(RES.styles().project());
+         projIcon.setTitle(constants_.projectIconDesc());
 
          eastFrame_.insert(projIcon, 0);
 

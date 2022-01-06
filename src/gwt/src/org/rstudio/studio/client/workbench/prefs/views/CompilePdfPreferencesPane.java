@@ -1,7 +1,7 @@
 /*
  * CompilePdfPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -28,6 +29,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class CompilePdfPreferencesPane extends PreferencesPane
@@ -40,7 +42,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       res_ = res;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
-      add(headerLabel("PDF Generation"));
+      add(headerLabel(constants_.headerPDFGenerationLabel()));
 
       defaultSweaveEngine_ = new RnwWeaveSelectWidget();
       defaultSweaveEngine_.setValue(
@@ -53,34 +55,32 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       add(defaultLatexProgram_);
 
       Label perProjectLabel = new Label(
-            "NOTE: The Rnw weave and LaTeX compilation options are also set on a " +
-            "per-project (and optionally per-file) basis. Click the help " +
-            "icons above for more details.");
+            constants_.perProjectNoteLabel());
 
       perProjectLabel.addStyleName(baseRes.styles().infoLabel());
       nudgeRight(perProjectLabel);
       spaced(perProjectLabel);
       add(perProjectLabel);
 
-      add(headerLabel("LaTeX Editing and Compilation"));
+      add(headerLabel(constants_.perProjectHeaderLabel()));
 
-      chkUseTinytex_ = new CheckBox("Use tinytex when compiling .tex files");
+      chkUseTinytex_ = new CheckBox(constants_.chkUseTinytexLabel());
       spaced(chkUseTinytex_);
       add(chkUseTinytex_);
 
-      chkCleanTexi2DviOutput_ = new CheckBox("Clean auxiliary output after compile");
+      chkCleanTexi2DviOutput_ = new CheckBox(constants_.chkCleanTexi2DviOutputLabel());
       spaced(chkCleanTexi2DviOutput_);
       add(chkCleanTexi2DviOutput_);
 
-      chkEnableShellEscape_ = new CheckBox("Enable shell escape commands");
+      chkEnableShellEscape_ = new CheckBox(constants_.chkEnableShellEscapeLabel());
       spaced(chkEnableShellEscape_);
       add(chkEnableShellEscape_);
 
       add(spaced(checkboxPref(
-            "Insert numbered sections and subsections",
+            constants_.insertNumberedLatexSectionsLabel(),
             prefs_.insertNumberedLatexSections(), false /*defaultSpace*/)));
 
-      Label previewingOptionsLabel = headerLabel("PDF Preview");
+      Label previewingOptionsLabel = headerLabel(constants_.previewingOptionsHeaderLabel());
       previewingOptionsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       add(previewingOptionsLabel);
 
@@ -88,7 +88,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       add(pdfPreview_);
 
       add(spaced(checkboxPref(
-            "Always enable Rnw concordance (required for synctex)",
+            constants_.alwaysEnableRnwConcordanceLabel(),
             prefs_.alwaysEnableRnwConcordance(),
             false /*defaultSpaces*/)));
    }
@@ -98,14 +98,14 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       public PdfPreviewSelectWidget()
       {
          super(
-            "Preview PDF after compile using:",
+            constants_.pdfPreviewSelectWidgetLabel(),
             new String[]{},
             new String[]{},
             false,
             true,
             false);
 
-         HelpButton.addHelpButton(this, "pdf_preview", "Help on previewing PDF files");
+         HelpButton.addHelpButton(this, "pdf_preview", constants_.pdfPreviewHelpButtonTitle());
       }
    }
 
@@ -126,7 +126,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Sweave";
+      return constants_.preferencesPaneTitle();
    }
 
    @Override
@@ -136,19 +136,19 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       chkCleanTexi2DviOutput_.setValue(prefs.cleanTexi2dviOutput().getValue());
       chkEnableShellEscape_.setValue(prefs.latexShellEscape().getValue());
 
-      pdfPreview_.addChoice("(No Preview)", UserPrefs.PDF_PREVIEWER_NONE);
+      pdfPreview_.addChoice(constants_.pdfNoPreviewOption(), UserPrefs.PDF_PREVIEWER_NONE);
 
       String desktopSynctexViewer = SynctexUtils.getDesktopSynctexViewer();
       if (desktopSynctexViewer.length() > 0)
       {
-         pdfPreview_.addChoice(desktopSynctexViewer  + " (Recommended)",
+         pdfPreview_.addChoice(desktopSynctexViewer  + " " + constants_.pdfPreviewSumatraOption(),
                                UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX);
       }
 
-      pdfPreview_.addChoice("RStudio Viewer",
+      pdfPreview_.addChoice(constants_.pdfPreviewRStudioViewerOption(),
                             UserPrefs.PDF_PREVIEWER_RSTUDIO);
 
-      pdfPreview_.addChoice("System Viewer",
+      pdfPreview_.addChoice(constants_.pdfPreviewSystemViewerOption(),
                             UserPrefs.PDF_PREVIEWER_SYSTEM);
 
       pdfPreview_.setValue(prefs_.pdfPreviewer().getValue());
@@ -188,5 +188,6 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    private CheckBox chkCleanTexi2DviOutput_;
    private CheckBox chkEnableShellEscape_;
    private PdfPreviewSelectWidget pdfPreview_;
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 
 }

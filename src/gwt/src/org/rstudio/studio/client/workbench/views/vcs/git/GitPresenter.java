@@ -1,7 +1,7 @@
 /*
  * GitPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.GitHubViewRequest;
@@ -291,9 +293,8 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       else
       {
          globalDisplay_.showMessage(MessageDialog.INFO,
-                                    "No Changes to File",
-                                    "There are no changes to the file \"" +
-                                    file.getName() + "\" to diff.");
+                                    constants_.noChangesToFile(),
+                                    constants_.noChangesToFileToDiff(file.getName()));
       }
 
    }
@@ -319,9 +320,8 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
       else
       {
          globalDisplay_.showMessage(MessageDialog.INFO,
-                                    "No Changes to Revert",
-                                    "There are no changes to the file \"" +
-                                    file.getName() + "\" to revert.");
+                                    constants_.noChangesToRevert(),
+                                    constants_.noChangesToFileToRevert(file.getName()));
       }
 
 
@@ -330,12 +330,10 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    private void doRevert(final ArrayList<String> revertList,
                          final Command onRevertConfirmed)
    {
-      String noun = revertList.size() == 1 ? "file" : "files";
       globalDisplay_.showYesNoMessage(
             GlobalDisplay.MSG_WARNING,
-            "Revert Changes",
-            "Changes to the selected " + noun + " will be lost, including " +
-            "staged changes.\n\nAre you sure you want to continue?",
+            constants_.revertChangesCapitalized(),
+            revertList.size() == 1 ? constants_.changesToFileWillBeLost() : constants_.changesToFileWillBeLostPlural(),
             new Operation()
             {
                @Override
@@ -346,7 +344,7 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
 
                   server_.gitRevert(
                         revertList,
-                        new SimpleRequestCallback<>("Revert Changes"));
+                        new SimpleRequestCallback<>(constants_.revertChangesCapitalized()));
 
                }
             },
@@ -373,10 +371,8 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
             if (url.length() == 0)
             {
                globalDisplay_.showErrorMessage(
-                     "Error",
-                     "Unable to view " + path + " on GitHub.\n\n" +
-                     "Are you sure that this file is on GitHub and is " +
-                     "contained in the currently active project?");
+                     constants_.errorCapitalized(),
+                     constants_.unableToViewPathOnGithub(path));
             }
             else
             {
@@ -406,4 +402,5 @@ public class GitPresenter extends BaseVcsPresenter implements IsWidget
    private final GlobalDisplay globalDisplay_;
    private final SatelliteManager satelliteManager_;
    private final VCSFileOpener vcsFileOpener_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

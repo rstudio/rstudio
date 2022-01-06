@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -47,8 +47,17 @@ else()
 
 endif()
 
-# pandoc from quarto is used
-set(RSTUDIO_DEPENDENCIES_PANDOC_DIR       "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/bin")
+
+# install pandoc
+# - by default, we use quarto + quarto's bundled pandoc
+# - if quarto is not enabled, use pandoc fallback
+if(QUARTO_ENABLED)
+   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/bin")
+elseif(EXISTS "${RSTUDIO_TOOLS_ROOT}/pandoc/${PANDOC_VERSION}")
+   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_TOOLS_ROOT}/pandoc/${PANDOC_VERSION}")
+else()
+   set(RSTUDIO_DEPENDENCIES_PANDOC_DIR "${RSTUDIO_DEPENDENCIES_DIR}/pandoc/${PANDOC_VERSION}")
+endif()
 
 
 # validate our dependencies exist
@@ -56,6 +65,12 @@ foreach(VAR RSTUDIO_DEPENDENCIES_DICTIONARIES_DIR
             RSTUDIO_DEPENDENCIES_MATHJAX_DIR
             RSTUDIO_DEPENDENCIES_PANDOC_DIR
             RSTUDIO_DEPENDENCIES_QUARTO_DIR)
+
+ 
+   # skip quarto if not enabled
+   if("${VAR}" STREQUAL "RSTUDIO_DEPENDENCIES_QUARTO_DIR" AND NOT QUARTO_ENABLED)
+      continue()
+   endif()
 
    # validate existence
    if(NOT EXISTS "${${VAR}}")
@@ -146,8 +161,8 @@ set(SESSION_SOURCE_FILES
    modules/SessionCodeSearch.cpp
    modules/SessionConfigFile.cpp
    modules/SessionCRANMirrors.cpp
+   modules/SessionClipboard.cpp
    modules/SessionCrashHandler.cpp
-   modules/SessionUserCommands.cpp
    modules/SessionConsole.cpp
    modules/SessionDependencies.cpp
    modules/SessionDependencyList.cpp
@@ -202,6 +217,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionSVN.cpp
    modules/SessionSystemResources.cpp
    modules/SessionUpdates.cpp
+   modules/SessionUserCommands.cpp
    modules/SessionVCS.cpp
    modules/SessionWorkbench.cpp
    modules/SessionUserPrefs.cpp
@@ -597,10 +613,16 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    install(DIRECTORY "${RSTUDIO_DEPENDENCIES_MATHJAX_DIR}"
            DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources")
 
-   # install quarto
-   install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
-           USE_SOURCE_PERMISSIONS
-           DESTINATION "${RSTUDIO_INSTALL_BIN}")
+   # install quarto (or pandoc if quarto disabled)
+   if(QUARTO_ENABLED)
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
+              DESTINATION "${RSTUDIO_INSTALL_BIN}"
+              USE_SOURCE_PERMISSIONS)
+   else()
+      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/"
+              DESTINATION "${RSTUDIO_INSTALL_BIN}/pandoc"
+              USE_SOURCE_PERMISSIONS)
+   endif()
 
    # install embedded packages
    foreach(PKG ${RSTUDIO_EMBEDDED_PACKAGES})

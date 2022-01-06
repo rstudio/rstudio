@@ -1,7 +1,7 @@
 /*
  * SecondaryReposWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 public class SecondaryReposWidget extends Composite
 {
@@ -58,19 +59,19 @@ public class SecondaryReposWidget extends Composite
       VerticalPanel buttonPanel = new VerticalPanel();
       buttonPanel.addStyleName(RES.styles().buttonPanel());
 
-      buttonAdd_ = createButton("Add...");
+      buttonAdd_ = createButton(constants_.buttonAddLabel());
       buttonAdd_.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd_);
 
-      buttonRemove_ = createButton("Remove...");
+      buttonRemove_ = createButton(constants_.buttonRemoveLabel());
       buttonRemove_.addClickHandler(removeButtonClicked_);
       buttonPanel.add(buttonRemove_);
 
-      buttonUp_ = createButton("Up");
+      buttonUp_ = createButton(constants_.buttonUpLabel());
       buttonUp_.addClickHandler(upButtonClicked_);
       buttonPanel.add(buttonUp_);
 
-      buttonDown_ = createButton("Down");
+      buttonDown_ = createButton(constants_.buttonDownLabel());
       buttonDown_.addClickHandler(downButtonClicked_);
       buttonPanel.add(buttonDown_);
 
@@ -151,8 +152,8 @@ public class SecondaryReposWidget extends Composite
             final String repo = listBox_.getValue(index);
             globalDisplay_.showYesNoMessage(
                MessageDialog.WARNING, 
-               "Confirm Remove", 
-               "Are you sure you want to remove the " + repo + " repository?",
+               constants_.confirmRemoveCaption(),
+               constants_.confirmRemoveMessage(repo),
                new Operation() {
                   @Override
                   public void execute()
@@ -237,4 +238,6 @@ public class SecondaryReposWidget extends Composite
    {
       RES.styles().ensureInjected();
    }
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+
 }

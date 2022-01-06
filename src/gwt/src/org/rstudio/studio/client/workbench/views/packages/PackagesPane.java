@@ -1,7 +1,7 @@
 /*
  * PackagesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -192,7 +192,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Packages Tab");
+      Toolbar toolbar = new Toolbar(constants_.packagesTabLabel());
      
       // install packages
       toolbar.addLeftWidget(commands_.installPackage().createToolbarButton());
@@ -238,7 +238,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       toolbar.addLeftWidget(renvMenuButton_);
       renvMenuButton_.setVisible(false);
             
-      searchWidget_ = new SearchWidget("Filter by package name", new SuggestOracle() {
+      searchWidget_ = new SearchWidget(constants_.filterByPackageNameLabel(), new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -420,18 +420,18 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                public String get(PackageInfo object)
                {
                   if (object.getPackageSource() == null)
-                     return "Browse package on CRAN";
+                     return constants_.browsePackageCRANLabel();
                   
                   PackageInfo.Source source = PackageInfo.Source.valueOf(object.getPackageSource());
                   switch (source)
                   {
                   case Base         : return "";
-                  case Bioconductor : return "Browse package on Bioconductor";
-                  case CRAN         : return "Browse package on CRAN";
-                  case Custom       : return "Browse package [" + object.getBrowseUrl() + "]";
-                  case GitHub       : return "Browse package on GitHub";
-                  case Unknown      : return "Browse package on CRAN";
-                  default           : return "Browse package on CRAN";
+                  case Bioconductor : return constants_.browsePackageBioconductorLabel();
+                  case CRAN         : return constants_.browsePackageCRANLabel();
+                  case Custom       : return constants_.brosePackageLabel(object.getBrowseUrl());
+                  case GitHub       : return constants_.browsePackageGitHubLabel();
+                  case Unknown      : return constants_.browsePackageCRANLabel();
+                  default           : return constants_.browsePackageCRANLabel();
                   }
                }
             })
@@ -452,7 +452,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   observer_.removePackage(packageInfo);
                }
             },
-            "Remove package")
+            constants_.removePackageTitle())
       {
          @Override
          public boolean showButton(PackageInfo object)
@@ -463,9 +463,9 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
 
       // add common columns
       packagesTable_.addColumn(loadedColumn, new TextHeader(""));
-      packagesTable_.addColumn(nameColumn, new TextHeader("Name"));
-      packagesTable_.addColumn(descColumn, new TextHeader("Description"));
-      packagesTable_.addColumn(versionColumn, new TextHeader("Version"));
+      packagesTable_.addColumn(nameColumn, new TextHeader(constants_.nameText()));
+      packagesTable_.addColumn(descColumn, new TextHeader(constants_.descriptionText()));
+      packagesTable_.addColumn(versionColumn, new TextHeader(constants_.versionText()));
       packagesTable_.setColumnWidth(loadedColumn, 30, Unit.PX);
 
       // add columns when using project-local library
@@ -494,7 +494,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                         else if (source == "Bioconductor")
                            return "BioC";
                         else if (source == "source")
-                           return "Source";
+                           return constants_.sourceText();
                         else
                            return source;
                      }
@@ -503,8 +503,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                   }
          };
 
-         packagesTable_.addColumn(lockfileVersionColumn, new TextHeader("Lockfile"));
-         packagesTable_.addColumn(packageSourceColumn, new TextHeader("Source"));
+         packagesTable_.addColumn(lockfileVersionColumn, new TextHeader(constants_.lockfileText()));
+         packagesTable_.addColumn(packageSourceColumn, new TextHeader(constants_.sourceText()));
 
          // distribute columns for extended package information
          packagesTable_.setColumnWidth(nameColumn, 20, Unit.PCT);
@@ -575,10 +575,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                    packageInfo.getLibrary().length() == 0)
                {
                   display_.showMessage(GlobalDisplay.MSG_INFO, 
-                        "Package Not Loaded",
-                        "The package '" + packageInfo.getName() + "' cannot " +
-                        "be loaded because it is not installed. Install the " +
-                        "package to make it available for loading.");
+                        constants_.packageNotLoadedCaption(),
+                        constants_.packageNotLoadedMessage(packageInfo.getName()));
                }
                else
                {
@@ -614,10 +612,8 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                          packageInfo.getHelpUrl().length() == 0)
                      {
                         display_.showMessage(GlobalDisplay.MSG_INFO, 
-                              "Help Not Available", 
-                              "The package '" + packageInfo.getName() + "' " + 
-                              "is not installed. Install the package to make " +
-                              "its help content available.");
+                              constants_.helpNotAvailableCaption(),
+                              constants_.helpNotAvailableMessage(packageInfo.getName()));
                      }
                      else
                      {
@@ -700,4 +696,5 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final Session session_;
    private final GlobalDisplay display_;
    private final PackagesDataGridResources dataGridRes_;
+   private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 }

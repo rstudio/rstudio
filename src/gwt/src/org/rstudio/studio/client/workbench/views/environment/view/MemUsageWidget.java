@@ -1,7 +1,7 @@
 /*
  * MemUsageWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.view;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.resources.client.ImageResource;
@@ -29,6 +30,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.UserPrefMenuItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.model.MemoryUsage;
 
 public class MemUsageWidget extends Composite
@@ -59,12 +61,12 @@ public class MemUsageWidget extends Composite
       memoryMenu.addItem(new UserPrefMenuItem<Boolean>(
          prefs_.showMemoryUsage(),
          true,
-         "Show Current Memory Usage",
+         constants_.showCurrentMemoryUsage(),
          prefs_
       ));
 
       menu_ = new ToolbarMenuButton(
-         "Mem",
+         constants_.memoryCapitalized(),
          ToolbarButton.NoTitle,
          (ImageResource) null,
          memoryMenu);
@@ -99,7 +101,7 @@ public class MemUsageWidget extends Composite
       {
          pieCrust_.getElement().removeAllChildren();
          pieCrust_.setVisible(false);
-         menu_.setText("Mem");
+         menu_.setText(constants_.memoryCapitalized());
       }
       else
       {
@@ -109,8 +111,9 @@ public class MemUsageWidget extends Composite
             setSuspended(false);
          }
 
-         menu_.setTitle(StringUtil.prettyFormatNumber(usage.getProcess().getKb()) +
-            " KiB used by R session (source: " + usage.getProcess().getProviderName() + ")");
+         menu_.setTitle(constants_.kiBUsedByRSession(
+                 StringUtil.prettyFormatNumber(usage.getProcess().getKb()),
+                 usage.getProcess().getProviderName()));
          menu_.setText(formatBigMemory(usage.getProcess().getKb()));
 
          MemoryUsagePieChart pie = new MemoryUsagePieChart(usage);
@@ -177,8 +180,8 @@ public class MemUsageWidget extends Composite
       if (suspended)
       {
          MiniPieWidget pie = new MiniPieWidget(
-            "Memory in use: none (suspended)",
-            "Empty pie chart depicting no memory usage",
+            constants_.memoryInUseNone(),
+            constants_.emptyPieChartNoMemoryUsage(),
             MEMORY_PIE_UNUSED_COLOR);
          loadPieDisplay(pie);
 
@@ -199,4 +202,5 @@ public class MemUsageWidget extends Composite
    private boolean suspended_;
 
    public static final String MEMORY_PIE_UNUSED_COLOR = "#e4e4e4";
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

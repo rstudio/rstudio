@@ -106,6 +106,7 @@ def s3_upload(type, flavor, os, arch) {
     // for the last linux build, on OS only we also update windows to avoid the need for publish-daily-binary.bat
     if (flavor == "desktop" && os == "centos8") {
        def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+       packageName = packageName.replace('+', '-')
        sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
     }
   }
@@ -198,7 +199,7 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
                                                   string(name: 'GIT_REVISION', value: "${rstudioBuildCommit}"),
                                                   string(name: 'BRANCH_NAME', value: "${rstudioReleaseBranch}"),
-                                                  string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
+                                                  string(name: 'SLACK_CHANNEL', value: params.get('SLACK_CHANNEL', '#ide-builds'))]
 }
 
 
@@ -295,12 +296,32 @@ try {
               checkout scm
               withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
                 def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
-                def image_tag = "windows-${rstudioReleaseBranch}"
-                pullBuildPush(image_name: 'jenkins/ide',
-                  dockerfile: "docker/jenkins/Dockerfile.windows",
-                  image_tag: image_tag,
-                  build_args: github_args + " " + jenkins_user_build_args()),
-                  retry_image_pull: 5
+                def dockerfile = "-f docker/jenkins/Dockerfile.windows"
+                def container
+                // the following is adapted from pullBuildPush with the
+                // omission of Unix-isms
+                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                  def image_cache
+                  def image_name = "jenkins/ide"
+                  def image_tag = "windows-${rstudioReleaseBranch}"
+                  def cache_tag = image_tag
+                  def build_args = github_args
+                  def docker_context = '.'
+                  try {
+                    image_cache = docker.image(image_name + ':' + cache_tag)
+                    retry(5) {
+                      image_cache.pull()
+                    }
+                  } catch(e) { // docker.image throws a generic exception.
+                    echo 'Windows container image not found; expect build to take a bit longer.'
+                  }
+
+                  echo 'Building Windows container image'
+                  container = docker.build(image_name + ':' + image_tag, "--cache-from ${image_cache.imageName()} ${build_args} ${dockerfile} ${docker_context}")
+
+                  echo 'Pushing Windows container'
+                  container.push()
+                }
               }
             }
           }

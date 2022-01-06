@@ -1,7 +1,7 @@
 /*
  * SessionInfo.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -369,7 +370,7 @@ public class SessionInfo extends JavaScriptObject
       if (state != null)
          return state.getPaneCaption();
       else
-         return "Presentation";
+         return constants_.presentationCaption();
    }
 
    public final native PresentationState getPresentationState() /*-{
@@ -681,4 +682,5 @@ public class SessionInfo extends JavaScriptObject
    public final native MemoryUsage getMemoryUsage() /*-{
       return this.memory_usage;
    }-*/;
+   private static final ModelConstants constants_ = GWT.create(ModelConstants.class);
 }

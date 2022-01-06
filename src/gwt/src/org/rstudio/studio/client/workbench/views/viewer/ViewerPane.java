@@ -1,7 +1,7 @@
 /*
  * ViewerPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -81,7 +81,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar("Viewer Tab");
+      toolbar_ = new Toolbar(constants_.viewerTabLabel());
 
       // add html widget buttons
       toolbar_.addLeftWidget(commands_.viewerBack().createToolbarButton());
@@ -98,7 +98,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
 
       exportButton_ = new ToolbarMenuButton(
-            "Export", ToolbarButton.NoTitle, new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
+            constants_.exportText(), ToolbarButton.NoTitle, new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
       toolbar_.addLeftWidget(exportButton_);
       exportButton_.setVisible(false);
@@ -159,7 +159,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                @Override
                public void onError(ServerError error)
                {
-                  globalDisplay_.showErrorMessage("Could Not Publish",
+                  globalDisplay_.showErrorMessage(constants_.couldNotPublishCaption(),
                         error.getMessage());
                }
             });
@@ -170,7 +170,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          {
             String title = frame_.getTitle();
             if (StringUtil.isNullOrEmpty(title))
-               title = "Viewer Content";
+               title = constants_.viewerContentTitle();
             return title;
          }
       });
@@ -181,7 +181,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame("Viewer Pane");
+      frame_ = new RStudioFrame(constants_.viewerPaneTitle());
       frame_.setSize("100%", "100%");
       frame_.addStyleName("ace_editor_theme");
       navigate(URIConstants.ABOUT_BLANK, false);
@@ -238,7 +238,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    public void previewQuarto(String url, QuartoNavigate quartoNav)
    {
       rmdPreviewParams_ = null;
-      navigate(url, false);
+      navigate(url, false, false);
       quartoConnection_.setQuartoUrl(url, quartoNav.isWebsite());
       publishButton_.setManuallyHidden(false);
       if (quartoNav.isWebsite())
@@ -377,7 +377,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    {
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerEditSource().createToolbarButton());
-      toolbar_.addLeftWidget(quartoSyncEditor_ = new CheckBox("Sync Editor"));
+      toolbar_.addLeftWidget(quartoSyncEditor_ = new CheckBox(constants_.syncEditorLabel()));
       quartoSyncEditor_.getElement().getStyle().setMarginLeft(3, Unit.PX);
       quartoSyncEditor_.setVisible(false);
       quartoSyncEditor_.setValue(pUserState_.get().quartoWebsiteSyncEditor().getValue());
@@ -428,6 +428,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
    private void navigate(String url, boolean useRawURL)
    {
+      navigate(url, useRawURL, !useRawURL);
+   }
+   
+   private void navigate(String url, boolean useRawURL, boolean viewerPaneParam)
+   {
       // save the unmodified URL for pop-out
       unmodifiedUrl_ = url;
 
@@ -452,9 +457,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
           !unmodifiedUrl_.equals(URIConstants.ABOUT_BLANK) &&
           !useRawURL)
       {
-         String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_,
-                                                   "viewer_pane",
-                                                   "1");
+         String viewerUrl = unmodifiedUrl_;
+         if (viewerPaneParam)
+         {
+            viewerUrl = URIUtils.addQueryParam(viewerUrl, "viewer_pane", "1");
+         }
 
          viewerUrl = URIUtils.addQueryParam(viewerUrl,
                                             "capabilities",
@@ -505,5 +512,5 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
    private HtmlMessageListener htmlMessageListener_;
    private QuartoConnection quartoConnection_;
-   
+   private static final ViewerConstants constants_ = com.google.gwt.core.client.GWT.create(ViewerConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -289,10 +289,13 @@ public class TextEditingTarget implements
       void setAccessibleName(String name);
 
       TextEditorContainer editorContainer();
+      
+      MarkdownToolbar getMarkdownToolbar();
 
       void manageCommandUI();
 
       void addVisualModeFindReplaceButton(ToolbarButton findReplaceButton);
+      void showVisualModeFindReplaceButton(boolean show);
       
       SourceColumn getSourceColumn();
    }
@@ -7063,10 +7066,15 @@ public class TextEditingTarget implements
          // of the project foramts then use standard quarto website preview behavior 
          // (call rmarkdown render and dispatch to quarto). if this returns false then 
          // quarto_preview will be used (e.g. for pdfs, presentations, etc.)
-         String docFormat = quartoFormat();
-         return (docFormat == null || Arrays.asList(config.project_formats).contains(docFormat)) &&
-                config.project_type.equals(QuartoCommandConstants.PROJECT_WEBSITE);
-                
+         if (config.project_type.equals(QuartoCommandConstants.PROJECT_WEBSITE))
+         {
+            String docFormat = quartoFormat();
+            return docFormat == null || docFormat.startsWith(QUARTO_HTML_FORMAT);
+         }
+         else
+         {
+            return false;
+         }     
       }
       else
       {
@@ -8150,7 +8158,109 @@ public class TextEditingTarget implements
       public String getExtendedFileType()
       {
          return extendedType_;
-      }      
+      }
+
+      @Override
+      public String[] getQuartoFormats()
+      {
+         if (SourceDocument.XT_QUARTO_DOCUMENT.equals(extendedType_))
+         {
+            return getQuartoOutputFormats().toArray(new String[] {});
+         }
+         else
+         {
+            return new String[] {};
+         }
+      }
+
+      @Override
+      public String[] getQuartoProjectFormats()
+      {
+         QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
+         if (quartoConfig.is_project && quartoConfig.project_formats != null)
+         {
+            return quartoConfig.project_formats;
+         }
+         else
+         {
+            return new String[] {};
+         }
+      }   
+      
+      @Override 
+      public String getQuartoEngine()
+      {
+         if (SourceDocument.XT_QUARTO_DOCUMENT.equals(extendedType_))
+         {
+            String yaml = getRmdFrontMatter();
+            if (yaml != null)
+            {
+               // see if we can use a cached parse
+               YamlTree tree = null;   
+               if (lastYaml_ != null && yaml.equals(lastYaml_))
+               {
+                  tree = lastTree_;
+               }
+               else
+               {
+                  try
+                  {
+                     tree = new YamlTree(yaml);
+                     lastYaml_ = yaml;
+                     lastTree_ = tree;
+                  }
+                  catch(Exception ex)
+                  {
+                     Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
+                  }
+               }
+               
+               // determine engine
+               String engine = tree.getKeyValue(RmdFrontMatter.ENGINE_KEY);
+               if (engine.length() > 0)
+                  return engine;
+               if (tree.getKeyValue(RmdFrontMatter.JUPYTER_KEY).length() > 0)
+                  return "jupyter";
+
+               // scan chunk engines
+               HashSet<String> chunkEngines = new HashSet<String>();
+               ScopeList scopeList = new ScopeList(docDisplay_);
+               for (int i=0; i<scopeList.size(); i++) 
+               {
+                  Scope scope = scopeList.get(i);
+                  if (scope.isChunk())
+                  {  
+                     int row = scope.getPreamble().getRow();
+                     chunkEngines.add(getEngineForRow(row).toLowerCase());
+                  }
+               }
+               
+               // work out engine
+               if (chunkEngines.contains("r"))
+               {
+                  return "knitr";
+               }
+               else if (chunkEngines.size() == 1 && chunkEngines.contains("ojs"))
+               {
+                  return "markdown";
+               }
+               else if (chunkEngines.size() > 0)
+               {
+                  return "jupyter";
+               }
+               else
+               {
+                  return "markdown";
+               }               
+            }
+         }
+         
+         return null;   
+      }
+      
+      // cache front matter parse
+      String lastYaml_ = null;
+      YamlTree lastTree_ = null;
    };
 
    public CompletionContext getRCompletionContext()

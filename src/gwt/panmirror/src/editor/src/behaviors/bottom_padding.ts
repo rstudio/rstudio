@@ -1,7 +1,7 @@
 /*
  * bottom_padding.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,8 +19,7 @@ import { Schema } from 'prosemirror-model';
 import zenscroll from 'zenscroll';
 
 import { Extension } from '../api/extension';
-import { editingRootNode } from '../api/node';
-import { selectionIsBodyTopLevel } from '../api/selection';
+import { selectionWithinLastBodyParagraph } from '../api/selection';
 import { EditorView } from 'prosemirror-view';
 import { bodyElement } from '../api/dom';
 import { findParentNodeOfType } from 'prosemirror-utils';
@@ -56,16 +55,5 @@ const extension: Extension = {
     ];
   },
 };
-
-function selectionWithinLastBodyParagraph(selection: Selection) {
-  if (selectionIsBodyTopLevel(selection)) {
-    const editingRoot = editingRootNode(selection);
-    if (editingRoot) {
-      const node = selection.$head.node();
-      return node === editingRoot.node.lastChild && node.type === node.type.schema.nodes.paragraph;
-    }
-  }
-  return false;
-}
 
 export default extension;

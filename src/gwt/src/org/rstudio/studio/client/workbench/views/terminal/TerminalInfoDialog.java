@@ -1,7 +1,7 @@
 /*
  * TerminalInfoDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,14 +41,14 @@ public class TerminalInfoDialog extends ModalDialogBase
       super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      setText("Terminal Diagnostics");
+      setText(constants_.terminalDiagnosticsText());
 
       boolean localEchoEnabled = userPrefs_.terminalLocalEcho().getValue() &&
             !BrowseCap.isWindowsDesktop();
 
       final StringBuilder diagnostics = new StringBuilder();
 
-      diagnostics.append("Global Terminal Information\n---------------------------\n");
+      diagnostics.append(constants_.globalTerminalInformationText());
       diagnostics.append(globalInfo);
       if (session != null)
       {
@@ -58,38 +58,38 @@ public class TerminalInfoDialog extends ModalDialogBase
          if (StringUtil.isNullOrEmpty(cwd))
             cwd = "Default";
 
-         diagnostics.append("\nCurrent Terminal Session Information\n------------------------------------\n");
-         diagnostics.append("Caption:     '").append(cpi.getCaption()).append("'\n");
-         diagnostics.append("Title:       '").append(cpi.getTitle()).append("'\n");
-         diagnostics.append("Cols x Rows  '").append(cpi.getCols()).append(" x ").append(cpi.getRows()).append("'\n");
-         diagnostics.append("Shell:       '").append(TerminalShellInfo.getShellName(cpi.getShellType())).append("'\n");
-         diagnostics.append("Handle:      '").append(cpi.getHandle()).append("'\n");
-         diagnostics.append("Sequence:    '").append(cpi.getTerminalSequence()).append("'\n");
-         diagnostics.append("Restarted:   '").append(cpi.getRestarted()).append("\n");
+         diagnostics.append("\n" + constants_.globalTerminalInformationText());
+         diagnostics.append(constants_.captionText()).append(cpi.getCaption()).append("'\n");
+         diagnostics.append(constants_.titleText()).append(cpi.getTitle()).append("'\n");
+         diagnostics.append(constants_.colsText()).append(cpi.getCols()).append(" x ").append(cpi.getRows()).append("'\n");
+         diagnostics.append(constants_.shellText()).append(TerminalShellInfo.getShellName(cpi.getShellType())).append("'\n");
+         diagnostics.append(constants_.handleText()).append(cpi.getHandle()).append("'\n");
+         diagnostics.append(constants_.sequenceText()).append(cpi.getTerminalSequence()).append("'\n");
+         diagnostics.append(constants_.restartedText()).append(cpi.getRestarted()).append("\n");
          if (!BrowseCap.isWindowsDesktop())
-            diagnostics.append("Busy:        '").append(cpi.getHasChildProcs()).append("'\n");
-         diagnostics.append("Exit Code:   '").append(cpi.getExitCode()).append("'\n");
-         diagnostics.append("Full screen: 'client=").append(session.xtermAltBufferActive()).append("/server=").append(cpi.getAltBufferActive()).append("'\n");
-         diagnostics.append("Zombie:      '").append(cpi.getZombie()).append("'\n");
-         diagnostics.append("Track Env    '").append(cpi.getTrackEnv()).append("'\n");
-         diagnostics.append("Local-echo:  '").append(localEchoEnabled).append("'\n");
-         diagnostics.append("Working Dir: '").append(cwd).append("'\n");
-         diagnostics.append("Interactive: '").append(cpi.getInteractionModeName()).append("'\n");
-         diagnostics.append("WebSockets:  '").append(userPrefs_.terminalWebsockets().getValue()).append("'\n");
+            diagnostics.append(constants_.busyText()).append(cpi.getHasChildProcs()).append("'\n");
+         diagnostics.append(constants_.exitCodeText()).append(cpi.getExitCode()).append("'\n");
+         diagnostics.append(constants_.fullScreenText()).append(session.xtermAltBufferActive()).append("/server=").append(cpi.getAltBufferActive()).append("'\n");
+         diagnostics.append(constants_.zombieText()).append(cpi.getZombie()).append("'\n");
+         diagnostics.append(constants_.trackEnvText()).append(cpi.getTrackEnv()).append("'\n");
+         diagnostics.append(constants_.localEchoText()).append(localEchoEnabled).append("'\n");
+         diagnostics.append(constants_.workingDirText()).append(cwd).append("'\n");
+         diagnostics.append(constants_.interactiveText()).append(cpi.getInteractionModeName()).append("'\n");
+         diagnostics.append(constants_.webSocketsText()).append(userPrefs_.terminalWebsockets().getValue()).append("'\n");
 
-         diagnostics.append("\nSystem Information\n------------------\n");
-         diagnostics.append("Desktop:    '").append(Desktop.isDesktop()).append("'\n");
-         diagnostics.append("Remote:     '").append(Desktop.isRemoteDesktop()).append("'\n");
-         diagnostics.append("Platform:   '").append(BrowseCap.getPlatformName()).append("'\n");
+         diagnostics.append(constants_.systemInformationText());
+         diagnostics.append(constants_.desktopText()).append(Desktop.isDesktop()).append("'\n");
+         diagnostics.append(constants_.remoteText()).append(Desktop.isRemoteDesktop()).append("'\n");
+         diagnostics.append(constants_.platformText()).append(BrowseCap.getPlatformName()).append("'\n");
          if (!Desktop.hasDesktopFrame())
-            diagnostics.append("Browser:    '").append(BrowseCap.getBrowserName()).append("'\n");
+            diagnostics.append(constants_.browserText()).append(BrowseCap.getBrowserName()).append("'\n");
 
-         diagnostics.append("\nConnection Information\n----------------------\n");
+         diagnostics.append(constants_.connectionInformationText());
          diagnostics.append(session.getSocket().getConnectionDiagnostics());
 
-         diagnostics.append("\nLocal-echo Match Failures\n-------------------------\n");
+         diagnostics.append(constants_.matchFailuresText());
          if (!localEchoEnabled)
-            diagnostics.append("<Not applicable>\n");
+            diagnostics.append(constants_.notApplicableText());
          else
             diagnostics.append(session.getSocket().getLocalEchoDiagnostics());
       }
@@ -99,13 +99,13 @@ public class TerminalInfoDialog extends ModalDialogBase
       textArea_.setReadOnly(true);
       textArea_.setText(diagnostics.toString());
 
-      addOkButton(new ThemedButton("Close", event -> closeDialog()));
+      addOkButton(new ThemedButton(constants_.closeTitle(), event -> closeDialog()));
 
       if (session != null)
       {
-         appendBufferButton_ = new ThemedButton("Append Buffer", event -> {
+         appendBufferButton_ = new ThemedButton(constants_.appendBufferTitle(), event -> {
             appendBufferButton_.setEnabled(false);
-            diagnostics.append("\n\nTerminal Buffer (Server)\n---------------\n");
+            diagnostics.append(constants_.terminalBufferText());
             session.getBuffer(false /*stripAnsiCodes*/, new ResultCallback<String, String>()
             {
                @Override
@@ -146,4 +146,5 @@ public class TerminalInfoDialog extends ModalDialogBase
 
    // Injected ---- 
    private UserPrefs userPrefs_;
+   private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }

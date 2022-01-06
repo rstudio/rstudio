@@ -1,7 +1,7 @@
 /*
  * TextBoxWithButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -103,7 +103,7 @@ public class TextBoxWithButton extends Composite
       // prevent button from triggering "submit" when hosted in a form, such as in FileUploadDialog
       themedButton_.getElement().setAttribute("type", "button");
       
-      clearButton_ = new ThemedButton("Clear", (ClickEvent event) ->
+      clearButton_ = new ThemedButton(constants_.clearLabel(), (ClickEvent event) ->
       {
          setText("");
       });

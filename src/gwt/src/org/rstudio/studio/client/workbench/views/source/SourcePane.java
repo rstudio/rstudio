@@ -1,7 +1,7 @@
 /*
  * SourcePane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
@@ -91,7 +92,7 @@ public class SourcePane extends LazyPanel implements Display,
          }
       });
       chevron_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.chevron2x()));
-      chevron_.setAltText("Switch to tab");
+      chevron_.setAltText(constants_.switchToTab());
       chevron_.getElement().getStyle().setCursor(Cursor.POINTER);
       chevron_.addClickHandler(
          event -> {
@@ -355,5 +356,5 @@ public class SourcePane extends LazyPanel implements Display,
    private Image chevron_;
    private LayoutPanel panel_;
    private TabOverflowPopupPanel tabOverflowPopup_;
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

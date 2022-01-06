@@ -1,7 +1,7 @@
 /*
  * Toolbar.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -369,9 +369,9 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
       return widget;
    }
    
-   public void removeLeftWidget(Widget widget)
+   public boolean removeLeftWidget(Widget widget)
    {
-      leftToolbarPanel_.remove(widget);
+      return leftToolbarPanel_.remove(widget);
    }
 
    public void removeLeftWidgets()
@@ -379,9 +379,9 @@ public class Toolbar extends ResizeComposite implements HasResizeHandlers
       removeAllWidgets(leftToolbarPanel_);
    }
    
-   public void removeRightWidget(Widget widget)
+   public boolean removeRightWidget(Widget widget)
    {
-      rightToolbarPanel_.remove(widget);
+      return rightToolbarPanel_.remove(widget);
    }
    
    public void removeRightWidgets()

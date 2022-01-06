@@ -1,7 +1,7 @@
 /*
  * Edit.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.edit;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -59,13 +60,13 @@ public class Edit implements ShowEditorEvent.Handler
          {
             if (input != null)
             {
-               progress.onProgress("Saving...");
+               progress.onProgress(constants_.savingProgressLabel());
                server_.editCompleted(input,
                                     new VoidServerRequestCallback(progress));
             }
             else
             {
-               progress.onProgress("Cancelling...");
+               progress.onProgress(constants_.cancellingProgressLabel());
                server_.editCompleted(null,
                                     new VoidServerRequestCallback(progress));
             }
@@ -76,4 +77,5 @@ public class Edit implements ShowEditorEvent.Handler
 
    private final Display view_;
    private final EditServerOperations server_;
+   private static final EditConstants constants_ = GWT.create(EditConstants.class);
 }

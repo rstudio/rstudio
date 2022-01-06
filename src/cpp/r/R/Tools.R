@@ -1,7 +1,7 @@
 #
 # Tools.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -1288,6 +1288,126 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    
    # return the environments
    envirs
+})
+
+.rs.addFunction("heredoc", function(text)
+{
+   # remove leading, trailing whitespace
+   trimmed <- gsub("^\\s*\\n|\\n\\s*$", "", text)
+   
+   # split into lines
+   lines <- strsplit(trimmed, "\n", fixed = TRUE)[[1L]]
+   
+   # compute common indent
+   indent <- regexpr("[^[:space:]]", lines)
+   common <- min(setdiff(indent, -1L))
+   paste(substring(lines, common), collapse = "\n")
+})
+
+.rs.addFunction("bugReport", function(pro = NULL)
+{
+   # collect information about the running version of R / RStudio
+   rstudioInfo <- .rs.api.versionInfo()
+   rstudioVersion <- format(rstudioInfo$version)
+   
+   rstudioEdition <- sprintf(
+      "%s [%s]",
+      if (rstudioInfo$mode == "desktop") "Desktop" else "Server",
+      if (is.null(rstudioInfo$edition)) "Open Source" else toupper(rstudioInfo$edition)
+   )
+   
+   rInfo <- utils::sessionInfo()
+   rVersion <- rInfo$R.version$version.string
+   rVersion <- sub("^R version", "", rVersion, fixed = TRUE)
+   osVersion <- rInfo$running
+   
+   rInfoText <- local({
+      op <- options(width = 78)
+      on.exit(options(op), add = TRUE)
+      paste(capture.output(print(rInfo)), collapse = "\n")
+   })
+   
+   # create issue template and fill in the pieces
+   template <- .rs.heredoc("
+      ### System details
+
+          RStudio Edition : %s
+          RStudio Version : %s
+          OS Version      : %s
+          R Version       : %s
+  
+      ### Steps to reproduce the problem
+      
+      ### Describe the problem in detail
+      
+      ### Describe the behavior you expected
+      
+      ---
+      
+      <details>
+      
+      <summary>Session Info</summary>
+      
+      ``` r
+      %s
+      ```
+      
+      </details>
+   ")
+   
+   rendered <- sprintf(template, rstudioVersion, rstudioEdition, osVersion, rVersion, rInfoText)
+   
+   if (rstudioInfo$mode == "desktop") {
+      
+      # on desktop, we copy the text directly to the clipboard
+      text <- paste(rendered, collapse = "\n")
+      .Call("rs_clipboardSetText", text, PACKAGE = "(embedding)")
+      
+      writeLines(.rs.heredoc("
+         * The bug report template has been written to the clipboard.
+         * Please paste the clipboard contents into the issue comment section,
+         * and then fill out the rest of the issue details.
+         *
+      "))
+      
+   } else {
+      
+      # on server, we ask the user to copy the text to the clipboard
+      header <- .rs.heredoc("
+         <!--
+         Please copy the following text to your clipboard,
+         and then click 'Cancel' to close the dialog.
+         -->
+      ")
+      
+      # write generated text to file, then open it in an editor
+      text <- c(header, "", rendered)
+      file <- tempfile("rstudio-bug-report-", fileext = ".html")
+      on.exit(unlink(file), add = TRUE)
+      writeLines(text, con = file)
+      utils::file.edit(file)
+
+   }
+   
+   # if 'pro' wasn't supplied, then try to guess based on the running edition
+   if (is.null(pro))
+      pro <- !is.null(rstudioInfo$edition)
+   
+   # tell the user we're about to navigate away
+   url <- if (pro) {
+      "https://github.com/rstudio/rstudio-pro/issues/new"
+   } else {
+      "https://github.com/rstudio/rstudio/issues/new"
+   }
+   
+   # notify the user
+   fmt <- " * Navigating to '%s' in 3 seconds ... "
+   msg <- sprintf(fmt, url)
+   writeLines(msg)
+   Sys.sleep(3)
+   
+   # perform navigation
+   utils::browseURL(url)
 })
 
 .rs.addFunction("initTools", function()

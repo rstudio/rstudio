@@ -1,7 +1,7 @@
 /*
  * CodeBrowserContextWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ScrollableToolbarPopupMenu;
@@ -36,6 +37,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class CodeBrowserContextWidget extends Composite
                                       implements HasSelectionHandlers<String>
@@ -125,12 +127,12 @@ public class CodeBrowserContextWidget extends Composite
 
       if (functionDef.getMethods().length() > 0)
       {
-         captionLabel_.setText("Method:");
+         captionLabel_.setText(constants_.methodColon());
          dropDownImage_.setVisible(true);
       }
       else
       {
-         captionLabel_.setText("Function:");
+         captionLabel_.setText(constants_.functionColon());
          dropDownImage_.setVisible(false);
       }
 
@@ -161,4 +163,5 @@ public class CodeBrowserContextWidget extends Composite
    private Image dropDownImage_;
 
    private final HandlerManager handlers_ = new HandlerManager(null);
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

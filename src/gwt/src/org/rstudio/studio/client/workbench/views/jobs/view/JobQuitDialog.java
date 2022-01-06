@@ -1,7 +1,7 @@
 /*
  * JobQuitDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,11 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import com.google.gwt.user.client.ui.Widget;
@@ -30,9 +32,9 @@ public class JobQuitDialog extends ModalDialog<Boolean>
                         OperationWithInput<Boolean> onConfirmed,
                         Operation cancelOperation)
    {
-      super("Terminate Running Jobs", Roles.getAlertdialogRole(), onConfirmed, cancelOperation);
+      super(constants_.terminateRunningJobsCaption(), Roles.getAlertdialogRole(), onConfirmed, cancelOperation);
       running_ = runningJobs;
-      setOkButtonCaption("Terminate Jobs");
+      setOkButtonCaption(constants_.terminateJobsCaption());
    }
 
    @Override
@@ -48,4 +50,5 @@ public class JobQuitDialog extends ModalDialog<Boolean>
    }
 
    private List<Job> running_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * PanmirrorToolbarCommands.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -128,7 +128,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntryProvider
       add(PanmirrorCommands.Footnote, constants_.footnoteMenuText());
       add(PanmirrorCommands.HorizontalRule, constants_.horizontalRuleMenuText());
       add(PanmirrorCommands.ParagraphInsert, constants_.paragraphMenuText());
-      add(PanmirrorCommands.HTMLComment, constants_.paragraphMenuText(), icons.COMMENT);
+      add(PanmirrorCommands.HTMLComment, constants_.commentMenuText(), icons.COMMENT);
       add(PanmirrorCommands.YamlMetadata, constants_.yamlBlockMenuText());
       add(PanmirrorCommands.Shortcode, constants_.shortcodeMenuText());
       add(PanmirrorCommands.InsertDiv, constants_.divMenuText());

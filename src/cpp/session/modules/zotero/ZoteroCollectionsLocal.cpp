@@ -723,11 +723,20 @@ FilePath defaultZoteroDataDir()
    return homeDir.completeChildPath("Zotero");
 }
 
+FilePath platformProfileDir(FilePath profilePath)
+{
+#if defined(_WIN32) || defined(__APPLE__)
+    return profilePath.getParent();
+#else
+    return profilePath;
+#endif
+}
+
 FilePath defaultProfileDir()
 {
    // read the lines
    FilePath profilesDir = zoteroProfilesDir();
-   FilePath profileIni = profilesDir.getParent().completeChildPath("profiles.ini");
+   FilePath profileIni = platformProfileDir(profilesDir).completeChildPath("profiles.ini");
    if (profileIni.exists())
    {
 
@@ -769,7 +778,7 @@ FilePath defaultProfileDir()
           if (sectionIsDefault && !sectionPath.empty())
           {
              if (sectionPathIsRelative)
-                return profilesDir.getParent().completeChildPath(sectionPath);
+                return platformProfileDir(profilesDir).completeChildPath(sectionPath);
              else
                 return FilePath(sectionPath);
           }

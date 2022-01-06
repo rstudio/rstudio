@@ -1,7 +1,7 @@
 /*
  * ChooseFile.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.choosefile;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -57,12 +58,12 @@ public class ChooseFile implements ChooseFileEvent.Handler
             String message, path;
             if (input != null)
             {
-               message = "Saving...";
+               message = constants_.savingMessage();
                path = input.getPath();
             }
             else
             {
-               message = "Cancelling...";
+               message = constants_.cancellingMessage();
                path = null;
             }
 
@@ -77,7 +78,7 @@ public class ChooseFile implements ChooseFileEvent.Handler
       if (event.getNewFile())
       {
          fileDialogs_.saveFile(
-               "Choose File",
+               constants_.chooseFileCaption(),
                fsContext_,
                workbenchContext_.getCurrentWorkingDir(),
                "",
@@ -87,7 +88,7 @@ public class ChooseFile implements ChooseFileEvent.Handler
       else
       {
          fileDialogs_.openFile(
-               "Choose File",
+               constants_.chooseFileCaption(),
                fsContext_,
                workbenchContext_.getCurrentWorkingDir(),
                operation);
@@ -98,4 +99,5 @@ public class ChooseFile implements ChooseFileEvent.Handler
    private final RemoteFileSystemContext fsContext_;
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
+   private static final ChoosefileConstants constants_ = GWT.create(ChoosefileConstants.class);
 }

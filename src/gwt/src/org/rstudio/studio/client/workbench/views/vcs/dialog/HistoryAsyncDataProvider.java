@@ -1,7 +1,7 @@
 /*
  * HistoryAsyncDataProvider.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.AbstractHasData;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.view.client.AsyncDataProvider;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
 public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitInfo>
 {
@@ -101,7 +103,7 @@ public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitI
       getHistory(
             rev_, fileFilter_.getValue(),
             start, length, searchText_.getValue(),
-            new SimpleRequestCallback<RpcObjectList<CommitInfo>>("Error Fetching History")
+            new SimpleRequestCallback<RpcObjectList<CommitInfo>>(constants_.errorFetchingHistory())
             {
                @Override
                public void onResponseReceived(RpcObjectList<CommitInfo> response)
@@ -145,4 +147,5 @@ public abstract class HistoryAsyncDataProvider extends AsyncDataProvider<CommitI
    private HasValue<String> searchText_;
    private HasValue<FileSystemItem> fileFilter_;
    private HistoryStrategy strategy_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

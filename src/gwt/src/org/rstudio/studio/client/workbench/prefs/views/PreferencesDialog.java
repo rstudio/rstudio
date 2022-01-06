@@ -1,7 +1,7 @@
 /*
  * PreferencesDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,7 +54,6 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             EditingPreferencesPane source,
                             ConsolePreferencesPane console,
                             RMarkdownPreferencesPane rmarkdown,
-                            QuartoPreferencesPane quarto,
                             CompilePdfPreferencesPane compilePdf,
                             AppearancePreferencesPane appearance,
                             PaneLayoutPreferencesPane paneLayout,
@@ -83,7 +82,6 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                   paneLayout,
                   packages,
                   rmarkdown,
-                  quarto,
                   python,
                   compilePdf,
                   spelling,
@@ -177,13 +175,9 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
       List<PreferencesDialogPaneBase<UserPrefs>> allPanes = new ArrayList<>();
       for (PreferencesDialogPaneBase<UserPrefs> pane : paneList)
       {
-         // hide quarto prefs if necessary
-         if (pane.getName().equals(QuartoPreferencesPane.NAME) &&
-             prefs.quartoEnabled().getValue().equals(UserPrefs.QUARTO_ENABLED_HIDDEN))
-         {
-            continue;
-         }
-         
+         // filter out panes here basd on prefs as required
+         // (not doing any filtering right now)
+    
          allPanes.add(pane);
       }
       return allPanes;

@@ -1,7 +1,7 @@
 /*
  * SVNHistoryStrategy.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn.dialog;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.cellview.client.AbstractPager;
 import com.google.gwt.user.client.ui.HasValue;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.Pager;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -53,7 +55,7 @@ public class SVNHistoryStrategy implements HistoryStrategy
    @Override
    public String idColumnName()
    {
-      return "Revision";
+      return constants_.revisionCapitalized();
    }
 
    @Override
@@ -188,4 +190,5 @@ public class SVNHistoryStrategy implements HistoryStrategy
    private final SVNServerOperations server_;
    private final SVNHistoryAsyncDataProvider dataProvider_;
    private final SVNState vcsState_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

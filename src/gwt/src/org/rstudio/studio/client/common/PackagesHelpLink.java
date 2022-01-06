@@ -1,7 +1,7 @@
 /*
  * PackagesHelpLink.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,10 +15,14 @@
 
 package org.rstudio.studio.client.common;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+
 public class PackagesHelpLink extends HelpLink
 {
    public PackagesHelpLink()
    {
-      super("Developing Packages", "building_packages");
+      super(constants_.developingPkgHelpLink(), "building_packages");
    }
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * BuildPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -337,8 +338,8 @@ public class BuildPresenter extends BasePresenter
    void onRoxygenizePackage()
    {
       dependencyManager_.withRoxygen(
-            "Building package documentation",
-            "Building package documentation",
+            constants_.packageDocumentationProgressCaption(),
+            constants_.packageDocumentationProgressCaption(),
             () -> startBuild("roxygenize-package"));
    }
 
@@ -379,7 +380,7 @@ public class BuildPresenter extends BasePresenter
    {
       if (session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_WEBSITE)
       {
-          dependencyManager_.withRMarkdown("Building sites", new Command() {
+          dependencyManager_.withRMarkdown(constants_.buildingSitesUserAction(), new Command() {
             @Override
             public void execute()
             {
@@ -430,7 +431,7 @@ public class BuildPresenter extends BasePresenter
          {
             terminalHelper_.warnBusyTerminalBeforeCommand(() ->
                   executeBuildNoBusyCheck(type, subType),
-                  "Build", "Terminal jobs will be terminated. Are you sure?",
+                  "Build", constants_.terminalTerminatedQuestion(),
                   userPrefs_.busyDetection().getValue());
          }
       });
@@ -464,15 +465,15 @@ public class BuildPresenter extends BasePresenter
    void onStopBuild()
    {
        server_.terminateBuild(new DelayedProgressRequestCallback<Boolean>(
-                                                       "Terminating Build..."){
+                                                       constants_.terminatingBuildMessage()){
          @Override
          protected void onSuccess(Boolean response)
          {
             if (!response)
             {
                globalDisplay_.showErrorMessage(
-                     "Error Terminating Build",
-                     "Unable to terminate build. Please try again.");
+                     constants_.errorTerminatingBuildCaption(),
+                     constants_.errorTerminatingBuildMessage());
             }
          }
        });
@@ -549,7 +550,7 @@ public class BuildPresenter extends BasePresenter
    private void quartoServe(String format, boolean render)
    {
       source_.withSaveFilesBeforeCommand(() -> {
-         server_.quartoServe(format, render, new SimpleRequestCallback<Void>("Quarto Serve Error"));
+         server_.quartoServe(format, render, new SimpleRequestCallback<Void>(constants_.quartoServeError()));
       }, () -> {}, "Quarto");
    }
 
@@ -569,5 +570,5 @@ public class BuildPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;
-   
+   private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
 }

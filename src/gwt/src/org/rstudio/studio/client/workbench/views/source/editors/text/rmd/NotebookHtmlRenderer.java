@@ -1,7 +1,7 @@
 /*
  * NotebookHtmlRenderer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
@@ -172,13 +174,11 @@ public class NotebookHtmlRenderer
 
                   if (StringUtil.isNullOrEmpty(dependency.getVersion()))
                   {
-                     message = "The rmarkdown package is not installed; " +
-                               "notebook HTML file will not be generated.";
+                     message = constants_.rMarkdownNotInstalledHTMLNoGenerate();
                   }
                   else
                   {
-                     message = "An updated version of the rmarkdown package " +
-                               "is required to generate notebook HTML files.";
+                     message = constants_.rMarkdownUpgradeRequired();
                   }
 
                   editingDisplay_.showWarningBar(message);
@@ -200,7 +200,7 @@ public class NotebookHtmlRenderer
    {
       CommandWithArg<Boolean> createNotebookCmd = new CommandWithArg<Boolean>()
       {
-         final String warningPrefix = "Error creating notebook: ";
+         final String warningPrefix = constants_.errorCreatingNotebookPrefix();
          @Override
          public void execute(Boolean metDependencies)
          {
@@ -246,7 +246,7 @@ public class NotebookHtmlRenderer
          }
       };
 
-      dependencyManager_.withRMarkdown("R Notebook", "Creating R Notebooks",
+      dependencyManager_.withRMarkdown(constants_.rNotebook(), constants_.creatingRNotebooks(),
             createNotebookCmd);
    }
 
@@ -261,4 +261,5 @@ public class NotebookHtmlRenderer
    private final EventBus events_;
    private final TextEditingTarget.Display editingDisplay_;
    private final DependencyManager dependencyManager_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

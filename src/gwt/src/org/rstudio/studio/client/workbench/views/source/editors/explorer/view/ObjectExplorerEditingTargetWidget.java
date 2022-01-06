@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerEditingTargetWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -66,7 +67,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       
       refreshButton_ = new ToolbarButton(
             ToolbarButton.NoText,
-            "Refresh",
+            constants_.refresh(),
             RES.refresh2x(),
             new ClickHandler()
             {
@@ -77,7 +78,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
                }
             });
       
-      filterWidget_ = new SearchWidget("Search objects", new SuggestOracle()
+      filterWidget_ = new SearchWidget(constants_.searchObjects(), new SuggestOracle()
       {
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -121,7 +122,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    
    private void initToolbar()
    {
-      cbAttributes_.setText("Show Attributes");
+      cbAttributes_.setText(constants_.showAttributes());
       cbAttributes_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
@@ -210,5 +211,5 @@ public class ObjectExplorerEditingTargetWidget extends Composite
    static {
       RES.styles().ensureInjected();
    }
-   
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

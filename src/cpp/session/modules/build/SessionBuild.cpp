@@ -1,7 +1,7 @@
 /*
  * SessionBuild.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -678,18 +678,20 @@ private:
       type_ = type;
 
       // add testthat and shinytest result parsers
-      core::Version testthatVersion;
-      module_context::packageVersion("testthat", &testthatVersion);
-      
       if (type == kTestFile)
       {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.getParent(), testthatVersion));
+         if (module_context::isPackageInstalled("testthat")) {
+            parsers.add(testthatErrorParser(packagePath.getParent()));
+         }
+         
       }
       else if (type == kTestPackage)
       {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat"), testthatVersion));
+         if (module_context::isPackageInstalled("testthat")) {
+            parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat")));
+         }
       }
 
       initErrorParser(packagePath, parsers);

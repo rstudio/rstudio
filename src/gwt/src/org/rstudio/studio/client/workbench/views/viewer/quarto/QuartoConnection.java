@@ -1,7 +1,7 @@
 /*
  * QuartoConnection.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,7 +54,7 @@ public class QuartoConnection
             url = server_.getApplicationURL(url);
          
          // clean out viewer_pane params
-         int paramsLoc = url.indexOf("?viewer_pane=");
+         int paramsLoc = url.indexOf("?capabilities=");
          if (paramsLoc != -1)
             url = url.substring(0, paramsLoc);
       }

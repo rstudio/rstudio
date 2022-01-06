@@ -1,7 +1,7 @@
 /*
  * ManipulatorManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressImage;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.plots.PlotsConstants;
 import org.rstudio.studio.client.workbench.views.plots.PlotsSurface;
 import org.rstudio.studio.client.workbench.views.plots.model.Manipulator;
 
@@ -45,7 +46,7 @@ public class ManipulatorManager
       // create manipulator button
       manipulatorButton_ = new ToolbarButton(
             ToolbarButton.NoText,
-            "Show plot manipulator",
+            constants_.showPlotManipulatorTitle(),
             new ImageResource2x(resources.manipulateButton2x()),
             new ClickHandler() { 
                public void onClick(ClickEvent event)
@@ -191,5 +192,5 @@ public class ManipulatorManager
    private ToolbarButton manipulatorButton_;
    private ProgressImage manipulatorProgress_;
    private ManipulatorPopupPanel manipulatorPopup_;
-  
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }

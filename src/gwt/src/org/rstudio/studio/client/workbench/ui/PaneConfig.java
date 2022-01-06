@@ -1,7 +1,7 @@
 /*
  * PaneConfig.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,14 +67,14 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet1.push("VCS");
       tabSet1.push("Tutorial");
       tabSet1.push("Presentation");
-      tabSet1.push("Presentations");
-
+      
       JsArrayString tabSet2 = createArray().cast();
       tabSet2.push("Files");
       tabSet2.push("Plots");
       tabSet2.push("Packages");
       tabSet2.push("Help");
       tabSet2.push("Viewer");
+      tabSet2.push("Presentations");
 
       JsArrayString hiddenTabSet = createArray().cast();
       return create(panes, tabSet1, tabSet2, hiddenTabSet, false, true, 0);
@@ -226,11 +226,10 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          }
       }
       
-      // if we don't have Presentation2 then provide it (but keep Presentation last)
+      // if we don't have Presentation2 then provide it 
       if (!hasPresentation2(ts1) && !hasPresentation2(ts2))
       {
-         ts1.set(ts1.length(), "Presentation");
-         ts1.set(ts1.length() - 2, "Presentations");
+         ts2.set(ts2.length(), "Presentations");
       }
 
 

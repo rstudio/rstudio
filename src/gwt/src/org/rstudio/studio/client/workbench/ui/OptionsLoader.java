@@ -1,7 +1,7 @@
 /*
  * OptionsLoader.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.AsyncShim;
@@ -84,13 +85,13 @@ public class OptionsLoader
          prefsDialog.addCloseHandler(popupPanelCloseEvent ->
          {
             boolean notified = notifyIfNecessary(
-                                 "weaving Rnw files",
+                                 constants_.weavingRnwFilesText(),
                                  previousRnwWeaveMethod_,
                                  uiPrefs_.defaultSweaveEngine());
 
             if (!notified)
             {
-               notifyIfNecessary("LaTeX typesetting",
+               notifyIfNecessary(constants_.latexTypesettingText(),
                                  previousLatexProgram_,
                                  uiPrefs_.defaultLatexProgram());
             }
@@ -106,12 +107,8 @@ public class OptionsLoader
          {
             globalDisplay_.showYesNoMessage(
                   MessageDialog.WARNING,
-                  "Project Option Unchanged",
-                  "You changed the global option for " + valueName  + " to " +
-                  pref.getGlobalValue() + ", however the current project is " +
-                  "still configured to use " + pref.getValue() + ".\n\n" +
-                  "Do you want to edit the options for the current " +
-                  "project as well?",
+                  constants_.projectOptionUnchangedCaption(),
+                  constants_.projectOptionUnchangedMessage(valueName, pref.getGlobalValue(), pref.getValue()),
                   () -> commands_.projectSweaveOptions().execute(),
                   true);
 
@@ -133,4 +130,5 @@ public class OptionsLoader
    private final Commands commands_;
    private final UserPrefs uiPrefs_;
    private final Provider<PreferencesDialog> pPrefDialog_;
+   private static final UIConstants constants_ = GWT.create(UIConstants.class);
 }

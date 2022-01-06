@@ -33,19 +33,19 @@ CREATE TABLE licensed_users(
    user_name text NOT NULL,
 
    /* Always false column, to keep the order the same as in Workbench */
-   locked boolean NOT NULL DEFAULT 0,
+   locked boolean NOT NULL DEFAULT false,
 
    /* The date time when the user last signed in */
    last_sign_in text NOT NULL,
 
    /* Always false column, to keep the order the same as in Workbench */
-   is_admin boolean NOT NULL DEFAULT 0,
+   is_admin boolean NOT NULL DEFAULT false,
 
    /* The Posix/Operating-System-Level ID of the user */
    user_id integer NOT NULL DEFAULT -1,
 
    /* Auto incrementing ID for each user for internal FK relationships. */
-   id integer NOT NULL,
+   id SERIAL NOT NULL,
 
    /* Add Primary Key */
    PRIMARY KEY(id)

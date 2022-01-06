@@ -1,7 +1,7 @@
 /*
  * SVNChangelistTable.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 import com.google.gwt.user.cellview.client.Column;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 
 import java.util.Comparator;
@@ -60,7 +62,7 @@ public class SVNChangelistTable extends ChangelistTable
                               b.getChangelist());
                }
             });
-            table_.addColumn(changelistColumn_, "Changelist");
+            table_.addColumn(changelistColumn_, constants_.changeList());
          }
       }
    }
@@ -72,4 +74,5 @@ public class SVNChangelistTable extends ChangelistTable
    }
 
    private Column<StatusAndPath, String> changelistColumn_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

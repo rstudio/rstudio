@@ -1,7 +1,7 @@
 /*
  * SavePlotAsHandler.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import org.rstudio.studio.client.workbench.views.plots.PlotsConstants;
 
 public class SavePlotAsHandler
 {
@@ -70,7 +71,7 @@ public class SavePlotAsHandler
                                   final boolean viewAfterSave,
                                   Operation onCompleted)
    {
-      progressIndicator_.onProgress("Converting Plot...");
+      progressIndicator_.onProgress(constants_.convertingPlotText());
 
       savePlotAs(
             targetPath,
@@ -111,7 +112,7 @@ public class SavePlotAsHandler
                               final Operation onCompleted)
    {
       globalDisplay_.openProgressWindow("_blank",
-            "Converting Plot...",
+            constants_.convertingPlotText(),
             new OperationWithInput<WindowEx>() {
          public void execute(final WindowEx window)
          {
@@ -141,7 +142,7 @@ public class SavePlotAsHandler
                      {
                         window.close();
 
-                        globalDisplay_.showErrorMessage("Error Saving Plot",
+                        globalDisplay_.showErrorMessage(constants_.errorSavingPlotCaption(),
                               error.getUserMessage());
                      }
 
@@ -191,9 +192,8 @@ public class SavePlotAsHandler
 
                      globalDisplay_.showYesNoMessage(
                            MessageDialog.WARNING,
-                           "File Exists",
-                           "The specified file name already exists. " +
-                           "Do you want to overwrite it?",
+                           constants_.fileExistsCaption(),
+                           constants_.fileExistsMessage(),
                            new Operation() {
                               @Override
                               public void execute()
@@ -221,4 +221,5 @@ public class SavePlotAsHandler
    private final GlobalDisplay globalDisplay_;
    private ProgressIndicator progressIndicator_;
    private final ServerOperations server_;
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }

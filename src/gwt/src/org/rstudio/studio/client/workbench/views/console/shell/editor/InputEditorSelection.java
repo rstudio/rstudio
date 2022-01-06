@@ -1,7 +1,7 @@
 /*
  * InputEditorSelection.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,9 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.console.shell.editor;
+
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 
 public final class InputEditorSelection
       implements Comparable<InputEditorSelection>
@@ -73,8 +76,8 @@ public final class InputEditorSelection
    @Override
    public String toString()
    {
-      return "Start: " + (start_ == null ? "null" : start_) +
-             ", End: " + (end_ == null ? "null" : end_);
+      return constants_.startText() + (start_ == null ? constants_.nullText() : start_) +
+             ", " + constants_.endText() + (end_ == null ? constants_.nullText() : end_);
    }
 
    public InputEditorSelection shrinkToNonEmptyLines()
@@ -96,4 +99,5 @@ public final class InputEditorSelection
 
    private final InputEditorPosition start_;
    private final InputEditorPosition end_;
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

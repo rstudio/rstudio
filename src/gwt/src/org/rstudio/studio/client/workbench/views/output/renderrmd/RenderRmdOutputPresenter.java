@@ -1,7 +1,7 @@
 /*
  * RenderRmdOutputPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
@@ -62,8 +63,8 @@ public class RenderRmdOutputPresenter extends BusyPresenter
                                    Binder binder,
                                    EventBus events)
    {
-      super(outputFactory.create("R Markdown",
-                                 "View the R Markdown render log"));
+      super(outputFactory.create(constants_.rMarkdownTitle(),
+                                 constants_.viewRMarkdownTitle()));
       binder.bind(commands, this);
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);
@@ -98,9 +99,8 @@ public class RenderRmdOutputPresenter extends BusyPresenter
       if (isBusy())
       {
         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-              "Stop R Markdown Rendering",
-              "The rendering of '" + targetFile_ + "' is in progress. Do you "+
-              "want to terminate and close the tab?", false,
+              constants_.stopRMarkdownRenderingCaption(),
+              constants_.stopRMarkdownRenderingMessage(targetFile_), false,
               new Operation()
               {
                  @Override
@@ -111,7 +111,7 @@ public class RenderRmdOutputPresenter extends BusyPresenter
                     terminateRenderRmd();
                     onConfirmed.execute();
                  }
-              }, null, null, "Stop", "Cancel", true);
+              }, null, null, constants_.stopLabel(), constants_.cancelLabel(), true);
       }
       else
       {
@@ -210,7 +210,7 @@ public class RenderRmdOutputPresenter extends BusyPresenter
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage("Knit Terminate Failed",
+            globalDisplay_.showErrorMessage(constants_.knitTerminateFailedMessage(),
                   error.getMessage());
          }
       });
@@ -226,4 +226,5 @@ public class RenderRmdOutputPresenter extends BusyPresenter
    private boolean isSourceZoomed_ = false;
    private boolean switchToConsoleAfterRender_ = false;
    private String targetFile_;
+   private static final OutputConstants constants_ = com.google.gwt.core.client.GWT.create(OutputConstants.class);
 }

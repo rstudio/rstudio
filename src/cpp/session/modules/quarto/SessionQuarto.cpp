@@ -1,7 +1,7 @@
 /*
  * SessionQuarto.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -148,13 +148,22 @@ std::tuple<FilePath,Version> userInstalledQuarto()
    return std::make_tuple(FilePath(), Version());
 }
 
+#ifndef QUARTO_ENABLED
+
+void detectQuartoInstallation()
+{
+   return;
+}
+
+#else
+
 void detectQuartoInstallation()
 {
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.2.315");
+   const Version kQuartoRequiredVersion("0.2.444");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.2.315");
+   const Version kQuartoRecommendedVersion("0.2.444");
 
    // reset
    s_userInstalledPath = FilePath();
@@ -219,6 +228,8 @@ void detectQuartoInstallation()
       showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
    }
 }
+
+#endif
 
 bool quartoIsInstalled()
 {
@@ -612,12 +623,13 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   std::string type, engine, kernel, venv, packages, editor;
+   std::string type, engine, kernel, venv, condaenv, packages, editor;
    error = json::readObject(projectOptionsJson,
                             "type", type,
                             "engine", engine,
                             "kernel", kernel,
                             "venv", venv,
+                            "condaenv", condaenv,
                             "packages", packages,
                             "editor", editor);
    if (error)
@@ -629,7 +641,8 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    // add some first run files
    using namespace module_context;
    std::vector<std::string> projFiles;
-   if (type == kQuartoProjectWebsite || type == kQuartoProjectBook)
+   if (boost::algorithm::starts_with(type, kQuartoProjectWebsite) ||
+       boost::algorithm::starts_with(type, kQuartoProjectBook))
    {
       projFiles.push_back("index.qmd");
       projFiles.push_back("_quarto.yml");
@@ -673,9 +686,12 @@ Error quartoCreateProject(const json::JsonRpcRequest& request,
    }
 
    // create venv (optional)
-   if (engine == "jupyter" && !venv.empty())
+   if (engine == "jupyter" && (!venv.empty() || !condaenv.empty()))
    {
-      args.push_back("--with-venv");
+      if (!venv.empty())
+         args.push_back("--with-venv");
+      else
+         args.push_back("--with-condaenv");
       if (!packages.empty())
       {
          std::vector<std::string> pkgVector;

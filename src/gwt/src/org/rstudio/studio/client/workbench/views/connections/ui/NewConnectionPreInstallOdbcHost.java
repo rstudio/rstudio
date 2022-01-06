@@ -1,7 +1,7 @@
 /*
  * NewConnectionPreInstallOdbcHost.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.rstudioapi.DialogHtmlSanitizer;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
@@ -74,7 +75,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    {
       dirChooser_.setText(info.getOdbcInstallPath());
       license_.setText(info.getOdbcLicense());
-      driverLabel_.setText("The " + info.getName() + " driver is currently not installed. ");
+      driverLabel_.setText(constants_.driverLabelText(info.getName()));
 
       if (!StringUtil.isNullOrEmpty(info.getOdbcWarning()))
       {
@@ -127,4 +128,5 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    private OperationWithInput<Boolean> nextPageEnabledOperation_;
 
    private ConnectionOptions options_;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

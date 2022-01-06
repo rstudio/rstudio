@@ -1,7 +1,7 @@
 /*
  * PanmirrorEditImageDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -190,7 +190,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       }
       
       // alignment
-      alignDefault = new RadioButton("align", constants_.defaultLabel());
+      alignDefault = new RadioButton("align", constants_.defaultAlignLabel());
       alignLeft_ = new RadioButton("align", constants_.leftLabel());
       alignCenter_ = new RadioButton("align", constants_.centerLabel());
       alignRight_ = new RadioButton("align", constants_.rightLabel());

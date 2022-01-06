@@ -1,7 +1,7 @@
 /*
  * MarkerSetsToolbarButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.MenuItem;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 
 public class MarkerSetsToolbarButton extends ToolbarMenuButton
                                      implements HasValueChangeHandlers<String>
@@ -41,13 +42,13 @@ public class MarkerSetsToolbarButton extends ToolbarMenuButton
      
       updateActiveMarkerSet(null);
       
-      setTitle("Switch active marker list");
+      setTitle(constants_.switchActiveMarkerListTitle());
    }
    
    public void updateActiveMarkerSet(String set)
    {
       if (set == null)
-         setText("(No markers)");
+         setText(constants_.noMarkersText());
       else
          setText(set);
    }
@@ -80,4 +81,5 @@ public class MarkerSetsToolbarButton extends ToolbarMenuButton
    {
       return addHandler(handler, ValueChangeEvent.getType());
    }
+   private static final OutputConstants constants_ = com.google.gwt.core.client.GWT.create(OutputConstants.class);
 }

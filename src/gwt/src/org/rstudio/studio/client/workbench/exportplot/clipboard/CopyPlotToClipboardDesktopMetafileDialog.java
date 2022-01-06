@@ -1,7 +1,7 @@
 /*
  * CopyPlotToClipboardDesktopMetafileDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,11 @@
 package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.Timers;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotConstants;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
@@ -44,17 +46,17 @@ public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboar
       
       Label label = new Label();
       label.setStylePrimaryName(styles.copyFormatLabel());
-      label.setText("Copy as:");
+      label.setText(constants_.copyAsText());
       addLeftWidget(label);
       
       copyAsBitmapRadioButton_ = new RadioButton(
-                                       "Format", 
+                                       constants_.formatName(),
                                        SafeHtmlUtils.fromString("Bitmap"));
       copyAsBitmapRadioButton_.setStylePrimaryName(styles.copyFormatBitmap());
       addLeftWidget(copyAsBitmapRadioButton_);
       
       copyAsMetafileRadioButton_ = new RadioButton(
-                                       "Format", 
+                                       constants_.formatName(),
                                        SafeHtmlUtils.fromString("Metafile"));
       copyAsMetafileRadioButton_.setStylePrimaryName(styles.copyFormatMetafile());
       addLeftWidget(copyAsMetafileRadioButton_);
@@ -124,5 +126,6 @@ public class CopyPlotToClipboardDesktopMetafileDialog extends CopyPlotToClipboar
    }
    
    private RadioButton copyAsBitmapRadioButton_;
-   private RadioButton copyAsMetafileRadioButton_;  
+   private RadioButton copyAsMetafileRadioButton_;
+   private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 }

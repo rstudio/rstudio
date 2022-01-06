@@ -1,7 +1,7 @@
 /*
  * ObjectBrowser.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 
 import com.google.gwt.core.client.GWT;
@@ -66,7 +67,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
       objectsModel_ = new ObjectBrowserModel();
       
       // show progress while updating the connection
-      hostPanel_.showProgress(50, "Loading objects");
+      hostPanel_.showProgress(50, constants_.loadingObjectsMessage());
             
       // update the table then restore expanded nodes
       objectsModel_.update(
@@ -241,4 +242,5 @@ public class ObjectBrowser extends Composite implements RequiresResize
    @SuppressWarnings("unused")
    private Connection connection_;
    private HandlerRegistration registration_;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

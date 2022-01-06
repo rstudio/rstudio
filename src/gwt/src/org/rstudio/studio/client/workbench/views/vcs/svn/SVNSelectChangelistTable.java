@@ -1,7 +1,7 @@
 /*
  * SVNSelectChangelistTable.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.view.client.MultiSelectionModel;
 import org.rstudio.core.client.cellview.TriStateCheckboxCell;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
 import java.util.*;
 
@@ -127,7 +129,7 @@ public class SVNSelectChangelistTable extends SVNChangelistTable
             return a2 - b2;
          }
       });
-      table_.addColumn(commitColumn_, "Commit");
+      table_.addColumn(commitColumn_, constants_.commitCapitalized());
       table_.setColumnWidth(commitColumn_, "46px");
 
       super.configureTable();
@@ -144,4 +146,5 @@ public class SVNSelectChangelistTable extends SVNChangelistTable
    private final HashMap<String, Boolean> selected_ = new HashMap<>();
    private final HashSet<String> uncommitableStatuses = new HashSet<>();
    private Column<StatusAndPath, Boolean> commitColumn_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

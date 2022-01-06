@@ -1,7 +1,7 @@
 /*
  * AceThemes.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
@@ -227,11 +228,11 @@ public class AceThemes
    {
       if (!themes_.containsKey(themeName))
       {
-         errorMessageConsumer.accept("The specified theme does not exist");
+         errorMessageConsumer.accept(constants_.specifiedThemeDoesNotExist());
       }
       else if (themes_.get(themeName).isDefaultTheme())
       {
-         errorMessageConsumer.accept("The specified theme is a default RStudio theme and cannot be removed.");
+         errorMessageConsumer.accept(constants_.specifiedDefaultThemeCannotBeRemoved());
       }
       else
       {
@@ -285,4 +286,5 @@ public class AceThemes
    private final Provider<UserState> state_;
    private final Provider<UserPrefs> prefs_;
    private HashMap<String, AceTheme> themes_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

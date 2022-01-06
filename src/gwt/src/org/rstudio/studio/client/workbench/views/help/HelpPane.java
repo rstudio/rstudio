@@ -1,7 +1,7 @@
 /*
  * HelpPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -111,7 +111,7 @@ public class HelpPane extends WorkbenchPane
       });
 
       frame_ = new RStudioThemedFrame(
-         "Help Pane",
+         constants_.helpPaneTitle(),
          null,
          RES.editorStyles().getText(),
          null,
@@ -401,7 +401,7 @@ public class HelpPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Help Tab");
+      Toolbar toolbar = new Toolbar(constants_.helpTabLabel());
 
       toolbar.addLeftWidget(commands_.helpBack().createToolbarButton());
       toolbar.addLeftWidget(commands_.helpForward().createToolbarButton());
@@ -431,7 +431,7 @@ public class HelpPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar("Help Tab Second");
+      SecondaryToolbar toolbar = new SecondaryToolbar(constants_.helpTabSecondLabel());
 
       title_ = new Label();
       title_.addStyleName(RES.styles().topicTitle());
@@ -441,7 +441,7 @@ public class HelpPane extends WorkbenchPane
       toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
 
       final SmallButton btnNext = new SmallButton("&gt;", true);
-      btnNext.setTitle("Find next (Enter)");
+      btnNext.setTitle(constants_.findNextLabel());
       btnNext.addStyleName(RES.styles().topicNavigationButton());
       btnNext.setVisible(false);
       btnNext.addClickHandler(new ClickHandler() {
@@ -453,7 +453,7 @@ public class HelpPane extends WorkbenchPane
       });
 
       final SmallButton btnPrev = new SmallButton("&lt;", true);
-      btnPrev.setTitle("Find previous");
+      btnPrev.setTitle(constants_.findPreviousLabel());
       btnPrev.addStyleName(RES.styles().topicNavigationButton());
       btnPrev.setVisible(false);
       btnPrev.addClickHandler(new ClickHandler() {
@@ -465,7 +465,7 @@ public class HelpPane extends WorkbenchPane
       });
 
 
-      findTextBox_ = new FindTextBox("Find in Topic");
+      findTextBox_ = new FindTextBox(constants_.findInTopicLabel());
       findTextBox_.addStyleName(RES.styles().findTopicTextbox());
       findTextBox_.setOverrideWidth(90);
       ElementIds.assignElementId(findTextBox_, ElementIds.SW_HELP_FIND_IN_TOPIC);
@@ -818,8 +818,8 @@ public class HelpPane extends WorkbenchPane
       if (!contentWindow.find(term, false, false, true, false))
       {
          globalDisplay_.showMessage(MessageDialog.INFO,
-               "Find in Topic",
-               "No occurrences found",
+               constants_.findInTopicLabel(),
+               constants_.noOccurrencesFoundMessage(),
                findInputSource);
       }
    }
@@ -884,4 +884,5 @@ public class HelpPane extends WorkbenchPane
    private boolean selected_;
    private static int popoutCount_ = 0;
    private SearchDisplay searchWidget_;
+   private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
 }

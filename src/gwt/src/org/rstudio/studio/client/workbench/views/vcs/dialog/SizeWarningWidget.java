@@ -1,7 +1,7 @@
 /*
  * SizeWarningWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
 public class SizeWarningWidget extends Composite implements HasClickHandlers
 {
@@ -33,7 +34,7 @@ public class SizeWarningWidget extends Composite implements HasClickHandlers
 
    public SizeWarningWidget(String subject)
    {
-      showDiffButton_ = new ThemedButton("Show Diff");
+      showDiffButton_ = new ThemedButton(constants_.showDiffCapitalized());
 
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
 
@@ -44,6 +45,7 @@ public class SizeWarningWidget extends Composite implements HasClickHandlers
    {
       size_.setInnerText(StringUtil.formatFileSize(size));
    }
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 
    @Override
    public HandlerRegistration addClickHandler(ClickHandler handler)

@@ -1,7 +1,7 @@
 /*
  * FilesList.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileIconResourceCell;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.views.files.Files;
+import org.rstudio.studio.client.workbench.views.files.FilesConstants;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 
 import com.google.gwt.core.client.JsArray;
@@ -205,7 +207,7 @@ public class FilesList extends Composite
             }
          };
       nameColumn.setSortable(true);
-      filesDataGrid_.addColumn(nameColumn, "Name");
+      filesDataGrid_.addColumn(nameColumn, constants_.nameHeaderText());
 
       sortHandler_.setComparator(nameColumn, new FilesListComparator() {
          @Override
@@ -241,7 +243,7 @@ public class FilesList extends Composite
          }
       };
       sizeColumn.setSortable(true);
-      filesDataGrid_.addColumn(sizeColumn, new ResizableHeader(filesDataGrid_, "Size"));
+      filesDataGrid_.addColumn(sizeColumn, new ResizableHeader(filesDataGrid_, constants_.sizeText()));
       filesDataGrid_.setColumnWidth(sizeColumn, SIZE_COLUMN_WIDTH_PIXELS, Unit.PX);
 
       sortHandler_.setComparator(sizeColumn, new FoldersOnBottomComparator() {
@@ -269,7 +271,7 @@ public class FilesList extends Composite
          }
       };
       modColumn.setSortable(true);
-      filesDataGrid_.addColumn(modColumn, new ResizableHeader(filesDataGrid_, "Modified"));
+      filesDataGrid_.addColumn(modColumn, new ResizableHeader(filesDataGrid_, constants_.modifiedText()));
       filesDataGrid_.setColumnWidth(modColumn, MODIFIED_COLUMN_WIDTH_PIXELS, Unit.PX);
 
       sortHandler_.setComparator(modColumn, new FoldersOnBottomComparator() {
@@ -716,5 +718,6 @@ public class FilesList extends Composite
    private static final int STATE_LARGE   = 2;
 
    private int state_ = STATE_UNKNOWN;
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 
 }

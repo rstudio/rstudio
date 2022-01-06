@@ -1,7 +1,7 @@
 /*
  * CoreClientConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -576,9 +576,9 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String installText();
 
     /**
-     * Translated "Don't Show Again"
+     * Translated "Don''t Show Again"
      *
-     * @return translated "Don't Show Again"
+     * @return translated "Don''t Show Again"
      */
     @DefaultMessage("Don''t Show Again")
     @Key("donnotShowAgain")
@@ -1450,4 +1450,32 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     @DefaultMessage("{0} completed")
     @Key("completedText")
     String completedText(String labelText);
+
+    /**
+     * Translated "Clear".
+     *
+     * @return translated "Clear"
+     */
+    @DefaultMessage("Clear")
+    @Key("clearLabel")
+    String clearLabel();
+
+    /**
+     * Translated "Browse...".
+     *
+     * @return translated "Browse..."
+     */
+    @DefaultMessage("Browse...")
+    @Key("fileChooserTextBoxBrowseLabel")
+    String fileChooserTextBoxBrowseLabel();
+
+    /**
+     * Translated "Choose File".
+     *
+     * @return translated "Choose File"
+     */
+    @DefaultMessage("Choose File")
+    @Key("chooseFileCaption")
+    String chooseFileCaption();
+
 }

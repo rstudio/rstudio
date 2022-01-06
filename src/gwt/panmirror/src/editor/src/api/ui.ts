@@ -1,7 +1,7 @@
 /*
  * ui.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,7 +43,7 @@ export interface EditorUIChunkCallbacks {
 
 export interface EditorUIChunks {
   // create a code chunk editor
-  createChunkEditor: (type: string, element: Element, index: number, callbacks: EditorUIChunkCallbacks) => ChunkEditor;
+  createChunkEditor: (type: string, element: Element, index: number, classes: string[], callbacks: EditorUIChunkCallbacks) => ChunkEditor;
 
   // expand or collapse all chunk editors
   setChunksExpanded: (expanded: boolean) => void;

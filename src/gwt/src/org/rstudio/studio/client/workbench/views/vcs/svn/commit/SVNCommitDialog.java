@@ -1,7 +1,7 @@
 /*
  * SVNCommitDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,6 +46,7 @@ import org.rstudio.studio.client.common.vcs.SVNServerOperations;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNSelectChangelistTablePresenter;
@@ -67,7 +68,7 @@ public class SVNCommitDialog extends ModalDialogBase
       globalDisplay_ = globalDisplay;
       session_ = session;
 
-      setText("Commit");
+      setText(constants_.commitCapitalized());
 
       if (commitDraftStateValue_ == null)
       {
@@ -91,7 +92,7 @@ public class SVNCommitDialog extends ModalDialogBase
          };
       }
 
-      ThemedButton commitButton = new ThemedButton("Commit",
+      ThemedButton commitButton = new ThemedButton(constants_.commitCapitalized(),
                                                     new ClickHandler() {
          public void onClick(ClickEvent event)
          {
@@ -161,7 +162,7 @@ public class SVNCommitDialog extends ModalDialogBase
          server_.svnCommit(
                changelist_.getSelectedPaths(),
                message_.getText(),
-               new SimpleRequestCallback<ConsoleProcess>("SVN Commit")
+               new SimpleRequestCallback<ConsoleProcess>(constants_.svnCommit())
                {
                   private int exitCode_ = 0;
 
@@ -219,9 +220,8 @@ public class SVNCommitDialog extends ModalDialogBase
       if (changelist_.getSelectedPaths().size() == 0)
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
-                                    "No Items Selected",
-                                    "Please select one or more items to " +
-                                    "commit.",
+                                    constants_.noItemsSelectedCapitalized(),
+                                    constants_.selectOneOrMoreItemsToCommit(),
                                     message_);
          return false;
       }
@@ -230,8 +230,8 @@ public class SVNCommitDialog extends ModalDialogBase
       if (message_.getText().trim().length() == 0)
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
-                                    "Message Required",
-                                    "Please provide a commit message.",
+                                    constants_.messageRequiredCapitalized(),
+                                    constants_.provideACommitMessage(),
                                     message_);
          return false;
       }
@@ -269,4 +269,5 @@ public class SVNCommitDialog extends ModalDialogBase
 
    private static final String MODULE_SVN = "svn";
    private static final String KEY_COMMIT_MESSAGE = "commitMessage";
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

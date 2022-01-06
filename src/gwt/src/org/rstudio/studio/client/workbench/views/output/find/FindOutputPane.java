@@ -1,7 +1,7 @@
 /*
  * FindOutputPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,7 @@ import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 import org.rstudio.studio.client.workbench.views.output.find.events.PreviewReplaceEvent;
 
@@ -60,19 +61,19 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Find Output Tab");
+      Toolbar toolbar = new Toolbar(constants_.findOutputTabLabel());
 
       searchLabel_ = new Label();
       toolbar.addLeftWidget(searchLabel_);
 
       stopSearch_ = new ToolbarButton(
             ToolbarButton.NoText,
-            "Stop find in files",
+            constants_.stopFindInFilesTitle(),
             commands_.interruptR().getImageResource());
       stopSearch_.setVisible(false);
       toolbar.addRightWidget(stopSearch_);
 
-      showFindButton_ = new LeftRightToggleButton("Find", "Replace", true);
+      showFindButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), true);
       showFindButton_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -92,7 +93,7 @@ public class FindOutputPane extends WorkbenchPane
       });
       toolbar.addRightWidget(showFindButton_);
 
-      showReplaceButton_ = new LeftRightToggleButton("Find", "Replace", false);
+      showReplaceButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), false);
       showReplaceButton_.setVisible(false);
       showReplaceButton_.addClickHandler(new ClickHandler() {
          @Override
@@ -120,7 +121,7 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar replaceToolbar = new SecondaryToolbar("Replace");
+      SecondaryToolbar replaceToolbar = new SecondaryToolbar(constants_.replaceLabel());
       replaceMode_ = true;
 
       replaceTextBox_ = new TextBox();
@@ -131,18 +132,18 @@ public class FindOutputPane extends WorkbenchPane
             displayPreview_.nudge();
          }
       });
-      FormLabel replaceLabel = new FormLabel("Replace with: ", replaceTextBox_);
+      FormLabel replaceLabel = new FormLabel(constants_.replaceWithLabel(), replaceTextBox_);
       replaceToolbar.addLeftWidget(replaceLabel);
       replaceToolbar.addLeftWidget(replaceTextBox_);
 
       stopReplace_ = new ToolbarButton(
             ToolbarButton.NoText,
-            "Stop replace",
+            constants_.stopReplaceTitle(),
             commands_.interruptR().getImageResource());
       stopReplace_.setVisible(false);
       replaceToolbar.addRightWidget(stopReplace_);
 
-      replaceAllButton_ = new ToolbarButton("Replace All", "Replace All", null);
+      replaceAllButton_ = new ToolbarButton(constants_.replaceAllText(), constants_.replaceAllText(), null);
       replaceToolbar.addRightWidget(replaceAllButton_);
 
       replaceProgress_ = new ProgressBar();
@@ -167,7 +168,7 @@ public class FindOutputPane extends WorkbenchPane
             resources.styles().selectedRow(),
             true,
             false,
-            "Find in Files Results");
+            constants_.findInFilesResultsTitle());
       FontSizer.applyNormalFontSize(table_);
       table_.addStyleName(resources.styles().findOutput());
       table_.addClickHandler(new ClickHandler()
@@ -276,7 +277,7 @@ public class FindOutputPane extends WorkbenchPane
    public void showSearchCompleted()
    {
       if (matchCount_ == 0)
-         statusPanel_.setStatusText("(No results found)");
+         statusPanel_.setStatusText(constants_.noResultsFoundText());
    }
 
    @Override
@@ -343,13 +344,13 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void updateSearchLabel(String query, String path, boolean wholeWord)
    {
-      String intro = wholeWord ? "Results for whole word " : "Results for ";
+      String intro = wholeWord ? constants_.resultsForWholeWordText() : constants_.resultsForText();
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
       builder.appendEscaped(intro)
             .appendHtmlConstant("<strong>")
             .appendEscaped(query)
             .appendHtmlConstant("</strong>")
-            .appendEscaped(" in ")
+            .appendEscaped(" " + constants_.inText())
             .appendEscaped(path);
       searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
    }
@@ -357,17 +358,17 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void updateSearchLabel(String query, String path, String replace, boolean wholeWord)
    {
-      String intro = wholeWord ? "Replace results for whole word " : "Replace results for ";
+      String intro = wholeWord ? constants_.replaceResultsWholeWordText() : constants_.replaceResultsForText();
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
       builder.appendEscaped(intro)
             .appendHtmlConstant("<strong>")
             .appendEscaped(query)
             .appendHtmlConstant("</strong>")
-            .appendEscaped(" with ")
+            .appendEscaped(" " + constants_.withText())
             .appendHtmlConstant("<strong>")
             .appendEscaped(replace)
             .appendHtmlConstant("</strong>")
-            .appendEscaped(" in ")
+            .appendEscaped(" " + constants_.inText())
             .appendEscaped(path);
       searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
    }
@@ -376,20 +377,20 @@ public class FindOutputPane extends WorkbenchPane
    public void updateSearchLabel(String query, String path, String replace,
                                  boolean wholeWord, int successCount, int errorCount)
    {
-      String intro = wholeWord ? "Replace results for whole word " : "Replace results for ";
+      String intro = wholeWord ? constants_.replaceResultsWholeWordText() : constants_.replaceResultsForText();
       SafeHtmlBuilder builder = new SafeHtmlBuilder();
       builder.appendEscaped(intro)
             .appendHtmlConstant("<strong>")
             .appendEscaped(query)
             .appendHtmlConstant("</strong>")
-            .appendEscaped(" with ")
+            .appendEscaped(" " + constants_.withText())
             .appendHtmlConstant("<strong>")
             .appendEscaped(replace)
             .appendHtmlConstant("</strong>")
-            .appendEscaped(" in ")
+            .appendEscaped(" " + constants_.inText())
             .appendEscaped(path);
       {
-         String summary = ": " + successCount + " successful, " + errorCount + " failed";
+         String summary = constants_.summaryLabel(successCount, errorCount);
          builder.appendEscaped(summary);
       }
       searchLabel_.getElement().setInnerHTML(builder.toSafeHtml().asString());
@@ -545,4 +546,5 @@ public class FindOutputPane extends WorkbenchPane
 
    // This must be the same as MAX_COUNT in SessionFind.cpp
    private static final int MAX_COUNT = 1000;
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

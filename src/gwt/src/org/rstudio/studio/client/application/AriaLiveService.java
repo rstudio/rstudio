@@ -1,7 +1,7 @@
 /*
  * AriaLiveService.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,6 +51,7 @@ public class AriaLiveService
    public static final String TAB_KEY_MODE = "tab_key_mode";
    public static final String TOOLBAR_VISIBILITY = "toolbar_visibility";
    public static final String WARNING_BAR = "warning_bar";
+   public static final String SESSION_SUSPENDED = "session_suspended";
 
    // Announcement requested by a user, not controlled by a preference since it is on-demand.
    // Do not include in the announcements_ map.
@@ -83,6 +84,7 @@ public class AriaLiveService
       announcements_.put(TAB_KEY_MODE, constants_.tabKeyFocusAnnouncement());
       announcements_.put(TOOLBAR_VISIBILITY, constants_.toolBarVisibilityAnnouncement());
       announcements_.put(WARNING_BAR, constants_.warningBarsAnnouncement());
+      announcements_.put(SESSION_SUSPENDED, constants_.sessionSuspendAnnouncement());
 
       alwaysEnabledAnnouncements_ = new HashSet<>();
       alwaysEnabledAnnouncements_.add(ON_DEMAND);

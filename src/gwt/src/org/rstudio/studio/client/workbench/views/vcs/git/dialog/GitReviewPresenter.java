@@ -1,7 +1,7 @@
 /*
  * GitReviewPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.git.dialog;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -61,6 +62,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
@@ -145,13 +147,13 @@ public class GitReviewPresenter implements ReviewPresenter
          ArrayList<String> paths = view_.getSelectedPaths();
 
          if (patchMode_ == PatchMode.Stage && !reverse_)
-            server_.gitStage(paths, new SimpleRequestCallback<>("Stage"));
+            server_.gitStage(paths, new SimpleRequestCallback<>(constants_.stageCapitalized()));
          else if (patchMode_ == PatchMode.Stage && reverse_)
             server_.gitUnstage(paths,
-                               new SimpleRequestCallback<>("Unstage"));
+                               new SimpleRequestCallback<>(constants_.unstageCapitalized()));
          else if (patchMode_ == PatchMode.Working && reverse_)
             server_.gitDiscard(paths,
-                               new SimpleRequestCallback<>("Discard"));
+                               new SimpleRequestCallback<>(constants_.discardCapitalized()));
          else
             throw new RuntimeException("Unknown patchMode and reverse combo");
 
@@ -388,12 +390,10 @@ public class GitReviewPresenter implements ReviewPresenter
             final ArrayList<String> paths = view_.getSelectedPaths();
             if (paths.size() == 0)
                return;
-            String noun = paths.size() == 1 ? "file" : "files";
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
-                  "Revert Changes",
-                  "Changes to the selected " + noun + " will be lost, including " +
-                  "staged changes.\n\nAre you sure you want to continue?",
+                  constants_.revertChangesCapitalized(),
+                  paths.size() == 1 ? constants_.changesToFileWillBeLost() : constants_.changesToFileWillBeLostPlural(),
                   new Operation()
                   {
                      @Override
@@ -403,7 +403,7 @@ public class GitReviewPresenter implements ReviewPresenter
 
                         server_.gitRevert(
                               paths,
-                              new SimpleRequestCallback<>("Revert Changes"));
+                              new SimpleRequestCallback<>(constants_.revertChangesCapitalized()));
 
                         view_.getChangelistTable().focus();
                      }
@@ -464,14 +464,12 @@ public class GitReviewPresenter implements ReviewPresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            String which = view_.getLineTableDisplay().getSelectedLines().size() == 0
-                           ? "All unstaged"
-                           : "The selected";
             globalDisplay.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
-                  "Discard All",
-                  which + " changes in this file will be " +
-                  "lost.\n\nAre you sure you want to continue?",
+                  constants_.discardAllCapitalized(),
+                    view_.getLineTableDisplay().getSelectedLines().size() == 0
+                            ? constants_.allUnstagedChangesWillBeLost() :
+                            constants_.theSelectedChangesWillBeLost(),
                   new Operation() {
                      @Override
                      public void execute() {
@@ -607,12 +605,11 @@ public class GitReviewPresenter implements ReviewPresenter
          {
             String prettySize = StringUtil.formatFileSize(gitCommitLargeFileSize_);
             String message =
-                  "Some of the files to be committed are quite large " +
-                  "(>" + prettySize + " in size). Are you sure you want to commit these files?";
+                  constants_.someFilesAreQuiteLarge(prettySize);
 
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
-                  "Committing Large Files",
+                  constants_.committingLargeFiles(),
                   message,
                   false,
                   new Operation()
@@ -632,8 +629,8 @@ public class GitReviewPresenter implements ReviewPresenter
                      }
                   },
                   null,
-                  "Commit",
-                  "Cancel",
+                  constants_.commitCapitalized(),
+                  constants_.cancelCapitalized(),
                   true);
          }
 
@@ -671,7 +668,7 @@ public class GitReviewPresenter implements ReviewPresenter
                             && error.getClientInfo().isString() != null)
                         {
                            globalDisplay_.showErrorMessage(
-                                 "Commit",
+                                 constants_.commitCapitalized(),
                                  error.getClientInfo().isString().stringValue());
                         }
                         else
@@ -795,7 +792,7 @@ public class GitReviewPresenter implements ReviewPresenter
             view_.getContextLines().getValue(),
             overrideSizeWarning_,
             uiPrefs_.gitDiffIgnoreWhitespace().getValue(),
-            new SimpleRequestCallback<DiffResult>("Diff Error")
+            new SimpleRequestCallback<DiffResult>(constants_.diffError())
             {
                @Override
                public void onResponseReceived(DiffResult diffResult)
@@ -945,4 +942,5 @@ public class GitReviewPresenter implements ReviewPresenter
    private final int gitCommitLargeFileSize_;
 
    private boolean overrideSizeWarning_ = false;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

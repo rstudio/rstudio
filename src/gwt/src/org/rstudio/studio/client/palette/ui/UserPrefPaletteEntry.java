@@ -1,7 +1,7 @@
 /*
  * UserPrefPaletteEntry.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.palette.ui;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.palette.PaletteConstants;
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
@@ -41,7 +43,7 @@ public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
    @Override
    public String getContext()
    {
-      return new String("Setting");
+      return new String(constants_.settingText());
    }
    
    @Override
@@ -66,4 +68,5 @@ public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
    abstract public void invoke(InvocationSource source);
 
    protected final PrefValue<?> pref_;
+   private static final PaletteConstants constants_ = GWT.create(PaletteConstants.class);
 }

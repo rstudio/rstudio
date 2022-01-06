@@ -1,7 +1,7 @@
 /*
  * FilesUpload.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.files;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -77,8 +78,8 @@ public class FilesUpload
                   // Warn user unzip is not installed
                   globalDisplay_.showYesNoMessage(
                           MessageDialog.WARNING,
-                          "unzip not found",
-                          "The unzip system utility could not be found. unzip is required for decompressing .zip archives after upload.\n\nWould you like to upload the zip archive without unzipping?",
+                          constants_.unzipNotFoundCaption(),
+                          constants_.unzipNotFoundMessage(),
                           false,
                           checkForFileUploadOverwrite(pendingUpload, token),
                           completeFileUploadOperation(token, false),
@@ -109,18 +110,18 @@ public class FilesUpload
       FileSystemItem firstFile = overwrites.get(0);
       boolean multiple = overwrites.length() > 1;
       StringBuilder msg = new StringBuilder();
-      msg.append("The upload will overwrite ");
+      msg.append(constants_.uploadOverwriteMessage());
       if (multiple)
-         msg.append("multiple files including ");
+         msg.append(constants_.multipleFilesMessage());
       else
-         msg.append("the file ");
+         msg.append(constants_.theFileMessage());
       msg.append("\"" + firstFile.getPath() + "\". ");
 
-      msg.append("Are you sure you want to overwrite ");
+      msg.append(constants_.overwriteQuestion());
       if (multiple)
-         msg.append("these files?");
+         msg.append(constants_.filesLabel());
       else
-         msg.append("this file?");
+         msg.append(constants_.thisFileLabel());
       return msg.toString();
    }
 
@@ -131,8 +132,7 @@ public class FilesUpload
       {
          public void execute()
          {
-            String msg = (commit ? "Completing" : "Cancelling") + 
-            " file upload...";
+            String msg = constants_.fileUploadMessage((commit ? constants_.completingLabel() : constants_.cancellingLabel()));
             final Command dismissProgress = globalDisplay_.showProgress(msg);
 
             server_.completeUpload(token, 
@@ -151,7 +151,7 @@ public class FilesUpload
                public void onError(ServerError error)
                {
                   dismissProgress.execute();  
-                  globalDisplay_.showErrorMessage("File Upload Error",
+                  globalDisplay_.showErrorMessage(constants_.fileUploadErrorMessage(),
                         error.getUserMessage());
 
                   FileUploadEvent event = new FileUploadEvent(false);
@@ -174,7 +174,7 @@ public class FilesUpload
             {
                globalDisplay_.showYesNoMessage(
                        MessageDialog.WARNING,
-                       "Confirm Overwrite",
+                       constants_.confirmOverwriteCaption(),
                        confirmFileUploadOverwriteMessage(pendingUpload),
                        false,
                        completeFileUploadOperation(token, true),
@@ -193,4 +193,5 @@ public class FilesUpload
    private final GlobalDisplay globalDisplay_;
    private final FilesServerOperations server_;
    private final EventBus eventBus_;
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

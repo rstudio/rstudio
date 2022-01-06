@@ -1,7 +1,7 @@
 /*
  * TabOverflowPopupPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
@@ -116,7 +117,7 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
 
       DockPanel dockPanel = new DockPanel();
 
-      search_ = new SearchWidget("Search tabs", new DocsOracle());
+      search_ = new SearchWidget(constants_.searchTabs(), new DocsOracle());
       search_.addValueChangeHandler(this);
 
       search_.getElement().getStyle().setMarginRight(0, Unit.PX);
@@ -228,4 +229,5 @@ public class TabOverflowPopupPanel extends ThemedPopupPanel
    private final SearchWidget search_;
    private HandlerRegistration nativePreviewHandler_;
    private Element lastFocusedElement_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * DataViewerConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,15 +18,6 @@ package org.rstudio.studio.client.quarto;
 import com.google.gwt.i18n.client.Messages;
 
 public interface QuartoConstants extends Messages {
-
-    /**
-     * Translate "Error".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("Error")
-    @Key("progressIndicatorErrorCaption")
-    String progressIndicatorErrorCaption();
 
     /**
      * Translate "Presentation".
@@ -54,105 +45,6 @@ public interface QuartoConstants extends Messages {
     @DefaultMessage("Interactive")
     @Key("interactiveLabel")
     String interactiveLabel();
-
-    /**
-     * Translate "New Quarto {0}...".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("New Quarto {0}...")
-    @Key("newQuartoItemMessage")
-    String newQuartoItemMessage(String item);
-
-    /**
-     * Translate "title: "{0}"".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("title: \"{0}\"")
-    @Key("newDocTitleLabel")
-    String newDocTitleLabel(String title);
-
-    /**
-     * Translate "author: "{0}"".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("author: \"{0}\"")
-    @Key("newDocAuthorLabel")
-    String newDocAuthorLabel(String author);
-
-    /**
-     * Translate "format: "{0}"".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("format: \"{0}\"")
-    @Key("newDocFormatLabel")
-    String newDocFormatLabel(String format);
-
-    /**
-     * Translate "editor: "{0}"".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("editor: \"{0}\"")
-    @Key("newDocEditorLabel")
-    String newDocEditorLabel(String editor);
-
-    /**
-     * Translate "This document uses the Quarto [visual markdown editor](https://quarto.org/docs/visual-editor/). Use the button at the far right of the editor toolbar to switch between visual and source code mode.".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("This document uses the Quarto [visual markdown editor](https://quarto.org/docs/visual-editor/). Use the button at the far right of the editor toolbar to switch between visual and source code mode.")
-    @Key("newDocVisualEditorMsg")
-    String newDocVisualEditorMsg();
-
-    /**
-     * Translate "This is an executable code chunk (click the run button on the right to execute it):".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("This is an executable code chunk (click the run button on the right to execute it):")
-    @Key("newDocEngineMarkdownLine1")
-    String newDocEngineMarkdownLine1();
-
-    /**
-     * Translate "Insert additional code chunks using the insert chunk toolbar button (or **Insert** menu).".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("Insert additional code chunks using the insert chunk toolbar button (or **Insert** menu).")
-    @Key("newDocEngineMarkdownLine2")
-    String newDocEngineMarkdownLine2();
-
-    /**
-     * Translate "Use the toolbar menus (**Format**, **Insert**, **Reference**, and **Table**) to apply formatting and insert various content types (e.g. images, links, references, math, tables, etc.).".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("Use the toolbar menus (**Format**, **Insert**, **Reference**, and **Table**) to apply formatting and insert various content types (e.g. images, links, references, math, tables, etc.).")
-    @Key("newDocToolbarMenuInstruction")
-    String newDocToolbarMenuInstruction();
-
-    /**
-     * Translate "Click the **Render** button on the editor toolbar to create an output document from this file.".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("Click the **Render** button on the editor toolbar to create an output document from this file.")
-    @Key("newDocRenderButtonInstructions")
-    String newDocRenderButtonInstructions();
-
-    /**
-     * Translate "Learn more about Quarto at <https://quarto.org>.".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("Learn more about Quarto at <https://quarto.org>.")
-    @Key("newDocLearnMoreLink")
-    String newDocLearnMoreLink();
 
     /**
      * Translate "New Quarto Document".
@@ -290,7 +182,7 @@ public interface QuartoConstants extends Messages {
     String htmlFormatText();
 
     /**
-     * Translate "Recommended format for authoring (you can switch to PDF or Word output anytime)".
+     * Translate "Recommended format for authoring (you can switch to PDF or Word output anytime)"
      *
      * @return the translated value
      */
@@ -326,11 +218,11 @@ public interface QuartoConstants extends Messages {
     String wordFormatText();
 
     /**
-     * Translate "Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux).".
+     * Translate "Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux)"
      *
      * @return the translated value
      */
-    @DefaultMessage("Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux).")
+    @DefaultMessage("Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux)")
     @Key("wordFormatDesc")
     String wordFormatDesc();
 
@@ -344,7 +236,7 @@ public interface QuartoConstants extends Messages {
     String jsFormatText();
 
     /**
-     * Translate "HTML presentation viewable with any browser (you can also print to PDF with Chrome)".
+     * Translate "HTML presentation viewable with any browser (you can also print to PDF with Chrome)"
      *
      * @return the translated value
      */
@@ -362,7 +254,7 @@ public interface QuartoConstants extends Messages {
     String beamerFormatText();
 
     /**
-     * Translate "PDF output requires a LaTeX installation (e.g. https://yihui.org/tinytex/)".
+     * Translate "PDF output requires a LaTeX installation (e.g. https://yihui.org/tinytex/)"
      *
      * @return the translated value
      */
@@ -380,11 +272,11 @@ public interface QuartoConstants extends Messages {
     String powerPointFormatText();
 
     /**
-     * Translate "PowerPoint previewing requires an installation of PowerPoint or OpenOffice.".
+     * Translate "PowerPoint previewing requires an installation of PowerPoint or OpenOffice".
      *
      * @return the translated value
      */
-    @DefaultMessage("PowerPoint previewing requires an installation of PowerPoint or OpenOffice.")
+    @DefaultMessage("PowerPoint previewing requires an installation of PowerPoint or OpenOffice")
     @Key("powerPointFormatDesc")
     String powerPointFormatDesc();
 
@@ -393,16 +285,16 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create an interactive HTML document with Shiny components.")
+    @DefaultMessage("Create an interactive HTML document with Shiny components")
     @Key("shinyFormatDesc")
     String shinyFormatDesc();
 
     /**
-     * Translate "Create an interactive HTML document with Observable JS components.".
+     * Translate "Create an interactive HTML document with Observable JS components".
      *
      * @return the translated value
      */
-    @DefaultMessage("Create an interactive HTML document with Observable JS components.")
+    @DefaultMessage("Create an interactive HTML document with Observable JS components")
     @Key("observableJSFormatDesc")
     String observableJSFormatDesc();
 
@@ -423,4 +315,13 @@ public interface QuartoConstants extends Messages {
     @DefaultMessage("About the Quarto visual editor")
     @Key("aboutHelpButtonTitle")
     String aboutHelpButtonTitle();
+
+    /**
+     * Translate "Editor:".
+     *
+     * @return the translated value
+     */
+    @DefaultMessage("Editor:")
+    @Key("editorText")
+    String editorText();
 }

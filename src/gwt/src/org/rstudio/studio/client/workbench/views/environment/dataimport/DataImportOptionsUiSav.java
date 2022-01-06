@@ -1,7 +1,7 @@
 /*
  * DataImportOptionsUiSav.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 
 import com.google.gwt.core.client.GWT;
@@ -124,7 +125,7 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
    public HelpLink getHelpLink()
    {
       return new HelpLink(
-         "Reading data using haven",
+         constants_.readingDataUsingHaven(),
          "import_haven",
          false,
          true);
@@ -197,6 +198,7 @@ public class DataImportOptionsUiSav extends DataImportOptionsUi
          fileChooser_.setEnabled(false);
       }
    }
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
    
    @UiField
    ListBox formatListBox_;

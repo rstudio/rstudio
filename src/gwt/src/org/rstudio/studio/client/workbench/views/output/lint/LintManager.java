@@ -1,7 +1,7 @@
 /*
  * LintManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -197,12 +197,8 @@ public class LintManager
    }
    
    private int defaultLintDelayMs()
-   {
-      // give pure yaml linting a shorter delay b/c its known to be high performance
-      if (source_.getTextFileType().isYaml())
-         return 500;
-      else
-         return userPrefs_.backgroundDiagnosticsDelayMs().getValue();
+   { 
+      return userPrefs_.backgroundDiagnosticsDelayMs().getValue();
    }
    
    private void lintActiveDocument(final LintContext context)

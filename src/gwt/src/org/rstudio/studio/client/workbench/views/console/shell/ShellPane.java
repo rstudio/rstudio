@@ -1,7 +1,7 @@
 /*
  * ShellPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console.shell;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
@@ -23,6 +24,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.shell.ShellWidget;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 public class ShellPane extends ShellWidget implements Shell.Display
@@ -30,7 +32,7 @@ public class ShellPane extends ShellWidget implements Shell.Display
    @Inject
    public ShellPane(final AceEditor editor, UserPrefs uiPrefs, EventBus events, AriaLiveService ariaLive)
    {
-      super(editor, uiPrefs, events, ariaLive, "Console Output");
+      super(editor, uiPrefs, events, ariaLive, constants_.consoleOutputLabel());
 
       editor.setDisableOverwrite(true);
 
@@ -81,4 +83,5 @@ public class ShellPane extends ShellWidget implements Shell.Display
          input_.focus();
       });
    }
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

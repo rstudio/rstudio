@@ -1,7 +1,7 @@
 /*
  * UserPrefsComputedLayer.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,6 +46,11 @@ Error UserPrefsComputedLayer::readPrefs()
 {
    json::Object layer;
 
+#ifndef QUARTO_ENABLED
+   // Quarto -----------------------------------------------------------------
+   layer[kQuartoEnabled] = kQuartoEnabledHidden;
+#endif
+   
    // VCS executable paths ---------------------------------------------------
    layer[kGitExePath] = modules::git::detectedGitExePath().getAbsolutePath();
    layer[kSvnExePath] = modules::svn::detectedSvnExePath().getAbsolutePath();

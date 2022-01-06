@@ -1,7 +1,7 @@
 /*
  * code_block_input.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,7 @@ const extension = (context: ExtensionContext): Extension => {
     inputRules: () => {
       if (fencedAttributes) {
         return [
-          new InputRule(/^```{$/, (state: EditorState, match: string[], start: number, end: number) => {
+          new InputRule(/^```+{$/, (state: EditorState, match: string[], start: number, end: number) => {
             if (!canApplyCodeBlockInputRule(state)) {
               return null;
             }
@@ -71,7 +71,7 @@ function codeBlockInputRuleEnter(pandocExtensions: PandocExtensions, fencedAttri
 
     // full text of parent must meet the pattern
     // eslint-disable-next-line no-useless-escape
-    const match = $head.parent.textContent.match(/^```(?:(\w+)|\{([\.=]?[^\}]+)\})?$/);
+    const match = $head.parent.textContent.match(/^```+(?:(\w+)|\{([\.=]?[^\}]+)\})?$/);
     if (!match) {
       return false;
     }

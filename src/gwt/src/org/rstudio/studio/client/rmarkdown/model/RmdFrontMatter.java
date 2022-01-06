@@ -1,7 +1,7 @@
 /*
  * RmdFrontMatter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -170,6 +170,8 @@ public class RmdFrontMatter extends JavaScriptObject
    public final static String RUNTIME_KEY = "runtime";
    public final static String SERVER_KEY = "server";
    public final static String KNIT_KEY = "knit";
+   public final static String ENGINE_KEY = "engine";
+   public final static String JUPYTER_KEY = "jupyter";
 
    public final static String DEFAULT_FORMAT = "default";
    public final static String SHINY_RUNTIME = "shiny";

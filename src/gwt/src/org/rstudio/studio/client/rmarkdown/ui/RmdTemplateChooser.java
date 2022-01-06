@@ -1,7 +1,7 @@
 /*
  * RmdTemplateChooser.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,7 +59,7 @@ public class RmdTemplateChooser extends Composite
 
    public RmdTemplateChooser(RMarkdownServerOperations server)
    {
-      dirLocation_ = new DirectoryChooserTextBox("Location:", 
+      dirLocation_ = new DirectoryChooserTextBox(constants_.locationLabel(),
             ElementIds.TextBoxButtonId.RMD_TEMPLATE_DIR);
       initWidget(uiBinder.createAndBindUi(this));
       server_ = server;

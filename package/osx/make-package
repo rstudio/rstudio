@@ -3,7 +3,7 @@
 #
 # make-package
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,10 @@ set +H
 
 PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
+
+# use RStudioDesktop as GWT main module
+GWT_MAIN_MODULE=RStudioDesktop
+export GWT_MAIN_MODULE
 
 # used to ensure JAVA_HOME points at a version of Java compatible
 # with the version of GWT sources we use for compilation
@@ -96,7 +100,7 @@ else
    RSTUDIO_PRO_SUFFIX=""
 fi
 
-RSTUDIO_BUNDLE_NAME="RStudio${RSTUDIO_PRO_SUFFIX}-${RSTUDIO_VERSION_FULL}"
+RSTUDIO_BUNDLE_NAME=$(echo "RStudio${RSTUDIO_PRO_SUFFIX}-${RSTUDIO_VERSION_FULL}" | sed 's/+/-/g')
 
 # use Ninja if available
 if has-program ninja; then
@@ -149,10 +153,13 @@ for arg in "$@"; do
    --install)          install=1 ;;
    --build-gwt=*)      build_gwt=${arg#*=} ;;
    --copy-gwt=*)       copy_gwt=${arg#*=} ;;
+   --gwt-build=*)      build_gwt=${arg#*=} ;;
+   --gwt-copy=*)       copy_gwt=${arg#*=} ;;
    --build-package=*)  build_package=${arg#*=} ;;
    --build-dmg=*)      build_dmg=${arg#*=} ;;
    --use-creds=*)      use_creds=${arg#*=} ;;
    --rstudio-target=*) rstudio_target=${arg#*=} ;;
+   *)                  echo "Ignoring unrecognized argument '${arg}'"
    esac
 
 done

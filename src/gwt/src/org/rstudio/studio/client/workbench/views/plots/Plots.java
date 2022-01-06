@@ -1,7 +1,7 @@
 /*
  * Plots.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -245,14 +245,14 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       // confirm
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
 
-         "Remove Plot",
+          constants_.removePlotCaption(),
 
-         "Are you sure you want to remove the current plot?",
+          constants_.removePlotMessage(),
 
          new ProgressOperation() {
             public void execute(final ProgressIndicator indicator)
             {
-               indicator.onProgress("Removing plot...");
+               indicator.onProgress(constants_.removingPlotText());
                server_.removePlot(new VoidServerRequestCallback(indicator));
             }
          },
@@ -272,14 +272,14 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       // confirm
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
 
-         "Clear Plots",
+         constants_.clearPlotsCaption(),
 
-         "Are you sure you want to clear all of the plots in the history?",
+         constants_.clearPlotsMessage(),
 
          new ProgressOperation() {
             public void execute(final ProgressIndicator indicator)
             {
-               indicator.onProgress("Clearing plots...");
+               indicator.onProgress(constants_.clearingPlotsText());
                server_.clearPlots(new VoidServerRequestCallback(indicator));
             }
          },
@@ -295,8 +295,8 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       view_.bringToFront();
 
       final ProgressIndicator indicator =
-         globalDisplay_.getProgressIndicator("Error");
-      indicator.onProgress("Preparing to export plot...");
+         globalDisplay_.getProgressIndicator(constants_.errorCaption());
+      indicator.onProgress(constants_.preparingExportPlotText());
 
       // get the default directory
       FileSystemItem defaultDir = ExportPlotUtils.getDefaultSaveDirectory(
@@ -334,8 +334,8 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       view_.bringToFront();
 
       final ProgressIndicator indicator =
-         globalDisplay_.getProgressIndicator("Error");
-      indicator.onProgress("Preparing to export plot...");
+         globalDisplay_.getProgressIndicator(constants_.errorCaption());
+      indicator.onProgress(constants_.preparingExportPlotText());
 
       // get the default directory
       final FileSystemItem defaultDir = ExportPlotUtils.getDefaultSaveDirectory(
@@ -532,7 +532,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
 
          if (showErrors_)
          {
-            globalDisplay_.showErrorMessage("Server Error",
+            globalDisplay_.showErrorMessage(constants_.serverErrorCaption(),
                                             error.getUserMessage());
          }
       }
@@ -595,7 +595,7 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
       public void onError(ServerError error)
       {
          manipulatorManager_.setProgress(false);
-         globalDisplay_.showErrorMessage("Server Error",
+         globalDisplay_.showErrorMessage(constants_.serverErrorCaption(),
                                          error.getUserMessage());
 
       }
@@ -618,4 +618,5 @@ public class Plots extends BasePresenter implements PlotsChangedEvent.Handler,
 
    // size of most recently rendered plot
    Size plotSize_ = null;
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }

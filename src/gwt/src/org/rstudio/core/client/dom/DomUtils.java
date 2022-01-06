@@ -1,7 +1,7 @@
 /*
  * DomUtils.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1047,18 +1047,6 @@ public class DomUtils
          el.setSelectionRange(start, end);
    }-*/;
 
-   public static final native void copyCodeToClipboard(String text) /*-{
-      var copyElem = document.createElement('pre');
-      copyElem.contentEditable = true;
-      document.body.appendChild(copyElem);
-      copyElem.innerHTML = text;
-      copyElem.unselectable = "off";
-      copyElem.focus();
-      document.execCommand('SelectAll');
-      document.execCommand("Copy", false, null);
-      document.body.removeChild(copyElem);
-   }-*/;
-
    public static final String extractCssValue(String className,
          String propertyName)
    {
@@ -1342,29 +1330,6 @@ public class DomUtils
       return el.getBoundingClientRect();
    }-*/;
 
-   public static final native void copyToClipboard(String text)
-   /*-{
-      if (window.clipboardData && window.clipboardData.setData) {
-         // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
-         clipboardData.setData("Text", text);
-      }
-      else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-         var textarea = document.createElement("textarea");
-         textarea.textContent = text;
-         textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in Microsoft Edge.
-         document.body.appendChild(textarea);
-         textarea.select();
-         try {
-            document.execCommand("copy");  // Security exception may be thrown by some browsers.
-         }
-         catch (ex) {
-            console.warn("Copy to clipboard failed.", ex);
-         }
-         finally {
-            document.body.removeChild(textarea);
-         }
-      }
-   }-*/;
 
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;

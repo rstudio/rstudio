@@ -1,7 +1,7 @@
 /*
  * HistoryPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.dialog;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -50,6 +51,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.DiffParser;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.SwitchViewEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
@@ -244,7 +246,7 @@ public class HistoryPresenter
             final ProgressIndicator indicator =
                   new GlobalProgressDelayer(globalDisplay,
                                             500,
-                                            "Reading file...").getIndicator();
+                                            constants_.readingFileEllipses()).getIndicator();
 
             strategy_.showFile(
                   event.getRevision(),
@@ -277,7 +279,7 @@ public class HistoryPresenter
 
                         viewFilePanel.getToolbar().addRightWidget(
                                                          new ToolbarButton(
-                              "Show History",
+                              constants_.showHistoryCapitalized(),
                               ToolbarButton.NoTitle,
                               commands.goToWorkingDir().getImageResource(),
                               new ClickHandler() {
@@ -435,4 +437,5 @@ public class HistoryPresenter
    private final Invalidation invalidation_ = new Invalidation();
    private boolean initialized_;
    private String commitShowing_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

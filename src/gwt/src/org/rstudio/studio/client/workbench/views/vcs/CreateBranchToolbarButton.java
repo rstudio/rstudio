@@ -1,7 +1,7 @@
 /*
  * CreateBranchToolbarButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.vcs;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Functional;
@@ -50,7 +51,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
    public CreateBranchToolbarButton(GlobalDisplay globalDisplay,
                                     GitServerOperations gitServer)
    {
-      super("New Branch",
+      super(constants_.newBranchCapitalized(),
             ToolbarButton.NoTitle,
             new ImageResource2x(StandardIcons.INSTANCE.mermaid2x()),
             (ClickHandler) null);
@@ -103,7 +104,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
             };
             
       createBranchDialog_ = new CreateBranchDialog(
-            "New Branch",
+            constants_.newBranchCapitalized(),
             remotesInfo,
             onCreateBranch,
             onAddRemote);
@@ -189,13 +190,12 @@ public class CreateBranchToolbarButton extends ToolbarButton
       if (hasBranch)
       {
          String message =
-               "A local branch named '" + input.getBranch() + "' already exists. " +
-               "Would you like to check out that branch, or overwrite it?";
+               constants_.localBranchAlreadyExists(input.getBranch());
          
          List<String> labels = new ArrayList<>();
-         labels.add("Checkout");
-         labels.add("Overwrite");
-         labels.add("Cancel");
+         labels.add(constants_.checkoutCapitalized());
+         labels.add(constants_.overwriteCapitalized());
+         labels.add(constants_.cancelCapitalized());
          
          List<String> elementIds = new ArrayList<>();
          elementIds.add(ElementIds.DIALOG_YES_BUTTON);
@@ -231,7 +231,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
          
          globalDisplay_.showGenericDialog(
                MessageDialog.INFO,
-               "Local Branch Already Exists",
+               constants_.localBranchAlreadyExistsCaption(),
                message,
                labels,
                elementIds,
@@ -261,13 +261,11 @@ public class CreateBranchToolbarButton extends ToolbarButton
       if (remoteBranch != null)
       {
          String message =
-               "A remote branch named '" + input.getBranch() + "' already exists " +
-               "on the remote repository '" + input.getRemote() + "'. Would you like " +
-               "to check out that branch?";
+               constants_.remoteBranchNameAlreadyExists(input.getBranch(),input.getRemote());
          
          List<String> labels = new ArrayList<>();
-         labels.add("Checkout");
-         labels.add("Cancel");
+         labels.add(constants_.checkoutCapitalized());
+         labels.add(constants_.cancelCapitalized());
 
          List<String> elementIds = new ArrayList<>();
          elementIds.add(ElementIds.DIALOG_OK_BUTTON);
@@ -293,7 +291,7 @@ public class CreateBranchToolbarButton extends ToolbarButton
          
          globalDisplay_.showGenericDialog(
                MessageDialog.INFO,
-               "Remote Branch Already Exists",
+               constants_.remoteBranchAlreadyExistsCaption(),
                message,
                labels,
                elementIds,
@@ -413,4 +411,5 @@ public class CreateBranchToolbarButton extends ToolbarButton
    
    private final GlobalDisplay globalDisplay_;
    private final GitServerOperations gitServer_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

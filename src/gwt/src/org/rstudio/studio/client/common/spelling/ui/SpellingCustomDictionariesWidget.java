@@ -1,7 +1,7 @@
 /*
  * SpellingCustomDictionariesWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.spelling.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.LabelWithHelp;
 import org.rstudio.core.client.widget.MessageDialog;
@@ -24,12 +25,12 @@ import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.spelling.SpellingService;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.SelectElement;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -58,17 +59,17 @@ public class SpellingCustomDictionariesWidget extends Composite
       dictionariesPanel.add(listBox_);
       
       VerticalPanel buttonPanel = new VerticalPanel();
-      SmallButton buttonAdd = createButton("Add...");
+      SmallButton buttonAdd = createButton(constants_.buttonAddLabel());
       buttonAdd.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd);
-      SmallButton buttonRemove = createButton("Remove...");
+      SmallButton buttonRemove = createButton(constants_.buttonRemoveLabel());
       buttonRemove.addClickHandler(removeButtonClicked_);
       buttonPanel.add(buttonRemove);
       dictionariesPanel.add(buttonPanel);
       
-      panel.add(new LabelWithHelp("Custom dictionaries:",
+      panel.add(new LabelWithHelp(constants_.labelWithHelpText(),
             "custom_dictionaries",
-            "Help on custom spelling dictionaries",
+            constants_.labelWithHelpTitle(),
             listBox_));
       panel.add(dictionariesPanel);
       
@@ -107,10 +108,10 @@ public class SpellingCustomDictionariesWidget extends Composite
       public void onClick(ClickEvent event)
       {
          fileDialogs_.openFile(
-            "Add Custom Dictionary (*.dic)", 
+            constants_.fileDialogsCaption(),
             fileSystemContext_, 
             FileSystemItem.home(), 
-            "Dictionaries (*.dic)",
+            constants_.fileDialogsFilter(),
             new ProgressOperationWithInput<FileSystemItem>() {
 
                @Override
@@ -121,7 +122,7 @@ public class SpellingCustomDictionariesWidget extends Composite
                   if (input == null)
                      return;
                   
-                  progressIndicator_.onProgress("Adding dictionary...");
+                  progressIndicator_.onProgress(constants_.onProgressAddingLabel());
 
                   spellingService_.addCustomDictionary(
                                                   input.getPath(),
@@ -146,14 +147,13 @@ public class SpellingCustomDictionariesWidget extends Composite
             final String dictionary = listBox_.getValue(index);
             globalDisplay_.showYesNoMessage(
                   MessageDialog.WARNING, 
-                  "Confirm Remove", 
-                  "Are you sure you want to remove the " + dictionary + 
-                  " custom dictionary?",
+                  constants_.removeDictionaryCaption(),
+                  constants_.removeDictionaryMessage(dictionary),
                   new Operation() {
                      @Override
                      public void execute()
                      {
-                        progressIndicator_.onProgress("Removing dictionary...");
+                        progressIndicator_.onProgress(constants_.progressRemoveIndicator());
 
                         spellingService_.removeCustomDictionary(
                                                   dictionary,
@@ -224,5 +224,6 @@ public class SpellingCustomDictionariesWidget extends Composite
    {
       RES.styles().ensureInjected();
    }
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 
 }

@@ -1,7 +1,7 @@
 /*
  * TerminalTabPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -297,8 +297,8 @@ public class TerminalTabPresenter extends BasePresenter
 
       terminalHelper_.warnBusyTerminalBeforeCommand(
             command,
-            "Close All Terminals",
-            "Are you sure you want to close all terminals? Any running jobs will be stopped",
+            constants_.closeAllTerminalsCaption(),
+            constants_.closeAllTerminalsQuestion(),
             userPrefs_.busyDetection().getValue()
       );
    }
@@ -312,4 +312,5 @@ public class TerminalTabPresenter extends BasePresenter
    private final Display view_;
    private final TerminalHelper terminalHelper_;
    private final UserPrefs userPrefs_;
+   private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }

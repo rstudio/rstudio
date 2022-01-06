@@ -1,7 +1,7 @@
 /*
  * list.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -391,8 +391,8 @@ function bulletListOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Bullet List'),
     description: ui.context.translateText('List using bullets for items'),
-    group: OmniInsertGroup.Lists,
-    priority: 5,
+    group: OmniInsertGroup.Common,
+    priority: 4,
     image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.bullet_list_dark! : ui.images.omni_insert?.bullet_list!),
   };
 }
@@ -401,8 +401,8 @@ function orderedListOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Numbered List'),
     description: ui.context.translateText('List using numbers for items'),
-    group: OmniInsertGroup.Lists,
-    priority: 4,
+    group: OmniInsertGroup.Common,
+    priority: 3,
     image: () =>
       ui.prefs.darkMode() ? ui.images.omni_insert?.ordered_list_dark! : ui.images.omni_insert?.ordered_list!,
   };

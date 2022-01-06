@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include "SessionClientInit.hpp"
 #include "SessionInit.hpp"
-#include "SessionSuspend.hpp"
 #include "SessionHttpMethods.hpp"
 #include "SessionDirs.hpp"
 
@@ -71,6 +70,7 @@
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionQuarto.hpp>
+#include <session/SessionSuspend.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 #include <session/prefs/UserPrefs.hpp>
 #include <session/prefs/UserState.hpp>
@@ -206,6 +206,14 @@ void handleClientInit(const boost::function<void()>& initFunction,
       // header value (complements RSTUDIO_USER_IDENTITY)
       core::system::setenv("RSTUDIO_USER_IDENTITY_DISPLAY", 
             userIdentityDisplay(ptrConnection->request()));
+
+      // read display name from upstream if set
+      std::string displayName = ptrConnection->request().headerValue(
+            kRStudioUserIdentityDisplay);
+      if (!displayName.empty())
+      {
+         persistentState().setUserDisplayName(displayName);
+      }
    }
 
    // prepare session info 
@@ -287,6 +295,14 @@ void handleClientInit(const boost::function<void()>& initFunction,
       json::Object actionsObject;
       consoleActions.asJson(&actionsObject);
       sessionInfo["console_actions"] = actionsObject;
+
+      suspend::initFromResume();
+
+      std::string resumeMsg = suspend::getResumedMessage();
+      if (!resumeMsg.empty())
+      {
+         module_context::consoleWriteOutput(resumeMsg);
+      }
    }
 
    sessionInfo["rnw_weave_types"] = modules::authoring::supportedRnwWeaveTypes();

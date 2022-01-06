@@ -1,7 +1,7 @@
 /*
  * PublishReportSourcePage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,7 +50,7 @@ public class PublishReportSourcePage
       
       String descriptor = constants_.documentLowercase();
       if (asMultiple)
-         descriptor = constants_.documentsLowercase();
+         descriptor = constants_.documentsLowercasePlural();
       if (input.isWebsiteRmd())
          descriptor = constants_.websiteLowercase();
       

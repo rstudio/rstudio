@@ -1,7 +1,7 @@
 /*
  * DataEditingTarget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.server.ErrorLoggingServerRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.urlcontent.UrlContentEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.DataViewChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.PopoutDocEvent;
@@ -102,9 +104,9 @@ public class DataEditingTarget extends UrlContentEditingTarget
    private void setAccessibleName(String accessibleName)
    {
       if (StringUtil.isNullOrEmpty(accessibleName))
-         accessibleName = "Untitled Data Browser";
-      Roles.getTabpanelRole().setAriaLabelProperty(progressPanel_.getElement(), accessibleName + 
-            " Data Browser");
+         accessibleName = constants_.untitledDataBrowser();
+      Roles.getTabpanelRole().setAriaLabelProperty(progressPanel_.getElement(),
+              constants_.accessibleNameDataBrowser(accessibleName));
    }
 
    @Override
@@ -151,7 +153,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    private void reloadDisplay()
    {
       view_ = new DataEditingTargetWidget(
-            "Data Browser",
+            constants_.dataBrowser(),
             commands_,
             events_,
             getDataItem(),
@@ -198,7 +200,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public String getCurrentStatus()
    {
-      return "Data Browser displayed";
+      return constants_.dataBrowserDisplayed();
    }
 
    protected String getCacheKey()
@@ -219,7 +221,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
       server_.modifyDocumentProperties(
             doc_.getId(),
             props,
-            new SimpleRequestCallback<Void>("Error")
+            new SimpleRequestCallback<Void>(constants_.errorCapitalized())
             {
                @Override
                public void onResponseReceived(Void response)
@@ -246,4 +248,5 @@ public class DataEditingTarget extends UrlContentEditingTarget
    private final EventBus events_;
    private boolean isActive_;
    private QueuedRefreshType queuedRefresh_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * array-utils.test.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { nextLowest, nextHighest } from '../../../src/core/array-utils';
+import { nextLowest, nextHighest, firstStartingWith } from '../../../src/core/array-utils';
 
 describe('array-util', () => {
   const choices = [1, 3, 9, 11, 17];
@@ -58,6 +58,24 @@ describe('array-util', () => {
       const noChoices: number[] = [];
       const current = 5;
       assert.equal(nextHighest(current, noChoices), 5);
+    });
+  });
+
+  describe('firstStartingWith', () => {
+    it('returns empty string for empty input array', () => {
+      const input: string[] = [];
+      const result = firstStartingWith(input, 'hello');
+      assert.equal(result, '');
+    });
+    it('returns empty string for no match', () => {
+      const input = ['one', 'two'];
+      const result = firstStartingWith(input, 'three');
+      assert.equal(result, '');
+    });
+    it('returns match minus prefix', () => {
+      const input = ['one', '--two=stuff', 'three'];
+      const result = firstStartingWith(input, '--two=');
+      assert.equal(result, 'stuff');
     });
   });
 });

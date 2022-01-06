@@ -1,7 +1,7 @@
 /*
  * Presentation2Pane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.presentation2;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.RStudioFrame;
@@ -75,14 +76,14 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar("Presentation Toolbar");
+      toolbar_ = new Toolbar(constants_.presentationToolbarLabel());
       
       
       toolbar_.addLeftWidget(commands_.presentation2Present().createToolbarButton());
       
       ToolbarPopupMenu presentMenu = new ToolbarPopupMenu();
       presentMenu.addItem(commands_.presentation2PresentFromBeginning().createMenuItem(false));
-      ToolbarMenuButton presentButton = new ToolbarMenuButton(ToolbarButton.NoText, "Present", presentMenu, true);
+      ToolbarMenuButton presentButton = new ToolbarMenuButton(ToolbarButton.NoText, constants_.presentTitle(), presentMenu, true);
       presentButton.setEnabled(commands_.presentation2PresentFromBeginning().isEnabled());
       commands_.presentation2PresentFromBeginning().addEnabledChangedHandler(event -> {
          presentButton.setEnabled(commands_.presentation2PresentFromBeginning().isEnabled());
@@ -93,6 +94,12 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       toolbar_.addLeftWidget(commands_.presentation2Print().createToolbarButton());
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.presentation2Edit().createToolbarButton());
+      toolbar_.addLeftSeparator();
+      
+      ToolbarButton openExternalButton = commands_.presentation2Present().createToolbarButton();
+      openExternalButton.setLeftImage(commands_.viewerPopout().getImageResource());
+      openExternalButton.setText("");
+      toolbar_.addLeftWidget(openExternalButton);
       
       // publish
       publishButton_ = new RSConnectPublishButton(
@@ -110,7 +117,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar("Presentation Slides Toolbar");
+      SecondaryToolbar toolbar = new SecondaryToolbar(constants_.presentationSlidesToolbarLabel());
       toolbar.addLeftWidget(commands_.presentation2Prev().createToolbarButton());
       toolbar.addLeftWidget(commands_.presentation2Next().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -130,7 +137,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    @Override
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame("Presentation Preview");
+      frame_ = new RStudioFrame(constants_.presentationPreviewTitle());
       frame_.addStyleName("ace_editor_theme");
       frame_.setSize("100%", "100%");
       frame_.setUrl(URIConstants.ABOUT_BLANK);
@@ -448,4 +455,5 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
    private RStudioFrame frame_;
   
    private HandlerManager handlerManager_ = new HandlerManager(this);
+   private static final Presentation2Constants constants_ = com.google.gwt.core.client.GWT.create(Presentation2Constants.class);
 }

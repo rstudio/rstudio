@@ -1,7 +1,7 @@
 /*
  * AboutDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Window;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -42,7 +43,7 @@ public class AboutDialog extends ModalDialogBase
 
       ThemedButton copyVersionButton = new ThemedButton(constants_.copyVersionButtonTitle(), (ClickEvent) ->
       {
-         DomUtils.copyToClipboard("RStudio " + info.version + " " +
+         Clipboard.setText("RStudio " + info.version + " " +
             "\"" + info.release_name + "\" " + info.build_type +
             " (" + info.commit + ", " + info.date + ") " +
             constants_.forText() + info.os + "\n" +

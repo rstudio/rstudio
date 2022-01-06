@@ -1,7 +1,7 @@
 /*
  * cursor.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -80,7 +80,7 @@ function gapArrowHandler(dir: 'up' | 'left') {
         return false;
       }
 
-      // check if we are in a div
+      // check if we are in a div 
       if (state.schema.nodes.div) {
         const div = findParentNodeOfType(state.schema.nodes.div)(state.selection);
       
@@ -170,6 +170,7 @@ function gapClickHandler(view: EditorView, event: Event): boolean {
         return node.type === schema.nodes.div ||
                node.type === schema.nodes.figure ||
                node.type === schema.nodes.table ||
+               node.type === schema.nodes.horizontal_rule ||
                node.type === schema.nodes.code_block;
       } else {
         return false;

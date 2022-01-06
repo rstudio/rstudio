@@ -1,7 +1,7 @@
 /*
  * DataViewerConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -144,4 +144,13 @@ public interface PaletteConstants extends Messages {
     @DefaultMessage("Off")
     @Key("checkboxLabelOff")
     String checkboxLabelOff();
+
+    /**
+     * Translate "Setting".
+     *
+     * @return the translated value
+     */
+    @DefaultMessage("Setting")
+    @Key("settingText")
+    String settingText();
 }

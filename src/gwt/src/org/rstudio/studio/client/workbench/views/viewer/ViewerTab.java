@@ -1,7 +1,7 @@
 /*
  * ViewerTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -49,4 +49,5 @@ public class ViewerTab extends DelayLoadWorkbenchTab<ViewerPresenter>
 
    @SuppressWarnings("unused")
    private Session session_;
+   private static final ViewerConstants constants_ = com.google.gwt.core.client.GWT.create(ViewerConstants.class);
 }

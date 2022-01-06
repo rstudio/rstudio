@@ -1,7 +1,7 @@
 /*
  * GlobalToolbar.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,11 +58,11 @@ public class GlobalToolbar extends Toolbar
       newMenu_ = new ToolbarPopupMenu();
       newMenu_.addItem(commands.newSourceDoc().createMenuItem(false));
       newMenu_.addSeparator();
-      newMenu_.addItem(commands.newRNotebook().createMenuItem(false));
-      newMenu_.addItem(commands.newRMarkdownDoc().createMenuItem(false));
-      newMenu_.addSeparator();
       newMenu_.addItem(commands.newQuartoDoc().createMenuItem(false));
       newMenu_.addItem(commands.newQuartoPres().createMenuItem(false));
+      newMenu_.addSeparator();
+      newMenu_.addItem(commands.newRNotebook().createMenuItem(false));
+      newMenu_.addItem(commands.newRMarkdownDoc().createMenuItem(false));
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newRShinyApp().createMenuItem(false));
       newMenu_.addItem(commands.newRPlumberDoc().createMenuItem(false));

@@ -1,7 +1,7 @@
 /*
  * CommitDetail.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.*;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ViewFileRevisionEvent;
 import org.rstudio.studio.client.workbench.views.vcs.dialog.HistoryPresenter.CommitDetailDisplay;
@@ -50,7 +51,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
 
    public CommitDetail()
    {
-      sizeWarning_ = new SizeWarningWidget("commit");
+      sizeWarning_ = new SizeWarningWidget(constants_.commit());
       sizeWarning_.setVisible(false);
       progressPanel_ = new ProgressPanel(ProgressImages.createLargeGray());
       initWidget(GWT.<Binder>create(Binder.class).createAndBindUi(this));
@@ -178,7 +179,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    @Override
    public void setCommitListIsLoading(boolean isLoading)
    {
-      emptySelectionLabel_.setText(isLoading ? "" : "(No commit selected)");
+      emptySelectionLabel_.setText(isLoading ? "" : constants_.noCommitSelectedParentheses());
    }
 
    @Override
@@ -239,6 +240,7 @@ public class CommitDetail extends Composite implements CommitDetailDisplay
    {
       return sizeWarning_;
    }
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 
    private final Invalidation invalidation_ = new Invalidation();
    private CommitInfo commit_;

@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -506,7 +506,7 @@ private:
          if (error)
             LOG_ERROR(error);
          if (extendedType == "quarto-document")
-            renderFunc = "quarto run";
+            renderFunc = "quarto serve";
          else
             renderFunc = kShinyRenderFunc;
       }
@@ -528,7 +528,7 @@ private:
 
       // if we are using a quarto command to render, we must be a quarto doc. read
       // all of the input file lines to be used in error navigation
-      if (renderFunc == "quarto run" || renderFunc == "quarto render")
+      if (renderFunc == "quarto serve" || renderFunc == "quarto render")
       {
           isQuarto_ = true;
           Error error = core::readLinesFromFile(targetFile_, &targetFileLines_);

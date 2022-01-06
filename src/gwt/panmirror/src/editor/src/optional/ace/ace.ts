@@ -1,7 +1,7 @@
 /*
  * ace.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -517,7 +517,7 @@ export class AceNodeView implements NodeView {
     }
 
     // call host factory to instantiate editor
-    this.chunk = this.ui.chunks.createChunkEditor('ace', this.dom, this.node.attrs.md_index, {
+    this.chunk = this.ui.chunks.createChunkEditor('ace', this.dom, this.node.attrs.md_index, this.node.attrs.classes, {
       getPos: () => this.getPos(),
       scrollIntoView: ele => this.scrollIntoView(ele),
       scrollCursorIntoView: () => this.scrollCursorIntoView(),

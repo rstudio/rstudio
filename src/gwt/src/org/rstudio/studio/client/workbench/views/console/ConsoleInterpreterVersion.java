@@ -1,7 +1,7 @@
 /*
  * ConsoleInterpreterVersion.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -171,7 +171,7 @@ public class ConsoleInterpreterVersion
    
    private String rVersionLabel()
    {
-      String version = "(unknown)";
+      String version = constants_.unknownLabel();
       
       try
       {
@@ -245,5 +245,6 @@ public class ConsoleInterpreterVersion
    {
       RES.styles().ensureInjected();
    }
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 
 }

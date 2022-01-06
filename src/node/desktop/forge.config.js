@@ -6,6 +6,19 @@ createFullPackageFileName();
 
 // loadCMakeVars(__dirname + '/../../../package/osx/build/CMakeCache.txt');
 
+
+const dmgSize = {
+  height: 450,
+  width: 801,
+};
+const iconSize = Math.round((dmgSize.width * 12.3) / 100);
+
+const dmgIconPosition = { x: Math.round((dmgSize.width * 29.23) / 100), y: Math.round((dmgSize.height * 57.99) / 100) };
+const dmgApplicationsPosition = {
+  x: Math.round((dmgSize.width * 68.69) / 100),
+  y: Math.round((dmgSize.height * 57.99) / 100),
+};
+
 const config = {
   hooks: {
     postPackage: async (forgeConfig, options) => {
@@ -61,6 +74,26 @@ const config = {
       config: {
         format: 'ULFO',
         name: 'Rstudio-electron-app',
+        background: './resources/background/dmg-background.tiff',
+        icon: './resources/icons/RStudio.icns',
+        iconSize,
+        additionalDMGOptions: {
+          window: {
+            size: dmgSize,
+          },
+        },
+        contents: [
+          {
+            ...dmgIconPosition,
+            type: 'file',
+            path: __dirname + '/out/RStudio-darwin-x64/RStudio.app',
+          },
+          {
+            ...dmgApplicationsPosition,
+            type: 'link',
+            path: '/Applications',
+          },
+        ],
       },
     },
   ],
@@ -142,24 +175,24 @@ const config = {
 
 
 
-// config.packagerConfig = {
-//   ...config.packagerConfig,
-//   appBundleId: 'com.rstudio.mt-test',
-//   osxSign: {
-//     'identity': 'Developer ID Application: Matheus Tavares (QM39MZ3QRV)',
-//     'entitlements': 'resources/electron-entitlements.mac.plist',
-//     'entitlements-inherit': 'resources/electron-entitlements-inherit.mac.plist',
-//     'hardened-runtime': true,
-//     'gatekeeper-assess': false,
-//     'signature-flags': 'library',
-//   },
-//   osxNotarize: {
-//     appleId: 'contact@tavapps.com',
-//     appleIdPassword: '',
-//     appBundleId: 'com.rstudio.mt-test',
-//     ascProvider: 'QM39MZ3QRV',
-//   },
-// };
+config.packagerConfig = {
+  ...config.packagerConfig,
+  appBundleId: 'com.rstudio.mt-test',
+  osxSign: {
+    'identity': 'Developer ID Application: Matheus Tavares (QM39MZ3QRV)',
+    'entitlements': 'resources/electron-entitlements.mac.plist',
+    'entitlements-inherit': 'resources/electron-entitlements-inherit.mac.plist',
+    'hardened-runtime': true,
+    'gatekeeper-assess': false,
+    'signature-flags': 'library',
+  },
+  osxNotarize: {
+    appleId: 'contact@tavapps.com',
+    appleIdPassword: 'igzh-ooso-rjvg-yyoy',
+    appBundleId: 'com.rstudio.mt-test',
+    ascProvider: 'QM39MZ3QRV',
+  },
+};
 
 
 // } else {

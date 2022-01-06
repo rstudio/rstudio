@@ -3,7 +3,7 @@
 #
 # CMakeGlobals.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -126,6 +126,9 @@ endif()
 if(NOT DEFINED RSTUDIO_DESKTOP)
    if(RSTUDIO_TARGET STREQUAL "Electron")
       set(RSTUDIO_ELECTRON TRUE)
+   elseif(LINUX AND UNAME_M STREQUAL aarch64)
+      message(STATUS "Desktop builds not currently supported on aarch64; disabling RSTUDIO_DESKTOP")
+      set(RSTUDIO_DESKTOP FALSE)
    elseif(APPLE AND UNAME_M STREQUAL arm64)
       message(STATUS "Desktop builds not currently supported on arm64; disabling RSTUDIO_DESKTOP")
       set(RSTUDIO_DESKTOP FALSE)
@@ -140,8 +143,13 @@ if(RSTUDIO_NO_DESKTOP)
 endif()
 
 # set session32 if specified
-if(RSTUDIO_TARGET STREQUAL "SessionWin32")
-   set(RSTUDIO_SESSION_WIN32 TRUE)
+if(WIN32)
+   if(RSTUDIO_TARGET STREQUAL "SessionWin32")
+      set(RSTUDIO_SESSION_WIN32 TRUE)
+      add_definitions(-D_X86_)
+   else()
+      add_definitions(-D_AMD64_)
+   endif()
 endif()
 
 # record git revision hash (cache it since we don't use this in development
@@ -200,7 +208,19 @@ if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
    endif()
 endif()
 
-set(PANDOC_VERSION "2.16.1" CACHE INTERNAL "Pandoc version")
+# pandoc version
+set(PANDOC_VERSION "2.16.2" CACHE INTERNAL "Pandoc version")
+
+# quarto support
+if(LINUX AND UNAME_M STREQUAL aarch64)
+   # disabled on linux aarch64
+   message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
+   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+else()
+   # enable by default
+   set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
+   add_definitions(-DQUARTO_ENABLED)
+endif()
 
 # install freedesktop integration files if we are installing into /usr
 if(NOT DEFINED RSTUDIO_INSTALL_FREEDESKTOP)

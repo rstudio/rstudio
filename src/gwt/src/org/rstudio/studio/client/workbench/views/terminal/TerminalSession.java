@@ -1,7 +1,7 @@
 /*
  * TerminalSession.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -145,21 +145,21 @@ public class TerminalSession extends XTermWidget
             if (consoleProcess_ == null)
             {
                disconnect(false);
-               callback.onFailure("No Terminal ConsoleProcess received from server");
+               callback.onFailure(constants_.noTerminalReceivedFromServerText());
                return;
             }
 
             if (consoleProcess_.getProcessInfo().getCaption().isEmpty())
             {
                disconnect(false);
-               callback.onFailure("Empty Terminal caption");
+               callback.onFailure(constants_.emptyTerminalCaptionText());
                return;
             }
 
             if (consoleProcess_.getProcessInfo().getTerminalSequence() <= ConsoleProcessInfo.SEQUENCE_NO_TERMINAL)
             {
                disconnect(false);
-               callback.onFailure("Undetermined Terminal sequence");
+               callback.onFailure(constants_.undeterminedTerminalSequenceText());
                return;
             }
 
@@ -243,7 +243,7 @@ public class TerminalSession extends XTermWidget
                   if (!StringUtil.isNullOrEmpty(errorMsg))
                   {
                      globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
-                           "Terminal Failed to Connect", errorMsg);
+                           constants_.terminalFailedToConnect(), errorMsg);
                   }
                }
             });
@@ -549,7 +549,7 @@ public class TerminalSession extends XTermWidget
       server_.processEraseBuffer(
             getHandle(),
             false /*lastLineOnly*/,
-            new SimpleRequestCallback<>("Clearing Buffer"));
+            new SimpleRequestCallback<>(constants_.clearingBufferCaption()));
    }
 
    /**
@@ -558,7 +558,7 @@ public class TerminalSession extends XTermWidget
    public void interruptTerminal()
    {
       server_.processInterruptChild(getHandle(),
-            new SimpleRequestCallback<>("Interrupting child"));
+            new SimpleRequestCallback<>(constants_.interruptingChildCaption()));
    }
 
    protected void addHandlerRegistration(HandlerRegistration reg)
@@ -574,7 +574,7 @@ public class TerminalSession extends XTermWidget
 
    protected void writeError(String msg)
    {
-      writeln(AnsiCode.ForeColor.RED + "Error: " + msg + AnsiCode.DEFAULTCOLORS);
+      writeln(constants_.writeErrorMessage(AnsiCode.ForeColor.RED, msg, AnsiCode.DEFAULTCOLORS));
    }
 
    @Override
@@ -826,12 +826,12 @@ public class TerminalSession extends XTermWidget
 
    public void showZombieMessage()
    {
-      writeln("[Process completed]");
-      accept("[Exit code: ");
+      writeln(constants_.processCompletedText());
+      accept(constants_.zombieExitCodeText());
       if (procInfo_.getExitCode() != null)
          accept(Integer.toString(procInfo_.getExitCode()));
       else
-         accept("Unknown");
+         accept(constants_.unknownText());
       writeln("]");
    }
 
@@ -859,7 +859,7 @@ public class TerminalSession extends XTermWidget
          server_.processEraseBuffer(
                getHandle(),
                true /*lastLineOnly*/,
-               new SimpleRequestCallback<>("Clearing Final Line of Buffer"));
+               new SimpleRequestCallback<>(constants_.clearingFinalLineCaption()));
 
          restartSequenceWritten_ = true;
       }
@@ -966,4 +966,5 @@ public class TerminalSession extends XTermWidget
    private UserPrefs uiPrefs_;
    private SessionInfo sessionInfo_;
    private GlobalDisplay globalDisplay_;
+   private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }

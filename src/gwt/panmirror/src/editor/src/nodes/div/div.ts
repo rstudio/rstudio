@@ -1,7 +1,7 @@
 /*
  * div.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -137,8 +137,8 @@ const extension = (context: ExtensionContext) : Extension | null => {
         new DivCommand(EditorCommandId.InsertDiv, ui, false, {
           name: ui.context.translateText('Div...'),
           description: ui.context.translateText('Block containing other content'),
-          group: OmniInsertGroup.Blocks,
-          priority: 1,
+          group: OmniInsertGroup.Common,
+          priority: 6,
           image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.div_dark! : ui.images.omni_insert?.div!),
         }),
       ];

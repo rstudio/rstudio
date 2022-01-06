@@ -1,6 +1,6 @@
 /* UserPrefsAccessor.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -381,11 +381,11 @@ public class UserPrefsAccessor extends Prefs
       }-*/;
 
       public final native JsArrayString getTabSet1() /*-{
-         return this && this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentations","Presentation"];
+         return this && this.tabSet1 || ["Environment","History","Connections","Build","VCS","Tutorial","Presentation"];
       }-*/;
 
       public final native JsArrayString getTabSet2() /*-{
-         return this && this.tabSet2 || ["Files","Plots","Packages","Help","Viewer"];
+         return this && this.tabSet2 || ["Files","Plots","Packages","Help","Viewer","Presentations"];
       }-*/;
 
       public final native JsArrayString getHiddenTabSet() /*-{
@@ -2210,6 +2210,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar.
+    */
+   public PrefValue<Boolean> consoleSuspendBlockedNotice()
+   {
+      return bool(
+         "console_suspend_blocked_notice",
+         "Warn when automatic session suspension is paused", 
+         "Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar.", 
+         true);
+   }
+
+   /**
+    * How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices.
+    */
+   public PrefValue<Integer> consoleSuspendBlockedNoticeDelay()
+   {
+      return integer(
+         "console_suspend_blocked_notice_delay",
+         "Number of seconds to delay warning", 
+         "How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices.", 
+         5);
+   }
+
+   /**
     * Whether a git repo should be initialized inside new projects by default.
     */
    public PrefValue<Boolean> newProjGitInit()
@@ -3530,6 +3554,10 @@ public class UserPrefsAccessor extends Prefs
          gitDiffIgnoreWhitespace().setValue(layer, source.getBool("git_diff_ignore_whitespace"));
       if (source.hasKey("console_double_click_select"))
          consoleDoubleClickSelect().setValue(layer, source.getBool("console_double_click_select"));
+      if (source.hasKey("console_suspend_blocked_notice"))
+         consoleSuspendBlockedNotice().setValue(layer, source.getBool("console_suspend_blocked_notice"));
+      if (source.hasKey("console_suspend_blocked_notice_delay"))
+         consoleSuspendBlockedNoticeDelay().setValue(layer, source.getInteger("console_suspend_blocked_notice_delay"));
       if (source.hasKey("new_proj_git_init"))
          newProjGitInit().setValue(layer, source.getBool("new_proj_git_init"));
       if (source.hasKey("new_proj_use_renv"))
@@ -3834,6 +3862,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(globalTheme());
       prefs.add(gitDiffIgnoreWhitespace());
       prefs.add(consoleDoubleClickSelect());
+      prefs.add(consoleSuspendBlockedNotice());
+      prefs.add(consoleSuspendBlockedNoticeDelay());
       prefs.add(newProjGitInit());
       prefs.add(newProjUseRenv());
       prefs.add(rootDocument());

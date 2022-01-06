@@ -1,7 +1,7 @@
 /*
  * EditDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.edit.ui;
 
 import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
@@ -25,6 +26,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 
 public class EditDialog extends ModalDialogBase
@@ -35,8 +37,8 @@ public class EditDialog extends ModalDialogBase
                      boolean lineWrapping,
                      final ProgressOperationWithInput<String> operation)
    {
-      this("Edit", 
-           "Save",
+      this(constants_.editDialog(),
+           constants_.saveDialog(),
            text, 
            role,
            isRCode, 
@@ -74,7 +76,7 @@ public class EditDialog extends ModalDialogBase
       });
       addButton(saveButton, ElementIds.DIALOG_OK_BUTTON);
 
-      ThemedButton cancelButton = new ThemedButton("Cancel", new ClickHandler() {
+      ThemedButton cancelButton = new ThemedButton(constants_.cancelButton(), new ClickHandler() {
          public void onClick(ClickEvent event)
          {
             operation.execute(null, progressIndicator);
@@ -133,4 +135,6 @@ public class EditDialog extends ModalDialogBase
    private final boolean lineWrapping_;
    private final AceEditor editor_;
    private Size minimumSize_;
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+
 }
