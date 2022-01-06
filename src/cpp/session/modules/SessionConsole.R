@@ -16,5 +16,24 @@
 
 .rs.addJsonRpcHandler("console_follow_hyperlink", function(url, text, params)
 {
-   utils::browseURL(url)
+  if (identical(params, "")){
+    utils::browseURL(url)
+  } else {
+    options <- strsplit(params, ":")[[1]]
+
+    names <- sapply(options, function(param) sub("=.*$", "", param))
+    options <- lapply(options, function(param) sub("^[^=]*=", "", param))
+    names(options) <- names
+
+    if (is.null(options$type)) {
+      options$type <- ""
+    }
+
+    switch(
+      options$type,
+      help = .rs.showHelpTopic(options$topic, NULL),
+      stop(paste0("Can't handle link <", url, "> with params <", params, ">"))
+    )
+  }
+
 })
