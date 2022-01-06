@@ -20,20 +20,30 @@
     utils::browseURL(url)
   } else {
     options <- strsplit(params, ":")[[1]]
-
+    
     names <- sapply(options, function(param) sub("=.*$", "", param))
     options <- lapply(options, function(param) sub("^[^=]*=", "", param))
     names(options) <- names
-
+    
     if (is.null(options$type)) {
       options$type <- ""
     }
-
+    
     switch(
       options$type,
       help = .rs.showHelpTopic(options$topic, NULL),
+      file = {
+        file <- url
+        line <- as.numeric(options$line)
+        if (length(line) == 0L) line <- -1L
+        
+        col <- as.numeric(options$col)
+        if (length(col) == 0L) col <- -1L
+        
+        .rs.api.navigateToFile(url, line = line, col = col)          
+      },
       stop(paste0("Can't handle link <", url, "> with params <", params, ">"))
     )
   }
-
+  
 })
