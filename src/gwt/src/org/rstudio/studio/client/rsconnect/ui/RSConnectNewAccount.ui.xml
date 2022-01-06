@@ -10,12 +10,10 @@
    <g:HTMLPanel>
    <g:HTML>
    <p>
-      <ui:msg key="publishContent">To publish content, you first need to connect RStudio to an account on
-         the service you want to publish to.</ui:msg>
+      <ui:msg key="publishContentText">To publish content, you first need to connect RStudio to an account on the service you want to publish to.</ui:msg>
    </p>
    <p>
-      <ui:msg key="authorizedText">Once you've authorized this computer to publish content to an account,
-         you can publish any time without re-entering your credentials.</ui:msg>
+      <ui:msg key="authorizeNewAccountText">Once you've authorized this computer to publish content to an account, you can publish any time without re-entering your credentials.</ui:msg>
    </p>
    </g:HTML>
    </g:HTMLPanel>

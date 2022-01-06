@@ -10,13 +10,11 @@
    <g:HTMLPanel>
       <g:HTML>
       <p>
-         <ui:msg key="rPubsText">RPubs is a free service from RStudio for sharing documents on the web.
-            Click Publish to get started.</ui:msg>
+         <ui:msg key="publishRPubsText">RPubs is a free service from RStudio for sharing documents on the web. Click Publish to get started.</ui:msg>
       </p>
       <p>
-         <ui:msg key="rPubsImportantText"><strong>IMPORTANT: All documents published to RPubs are publicly
-            visible.</strong> You should only publish documents you wish to share
-            publicly.</ui:msg>
+         <strong><ui:msg key="importantRPubsText">IMPORTANT: All documents published to RPubs are publicly visible.</ui:msg>
+         </strong><ui:msg key="publishDocumentsText">You should only publish documents you wish to share publicly.</ui:msg>
       </p>
       </g:HTML>
    </g:HTMLPanel>
