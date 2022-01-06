@@ -36,7 +36,7 @@ public interface ConsoleServerOperations extends CodeToolsServerOperations,
                      int flags,
                      ServerRequestCallback<Void> requestCallback);
    
-   void consoleFollowHyperlink(String url, String link_params, ServerRequestCallback<Void> requestCallback);
+   void consoleFollowHyperlink(String url, String text, String params, ServerRequestCallback<Void> requestCallback);
 
    void resetConsoleActions(ServerRequestCallback<Void> requestCallback);
 

@@ -14,3 +14,7 @@
 #
 #
 
+.rs.addJsonRpcHandler("console_follow_hyperlink", function(url, text, params)
+{
+   utils::browseURL(url)
+})

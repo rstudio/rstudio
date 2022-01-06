@@ -692,13 +692,14 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
 
-   public void consoleFollowHyperlink(String url, String link_params, ServerRequestCallback<Void> requestCallback) {
-      JSONArray params = new JSONArrayBuilder()
+   public void consoleFollowHyperlink(String url, String text, String params, ServerRequestCallback<Void> requestCallback) {
+      JSONArray array = new JSONArrayBuilder()
             .add(url)
-            .add(link_params)
+            .add(text)
+            .add(params)
             .get();
 
-      sendRequest(RPC_SCOPE, CONSOLE_FOLLOW_HYPERLINK, params, requestCallback);
+      sendRequest(RPC_SCOPE, CONSOLE_FOLLOW_HYPERLINK, array, requestCallback);
    }
 
    public void resetConsoleActions(ServerRequestCallback<Void> requestCallback)

@@ -2554,11 +2554,6 @@ assign(x = ".rs.acCompletionTypes",
    
 })
 
-.rs.addJsonRpcHandler("console_follow_hyperlink", function(url, linkParams)
-{
-   utils::browseURL(url)
-})
-
 .rs.addJsonRpcHandler("get_dplyr_join_completions_string", function(token,
                                                                     string,
                                                                     cursorPos)
