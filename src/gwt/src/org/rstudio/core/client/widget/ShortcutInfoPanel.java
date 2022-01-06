@@ -14,13 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-import java.util.List;
-
-import org.rstudio.core.client.CoreClientConstants;
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.ShortcutInfo;
-import org.rstudio.core.client.command.ShortcutManager;
-
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -29,12 +22,13 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Anchor;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FocusPanel;
-import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.*;
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.ShortcutInfo;
+import org.rstudio.core.client.command.ShortcutManager;
+
+import java.util.List;
 
 public class ShortcutInfoPanel extends Composite
 {
@@ -106,6 +100,8 @@ public class ShortcutInfoPanel extends Composite
                   continue;
                }
                sb.appendHtmlConstant("<tr><td><strong>");
+               //TODO: this is only pulling the value from the default locale,
+               // but info.getDescription() below works just fine.
                sb.appendHtmlConstant(
                      StringUtil.joinStrings(info.getShortcuts(), ", "));
                sb.appendHtmlConstant("</strong></td><td>");
@@ -113,6 +109,7 @@ public class ShortcutInfoPanel extends Composite
                sb.appendHtmlConstant("</td></tr>");
             }
             sb.appendHtmlConstant("</table>");
+            //TODO: this will break with localization
             if (colGroupName == "Panes")
             {
                sb.appendHtmlConstant("<p>"+ constants_.addShiftPTag() + "</p>");
