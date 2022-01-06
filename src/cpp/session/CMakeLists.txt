@@ -615,7 +615,7 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
    # install quarto (or pandoc if quarto disabled)
    if(QUARTO_ENABLED)
-   # install some quarto folders into Resources, as needed
+      # install some quarto folders into Resources, as needed
       if(APPLE)
          install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
                DESTINATION "${RSTUDIO_INSTALL_BIN}"
