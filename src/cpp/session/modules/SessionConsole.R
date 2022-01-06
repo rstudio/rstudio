@@ -32,6 +32,7 @@
     switch(
       options$type,
       help = .rs.showHelpTopic(options$topic, NULL),
+      viewer = .rs.api.viewer(url),
       file = {
         file <- url
         line <- as.numeric(options$line)
