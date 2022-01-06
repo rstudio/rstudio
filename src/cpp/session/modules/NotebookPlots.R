@@ -29,7 +29,14 @@
       units    = units,
       res      = 96 * pixelRatio
    )
-   
+
+   gdBackend <- getOption("RStudioGD.backend")
+   if (gdBackend != "default")
+   {
+     # pass along graphics device backend if set
+     args$type <- gdBackend
+   }
+
    if (nchar(extraArgs) > 0)
    {
       # trim leading comma from extra args if present
