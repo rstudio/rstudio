@@ -1,6 +1,9 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:rw='urn:import:org.rstudio.core.client.widget'>
+             xmlns:rw='urn:import:org.rstudio.core.client.widget'
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
 
    <ui:with field="res" type="org.rstudio.studio.client.application.ui.WarningBar.Resources"/>
    <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
@@ -25,7 +28,7 @@
                      width="9"
                      height="9"
                      addStyleNames="{res.styles.dismiss}"
-                     description="Dismiss Warning Bar"/>
+                     description="Dismiss Warning Bar"><ui:attribute name="description" key="dismissWarningText"/></rw:ImageButton>
          </td>
          <td class="{res.styles.right}"/>
       </tr>

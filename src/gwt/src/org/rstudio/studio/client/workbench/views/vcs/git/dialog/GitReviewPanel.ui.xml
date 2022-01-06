@@ -2,7 +2,10 @@
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
              xmlns:vcs='urn:import:org.rstudio.studio.client.workbench.views.vcs.common'
              xmlns:vcs_diff='urn:import:org.rstudio.studio.client.workbench.views.vcs.common.diff'
-             xmlns:rs_widget='urn:import:org.rstudio.core.client.widget'>
+             xmlns:rs_widget='urn:import:org.rstudio.core.client.widget'
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
 
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.vcs.git.dialog.GitReviewPanel.Resources"/>
    <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
@@ -22,7 +25,7 @@
                         <g:layer left="6px" right="6px" top="4px" height="20px">
                            <g:HorizontalPanel width="100%">
                              <g:cell horizontalAlignment="ALIGN_LEFT">
-                               <rs_widget:FormLabel ui:field="lblCommit_" text="Commit message"/>
+                               <rs_widget:FormLabel ui:field="lblCommit_" text="Commit message"><ui:attribute name="text" key="commitMessage"/></rs_widget:FormLabel>
                              </g:cell>
                              <g:cell horizontalAlignment="ALIGN_RIGHT">
                                <g:Label ui:field="lblCharCount_"/>
@@ -34,7 +37,7 @@
                         </g:layer>
                         <g:layer left="6px" right="6px" bottom="0" height="30px">
                            <g:FlowPanel>
-                              <g:CheckBox ui:field="commitIsAmend_" text="Amend previous commit"/>
+                              <g:CheckBox ui:field="commitIsAmend_" text="Amend previous commit"><ui:attribute name="text" key="amendPreviousCommit"/></g:CheckBox>
                               <rs_widget:ThemedButton ui:field="commitButton_"/>
                            </g:FlowPanel>
                         </g:layer>
@@ -52,17 +55,18 @@
             <g:north size="28">
                <g:HorizontalPanel ui:field="toolbarWrapper_" styleName="{res.styles.toolbarWrapper} {res.styles.diffToolbarWrapper}">
                   <g:FlowPanel ui:field="diffViewOptions_" styleName="{res.styles.diffViewOptions}">
-                     <g:Label text="Show" styleName="{res.styles.stagedLabel}"/>
+                     <g:Label text="Show" styleName="{res.styles.stagedLabel}"><ui:attribute name="text" key="showText"/></g:Label>
                      <g:RadioButton ui:field="stagedCheckBox_"
                                     name="ReviewPanelShow"
                                     text="Staged"
-                                    styleName="{res.styles.staged}"/>
+                                    styleName="{res.styles.staged}"><ui:attribute name="text" key="stagedText"/></g:RadioButton>
                      <g:RadioButton ui:field="unstagedCheckBox_"
                                     name="ReviewPanelShow"
                                     text="Unstaged"
                                     checked="true"
-                                    styleName="{res.styles.unstaged}"/>
-                     <rs_widget:FormLabel ui:field="lblContext_" display="inline" text="Context" styleName="{res.styles.stagedLabel}"/>
+                                    styleName="{res.styles.unstaged}"><ui:attribute name="text" key="unstagedText"/></g:RadioButton>
+                     <rs_widget:FormLabel ui:field="lblContext_" display="inline" text="Context" styleName="{res.styles.stagedLabel}"><ui:attribute
+                             name="text" key="contextText"/></rs_widget:FormLabel>
                      <g:ListBox ui:field="contextLines_" visibleItemCount="1" selectedIndex="0">
                         <g:item value="5">5 lines</g:item>
                         <g:item value="10">10 lines</g:item>
@@ -73,7 +77,7 @@
                       <g:CheckBox ui:field="ignoreWhitespaceCheckbox_"
                                   text="Ignore Whitespace"
                                   checked="false"
-                                  styleName="{res.styles.ignoreWhitespace}"/>
+                                  styleName="{res.styles.ignoreWhitespace}"><ui:attribute name="text" key="ignoreWhitespaceText"/></g:CheckBox>
                   </g:FlowPanel>
                   <rs_widget:Toolbar ui:field="diffToolbar_"/>
                </g:HorizontalPanel>

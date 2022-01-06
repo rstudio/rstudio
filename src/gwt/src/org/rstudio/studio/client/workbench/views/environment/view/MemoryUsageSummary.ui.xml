@@ -1,7 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
-             xmlns:env="urn:import:org.rstudio.studio.client.workbench.views.environment.view">
+             xmlns:env="urn:import:org.rstudio.studio.client.workbench.views.environment.view"
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
     <ui:style type="org.rstudio.studio.client.workbench.views.environment.view.MemoryUsageSummary.Style">
         .pieLabel {
             font-size: 14pt;
@@ -68,12 +71,12 @@
         <g:cell>
             <g:VerticalPanel styleName="{style.left}">
                 <g:cell>
-                    <env:MemoryUsagePieChart title="Memory usage" ui:field="pie_" />
+                    <env:MemoryUsagePieChart title="Memory usage" ui:field="pie_"><ui:attribute name="title" key="memoryUsageTitle"/></env:MemoryUsagePieChart>
                 </g:cell>
                 <g:cell>
                     <g:VerticalPanel styleName="{style.pieLegendBox}">
                         <g:Label styleName="{style.pieLabel} {style.pieLegend}" text="50%" ui:field="pieLabel_"></g:Label>
-                        <g:Label styleName="{style.pieLegend}" text="memory in use"></g:Label>
+                        <g:Label styleName="{style.pieLegend}" text="memory in use"><ui:attribute name="text" key="memoryInUseText"/></g:Label>
                     </g:VerticalPanel>
                 </g:cell>
             </g:VerticalPanel>

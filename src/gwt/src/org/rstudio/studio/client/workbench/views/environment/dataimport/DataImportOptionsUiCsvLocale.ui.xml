@@ -1,6 +1,9 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:rs="urn:import:org.rstudio.core.client.widget"
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style type="org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportOptionsUiCsvLocale.DataImportOptionsUiCsvLocaleStyle">
       .dialog {
@@ -31,14 +34,14 @@
       <table class="{style.localeTable}">
          <tr>
             <td>
-                <rs:FormLabel text="Date Name:" for="{ElementIds.getDataImportCsvDatename}" />
+                <rs:FormLabel text="Date Name:" for="{ElementIds.getDataImportCsvDatename}"><ui:attribute name="text" key="dateNameText"/></rs:FormLabel>
             </td>
             <td>
                 <rs:FormTextBox ui:field="dateName_" styleName="{style.textBox}" text="en"
                                 elementId="{ElementIds.getDataImportCsvDatename}" />
             </td>
             <td class="{style.spacedCell}">
-                <rs:FormLabel text="Encoding:" for="{ElementIds.getDataImportCsvEncoding}" />
+                <rs:FormLabel text="Encoding:" for="{ElementIds.getDataImportCsvEncoding}" ><ui:attribute name="text" key="encodingText"/></rs:FormLabel>
             </td>
             <td>
                 <rs:FormListBox styleName="{style.listBox}" ui:field="encoding_"
@@ -47,14 +50,14 @@
          </tr>
          <tr>
             <td>
-                <rs:FormLabel text="Date Format:" for="{ElementIds.getDataImportCsvDateFormat}"/>
+                <rs:FormLabel text="Date Format:" for="{ElementIds.getDataImportCsvDateFormat}"><ui:attribute name="text" key="dateFormatText"/></rs:FormLabel>
             </td>
             <td>
                 <rs:FormTextBox ui:field="dateFormat_" styleName="{style.textBox}" text="%AD"
                                 elementId="{ElementIds.getDataImportCsvDateFormat}"/>
             </td>
             <td class="{style.spacedCell}">
-                <rs:FormLabel text="Time Format:" for="{ElementIds.getDataImportCsvTimeFormat}"/>
+                <rs:FormLabel text="Time Format:" for="{ElementIds.getDataImportCsvTimeFormat}"><ui:attribute name="text" key="timeFormatText"/></rs:FormLabel>
             </td>
             <td>
                 <rs:FormTextBox ui:field="timeFormat_" styleName="{style.textBox}" text="%AT"
@@ -63,14 +66,15 @@
          </tr>
          <tr>
             <td>
-                <rs:FormLabel text="Decimal Mark:" for="{ElementIds.getDataImportCsvDecimalMark}"/>
+                <rs:FormLabel text="Decimal Mark:" for="{ElementIds.getDataImportCsvDecimalMark}"><ui:attribute name="text" key="decimalMarkText"/></rs:FormLabel>
             </td>
             <td>
                 <rs:FormTextBox ui:field="decimalMark_" styleName="{style.textBox}" text="."
                                 elementId="{ElementIds.getDataImportCsvDecimalMark}"/>
             </td>
             <td class="{style.spacedCell}">
-                <rs:FormLabel text="Grouping Mark:" for="{ElementIds.getDataImportCsvGroupingMark}"/>
+                <rs:FormLabel text="Grouping Mark:" for="{ElementIds.getDataImportCsvGroupingMark}"><ui:attribute
+                        name="text" key="groupingMarkText"/></rs:FormLabel>
             </td>
             <td>
                 <rs:FormTextBox ui:field="groupingMark_" styleName="{style.textBox}" text=","
@@ -79,7 +83,7 @@
          </tr>
          <tr>
             <td>
-                <rs:FormLabel text="Time Zone:" for="{ElementIds.getDataImportCsvTz}"/>
+                <rs:FormLabel text="Time Zone:" for="{ElementIds.getDataImportCsvTz}"><ui:attribute name="text" key="timeZoneText"/></rs:FormLabel>
             </td>
             <td>
                 <rs:FormTextBox ui:field="timeZone_" styleName="{style.textBox}" text="UTC"
