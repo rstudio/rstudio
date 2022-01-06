@@ -31,7 +31,7 @@
    )
 
    gdBackend <- getOption("RStudioGD.backend")
-   if (gdBackend != "default")
+   if (!identical(gdBackend, "default"))
    {
      # pass along graphics device backend if set
      args$type <- gdBackend
