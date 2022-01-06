@@ -271,12 +271,12 @@
             "source": false
         },
         "tinytex": {
-            "version": "0.16",
+            "version": "0.31",
             "location": "cran",
             "source": false
         },
         "xfun": {
-            "version": "0.15",
+            "version": "0.21",
             "location": "cran",
             "source": false
         },
