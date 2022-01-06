@@ -95,11 +95,6 @@
             "location": "cran",
             "source": false
         },
-        "jquerylib": {
-            "version": "0.1.1",
-            "location": "cran",
-            "source": false
-        },
         "keyring": {
             "version": "1.1.0",
             "location": "cran",
@@ -281,7 +276,7 @@
             "source": false
         },
         "xfun": {
-            "version": "0.21",
+            "version": "0.15",
             "location": "cran",
             "source": false
         },
@@ -367,7 +362,6 @@
                 "glue",
                 "highr",
                 "htmltools",
-                "jquerylib",
                 "jsonlite",
                 "knitr",
                 "magrittr",
