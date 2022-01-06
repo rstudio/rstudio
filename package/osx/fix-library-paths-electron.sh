@@ -15,33 +15,38 @@
 #
 #
 
+
 if [ "$#" = "0" ]; then
    echo "Usage: $0 [frameworks directory] [prefix] [files]"
    exit 0
 fi
 
+IFS=":"
+
 DIR="$1"
 PREFIX="$2"
-FILES="$3"
+FILES=$3
+echo "FIXPATHS: $FILES"
 
 cd "$DIR"
 for FILE in ${FILES}; do
-   echo "FILE: $FILE"
+   
+   echo "\n\nFILE: $FILE\n\n"
 
-   install_name_tool -id "${FILE}" "${FILE}"
+   install_name_tool -id "$FILE" $FILE
 
-   LIBPATHS=$( \
-      otool -L "${FILE}" | \
-      tail -n+2 | \
-      cut -d' ' -f1 | \
-      sed 's|\t||g' | \
-      grep -E 'homebrew|local'
-   )
+#    LIBPATHS=$( \
+#       otool -L "$FILE" | \
+#       tail -n+2 | \
+#       cut -d' ' -f1 | \
+#       sed 's|\t||g' | \
+#       grep -E 'homebrew|local'
+#    )
 
-   for LIBPATH in ${LIBPATHS}; do
-      OLD="${LIBPATH}"
-      NEW="${PREFIX}/$(basename "${OLD}")"
-      install_name_tool -change "${OLD}" "${NEW}" "${FILE}"
-   done
+#    for LIBPATH in "${LIBPATHS}"; do
+#       OLD="${LIBPATH}"
+#       NEW="${PREFIX}/$(basename "${OLD}")"
+#       install_name_tool -change "${OLD}" "${NEW}" "$FILE"
+#    done
 
 done
