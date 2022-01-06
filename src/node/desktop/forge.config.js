@@ -118,26 +118,50 @@ const config = {
 //   process.env.APPLE_ID !== '' &&
 //   process.env.APPLE_ID_PASSWORD !== ''
 // ) {
-config.packagerConfig = {
-  ...config.packagerConfig,
-  appBundleId: 'org.rstudio.RStudio',
-  osxSign: {
-    'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
-    'hardened-runtime': true,
-    'entitlements': 'resources/electron-entitlements.mac.plist',
-    'entitlements-inherit': 'resources/electron-entitlements.mac.plist',
-    'signature-flags': 'library',
-    'hardenedRuntime': true,
-    'gatekeeper-assess': false,
-    'signature-flags': 'library',
-  },
-  osxNotarize: {
-    appleId: process.env.APPLE_ID,
-    appleIdPassword: process.env.APPLE_ID_PASSWORD,
-    appBundleId: 'org.rstudio.RStudio',
-    // ascProvider: 'FYF2F5GFX4',
-  },
-};
+
+
+// config.packagerConfig = {
+//   ...config.packagerConfig,
+//   appBundleId: 'org.rstudio.RStudio',
+//   osxSign: {
+//     'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
+//     'entitlements': 'resources/electron-entitlements.mac.plist',
+//     'entitlements-inherit': 'resources/electron-entitlements.mac.plist',
+//     'hardenedRuntime': true,
+//     'hardened-runtime': true,
+//     'gatekeeper-assess': false,
+//     'signature-flags': 'library',
+//   },
+//   osxNotarize: {
+//     appleId: process.env.APPLE_ID,
+//     appleIdPassword: process.env.APPLE_ID_PASSWORD,
+//     appBundleId: 'org.rstudio.RStudio',
+//     // ascProvider: 'FYF2F5GFX4',
+//   },
+// };
+
+
+
+// config.packagerConfig = {
+//   ...config.packagerConfig,
+//   appBundleId: 'com.rstudio.mt-test',
+//   osxSign: {
+//     'identity': 'Developer ID Application: Matheus Tavares (QM39MZ3QRV)',
+//     'entitlements': 'resources/electron-entitlements.mac.plist',
+//     'entitlements-inherit': 'resources/electron-entitlements-inherit.mac.plist',
+//     'hardened-runtime': true,
+//     'gatekeeper-assess': false,
+//     'signature-flags': 'library',
+//   },
+//   osxNotarize: {
+//     appleId: 'contact@tavapps.com',
+//     appleIdPassword: '',
+//     appBundleId: 'com.rstudio.mt-test',
+//     ascProvider: 'QM39MZ3QRV',
+//   },
+// };
+
+
 // } else {
 //   console.warn('Should be notarizing, but environment variables APPLE_ID or APPLE_ID_PASSWORD are missing!');
 // }
