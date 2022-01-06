@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# fix-library-paths.sh
+# fix-library-paths-electron.sh
 #
 # Copyright (C) 2022 by RStudio, PBC
 #
