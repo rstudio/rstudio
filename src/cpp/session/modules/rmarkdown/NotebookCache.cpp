@@ -308,6 +308,12 @@ void onDocRenamed(const std::string& oldPath,
 
 void onDocAdded(const std::string& id)
 {
+   if (!core::thread::isMainThread())
+   {
+      module_context::executeOnMainThread(boost::bind(onDocAdded, id));
+      return;
+   }
+
    std::string path;
    Error error = source_database::getPath(id, &path);
    if (error)

@@ -99,8 +99,8 @@ void processEvents()
    Error error = rstudio::r::exec::executeSafely(
             rstudio::r::session::event_loop::processEvents);
 
-   if (error)
-      LOG_ERROR(error);
+   if (error) // If the statement is interrupted, this can return an error so logging as debug to limit visibility
+      LOG_DEBUG_MESSAGE(error.asString());
 }
 
 bool parseAndValidateJsonRpcConnection(

@@ -108,6 +108,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 #else
    options.reportHasSubprocs = true;
 #endif
+   options.callbacksRequireMainThread = false; // to allow use of terminal from offline thread
    options.trackCwd = true;
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();

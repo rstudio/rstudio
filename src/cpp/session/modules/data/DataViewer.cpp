@@ -869,6 +869,30 @@ Error getGridData(const http::Request& request,
    return Success();
 }
 
+Error removeRCachedData(const std::string& cacheKey);
+
+void removeRCachedDataCallback(const std::string& cacheKey)
+{
+   Error error = removeRCachedData(cacheKey);
+   if (error)
+      LOG_ERROR(error);
+}
+
+Error removeRCachedData(const std::string& cacheKey)
+{
+   if (core::thread::isMainThread())
+   {
+      // remove cache env object and backing file
+      return r::exec::RFunction(".rs.removeCachedData", cacheKey,
+            viewerCacheDir()).call();
+   }
+   else
+   {
+      module_context::executeOnMainThread(boost::bind(removeRCachedDataCallback, cacheKey));
+      return Success();
+   }
+}
+
 Error removeCacheKey(const std::string& cacheKey)
 {
    // remove from watchlist
@@ -877,9 +901,7 @@ Error removeCacheKey(const std::string& cacheKey)
    if (pos != s_cachedFrames.end())
       s_cachedFrames.erase(pos);
    
-   // remove cache env object and backing file
-   return r::exec::RFunction(".rs.removeCachedData", cacheKey, 
-         viewerCacheDir()).call();
+    return removeRCachedData(cacheKey);
 }
 
 // called by the client to expire data cached by an associated viewer tab
