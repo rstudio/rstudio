@@ -67,6 +67,7 @@
 * Fixed permissions on Mac Desktop application so all user accounts can launch it (#9945, #10267)
 * Fixed logging directory permissions to be more restrictive (775 instead of 777) (#3099)
 * Fixed Duplicate --session-collab-server when launching R session (pro #3106)
+* Fixed errors when opening or saving Rmarkdown documents when R is busy (#9868)
 
 ### Breaking
 * Remove --session-collab-server and filebase-path (pro #3181)

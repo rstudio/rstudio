@@ -922,12 +922,7 @@ private:
          }
          else if (isQuarto_)
          {
-            // check for a jupyter error if this is quarto
-            int errLine = module_context::jupyterErrorLineNumber(targetFileLines_, allOutput_);
-            if (errLine != -1)
-            {
-               module_context::editFile(targetFile_, errLine);
-            }
+            navigateToRenderPreviewError(targetFile_, targetFileLines_, output, allOutput_);
          }
          else
          {
@@ -1685,13 +1680,13 @@ bool pptAvailable()
 
 bool rmarkdownPackageAvailable()
 {
-   if (!ASSERT_MAIN_THREAD())
-   {
-      return s_rmarkdownAvailable;
-   }
-   
    if (!s_rmarkdownAvailableInited)
    {
+      if (!ASSERT_MAIN_THREAD())
+      {
+         return s_rmarkdownAvailable;
+      }
+
       s_rmarkdownAvailableInited = true;
       initRmarkdownPackageAvailable();
    }

@@ -35,3 +35,11 @@
                         quiet = TRUE,
                         cacheOK = FALSE)
 })
+
+.rs.addFunction("quarto.serveRender", function(port, path) {
+   utils::download.file(paste0("http://localhost:", port, "/90B3C9E8-0DBC-4BC0-B164-AA2D5C031B28/", path),
+                        destfile = tempfile(),
+                        quiet = TRUE,
+                        cacheOK = FALSE)
+})
+

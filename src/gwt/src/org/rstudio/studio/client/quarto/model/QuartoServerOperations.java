@@ -25,6 +25,7 @@ public interface QuartoServerOperations
 {
    void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback);
    void quartoServe(String format, boolean render, ServerRequestCallback<Void> requestCallback);
+   void quartoServeRender(String file, ServerRequestCallback<Boolean> requestCallback);
    void quartoPreview(String file, 
                       String format, 
                       PresentationEditorLocation editorState,
