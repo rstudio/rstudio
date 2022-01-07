@@ -24,6 +24,7 @@
 #include <session/SessionHttpConnectionListener.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/SessionPersistentState.hpp>
 #include <session/SessionSuspend.hpp>
 
 #include <shared_core/Error.hpp>
@@ -439,7 +440,7 @@ void checkForSuspend(const boost::function<bool()>& allowSuspend)
    checkForTimeout(allowSuspend);
 }
 
-std::string mostSignificantTimeAgo(boost::posix_time::ptime before, boost::posix_time::ptime after = boost::posix_time::second_clock::universal_time())
+std::string mostSignificantTimeAgo(const boost::posix_time::ptime& before, const boost::posix_time::ptime& after = boost::posix_time::second_clock::universal_time())
 {
    if (before == boost::posix_time::not_a_date_time || after == boost::posix_time::not_a_date_time)
       return "";
@@ -455,24 +456,38 @@ std::string mostSignificantTimeAgo(boost::posix_time::ptime before, boost::posix
       return ""; // Stay quiet if not enough time has passed
    if (diff < boost::posix_time::hours(1))
       return std::to_string(diff.minutes()) + " minutes ago";
+
+   if (diff < boost::posix_time::hours(2))
+      return std::to_string(diff.hours()) + " hour ago";
    if (diff < boost::posix_time::hours(24))
-      return std::to_string(diff.hours()) + " hour(s) ago";
+      return std::to_string(diff.hours()) + " hours ago";
+
+   if (diff < boost::posix_time::hours(48))
+      return std::to_string(diff.hours() / 24l) + " day ago";
    if (diff < boost::posix_time::hours(24 * 365))
-      return std::to_string(diff.hours() / 24l) + " day(s) ago";
+      return std::to_string(diff.hours() / 24l) + " days ago";
+
+   if (diff < boost::posix_time::hours(24 * 365 * 2))
+       return std::to_string(diff.hours() / (24l * 365l)) + " year ago";
    else
-      return std::to_string(diff.hours() / (24l * 365l)) + " year(s) ago";
+      return std::to_string(diff.hours() / (24l * 365l)) + " years ago";
 }
 
 std::string getResumedMessage()
 {
-   if (s_timeoutState == kWaitingForInactivity)
+   boost::posix_time::ptime suspensionTimestamp = module_context::activeSession().suspensionTime();
+
+   // Assume suspension never occured if there's no suspensionTimestamp
+   if (suspensionTimestamp == boost::posix_time::not_a_date_time)
    {
-      std::string xAmountOfTimeAgo = mostSignificantTimeAgo(s_blockingTimestamp);
+      boost::posix_time::ptime lastResumed = module_context::activeSession().lastResumed();
+
+      std::string xAmountOfTimeAgo = mostSignificantTimeAgo(lastResumed);
       if (xAmountOfTimeAgo.empty())
          return "";
 
-      std::string blockedTime = boost::posix_time::to_simple_string(s_blockingTimestamp);
-      return "Connected to your session in progress, last used "
+      std::string blockedTime = boost::posix_time::to_simple_string(lastResumed);
+      return "Connected to your session in progress, last started "
              + blockedTime
              + " UTC ("
              + xAmountOfTimeAgo
@@ -480,7 +495,6 @@ std::string getResumedMessage()
    }
    else
    {
-      boost::posix_time::ptime suspensionTimestamp = module_context::activeSession().suspensionTime();
       std::string xAmountOfTimeAgo = mostSignificantTimeAgo(suspensionTimestamp);
       if (xAmountOfTimeAgo.empty())
          return "";
@@ -498,9 +512,10 @@ std::string getResumedMessage()
 
 void initFromResume()
 {
-   // notify GWT to continue displaying suspend blocked info
-   if (opsBlockingSuspend.size())
-      sendBlockingClientEvent(blockingOpsToJson());
+   module_context::activeSession().setLastResumed();
+   module_context::activeSession().setSuspensionTime(boost::posix_time::not_a_date_time);
+
+   s_timeoutState = kWaitingForTimeout;
 }
 
 // cooperative suspend -- the http server is forced to timeout and a flag 
