@@ -875,7 +875,7 @@ void removeRCachedDataCallback(const std::string& cacheKey)
 {
    Error error = removeRCachedData(cacheKey);
    if (error)
-     LOG_ERROR(error);
+      LOG_ERROR(error);
 }
 
 Error removeRCachedData(const std::string& cacheKey)
