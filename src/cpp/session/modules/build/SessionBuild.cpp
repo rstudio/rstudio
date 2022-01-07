@@ -724,6 +724,9 @@ private:
       core::system::setenv(&childEnv, "R_BROWSER", "false");
       core::system::setenv(&childEnv, "R_PDFVIEWER", "false");
 
+      // allow cli::style_hyperlink()
+      core::system::setenv(&childEnv, "R_CLI_HYPERLINKS", "true");
+
       // add r tools to path if necessary
       module_context::addRtoolsToPathIfNecessary(&childEnv, &buildToolsWarning_);
 
