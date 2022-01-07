@@ -543,7 +543,7 @@ public:
    core::Error setNumSpacesForTab(int val);
 
    /**
-    * When enabled, the indentation for documents not part of an RStudio project will be automatically detected.
+    * Whether to automatically detect indentation settings from file contents.
     */
    bool autoDetectIndentation();
    core::Error setAutoDetectIndentation(bool val);
@@ -579,13 +579,13 @@ public:
    core::Error setShowIndentGuides(bool val);
 
    /**
-    * Whether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment.
+    * Whether to continue comments (by inserting the comment character) after adding a new line.
     */
    bool continueCommentsOnNewline();
    core::Error setContinueCommentsOnNewline(bool val);
 
    /**
-    * Hyperlinks in comments will be underlined and clickable
+    * Whether web links in comments are clickable.
     */
    bool highlightWebLink();
    core::Error setHighlightWebLink(bool val);

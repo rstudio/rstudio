@@ -230,9 +230,9 @@
         },
         "auto_detect_indentation": {
             "type": "boolean",
-            "default": true,
-            "title": "Autodetect indentation in files",
-            "description": "When enabled, the indentation for documents not part of an RStudio project will be automatically detected."
+            "default": false,
+            "title": "Auto-detect indentation in files",
+            "description": "Whether to automatically detect indentation settings from file contents."
         },
         "show_margin": {
             "type": "boolean",
@@ -268,13 +268,13 @@
             "type": "boolean",
             "default": false,
             "title": "Continue comments after adding new line",
-            "description": "Whether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment."
+            "description": "Whether to continue comments (by inserting the comment character) after adding a new line."
         },
         "highlight_web_link": {
             "type": "boolean",
             "default": true,
-            "title": "Hyperlinks in comments will be underlined and clickable",
-            "description": "Hyperlinks in comments will be underlined and clickable"
+            "title": "Whether web links in comments are clickable",
+            "description": "Whether web links in comments are clickable."
         },
         "editor_keybindings": {
             "type": "string",
@@ -325,7 +325,7 @@
             "enum": ["never", "quotes", "quotes_and_brackets"],
             "enumReadable": ["Never", "Quotes", "Quotes & Brackets"],
             "default": "quotes_and_brackets",
-            "title": "Surround selections with delimiter insertion",
+            "title": "Surround selections with",
             "description": "Which kinds of delimiters can be used to surround the current selection."
         },
         "enable_snippets": {
@@ -571,7 +571,7 @@
         },
         "limit_visible_console": {
             "type": "boolean",
-            "default": true,
+            "default": false,
             "title": "Limit visible console output",
             "description": "Whether to only show a limited window of the total console output"
         },

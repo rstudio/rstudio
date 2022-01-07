@@ -1,6 +1,6 @@
 /* UserPrefsAccessorConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -207,11 +207,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String numSpacesForTabDescription();
 
    /**
-    * When enabled, the indentation for documents not part of an RStudio project will be automatically detected.
+    * Whether to automatically detect indentation settings from file contents.
     */
-   @DefaultStringValue("Autodetect indentation in files")
+   @DefaultStringValue("Auto-detect indentation in files")
    String autoDetectIndentationTitle();
-   @DefaultStringValue("When enabled, the indentation for documents not part of an RStudio project will be automatically detected.")
+   @DefaultStringValue("Whether to automatically detect indentation settings from file contents.")
    String autoDetectIndentationDescription();
 
    /**
@@ -255,19 +255,19 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showIndentGuidesDescription();
 
    /**
-    * Whether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment.
+    * Whether to continue comments (by inserting the comment character) after adding a new line.
     */
    @DefaultStringValue("Continue comments after adding new line")
    String continueCommentsOnNewlineTitle();
-   @DefaultStringValue("Whether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment.")
+   @DefaultStringValue("Whether to continue comments (by inserting the comment character) after adding a new line.")
    String continueCommentsOnNewlineDescription();
 
    /**
-    * Hyperlinks in comments will be underlined and clickable
+    * Whether web links in comments are clickable.
     */
-   @DefaultStringValue("Hyperlinks in comments will be underlined and clickable")
+   @DefaultStringValue("Whether web links in comments are clickable")
    String highlightWebLinkTitle();
-   @DefaultStringValue("Hyperlinks in comments will be underlined and clickable")
+   @DefaultStringValue("Whether web links in comments are clickable.")
    String highlightWebLinkDescription();
 
    /**
@@ -337,7 +337,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * Which kinds of delimiters can be used to surround the current selection.
     */
-   @DefaultStringValue("Surround selections with delimiter insertion")
+   @DefaultStringValue("Surround selections with")
    String surroundSelectionTitle();
    @DefaultStringValue("Which kinds of delimiters can be used to surround the current selection.")
    String surroundSelectionDescription();

@@ -443,7 +443,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * When enabled, the indentation for documents not part of an RStudio project will be automatically detected.
+    * Whether to automatically detect indentation settings from file contents.
     */
    public PrefValue<Boolean> autoDetectIndentation()
    {
@@ -451,7 +451,7 @@ public class UserPrefsAccessor extends Prefs
          "auto_detect_indentation",
          _constants.autoDetectIndentationTitle(), 
          _constants.autoDetectIndentationDescription(), 
-         true);
+         false);
    }
 
    /**
@@ -515,7 +515,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to continue comments (by inserting the comment character) after adding a new line.  Press Shift + Enter to exit a comment.
+    * Whether to continue comments (by inserting the comment character) after adding a new line.
     */
    public PrefValue<Boolean> continueCommentsOnNewline()
    {
@@ -527,7 +527,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Hyperlinks in comments will be underlined and clickable
+    * Whether web links in comments are clickable.
     */
    public PrefValue<Boolean> highlightWebLink()
    {
@@ -1193,7 +1193,7 @@ public class UserPrefsAccessor extends Prefs
          "limit_visible_console",
          _constants.limitVisibleConsoleTitle(), 
          _constants.limitVisibleConsoleDescription(), 
-         true);
+         false);
    }
 
    /**
