@@ -81,8 +81,7 @@ Error migrateUserStateIfNecessary(SessionType sessionType)
 
    // Ensure file locks are initialized (this migration happens very early in the 
    // startup process
-   if (FileLock::verifyInitialized()) 
-      FileLock::initialize();
+   FileLock::initialize();
 
    // At this point we've decided to do a migration. Acquire a lock to ensure that
    // multiple processes don't attempt to migrate at once (not likely but possible)

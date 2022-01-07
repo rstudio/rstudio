@@ -153,10 +153,13 @@ for arg in "$@"; do
    --install)          install=1 ;;
    --build-gwt=*)      build_gwt=${arg#*=} ;;
    --copy-gwt=*)       copy_gwt=${arg#*=} ;;
+   --gwt-build=*)      build_gwt=${arg#*=} ;;
+   --gwt-copy=*)       copy_gwt=${arg#*=} ;;
    --build-package=*)  build_package=${arg#*=} ;;
    --build-dmg=*)      build_dmg=${arg#*=} ;;
    --use-creds=*)      use_creds=${arg#*=} ;;
    --rstudio-target=*) rstudio_target=${arg#*=} ;;
+   *)                  echo "Ignoring unrecognized argument '${arg}'"
    esac
 
 done
