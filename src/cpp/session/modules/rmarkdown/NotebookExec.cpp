@@ -168,7 +168,9 @@ void ChunkExecContext::connect()
    // extract knitr figure options if present
    double figWidth = options_.getOverlayOption("fig.width", 0.0);
    double figHeight = options_.getOverlayOption("fig.height", 0.0);
-   
+   // the knitr 'dev' option, if set, may override the default graphics device backend
+   std::string chunkGraphicsBackend = options_.getOverlayOption("dev", std::string("png"));
+
    // if 'fig.asp' is set, then use that to override 'fig.height'
    double figAsp = options_.getOverlayOption("fig.asp", 0.0);
    if (figAsp != 0.0)
@@ -193,13 +195,13 @@ void ChunkExecContext::connect()
    {
       // user specified plot size, use it
       error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_, 
-            figHeight, figWidth, PlotSizeManual, outputPath_);
+            figHeight, figWidth, PlotSizeManual, outputPath_, chunkGraphicsBackend);
    }
    else
    {
       // user didn't specify plot size, use the width of the editor surface
       error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_,
-            0, pixelWidth_, PlotSizeAutomatic, outputPath_);
+            0, pixelWidth_, PlotSizeAutomatic, outputPath_, chunkGraphicsBackend);
    }
    if (error)
       LOG_ERROR(error);

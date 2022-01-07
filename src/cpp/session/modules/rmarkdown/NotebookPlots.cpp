@@ -280,12 +280,15 @@ void PlotCapture::onNewPlot()
 core::Error PlotCapture::connectPlots(const std::string& docId, 
       const std::string& chunkId, const std::string& nbCtxId, 
       double height, double width, PlotSizeBehavior sizeBehavior,
-      const FilePath& plotFolder)
+      const FilePath& plotFolder, const std::string& chunkGraphicsBackend)
 {
    // save identifiers
    docId_ = docId;
    chunkId_ = chunkId;
    nbCtxId_ = nbCtxId;
+
+   // the graphics backend device set by the knitr chunk option 'dev'
+   chunkGraphicsBackend_ = chunkGraphicsBackend;
 
    // clean up any stale plots from the folder
    plotFolder_ = plotFolder;
@@ -380,7 +383,7 @@ core::Error PlotCapture::setGraphicsOption()
    setOption.addParam(r::session::graphics::device::devicePixelRatio());
 
    // other args (OS dependent)
-   setOption.addParam(r::session::graphics::extraBitmapParams());
+   setOption.addParam(r::session::graphics::extraBitmapParams();
 
    return setOption.call();
 }
