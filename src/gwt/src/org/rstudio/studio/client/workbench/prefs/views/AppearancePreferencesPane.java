@@ -93,7 +93,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       final String originalTheme = userPrefs_.globalTheme().getValue();
 
       flatTheme_ = new SelectWidget(constants_.appearanceRStudioThemeLabel(),
-                                new String[]{"Modern", "Sky"},
+                                new String[]{constants_.modernThemeLabel(), constants_.skyThemeLabel()},
                                 new String[]{
                                       UserPrefs.GLOBAL_THEME_DEFAULT,
                                       UserPrefs.GLOBAL_THEME_ALTERNATE
