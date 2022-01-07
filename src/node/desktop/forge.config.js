@@ -163,12 +163,9 @@ config.packagerConfig = {
     appleId: process.env.APPLE_ID,
     appleIdPassword: process.env.APPLE_ID_PASSWORD,
     appBundleId: 'org.rstudio.RStudio',
-    ascProvider: 'FYF2F5GFX4',
+    ascProvider: 'RStudioInc',
   },
 };
-
-
-
 
 // } else {
 //   console.warn('Should be notarizing, but environment variables APPLE_ID or APPLE_ID_PASSWORD are missing!');
