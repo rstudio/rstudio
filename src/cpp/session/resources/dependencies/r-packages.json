@@ -538,7 +538,7 @@
         "tutorial": {
             "description": "RStudio Tutorials",
             "packages": [
-                "checkmate", 
+                "checkmate",
                 "ellipsis",
                 "evaluate",
                 "fastmap",
