@@ -296,6 +296,12 @@ platform () {
 			return 0
 		fi
 
+		# Detect Rocky Linux (used for RHEL8)
+		if grep -siq "rocky" /etc/redhat-release; then
+			echo "rocky"
+			return 0
+		fi
+
 		# Warn about other RedHat flavors we don't yet recognize
 		echo "unrecognized redhat variant '$(cat /etc/redhat-release)'"
 		return 1
@@ -407,6 +413,10 @@ is-redhat () {
 
 is-centos () {
 	[ "$(platform)" = "centos" ]
+}
+
+is-rhel () {
+	[ "$(platform)" = "rocky" ]
 }
 
 is-fedora () {

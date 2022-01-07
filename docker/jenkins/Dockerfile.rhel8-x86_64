@@ -1,6 +1,6 @@
-FROM centos:8
+FROM rockylinux/rockylinux:8
 
-ENV OPERATING_SYSTEM=centos_8
+ENV OPERATING_SYSTEM=rockylinux_8
 
 RUN set -x \
       && yum install epel-release -y \
@@ -27,6 +27,7 @@ RUN yum install -y \
     libacl-devel \
     libcap-devel \ 
     libpq-devel \
+    libuser \
     libuuid-devel \
     libxml2-devel \
     libXcursor-devel \
@@ -74,7 +75,7 @@ RUN cp /usr/bin/python2 /usr/bin/python
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad centos8
+RUN bash /tmp/install-crashpad rhel8
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
@@ -94,14 +95,14 @@ COPY dependencies/linux/install-qt-linux /tmp/
 RUN export QT_VERSION=5.12.8 && \
     cd /tmp && /bin/bash ./install-qt-linux
 
-# get libuser header files (libuser-devel not currently available on centos8)
+# get libuser header files (libuser-devel not currently available on rhel8)
 RUN wget https://pagure.io/libuser/archive/libuser-0.62/libuser-libuser-0.62.tar.gz
 RUN tar zxvf libuser-libuser-0.62.tar.gz
 RUN mkdir -p /usr/include/libuser
 RUN cp libuser-libuser-0.62/lib/*.h /usr/include/libuser 
 
 # build and install gpg1.4 which we need to sign the builds in headless mode
-# this is unavailable in the official centos8 repos
+# this is unavailable in the official rhel8 repos
 RUN wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2
 RUN tar xvf gnupg-1.4.23.tar.bz2
 RUN cd gnupg-1.4.23 && ./configure --prefix=/gnupg1 && make && make install
