@@ -55,6 +55,11 @@
             "location": "cran",
             "source": false
         },
+        "ellipsis": {
+            "version": "0.2.0.1", 
+            "location": "cran",
+            "source": false
+        },
         "evaluate": {
             "version": "0.13",
             "location": "cran",
