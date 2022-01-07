@@ -615,9 +615,20 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
 
    # install quarto (or pandoc if quarto disabled)
    if(QUARTO_ENABLED)
-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
-              DESTINATION "${RSTUDIO_INSTALL_BIN}"
-              USE_SOURCE_PERMISSIONS)
+      # install some quarto folders into Resources, as needed
+      if(APPLE)
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
+               DESTINATION "${RSTUDIO_INSTALL_BIN}"
+               USE_SOURCE_PERMISSIONS
+               PATTERN "*/share" EXCLUDE)
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/share" 
+               DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/quarto"
+               USE_SOURCE_PERMISSIONS)
+      else()
+         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
+               DESTINATION "${RSTUDIO_INSTALL_BIN}"
+               USE_SOURCE_PERMISSIONS)
+      endif()
    else()
       install(DIRECTORY "${RSTUDIO_DEPENDENCIES_PANDOC_DIR}/"
               DESTINATION "${RSTUDIO_INSTALL_BIN}/pandoc"
