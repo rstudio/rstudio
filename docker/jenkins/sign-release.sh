@@ -120,7 +120,7 @@ elif [ "$EXT" == "rpm" ]; then
     if [ -f /etc/redhat-release ]; then
        REDHAT_VERSION=$(cat /etc/redhat-release | grep -oP "CentOS Linux release \K[\w.]+") || true
        VERSION_ARRAY=(${REDHAT_VERSION//./ })
-       if ((${VERSION_ARRAY[0]} >= 8)); then
+       if [ -z ${REDHAT_VERSION} ]; then
           FORCE_NO_EXPECT=true
           echo "Not using expect approach because we are on a newer version of Redhat"
        fi
