@@ -538,8 +538,22 @@
         "tutorial": {
             "description": "RStudio Tutorials",
             "packages": [
+                "checkmate", 
+                "ellipsis",
+                "evaluate",
+                "fastmap",
+                "htmltools",
+                "htmlwidgets",
+                "jsonlite",
+                "knitr",
                 "learnr",
-                "rstudioapi"
+                "rmarkdown",
+                "rappdirs",
+                "renv",
+                "rprojroot",
+                "rstudioapi",
+                "shiny",
+                "withr"
             ]
         }
     }
