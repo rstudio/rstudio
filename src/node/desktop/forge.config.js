@@ -2,11 +2,6 @@ const { createFullPackageFileName } = require('./scripts/create-full-package-fil
 // This function makes sure that the correct filename is created and saved for the final DMG file.
 createFullPackageFileName();
 
-// require('./scripts/fix-library-paths.js');
-
-// loadCMakeVars(__dirname + '/../../../package/osx/build/CMakeCache.txt');
-
-
 const dmgSize = {
   height: 450,
   width: 801,
@@ -153,46 +148,26 @@ const config = {
 // ) {
 
 
-// config.packagerConfig = {
-//   ...config.packagerConfig,
-//   appBundleId: 'org.rstudio.RStudio',
-//   osxSign: {
-//     'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
-//     'entitlements': 'resources/electron-entitlements.mac.plist',
-//     'entitlements-inherit': 'resources/electron-entitlements.mac.plist',
-//     'hardenedRuntime': true,
-//     'hardened-runtime': true,
-//     'gatekeeper-assess': false,
-//     'signature-flags': 'library',
-//   },
-//   osxNotarize: {
-//     appleId: process.env.APPLE_ID,
-//     appleIdPassword: process.env.APPLE_ID_PASSWORD,
-//     appBundleId: 'org.rstudio.RStudio',
-//     // ascProvider: 'FYF2F5GFX4',
-//   },
-// };
-
-
-
 config.packagerConfig = {
   ...config.packagerConfig,
-  appBundleId: 'com.rstudio.mt-test',
+  appBundleId: 'org.rstudio.RStudio',
   osxSign: {
-    'identity': 'Developer ID Application: Matheus Tavares (QM39MZ3QRV)',
+    'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
     'entitlements': 'resources/electron-entitlements.mac.plist',
-    'entitlements-inherit': 'resources/electron-entitlements-inherit.mac.plist',
+    'entitlements-inherit': 'resources/electron-entitlements.mac.plist',
     'hardened-runtime': true,
     'gatekeeper-assess': false,
     'signature-flags': 'library',
   },
   osxNotarize: {
-    appleId: 'contact@tavapps.com',
-    appleIdPassword: 'igzh-ooso-rjvg-yyoy',
-    appBundleId: 'com.rstudio.mt-test',
-    ascProvider: 'QM39MZ3QRV',
+    appleId: process.env.APPLE_ID,
+    appleIdPassword: process.env.APPLE_ID_PASSWORD,
+    appBundleId: 'org.rstudio.RStudio',
+    ascProvider: 'FYF2F5GFX4',
   },
 };
+
+
 
 
 // } else {
