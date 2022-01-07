@@ -291,13 +291,20 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
    chunkGraphicsBackend_ = chunkGraphicsBackend;
    // the graphics backend device set by the 'RStudioGD.backend' option
    defaultGraphicsBackend_.set(r::options::getOption("RStudioGD.backend"));
+   
    // overwrite the original 'RStudioGD.backend' option, if appropriate
-   setBackendDeviceOption();
+   Error error = setBackendDeviceOption();
+   if (error)
+   {
+      LOG_ERROR(error);
+      r::options::setOption("RStudioGD.backend", defaultGraphicsBackend_.get());
+   }
+
 
    // clean up any stale plots from the folder
    plotFolder_ = plotFolder;
    std::vector<FilePath> folderContents;
-   Error error = plotFolder.getChildren(folderContents);
+   error = plotFolder.getChildren(folderContents);
    if (error)
       return error;
 
@@ -354,6 +361,7 @@ void PlotCapture::disconnect()
 
       // restore the graphics device option
       r::options::setOption("device", deviceOption_.get());
+      r::options::setOption("RStudioGD.backend", defaultGraphicsBackend_.get());
 
       onNewPlot_.disconnect();
       onBeforeNewPlot_.disconnect();
