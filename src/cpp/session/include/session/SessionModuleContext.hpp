@@ -943,6 +943,10 @@ core::Error perFilePathStorage(const std::string& scope,
 // returns -1 if no error was found in the output
 int jupyterErrorLineNumber(const std::vector<std::string>& srcLines,
                            const std::string& output);
+bool navigateToRenderPreviewError(const core::FilePath& previewFile,
+                                  const std::vector<std::string>& previewFileLines,
+                                  const std::string& output,
+                                  const std::string& allOutput);
 
 std::vector<core::FilePath> ignoreContentDirs();
 bool isIgnoredContent(const core::FilePath& filePath, const std::vector<core::FilePath>& ignoreDirs);
