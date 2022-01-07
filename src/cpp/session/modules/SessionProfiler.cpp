@@ -82,28 +82,16 @@ void handleProfilerResourceResReq(const http::Request& request,
 
 void clearRProfile(const std::string& path, const std::string& htmlLocalPath)
 {
-   if (core::thread::isMainThread())
-   {
-      Error error = r::exec::RFunction(".rs.rpc.clear_profile")
-            .addUtf8Param(path)
-            .addUtf8Param(htmlLocalPath)
-            .call();
+   Error error = r::exec::RFunction(".rs.rpc.clear_profile")
+         .addUtf8Param(path)
+         .addUtf8Param(htmlLocalPath)
+         .call();
 
-      if (error)
-      {
-         LOG_ERROR(error);
-      }
-   }
-   else
+   if (error)
    {
-      module_context::scheduleDelayedWork(
-                           boost::posix_time::milliseconds(1),
-                           boost::bind(clearRProfile, path, htmlLocalPath),
-                           false);
-
+      LOG_ERROR(error);
    }
 }
-
 
 void onDocPendingRemove(
         boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -114,7 +102,7 @@ void onDocPendingRemove(
    if (htmlLocalPath.empty() && path.empty())
       return;
 
-   clearRProfile(path, htmlLocalPath);
+   module_context::executeOnMainThread(boost::bind(clearRProfile, path, htmlLocalPath));
 }
 
 Error initialize()

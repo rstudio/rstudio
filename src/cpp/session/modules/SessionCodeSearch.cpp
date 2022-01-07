@@ -991,10 +991,7 @@ void RSourceIndexes::update(const boost::shared_ptr<SourceDocument>& pDoc)
 
    if (!core::thread::isMainThread())
    {
-      module_context::scheduleDelayedWork(
-                           boost::posix_time::milliseconds(1),
-                           boost::bind(&RSourceIndexes::update, this, pDoc),
-                           false);
+      module_context::executeOnMainThread(boost::bind(&RSourceIndexes::update, this, pDoc));
       return;
    }
 

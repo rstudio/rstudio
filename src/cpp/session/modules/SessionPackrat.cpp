@@ -595,17 +595,8 @@ void onFileChanged(FilePath sourceFilePath)
    if (sourceFilePath.getFilename() == kPackratLockfile)
    {
       PACKRAT_TRACE("detected change to lockfile " << sourceFilePath);
-      if (core::thread::isMainThread())
-      {
-         checkHashes(HASH_TYPE_LOCKFILE, HASH_STATE_OBSERVED, onLockfileUpdate);
-      }
-      else
-      {
-         module_context::scheduleDelayedWork(
-                              boost::posix_time::milliseconds(1),
-                              boost::bind(onFileChanged, sourceFilePath),
-                              false);
-      }
+
+      module_context::executeOnMainThread(boost::bind(checkHashes, HASH_TYPE_LOCKFILE, HASH_STATE_OBSERVED, onLockfileUpdate));
    }
    else if (sourceFilePath.isWithin(libraryPath) && 
             (sourceFilePath.isDirectory() || 

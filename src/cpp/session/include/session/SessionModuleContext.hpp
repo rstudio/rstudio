@@ -410,6 +410,7 @@ void scheduleDelayedWork(const boost::posix_time::time_duration& period,
                          const boost::function<void()> &execute,
                          bool idleOnly = true);
 
+void executeOnMainThread(const boost::function<void()> &execute);
 
 core::string_utils::LineEnding lineEndings(const core::FilePath& filePath);
 

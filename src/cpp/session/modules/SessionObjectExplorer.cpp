@@ -141,24 +141,14 @@ void onResume(const Settings&)
 
 void removeFromRCache(const std::string& id)
 {
-   if (core::thread::isMainThread())
-   {
-      // also attempt to remove from R cache
-      using namespace r::exec;
-      Error error = RFunction(".rs.explorer.removeCacheEntry")
-            .addParam(id)
-            .call();
+   // also attempt to remove from R cache
+   using namespace r::exec;
+   Error error = RFunction(".rs.explorer.removeCacheEntry")
+         .addParam(id)
+         .call();
 
-      if (error)
-         LOG_ERROR(error);
-   }
-   else
-   {
-      module_context::scheduleDelayedWork(
-                           boost::posix_time::milliseconds(1),
-                           boost::bind(removeFromRCache, id),
-                           false);
-   }
+   if (error)
+      LOG_ERROR(error);
 }
 
 void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
@@ -178,7 +168,7 @@ void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
       return;
    }
 
-   removeFromRCache(id);
+   module_context::executeOnMainThread(boost::bind(removeFromRCache, id));
 }
 
 void onDeferredInit(bool)

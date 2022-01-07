@@ -888,12 +888,7 @@ Error removeRCachedData(const std::string& cacheKey)
    }
    else
    {
-      LOG_DEBUG_MESSAGE("In removeRCachedData - main thread busy - scheduling to run later: " + cacheKey);
-      module_context::scheduleDelayedWork(
-                           boost::posix_time::milliseconds(100),
-                           boost::bind(removeRCachedDataCallback, cacheKey),
-                           false);
-
+      module_context::executeOnMainThread(boost::bind(removeRCachedDataCallback, cacheKey));
       return Success();
    }
 }
