@@ -150,7 +150,7 @@ def get_type_from_os(os) {
   def type
   // groovy switch case regex is broken in pipeline
   // https://issues.jenkins-ci.org/browse/JENKINS-37214
-  if (os.contains('centos') || os.contains('suse') || os.contains('fedora') || os.contains('rhel') {
+  if (os.contains('centos') || os.contains('suse') || os.contains('fedora') || os.contains('rhel')) {
     type = 'RPM'
   } else {
     type = 'DEB'
