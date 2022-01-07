@@ -60,6 +60,7 @@ public:
    void onExprComplete();
 private:
    core::Error setGraphicsOption();
+   core::Error setBackendDeviceOption();
    void processPlots(bool ignoreEmpty);
    void removeGraphicsDevice();
    void onNewPlot();
@@ -78,6 +79,7 @@ private:
    std::string nbCtxId_;
 
    std::string chunkGraphicsBackend_;
+   r::sexp::PreservedSEXP defaultGraphicsBackend_;
 
    r::sexp::PreservedSEXP deviceOption_;
    r::sexp::PreservedSEXP lastPlot_;

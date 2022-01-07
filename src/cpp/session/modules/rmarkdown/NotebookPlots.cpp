@@ -289,6 +289,10 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
 
    // the graphics backend device set by the knitr chunk option 'dev'
    chunkGraphicsBackend_ = chunkGraphicsBackend;
+   // the graphics backend device set by the 'RStudioGD.backend' option
+   defaultGraphicsBackend_.set(r::options::getOption("RStudioGD.backend"));
+   // overwrite the original 'RStudioGD.backend' option, if appropriate
+   setBackendDeviceOption();
 
    // clean up any stale plots from the folder
    plotFolder_ = plotFolder;
@@ -358,6 +362,25 @@ void PlotCapture::disconnect()
    NotebookCapture::disconnect();
 }
 
+core::Error PlotCapture::setBackendDeviceOption()
+{
+   // if chunkGraphicsBackend_ starts with 'ragg', 'quartz' or 'Cairo' then we should use the
+   // corresponding backend instead of the global default
+   if (chunkGraphicsBackend_.find("ragg") == 0)
+   {
+      return r::options::setOption("RStudioGD.backend", "ragg");
+   }
+   if (chunkGraphicsBackend_.find("quartz") == 0)
+   {
+      return r::options::setOption("RStudioGD.backend", "quartz");
+   }
+   if (chunkGraphicsBackend_.find("cairo") == 0 || chunkGraphicsBackend_.find("Cairo"))
+   {
+      return r::options::setOption("RStudioGD.backend", "cairo");
+   }
+   return Success();
+}
+
 core::Error PlotCapture::setGraphicsOption()
 {
    Error error;
@@ -383,7 +406,7 @@ core::Error PlotCapture::setGraphicsOption()
    setOption.addParam(r::session::graphics::device::devicePixelRatio());
 
    // other args (OS dependent)
-   setOption.addParam(r::session::graphics::extraBitmapParams();
+   setOption.addParam(r::session::graphics::extraBitmapParams());
 
    return setOption.call();
 }
