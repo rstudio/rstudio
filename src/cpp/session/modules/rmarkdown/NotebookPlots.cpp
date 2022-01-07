@@ -31,6 +31,7 @@
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
 #include <r/session/RGraphics.hpp>
+#include <r/session/RGraphicsConstants.h>
 #include <r/ROptions.hpp>
 #include <r/RRoutines.hpp>
 
@@ -289,15 +290,15 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
 
    // the graphics backend device set by the knitr chunk option 'dev'
    chunkGraphicsBackend_ = chunkGraphicsBackend;
-   // the graphics backend device set by the 'RStudioGD.backend' option
-   defaultGraphicsBackend_.set(r::options::getOption("RStudioGD.backend"));
-   
-   // overwrite the original 'RStudioGD.backend' option, if appropriate
+   // the graphics backend device set by the kGraphicsOptionBackend option
+   defaultGraphicsBackend_.set(r::options::getOption(kGraphicsOptionBackend));
+
+   // overwrite the original option, if appropriate
    Error error = setBackendDeviceOption();
    if (error)
    {
       LOG_ERROR(error);
-      r::options::setOption("RStudioGD.backend", defaultGraphicsBackend_.get());
+      r::options::setOption(kGraphicsOptionBackend, defaultGraphicsBackend_.get());
    }
 
 
@@ -361,7 +362,7 @@ void PlotCapture::disconnect()
 
       // restore the graphics device option
       r::options::setOption("device", deviceOption_.get());
-      r::options::setOption("RStudioGD.backend", defaultGraphicsBackend_.get());
+      r::options::setOption(kGraphicsOptionBackend, defaultGraphicsBackend_.get());
 
       onNewPlot_.disconnect();
       onBeforeNewPlot_.disconnect();
@@ -376,15 +377,15 @@ core::Error PlotCapture::setBackendDeviceOption()
    // corresponding backend instead of the global default
    if (chunkGraphicsBackend_.find("ragg") == 0)
    {
-      return r::options::setOption("RStudioGD.backend", "ragg");
+      return r::options::setOption(kGraphicsOptionBackend, "ragg");
    }
    if (chunkGraphicsBackend_.find("quartz") == 0)
    {
-      return r::options::setOption("RStudioGD.backend", "quartz");
+      return r::options::setOption(kGraphicsOptionBackend, "quartz");
    }
    if (chunkGraphicsBackend_.find("cairo") == 0 || chunkGraphicsBackend_.find("Cairo"))
    {
-      return r::options::setOption("RStudioGD.backend", "cairo");
+      return r::options::setOption(kGraphicsOptionBackend, "cairo");
    }
    return Success();
 }
