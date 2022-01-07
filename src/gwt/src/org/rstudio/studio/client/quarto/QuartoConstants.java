@@ -1,7 +1,7 @@
 /*
  * DataViewerConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -182,7 +182,7 @@ public interface QuartoConstants extends Messages {
     String htmlFormatText();
 
     /**
-     * Translate "Recommended format for authoring (you can switch to PDF or Word output anytime)".
+     * Translate "Recommended format for authoring (you can switch to PDF or Word output anytime)"
      *
      * @return the translated value
      */
@@ -218,11 +218,11 @@ public interface QuartoConstants extends Messages {
     String wordFormatText();
 
     /**
-     * Translate "Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux).".
+     * Translate "Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux)"
      *
      * @return the translated value
      */
-    @DefaultMessage("Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux).")
+    @DefaultMessage("Previewing Word documents requires an installation of MS Word (or Libre/Open Office on Linux)")
     @Key("wordFormatDesc")
     String wordFormatDesc();
 
@@ -236,7 +236,7 @@ public interface QuartoConstants extends Messages {
     String jsFormatText();
 
     /**
-     * Translate "HTML presentation viewable with any browser (you can also print to PDF with Chrome)".
+     * Translate "HTML presentation viewable with any browser (you can also print to PDF with Chrome)"
      *
      * @return the translated value
      */
@@ -254,7 +254,7 @@ public interface QuartoConstants extends Messages {
     String beamerFormatText();
 
     /**
-     * Translate "PDF output requires a LaTeX installation (e.g. https://yihui.org/tinytex/)".
+     * Translate "PDF output requires a LaTeX installation (e.g. https://yihui.org/tinytex/)"
      *
      * @return the translated value
      */
@@ -272,11 +272,11 @@ public interface QuartoConstants extends Messages {
     String powerPointFormatText();
 
     /**
-     * Translate "PowerPoint previewing requires an installation of PowerPoint or OpenOffice.".
+     * Translate "PowerPoint previewing requires an installation of PowerPoint or OpenOffice".
      *
      * @return the translated value
      */
-    @DefaultMessage("PowerPoint previewing requires an installation of PowerPoint or OpenOffice.")
+    @DefaultMessage("PowerPoint previewing requires an installation of PowerPoint or OpenOffice")
     @Key("powerPointFormatDesc")
     String powerPointFormatDesc();
 
@@ -285,16 +285,16 @@ public interface QuartoConstants extends Messages {
      *
      * @return the translated value
      */
-    @DefaultMessage("Create an interactive HTML document with Shiny components.")
+    @DefaultMessage("Create an interactive HTML document with Shiny components")
     @Key("shinyFormatDesc")
     String shinyFormatDesc();
 
     /**
-     * Translate "Create an interactive HTML document with Observable JS components.".
+     * Translate "Create an interactive HTML document with Observable JS components".
      *
      * @return the translated value
      */
-    @DefaultMessage("Create an interactive HTML document with Observable JS components.")
+    @DefaultMessage("Create an interactive HTML document with Observable JS components")
     @Key("observableJSFormatDesc")
     String observableJSFormatDesc();
 
