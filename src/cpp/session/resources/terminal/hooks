@@ -3,7 +3,7 @@
 # if we have a conda prefix, ensure it's still used
 if [ -n "${_RS_CONDA_PREFIX}" ]; then
 
-	# if we're running on WSL, we need to conver the path
+	# if we're running on WSL, we need to convert the path
 	# here to a Linux-style path
 	if command -v wslpath >/dev/null 2>&1; then
 		_RS_CONDA_PREFIX=$(wslpath "${_RS_CONDA_PREFIX}")
