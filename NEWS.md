@@ -48,6 +48,7 @@
 * Added support for Amazon Linux 2 (Pro #2474)
 * Treat Alt and Caption fields differently depending on file type (#9713)
 * Fixed shortcut conflict on German keyboard (#9276)
+* Updated shinymod snippet for Shiny modules (#10009)
 
 #### R
 
