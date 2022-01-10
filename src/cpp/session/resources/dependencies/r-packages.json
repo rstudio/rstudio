@@ -426,7 +426,6 @@
                 "rmarkdown",
                 "stringi",
                 "stringr",
-                "tinytex",
                 "xfun",
                 "yaml"
             ]

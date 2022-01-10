@@ -737,4 +737,102 @@ public interface TerminalConstants extends com.google.gwt.i18n.client.Messages {
     @Key("closeAllTerminalsQuestion")
     String closeAllTerminalsQuestion();
 
+    /**
+     * Translated "Default".
+     *
+     * @return translated "Default"
+     */
+    @DefaultMessage("Default")
+    @Key("defaultShellLabel")
+    String defaultShellLabel();
+
+    /**
+     * Translated "Git Bash".
+     *
+     * @return translated "Git Bash"
+     */
+    @DefaultMessage("Git Bash")
+    @Key("winGitBashShellLabel")
+    String winGitBashShellLabel();
+
+    /**
+     * Translated "WSL".
+     *
+     * @return translated "WSL"
+     */
+    @DefaultMessage("WSL")
+    @Key("winWslBashShellLabel")
+    String winWslBashShellLabel();
+
+    /**
+     * Translated "Command Prompt".
+     *
+     * @return translated "Command Prompt"
+     */
+    @DefaultMessage("Command Prompt")
+    @Key("winCmdShellLabel")
+    String winCmdShellLabel();
+
+    /**
+     * Translated "PowerShell".
+     *
+     * @return translated "PowerShell"
+     */
+    @DefaultMessage("PowerShell")
+    @Key("winPsShellLabel")
+    String winPsShellLabel();
+
+    /**
+     * Translated "PowerShell Core".
+     *
+     * @return translated "PowerShell Core"
+     */
+    @DefaultMessage("PowerShell Core")
+    @Key("psCoreShellLabel")
+    String psCoreShellLabel();
+
+    /**
+     * Translated "Bash".
+     *
+     * @return translated "Bash"
+     */
+    @DefaultMessage("Bash")
+    @Key("bashShellLabel")
+    String bashShellLabel();
+
+    /**
+     * Translated "Custom".
+     *
+     * @return translated "Custom"
+     */
+    @DefaultMessage("Custom")
+    @Key("customShellLabel")
+    String customShellLabel();
+
+    /**
+     * Translated "User command".
+     *
+     * @return translated "User command"
+     */
+    @DefaultMessage("User command")
+    @Key("nonShellLabel")
+    String nonShellLabel();
+
+    /**
+     * Translated "Zsh".
+     *
+     * @return translated "Zsh"
+     */
+    @DefaultMessage("Zsh")
+    @Key("zshShellLabel")
+    String zshShellLabel();
+
+    /**
+     * Translated "Unknown".
+     *
+     * @return translated "Unknown"
+     */
+    @DefaultMessage("Unknown")
+    @Key("unknownShellLabel")
+    String unknownShellLabel();
 }

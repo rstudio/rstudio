@@ -258,6 +258,13 @@ Error unsatisfiedDependencies(const json::JsonRpcRequest& request,
       return error;
    std::vector<Dependency> deps = dependenciesFromJson(depsJson);
 
+   // if prompted installation is disabled entirely then return no deps
+   if (!core::system::getenv("RSTUDIO_DISABLE_PACKAGE_INSTALL_PROMPT").empty())
+   {
+      pResponse->setResult(dependenciesToJson(std::vector<Dependency>()));
+      return Success();
+   }
+
    // build the list of unsatisfied dependencies
    using namespace module_context;
    std::vector<Dependency> unsatisfiedDeps;

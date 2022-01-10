@@ -27,7 +27,7 @@
                 <ui:msg key="confirmAccountText">A window will open momentarily to confirm your account. If it doesn't, click here to open it:</ui:msg>
             </p>
          </g:HTML>
-         <g:Anchor ui:field="claimLink_" target="_blank"></g:Anchor>
+         <g:Anchor ui:field="claimLink_" target="_blank"/>
       </g:HTMLPanel>
      <g:HTMLPanel ui:field="successPanel_" visible="false">
         <g:Label styleName="{style.headerLabel}"
@@ -41,13 +41,10 @@
          </g:HTML>
       </g:HTMLPanel>
      <g:HTMLPanel ui:field="errorPanel_" visible="false">
-        <g:Label styleName="{style.headerLabel} {style.spaced}" 
-                 ui:field="errorHeader_"></g:Label>
-        <g:Label styleName="{style.spaced}" 
-                 ui:field="errorMessage_"></g:Label>
-        <rs:ThemedButton ui:field="tryAgainButton_" 
-                         text="Try Again">
-            <ui:attribute ui:name="text" key="tryAgainText"/>
+         <g:Label styleName="{style.headerLabel} {style.spaced}" ui:field="errorHeader_"/>
+         <g:Label styleName="{style.spaced}" ui:field="errorMessage_"/>
+        <rs:ThemedButton ui:field="tryAgainButton_" text="Try Again">
+            <ui:attribute name="text" key="tryAgainText"/>
         </rs:ThemedButton>
       </g:HTMLPanel>
    </g:HTMLPanel>
