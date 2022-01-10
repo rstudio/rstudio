@@ -383,7 +383,7 @@ core::Error PlotCapture::setBackendDeviceOption()
    {
       return r::options::setOption(kGraphicsOptionBackend, "quartz");
    }
-   if (chunkGraphicsBackend_.find("cairo") == 0 || chunkGraphicsBackend_.find("Cairo"))
+   if (chunkGraphicsBackend_.find("cairo") == 0 || chunkGraphicsBackend_.find("Cairo") == 0)
    {
       return r::options::setOption(kGraphicsOptionBackend, "cairo");
    }
