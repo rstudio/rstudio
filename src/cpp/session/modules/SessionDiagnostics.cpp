@@ -892,7 +892,10 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
          markerLintType = LintTypeInfo;
       }
 
-      int line = marker.line - 1; // markers begin the index at 1 and lint items begin at 0
+      int line =
+          marker.line <= 0
+              ? 1
+              : marker.line - 1; // markers begin the index at 1 and lint items begin at 0
       int col = marker.column;
       lintItems.add(
           line, col, line, col, markerLintType, marker.message.text());
