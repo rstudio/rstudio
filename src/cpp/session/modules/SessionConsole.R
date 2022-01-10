@@ -16,27 +16,17 @@
 
 .rs.addJsonRpcHandler("console_follow_hyperlink", function(url, text, params)
 {
-
-  pattern <- "^([a-zA-Z]+)::(.*$)"
-  if (grepl(pattern, url)) {
-    target <- sub(pattern, "\\1", url)
-    url <- sub(pattern, "\\2", url)
-  } else {
-    target <- "browser"
+  if (!grepl("://", url)) {
+    stop("missing scheme")
   }
-
-  handlers <- list(
-    # http://example.com
-    # browser::http://example.com
-    browser = function(url) utils::browseURL(url), 
-
-    # viewer::http://example.com
-    viewer = function(url) .rs.api.viewer(url),
-
-    # help::stats/rnorm
-    # help::stats::rnorm
-    help = function(url) {
-      parts <- strsplit(url, "[/:]+")[[1L]]
+  
+  scheme <- sub("://.*$", "", url)
+  handler <- switch(scheme, 
+    # rstatshelp:://stats/rnorm
+    # rstatshelp:://stats::rnorm
+    rstatshelp = function(url) {
+      url <- sub("rstatshelp://", "", url)
+      parts <- strsplit(url, "/")[[1L]]
 
       if (length(parts) == 2L) {
         .rs.showHelpTopic(topic = parts[[2L]], package = parts[[1L]])
@@ -46,10 +36,11 @@
       }
     }, 
 
-    # file::some/file/path
-    # file::some/file/path#32
-    # file::some/file/path#32,15
+    # file:://some/file/path
+    # file:://some/file/path#32
+    # file:://some/file/path#32,15
     file = function(url) {
+      url <- sub("file://", "", url)  
       parts <- strsplit(url, "#")[[1L]]
       file <- parts[[1L]]
       line <- -1L
@@ -64,8 +55,19 @@
       }
       
       .rs.api.navigateToFile(file, line = line, col = col, moveCursor = TRUE)
-    }
-  )
+    }, 
 
-  handlers[[target]](url)
+    # anything else opens in the browser, or the viewer
+    # http://example.com
+    function(url) {
+      viewer <- utils::browseURL
+      fun <- if (identical(params, "target=viewer")) {
+        viewer <- .rs.api.viewer
+      }
+      viewer(url)
+    }
+    
+  )
+  handler(url)
+
 })
