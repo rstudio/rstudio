@@ -390,20 +390,20 @@
         "shiny": {
             "description": "Shiny",
             "packages": [
-                "Rcpp",
-                "httpuv",
-                "mime",
-                "jsonlite",
-                "xtable",
-                "digest",
-                "R6",
-                "sourcetools",
-                "htmltools",
-                "promises",
                 "crayon",
-                "rlang",
+                "digest",
+                "htmltools",
+                "httpuv",
+                "jsonlite",
                 "later",
-                "shiny"
+                "mime",
+                "promises",
+                "rlang",
+                "R6",
+                "Rcpp",
+                "shiny",
+                "sourcetools",
+                "xtable"
             ]
         },
         "reticulate": {
