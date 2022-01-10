@@ -739,6 +739,10 @@ public class VirtualConsole
          params_ = params;
       }
 
+      public String getTitle() {
+         return url_;
+      }
+
       public String url_;
       public String params_;
    }
@@ -760,6 +764,8 @@ public class VirtualConsole
 
             // for now, perhaps a dedicated style would be better
             element.addClassName("xtermUnderline");
+
+            element.setTitle(hyperlink_.getTitle());
          }
          
          if (className != null)
