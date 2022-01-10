@@ -894,12 +894,10 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
          markerLintType = LintTypeInfo;
       }
 
-      lintItems.add(marker.line - 1,
-                    marker.column,
-                    marker.line,
-                    marker.column,
-                    markerLintType,
-                    marker.message.text());
+      int line = marker.line - 1; // markers begin the index at 1 and lint items begin at 0
+      int col = marker.column;
+      lintItems.add(
+          line, col, line, col, markerLintType, marker.message.text());
    }
 
    pResponse->setResult(lintAsJson(lintItems));
