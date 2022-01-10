@@ -33,7 +33,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
