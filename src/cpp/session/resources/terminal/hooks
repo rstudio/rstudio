@@ -5,7 +5,7 @@ if [ -n "${_RS_CONDA_PREFIX}" ]; then
 
 	# if we're running on WSL, we need to conver the path
 	# here to a Linux-style path
-	if command -v wslpath &> /dev/null; then
+	if command -v wslpath >/dev/null 2>&1; then
 		_RS_CONDA_PREFIX=$(wslpath "${_RS_CONDA_PREFIX}")
 	fi
 
@@ -24,7 +24,7 @@ if [ -n "${_RS_CONDA_PREFIX}" ]; then
 	case "$(uname -s)" in
 	MINGW32*)
 		
-		if command -v cygpath &> /dev/null; then
+		if command -v cygpath >/dev/null 2>&1; then
 			_CONDA_PREFIX=$(cygpath "${CONDA_PREFIX}")
 		fi
 		
@@ -66,7 +66,7 @@ if [ -f "${RETICULATE_PYTHON}" ]; then
 	# munge path for MINGW32 if necessary
 	case "$(uname -s)" in
 	MINGW32*)
-		if command -v cygpath &> /dev/null; then
+		if command -v cygpath >/dev/null 2>&1; then
 			_RS_PYTHON_BIN=$(cygpath "${_RS_PYTHON_BIN}")
 		fi
 	;;
