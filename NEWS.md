@@ -2,6 +2,10 @@
 
 ### New
 
+#### R
+
+- Added support for using the AGG renderer (as provided by the ragg package) as a graphics backend for inline plot execution; also added support for using the backend graphics device requested by the knitr `dev` chunk option (#9931)
+
 ### Fixed
 
 ### Breaking
