@@ -118,6 +118,9 @@ bool FileLock::verifyInitialized()
 
 void FileLock::initialize(FileLock::LockType fallbackLockType)
 {
+   // Nothing to do if already initialized
+   if (s_isInitialized) return;
+
    // read settings
    FilePath locksConfPath = core::system::xdg::systemConfigFile(kLocksConfFile);
 

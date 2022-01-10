@@ -401,7 +401,7 @@ core::Error UserPrefValues::setShowIndentGuides(bool val)
 }
 
 /**
- * Whether continue comments (by inserting the comment character) after adding a new line.
+ * Whether to continue comments (by inserting the comment character) after adding a new line.
  */
 bool UserPrefValues::continueCommentsOnNewline()
 {

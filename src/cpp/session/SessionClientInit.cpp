@@ -294,15 +294,20 @@ void handleClientInit(const boost::function<void()>& initFunction,
       // console actions
       json::Object actionsObject;
       consoleActions.asJson(&actionsObject);
-      sessionInfo["console_actions"] = actionsObject;
-
-      suspend::initFromResume();
 
       std::string resumeMsg = suspend::getResumedMessage();
       if (!resumeMsg.empty())
       {
-         module_context::consoleWriteOutput(resumeMsg);
+         // Manually adding message to the console here instead of using consoleWriteOutput()
+         // to avoid it ending up in the history and printing out every time this session
+         // resumes/reloads and potentially resulting in an unecessarily long list of
+         // previous resumed messages
+         actionsObject["data"].getArray().push_back(resumeMsg);
+         actionsObject["type"].getArray().push_back(kConsoleActionOutput);
       }
+      sessionInfo["console_actions"] = actionsObject;
+
+      suspend::initFromResume();
    }
 
    sessionInfo["rnw_weave_types"] = modules::authoring::supportedRnwWeaveTypes();

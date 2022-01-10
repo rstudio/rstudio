@@ -65,6 +65,7 @@ Error ActiveSessions::create(const std::string& project,
    activeSession.setInitial(initial);
    activeSession.setLastUsed();
    activeSession.setRunning(false);
+   activeSession.setLastResumed();
 
    // return the id if requested
    if (pId != nullptr)

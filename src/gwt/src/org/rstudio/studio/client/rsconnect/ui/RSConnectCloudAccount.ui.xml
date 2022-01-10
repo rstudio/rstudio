@@ -33,7 +33,7 @@
      </g:HTML>
      <rw:FormTextArea styleName="{style.accountInfo} {style.spaced}"
                  ui:field="accountInfo" visibleLines="5" ariaLabel="ShinyApps Token and Secret">
-         <ui:attribute ui:name="ariaLabel" key="shinyAppsAriaLabelText"/>
+         <ui:attribute name="ariaLabel" key="shinyAppsAriaLabelText"/>
      </rw:FormTextArea>
      <g:HTML>
         <small>

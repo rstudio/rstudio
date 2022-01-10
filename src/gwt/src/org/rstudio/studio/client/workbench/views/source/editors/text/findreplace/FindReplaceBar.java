@@ -54,6 +54,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    interface Styles extends CssResource
    {
       String findReplaceBar();
+      String findTextBox();
       String replaceTextBox();
       String findPanel();
       String optionsPanel();
@@ -85,6 +86,7 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       HorizontalPanel findReplacePanel = new HorizontalPanel();
       findReplacePanel.addStyleName(RES.styles().findPanel());
       findReplacePanel.add(txtFind_ = new FindTextBox(constants_.findCapitalized()));
+      txtFind_.addStyleName(RES.styles().findTextBox());
       txtFind_.setIconVisible(true);
 
       Commands cmds = RStudioGinjector.INSTANCE.getCommands();
