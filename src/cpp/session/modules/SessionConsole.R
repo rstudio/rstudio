@@ -16,35 +16,56 @@
 
 .rs.addJsonRpcHandler("console_follow_hyperlink", function(url, text, params)
 {
-  if (identical(params, "")){
-    utils::browseURL(url)
+
+  pattern <- "^([a-zA-Z]+)::(.*$)"
+  if (grepl(pattern, url)) {
+    target <- sub(pattern, "\\1", url)
+    url <- sub(pattern, "\\2", url)
   } else {
-    options <- strsplit(params, ":")[[1]]
-    
-    names <- sapply(options, function(param) sub("=.*$", "", param))
-    options <- lapply(options, function(param) sub("^[^=]*=", "", param))
-    names(options) <- names
-    
-    if (is.null(options$type)) {
-      options$type <- ""
-    }
-    
-    switch(
-      options$type,
-      help = .rs.showHelpTopic(options$topic, NULL),
-      viewer = .rs.api.viewer(url),
-      file = {
-        file <- url
-        line <- as.numeric(options$line)
-        if (length(line) == 0L) line <- -1L
-        
-        col <- as.numeric(options$col)
-        if (length(col) == 0L) col <- -1L
-        
-        .rs.api.navigateToFile(url, line = line, col = col)          
-      },
-      stop(paste0("Can't handle link <", url, "> with params <", params, ">"))
-    )
+    target <- "browser"
   }
-  
+
+  handlers <- list(
+    # http://example.com
+    # browser::http://example.com
+    browser = function(url) utils::browseURL(url), 
+
+    # viewer::http://example.com
+    viewer = function(url) .rs.api.viewer(url),
+
+    # help::stats/rnorm
+    # help::stats::rnorm
+    help = function(url) {
+      parts <- strsplit(url, "[/:]+")[[1L]]
+
+      if (length(parts) == 2L) {
+        .rs.showHelpTopic(topic = parts[[2L]], package = parts[[1L]])
+      } else {
+        # help::rnorm
+        .rs.showHelpTopic(topic = parts[[1L]], package = NULL)
+      }
+    }, 
+
+    # file::some/file/path
+    # file::some/file/path#32
+    # file::some/file/path#32,15
+    file = function(url) {
+      parts <- strsplit(url, "#")[[1L]]
+      file <- parts[[1L]]
+
+      if (length(parts) == 2L) {
+        location <- strsplit(parts[[2L]], ",")[[1L]]
+        line <- as.numeric(location[[1L]])
+        if (length(location) == 1L) {
+          col <- -1L
+        } else {
+          col <- as.numeric(location[[2L]])
+        }
+      }
+      
+      .rs.api.navigateToFile(file, line = line, col = col, moveCursor = TRUE)
+    }
+  )
+
+  handlers[[target]](url)
 })
