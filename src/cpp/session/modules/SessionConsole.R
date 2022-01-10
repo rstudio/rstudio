@@ -19,6 +19,16 @@
   if (!grepl("://", url)) {
     stop("missing scheme")
   }
+
+  if (identical(params, "")) {
+    params <- list()
+  } else {
+    params <- strsplit(params, ":")
+
+    names  <- sapply(params, function(p) sub("=.+$", "", p))
+    params <- lapply(params, function(p) sub("^[^=]+=", "", p))
+    names(params) <- names
+  }
   
   scheme <- sub("://.*$", "", url)
   handler <- switch(scheme, 
@@ -61,7 +71,8 @@
     # http://example.com
     function(url) {
       viewer <- utils::browseURL
-      fun <- if (identical(params, "target=viewer")) {
+
+      fun <- if (identical(params$target, "viewer")) {
         viewer <- .rs.api.viewer
       }
       viewer(url)
