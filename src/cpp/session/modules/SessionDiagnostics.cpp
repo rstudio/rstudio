@@ -873,7 +873,7 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    LintItems lintItems = results.lint();
 
    using namespace module_context;
-   for (SourceMarker marker : markers)
+   for (const SourceMarker& marker : markers)
    {
       LintType markerLintType;
       switch (marker.type)
@@ -884,12 +884,10 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       case SourceMarker::Type::Warning:
          markerLintType = LintTypeWarning;
          break;
-      case SourceMarker::Type::Info:
-         markerLintType = LintTypeInfo;
-         break;
       case SourceMarker::Type::Style:
          markerLintType = LintTypeStyle;
          break;
+      case SourceMarker::Type::Info:
       default:
          markerLintType = LintTypeInfo;
       }

@@ -233,16 +233,16 @@ public:
       return obj;
    }
 
-   std::vector<module_context::SourceMarker> findMarkers(std::string path) const
+   std::vector<module_context::SourceMarker> findMarkers(const std::string& path) const
    {
       std::vector<module_context::SourceMarker> markers;
       // replace home alias to home path
       core::FilePath resolvedPath = core::FilePath::resolveAliasedPath(
           path, system::User::getUserHomePath());
 
-      for (module_context::SourceMarkerSet markerSet : markerSets_)
+      for (const module_context::SourceMarkerSet& markerSet : markerSets_)
       {
-         for (module_context::SourceMarker marker : markerSet.markers)
+         for (const module_context::SourceMarker& marker : markerSet.markers)
          {
             if (marker.path == resolvedPath)
             {
@@ -492,7 +492,7 @@ json::Object markersStateAsJson()
    return sourceMarkers().stateAsJson();
 }
 
-std::vector<module_context::SourceMarker> markersForFile(std::string path)
+std::vector<module_context::SourceMarker> markersForFile(const std::string& path)
 {
    return sourceMarkers().findMarkers(path);
 }

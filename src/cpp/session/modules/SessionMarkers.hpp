@@ -33,7 +33,7 @@ namespace modules {
 namespace markers {
 
 core::json::Object markersStateAsJson();
-std::vector<module_context::SourceMarker> markersForFile(std::string path);
+std::vector<module_context::SourceMarker> markersForFile(const std::string& path);
 
 core::Error initialize();
    
