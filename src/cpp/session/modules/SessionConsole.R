@@ -52,13 +52,13 @@
     file = function(url) {
       parts <- strsplit(url, "#")[[1L]]
       file <- parts[[1L]]
+      line <- -1L
+      col <- -1L
 
       if (length(parts) == 2L) {
         location <- strsplit(parts[[2L]], ",")[[1L]]
         line <- as.numeric(location[[1L]])
-        if (length(location) == 1L) {
-          col <- -1L
-        } else {
+        if (length(location) == 2L) {
           col <- as.numeric(location[[2L]])
         }
       }
