@@ -47,6 +47,15 @@
       if (is.list(extraList))
          args <- c(args, extraList)
    }
+
+   gdBackend <- getOption("RStudioGD.backend")
+   if (!identical(gdBackend, "default"))
+   {
+     # pass along graphics device backend if set
+     # we allow this option to be temporarily set by the knitr chunk option while the notebook
+     # chunk is executing; this takes precedence over the device passed via extraArgs
+     args$type <- gdBackend
+   }
    
    # if it looks like we're using AGG, delegate to that
    if (identical(args$type, "ragg"))
@@ -61,16 +70,6 @@
       
       return(device)
    }
-
-   gdBackend <- getOption("RStudioGD.backend")
-   if (!identical(gdBackend, "default"))
-   {
-     # pass along graphics device backend if set
-     # we allow this option to be temporarily set by the knitr chunk option while the notebook
-     # chunk is executing; this takes precedence over the device passed via extraArgs
-     args$type <- gdBackend
-   }
-   
    
    # create the device
    require(grDevices, quietly = TRUE)
