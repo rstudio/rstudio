@@ -30,13 +30,6 @@
       res      = 96 * pixelRatio
    )
 
-   gdBackend <- getOption("RStudioGD.backend")
-   if (!identical(gdBackend, "default"))
-   {
-     # pass along graphics device backend if set
-     args$type <- gdBackend
-   }
-
    if (nchar(extraArgs) > 0)
    {
       # trim leading comma from extra args if present
@@ -67,6 +60,15 @@
       )
       
       return(device)
+   }
+
+   gdBackend <- getOption("RStudioGD.backend")
+   if (!identical(gdBackend, "default"))
+   {
+     # pass along graphics device backend if set
+     # we allow this option to be temporarily set by the knitr chunk option while the notebook
+     # chunk is executing; this takes precedence over the device passed via extraArgs
+     args$type <- gdBackend
    }
    
    
