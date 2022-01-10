@@ -29,7 +29,7 @@
       units    = units,
       res      = 96 * pixelRatio
    )
-   
+
    if (nchar(extraArgs) > 0)
    {
       # trim leading comma from extra args if present
@@ -47,6 +47,15 @@
       if (is.list(extraList))
          args <- c(args, extraList)
    }
+
+   gdBackend <- getOption("RStudioGD.backend")
+   if (!identical(gdBackend, "default"))
+   {
+     # pass along graphics device backend if set
+     # we allow this option to be temporarily set by the knitr chunk option while the notebook
+     # chunk is executing; this takes precedence over the device passed via extraArgs
+     args$type <- gdBackend
+   }
    
    # if it looks like we're using AGG, delegate to that
    if (identical(args$type, "ragg"))
@@ -61,7 +70,6 @@
       
       return(device)
    }
-   
    
    # create the device
    require(grDevices, quietly = TRUE)
