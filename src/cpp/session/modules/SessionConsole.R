@@ -40,20 +40,20 @@
     # file:://some/file/path#32
     # file:://some/file/path#32,15
     file = function(url) {
-      url <- sub("file://", "", url)  
-      parts <- strsplit(url, "#")[[1L]]
+      url <- sub("file://", "", url)
+      parts <- strsplit(url, ":")[[1L]]
       file <- parts[[1L]]
-      line <- -1L
-      col <- -1L
 
-      if (length(parts) == 2L) {
-        location <- strsplit(parts[[2L]], ",")[[1L]]
-        line <- as.numeric(location[[1L]])
-        if (length(location) == 2L) {
-          col <- as.numeric(location[[2L]])
-        }
+      line <- -1L
+      if (length(parts) > 1) {
+        line <- as.numeric(parts[[2L]])
       }
-      
+
+      col <- -1L
+      if (length(parts) > 2) {
+        col <- as.numeric(parts[[3L]])
+      }
+
       .rs.api.navigateToFile(file, line = line, col = col, moveCursor = TRUE)
     }, 
 
