@@ -1,7 +1,7 @@
 /*
  * PanmirrorUIChunks.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.panmirror.ui;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
@@ -27,7 +28,8 @@ public class PanmirrorUIChunks
    @JsFunction
    public interface CreateChunkEditor
    {
-      PanmirrorUIChunkEditor create(String type, Element element, int position, PanmirrorUIChunkCallbacks callbacks);
+      PanmirrorUIChunkEditor create(String type, Element element, int position, JsArrayString classes,
+                                    PanmirrorUIChunkCallbacks callbacks);
    }
 
    @JsFunction

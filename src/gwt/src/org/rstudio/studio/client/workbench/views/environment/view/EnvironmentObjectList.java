@@ -1,7 +1,7 @@
 /*
  * EnvironmentObjectList.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
 import com.google.gwt.cell.client.ClickableTextCell;
@@ -197,14 +198,14 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
                             new ImageResource2x(EnvironmentResources.INSTANCE.expandIcon2x());
 
                   imageUri = expandImage.getSafeUri().asString();
-                  imageAlt = object.expanded ? "Collapse Object" : "Expand Object";
+                  imageAlt = object.expanded ? constants_.collapseObject() : constants_.expandObject();
                }
                else if (object.hasTraceInfo())
                {
                   imageUri = new ImageResource2x(EnvironmentResources.INSTANCE
                         .tracedFunction2x()).getSafeUri().asString();
                   imageStyle += (" " + style_.unclickableIcon());
-                  imageAlt = "Has Trace";
+                  imageAlt = constants_.hasTrace();
                }
                if (imageUri.length() > 0)
                {
@@ -400,12 +401,11 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
 
          }
          String size = rowValue.rObject.getSize() > 0 ?
-                              ", " + rowValue.rObject.getSize() + " bytes" :
+                              constants_.sizeBytes(rowValue.rObject.getSize()) :
                               "";
          nameCol.className(styleName);
-         nameCol.title(
-                 rowValue.rObject.getName() +
-                 " (" + rowValue.rObject.getType() + size + ")");
+         nameCol.title(constants_.buildNameColumnTitle(rowValue.rObject.getName(),
+                 rowValue.rObject.getType(),size));
          renderCell(nameCol, createContext(1), objectNameColumn_, rowValue);
          nameCol.endTD();
       }
@@ -423,7 +423,7 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
          {
             if (rowValue.isPromise())
             {
-               title += " (unevaluated promise)";
+               title += constants_.unevaluatedPromise("");
             }
             descCol.title(title);
          }
@@ -488,15 +488,15 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
             switch (rowValue.getCategory())
             {
                case RObjectEntry.Categories.Data:
-                  categoryTitle = "Data";
+                  categoryTitle = constants_.dataCapitalized();
                   categoryClass = ClassIds.ENV_LIST_DATA_HDR;
                   break;
                case RObjectEntry.Categories.Function:
-                  categoryTitle = "Functions";
+                  categoryTitle = constants_.functionsCapitalized();
                   categoryClass = ClassIds.ENV_LIST_FUNCTIONS_HDR;
                   break;
                default:
-                  categoryTitle = "Values";
+                  categoryTitle = constants_.valuesCapitalized();
                   categoryClass = ClassIds.ENV_LIST_VALUES_HDR;
                   break;
             }
@@ -542,4 +542,5 @@ public class EnvironmentObjectList extends EnvironmentObjectDisplay
    private Column<RObjectEntry, String> objectNameColumn_;
    private Column<RObjectEntry, String> objectResizeColumn_;
    private Column<RObjectEntry, String> objectDescriptionColumn_;
+   private static final ViewEnvironmentConstants constants_ = com.google.gwt.core.client.GWT.create(ViewEnvironmentConstants.class);
 }

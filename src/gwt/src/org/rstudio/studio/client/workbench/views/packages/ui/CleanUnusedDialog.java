@@ -1,7 +1,7 @@
 /*
  * CleanUnusedDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.cellview.client.CellTable;
 import com.google.gwt.user.cellview.client.TextColumn;
+import org.rstudio.studio.client.workbench.views.packages.PackagesConstants;
 
 public class CleanUnusedDialog 
    extends PackageActionConfirmationDialog<PackratPackageAction>
@@ -37,7 +38,7 @@ public class CleanUnusedDialog
          OperationWithInput<ArrayList<PackratPackageAction>> checkOperation,
          Operation cancelOperation)
    {
-      super("Clean Unused Packages", "Remove Packages", Roles.getDialogRole(), cleanDS, checkOperation,
+      super(constants_.cleanUnusedPackagesCaption(), constants_.removePackagesCaption(), Roles.getDialogRole(), cleanDS, checkOperation,
             cancelOperation);
       globalDisplay_ = globalDisplay;
    }
@@ -45,16 +46,14 @@ public class CleanUnusedDialog
    @Override
    protected void showNoActionsRequired()
    {
-      globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, "Packrat Clean", 
-            "No unused packages were found in the library.");
+      globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, constants_.packratCleanCaption(),
+            constants_.packratCleanMessage());
    }
 
    @Override
    protected String getExplanatoryText()
    {
-      return "These packages are present in your library, but do not " +
-        "appear to be used by code in your project. Select any you'd like to " +
-        "clean up.";
+      return constants_.explanatoryMessage();
    }
    
    @Override
@@ -66,7 +65,7 @@ public class CleanUnusedDialog
             return action.getActionInfo().getPackage();
          } 
       };  
-      table.addColumn(nameColumn, "Package");
+      table.addColumn(nameColumn, constants_.packageHeader());
       table.setColumnWidth(nameColumn, 65, Unit.PCT);
       
       TextColumn<PendingAction> installedColumn = new TextColumn<PendingAction>() {
@@ -75,7 +74,7 @@ public class CleanUnusedDialog
             return action.getActionInfo().getLibraryVersion();
          } 
       };  
-      table.addColumn(installedColumn, "Version");
+      table.addColumn(installedColumn, constants_.versionText());
       table.setColumnWidth(installedColumn, 35, Unit.PCT);
    }
 
@@ -86,4 +85,5 @@ public class CleanUnusedDialog
    }
 
    private final GlobalDisplay globalDisplay_;
+   private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 }

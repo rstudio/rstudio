@@ -1,7 +1,7 @@
 /*
  * heading.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -129,6 +129,7 @@ const extension = (context: ExtensionContext): Extension => {
 
     commands: (schema: Schema) => {
       return [
+        new HeadingCommand(schema, EditorCommandId.Heading1, 1, heading1OmniInsert(ui)),
         new HeadingCommand(schema, EditorCommandId.Heading2, 2, heading2OmniInsert(ui)),
         new HeadingCommand(schema, EditorCommandId.Heading3, 3, heading3OmniInsert(ui)),
         new HeadingCommand(schema, EditorCommandId.Heading4, 4, heading4OmniInsert(ui)),
@@ -203,6 +204,12 @@ class HeadingCommand extends ProsemirrorCommand {
   }
 }
 
+function heading1OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(ui, 1, ui.context.translateText('Part heading'), [
+    ui.images.omni_insert?.heading1!,
+    ui.images.omni_insert?.heading1_dark!,
+  ]);
+}
 
 function heading2OmniInsert(ui: EditorUI) {
   return headingOmniInsert(ui, 2, ui.context.translateText('Section heading'), [

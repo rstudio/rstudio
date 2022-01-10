@@ -1,7 +1,7 @@
 /*
  * FilesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.files;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -156,10 +157,8 @@ public class FilesPane extends WorkbenchPane implements Files.Display
          public void onError(ServerError error)
          {
             setProgress(false);
-            globalDisplay_.showErrorMessage("File Listing Error",
-                                            "Error navigating to " +
-                                            directory.getPath() + ":\n\n" +
-                                            error.getUserMessage());
+            globalDisplay_.showErrorMessage(constants_.fileListingErrorCaption(),
+                                            constants_.fileListingErrorMessage(directory.getPath(), error.getUserMessage()));
 
             if (!directory.equalTo(FileSystemItem.home()))
             {
@@ -249,10 +248,10 @@ public class FilesPane extends WorkbenchPane implements Files.Display
        final ToolbarPopupMenu menu = new ToolbarPopupMenu();
        
        String editLabel = AppCommand.formatMenuLabel(
-          commands_.renameFile().getImageResource(), "Open in Editor", null);
+          commands_.renameFile().getImageResource(), constants_.openInEditorLabel(), null);
        String openLabel = AppCommand.formatMenuLabel(
           commands_.openHtmlExternal().getImageResource(), 
-          "View in Web Browser", 
+          constants_.viewInWebBrowserLabel(),
           null);
        
        menu.addItem(new MenuItem(editLabel, true, onEdit));
@@ -276,10 +275,10 @@ public class FilesPane extends WorkbenchPane implements Files.Display
        final ToolbarPopupMenu menu = new ToolbarPopupMenu();
        
        String editLabel = AppCommand.formatMenuLabel(
-          commands_.renameFile().getImageResource(), "View File", null);
+          commands_.renameFile().getImageResource(), constants_.viewFileLabel(), null);
        String importLabel = AppCommand.formatMenuLabel(
           new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()), 
-          "Import Dataset...", 
+          constants_.importDatasetLabel(),
           null);
        
        menu.addItem(new MenuItem(editLabel, true, onView));
@@ -356,4 +355,5 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    private final Commands commands_;
    private final Provider<FileCommandToolbar> pFileCommandToolbar_;
    private final Provider<UserPrefs> pPrefs_;
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

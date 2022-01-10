@@ -1,7 +1,7 @@
 /*
  * NewConnectionSnippetDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
 
 import com.google.gwt.core.client.GWT;
@@ -54,7 +55,7 @@ public class NewConnectionSnippetDialog extends ModalDialog<HashMap<String, Stri
       ArrayList<NewConnectionSnippetParts> config,
       NewConnectionInfo newConnectionInfo)
    {
-      super("Advanced Options", Roles.getDialogRole(), operation);
+      super(constants_.advancedOptionsCaption(), Roles.getDialogRole(), operation);
       initialConfig_ = config;
       newConnectionInfo_ = newConnectionInfo;
 
@@ -66,11 +67,11 @@ public class NewConnectionSnippetDialog extends ModalDialog<HashMap<String, Stri
    {
       super.onDialogShown();
 
-      setOkButtonCaption("Configure");
+      setOkButtonCaption(constants_.configureButtonLabel());
 
       if (newConnectionInfo_.getHelp() != null) {
          HelpLink helpLink = new HelpLink(
-            "Using " + newConnectionInfo_.getName(),
+            constants_.newConnectionInfoCaption(newConnectionInfo_.getName()),
             newConnectionInfo_.getHelp(),
             false,
             false);
@@ -145,4 +146,5 @@ public class NewConnectionSnippetDialog extends ModalDialog<HashMap<String, Stri
    private NewConnectionInfo newConnectionInfo_;
    private ArrayList<NewConnectionSnippetParts> initialConfig_;
    HashMap<String, String> partsKeyValues_ = new HashMap<>();
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

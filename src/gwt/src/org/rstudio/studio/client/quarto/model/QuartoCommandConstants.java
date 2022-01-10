@@ -1,7 +1,7 @@
 /*
  * QuartoConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,8 @@ public class QuartoCommandConstants
    public final static String PROJECT_DEFAULT = "default";
    public final static String PROJECT_WEBSITE = "website";
    public final static String PROJECT_BOOK = "book";
+   
+   public final static String PROJECT_WEBSITE_BLOG = "website:blog";
    
    public final static String ENGINE_MARKDOWN = "markdown";
    public final static String ENGINE_KNITR = "knitr";

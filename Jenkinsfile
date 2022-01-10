@@ -106,7 +106,7 @@ def s3_upload(type, flavor, os, arch) {
     // for the last linux build, on OS only we also update windows to avoid the need for publish-daily-binary.bat
     if (flavor == "desktop" && os == "centos8") {
        def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-       packageName = packageNmae.replace('+', '-')
+       packageName = packageName.replace('+', '-')
        sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
     }
   }
@@ -150,7 +150,7 @@ def get_type_from_os(os) {
   def type
   // groovy switch case regex is broken in pipeline
   // https://issues.jenkins-ci.org/browse/JENKINS-37214
-  if (os.contains('centos') || os.contains('suse') || os.contains('fedora')) {
+  if (os.contains('centos') || os.contains('suse') || os.contains('fedora') || os.contains('rhel')) {
     type = 'RPM'
   } else {
     type = 'DEB'
@@ -199,7 +199,7 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'RSTUDIO_VERSION_SUFFIX', value: "${rstudioVersionSuffix}"),
                                                   string(name: 'GIT_REVISION', value: "${rstudioBuildCommit}"),
                                                   string(name: 'BRANCH_NAME', value: "${rstudioReleaseBranch}"),
-                                                  string(name: 'SLACK_CHANNEL', value: SLACK_CHANNEL)]
+                                                  string(name: 'SLACK_CHANNEL', value: params.get('SLACK_CHANNEL', '#ide-builds'))]
 }
 
 
@@ -219,8 +219,8 @@ try {
           [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: '',    package_os: 'Ubuntu Bionic'],
           [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'Debian 9'],
           [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'Debian 9'],
-          [os: 'centos8',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'CentOS 8'],
-          [os: 'centos8',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'CentOS 8']
+          [os: 'rhel8',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'RHEL 8'],
+          [os: 'rhel8',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'RHEL 8']
         ]
         containers = limit_builds(containers)
 

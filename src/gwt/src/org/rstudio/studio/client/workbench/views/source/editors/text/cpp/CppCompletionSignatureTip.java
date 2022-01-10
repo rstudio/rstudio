@@ -1,7 +1,7 @@
 /*
  * CppCompletionSignatureTip.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,11 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DecorativeImage;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -108,8 +110,7 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
          
          if (pagingLabel_ != null)
          {
-            pagingLabel_.setText((index+1) + " of " + 
-                                 completion_.getText().length());
+            pagingLabel_.setText(constants_.pagingLabelTextOf((index+1), completion_.getText().length()));
          }
          
          setText(completion_.getText().get(currentTextIndex_));
@@ -240,4 +241,5 @@ public class CppCompletionSignatureTip extends CppCompletionToolTip
    private static ArrayList<CppCompletionSignatureTip> allTips_ = new ArrayList<>();
    
    private static final CppCompletionResources RES = CppCompletionResources.INSTANCE;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

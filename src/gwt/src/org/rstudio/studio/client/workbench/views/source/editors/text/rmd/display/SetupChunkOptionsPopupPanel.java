@@ -1,7 +1,7 @@
 /*
  * SetupChunkOptionsPopupPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.TextBox;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
@@ -55,7 +57,7 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       revertButton_.setVisible(false);
       enginePanel_.setVisible(false);
       
-      setHeader("Default Chunk Options", true);
+      setHeader(constants_.defaultChunkOptions(), true);
    }
    
    String indented(String text)
@@ -276,5 +278,5 @@ public class SetupChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
    }
    
    private CodeToolsServerOperations server_;
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

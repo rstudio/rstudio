@@ -1,7 +1,7 @@
 /*
  * SessionPersistentState.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -76,6 +76,10 @@ public:
    // reused session proxy port (for launcher session restarts)
    std::string reusedSessionProxyPort() const;
    void setReusedSessionProxyPort(const std::string& port);
+
+   // the active user's display name, if it has been explicitly set upstream from proxy auth
+   std::string userDisplayName() const;
+   void setUserDisplayName(const std::string& name);
 
    // get underlying settings
    core::Settings& settings() { return settings_; }

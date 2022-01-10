@@ -1,7 +1,7 @@
 /*
  * RmdFrontMatter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,21 +42,8 @@ public class RmdFrontMatter extends JavaScriptObject
    }-*/;
 
    public final native void addDate() /*-{
-      // We use JavaScript to create a date string so the document picks up the
-      // system locale's mechanism for formatting dates.
-      //
-      // IE 11 adds unprintable Unicode characters to the date string that we
-      // need to remove for R Markdown. See case 4300 for details, including a
-      // link to the issue reported against IE in early 2014 (unresolved as of
-      // 3/2015)
-      var date = (new Date()).toLocaleDateString().replace(/\u200e/g, "");
-      
-      // Remove periods as they interfere with rendering to PDF.
-      // see: https://github.com/rstudio/rmarkdown/issues/145#issuecomment-47415718
-      date = date.replace(/\./g, " ");
-      date = date.replace(/\s+/g, " ");
-      
-      this.date = date;
+      // using iso format: yyyy-mm-dd
+      this.date = new Date().toISOString().replace(/T.*$/, "");
    }-*/;
    
    public final native void addResourceFile(String file) /*-{

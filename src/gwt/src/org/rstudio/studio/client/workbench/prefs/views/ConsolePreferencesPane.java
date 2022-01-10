@@ -1,7 +1,7 @@
 /*
  * ConsolePreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,6 +74,8 @@ public class ConsolePreferencesPane extends PreferencesPane
       spacedBefore(otherLabel);
       add(otherLabel);
       add(spaced(checkboxPref(constants_.otherDoubleClickLabel(), prefs_.consoleDoubleClickSelect())));
+      add(spaced(checkboxPref(constants_.warnAutoSuspendPausedLabel(), prefs_.consoleSuspendBlockedNotice())));
+      add(indent(numericPref(constants_.numSecondsToDelayWarningLabel(), prefs_.consoleSuspendBlockedNoticeDelay())));
    }
 
    @Override

@@ -1,7 +1,7 @@
 /*
  * insert_citation-panel-doi.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -99,13 +99,6 @@ export function doiSourcePanel(
 
 export const DOISourcePanel = React.forwardRef<HTMLDivElement, CitationSourcePanelProps>(
   (props: CitationSourcePanelProps, ref) => {
-    // When rendered, be sure that the item is selected
-    React.useEffect(() => {
-      if (props.citations.length > 0 && props.selectedIndex !== 0) {
-        props.onSelectedIndexChanged(0);
-      }
-    });
-
     // Track whether we are mounted to allow a latent search that returns after the
     // component unmounts to nmot mutate state further
     return (

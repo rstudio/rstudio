@@ -1,7 +1,7 @@
 /*
  * HelpStrategy.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,12 +16,14 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.HashMap;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
@@ -109,7 +111,7 @@ public class HelpStrategy
             {
                Debug.logError(error);
                RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                     "Error Retrieving Help", error.getUserMessage());
+                     constants_.errorRetrievingHelp(), error.getUserMessage());
                display.clearHelp(false);
             }
 
@@ -141,7 +143,7 @@ public class HelpStrategy
             {
                Debug.logError(error);
                RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                     "Error Retrieving Help", error.getUserMessage());
+                     constants_.errorRetrievingHelp(), error.getUserMessage());
                display.clearHelp(false);
             }
    
@@ -382,5 +384,6 @@ public class HelpStrategy
    }
    
    HashMap<QualifiedName, ParsedInfo> cache_;
-   
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
+
 }

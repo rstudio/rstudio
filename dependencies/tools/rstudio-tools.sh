@@ -3,7 +3,7 @@
 #
 # rstudio-tools.sh -- Bash toolkit used in dependency scripts
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -314,6 +314,12 @@ platform () {
 			return 0
 		fi
 
+		# Detect Rocky Linux (used for RHEL8)
+		if grep -siq "rocky" /etc/redhat-release; then
+			echo "rocky"
+			return 0
+		fi
+
 		# Warn about other RedHat flavors we don't yet recognize
 		echo "unrecognized redhat variant '$(cat /etc/redhat-release)'"
 		return 1
@@ -425,6 +431,10 @@ is-redhat () {
 
 is-centos () {
 	[ "$(platform)" = "centos" ]
+}
+
+is-rhel () {
+	[ "$(platform)" = "rocky" ]
 }
 
 is-fedora () {

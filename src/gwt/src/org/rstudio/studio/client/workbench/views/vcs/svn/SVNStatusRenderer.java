@@ -1,7 +1,7 @@
 /*
  * SVNStatusRenderer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
 
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable.ChangelistTableCellTableResources;
 
 public class SVNStatusRenderer implements SafeHtmlRenderer<String>
@@ -93,27 +94,27 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
       switch (c)
       {
          case 'A':
-            return "Added";
+            return constants_.addedCapitalized();
          case 'C':
-            return "Conflicted";
+            return constants_.conflictedCapitalized();
          case 'D':
-            return "Deleted";
+            return constants_.deletedCapitalized();
          case 'X':
-            return "External";
+            return constants_.externalCapitalized();
          case 'I':
-            return "Ignored";
+            return constants_.ignoredCapitalized();
          case '!':
-            return "Missing";
+            return constants_.missingCapitalized();
 //         case 'G':
 //            return resources_.statusMerged();
          case 'M':
-            return "Modified";
+            return constants_.modifiedCapitalized();
          case ' ':
             return "";
          case '~':
-            return "Obstructed";
+            return constants_.obstructedCapitalized();
          case '?':
-            return "Unversioned";
+            return constants_.unversionedCapitalized();
          default:
             return "";
       }
@@ -163,4 +164,5 @@ public class SVNStatusRenderer implements SafeHtmlRenderer<String>
 
    private static final StatusResources resources_ = GWT.create(StatusResources.class);
    private static final ChangelistTableCellTableResources ctRes_ = GWT.create(ChangelistTableCellTableResources.class);
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

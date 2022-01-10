@@ -1,7 +1,7 @@
 /*
  * PlotsPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,14 +68,14 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
          @Override
          public String getTitle()
          {
-            return "Current Plot";
+            return constants_.currentPlotTitle();
          }
 
          @Override
          public void generatePublishHtml(
                final CommandWithArg<String> onComplete)
          {
-            dependencies_.withRMarkdown("Publishing plots", new Command()
+            dependencies_.withRMarkdown(constants_.publishingPlotsLabel(), new Command()
             {
                @Override
                public void execute()
@@ -85,7 +85,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
                        new Size(400, 350),
                        new Size(800, 700));
                   server_.plotsCreateRPubsHtml(
-                     "Plot",
+                     constants_.plotText(),
                      "",
                      size.width,
                      size.height,
@@ -112,7 +112,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       panel_.addStyleName("ace_editor_theme");
       panel_.setSize("100%", "100%");
 
-      frame_ = new ImageFrame("Plots Pane");
+      frame_ = new ImageFrame(constants_.plotsPaneLabel());
       frame_.setStyleName("rstudio-HelpFrame");
       frame_.setMarginWidth(0);
       frame_.setMarginHeight(0);
@@ -249,5 +249,6 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
          plotsToolbar_.removeCustomToolbar();
       }
    };
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 
 }

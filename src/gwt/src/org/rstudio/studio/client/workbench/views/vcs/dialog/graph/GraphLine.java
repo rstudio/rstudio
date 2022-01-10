@@ -1,7 +1,7 @@
 /*
  * GraphLine.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,8 +17,10 @@ package org.rstudio.studio.client.workbench.views.vcs.dialog.graph;
 import com.google.gwt.canvas.client.Canvas;
 import com.google.gwt.canvas.dom.client.Context2d;
 import com.google.gwt.canvas.dom.client.Context2d.LineJoin;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import org.rstudio.core.client.SafeHtmlUtil;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
 public class GraphLine
 {
@@ -110,7 +112,7 @@ public class GraphLine
             if (c.nexus)
             {
                nexusColumn = i;
-               altText_ = "commit depth " + nexusColumn;
+               altText_ = constants_.commitDepthAltText(nexusColumn);
                ctx.setFillStyle(theme.getColorForId(c.id));
             }
 
@@ -158,4 +160,5 @@ public class GraphLine
 
    // Use a static canvas to avoid the overhead of continually recreating them
    private static final Canvas s_canvas = Canvas.createIfSupported();
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

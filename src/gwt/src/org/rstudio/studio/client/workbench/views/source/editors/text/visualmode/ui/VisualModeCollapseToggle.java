@@ -1,7 +1,7 @@
 /*
  * VisualModeCollapseToggle.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class VisualModeCollapseToggle extends Composite
 {
@@ -126,7 +127,7 @@ public class VisualModeCollapseToggle extends Composite
       collapsed_.setVisible(!expanded);
 
       // Change hint text.
-      toggle_.setTitle((expanded ? "Collapse" : "Expand") + " code chunk");
+      toggle_.setTitle(constants_.collapseOrExpandCodeChunk((expanded ? constants_.collapseCapitalized() : constants_.expandCapitalized())));
    }
 
    /**
@@ -142,4 +143,5 @@ public class VisualModeCollapseToggle extends Composite
 
    private final HTMLPanel toggle_;
    private final HTMLPanel collapsed_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * QuartoServerOperations.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ public interface QuartoServerOperations
 {
    void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback);
    void quartoServe(String format, boolean render, ServerRequestCallback<Void> requestCallback);
+   void quartoServeRender(String file, ServerRequestCallback<Boolean> requestCallback);
    void quartoPreview(String file, 
                       String format, 
                       PresentationEditorLocation editorState,

@@ -34,3 +34,11 @@
   border-color: transparent;
 }
 
+.dataGridEvenRow,
+.dataGridOddRow,
+.dataGridHoveredRow,
+.dataGridSelectedRow,
+.dataGridKeyboardSelectedRow {
+  background: inherit;
+}
+

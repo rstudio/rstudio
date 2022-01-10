@@ -9,10 +9,12 @@ When you click the **Render** button a document will be generated that includes:
 -   Content authored with markdown
 -   Output from executable code
 
-## Plot
+## Code
+
+When you click the **Render** button a presentation will be generated that includes both content and the output of embedded code. You can embed code like this:
 
 ```{r}
-plot(mtcars)
+1 + 1
 ```
 
 

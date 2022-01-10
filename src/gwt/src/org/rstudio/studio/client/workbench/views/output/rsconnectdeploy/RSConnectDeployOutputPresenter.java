@@ -1,7 +1,7 @@
 /*
  * RSConnectDeployOutputPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.studio.client.rsconnect.events.RSConnectDeploymentStartedEven
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 
@@ -143,4 +144,5 @@ public class RSConnectDeployOutputPresenter extends BusyPresenter
    private final Commands commands_;
 
    private boolean switchToConsoleAfterDeploy_ = false;
+   private static final OutputConstants constants_ = com.google.gwt.core.client.GWT.create(OutputConstants.class);
 }

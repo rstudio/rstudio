@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerEditingTargetStatusBar.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,9 +20,11 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.Label;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class ObjectExplorerEditingTargetStatusBar extends Composite
 {
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
    public ObjectExplorerEditingTargetStatusBar(ObjectExplorerEditingTargetWidget widget,
                                                ObjectExplorerDataGrid grid)
    {
@@ -73,7 +75,7 @@ public class ObjectExplorerEditingTargetStatusBar extends Composite
    private final FlowPanel panel_;
    private final Label label_;
 
-   private static final String NO_SELECTION = "(No selection)";
+   private static final String NO_SELECTION = constants_.noSelectionParentheses();
 
    // Boilerplate ----
 

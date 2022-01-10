@@ -1,7 +1,7 @@
 /*
  * SessionHttpMethods.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 #include "SessionHttpMethods.hpp"
 #include "SessionConsoleInput.hpp"
 #include "SessionMainProcess.hpp"
-#include "SessionSuspend.hpp"
 #include "SessionClientInit.hpp"
 #include "SessionInit.hpp"
 #include "SessionUriHandlers.hpp"
@@ -57,6 +56,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/SessionSuspend.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
@@ -87,20 +87,6 @@ std::string s_nextSessionUrl;
 bool s_protocolDebugEnabled = false;
 bool s_sessionDebugLogCreated = false;
 
-boost::posix_time::ptime timeoutTimeFromNow()
-{
-   int timeoutMinutes = options().timeoutMinutes();
-   if (timeoutMinutes > 0)
-   {
-      return boost::posix_time::second_clock::universal_time() +
-             boost::posix_time::minutes(options().timeoutMinutes());
-   }
-   else
-   {
-      return boost::posix_time::ptime(boost::posix_time::not_a_date_time);
-   }
-}
-
 void processEvents()
 {
    if (!ASSERT_MAIN_THREAD())
@@ -113,8 +99,8 @@ void processEvents()
    Error error = rstudio::r::exec::executeSafely(
             rstudio::r::session::event_loop::processEvents);
 
-   if (error)
-      LOG_ERROR(error);
+   if (error) // If the statement is interrupted, this can return an error so logging as debug to limit visibility
+      LOG_DEBUG_MESSAGE(error.asString());
 }
 
 bool parseAndValidateJsonRpcConnection(
@@ -232,37 +218,6 @@ Error startHttpConnectionListener()
    }
 
    return Success();
-}
-
-bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
-{
-   using namespace boost::posix_time;
-
-   // never time out in desktop mode
-   if (options().programMode() == kSessionProgramModeDesktop)
-      return false;
-
-   // check for an client disconnection based timeout
-   int disconnectedTimeoutMinutes = options().disconnectedTimeoutMinutes();
-   if (disconnectedTimeoutMinutes > 0)
-   {
-      ptime lastEventConnection =
-         httpConnectionListener().eventsConnectionQueue().lastConnectionTime();
-      if (!lastEventConnection.is_not_a_date_time())
-      {
-         if ( (lastEventConnection + minutes(disconnectedTimeoutMinutes)
-               < second_clock::universal_time()) )
-         {
-            return true;
-         }
-      }
-   }
-
-   // check for a foreground inactivity based timeout
-   if (timeoutTime.is_not_a_date_time())
-      return false;
-   else
-      return second_clock::universal_time() > timeoutTime;
 }
 
 bool isWaitForMethodUri(const std::string& uri)
@@ -490,52 +445,19 @@ bool waitForMethod(const std::string& method,
    }
 
    // establish timeouts
-   boost::posix_time::ptime timeoutTime = timeoutTimeFromNow();
+   suspend::resetSuspendTimeout();
    boost::posix_time::time_duration connectionQueueTimeout =
                                    boost::posix_time::milliseconds(50);
+
+   // If this method (and the provided allowSuspend() function) blocks auto suspension,
+   // make sure to record it
+   suspend::addBlockingOp(method, allowSuspend);
 
    // wait until we get the method we are looking for
    while (true)
    {
       // suspend if necessary (does not return if a suspend occurs)
-      suspend::suspendIfRequested(allowSuspend);
-
-      // check for timeout
-      if (isTimedOut(timeoutTime))
-      {
-         if (allowSuspend())
-         {
-            // note that we timed out
-            suspend::setSuspendedFromTimeout(true);
-
-            if (!options().timeoutSuspend())
-            {
-               // configuration dictates that we should quit the
-               // session instead of suspending when timeout occurs
-               //
-               // the conditions for the quit must be the same as those
-               // for a regular suspend
-               rstudio::r::session::quit(false, EXIT_SUCCESS); // does not return
-               return false;
-            }
-
-            // attempt to suspend (does not return if it succeeds)
-            if (!suspend::suspendSession(false))
-            {
-               // reset timeout flag
-               suspend::setSuspendedFromTimeout(false);
-
-               // if it fails then reset the timeout timer so we don't keep
-               // hammering away on the failure case
-               timeoutTime = timeoutTimeFromNow();
-            }
-         }
-      }
-
-      // if we have at least one async process running then this counts
-      // as "activity" and resets the timeout timer
-      if (main_process::haveActiveChildren())
-         timeoutTime = timeoutTimeFromNow();
+      suspend::checkForSuspend(allowSuspend);
 
       // look for a connection (waiting for the specified interval)
       boost::shared_ptr<HttpConnection> ptrConnection =
@@ -607,7 +529,7 @@ bool waitForMethod(const std::string& method,
          }
 
          // since we got a connection we can reset the timeout time
-         timeoutTime = timeoutTimeFromNow();
+         suspend::resetSuspendTimeout();
 
          // after we've processed at least one waitForMethod it is now safe to
          // initialize the polledEventHandler (which is used to maintain rsession
@@ -621,6 +543,8 @@ bool waitForMethod(const std::string& method,
                                                      polledEventHandler);
       }
    }
+
+   suspend::removeBlockingOp(suspend::kGenericMethod + method);
 
    // satisfied the request
    return true;

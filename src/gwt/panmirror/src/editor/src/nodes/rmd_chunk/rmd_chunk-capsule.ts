@@ -1,7 +1,7 @@
 /*
  * rmd_chunk-capsule.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,15 @@ export function rmdChunkBlockCapsuleFilter() {
   return {
     type: kBlockCapsuleType,
 
-    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n(?:[\t >]*```+|[\W\w]*?\n[\t >]*```+))([ \t]*)$/gm,
+    match: /^([\t >]*)((```+)\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n(?:[\t >]*\3|[\W\w]*?\n[\t >]*\3))([ \t]*)$/gm,
+
+    extract: (match: string, p1: string, p2: string, p3: string, p4: string) => {
+      return {
+        prefix: p1,
+        source: p2,
+        suffix: p4,
+      };
+    },
 
     // textually enclose the capsule so that pandoc parses it as the type of block we want it to
     // (in this case a code block). we use the capsule prefix here to make sure that the code block's

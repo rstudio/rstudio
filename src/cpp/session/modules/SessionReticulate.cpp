@@ -1,7 +1,7 @@
 /*
  * SessionReticulate.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,7 +45,7 @@ bool s_reticulatePythonInited = false;
 
 void updateReticulatePython(bool forInit)
 {
-   if (!forInit && s_pythonInitialized)
+   if (!forInit && s_reticulatePythonInited)
       return;
 
    if (!ASSERT_MAIN_THREAD())
@@ -62,7 +62,7 @@ void updateReticulatePython(bool forInit)
       if (error)
          LOG_ERROR(error);
    }
-   
+
    s_reticulatePythonInited = true;
 }
 

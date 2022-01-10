@@ -1,7 +1,7 @@
 /*
  * SessionAsyncRProcess.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -175,9 +175,6 @@ void AsyncRProcess::start(const char* rCommand,
    // update environment used for child process
    options.environment = childEnv;
    
-   // require main thread
-   options.callbacksRequireMainThread = true;
-
    core::system::ProcessCallbacks cb;
    using namespace module_context;
    cb.onContinue = boost::bind(&AsyncRProcess::onContinue,

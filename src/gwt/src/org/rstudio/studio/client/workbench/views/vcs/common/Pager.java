@@ -1,7 +1,7 @@
 /*
  * Pager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.cellview.client.SimplePager;
 import com.google.gwt.view.client.HasRows;
 import com.google.gwt.view.client.Range;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
 public class Pager extends SimplePager
 {
@@ -94,11 +95,11 @@ public class Pager extends SimplePager
       String text = super.createText();
 
       if (display.isRowCountExact())
-         return "Commits " + text;
+         return constants_.commitsPager(text);
       else
       {
-         int pos = text.indexOf(" of ");
-         return "Commits " + (pos >= 0 ? text.substring(0, pos) : text);
+         int pos = text.indexOf(" of "); // TODO - don't think I can change this? Check w/ Gary
+         return constants_.commitsPager((pos >= 0 ? text.substring(0, pos) : text));
       }
    }
 
@@ -114,5 +115,5 @@ public class Pager extends SimplePager
          }
       }
    }
-
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

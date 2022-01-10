@@ -1,7 +1,7 @@
 /*
  * CppCompletionManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.Invalidation;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionUtils;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
@@ -130,7 +132,7 @@ public class CppCompletionManager implements CompletionManager
                   line,
                   column,
                   new CppCompletionServerRequestCallback<CppSourceLocation>(
-                        "Finding definition...") {
+                        constants_.findingDefinition()) {
                      @Override
                      public void onSuccess(CppSourceLocation loc)
                      {
@@ -454,5 +456,6 @@ public class CppCompletionManager implements CompletionManager
    private final SnippetHelper snippets_;
 
    private final HandlerRegistrations handlers_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 
 }

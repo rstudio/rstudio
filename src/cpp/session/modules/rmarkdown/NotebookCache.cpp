@@ -1,7 +1,7 @@
 /*
  * NotebookCache.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -308,6 +308,12 @@ void onDocRenamed(const std::string& oldPath,
 
 void onDocAdded(const std::string& id)
 {
+   if (!core::thread::isMainThread())
+   {
+      module_context::executeOnMainThread(boost::bind(onDocAdded, id));
+      return;
+   }
+
    std::string path;
    Error error = source_database::getPath(id, &path);
    if (error)

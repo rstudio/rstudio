@@ -1,7 +1,7 @@
 /*
  * ExportPlotSizeEditor.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.exportplot;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.dom.IFrameElementEx;
 
@@ -114,7 +115,7 @@ public class ExportPlotSizeEditor extends Composite
           
       // image width
       widthTextBox_ = createImageSizeTextBox();
-      FormLabel widthLabel = createImageOptionLabel("Width:", widthTextBox_);
+      FormLabel widthLabel = createImageOptionLabel(constants_.widthText(), widthTextBox_);
       widthAndHeightPanel.add(widthLabel);
       widthTextBox_.addChangeHandler(new ChangeHandler() {
          @Override
@@ -145,7 +146,7 @@ public class ExportPlotSizeEditor extends Composite
       // image height
       widthAndHeightPanel.add(new HTML("&nbsp;&nbsp;"));
       heightTextBox_ = createImageSizeTextBox();
-      FormLabel heightLabel = createImageOptionLabel("Height:", heightTextBox_);
+      FormLabel heightLabel = createImageOptionLabel(constants_.heightText(), heightTextBox_);
       widthAndHeightPanel.add(heightLabel);
       heightTextBox_.addChangeHandler(new ChangeHandler() {
          @Override
@@ -181,7 +182,7 @@ public class ExportPlotSizeEditor extends Composite
       keepRatioCheckBox_ = new CheckBox();
       keepRatioCheckBox_.addStyleName(resources.styles().maintainAspectRatioCheckBox());
       keepRatioCheckBox_.setValue(keepRatio);
-      keepRatioCheckBox_.setText("Maintain aspect ratio");
+      keepRatioCheckBox_.setText(constants_.maintainAspectRatioText());
       optionsPanel.add(keepRatioCheckBox_);
       
       // image and sizer in layout panel (create now so we can call
@@ -190,7 +191,7 @@ public class ExportPlotSizeEditor extends Composite
      
       
       // update button
-      ThemedButton updateButton = new ThemedButton("Update Preview", 
+      ThemedButton updateButton = new ThemedButton(constants_.updatePreviewTitle(),
                                                     new ClickHandler(){
          public void onClick(ClickEvent event) 
          {
@@ -522,4 +523,5 @@ public class ExportPlotSizeEditor extends Composite
    
    private final int MIN_SIZE = 100;
    private LayoutPanel previewPanel_;
+   private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 }

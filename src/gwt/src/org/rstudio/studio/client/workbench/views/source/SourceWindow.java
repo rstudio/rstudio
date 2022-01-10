@@ -1,7 +1,7 @@
 /*
  * SourceWindow.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.ClosingEvent;
@@ -146,24 +147,24 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
 
                if (unsaved.size() > 0)
                {
-                  String msg = "Your edits to the ";
+                  String msg="";
                   if (unsaved.size() == 1)
                   {
-                     msg += "file " + unsavedTargetDesc(unsaved.get(0));
+                     msg += constants_.yourEditsToFileHasNotBeenSaved(unsavedTargetDesc(unsaved.get(0)));
                   }
                   else
                   {
-                     msg += "files ";
+                     String filesList="";
                      for (int i = 0; i < unsaved.size(); i++)
                      {
-                        msg += unsavedTargetDesc(unsaved.get(i));
+                        filesList += unsavedTargetDesc(unsaved.get(i));
                         if (i == unsaved.size() - 2)
-                           msg += " and ";
+                           filesList += constants_.andForList();
                         else if (i < unsaved.size() - 2)
-                           msg += ", ";
+                           filesList += constants_.commaListSeparator();
                      }
+                     msg += constants_.yourEditsToFilePluralHasNotBeenSaved(filesList);
                   }
-                  msg += " have not been saved.";
                   event.setMessage(msg);
                }
             }
@@ -368,9 +369,8 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
            // and file backed targets, we just fall back to a generic prompt
            RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
                  GlobalDisplay.MSG_WARNING,
-                 "Unsaved Changes",
-                 "There are unsaved documents in this window. Are you sure " +
-                 "you want to close it?",
+                 constants_.unsavedChanges(),
+                 constants_.confirmCloseUnsavedDocuments(),
                  false,  // include cancel
                  new Operation()
                  {
@@ -382,8 +382,8 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
                  },
                  null,
                  null,
-                 "Close and Discard Changes",
-                 "Cancel",
+                 constants_.closeAndDiscardChanges(),
+                 constants_.cancel(),
                  false);
            return;
         }
@@ -394,7 +394,7 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
          quitContext.onReadyToQuit(false);
       else
          ApplicationQuit.handleUnsavedChanges(SaveAction.SAVEASK,
-               "Close Source Window", true /*allowCancel*/, false /*forceSaveAll*/,
+               constants_.closeSourceWindow(), true /*allowCancel*/, false /*forceSaveAll*/,
                source_, null, null, quitContext);
    }
 
@@ -415,4 +415,5 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
    private final Satellite satellite_;
    private String initialDocId_;
    private SourcePosition initialSourcePosition_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

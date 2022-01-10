@@ -1,7 +1,7 @@
 /*
  * desktop-browser-window.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -60,7 +60,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     existingWindow?: BrowserWindow, // attach to this window instead of creating a new one
   ) {
     super();
-    const apiKeys = [['desktopInfo', ...addApiKeys].join('|')];
+    const apiKeys = [['--apiKeys=desktopInfo', ...addApiKeys].join('|')];
     if (existingWindow) {
       this.window = existingWindow;
     } else {
@@ -86,6 +86,22 @@ export class DesktopBrowserWindow extends EventEmitter {
         show: false,
         acceptFirstMouse: true,
       });
+
+      const customStyles =
+        // eslint-disable-next-line max-len
+        '.gwt-SplitLayoutPanel-HDragger{cursor:ew-resize !important;} .gwt-SplitLayoutPanel-VDragger{cursor:ns-resize !important;}';
+
+      this.window.webContents
+        .insertCSS(customStyles, {
+          cssOrigin: 'author',
+        })
+        .then((result) => {
+          console.log('Custom Styles Added Successfully');
+        })
+        .catch((error) => {
+          console.log('Error when adding custom styles');
+          console.log(error);
+        });
 
       // Uncomment to have all windows show dev tools by default
       // this.window.webContents.openDevTools();

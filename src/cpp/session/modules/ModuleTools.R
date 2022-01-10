@@ -1,7 +1,7 @@
 #
 # ModuleTools.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -379,6 +379,7 @@
 
    # create a temporary copy of the file for conversion
    inputFile <- tempfile(tmpdir = dirname(input), fileext = ".html")
+   on.exit(unlink(inputFile), add=TRUE)
    inputLines <- readLines(con = input, warn = FALSE)
 
    # write all the lines from the input except the DOCTYPE declaration, which pandoc will not treat

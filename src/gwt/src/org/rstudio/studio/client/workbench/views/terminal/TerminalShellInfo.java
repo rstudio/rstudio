@@ -1,7 +1,7 @@
 /*
  * TerminalShellInfo.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -35,27 +36,29 @@ public class TerminalShellInfo extends JavaScriptObject
       switch (shell)
       {
       case UserPrefs.WINDOWS_TERMINAL_SHELL_DEFAULT:
-         return "Default";
+         return constants_.defaultShellLabel();
       case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_GIT_BASH:
-         return "Git Bash";
+         return constants_.winGitBashShellLabel();
       case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_WSL_BASH:
-         return "WSL";
+         return constants_.winWslBashShellLabel();
       case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_CMD:
-         return "Command Prompt";
+         return constants_.winCmdShellLabel();
       case UserPrefs.WINDOWS_TERMINAL_SHELL_WIN_PS:
-         return "PowerShell";
+         return constants_.winPsShellLabel();
       case UserPrefs.WINDOWS_TERMINAL_SHELL_PS_CORE:
-         return "PowerShell Core";
+         return constants_.psCoreShellLabel();
       case UserPrefs.POSIX_TERMINAL_SHELL_BASH:
-         return "Bash";
+         return constants_.bashShellLabel();
       case UserPrefs.POSIX_TERMINAL_SHELL_CUSTOM:
-         return "Custom";
+         return constants_.customShellLabel();
       case UserPrefs.POSIX_TERMINAL_SHELL_NONE:
-         return "User command";
+         return constants_.nonShellLabel();
       case UserPrefs.POSIX_TERMINAL_SHELL_ZSH:
-         return "Zsh";
+         return constants_.zshShellLabel();
       default:
-         return "Unknown";
+         return constants_.unknownShellLabel();
       }
    }
+
+   private static final TerminalConstants constants_ = GWT.create(TerminalConstants.class);
 }

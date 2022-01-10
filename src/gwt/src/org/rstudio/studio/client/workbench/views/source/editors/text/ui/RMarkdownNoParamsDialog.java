@@ -1,7 +1,7 @@
 /*
  * RMarkdownNoParamsDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -28,16 +29,17 @@ import org.rstudio.core.client.widget.MultiLineLabel;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class RMarkdownNoParamsDialog extends ModalDialogBase
 {  
    public RMarkdownNoParamsDialog()
    {
       super(Roles.getAlertdialogRole());
-      setText("No Parameters Defined");
+      setText(constants_.noParametersDefined());
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
       
-      addOkButton(new ThemedButton("OK", new ClickHandler()
+      addOkButton(new ThemedButton(constants_.okFullyCapitalized(), new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
@@ -64,12 +66,11 @@ public class RMarkdownNoParamsDialog extends ModalDialogBase
       // add message widget
       VerticalPanel messagePanel = new VerticalPanel();
       Label label = new MultiLineLabel(
-            "There are no parameters defined for the current " +
-            "R Markdown document.");
+            constants_.noParametersDefinedForCurrentRMarkdown());
       label.setStylePrimaryName(
             ThemeResources.INSTANCE.themeStyles().dialogMessage());
       messagePanel.add(label);
-      HelpLink helpLink = new HelpLink("Using R Markdown Parameters",
+      HelpLink helpLink = new HelpLink(constants_.usingRMarkdownParameters(),
                                        "parameterized_reports", 
                                        false);
       Style style = helpLink.getElement().getStyle();
@@ -85,4 +86,5 @@ public class RMarkdownNoParamsDialog extends ModalDialogBase
       setARIADescribedBy(label.getElement());
       return panel;
    }
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

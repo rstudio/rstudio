@@ -1,7 +1,7 @@
 /*
  * NewConnectionWizard.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.events.NewConnectionWizardRequestCloseEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsServerOperations;
@@ -55,8 +56,8 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
                               String warning)
    {
       super(
-         "New Connection",
-         "OK",
+         constants_.newConnectionCaption(),
+         constants_.okLabel(),
             Roles.getDialogRole(),
          context,
          createFirstPage(context, warning),
@@ -64,7 +65,7 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
       );
 
       mainHelpLink_ = new HelpLink(
-         "Using RStudio Connections",
+         constants_.rstudioConnectionsCaption(),
          "rstudio_connections",
          false,
          true);
@@ -105,7 +106,7 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
    private static WizardPage<NewConnectionContext, ConnectionOptions>
       createFirstPage(NewConnectionContext input, String warning)
    {
-      return new NewConnectionNavigationPage("New Connection", "OK", null, input, warning);
+      return new NewConnectionNavigationPage(constants_.newConnectionCaption(), "OK", null, input, warning);
    }
 
    public interface Styles extends CssResource
@@ -131,4 +132,5 @@ public class NewConnectionWizard extends Wizard<NewConnectionContext, Connection
    }
    
    private HelpLink mainHelpLink_;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

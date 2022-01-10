@@ -2,7 +2,7 @@
 /*
  * SessionConstants.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -137,7 +137,12 @@
 #define kSessionTmpDirEnvVar       "RS_SESSION_TMP_DIR"
 #define kSessionTmpDir             "rstudio-rsession"
 
-#define kDefaultPandocPath         "bin/quarto/bin"
+#ifdef QUARTO_ENABLED
+# define kDefaultPandocPath        "bin/quarto/bin"
+#else
+# define kDefaultPandocPath        "bin/pandoc"
+#endif
+
 #define kDefaultQuartoPath         "bin/quarto"
 #define kDefaultPostbackPath       "bin/postback/rpostback"
 #define kDefaultRsclangPath        "bin/rsclang"

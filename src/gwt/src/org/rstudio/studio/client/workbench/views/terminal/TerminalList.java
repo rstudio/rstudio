@@ -1,7 +1,7 @@
 /*
  * TerminalList.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -450,19 +450,19 @@ public class TerminalList implements Iterable<String>,
    {
       StringBuilder dump = new StringBuilder();
 
-      dump.append("Terminal List Count: ");
+      dump.append(constants_.terminalListCountText());
       dump.append(terminalCount());
       dump.append("\n");
       for (int i = 0; i < terminalCount(); i++)
       {
-         dump.append("Handle: '");
+         dump.append(constants_.handleDumpText());
          String handle = terminalHandleAtIndex(i);
          dump.append(handle);
-         dump.append("' Caption: '");
+         dump.append(constants_.captionDumpText());
 
          TerminalListData data = getFullMetadataForHandle(handle);
          dump.append(data.getCPI().getCaption());
-         dump.append("' Session Created: ");
+         dump.append(constants_.sessionCreatedText());
          dump.append(data.getSessionCreated());
          dump.append("\n");
       }
@@ -478,4 +478,5 @@ public class TerminalList implements Iterable<String>,
    // Injected ----
    private Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
    private EventBus eventBus_;
+   private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }

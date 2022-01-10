@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -506,7 +506,7 @@ private:
          if (error)
             LOG_ERROR(error);
          if (extendedType == "quarto-document")
-            renderFunc = "quarto run";
+            renderFunc = "quarto serve";
          else
             renderFunc = kShinyRenderFunc;
       }
@@ -528,7 +528,7 @@ private:
 
       // if we are using a quarto command to render, we must be a quarto doc. read
       // all of the input file lines to be used in error navigation
-      if (renderFunc == "quarto run" || renderFunc == "quarto render")
+      if (renderFunc == "quarto serve" || renderFunc == "quarto render")
       {
           isQuarto_ = true;
           Error error = core::readLinesFromFile(targetFile_, &targetFileLines_);
@@ -922,12 +922,7 @@ private:
          }
          else if (isQuarto_)
          {
-            // check for a jupyter error if this is quarto
-            int errLine = module_context::jupyterErrorLineNumber(targetFileLines_, allOutput_);
-            if (errLine != -1)
-            {
-               module_context::editFile(targetFile_, errLine);
-            }
+            navigateToRenderPreviewError(targetFile_, targetFileLines_, output, allOutput_);
          }
          else
          {
@@ -1685,13 +1680,13 @@ bool pptAvailable()
 
 bool rmarkdownPackageAvailable()
 {
-   if (!ASSERT_MAIN_THREAD())
-   {
-      return s_rmarkdownAvailable;
-   }
-   
    if (!s_rmarkdownAvailableInited)
    {
+      if (!ASSERT_MAIN_THREAD())
+      {
+         return s_rmarkdownAvailable;
+      }
+
       s_rmarkdownAvailableInited = true;
       initRmarkdownPackageAvailable();
    }

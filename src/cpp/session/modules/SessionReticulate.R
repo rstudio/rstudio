@@ -1,7 +1,7 @@
 #
 # SessionReticulate.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -932,10 +932,18 @@
       return(.rs.python.emptyCompletions())
    
    # attempt to get completions
-   candidates <- tryCatch(reticulate::py_list_attributes(object), error = identity)
-   if (inherits(candidates, "error"))
-      return(.rs.python.emptyCompletions())
-   
+   candidates <- if (inherits(object, "__main__.R"))
+   {
+      # for the custom 'R' object, return objects in the global environment
+      # we might want to consider whether data objects should be returned too
+      ls(envir = globalenv())
+   }
+   else
+   {
+      # otherwise, use object attributes instead
+      tryCatch(reticulate::py_list_attributes(object), error = identity)
+   }
+    
    # split string into source (module or sub-module providing object)
    # and token
    token <- tail(pieces, n = 1L)

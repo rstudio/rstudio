@@ -1,7 +1,7 @@
 /*
  * RMarkdownPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@ import jsinterop.base.Js;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.MessageDisplay;
+import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -43,6 +44,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroLocalConfig;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
@@ -69,7 +71,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    {
       prefs_ = prefs;
       state_ = state;
+      session_ = session;
       res_ = res;
+      PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
       
       VerticalTabPanel basic = new VerticalTabPanel(ElementIds.RMARKDOWN_BASIC_PREFS);
 
@@ -272,12 +276,16 @@ public class RMarkdownPreferencesPane extends PreferencesPane
 
       
       // list spacing
+      String[] listSpacingOptions = {
+              constants_.listSpacingTight(),
+              constants_.listSpacingSpaced()
+      };
       String[] listSpacingValues = {
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_LIST_SPACING_TIGHT,
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_LIST_SPACING_SPACED
       };
       visualModeListSpacing_ = new SelectWidget(constants_.visualModeListSpacingLabel(),
-            listSpacingValues, listSpacingValues, 
+            listSpacingOptions, listSpacingValues,
             false, true, false);
       visualModeListSpacing_.getElement().getStyle().setMarginBottom(10, Unit.PX);
       if (!visualModeListSpacing_.setValue(prefs_.visualMarkdownEditingListSpacing().getGlobalValue()))
@@ -285,12 +293,17 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeOptions.add(visualModeListSpacing_);
       
       // auto wrap
-      String[] wrapValues = {
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE,
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN,
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE
+      String[] wrapOptions = {
+         constants_.editingWrapNone(),
+         constants_.editingWrapColumn(),
+         constants_.editingWrapSentence()
       };
-      visualModeWrap_ = new SelectWidget(constants_.visualModeWrapLabel(), wrapValues, wrapValues, false, true, false);
+      String[] wrapValues = {
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE,
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN,
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE
+      };
+      visualModeWrap_ = new SelectWidget(constants_.visualModeWrapLabel(), wrapOptions, wrapValues, false, true, false);
       if (!visualModeWrap_.setValue(prefs_.visualMarkdownEditingWrap().getGlobalValue()))
          visualModeWrap_.getListBox().setSelectedIndex(0);
       HelpButton.addHelpButton(visualModeWrap_, "visual_markdown_editing-line-wrapping", constants_.visualModeWrapHelpLabel(), 0);
@@ -315,12 +328,17 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       lessSpaced(visualModeWrapColumn_);
 
       // references
-      String[] referencesValues = {
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK,
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION,
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT
+      String[] referencesOptions = {
+              constants_.refLocationBlock(),
+              constants_.refLocationSection(),
+              constants_.refLocationDocument()
       };
-      visualModeReferences_ = new SelectWidget(constants_.visualModeReferencesLabel(), referencesValues, referencesValues, false, true, false);
+      String[] referencesValues = {
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK,
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION,
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT
+      };
+      visualModeReferences_ = new SelectWidget(constants_.visualModeReferencesLabel(), referencesOptions, referencesValues, false, true, false);
       if (!visualModeReferences_.setValue(prefs_.visualMarkdownEditingReferencesLocation().getGlobalValue()))
          visualModeReferences_.getListBox().setSelectedIndex(0);
       spaced(visualModeReferences_);
@@ -368,6 +386,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualMode.add(visualModeOptions);
       
       VerticalTabPanel citations = new VerticalTabPanel(ElementIds.RMARKDOWN_CITATIONS_PREFS);
+      citations.add(headerLabel("Citations"));
  
       Label citationsLabel = new Label(constants_.citationsLabel());
       spaced(citationsLabel);
@@ -466,6 +485,25 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          
       });
       
+
+      VerticalTabPanel quarto = new VerticalTabPanel(ElementIds.RMARKDOWN_QUARTO_PREFS);
+      quarto.add(headerLabel("Quarto"));
+      quarto.add(new Label(constants_.quartoPreviewLabel(), true));
+      chkEnableQuarto_ = new CheckBox(constants_.enableQuartoPreviewCheckboxLabel());
+      quarto.add(spacedBefore(chkEnableQuarto_));
+      lblQuartoVersion_ = new Label("", true);
+      lblQuartoVersion_.setVisible(false);
+      lblQuartoVersion_.addStyleName(res_.styles().checkBoxAligned());
+      quarto.add(spacedBefore(lblQuartoVersion_));      
+      quarto.add(lblQuartoPath_ = new Label());
+      lblQuartoPath_.addStyleName(baseRes.styles().infoLabel());
+      lblQuartoPath_.addStyleName(res_.styles().checkBoxAligned());
+      lblQuartoPath_.setVisible(false);
+      HelpLink helpLink = new HelpLink(constants_.helpLinkCaption(), "https://quarto.org", false, false);
+      nudgeRight(helpLink);
+      helpLink.addStyleName(res_.styles().newSection());
+      quarto.add(helpLink);
+      
    
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.tabPanelTitle());
       tabPanel.setSize("435px", "533px");
@@ -473,6 +511,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       tabPanel.add(advanced, constants_.tabPanelAdvanced(), advanced.getBasePanelId());
       tabPanel.add(visualMode, constants_.tabPanelVisual(), visualMode.getBasePanelId());
       tabPanel.add(citations, constants_.tabPanelCitations(), citations.getBasePanelId());
+      if (!prefs.quartoEnabled().getValue().equals(UserPrefs.QUARTO_ENABLED_HIDDEN))
+         tabPanel.add(quarto, "Quarto", quarto.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -513,6 +553,40 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       zoteroLibs_.setLibraries(prefs_.zoteroLibraries().getValue());
       zoteroLibs_.addAvailableLibraries();
+      
+      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      if (prefs.quartoEnabled().getValue().equals(UserPrefs.QUARTO_ENABLED_ENABLED))
+      {
+         chkEnableQuarto_.setValue(true);
+      }
+      else if (prefs.quartoEnabled().getValue().equals(UserPrefs.QUARTO_ENABLED_DISABLED))
+      {
+         chkEnableQuarto_.setValue(false);
+      }
+      else // auto
+      {
+         chkEnableQuarto_.setValue(
+           !config.user_installed.isEmpty()
+         );
+      }
+      
+      // let user know what version of quarto we are using (only 
+      // show version info for non-embedded versions)
+      lblQuartoVersion_.setText("Quarto v" + config.version);
+      lblQuartoVersion_.setVisible(chkEnableQuarto_.getValue() && 
+            !config.user_installed.isEmpty());
+      lblQuartoPath_.setText(config.user_installed);
+      lblQuartoPath_.setVisible(lblQuartoVersion_.isVisible());
+   
+      // only write quarto pref if the user interacts with it
+      chkEnableQuarto_.addValueChangeHandler(event -> {
+         boolean showVersion = !config.user_installed.isEmpty() && event.getValue();
+         lblQuartoVersion_.setVisible(showVersion);
+         lblQuartoPath_.setVisible(showVersion);
+         writeEnableQuarto_ = event.getValue()  
+            ? UserPrefs.QUARTO_ENABLED_ENABLED 
+            : UserPrefs.QUARTO_ENABLED_DISABLED;
+      });
  
    }
    
@@ -586,6 +660,12 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       state_.zoteroApiKey().setGlobalValue(zoteroApiKey_.getKey());
       
+      if (writeEnableQuarto_ != null)
+      {
+         prefs_.quartoEnabled().setGlobalValue(writeEnableQuarto_);
+         restartRequirement = new RestartRequirement(true, true, true);
+      }
+      
       return restartRequirement;
    }
 
@@ -593,6 +673,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final UserState state_;
    
    private final PreferencesDialogResources res_;
+   private final Session session_;
 
    private final SelectWidget rmdViewerMode_;
    private final SelectWidget docOutlineDisplay_;
@@ -613,5 +694,11 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final CheckBox zoteroUseBetterBibtex_;
    private PanmirrorZoteroLocalConfig zoteroLocalConfig_ = new PanmirrorZoteroLocalConfig();
    private boolean zoteroIsAuto_ = false;
+   
+   private final CheckBox chkEnableQuarto_;
+   private final Label lblQuartoVersion_;
+   private final Label lblQuartoPath_;
+   private String writeEnableQuarto_ = null;
+   
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

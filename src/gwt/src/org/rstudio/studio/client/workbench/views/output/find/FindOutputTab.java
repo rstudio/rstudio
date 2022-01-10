@@ -1,7 +1,7 @@
 /*
  * FindOutputTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 
@@ -75,4 +76,5 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
    }
 
    private final Shim shim_;
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -108,6 +108,7 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
 #else
    options.reportHasSubprocs = true;
 #endif
+   options.callbacksRequireMainThread = false; // to allow use of terminal from offline thread
    options.trackCwd = true;
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();
@@ -819,12 +820,19 @@ bool augmentTerminalProcessPython(ConsoleProcessPtr cp)
    if (!prefs::userPrefs().terminalPythonIntegration())
       return false;
    
-   // find currently-configured version of Python
+   // forward RETICULATE_PYTHON if set
    std::string reticulatePython = modules::reticulate::reticulatePython();
    if (!reticulatePython.empty())
-   {
       cp->setenv("RETICULATE_PYTHON", reticulatePython);
-   }
+   
+   // forward CONDA_PREFIX if set
+   // use custom environment variable name since the user profile
+   // might override this to use the 'base' environment by default;
+   // our terminal hooks ensure we 'clean up' after whatever the
+   // user profile might've done
+   std::string condaPrefix = core::system::getenv("CONDA_PREFIX");
+   if (!condaPrefix.empty())
+      cp->setenv("_RS_CONDA_PREFIX", condaPrefix);
 
    // return true if we have a configured version of python
    // (indicating that we want terminal hooks to be installed)

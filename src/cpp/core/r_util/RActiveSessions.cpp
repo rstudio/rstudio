@@ -1,7 +1,7 @@
 /*
  * RActiveSessions.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,6 +65,7 @@ Error ActiveSessions::create(const std::string& project,
    activeSession.setInitial(initial);
    activeSession.setLastUsed();
    activeSession.setRunning(false);
+   activeSession.setLastResumed();
 
    // return the id if requested
    if (pId != nullptr)
@@ -156,8 +157,7 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
 
 boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(const std::string& id) const
 {
-   FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
-   return boost::shared_ptr<ActiveSession>(new ActiveSession(id, scratchPath));
+   return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
 }
 
 std::vector<boost::shared_ptr<GlobalActiveSession> >

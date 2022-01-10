@@ -1,7 +1,7 @@
 /*
  * insert_citation_picker.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -499,12 +499,15 @@ export const InsertCitationPanel: React.FC<InsertCitationPanelProps> = props => 
           .search(searchTerm, insertCitationPanelState.selectedNode, existingCitationIds)
           .then(searchResult => {
             if (!searchCanceled.current) {
+              // If only a single result is returned, select that by default
+              const selectedIndex = searchResult?.citations.length === 1 ? 0 : -1;
+
               updateState({
                 searchTerm,
                 citations: searchResult?.citations,
                 status: searchResult?.status,
                 statusMessage: searchResult?.statusMessage,
-                selectedIndex: -1,
+                selectedIndex,
               });
             }
           });

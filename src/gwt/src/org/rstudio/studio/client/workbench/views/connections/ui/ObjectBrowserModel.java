@@ -1,7 +1,7 @@
 /*
  * ObjectBrowserModel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
@@ -30,6 +31,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.events.ViewConnectionDatasetEvent;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionObjectSpecifier;
@@ -497,7 +499,7 @@ public class ObjectBrowserModel implements TreeViewModel
             sb.appendHtmlConstant("<img src=\"" + type.getIconData() + "\" " + 
                  (type.isDataType() ? 
                      "class=\"" + RES.cellTreeStyle().tableViewDataset() + "\" " +
-                     "title=\"View table (up to 1,000 records)\"" 
+                     "title=" + constants_.viewTableHTML()
                      : 
                      "class=\"" + RES.cellTreeStyle().containerIcon() + "\" ") +
                  "/ >");
@@ -555,4 +557,5 @@ public class ObjectBrowserModel implements TreeViewModel
    private static NoSelectionModel<Field> noFieldSelectionModel_ = new NoSelectionModel<>();
    
    static final ObjectBrowser.Resources RES = ObjectBrowser.RES;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

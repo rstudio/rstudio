@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetRMarkdownHelper.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -199,7 +199,7 @@ public class TextEditingTargetRMarkdownHelper
                // check if this is a Shiny Doc
                if (isShinyDoc)
                {
-                  dependencyManager_.withShiny("Running shiny documents",
+                  dependencyManager_.withShiny(constants_.runningShinyDocuments(),
                                                callReadyCommand);
                }
                else
@@ -213,7 +213,7 @@ public class TextEditingTargetRMarkdownHelper
    public void renderNotebookv2(final DocUpdateSentinel sourceDoc,
          final String viewerType)
    {
-      withRMarkdownPackage("Compiling notebooks from R scripts",
+      withRMarkdownPackage(constants_.compilingNotebooks(),
                            false,
          new CommandWithArg<RMarkdownContext>() {
             @Override
@@ -340,7 +340,7 @@ public class TextEditingTargetRMarkdownHelper
       withRMarkdownPackage(type == RmdOutput.TYPE_NOTEBOOK ?
                               constants_.rNotebook() :
                               constants_.rMarkdown(),
-                           "Rendering R Markdown documents",
+                           constants_.renderingR(),
                            type == RmdOutput.TYPE_SHINY,
                            new CommandWithArg<RMarkdownContext>() {
          @Override
@@ -363,7 +363,7 @@ public class TextEditingTargetRMarkdownHelper
    public void renderRMarkdownSource(final String source,
                                      final boolean isShinyDoc)
    {
-      withRMarkdownPackage("Rendering R Markdown documents",
+      withRMarkdownPackage(constants_.renderingR(),
                            isShinyDoc,
             new CommandWithArg<RMarkdownContext>() {
          @Override
@@ -909,7 +909,7 @@ public class TextEditingTargetRMarkdownHelper
       }
 
       // meet all dependencies then ask for params
-      final String action = "Specifying Knit parameters";
+      final String action = constants_.specifyingKnit();
       dependencyManager_.withRMarkdown(
          action,
          new Command() {
@@ -1161,7 +1161,7 @@ public class TextEditingTargetRMarkdownHelper
          final OperationWithInput<NewRMarkdownDialog.Result> onComplete)
    {
       withRMarkdownPackage(
-         "Creating R Markdown documents",
+         constants_.creatingRMarkdown(),
          false,
          new CommandWithArg<RMarkdownContext>()
       {

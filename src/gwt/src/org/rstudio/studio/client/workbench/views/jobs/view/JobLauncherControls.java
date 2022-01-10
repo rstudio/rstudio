@@ -1,7 +1,7 @@
 /*
  * JobLauncherControls.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 
 public class JobLauncherControls extends Composite
 {
@@ -39,16 +40,16 @@ public class JobLauncherControls extends Composite
    public JobLauncherControls()
    {
       file_ = new FileChooserTextBox(
-         "R Script", "", ElementIds.TextBoxButtonId.JOB_SCRIPT, false, null, null);
-      dir_ = new DirectoryChooserTextBox("Working Directory",
+         constants_.rScriptLabel(), "", ElementIds.TextBoxButtonId.JOB_SCRIPT, false, null, null);
+      dir_ = new DirectoryChooserTextBox(constants_.workingDirectoryCaption(),
          ElementIds.TextBoxButtonId.JOB_WORKING_DIR,
          null);
 
       initWidget(uiBinder.createAndBindUi(this));
       
-      exportEnv_.addItem("(Don't copy)", "");
-      exportEnv_.addItem("To global environment", "R_GlobalEnv");
-      exportEnv_.addItem("To results object in global environment", "local");
+      exportEnv_.addItem(constants_.dontCopyText(), "");
+      exportEnv_.addItem(constants_.toGlobalEnvironmentText(), "R_GlobalEnv");
+      exportEnv_.addItem(constants_.toResultObjectText(), "local");
    }
    
    public void setScriptPath(FileSystemItem path)
@@ -95,4 +96,5 @@ public class JobLauncherControls extends Composite
    @UiField(provided=true) DirectoryChooserTextBox dir_;
    @UiField CheckBox importEnv_;
    @UiField ListBox exportEnv_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

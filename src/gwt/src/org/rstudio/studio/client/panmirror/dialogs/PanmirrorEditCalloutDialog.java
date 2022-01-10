@@ -1,7 +1,7 @@
 /*
  * PanmirrorEditCalloutDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ public class PanmirrorEditCalloutDialog extends ModalDialog<PanmirrorCalloutEdit
          ThemedButton removeAttributesButton = new ThemedButton(constants_.unwrapDivTitle());
          removeAttributesButton.addClickHandler((event) -> {
             PanmirrorCalloutEditResult result = collectInput();
-            result.action = constants_.removeActionText();
+            result.action = "remove";
             validateAndGo(result, new Command()
             {
                @Override
@@ -90,7 +90,7 @@ public class PanmirrorEditCalloutDialog extends ModalDialog<PanmirrorCalloutEdit
       // type
       calloutType_ = new SelectWidget(
          constants_.typeLabel(),
-         new String[]{constants_.noteLabel(), constants_.tipLabel(), constants_.importantLabel(), constants_.cautionLabel(), constants_.warningLabel()}
+         new String[]{"note", "tip", "important", "caution", "warning"}
       );
       calloutType_.setValue(props.callout.type);
       calloutType_.getLabel().getElement().getStyle().setMarginLeft(0, Unit.PX);
@@ -102,7 +102,7 @@ public class PanmirrorEditCalloutDialog extends ModalDialog<PanmirrorCalloutEdit
       // appearance
       calloutAppearance_ = new SelectWidget(
         constants_.appearanceLabel(),
-        new String[] {constants_.defaultLabel(), constants_.simpleLabel(), constants_.minimalLabel()}
+        new String[] {"default", "simple", "minimal"}
       );
       calloutAppearance_.setValue(props.callout.appearance);
       calloutAppearance_.getElement().getStyle().setMarginRight(10, Unit.PX);

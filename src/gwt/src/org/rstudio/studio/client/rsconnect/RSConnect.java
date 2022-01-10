@@ -1,7 +1,7 @@
 /*
  * RSConnect.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -166,7 +166,7 @@ public class RSConnect implements SessionInitEvent.Handler,
       // see if we have the requisite R packages
       depsPending_ = true;
       dependencyManager_.withRSConnect(
-         "Publishing content",
+         constants_.publishingContentLabel(),
          event.getContentType() == CONTENT_TYPE_DOCUMENT ||
          event.getContentType() == CONTENT_TYPE_WEBSITE ||
          event.getContentType() == CONTENT_TYPE_QUARTO_WEBSITE ,
@@ -220,7 +220,7 @@ public class RSConnect implements SessionInitEvent.Handler,
 
       String ctx = constants_.publishRpubTitle(contentTypeDesc(event.getContentType()));
       RPubsUploadDialog dlg = new RPubsUploadDialog(
-            "Publish Wizard",
+            constants_.publishWizardLabel(),
             ctx,
             event.getFromPreview() != null ?
                   event.getFromPreview().getSourceFile() : null,

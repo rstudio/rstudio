@@ -1,7 +1,7 @@
 /*
  * SVNCommandHandler.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@ import org.rstudio.studio.client.common.vcs.ignore.Ignore;
 import org.rstudio.studio.client.common.vcs.ignore.IgnoreList;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
@@ -148,13 +149,13 @@ public class SVNCommandHandler
       @Override
       public String getDialogCaption()
       {
-         return "SVN Ignore";
+         return constants_.svnIgnore();
       }
 
       @Override
       public String getIgnoresCaption()
       {
-         return "svn:ignore";
+         return constants_.svnColonIgnore();
       }
 
       @Override
@@ -211,7 +212,7 @@ public class SVNCommandHandler
       ArrayList<String> paths = getPathArray();
 
       if (paths.size() > 0)
-         server_.svnAdd(paths, new ProcessCallback("SVN Add"));
+         server_.svnAdd(paths, new ProcessCallback(constants_.svnAdd()));
    }
 
    @Handler
@@ -220,7 +221,7 @@ public class SVNCommandHandler
       ArrayList<String> paths = getPathArray();
 
       if (paths.size() > 0)
-         server_.svnDelete(paths, new ProcessCallback("SVN Delete"));
+         server_.svnDelete(paths, new ProcessCallback(constants_.svnDelete()));
    }
 
    @Handler
@@ -268,7 +269,7 @@ public class SVNCommandHandler
          {
             new SVNResolveDialog(
                   paths.size(),
-                  "Resolve",
+                  constants_.resolveCapitalized(),
                   new OperationWithInput<String>()
                   {
                      @Override
@@ -276,7 +277,7 @@ public class SVNCommandHandler
                      {
                         server_.svnResolve(
                               input, paths,
-                              new ProcessCallback("SVN Resolve"));
+                              new ProcessCallback(constants_.svnResolve()));
                      }
                   }).showModal();
          }
@@ -290,12 +291,11 @@ public class SVNCommandHandler
       {
          String message =
                (paths.size() > 1 ?
-               "None of the selected paths appear to have conflicts." :
-               "The selected path does not appear to have conflicts.") +
-               "\n\nDo you want to resolve anyway?";
+               constants_.noneOfSelectedPathsHaveConflicts() :
+               constants_.selectedPathDoesNotAppearToHaveConflicts());
 
          globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
-                                         "No Conflicts Detected",
+                                         constants_.noConflictsDetected(),
                                          message,
                                          resolveOperation,
                                          true);
@@ -322,9 +322,8 @@ public class SVNCommandHandler
       else
       {
          globalDisplay_.showMessage(MessageDialog.INFO,
-                                    "No Changes to Revert",
-                                    "There are no changes to the file \"" +
-                                    file.getName() + "\" to revert.");
+                                    constants_.noChangesToRevert(),
+                                    constants_.noChangesToFileToRevert(file.getName()));
       }
 
    }
@@ -332,12 +331,11 @@ public class SVNCommandHandler
    private void doRevert(final ArrayList<String> revertList,
                          final Command onRevertConfirmed)
    {
-      String noun = revertList.size() == 1 ? "file" : "files";
       globalDisplay_.showYesNoMessage(
             GlobalDisplay.MSG_WARNING,
-            "Revert Changes",
-            "Changes to the selected " + noun + " will be reverted.\n\n" +
-                  "Are you sure you want to continue?",
+            constants_.revertChangesCapitalized(),
+              revertList.size() == 1 ? constants_.changesToSelectedFileWillBeReverted() :
+                      constants_.changesToSelectedFileWillBeRevertedPlural(),
                   new Operation()
             {
                @Override
@@ -347,7 +345,7 @@ public class SVNCommandHandler
                      onRevertConfirmed.execute();
 
                   server_.svnRevert(revertList,
-                                    new ProcessCallback("SVN Revert"));
+                                    new ProcessCallback(constants_.svnRevert()));
 
                }
             },
@@ -372,4 +370,5 @@ public class SVNCommandHandler
    private final VCSFileOpener vcsFileOpener_;
    private Provider<SVNCommitDialog> pCommitDialog_;
    private Provider<Ignore> pIgnore_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

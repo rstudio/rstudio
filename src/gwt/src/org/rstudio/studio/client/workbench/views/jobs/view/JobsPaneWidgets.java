@@ -1,7 +1,7 @@
 /*
  * JobsPaneWidgets.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.StringUtil;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobSelectionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
@@ -43,11 +45,11 @@ public class JobsPaneWidgets implements JobsPaneOperations
       userPrefs_ = userPrefs;
       list_ = list;
 
-      toolbar_ = new Toolbar("Jobs Tab");
+      toolbar_ = new Toolbar(constants_.jobsTabLabel());
       
       allJobs_ = new ToolbarButton(
             ToolbarButton.NoText,
-            "View all jobs",
+            constants_.viewAllJobsTitle(),
             commands_.helpBack().getImageResource(), evt ->
       {
          // deselect current job
@@ -244,4 +246,5 @@ public class JobsPaneWidgets implements JobsPaneOperations
    private final EventBus events_;
    private final UserPrefs userPrefs_;
    private final JobsList list_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

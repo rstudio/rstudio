@@ -1,7 +1,7 @@
 /*
  * RequestLogVisualization.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -109,16 +109,7 @@ public class RequestLogVisualization extends Composite
       detail_.getElement().getStyle().setBackgroundColor("#FFE");
 
       instructions_ = new HTML();
-      instructions_.setHTML("<p>Click on a request to see details. Click on the " +
-                            "background to show these instructions again.</p>" +
-                            "<h4>Available commands:</h4>" +
-                            "<ul>" +
-                            "<li>Esc: Close</li>" +
-                            "<li>P: Play/pause</li>" +
-                            "<li>E: Export</li>" +
-                            "<li>I: Import</li>" +
-                            "<li>+/-: Zoom in/out</li>" +
-                            "</ul>");
+      instructions_.setHTML(constants_.requestLogVisualization());
       detail_.setWidget(instructions_);
 
       outerPanel.addSouth(detail_, 200);

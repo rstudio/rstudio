@@ -1,7 +1,7 @@
 /*
  * SessionPackrat.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -595,7 +595,8 @@ void onFileChanged(FilePath sourceFilePath)
    if (sourceFilePath.getFilename() == kPackratLockfile)
    {
       PACKRAT_TRACE("detected change to lockfile " << sourceFilePath);
-      checkHashes(HASH_TYPE_LOCKFILE, HASH_STATE_OBSERVED, onLockfileUpdate);
+
+      module_context::executeOnMainThread(boost::bind(checkHashes, HASH_TYPE_LOCKFILE, HASH_STATE_OBSERVED, onLockfileUpdate));
    }
    else if (sourceFilePath.isWithin(libraryPath) && 
             (sourceFilePath.isDirectory() || 

@@ -1,7 +1,7 @@
 /*
  * TerminalSessionSocket.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -121,7 +121,7 @@ public class TerminalSessionSocket
          @Override
          public void run()
          {
-            diagnosticError("Timeout connecting via WebSockets, switching to RPC");
+            diagnosticError(constants_.timeoutConnectingMessage());
             switchToRPC();
          }
       };
@@ -142,7 +142,7 @@ public class TerminalSessionSocket
 
       if (consoleProcess.getProcessInfo().getZombie())
       {
-         diagnostic_.log("Zombie, not reconnecting");
+         diagnostic_.log(constants_.zombieNotReconnectingMessage());
          callback.onConnected();
          return;
       }
@@ -157,7 +157,7 @@ public class TerminalSessionSocket
       switch (consoleProcess_.getChannelMode())
       {
       case ConsoleProcessInfo.CHANNEL_RPC:
-         diagnostic_.log("Connected with RPC");
+         diagnostic_.log(constants_.connectedWithRPCMessage());
          callback.onConnected();
          break;
 
@@ -185,19 +185,19 @@ public class TerminalSessionSocket
             }
             else
             {
-               callback.onError("Unable to discover websocket protocol");
+               callback.onError(constants_.unableToDiscoverWebsocketMessage());
                return;
             }
          }
 
-         diagnostic_.log("Connect WebSocket: '" + url + "'");
+         diagnostic_.log(constants_.connectWebSocketMessage() + url + "'");
          socket_ = new Websocket(url);
          socket_.addListener(new WebsocketListenerExt()
          {
             @Override
             public void onClose(CloseEvent event)
             {
-               diagnostic_.log("WebSocket closed");
+               diagnostic_.log(constants_.websockedClosedMessage());
                if (socket_ != null)
                {
                   // if socket is already null then we're probably in the middle of switching to RPC
@@ -226,7 +226,7 @@ public class TerminalSessionSocket
             public void onOpen()
             {
                connectWebSocketTimer_.cancel();
-               diagnostic_.log("WebSocket connected");
+               diagnostic_.log(constants_.websocketConnectedMessage());
                callback.onConnected();
                if (webSocketPingInterval_ > 0)
                {
@@ -238,7 +238,7 @@ public class TerminalSessionSocket
             public void onError()
             {
                connectWebSocketTimer_.cancel();
-               diagnosticError("WebSocket connect error, switching to RPC");
+               diagnosticError(constants_.websocketConnectError());
                switchToRPC();
             }
          });
@@ -252,7 +252,7 @@ public class TerminalSessionSocket
 
       case ConsoleProcessInfo.CHANNEL_PIPE:
       default:
-         callback.onError("Channel type not implemented");
+         callback.onError(constants_.channelTypeNotImplementedError());
          break;
       }
    }
@@ -270,15 +270,15 @@ public class TerminalSessionSocket
          @Override
          public void onResponseReceived(Void response)
          {
-            diagnostic_.log("Switched to RPC");
+            diagnostic_.log(constants_.switchedToRPCMessage());
             connectCallback_.onConnected();
          }
 
          @Override
          public void onError(ServerError error)
          {
-            diagnostic_.log("Failed to switch to RPC: " + error.getMessage());
-            connectCallback_.onError("Terminal failed to connect. Please try again.");
+            diagnostic_.log(constants_.failedToSwitchRPCMessage() + error.getMessage());
+            connectCallback_.onError(constants_.terminalFailedToConnectMessage());
          }
       });
    }
@@ -313,7 +313,7 @@ public class TerminalSessionSocket
             socket_.send(TerminalSocketPacket.textPacket(input));
          }
          else
-            diagnosticError("Tried to send user input over null websocket");
+            diagnosticError(constants_.sendUserInputMessage());
 
          requestCallback.onResponseReceived(null);
          break;
@@ -380,7 +380,7 @@ public class TerminalSessionSocket
 
    public void disconnect(boolean permanent)
    {
-      diagnostic_.log(permanent ? "Permanently Disconnected" : "Disconnected");
+      diagnostic_.log(permanent ? constants_.permanentlyDisconnectedLabel() : constants_.disconnectedLabel());
       if (socket_ != null)
          socket_.close();
       socket_ = null;
@@ -436,4 +436,5 @@ public class TerminalSessionSocket
    private final int webSocketPingInterval_;
    private final Timer connectWebSocketTimer_;
    private final int webSocketConnectTimeout_;
+   private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }

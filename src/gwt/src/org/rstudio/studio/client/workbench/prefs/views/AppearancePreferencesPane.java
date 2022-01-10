@@ -1,7 +1,7 @@
 /*
  * AppearancePreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -93,7 +93,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       final String originalTheme = userPrefs_.globalTheme().getValue();
 
       flatTheme_ = new SelectWidget(constants_.appearanceRStudioThemeLabel(),
-                                new String[]{"Modern", "Sky"},
+                                new String[]{constants_.modernThemeLabel(), constants_.skyThemeLabel()},
                                 new String[]{
                                       UserPrefs.GLOBAL_THEME_DEFAULT,
                                       UserPrefs.GLOBAL_THEME_ALTERNATE

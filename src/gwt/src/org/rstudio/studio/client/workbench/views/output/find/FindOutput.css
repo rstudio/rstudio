@@ -44,11 +44,6 @@
 *:focus .selectedRow {
    background-color: rgb(146, 193, 240)
 }
-@if user.agent ie8 {
-   .selectedRow {
-      background-color: rgb(146, 193, 240)
-   }
-}
 
 .rstudio-themes-dark .selectedRow {
    background-color: THEME_DARK_ROW_SELECTED;

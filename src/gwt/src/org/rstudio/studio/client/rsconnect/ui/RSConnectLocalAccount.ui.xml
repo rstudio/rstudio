@@ -2,7 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
     xmlns:rsw="urn:import:org.rstudio.core.client.widget"
-    xmlns:rsc="urn:import:org.rstudio.studio.client.common">
+    xmlns:rsc="urn:import:org.rstudio.studio.client.common"
+    ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+    ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+    ui:generateLocales="default">
     <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
     <ui:style>
     .explanatoryText
@@ -30,16 +33,19 @@
     }
     </ui:style>
     <g:HTMLPanel>
-      <g:VerticalPanel>
+        <g:VerticalPanel>
          <rsw:FormLabel for="{ElementIds.getRscServerUrl}"
-                        text="Enter the public URL of the RStudio Connect server:"/>
+                        text="Enter the public URL of the RStudio Connect server:">
+             <ui:attribute name="text" key="enterPublicURLText"/>
+         </rsw:FormLabel>
          <rsw:TextBoxWithCue styleName="{style.textControl}"
                              cueText="servername.com:3939"
                              width="250px"
                              elementId="{ElementIds.getRscServerUrl}" 
                              ui:field="serverUrl_"/>
          <g:Label styleName="{style.spaced} {style.explanatoryText}"
-                  text="Contact your RStudio Connect server administrator if you need its URL.">
+             text="Contact your RStudio Connect server administrator if you need its URL.">
+             <ui:attribute name="text" key="contactAdminText"/>
          </g:Label>
          <rsc:HelpLink caption="About RStudio Connect" 
                        link="rstudio_connect"

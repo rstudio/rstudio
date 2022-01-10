@@ -1,7 +1,7 @@
 /*
  * CheckSpelling.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.*;
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.common.spelling.model.SpellCheckerResult;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 
 import java.util.ArrayList;
@@ -246,8 +248,8 @@ public class CheckSpelling
          Debug.log(e.toString());
          close();
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               "Check Spelling",
-               "An error has occurred:\n\n" + e.getMessage());
+               constants_.checkSpelling(),
+               constants_.anErrorHasOccurredMessage(e.getMessage()));
          callback_.onFailure(e);
       }
    }
@@ -257,8 +259,8 @@ public class CheckSpelling
       close();
       RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
             GlobalDisplay.MSG_INFO,
-            "Check Spelling",
-            "Spell check is complete.");
+            constants_.checkSpelling(),
+            constants_.spellCheckIsComplete());
       callback_.onSuccess(Void.create());
    }
 
@@ -351,8 +353,8 @@ public class CheckSpelling
          Debug.log(e.toString());
          close();
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-               "Check Spelling",
-               "An error has occurred:\n\n" + e.getMessage());
+               constants_.checkSpelling(),
+               constants_.anErrorHasOccurredMessage(e.getMessage()));
          callback_.onFailure(e);
       }
    }
@@ -370,4 +372,5 @@ public class CheckSpelling
 
    private boolean wrapped_;
    private boolean canceled_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

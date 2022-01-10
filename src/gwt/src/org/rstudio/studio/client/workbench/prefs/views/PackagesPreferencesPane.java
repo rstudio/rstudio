@@ -1,7 +1,7 @@
 /*
  * PackagesPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,7 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 
 package org.rstudio.studio.client.workbench.prefs.views;
 
@@ -144,7 +143,7 @@ public class PackagesPreferencesPane extends PreferencesPane
               constants_.useSecurePackageDownloadTitle());
       HorizontalPanel secureDownloadPanel = HelpButton.checkBoxWithHelp(
                         useSecurePackageDownload_,
-                        new HelpButton(constants_.useSecurePackageTopic(), constants_.useSecurePackageTitle()));
+                        new HelpButton("secure_download", constants_.useSecurePackageTitle()));
       lessSpaced(secureDownloadPanel);
       management.add(secureDownloadPanel);
 

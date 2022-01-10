@@ -1,7 +1,7 @@
 /*
  * InstallPackageDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@ import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.packages.PackagesConstants;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallContext;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallOptions;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageInstallRequest;
@@ -68,14 +69,14 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                            GlobalDisplay globalDisplay,
                            OperationWithInput<PackageInstallRequest> operation)
 {
-      super("Install Packages", Roles.getDialogRole(), operation);
+      super(constants_.installPackagesCaption(),Roles.getDialogRole(), operation);
       
       installContext_ = installContext;
       defaultInstallOptions_ = defaultInstallOptions;
       server_ = server;
       globalDisplay_ = globalDisplay;
 
-      setOkButtonCaption("Install");
+      setOkButtonCaption(constants_.installButtonCaption());
 }
 
   
@@ -110,8 +111,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
           !installFromRepository() && request.getLocalPackage() == null)
       {
          globalDisplay_.showErrorMessage(
-               "No Package Selected", 
-               "You must specify the package to install.",
+               constants_.noPackageSelectedCaption(),
+               constants_.noPackageSelectedMessage(),
                getPackageInputWidget());
          
          return false;
@@ -137,12 +138,12 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       JsArrayString repos = installContext_.selectedRepositoryNames();
       if (repos.length() == 1)
       {
-         packageSourceListBox_.addItem("Repository (" + repos.get(0) + ")");
+         packageSourceListBox_.addItem(constants_.repositoryLabel(repos.get(0)));
       }
       else
       {
          StringBuilder reposItem = new StringBuilder();
-         reposItem.append("Repository (");
+         reposItem.append(constants_.repositoryItemLabel());
          for (int i=0; i<repos.length(); i++)
          {
             if (i != 0)
@@ -152,11 +153,11 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
          reposItem.append(")");
          packageSourceListBox_.addItem(reposItem.toString());
       }
-      packageSourceListBox_.addItem("Package Archive File (" + 
+      packageSourceListBox_.addItem(constants_.packageArchiveFileLabel() +
                                     installContext_.packageArchiveExtension() +
                                     ")");
-      reposCaption_ = new CaptionWithHelp("Install from:",
-                                          "Configuring Repositories",
+      reposCaption_ = new CaptionWithHelp(constants_.installFromCaption(),
+                                          constants_.configuringRepositoriesHelpCaption(),
                                           "configuring_repositories",
                                           packageSourceListBox_);
       reposCaption_.setIncludeVersionInfo(false);
@@ -177,7 +178,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       packagesSuggestBox_.setLimit(20);
       packagesSuggestBox_.addStyleName(RESOURCES.styles().extraBottomPad());
       FormLabel packagesLabel = new FormLabel(
-                      "Packages (separate multiple with space or comma):", packagesSuggestBox_);
+                      constants_.packagesLabel(), packagesSuggestBox_);
       packagesLabel.setStylePrimaryName(RESOURCES.styles().packagesLabel());
       reposSourcePanel_.add(packagesLabel);
       reposSourcePanel_.add(packagesSuggestBox_);
@@ -186,9 +187,9 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
          
       // archive source panel
       packageArchiveFile_ = new TextBoxWithButton(
-                                              "Package archive:",
+                                              constants_.packageArchiveLabel(),
                                               "",
-                                              "Browse...",
+                                              constants_.browseActionLabel(),
                                               null,
                                               ElementIds.TextBoxButtonId.PACKAGE_ARCHIVE,
                                               true,
@@ -238,13 +239,13 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       }
       libraryListBox_.setSelectedIndex(selectedIndex); 
 
-      FormLabel libraryListLabel = new FormLabel("Install to Library:", libraryListBox_);
+      FormLabel libraryListLabel = new FormLabel(constants_.installToLibraryText(), libraryListBox_);
       mainPanel.add(libraryListLabel);
       mainPanel.add(libraryListBox_);
       
       // install dependencies check box
       installDependenciesCheckBox_.addStyleName(RESOURCES.styles().installDependenciesCheckBox());
-      installDependenciesCheckBox_.setText("Install dependencies");
+      installDependenciesCheckBox_.setText(constants_.installDependenciesText());
       installDependenciesCheckBox_.setValue(
                            defaultInstallOptions_.getInstallDependencies());
       mainPanel.add(installDependenciesCheckBox_);
@@ -306,7 +307,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       public void onClick(ClickEvent event)
       {
          fileDialogs_.openFile(
-               "Select Package Archive",
+               constants_.selectPackageArchiveCaption(),
                fileSystemContext_,
                defaultArchiveDir_,
                new ProgressOperationWithInput<FileSystemItem>()
@@ -413,4 +414,5 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    
    private final FileDialogs fileDialogs_ = 
       RStudioGinjector.INSTANCE.getFileDialogs();
+   private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 }

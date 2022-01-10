@@ -1,7 +1,7 @@
 /*
  * GeneralPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -556,7 +556,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return constants_.generalTablListGraphicsOption();
+      return constants_.generalTablistLabel();
    }
 
    @SuppressWarnings("unused")

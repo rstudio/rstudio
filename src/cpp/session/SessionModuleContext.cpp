@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -932,6 +932,13 @@ void scheduleDelayedWork(const boost::posix_time::time_duration& period,
                         false);
 }
 
+void executeOnMainThread(const boost::function<void()> &execute)
+{
+   if (core::thread::isMainThread())
+      execute();
+   else
+      scheduleDelayedWork(boost::posix_time::milliseconds(1), execute, false);
+}
 
 void onBackgroundProcessing(bool isIdle)
 {
@@ -2918,8 +2925,6 @@ std::vector<FilePath> ignoreContentDirs()
          std::string outputDir = module_context::websiteOutputDir();
          if (!outputDir.empty())
             ignoreDirs.push_back(buildTargetPath.completeChildPath(outputDir));
-         else
-            ignoreDirs.push_back(buildTargetPath);
       }
 
    }

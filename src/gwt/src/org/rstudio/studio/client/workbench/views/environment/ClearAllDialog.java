@@ -1,7 +1,7 @@
 /*
  * ClearAllDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.*;
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -44,10 +45,10 @@ public class ClearAllDialog extends ModalDialogBase
       RStudioGinjector.INSTANCE.injectMembers(this);
       numObjects_ = numObjects;
       
-      setText("Confirm Remove Objects");
+      setText(constants_.confirmRemoveObjects());
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
       
-      ThemedButton yesButton = new ThemedButton("Yes", new ClickHandler()
+      ThemedButton yesButton = new ThemedButton(constants_.yesCapitalized(), new ClickHandler()
       {
          public void onClick(ClickEvent event)
          {
@@ -58,7 +59,7 @@ public class ClearAllDialog extends ModalDialogBase
       });
       addOkButton(yesButton);
       
-      addCancelButton().setText("No");
+      addCancelButton().setText(constants_.noCapitalized());
    }
    
    @Inject 
@@ -86,14 +87,13 @@ public class ClearAllDialog extends ModalDialogBase
       // add message widget
       String objects;
       if (numObjects_ == 0)
-         objects = "all objects";
+         objects = constants_.allObjects();
       else if (numObjects_ == 1)
-         objects = "1 object";
+         objects = constants_.oneObject();
       else
-         objects = numObjects_ + " objects";
+         objects = constants_.multipleObjects(numObjects_);
       Label label = new MultiLineLabel(
-            "Are you sure you want to remove "  + objects + " from the " +
-            "environment? This operation cannot be undone.");
+            constants_.confirmObjectRemove(objects));
       label.setStylePrimaryName(
             ThemeResources.INSTANCE.themeStyles().dialogMessage());
       horizontalPanel.add(label);
@@ -108,7 +108,7 @@ public class ClearAllDialog extends ModalDialogBase
       optionStyle.setMarginLeft(image.getWidth(), Unit.PX);
       optionStyle.setMarginBottom(10, Unit.PX);
       
-      chkIncludeHidden_ = new CheckBox("Include hidden objects");
+      chkIncludeHidden_ = new CheckBox(constants_.includeHiddenObjects());
       chkIncludeHidden_.setValue(state_.clearHidden().getValue());
 
       if (numObjects_ == 0)
@@ -132,4 +132,5 @@ public class ClearAllDialog extends ModalDialogBase
    private CheckBox chkIncludeHidden_;
    private UserState state_;
    private int numObjects_;
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

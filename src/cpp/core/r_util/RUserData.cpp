@@ -1,7 +1,7 @@
 /*
  * RUserData.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -81,8 +81,7 @@ Error migrateUserStateIfNecessary(SessionType sessionType)
 
    // Ensure file locks are initialized (this migration happens very early in the 
    // startup process
-   if (FileLock::verifyInitialized()) 
-      FileLock::initialize();
+   FileLock::initialize();
 
    // At this point we've decided to do a migration. Acquire a lock to ensure that
    // multiple processes don't attempt to migrate at once (not likely but possible)

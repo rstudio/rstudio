@@ -1,7 +1,7 @@
 /*
  * CopyPlotToClipboardDesktopDialogBase.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,11 @@
  */
 package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotConstants;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotDialog;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
@@ -33,9 +35,9 @@ public abstract class CopyPlotToClipboardDesktopDialogBase extends ExportPlotDia
    {
       super(options, previewer);
      
-      setText("Copy Plot to Clipboard");
+      setText(constants_.copyPlotText());
       
-      ThemedButton copyButton = new ThemedButton("Copy Plot", 
+      ThemedButton copyButton = new ThemedButton(constants_.copyButtonText(),
             new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
@@ -66,4 +68,5 @@ public abstract class CopyPlotToClipboardDesktopDialogBase extends ExportPlotDia
    }
    
    protected abstract void copyAsBitmap(final Operation onCompleted);
+   private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 }

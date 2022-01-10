@@ -6,5 +6,6 @@
    <set-property name="rstudio.desktop" value="true"/>
    <!-- dev language for i18n development -->
    <extend-property name="locale" values="dev"/>
+   <!--<set-property name="locale" value="fr"/>-->
 </module>
 

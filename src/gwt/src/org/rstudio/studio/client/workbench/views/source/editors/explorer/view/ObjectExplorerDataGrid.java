@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerDataGrid.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerServerOperations;
 
 /*
@@ -344,7 +345,7 @@ public class ObjectExplorerDataGrid
       public NameCell()
       {
          super();
-         String moreButtonCell = "<td><input type='button' value='More...' data-action='open'></input></td>";
+         String moreButtonCell = constants_.moreButtonCell();
          moreButtonCellHtml_ = SafeHtmlUtils.fromTrustedString(moreButtonCell);
       }
 
@@ -572,13 +573,13 @@ public class ObjectExplorerDataGrid
 
       // add columns
       nameColumn_ = new IdentityColumn<>(new NameCell());
-      addColumn(nameColumn_, new TextHeader("Name"));
+      addColumn(nameColumn_, new TextHeader(constants_.name()));
 
       typeColumn_ = new IdentityColumn<>(new TypeCell());
-      addColumn(typeColumn_, new ResizableHeader(this, "Type"));
+      addColumn(typeColumn_, new ResizableHeader(this, constants_.type()));
 
       valueColumn_ = new IdentityColumn<>(new ValueCell());
-      addColumn(valueColumn_, new ResizableHeader(this, "Value"));
+      addColumn(valueColumn_, new ResizableHeader(this, constants_.value()));
 
       initializeColumnWidths();
 
@@ -1079,7 +1080,7 @@ public class ObjectExplorerDataGrid
       Data data = getData().get(row);
       String code = generateExtractingCode(data);
       String language = handle_.getLanguage();
-      code = "View(" + code + ")";
+      code = constants_.viewCode(code);
       events_.fireEvent(new SendToConsoleEvent(code, language, true));
    }
 
@@ -1454,4 +1455,5 @@ public class ObjectExplorerDataGrid
    static {
       RES.dataGridStyle().ensureInjected();
    }
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

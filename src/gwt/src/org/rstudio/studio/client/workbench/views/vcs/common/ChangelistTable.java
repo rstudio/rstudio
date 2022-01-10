@@ -1,7 +1,7 @@
 /*
  * ChangelistTable.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,7 @@ import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MultiSelectCellTable;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -254,7 +255,7 @@ public abstract class ChangelistTable extends Composite
       };
       statusColumn.setSortable(true);
       statusColumn.setHorizontalAlignment(Column.ALIGN_CENTER);
-      table_.addColumn(statusColumn, "Status");
+      table_.addColumn(statusColumn, constants_.statusCapitalized());
       table_.setColumnWidth(statusColumn, "56px");
       sortHandler_.setComparator(statusColumn, new Comparator<StatusAndPath>()
       {
@@ -279,7 +280,7 @@ public abstract class ChangelistTable extends Composite
       };
       pathColumn.setSortable(true);
       sortHandler_.setComparator(pathColumn, new StatusAndPath.PathComparator());
-      table_.addColumn(pathColumn, "Path");
+      table_.addColumn(pathColumn, constants_.pathCapitalized());
 
       table_.getColumnSortList().push(pathColumn);
    }
@@ -434,4 +435,5 @@ public abstract class ChangelistTable extends Composite
    private ChangelistInfoBar infoBar_;
    private boolean selectFirstItemByDefault_;
    private static final ChangelistTableCellTableResources resources_ = GWT.<ChangelistTableCellTableResources>create(ChangelistTableCellTableResources.class);
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

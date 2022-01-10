@@ -1,7 +1,7 @@
 /*
  * SessionCodeSearch.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -989,12 +989,18 @@ void RSourceIndexes::update(const boost::shared_ptr<SourceDocument>& pDoc)
    if (!pDoc->canContainRCode())
       return;
 
+   if (!core::thread::isMainThread())
+   {
+      module_context::executeOnMainThread(boost::bind(&RSourceIndexes::update, this, pDoc));
+      return;
+   }
+
    // index the source
    std::string code;
    Error error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &code);
    if (error)
    {
-      LOG_ERROR(error);
+      LOG_DEBUG_MESSAGE("Error extracting R code from file: " + error.asString());
       return;
    }
    

@@ -1,7 +1,7 @@
 /*
  * YamlUtil.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,10 @@ bool hasYamlHeader(const FilePath& filePath)
    std::string contents;
    Error error = readStringFromFile(filePath, &contents);
    if (error)
-      LOG_ERROR(error);
+   {
+      LOG_DEBUG_MESSAGE(error.asString());
+      return false;
+   }
    
    return hasYamlHeader(contents);
 }

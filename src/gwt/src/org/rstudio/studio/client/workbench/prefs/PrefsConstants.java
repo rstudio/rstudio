@@ -1,7 +1,7 @@
 /*
  * PrefsConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1275,6 +1275,24 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String otherDoubleClickLabel();
 
     /**
+     * Translated "Warn when automatic session suspension is paused".
+     *
+     * @return translated "Warn when automatic session suspension is paused"
+     */
+    @DefaultMessage("Warn when automatic session suspension is paused")
+    @Key("WarnAutomaticSuspensionPaused")
+    String warnAutoSuspendPausedLabel();
+
+    /**
+     * Translated "Number of seconds to delay warning".
+     *
+     * @return translated "Number of seconds to delay warning"
+     */
+    @DefaultMessage("Number of seconds to delay warning")
+    @Key("numberOfSecondsToDelayWarning")
+    String numSecondsToDelayWarningLabel();
+
+    /**
      * Translated "R Sessions".
      *
      * @return translated "R Sessions"
@@ -1941,15 +1959,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingEditShortcuts();
 
     /**
-     * Translated "Edit Snippets...".
-     *
-     * @return translated "Edit Snippets..."
-     */
-    @DefaultMessage("Edit Snippets...")
-    @Key("editingEditSnippets")
-    String editingEditSnippets();
-
-    /**
      * Translated "Execution".
      *
      * @return translated "Execution"
@@ -2281,15 +2290,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Use secure download method for HTTP")
     @Key("useSecurePackageDownloadTitle")
     String useSecurePackageDownloadTitle();
-
-    /**
-     * Translated "secure_download".
-     *
-     * @return translated "secure_download"
-     */
-    @DefaultMessage("secure_download")
-    @Key("useSecurePackageTopic")
-    String useSecurePackageTopic();
 
     /**
      * Translated "Help on secure package downloads for R".
@@ -3791,11 +3791,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String markdownPerFileOptionsHelpLink();
 
     /**
-     * Translated "Citation features are available within R Markdown visual mode.".
+     * Translated "Citation features are available within visual editing mode.".
      *
-     * @return translated "Citation features are available within R Markdown visual mode."
+     * @return translated "Citation features are available within visual editing mode."
      */
-    @DefaultMessage("Citation features are available within R Markdown visual mode.")
+    @DefaultMessage("Citation features are available within visual editing mode.")
     @Key("citationsLabel")
     String citationsLabel();
 
@@ -3888,6 +3888,7 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Citations")
     @Key("tabPanelCitations")
     String tabPanelCitations();
+    
 
     /**
      * Translated "(None)".
@@ -4701,15 +4702,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingEditSnippetsCaption();
 
     /**
-     * Translated "Using Code Snippets".
-     *
-     * @return translated "Using Code Snippets"
-     */
-    @DefaultMessage("Using Code Snippets")
-    @Key("editingSnippetHelpLink")
-    String editingSnippetHelplink();
-
-    /**
      * Translated "Save".
      *
      * @return translated "Save"
@@ -4717,15 +4709,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Save")
     @Key("editingSaveButtonLabel")
     String editingSaveButtonLabel();
-
-    /**
-     * Translated "Error Applying Snippets ({0})".
-     *
-     * @return translated "Error Applying Snippets ({0})"
-     */
-    @DefaultMessage("Error Applying Snippets ({0})")
-    @Key("errorApplyingSnippetsCaption")
-    String errorApplyingSnippetsCaption(String fileTypeLabel);
 
     /**
      * Translated "Confirm Remove".
@@ -4744,5 +4727,113 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Are you sure you want to remove the {0} repository?")
     @Key("confirmRemoveMessage")
     String confirmRemoveMessage(String repo);
+
+    /**
+     * Translated "Modern".
+     *
+     * @return translated "Modern"
+     */
+    @DefaultMessage("Modern")
+    @Key("modernThemeLabel")
+    String modernThemeLabel();
+
+    /**
+     * Translated "Sky".
+     *
+     * @return translated "Sky"
+     */
+    @DefaultMessage("Sky")
+    @Key("skyThemeLabel")
+    String skyThemeLabel();
+
+    /**
+     * Translated "General".
+     *
+     * @return translated "General"
+     */
+    @DefaultMessage("General")
+    @Key("generalHeaderLabel")
+    String generalHeaderLabel();
+
+    /**
+     * Translated "Edit Snippets...".
+     *
+     * @return translated "Edit Snippets..."
+     */
+    @DefaultMessage("Edit Snippets...")
+    @Key("editSnippetsButtonLabel")
+    String editSnippetsButtonLabel();
+
+    /**
+     * Translated "tight".
+     *
+     * @return translated "tight"
+     */
+    @DefaultMessage("tight")
+    @Key("listSpacingTight")
+    String listSpacingTight();
+
+    /**
+     * Translated "spaced".
+     *
+     * @return translated "spaced"
+     */
+    @DefaultMessage("spaced")
+    @Key("listSpacingSpaced")
+    String listSpacingSpaced();
+
+    /**
+     * Translated "(none)".
+     *
+     * @return translated "(none)"
+     */
+    @DefaultMessage("(none)")
+    @Key("editingWrapNone")
+    String editingWrapNone();
+
+    /**
+     * Translated "(column)".
+     *
+     * @return translated "(column)"
+     */
+    @DefaultMessage("(column)")
+    @Key("editingWrapColumn")
+    String editingWrapColumn();
+
+    /**
+     * Translated "(sentence)".
+     *
+     * @return translated "(sentence)"
+     */
+    @DefaultMessage("(sentence)")
+    @Key("editingWrapSentence")
+    String editingWrapSentence();
+
+    /**
+     * Translated "block".
+     *
+     * @return translated "block"
+     */
+    @DefaultMessage("block")
+    @Key("refLocationBlock")
+    String refLocationBlock();
+
+    /**
+     * Translated "section".
+     *
+     * @return translated "section"
+     */
+    @DefaultMessage("section")
+    @Key("refLocationSection")
+    String refLocationSection();
+
+    /**
+     * Translated "document"".
+     *
+     * @return translated "document"
+     */
+    @DefaultMessage("document")
+    @Key("refLocationDocument")
+    String refLocationDocument();
 
 }

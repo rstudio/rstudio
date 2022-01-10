@@ -1,7 +1,7 @@
 /*
  * array-utils.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,4 +43,19 @@ export function nextLowest(val: number, choices: number[]): number {
   let index = choices.findIndex((x) => x >= val);
   index = index <= 0 ? 0 : --index;
   return choices[index];
+}
+
+/**
+ * @param strArray Array to search
+ * @param prefix String prefix to match 
+ * @returns Value of first array member starting with `prefix` (with `prefix` removed) or
+ * empty string if no matches.
+ */
+export function firstStartingWith(strArray: string[], prefix: string): string {
+  for (const item of strArray) {
+    if (item.startsWith(prefix)) {
+      return item.slice(prefix.length);
+    }
+  }
+  return '';
 }

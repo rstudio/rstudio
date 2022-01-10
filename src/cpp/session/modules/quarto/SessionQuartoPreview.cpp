@@ -1,7 +1,7 @@
    /*
  * SessionQuartoPreview.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -251,27 +251,7 @@ private:
       }
 
       // look for an error and do source navigation as necessary
-      int errLine = -1;
-      FilePath errFile = previewFile_;
-
-      // look for knitr error
-      const boost::regex knitrErr("Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)");
-      boost::smatch matches;
-      if (regex_utils::search(output, matches, knitrErr))
-      {
-         errLine = safe_convert::stringTo<int>(matches[1].str(), 1);
-         errFile = previewFile_.getParent().completePath(matches[3].str());
-      }
-
-      // look for jupyter error
-      if (errLine == -1)
-         errLine = jupyterErrorLineNumber(previewFileLines_, allOutput_);
-
-      // if there was an error then navigate to it
-      if (errLine != -1)
-      {
-         module_context::editFile(errFile, errLine);
-      }
+      navigateToRenderPreviewError(previewFile_, previewFileLines_, output, allOutput_);
 
       // standard output forwarding
       QuartoJob::onStdErr(output);

@@ -1,7 +1,7 @@
 /*
  * ConsoleInterruptProfilerButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.console;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -38,7 +39,7 @@ public class ConsoleInterruptProfilerButton extends Composite
       Image button = new Image(icon);
       button.addStyleName(ThemeResources.INSTANCE.themeStyles().toolbarButtonLeftImage());
       button.getElement().getStyle().setMarginRight(4,Unit.PX);
-      button.setTitle("Profiling Code");
+      button.setTitle(constants_.profilingCodeTitle());
       
       return button;
    }
@@ -92,4 +93,5 @@ public class ConsoleInterruptProfilerButton extends Composite
    private final DelayFadeInHelper fadeInHelper_;
    private final int width_;
    private final int height_;
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * PresentationDispatcher.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -156,7 +156,7 @@ public class PresentationDispatcher
       else 
       {
          globalDisplay_.showErrorMessage(
-               "Unknown Presentation Command", 
+               constants_.unknownPresentationCommandCaption(),
                cmdName + ": " + params);
       }
    }
@@ -206,7 +206,7 @@ public class PresentationDispatcher
          else if (cmd.equals("clear"))
             commands_.consoleClear().execute();
          else
-            globalDisplay_.showErrorMessage("Unknown Console Directive", cmd);
+            globalDisplay_.showErrorMessage(constants_.unknownConsoleDirectiveCaption(), cmd);
       }
    }
 
@@ -241,5 +241,5 @@ public class PresentationDispatcher
    private final Session session_;
    @SuppressWarnings("unused")
    private final WorkbenchContext workbenchContext_;
-   
+   private static final PresentationConstants constants_ = com.google.gwt.core.client.GWT.create(PresentationConstants.class);
 }

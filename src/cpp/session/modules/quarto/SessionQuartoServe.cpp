@@ -1,7 +1,7 @@
 /*
  * SessionQuartoServe.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@
 #include <core/RegexUtils.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/WaitUtils.hpp>
+#include <core/FileSerializer.hpp>
 
 #include <r/RExec.hpp>
 
@@ -57,6 +58,25 @@ std::string serverUrl(long port, const std::string& path = "")
    return url + path;
 }
 
+void navigateToViewer(long port, const std::string& path, const std::string& jobId)
+{
+   // if the viewer is already on the site just activate it
+   if (boost::algorithm::starts_with(
+          module_context::viewerCurrentUrl(false), serverUrl(port)))
+   {
+      module_context::activatePane("viewer");
+   }
+   else
+   {
+      module_context::viewer(
+          serverUrl(port, path),
+          -1,
+          module_context::QuartoNavigate::navWebsite(jobId)
+      );
+   }
+}
+
+
 class QuartoServe : public QuartoJob
 {
 public:
@@ -88,6 +108,34 @@ public:
       return pJob_->id();
    }
 
+   void render(const FilePath& filePath)
+   {
+      // track render state (for output/error handling)
+      renderFile_ = filePath;
+      Error error = core::readLinesFromFile(renderFile_, &renderFileLines_);
+      if (error)
+         LOG_ERROR(error);
+      renderOutput_ = "";
+
+      // switch to jobs tab
+      json::Object eventJson;
+      eventJson["id"] = jobId();
+      module_context::enqueClientEvent(ClientEvent(client_events::kJobsActivate, eventJson));
+
+      // invoke the render
+      std::string relativePath = filePath.getRelativePath(quartoProjectDir());
+      error = r::exec::RFunction(".rs.quarto.serveRender",
+         safe_convert::numberToString(port()),
+         relativePath).call();
+      if (error)
+      {
+         stop();
+         std::string errMsg = "Error rendering file : " + relativePath + "\n";
+         errMsg += r::endUserErrorMessage(error);
+         module_context::consoleWriteError(errMsg + "\n");
+      }
+
+   }
 
 protected:
    explicit QuartoServe(const std::string& format, bool render, const std::string& path)
@@ -129,6 +177,30 @@ protected:
 
    virtual void onStdErr(const std::string& error)
    {
+      // if we are tracking a render
+      if (!renderFile_.isEmpty())
+      {
+         // track all output (used for error navigation)
+         renderOutput_ += error;
+
+         // always be looking for an output file
+         FilePath outputFile = module_context::extractOutputFileCreated(renderFile_.getParent(), error);
+         if (!outputFile.isEmpty())
+         {
+            // navigate to viewer
+            std::string path = urlPathForQuartoProjectOutputFile(outputFile);
+            navigateToViewer(port(), path, jobId());
+
+            // activate the console
+            ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
+            module_context::enqueClientEvent(activateConsoleEvent);
+
+            // stop tracking render
+            clearRenderState();
+         }
+      }
+
+
       // detect browse directive
       if (port_ == 0)
       {
@@ -160,15 +232,37 @@ protected:
          }
       }
 
-      // standard output forwarding
+      // look for an error and do source navigation as necessary
+      if (!renderFile_.isEmpty())
+      {
+         if (navigateToRenderPreviewError(renderFile_, renderFileLines_, error, renderOutput_))
+         {
+            clearRenderState();
+         }
+      }
+
+
+      // forward output
       QuartoJob::onStdErr(error);
    }
+
+private:
+   void clearRenderState()
+   {
+      renderFile_ = FilePath();
+      renderFileLines_.clear();
+      renderOutput_ = "";
+   }
+
 
 private:
    int port_;
    std::string format_;
    bool render_;
    std::string path_;
+   FilePath renderFile_;
+   std::vector<std::string> renderFileLines_;
+   std::string renderOutput_;
 };
 
 // serve singleton
@@ -212,29 +306,35 @@ Error quartoServeRpc(const json::JsonRpcRequest& request,
    return quartoServe(format, render);
 }
 
+Error quartoServeRenderRpc(const json::JsonRpcRequest& request,
+                           json::JsonRpcResponse* pResponse)
+{
+   // read params
+   std::string file;
+   Error error = json::readParams(request.params, &file);
+   if (error)
+      return error;
+   FilePath filePath = module_context::resolveAliasedPath(file);
+
+   if (s_pServe && s_pServe->isRunning())
+   {
+      s_pServe->render(filePath);
+      pResponse->setResult(true);
+   }
+   else
+   {
+      pResponse->setResult(false);
+   }
+
+   return Success();
+}
+
+
 bool isJobServeRunning()
 {
    return s_pServe && s_pServe->isRunning();
 }
 
-
-void navigateToViewer(long port, const std::string& path, const std::string& jobId)
-{
-   // if the viewer is already on the site just activate it
-   if (boost::algorithm::starts_with(
-          module_context::viewerCurrentUrl(false), serverUrl(port)))
-   {
-      module_context::activatePane("viewer");
-   }
-   else
-   {
-      module_context::viewer(
-          serverUrl(port, path),
-          -1,
-          module_context::QuartoNavigate::navWebsite(jobId)
-      );
-   }
-}
 
 bool isNewQuartoBuild(const std::string& renderOutput)
 {
@@ -316,6 +416,7 @@ Error initialize()
   ExecBlock initBlock;
    initBlock.addFunctions()
      (boost::bind(module_context::registerRpcMethod, "quarto_serve", quartoServeRpc))
+     (boost::bind(module_context::registerRpcMethod, "quarto_serve_render", quartoServeRenderRpc))
    ;
    return initBlock.execute();
 }

@@ -1,7 +1,7 @@
 /*
  * QuartoNewProjectOptions.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,17 +25,19 @@ public class QuartoNewProjectOptions extends JavaScriptObject
    public final static QuartoNewProjectOptions createDefault()
    {
       return create(QuartoCommandConstants.PROJECT_DEFAULT, QuartoCommandConstants.ENGINE_KNITR, "python3",
-                    "", "matplotlib pandas", QuartoCommandConstants.EDITOR_VISUAL);
+                    "", "", "matplotlib pandas", QuartoCommandConstants.EDITOR_VISUAL);
    }
    
-   public native final static QuartoNewProjectOptions create(String type, String engine, String kernel, String venv, 
+   public native final static QuartoNewProjectOptions create(String type, String engine, String kernel, 
+                                                             String venv, String condaenv,
                                                              String packages, String editor) 
    /*-{
       var options = new Object();
       options.type = type;
       options.engine = engine;
       options.kernel = kernel;
-      options.venv= venv;
+      options.venv = venv;
+      options.condaenv = condaenv;
       options.packages = packages;
       options.editor = editor;
       return options;
@@ -45,6 +47,7 @@ public class QuartoNewProjectOptions extends JavaScriptObject
    public final native String getEngine() /*-{ return this["engine"]; }-*/;
    public final native String getKernel() /*-{ return this["kernel"]; }-*/;
    public final native String getVenv() /*-{ return this["venv"]; }-*/;
+   public final native String getCondaenv() /*-{ return this["condaenv"] || ""; }-*/;
    public final native String getPackages() /*-{ return this["packages"] || ""; }-*/ ;
    public final native String getEditor() /*-{ return this["editor"] || ""; }-*/ ;
 }

@@ -1,7 +1,7 @@
 /*
  * PresentationFrame.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,7 @@ public class PresentationFrame extends AnchorableFrame
                             boolean allowFullScreen,
                             final HasText titleWidget)
    {
-      super("Presentation Frame", autoFocus);
+      super(constants_.presentationFrameTitle(), autoFocus);
       
       // allow full-screen view of iframe
       if (allowFullScreen)
@@ -127,5 +127,5 @@ public class PresentationFrame extends AnchorableFrame
    
    
    private String title_ = "";
-
+   private static final PresentationConstants constants_ = com.google.gwt.core.client.GWT.create(PresentationConstants.class);
 }

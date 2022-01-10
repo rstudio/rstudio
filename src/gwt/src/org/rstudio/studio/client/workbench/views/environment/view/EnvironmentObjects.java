@@ -1,7 +1,7 @@
 /*
  * EnvironmentObjects.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@ import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.workbench.views.environment.EnvironmentPane;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.CallFramePanel.CallFramePanelHost;
@@ -48,6 +49,7 @@ public class EnvironmentObjects extends ResizeComposite
    implements CallFramePanelHost,
               EnvironmentObjectDisplay.Host
 {
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
    private class ScrollIntoViewTimer extends Timer
    {
       @Override
@@ -751,7 +753,7 @@ public class EnvironmentObjects extends ResizeComposite
    }
 
    private final static String EMPTY_ENVIRONMENT_MESSAGE =
-           "Environment is empty";
+           constants_.environmentIsEmpty();
 
    public static final int OBJECT_LIST_VIEW = 0;
    public static final int OBJECT_GRID_VIEW = 1;

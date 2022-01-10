@@ -1,7 +1,7 @@
 /*
  * CompilePdfOutputPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.compilepdf;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -42,6 +43,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.BusyPresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneDisplay;
 import org.rstudio.studio.client.workbench.views.output.common.CompileOutputPaneFactory;
 import org.rstudio.studio.client.workbench.views.output.compilepdf.events.CompilePdfEvent;
@@ -66,7 +68,7 @@ public class CompilePdfOutputPresenter extends BusyPresenter
                                     EventBus events)
    {
       super(outputFactory.create("Compile PDF",
-                                 "View the LaTeX compilation log"));
+                                 constants_.viewLogTitle()));
       binder.bind(commands, this);
       view_ = (CompileOutputPaneDisplay) getView();
       globalDisplay_ = globalDisplay;
@@ -132,13 +134,13 @@ public class CompilePdfOutputPresenter extends BusyPresenter
       });
 
       server_.isCompilePdfRunning(
-        new DelayedProgressRequestCallback<Boolean>("Closing Compile PDF...") {
+        new DelayedProgressRequestCallback<Boolean>(constants_.closingCompilePDFProgressMessage()) {
          @Override
          public void onSuccess(Boolean isRunning)
          {
             if (isRunning)
             {
-               confirmTerminateRunningCompile("close the Compile PDF tab",
+               confirmTerminateRunningCompile(constants_.closeCompilePDF(),
                                               confirmedCommand);
             }
             else
@@ -242,7 +244,7 @@ public class CompilePdfOutputPresenter extends BusyPresenter
             encoding,
             sourceLocation,
             completedAction,
-            new DelayedProgressRequestCallback<Boolean>("Compiling PDF...")
+            new DelayedProgressRequestCallback<Boolean>(constants_.compilingPDFProgressMessage())
             {
                @Override
                protected void onSuccess(Boolean started)
@@ -257,10 +259,8 @@ public class CompilePdfOutputPresenter extends BusyPresenter
    {
       globalDisplay_.showYesNoMessage(
          MessageDialog.WARNING,
-         "Stop Running Compile",
-         "There is a PDF compilation currently running. If you " +
-         operation + " it will be terminated. Are you " +
-         "sure you want to stop the running PDF compilation?",
+         constants_.stopRunningCompilesCaption(),
+         constants_.stopPDFCompilationRunningMessage(operation),
          new Operation() {
             @Override
             public void execute()
@@ -274,7 +274,7 @@ public class CompilePdfOutputPresenter extends BusyPresenter
    private void terminateCompilePdf(final Command onTerminated)
    {
       server_.terminateCompilePdf(new DelayedProgressRequestCallback<Boolean>(
-                                    "Terminating PDF compilation...") {
+                                    constants_.terminatingPDFCompilationCaption()) {
          @Override
          protected void onSuccess(Boolean wasTerminated)
          {
@@ -288,7 +288,7 @@ public class CompilePdfOutputPresenter extends BusyPresenter
             {
                globalDisplay_.showErrorMessage(
                     "Compile PDF",
-                    "Unable to terminate PDF compilation. Please try again.");
+                    constants_.unableToTerminatePDFCompilationMessage());
             }
          }
       });
@@ -303,4 +303,5 @@ public class CompilePdfOutputPresenter extends BusyPresenter
    private final Commands commands_;
 
    private boolean switchToConsoleOnSuccessfulCompile_;
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

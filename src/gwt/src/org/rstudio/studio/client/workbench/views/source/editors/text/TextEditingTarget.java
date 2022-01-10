@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -289,6 +289,8 @@ public class TextEditingTarget implements
       void setAccessibleName(String name);
 
       TextEditorContainer editorContainer();
+      
+      MarkdownToolbar getMarkdownToolbar();
 
       void manageCommandUI();
 
@@ -6840,10 +6842,14 @@ public class TextEditingTarget implements
                
             };
             
+            // check for some special case behavior for quarto
+            String quartoPreviewFormat = useQuartoPreview();
+            boolean quartoServeRenderer = format == null && useQuartoServeRenderer();
+            
             
             // see if we should be using quarto preview
-            String quartoFormat = useQuartoPreview();
-            if (quartoFormat != null)
+           
+            if (quartoPreviewFormat != null)
             {    
                // command to execute quarto preview
                Command quartoPreviewCmd = new Command() {
@@ -6854,8 +6860,8 @@ public class TextEditingTarget implements
                      // out this file is part of a website or book project)
                      server_.quartoPreview(
                         docUpdateSentinel_.getPath(), 
-                        quartoFormat, 
-                        isQuartoRevealJs(quartoFormat) ? presentationEditorLocation() : null,
+                        quartoPreviewFormat, 
+                        isQuartoRevealJs(quartoPreviewFormat) ? presentationEditorLocation() : null,
                         new SimpleRequestCallback<Boolean>() {
                            @Override
                            public void onResponseReceived(Boolean previewed)
@@ -6880,6 +6886,23 @@ public class TextEditingTarget implements
                {
                   quartoPreviewCmd.execute();
                }
+            }
+            else if (quartoServeRenderer)
+            {
+               // quarto serve can reject the render (e.g. if serve 
+               // isn't already running)
+               server_.quartoServeRender(
+                  docUpdateSentinel_.getPath(), 
+                  new SimpleRequestCallback<Boolean>() {
+                     @Override
+                     public void onResponseReceived(Boolean rendered)
+                     {
+                        if (!rendered) 
+                        {
+                           renderCmd.execute();
+                        }
+                     }
+                  });
             }
             else
             {
@@ -7006,7 +7029,9 @@ public class TextEditingTarget implements
    }
    
    
-   
+   // quarto preview is used for standalone files (files witihn a project
+   // can evade this by selecting a non-html format for an individual file
+   // (e.g. a revealjs presentation or a pdf)
    private String useQuartoPreview()
    {
       if (session_.getSessionInfo().getQuartoConfig().enabled &&
@@ -7041,6 +7066,23 @@ public class TextEditingTarget implements
      
    }
    
+   private boolean useQuartoServeRenderer()
+   {
+      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      if (config.enabled && 
+          (extendedType_ == SourceDocument.XT_QUARTO_DOCUMENT) &&
+          QuartoHelper.isQuartoWebsiteDoc(docUpdateSentinel_.getPath(), config)
+         )
+      {
+         return true;
+      }
+      else
+      {
+         return false;
+      }
+   }
+
+   
    private static final String QUARTO_PDF_FORMAT = "pdf";
    private static final String QUARTO_BEAMER_FORMAT = "beamer";
    private static final String QUARTO_HTML_FORMAT = "html";
@@ -7053,21 +7095,16 @@ public class TextEditingTarget implements
    }
    
  
-   
+   // is this a normal website or book html file?
    private boolean isQuartoWebsiteDefaultHtmlDoc()
    {
       QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
       boolean isWebsiteDoc = QuartoHelper.isQuartoWebsiteDoc(docUpdateSentinel_.getPath(), config);
       if (isWebsiteDoc)
       {
-         // if this in a website project and has either no format or a format that is part
-         // of the project foramts then use standard quarto website preview behavior 
-         // (call rmarkdown render and dispatch to quarto). if this returns false then 
-         // quarto_preview will be used (e.g. for pdfs, presentations, etc.)
          String docFormat = quartoFormat();
-         return (docFormat == null || Arrays.asList(config.project_formats).contains(docFormat)) &&
-                config.project_type.equals(QuartoCommandConstants.PROJECT_WEBSITE);
-                
+         return docFormat == null || docFormat.startsWith(QUARTO_HTML_FORMAT);
+            
       }
       else
       {
@@ -8217,10 +8254,10 @@ public class TextEditingTarget implements
 
                // scan chunk engines
                HashSet<String> chunkEngines = new HashSet<String>();
-               JsArray<Scope> scopeTree = docDisplay_.getScopeTree();
-               for (int i=0; i<scopeTree.length(); i++) 
+               ScopeList scopeList = new ScopeList(docDisplay_);
+               for (int i=0; i<scopeList.size(); i++) 
                {
-                  Scope scope = scopeTree.get(i);
+                  Scope scope = scopeList.get(i);
                   if (scope.isChunk())
                   {  
                      int row = scope.getPreamble().getRow();

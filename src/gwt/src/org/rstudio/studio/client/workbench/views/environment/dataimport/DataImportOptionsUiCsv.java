@@ -1,7 +1,7 @@
 /*
  * DataImportOptionsCsv.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
@@ -46,7 +47,7 @@ import com.google.inject.Inject;
 
 public class DataImportOptionsUiCsv extends DataImportOptionsUi
 {
-
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
    private static DataImportOptionsCsvUiBinder uiBinder = GWT
          .create(DataImportOptionsCsvUiBinder.class);
 
@@ -135,29 +136,29 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       trimSpacesCheckBox_.setValue(true);
       openDataViewerCheckBox_.setValue(true);
       
-      escapeListBox_.addItem("None", "");
-      escapeListBox_.addItem("Backslash", escapeBackslash_);
-      escapeListBox_.addItem("Double", escapeDouble_);
-      escapeListBox_.addItem("Both", escapeBoth_);
+      escapeListBox_.addItem(constants_.noneCapitalized(), "");
+      escapeListBox_.addItem(constants_.backslashCapitalized(), escapeBackslash_);
+      escapeListBox_.addItem(constants_.doubleCapitalized(), escapeDouble_);
+      escapeListBox_.addItem(constants_.bothCapitalized(), escapeBoth_);
       
-      delimiterListBox_.addItem("Comma", ",");
-      delimiterListBox_.addItem("Semicolon", ";");
-      delimiterListBox_.addItem("Tab", "\t");
-      delimiterListBox_.addItem("Whitespace", " ");
-      delimiterListBox_.addItem("Other...", "other");
+      delimiterListBox_.addItem(constants_.commaCapitalized(), ",");
+      delimiterListBox_.addItem(constants_.semicolonCapitalized(), ";");
+      delimiterListBox_.addItem(constants_.tabCapitalized(), "\t");
+      delimiterListBox_.addItem(constants_.whitespaceCapitalized(), " ");
+      delimiterListBox_.addItem(constants_.otherEllipses(), "other");
       
-      quotesListBox_.addItem("Default", "");
-      quotesListBox_.addItem("Single (')", "'");
-      quotesListBox_.addItem("Double (\")", "\\\"");
-      quotesListBox_.addItem("None", "");
+      quotesListBox_.addItem(constants_.defaultCapitalized(), "");
+      quotesListBox_.addItem(constants_.singleQuoteParentheses(), "'");
+      quotesListBox_.addItem(constants_.doubleQuotesParentheses(), "\\\"");
+      quotesListBox_.addItem(constants_.noneCapitalized(), "");
       
-      naListBox_.addItem("Default", "");
-      naListBox_.addItem("NA", "NA");
-      naListBox_.addItem("null", "null");
+      naListBox_.addItem(constants_.defaultCapitalized(), "");
+      naListBox_.addItem(constants_.notApplicableAbbreviation(), "NA");
+      naListBox_.addItem(constants_.nullWord(), "null");
       naListBox_.addItem("0", "0");
-      naListBox_.addItem("empty", "empty");
+      naListBox_.addItem(constants_.empty(), "empty");
       
-      commentListBox_.addItem("Default", "");
+      commentListBox_.addItem(constants_.defaultCapitalized(), "");
       commentListBox_.addItem("#", "#");
       commentListBox_.addItem("%", "%");
       commentListBox_.addItem("//", "//");
@@ -204,8 +205,8 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
             if (delimiterListBox_.getSelectedValue() == "other")
             {
                globalDisplay_.promptForTextWithOption(
-                  "Other Delimiter",
-                  "Please enter a single character delimiter.",
+                  constants_.otherDelimiter(),
+                  constants_.enterSingleCharacterDelimiter(),
                   "",
                   MessageDisplay.INPUT_REQUIRED_TEXT,
                   "",
@@ -230,7 +231,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
                         String otherDelimiter = result.input;
                         
                         if (otherDelimiter.length() != 1) {
-                           globalDisplay_.showErrorMessage("Incorrect Delimiter", "The specified delimiter is not valid.");
+                           globalDisplay_.showErrorMessage(constants_.incorrectDelimiter(), constants_.specifiedDelimiterNotValid());
                         }
                         else {
                            for (int idxDelimiter = 0; idxDelimiter < delimiterListBox_.getItemCount(); idxDelimiter++) {
@@ -241,7 +242,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
                            }
 
                            int selectedIndex = delimiterListBox_.getSelectedIndex();
-                           delimiterListBox_.insertItem("Character " + otherDelimiter, otherDelimiter, selectedIndex - 1);
+                           delimiterListBox_.insertItem(constants_.characterOtherDelimiter(otherDelimiter), otherDelimiter, selectedIndex - 1);
                            
                            dismissAndUpdate(indicator, selectedIndex - 1);
                         }
@@ -289,7 +290,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       commentListBox_.addChangeHandler(changeHandler);
       skipTextBox_.addValueChangeHandler(valueChangeHandler);
 
-      Roles.getButtonRole().setAriaLabelProperty(localeButton_.getElement(), "Configure Locale");
+      Roles.getButtonRole().setAriaLabelProperty(localeButton_.getElement(), constants_.configureLocale());
       localeButton_.addClickHandler(new ClickHandler() {
          public void onClick(ClickEvent event) {
             new DataImportOptionsUiCsvLocale(
@@ -329,7 +330,7 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
    public HelpLink getHelpLink()
    {
       return new HelpLink(
-         "Reading rectangular data using readr",
+         constants_.readingRectangularDataUsingReadr(),
          "import_readr",
          false,
          true);

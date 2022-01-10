@@ -1,7 +1,7 @@
 /*
  * BrowseAddinsDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,10 +70,10 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
 {
    public BrowseAddinsDialog(OperationWithInput<Command> operation)
    {
-      super("Addins", Roles.getDialogRole(), operation);
+      super(constants_.addinCaption(), Roles.getDialogRole(), operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      setOkButtonCaption("Execute");
+      setOkButtonCaption(constants_.executeButtonLabel());
       
       filterWidget_ = new FilterWidget()
       {
@@ -85,7 +85,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       };
       filterWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
       
-      helpLink_ = new HelpLink("Using RStudio Addins", "rstudio_addins", false);
+      helpLink_ = new HelpLink(constants_.rstudioAddinsCaption(), "rstudio_addins", false);
       helpLink_.getElement().getStyle().setFloat(Style.Float.RIGHT);
       
       addAttachHandler((AttachEvent event) -> {
@@ -117,7 +117,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       });
       
       table_.setSelectionModel(selectionModel_);
-      table_.setEmptyTableWidget(emptyTableLabel("Loading addins..."));
+      table_.setEmptyTableWidget(emptyTableLabel(constants_.loadingAddinsCaption()));
       
       addColumns();
       
@@ -133,9 +133,9 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          data.add(addins_.get(key));
       dataProvider_.setList(data);
       originalData_ = data;
-      table_.setEmptyTableWidget(emptyTableLabel("No addins available"));
+      table_.setEmptyTableWidget(emptyTableLabel(constants_.noAddinsAvailableCaption()));
       
-      addLeftWidget(new ThemedButton("Keyboard Shortcuts...", new ClickHandler()
+      addLeftWidget(new ThemedButton(constants_.keyboardShortcutsTitle(), new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -146,7 +146,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       }));
       
       FlowPanel headerPanel = new FlowPanel();
-      FormLabel filterLabel = new FormLabel(true, "Filter addins:", filterWidget_.getInputElement());
+      FormLabel filterLabel = new FormLabel(true, constants_.filterAddinsText(), filterWidget_.getInputElement());
       filterLabel.addStyleName(RES.dataGridStyle().filterLabel());
       headerPanel.add(filterLabel);
       headerPanel.add(filterWidget_);
@@ -187,7 +187,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          }
       };
       pkgColumn_.setSortable(true);
-      table_.addColumn(pkgColumn_, new TextHeader("Package"));
+      table_.addColumn(pkgColumn_, new TextHeader(constants_.packageTextHeader()));
       table_.setColumnWidth(pkgColumn_, "120px");
             
       // Name ----
@@ -200,7 +200,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          }
       };
       nameColumn_.setSortable(true);
-      table_.addColumn(nameColumn_, new TextHeader("Name"));
+      table_.addColumn(nameColumn_, new TextHeader(constants_.nameTextHeader()));
       table_.setColumnWidth(nameColumn_, "120px");
       
       // Description ----
@@ -213,7 +213,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
          }
       };
       descColumn_.setSortable(true);
-      table_.addColumn(descColumn_, new TextHeader("Description"));
+      table_.addColumn(descColumn_, new TextHeader(constants_.descTextHeader()));
      
       table_.addColumnSortHandler(new ColumnSortEvent.Handler()
       {
@@ -292,7 +292,7 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
       });
       dataProvider_.setList(data);
       ariaLive_.announce(AriaLiveService.FILTERED_LIST,
-            "Found " + data.size() + " addins matching " + StringUtil.spacedString(query),
+            constants_.foundAddinsMessage(data.size(),StringUtil.spacedString(query)),
             Timing.DEBOUNCE, Severity.STATUS);
    }
    
@@ -388,5 +388,5 @@ public class BrowseAddinsDialog extends ModalDialog<Command>
    static {
       RES.dataGridStyle().ensureInjected();
    }
-   
+   private static final ClientWorkbenchConstants constants_ = GWT.create(ClientWorkbenchConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * CppCompletionRequest.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text.cpp;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.regex.Match;
@@ -26,6 +27,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -166,7 +168,7 @@ public class CppCompletionRequest
       // check for no hits on explicit request
       if ((filtered.length() == 0) && explicit_)
       {
-         showCompletionPopup("(No matches)");
+         showCompletionPopup(constants_.noMatchesParentheses());
       }
       // check for auto-accept
       else if ((filtered.length() == 1) && autoAccept && explicit_)
@@ -215,7 +217,8 @@ public class CppCompletionRequest
       // update the UI
       updateUI(true);
    }
-   
+
+   // TODO UNSURE ABOUT PATTERN HERE
    static Pattern RE_NO_MEMBER_NAMED =
          Pattern.create("^no member named '(.*)' in '(.*)'$");
    
@@ -293,11 +296,11 @@ public class CppCompletionRequest
    {
       switch (type)
       {
-         case CppDiagnostic.IGNORED: return "ignored";
-         case CppDiagnostic.NOTE:    return "note";
-         case CppDiagnostic.WARNING: return "warning";
-         case CppDiagnostic.ERROR:   return "error";
-         case CppDiagnostic.FATAL:   return "fatal";
+         case CppDiagnostic.IGNORED: return constants_.ignored();
+         case CppDiagnostic.NOTE:    return constants_.note();
+         case CppDiagnostic.WARNING: return constants_.warningLowercase();
+         case CppDiagnostic.ERROR:   return constants_.error();
+         case CppDiagnostic.FATAL:   return constants_.fatal();
          default: return "";
       }
    }
@@ -482,4 +485,5 @@ public class CppCompletionRequest
    
    private boolean terminated_ = false;
    private Command onTerminated_ = null;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

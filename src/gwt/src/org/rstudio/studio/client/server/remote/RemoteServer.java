@@ -1,7 +1,7 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -6447,6 +6447,15 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void quartoServeRender(String file, ServerRequestCallback<Boolean> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      sendRequest(RPC_SCOPE, QUARTO_SERVE_RENDER, params, callback);
+   }
+   
+   
+   @Override
    public void quartoCreateProject(String projectFile, 
                                    QuartoNewProjectOptions options, 
                                    ServerRequestCallback<ConsoleProcess> callback)
@@ -7002,7 +7011,9 @@ public class RemoteServer implements Server
    private static final String QUARTO_CAPABILITIES = "quarto_capabilities";
    private static final String QUARTO_PREVIEW = "quarto_preview";
    private static final String QUARTO_SERVE = "quarto_serve";
+   private static final String QUARTO_SERVE_RENDER = "quarto_serve_render";
    private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
+  
   
 
 }

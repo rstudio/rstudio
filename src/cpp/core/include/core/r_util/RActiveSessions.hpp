@@ -1,7 +1,7 @@
 /*
  * RActiveSessions.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,8 @@
 #include <core/DateTime.hpp>
 #include <shared_core/SafeConvert.hpp>
 
+#include <shared_core/json/Json.hpp>
+
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RActiveSessionStorage.hpp>
@@ -40,7 +42,11 @@ private:
 
    friend class ActiveSessions;
 
-   ActiveSession(
+   explicit ActiveSession(const std::string& id) : id_(id) 
+   {
+   }
+
+   explicit ActiveSession(
       const std::string& id,
       const FilePath& scratchPath) : 
          id_(id),
@@ -70,6 +76,9 @@ private:
    const std::string kRVersionHome = "r_version_home";
    const std::string kRVersionLabel = "r_version_label";
    const std::string kWorkingDir = "working_directory";
+   const std::string kLastResumed = "last_resumed";
+   const std::string kSuspendTimestamp = "suspend_timestamp";
+   const std::string kBlockingSuspend = "blocking_suspend";
 
  public:
 
@@ -146,6 +155,34 @@ private:
    {
       std::string value = safe_convert::numberToString(initial);
       writeProperty(kInitial, value);
+   }
+
+   void setBlockingSuspend(json::Array blocking)
+   {
+      if (!empty())
+      {
+         writeProperty(kBlockingSuspend, blocking.writeFormatted());
+      }
+   }
+
+   boost::posix_time::ptime suspensionTime() const
+   {
+      return ptimeTimestampProperty(kSuspendTimestamp);
+   }
+
+   void setSuspensionTime(const boost::posix_time::ptime value = boost::posix_time::second_clock::universal_time())
+   {
+      setPtimeTimestampProperty(kSuspendTimestamp, value);
+   }
+
+   boost::posix_time::ptime lastResumed() const
+   {
+      return ptimeTimestampProperty(kLastResumed);
+   }
+
+   void setLastResumed(const boost::posix_time::ptime value = boost::posix_time::second_clock::universal_time())
+   {
+      setPtimeTimestampProperty(kLastResumed, value);
    }
 
    double lastUsed() const
@@ -346,7 +383,6 @@ private:
       sortConditions_.running_ = running();
       sortConditions_.lastUsed_ = lastUsed();
    }
- 
 
    void setTimestampProperty(const std::string& property)
    {
@@ -365,6 +401,39 @@ private:
          return 0;
    }
 
+   void setPtimeTimestampProperty(const std::string& property, const boost::posix_time::ptime& time)
+   {
+      if (!empty())
+      {
+         std::string suspendTime = boost::posix_time::to_iso_extended_string(time);
+         writeProperty(property, suspendTime);
+      }
+   }
+
+   boost::posix_time::ptime ptimeTimestampProperty(const std::string& property) const
+   {
+      if (!empty())
+      {
+         try
+         {
+            std::string value = readProperty(property);
+            if (value.empty())
+               return boost::posix_time::not_a_date_time;
+
+            boost::posix_time::ptime retVal = boost::posix_time::from_iso_extended_string(value);
+
+            if (retVal.is_not_a_date_time())
+               return boost::posix_time::not_a_date_time;
+
+            return retVal;
+         }
+         catch (std::exception const& e)
+         {
+            LOG_ERROR_MESSAGE("Failed to read property " + property + ": " + std::string(e.what()));
+         }
+      }
+      return boost::posix_time::not_a_date_time;
+   }
 
    void setRunning(bool running)
    {

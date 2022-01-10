@@ -201,8 +201,8 @@
                     "TabSet1",
                     "TabSet2",
                     "HiddenTabSet"],
-                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentations", "Presentation"],
-                "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
+                "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Tutorial", "Presentation"],
+                "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer", "Presentations"],
                 "hiddenTabSet": [],
                 "console_left_on_top": false,
                 "console_right_on_top": true,
@@ -268,16 +268,18 @@
             "type": "boolean",
             "default": false,
             "title": "Continue comments after adding new line",
-            "description": "Whether continue comments (by inserting the comment character) after adding a new line."
+            "description": "Whether to continue comments (by inserting the comment character) after adding a new line."
         },
         "highlight_web_link": {
             "type": "boolean",
             "default": true,
+            "title": "Whether web links in comments are clickable",
             "description": "Whether web links in comments are clickable."
         },
         "editor_keybindings": {
             "type": "string",
             "enum": ["default", "vim", "emacs", "sublime"],
+            "enumReadable": ["Default", "Vim", "Emacs", "Sublime Text"],
             "default": "default",
             "title": "Keybinding set for editor",
             "description": "The keybindings to use in the RStudio code editor."
@@ -321,6 +323,7 @@
         "surround_selection": {
             "type": "string",
             "enum": ["never", "quotes", "quotes_and_brackets"],
+            "enumReadable": ["Never", "Quotes", "Quotes & Brackets"],
             "default": "quotes_and_brackets",
             "title": "Surround selections with",
             "description": "Which kinds of delimiters can be used to surround the current selection."
@@ -334,6 +337,7 @@
         "code_completion": {
             "type": "string",
             "enum": ["always", "never", "triggered", "manual"],
+            "enumReadable": ["Automatically", "Never", "When triggered ($, ::)", "Manually (tab)"],
             "default": "always",
             "title": "Use code completion for R",
             "description": "When to use auto-completion for R code in the RStudio code editor."
@@ -341,6 +345,7 @@
         "code_completion_other": {
             "type": "string",
             "enum": ["always", "triggered", "manual"],
+            "enumReadable": ["Automatically", "When triggered", "Manually (ctrl+space)"],
             "default": "always",
             "title": "Use code completion for other languages",
             "description": "When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor."
@@ -504,6 +509,7 @@
         "fold_style": {
             "type": "string",
             "enum": ["begin-only", "begin-and-end"],
+            "enumReadable": ["Start Only", "Start and End"],
             "default": "begin-and-end",
             "title": "Fold style in editor",
             "description": "The style of folding to use."
@@ -858,6 +864,7 @@
         "execution_behavior": {
             "type": "string",
             "enum": ["line", "statement", "paragraph"],
+            "enumReadable": ["Current line", "Multi-line R statement", "Multiple consecutive R lines"],
             "default": "statement",
             "title": "Unit of R code execution",
             "description": "The unit of R code to execute when the Execute command is invoked."
@@ -1053,6 +1060,18 @@
             "default": false,
             "title": "Double click to select in the Console",
             "description": "Whether double-clicking should select a word in the Console pane."
+        },
+        "console_suspend_blocked_notice": {
+            "type": "boolean",
+            "default": true,
+            "title": "Warn when automatic session suspension is paused",
+            "description": "Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar."
+        },
+        "console_suspend_blocked_notice_delay": {
+            "type": "integer",
+            "default": 5,
+            "title": "Number of seconds to delay warning",
+            "description": "How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices."
         },
         "new_proj_git_init": {
             "type": "boolean",
@@ -1274,6 +1293,7 @@
         "auto_save_on_idle": {
             "type": "string",
             "enum": ["commit", "backup", "none"],
+            "enumReadable": ["Save and write changes", "Backup unsaved changes", "Do nothing"],
             "default": "backup",
             "title": "Autosave mode on idle",
             "description": "How to deal with changes to documents on idle."

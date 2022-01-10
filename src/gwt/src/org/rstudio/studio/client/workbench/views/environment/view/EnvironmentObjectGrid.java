@@ -1,7 +1,7 @@
 /*
  * EnvironmentObjectGrid.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
 import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
 import com.google.gwt.cell.client.Cell;
@@ -150,7 +151,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
          @Override
          public LabeledBoolean getValue()
          {
-            return new LabeledBoolean("Select all", selectAll_);
+            return new LabeledBoolean(constants_.selectAll(), selectAll_);
          }
       };
       checkHeader_.setUpdater(new ValueUpdater<LabeledBoolean>()
@@ -166,7 +167,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       });
 
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(filterRenderer_), "Name",
+              new ClickableTextCell(filterRenderer_), constants_.nameCapitalized(),
               selectionEnabled() ? 20 : 25,
               ObjectGridColumn.COLUMN_NAME, host_)
               {
@@ -177,7 +178,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Type", 15,
+              new ClickableTextCell(), constants_.typeCapitalized(), 15,
               ObjectGridColumn.COLUMN_TYPE, host_)
               {
                   @Override
@@ -187,7 +188,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Length", 10,
+              new ClickableTextCell(), constants_.lengthCapitalized(), 10,
               ObjectGridColumn.COLUMN_LENGTH, host_)
               {
                   @Override
@@ -200,7 +201,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   }
               });
       columns_.add(new ObjectGridColumn(
-              new ClickableTextCell(), "Size", 12,
+              new ClickableTextCell(), constants_.sizeCapitalized(), 12,
               ObjectGridColumn.COLUMN_SIZE, host_)
               {
                   @Override
@@ -211,7 +212,7 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
               });
       columns_.add(new ObjectGridColumn(
               new ClickableTextCell(filterRenderer_),
-              "Value", 38,
+              constants_.valueCapitalized(), 38,
               ObjectGridColumn.COLUMN_VALUE, host_)
               {
                   @Override
@@ -400,4 +401,5 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
    private Style style_;
    private SelectionModel<RObjectEntry> selection_;
    private boolean selectAll_ = false;
+   private static final ViewEnvironmentConstants constants_ = com.google.gwt.core.client.GWT.create(ViewEnvironmentConstants.class);
 }

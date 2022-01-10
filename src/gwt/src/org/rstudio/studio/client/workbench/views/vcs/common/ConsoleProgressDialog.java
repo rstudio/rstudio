@@ -1,7 +1,7 @@
 /*
  * ConsoleProgressDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.vcs.common;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -44,6 +45,7 @@ import org.rstudio.studio.client.common.shell.ShellOutputWriter;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 
 public class ConsoleProgressDialog extends ProgressDialog
                                    implements ConsoleOutputEvent.Handler, 
@@ -129,7 +131,7 @@ public class ConsoleProgressDialog extends ProgressDialog
       if (getInteractionMode() == ConsoleProcessInfo.INTERACTION_ALWAYS)
       {
          hideProgress();
-         stopButton().setText("Close");
+         stopButton().setText(constants_.closeCapitalized());
          
          int height = Window.getClientHeight() - 150;
          int width = Math.min(800, Window.getClientWidth() - 150);
@@ -140,7 +142,7 @@ public class ConsoleProgressDialog extends ProgressDialog
       else
       {
          showProgress();
-         stopButton().setText("Stop");
+         stopButton().setText(constants_.stopCapitalized());
       }
       
       stopButton().addClickHandler(this);
@@ -270,7 +272,7 @@ public class ConsoleProgressDialog extends ProgressDialog
    private void setExitCode(int exitCode)
    {
       running_ = false;
-      stopButton().setText("Close");
+      stopButton().setText(constants_.closeCapitalized());
       stopButton().setDefault(true);
       hideProgress();
    }
@@ -361,4 +363,5 @@ public class ConsoleProgressDialog extends ProgressDialog
    private final ShellOutputWriter outputWriter_;
   
    private ShellDisplay display_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

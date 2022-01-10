@@ -1,7 +1,7 @@
 /*
  * NewConnectionShinyPage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResourceUrl;
 import org.rstudio.core.client.widget.ModalDialogBase;
@@ -21,6 +22,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionContext;
 import org.rstudio.studio.client.workbench.views.connections.model.NewConnectionInfo;
@@ -35,7 +37,7 @@ public class NewConnectionShinyPage
    {
       super(info.getName(),
             subTitle,
-            info.getName() + " Connection",
+            constants_.newConnectionPage(info.getName()),
             StringUtil.isNullOrEmpty(info.iconData()) ? null
                   : new ImageResourceUrl(new SafeUri()
                   {
@@ -91,7 +93,7 @@ public class NewConnectionShinyPage
          return null;
 
       return new HelpLink(
-         "Using " + info_.getName(),
+         constants_.connectionHelpLink(info_.getName()),
          info_.getHelp(),
          false,
          false);
@@ -111,4 +113,5 @@ public class NewConnectionShinyPage
    
    private NewConnectionShinyHost contents_;
    private NewConnectionInfo info_;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }
