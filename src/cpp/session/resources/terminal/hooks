@@ -3,6 +3,12 @@
 # if we have a conda prefix, ensure it's still used
 if [ -n "${_RS_CONDA_PREFIX}" ]; then
 
+	# if we're running on WSL, we need to conver the path
+	# here to a Linux-style path
+	if command -v wslpath 2> /dev/null; then
+		_RS_CONDA_PREFIX=$(wslpath "${_RS_CONDA_PREFIX}")
+	fi
+
 	# ideally, we'd call conda activate here,
 	# but users (especially on Windows) might not
 	# have called 'conda init' with their shell,
@@ -18,7 +24,10 @@ if [ -n "${_RS_CONDA_PREFIX}" ]; then
 	case "$(uname -s)" in
 	MINGW32*)
 		
-		_CONDA_PREFIX=$(cygpath "${CONDA_PREFIX}")
+		if command -v cygpath 2> /dev/null; then
+			_CONDA_PREFIX=$(cygpath "${CONDA_PREFIX}")
+		fi
+		
 		_CONDA_SUFFIXES=(
 			bin
 			Scripts
@@ -57,7 +66,9 @@ if [ -f "${RETICULATE_PYTHON}" ]; then
 	# munge path for MINGW32 if necessary
 	case "$(uname -s)" in
 	MINGW32*)
-		_RS_PYTHON_BIN=$(cygpath "${_RS_PYTHON_BIN}")
+		if command -v cygpath 2> /dev/null; then
+			_RS_PYTHON_BIN=$(cygpath "${_RS_PYTHON_BIN}")
+		fi
 	;;
 	esac
 
