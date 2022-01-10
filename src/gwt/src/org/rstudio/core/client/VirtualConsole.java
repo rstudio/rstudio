@@ -251,6 +251,16 @@ public class VirtualConsole
       Entry<Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
 
+      if (hyperlink_ != null ) {
+         // currently an hyperlink to display
+
+         // if the previous range does not display an hyperlink, or 
+         // it's different: force new range. 
+         if (range.hyperlink_ == null || !StringUtil.equals(range.hyperlink_.url_, hyperlink_.url_)) {
+            forceNewRange = true;
+         }
+      }
+
       if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
       {
          // just append to the existing output stream
@@ -413,7 +423,7 @@ public class VirtualConsole
                      end,
                      overlap.clazz,
                      text.substring((text.length() - (amountTrimmed - range.length))), 
-                     null); // TODO: not sure about this
+                     overlap.hyperlink_);
                insertions.add(remainder);
                if (parent_ != null)
                   range.element.getParentElement().insertAfter(remainder.element, range.element);
@@ -554,7 +564,6 @@ public class VirtualConsole
 
       int tail = 0;
       
-      boolean hyperlink_code = false;
       while (match != null)
       {
          int pos = match.getIndex();
@@ -562,15 +571,13 @@ public class VirtualConsole
          // character, add it.
          if (tail != pos)
          {
-            // force a new range when an hyperlink opens or closes
-            if (hyperlink_code) forceNewRange = true;
-
             text(data.substring(tail, pos), currentClazz, forceNewRange);
 
             // once we've started a new range, rest of output for this submit
             // call should share that range (e.g. a multi-line error message)
             // unless the previous code is hyperlink (open or close)
-            if (!hyperlink_code) forceNewRange = false;
+      
+            forceNewRange = false;
          }
 
          tail = pos + 1;
@@ -612,7 +619,6 @@ public class VirtualConsole
 
                   // discard either start or end anchor code
                   tail = pos + hyperlinkMatch.getValue().length();
-                  hyperlink_code = true;
                   break;
                }
                
