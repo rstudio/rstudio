@@ -1,3 +1,7 @@
+const { createFullPackageFileName } = require('./scripts/create-full-package-file-name.js');
+// This function makes sure that the correct filename is created and saved for the final DMG file.
+createFullPackageFileName();
+
 const dmgSize = {
   height: 450,
   width: 801,
@@ -10,7 +14,7 @@ const dmgApplicationsPosition = {
   y: Math.round((dmgSize.height * 57.99) / 100),
 };
 
-module.exports = {
+const config = {
   hooks: {
     postPackage: async (forgeConfig, options) => {
       // Run import-resources.ts script to copy all the non-Electron bits
@@ -41,9 +45,6 @@ module.exports = {
       return promise;
     },
   },
-  packagerConfig: {
-    icon: './resources/icons/RStudio',
-  },
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
@@ -67,6 +68,7 @@ module.exports = {
       name: '@electron-forge/maker-dmg',
       config: {
         format: 'ULFO',
+        name: 'Rstudio-electron-app',
         background: './resources/background/dmg-background.tiff',
         icon: './resources/icons/RStudio.icns',
         iconSize,
@@ -133,4 +135,37 @@ module.exports = {
       },
     ],
   ],
+  packagerConfig: {
+    icon: './resources/icons/RStudio',
+  },
 };
+
+if (
+  process.env.APPLE_ID !== undefined &&
+  process.env.APPLE_ID_PASSWORD !== undefined &&
+  process.env.APPLE_ID !== '' &&
+  process.env.APPLE_ID_PASSWORD !== ''
+) {
+  config.packagerConfig = {
+    ...config.packagerConfig,
+    appBundleId: 'org.rstudio.RStudio',
+    osxSign: {
+      'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
+      'entitlements': 'resources/electron-entitlements.mac.plist',
+      'entitlements-inherit': 'resources/electron-entitlements.mac.plist',
+      'hardened-runtime': true,
+      'gatekeeper-assess': false,
+      'signature-flags': 'library',
+    },
+    osxNotarize: {
+      appleId: process.env.APPLE_ID,
+      appleIdPassword: process.env.APPLE_ID_PASSWORD,
+      appBundleId: 'org.rstudio.RStudio',
+      ascProvider: 'RStudioInc',
+    },
+  };
+} else {
+  console.warn('Should be notarizing, but environment variables APPLE_ID or APPLE_ID_PASSWORD are missing!');
+}
+
+module.exports = config;
