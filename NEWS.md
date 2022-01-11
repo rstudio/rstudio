@@ -35,6 +35,12 @@
 * Show user's full name, or proxied auth display name, in Project Sharing presence indicator (Pro #3121)
 * Allow users to specify R version in launcher jobs (Pro #1046)
 
+#### R
+
+* RStudio now supports the experimental UTF-8 UCRT builds of R (#9824)
+* Preliminary support for R graphics engine version 15 in R 4.2.0. (#10058)
+* Default file download method in Windows for R 4.2 and above changed from `wininet` to `libcurl` (#10163)
+
 #### Misc
 
 * Add commands to open selected files in columns or active editor (#7920)
@@ -49,11 +55,6 @@
 * Treat Alt and Caption fields differently depending on file type (#9713)
 * Fixed shortcut conflict on German keyboard (#9276)
 * Updated shinymod snippet for Shiny modules (#10009)
-
-#### R
-
-* RStudio now supports the experimental UTF-8 UCRT builds of R (#9824)
-* Preliminary support for R graphics engine version 15 in R 4.2.0. (#10058)
 
 ### Fixed
 
