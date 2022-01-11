@@ -738,11 +738,11 @@
             "title": "Enable the Packages pane",
             "description": "Whether to enable RStudio's Packages pane."
         },
-        "use_rcpp_template": {
-            "type": "boolean",
-            "default": true,
-            "title": "Use RCpp file templates",
-            "description": "Whether to use RCPP templates."
+        "cpp_template": {
+            "type": "string",
+            "default": "Rcpp",
+            "title": "C++ template",
+            "description": "C++ template."
         },
         "restore_source_documents": {
             "type": "boolean",

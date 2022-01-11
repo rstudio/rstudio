@@ -3109,7 +3109,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRealTimeSpellchecking,
       kNavigateToBuildError,
       kPackagesPaneEnabled,
-      kUseRcppTemplate,
+      kCppTemplate,
       kRestoreSourceDocuments,
       kHandleErrorsInUserCodeOnly,
       kAutoExpandErrorTracebacks,

@@ -1541,7 +1541,7 @@ public class UserPrefsAccessor extends Prefs
     public PrefValue<String> cppTemplate()
     {
        return string(
-          "use_rcpp_template",
+          "cpp_template",
           _constants.cppTemplateTitle(), 
           _constants.cppTemplateDescription(), 
           "Rcpp");
