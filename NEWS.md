@@ -33,6 +33,7 @@
 * Added SSL communication between RSW and remote sessions (using the job launcher). It's enabled by default and can be disabled in rserver.conf by setting session-ssl-enabled=0. Certificates are generated for each job by default or can be manually configured. (Pro #3026)
 * Disable session SSL for Code Server 3.9.3 and support auth changes in Code Server 3.11.0 (Pro #3111)
 * Show user's full name, or proxied auth display name, in Project Sharing presence indicator (Pro #3121)
+* Allow users to specify R version in launcher jobs (Pro #1046)
 
 #### Misc
 
@@ -67,6 +68,7 @@
 * Fixed permissions on Mac Desktop application so all user accounts can launch it (#9945, #10267)
 * Fixed logging directory permissions to be more restrictive (775 instead of 777) (#3099)
 * Fixed Duplicate --session-collab-server when launching R session (pro #3106)
+* Fixed errors when opening or saving Rmarkdown documents when R is busy (#9868)
 
 ### Breaking
 * Remove --session-collab-server and filebase-path (pro #3181)
