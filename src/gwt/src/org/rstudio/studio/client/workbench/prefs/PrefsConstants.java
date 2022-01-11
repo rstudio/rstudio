@@ -4197,4 +4197,292 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("refLocationDocument")
     String refLocationDocument();
 
+    /**
+     * Translated "Other Languages".
+     *
+     * @return translated "Other Languages"
+     */
+    @DefaultMessage("Other Languages")
+    @Key("editingDiagOtherLabel")
+    String editingDiagOtherLabel();
+
+    /**
+     * Translated "Show Diagnostics".
+     *
+     * @return translated "Show Diagnostics"
+     */
+    @DefaultMessage("Show Diagnostics")
+    @Key("editingDiagShowLabel")
+    String editingDiagShowLabel();
+
+    /**
+     * Translated "R Diagnostics".
+     *
+     * @return translated "R Diagnostics"
+     */
+    @DefaultMessage("R Diagnostics")
+    @Key("editingDiagnosticsPanel")
+    String editingDiagnosticsPanel();
+
+    /**
+     * Translated "General".
+     *
+     * @return translated "General"
+     */
+    @DefaultMessage("General")
+    @Key("editingDisplayPanel")
+    String editingDisplayPanel();
+
+    /**
+     * Translated "Modify Keyboard Shortcuts...".
+     *
+     * @return translated "Modify Keyboard Shortcuts..."
+     */
+    @DefaultMessage("Modify Keyboard Shortcuts...")
+    @Key("editingEditShortcuts")
+    String editingEditShortcuts();
+
+    /**
+     * Translated "Execution".
+     *
+     * @return translated "Execution"
+     */
+    @DefaultMessage("Execution")
+    @Key("editingExecutionLabel")
+    String editingExecutionLabel();
+
+    /**
+     * Translated "Completion Delay".
+     *
+     * @return translated "Completion Delay"
+     */
+    @DefaultMessage("Completion Delay")
+    @Key("editingHeaderLabel")
+    String editingHeaderLabel();
+
+    /**
+     * Translated "Other Languages".
+     *
+     * @return translated "Other Languages"
+     */
+    @DefaultMessage("Other Languages")
+    @Key("editingOtherLabel")
+    String editingOtherLabel();
+
+    /**
+     * Translated "Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL.".
+     *
+     * @return translated "Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL."
+     */
+    @DefaultMessage("Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL.")
+    @Key("editingOtherTip")
+    String editingOtherTip();
+
+    /**
+     * Translated "General".
+     *
+     * @return translated "General"
+     */
+    @DefaultMessage("General")
+    @Key("editingSavePanel")
+    String editingSavePanel();
+
+    /**
+     * Translated "Change...".
+     *
+     * @return translated "Change..."
+     */
+    @DefaultMessage("Change...")
+    @Key("editingSavePanelAction")
+    String editingSavePanelAction();
+
+    /**
+     * Translated "Auto-save".
+     *
+     * @return translated "Auto-save"
+     */
+    @DefaultMessage("Auto-save")
+    @Key("editingSavePanelAutosave")
+    String editingSavePanelAutosave();
+
+    /**
+     * Translated "Serialization".
+     *
+     * @return translated "Serialization"
+     */
+    @DefaultMessage("Serialization")
+    @Key("editingSerializationLabel")
+    String editingSerializationLabel();
+
+    /**
+     * Translated "Help on code snippets".
+     *
+     * @return translated "Help on code snippets"
+     */
+    @DefaultMessage("Help on code snippets")
+    @Key("editingSnippetHelpTitle")
+    String editingSnippetHelpTitle();
+
+    /**
+     * Translated "Snippets".
+     *
+     * @return translated "Snippets"
+     */
+    @DefaultMessage("Snippets")
+    @Key("editingSnippetsLabel")
+    String editingSnippetsLabel();
+
+    /**
+     * Translated "Editing".
+     *
+     * @return translated "Editing"
+     */
+    @DefaultMessage("Editing")
+    @Key("editingTabPanel")
+    String editingTabPanel();
+
+    /**
+     * Translated "Completion".
+     *
+     * @return translated "Completion"
+     */
+    @DefaultMessage("Completion")
+    @Key("editingTabPanelCompletionPanel")
+    String editingTabPanelCompletionPanel();
+
+    /**
+     * Translated "Diagnostics".
+     *
+     * @return translated "Diagnostics"
+     */
+    @DefaultMessage("Diagnostics")
+    @Key("editingTabPanelDiagnosticsPanel")
+    String editingTabPanelDiagnosticsPanel();
+
+    /**
+     * Translated "Display".
+     *
+     * @return translated "Display"
+     */
+    @DefaultMessage("Display")
+    @Key("editingTabPanelDisplayPanel")
+    String editingTabPanelDisplayPanel();
+
+    /**
+     * Translated "Saving".
+     *
+     * @return translated "Saving"
+     */
+    @DefaultMessage("Saving")
+    @Key("editingTabPanelSavePanel")
+    String editingTabPanelSavePanel();
+
+    /**
+     * Translated "R and C/C++".
+     *
+     * @return translated "R and C/C++"
+     */
+    @DefaultMessage("R and C/C++")
+    @Key("editingCompletionPanel")
+    String editingCompletionPanel();
+
+    /**
+     * Translated "General".
+     *
+     * @return translated "General"
+     */
+    @DefaultMessage("General")
+    @Key("editingHeader")
+    String editingHeader();
+
+    /**
+     * Translated "No bindings available".
+     *
+     * @return translated "No bindings available"
+     */
+    @DefaultMessage("No bindings available")
+    @Key("editingKeyboardShortcuts")
+    String editingKeyboardShortcuts();
+
+    /**
+     * Translated "Keyboard Shortcuts".
+     *
+     * @return translated "Keyboard Shortcuts"
+     */
+    @DefaultMessage("Keyboard Shortcuts")
+    @Key("editingKeyboardText")
+    String editingKeyboardText();
+
+    /**
+     * Translated "Customized".
+     *
+     * @return translated "Customized"
+     */
+    @DefaultMessage("Customized")
+    @Key("editingRadioCustomized")
+    String editingRadioCustomized();
+
+    /**
+     * Translated "Filter...".
+     *
+     * @return translated "Filter..."
+     */
+    @DefaultMessage("Filter...")
+    @Key("editingFilterWidget")
+    String editingFilterWidget();
+
+    /**
+     * Translated "Reset...".
+     *
+     * @return translated "Reset..."
+     */
+    @DefaultMessage("Reset...")
+    @Key("editingResetText")
+    String editingResetText();
+
+    /**
+     * Translated "Reset Keyboard Shortcuts".
+     *
+     * @return translated "Reset Keyboard Shortcuts"
+     */
+    @DefaultMessage("Reset Keyboard Shortcuts")
+    @Key("editingGlobalDisplay")
+    String editingGlobalDisplay();
+
+    /**
+     * Translated "Are you sure you want to reset keyboard shortcuts to their default values? ".
+     *
+     * @return translated "Are you sure you want to reset keyboard shortcuts to their default values? "
+     */
+    @DefaultMessage("Are you sure you want to reset keyboard shortcuts to their default values? ")
+    @Key("editingGlobalCaption")
+    String editingGlobalCaption();
+
+    /**
+     * Translated "This action cannot be undone.".
+     *
+     * @return translated "This action cannot be undone."
+     */
+    @DefaultMessage("This action cannot be undone.")
+    @Key("editingGlobalMessage")
+    String editingGlobalMessage();
+
+    /**
+     * Translated "Resetting Keyboard Shortcuts...".
+     *
+     * @return translated "Resetting Keyboard Shortcuts..."
+     */
+    @DefaultMessage("Resetting Keyboard Shortcuts...")
+    @Key("editingProgressMessage")
+    String editingProgressMessage();
+
+    /**
+     * Translated "Cancel".
+     *
+     * @return translated "Cancel"
+     */
+    @DefaultMessage("Cancel")
+    @Key("editingCancelShortcuts")
+    String editingCancelShortcuts();
+
 }
