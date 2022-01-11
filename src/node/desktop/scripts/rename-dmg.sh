@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # This should be run after the dmg is created, and after create-full-package-file-name.js also runs from inside forge.config.js
-
+# TODO: This should not be run out of `./rename-dmg.sh` due to windows restrictions
 OUT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)/../out"
 
 FILENAME_EXTENSION="filename"
