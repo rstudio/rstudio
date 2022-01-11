@@ -1,6 +1,9 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:widget="urn:import:org.rstudio.core.client.widget">
+             xmlns:widget="urn:import:org.rstudio.core.client.widget"
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
       .panel {
@@ -17,14 +20,14 @@
    </ui:style>
 
    <g:HTMLPanel styleName="{style.panel}">
-         <widget:FormLabel for="{ElementIds.getNewRdName}" text="Topic name:"/>
+         <widget:FormLabel for="{ElementIds.getNewRdName}" text="Topic name:"><ui:attribute name="text" key="topicName"/></widget:FormLabel>
          <widget:FormTextBox elementId="{ElementIds.getNewRdName}" ui:field="txtName_" styleName="{style.fillWidth}"/> <br/>
          
-         <widget:FormLabel for="{ElementIds.getNewRdTemplate}" text="Rd template:"/>
+         <widget:FormLabel for="{ElementIds.getNewRdTemplate}" text="Rd template:"><ui:attribute name="text" key="templateText"/></widget:FormLabel>
          <widget:FormListBox elementId="{ElementIds.getNewRdTemplate}" ui:field="listDocType_" styleName="{style.fillWidth}">
-            <g:item value="function">Function</g:item>
-            <g:item value="data">Dataset</g:item>
-            <g:item value="none">(Empty Topic)</g:item>
+            <g:item value="function"><ui:msg key="function">Function</ui:msg></g:item>
+            <g:item value="data"><ui:msg key="dataset">Dataset</ui:msg></g:item>
+            <g:item value="none"><ui:msg key="emptyTopic">(Empty Topic)</ui:msg></g:item>
          </widget:FormListBox> <br/>
    </g:HTMLPanel>
 

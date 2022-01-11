@@ -1,7 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
-   xmlns:rw="urn:import:org.rstudio.core.client.widget">
+   xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
       .spaced, .header {
@@ -21,15 +24,16 @@
       }
    </ui:style>
    <g:VerticalPanel styleName="{style.outer}" width="350px">
-      <g:Label styleName="{style.header}" text="Script Paths"></g:Label>
+      <g:Label styleName="{style.header}" text="Script Paths"><ui:attribute name="text" key="scriptPathsText"/></g:Label>
       <rw:FileChooserTextBox styleName="{style.spaced}" ui:field="file_"></rw:FileChooserTextBox>
       <rw:DirectoryChooserTextBox styleName="{style.spaced}" ui:field="dir_"></rw:DirectoryChooserTextBox>
-      <g:Label styleName="{style.header}" text="Environment"></g:Label>
+      <g:Label styleName="{style.header}" text="Environment"><ui:attribute name="text" key="environmentText"/></g:Label>
       <g:CheckBox styleName="gwt-CheckBox {style.check} {style.spaced}" 
                   text="Run job with copy of global environment" 
-                  ui:field="importEnv_"></g:CheckBox>
+                  ui:field="importEnv_"><ui:attribute name="text" key="runJobText"/></g:CheckBox>
       <g:HorizontalPanel>
-         <rw:InlineFormLabel forId="{ElementIds.getJobLauncherEnvironment}" text="Copy job results: "/>
+         <rw:InlineFormLabel forId="{ElementIds.getJobLauncherEnvironment}" text="Copy job results: "><ui:attribute
+                 name="text" key="copyJobText"/></rw:InlineFormLabel>
          <rw:FormListBox elementId="{ElementIds.getJobLauncherEnvironment}"
                          styleName="{style.check} {style.spaced}" ui:field="exportEnv_"/>
       </g:HorizontalPanel>

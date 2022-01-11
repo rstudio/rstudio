@@ -3,7 +3,10 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
    xmlns:rc="urn:import:org.rstudio.studio.client.common"
-   xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui">
+   xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
 
    <ui:with field="resources" type="org.rstudio.studio.client.common.newdocument.NewDocumentResources" />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
@@ -38,6 +41,7 @@
            </rw:LayoutGrid>
            <rw:FieldSetPanel legend="Default Output Format:" styleName="{resources.styles.defaultOutputLabel}">
               <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
+               <ui:attribute name="legend" key="defaultOutputFormat"/>
            </rw:FieldSetPanel>
         </g:HTMLPanel>
         <g:HTMLPanel ui:field="existingTemplatePanel_">
