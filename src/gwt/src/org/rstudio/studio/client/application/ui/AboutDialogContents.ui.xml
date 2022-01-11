@@ -176,38 +176,31 @@
             <g:HTMLPanel styleName="{style.trademarkNotice}">
                <g:InlineLabel
                   text="RStudio and Shiny are registered trademarks of RStudio, PBC, all rights reserved. See">
-                  <ui:attribute name="text" key="trademarkNotice"/>
                </g:InlineLabel>
                <g:Anchor
                   href="https://www.rstudio.com/about/trademark/"
                   text="https://www.rstudio.com/about/trademark/"
                   target="_blank"></g:Anchor>
-               <g:InlineLabel
-                  text="for permitted uses and guidelines.">
-                  <ui:attribute name="text" key="permittedUsesText"/>
-               </g:InlineLabel>
+               <g:InlineLabel text="for permitted uses and guidelines."></g:InlineLabel>
             </g:HTMLPanel>
             <g:HTMLPanel ui:field="gplNotice">
                <g:InlineLabel
-                  text="Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement with RStudio, then this program is licensed to you under the terms of version 3 of the GNU">
-                  <ui:attribute name="text" key="gplNoticeText"/>
-               </g:InlineLabel>
+                       text="Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement with RStudio, then this program is licensed to you under the terms of version 3 of the GNU"></g:InlineLabel>
                <g:Anchor ui:field="gplLink" href="http://www.gnu.org/licenses/agpl-3.0.txt"
                   text="Affero General Public License."
-                  target="_blank"><ui:attribute name="text" key="gplText"/> </g:Anchor>
-               <g:InlineLabel ui:field="gplLinkLabel" text="(opens in new window)" styleName="{res.themeStyles.visuallyHidden}"><ui:attribute
-                       name="text" key="openInNewWindowText"/></g:InlineLabel>
+                  target="_blank"></g:Anchor>
+               <g:InlineLabel ui:field="gplLinkLabel" text="(opens in new window)" styleName="{res.themeStyles.visuallyHidden}"></g:InlineLabel>
             </g:HTMLPanel>
          </g:HTMLPanel>
          <g:HTMLPanel styleName="{style.notice}">
             <rw:HyperlinkLabel
-                  text="Open Source Components"
-                  addStyleNames="{style.noticeLink} {res.themeStyles.handCursor}"
-                  ui:field="showNoticelink_"><ui:attribute name="text" key="openSourceComponents"/></rw:HyperlinkLabel>
+                    text="Open Source Components"
+                    addStyleNames="{style.noticeLink} {res.themeStyles.handCursor}"
+                    ui:field="showNoticelink_"/>
          </g:HTMLPanel>
          <g:HTMLPanel ui:field="licenseLabel" visible="false">
             <rw:FormLabel text="RStudio Pro License Status" styleName="{style.licenseLabel}"
-               for="{ElementIds.getAboutLicenseInfo}"><ui:attribute name="text" key="licenseLabel"/></rw:FormLabel>
+                          for="{ElementIds.getAboutLicenseInfo}"/>
          </g:HTMLPanel>
          <rw:FormTextArea ui:field="licenseBox" styleName="{style.licenseBox}"
             visibleLines="10" visible="false" readOnly="true" elementId="{ElementIds.getAboutLicenseInfo}"/>
