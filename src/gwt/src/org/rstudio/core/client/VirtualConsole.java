@@ -578,8 +578,6 @@ public class VirtualConsole
 
             // once we've started a new range, rest of output for this submit
             // call should share that range (e.g. a multi-line error message)
-            // unless the previous code is hyperlink (open or close)
-      
             forceNewRange = false;
          }
 
