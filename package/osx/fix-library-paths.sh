@@ -26,7 +26,6 @@ FILES="$3"
 
 cd "$DIR"
 for FILE in ${FILES}; do
-   echo "FILE: $FILE"
 
    install_name_tool -id "${FILE}" "${FILE}"
 
