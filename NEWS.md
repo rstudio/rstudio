@@ -55,6 +55,7 @@
 * Treat Alt and Caption fields differently depending on file type (#9713)
 * Fixed shortcut conflict on German keyboard (#9276)
 * Updated shinymod snippet for Shiny modules (#10009)
+* Fixed an issue where `conda install` could fail within a Git Bash terminal on Windows (#10283)
 
 ### Fixed
 
@@ -73,7 +74,10 @@
 * Fixed errors when opening or saving Rmarkdown documents when R is busy (#9868)
 
 ### Breaking
+
 * Remove --session-collab-server and filebase-path (pro #3181)
 
 ### Deprecated / Removed
+
 There is no deprecated or removed functionality in this release.
+

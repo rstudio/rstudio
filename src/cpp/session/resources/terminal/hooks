@@ -3,8 +3,48 @@
 # if we have a conda prefix, ensure it's still used
 if [ -n "${_RS_CONDA_PREFIX}" ]; then
 
-	# activate the environment
-	conda activate "${_RS_CONDA_PREFIX}"
+	# if we're running on WSL, we need to convert the path
+	# here to a Linux-style path
+	if command -v wslpath >/dev/null 2>&1; then
+		_RS_CONDA_PREFIX=$(wslpath "${_RS_CONDA_PREFIX}")
+	fi
+
+	# ideally, we'd call conda activate here,
+	# but users (especially on Windows) might not
+	# have called 'conda init' with their shell,
+	# so we fake the process here
+	CONDA_PREFIX="${_RS_CONDA_PREFIX}"
+	export CONDA_PREFIX
+
+	# on Windows, we need to put a number of locations
+	# on the PATH for conda utilities to function
+	#
+	# in particular, conda's crypto libraries need to
+	# be on the PATH for 'conda install' to function
+	case "$(uname -s)" in
+	MINGW32*)
+		
+		if command -v cygpath >/dev/null 2>&1; then
+			_CONDA_PREFIX=$(cygpath "${CONDA_PREFIX}")
+		fi
+		
+		_CONDA_SUFFIXES=(
+			bin
+			Scripts
+			Library/bin
+			Library/usr/bin
+			Library/mingw-w64/bin
+		)
+		
+		for _CONDA_SUFFIX in ${_CONDA_SUFFIXES[@]}; do
+			PATH="${_CONDA_PREFIX}/${_CONDA_SUFFIX}:${PATH}"
+		done
+
+		unset _CONDA_PREFIX
+		unset _CONDA_SUFFIX
+		unset _CONDA_SUFFIXES
+	;;
+	esac
 
 	# unset CONDA_PROMPT_MODIFIER for project-local envs
 	# (look for slash in environment variable value)
@@ -22,6 +62,15 @@ fi
 if [ -f "${RETICULATE_PYTHON}" ]; then
 
 	_RS_PYTHON_BIN=$(dirname "${RETICULATE_PYTHON}")
+
+	# munge path for MINGW32 if necessary
+	case "$(uname -s)" in
+	MINGW32*)
+		if command -v cygpath >/dev/null 2>&1; then
+			_RS_PYTHON_BIN=$(cygpath "${_RS_PYTHON_BIN}")
+		fi
+	;;
+	esac
 
 	# if a Scripts sub-directory exists, place that on
 	# the PATH as well (primarily for conda on Windows)
