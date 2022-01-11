@@ -1554,33 +1554,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String serverHomePageNeverOption();
 
     /**
-     * Translated "sessions".
-     *
-     * @return translated "sessions"
-     */
-    @DefaultMessage("sessions")
-    @Key("serverHomePageSessions")
-    String serverHomePageSessions();
-
-    /**
-     * Translated "always".
-     *
-     * @return translated "always"
-     */
-    @DefaultMessage("always")
-    @Key("serverHomePageAlways")
-    String serverHomePageAlways();
-
-    /**
-     * Translated "never".
-     *
-     * @return translated "never"
-     */
-    @DefaultMessage("never")
-    @Key("serverHomePageNever")
-    String serverHomePageNever();
-
-    /**
      * Translated "Re-use idle sessions for project links".
      *
      * @return translated "Re-use idle sessions for project links"

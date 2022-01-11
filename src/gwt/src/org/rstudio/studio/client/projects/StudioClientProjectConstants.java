@@ -2125,15 +2125,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String packageLabel();
 
     /**
-     * Translated "package".
-     *
-     * @return translated "package"
-     */
-    @DefaultMessage("package")
-    @Key("packageValue")
-    String packageValue();
-
-    /**
      * Translated "Git/SVN".
      *
      * @return translated "Git/SVN"
