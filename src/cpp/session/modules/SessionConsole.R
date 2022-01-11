@@ -16,10 +16,6 @@
 
 .rs.addJsonRpcHandler("console_follow_hyperlink", function(url, text, params)
 {
-  if (!grepl("://", url)) {
-    stop("missing scheme")
-  }
-
   # `params=` follows the key1=value1:key2:value2 pattern
   # https://iterm2.com/documentation-escape-codes.html
   #
@@ -34,56 +30,34 @@
     names(params) <- names
   }
   
-  scheme <- sub("://.*$", "", url)
-  handler <- switch(scheme, 
-    # rstatshelp:://stats/rnorm
-    # rstatshelp:://stats::rnorm
-    rstatshelp = function(url) {
-      url <- sub("rstatshelp://", "", url)
-      parts <- strsplit(url, "/")[[1L]]
-
-      if (length(parts) == 2L) {
-        .rs.showHelpTopic(topic = parts[[2L]], package = parts[[1L]])
-      } else {
-        # help::rnorm
-        .rs.showHelpTopic(topic = parts[[1L]], package = NULL)
-      }
-    }, 
-
+  if (grepl("^file://", url)) {
     # file:://some/file/path
     # file:://some/file/path#32
     # file:://some/file/path#32,15
-    file = function(url) {
-      url <- sub("file://", "", url)
-      parts <- strsplit(url, ":")[[1L]]
-      file <- parts[[1L]]
+    url <- sub("file://", "", url)
+    parts <- strsplit(url, ":")[[1L]]
+    file <- parts[[1L]]
 
-      line <- -1L
-      if (length(parts) > 1) {
-        line <- as.numeric(parts[[2L]])
-      }
-
-      col <- -1L
-      if (length(parts) > 2) {
-        col <- as.numeric(parts[[3L]])
-      }
-
-      .rs.api.navigateToFile(file, line = line, col = col, moveCursor = TRUE)
-    }, 
-
-    # anything else opens in the browser, or the viewer
-    # http://example.com
-    function(url) {
-      viewer <- utils::browseURL
-      
-      if (identical(params$target, "viewer")) {
-        viewer <- .rs.api.viewer
-      }
-
-      viewer(url)
+    line <- -1L
+    if (length(parts) > 1) {
+      line <- as.numeric(parts[[2L]])
     }
-    
-  )
-  handler(url)
 
+    col <- -1L
+    if (length(parts) > 2) {
+      col <- as.numeric(parts[[3L]])
+    }
+
+    .rs.api.navigateToFile(file, line = line, col = col, moveCursor = TRUE)
+  } else {
+    # anything else goes through utils::browseURL() or the viewer
+    # utils::browseURL() in turn knows how to open local help files
+    # e.g. "http://localhost:8787/library/base/html/mean.html" in the help pane
+    # in the help pane
+    if (identical(params$target, "viewer")) {
+      .rs.api.viewer(url)
+    } else {
+      utils::browseURL(url)
+    }
+  }
 })
