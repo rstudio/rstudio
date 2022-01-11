@@ -102,7 +102,8 @@ public class VirtualConsole
    }
 
    @Inject 
-   private void initialize(ConsoleServerOperations server) {
+   private void initialize(ConsoleServerOperations server)
+   {
       server_ = server;
    }
 
@@ -251,12 +252,14 @@ public class VirtualConsole
       Entry<Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
 
-      if (hyperlink_ != null ) {
+      if (hyperlink_ != null)
+      {
          // currently an hyperlink to display
 
          // if the previous range does not display an hyperlink, or 
          // it's different: force new range. 
-         if (range.hyperlink_ == null || !StringUtil.equals(range.hyperlink_.url_, hyperlink_.url_)) {
+         if (range.hyperlink_ == null || !StringUtil.equals(range.hyperlink_.url_, hyperlink_.url_))
+         {
             forceNewRange = true;
          }
       }
@@ -609,11 +612,15 @@ public class VirtualConsole
                
                Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(data.substring(pos), 0);
                
-               if (hyperlinkMatch != null){
+               if (hyperlinkMatch != null)
+               {
                   String url = hyperlinkMatch.getGroup(2);
-                  if (!StringUtil.equals(url, "")) {
+                  if (!StringUtil.equals(url, ""))
+                  {
                      hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1));
-                  } else {
+                  }
+                  else
+                  {
                      hyperlink_ = null;   
                   }
 
@@ -739,12 +746,14 @@ public class VirtualConsole
    }
    private class Hyperlink
    {
-      public Hyperlink(String url, String params) {
+      public Hyperlink(String url, String params)
+      {
          url_ = url;
          params_ = params;
       }
 
-      public String getTitle() {
+      public String getTitle()
+      {
          return url_;
       }
 
@@ -763,7 +772,8 @@ public class VirtualConsole
          if (hyperlink_ != null) 
          {
             Event.sinkEvents(element, Event.ONCLICK);
-            Event.setEventListener(element, event -> {
+            Event.setEventListener(element, event ->
+            {
                server_.consoleFollowHyperlink(hyperlink_.url_, text, hyperlink_.params_, new VoidServerRequestCallback());
             });
 
