@@ -20,6 +20,10 @@
     stop("missing scheme")
   }
 
+  # `params=` follows the key1=value1:key2:value2 pattern
+  # https://iterm2.com/documentation-escape-codes.html
+  #
+  # This at the moment is only used for params = c(target = "viewer")
   if (identical(params, "")) {
     params <- list()
   } else {
@@ -71,10 +75,11 @@
     # http://example.com
     function(url) {
       viewer <- utils::browseURL
-
-      fun <- if (identical(params$target, "viewer")) {
+      
+      if (identical(params$target, "viewer")) {
         viewer <- .rs.api.viewer
       }
+
       viewer(url)
     }
     
