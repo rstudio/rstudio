@@ -37,6 +37,7 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.InfoBar;
 import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.HelpLink;
@@ -185,8 +186,21 @@ public class PackagesPreferencesPane extends PreferencesPane
       lessSpaced(viewDirAfterCheckFailure_);
       development.add(viewDirAfterCheckFailure_);
 
-      development.add(checkboxPref(constants_.developmentRcppLabel(), uiPrefs.useRcppTemplate()));
-
+      cppTemplate_ = new SelectWidget(
+         constants_.developmentCppTemplate(),
+         new String[] {
+               "Rcpp", 
+               "cpp11", 
+               constants_.developmentEmptyLabel()
+         },
+         new String[] {
+            "Rcpp", "cpp11", "empty"
+         },
+         false,
+         true,
+         false);
+      development.add(cppTemplate_);
+      
       useNewlineInMakefiles_ = new CheckBox(constants_.developmentUseLFLabel());
       lessSpaced(useNewlineInMakefiles_);
       development.add(useNewlineInMakefiles_);
@@ -276,6 +290,8 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       useNewlineInMakefiles_.setEnabled(true);
       useNewlineInMakefiles_.setValue(prefs.useNewlinesInMakefiles().getValue());
+
+      cppTemplate_.setValue(prefs.cppTemplate().getValue());
 
       server_.getCRANActives(
          new SimpleRequestCallback<JsArray<CRANMirror>>() {
@@ -375,7 +391,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       prefs.useSecureDownload().setGlobalValue(useSecurePackageDownload_.getValue());
       prefs.useNewlinesInMakefiles().setGlobalValue(useNewlineInMakefiles_.getValue());
       prefs.cranMirror().setGlobalValue(cranMirror_);
-
+      prefs.cppTemplate().setGlobalValue(cppTemplate_.getValue());
       return restartRequirement;
    }
 
@@ -393,6 +409,7 @@ public class PackagesPreferencesPane extends PreferencesPane
    private final CheckBox useDevtools_;
    private final CheckBox useSecurePackageDownload_;
    private final CheckBox useNewlineInMakefiles_;
+   private final SelectWidget cppTemplate_;
    private boolean reloadRequired_ = false;
    private String cranMirrorStored_;
    private final SecondaryReposWidget secondaryReposWidget_;

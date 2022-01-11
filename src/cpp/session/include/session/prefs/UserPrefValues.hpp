@@ -1043,8 +1043,8 @@ public:
    /**
     * Whether to use RCPP templates.
     */
-   bool useRcppTemplate();
-   core::Error setUseRcppTemplate(bool val);
+   std::string cppTemplate();
+   core::Error setCppTemplate(std::string val);
 
    /**
     * Whether to restore the last opened source documents when RStudio starts up.

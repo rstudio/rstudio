@@ -1536,16 +1536,17 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to use RCPP templates.
+    * C++ template.
     */
-   public PrefValue<Boolean> useRcppTemplate()
-   {
-      return bool(
-         "use_rcpp_template",
-         _constants.useRcppTemplateTitle(), 
-         _constants.useRcppTemplateDescription(), 
-         true);
-   }
+    public PrefValue<String> cppTemplate()
+    {
+       return string(
+          "use_rcpp_template",
+          _constants.cppTemplateTitle(), 
+          _constants.cppTemplateDescription(), 
+          "Rcpp");
+    }
+ 
 
    /**
     * Whether to restore the last opened source documents when RStudio starts up.
@@ -3496,8 +3497,8 @@ public class UserPrefsAccessor extends Prefs
          navigateToBuildError().setValue(layer, source.getBool("navigate_to_build_error"));
       if (source.hasKey("packages_pane_enabled"))
          packagesPaneEnabled().setValue(layer, source.getBool("packages_pane_enabled"));
-      if (source.hasKey("use_rcpp_template"))
-         useRcppTemplate().setValue(layer, source.getBool("use_rcpp_template"));
+      if (source.hasKey("cpp_template"))
+         cppTemplate().setValue(layer, source.getString("cpp_template"));
       if (source.hasKey("restore_source_documents"))
          restoreSourceDocuments().setValue(layer, source.getBool("restore_source_documents"));
       if (source.hasKey("handle_errors_in_user_code_only"))
@@ -3852,7 +3853,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(realTimeSpellchecking());
       prefs.add(navigateToBuildError());
       prefs.add(packagesPaneEnabled());
-      prefs.add(useRcppTemplate());
+      prefs.add(cppTemplate());
       prefs.add(restoreSourceDocuments());
       prefs.add(handleErrorsInUserCodeOnly());
       prefs.add(autoExpandErrorTracebacks());
