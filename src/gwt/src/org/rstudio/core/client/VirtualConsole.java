@@ -252,16 +252,11 @@ public class VirtualConsole
       Entry<Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
 
-      if (hyperlink_ != null)
+      if (hyperlink_ != null || range.hyperlink_ != null)
       {
-         // currently an hyperlink to display
-
-         // if the previous range does not display an hyperlink, or 
-         // it's different: force new range. 
-         if (range.hyperlink_ == null || !StringUtil.equals(range.hyperlink_.url, hyperlink_.url))
-         {
-            forceNewRange = true;
-         }
+         // force if this needs to display an hyperlink
+         // or if the previous range was an hyperlink
+         forceNewRange = true;
       }
 
       if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
