@@ -772,7 +772,7 @@ public class VirtualConsole
             Event.sinkEvents(element, Event.ONCLICK);
             Event.setEventListener(element, event ->
             {
-               consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params_, new VoidServerRequestCallback());
+               consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
             });
 
             // for now, perhaps a dedicated style would be better
