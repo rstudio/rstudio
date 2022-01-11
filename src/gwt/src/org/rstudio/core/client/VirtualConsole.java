@@ -102,9 +102,9 @@ public class VirtualConsole
    }
 
    @Inject 
-   private void initialize(ConsoleServerOperations server)
+   private void initialize(ConsoleServerOperations consoleServer)
    {
-      server_ = server;
+      consoleServer_ = consoleServer;
    }
 
    public void clear()
@@ -258,7 +258,7 @@ public class VirtualConsole
 
          // if the previous range does not display an hyperlink, or 
          // it's different: force new range. 
-         if (range.hyperlink_ == null || !StringUtil.equals(range.hyperlink_.url_, hyperlink_.url_))
+         if (range.hyperlink_ == null || !StringUtil.equals(range.hyperlink_.url, hyperlink_.url))
          {
             forceNewRange = true;
          }
@@ -746,17 +746,17 @@ public class VirtualConsole
    {
       public Hyperlink(String url, String params)
       {
-         url_ = url;
-         params_ = params;
+         this.url = url;
+         this.params = params;
       }
 
       public String getTitle()
       {
-         return url_;
+         return url;
       }
 
-      public String url_;
-      public String params_;
+      public String url;
+      public String params;
    }
    private class ClassRange
    {
@@ -772,7 +772,7 @@ public class VirtualConsole
             Event.sinkEvents(element, Event.ONCLICK);
             Event.setEventListener(element, event ->
             {
-               server_.consoleFollowHyperlink(hyperlink_.url_, text, hyperlink_.params_, new VoidServerRequestCallback());
+               consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params_, new VoidServerRequestCallback());
             });
 
             // for now, perhaps a dedicated style would be better
@@ -873,5 +873,5 @@ public class VirtualConsole
 
    // Injected ----
    private final Preferences prefs_;
-   private ConsoleServerOperations server_;
+   private ConsoleServerOperations consoleServer_;
 }
