@@ -42,6 +42,11 @@
 
 .rs.addFunction("notebookConditions.connectImpl", function()
 {
+  
+  # NOTE: because the body of this function will be evaluated in the
+  # global environment, we need to avoid defining variables here.
+  #
+  # https://github.com/rstudio/rstudio/issues/8834
   .rs.notebookConditions.handlerStack <-
    .Internal(.addCondHands(
          c("warning", "message"),
@@ -66,6 +71,10 @@
 
 .rs.addFunction("notebookConditions.disconnectImpl", function()
 {
+  # NOTE: because the body of this function will be evaluated in the
+  # global environment, we need to avoid defining variables here.
+  #
+  # https://github.com/rstudio/rstudio/issues/8834
    .Internal(.resetCondHands(
      base::get(
        x = ".rs.notebookConditions.handlerStack",
