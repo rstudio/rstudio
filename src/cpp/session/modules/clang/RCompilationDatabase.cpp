@@ -295,9 +295,13 @@ std::vector<std::string> parseCompilationResults(const std::string& results)
 #ifdef _WIN32
          // remove collision with built-in compilation arguments
          // (we need to ensure system headers are included in the right order)
-         for (auto&& arg : args)
-            if (arg.find("x86_64-w64-mingw32.static.posix") == std::string::npos)
-               compileArgs.push_back(arg);
+         auto version = r::version_info::currentRVersion();
+         if (version.versionMajor() == 4 && version.versionMinor() >= 2)
+         {
+            for (auto&& arg : args)
+               if (arg.find("x86_64-w64-mingw32.static.posix") == std::string::npos)
+                  compileArgs.push_back(arg);
+         }
 #endif
 
          // we found the compilation line; we're done parsing
