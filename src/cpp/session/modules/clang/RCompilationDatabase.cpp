@@ -1053,12 +1053,6 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    // may not be compatible with the Rtools headers
    args.push_back("-nostdinc");
 
-   // set GNUC levels
-   // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
-   args.push_back("-D__GNUC__=5");
-   args.push_back("-D__GNUC_MINOR__=0");
-   args.push_back("-D__GNUC_PATCHLEVEL__=2");
-
    // add Rtools headers
    auto rtArgs = rToolsArgs();
    args.insert(args.end(), rtArgs.begin(), rtArgs.end());
