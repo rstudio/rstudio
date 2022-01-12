@@ -136,7 +136,12 @@ def s3_upload(type, flavor, os, arch) {
 
 def sentry_upload(type, flavor) {
   withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-    sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
+    retry(2) {
+      // timeout sentry in 15 minutes
+      timeout(activity: true, time: 15) {
+	sh "cd package/linux/build-${flavor.capitalize()}-${type}/src/cpp && ../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
+      }
+    }
   }
 }
 
