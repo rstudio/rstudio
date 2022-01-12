@@ -68,7 +68,7 @@ bool verbose(int level)
 
 bool precompiledHeadersEnabled()
 {
-   return r::options::getOption<bool>("rstudio.usePrecompiledHeaders", true, false);
+   return r::options::getOption<bool>("rstudio.libclang.usePrecompiledHeaders", true, false);
 }
 
 struct SourceCppFileInfo

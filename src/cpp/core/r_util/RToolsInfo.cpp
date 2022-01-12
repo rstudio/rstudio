@@ -337,17 +337,24 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
 
 namespace {
 
-Error useEnvironmentRTools(const std::string& rToolsVersion,
-                           const std::string& rToolsHomeEnv,
-                           std::vector<RToolsInfo>* pRTools)
+Error useRtools(const std::string& rToolsVersion,
+                const std::string& rToolsHomeEnv,
+                const std::string& rToolsDefaultPath,
+                std::vector<RToolsInfo>* pRTools)
 {
-   // read value
+   FilePath installPath(rToolsDefaultPath);
+
+   // if the associated environment variable is set, and
+   // it points to an existing directory, use that instead
    std::string rToolsHome = core::system::getenv(rToolsHomeEnv);
-   if (rToolsHome.empty())
-      return Success();
+   if (!rToolsHome.empty())
+   {
+      FilePath candidatePath(rToolsHome);
+      if (candidatePath.exists())
+         installPath = candidatePath;
+   }
 
    // build info
-   FilePath installPath(rToolsHome);
    RToolsInfo toolsInfo(rToolsVersion, installPath, false);
 
    // check that recorded path is valid
@@ -377,12 +384,12 @@ Error scanEnvironmentForRTools(const std::string& rVersion,
    else if (version < Version("4.2.0"))
    {
       // use RTOOLS40_HOME
-      useEnvironmentRTools("4.0", "RTOOLS40_HOME", pRTools);
+      useRtools("4.0", "RTOOLS40_HOME", "C:/rtools40", pRTools);
    }
    else if (version < Version("5.0.0"))
    {
       // use RTOOLS42_HOME
-      useEnvironmentRTools("4.2", "RTOOLS42_HOME", pRTools);
+      useRtools("4.2", "RTOOLS42_HOME", "C:/rtools42", pRTools);
    }
 
    return Success();
