@@ -77,12 +77,12 @@ std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& versi
    FilePath headersPath = options().libclangHeadersPath();
 
    // add compiler headers
-   std::string headersVersion = kEmbeddedLibClangVersion;
+   std::string headersVersion = version.asString();
    compileArgs.push_back("-I" + headersPath.completeChildPath(headersVersion).getAbsolutePath());
 
    // add libc++ for embedded clang
    if (isCppFile)
-      compileArgs.push_back("-I" + headersPath.completeChildPath("libc++/" kEmbeddedLibClangVersion).getAbsolutePath());
+      compileArgs.push_back("-I" + headersPath.completeChildPath("libc++/" + headersVersion).getAbsolutePath());
 
    return compileArgs;
 }

@@ -242,21 +242,26 @@ RToolsInfo::RToolsInfo(const std::string& name,
       std::replace(rtoolsPath.begin(), rtoolsPath.end(), '/', '\\');
       environmentVars.push_back({"RTOOLS42_HOME", rtoolsPath});
 
-      // set clang args
-      std::string triple = "x86_64-w64-mingw32.static.posix";
+#define kRtoolsTriple "x86_64-w64-mingw32.static.posix"
+#define kRtoolsBaseDir kRtoolsTriple
+#define kGccVersion "10.3.0"
 
       auto stems = {
-         "lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++",
-         "lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/x86_64-w64-mingw32.static.posix",
-         "lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/backward",
-         "lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
-         "include",
-         "lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed"
+         kRtoolsBaseDir "/lib/gcc/" kRtoolsTriple "/" kGccVersion "/include/c++",
+         kRtoolsBaseDir "/lib/gcc/" kRtoolsTriple "/" kGccVersion "/include/c++/" kRtoolsTriple,
+         kRtoolsBaseDir "/lib/gcc/" kRtoolsTriple "/" kGccVersion "/include/c++/backward",
+         kRtoolsBaseDir "/lib/gcc/" kRtoolsTriple "/" kGccVersion "/include",
+         kRtoolsBaseDir "/include",
+         kRtoolsBaseDir "/lib/gcc/" kRtoolsTriple "/" kGccVersion "/include-fixed"
       };
+
+#undef kRtoolsBaseDir
+#undef kRtoolsTriple
+#undef kGccVersion
 
       for (auto&& stem : stems)
       {
-         FilePath includePath = installPath.completeChildPath(triple + "/" + stem);
+         FilePath includePath = installPath.completeChildPath(stem);
          clangArgs.push_back("-I" + includePath.getAbsolutePath());
       }
 

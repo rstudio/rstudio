@@ -37,6 +37,7 @@
 #include <core/libclang/LibClang.hpp>
 
 #include <r/RExec.hpp>
+#include <r/ROptions.hpp>
 #include <r/RVersionInfo.hpp>
 
 #include <session/projects/SessionProjects.hpp>
@@ -63,6 +64,11 @@ LibClang& clang()
 bool verbose(int level)
 {
    return rSourceIndex().verbose() >= level;
+}
+
+bool precompiledHeadersEnabled()
+{
+   return r::options::getOption<bool>("rstudio.usePrecompiledHeaders", true, false);
 }
 
 struct SourceCppFileInfo
@@ -402,7 +408,8 @@ void RCompilationDatabase::updateForCurrentPackage()
    
    bool isCurrent =
          packageBuildFileHash == packageBuildFileHash_ &&
-         compilerHash == compilerHash_;
+         compilerHash == compilerHash_ &&
+         module_context::rVersion() == rVersion_;
    
    if (isCurrent)
       return;
@@ -422,6 +429,7 @@ void RCompilationDatabase::updateForCurrentPackage()
       packageCompilationConfig_.isCpp = isCpp;
       packageBuildFileHash_ = packageBuildFileHash;
       compilerHash_ = compilerHash;
+      rVersion_ = module_context::rVersion();
 
       // save them to disk
       savePackageCompilationConfig();
@@ -527,6 +535,7 @@ void RCompilationDatabase::savePackageCompilationConfig()
    configJson["is_cpp"] = packageCompilationConfig_.isCpp;
    configJson["hash"] = packageBuildFileHash_;
    configJson["compiler"] = compilerHash_;
+   configJson["rversion"] = rVersion_;
 
    FilePath configFilePath = compilationConfigFilePath();
    std::string jsonFormatted = configJson.writeFormatted();
@@ -582,6 +591,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    // also attempt to read 'compiler' field (added in 1.4 Juliet Rose)
    // errors can be ignored here since this field won't exist in older databases
    json::readObject(configJson.getObject(), "compiler", compilerHash_);
+   json::readObject(configJson.getObject(), "rversion", rVersion_);
 
    packageCompilationConfig_.args.clear();
    for (const json::Value& argJson : argsJson)
@@ -820,6 +830,7 @@ void RCompilationDatabase::rebuildPackageCompilationDatabase()
 {
    packageBuildFileHash_.clear();
    compilerHash_.clear();
+   rVersion_.clear();
 }
 
 bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
@@ -889,6 +900,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
 
    // add precompiled headers if necessary
    if (usePrecompiledHeaders && usePrecompiledHeaders_ &&
+       precompiledHeadersEnabled() &&
        !config.PCH.empty() && config.isCpp &&
        (filePath.getExtensionLowerCase() != ".c") &&
        (filePath.getExtensionLowerCase() != ".m"))
@@ -1050,9 +1062,7 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    // add Rtools headers
    auto rtArgs = rToolsArgs();
    args.insert(args.end(), rtArgs.begin(), rtArgs.end());
-#endif
-
-#ifndef _WIN32
+#else
    // add system include headers as reported by compiler
    std::vector<std::string> includes;
    discoverSystemIncludePaths(&includes);
