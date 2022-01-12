@@ -35,15 +35,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     String visualEditorLabel(String menuText);
 
     /**
-     * Translated "Panmirror Editor Toolbar".
-     *
-     * @return translated "Panmirror Editor Toolbar"
-     */
-    @DefaultMessage("Panmirror Editor Toolbar")
-    @Key("panMirrorToolbarLabel")
-    String panMirrorToolbarLabel();
-
-    /**
      * Translated "Format".
      *
      * @return translated "Format"
@@ -60,15 +51,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     @DefaultMessage("Insert")
     @Key("insertTitle")
     String insertTitle();
-
-    /**
-     * Translated "Reference".
-     *
-     * @return translated "Reference"
-     */
-    @DefaultMessage("Reference")
-    @Key("referenceTitle")
-    String referenceTitle();
 
     /**
      * Translated "Table".
@@ -97,14 +79,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     @Key("formatText")
     String formatText();
 
-    /**
-     * Translated "Reference".
-     *
-     * @return translated "Reference"
-     */
-    @DefaultMessage("Reference")
-    @Key("referenceText")
-    String referenceText();
 
     /**
      * Translated "Insert".
@@ -1002,15 +976,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     String goToNextChunkMenuText();
 
     /**
-     * Translated "Go to Previous Chunk".
-     *
-     * @return translated "Go to Previous Chunk"
-     */
-    @DefaultMessage("Go to Previous Chunk")
-    @Key("goToPreviousChunkMenuText")
-    String goToPreviousChunkMenuText();
-
-    /**
      * Translated "Insert:::Slide Pause".
      *
      * @return translated "Insert:::Slide Pause"
@@ -1036,15 +1001,6 @@ public interface PanmirrorConstants extends com.google.gwt.i18n.client.Messages 
     @DefaultMessage("Insert:::Slide Columns")
     @Key("insertSlideColumnsMenuText")
     String insertSlideColumnsMenuText();
-
-    /**
-     * Translated "Command palette requested unknown command from visual editor: '".
-     *
-     * @return translated "Command palette requested unknown command from visual editor: '"
-     */
-    @DefaultMessage("Command palette requested unknown command from visual editor: ")
-    @Key("unknownCommandDebugLog")
-    String unknownCommandDebugLog();
 
     /**
      * Translated "Edit Attributes".

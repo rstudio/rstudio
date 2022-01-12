@@ -806,24 +806,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String themeWarningMessageLightLabel();
 
     /**
-     * Translated "default theme: "".
-     *
-     * @return translated "default theme: ""
-     */
-    @DefaultMessage("default theme: \"")
-    @Key("themeWarningMessageDefaultLabel")
-    String themeWarningMessageDefaultLabel();
-
-    /**
-     * Translated "The theme "".
-     *
-     * @return translated "The theme ""
-     */
-    @DefaultMessage("The theme \"")
-    @Key("updateThemeLogWarning")
-    String updateThemeLogWarning();
-
-    /**
      * Translated "A theme file with the same name, ''{0}'', already exists. Adding the theme will cause the existing file to be overwritten. Would you like to add the theme anyway?".
      *
      * @return translated "A theme file with the same name, ''{0}'', already exists. Adding the theme will cause the existing file to be overwritten. Would you like to add the theme anyway?"
@@ -1120,33 +1102,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("System Viewer")
     @Key("pdfPreviewSystemViewerOption")
     String pdfPreviewSystemViewerOption();
-
-    /**
-     * Translated "Help on weaving Rnw files".
-     *
-     * @return translated "Help on weaving Rnw files"
-     */
-    @DefaultMessage("Help on weaving Rnw files")
-    @Key("helpButtonLabel")
-    String helpButtonLabel();
-
-    /**
-     * Translated "Typeset LaTeX into PDF using:".
-     *
-     * @return translated "Typeset LaTeX into PDF using:"
-     */
-    @DefaultMessage("Typeset LaTeX into PDF using:")
-    @Key("latexProgramSelectLabel")
-    String latexProgramSelectLabel();
-
-    /**
-     * Translated "Help on customizing LaTeX options".
-     *
-     * @return translated "Help on customizing LaTeX options"
-     */
-    @DefaultMessage("Help on customizing LaTeX options")
-    @Key("helpLaxtexButtonLabel")
-    String helpLaxtexButtonLabel();
 
     /**
      * Translated "Display".
@@ -1599,33 +1554,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String serverHomePageNeverOption();
 
     /**
-     * Translated "sessions".
-     *
-     * @return translated "sessions"
-     */
-    @DefaultMessage("sessions")
-    @Key("serverHomePageSessions")
-    String serverHomePageSessions();
-
-    /**
-     * Translated "always".
-     *
-     * @return translated "always"
-     */
-    @DefaultMessage("always")
-    @Key("serverHomePageAlways")
-    String serverHomePageAlways();
-
-    /**
-     * Translated "never".
-     *
-     * @return translated "never"
-     */
-    @DefaultMessage("never")
-    @Key("serverHomePageNever")
-    String serverHomePageNever();
-
-    /**
      * Translated "Re-use idle sessions for project links".
      *
      * @return translated "Re-use idle sessions for project links"
@@ -1742,14 +1670,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("clipboardMonitoringLabel")
     String clipboardMonitoringLabel();
 
-    /**
-     * Translated "Show full path to project in window title".
-     *
-     * @return translated "Show full path to project in window title"
-     */
-    @DefaultMessage("Show full path to project in window title")
-    @Key("fullPathInTitleLabel")
-    String fullPathInTitleLabel();
 
     /**
      * Translated "Other".
@@ -1887,15 +1807,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String graphicsBackendUserAction();
 
     /**
-     * Translated "default".
-     *
-     * @return "default"
-     */
-    @DefaultMessage("default")
-    @Key("defaultLabel")
-    String defaultLabel();
-
-    /**
      * Translated "Browse...".
      *
      * @return "Browse..."
@@ -1912,313 +1823,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Choose Directory")
     @Key("directoryLabel")
     String directoryLabel();
-
-    /**
-     * Translated "Other Languages".
-     *
-     * @return translated "Other Languages"
-     */
-    @DefaultMessage("Other Languages")
-    @Key("editingDiagOtherLabel")
-    String editingDiagOtherLabel();
-
-    /**
-     * Translated "Show Diagnostics".
-     *
-     * @return translated "Show Diagnostics"
-     */
-    @DefaultMessage("Show Diagnostics")
-    @Key("editingDiagShowLabel")
-    String editingDiagShowLabel();
-
-    /**
-     * Translated "R Diagnostics".
-     *
-     * @return translated "R Diagnostics"
-     */
-    @DefaultMessage("R Diagnostics")
-    @Key("editingDiagnosticsPanel")
-    String editingDiagnosticsPanel();
-
-    /**
-     * Translated "General".
-     *
-     * @return translated "General"
-     */
-    @DefaultMessage("General")
-    @Key("editingDisplayPanel")
-    String editingDisplayPanel();
-
-    /**
-     * Translated "Modify Keyboard Shortcuts...".
-     *
-     * @return translated "Modify Keyboard Shortcuts..."
-     */
-    @DefaultMessage("Modify Keyboard Shortcuts...")
-    @Key("editingEditShortcuts")
-    String editingEditShortcuts();
-
-    /**
-     * Translated "Execution".
-     *
-     * @return translated "Execution"
-     */
-    @DefaultMessage("Execution")
-    @Key("editingExecutionLabel")
-    String editingExecutionLabel();
-
-    /**
-     * Translated "Completion Delay".
-     *
-     * @return translated "Completion Delay"
-     */
-    @DefaultMessage("Completion Delay")
-    @Key("editingHeaderLabel")
-    String editingHeaderLabel();
-
-    /**
-     * Translated "Other Languages".
-     *
-     * @return translated "Other Languages"
-     */
-    @DefaultMessage("Other Languages")
-    @Key("editingOtherLabel")
-    String editingOtherLabel();
-
-    /**
-     * Translated "Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL.".
-     *
-     * @return translated "Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL."
-     */
-    @DefaultMessage("Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL.")
-    @Key("editingOtherTip")
-    String editingOtherTip();
-
-    /**
-     * Translated "General".
-     *
-     * @return translated "General"
-     */
-    @DefaultMessage("General")
-    @Key("editingSavePanel")
-    String editingSavePanel();
-
-    /**
-     * Translated "Change...".
-     *
-     * @return translated "Change..."
-     */
-    @DefaultMessage("Change...")
-    @Key("editingSavePanelAction")
-    String editingSavePanelAction();
-
-    /**
-     * Translated "Auto-save".
-     *
-     * @return translated "Auto-save"
-     */
-    @DefaultMessage("Auto-save")
-    @Key("editingSavePanelAutosave")
-    String editingSavePanelAutosave();
-
-    /**
-     * Translated "Serialization".
-     *
-     * @return translated "Serialization"
-     */
-    @DefaultMessage("Serialization")
-    @Key("editingSerializationLabel")
-    String editingSerializationLabel();
-
-    /**
-     * Translated "code_snippets".
-     *
-     * @return translated "code_snippets"
-     */
-    @DefaultMessage("code_snippets")
-    @Key("editingSnippetHelpRstudioLinkName")
-    String editingSnippetHelpRstudioLinkName();
-
-    /**
-     * Translated "Help on code snippets".
-     *
-     * @return translated "Help on code snippets"
-     */
-    @DefaultMessage("Help on code snippets")
-    @Key("editingSnippetHelpTitle")
-    String editingSnippetHelpTitle();
-
-    /**
-     * Translated "Snippets".
-     *
-     * @return translated "Snippets"
-     */
-    @DefaultMessage("Snippets")
-    @Key("editingSnippetsLabel")
-    String editingSnippetsLabel();
-
-    /**
-     * Translated "Editing".
-     *
-     * @return translated "Editing"
-     */
-    @DefaultMessage("Editing")
-    @Key("editingTabPanel")
-    String editingTabPanel();
-
-    /**
-     * Translated "Completion".
-     *
-     * @return translated "Completion"
-     */
-    @DefaultMessage("Completion")
-    @Key("editingTabPanelCompletionPanel")
-    String editingTabPanelCompletionPanel();
-
-    /**
-     * Translated "Diagnostics".
-     *
-     * @return translated "Diagnostics"
-     */
-    @DefaultMessage("Diagnostics")
-    @Key("editingTabPanelDiagnosticsPanel")
-    String editingTabPanelDiagnosticsPanel();
-
-    /**
-     * Translated "Display".
-     *
-     * @return translated "Display"
-     */
-    @DefaultMessage("Display")
-    @Key("editingTabPanelDisplayPanel")
-    String editingTabPanelDisplayPanel();
-
-    /**
-     * Translated "Editing".
-     *
-     * @return translated "Editing"
-     */
-    @DefaultMessage("Editing")
-    @Key("editingTabPanelEditingPanel")
-    String editingTabPanelEditingPanel();
-
-    /**
-     * Translated "Saving".
-     *
-     * @return translated "Saving"
-     */
-    @DefaultMessage("Saving")
-    @Key("editingTabPanelSavePanel")
-    String editingTabPanelSavePanel();
-
-    /**
-     * Translated "R and C/C++".
-     *
-     * @return translated "R and C/C++"
-     */
-    @DefaultMessage("R and C/C++")
-    @Key("editingCompletionPanel")
-    String editingCompletionPanel();
-
-    /**
-     * Translated "General".
-     *
-     * @return translated "General"
-     */
-    @DefaultMessage("General")
-    @Key("editingHeader")
-    String editingHeader();
-
-    /**
-     * Translated "No bindings available".
-     *
-     * @return translated "No bindings available"
-     */
-    @DefaultMessage("No bindings available")
-    @Key("editingKeyboardShortcuts")
-    String editingKeyboardShortcuts();
-
-    /**
-     * Translated "Keyboard Shortcuts".
-     *
-     * @return translated "Keyboard Shortcuts"
-     */
-    @DefaultMessage("Keyboard Shortcuts")
-    @Key("editingKeyboardText")
-    String editingKeyboardText();
-
-    /**
-     * Translated "Customized".
-     *
-     * @return translated "Customized"
-     */
-    @DefaultMessage("Customized")
-    @Key("editingRadioCustomized")
-    String editingRadioCustomized();
-
-    /**
-     * Translated "Filter...".
-     *
-     * @return translated "Filter..."
-     */
-    @DefaultMessage("Filter...")
-    @Key("editingFilterWidget")
-    String editingFilterWidget();
-
-    /**
-     * Translated "Reset...".
-     *
-     * @return translated "Reset..."
-     */
-    @DefaultMessage("Reset...")
-    @Key("editingResetText")
-    String editingResetText();
-
-    /**
-     * Translated "Reset Keyboard Shortcuts".
-     *
-     * @return translated "Reset Keyboard Shortcuts"
-     */
-    @DefaultMessage("Reset Keyboard Shortcuts")
-    @Key("editingGlobalDisplay")
-    String editingGlobalDisplay();
-
-    /**
-     * Translated "Are you sure you want to reset keyboard shortcuts to their default values? ".
-     *
-     * @return translated "Are you sure you want to reset keyboard shortcuts to their default values? "
-     */
-    @DefaultMessage("Are you sure you want to reset keyboard shortcuts to their default values? ")
-    @Key("editingGlobalCaption")
-    String editingGlobalCaption();
-
-    /**
-     * Translated "This action cannot be undone.".
-     *
-     * @return translated "This action cannot be undone."
-     */
-    @DefaultMessage("This action cannot be undone.")
-    @Key("editingGlobalMessage")
-    String editingGlobalMessage();
-
-    /**
-     * Translated "Resetting Keyboard Shortcuts...".
-     *
-     * @return translated "Resetting Keyboard Shortcuts..."
-     */
-    @DefaultMessage("Resetting Keyboard Shortcuts...")
-    @Key("editingProgressMessage")
-    String editingProgressMessage();
-
-    /**
-     * Translated "Cancel".
-     *
-     * @return translated "Cancel"
-     */
-    @DefaultMessage("Cancel")
-    @Key("editingCancelShortcuts")
-    String editingCancelShortcuts();
-
     /**
      * Translated "Code".
      *
@@ -2706,42 +2310,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String removeButtonLabel();
 
     /**
-     * Translated "Top left panel".
-     *
-     * @return translated "Top left panel"
-     */
-    @DefaultMessage("Top left panel")
-    @Key("leftTopPanelText")
-    String leftTopPanelText();
-
-    /**
-     * Translated "Bottom left panel".
-     *
-     * @return translated "Bottom left panel"
-     */
-    @DefaultMessage("Bottom left panel")
-    @Key("leftBottomPanelText")
-    String leftBottomPanelText();
-
-    /**
-     * Translated "Top right panel".
-     *
-     * @return translated "Top right panel"
-     */
-    @DefaultMessage("Top right panel")
-    @Key("rightTopPanelText")
-    String rightTopPanelText();
-
-    /**
-     * Translated "Bottom right panel".
-     *
-     * @return translated "Bottom right panel"
-     */
-    @DefaultMessage("Bottom right panel")
-    @Key("rightBottomPanelText")
-    String rightBottomPanelText();
-
-    /**
      * Translated "Bad config! Falling back to a reasonable default".
      *
      * @return translated "Bad config! Falling back to a reasonable default"
@@ -3003,123 +2571,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String getAccountCountLabel();
 
     /**
-     * Translated "Connect Account".
-     *
-     * @return translated "Connect Account"
-     */
-    @DefaultMessage("Connect Account")
-    @Key("connectAccountCaption")
-    String connectAccountCaption();
-
-    /**
-     * Translated "Connect Account".
-     *
-     * @return translated "Connect Account"
-     */
-    @DefaultMessage("Connect Account")
-    @Key("connectAccountOkCaption")
-    String connectAccountOkCaption();
-
-    /**
-     * Translated "Connect Publishing Account".
-     *
-     * @return translated "Connect Publishing Account"
-     */
-    @DefaultMessage("Connect Publishing Account")
-    @Key("newRSConnectAccountPageTitle")
-    String newRSConnectAccountPageTitle();
-
-    /**
-     * Translated "Pick an account".
-     *
-     * @return translated "Pick an account"
-     */
-    @DefaultMessage("Pick an account")
-    @Key("newRSConnectAccountPageSubTitle")
-    String newRSConnectAccountPageSubTitle();
-
-    /**
-     * Translated "Connect Publishing Account".
-     *
-     * @return translated "Connect Publishing Account"
-     */
-    @DefaultMessage("Connect Publishing Account")
-    @Key("newRSConnectAccountPageCaption")
-    String newRSConnectAccountPageCaption();
-
-    /**
-     * Translated "Choose Account Type".
-     *
-     * @return translated "Choose Account Type"
-     */
-    @DefaultMessage("Choose Account Type")
-    @Key("wizardNavigationPageTitle")
-    String wizardNavigationPageTitle();
-
-    /**
-     * Translated "Choose Account Type".
-     *
-     * @return translated "Choose Account Type"
-     */
-    @DefaultMessage("Choose Account Type")
-    @Key("wizardNavigationPageSubTitle")
-    String wizardNavigationPageSubTitle();
-
-    /**
-     * Translated "Connect Account".
-     *
-     * @return translated "Connect Account"
-     */
-    @DefaultMessage("Connect Account")
-    @Key("wizardNavigationPageCaption")
-    String wizardNavigationPageCaption();
-
-    /**
-     * Translated "RStudio Connect is a server product from RStudio ".
-     *
-     * @return translated "RStudio Connect is a server product from RStudio "
-     */
-    @DefaultMessage("RStudio Connect is a server product from RStudio ")
-    @Key("serviceDescription")
-    String serviceDescription();
-
-    /**
-     * Translated "for secure sharing of applications, reports, plots, and APIs.".
-     *
-     * @return translated "for secure sharing of applications, reports, plots, and APIs."
-     */
-    @DefaultMessage("for secure sharing of applications, reports, plots, and APIs.")
-    @Key("serviceMessageDescription")
-    String serviceMessageDescription();
-
-    /**
-     * Translated "A cloud service run by RStudio. Publish Shiny applications ".
-     *
-     * @return translated "A cloud service run by RStudio. Publish Shiny applications "
-     */
-    @DefaultMessage("A cloud service run by RStudio. Publish Shiny applications ")
-    @Key("newRSConnectCloudPageSubTitle")
-    String newRSConnectCloudPageSubTitle();
-
-    /**
-     * Translated "and interactive documents to the Internet.".
-     *
-     * @return translated "and interactive documents to the Internet."
-     */
-    @DefaultMessage("and interactive documents to the Internet.")
-    @Key("newRSConnectCloudPageSub")
-    String newRSConnectCloudPageSub();
-
-    /**
-     * Translated "Connect ShinyApps.io Account".
-     *
-     * @return translated "Connect ShinyApps.io Account"
-     */
-    @DefaultMessage("Connect ShinyApps.io Account")
-    @Key("newRSConnectCloudPageCaption")
-    String newRSConnectCloudPageCaption();
-
-    /**
      * Translated "(No interpreter selected)".
      *
      * @return translated "(No interpreter selected)"
@@ -3228,32 +2679,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("cbAutoUseProjectInterpreterMessage")
     String cbAutoUseProjectInterpreterMessage();
 
-    /**
-     * Translated "Python Interpreters".
-     *
-     * @return translated "Python Interpreters"
-     */
-    @DefaultMessage("Python Interpreters")
-    @Key("interpretersCaption")
-    String interpretersCaption();
-
-    /**
-     * Translated "Select".
-     *
-     * @return translated "Select"
-     */
-    @DefaultMessage("Select")
-    @Key("okButtonCaption")
-    String okButtonCaption();
-
-    /**
-     * Translated "(None available)".
-     *
-     * @return translated "(None available)"
-     */
-    @DefaultMessage("(None available)")
-    @Key("noneAvailableListBox")
-    String noneAvailableListBox();
 
     /**
      * Translated "General".
@@ -3335,15 +2760,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("System Interpreter")
     @Key("systemInterpreterType")
     String systemInterpreterType();
-
-    /**
-     * Get locale value for name (default "Quarto").
-     *
-     * @return translated value for name
-     */
-    @DefaultMessage("Quarto")
-    @Key("name")
-    String name();
 
     /**
      * Get locale value for the Quarto preview label. Default value
@@ -3888,25 +3304,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Citations")
     @Key("tabPanelCitations")
     String tabPanelCitations();
-    
-
-    /**
-     * Translated "(None)".
-     *
-     * @return translated "(None)"
-     */
-    @DefaultMessage("(None)")
-    @Key("noneOption")
-    String noneOption();
-
-    /**
-     * Translated "Local".
-     *
-     * @return translated "Local"
-     */
-    @DefaultMessage("Local")
-    @Key("localOption")
-    String localOption();
 
     /**
      * Translated "Web".
@@ -4034,16 +3431,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("gitSVNPaneHeader")
     String gitSVNPaneHeader();
 
-
-    /**
-     * Translated "View public key".
-     *
-     * @return translated "View public key"
-     */
-    @DefaultMessage("View public key")
-    @Key("publicKeyLinkCaption")
-    String publicKeyLinkCaption();
-
     /**
      * Translated "auto".
      *
@@ -4125,14 +3512,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("realTimeSpellcheckingCheckboxLabel")
     String realTimeSpellcheckingCheckboxLabel();
 
-    /**
-     * Translated "Real time spell-checking currently unavailable for this dictionary".
-     *
-     * @return translated "Real time spell-checking currently unavailable for this dictionary"
-     */
-    @DefaultMessage("Real time spell-checking currently unavailable for this dictionary")
-    @Key("blacklistWarningLabel")
-    String blacklistWarningLabel();
 
     /**
      * Translated "User dictionary: ".
@@ -4187,15 +3566,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Spelling")
     @Key("spellingPaneLabel")
     String spellingPaneLabel();
-
-    /**
-     * Translated "Use real time spell-checking".
-     *
-     * @return translated "Use real time spell-checking"
-     */
-    @DefaultMessage("Use real time spell-checking")
-    @Key("realtimeSpellcheckingCheckbox")
-    String realtimeSpellcheckingCheckbox();
 
     /**
      * Translated "Edit".
@@ -4575,15 +3945,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String chkPythonIntegrationTitle();
 
     /**
-     * Translated "Environment".
-     *
-     * @return translated "Environment"
-     */
-    @DefaultMessage("Environment")
-    @Key("environmentTab")
-    String environmentTab();
-
-    /**
      * Translated "History".
      *
      * @return translated "History"
@@ -4682,33 +4043,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Presentation")
     @Key("presentationTab")
     String presentationTab();
-
-    /**
-     * Translated "Invaliding tabset config (Presentation index)".
-     *
-     * @return translated "Invaliding tabset config (Presentation index)"
-     */
-    @DefaultMessage("Invaliding tabset config (Presentation index)")
-    @Key("validateAndAutoCorrect")
-    String validateAndAutoCorrect();
-
-    /**
-     * Translated "Edit Snippets".
-     *
-     * @return translated "Edit Snippets"
-     */
-    @DefaultMessage("Edit Snippets")
-    @Key("editingEditSnippetsCaption")
-    String editingEditSnippetsCaption();
-
-    /**
-     * Translated "Save".
-     *
-     * @return translated "Save"
-     */
-    @DefaultMessage("Save")
-    @Key("editingSaveButtonLabel")
-    String editingSaveButtonLabel();
 
     /**
      * Translated "Confirm Remove".
@@ -4835,5 +4169,293 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("document")
     @Key("refLocationDocument")
     String refLocationDocument();
+
+    /**
+     * Translated "Other Languages".
+     *
+     * @return translated "Other Languages"
+     */
+    @DefaultMessage("Other Languages")
+    @Key("editingDiagOtherLabel")
+    String editingDiagOtherLabel();
+
+    /**
+     * Translated "Show Diagnostics".
+     *
+     * @return translated "Show Diagnostics"
+     */
+    @DefaultMessage("Show Diagnostics")
+    @Key("editingDiagShowLabel")
+    String editingDiagShowLabel();
+
+    /**
+     * Translated "R Diagnostics".
+     *
+     * @return translated "R Diagnostics"
+     */
+    @DefaultMessage("R Diagnostics")
+    @Key("editingDiagnosticsPanel")
+    String editingDiagnosticsPanel();
+
+    /**
+     * Translated "General".
+     *
+     * @return translated "General"
+     */
+    @DefaultMessage("General")
+    @Key("editingDisplayPanel")
+    String editingDisplayPanel();
+
+    /**
+     * Translated "Modify Keyboard Shortcuts...".
+     *
+     * @return translated "Modify Keyboard Shortcuts..."
+     */
+    @DefaultMessage("Modify Keyboard Shortcuts...")
+    @Key("editingEditShortcuts")
+    String editingEditShortcuts();
+
+    /**
+     * Translated "Execution".
+     *
+     * @return translated "Execution"
+     */
+    @DefaultMessage("Execution")
+    @Key("editingExecutionLabel")
+    String editingExecutionLabel();
+
+    /**
+     * Translated "Completion Delay".
+     *
+     * @return translated "Completion Delay"
+     */
+    @DefaultMessage("Completion Delay")
+    @Key("editingHeaderLabel")
+    String editingHeaderLabel();
+
+    /**
+     * Translated "Other Languages".
+     *
+     * @return translated "Other Languages"
+     */
+    @DefaultMessage("Other Languages")
+    @Key("editingOtherLabel")
+    String editingOtherLabel();
+
+    /**
+     * Translated "Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL.".
+     *
+     * @return translated "Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL."
+     */
+    @DefaultMessage("Keyword and text-based completions are supported for several other languages including JavaScript, HTML, CSS, Python, and SQL.")
+    @Key("editingOtherTip")
+    String editingOtherTip();
+
+    /**
+     * Translated "General".
+     *
+     * @return translated "General"
+     */
+    @DefaultMessage("General")
+    @Key("editingSavePanel")
+    String editingSavePanel();
+
+    /**
+     * Translated "Change...".
+     *
+     * @return translated "Change..."
+     */
+    @DefaultMessage("Change...")
+    @Key("editingSavePanelAction")
+    String editingSavePanelAction();
+
+    /**
+     * Translated "Auto-save".
+     *
+     * @return translated "Auto-save"
+     */
+    @DefaultMessage("Auto-save")
+    @Key("editingSavePanelAutosave")
+    String editingSavePanelAutosave();
+
+    /**
+     * Translated "Serialization".
+     *
+     * @return translated "Serialization"
+     */
+    @DefaultMessage("Serialization")
+    @Key("editingSerializationLabel")
+    String editingSerializationLabel();
+
+    /**
+     * Translated "Help on code snippets".
+     *
+     * @return translated "Help on code snippets"
+     */
+    @DefaultMessage("Help on code snippets")
+    @Key("editingSnippetHelpTitle")
+    String editingSnippetHelpTitle();
+
+    /**
+     * Translated "Snippets".
+     *
+     * @return translated "Snippets"
+     */
+    @DefaultMessage("Snippets")
+    @Key("editingSnippetsLabel")
+    String editingSnippetsLabel();
+
+    /**
+     * Translated "Editing".
+     *
+     * @return translated "Editing"
+     */
+    @DefaultMessage("Editing")
+    @Key("editingTabPanel")
+    String editingTabPanel();
+
+    /**
+     * Translated "Completion".
+     *
+     * @return translated "Completion"
+     */
+    @DefaultMessage("Completion")
+    @Key("editingTabPanelCompletionPanel")
+    String editingTabPanelCompletionPanel();
+
+    /**
+     * Translated "Diagnostics".
+     *
+     * @return translated "Diagnostics"
+     */
+    @DefaultMessage("Diagnostics")
+    @Key("editingTabPanelDiagnosticsPanel")
+    String editingTabPanelDiagnosticsPanel();
+
+    /**
+     * Translated "Display".
+     *
+     * @return translated "Display"
+     */
+    @DefaultMessage("Display")
+    @Key("editingTabPanelDisplayPanel")
+    String editingTabPanelDisplayPanel();
+
+    /**
+     * Translated "Saving".
+     *
+     * @return translated "Saving"
+     */
+    @DefaultMessage("Saving")
+    @Key("editingTabPanelSavePanel")
+    String editingTabPanelSavePanel();
+
+    /**
+     * Translated "R and C/C++".
+     *
+     * @return translated "R and C/C++"
+     */
+    @DefaultMessage("R and C/C++")
+    @Key("editingCompletionPanel")
+    String editingCompletionPanel();
+
+    /**
+     * Translated "General".
+     *
+     * @return translated "General"
+     */
+    @DefaultMessage("General")
+    @Key("editingHeader")
+    String editingHeader();
+
+    /**
+     * Translated "No bindings available".
+     *
+     * @return translated "No bindings available"
+     */
+    @DefaultMessage("No bindings available")
+    @Key("editingKeyboardShortcuts")
+    String editingKeyboardShortcuts();
+
+    /**
+     * Translated "Keyboard Shortcuts".
+     *
+     * @return translated "Keyboard Shortcuts"
+     */
+    @DefaultMessage("Keyboard Shortcuts")
+    @Key("editingKeyboardText")
+    String editingKeyboardText();
+
+    /**
+     * Translated "Customized".
+     *
+     * @return translated "Customized"
+     */
+    @DefaultMessage("Customized")
+    @Key("editingRadioCustomized")
+    String editingRadioCustomized();
+
+    /**
+     * Translated "Filter...".
+     *
+     * @return translated "Filter..."
+     */
+    @DefaultMessage("Filter...")
+    @Key("editingFilterWidget")
+    String editingFilterWidget();
+
+    /**
+     * Translated "Reset...".
+     *
+     * @return translated "Reset..."
+     */
+    @DefaultMessage("Reset...")
+    @Key("editingResetText")
+    String editingResetText();
+
+    /**
+     * Translated "Reset Keyboard Shortcuts".
+     *
+     * @return translated "Reset Keyboard Shortcuts"
+     */
+    @DefaultMessage("Reset Keyboard Shortcuts")
+    @Key("editingGlobalDisplay")
+    String editingGlobalDisplay();
+
+    /**
+     * Translated "Are you sure you want to reset keyboard shortcuts to their default values? ".
+     *
+     * @return translated "Are you sure you want to reset keyboard shortcuts to their default values? "
+     */
+    @DefaultMessage("Are you sure you want to reset keyboard shortcuts to their default values? ")
+    @Key("editingGlobalCaption")
+    String editingGlobalCaption();
+
+    /**
+     * Translated "This action cannot be undone.".
+     *
+     * @return translated "This action cannot be undone."
+     */
+    @DefaultMessage("This action cannot be undone.")
+    @Key("editingGlobalMessage")
+    String editingGlobalMessage();
+
+    /**
+     * Translated "Resetting Keyboard Shortcuts...".
+     *
+     * @return translated "Resetting Keyboard Shortcuts..."
+     */
+    @DefaultMessage("Resetting Keyboard Shortcuts...")
+    @Key("editingProgressMessage")
+    String editingProgressMessage();
+
+    /**
+     * Translated "Cancel".
+     *
+     * @return translated "Cancel"
+     */
+    @DefaultMessage("Cancel")
+    @Key("editingCancelShortcuts")
+    String editingCancelShortcuts();
 
 }
