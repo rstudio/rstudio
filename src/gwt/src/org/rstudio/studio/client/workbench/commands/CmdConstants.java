@@ -187,7 +187,7 @@ public interface CmdConstants extends Constants {
     String newQuartoPresDesc();
     
     // serveQuartoSite
-    @DefaultStringValue("_Serve Site") // $NON-NLS-1$
+    @DefaultStringValue("_Preview Site") // $NON-NLS-1$
     String serveQuartoSiteMenuLabel();
     @DefaultStringValue("Run development server for Quarto site") // $NON-NLS-1$
     String serveQuartoSiteDesc();

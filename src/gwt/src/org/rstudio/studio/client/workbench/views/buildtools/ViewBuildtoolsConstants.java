@@ -53,11 +53,11 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
     String buildBookOptionsText();
 
     /**
-     * Translated "Serve Book".
+     * Translated "Preview Book".
      *
-     * @return translated "Serve Book"
+     * @return translated "Preview Book"
      */
-    @DefaultMessage("Serve Book")
+    @DefaultMessage("Preview Book")
     @Key("serveBookText")
     String serveBookText();
 
@@ -233,11 +233,11 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
     String renderLabel();
 
     /**
-     * Translated "Serve ".
+     * Translated "Preview ".
      *
-     * @return translated "Serve "
+     * @return translated "Preview "
      */
-    @DefaultMessage("Serve ")
+    @DefaultMessage("Preview ")
     @Key("serveLabel")
     String serveLabel();
 
