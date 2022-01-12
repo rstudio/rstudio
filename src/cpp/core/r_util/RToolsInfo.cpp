@@ -248,23 +248,14 @@ RToolsInfo::RToolsInfo(const std::string& name,
       clangArgs.push_back("-D__GNUC_MINOR__=0");
       clangArgs.push_back("-D__GNUC_PATCHLEVEL__=2");
 
-      // set compiler paths
-#define kRtoolsTriple "x86_64-w64-mingw32.static.posix"
-#define kRtoolsBaseDir kRtoolsTriple
-#define kGccVersion "10.3.0"
-
       auto stems = {
-         kRtoolsBaseDir "/lib/gcc/" kRtoolsTriple "/" kGccVersion "/include/c++",
-         kRtoolsBaseDir "/lib/gcc/" kRtoolsTriple "/" kGccVersion "/include/c++/" kRtoolsTriple,
-         kRtoolsBaseDir "/lib/gcc/" kRtoolsTriple "/" kGccVersion "/include/c++/backward",
-         kRtoolsBaseDir "/lib/gcc/" kRtoolsTriple "/" kGccVersion "/include",
-         kRtoolsBaseDir "/include",
-         kRtoolsBaseDir "/lib/gcc/" kRtoolsTriple "/" kGccVersion "/include-fixed"
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++",
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/x86_64-w64-mingw32.static.posix",
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++/backward",
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include",
+         "x86_64-w64-mingw32.static.posix/include",
+         "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include-fixed",
       };
-
-#undef kRtoolsBaseDir
-#undef kRtoolsTriple
-#undef kGccVersion
 
       for (auto&& stem : stems)
       {
