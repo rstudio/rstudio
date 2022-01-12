@@ -328,61 +328,67 @@
       if (is.null(names(x)))
          names(x) <- paste("V", seq_along(x), sep = "")
       
-      if (!flatten) {
-         return(x)
-      }
-      frameCols <- .rs.frameCols(x)
-      if (length(frameCols) > 0) {
-         return(.rs.flattenFrame(x, frameCols))
-      } else {
-         return(x)
-      }
+      if (flatten) {
+         x <- .rs.flattenFrame(x)
+      } 
+      return(x)
    }
 })
 
-.rs.addFunction("frameCols", function(x) {
-   which(vapply(x, is.data.frame, TRUE))
+.rs.addFunction("multiCols", function(x) {
+   fun <- function(col) is.data.frame(col) || is.matrix(col)
+   which(vapply(x, fun, TRUE))
 })
 
-.rs.addFunction("flattenFrame", function(x, framecols) {
-   while (length(framecols) > 0) {
-      framecol <- framecols[1]
-      newcols <- ncol(x[[framecol]])
-      if (identical(newcols, 0)) 
-      {
-         # remove columns consisting of empty frames
-         x[[framecol]] <- NULL
-      }
-      else
-      {
-         # recursive--are any columns in the nested frame themselves frames?
-         nestedFrameCols <- .rs.frameCols(x[[framecol]]) 
-         if (length(nestedFrameCols) > 0) {
-            x[[framecol]] <- .rs.flattenFrame(x[[framecol]], nestedFrameCols)
-            
-            # readjust indices
-            newcols <- ncol(x[[framecol]])
-         }
-         
-         # apply column names
-         cols <- x[[framecol]]
-         if (length(names(framecols)) > 0) {
-            names(cols) <- paste(names(framecol)[[1]], names(cols), sep = ".")
-         }
-         
-         # replace other columns in place
-         if (framecol >= ncol(x))  {
-            x <- cbind(x[0:(framecol-1)], cols)
-         } else {
-            x <- cbind(x[0:(framecol-1)], cols, x[(framecol+1):ncol(x)])
-         }
+.rs.addFunction("flattenFrame", function(x) {
+  multicols <- .rs.multiCols(x)
+  while (length(multicols) > 0) {
+    multicol <- multicols[1]
+    newcols <- ncol(x[[multicol]])
+    if (identical(newcols, 0)) 
+    {
+      # remove columns consisting of empty frames
+      x[[multicol]] <- NULL
+    }
+    else
+    {
+      cols <- x[[multicol]]
+
+      # recurse because x[[multicol]] might also need flattening
+      if (length(.rs.multiCols(cols)) > 0L) {
+        cols <- x[[multicol]] <- .rs.flattenFrame(cols)
+        
+        # readjust indices
+        newcols <- ncol(cols)
       }
       
-      # pop this frame off the list and adjust the other indices to account for
-      # the columns we just added, if any
-      framecols <- framecols[-1] + (max(newcols, 1) - 1) 
-   }
-   x
+      # apply column names
+      
+      prefix <- c(names(multicol)[[1]], rep("", ncol(cols) - 1L))
+      if (is.matrix(cols)) {
+        colnames <- colnames(cols)
+        if (is.null(colnames)) {
+          colnames(cols) <- paste0(prefix, '[, ', 1:ncol(cols), ']')
+        } else {
+          colnames(cols) <- paste0(prefix, '[, "', colnames, '"]')
+        }
+      } else if (is.data.frame(cols)) {
+        names(cols) <- paste(prefix, names(cols), sep = "$")
+      }
+      
+      # replace other columns in place
+      if (multicol >= ncol(x))  {
+        x <- cbind(x[0:(multicol-1)], cols)
+      } else {
+        x <- cbind(x[0:(multicol-1)], cols, x[(multicol+1):ncol(x)])
+      }
+    }
+    
+    # pop this frame off the list and adjust the other indices to account for
+    # the columns we just added, if any
+    multicols <- multicols[-1] + (max(newcols, 1) - 1) 
+  }
+  x
 })
 
 .rs.addFunction("applyTransform", function(x, filtered, search, cols, dirs)
