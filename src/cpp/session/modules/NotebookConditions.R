@@ -42,13 +42,8 @@
 
 .rs.addFunction("notebookConditions.connectImpl", function()
 {
-   # NOTE: because the body of this function will be evaluated in the
-   # global environment, we need to avoid defining variables here.
-   #
-   # https://github.com/rstudio/rstudio/issues/8834
-   base::assign(
-      x = ".rs.notebookConditions.handlerStack",
-      value = .Internal(.addCondHands(
+  .rs.notebookConditions.handlerStack <-
+   .Internal(.addCondHands(
          c("warning", "message"),
          list(
             warning = .rs.notebookConditions.onWarning,
@@ -57,9 +52,7 @@
          base::globalenv(),
          NULL,
          TRUE
-      )),
-      envir = base::as.environment("tools:rstudio")
-   )
+      ))
 })
 
 .rs.addFunction("notebookConditions.disconnectCall", function()
@@ -69,19 +62,8 @@
 
 .rs.addFunction("notebookConditions.disconnectImpl", function()
 {
-   # NOTE: because the body of this function will be evaluated in the
-   # global environment, we need to avoid defining variables here.
-   #
-   # https://github.com/rstudio/rstudio/issues/8834
    .Internal(.resetCondHands(
-      base::get(
-         x = ".rs.notebookConditions.handlerStack",
-         envir = base::as.environment("tools:rstudio")
-      )
+     .rs.notebookConditions.handlerStack
    ))
-   
-   base::rm(
-      list = ".rs.notebookConditions.handlerStack",
-      envir = base::as.environment("tools:rstudio")
-   )
+  rm(.rs.notebookConditions.handlerStack)
 })
