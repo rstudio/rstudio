@@ -33,8 +33,8 @@
 
 .rs.addFunction("setClangDiagnostics", function(level)
 {
-   if (!is.numeric(level) || (level < 0) || (level > 2))
-      stop("level must be 0, 1, or 2")
+   if (!is.numeric(level) || (level < 0) || (level > 3))
+      stop("level must be within the range [0, 3]")
    
    if (level > 0)
       .rs.isClangAvailable()
