@@ -56,7 +56,7 @@
   base::assign(".rs.notebookConditions.handlerStack", 
                .rs.notebookConditions.handlerStack,
                .rs.toolsEnv())
-  rm(.rs.notebookConditions.handlerStack)
+  base::rm(.rs.notebookConditions.handlerStack)
 })
 
 .rs.addFunction("notebookConditions.disconnectCall", function()
