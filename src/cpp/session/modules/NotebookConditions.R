@@ -53,6 +53,10 @@
          NULL,
          TRUE
       ))
+  base::assign(".rs.notebookConditions.handlerStack", 
+               .rs.notebookConditions.handlerStack,
+               .rs.toolsEnv())
+  rm(.rs.notebookConditions.handlerStack)
 })
 
 .rs.addFunction("notebookConditions.disconnectCall", function()
@@ -63,7 +67,11 @@
 .rs.addFunction("notebookConditions.disconnectImpl", function()
 {
    .Internal(.resetCondHands(
-     .rs.notebookConditions.handlerStack
+     base::get(
+       x = ".rs.notebookConditions.handlerStack",
+       envir = .rs.toolsEnv()
+     )
+     
    ))
-  rm(.rs.notebookConditions.handlerStack)
+  base::rm(.rs.notebookConditions.handlerStack, envir = .rs.toolsEnv())
 })
