@@ -23,7 +23,7 @@
   if (identical(params, "")) {
     params <- list()
   } else {
-    params <- strsplit(params, ":")
+    params <- strsplit(params, ":")[[1L]]
 
     names  <- sapply(params, function(p) sub("=.+$", "", p))
     params <- lapply(params, function(p) sub("^[^=]+=", "", p))
@@ -32,6 +32,8 @@
   
   if (identical("rstudio:help", url)) {
     .rs.showHelpTopic(params$topic, params$package) 
+  } else if (identical("rstudio:vignette", url)) {
+    print(vignette(params$topic, package = params$package))
   } else if (grepl("^file://", url)) {
     # file:://some/file/path
     # file:://some/file/path#32
