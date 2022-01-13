@@ -72,6 +72,7 @@
 * Fixed logging directory permissions to be more restrictive (775 instead of 777) (#3099)
 * Fixed Duplicate --session-collab-server when launching R session (pro #3106)
 * Fixed errors when opening or saving Rmarkdown documents when R is busy (#9868)
+* Fixed issue with SLES 12 builds using OpenSSL 1.1 instead of 1.0.2
 
 ### Breaking
 
