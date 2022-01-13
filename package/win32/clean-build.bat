@@ -1,11 +1,6 @@
+@echo off
 
-rmdir /s /q build 
-cd ..\..\src\gwt
+if exist build rmdir /s /q build 
+pushd ..\..\src\gwt
 ant clean 
-
-
-
-
-
-
-
+popd

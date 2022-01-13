@@ -1,8 +1,16 @@
 @echo off
 set PACKAGE_DIR="%CD%"
 
+setlocal
+
+for %%A in (%*) do (
+      if "%%A" == "clean" set CLEANBUILD=1
+      if "%%A" == "quick" set QUICK=1
+      if "%%A" == "electron" set ELECTRON=1
+)
+
 REM clean if requested
-if "%1" == "clean" (
+if defined CLEANBUILD (
       call clean-build.bat
       if exist CMakeCache.txt del CMakeCache.txt
 )
@@ -15,8 +23,6 @@ for %%F in (ant cmake) do (
             exit /b 1
       )
 )
-
-setlocal
 
 REM Build for desktop
 set GWT_MAIN_MODULE=RStudioDesktop
@@ -66,11 +72,11 @@ cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
-call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %1 || goto :error
+call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
 
 REM create packages
 cd "%BUILD_DIR%"
-if not "%1" == "quick" cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
+if NOT defined QUICK cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
 if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
 cd ..
 

@@ -8,9 +8,15 @@ if "%CMAKE_BUILD_TYPE%" == "Debug" set WIN32_BUILD_PATH=build32-debug
 set INSTALL_PATH=%1
 if "%INSTALL_PATH%" == "" set INSTALL_PATH=..\..\..\src\qtcreator-build\session
 
-if "%2" == "clean" rmdir /s /q %WIN32_BUILD_PATH%
+for %%A in (%*) do (
+      if "%%A" == "clean" set CLEANBUILD=1
+      if "%%A" == "quick" set QUICK=1
+      if "%%A" == "electron" set ELECTRON=1
+)
 
-setlocal
+if defined CLEANBUILD (
+      if exist %WIN32_BUILD_PATH% rmdir /s /q %WIN32_BUILD_PATH%
+)
 
 REM perform 32-bit build
 mkdir %WIN32_BUILD_PATH%
