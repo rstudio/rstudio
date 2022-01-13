@@ -222,23 +222,4 @@ public interface ClientWorkbenchConstants extends com.google.gwt.i18n.client.Mes
     @Key("adminNotificationCaption")
     String adminNotificationCaption();
 
-    /**
-     * Translated "Connections".
-     *
-     * @return translated "Connections"
-     */
-    @DefaultMessage("Connections")
-    @Key("connectionsTitle")
-    String connectionsTitle();
-
-    /**
-     * Translated "{0} Connection".
-     *
-     * @return translated "{0} Connection"
-     */
-    @DefaultMessage("{0} Connection")
-    @Key("connectionNameLabel")
-    String connectionNameLabel(String name);
-
-
 }

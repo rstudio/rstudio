@@ -186,7 +186,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
          String originUrl = vcsContext_.getGitRemoteOriginUrl();
          if (originUrl.length() == 0)
             originUrl = NO_REMOTE_ORIGIN;
-         lblOrigin_.setOrigin(constants_.lblOrigin_(), originUrl);
+         lblOrigin_.setOrigin(constants_.lblOrigin(), originUrl);
          lblOrigin_.setVisible(true);
          vcsSelect_.removeStyleName(RES.styles().vcsSelectExtraSpaced());
 

@@ -92,7 +92,7 @@ public class NewPackagePage extends NewDirectoryPage
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
       String[] labels = {constants_.packageLabel()};
-      String[] values = {constants_.packageValue()};
+      String[] values = {"package"};
       listProjectType_ = new SelectWidget(constants_.typeLabel(),
                                           labels,
                                           values,

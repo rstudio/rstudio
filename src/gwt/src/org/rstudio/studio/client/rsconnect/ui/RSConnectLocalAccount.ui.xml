@@ -36,7 +36,7 @@
         <g:VerticalPanel>
          <rsw:FormLabel for="{ElementIds.getRscServerUrl}"
                         text="Enter the public URL of the RStudio Connect server:">
-             <ui:attribute ui:name="text" key="enterPublicURLText"/>
+             <ui:attribute name="text" key="enterPublicURLText"/>
          </rsw:FormLabel>
          <rsw:TextBoxWithCue styleName="{style.textControl}"
                              cueText="servername.com:3939"

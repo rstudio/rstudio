@@ -46,24 +46,7 @@ void handleQuartoResources(const http::Request& request, http::Response* pRespon
    FilePath resourcesPath(config.resources_path);
    FilePath quartoResource = resourcesPath.completeChildPath(path);
 
-   // check for special quarto_build_editor_tools mode
-   if (prefs::userState().quartoBuildEditorTools())
-   {
-      // build yaml.js on the fly
-      if ((path == "editor/tools/yaml/yaml.js") &&
-          resourcesPath.completeChildPath("editor/tools/yaml/tree-sitter-yaml.wasm").exists())
-      {
-         quartoBuildjs();
-      }
-
-      // never cache quarto resources in build mode
-      pResponse->setNoCacheHeaders();
-      pResponse->setFile(quartoResource, request);
-   }
-   else
-   {
-      pResponse->setCacheableFile(quartoResource, request);
-   }
+   pResponse->setCacheableFile(quartoResource, request);
 }
 
 } // anonymous namespace

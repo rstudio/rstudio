@@ -276,12 +276,16 @@ public class RMarkdownPreferencesPane extends PreferencesPane
 
       
       // list spacing
+      String[] listSpacingOptions = {
+              constants_.listSpacingTight(),
+              constants_.listSpacingSpaced()
+      };
       String[] listSpacingValues = {
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_LIST_SPACING_TIGHT,
          UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_LIST_SPACING_SPACED
       };
       visualModeListSpacing_ = new SelectWidget(constants_.visualModeListSpacingLabel(),
-            listSpacingValues, listSpacingValues, 
+            listSpacingOptions, listSpacingValues,
             false, true, false);
       visualModeListSpacing_.getElement().getStyle().setMarginBottom(10, Unit.PX);
       if (!visualModeListSpacing_.setValue(prefs_.visualMarkdownEditingListSpacing().getGlobalValue()))
@@ -289,12 +293,17 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeOptions.add(visualModeListSpacing_);
       
       // auto wrap
-      String[] wrapValues = {
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE,
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN,
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE
+      String[] wrapOptions = {
+         constants_.editingWrapNone(),
+         constants_.editingWrapColumn(),
+         constants_.editingWrapSentence()
       };
-      visualModeWrap_ = new SelectWidget(constants_.visualModeWrapLabel(), wrapValues, wrapValues, false, true, false);
+      String[] wrapValues = {
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_NONE,
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_COLUMN,
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_WRAP_SENTENCE
+      };
+      visualModeWrap_ = new SelectWidget(constants_.visualModeWrapLabel(), wrapOptions, wrapValues, false, true, false);
       if (!visualModeWrap_.setValue(prefs_.visualMarkdownEditingWrap().getGlobalValue()))
          visualModeWrap_.getListBox().setSelectedIndex(0);
       HelpButton.addHelpButton(visualModeWrap_, "visual_markdown_editing-line-wrapping", constants_.visualModeWrapHelpLabel(), 0);
@@ -319,12 +328,17 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       lessSpaced(visualModeWrapColumn_);
 
       // references
-      String[] referencesValues = {
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK,
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION,
-         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT
+      String[] referencesOptions = {
+              constants_.refLocationBlock(),
+              constants_.refLocationSection(),
+              constants_.refLocationDocument()
       };
-      visualModeReferences_ = new SelectWidget(constants_.visualModeReferencesLabel(), referencesValues, referencesValues, false, true, false);
+      String[] referencesValues = {
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK,
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION,
+              UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT
+      };
+      visualModeReferences_ = new SelectWidget(constants_.visualModeReferencesLabel(), referencesOptions, referencesValues, false, true, false);
       if (!visualModeReferences_.setValue(prefs_.visualMarkdownEditingReferencesLocation().getGlobalValue()))
          visualModeReferences_.getListBox().setSelectedIndex(0);
       spaced(visualModeReferences_);
@@ -481,10 +495,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       lblQuartoVersion_.setVisible(false);
       lblQuartoVersion_.addStyleName(res_.styles().checkBoxAligned());
       quarto.add(spacedBefore(lblQuartoVersion_));      
-      quarto.add(lblQuartoPath_ = new Label());
+      quarto.add(spaced(lblQuartoPath_ = new Label()));
       lblQuartoPath_.addStyleName(baseRes.styles().infoLabel());
       lblQuartoPath_.addStyleName(res_.styles().checkBoxAligned());
       lblQuartoPath_.setVisible(false);
+      lblQuartoUsing_ = new Label("Create Quarto documents and projects using the New File and New Project commands.");
+      quarto.add(lblQuartoUsing_);
+      
       HelpLink helpLink = new HelpLink(constants_.helpLinkCaption(), "https://quarto.org", false, false);
       nudgeRight(helpLink);
       helpLink.addStyleName(res_.styles().newSection());
@@ -563,12 +580,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             !config.user_installed.isEmpty());
       lblQuartoPath_.setText(config.user_installed);
       lblQuartoPath_.setVisible(lblQuartoVersion_.isVisible());
+      lblQuartoUsing_.setVisible(lblQuartoVersion_.isVisible());
    
       // only write quarto pref if the user interacts with it
       chkEnableQuarto_.addValueChangeHandler(event -> {
          boolean showVersion = !config.user_installed.isEmpty() && event.getValue();
          lblQuartoVersion_.setVisible(showVersion);
          lblQuartoPath_.setVisible(showVersion);
+         lblQuartoUsing_.setVisible(showVersion);
          writeEnableQuarto_ = event.getValue()  
             ? UserPrefs.QUARTO_ENABLED_ENABLED 
             : UserPrefs.QUARTO_ENABLED_DISABLED;
@@ -684,6 +703,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final CheckBox chkEnableQuarto_;
    private final Label lblQuartoVersion_;
    private final Label lblQuartoPath_;
+   private final Label lblQuartoUsing_;
    private String writeEnableQuarto_ = null;
    
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);

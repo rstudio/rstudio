@@ -19,6 +19,14 @@
    white-space: nowrap;
 }
 
+.findTextBox, .replaceTextBox {
+   margin-top: 1px;
+}
+
+.findTextBox {
+   margin-left: 3px;
+}
+
 .replaceTextBox {
    margin-left: 10px;
 }

@@ -459,7 +459,7 @@ bool isShinyRMarkdownDocument(const FilePath& filePath)
    Error error = readStringFromFile(filePath, &contents);
    if (error)
    {
-      LOG_ERROR(error);
+      LOG_DEBUG_MESSAGE(error.asString());
       return false;
    }
    
@@ -475,7 +475,7 @@ ShinyFileType getShinyFileType(const FilePath& filePath)
    Error error = readStringFromFile(filePath, &contents);
    if (error)
    {
-      LOG_ERROR(error);
+      LOG_DEBUG_MESSAGE(error.asString());
       return ShinyNone;
    }
    

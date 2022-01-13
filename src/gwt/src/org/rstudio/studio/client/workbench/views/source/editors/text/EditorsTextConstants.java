@@ -1196,42 +1196,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     String section();
 
     /**
-     * Translated "\\begin{verbatim}\n".
-     *
-     * @return translated "\\begin{verbatim}\n"
-     */
-    @DefaultMessage("\\begin{verbatim}\n")
-    @Key("verbatimPrefix")
-    String verbatimPrefix();
-
-    /**
-     * Translated "\n\\end{verbatim}".
-     *
-     * @return translated "\n\\end{verbatim}"
-     */
-    @DefaultMessage("\n\\end{verbatim}")
-    @Key("verbatimSuffix")
-    String verbatimSuffix();
-
-    /**
-     * Translated "\\begin{quote}\n".
-     *
-     * @return translated "\\begin{quote}\n"
-     */
-    @DefaultMessage("\\begin{quote}\n")
-    @Key("blockQuotePrefix")
-    String blockQuotePrefix();
-
-    /**
-     * Translated "\n\\end{quote}".
-     *
-     * @return translated "\n\\end{quote}"
-     */
-    @DefaultMessage("\n\\end{quote}")
-    @Key("blockQuoteSuffix")
-    String blockQuoteSuffix();
-
-    /**
      * Translated "(Untitled Slide)".
      *
      * @return translated "(Untitled Slide)"
@@ -1581,24 +1545,6 @@ public interface EditorsTextConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("Show whitespace")
     @Key("showWhitespace")
     String showWhitespace();
-
-    /**
-     * Translated "Switch to visual markdown editor".
-     *
-     * @return translated "Switch to visual markdown editor"
-     */
-    @DefaultMessage("Switch to visual markdown editor")
-    @Key("switchToVisualMarkdownEditor")
-    String switchToVisualMarkdownEditor();
-
-    /**
-     * Translated "Switch to source editor".
-     *
-     * @return translated "Switch to source editor"
-     */
-    @DefaultMessage("Switch to source editor")
-    @Key("switchToSourceEditor")
-    String switchToSourceEditor();
 
     /**
      * Translated "Format".

@@ -579,7 +579,7 @@ public:
    core::Error setShowIndentGuides(bool val);
 
    /**
-    * Whether continue comments (by inserting the comment character) after adding a new line.
+    * Whether to continue comments (by inserting the comment character) after adding a new line.
     */
    bool continueCommentsOnNewline();
    core::Error setContinueCommentsOnNewline(bool val);

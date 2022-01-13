@@ -45,7 +45,7 @@ bool s_reticulatePythonInited = false;
 
 void updateReticulatePython(bool forInit)
 {
-   if (!forInit && s_pythonInitialized)
+   if (!forInit && s_reticulatePythonInited)
       return;
 
    if (!ASSERT_MAIN_THREAD())
@@ -62,7 +62,7 @@ void updateReticulatePython(bool forInit)
       if (error)
          LOG_ERROR(error);
    }
-   
+
    s_reticulatePythonInited = true;
 }
 

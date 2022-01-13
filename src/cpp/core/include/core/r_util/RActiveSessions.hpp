@@ -76,6 +76,9 @@ private:
    const std::string kRVersionHome = "r_version_home";
    const std::string kRVersionLabel = "r_version_label";
    const std::string kWorkingDir = "working_directory";
+   const std::string kLastResumed = "last_resumed";
+   const std::string kSuspendTimestamp = "suspend_timestamp";
+   const std::string kBlockingSuspend = "blocking_suspend";
 
  public:
 
@@ -158,43 +161,28 @@ private:
    {
       if (!empty())
       {
-         writeProperty("blocking-suspend", blocking.writeFormatted());
+         writeProperty(kBlockingSuspend, blocking.writeFormatted());
       }
    }
 
-   void setSuspensionTime()
+   boost::posix_time::ptime suspensionTime() const
    {
-      if (!empty())
-      {
-         std::string suspendTime = boost::posix_time::to_iso_extended_string(
-                                    boost::posix_time::second_clock::universal_time());
-         writeProperty("suspend-timestamp", suspendTime);
-      }
+      return ptimeTimestampProperty(kSuspendTimestamp);
    }
 
-   boost::posix_time::ptime suspensionTime()
+   void setSuspensionTime(const boost::posix_time::ptime value = boost::posix_time::second_clock::universal_time())
    {
-      if (!empty())
-      {
-         try
-         {
-            std::string value = readProperty("suspend-timestamp");
-            if (value.empty())
-               return boost::posix_time::not_a_date_time;
+      setPtimeTimestampProperty(kSuspendTimestamp, value);
+   }
 
-            boost::posix_time::ptime retVal = boost::posix_time::from_iso_extended_string(value);
+   boost::posix_time::ptime lastResumed() const
+   {
+      return ptimeTimestampProperty(kLastResumed);
+   }
 
-            if (retVal.is_not_a_date_time())
-               return boost::posix_time::not_a_date_time;
-
-            return retVal;
-         }
-         catch (std::exception const& e)
-         {
-            LOG_ERROR_MESSAGE("Failed to read session suspend timestamp: " + std::string(e.what()));
-         }
-      }
-      return boost::posix_time::not_a_date_time;
+   void setLastResumed(const boost::posix_time::ptime value = boost::posix_time::second_clock::universal_time())
+   {
+      setPtimeTimestampProperty(kLastResumed, value);
    }
 
    double lastUsed() const
@@ -395,7 +383,6 @@ private:
       sortConditions_.running_ = running();
       sortConditions_.lastUsed_ = lastUsed();
    }
- 
 
    void setTimestampProperty(const std::string& property)
    {
@@ -414,6 +401,44 @@ private:
          return 0;
    }
 
+   void setPtimeTimestampProperty(const std::string& property, const boost::posix_time::ptime& time)
+   {
+      if (!empty())
+      {
+         std::string suspendTime = boost::posix_time::to_iso_extended_string(time);
+         writeProperty(property, suspendTime);
+      }
+   }
+
+   boost::posix_time::ptime ptimeTimestampProperty(const std::string& property) const
+   {
+      if (!empty())
+      {
+         std::string value = "Value Not Read";
+         try
+         {
+            value = readProperty(property);
+            if (value.empty())
+               return boost::posix_time::not_a_date_time;
+
+            // posix_time::from_iso_extended_string can't parse not_a_date_time correctly, so handling it here
+            if (value == boost::posix_time::to_iso_extended_string(boost::posix_time::not_a_date_time))
+               return boost::posix_time::not_a_date_time;
+
+            boost::posix_time::ptime retVal = boost::posix_time::from_iso_extended_string(value);
+
+            if (retVal.is_not_a_date_time())
+               return boost::posix_time::not_a_date_time;
+
+            return retVal;
+         }
+         catch (std::exception const& e)
+         {
+            LOG_INFO_MESSAGE("Failure reading property " + property + ": " + std::string(e.what()) + ". Property contents: " + value);
+         }
+      }
+      return boost::posix_time::not_a_date_time;
+   }
 
    void setRunning(bool running)
    {

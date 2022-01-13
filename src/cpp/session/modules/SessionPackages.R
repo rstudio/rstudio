@@ -1304,8 +1304,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       getRversion() >= "3.3" && .rs.haveRequiredRSvnRev(69197)
    }
 
-   # Check whether we are running R 3.2 and whether we have libcurl
+   # Check whether we are running R 3.2+, R 4.2+, and whether we have libcurl
    isR32 <- getRversion() >= "3.2"
+   isR42 <- getRversion() >= "4.2"
    haveLibcurl <- isR32 && capabilities("libcurl") && libcurlHandles404()
    
    # Utility function to bind to libcurl or a fallback utility (e.g. wget)
@@ -1321,12 +1322,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # Determine the right secure download method per-system
    sysName <- Sys.info()[['sysname']]
    
-   # For windows we prefer binding directly to wininet if we can (since
-   # that doesn't rely on the value of setInternet2). If it's R <= 3.1
-   # then we can use "internal" for https so long as internet2 is enabled 
-   # (we don't use libcurl on Windows because it doesn't check certs).
+   # For windows, with R versions >= 3.2 to <= 4.1, we prefer binding directly to wininet
+   # if we can (since that doesn't rely on the value of setInternet2).
+   # In R 4.2+ wininet is deprecated, so we use libcurl instead when available.
+   # If it's R <= 3.1 then we can use "internal" for https so long as internet2 is enabled
    if (identical(sysName, "Windows")) {
-      if (isR32)
+      if (isR42 && haveLibcurl)
+         "libcurl"
+      else if (isR32)
          "wininet"
       else if (isTRUE(.rs.setInternet2(NA)))
          "internal"

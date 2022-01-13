@@ -160,10 +160,10 @@ void detectQuartoInstallation()
 void detectQuartoInstallation()
 {
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.2.444");
+   const Version kQuartoRequiredVersion("0.2.476");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.2.444");
+   const Version kQuartoRecommendedVersion("0.2.476");
 
    // reset
    s_userInstalledPath = FilePath();
@@ -763,18 +763,6 @@ json::Value quartoCapabilities()
    }
 }
 
-void quartoBuildjs()
-{
-   core::system::ProcessResult result;
-   Error error = runQuarto({"build-js"}, FilePath(), &result);
-   if (error)
-      LOG_ERROR(error);
-
-   if (result.exitStatus != EXIT_SUCCESS)
-   {
-      LOG_ERROR_MESSAGE(result.stdErr);
-   }
-}
 
 // Given a path to a Quarto file (usually .qmd), attempt to inspect it
 Error quartoInspect(const std::string& path,
@@ -1155,6 +1143,42 @@ void readQuartoProjectConfig(const FilePath& configFile,
 } // namesace quarto
 
 namespace module_context  {
+
+
+bool navigateToRenderPreviewError(const FilePath& previewFile,
+                                  const std::vector<std::string>& previewFileLines,
+                                  const std::string& output,
+                                  const std::string& allOutput)
+{
+   // look for an error and do source navigation as necessary
+   int errLine = -1;
+   FilePath errFile = previewFile;
+
+   // look for knitr error
+   const boost::regex knitrErr("Quitting from lines (\\d+)-(\\d+) \\(([^)]+)\\)");
+   boost::smatch matches;
+   if (regex_utils::search(output, matches, knitrErr))
+   {
+      errLine = safe_convert::stringTo<int>(matches[1].str(), 1);
+      errFile = previewFile.getParent().completePath(matches[3].str());
+   }
+
+   // look for jupyter error
+   if (errLine == -1)
+      errLine = jupyterErrorLineNumber(previewFileLines, allOutput);
+
+   // if there was an error then navigate to it
+   if (errLine != -1)
+   {
+      module_context::editFile(errFile, errLine);
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+
+}
 
 int jupyterErrorLineNumber(const std::vector<std::string>& srcLines, const std::string& output)
 {

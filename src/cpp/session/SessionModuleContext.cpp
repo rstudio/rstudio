@@ -932,6 +932,13 @@ void scheduleDelayedWork(const boost::posix_time::time_duration& period,
                         false);
 }
 
+void executeOnMainThread(const boost::function<void()> &execute)
+{
+   if (core::thread::isMainThread())
+      execute();
+   else
+      scheduleDelayedWork(boost::posix_time::milliseconds(1), execute, false);
+}
 
 void onBackgroundProcessing(bool isIdle)
 {

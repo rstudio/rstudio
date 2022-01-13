@@ -42,7 +42,10 @@ bool hasYamlHeader(const FilePath& filePath)
    std::string contents;
    Error error = readStringFromFile(filePath, &contents);
    if (error)
-      LOG_ERROR(error);
+   {
+      LOG_DEBUG_MESSAGE(error.asString());
+      return false;
+   }
    
    return hasYamlHeader(contents);
 }

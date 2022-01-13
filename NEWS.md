@@ -33,6 +33,13 @@
 * Added SSL communication between RSW and remote sessions (using the job launcher). It's enabled by default and can be disabled in rserver.conf by setting session-ssl-enabled=0. Certificates are generated for each job by default or can be manually configured. (Pro #3026)
 * Disable session SSL for Code Server 3.9.3 and support auth changes in Code Server 3.11.0 (Pro #3111)
 * Show user's full name, or proxied auth display name, in Project Sharing presence indicator (Pro #3121)
+* Allow users to specify R version in launcher jobs (Pro #1046)
+
+#### R
+
+* RStudio now supports the experimental UTF-8 UCRT builds of R (#9824)
+* Preliminary support for R graphics engine version 15 in R 4.2.0. (#10058)
+* Default file download method in Windows for R 4.2 and above changed from `wininet` to `libcurl` (#10163)
 
 #### Misc
 
@@ -47,11 +54,8 @@
 * Added support for Amazon Linux 2 (Pro #2474)
 * Treat Alt and Caption fields differently depending on file type (#9713)
 * Fixed shortcut conflict on German keyboard (#9276)
-
-#### R
-
-* RStudio now supports the experimental UTF-8 UCRT builds of R (#9824)
-* Preliminary support for R graphics engine version 15 in R 4.2.0. (#10058)
+* Updated shinymod snippet for Shiny modules (#10009)
+* Fixed an issue where `conda install` could fail within a Git Bash terminal on Windows (#10283)
 
 ### Fixed
 
@@ -67,9 +71,13 @@
 * Fixed permissions on Mac Desktop application so all user accounts can launch it (#9945, #10267)
 * Fixed logging directory permissions to be more restrictive (775 instead of 777) (#3099)
 * Fixed Duplicate --session-collab-server when launching R session (pro #3106)
+* Fixed errors when opening or saving Rmarkdown documents when R is busy (#9868)
 
 ### Breaking
+
 * Remove --session-collab-server and filebase-path (pro #3181)
 
 ### Deprecated / Removed
+
 There is no deprecated or removed functionality in this release.
+
