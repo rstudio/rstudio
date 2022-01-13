@@ -16,11 +16,6 @@
 
 .rs.addJsonRpcHandler("console_follow_hyperlink", function(url, text, params)
 {
-  if (identical("rstudio:print", url)) {
-    data <- unserialize(charToRaw(URLdecode(sub("^data=", "", params))))
-    return(print(data))
-  }
-
   # `params=` follows the key1=value1:key2:value2 pattern
   # https://iterm2.com/documentation-escape-codes.html
   #
@@ -35,7 +30,9 @@
     names(params) <- names
   }
   
-  if (grepl("^file://", url)) {
+  if (identical("rstudio:help", url)) {
+    .rs.showHelpTopic(params$topic, params$package) 
+  } else if (grepl("^file://", url)) {
     # file:://some/file/path
     # file:://some/file/path#32
     # file:://some/file/path#32,15
@@ -54,25 +51,8 @@
     }
 
     .rs.api.navigateToFile(file, line = line, col = col, moveCursor = TRUE)
-  } else if (grepl("^rstudio:help", url)) {
-    # rstudio:help?topic=mean
-    # rstudio:help?topic=stats::rnorm
-
-    topic <- sub("^.*topic=", "", url)
-    parts <- strsplit(topic, "::")[[1L]]
-    if (length(parts) == 1L) {
-      package <- NULL
-    } else {
-      package <- parts[[1L]]
-      topic <- parts[[2L]]
-    }
-    .rs.showHelpTopic(topic, package)
-
   } else {
     # anything else goes through utils::browseURL() or the viewer
-    # utils::browseURL() in turn knows how to open local help files
-    # e.g. "http://localhost:8787/library/base/html/mean.html" in the help pane
-    # in the help pane
     if (identical(params$target, "viewer")) {
       .rs.api.viewer(url)
     } else {
