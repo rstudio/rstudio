@@ -20,6 +20,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
 #include <core/Exec.hpp>
+#include <core/Base64.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/system/FileScanner.hpp>
@@ -162,14 +163,20 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
    }
 
    // create index
+   std::string filterParams;
+   std::string filterParamsJson =
+     "{ \"crossref-index-file\": \"index.json\", \"crossref-input-type\": \"qmd\" }";
+   Error error = core::base64::encode(filterParamsJson, &filterParams);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return json::Array();
+   }
    core::system::ProcessOptions options;
    options.workingDir = xrefIndexingDir;
    core::system::Options env;
    core::system::environment(&env);
-   core::system::setenv(&env,
-      "QUARTO_FILTER_PARAMS",
-      "{ \"crossref-index-file\": \"index.json\", \"crossref-input-type\": \"qmd\" }"
-   );
+   core::system::setenv(&env, "QUARTO_FILTER_PARAMS", filterParams);
    options.environment = env;
    std::vector<std::string> args;
    args.push_back("--from");
@@ -180,7 +187,7 @@ json::Array indexSourceFile(const std::string& contents, const std::string& file
    args.push_back("defaults.yml");
    core::system::ProcessResult result;
 
-   Error error = module_context::runPandoc(
+   error = module_context::runPandoc(
       FilePath(config.bin_path).completeChildPath("pandoc").getAbsolutePath(),
       args,
       contents,
