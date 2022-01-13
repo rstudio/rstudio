@@ -363,8 +363,7 @@
       }
       
       # apply column names
-      
-      prefix <- c(names(multicol)[[1]], rep("", ncol(cols) - 1L))
+      prefix <- names(multicol)[[1]]
       if (is.matrix(cols)) {
         colnames <- colnames(cols)
         if (is.null(colnames)) {
