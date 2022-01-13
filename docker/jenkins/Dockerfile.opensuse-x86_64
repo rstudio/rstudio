@@ -5,11 +5,22 @@ ENV OPERATING_SYSTEM=opensuse_leap153
 # needed to build RPMs
 RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Tumbleweed/systemsmanagement:wbem:deps.repo
 
+
 # refresh repos and install required packages
-RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
-    zypper --non-interactive install -y \
+
+RUN zypper --non-interactive --gpg-auto-import-keys refresh
+
+# Remove openssl-1_1, it conflicts with openssl-1_0_0 a dependency of libopenssl-1_0_0-devel
+# and we need libopenssl-1_0_0-devel to link against 1.0.2 ssl for sles 12 artifacts.
+# The package name is openssl-1_0_0 however its version is 1.0.2
+RUN zypper --non-interactive remove -y openssl-1_1
+RUN zypper --non-interactive install -y \
     ant \
     boost-devel \
+    # Uninstalling openssl unfortunately blew away the certificates
+    # Reinstall them here
+    ca-certificates \
+    ca-certificates-mozilla \
     curl \
     expect \
     fakeroot \
@@ -20,6 +31,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libacl-devel \
     libattr-devel \
     libcap-devel \
+    # For openssl 1.0.2 
+    libopenssl-1_0_0-devel \
     libuser-devel \
     libuuid-devel \
     libxml2-devel \
@@ -27,7 +40,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libXrandr-devel \
     lsof \
     make \
-    openssl-devel \
+    # For openssl 1.0.2
+    openssl-1_0_0 \
     pam-devel \
     pango-devel \
     postgresql-devel \
