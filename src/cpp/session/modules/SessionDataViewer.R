@@ -367,10 +367,11 @@
       if (is.matrix(cols)) {
         colnames <- colnames(cols)
         if (is.null(colnames)) {
-          colnames(cols) <- paste0(prefix, '[, ', 1:ncol(cols), ']')
+          colnames(cols) <- paste0(prefix, '[,\u00a0', 1:ncol(cols), ']')
         } else {
-          colnames(cols) <- paste0(prefix, '[, "', colnames, '"]')
+          colnames(cols) <- paste0(prefix, '[,\u00a0"', colnames, '"]')
         }
+
       } else if (is.data.frame(cols)) {
         names(cols) <- paste(prefix, names(cols), sep = "$")
       }
