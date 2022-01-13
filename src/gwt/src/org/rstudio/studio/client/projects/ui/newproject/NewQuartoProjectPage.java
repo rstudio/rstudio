@@ -137,7 +137,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       ElementIds.assignElementId(chkUseVenv_,
          ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_VENV));
       venvPanel_.add(chkUseVenv_);
-      chkUseCondaenv_ = new CheckBox("Use condaenv with packages:");
+      chkUseCondaenv_ = new CheckBox(constants_.useCondaenv());
       ElementIds.assignElementId(chkUseCondaenv_,
             ElementIds.idWithPrefix(getTitle(), ElementIds.NEW_PROJECT_CONDAENV));
       venvPanel_.add(chkUseCondaenv_);

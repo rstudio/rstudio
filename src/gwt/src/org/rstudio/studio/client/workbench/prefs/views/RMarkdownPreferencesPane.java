@@ -495,10 +495,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       lblQuartoVersion_.setVisible(false);
       lblQuartoVersion_.addStyleName(res_.styles().checkBoxAligned());
       quarto.add(spacedBefore(lblQuartoVersion_));      
-      quarto.add(lblQuartoPath_ = new Label());
+      quarto.add(spaced(lblQuartoPath_ = new Label()));
       lblQuartoPath_.addStyleName(baseRes.styles().infoLabel());
       lblQuartoPath_.addStyleName(res_.styles().checkBoxAligned());
       lblQuartoPath_.setVisible(false);
+      lblQuartoUsing_ = new Label("Create Quarto documents and projects using the New File and New Project commands.");
+      quarto.add(lblQuartoUsing_);
+      
       HelpLink helpLink = new HelpLink(constants_.helpLinkCaption(), "https://quarto.org", false, false);
       nudgeRight(helpLink);
       helpLink.addStyleName(res_.styles().newSection());
@@ -577,12 +580,14 @@ public class RMarkdownPreferencesPane extends PreferencesPane
             !config.user_installed.isEmpty());
       lblQuartoPath_.setText(config.user_installed);
       lblQuartoPath_.setVisible(lblQuartoVersion_.isVisible());
+      lblQuartoUsing_.setVisible(lblQuartoVersion_.isVisible());
    
       // only write quarto pref if the user interacts with it
       chkEnableQuarto_.addValueChangeHandler(event -> {
          boolean showVersion = !config.user_installed.isEmpty() && event.getValue();
          lblQuartoVersion_.setVisible(showVersion);
          lblQuartoPath_.setVisible(showVersion);
+         lblQuartoUsing_.setVisible(showVersion);
          writeEnableQuarto_ = event.getValue()  
             ? UserPrefs.QUARTO_ENABLED_ENABLED 
             : UserPrefs.QUARTO_ENABLED_DISABLED;
@@ -698,6 +703,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final CheckBox chkEnableQuarto_;
    private final Label lblQuartoVersion_;
    private final Label lblQuartoPath_;
+   private final Label lblQuartoUsing_;
    private String writeEnableQuarto_ = null;
    
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);

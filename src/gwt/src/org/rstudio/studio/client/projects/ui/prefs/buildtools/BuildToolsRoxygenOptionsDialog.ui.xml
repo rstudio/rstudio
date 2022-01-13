@@ -1,5 +1,8 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
 
    <ui:style>
       .panel {
@@ -17,18 +20,18 @@
 
    <g:HTMLPanel styleName="{style.panel}">
       <fieldset>
-         <legend><g:Label text="Use roxygen to generate:"/></legend>
-         <g:CheckBox ui:field="chkRocletRd_" text="Rd files"/> <br/>
-         <g:CheckBox ui:field="chkRocletCollate_" text="Collate field"/> <br/>
-         <g:CheckBox ui:field="chkRocletNamespace_" text="NAMESPACE file"/> <br/>
-         <g:CheckBox ui:field="chkRocletVignette_" text="Vignettes"/> <br/>
+         <legend><g:Label text="Use roxygen to generate:"><ui:attribute name="text" key="roxygenGenerate"/></g:Label></legend>
+         <g:CheckBox ui:field="chkRocletRd_" text="Rd files"><ui:attribute name="text" key="rdFiles"/></g:CheckBox> <br/>
+         <g:CheckBox ui:field="chkRocletCollate_" text="Collate field"><ui:attribute name="text" key="collateField"/></g:CheckBox> <br/>
+         <g:CheckBox ui:field="chkRocletNamespace_" text="NAMESPACE file"><ui:attribute name="text" key="namespaceFile"/></g:CheckBox> <br/>
+         <g:CheckBox ui:field="chkRocletVignette_" text="Vignettes"><ui:attribute name="text" key="vignettesText"/></g:CheckBox> <br/>
       </fieldset>
       <br/>
       <fieldset>
-         <legend><g:Label text="Automatically roxygenize when running:"/></legend>
-         <g:CheckBox ui:field="chkRunForCheckPackage_" text="R CMD check"/> <br/>
-         <g:CheckBox ui:field="chkRunForBuildPackage_" text="Source and binary package builds"/> <br/>
-         <g:CheckBox ui:field="chkRunForBuildAndReload_" text="Install and Restart"/> <br/>
+         <legend><g:Label text="Automatically roxygenize when running:"><ui:attribute name="text" key="roxygenizeRunningText"/></g:Label></legend>
+         <g:CheckBox ui:field="chkRunForCheckPackage_" text="R CMD check"><ui:attribute name="text" key="rCMDCheck"/></g:CheckBox> <br/>
+         <g:CheckBox ui:field="chkRunForBuildPackage_" text="Source and binary package builds"><ui:attribute name="text" key="packageBuildsText"/></g:CheckBox> <br/>
+         <g:CheckBox ui:field="chkRunForBuildAndReload_" text="Install and Restart"><ui:attribute name="text" key="installRestart"/></g:CheckBox> <br/>
        </fieldset>
       <br/>
    </g:HTMLPanel>

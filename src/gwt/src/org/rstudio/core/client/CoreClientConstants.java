@@ -378,15 +378,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String rStudioServerMessage();
 
     /**
-     * Translated "Unable to establish connection with ".
-     *
-     * @return translated "Unable to establish connection with "
-     */
-    @DefaultMessage("Unable to establish connection with ")
-    @Key("statusCodeMessage")
-    String statusCodeMessage();
-
-    /**
      * Translated "OK".
      *
      * @return translated "OK"
@@ -513,15 +504,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String closeTabText();
 
     /**
-     * Translated "WindowFrameButton: for keyboard support use setClickHandler instead of addClickHandler".
-     *
-     * @return translated "WindowFrameButton: for keyboard support use setClickHandler instead of addClickHandler"
-     */
-    @DefaultMessage("WindowFrameButton: for keyboard support use setClickHandler instead of addClickHandler")
-    @Key("addClickHandlerMessage")
-    String addClickHandlerMessage();
-
-    /**
      * Translated "Could Not Change Setting"
      *
      * @return translated "Could Not Change Setting"
@@ -556,15 +538,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     @DefaultMessage("Unexpected empty response from server")
     @Key("onSubmitErrorMessage")
     String onSubmitErrorMessage();
-
-    /**
-     * Translated "and "
-     *
-     * @return translated "and "
-     */
-    @DefaultMessage("and ")
-    @Key("andText")
-    String andText();
 
     /**
      * Translated "Install"
@@ -857,15 +830,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String refreshAutomaticallyLabel();
 
     /**
-     * Translated "Manual Refresh Only"
-     *
-     * @return translated "Manual Refresh Only"
-     */
-    @DefaultMessage("Manual Refresh Only")
-    @Key("manualRefreshOnlyLabel")
-    String manualRefreshOnlyLabel();
-
-    /**
      * Translated "Stop"
      *
      * @return translated "Stop"
@@ -1046,15 +1010,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String addShiftPTag();
 
     /**
-     * Translated "Invalid usage, cannot provide both label and existingLabel"
-     *
-     * @return translated "Invalid usage, cannot provide both label and existingLabel"
-     */
-    @DefaultMessage("Invalid usage, cannot provide both label and existingLabel")
-    @Key("existingLabelMessage")
-    String existingLabelMessage();
-
-    /**
      * Translated "[Use Default]"
      *
      * @return translated "[Use Default]"
@@ -1145,24 +1100,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String folderNameLabel();
 
     /**
-     * Translated "for"
-     *
-     * @return translated "for"
-     */
-    @DefaultMessage("for")
-    @Key("forAttributeName")
-    String forAttributeName();
-
-    /**
-     * Translated "spellcheck"
-     *
-     * @return translated "spellcheck"
-     */
-    @DefaultMessage("spellcheck")
-    @Key("spellCheckAttribute")
-    String spellCheckAttribute();
-
-    /**
      * Translated "Warning"
      *
      * @return translated "Warning"
@@ -1199,15 +1136,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     String dialogErrorText();
 
     /**
-     * Translated "No potentially focusable controls found in modal dialog"
-     *
-     * @return translated "No potentially focusable controls found in modal dialog"
-     */
-    @DefaultMessage("No potentially focusable controls found in modal dialog")
-    @Key("noFocusableControlsLog")
-    String noFocusableControlsLog();
-
-    /**
      * Translated "Manual Refresh Only"
      *
      * @return translated "Manual Refresh Only"
@@ -1215,15 +1143,6 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     @DefaultMessage("Manual Refresh Only")
     @Key("manualRefreshLabel")
     String manualRefreshLabel();
-
-    /**
-     * Translated "Can''t create progress spinner (no HTML5 canvas support)"
-     *
-     * @return translated "Can''t create progress spinner (no HTML5 canvas support)"
-     */
-    @DefaultMessage("Can''t create progress spinner (no HTML5 canvas support)")
-    @Key("progressSpinnerLog")
-    String progressSpinnerLog();
 
     /**
      * Translated "Busy"

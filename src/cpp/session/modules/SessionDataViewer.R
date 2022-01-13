@@ -129,12 +129,21 @@
       
       # extract label, if any, or use global label, if any
       label <- attr(x[[idx]], "label", exact = TRUE)
-      if (is.character(label))
-         col_label <- label
+      col_label <- if (is.character(label))
+      {
+         label
+      }
       else if (idx <= length(colLabels))
-         col_label <- colLabels[[idx]]
-      else 
-         col_label <- ""
+      {
+         if (col_name %in% names(colLabels))
+            colLabels[[col_name]]
+         else
+            colLabels[[idx]]
+      }
+      else
+      {
+         ""
+      }
       
       # ensure that the column contains some scalar values we can examine 
       if (length(x[[idx]]) > 0)

@@ -1,6 +1,9 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:w='urn:import:org.rstudio.core.client.widget'>
+             xmlns:w='urn:import:org.rstudio.core.client.widget'
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
 
    <ui:style>
       .warning {
@@ -26,11 +29,11 @@
                <g:Image resource='{messageDialogImages.dialog_warning2x}' altText="Warning"/>
             </td>
             <td valign="top" class="{style.labelCell}">
-               <strong>This <span ui:field="subject_"/> is extremely large
+               <ui:msg key="warningText"><strong>This <span ui:field="subject_"/> is extremely large
                   (<span ui:field="size_"/>) and may<br/>
                   cause RStudio to slow down or even hang.</strong>
-               <br/><br/>
-               Are you sure you want to continue?
+                  <br/><br/>
+                  Are you sure you want to continue?</ui:msg>
             </td>
          </tr>
          <tr>

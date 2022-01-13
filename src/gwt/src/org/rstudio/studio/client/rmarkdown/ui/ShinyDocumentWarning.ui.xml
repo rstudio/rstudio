@@ -2,7 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw='urn:import:org.rstudio.core.client.widget'
-   xmlns:rs="urn:import:org.rstudio.studio.client.common">
+   xmlns:rs="urn:import:org.rstudio.studio.client.common"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:with field="projRes" type="org.rstudio.studio.client.projects.ui.newproject.NewProjectResources" />
    <ui:style>
      .warning
@@ -18,12 +21,12 @@
    <g:HTMLPanel>
    <rw:DecorativeImage styleName="{style.shinyLogo}" resource="{projRes.shinyAppIcon2x}"></rw:DecorativeImage>
    <g:HTML ui:field="dialogMessage_" styleName="{style.warning}">
-     This R Markdown document contains Shiny content, but was rendered to 
-     a static file. Shiny content in the document may not appear, and will not
-     be interactive.<br/>
-     <br/>
-     Render and view this document using Shiny instead?
+       <ui:msg key="dialogMessage">  This R Markdown document contains Shiny content, but was rendered to
+           a static file. Shiny content in the document may not appear, and will not
+           be interactive.<br/>
+           <br/>
+       </ui:msg>
    </g:HTML>
-   <rs:HelpLink caption="Shiny Documents" link="shiny_documents"></rs:HelpLink>
+   <rs:HelpLink caption="Shiny Documents" link="shiny_documents"><ui:attribute name="caption" key="shinyDocumentsCaption"/></rs:HelpLink>
    </g:HTMLPanel>
 </ui:UiBinder> 

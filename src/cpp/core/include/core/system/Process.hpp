@@ -115,7 +115,7 @@ struct ProcessOptions
         reportHasSubprocs(false),
         trackCwd(false),
         threadSafe(false),
-        callbacksRequireMainThread(false)
+        callbacksRequireMainThread(true)
 #endif
    {
    }

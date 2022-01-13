@@ -160,10 +160,10 @@ void detectQuartoInstallation()
 void detectQuartoInstallation()
 {
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.2.466");
+   const Version kQuartoRequiredVersion("0.2.476");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.2.466");
+   const Version kQuartoRecommendedVersion("0.2.476");
 
    // reset
    s_userInstalledPath = FilePath();
@@ -763,18 +763,6 @@ json::Value quartoCapabilities()
    }
 }
 
-void quartoBuildjs()
-{
-   core::system::ProcessResult result;
-   Error error = runQuarto({"build-js"}, FilePath(), &result);
-   if (error)
-      LOG_ERROR(error);
-
-   if (result.exitStatus != EXIT_SUCCESS)
-   {
-      LOG_ERROR_MESSAGE(result.stdErr);
-   }
-}
 
 // Given a path to a Quarto file (usually .qmd), attempt to inspect it
 Error quartoInspect(const std::string& path,

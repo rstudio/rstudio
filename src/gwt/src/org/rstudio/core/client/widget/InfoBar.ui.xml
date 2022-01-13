@@ -1,6 +1,9 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
-             xmlns:f='urn:import:org.rstudio.core.client.widget'>
+             xmlns:f='urn:import:org.rstudio.core.client.widget'
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
 
     <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
@@ -69,7 +72,9 @@
           <f:ImageButton ui:field="dismiss_"
                    resource="{themeRes.closeTab2x}"
                    addStyleNames="{style.dismiss}"
-                   title="Dismiss infobar"/>
+                   title="Dismiss infobar">
+             <ui:attribute name="title" key="dismissInfobarTitle"/>
+          </f:ImageButton>
       </g:east>
    </g:DockLayoutPanel>
    </g:FlowPanel>

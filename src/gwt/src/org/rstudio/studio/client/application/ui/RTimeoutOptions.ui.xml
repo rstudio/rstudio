@@ -1,6 +1,9 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:style>
    .host
    {
@@ -38,12 +41,12 @@
    </ui:style>
    <g:HTMLPanel styleName="{style.host}">
       <g:Label styleName="{style.warning}" text="R is taking longer to start than usual."
-               ui:field="visibleMsg_"></g:Label>
+               ui:field="visibleMsg_"><ui:attribute name="text" key="takingLongerToStart"/></g:Label>
       <g:VerticalPanel>
          <g:HorizontalPanel>
-            <g:Button text="Reload" ui:field="reload_"></g:Button>
-            <g:Button text="Safe Mode" ui:field="safeMode_"></g:Button>
-            <g:Button text="Terminate R" ui:field="terminate_"></g:Button>
+            <g:Button text="Reload" ui:field="reload_"><ui:attribute name="text" key="reloadText"/></g:Button>
+            <g:Button text="Safe Mode" ui:field="safeMode_"><ui:attribute name="text" key="safeModeText"/></g:Button>
+            <g:Button text="Terminate R" ui:field="terminate_"><ui:attribute name="text" key="terminateRText"/></g:Button>
          </g:HorizontalPanel>
       </g:VerticalPanel>
       <g:Label styleName="{style.status}" ui:field="status_"></g:Label>

@@ -19,16 +19,18 @@
 
 package org.rstudio.studio.client.workbench.prefs.model;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
-import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.core.client.JsArray;
+import org.rstudio.core.client.JsArrayUtil;
+
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.gwt.core.client.GWT;
 
 
 /**

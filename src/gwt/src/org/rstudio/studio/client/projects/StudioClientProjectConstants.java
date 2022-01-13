@@ -1761,8 +1761,8 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      * @return translated "Origin:"
      */
     @DefaultMessage("Origin:")
-    @Key("lblOrigin_")
-    String lblOrigin_();
+    @Key("lblOrigin")
+    String lblOrigin();
 
     /**
      * Translated "Repo:".
@@ -2125,15 +2125,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String packageLabel();
 
     /**
-     * Translated "package".
-     *
-     * @return translated "package"
-     */
-    @DefaultMessage("package")
-    @Key("packageValue")
-    String packageValue();
-
-    /**
      * Translated "Git/SVN".
      *
      * @return translated "Git/SVN"
@@ -2168,4 +2159,13 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Use global cache for installed packages")
     @Key("chkUseCacheLabel")
     String chkUseCacheLabel();
+
+    /**
+     * Translated "Use condaenv with packages:".
+     *
+     * @return translated "Use condaenv with packages:"
+     */
+    @DefaultMessage("Use condaenv with packages:")
+    @Key("useCondaenv")
+    String useCondaenv();
 }
