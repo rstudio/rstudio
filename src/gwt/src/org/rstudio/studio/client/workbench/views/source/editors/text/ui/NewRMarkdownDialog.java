@@ -65,15 +65,16 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
    public static class RmdNewDocument
    {  
-      public RmdNewDocument(String template, String author, String title, 
+      public RmdNewDocument(String template, String author, String title, String date, 
                             String format, boolean isShiny)
       {
          template_ = template;
          title_ = title;
          author_ = author;
+         date_ = date;
          isShiny_ = isShiny;
          format_ = format;
-         result_ = toJSO(author, title, format, isShiny);
+         result_ = toJSO(author, title, date, format, isShiny);
       }
       
       public String getTemplate()
@@ -89,6 +90,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       public String getTitle()
       {
          return title_;
+      }
+
+      public String getDate()
+      {
+         return date_;
       }
       
       public boolean isShiny()
@@ -108,17 +114,19 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       
       private final JavaScriptObject toJSO(String author, 
                                            String title, 
+                                           String date,
                                            String format, 
                                            boolean isShiny)
       {
          RmdFrontMatter result = RmdFrontMatter.create();
-         result.applyCreateOptions(author, title, format, isShiny);
+         result.applyCreateOptions(author, title, date, format, isShiny);
          return result;
       }
 
       private final String template_;
       private final String author_;
       private final String title_;
+      private final String date_;
       private final boolean isShiny_;
       private final String format_;
       private final JavaScriptObject result_;
@@ -176,6 +184,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       resources.styles().ensureInjected();
       txtAuthor_.setText(author);
       txtTitle_.setText(constants_.untitledCapitalized());
+      txtDate_.setText("`r Sys.Date()`");
       Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), constants_.templatesCapitalized());
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
@@ -296,6 +305,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
             new RmdNewDocument(getSelectedTemplate(), 
                                txtAuthor_.getText().trim(), 
                                txtTitle_.getText().trim(), 
+                               txtDate_.getText().trim(),
                                formatName,
                                isShiny),
             templateChooser_.getChosenTemplate(),
@@ -434,6 +444,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    
    @UiField TextBox txtAuthor_;
    @UiField TextBox txtTitle_;
+   @UiField TextBox txtDate_;
    @UiField WidgetListBox<TemplateMenuItem> listTemplates_;
    @UiField NewDocumentResources resources;
    @UiField HTMLPanel templateFormatPanel_;
