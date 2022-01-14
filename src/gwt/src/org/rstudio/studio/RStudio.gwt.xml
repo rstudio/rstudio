@@ -151,7 +151,8 @@
    <!-- Specify supported locales -->
    <extend-property name="locale" values="en,fr"/>
 
-   <!-- Set default locale to en -->
+   <!-- Set locale and default locale to en -->
+   <set-property name="locale" value="en"/>
    <set-property-fallback name="locale" value="en"/>
 
    <!-- Collapse properties -->
