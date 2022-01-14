@@ -1432,6 +1432,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    }
    else
    {
+      cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
       cmd << "--binary-files=without-match";
       cmd << "-rHn";
       cmd << "--color=always";
