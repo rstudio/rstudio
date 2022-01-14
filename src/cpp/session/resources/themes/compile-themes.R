@@ -652,6 +652,7 @@
          sprintf(".xtermInvertColor { color: %s; }", background),
          sprintf(".xtermInvertBgColor { background-color: %s; }", foreground),
          ".xtermBold { font-weight: bold; }",
+         ".xtermHyperlink { text-decoration: underline; }",
          ".xtermUnderline { text-decoration: underline; }",
          ".xtermBlink { text-decoration: blink; }",
          ".xtermHidden { visibility: hidden; }",

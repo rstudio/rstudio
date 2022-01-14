@@ -180,6 +180,7 @@
 .xtermInvertColor { color: #eeeeee; }
 .xtermInvertBgColor { background-color: #333333; }
 .xtermBold { font-weight: bold; }
+.xtermHyperlink { text-decoration: underline; }
 .xtermUnderline { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
