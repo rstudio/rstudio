@@ -653,6 +653,7 @@
          sprintf(".xtermInvertBgColor { background-color: %s; }", foreground),
          ".xtermBold { font-weight: bold; }",
          ".xtermUnderline { text-decoration: underline; }",
+         ".xtermHyperlink {}", 
          ".xtermBlink { text-decoration: blink; }",
          ".xtermHidden { visibility: hidden; }",
          ".xtermItalic { font-style: italic; }",
