@@ -954,6 +954,11 @@ void rConsoleHistoryReset()
    rsession::clientEventQueue().add(event);
 }
 
+void rConsoleReset()
+{
+   rsession::console_input::clearConsoleInputBuffer();
+}
+
 bool rLocator(double* x, double* y)
 {
    // since locator can be called in a loop we need to checkForChanges
@@ -2302,6 +2307,7 @@ int main(int argc, char * const argv[])
       rCallbacks.busy = rBusy;
       rCallbacks.consoleWrite = rConsoleWrite;
       rCallbacks.consoleHistoryReset = rConsoleHistoryReset;
+      rCallbacks.consoleReset = rConsoleReset;
       rCallbacks.locator = rLocator;
       rCallbacks.deferredInit = rDeferredInit;
       rCallbacks.suspended = rSuspended;
