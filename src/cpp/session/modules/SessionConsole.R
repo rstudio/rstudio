@@ -16,10 +16,7 @@
 
 .rs.addJsonRpcHandler("console_follow_hyperlink", function(url, text, params)
 {
-  # `params=` follows the key1=value1:key2:value2 pattern
-  # https://iterm2.com/documentation-escape-codes.html
-  #
-  # This at the moment is only used for params = c(target = "viewer")
+  # key1=value1:key2:value2 pattern, see https://iterm2.com/documentation-escape-codes.html
   if (identical(params, "")) {
     params <- list()
   } else {
@@ -30,10 +27,13 @@
     names(params) <- names
   }
   
-  if (identical("rstudio:help", url)) {
+  if (identical(url, "rstudio:help")) {
     .rs.showHelpTopic(params$topic, params$package) 
-  } else if (identical("rstudio:vignette", url)) {
+  } else if (identical(url, "rstudio:vignette")) {
     print(vignette(params$topic, package = params$package))
+  } else if (grepl("^rstudio:viewer:", url)) {
+    url <- sub("^rstudio:viewer:", "", url)
+    return(.rs.api.viewer(url))
   } else if (grepl("^file://", url)) {
     # file:://some/file/path
     # file:://some/file/path#32
@@ -54,11 +54,6 @@
 
     .rs.api.navigateToFile(file, line = line, col = col, moveCursor = TRUE)
   } else {
-    # anything else goes through utils::browseURL() or the viewer
-    if (identical(params$target, "viewer")) {
-      .rs.api.viewer(url)
-    } else {
-      utils::browseURL(url)
-    }
+    utils::browseURL(url)
   }
 })
