@@ -47,6 +47,11 @@ const std::string kReplaceRegex("\\1\\2\\1\\2");
 
 const std::string kGrepPattern("aba \033[01m\033[KOOOkkk\033[m\033[K okab AAOO awesome aa abab");
 const std::string kGitGrepPattern("aba \033[1;31mOOOkkk\033[m okab AAOO awesome aa abab");
+
+const std::string kWordBoundaryRegex("\\bgreat\\b");
+const size_t wMatchOn = 15;
+const size_t wMatchOff = 20;
+const std::string kLineNoMatch("RStudio is the greatest");
 } // anonymous namespace
 
 TEST_CASE("SessionFind")
@@ -104,6 +109,30 @@ TEST_CASE("SessionFind")
          &replaceMatchOff);
       CHECK(line.compare("aba OOOkkk okab AAOO abab aa abab") == 0);
       CHECK(replaceMatchOff == 25);
+   }
+
+   SECTION("Replace regex word boundaries")
+   {
+      std::string line(kLine);
+      size_t replaceMatchOff;
+
+      Replacer replacer(true);
+      replacer.replaceRegex(matchOn, matchOff, kWordBoundaryRegex, kReplaceString,
+                            &line, &replaceMatchOff);
+      CHECK(line.compare("RStudio is awesome") == 0);
+      CHECK(replaceMatchOff == 18);
+   }
+
+   SECTION("Replace regex word boundaries - no match")
+   {
+      std::string line(kLineNoMatch);
+      size_t replaceMatchOff;
+
+      Replacer replacer(true);
+      replacer.replaceRegex(wMatchOn, wMatchOff, kWordBoundaryRegex, kReplaceString,
+                            &line, &replaceMatchOff);
+      CHECK(line.compare("RStudio is the greatest") == 0);
+      CHECK(replaceMatchOff == wMatchOff);
    }
 
    SECTION("Replace ASCII encoding")

@@ -1753,7 +1753,8 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-      boost::regex find(findRegex, boost::regex::grep | boost::regex::icase);
+      // emacs flavor regex includes POSIX BRE
+      boost::regex find(findRegex, boost::regex::emacs | boost::regex::icase);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
@@ -1778,7 +1779,7 @@ core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-      boost::regex find(findRegex, boost::regex::grep);
+      boost::regex find(findRegex, boost::regex::emacs);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
