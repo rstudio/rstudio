@@ -171,6 +171,7 @@
 .xtermInvertColor { color: #0b0b0b; }
 .xtermInvertBgColor { background-color: #00ff00; }
 .xtermBold { font-weight: bold; }
+.xtermHyperlink { text-decoration: underline; }
 .xtermUnderline { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
