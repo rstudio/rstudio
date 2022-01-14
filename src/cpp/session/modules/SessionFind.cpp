@@ -1404,7 +1404,8 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-c" << "grep.fullName=false";
       cmd << "-C";
       cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
-      cmd <<  "grep";
+      cmd << "grep";
+      cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
       cmd << "--exclude-standard"; // but exclude gitignore
@@ -1753,8 +1754,9 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-      // emacs flavor regex includes POSIX BRE
-      boost::regex find(findRegex, boost::regex::emacs | boost::regex::icase);
+
+      // egrep (grep -E) flavor regex includes POSIX ERE
+      boost::regex find(findRegex, boost::regex::egrep | boost::regex::icase);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
@@ -1779,7 +1781,7 @@ core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-      boost::regex find(findRegex, boost::regex::emacs);
+      boost::regex find(findRegex, boost::regex::egrep);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
