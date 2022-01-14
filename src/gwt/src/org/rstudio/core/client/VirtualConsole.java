@@ -769,10 +769,6 @@ public class VirtualConsole
             {
                consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
             });
-
-            // for now, perhaps a dedicated style would be better
-            element.addClassName("xtermUnderline");
-
             element.setTitle(hyperlink_.getTitle());
          }
          
