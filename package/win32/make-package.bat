@@ -3,10 +3,14 @@ set PACKAGE_DIR="%CD%"
 
 setlocal
 
+set BUILD_GWT=1
+
 for %%A in (%*) do (
-      if "%%A" == "clean" set CLEANBUILD=1
-      if "%%A" == "quick" set QUICK=1
-      if "%%A" == "electron" set ELECTRON=1
+      if /I "%%A" == "clean" set CLEANBUILD=1
+      if /I "%%A" == "quick" set QUICK=1
+      if /I "%%A" == "electron" set ELECTRON=1
+      if /I "%%A" == "only64" set ONLY_64BIT=1
+      if /I "%%A" == "nogwt" set BUILD_GWT=0
 )
 
 REM clean if requested
@@ -66,13 +70,17 @@ cmake -G "Ninja" ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
       -DCMAKE_C_COMPILER=cl ^
       -DCMAKE_CXX_COMPILER=cl ^
+      -DGWT_BUILD=%BUILD_GWT% ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
-call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
+if NOT defined ONLY_64BIT (
+      echo Building 32-bit components
+      call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
+)
 
 REM create packages
 cd "%BUILD_DIR%"
