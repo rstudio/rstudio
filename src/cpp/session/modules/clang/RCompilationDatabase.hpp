@@ -125,6 +125,7 @@ private:
    // oriented files to avoid re-running detection)
    std::string packageBuildFileHash_;
    std::string compilerHash_;
+   std::string rVersion_;
    CompilationConfig packageCompilationConfig_;
    bool usePrecompiledHeaders_;
    bool forceRebuildPrecompiledHeaders_;
