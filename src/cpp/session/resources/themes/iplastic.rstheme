@@ -181,6 +181,7 @@
 .xtermInvertBgColor { background-color: #333333; }
 .xtermBold { font-weight: bold; }
 .xtermUnderline { text-decoration: underline; }
+.xtermHyperlink {}
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }

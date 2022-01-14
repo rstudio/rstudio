@@ -770,6 +770,7 @@ public class VirtualConsole
                consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
             });
             element.setTitle(hyperlink_.getTitle());
+            element.addClassName("xtermHyperlink");
          }
          
          if (className != null)
