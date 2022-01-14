@@ -66,7 +66,7 @@ private:
 std::ostream& operator<<(std::ostream& os, const RToolsInfo& info);
 
 void scanForRTools(bool usingMingwGcc49,
-                   const std::string& rtoolsHomeEnvVar,
+                   const std::string& rVersion,
                    std::vector<RToolsInfo>* pRTools);
 
 template <typename T>
