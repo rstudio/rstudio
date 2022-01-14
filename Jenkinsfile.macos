@@ -125,7 +125,7 @@ pipeline {
             def RSTUDIO_RELEASE = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}${params.RSTUDIO_VERSION_SUFFIX}"
 
 
-            retry(2) {
+            retry(5) {
                // timeout sentry in 15 minutes
                timeout(activity: true, time: 15) {
 
