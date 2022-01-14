@@ -185,7 +185,6 @@
 .xtermInvertColor { color: #f3f2f3; }
 .xtermInvertBgColor { background-color: rgba(15, 0, 9, 1.0); }
 .xtermBold { font-weight: bold; }
-.xtermHyperlink { text-decoration: underline; }
 .xtermUnderline { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
