@@ -36,8 +36,8 @@
     return(.rs.api.viewer(url))
   } else if (grepl("^file://", url)) {
     # file://some/file/path
-    # file://some/file/path#32
-    # file://some/file/path#32,15
+    # file://some/file/path:32
+    # file://some/file/path:32:15
     url <- sub("file://", "", url)
     parts <- strsplit(url, ":")[[1L]]
     file <- parts[[1L]]
