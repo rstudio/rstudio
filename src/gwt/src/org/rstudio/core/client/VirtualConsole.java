@@ -770,11 +770,19 @@ public class VirtualConsole
                consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
             });
             element.setTitle(hyperlink_.getTitle());
-            element.addClassName("xtermHyperlink");
-         }
-         
+
+            // adding classes .xtermHyperlink .xtermColor5 onnly if there are 
+            // no current style applied
+            if (!className.contains("xterm"))
+            {
+               element.addClassName("xtermHyperlink");
+               element.addClassName("xtermColor5");
+            }
+            
+         } 
          if (className != null)
             element.addClassName(clazz);
+         
          element.setInnerText(text);
 
          if (captureNewElements_)
