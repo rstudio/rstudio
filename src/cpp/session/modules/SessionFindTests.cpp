@@ -42,7 +42,7 @@ const size_t rMatchOff = 10;
 const size_t caseMatchOn = 21;
 const size_t caseMatchOff = 27;
 
-const std::string kFindRegex("\\([a-z]\\)\\1\\{2\\}\\([a-z]\\)\\2\\{2\\}");
+const std::string kFindRegex("([a-z])\\1{2}([a-z])\\2{2}");
 const std::string kReplaceRegex("\\1\\2\\1\\2");
 
 const std::string kGrepPattern("aba \033[01m\033[KOOOkkk\033[m\033[K okab AAOO awesome aa abab");
