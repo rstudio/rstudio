@@ -41,6 +41,7 @@ import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
+import org.w3c.dom.ls.LSResourceResolver;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -747,7 +748,19 @@ public class VirtualConsole
 
       public String getTitle()
       {
-         return url;
+         if (url.startsWith("rstudio:viewer:")) 
+         {
+            return "open in viewer: " + url.replace("rstudio:viewer:", "");
+         } else if (StringUtil.equals(url, "rstudio:help")) 
+         {
+            return "help(" + params.replace(":", ", ") + ")";
+         } else if (StringUtil.equals(url, "rstudio:vignette")) 
+         {
+            return "vignette(" + params.replace(":", ", ") + ")";
+         } else 
+         {
+            return url;
+         }
       }
 
       public String url;
@@ -771,12 +784,10 @@ public class VirtualConsole
             });
             element.setTitle(hyperlink_.getTitle());
 
-            // adding classes .xtermHyperlink .xtermColor5 onnly if there are 
-            // no current style applied
+            // adding class .xtermHyperlink only if there are no current style applied
             if (!className.contains("xterm"))
             {
                element.addClassName("xtermHyperlink");
-               element.addClassName("xtermColor5");
             }
             
          } 
