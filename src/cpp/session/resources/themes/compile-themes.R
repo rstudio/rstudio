@@ -653,7 +653,7 @@
          sprintf(".xtermInvertBgColor { background-color: %s; }", foreground),
          ".xtermBold { font-weight: bold; }",
          ".xtermUnderline { text-decoration: underline; }",
-         ".xtermHyperlink { text-decoration: underline; font-style: italic; }",
+         ".xtermHyperlink { text-decoration: underline; font-style: italic; color: #75507b !important; }",
          ".xtermBlink { text-decoration: blink; }",
          ".xtermHidden { visibility: hidden; }",
          ".xtermItalic { font-style: italic; }",
