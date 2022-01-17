@@ -24,6 +24,7 @@ for %%F in (ant cmake) do (
       where /q %%F
       if ERRORLEVEL 1 (
             echo '%%F' not found on PATH; exiting
+            endlocal
             exit /b 1
       )
 )
