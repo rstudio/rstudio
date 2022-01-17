@@ -41,8 +41,8 @@ while true; do
         break
     fi
 
-    # Don't try more than 5 times
-    if [ $RETRIES -gt 5 ]; then
+    # Retry and timeout are now done in Jenkinsfile
+    if [ $RETRIES -gt 0 ]; then
         echo "Giving up upload after $RETRIES attempts"
         exit 1
     fi

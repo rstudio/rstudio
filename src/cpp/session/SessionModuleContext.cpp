@@ -1843,10 +1843,11 @@ json::Object createFileSystemItem(const FilePath& filePath)
 std::string rVersion()
 {
    std::string rVersion;
-   Error error = rstudio::r::exec::RFunction(".rs.rVersionString").call(
-                                                                  &rVersion);
+   Error error = rstudio::r::exec::RFunction(".rs.rVersionString")
+         .call(&rVersion);
    if (error)
       LOG_ERROR(error);
+
    return rVersion;
 }
 
