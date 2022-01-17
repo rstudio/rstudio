@@ -34,6 +34,9 @@
   } else if (grepl("^rstudio:viewer:", url)) {
     url <- sub("^rstudio:viewer:", "", url)
     return(.rs.api.viewer(url))
+  } else if (identical("rstudio:run", url)) {
+    arguments <- append(list(text), params)
+    do.call(.rs.api.sendToConsole, arguments)
   } else if (grepl("^file://", url)) {
     # file://some/file/path
     # file://some/file/path:32
