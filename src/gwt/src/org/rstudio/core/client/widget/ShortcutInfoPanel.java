@@ -74,43 +74,43 @@ public class ShortcutInfoPanel extends Composite
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
       List<ShortcutInfo> shortcuts = 
             ShortcutManager.INSTANCE.getActiveShortcutInfo();
-      String[][] groupNames = { 
-            new String[] { constants_.tabsGroupName(), constants_.panesGroupName(), constants_.filesGroupName(), constants_.mainMenuGroupName() },
-            new String[] { constants_.sourceNavigationGroupName(), constants_.executeGroupName() },
-            new String[] { constants_.sourceEditorGroupName(), constants_.debugGroupName(), constants_.accessibilityGroupName() },
-            new String[] { constants_.sourceControlGroupName(), constants_.buildGroupName(), constants_.consoleGroupName(), constants_.terminalGroupName(), constants_.otherGroupName() }
+      String[][] groupNames = {
+              new String[]{"Tabs", "Panes", "Files", "Main Menu (Server)"},
+              new String[]{"Source Navigation", "Execute"},
+              new String[]{"Source Editor", "Debug", "Accessibility"},
+              new String[]{"Source Control", "Build", "Console", "Terminal", "Other"}
+      };
+      String[][] groupNamesI18n = {
+              new String[] { constants_.tabsGroupName(), constants_.panesGroupName(), constants_.filesGroupName(), constants_.mainMenuGroupName() },
+              new String[] { constants_.sourceNavigationGroupName(), constants_.executeGroupName() },
+              new String[] { constants_.sourceEditorGroupName(), constants_.debugGroupName(), constants_.accessibilityGroupName() },
+              new String[] { constants_.sourceControlGroupName(), constants_.buildGroupName(), constants_.consoleGroupName(), constants_.terminalGroupName(), constants_.otherGroupName() }
       };
       int pctWidth = 100 / groupNames.length;
       sb.appendHtmlConstant("<table width='100%'><tr>");
-      for (String[] colGroupNames: groupNames)
+      for (int i = 0; i < groupNames.length; i++)
       {
          sb.appendHtmlConstant("<td width='" + pctWidth + "%'>");
-         for (String colGroupName: colGroupNames)
+         for (int j = 0; j < groupNames[i].length; j++)
          {
             sb.appendHtmlConstant("<h2>");
-            sb.appendEscaped(colGroupName);
+            sb.appendEscaped(groupNamesI18n[i][j]);
             sb.appendHtmlConstant("</h2><table>");
-            for (int i = 0; i < shortcuts.size(); i++)
-            {
-               ShortcutInfo info = shortcuts.get(i);
+            for (ShortcutInfo info : shortcuts) {
                if (info.getDescription() == null ||
-                   info.getShortcuts().size() == 0 || 
-                   info.getGroupName() != colGroupName)
-               {
+                       info.getShortcuts().isEmpty() ||
+                       !info.getGroupName().equals(groupNames[i][j])) {
                   continue;
                }
                sb.appendHtmlConstant("<tr><td><strong>");
-               //TODO: this is only pulling the value from the default locale,
-               // but info.getDescription() below works just fine.
                sb.appendHtmlConstant(
-                     StringUtil.joinStrings(info.getShortcuts(), ", "));
+                       StringUtil.joinStrings(info.getShortcuts(), ", "));
                sb.appendHtmlConstant("</strong></td><td>");
                sb.appendEscaped(info.getDescription());
                sb.appendHtmlConstant("</td></tr>");
             }
             sb.appendHtmlConstant("</table>");
-            //TODO: this will break with localization
-            if (colGroupName == "Panes")
+            if (groupNames[i][j].equals("Panes"))
             {
                sb.appendHtmlConstant("<p>"+ constants_.addShiftPTag() + "</p>");
             }
