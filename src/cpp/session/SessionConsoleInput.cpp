@@ -362,7 +362,8 @@ bool rConsoleRead(const std::string& prompt,
    if (!pConsoleInput->isCancel())
    {
       module_context::events().onBeforeExecute();
-      module_context::events().onConsoleInput(pConsoleInput->text);
+      if (!pConsoleInput->isNoEcho())
+         module_context::events().onConsoleInput(pConsoleInput->text);
    }
 
    // we are about to return input to r so set the flag indicating that state
@@ -376,9 +377,12 @@ bool rConsoleRead(const std::string& prompt,
                pConsoleInput->text);
    }
 
-   ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
-   clientEventQueue().add(promptEvent);
-   enqueueConsoleInput(*pConsoleInput);
+   if (!pConsoleInput->isNoEcho()) 
+   {
+      ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
+      clientEventQueue().add(promptEvent);
+      enqueueConsoleInput(*pConsoleInput);
+   }
 
    // always return true (returning false causes the process to exit)
    return true;
