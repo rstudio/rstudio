@@ -422,7 +422,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          eventBus_.fireEvent(new ConsoleInputEvent(commandText, ""));
       } else 
       {
-         eventBus_.fireEvent(new ConsoleInputEvent(commandText, "", ConsoleInputEvent.FLAG_NO_ECHO);
+         eventBus_.fireEvent(new ConsoleInputEvent(commandText, "", ConsoleInputEvent.FLAG_NO_ECHO));
       }
    }
 
