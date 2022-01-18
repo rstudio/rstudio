@@ -1986,13 +1986,22 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String developmentViewLabel();
 
     /**
-     * Translated "Use Rcpp template when creating C++ files".
+     * Translated "C++ template".
      *
-     * @return translated "Use Rcpp template when creating C++ files"
+     * @return translated "C++ template"
      */
-    @DefaultMessage("Use Rcpp template when creating C++ files")
-    @Key("developmentRcppLabel")
-    String developmentRcppLabel();
+    @DefaultMessage("C++ template")
+    @Key("developmentCppTemplate")
+    String developmentCppTemplate();
+ 
+    /**
+     * Translated "empty".
+     *
+     * @return translated "empty"
+     */
+    @DefaultMessage("empty")
+    @Key("developmentEmptyLabel")
+    String developmentEmptyLabel();
 
     /**
      * Translated "Always use LF line-endings in Unix Makefiles".
