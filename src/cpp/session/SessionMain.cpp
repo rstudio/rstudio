@@ -1820,6 +1820,7 @@ int main(int argc, char * const argv[])
       
       // initialize thread id
       core::thread::initializeMainThreadId(boost::this_thread::get_id());
+      core::system::setEnableCallbacksRequireMainThread(true);
 
       // terminate immediately with given exit code (for testing/debugging)
       std::string exitOnStartup = core::system::getenv("RSTUDIO_SESSION_EXIT_ON_STARTUP");
