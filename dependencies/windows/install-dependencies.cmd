@@ -65,7 +65,7 @@ if not exist gnugrep\%GNUGREP_VERSION% (
   wget %WGET_ARGS% "%BASEURL%%GNUGREP_FILE%"
   mkdir gnugrep\%GNUGREP_VERSION%
   echo Unzipping %GNUGREP_FILE%
-  unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep/%GNUGREP_VERSION%
+  unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep\%GNUGREP_VERSION%
   del "%GNUGREP_FILE%"
 )
 
