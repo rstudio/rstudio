@@ -64,7 +64,7 @@ if not exist gnudiff (
 
 if not exist %GNUGREP_SUBDIR% (
   wget %WGET_ARGS% "%BASEURL%%GNUGREP_FILE%"
-  mkdir gnugrep
+  mkdir %GNUGREP_SUBDIR%
   echo Unzipping %GNUGREP_FILE%
   unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep
   move gnugrep\%GNUGREP_NAME% %GNUGREP_SUBDIR%
