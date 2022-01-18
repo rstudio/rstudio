@@ -24,7 +24,8 @@ const config = {
       const util = require('util');
       const execFile = util.promisify(require('child_process').execFile);
       var path = require('path');
-      const tsNode = path.join(__dirname, 'node_modules', '.bin', 'ts-node');
+      const tsNode = path.join(__dirname, 'node_modules', '.bin',
+        process.platform === 'win32' ? 'ts-node.cmd' : 'ts-node');
       const script = path.join(__dirname, 'scripts', 'import-resources.ts');
       const promise = execFile(tsNode, [script]);
       promise.catch(function (e) {

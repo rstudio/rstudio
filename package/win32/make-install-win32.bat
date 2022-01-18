@@ -11,7 +11,7 @@ if "%INSTALL_PATH%" == "" set INSTALL_PATH=..\..\..\src\qtcreator-build\session
 for %%A in (%*) do (
       if /I "%%A" == "clean" set CLEANBUILD=1
       if /I "%%A" == "quick" set QUICK=1
-      if /I "%%A" == "electron" set ELECTRON=1
+      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
 )
 
 if defined CLEANBUILD (

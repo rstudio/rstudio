@@ -39,42 +39,16 @@ async function main(): Promise<void> {
  * Windows implementation
  */
 async function packageWin32(): Promise<number> {
-  console.error('Error: not implemented on this platform.');
-  // const packageDir = tools.getPlatformPackageOutputDir();
-  // if (!fs.existsSync(packageDir)) {
-  //   console.error(`'yarn package' results not found at: ${packageDir}`);
-  //   return 1;
-  // }
+  const packageDir = tools.getForgePlatformOutputDir();
+  const appDest = path.join(packageDir, 'resources', 'app');
 
-  // const rstudioInstallDir = path.join(tools.getProgramFilesWindows(), 'RStudio');
-  // if (!fs.existsSync(rstudioInstallDir)) {
-  //   console.error(`RStudio not found at ${rstudioInstallDir}. Install a recent daily build and try again.`);
-  //   return 1;
-  // }
-
-  // const appDest = path.join(packageDir, 'resources/app');
-
-  // await tools.copyFiles(
-  //   [path.join(rstudioInstallDir, 'bin')], path.join(appDest, 'bin'), {
-  //   filter: [
-  //     '**/*',
-  //     '!Qt5*',
-  //     '!QtWebEngineProcess.exe',
-  //     '!resources/*',
-  //     '!translations/*',
-  //     '!rstudio.exe',
-  //     '!d3dcompiler_47.dll',
-  //     '!libEGL.dll',
-  //     '!libGLESV2.dll'
-  //   ]
-  // });
-
-  // await copy(path.join(rstudioInstallDir, 'R'), path.join(appDest, 'R'));
-  // await copy(path.join(rstudioInstallDir, 'www'), path.join(appDest, 'www'));
-  // await copy(path.join(rstudioInstallDir, 'www-symbolmaps'), path.join(appDest, 'www-symbolmaps'));
-  // await copy(path.join(rstudioInstallDir, 'resources'), path.join(appDest, 'resources'), { filter: ['**/*', '!html/*'] });
-
-  return 1;
+  try {
+    await tools.copyFiles(['**/*'], 'c:\\temp\\ide-build\\install', appDest);
+  } catch (e) {
+    console.error(e.message);
+    return 1;
+  }
+  return 0;
 }
 
 /**

@@ -37,13 +37,21 @@ if(APPLE)
 endif()
 
 # Install node_modules during build phase
-add_custom_command(
-   TARGET electron_build
-   PRE_BUILD
-   WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-   COMMAND ${CMAKE_COMMAND} -E env PATH="${MODIFIED_PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
-      ${YARN}
-      "install")
+if (WIN32)
+   add_custom_command(
+      TARGET electron_build
+      PRE_BUILD
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+      COMMAND ${YARN} "install")
+else()
+   add_custom_command(
+      TARGET electron_build
+      PRE_BUILD
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+      COMMAND ${CMAKE_COMMAND} -E env PATH="${MODIFIED_PATH}" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+         ${YARN}
+         "install")
+endif()
 
 # Actual building and bundling of the Electron application is done via `yarn make`, not directly
 # by the cmake-driven build. See the `make-package` scripts in the `package` folder at root

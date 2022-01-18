@@ -639,7 +639,7 @@ else()
       if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
          add_subdirectory(diagnostics)
       endif()
-      if(RSTUDIO_DESKTOP)
+      if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
          add_subdirectory(desktop)
       endif()
 
