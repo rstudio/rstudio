@@ -22,7 +22,10 @@ set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
 set GIN_FILE=gin-2.1.2.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
-set GNUGREP_FILE=gnugrep-2.5.4.zip
+
+set GNUGREP_VERSION=3.0
+set GNUGREP_FILE=gnugrep-%GNUGREP_VERSION%.zip
+
 set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
@@ -57,11 +60,11 @@ if not exist gnudiff (
   del "%GNUDIFF_FILE%"
 )
 
-if not exist gnugrep (
+if not exist gnugrep\%GNUGREP_VERSION% (
   wget %WGET_ARGS% "%BASEURL%%GNUGREP_FILE%"
-  mkdir gnugrep
+  mkdir gnugrep\%GNUGREP_VERSION%
   echo Unzipping %GNUGREP_FILE%
-  unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep
+  unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep\%GNUGREP_VERSION%
   del "%GNUGREP_FILE%"
 )
 
