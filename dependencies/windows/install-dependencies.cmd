@@ -67,6 +67,7 @@ if not exist gnugrep\%GNUGREP_VERSION% (
   echo Unzipping %GNUGREP_FILE%
   unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep
   move gnugrep\%GNUGREP_NAME% %GNUGREP_VERSION%
+  del "%GNUGREP_FILE%"
 )
 
 if not exist msys-ssh-1000-18 (
