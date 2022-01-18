@@ -48,17 +48,21 @@
     # file://some/file/path:32
     # file://some/file/path:32:15
     url <- sub("file://", "", url)
-    parts <- strsplit(url, ":")[[1L]]
-    file <- parts[[1L]]
 
     line <- -1L
-    if (length(parts) > 1) {
-      line <- as.numeric(parts[[2L]])
-    }
-
     col <- -1L
-    if (length(parts) > 2) {
-      col <- as.numeric(parts[[3L]])
+
+    rx3 <- "^(.*):([0-9]+):([0-9]+)$"
+    rx2 <- "^(.*):([0-9]+)$"
+    if (grepl(rx3, url)) {
+      file <- sub(rx3, "\\1", url)
+      line <- as.numeric(sub(rx3, "\\2", url))
+      col <- as.numeric(sub(rx3, "\\3", url))
+    } else if (grepl(rx2, url)) {
+      file <- sub(rx2, "\\1", url)
+      line <- as.numeric(sub(rx2, "\\2", url))
+    } else {
+      file <- url
     }
 
     .rs.api.navigateToFile(file, line = line, col = col, moveCursor = TRUE)
