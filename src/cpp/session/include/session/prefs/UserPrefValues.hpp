@@ -190,7 +190,7 @@ namespace prefs {
 #define kRealTimeSpellchecking "real_time_spellchecking"
 #define kNavigateToBuildError "navigate_to_build_error"
 #define kPackagesPaneEnabled "packages_pane_enabled"
-#define kUseRcppTemplate "use_rcpp_template"
+#define kCppTemplate "cpp_template"
 #define kRestoreSourceDocuments "restore_source_documents"
 #define kHandleErrorsInUserCodeOnly "handle_errors_in_user_code_only"
 #define kAutoExpandErrorTracebacks "auto_expand_error_tracebacks"
@@ -1043,8 +1043,8 @@ public:
    /**
     * Whether to use RCPP templates.
     */
-   bool useRcppTemplate();
-   core::Error setUseRcppTemplate(bool val);
+   std::string cppTemplate();
+   core::Error setCppTemplate(std::string val);
 
    /**
     * Whether to restore the last opened source documents when RStudio starts up.
