@@ -186,21 +186,6 @@ public class PackagesPreferencesPane extends PreferencesPane
       lessSpaced(viewDirAfterCheckFailure_);
       development.add(viewDirAfterCheckFailure_);
 
-      cppTemplate_ = new SelectWidget(
-         constants_.developmentCppTemplate(),
-         new String[] {
-               "Rcpp", 
-               "cpp11", 
-               constants_.developmentEmptyLabel()
-         },
-         new String[] {
-            "Rcpp", "cpp11", "empty"
-         },
-         false,
-         true,
-         false);
-      development.add(cppTemplate_);
-      
       useNewlineInMakefiles_ = new CheckBox(constants_.developmentUseLFLabel());
       lessSpaced(useNewlineInMakefiles_);
       development.add(useNewlineInMakefiles_);
@@ -290,8 +275,6 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       useNewlineInMakefiles_.setEnabled(true);
       useNewlineInMakefiles_.setValue(prefs.useNewlinesInMakefiles().getValue());
-
-      cppTemplate_.setValue(prefs.cppTemplate().getValue());
 
       server_.getCRANActives(
          new SimpleRequestCallback<JsArray<CRANMirror>>() {
@@ -391,7 +374,6 @@ public class PackagesPreferencesPane extends PreferencesPane
       prefs.useSecureDownload().setGlobalValue(useSecurePackageDownload_.getValue());
       prefs.useNewlinesInMakefiles().setGlobalValue(useNewlineInMakefiles_.getValue());
       prefs.cranMirror().setGlobalValue(cranMirror_);
-      prefs.cppTemplate().setGlobalValue(cppTemplate_.getValue());
       return restartRequirement;
    }
 
@@ -409,7 +391,6 @@ public class PackagesPreferencesPane extends PreferencesPane
    private final CheckBox useDevtools_;
    private final CheckBox useSecurePackageDownload_;
    private final CheckBox useNewlineInMakefiles_;
-   private final SelectWidget cppTemplate_;
    private boolean reloadRequired_ = false;
    private String cranMirrorStored_;
    private final SecondaryReposWidget secondaryReposWidget_;

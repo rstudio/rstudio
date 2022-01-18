@@ -1932,6 +1932,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String developmentTitle();
 
     /**
+     * Translated "C/C++ Development".
+     *
+     * @return translated "C/C++ Development"
+     */
+    @DefaultMessage("C/C++ Development")
+    @Key("cppDevelopmentTitle")
+    String cppDevelopmentTitle();
+
+    /**
      * Translated "Use devtools package functions if available".
      *
      * @return translated "Use devtools package functions if available"
@@ -2020,6 +2029,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Packages")
     @Key("tabPackagesPanelTitle")
     String tabPackagesPanelTitle();
+
+    /**
+     * Translated "C / C++".
+     *
+     * @return translated "C / C++"
+     */
+    @DefaultMessage("C / C++")
+    @Key("tabCppPanelTitle")
+    String tabCppPanelTitle();
 
     /**
      * Translated "Management".
