@@ -70,7 +70,9 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       VerticalTabPanel management = new VerticalTabPanel(ElementIds.PACKAGE_MANAGEMENT_PREFS);
       VerticalTabPanel development = new VerticalTabPanel(ElementIds.PACKAGE_DEVELOPMENT_PREFS);
-
+      VerticalTabPanel cpp = new VerticalTabPanel(ElementIds.PACKAGE_CPP_PREFS);
+      
+      // -------- Management
       management.add(headerLabel(constants_.packageManagementTitle()));
 
       infoBar_ = new InfoBar(InfoBar.WARNING);
@@ -165,6 +167,7 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       management.add(spacedBefore(new HelpLink(constants_.managePackagesTitle(), "managing_packages")));
 
+      // -------- Development
       development.add(headerLabel(constants_.developmentTitle()));
 
       useDevtools_ = new CheckBox(constants_.useDevtoolsLabel());
@@ -173,10 +176,6 @@ public class PackagesPreferencesPane extends PreferencesPane
 
       development.add(checkboxPref(constants_.developmentSaveLabel(), uiPrefs.saveFilesBeforeBuild()));
       development.add(checkboxPref(constants_.developmentNavigateLabel(), uiPrefs.navigateToBuildError()));
-
-      hideObjectFiles_ = new CheckBox(constants_.developmentHideLabel());
-      lessSpaced(hideObjectFiles_);
-      development.add(hideObjectFiles_);
 
       cleanupAfterCheckSuccess_ = new CheckBox(constants_.developmentCleanupLabel());
       lessSpaced(cleanupAfterCheckSuccess_);
@@ -199,14 +198,37 @@ public class PackagesPreferencesPane extends PreferencesPane
       useInternet2_.setEnabled(false);
       cleanupAfterCheckSuccess_.setEnabled(false);
       viewDirAfterCheckFailure_.setEnabled(false);
-      hideObjectFiles_.setEnabled(false);
       useDevtools_.setEnabled(false);
       useSecurePackageDownload_.setEnabled(false);
 
+      // -------- R / C++
+      cpp.add(headerLabel(constants_.cppDevelopmentTitle()));
+
+      cppTemplate_ = new SelectWidget(
+         constants_.developmentCppTemplate(),
+         new String[] {
+               "Rcpp", 
+               "cpp11", 
+               constants_.developmentEmptyLabel()
+         },
+         new String[] {
+            "Rcpp", "cpp11", "empty"
+         },
+         false,
+         true,
+         false);
+      cpp.add(cppTemplate_);
+     
+      hideObjectFiles_ = new CheckBox(constants_.developmentHideLabel());
+      lessSpaced(hideObjectFiles_);
+      cpp.add(hideObjectFiles_);
+      hideObjectFiles_.setEnabled(false);
+      
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.tabPackagesPanelTitle());
       tabPanel.setSize("435px", "533px");
       tabPanel.add(management, constants_.managementPanelTitle(), management.getBasePanelId());
       tabPanel.add(development, constants_.developmentManagementPanelTitle(), development.getBasePanelId());
+      tabPanel.add(cpp, constants_.cppPanelTitle(), cpp.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -320,6 +342,8 @@ public class PackagesPreferencesPane extends PreferencesPane
             }
          }
       );
+
+      cppTemplate_.setValue(prefs.cppTemplate().getValue());
    }
 
    private boolean secondaryReposHasChanged()
@@ -374,6 +398,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       prefs.useSecureDownload().setGlobalValue(useSecurePackageDownload_.getValue());
       prefs.useNewlinesInMakefiles().setGlobalValue(useNewlineInMakefiles_.getValue());
       prefs.cranMirror().setGlobalValue(cranMirror_);
+      prefs.cppTemplate().setGlobalValue(cppTemplate_.getValue());
       return restartRequirement;
    }
 
@@ -391,6 +416,8 @@ public class PackagesPreferencesPane extends PreferencesPane
    private final CheckBox useDevtools_;
    private final CheckBox useSecurePackageDownload_;
    private final CheckBox useNewlineInMakefiles_;
+   private final SelectWidget cppTemplate_;
+   
    private boolean reloadRequired_ = false;
    private String cranMirrorStored_;
    private final SecondaryReposWidget secondaryReposWidget_;
