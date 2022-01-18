@@ -999,6 +999,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String rmdViewerTypeDescription();
 
    /**
+    * Whether to use current date when rendering document.
+    */
+   @DefaultStringValue("Use current date when rendering document")
+   String rmdAutoDateTitle();
+   @DefaultStringValue("Use current date when rendering document.")
+   String rmdAutoDateDescription();
+
+   /**
     * Whether to show verbose diagnostic information when publishing content.
     */
    @DefaultStringValue("Show diagnostic info when publishing")

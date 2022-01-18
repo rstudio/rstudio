@@ -18,11 +18,27 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiFactory;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.common.newdocument.NewDocumentResources;
-import org.rstudio.studio.client.common.newdocument.TemplateMenuItem;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -31,6 +47,8 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.newdocument.NewDocumentResources;
+import org.rstudio.studio.client.common.newdocument.TemplateMenuItem;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
@@ -42,22 +60,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateChooser;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiFactory;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RadioButton;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
@@ -171,7 +174,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          RMarkdownServerOperations server,
          RMarkdownContext context,
          WorkbenchContext workbench,
-         String author,
+         UserPrefs prefs,
          OperationWithInput<Result> operation)
    {
       super(constants_.newRMarkdown(), Roles.getDialogRole(), operation);
@@ -182,9 +185,24 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       formatOptions_ = new ArrayList<>();
       resources.styles().ensureInjected();
-      txtAuthor_.setText(author);
+      txtAuthor_.setText(prefs.documentAuthor().getGlobalValue());
       txtTitle_.setText(constants_.untitledCapitalized());
-      txtDate_.setText("`r Sys.Date()`");
+      checkboxAutoDate_.setText(prefs.rmdAutoDate().getDescription());
+      
+      boolean auto = prefs.rmdAutoDate().getGlobalValue();
+      setTextDate(auto);
+
+      checkboxAutoDate_.setValue(auto);
+      checkboxAutoDate_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event) {
+            Boolean auto = event.getValue();
+            prefs.rmdAutoDate().setGlobalValue(auto);
+            setTextDate(auto);
+         }
+      });
+      
       Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), constants_.templatesCapitalized());
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
@@ -412,6 +430,15 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       }
    }
    
+   private void setTextDate(boolean auto) {
+      txtDate_.setEnabled(!auto);
+      txtDate_.setText(auto ? "`r Sys.Date()`" : getISODate());
+   }
+
+   private native String getISODate() /*-{
+      return new Date().toISOString().substring(0, 10);
+   }-*/;
+
    private void populateTemplates()
    {
       templateChooser_.populateTemplates();
@@ -452,7 +479,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiField HTMLPanel existingTemplatePanel_;
    @UiField(provided=true) RmdTemplateChooser templateChooser_;
    @UiField HTMLPanel shinyInfoPanel_;
-
+   @UiField CheckBox checkboxAutoDate_;
+   
    private final Widget mainWidget_;
    private List<RadioButton> formatOptions_;
    private JsArray<RmdTemplate> templates_;

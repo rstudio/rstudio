@@ -44,10 +44,11 @@
                 </rw:customCell>
                 <rw:customCell>
                    <rw:FormTextBox elementId="{ElementIds.getNewRmdAuthor}" styleName="{resources.styles.textBox}" 
-                                   ui:field="txtDate_"/>
+                                   ui:field="txtDate_"/>   
                 </rw:customCell>
               </rw:row>
            </rw:LayoutGrid>
+           <rw:FormCheckBox elementId="{ElementIds.getNewRmdAutoDate}" ui:field="checkboxAutoDate_" />
            <rw:FieldSetPanel legend="Default Output Format:" styleName="{resources.styles.defaultOutputLabel}">
               <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
                <ui:attribute name="legend" key="defaultOutputFormat"/>
