@@ -36,6 +36,8 @@ namespace rstudio {
 namespace core {
 namespace system {
 
+bool s_enableCallbacksRequireMainThread = false;
+
 const char* const kSmartTerm = "xterm-256color";
 const char* const kDumbTerm = "dumb";
 
@@ -400,6 +402,16 @@ bool ProcessSupervisor::wait(
    }
 
    return true;
+}
+
+void setEnableCallbacksRequireMainThread(bool enabled)
+{
+   s_enableCallbacksRequireMainThread = enabled;
+}
+
+bool enableCallbacksRequireMainThread()
+{
+   return s_enableCallbacksRequireMainThread;
 }
 
 } // namespace system

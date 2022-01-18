@@ -684,7 +684,7 @@ void AsyncChildProcess::poll()
 {
    // skip polling if we're not on the main thread,
    // and the process options request we run on the main thread only
-   if (options().callbacksRequireMainThread && !core::thread::isMainThread())
+   if (enableCallbacksRequireMainThread() && options().callbacksRequireMainThread && !core::thread::isMainThread())
       return;
    
    // call onStarted if we haven't yet
