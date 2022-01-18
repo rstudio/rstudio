@@ -24,7 +24,9 @@ set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 
 set GNUGREP_VERSION=3.0
-set GNUGREP_FILE=gnugrep-%GNUGREP_VERSION%.zip
+set GNUGREP_SUBDIR=gnugrep\%GNUGREP_VERSION%
+set GNUGREP_NAME=gnugrep-%GNUGREP_VERSION%
+set GNUGREP_FILE=g%GNUGREP_NAME%.zip
 
 set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
@@ -60,12 +62,12 @@ if not exist gnudiff (
   del "%GNUDIFF_FILE%"
 )
 
-if not exist gnugrep\%GNUGREP_VERSION% (
+if not exist %GNUGREP_SUBDIR% (
   wget %WGET_ARGS% "%BASEURL%%GNUGREP_FILE%"
-  mkdir gnugrep\%GNUGREP_VERSION%
+  mkdir gnugrep
   echo Unzipping %GNUGREP_FILE%
-  unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep\%GNUGREP_VERSION%
-  del "%GNUGREP_FILE%"
+  unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep
+  move gnugrep\%GNUGREP_NAME% %GNUGREP_SUBDIR%
 )
 
 if not exist msys-ssh-1000-18 (
