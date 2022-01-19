@@ -362,8 +362,7 @@ bool rConsoleRead(const std::string& prompt,
    if (!pConsoleInput->isCancel())
    {
       module_context::events().onBeforeExecute();
-      if (!pConsoleInput->isNoEcho())
-         module_context::events().onConsoleInput(pConsoleInput->text);
+      module_context::events().onConsoleInput(pConsoleInput->text);
    }
 
    // we are about to return input to r so set the flag indicating that state
