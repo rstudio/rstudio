@@ -913,10 +913,21 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onNewCppDoc()
    {
+      String cppTemplatePref = userPrefs_.cppTemplate().getValue();
+      String cppTemplateFile = "default.cpp";
+      if (StringUtil.equals(cppTemplatePref, "Rcpp")) 
+      {
+         cppTemplateFile = "rcpp.cpp";
+      } 
+      else if (StringUtil.equals(cppTemplatePref, "cpp11")) 
+      {
+         cppTemplateFile = "cpp11.cpp";
+      }
+
       columnManager_.newSourceDocWithTemplate(
           FileTypeRegistry.CPP,
           "",
-          userPrefs_.useRcppTemplate().getValue() ? "rcpp.cpp" : "default.cpp",
+          cppTemplateFile,
           Position.create(0, 0),
           new CommandWithArg<EditingTarget> () {
             @Override

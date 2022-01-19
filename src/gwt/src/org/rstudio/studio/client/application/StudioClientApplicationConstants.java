@@ -1395,15 +1395,6 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String saveNoLabel();
 
     /**
-     * Translated "Console".
-     *
-     * @return translated "Console"
-     */
-    @DefaultMessage("Console")
-    @Key("consolePaneName")
-    String consolePaneName();
-
-    /**
      * Translated "(active)".
      *
      * @return translated "(active)"

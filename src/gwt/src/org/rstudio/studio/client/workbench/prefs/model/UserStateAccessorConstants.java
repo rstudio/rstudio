@@ -222,14 +222,6 @@ public interface UserStateAccessorConstants extends Constants {
    @DefaultStringValue("Sync source editor to Quarto website preview navigation.")
    String quartoWebsiteSyncEditorDescription();
 
-   /**
-    * Build Quarto editor tools (yaml.js) on the fly when requested.
-    */
-   @DefaultStringValue("Build Quarto Editor Tools")
-   String quartoBuildEditorToolsTitle();
-   @DefaultStringValue("Build Quarto editor tools (yaml.js) on the fly when requested.")
-   String quartoBuildEditorToolsDescription();
-
 
 
 }

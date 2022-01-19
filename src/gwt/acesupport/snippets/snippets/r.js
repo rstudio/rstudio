@@ -180,15 +180,20 @@ var snippets = [
    {
       name: "shinymod",
       content: [
-         '${1:name}_UI <- function(id) {',
+         '${1:name}UI <- function(id) {',
          '  ns <- NS(id)',
          '  tagList(',
          '    ${0}',
          '  )',
          '}',
          '',
-         '${1:name} <- function(input, output, session) {',
-         '  ',
+         '${1:name}Server <- function(id) {',
+         '  moduleServer(',
+         '    id,',
+         '    function(input, output, session) {',
+         '      ',
+         '    }',
+         '  )',
          '}'
       ].join("\n")
    }

@@ -35,7 +35,7 @@ set PANDOC_VERSION=2.16.2
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
-set QUARTO_VERSION=0.2.466
+set QUARTO_VERSION=0.3.24
 set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
 set LIBCLANG_VERSION=5.0.2
@@ -164,7 +164,7 @@ if not exist pandoc\%PANDOC_VERSION% (
 
 
 
-wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/download/v%QUARTO_VERSION%/%QUARTO_FILE%
+wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
 echo Unzipping Quarto %QUARTO_FILE%
 rmdir /s /q quarto
 mkdir quarto

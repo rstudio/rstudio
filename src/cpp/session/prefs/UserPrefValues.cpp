@@ -1402,16 +1402,16 @@ core::Error UserPrefValues::setPackagesPaneEnabled(bool val)
 }
 
 /**
- * Whether to use RCPP templates.
+ * C++ template.
  */
-bool UserPrefValues::useRcppTemplate()
+std::string UserPrefValues::cppTemplate()
 {
-   return readPref<bool>("use_rcpp_template");
+   return readPref<std::string>("cpp_template");
 }
 
-core::Error UserPrefValues::setUseRcppTemplate(bool val)
+core::Error UserPrefValues::setCppTemplate(std::string val)
 {
-   return writePref("use_rcpp_template", val);
+   return writePref("cpp_template", val);
 }
 
 /**
@@ -3109,7 +3109,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRealTimeSpellchecking,
       kNavigateToBuildError,
       kPackagesPaneEnabled,
-      kUseRcppTemplate,
+      kCppTemplate,
       kRestoreSourceDocuments,
       kHandleErrorsInUserCodeOnly,
       kAutoExpandErrorTracebacks,
