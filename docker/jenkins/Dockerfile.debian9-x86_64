@@ -2,10 +2,16 @@ FROM debian:stretch
 
 ENV OPERATING_SYSTEM=debian_9
 
-# update apt repository to cloudfront's mirror
+# update apt repository to cloudfront's mirror and add cran 3.4 to apt sources
 RUN set -x \
     && sed -i "s/deb.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
-    && sed -i "s/security.debian.org/cloudfront.debian.net/" /etc/apt/sources.list
+    && sed -i "s/security.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
+    && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update \
+    && apt-get install -y gnupg1 \
+    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys '95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7' \
+    && echo 'deb http://cran.rstudio.com/bin/linux/debian stretch-cran35/' >> /etc/apt/sources.list \
+    && apt-get update
 
 # update system
 RUN set -x \
