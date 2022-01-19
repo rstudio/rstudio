@@ -442,6 +442,10 @@ private:
    boost::recursive_mutex mutex_;
 };
 
+bool enableCallbacksRequireMainThread();
+
+void setEnableCallbacksRequireMainThread(bool enforce);
+
 } // namespace system
 } // namespace core
 } // namespace rstudio

@@ -1932,6 +1932,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String developmentTitle();
 
     /**
+     * Translated "C/C++ Development".
+     *
+     * @return translated "C/C++ Development"
+     */
+    @DefaultMessage("C/C++ Development")
+    @Key("cppDevelopmentTitle")
+    String cppDevelopmentTitle();
+
+    /**
      * Translated "Use devtools package functions if available".
      *
      * @return translated "Use devtools package functions if available"
@@ -1986,13 +1995,22 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String developmentViewLabel();
 
     /**
-     * Translated "Use Rcpp template when creating C++ files".
+     * Translated "C++ template".
      *
-     * @return translated "Use Rcpp template when creating C++ files"
+     * @return translated "C++ template"
      */
-    @DefaultMessage("Use Rcpp template when creating C++ files")
-    @Key("developmentRcppLabel")
-    String developmentRcppLabel();
+    @DefaultMessage("C++ template")
+    @Key("developmentCppTemplate")
+    String developmentCppTemplate();
+ 
+    /**
+     * Translated "empty".
+     *
+     * @return translated "empty"
+     */
+    @DefaultMessage("empty")
+    @Key("developmentEmptyLabel")
+    String developmentEmptyLabel();
 
     /**
      * Translated "Always use LF line-endings in Unix Makefiles".
@@ -2029,6 +2047,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Development")
     @Key("developmentManagementPanelTitle")
     String developmentManagementPanelTitle();
+
+    /**
+     * Translated "C / C++".
+     *
+     * @return translated "C / C++"
+     */
+    @DefaultMessage("C / C++")
+    @Key("C / C++")
+    String cppPanelTitle();
 
     /**
      * Translated "Restart R Required".
