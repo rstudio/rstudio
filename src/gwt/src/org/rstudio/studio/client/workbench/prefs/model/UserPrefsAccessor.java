@@ -1683,6 +1683,19 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to use current date when rendering document
+    */
+   public PrefValue<Boolean> rmdAutoDate()
+   {
+      return bool(
+         "rmd_auto_date", 
+         _constants.rmdAutoDateTitle(),
+         _constants.rmdAutoDateDescription(), 
+         false
+      );
+   }
+
+   /**
     * The path to the preferred R Markdown template.
     */
    public PrefValue<String> rmdPreferredTemplatePath()

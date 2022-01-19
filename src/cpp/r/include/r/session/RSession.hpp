@@ -30,6 +30,7 @@
 
 #define kConsoleInputCancel 1
 #define kConsoleInputEof    2
+#define kConsoleInputNoEcho 4
 
 #define EX_CONTINUE                         100
 #define EX_FORCE                            101
@@ -148,6 +149,11 @@ struct RConsoleInput
    {
       return (flags & kConsoleInputEof) != 0;
    }
+
+   bool isNoEcho()
+   {
+      return (flags & kConsoleInputNoEcho) != 0;
+   }
    
    // typically used for hand-constructed RPC requests
    core::json::Array toJsonArray()
@@ -188,6 +194,7 @@ struct RCallbacks
    boost::function<void(const std::string&, core::FilePath&, bool)> showFile;
    boost::function<void(const std::string&, int)> consoleWrite;
    boost::function<void()> consoleHistoryReset;
+   boost::function<void()> consoleReset;
    boost::function<bool(double*, double*)> locator;
    boost::function<core::FilePath(bool)> chooseFile;
    boost::function<int(const std::string&)> editFile;

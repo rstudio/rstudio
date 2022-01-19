@@ -408,12 +408,16 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    private void processCommandEntry()
    {
-      String commandText = view_.processCommandEntry();
+      processCommandEntry(view_.processCommandEntry(), true);
+   }
+
+   private void processCommandEntry(String commandText, boolean echo)
+   {
       if (addToHistory_ && (commandText.length() > 0))
-         eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
+      eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
 
       // fire event
-      eventBus_.fireEvent(new ConsoleInputEvent(commandText, ""));
+      eventBus_.fireEvent(new ConsoleInputEvent(commandText, "", echo ? 0 : ConsoleInputEvent.FLAG_NO_ECHO));
    }
 
    public void onSendToConsole(final SendToConsoleEvent event)
@@ -463,7 +467,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          {
             if (event.shouldExecute())
             {
-               processCommandEntry();
+               processCommandEntry(event.getCode(), event.shouldEcho());
+
                if (previousInput.length() > 0)
                   display.setText(previousInput);
             }
@@ -480,7 +485,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (!event.shouldAnimate())
       {
          display.clear();
-         display.setText(event.getCode());
+         if (event.shouldEcho()) 
+            display.setText(event.getCode());
          finishSendToConsole.execute();
       }
       else
