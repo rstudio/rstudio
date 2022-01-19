@@ -26,4 +26,4 @@ test_that(".rs.formatDataColumnDispatch() iterates over the classes", {
 
     x <- structure("x", class = c("bar", "foo", "character"))
     expect_equal(.rs.formatDataColumnDispatch(x), "Hi there!")
- })
+})
