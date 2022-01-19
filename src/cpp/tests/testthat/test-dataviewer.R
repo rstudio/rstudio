@@ -16,14 +16,18 @@
 context("data viewer")
 
 test_that(".rs.formatDataColumnDispatch() iterates over the classes", {
-    local_methods(
-        format.foo = function(x, ...) {
+    registerS3method("[", "foo",  function(x, ...) {
+        structure(NextMethod(), class = class(x))
+    })
+    registerS3method("format", "foo", function(x, ...) {
         rep("Hi there!", length(x))
     })
     
     x <- structure("x", class = c("foo", "bar", "character"))
     expect_equal(.rs.formatDataColumnDispatch(x), "Hi there!")
+    expect_equal(.rs.formatDataColumn(x, 1, 1), "Hi there!")
 
     x <- structure("x", class = c("bar", "foo", "character"))
     expect_equal(.rs.formatDataColumnDispatch(x), "Hi there!")
+    expect_equal(.rs.formatDataColumn(x, 1, 1), "Hi there!")
 })
