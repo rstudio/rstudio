@@ -2590,9 +2590,8 @@
 
 .rs.addJsonRpcHandler("project_guess_cpp_style", function(inDirectory = .rs.getProjectDirectory()) 
 {
-    # if there is no DESCRIPTION file, can't guess 
-    DESCRIPTION <- file.path(inDirectory, "DESCRIPTION")
-    if (file.exists(DESCRIPTION)) 
+    # if there is no DESCRIPTION file, can't guess
+    if (!is.null(inDirectory) && file.exists(DESCRIPTION <- file.path(inDirectory, "DESCRIPTION"))) 
     {
         data <- read.dcf(DESCRIPTION)[1, ]
 
