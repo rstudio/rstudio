@@ -240,6 +240,8 @@ public class ElementIds
    public static String getNewRmdTemplateLabel() { return getElementId(NEW_RMD_TEMPLATE_LABEL); }
    public final static String NEW_RMD_TEMPLATE = "new_rmd_template";
    public static String getNewRmdTemplate() { return getElementId(NEW_RMD_TEMPLATE); }
+   public final static String NEW_RMD_AUTO_DATE = "new_rmd_auto_date";
+   public static String getNewRmdAutoDate() { return getElementId(NEW_RMD_AUTO_DATE); }
 
    // RmdTemplateChooser
    public final static String RMD_TEMPLATE_CHOOSER_NAME = "rmd_template_chooser_name";

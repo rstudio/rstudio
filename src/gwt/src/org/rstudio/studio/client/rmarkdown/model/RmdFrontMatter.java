@@ -41,9 +41,8 @@ public class RmdFrontMatter extends JavaScriptObject
       this.runtime = runtime;
    }-*/;
 
-   public final native void addDate() /*-{
-      // using iso format: yyyy-mm-dd
-      this.date = new Date().toISOString().replace(/T.*$/, "");
+   public final native void setDate(String date) /*-{
+      this.date = date;
    }-*/;
    
    public final native void addResourceFile(String file) /*-{
@@ -133,14 +132,13 @@ public class RmdFrontMatter extends JavaScriptObject
      }
    }-*/;
    
-   public final void applyCreateOptions(String author, String title, 
+   public final void applyCreateOptions(String author, String title, String date, 
                                         String format, boolean isShiny)
    {
       setTitle(title);
       if (author.length() > 0)
       {
          setAuthor(author);
-         addDate();
       }
       if (isShiny)
       {
@@ -149,6 +147,9 @@ public class RmdFrontMatter extends JavaScriptObject
       if (format != null)
       {
          setOutputOption(format, RmdFrontMatterOutputOptions.create());
+      }
+      if (date.length() > 0) {
+         setDate(date);
       }
    }
    

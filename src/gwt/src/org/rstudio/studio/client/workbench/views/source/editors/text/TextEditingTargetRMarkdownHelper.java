@@ -1172,7 +1172,7 @@ public class TextEditingTargetRMarkdownHelper
                server_,
                context,
                workbenchContext_,
-               prefs_.documentAuthor().getGlobalValue(),
+               prefs_,
                onComplete).showModal();
          }
       });

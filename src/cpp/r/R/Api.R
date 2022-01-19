@@ -459,7 +459,8 @@
 .rs.addApiFunction("sendToConsole", function(code,
                                              echo = TRUE,
                                              execute = TRUE,
-                                             focus = TRUE)
+                                             focus = TRUE, 
+                                             animate = FALSE)
 {
    if (!is.character(code))
       stop("'code' should be a character vector", call. = FALSE)
@@ -470,6 +471,7 @@
       echo = .rs.scalar(as.logical(echo)),
       execute = .rs.scalar(as.logical(execute)),
       focus = .rs.scalar(as.logical(focus)),
+      animate = .rs.scalar(as.logical(animate)),
       language = "R"
    )
 

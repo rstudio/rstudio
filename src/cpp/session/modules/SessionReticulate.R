@@ -119,6 +119,14 @@
    {
       python <- .rs.readUiPref("python_path")
       .rs.reticulate.usePython(python)
+      
+      if (packageVersion("reticulate") >= "1.23")
+      {
+         .rs.addFunction("reticulate.describeObjectLength", function(object)
+         {
+            reticulate::py_len(object, -1L)
+         })
+      }
    })
    
 })
@@ -1647,6 +1655,8 @@ def _rstudio_html_generator_():
 
 .rs.addFunction("reticulate.describeObjectLength", function(object)
 {
+   # this function is overwritten in .rs.registerPackageLoadHook if 
+   # reticulate version >= 1.23
    builtins <- reticulate::import_builtins(convert = TRUE)
    tryCatch(
       builtins$len(object),
@@ -1658,7 +1668,7 @@ def _rstudio_html_generator_():
 {
    tryCatch(
       .rs.reticulate.describeObjectContentsImpl(object),
-      error = function(e) warning
+      error = warning
    )
 })
 

@@ -30,6 +30,7 @@
 
 #define kConsoleInputCancel 1
 #define kConsoleInputEof    2
+#define kConsoleInputNoEcho 4
 
 #define EX_CONTINUE                         100
 #define EX_FORCE                            101
@@ -147,6 +148,11 @@ struct RConsoleInput
    bool isEof()
    {
       return (flags & kConsoleInputEof) != 0;
+   }
+
+   bool isNoEcho()
+   {
+      return (flags & kConsoleInputNoEcho) != 0;
    }
    
    // typically used for hand-constructed RPC requests
