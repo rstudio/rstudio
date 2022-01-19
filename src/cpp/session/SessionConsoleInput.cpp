@@ -376,9 +376,12 @@ bool rConsoleRead(const std::string& prompt,
                pConsoleInput->text);
    }
 
-   ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
-   clientEventQueue().add(promptEvent);
-   enqueueConsoleInput(*pConsoleInput);
+   if (!pConsoleInput->isNoEcho()) 
+   {
+      ClientEvent promptEvent(client_events::kConsoleWritePrompt, prompt);
+      clientEventQueue().add(promptEvent);
+      enqueueConsoleInput(*pConsoleInput);
+   }
 
    // always return true (returning false causes the process to exit)
    return true;
