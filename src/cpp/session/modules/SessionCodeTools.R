@@ -2591,10 +2591,12 @@
 .rs.addJsonRpcHandler("project_guess_cpp_style", function(inDirectory = .rs.getProjectDirectory()) 
 {
    # give up if this is not a project or not a package
-   if (is.null(inDirectory)) return(.rs.scalar(""))
+   if (is.null(inDirectory))
+      return(.rs.scalar(""))
 
    DESCRIPTION <- file.path(inDirectory, "DESCRIPTION")
-   if (!file.exists(DESCRIPTION)) return(.rs.scalar(""))
+   if (!file.exists(DESCRIPTION))
+      return(.rs.scalar(""))
 
    # check if Rcpp or cpp11 is mentioned in LinkingTo:
    data <- read.dcf(DESCRIPTION)[1, ]
