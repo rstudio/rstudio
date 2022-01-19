@@ -190,7 +190,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       checkboxAutoDate_.setText(prefs.rmdAutoDate().getDescription());
       
       boolean auto = prefs.rmdAutoDate().getGlobalValue();
-      setTextDate(auto);
+      txtDate_.setText(getISODate());
+      txtDate_.setEnabled(!auto);
 
       checkboxAutoDate_.setValue(auto);
       checkboxAutoDate_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -199,7 +200,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          public void onValueChange(ValueChangeEvent<Boolean> event) {
             Boolean auto = event.getValue();
             prefs.rmdAutoDate().setGlobalValue(auto);
-            setTextDate(auto);
+            txtDate_.setEnabled(!auto);
          }
       });
       
@@ -323,7 +324,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
             new RmdNewDocument(getSelectedTemplate(), 
                                txtAuthor_.getText().trim(), 
                                txtTitle_.getText().trim(), 
-                               txtDate_.getText().trim(),
+                               checkboxAutoDate_.getValue() ? "`r Sys.Date()`" : txtDate_.getText().trim(),
                                formatName,
                                isShiny),
             templateChooser_.getChosenTemplate(),
@@ -430,11 +431,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       }
    }
    
-   private void setTextDate(boolean auto) {
-      txtDate_.setEnabled(!auto);
-      txtDate_.setText(auto ? "`r Sys.Date()`" : getISODate());
-   }
-
    private native String getISODate() /*-{
       return new Date().toISOString().substring(0, 10);
    }-*/;
