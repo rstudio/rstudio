@@ -48,7 +48,7 @@ REM Establish build dir
 set BUILD_DIR=build
 if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=RelWithDebInfo
 if "%CMAKE_BUILD_TYPE%" == "Debug" set BUILD_DIR=build-debug
-set ELECTRON_SRC_DIR=%PACKAGE_DIR%\..\..\src\node/desktop
+set ELECTRON_SRC_DIR=%PACKAGE_DIR%\..\..\src\node\desktop
 
 REM perform 64-bit build
 cd "%PACKAGE_DIR%"
@@ -91,7 +91,7 @@ if "%RSTUDIO_TARGET%" == "Electron" (
 
       REM perform install of 64-bit build 
       cd "%PACKAGE_DIR%\%BUILD_DIR%"
-      cmake --build . --target install -- %MAKEFLAGS% || goto :error
+      REM cmake --build . --target install -- %MAKEFLAGS% || goto :error
 
       REM perform 32-bit build and install it into the 64-bit tree
       cd "%PACKAGE_DIR%"
