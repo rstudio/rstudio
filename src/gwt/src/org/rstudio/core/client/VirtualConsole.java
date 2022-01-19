@@ -603,18 +603,31 @@ public class VirtualConsole
 
                // match hyperlink, either start or end (if [url] is empty
                // <ESC> ] 8 ; [params] ; [url] \7
-               
+               if (ansi_ == null)
+                  ansi_ = new AnsiCode();
+                     
                Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(data.substring(pos), 0);
                
                if (hyperlinkMatch != null)
                {
                   String url = hyperlinkMatch.getGroup(2);
+                  // toggle hyperlink, and artifically add or remove styles: underline, magenta and italic
                   if (!StringUtil.equals(url, ""))
                   {
+                     ansiCodeStyles_ = ansi_.processCode("\033[4m"); // underline
+                     ansiCodeStyles_ = ansi_.processCode("\033[3m"); // italic
+                     ansiCodeStyles_ = ansi_.processCode("\033[35m"); // magenta
+                     currentClazz = setCurrentClazz(ansiColorMode, clazz);
+
                      hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1));
                   }
                   else
                   {
+                     ansiCodeStyles_ = ansi_.processCode("\033[39m"); // </magenta>
+                     ansiCodeStyles_ = ansi_.processCode("\033[23m"); // </italic>
+                     ansiCodeStyles_ = ansi_.processCode("\033[24m"); // </underline>
+                     currentClazz = setCurrentClazz(ansiColorMode, clazz);
+                     
                      hyperlink_ = null;   
                   }
 
@@ -662,28 +675,9 @@ public class VirtualConsole
                else
                {
                   // process the SGR code
-                  if (ansi_ == null)
-                     ansi_ = new AnsiCode();
                   ansiCodeStyles_ = ansi_.processCode(sgrMatch.getValue());
-                  if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_STRIP)
-                  {
-                     currentClazz = clazz;
-                  }
-                  else
-                  {
-                     if (clazz != null)
-                     {
-                        currentClazz = clazz;
-                        if (ansiCodeStyles_.inlineClazzes != null)
-                        {
-                           currentClazz = currentClazz + " " + ansiCodeStyles_.inlineClazzes;
-                        }
-                     }
-                     else
-                     {
-                        currentClazz = ansiCodeStyles_.inlineClazzes;
-                     }
-                  }
+                  currentClazz = setCurrentClazz(ansiColorMode, clazz);
+                  
                   tail = pos + sgrMatch.getValue().length();
                }
                break;
@@ -738,6 +732,31 @@ public class VirtualConsole
             submit("\n");
       }
    }
+
+   private String setCurrentClazz(String ansiColorMode, String clazz) {
+      String currentClazz;
+      if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_STRIP)
+      {
+         currentClazz = clazz;
+      }
+      else
+      {
+         if (clazz != null)
+         {
+            currentClazz = clazz;
+            if (ansiCodeStyles_.inlineClazzes != null)
+            {
+               currentClazz = currentClazz + " " + ansiCodeStyles_.inlineClazzes;
+            }
+         }
+         else
+         {
+            currentClazz = ansiCodeStyles_.inlineClazzes;
+         }
+      }
+      return currentClazz;
+   }
+
    private class Hyperlink
    {
       public Hyperlink(String url, String params)
@@ -775,6 +794,9 @@ public class VirtualConsole
          length = text.length();
          hyperlink_ = hyperlink;
          element = Document.get().createSpanElement();
+         if (className != null)
+            element.addClassName(clazz);
+         
          if (hyperlink_ != null) 
          {
             Event.sinkEvents(element, Event.ONCLICK);
@@ -783,16 +805,8 @@ public class VirtualConsole
                consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
             });
             element.setTitle(hyperlink_.getTitle());
-
-            // adding class .xtermHyperlink only if there are no current style applied
-            if (!className.contains("xterm"))
-            {
-               element.addClassName("xtermHyperlink");
-            }
-            
-         } 
-         if (className != null)
-            element.addClassName(clazz);
+            element.addClassName("xtermHyperlink");
+         }
          
          element.setInnerText(text);
 
