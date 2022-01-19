@@ -2587,3 +2587,34 @@
    getNamespace(envir)
    
 })
+
+.rs.addJsonRpcHandler("project_guess_cpp_style", function(inDirectory = .rs.getProjectDirectory()) 
+{
+    # if there is no DESCRIPTION file, can't guess 
+    DESCRIPTION <- file.path(inDirectory, "DESCRIPTION")
+    if (file.exists(DESCRIPTION)) 
+    {
+        data <- read.dcf(DESCRIPTION)[1, ]
+
+        # guess cpp variant based on the LinkingTo field
+        if ("LinkingTo" %in% names(data)) {
+            LinkingTo <- data[["LinkingTo"]]
+            if (grepl("Rcpp", LinkingTo)) 
+            {
+                return(.rs.scalar("Rcpp"))
+            } else if (grepl("cpp11", LinkingTo)) 
+            {
+                return(.rs.scalar("cpp11"))
+            }
+        }
+
+        # check if cpp11 is vendored
+        if (file.exists(file.path(inDirectory, "inst", "include", "cpp11.hpp"))) 
+        {
+            return(.rs.scalar("cpp11"))
+        }
+    }
+     
+    # otherwise just use the default from user preferences 
+    .rs.scalar("")
+})
