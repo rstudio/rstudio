@@ -155,7 +155,8 @@
 .xtermInvertBgColor { background-color: #586e75; }
 .xtermBold { font-weight: bold; }
 .xtermUnderline { text-decoration: underline; }
-.xtermHyperlink { text-decoration: underline; font-style: italic; color: #75507b !important; }
+.xtermHyperlink { }
+.xtermHyperlink:hover { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }
