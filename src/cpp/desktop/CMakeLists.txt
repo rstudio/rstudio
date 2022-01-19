@@ -667,4 +667,12 @@ if(NOT RSTUDIO_ELECTRON)
             DESTINATION /usr/share/icons/hicolor/256x256/mimetypes)
 
    endif()
+else()
+   # Electron desktop; the bulk of this lives elsewhere (src\node\desktop) but it
+   # consumes some utility programs built from here. Once Qt desktop is retired we
+   # can consolidate all of this.
+   if(WIN32 AND NOT RSTUDIO_SESSION_WIN32)
+      add_subdirectory(urlopener)
+      add_subdirectory(synctex/rsinverse)
+   endif()
 endif()
