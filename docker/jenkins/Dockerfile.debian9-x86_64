@@ -2,7 +2,7 @@ FROM debian:stretch
 
 ENV OPERATING_SYSTEM=debian_9
 
-# update apt repository to cloudfront's mirror and add cran 3.4 to apt sources
+# update apt repository to cloudfront's mirror and add cran35 to apt sources
 RUN set -x \
     && sed -i "s/deb.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
     && sed -i "s/security.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
