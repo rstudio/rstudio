@@ -1658,7 +1658,7 @@ def _rstudio_html_generator_():
 {
    tryCatch(
       .rs.reticulate.describeObjectContentsImpl(object),
-      error = function(e) warning
+      error = warning
    )
 })
 
