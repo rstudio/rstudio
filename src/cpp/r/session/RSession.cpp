@@ -401,6 +401,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
       cb.readConsole = RReadConsole;
       cb.writeConsoleEx = RWriteConsoleEx;
       cb.cleanUp = RCleanUp;
+      cb.resetConsole = RResetConsole;
    }
    else
    {

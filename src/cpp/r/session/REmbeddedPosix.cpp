@@ -125,6 +125,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    ptr_R_ReadConsole = callbacks.readConsole;
    ptr_R_WriteConsole = nullptr; // must set this to NULL for Ex to be called
    ptr_R_WriteConsoleEx = callbacks.writeConsoleEx;
+   ptr_R_ResetConsole = callbacks.resetConsole;
    ptr_R_EditFile = callbacks.editFile;
    ptr_R_Busy = callbacks.busy;
 
