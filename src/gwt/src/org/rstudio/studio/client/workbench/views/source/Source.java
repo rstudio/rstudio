@@ -913,29 +913,52 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onNewCppDoc()
    {
-      String cppTemplatePref = userPrefs_.cppTemplate().getValue();
+      server_.projectGuessCppStyle(new ServerRequestCallback<String>()
+      {
+
+         @Override
+         public void onResponseReceived(String response)
+         {
+            onNewCppDocImpl(response);
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            onNewCppDocImpl("");
+         }
+
+      });
+   }
+
+   private void onNewCppDocImpl(String style) {
+      if (StringUtil.equals(style, ""))
+      {
+         style = userPrefs_.cppTemplate().getValue();
+      }
+
       String cppTemplateFile = "default.cpp";
-      if (StringUtil.equals(cppTemplatePref, "Rcpp")) 
+      if (StringUtil.equals(style, "Rcpp")) 
       {
          cppTemplateFile = "rcpp.cpp";
       } 
-      else if (StringUtil.equals(cppTemplatePref, "cpp11")) 
+      else if (StringUtil.equals(style, "cpp11")) 
       {
          cppTemplateFile = "cpp11.cpp";
       }
-
+      
       columnManager_.newSourceDocWithTemplate(
-          FileTypeRegistry.CPP,
-          "",
-          cppTemplateFile,
-          Position.create(0, 0),
-          new CommandWithArg<EditingTarget> () {
-            @Override
-            public void execute(EditingTarget target)
-            {
-               target.verifyCppPrerequisites();
+            FileTypeRegistry.CPP,
+            "",
+            cppTemplateFile,
+            Position.create(0, 0),
+            new CommandWithArg<EditingTarget> () {
+               @Override
+               public void execute(EditingTarget target)
+               {
+                  target.verifyCppPrerequisites();
+               }
             }
-          }
       );
    }
 

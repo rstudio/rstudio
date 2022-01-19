@@ -5921,6 +5921,12 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROFILE_SOURCES, params, requestCallback);
    }
 
+   public void projectGuessCppStyle(ServerRequestCallback<String> requestCallback) 
+   {
+      JSONArray params = new JSONArray();
+      sendRequest(RPC_SCOPE, PROJECT_GUESS_CPP_STYLE, params, requestCallback);
+   }
+
    public void removeConnection(ConnectionId id,
                                 ServerRequestCallback<Void> callback)
    {
@@ -6978,6 +6984,8 @@ public class RemoteServer implements Server
    private static final String REPLACE_COMMENT_HEADER = "replace_comment_header";
    private static final String SET_USER_CRASH_HANDLER_PROMPTED = "set_user_crash_handler_prompted";
 
+   private static final String PROJECT_GUESS_CPP_STYLE = "project_guess_cpp_style";
+
    private static final String PANDOC_GET_CAPABILITIES = "pandoc_get_capabilities";
    private static final String PANDOC_AST_TO_MARKDOWN = "pandoc_ast_to_markdown";
    private static final String PANDOC_MARKDOWN_TO_AST = "pandoc_markdown_to_ast";
@@ -7013,7 +7021,5 @@ public class RemoteServer implements Server
    private static final String QUARTO_SERVE = "quarto_serve";
    private static final String QUARTO_SERVE_RENDER = "quarto_serve_render";
    private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
-  
-  
 
 }
