@@ -91,11 +91,14 @@ if "%RSTUDIO_TARGET%" == "Electron" (
 
       REM perform install of 64-bit build 
       cd "%PACKAGE_DIR%\%BUILD_DIR%"
-      REM cmake --build . --target install -- %MAKEFLAGS% || goto :error
+      cmake --build . --target install -- %MAKEFLAGS% || goto :error
 
       REM perform 32-bit build and install it into the 64-bit tree
       cd "%PACKAGE_DIR%"
       call make-install-win32.bat "%INSTALL_DIR%\bin" %* || goto :error
+
+      REM Remove some duplicate files
+      rmdir /s /q "%INSTALL_DIR%\bin\bin"
 
       REM Build and package the Electron app.
       cd %ELECTRON_SRC_DIR%
