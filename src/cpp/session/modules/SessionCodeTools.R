@@ -2590,30 +2590,28 @@
 
 .rs.addJsonRpcHandler("project_guess_cpp_style", function(inDirectory = .rs.getProjectDirectory()) 
 {
-    # if there is no DESCRIPTION file, can't guess
-    if (!is.null(inDirectory) && file.exists(DESCRIPTION <- file.path(inDirectory, "DESCRIPTION"))) 
-    {
-        data <- read.dcf(DESCRIPTION)[1, ]
+   # give up if this is not a project or not a package
+   if (is.null(inDirectory)) return(.rs.scalar(""))
 
-        # guess cpp variant based on the LinkingTo field
-        if ("LinkingTo" %in% names(data)) {
-            LinkingTo <- data[["LinkingTo"]]
-            if (grepl("Rcpp", LinkingTo)) 
-            {
-                return(.rs.scalar("Rcpp"))
-            } else if (grepl("cpp11", LinkingTo)) 
-            {
-                return(.rs.scalar("cpp11"))
-            }
-        }
+   DESCRIPTION <- file.path(inDirectory, "DESCRIPTION")
+   if (!file.exists(DESCRIPTION)) return(.rs.scalar(""))
 
-        # check if cpp11 is vendored
-        if (file.exists(file.path(inDirectory, "inst", "include", "cpp11.hpp"))) 
-        {
-            return(.rs.scalar("cpp11"))
-        }
-    }
-     
-    # otherwise just use the default from user preferences 
-    .rs.scalar("")
+   # check if Rcpp or cpp11 is mentioned in LinkingTo:
+   data <- read.dcf(DESCRIPTION)[1, ]
+   if ("LinkingTo" %in% names(data)) {
+      LinkingTo <- data[["LinkingTo"]]
+      if (grepl("Rcpp", LinkingTo)) {
+         return(.rs.scalar("Rcpp"))
+      } else if (grepl("cpp11", LinkingTo)) {
+         return(.rs.scalar("cpp11"))
+      }
+   }
+
+   # check if cpp11 is vendored
+   if (file.exists(file.path(inDirectory, "inst", "include", "cpp11.hpp"))) {
+      return(.rs.scalar("cpp11"))
+   }
+
+   # give up, i.e. use the user preference
+   .rs.scalar("")
 })
