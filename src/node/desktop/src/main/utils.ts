@@ -116,7 +116,21 @@ export function removeStaleOptionsLockfile(): void {
 }
 
 export function rsessionExeName(): string {
-  return process.platform === 'win32' ? 'rsession.exe' : 'rsession';
+
+  if (process.platform === 'darwin') {
+    // TODO: this choice needs to be made at session-launch time,
+    // depending on the architecture of the version of R being used
+    if (process.arch === 'arm64') {
+      return 'rsession-arm64';
+    } else {
+      return 'rsession';
+    }
+  } else if (process.platform === 'win32') {
+    return 'rsession.exe';
+  } else {
+    return 'rsession';
+  }
+
 }
 
 // used to help find built C++ sources in developer configurations
@@ -188,14 +202,22 @@ function rsessionNotFoundError(): Error {
  * @returns Paths to config file, rsession, and desktop scripts.
  */
 export function findComponents(): [FilePath, FilePath, FilePath] {
+
   // determine paths to config file, rsession, and desktop scripts
   let confPath: FilePath = new FilePath();
   let sessionPath: FilePath = new FilePath();
 
-  const binRoot = new FilePath(app.getAppPath());
   if (app.isPackaged) {
+
+    // resolve session path
+    if (process.platform === 'darwin') {
+      sessionPath = new FilePath(path.join(path.dirname(process.execPath), rsessionExeName()));
+    } else {
+      const binRoot = new FilePath(app.getAppPath());
+      sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
+    }
+
     // confPath is intentionally left empty for a package build
-    sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
     return [confPath, sessionPath, new FilePath(app.getAppPath())];
   }
 

@@ -483,8 +483,20 @@ endif()
 message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}")
 
 if(UNIX)
+
+   # Homebrew now defaults to OpenSSL 3, but some older formulae that
+   # we use require OpenSSL 1.1. Try to force CMake to use that OpenSSL.
+   if(APPLE AND NOT OpenSSL_ROOT)
+      cmake_policy(SET CMP0074 NEW)
+      file(GLOB OPENSSL_ROOT_CANDIDATE "${HOMEBREW_PREFIX}/Cellar/openssl@1.1/*")
+      if(EXISTS OPENSSL_ROOT_CANDIDATE)
+         set(OpenSSL_ROOT "${OPENSSL_ROOT_CANDIDATE}")
+      endif()
+   endif()
+
    find_package(OpenSSL REQUIRED)
    include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+
 endif()
 
 if(WIN32)

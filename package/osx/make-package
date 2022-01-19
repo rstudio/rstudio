@@ -245,13 +245,9 @@ if [ -n "${build_x86_64}" ]; then
    info "Done!"
 
 
-   if [ "${build_package}" != "1" ]; then
-      # don't need to build here, it will happen during the packaging step below,
-      # otherwise the lengthy GWT build will happen twice (it isn't incremental)
-      info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
-      arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
-      info "Done!"
-   fi
+   info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
+   arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
+   info "Done!"
 
 fi
 
@@ -313,20 +309,8 @@ if [ "${build_package}" = "1" ]; then
    cd "${BUILD_DIR_X86_64}"
    "${CMAKE}" --build . --target install -- ${MAKEFLAGS}
 
-   if [ "${rstudio_target}" = "Electron" ]; then
-      OLDPATH="${PATH}"
-      NODEPATH="$(dirname "${NODE}")"
-      YARNPATH="$(dirname "${YARN}")"
-      PATH="${NODEPATH}:${YARNPATH}:${OLDPATH}"
+   if [ "${build_dmg}" = "1" ]; then
 
-      # Build and package the Electron app.
-      cd "${ELECTRON_SRC_DIR}"
-      ./scripts/update-json-version.sh "$RSTUDIO_VERSION_FULL"
-      yarn make
-      cd "${PKG_DIR}"
-      PATH="${OLDPATH}"
-
-   elif [ "${build_dmg}" = "1" ]; then
       # move to target directory
       cd "${INSTALL_DIR}"
 

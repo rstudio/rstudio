@@ -20,6 +20,11 @@ if [ "$#" = "0" ]; then
    exit 0
 fi
 
+# The FILES argument can be a glob, e.g. '*.dylib', which may not exist
+# for local package builds (which might only have build components
+# for the current architecture).
+shopt -s nullglob
+
 DIR="$1"
 PREFIX="$2"
 FILES="$3"
