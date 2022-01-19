@@ -121,8 +121,12 @@
       .rs.reticulate.usePython(python)
       
       if (packageVersion("reticulate") >= "1.23")
-         .rs.addFunction("reticulate.describeObjectLength",
-                         function(object) reticulate::py_len(object, -1L))
+      {
+         .rs.addFunction("reticulate.describeObjectLength", function(object)
+         {
+            reticulate::py_len(object, -1L)
+         })
+      }
    })
    
 })
