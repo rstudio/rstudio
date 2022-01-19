@@ -1,7 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
     xmlns:g="urn:import:com.google.gwt.user.client.ui"
-    xmlns:rs="urn:import:org.rstudio.core.client.widget">
+    xmlns:rs="urn:import:org.rstudio.core.client.widget"
+    ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+    ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+    ui:generateLocales="default">
     <ui:style>
         .modelChooser {
             display: -ms-flexbox;
@@ -33,6 +36,6 @@
     </ui:style>
     <g:HTMLPanel styleName="{style.modelChooser}">
         <g:TextBox ui:field="locationTextBox_" styleName="{style.modelTextBox}"/>
-        <rs:ThemedButton ui:field="actionButton_" text="Browse..."/>
+        <rs:ThemedButton ui:field="actionButton_" text="Browse..."><ui:attribute name="text" key="browseText"/></rs:ThemedButton>
     </g:HTMLPanel>
 </ui:UiBinder> 

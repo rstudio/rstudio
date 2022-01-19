@@ -1,7 +1,10 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
     xmlns:g='urn:import:com.google.gwt.user.client.ui'
     xmlns:rw="urn:import:org.rstudio.core.client.widget"
-    xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
+    xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs"
+    ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+    ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+    ui:generateLocales="default">
 
     <ui:with field="res"
         type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
@@ -19,7 +22,7 @@
             for="{ElementIds.getVisualMdInsertCiteId}"
             text="Citation Id:"
             styleName="{res.styles.fullWidth}"
-            ui:field="citationLabel_"/>
+            ui:field="citationLabel_"><ui:attribute name="text" key="citationId"/></rw:FormLabel>
 
         <rw:FormTextBox
             elementId="{ElementIds.getVisualMdInsertCiteId}"
@@ -29,7 +32,7 @@
 
         <rw:FormLabel
             styleName="{res.styles.fullWidth} {res.styles.spaced}"
-            text="Citation:" />
+            text="Citation:"><ui:attribute name="text" key="citationText"/></rw:FormLabel>
 
         <g:ScrollPanel
             styleName="{res.styles.fullWidth} {res.styles.spaced} {res.styles.flexTablePreview}"
@@ -47,7 +50,7 @@
             <rw:FormLabel
                 for="{ElementIds.getVisualMdInsertCiteBib}"
                 styleName="{res.styles.fullWidth} {res.styles.spaced}"
-                text="Add to bibliography:" />
+                text="Add to bibliography:"><ui:attribute name="text" key="addBibliography"/></rw:FormLabel>
 
             <rw:FormListBox
                 elementId="{ElementIds.getVisualMdInsertCiteBib}"
@@ -68,7 +71,7 @@
                   <rw:FormLabel
                       for="{ElementIds.getVisualMdInsertCiteCreateBib}"
                       styleName="{res.styles.fullWidth} {res.styles.spaced}"
-                      text="Create bibliography file:" />
+                      text="Create bibliography file:"><ui:attribute name="text" key="createBibFile"/></rw:FormLabel>
 
                   <rw:FormTextBox
                       elementId="{ElementIds.getVisualMdInsertCiteCreateBib}"
@@ -83,7 +86,7 @@
                   <rw:FormLabel
                       for="{ElementIds.getVisualMdInsertCiteCreateBibType}"
                       styleName="{res.styles.fullWidth} {res.styles.spaced}"
-                      text="Format:" />
+                      text="Format:"><ui:attribute name="text" key="formatText"/></rw:FormLabel>
 
                   <rw:FormListBox
                       elementId="{ElementIds.getVisualMdInsertCiteCreateBibType}"

@@ -245,9 +245,9 @@ public class GeneralPreferencesPane extends PreferencesPane
                   constants_.serverHomePageNeverOption()
             },
             new String[] {
-                  constants_.serverHomePageSessions(),
-                  constants_.serverHomePageAlways(),
-                  constants_.serverHomePageNever()
+                      "sessions",
+                      "always",
+                      "never"
             },
             false,
             true,

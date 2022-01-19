@@ -1,7 +1,10 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
-   xmlns:rc="urn:import:org.rstudio.studio.client.common.compile">
+   xmlns:rc="urn:import:org.rstudio.studio.client.common.compile"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
    <ui:style>
    .empty
    {
@@ -11,6 +14,6 @@
    </ui:style>
    <g:HTMLPanel>
       <rc:CompilePanel ui:field="output_"></rc:CompilePanel>
-      <g:Label styleName="{style.empty}" ui:field="empty_" text="Job has not emitted output"></g:Label>
+      <g:Label styleName="{style.empty}" ui:field="empty_" text="Job has not emitted output"><ui:attribute name="text" key="jobNotEmittedText"/></g:Label>
    </g:HTMLPanel>
 </ui:UiBinder> 

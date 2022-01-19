@@ -1125,7 +1125,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         rebindable="false"/>
         
    <cmd id="serveQuartoSite"
-        menuLabel="_Serve Site"
+        menuLabel="_Preview Site"
         desc="Run development server for Quarto site"
         rebindable="false"/>
 

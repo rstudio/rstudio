@@ -903,12 +903,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String packagesPaneEnabledDescription();
 
    /**
-    * Whether to use RCPP templates.
+    * C++ template.
     */
-   @DefaultStringValue("Use RCpp file templates")
-   String useRcppTemplateTitle();
-   @DefaultStringValue("Whether to use RCPP templates.")
-   String useRcppTemplateDescription();
+   @DefaultStringValue("C++ template")
+   String cppTemplateTitle();
+   @DefaultStringValue("C++ template")
+   String cppTemplateDescription();
 
    /**
     * Whether to restore the last opened source documents when RStudio starts up.

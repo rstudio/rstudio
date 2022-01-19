@@ -115,7 +115,7 @@ struct ProcessOptions
         reportHasSubprocs(false),
         trackCwd(false),
         threadSafe(false),
-        callbacksRequireMainThread(false)
+        callbacksRequireMainThread(true)
 #endif
    {
    }
@@ -441,6 +441,10 @@ private:
    boost::scoped_ptr<Impl> pImpl_;
    boost::recursive_mutex mutex_;
 };
+
+bool enableCallbacksRequireMainThread();
+
+void setEnableCallbacksRequireMainThread(bool enforce);
 
 } // namespace system
 } // namespace core

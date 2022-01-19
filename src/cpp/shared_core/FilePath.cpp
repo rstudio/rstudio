@@ -1296,7 +1296,9 @@ bool FilePath::isSymlink() const
 {
    try
    {
-      return exists() && boost::filesystem::is_symlink(m_impl->Path);
+      // NOTE: we omit the exists() check here as that will
+      // return false for existing but broken symlinks
+      return !isEmpty() && boost::filesystem::is_symlink(m_impl->Path);
    }
    catch(const boost::filesystem::filesystem_error& e)
    {

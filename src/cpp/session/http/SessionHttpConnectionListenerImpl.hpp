@@ -51,6 +51,7 @@
 #include "../SessionUriHandlers.hpp"
 #include "../SessionHttpMethods.hpp"
 #include "../SessionRpc.hpp"
+#include "../SessionInit.hpp"
 
 
 namespace rstudio {
@@ -349,7 +350,7 @@ private:
             eventsActive_ = false;
          }
          if (options().handleOfflineEnabled() && options().handleOfflineTimeoutMs() == 0 &&
-             rpc::isOfflineableRequest(ptrHttpConnection))
+             rpc::isOfflineableRequest(ptrHttpConnection) && init::isSessionInitialized())
          {
             // TODO: handleOffline - should these be put into a separate queue and run in a dedicated thread?
             if (http_methods::protocolDebugEnabled())

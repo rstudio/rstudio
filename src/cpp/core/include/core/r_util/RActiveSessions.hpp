@@ -414,10 +414,15 @@ private:
    {
       if (!empty())
       {
+         std::string value = "Value Not Read";
          try
          {
-            std::string value = readProperty(property);
+            value = readProperty(property);
             if (value.empty())
+               return boost::posix_time::not_a_date_time;
+
+            // posix_time::from_iso_extended_string can't parse not_a_date_time correctly, so handling it here
+            if (value == boost::posix_time::to_iso_extended_string(boost::posix_time::not_a_date_time))
                return boost::posix_time::not_a_date_time;
 
             boost::posix_time::ptime retVal = boost::posix_time::from_iso_extended_string(value);
@@ -429,7 +434,7 @@ private:
          }
          catch (std::exception const& e)
          {
-            LOG_ERROR_MESSAGE("Failed to read property " + property + ": " + std::string(e.what()));
+            LOG_INFO_MESSAGE("Failure reading property " + property + ": " + std::string(e.what()) + ". Property contents: " + value);
          }
       }
       return boost::posix_time::not_a_date_time;

@@ -478,15 +478,6 @@ public interface OutputConstants extends com.google.gwt.i18n.client.Messages {
     @Key("knitTerminateFailedMessage")
     String knitTerminateFailedMessage();
 
-    /**
-     * Translated "Render".
-     *
-     * @return translated "Render"
-     */
-    @DefaultMessage("Render")
-    @Key("renderTitle")
-    String renderTitle();
-
 
     /**
      * Translated "C++ Tab".
