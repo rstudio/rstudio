@@ -913,15 +913,18 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onNewCppDoc()
    {
-      server_.projectGuessCppStyle(new ServerRequestCallback<String>(){
+      server_.projectGuessCppStyle(new ServerRequestCallback<String>()
+      {
 
          @Override
-         public void onResponseReceived(String response) {
+         public void onResponseReceived(String response)
+         {
             onNewCppDocImpl(response);
          }
 
          @Override
-         public void onError(ServerError error) {
+         public void onError(ServerError error)
+         {
             onNewCppDocImpl("");
          }
 
@@ -929,7 +932,8 @@ public class Source implements InsertSourceEvent.Handler,
    }
 
    private void onNewCppDocImpl(String style) {
-      if (StringUtil.equals(style, "")) {
+      if (StringUtil.equals(style, ""))
+      {
          style = userPrefs_.cppTemplate().getValue();
       }
 
