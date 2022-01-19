@@ -2599,9 +2599,14 @@
       return(.rs.scalar(""))
 
    # check if Rcpp or cpp11 is mentioned in LinkingTo:
-   data <- read.dcf(DESCRIPTION)[1, ]
-   if ("LinkingTo" %in% names(data)) {
-      LinkingTo <- data[["LinkingTo"]]
+   LinkingTo <- tryCatch(
+      read.dcf(DESCRIPTION, all = TRUE)$LinkingTo, 
+      error = function(e) {
+         NULL
+      }
+   )      
+
+   if (!is.null(LinkingTo)) {
       if (grepl("Rcpp", LinkingTo)) {
          return(.rs.scalar("Rcpp"))
       } else if (grepl("cpp11", LinkingTo)) {
