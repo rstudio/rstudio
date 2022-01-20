@@ -21,11 +21,14 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
+import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -39,7 +42,8 @@ public class ConsoleDispatcher
                             FileDialogs fileDialogs,
                             WorkbenchContext workbenchContext,
                             Session session,
-                            RemoteFileSystemContext fsContext)
+                            RemoteFileSystemContext fsContext, 
+                            CppServerOperations cppServer)
    {
       eventBus_ = eventBus;
       commands_ = commands;
@@ -47,6 +51,7 @@ public class ConsoleDispatcher
       workbenchContext_ = workbenchContext;
       session_ = session;
       fsContext_ = fsContext;
+      cppServer_ = cppServer;
    }
 
    public void executeSetWd(FileSystemItem dir, boolean activateConsole)
@@ -153,25 +158,24 @@ public class ConsoleDispatcher
                                     boolean debug)
    {
 
-      StringBuilder code = new StringBuilder();
-
       if (fileType.isCpp())
       {
          // use a relative path if possible
          String relativePath = FileSystemItem.createFile(path).getPathRelativeTo(
-                                       workbenchContext_.getCurrentWorkingDir());
+            workbenchContext_.getCurrentWorkingDir());
          if (relativePath != null)
             path = relativePath;
 
-         code.append("Rcpp::sourceCpp(" + escapedPath(path) + ")");
-      }
-      else
+         executeCppSourceCommand(path, focus);
+      } else 
       {
+         StringBuilder code = new StringBuilder();
+
          String escapedPath = escapedPath(path);
          String systemEncoding = session_.getSessionInfo().getSystemEncoding();
          boolean isSystemEncoding =
-          normalizeEncoding(encoding) == normalizeEncoding(systemEncoding);
-
+            normalizeEncoding(encoding) == normalizeEncoding(systemEncoding);
+   
          if (contentKnownToBeAscii || isSystemEncoding)
             code.append((debug ? "debugSource" : "source") +
                      "(" + escapedPath);
@@ -182,13 +186,45 @@ public class ConsoleDispatcher
                   (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
                   "'");
          }
-
+   
          if (echo)
             code.append(", echo=TRUE");
          code.append(")");
+      
+         executeCode(code.toString(), focus);
       }
+      
+   }
 
+   public void executeCppSourceCommand(final String path, boolean focus) {
+      cppServer_.cppIsCpp11File(path, new ServerRequestCallback<Boolean>() 
+      {
+         @Override
+         public void onResponseReceived(Boolean response) 
+         {
+            execute(response);
+         }
 
+         @Override
+         public void onError(ServerError error) {
+            execute(false);
+         }
+
+         private void execute(boolean isCpp11) {
+            String code;
+            if (isCpp11) 
+            {
+               code = "Rcpp::sourceCpp(" + escapedPath(path) + ")";
+            } else 
+            {
+               code = "cpp11::cpp_source(" + escapedPath(path) + ")";
+            }
+            executeCode(code, focus);
+         }
+      });
+   }
+
+   private void executeCode(String code, boolean focus) {
       eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
 
       if (focus)
@@ -211,4 +247,5 @@ public class ConsoleDispatcher
    private final WorkbenchContext workbenchContext_;
    private final Session session_;
    private final RemoteFileSystemContext fsContext_;
+   private final CppServerOperations cppServer_;
 }
