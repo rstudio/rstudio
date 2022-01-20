@@ -611,11 +611,10 @@ public class VirtualConsole
                if (hyperlinkMatch != null)
                {
                   String url = hyperlinkMatch.getGroup(2);
-                  // toggle hyperlink, and artifically add or remove styles: underline, magenta and italic
+                  // toggle hyperlink_, and artifically add or remove styles: underline and magenta
                   if (!StringUtil.equals(url, ""))
                   {
                      ansiCodeStyles_ = ansi_.processCode("\033[4m"); // underline
-                     ansiCodeStyles_ = ansi_.processCode("\033[3m"); // italic
                      ansiCodeStyles_ = ansi_.processCode("\033[35m"); // magenta
                      currentClazz = setCurrentClazz(ansiColorMode, clazz);
 
@@ -624,7 +623,6 @@ public class VirtualConsole
                   else
                   {
                      ansiCodeStyles_ = ansi_.processCode("\033[39m"); // </magenta>
-                     ansiCodeStyles_ = ansi_.processCode("\033[23m"); // </italic>
                      ansiCodeStyles_ = ansi_.processCode("\033[24m"); // </underline>
                      currentClazz = setCurrentClazz(ansiColorMode, clazz);
                      
