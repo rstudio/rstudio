@@ -20,7 +20,7 @@ endfunction()
 
 execute_process(
 	COMMAND
-		"@CMAKE_CURRENT_SOURCE_DIR@/electron-build.sh"
+		"@CMAKE_CURRENT_SOURCE_DIR@/scripts/install-electron.sh"
 		"@CMAKE_CURRENT_SOURCE_DIR@/../../src/node/desktop"
 		"@CPACK_PACKAGE_VERSION@"
 		"@CMAKE_CURRENT_SOURCE_DIR@/install"

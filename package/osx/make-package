@@ -240,7 +240,11 @@ if [ -n "${build_x86_64}" ]; then
 
 
    info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
+   export npm_config_arch=x64
+   export npm_config_target_arch=x64
    arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
+   unset npm_config_arch
+   unset npm_config_target_arch
    info "Done!"
 
 fi
@@ -280,7 +284,11 @@ if [ -n "${build_arm64}" ]; then
    info "Done!"
 
    info "Building for arm64 with flags '${MAKEFLAGS}' ..."
+   export npm_config_arch=arm64
+   export npm_config_target_arch=arm64
    arch -arm64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
+   unset npm_config_arch
+   unset npm_config_target_arch
    info "Done!"
 
 fi

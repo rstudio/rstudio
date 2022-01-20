@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# electron-build.sh
+# install-electron.sh
 #
 # Copyright (C) 2022 by RStudio, PBC
 #
@@ -17,28 +17,9 @@
 
 set -v
 
-ELECTRON_SRC_DIR="${1-"../../src/node/desktop"}"
-ELECTRON_VERSION="${2-"99.9.9"}"
-RSTUDIO_INSTALL_DIR="${3-"$(pwd)/install"}"
-
-# copy node sources to a separate build directory
-ELECTRON_BUILD_DIR="$(dirname "${ELECTRON_SRC_DIR}")/desktop-build-$(arch)"
-rm -rf "${ELECTRON_BUILD_DIR}"
-mkdir -p "${ELECTRON_BUILD_DIR}"
-rsync -aqzvhP --exclude=node_modules --exclude=out "${ELECTRON_SRC_DIR}/" "${ELECTRON_BUILD_DIR}"
-
-# move to build directory, and rebuild node modules
-cd "${ELECTRON_BUILD_DIR}"
-rm -rf node_modules
-yarn
-
-# build the electron package
-./scripts/update-json-version.sh "${ELECTRON_VERSION}"
-yarn make
-
 # use rsync to 'merge' Electron build with our own
-# TODO: why are the paths so weird?
-ELECTRON_BUILD_X86="${ELECTRON_BUILD_DIR}/out/RStudio-darwin-x64/RStudio.app/Contents/resources/app/RStudio.app"
+ELECTRON_BUILD_X86="../../../src/node/desktop-build-x86_64/out/RStudio-darwin-x64/RStudio.app"
+ELECTRON_BUILD_ARM="../../../src/node/desktop-build-x86_64/out/RStudio-darwin-arm64/RStudio.app"
 echo "${ELECTRON_BUILD_X86}"
 if [ -e "${ELECTRON_BUILD_X86}" ]; then
 	rsync -azvhP "${ELECTRON_BUILD_X86}" "${RSTUDIO_INSTALL_DIR}"
