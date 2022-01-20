@@ -47,8 +47,7 @@
       formatter <- utils::getS3method(
          "format",
          class = class,
-         optional = TRUE, 
-         envir = globalenv()
+         optional = TRUE
       )
       if (!is.null(formatter))
          break
