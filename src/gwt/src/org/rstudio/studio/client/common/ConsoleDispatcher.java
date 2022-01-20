@@ -214,7 +214,7 @@ public class ConsoleDispatcher
             String code;
             if (isCpp11) 
             {
-               code = "cpp11::cpp_cource(" + escapedPath(path) + ")";
+               code = "cpp11::cpp_source(" + escapedPath(path) + ")";
             } else 
             {
                code = "Rcpp::sourceCpp(" + escapedPath(path) + ")";
