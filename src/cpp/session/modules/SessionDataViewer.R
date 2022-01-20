@@ -35,6 +35,8 @@
    # otherwise, delegate to internal methods
    if (is.numeric(col))
       .rs.formatDataColumnNumeric(col, ...)
+   else if (is.list(col))
+      .rs.formatDataColumnList(col, ...)
    else
       .rs.formatDataColumnDefault(col, ...)
 })
@@ -83,6 +85,15 @@
    
    # return formatted values
    vals
+})
+
+.rs.addFunction("formatDataColumnList", function(col, ...)
+{
+   classes <- sapply(col, function(x) {
+      class(x)[[1L]]
+   })
+   sizes <- sapply(col, length)
+   paste0("<", classes, " [", sizes, "]>" )
 })
 
 .rs.addFunction("formatDataColumnDefault", function(col, ...)
