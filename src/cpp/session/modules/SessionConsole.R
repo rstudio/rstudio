@@ -45,26 +45,16 @@
     do.call(.rs.api.sendToConsole, arguments)
   } else if (grepl("^file://", url)) {
     # file://some/file/path
-    # file://some/file/path:32
-    # file://some/file/path:32:15
-    url <- sub("file://", "", url)
-
+    file <- sub("file://", "", url)
     line <- -1L
-    col <- -1L
-
-    rx3 <- "^(.*):([0-9]+):([0-9]+)$"
-    rx2 <- "^(.*):([0-9]+)$"
-    if (grepl(rx3, url)) {
-      file <- sub(rx3, "\\1", url)
-      line <- as.numeric(sub(rx3, "\\2", url))
-      col <- as.numeric(sub(rx3, "\\3", url))
-    } else if (grepl(rx2, url)) {
-      file <- sub(rx2, "\\1", url)
-      line <- as.numeric(sub(rx2, "\\2", url))
-    } else {
-      file <- url
+    line <- -1L
+    
+    if (!is.null(params$line)) {
+      line <- as.numeric(params$line)
     }
-
+    if (!is.null(params$col)) {
+      col <- as.numeric(params$col)
+    }
     .rs.api.navigateToFile(file, line = line, col = col, moveCursor = TRUE)
   } else {
     utils::browseURL(url)
