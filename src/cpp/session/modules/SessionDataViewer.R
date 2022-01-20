@@ -35,7 +35,7 @@
    # otherwise, delegate to internal methods
    if (is.numeric(col))
       .rs.formatDataColumnNumeric(col, ...)
-   else if (is.list(col))
+   else if (is.list(col) && !is.data.frame(col))
       .rs.formatDataColumnList(col, ...)
    else
       .rs.formatDataColumnDefault(col, ...)
