@@ -87,6 +87,7 @@
 * Fixed Duplicate --session-collab-server when launching R session (pro #3106)
 * Fixed errors when opening or saving Rmarkdown documents when R is busy (#9868)
 * Fixed issue with SLES 12 builds using OpenSSL 1.1 instead of 1.0.2
+* The source button uses `cpp11::source_cpp()` on C++ files that have `[[cpp11::register]]` decorations (#10387)
 
 ### Breaking
 
