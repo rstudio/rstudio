@@ -382,7 +382,19 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       if (!completionListIsOnScreen())
          return;
+      
+      // don't show if there's no description
+      if (StringUtil.isNullOrEmpty(description))
+         return;
 
+      // strip ": " off the end
+      value = value.replace(": ", "");
+      
+      // add <p> around description (use an inline style b/c we aren't
+      // sure how other users of the help tooltip construct their 
+      // elements/css and don't want our tweaks to regress them)
+      description = "<p style='padding-left: 3px;'>" + description + "</p>";
+      
       help_.displayParameterHelp(value, description, false);
       resolveHelpPosition(!StringUtil.isNullOrEmpty(description));
       
