@@ -170,14 +170,8 @@ then
    exit 1
 fi
 
-if [ "${rstudio_target}" = "Electron" ]
-then
-   # At the moment only support building Electron for Intel
-   build_x86_64=1
-else
-   case "${arch}" in *arm64*)  build_arm64=1  ;; esac
-   case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
-fi
+case "${arch}" in *arm64*)  build_arm64=1  ;; esac
+case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
 
 if [ "${clean}" = "1" ]; then
 
