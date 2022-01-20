@@ -733,7 +733,8 @@ public class VirtualConsole
       }
    }
 
-   private String setCurrentClazz(String ansiColorMode, String clazz) {
+   private String setCurrentClazz(String ansiColorMode, String clazz)
+   {
       String currentClazz;
       if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_STRIP)
       {
