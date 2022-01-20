@@ -35,10 +35,10 @@ set(ELECTRON_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}"
 file(REMOVE_RECURSE "${ELECTRON_BUILD_DIR}")
 file(MAKE_DIRECTORY "${ELECTRON_BUILD_DIR}")
 file(
-	COPY "${CMAKE_CURRENT_SOURCE_DIR}/"
+   COPY "${CMAKE_CURRENT_SOURCE_DIR}/"
    DESTINATION "${ELECTRON_BUILD_DIR}/"
-	REGEX "/out$" EXCLUDE
-	REGEX "/node_modules$" EXCLUDE)
+   REGEX "/out$" EXCLUDE
+   REGEX "/node_modules$" EXCLUDE)
 
 # build electron components
 add_custom_target(
