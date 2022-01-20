@@ -5927,6 +5927,13 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, PROJECT_GUESS_CPP_STYLE, params, requestCallback);
    }
 
+   public void cppIsCpp11File(String path, ServerRequestCallback<Boolean> requestCallback) 
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, CPP_IS_CPP11_FILE, params, requestCallback);
+   }
+
    public void removeConnection(ConnectionId id,
                                 ServerRequestCallback<Void> callback)
    {
@@ -6985,6 +6992,7 @@ public class RemoteServer implements Server
    private static final String SET_USER_CRASH_HANDLER_PROMPTED = "set_user_crash_handler_prompted";
 
    private static final String PROJECT_GUESS_CPP_STYLE = "project_guess_cpp_style";
+   private static final String CPP_IS_CPP11_FILE = "cpp_is_cpp11_file";
 
    private static final String PANDOC_GET_CAPABILITIES = "pandoc_get_capabilities";
    private static final String PANDOC_AST_TO_MARKDOWN = "pandoc_ast_to_markdown";
