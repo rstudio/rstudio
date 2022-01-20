@@ -10,6 +10,7 @@
 ### Fixed
 - Fixed notebook execution handling of knitr `message=FALSE` chunk option to suppress messages if the option is set to FALSE (#9436)
 - Fixed plot export to PDF options (#9185)
+- `.rs.formatDataColumnDispatch()` iterates through classes of `x` (#10073)
 
 ### Breaking
 
