@@ -2628,7 +2628,7 @@
    if (!file.exists(file))
       return()
 
-   lines <- .rs.tryCatch(readLines(file))
+   lines <- .rs.tryCatch(readLines(file, warn = FALSE))
    call <- call("fun", file)
    
    if (is.character(lines) && any(grepl("cpp11::register", lines)))
