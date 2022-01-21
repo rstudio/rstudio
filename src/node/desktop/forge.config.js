@@ -140,34 +140,4 @@ const config = {
   },
 };
 
-if (process.platform === 'darwin') {
-  if (
-    process.env.APPLE_ID !== undefined &&
-    process.env.APPLE_ID_PASSWORD !== undefined &&
-    process.env.APPLE_ID !== '' &&
-    process.env.APPLE_ID_PASSWORD !== ''
-  ) {
-    config.packagerConfig = {
-      ...config.packagerConfig,
-      appBundleId: 'org.rstudio.RStudio',
-      osxSign: {
-        'identity': 'Developer ID Application: RStudio Inc. (FYF2F5GFX4)',
-        'entitlements': 'resources/electron-entitlements.mac.plist',
-        'entitlements-inherit': 'resources/electron-entitlements.mac.plist',
-        'hardened-runtime': true,
-        'gatekeeper-assess': false,
-        'signature-flags': 'library',
-      },
-      osxNotarize: {
-        appleId: process.env.APPLE_ID,
-        appleIdPassword: process.env.APPLE_ID_PASSWORD,
-        appBundleId: 'org.rstudio.RStudio',
-        ascProvider: 'RStudioInc',
-      },
-    };
-  } else {
-    console.warn('Should be notarizing, but environment variables APPLE_ID or APPLE_ID_PASSWORD are missing!');
-  }
-}
-
 module.exports = config;
