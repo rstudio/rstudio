@@ -34,6 +34,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
+import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
@@ -775,7 +776,7 @@ public class VirtualConsole
          } else if (StringUtil.equals(url, "rstudio:vignette")) 
          {
             return "vignette(" + params.replace(":", ", ") + ")";
-         } else 
+         } else
          {
             return url;
          }
@@ -792,21 +793,31 @@ public class VirtualConsole
          start = pos;
          length = text.length();
          hyperlink_ = hyperlink;
-         element = Document.get().createSpanElement();
-         if (className != null)
-            element.addClassName(clazz);
          
-         if (hyperlink_ != null) 
+         if (hyperlink_ == null) 
          {
-            Event.sinkEvents(element, Event.ONCLICK);
-            Event.setEventListener(element, event ->
+            element = Document.get().createSpanElement();
+            if (className != null)
+               element.addClassName(clazz);
+         }
+         else 
+         {
+            AnchorElement anchor = Document.get().createAnchorElement();
+            anchor.setHref(hyperlink_.url);
+            anchor.setAttribute("params", hyperlink_.params);
+            if (className != null)
+               anchor.addClassName(clazz);
+            Event.sinkEvents(anchor, Event.ONCLICK);
+            Event.setEventListener(anchor, event ->
             {
                consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
             });
-            element.setTitle(hyperlink_.getTitle());
-            element.addClassName("xtermHyperlink");
+            anchor.setTitle(hyperlink_.getTitle());
+            anchor.addClassName("xtermHyperlink");
+
+            element = anchor;
          }
-         
+
          element.setInnerText(text);
 
          if (captureNewElements_)
@@ -870,7 +881,7 @@ public class VirtualConsole
       public final String clazz;
       public int length;
       public int start;
-      public final SpanElement element;
+      public final Element element;
       public final Hyperlink hyperlink_;
    }
 
