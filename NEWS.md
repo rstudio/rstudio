@@ -68,6 +68,7 @@
 * Fixed shortcut conflict on German keyboard (#9276)
 * Updated shinymod snippet for Shiny modules (#10009)
 * Fixed an issue where `conda install` could fail within a Git Bash terminal on Windows (#10283)
+* Add a -G option to `rsandbox` to allow configuring the effective group of the process (#3214)
 
 ### Fixed
 
