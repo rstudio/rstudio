@@ -652,7 +652,7 @@
             "name": "external-gnugrep-path",
             "type": "core::FilePath",
             "memberName": "gnugrepPath_",
-            "defaultValue": "bin/gnugrep",
+            "defaultValue": "bin/gnugrep/3.0",
             "description": "Specifies the path to gnugrep utilities (Windows-only)."
          },
          {
