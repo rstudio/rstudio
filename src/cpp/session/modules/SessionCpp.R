@@ -13,7 +13,7 @@
 #
 #
 
-.rs.addFunction("cpp_source_file", function(file)
+.rs.addFunction("cppSourceFile", function(file)
 {
    lines <- .rs.tryCatch(readLines(file, warn = FALSE))
    call <- call("fun", file)
@@ -26,7 +26,7 @@
     deparse(call)
 })
 
-.rs.addFunction("cpp_project_style", function(inDirectory)
+.rs.addFunction("cppProjectStyle", function(inDirectory)
 {
    # give up if this is not a project or not a package
    if (is.null(inDirectory))
@@ -63,10 +63,10 @@
 
 .rs.addJsonRpcHandler("cpp_source_file", function(file)
 {
-   .rs.api.sendToConsole(.rs.cpp_source_file(file))
+   .rs.api.sendToConsole(.rs.cppSourceFile(file))
 })
 
 .rs.addJsonRpcHandler("cpp_project_style", function(inDirectory = .rs.getProjectDirectory()) 
 {
-    .rs.scalar(.rs.cpp_project_style(inDirectory))
+    .rs.scalar(.rs.cppProjectStyle(inDirectory))
 })
