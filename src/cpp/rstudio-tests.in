@@ -191,7 +191,14 @@ UNIT_TEST_FAILURE=false
 if has-scope "core"; then
 
    section "Running 'core' tests"
-   runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN}"
+   # Run only the tests that don't require root
+   runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} '~[requiresRoot]'"
+
+   # Invoke the *DropPrivTests separately because they must run as root
+   # We need separate invokations because we cannot restore privs between test cases of PermanentlyDropPrivs
+   runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} TemporarilyDropPrivTests"
+   runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} PermanentlyDropPrivPrimaryTests"
+   runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} PermanentlyDropPrivAlternateTests"
 
    if [ -e "@CMAKE_CURRENT_BINARY_DIR@/server_core/rstudio-server-core-tests" ]; then
       section "Running 'server_core' tests"
