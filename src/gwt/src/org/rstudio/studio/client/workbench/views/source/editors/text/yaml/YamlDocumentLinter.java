@@ -33,7 +33,7 @@ public class YamlDocumentLinter
       docDisplay_ = docDisplay;
    }
    
-   public void getLint(CommandWithArg<JsArray<LintItem>> ready)
+   public void getLint(boolean explicit, CommandWithArg<JsArray<LintItem>> ready)
    {
       // do we have a provider that can handle this context
       YamlEditorToolsProvider provider = providers_.getActiveProvider(
@@ -46,7 +46,7 @@ public class YamlDocumentLinter
       }
       
       // request lint
-      YamlEditorContext editorContext = YamlEditorContext.create(context_, docDisplay_);
+      YamlEditorContext editorContext = YamlEditorContext.create(explicit, context_, docDisplay_);
       provider.getLint(editorContext, (res) -> {
          if (res != null)
          {
