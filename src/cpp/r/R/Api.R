@@ -262,10 +262,28 @@
    invisible(.Call("rs_sourceMarkers", name, markers, basePath, autoSelect, PACKAGE = "(embedding)"))
 })
 
+.rs.setVar("fileEditCallbacks", new.env(parent = emptyenv()))
+
+.rs.addJsonRpcHandler("invoke_file_edit_callback", function(handle, file)
+{
+   callback_env <- .rs.fileEditCallbacks[[handle]]
+   if (!is.null(callback_env))
+   {
+      callback <- callback_env$callback
+      callback_env$count <- callback_env$count - 1L
+      callback(file)
+
+      if (callback_env$count == 0L) {
+         rm(list = handle, envir = .rs.fileEditCallbacks)
+      }
+   }
+})
+
 .rs.addApiFunction("navigateToFile", function(filePath = character(0),
                                               line = -1L,
                                               col = -1L,
-                                              moveCursor = TRUE)
+                                              moveCursor = TRUE, 
+                                              callback = NULL)
 {
    # validate file argument
    hasFile <- !is.null(filePath) && length(filePath) > 0
@@ -298,12 +316,27 @@
          filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
       }
    }
+
+   handle <- NULL
+   if (!is.null(callback))
+   {
+      # find a unique ID for this callback
+      repeat {
+         handle <- .Call("rs_generateShortUuid", PACKAGE = "(embedding)")
+         if (!(handle %in% names(.rs.fileEditCallbacks)))
+            break
+      }
+      callback_env <- new.env(parent = emptyenv())
+      callback_env$count <- length(filePath)
+      callback_env$callback <- callback
+      assign(handle, callback_env, envir = .rs.fileEditCallbacks)
+   }
    
    # if we're requesting navigation without a specific cursor position,
    # then use a separate API (this allows the API to work regardless of
    # whether we're in source or visual mode)
    if (identical(line, -1L) && identical(col, -1L))
-      return(invisible(.Call("rs_fileEdit", filePath, PACKAGE = "(embedding)")))
+      return(invisible(.Call("rs_fileEdit", filePath, handle, PACKAGE = "(embedding)")))
 
    # send event to client
    .rs.enqueClientEvent("jump_to_function", list(

@@ -1266,7 +1266,7 @@ Error setSourceDocumentDirty(const json::JsonRpcRequest& request,
    return Success();
 }
 
-void enqueFileEditEvent(const std::string& file)
+void enqueFileEditEvent(const std::string& file, const std::string& callback)
 {
    // ignore if no file passed
    if (file.empty())
@@ -1298,6 +1298,7 @@ void enqueFileEditEvent(const std::string& file)
    json::Object eventJson;
    eventJson["file"] = fileJson;
    eventJson["position"] = json::Value();
+   eventJson["callback"] = callback;
    ClientEvent event(client_events::kFileEdit, eventJson);
    module_context::enqueClientEvent(event);
 }
@@ -1339,7 +1340,7 @@ void onShutdown(bool terminatedNormally)
       LOG_ERROR(error);
 }
 
-SEXP rs_fileEdit(SEXP fileSEXP)
+SEXP rs_fileEdit(SEXP fileSEXP, SEXP callbackSEXP)
 {
    try
    {
@@ -1353,8 +1354,17 @@ SEXP rs_fileEdit(SEXP fileSEXP)
       if (error)
          throw r::exec::RErrorException(error.getSummary());
 
+      // setup the callback
+      std::string callback;
+      if (r::sexp::isString(callbackSEXP))
+      {
+         error = r::sexp::extract(callbackSEXP, &callback, true);
+         if (error)
+            throw r::exec::RErrorException(error.getSummary());
+      }
+
       // fire events
-      std::for_each(filenames.begin(), filenames.end(), enqueFileEditEvent);
+      std::for_each(filenames.begin(), filenames.end(), boost::bind(enqueFileEditEvent, _1, callback));
 
       // done
       return R_NilValue;
@@ -1498,7 +1508,7 @@ Error initialize()
    s_waitForRequestDocumentClose =
          module_context::registerWaitForMethod("request_document_close_completed");
 
-   RS_REGISTER_CALL_METHOD(rs_fileEdit, 1);
+   RS_REGISTER_CALL_METHOD(rs_fileEdit, 2);
    RS_REGISTER_CALL_METHOD(rs_requestDocumentSave, 1);
    RS_REGISTER_CALL_METHOD(rs_readSourceDocument, 1);
    RS_REGISTER_CALL_METHOD(rs_requestDocumentClose, 2);
