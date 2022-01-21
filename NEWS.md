@@ -46,6 +46,7 @@
 * Disable session SSL for Code Server 3.9.3 and support auth changes in Code Server 3.11.0 (Pro #3111)
 * Show user's full name, or proxied auth display name, in Project Sharing presence indicator (Pro #3121)
 * Allow users to specify R version in launcher jobs (Pro #1046)
+* Fixed bug with customized display names and launcher sessions (Pro #3217)
 
 #### R
 
