@@ -13,11 +13,8 @@
 #
 #
 
-.rs.addJsonRpcHandler("cpp_source_file", function(file)
+.rs.addFunction("cpp_source_file_call", function(file)
 {
-   if (!file.exists(file))
-      return()
-
    lines <- .rs.tryCatch(readLines(file, warn = FALSE))
    call <- call("fun", file)
    
@@ -26,5 +23,10 @@
    else 
       call[[1L]] <- quote(Rcpp::sourceCpp)
 
-   .rs.api.sendToConsole(deparse(call))
+    deparse(call)
+})
+
+.rs.addJsonRpcHandler("cpp_source_file", function(file)
+{
+   .rs.api.sendToConsole(.rs.cpp_source_file_call(file))
 })
