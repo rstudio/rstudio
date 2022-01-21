@@ -41,14 +41,25 @@ file(
    REGEX "/out$" EXCLUDE
    REGEX "/node_modules$" EXCLUDE)
 
-# build electron components
-add_custom_target(
-   electron_build ALL
-   DEPENDS rsession diagnostics
+# define custom command for building RStudio with Electron
+# note that OUTPUT tells CMake that this command should be used
+# if that output does not exist and needs to be created
+add_custom_command(
    WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
    COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${YARN} make
+   OUTPUT "${ELECTRON_BUILD_DIR}/out"
 )
 
+# define a target, indicating that building this target
+# requires that aforementioned OUTPUT file
+# (this effectively "links" this target with that command)
+add_custom_target(
+   electron_build ALL
+   DEPENDS "${ELECTRON_BUILD_DIR}/out"
+)
+
+# add target dependencies, so we don't build too many things at once
+add_dependencies(electron_build rsession diagnostics)
 if(TARGET gwt_build)
    add_dependencies(electron_build gwt_build)
 endif()

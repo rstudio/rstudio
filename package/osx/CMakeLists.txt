@@ -36,7 +36,7 @@ if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
    if(RSTUDIO_ELECTRON)
       configure_and_install("cmake/merge-electron.cmake")
    endif()
-   configure_and_install("cmake/fix-library-paths.cmake")
+   configure_and_install("cmake/prepare-package.cmake")
    configure_and_install("cmake/codesign-package.cmake")
 endif()
 

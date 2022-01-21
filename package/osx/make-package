@@ -274,6 +274,7 @@ if [ -n "${build_arm64}" ]; then
    arch -arm64 "${CMAKE}"                                   \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                     \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                 \
+      -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"               \
       -DRSESSION_ALTERNATE_BUILD=1                          \
       -DRSTUDIO_TARGET=${rstudio_target}                    \
       -DRSTUDIO_PACKAGE_BUILD=1                             \
@@ -335,6 +336,8 @@ if [ "${build_package}" = "1" ]; then
 
       # move to expected location in build folder
       mv "${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
+
+      info "'${BUILD_DIR_X86_64}/${RSTUDIO_BUNDLE_NAME}.dmg' has been created."
 
    fi
 

@@ -137,6 +137,11 @@ if(NOT DEFINED RSTUDIO_DESKTOP)
    endif()
 endif()
 
+# make sure RSTUDIO_ELECTRON is defined so it can be used in configure_file
+if(NOT DEFINED RSTUDIO_ELECTRON)
+   set(RSTUDIO_ELECTRON FALSE)
+endif()
+
 # override if requested
 if(RSTUDIO_NO_DESKTOP)
    set(RSTUDIO_DESKTOP FALSE)

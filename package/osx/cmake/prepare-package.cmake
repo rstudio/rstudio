@@ -1,5 +1,5 @@
 #
-# fix-library-paths.cmake
+# prepare-package.cmake
 #
 # Copyright (C) 2022 by RStudio, PBC
 #
@@ -13,12 +13,25 @@
 #
 #
 
+cmake_minimum_required(VERSION 3.4.3)
+
 # CMake's message is suppressed during install stage so just use echo here
 function(echo MESSAGE)
    execute_process(COMMAND echo "-- ${MESSAGE}")
 endfunction()
 
+if(@RSTUDIO_ELECTRON@)
+   set(RSESSION_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/bin")
+   set(X64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/Frameworks")
+   set(ARM64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Resources/app/Frameworks/arm64")
+else()
+   set(RSESSION_BINARY_DIR "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS")
+   set(X64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks")
+   set(ARM64_FRAMEWORKS_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64")
+endif()
+
 set(FIX_LIBRARY_PATHS_SCRIPT_PATH "@CMAKE_CURRENT_SOURCE_DIR@/scripts/fix-library-paths.sh")
+
 if(EXISTS "@RSESSION_ARM64_PATH@")
 
    echo("Found arm64 rsession binary: '@RSESSION_ARM64_PATH@'")
@@ -35,20 +48,20 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
    # copy arm64 rsession binary
    configure_file(
       "@RSESSION_ARM64_PATH@"
-      "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS/rsession-arm64"
+      "${RSESSION_BINARY_DIR}/rsession-arm64"
       COPYONLY)
 
    # copy required Homebrew libraries
    set(HOMEBREW_LIBS gettext krb5 libpq openssl@1.1 sqlite3)
 
-   file(MAKE_DIRECTORY "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64")
+   file(MAKE_DIRECTORY "${ARM64_FRAMEWORKS_DIRECTORY}")
    foreach(LIB ${HOMEBREW_LIBS})
       set(LIBPATH "${HOMEBREW_ARM64_PREFIX}/opt/${LIB}/lib")
       file(GLOB LIBFILES "${LIBPATH}/*.dylib")
       foreach(LIBFILE ${LIBFILES})
          file(
             COPY "${LIBFILE}"
-            DESTINATION "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64")
+            DESTINATION "${ARM64_FRAMEWORKS_DIRECTORY}")
       endforeach()
    endforeach()
 
@@ -56,14 +69,14 @@ if(EXISTS "@RSESSION_ARM64_PATH@")
    execute_process(
       COMMAND
          "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
-         "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks/arm64"
+         "${ARM64_FRAMEWORKS_DIRECTORY}"
          "@executable_path/../Frameworks/arm64"
          "*.dylib")
 
    execute_process(
       COMMAND
          "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
-         "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS"
+         "${RSESSION_BINARY_DIR}"
          "@executable_path/../Frameworks/arm64"
          "rsession-arm64")
 
@@ -77,15 +90,23 @@ endif()
 execute_process(
    COMMAND
       "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
-      "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks"
+      "${X64_FRAMEWORKS_DIRECTORY}"
       "@executable_path/../Frameworks"
       "*.dylib")
 
 execute_process(
    COMMAND
       "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
-      "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS"
+      "${RSESSION_BINARY_DIR}"
       "@executable_path/../Frameworks"
-      "RStudio diagnostics rpostback rsession")
+      "diagnostics rpostback rsession")
 
+if(NOT @RSTUDIO_ELECTRON@)
+   execute_process(
+      COMMAND
+      "${FIX_LIBRARY_PATHS_SCRIPT_PATH}"
+      "${RSESSION_BINARY_DIR}"
+      "@executable_path/../Frameworks"
+      "RStudio")
+endif()
 
