@@ -324,6 +324,7 @@ public class ElementIds
       PRIMARY_CRAN("primary_cran"),
       PRO_JOB_DIR("pro_job_dir"),
       PRO_JOB_SCRIPT("pro_job_script"),
+      PRO_R_HOME("job_launcher_pro_r_home"),
       PRO_NEW_SESSION_DIR("pro_new_session_dir"),
       PROJECT_PARENT("project_parent"),
       PROJECT_REPO_DIR("project_repo_dir"),
