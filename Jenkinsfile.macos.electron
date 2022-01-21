@@ -103,8 +103,12 @@ pipeline {
             returnStdout: true
           ).trim().toLowerCase()
 
-          def buildProduct = "electron"
-          def buildDest =  "s3://rstudio-ide-build/${buildProduct}/macos/"
+          def product = "electron"
+          if (params.RSTUDIO_VERSION_SUFFIX.contains("pro")) {
+            product = product + "-pro"
+          }
+
+          def buildDest =  "s3://rstudio-ide-build/${product}/macos/"
 
           withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
             sh "docker/jenkins/notarize-release.sh package/osx/build/${packageFile}"
@@ -117,7 +121,7 @@ pipeline {
 
           // upload daily build redirects
           withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
-            sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${buildProduct}/macos/${packageFile} ${wwwRstudioOrgPem}"
+            sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${product}/macos/${packageFile} ${wwwRstudioOrgPem}"
           }
 
           // upload debug symbols to Sentry
@@ -151,14 +155,8 @@ pipeline {
           // publish build to dailies page
           withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
-            // derive product
-            def product = "desktop"
-            if (params.RSTUDIO_VERSION_SUFFIX.contains("pro")) {
-              product = "desktop-pro"
-            }
-
             // publish the build
-            sh "docker/jenkins/publish-build.sh --build ${product}/macos --url https://s3.amazonaws.com/rstudio-ide-build/${buildProduct}/macos/${packageFile} --pat ${GITHUB_PAT} --file package/osx/build/${packageFile} --version ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}${params.RSTUDIO_VERSION_SUFFIX}"
+            sh "docker/jenkins/publish-build.sh --build ${product}/macos --url https://s3.amazonaws.com/rstudio-ide-build/${product}/macos/${packageFile} --pat ${GITHUB_PAT} --file package/osx/build/${packageFile} --version ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}${params.RSTUDIO_VERSION_SUFFIX}"
           }
 
         }
