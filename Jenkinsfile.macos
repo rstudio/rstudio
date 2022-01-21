@@ -103,7 +103,7 @@ pipeline {
             returnStdout: true
           ).trim().toLowerCase()
 
-          def buildDest =  "s3://rstudio-ide-build/desktop/macos/"
+          def buildDest =  "s3://rstudio-ide-build/electron/macos/"
 
           withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
             sh "docker/jenkins/notarize-release.sh package/osx/build/${packageFile}"
@@ -116,7 +116,7 @@ pipeline {
 
           // upload daily build redirects
           withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
-            sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/macos/${packageFile} ${wwwRstudioOrgPem}"
+            sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/electron/macos/${packageFile} ${wwwRstudioOrgPem}"
           }
 
           // upload debug symbols to Sentry
@@ -151,13 +151,13 @@ pipeline {
           withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
             // derive product
-            def product="desktop"
+            def product = "desktop"
             if (params.RSTUDIO_VERSION_SUFFIX.contains("pro")) {
               product = "desktop-pro"
             }
 
             // publish the build
-            sh "docker/jenkins/publish-build.sh --build ${product}/macos --url https://s3.amazonaws.com/rstudio-ide-build/desktop/macos/${packageFile} --pat ${GITHUB_PAT} --file package/osx/build/${packageFile} --version ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}${params.RSTUDIO_VERSION_SUFFIX}"
+            sh "docker/jenkins/publish-build.sh --build ${product}/macos --url https://s3.amazonaws.com/rstudio-ide-build/electron/macos/${packageFile} --pat ${GITHUB_PAT} --file package/osx/build/${packageFile} --version ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}${params.RSTUDIO_VERSION_SUFFIX}"
           }
 
         }
