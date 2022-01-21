@@ -1,5 +1,5 @@
 #
-# electron-build.cmake
+# merge-electron.cmake
 #
 # Copyright (C) 2022 by RStudio, PBC
 #
