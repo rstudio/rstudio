@@ -19,20 +19,40 @@ test_that("cpp_source_file() uses correct package", {
     tf <- tempfile(fileext = ".cpp")
     
     writeLines('#include <Rcpp.h>\n//[[Rcpp::export]]\nvoid fun(){}', tf)
-    call <- .rs.cpp_source_file_call(tf)
+    call <- .rs.cpp_source_file(tf)
     expect_match(call, "Rcpp::sourceCpp")
 
     writeLines('void fun(){}', tf)
-    call <- .rs.cpp_source_file_call(tf)
+    call <- .rs.cpp_source_file(tf)
     expect_match(call, "Rcpp::sourceCpp")
 
     writeLines('#include <cpp11.hpp>\n[[cpp11::register]]\nvoid fun(){}', tf)
-    call <- .rs.cpp_source_file_call(tf)
+    call <- .rs.cpp_source_file(tf)
     expect_match(call, "cpp11::cpp_source")
     
     unlink(tf)
-    call <- .rs.cpp_source_file_call(tf)
+    call <- .rs.cpp_source_file(tf)
     expect_match(call, "Rcpp::sourceCpp")
-
 })
 
+test_that("cpp_project_style() correctly guesses cpp flavor", {
+    path <- tempfile()
+    on.exit(unlink(path, recursive = TRUE))
+
+    dir.create(path)
+    writeLines("LinkingTo: Rcpp", file.path(path, "DESCRIPTION"))
+    expect_equal(.rs.cpp_project_style(path), "Rcpp")
+
+    writeLines("LinkingTo: cpp11", file.path(path, "DESCRIPTION"))
+    expect_equal(.rs.cpp_project_style(path), "cpp11")
+
+    writeLines("Type: Package", file.path(path, "DESCRIPTION"))
+    expect_equal(.rs.cpp_project_style(path), "")
+
+    writeLines("Type/Package", file.path(path, "DESCRIPTION"))
+    expect_equal(.rs.cpp_project_style(path), "")
+
+    dir.create(file.path(path, "inst", "include"), recursive = TRUE)
+    writeLines("", file.path(path, "inst", "include", "cpp11.hpp"))
+    expect_equal(.rs.cpp_project_style(path), "cpp11")
+})

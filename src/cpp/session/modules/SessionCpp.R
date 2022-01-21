@@ -13,7 +13,7 @@
 #
 #
 
-.rs.addFunction("cpp_source_file_call", function(file)
+.rs.addFunction("cpp_source_file", function(file)
 {
    lines <- .rs.tryCatch(readLines(file, warn = FALSE))
    call <- call("fun", file)
@@ -26,20 +26,15 @@
     deparse(call)
 })
 
-.rs.addJsonRpcHandler("cpp_source_file", function(file)
-{
-   .rs.api.sendToConsole(.rs.cpp_source_file_call(file))
-})
-
-.rs.addJsonRpcHandler("cpp_project_style", function(inDirectory = .rs.getProjectDirectory()) 
+.rs.addFunction("cpp_project_style", function(inDirectory)
 {
    # give up if this is not a project or not a package
    if (is.null(inDirectory))
-      return(.rs.scalar(""))
+      return("")
 
    DESCRIPTION <- file.path(inDirectory, "DESCRIPTION")
    if (!file.exists(DESCRIPTION))
-      return(.rs.scalar(""))
+      return("")
 
    # check if Rcpp or cpp11 is mentioned in LinkingTo:
    LinkingTo <- tryCatch(
@@ -51,17 +46,27 @@
 
    if (!is.null(LinkingTo)) {
       if (grepl("Rcpp", LinkingTo)) {
-         return(.rs.scalar("Rcpp"))
+         return("Rcpp")
       } else if (grepl("cpp11", LinkingTo)) {
-         return(.rs.scalar("cpp11"))
+         return("cpp11")
       }
    }
 
    # check if cpp11 is vendored
    if (file.exists(file.path(inDirectory, "inst", "include", "cpp11.hpp"))) {
-      return(.rs.scalar("cpp11"))
+      return("cpp11")
    }
 
    # give up, i.e. use the user preference
-   .rs.scalar("")
+   ""
+})
+
+.rs.addJsonRpcHandler("cpp_source_file", function(file)
+{
+   .rs.api.sendToConsole(.rs.cpp_source_file(file))
+})
+
+.rs.addJsonRpcHandler("cpp_project_style", function(inDirectory = .rs.getProjectDirectory()) 
+{
+    .rs.scalar(.rs.cpp_project_style(inDirectory))
 })
