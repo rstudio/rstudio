@@ -1405,7 +1405,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-C";
       cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
       cmd << "grep";
-      cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
       cmd << "--exclude-standard"; // but exclude gitignore
@@ -1417,7 +1416,9 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       // escaping double quotes, etc.
       cmd << "-f";
       cmd << tempFile;
-      if (!grepOptions.asRegex())
+      if (grepOptions.asRegex())
+         cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
+      else
          cmd << "-F";
       addDirectoriesToCommand(
          grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
@@ -1432,7 +1433,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    }
    else
    {
-      cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
       cmd << "--binary-files=without-match";
       cmd << "-rHn";
       cmd << "--color=always";
@@ -1445,7 +1445,9 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       // escaping double quotes, etc.
       cmd << "-f";
       cmd << tempFile;
-      if (!grepOptions.asRegex())
+      if (grepOptions.asRegex())
+         cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
+      else
          cmd << "-F";
       for (std::string arg : grepOptions.includeArgs())
          cmd << arg;

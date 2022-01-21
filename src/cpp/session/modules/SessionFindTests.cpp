@@ -275,6 +275,36 @@ TEST_CASE("SessionFind")
       CHECK(match[2].str().compare("1") == 0);
    }
 
+   SECTION("Replace regex with quantifiers")
+   {
+      std::string line("helllooo");
+      const std::string regex("l+o+");
+      const std::string replacement("LO!");
+      Replacer replacer(false);
+      const size_t matchOn = 2;
+      const size_t matchOff = 7;
+      size_t replaceMatchOff;
+
+      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+      CHECK(line.compare("heLO!") == 0);
+      CHECK(replaceMatchOff == 4);
+   }
+
+   SECTION("Replace regex with quantifiers")
+   {
+      std::string line("good, !@$ good and more!");
+      const std::string regex("^(\\w+)(\\W+)\\1");
+      const std::string replacement("\\1");
+      Replacer replacer(false);
+      const size_t matchOn = 0;
+      const size_t matchOff = 13;
+      size_t replaceMatchOff;
+
+      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+      CHECK(line.compare("good and more!") == 0);
+      CHECK(replaceMatchOff == 3);
+   }
+
 }
 
 } // end namespace tests
