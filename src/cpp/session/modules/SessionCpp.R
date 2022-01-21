@@ -12,3 +12,19 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+
+.rs.addJsonRpcHandler("cpp_source_file", function(file)
+{
+   if (!file.exists(file))
+      return()
+
+   lines <- .rs.tryCatch(readLines(file, warn = FALSE))
+   call <- call("fun", file)
+   
+   if (is.character(lines) && any(grepl("cpp11::register", lines)))
+      call[[1L]] <- quote(cpp11::cpp_source)
+   else 
+      call[[1L]] <- quote(Rcpp::sourceCpp)
+
+   .rs.api.sendToConsole(deparse(call))
+})
