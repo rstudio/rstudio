@@ -31,7 +31,8 @@ set(MODIFIED_PATH "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")
 # copy sources to build directory. note that the build directory cannot
 # be the "true" CMake directory as some files are resolved relative to
 # the desktop project's relative path in the application structure
-set(ELECTRON_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}")
+set(ELECTRON_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "")
+set(ELECTRON_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}" CACHE INTERNAL "")
 file(REMOVE_RECURSE "${ELECTRON_BUILD_DIR}")
 file(MAKE_DIRECTORY "${ELECTRON_BUILD_DIR}")
 file(

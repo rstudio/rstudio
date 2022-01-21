@@ -20,9 +20,12 @@ endfunction()
 
 execute_process(
 	COMMAND
-		"@CMAKE_CURRENT_SOURCE_DIR@/scripts/install-electron.sh"
-		"@CMAKE_CURRENT_SOURCE_DIR@/../../src/node/desktop"
-		"@CPACK_PACKAGE_VERSION@"
-		"@CMAKE_CURRENT_SOURCE_DIR@/install"
+		"@NODEJS@"
+		"@CMAKE_CURRENT_SOURCE_DIR@/scripts/merge-electron.mjs"
+		"@ELECTRON_SOURCE_DIR@/../desktop-build-x86_64/out/RStudio-darwin-x64/RStudio.app"
+		"@ELECTRON_SOURCE_DIR@/../desktop-build-arm64/out/RStudio-darwin-arm64/RStudio.app"
+		"@CMAKE_CURRENT_SOURCE_DIR@/install/RStudio.app"
+	WORKING_DIRECTORY
+		"@CMAKE_CURRENT_SOURCE_DIR@/scripts"
 )
 

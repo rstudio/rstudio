@@ -76,7 +76,7 @@ trap on-exit EXIT
 
 # build / install directories
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
-ELECTRON_SRC_DIR="${PKG_DIR}/../../src/node/desktop"
+ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
 
 BUILD_DIR_X86_64="${PKG_DIR}/build"
 BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
@@ -158,6 +158,7 @@ for arg in "$@"; do
    --build-package=*)  build_package=${arg#*=} ;;
    --build-dmg=*)      build_dmg=${arg#*=} ;;
    --use-creds=*)      use_creds=${arg#*=} ;;
+   --electron)         rstudio_target=Electron ;;
    --rstudio-target=*) rstudio_target=${arg#*=} ;;
    *)                  echo "Ignoring unrecognized argument '${arg}'"
    esac
@@ -186,8 +187,8 @@ if [ "${clean}" = "1" ]; then
    fi
 
    # cleanup Electron project
-   rm -rf "${ELECTRON_SRC_DIR}/.webpack"
-   rm -rf "${ELECTRON_SRC_DIR}/out"
+   rm -rf "${ELECTRON_SOURCE_DIR}/.webpack"
+   rm -rf "${ELECTRON_SOURCE_DIR}/out"
 
    # move back to package dir
    cd "${PKG_DIR}"
