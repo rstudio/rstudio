@@ -302,8 +302,12 @@ public class FindOutputPresenter extends BasePresenter
                         for (String pattern : dialogState_.getExcludeFilePatterns())
                            excludeFilePatterns.push(pattern);
 
-                        server_.completeReplace(dialogState_.getQuery(),
-                                                dialogState_.isRegex(),
+                        String serverQuery = dialogState_.getQuery();
+                        if (dialogState_.isWholeWord())
+                           serverQuery = "\\b" + serverQuery + "\\b";
+
+                        server_.completeReplace(serverQuery,
+                                                dialogState_.isRegex() || dialogState_.isWholeWord(),
                                                 !dialogState_.isCaseSensitive(),
                                                 searchPath,
                                                 includeFilePatterns,
