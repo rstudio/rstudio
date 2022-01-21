@@ -14,24 +14,23 @@
  */
 package org.rstudio.studio.client.common;
 
-import org.rstudio.core.client.StringUtil;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 import org.rstudio.core.client.RUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
-
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
 
 @Singleton
 public class ConsoleDispatcher
@@ -166,7 +165,7 @@ public class ConsoleDispatcher
          if (relativePath != null)
             path = relativePath;
 
-         executeCppSourceCommand(path, focus);
+         cppServer_.cppSourceFile(path, new VoidServerRequestCallback());
       } else 
       {
          StringBuilder code = new StringBuilder();
@@ -191,44 +190,12 @@ public class ConsoleDispatcher
             code.append(", echo=TRUE");
          code.append(")");
       
-         executeCode(code.toString(), focus);
+         eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
+
+         if (focus)
+            commands_.activateConsole().execute();
       }
       
-   }
-
-   public void executeCppSourceCommand(final String path, boolean focus) {
-      cppServer_.cppIsCpp11File(path, new ServerRequestCallback<Boolean>() 
-      {
-         @Override
-         public void onResponseReceived(Boolean response) 
-         {
-            execute(response);
-         }
-
-         @Override
-         public void onError(ServerError error) {
-            execute(false);
-         }
-
-         private void execute(boolean isCpp11) {
-            String code;
-            if (isCpp11) 
-            {
-               code = "cpp11::cpp_source(" + escapedPath(path) + ")";
-            } else 
-            {
-               code = "Rcpp::sourceCpp(" + escapedPath(path) + ")";
-            }
-            executeCode(code, focus);
-         }
-      });
-   }
-
-   private void executeCode(String code, boolean focus) {
-      eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
-
-      if (focus)
-         commands_.activateConsole().execute();
    }
 
    public static String escapedPath(String path)

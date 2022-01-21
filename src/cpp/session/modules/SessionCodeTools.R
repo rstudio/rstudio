@@ -2623,14 +2623,18 @@
    .rs.scalar("")
 })
 
-.rs.addJsonRpcHandler("cpp_is_cpp11_file", function(file)
+.rs.addJsonRpcHandler("cpp_source_file", function(file)
 {
-    if (!file.exists(file))
-        return(.rs.scalar(FALSE))
+   if (!file.exists(file))
+      return()
 
-    lines <- readLines(file)
-    if (any(grepl("cpp11::register", lines)))
-        return(.rs.scalar(TRUE))
+   lines <- .rs.tryCatch(readLines(file))
+   call <- call("fun", file)
+   
+   if (is.character(lines) && any(grepl("cpp11::register", lines)))
+      call[[1L]] <- quote(cpp11::cpp_source)
+   else 
+      call[[1L]] <- quote(Rcpp::sourceCpp)
 
-    return(.rs.scalar(FALSE))
+   .rs.api.sendToConsole(deparse(call))
 })

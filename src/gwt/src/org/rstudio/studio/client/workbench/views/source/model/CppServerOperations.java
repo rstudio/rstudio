@@ -50,8 +50,8 @@ public interface CppServerOperations extends BuildServerOperations
    void projectGuessCppStyle(
                 ServerRequestCallback<String> requestCallback);  
                 
-   void cppIsCpp11File(
+   void cppSourceFile(
                 String path, 
-                ServerRequestCallback<Boolean> requestCallback);         
+                ServerRequestCallback<Void> requestCallback);         
 
 }
