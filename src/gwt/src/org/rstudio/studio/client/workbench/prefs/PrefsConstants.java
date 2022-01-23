@@ -4511,5 +4511,14 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("When enabled, the indentation for documents not part of an RStudio project will be automatically detected.")
     @Key("editingAutoDetectIndentationDesc")
     String editingAutoDetectIndentationDesc();
+    
+    /**
+     * Translated "Insert matching parens/quotes"
+     *
+     * @return translated "Insert matching parens/quotes"
+     */
+    @DefaultMessage("Insert matching parens/quotes")
+    @Key("editingInsertMatchingLabel")
+    String editingInsertMatchingLabel();
 
 }

@@ -75,7 +75,7 @@ public class EditingPreferencesPane extends PreferencesPane
       tabWidth_.setWidth("36px");
       editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
             constants_.editingAutoDetectIndentationDesc()));
-      editingPanel.add(checkboxPref(prefs_.insertMatching()));
+      editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
       editingPanel.add(checkboxPref(prefs_.insertNativePipeOperator()));
       editingPanel.add(checkboxPref(prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref(prefs_.verticallyAlignArgumentsIndent()));
