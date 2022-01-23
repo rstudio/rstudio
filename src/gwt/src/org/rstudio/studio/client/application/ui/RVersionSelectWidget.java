@@ -43,16 +43,52 @@ public class RVersionSelectWidget extends SelectWidget
                                boolean includeHelpButton,
                                boolean fillContainer)
    {
+      this(caption, uniqueId, rVersions, false, true, false, false);
+   }
+
+   public RVersionSelectWidget(String caption,
+                               ElementIds.SelectWidgetId uniqueId,
+                               JsArray<RVersionSpec> rVersions,
+                               boolean includeSystemDefault,
+                               boolean includeHelpButton,
+                               boolean fillContainer,
+                               boolean includeUserSpecified)
+   {
       super(caption,
             uniqueId,
-            rVersionChoices(rVersions, includeSystemDefault),
-            rVersionValues(rVersions, includeSystemDefault),
+            rVersionChoices(rVersions, includeSystemDefault, includeUserSpecified),
+            rVersionValues(rVersions, includeSystemDefault, includeUserSpecified),
             false, 
             true, 
             false,
             fillContainer);
+      rVersions_ = rVersions;
+      includeSystemDefault_ = includeSystemDefault;
+      includeUserSpecified_ = includeUserSpecified;
       if (includeHelpButton)
          HelpButton.addHelpButton(this, "multiple_r_versions", constants_.helpOnRVersionsTitle());
+   }
+
+   public void setIncludeUserSpecified(boolean includeUserSpecified) {
+      includeUserSpecified_ = includeUserSpecified;
+      updateChoices();
+   }
+
+   public void setIncludeSystemDefault(boolean includeSystemDefault) {
+      includeSystemDefault_= includeSystemDefault;
+      updateChoices();
+   }
+
+   public void setRVersions(JsArray<RVersionSpec> rVersions) {
+      rVersions_ = rVersions;
+      updateChoices();
+   }
+
+   private void updateChoices() {
+      setChoices(
+         rVersionChoices(rVersions_, includeSystemDefault_, includeUserSpecified_),
+         rVersionValues(rVersions_, includeSystemDefault_, includeUserSpecified_)
+      );
    }
    
    public void setRVersion(RVersionSpec version)
@@ -66,9 +102,17 @@ public class RVersionSelectWidget extends SelectWidget
       return rVersionSpecFromString(getValue());
    }
    
+   public boolean isSystemDefault() {
+      return getValue().isEmpty();
+   }
+
+   public boolean isUserSpecified() {
+      return getValue() == USER_SPECIFIED;
+   }
    
    private static String[] rVersionChoices(JsArray<RVersionSpec> rVersions,
-                                           boolean includeSystemDefault)
+                                           boolean includeSystemDefault,
+                                           boolean includeUserSpecified)
    {
       // do we need to disambiguate identical version numbers
       boolean disambiguate = RVersionSpec.hasDuplicates(rVersions);
@@ -99,11 +143,15 @@ public class RVersionSelectWidget extends SelectWidget
          choices.add(choice.toString());
       }
 
+      if (includeUserSpecified)
+         choices.add(USER_SPECIFIED);
+
       return choices.toArray(new String[0]);
    }
 
    private static String[] rVersionValues(JsArray<RVersionSpec> rVersions,
-                                          boolean includeSystemDefault)
+                                          boolean includeSystemDefault,
+                                          boolean includeUserSpecified)
    {
       ArrayList<String> values = new ArrayList<>();
 
@@ -112,6 +160,11 @@ public class RVersionSelectWidget extends SelectWidget
 
       for (int i=0; i<rVersions.length(); i++)
          values.add(rVersionSpecToString(rVersions.get(i)));
+
+      // this should not pass conversion to rVersionSpec,
+      // and should safely retrun an empty rVersionSpec
+      if (includeUserSpecified)
+         values.add(USER_SPECIFIED);
 
       return values.toArray(new String[0]);
    }
@@ -145,5 +198,10 @@ public class RVersionSelectWidget extends SelectWidget
    }
    private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
    private final static String USE_DEFAULT_VERSION = constants_.useSystemDefaultText();
+   private final static String USER_SPECIFIED = constants_.userSpecifiedText();
    private final static String SEP = "::::";
+
+   private JsArray<RVersionSpec> rVersions_;
+   private boolean includeUserSpecified_ = false;
+   private boolean includeSystemDefault_ = false;
 }

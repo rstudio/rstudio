@@ -210,6 +210,7 @@ namespace prefs {
 #define kPlumberViewerTypeWindow "window"
 #define kPlumberViewerTypeBrowser "browser"
 #define kDocumentAuthor "document_author"
+#define kRmdAutoDate "rmd_auto_date"
 #define kRmdPreferredTemplatePath "rmd_preferred_template_path"
 #define kRmdViewerType "rmd_viewer_type"
 #define kRmdViewerTypeWindow "window"
@@ -1041,7 +1042,7 @@ public:
    core::Error setPackagesPaneEnabled(bool val);
 
    /**
-    * Whether to use RCPP templates.
+    * C++ template.
     */
    std::string cppTemplate();
    core::Error setCppTemplate(std::string val);
@@ -1099,6 +1100,12 @@ public:
     */
    std::string documentAuthor();
    core::Error setDocumentAuthor(std::string val);
+
+   /**
+    * Use current date when rendering document
+    */
+   bool rmdAutoDate();
+   core::Error setRmdAutoDate(bool val);
 
    /**
     * The path to the preferred R Markdown template.

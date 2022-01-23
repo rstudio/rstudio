@@ -34,6 +34,11 @@
 * Disable session SSL for Code Server 3.9.3 and support auth changes in Code Server 3.11.0 (Pro #3111)
 * Show user's full name, or proxied auth display name, in Project Sharing presence indicator (Pro #3121)
 * Allow users to specify R version in launcher jobs (Pro #1046)
+* Show additional environment information in the IDE Job Launcher dialog (Pro #3110)
+* Allow users to specify custom path to R_HOME in the IDE Job Launcher when the target cluster or image do not match the current environment (Pro #3110)
+* Fixed bug with customized display names and launcher sessions (Pro #3217)
+* Removed some unnecessary warnings in the RStudio VS Code Extension when using Dash (Ext #98)
+* Added a link to a help article about using VS Code Sessions in RStudio Workbench
 
 #### R
 

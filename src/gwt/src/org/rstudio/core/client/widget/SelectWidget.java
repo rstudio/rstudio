@@ -121,6 +121,7 @@ public class SelectWidget extends Composite
          values = options;
 
       listBox_ = new ListBox();
+      listBox_.getElement().getStyle().setProperty("minHeight", "20px");
       listBox_.setMultipleSelect(isMultipleSelect);
 
       // set the element ID if one is provided, otherwise let it get auto generated
