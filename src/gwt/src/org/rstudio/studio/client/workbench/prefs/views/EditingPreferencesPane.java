@@ -70,9 +70,11 @@ public class EditingPreferencesPane extends PreferencesPane
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
       editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
-      editingPanel.add(indent(tabWidth_ = numericPref(1, UserPrefs.MAX_TAB_WIDTH, prefs_.numSpacesForTab())));
+      editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
+            prefs_.numSpacesForTab())));
       tabWidth_.setWidth("36px");
-      editingPanel.add(checkboxPref(prefs_.autoDetectIndentation()));
+      editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
+            constants_.editingAutoDetectIndentationDesc()));
       editingPanel.add(checkboxPref(prefs_.insertMatching()));
       editingPanel.add(checkboxPref(prefs_.insertNativePipeOperator()));
       editingPanel.add(checkboxPref(prefs_.reindentOnPaste()));

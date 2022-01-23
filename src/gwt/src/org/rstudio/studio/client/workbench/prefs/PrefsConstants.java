@@ -4484,5 +4484,32 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Cancel")
     @Key("editingCancelShortcuts")
     String editingCancelShortcuts();
+    
+    /**
+     * Translated "Tab width"
+     *
+     * @return translated "Tab width"
+     */
+    @DefaultMessage("Tab width")
+    @Key("editingTabWidthLabel")
+    String editingTabWidthLabel();
+    
+    /**
+     * Translated "Auto-detect code indentation"
+     *
+     * @return translated "Auto-detect code indentation"
+     */
+    @DefaultMessage("Auto-detect code indentation")
+    @Key("editingAutoDetectIndentationLabel")
+    String editingAutoDetectIndentationLabel();
+    
+    /**
+     * Translated "Auto-detect code indentation"
+     *
+     * @return translated "When enabled, the indentation for documents not part of an RStudio project will be automatically detected."
+     */
+    @DefaultMessage("When enabled, the indentation for documents not part of an RStudio project will be automatically detected.")
+    @Key("editingAutoDetectIndentationDesc")
+    String editingAutoDetectIndentationDesc();
 
 }
