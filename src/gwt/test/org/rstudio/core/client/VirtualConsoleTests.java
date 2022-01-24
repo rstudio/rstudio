@@ -1212,4 +1212,24 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals(expected, ele.getInnerHTML());
       Assert.assertEquals("✓ |   4       | reporter-zzz [", vc.toString());
    }
+
+   public void testHyperlinkNoParams()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String testInput = "\u001b]8;;http://www.example.com\7text\u001b]8;;\7";
+      vc.submit(testInput);
+      String expected = "<a class=\"xtermUnderline xtermColor5 xtermHyperlink\" title=\"http://www.example.com\">text</a>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testHyperlinkWithParams()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String testInput = "\u001b]8;name1=value1:name2=value2;http://www.example.com\7text\u001b]8;;\7";
+      vc.submit(testInput);
+      String expected = "<a class=\"xtermUnderline xtermColor5 xtermHyperlink\" title=\"http://www.example.com\">text</a>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
 }
