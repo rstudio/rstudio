@@ -290,7 +290,7 @@ TEST_CASE("SessionFind")
       CHECK(replaceMatchOff == 4);
    }
 
-   SECTION("Replace regex with quantifiers")
+   SECTION("Replace regex with quantifiers, word character, and backreferences")
    {
       std::string line("good, !@$ good and more!");
       const std::string regex("^(\\w+)(\\W+)\\1");
