@@ -37,45 +37,47 @@ namespace cpp {
 
 namespace {
 
-Error cppProjectStyle(const json::JsonRpcRequest& request,
-                          json::JsonRpcResponse* pResponse)
+std::string cppProjectStyleImpl() 
 {
    projects::ProjectContext& context = projects::projectContext();
    
    // ----- not in a project or not in a package: give up
    if (!context.hasProject() || !context.isPackageProject())
    {
-      pResponse->setResult("");
-      return Success();
+      return "";
    }
 
    // ----- Look for Rcpp or cpp11 in LinkingTo
    const core::r_util::RPackageInfo& info = context.packageInfo();
    const std::string& linkingTo = info.linkingTo();
    
-   if (core::regex_utils::search(linkingTo, boost::regex("cpp11"))) 
+   boost::regex patternCpp11("cpp11");
+   if (core::regex_utils::search(linkingTo, patternCpp11)) 
    {
-      pResponse->setResult("cpp11");
-      return Success();
+      return "cpp11";
    }
    
-   if (core::regex_utils::search(linkingTo, boost::regex("Rcpp"))) 
+   boost::regex patternRcpp("Rcpp");
+   if (core::regex_utils::search(linkingTo, patternRcpp)) 
    {
-      pResponse->setResult("Rcpp");
-      return Success();
+      return "Rcpp";
    }
 
    // ---- check if cpp11 was vendored
    FilePath cpp11Header = context.directory().completePath("inst/include/cpp11.hpp");
    if (cpp11Header.exists())
    {
-      pResponse->setResult("cpp11");
-      return Success();
+      return "cpp11";
    }
 
    // ---- give up
-   pResponse->setResult("");
+   return "";
+}
 
+Error cppProjectStyle(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   pResponse->setResult(cppProjectStyleImpl());
    return Success();
 }
 
