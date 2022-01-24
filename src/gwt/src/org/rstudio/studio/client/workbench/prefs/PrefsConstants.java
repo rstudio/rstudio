@@ -4538,5 +4538,14 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Auto-indent code after paste")
     @Key("editingReindentOnPasteLabel")
     String editingReindentOnPasteLabel();
+    
+    /**
+     * Translated "Vertically align arguments in auto-indent"
+     *
+     * @return translated "Vertically align arguments in auto-indent"
+     */
+    @DefaultMessage("Vertically align arguments in auto-indent")
+    @Key("editingVerticallyAlignArgumentsIndentLabel")
+    String editingVerticallyAlignArgumentsIndentLabel();
 
 }

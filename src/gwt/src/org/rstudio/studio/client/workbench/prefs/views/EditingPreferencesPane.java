@@ -79,7 +79,7 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref(constants_.editingInsertNativePipeOperatorLabel(),
             prefs_.insertNativePipeOperator()));
       editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
-      editingPanel.add(checkboxPref(prefs_.verticallyAlignArgumentsIndent()));
+      editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref(prefs_.softWrapRFiles()));
       editingPanel.add(checkboxPref(prefs_.continueCommentsOnNewline()));
       editingPanel.add(checkboxPref(prefs_.highlightWebLink()));
