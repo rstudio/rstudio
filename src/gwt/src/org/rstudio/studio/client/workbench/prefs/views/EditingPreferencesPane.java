@@ -126,11 +126,9 @@ public class EditingPreferencesPane extends PreferencesPane
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       editingPanel.add(checkboxPref(constants_.editingFocusConsoleAfterExecLabel(), prefs_.focusConsoleAfterExec()));
 
-      // DEBUG: Before i18n, this had ctrl+enter hard coded into the description as a way of indicating to reader what
-      // this "execution" setting meant.  Current translation does not include that, but maybe we could map the
-      // translated shortcut value here as well (ctrl+enter doesn't HAVE to be the shortcut, although it is probably a
-      // good guess).  Alternative could be to add the text here or in the preference's title.
-      executionBehavior_ = new SelectWidget((Prefs.EnumValue) prefs_.executionBehavior(),
+      executionBehavior_ = new SelectWidget(
+            constants_.editingExecutionBehaviorLabel(),
+            (Prefs.EnumValue) prefs_.executionBehavior(),
             false,
             true,
             false);

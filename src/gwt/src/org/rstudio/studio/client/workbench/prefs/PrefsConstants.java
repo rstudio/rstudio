@@ -4611,4 +4611,13 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("editingFocusConsoleAfterExecLabel")
     String editingFocusConsoleAfterExecLabel();
     
+    /**
+     * Translated "Ctrl+Enter executes:"
+     *
+     * @return translated "Ctrl+Enter executes:"
+     */
+    @DefaultMessage("Ctrl+Enter executes:")
+    @Key("editingExecutionBehaviorLabel")
+    String editingExecutionBehaviorLabel();
+
 }
