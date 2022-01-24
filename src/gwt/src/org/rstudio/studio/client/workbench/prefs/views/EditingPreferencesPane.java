@@ -372,16 +372,23 @@ public class EditingPreferencesPane extends PreferencesPane
 
       VerticalTabPanel diagnosticsPanel = new VerticalTabPanel(ElementIds.EDIT_DIAGNOSTICS_PREFS);
       diagnosticsPanel.add(headerLabel(constants_.editingDiagnosticsPanel()));
-      final CheckBox chkShowRDiagnostics = checkboxPref(prefs_.showDiagnosticsR());
+      final CheckBox chkShowRDiagnostics = checkboxPref(
+            constants_.diagnosticsShowDiagnosticsRLabel(), prefs_.showDiagnosticsR());
       diagnosticsPanel.add(chkShowRDiagnostics);
 
       final VerticalPanel rOptionsPanel = new VerticalPanel();
-      rOptionsPanel.add(checkboxPref(prefs_.diagnosticsInRFunctionCalls()));
-      rOptionsPanel.add(checkboxPref(prefs_.checkArgumentsToRFunctionCalls()));
-      rOptionsPanel.add(checkboxPref(prefs_.checkUnexpectedAssignmentInFunctionCall()));
-      rOptionsPanel.add(checkboxPref(prefs_.warnIfNoSuchVariableInScope()));
-      rOptionsPanel.add(checkboxPref(prefs_.warnVariableDefinedButNotUsed()));
-      rOptionsPanel.add(checkboxPref(prefs_.styleDiagnostics()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsInRFunctionCallsLabel(), prefs_.diagnosticsInRFunctionCalls()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsCheckArgumentsToRFunctionCallsLabel(), prefs_.checkArgumentsToRFunctionCalls()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel(),
+            prefs_.checkUnexpectedAssignmentInFunctionCall()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsWarnIfNoSuchVariableInScopeLabel(), prefs_.warnIfNoSuchVariableInScope()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsWarnVariableDefinedButNotUsedLabel(), prefs_.warnVariableDefinedButNotUsed()));
+      rOptionsPanel.add(checkboxPref(constants_.diagnosticsStyleDiagnosticsLabel(), prefs_.styleDiagnostics()));
       rOptionsPanel.setVisible(prefs_.showDiagnosticsR().getValue());
       chkShowRDiagnostics.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
@@ -392,20 +399,24 @@ public class EditingPreferencesPane extends PreferencesPane
       });
 
       diagnosticsPanel.add(rOptionsPanel);
-      diagnosticsPanel.add(checkboxPref(prefs_.autoDiscoverPackageDependencies()));
+      diagnosticsPanel.add(checkboxPref(
+            constants_.diagnosticsAutoDiscoverPackageDependenciesLabel(),
+            prefs_.autoDiscoverPackageDependencies()));
 
       Label diagOtherLabel = headerLabel(constants_.editingOtherLabel());
       diagnosticsPanel.add(spacedBefore(diagOtherLabel));
-      diagnosticsPanel.add(checkboxPref(prefs_.showDiagnosticsCpp()));
-      diagnosticsPanel.add(checkboxPref(prefs_.showDiagnosticsYaml()));
-      diagnosticsPanel.add(checkboxPref(prefs_.showDiagnosticsOther()));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsShowDiagnosticsCppLabel(), prefs_.showDiagnosticsCpp()));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsShowDiagnosticsYamlLabel(), prefs_.showDiagnosticsYaml()));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsShowDiagnosticsOtherLabel(), prefs_.showDiagnosticsOther()));
 
       Label diagShowLabel = headerLabel(constants_.editingDiagShowLabel());
       diagnosticsPanel.add(spacedBefore(diagShowLabel));
-      diagnosticsPanel.add(checkboxPref(prefs_.diagnosticsOnSave()));
-      diagnosticsPanel.add(tight(checkboxPref(prefs_.backgroundDiagnostics(), false /*defaultSpace*/)));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsOnSaveLabel(), prefs_.diagnosticsOnSave()));
+      diagnosticsPanel.add(tight(checkboxPref(constants_.diagnosticsBackgroundDiagnosticsLabel(),
+            prefs_.backgroundDiagnostics(), false /*defaultSpace*/)));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
-            numericPref(0, 9999, prefs_.backgroundDiagnosticsDelayMs())));
+            numericPref(constants_.diagnosticsBackgroundDiagnosticsDelayMsLabel(), 0, 9999, 
+                  prefs_.backgroundDiagnosticsDelayMs())));
 
       HelpLink diagnosticsHelpLink = new DiagnosticsHelpLink();
       diagnosticsHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);

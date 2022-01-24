@@ -4882,4 +4882,130 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("completionCodeCompletionDelayLabel")
     String completionCodeCompletionDelayLabel();
     
+    /**
+     * Translated "Show diagnostics for R"
+     *
+     * @return translated "Show diagnostics for R"
+     */
+    @DefaultMessage("Show diagnostics for R")
+    @Key("diagnosticsShowDiagnosticsRLabel")
+    String diagnosticsShowDiagnosticsRLabel();
+    
+    /**
+     * Translated "Enable diagnostics within R function calls"
+     *
+     * @return translated "Enable diagnostics within R function calls"
+     */
+    @DefaultMessage("Enable diagnostics within R function calls")
+    @Key("diagnosticsInRFunctionCallsLabel")
+    String diagnosticsInRFunctionCallsLabel();
+    
+    /**
+     * Translated "Check arguments to R function calls"
+     *
+     * @return translated "Check arguments to R function calls"
+     */
+    @DefaultMessage("Check arguments to R function calls")
+    @Key("diagnosticsCheckArgumentsToRFunctionCallsLabel")
+    String diagnosticsCheckArgumentsToRFunctionCallsLabel();
+    
+    /**
+     * Translated "Check usage of '<-' in function call"
+     *
+     * @return translated "Check usage of '<-' in function call"
+     */
+    @DefaultMessage("Check usage of '<-' in function call")
+    @Key("diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel")
+    String diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel();
+    
+    /**
+     * Translated "Warn if variable used has no definition in scope"
+     *
+     * @return translated "Warn if variable used has no definition in scope"
+     */
+    @DefaultMessage("Warn if variable used has no definition in scope")
+    @Key("diagnosticsWarnIfNoSuchVariableInScopeLabel")
+    String diagnosticsWarnIfNoSuchVariableInScopeLabel();
+    
+    /**
+     * Translated "Warn if variable is defined but not used"
+     *
+     * @return translated "Warn if variable is defined but not used"
+     */
+    @DefaultMessage("Warn if variable is defined but not used")
+    @Key("diagnosticsWarnVariableDefinedButNotUsedLabel")
+    String diagnosticsWarnVariableDefinedButNotUsedLabel();
+    
+    /**
+     * Translated "Provide R style diagnostics (e.g. whitespace)"
+     *
+     * @return translated "Provide R style diagnostics (e.g. whitespace)"
+     */
+    @DefaultMessage("Provide R style diagnostics (e.g. whitespace)")
+    @Key("diagnosticsStyleDiagnosticsLabel")
+    String diagnosticsStyleDiagnosticsLabel();
+    
+    /**
+     * Translated "Prompt to install missing R packages discovered in R source files"
+     *
+     * @return translated "Prompt to install missing R packages discovered in R source files"
+     */
+    @DefaultMessage("Prompt to install missing R packages discovered in R source files")
+    @Key("diagnosticsAutoDiscoverPackageDependenciesLabel")
+    String diagnosticsAutoDiscoverPackageDependenciesLabel();
+    
+    /**
+     * Translated "Show diagnostics for C/C++"
+     *
+     * @return translated "Show diagnostics for C/C++"
+     */
+    @DefaultMessage("Show diagnostics for C/C++")
+    @Key("diagnosticsShowDiagnosticsCppLabel")
+    String diagnosticsShowDiagnosticsCppLabel();
+    
+    /**
+     * Translated "Show diagnostics for YAML"
+     *
+     * @return translated "Show diagnostics for YAML"
+     */
+    @DefaultMessage("Show diagnostics for YAML")
+    @Key("diagnosticsShowDiagnosticsYamlLabel")
+    String diagnosticsShowDiagnosticsYamlLabel();
+    
+    /**
+     * Translated "Show diagnostics for JavaScript, HTML, and CSS"
+     *
+     * @return translated "Show diagnostics for JavaScript, HTML, and CSS"
+     */
+    @DefaultMessage("Show diagnostics for JavaScript, HTML, and CSS")
+    @Key("diagnosticsShowDiagnosticsOtherLabel")
+    String diagnosticsShowDiagnosticsOtherLabel();
+    
+    /**
+     * Translated "Show diagnostics whenever source files are saved"
+     *
+     * @return translated "Show diagnostics whenever source files are saved"
+     */
+    @DefaultMessage("Show diagnostics whenever source files are saved")
+    @Key("diagnosticsOnSaveLabel")
+    String diagnosticsOnSaveLabel();
+    
+    /**
+     * Translated "Show diagnostics after keyboard is idle for a period of time"
+     *
+     * @return translated "Show diagnostics after keyboard is idle for a period of time"
+     */
+    @DefaultMessage("Show diagnostics after keyboard is idle for a period of time")
+    @Key("diagnosticsBackgroundDiagnosticsLabel")
+    String diagnosticsBackgroundDiagnosticsLabel();
+    
+    /**
+     * Translated "Keyboard idle time (ms):"
+     *
+     * @return translated "Keyboard idle time (ms):"
+     */
+    @DefaultMessage("Keyboard idle time (ms):")
+    @Key("diagnosticsBackgroundDiagnosticsDelayMsLabel")
+    String diagnosticsBackgroundDiagnosticsDelayMsLabel();
+    
 }
