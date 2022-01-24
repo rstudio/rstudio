@@ -1682,6 +1682,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Use current date when rendering document
+    */
+   public PrefValue<Boolean> rmdAutoDate()
+   {
+      return bool(
+         "rmd_auto_date",
+         _constants.rmdAutoDateTitle(), 
+         _constants.rmdAutoDateDescription(), 
+         false);
+   }
+
+   /**
     * The path to the preferred R Markdown template.
     */
    public PrefValue<String> rmdPreferredTemplatePath()
@@ -3516,6 +3528,8 @@ public class UserPrefsAccessor extends Prefs
          plumberViewerType().setValue(layer, source.getString("plumber_viewer_type"));
       if (source.hasKey("document_author"))
          documentAuthor().setValue(layer, source.getString("document_author"));
+      if (source.hasKey("rmd_auto_date"))
+         rmdAutoDate().setValue(layer, source.getBool("rmd_auto_date"));
       if (source.hasKey("rmd_preferred_template_path"))
          rmdPreferredTemplatePath().setValue(layer, source.getString("rmd_preferred_template_path"));
       if (source.hasKey("rmd_viewer_type"))
@@ -3862,6 +3876,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(shinyBackgroundJobs());
       prefs.add(plumberViewerType());
       prefs.add(documentAuthor());
+      prefs.add(rmdAutoDate());
       prefs.add(rmdPreferredTemplatePath());
       prefs.add(rmdViewerType());
       prefs.add(showPublishDiagnostics());

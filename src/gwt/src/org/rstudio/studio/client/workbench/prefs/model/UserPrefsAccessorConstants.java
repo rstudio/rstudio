@@ -983,6 +983,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String documentAuthorDescription();
 
    /**
+    * Use current date when rendering document
+    */
+   @DefaultStringValue("Use current date when rendering document")
+   String rmdAutoDateTitle();
+   @DefaultStringValue("Use current date when rendering document")
+   String rmdAutoDateDescription();
+
+   /**
     * The path to the preferred R Markdown template.
     */
    @DefaultStringValue("Path to preferred R Markdown template")
