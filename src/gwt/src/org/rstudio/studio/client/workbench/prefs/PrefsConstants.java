@@ -4548,4 +4548,22 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("editingVerticallyAlignArgumentsIndentLabel")
     String editingVerticallyAlignArgumentsIndentLabel();
 
+    /**
+     * Translated "Continue comment when inserting new line"
+     *
+     * @return translated "Continue comment when inserting new line"
+     */
+    @DefaultMessage("Continue comment when inserting new line")
+    @Key("editingContinueCommentsOnNewlineLabel")
+    String editingContinueCommentsOnNewlineLabel();
+    
+    /**
+     * Translated "When enabled, pressing Enter will continue comments on new lines. Press Shift + Enter to exit a comment."
+     *
+     * @return translated "When enabled, pressing Enter will continue comments on new lines. Press Shift + Enter to exit a comment."
+     */
+    @DefaultMessage("When enabled, pressing Enter will continue comments on new lines. Press Shift + Enter to exit a comment.")
+    @Key("editingContinueCommentsOnNewlineDesc")
+    String editingContinueCommentsOnNewlineDesc();
+
 }
