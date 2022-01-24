@@ -85,7 +85,10 @@ public class EditingPreferencesPane extends PreferencesPane
             constants_.editingContinueCommentsOnNewlineLabel(),
             prefs_.continueCommentsOnNewline(),
             constants_.editingContinueCommentsOnNewlineDesc()));
-      editingPanel.add(checkboxPref(prefs_.highlightWebLink()));
+      editingPanel.add(checkboxPref(
+            constants_.editingHighlightWebLinkLabel(),
+            prefs_.highlightWebLink(),
+            constants_.editingHighlightWebLinkDesc()));
 
       delimiterSurroundWidget_ = new SelectWidget((Prefs.EnumValue) prefs_.surroundSelection(),
          false,

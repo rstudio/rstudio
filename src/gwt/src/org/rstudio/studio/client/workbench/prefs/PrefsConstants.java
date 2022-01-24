@@ -4565,5 +4565,23 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("When enabled, pressing Enter will continue comments on new lines. Press Shift + Enter to exit a comment.")
     @Key("editingContinueCommentsOnNewlineDesc")
     String editingContinueCommentsOnNewlineDesc();
+    
+    /**
+     * Translated "Enable hyperlink highlighting in editor"
+     *
+     * @return translated "Enable hyperlink highlighting in editor"
+     */
+    @DefaultMessage("Enable hyperlink highlighting in editor")
+    @Key("editingHighlightWebLinkLabel")
+    String editingHighlightWebLinkLabel();
+    
+    /**
+     * Translated "When enabled, hyperlinks in comments will be underlined and clickable."
+     *
+     * @return translated "When enabled, hyperlinks in comments will be underlined and clickable."
+     */
+    @DefaultMessage("When enabled, hyperlinks in comments will be underlined and clickable.")
+    @Key("editingHighlightWebLinkDesc")
+    String editingHighlightWebLinkDesc();
 
 }
