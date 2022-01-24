@@ -1538,15 +1538,14 @@ public class UserPrefsAccessor extends Prefs
    /**
     * C++ template.
     */
-    public PrefValue<String> cppTemplate()
-    {
-       return string(
-          "cpp_template",
-          _constants.cppTemplateTitle(), 
-          _constants.cppTemplateDescription(), 
-          "Rcpp");
-    }
- 
+   public PrefValue<String> cppTemplate()
+   {
+      return string(
+         "cpp_template",
+         _constants.cppTemplateTitle(), 
+         _constants.cppTemplateDescription(), 
+         "Rcpp");
+   }
 
    /**
     * Whether to restore the last opened source documents when RStudio starts up.
@@ -1680,19 +1679,6 @@ public class UserPrefsAccessor extends Prefs
          _constants.documentAuthorTitle(), 
          _constants.documentAuthorDescription(), 
          "");
-   }
-
-   /**
-    * Whether to use current date when rendering document
-    */
-   public PrefValue<Boolean> rmdAutoDate()
-   {
-      return bool(
-         "rmd_auto_date", 
-         _constants.rmdAutoDateTitle(),
-         _constants.rmdAutoDateDescription(), 
-         false
-      );
    }
 
    /**

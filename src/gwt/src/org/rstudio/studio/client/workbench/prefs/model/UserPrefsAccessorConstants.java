@@ -907,7 +907,7 @@ public interface UserPrefsAccessorConstants extends Constants {
     */
    @DefaultStringValue("C++ template")
    String cppTemplateTitle();
-   @DefaultStringValue("C++ template")
+   @DefaultStringValue("C++ template.")
    String cppTemplateDescription();
 
    /**
@@ -997,14 +997,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String rmdViewerTypeTitle();
    @DefaultStringValue("Where to display R Markdown documents when they have completed rendering.")
    String rmdViewerTypeDescription();
-
-   /**
-    * Whether to use current date when rendering document.
-    */
-   @DefaultStringValue("Use current date when rendering document")
-   String rmdAutoDateTitle();
-   @DefaultStringValue("Use current date when rendering document.")
-   String rmdAutoDateDescription();
 
    /**
     * Whether to show verbose diagnostic information when publishing content.

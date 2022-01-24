@@ -1041,7 +1041,7 @@ public:
    core::Error setPackagesPaneEnabled(bool val);
 
    /**
-    * Whether to use RCPP templates.
+    * C++ template.
     */
    std::string cppTemplate();
    core::Error setCppTemplate(std::string val);
