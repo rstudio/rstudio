@@ -761,13 +761,16 @@ public class VirtualConsole
          if (url.startsWith("rstudio:viewer:")) 
          {
             return "open in viewer: " + url.replace("rstudio:viewer:", "");
-         } else if (StringUtil.equals(url, "rstudio:help")) 
+         }
+         else if (StringUtil.equals(url, "rstudio:help")) 
          {
             return "help(" + params.replace(":", ", ") + ")";
-         } else if (StringUtil.equals(url, "rstudio:vignette")) 
+         }
+         else if (StringUtil.equals(url, "rstudio:vignette")) 
          {
             return "vignette(" + params.replace(":", ", ") + ")";
-         } else
+         }
+         else
          {
             return url;
          }
