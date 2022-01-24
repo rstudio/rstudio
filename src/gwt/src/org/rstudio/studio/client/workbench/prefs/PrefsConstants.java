@@ -4583,5 +4583,23 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("When enabled, hyperlinks in comments will be underlined and clickable.")
     @Key("editingHighlightWebLinkDesc")
     String editingHighlightWebLinkDesc();
+    
+    /**
+     * Translated "Surround selection on text insertion:"
+     *
+     * @return translated "Surround selection on text insertion:"
+     */
+    @DefaultMessage("Surround selection on text insertion:")
+    @Key("editingSurroundSelectionLabel")
+    String editingSurroundSelectionLabel();
+    
+    /**
+     * Translated "Keybindings:"
+     *
+     * @return translated "Keybindings:"
+     */
+    @DefaultMessage("Keybindings:")
+    @Key("editingKeybindingsLabel")
+    String editingKeybindingsLabel();
 
 }

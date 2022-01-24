@@ -90,14 +90,16 @@ public class EditingPreferencesPane extends PreferencesPane
             prefs_.highlightWebLink(),
             constants_.editingHighlightWebLinkDesc()));
 
-      delimiterSurroundWidget_ = new SelectWidget((Prefs.EnumValue) prefs_.surroundSelection(),
+      delimiterSurroundWidget_ = new SelectWidget(constants_.editingSurroundSelectionLabel(),
+         (Prefs.EnumValue) prefs_.surroundSelection(),
          false,
          true,
          false);
       editingPanel.add(delimiterSurroundWidget_);
 
       HorizontalPanel keyboardPanel = new HorizontalPanel();
-      editorMode_ = new SelectWidget((Prefs.EnumValue) prefs_.editorKeybindings(),
+      editorMode_ = new SelectWidget(constants_.editingKeybindingsLabel(),
+                                     (Prefs.EnumValue) prefs_.editorKeybindings(),
                                      false,
                                      true,
                                      false);
