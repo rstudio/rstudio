@@ -4783,4 +4783,103 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("savingAutoSaveIdleMsLabel")
     String savingAutoSaveIdleMsLabel();
     
+    /**
+     * Translated "Show code completions:"
+     *
+     * @return translated "Show code completions:"
+     */
+    @DefaultMessage("Show code completions:")
+    @Key("completionCodeCompletionLabel")
+    String completionCodeCompletionLabel();
+    
+    /**
+     * Translated "Show code completions:"
+     *
+     * @return translated "Show code completions:"
+     */
+    @DefaultMessage("Show code completions:")
+    @Key("completionCodeCompletionOtherLabel")
+    String completionCodeCompletionOtherLabel();
+    
+    /**
+     * Translated "Allow automatic completions in console"
+     *
+     * @return translated "Allow automatic completions in console"
+     */
+    @DefaultMessage("Allow automatic completions in console")
+    @Key("completionConsoleCodeCompletionLabel")
+    String completionConsoleCodeCompletionLabel();
+    
+    /**
+     * Translated "Insert parentheses after function completions"
+     *
+     * @return translated "Insert parentheses after function completions"
+     */
+    @DefaultMessage("Insert parentheses after function completions")
+    @Key("completionInsertParensAfterFunctionCompletion")
+    String completionInsertParensAfterFunctionCompletion();
+    
+    /**
+     * Translated "Show help tooltip after function completions"
+     *
+     * @return translated "Show help tooltip after function completions"
+     */
+    @DefaultMessage("Show help tooltip after function completions")
+    @Key("completionShowFunctionSignatureTooltipsLabel")
+    String completionShowFunctionSignatureTooltipsLabel();
+    
+    /**
+     * Translated "Show help tooltip on cursor idle"
+     *
+     * @return translated "Show help tooltip on cursor idle"
+     */
+    @DefaultMessage("Show help tooltip on cursor idle")
+    @Key("completionShowHelpTooltipOnIdleLabel")
+    String completionShowHelpTooltipOnIdleLabel();
+    
+    /**
+     * Translated "Insert spaces around equals for argument completions"
+     *
+     * @return translated "Insert spaces around equals for argument completions"
+     */
+    @DefaultMessage("Insert spaces around equals for argument completions")
+    @Key("completionInsertSpacesAroundEqualsLabel")
+    String completionInsertSpacesAroundEqualsLabel();
+    
+    /**
+     * Translated "Use tab for autocompletions"
+     *
+     * @return translated "Use tab for autocompletions"
+     */
+    @DefaultMessage("Use tab for autocompletions")
+    @Key("completionTabCompletionLabel")
+    String completionTabCompletionLabel();
+    
+    /**
+     * Translated "Use tab for multiline autocompletions"
+     *
+     * @return translated "Use tab for multiline autocompletions"
+     */
+    @DefaultMessage("Use tab for multiline autocompletions")
+    @Key("completionTabMultilineCompletionLabel")
+    String completionTabMultilineCompletionLabel();
+    
+    /**
+     * Translated "Show completions after characters entered:"
+     *
+     * @return translated "Show completions after characters entered:"
+     */
+    @DefaultMessage("Show completions after characters entered:")
+    @Key("completionCodeCompletionCharactersLabel")
+    String completionCodeCompletionCharactersLabel();
+    
+    /**
+     * Translated "Show completions after keyboard idle (ms):"
+     *
+     * @return translated "Show completions after keyboard idle (ms):"
+     */
+    @DefaultMessage("Show completions after keyboard idle (ms):")
+    @Key("completionCodeCompletionDelayLabel")
+    String completionCodeCompletionDelayLabel();
+    
 }

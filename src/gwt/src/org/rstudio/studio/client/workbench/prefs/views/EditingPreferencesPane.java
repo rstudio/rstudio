@@ -287,7 +287,9 @@ public class EditingPreferencesPane extends PreferencesPane
 
       completionPanel.add(headerLabel(constants_.editingCompletionPanel()));
 
-      showCompletions_ = new SelectWidget((Prefs.EnumValue) prefs_.codeCompletion(),
+      showCompletions_ = new SelectWidget(
+            constants_.completionCodeCompletionLabel(),
+            (Prefs.EnumValue) prefs_.codeCompletion(),
             false,
             true,
             false);
@@ -295,7 +297,9 @@ public class EditingPreferencesPane extends PreferencesPane
       spaced(showCompletions_);
       completionPanel.add(showCompletions_);
 
-      final CheckBox alwaysCompleteInConsole = checkboxPref(prefs_.consoleCodeCompletion());
+      final CheckBox alwaysCompleteInConsole = checkboxPref(
+            constants_.completionConsoleCodeCompletionLabel(),
+            prefs_.consoleCodeCompletion());
       completionPanel.add(alwaysCompleteInConsole);
 
       showCompletions_.addChangeHandler(new ChangeHandler()
@@ -310,10 +314,14 @@ public class EditingPreferencesPane extends PreferencesPane
       });
 
       final CheckBox insertParensAfterFunctionCompletionsCheckbox =
-           checkboxPref(prefs_.insertParensAfterFunctionCompletion());
+           checkboxPref(
+                 constants_.completionInsertParensAfterFunctionCompletion(),
+                 prefs_.insertParensAfterFunctionCompletion());
 
       final CheckBox showSignatureTooltipsCheckbox =
-           checkboxPref(prefs_.showFunctionSignatureTooltips());
+           checkboxPref(
+                 constants_.completionShowFunctionSignatureTooltipsLabel(),
+                 prefs_.showFunctionSignatureTooltips());
 
       addEnabledDependency(
             insertParensAfterFunctionCompletionsCheckbox,
@@ -322,17 +330,26 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
       completionPanel.add(showSignatureTooltipsCheckbox);
 
-      completionPanel.add(checkboxPref(prefs_.showHelpTooltipOnIdle()));
-      completionPanel.add(checkboxPref(prefs_.insertSpacesAroundEquals()));
-      completionPanel.add(checkboxPref(prefs_.tabCompletion()));
-      completionPanel.add(checkboxPref(prefs_.tabMultilineCompletion()));
-
+      completionPanel.add(checkboxPref(
+            constants_.completionShowHelpTooltipOnIdleLabel(),
+            prefs_.showHelpTooltipOnIdle()));
+      completionPanel.add(checkboxPref(
+            constants_.completionInsertSpacesAroundEqualsLabel(),
+            prefs_.insertSpacesAroundEquals()));
+      completionPanel.add(checkboxPref(
+            constants_.completionTabCompletionLabel(),
+            prefs_.tabCompletion()));
+      completionPanel.add(checkboxPref(
+            constants_.completionTabMultilineCompletionLabel(),
+            prefs_.tabMultilineCompletion()));
 
       Label otherLabel = headerLabel(constants_.editingDiagOtherLabel());
       otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       completionPanel.add(otherLabel);
 
-      showCompletionsOther_ = new SelectWidget((Prefs.EnumValue) prefs_.codeCompletionOther(),
+      showCompletionsOther_ = new SelectWidget(
+            constants_.completionCodeCompletionOtherLabel(),
+            (Prefs.EnumValue) prefs_.codeCompletionOther(),
             false,
             true,
             false);
@@ -348,9 +365,9 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(delayLabel);
 
       completionPanel.add(nudgeRightPlus(alwaysCompleteChars_ =
-          numericPref(1, 99, prefs_.codeCompletionCharacters())));
+          numericPref(constants_.completionCodeCompletionCharactersLabel(), 1, 99, prefs_.codeCompletionCharacters())));
       completionPanel.add(nudgeRightPlus(alwaysCompleteDelayMs_ =
-          numericPref(0, 9999, prefs_.codeCompletionDelay())));
+          numericPref(constants_.completionCodeCompletionDelayLabel(), 0, 9999, prefs_.codeCompletionDelay())));
 
 
       VerticalTabPanel diagnosticsPanel = new VerticalTabPanel(ElementIds.EDIT_DIAGNOSTICS_PREFS);
