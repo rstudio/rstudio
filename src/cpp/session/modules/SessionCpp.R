@@ -26,47 +26,7 @@
     deparse(call)
 })
 
-.rs.addFunction("cppProjectStyle", function(inDirectory)
-{
-   # give up if this is not a project or not a package
-   if (is.null(inDirectory))
-      return("")
-
-   DESCRIPTION <- file.path(inDirectory, "DESCRIPTION")
-   if (!file.exists(DESCRIPTION))
-      return("")
-
-   # check if Rcpp or cpp11 is mentioned in LinkingTo:
-   LinkingTo <- tryCatch(
-      read.dcf(DESCRIPTION, all = TRUE)$LinkingTo, 
-      error = function(e) {
-         NULL
-      }
-   )      
-
-   if (!is.null(LinkingTo)) {
-      if (grepl("Rcpp", LinkingTo)) {
-         return("Rcpp")
-      } else if (grepl("cpp11", LinkingTo)) {
-         return("cpp11")
-      }
-   }
-
-   # check if cpp11 is vendored
-   if (file.exists(file.path(inDirectory, "inst", "include", "cpp11.hpp"))) {
-      return("cpp11")
-   }
-
-   # give up, i.e. use the user preference
-   ""
-})
-
 .rs.addJsonRpcHandler("cpp_source_file", function(file)
 {
    .rs.api.sendToConsole(.rs.cppSourceFile(file))
-})
-
-.rs.addJsonRpcHandler("cpp_project_style", function(inDirectory = .rs.getProjectDirectory()) 
-{
-    .rs.scalar(.rs.cppProjectStyle(inDirectory))
 })

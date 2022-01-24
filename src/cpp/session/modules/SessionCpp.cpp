@@ -16,10 +16,15 @@
 #include "SessionCpp.hpp"
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+
 #include <core/Exec.hpp>
 #include <core/json/JsonRpc.hpp>
+#include <core/r_util/RPackageInfo.hpp>
+#include <core/regex/RegexMatch.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/projects/SessionProjects.hpp>
 
 #include <string>
 
@@ -30,6 +35,52 @@ namespace session {
 namespace modules {
 namespace cpp {
 
+namespace {
+
+Error cppProjectStyle(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
+{
+   projects::ProjectContext& context = projects::projectContext();
+   
+   // ----- not in a project or not in a package: give up
+   if (!context.hasProject() || !context.isPackageProject())
+   {
+      pResponse->setResult("");
+      return Success();
+   }
+
+   // ----- Look for Rcpp or cpp11 in LinkingTo
+   const core::r_util::RPackageInfo& info = context.packageInfo();
+   const std::string& linkingTo = info.linkingTo();
+   
+   if (core::regex_utils::search(linkingTo, boost::regex("cpp11"))) 
+   {
+      pResponse->setResult("cpp11");
+      return Success();
+   }
+   
+   if (core::regex_utils::search(linkingTo, boost::regex("Rcpp"))) 
+   {
+      pResponse->setResult("Rcpp");
+      return Success();
+   }
+
+   // ---- check if cpp11 was vendored
+   FilePath cpp11Header = context.directory().completePath("inst/include/cpp11.hpp");
+   if (cpp11Header.exists())
+   {
+      pResponse->setResult("cpp11");
+      return Success();
+   }
+
+   // ---- give up
+   pResponse->setResult("");
+
+   return Success();
+}
+
+} // anonymous namespace
+
 Error initialize()
 {
    using boost::bind;
@@ -38,6 +89,7 @@ Error initialize()
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionCpp.R"))
+      (bind(registerRpcMethod, "cpp_project_style", cppProjectStyle))
    ;
    return initBlock.execute();
 }
