@@ -4710,4 +4710,77 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Fold Style:")
     @Key("displayFoldStyleLabel")
     String displayFoldStyleLabel();
+    
+    /**
+     * Translated "Ensure that source files end with newline"
+     *
+     * @return translated "Ensure that source files end with newline"
+     */
+    @DefaultMessage("Ensure that source files end with newline")
+    @Key("savingAutoAppendNewLineLabel")
+    String savingAutoAppendNewLineLabel();
+
+    /**
+     * Translated "Strip trailing horizontal whitespace when saving"
+     *
+     * @return translated "Strip trailing horizontal whitespace when saving"
+     */
+    @DefaultMessage("Strip trailing horizontal whitespace when saving")
+    @Key("savingStripTrailingWhitespaceLabel")
+    String savingStripTrailingWhitespaceLabel();
+    
+    /**
+     * Translated "Restore last cursor position when opening file"
+     *
+     * @return translated "Restore last cursor position when opening file"
+     */
+    @DefaultMessage("Restore last cursor position when opening file")
+    @Key("savingRestoreSourceDocumentCursorPositionLabel")
+    String savingRestoreSourceDocumentCursorPositionLabel();
+    
+    /**
+     * Translated "Default text encoding:"
+     *
+     * @return translated "Default text encoding:"
+     */
+    @DefaultMessage("Default text encoding:")
+    @Key("savingDefaultEncodingLabel")
+    String savingDefaultEncodingLabel();
+
+    /**
+     * Translated "Always save R scripts before sourcing"
+     *
+     * @return translated "Always save R scripts before sourcing"
+     */
+    @DefaultMessage("Always save R scripts before sourcing")
+    @Key("savingSaveBeforeSourcingLabel")
+    String savingSaveBeforeSourcingLabel();
+
+    /**
+     * Translated "Automatically save when editor loses focus"
+     *
+     * @return translated "Automatically save when editor loses focus"
+     */
+    @DefaultMessage("Automatically save when editor loses focus")
+    @Key("savingAutoSaveOnBlurLabel")
+    String savingAutoSaveOnBlurLabel();
+    
+    /**
+     * Translated "When editor is idle:"
+     *
+     * @return translated "When editor is idle:"
+     */
+    @DefaultMessage("When editor is idle:")
+    @Key("savingAutoSaveOnIdleLabel")
+    String savingAutoSaveOnIdleLabel();
+    
+    /**
+     * Translated "Idle period:"
+     *
+     * @return translated "Idle period:"
+     */
+    @DefaultMessage("Idle period:")
+    @Key("savingAutoSaveIdleMsLabel")
+    String savingAutoSaveIdleMsLabel();
+    
 }

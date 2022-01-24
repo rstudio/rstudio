@@ -190,9 +190,9 @@ public class EditingPreferencesPane extends PreferencesPane
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
 
       savePanel.add(headerLabel(constants_.generalHeaderLabel()));
-      savePanel.add(checkboxPref(prefs_.autoAppendNewline()));
-      savePanel.add(checkboxPref(prefs_.stripTrailingWhitespace()));
-      savePanel.add(checkboxPref(prefs_.restoreSourceDocumentCursorPosition()));
+      savePanel.add(checkboxPref(constants_.savingAutoAppendNewLineLabel(), prefs_.autoAppendNewline()));
+      savePanel.add(checkboxPref(constants_.savingStripTrailingWhitespaceLabel(), prefs_.stripTrailingWhitespace()));
+      savePanel.add(checkboxPref(constants_.savingRestoreSourceDocumentCursorPositionLabel(), prefs_.restoreSourceDocumentCursorPosition()));
 
       Label serializationLabel = headerLabel(constants_.editingSerializationLabel());
       serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
@@ -205,7 +205,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       savePanel.add(lessSpaced(encoding_ = new TextBoxWithButton(
-            prefs_.defaultEncoding().getTitle(),
+            constants_.savingDefaultEncodingLabel(),
             "",
             constants_.editingSavePanelAction(),
             null,
@@ -247,15 +247,17 @@ public class EditingPreferencesPane extends PreferencesPane
       setEncoding(prefs_.defaultEncoding().getGlobalValue());
 
       savePanel.add(spacedBefore(headerLabel(constants_.editingSavePanelAutosave())));
-      savePanel.add(checkboxPref(prefs_.saveBeforeSourcing()));
-      savePanel.add(checkboxPref(prefs_.autoSaveOnBlur()));
-      autoSaveOnIdle_ = new SelectWidget((Prefs.EnumValue) prefs_.autoSaveOnIdle(),
+      savePanel.add(checkboxPref(constants_.savingSaveBeforeSourcingLabel(), prefs_.saveBeforeSourcing()));
+      savePanel.add(checkboxPref(constants_.savingAutoSaveOnBlurLabel(), prefs_.autoSaveOnBlur()));
+      autoSaveOnIdle_ = new SelectWidget(
+            constants_.savingAutoSaveOnIdleLabel(),
+            (Prefs.EnumValue) prefs_.autoSaveOnIdle(),
             false,
             true,
             false);
       savePanel.add(autoSaveOnIdle_);
       autoSaveIdleMs_ = new SelectWidget(
-            prefs_.autoSaveIdleMs().getTitle(),
+            constants_.savingAutoSaveIdleMsLabel(),
             new String[] {
                "500ms",
                "1000ms",
