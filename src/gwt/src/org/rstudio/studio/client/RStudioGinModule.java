@@ -435,6 +435,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ChooseFileServerOperations.class).to(RemoteServer.class);
       bind(CodeToolsServerOperations.class).to(RemoteServer.class);
       bind(ConsoleServerOperations.class).to(RemoteServer.class);
+      bind(VirtualConsoleServerOperations.class).to(RemoteServer.class);
       bind(SourceServerOperations.class).to(RemoteServer.class);
       bind(FilesServerOperations.class).to(RemoteServer.class);
       bind(HistoryServerOperations.class).to(RemoteServer.class);

@@ -40,7 +40,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
-import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
+import org.rstudio.studio.client.workbench.views.console.model.VirtualConsoleServerOperations;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -102,11 +102,11 @@ public class VirtualConsole
    }
 
    @Inject 
-   private void initialize(ConsoleServerOperations consoleServer)
+   private void initialize(VirtualConsoleServerOperations consoleServer)
    {
       consoleServer_ = consoleServer;
    }
-
+   
    public void clear()
    {
       if (isVirtualized())
@@ -904,5 +904,5 @@ public class VirtualConsole
 
    // Injected ----
    private final Preferences prefs_;
-   private ConsoleServerOperations consoleServer_;
+   private VirtualConsoleServerOperations consoleServer_;
 }

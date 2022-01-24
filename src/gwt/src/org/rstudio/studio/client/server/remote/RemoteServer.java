@@ -692,6 +692,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
 
+   @Override
    public void consoleFollowHyperlink(String url, String text, String params, ServerRequestCallback<Void> requestCallback) {
       JSONArray array = new JSONArrayBuilder()
             .add(url)
