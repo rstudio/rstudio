@@ -4520,5 +4520,14 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Insert matching parens/quotes")
     @Key("editingInsertMatchingLabel")
     String editingInsertMatchingLabel();
+    
+    /**
+     * Translated "Use native pipe operator, |> (requires R 4.1+)"
+     *
+     * @return translated "Use native pipe operator, |> (requires R 4.1+)"
+     */
+    @DefaultMessage("Use native pipe operator, |> (requires R 4.1+)")
+    @Key("editingInsertNativePipeOperatorLabel")
+    String editingInsertNativePipeOperatorLabel();
 
 }
