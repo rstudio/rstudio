@@ -91,13 +91,11 @@ public class VirtualConsole
    }
 
    @Inject
-   public VirtualConsole(@Assisted Element parent, final Preferences prefs, VirtualConsoleServerOperations consoleServer)
+   public VirtualConsole(@Assisted Element parent, final Preferences prefs, final VirtualConsoleServerOperations consoleServer)
    {
       prefs_ = prefs;
       parent_ = parent;
       consoleServer_ = consoleServer;
-
-      RStudioGinjector.INSTANCE.injectMembers(this);
 
       VirtualScrollerManager.init();
    }
@@ -899,5 +897,5 @@ public class VirtualConsole
 
    // Injected ----
    private final Preferences prefs_;
-   private VirtualConsoleServerOperations consoleServer_;
+   private final VirtualConsoleServerOperations consoleServer_;
 }
