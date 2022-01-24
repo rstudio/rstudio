@@ -18,6 +18,16 @@ function(echo MESSAGE)
    execute_process(COMMAND echo "-- ${MESSAGE}")
 endfunction()
 
+# run yarn to ensure required packages are installed
+execute_process(
+	COMMAND
+		"@YARN@"
+	WORKING_DIRECTORY
+		"@CMAKE_CURRENT_SOURCE_DIR@/scripts"
+)
+
+
+# run the merge script
 execute_process(
 	COMMAND
 		"@NODEJS@"
