@@ -4529,5 +4529,14 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Use native pipe operator, |> (requires R 4.1+)")
     @Key("editingInsertNativePipeOperatorLabel")
     String editingInsertNativePipeOperatorLabel();
+    
+    /**
+     * Translated "Auto-indent code after paste"
+     *
+     * @return translated "Auto-indent code after paste"
+     */
+    @DefaultMessage("Auto-indent code after paste")
+    @Key("editingReindentOnPasteLabel")
+    String editingReindentOnPasteLabel();
 
 }
