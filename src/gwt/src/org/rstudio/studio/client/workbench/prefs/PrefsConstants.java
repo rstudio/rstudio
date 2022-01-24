@@ -4602,4 +4602,13 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("editingKeybindingsLabel")
     String editingKeybindingsLabel();
 
+    /**
+     * Translated "Focus console after executing from source"
+     *
+     * @return translated "Focus console after executing from source"
+     */
+    @DefaultMessage("Focus console after executing from source")
+    @Key("editingFocusConsoleAfterExecLabel")
+    String editingFocusConsoleAfterExecLabel();
+    
 }

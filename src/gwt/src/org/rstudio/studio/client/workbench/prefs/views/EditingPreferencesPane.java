@@ -124,7 +124,7 @@ public class EditingPreferencesPane extends PreferencesPane
       Label executionLabel = headerLabel(constants_.editingExecutionLabel());
       editingPanel.add(executionLabel);
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      editingPanel.add(checkboxPref(prefs_.focusConsoleAfterExec()));
+      editingPanel.add(checkboxPref(constants_.editingFocusConsoleAfterExecLabel(), prefs_.focusConsoleAfterExec()));
 
       // DEBUG: Before i18n, this had ctrl+enter hard coded into the description as a way of indicating to reader what
       // this "execution" setting meant.  Current translation does not include that, but maybe we could map the
