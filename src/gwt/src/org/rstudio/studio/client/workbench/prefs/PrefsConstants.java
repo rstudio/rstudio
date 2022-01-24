@@ -4619,5 +4619,95 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Ctrl+Enter executes:")
     @Key("editingExecutionBehaviorLabel")
     String editingExecutionBehaviorLabel();
+    
+    /**
+     * Translated "Highlight selected word"
+     *
+     * @return translated "Highlight selected word"
+     */
+    @DefaultMessage("Highlight selected word")
+    @Key("displayHighlightSelectedWordLabel")
+    String displayHighlightSelectedWordLabel();
+    
+    /**
+     * Translated "Highlight selected line"
+     *
+     * @return translated "Highlight selected line"
+     */
+    @DefaultMessage("Highlight selected line")
+    @Key("displayHighlightSelectedLineLabel")
+    String displayHighlightSelectedLineLabel();
+    
+    /**
+      * Translated "Show line numbers"
+      *
+      * @return translated "Show line numbers"
+      */
+    @DefaultMessage("Show line numbers")
+    @Key("displayShowLineNumbersLabel")
+    String displayShowLineNumbersLabel();
+    
+    /**
+     * Translated "Show margin"
+     *
+     * @return translated "Show margin"
+     */
+    @DefaultMessage("Show margin")
+    @Key("displayShowMarginLabel")
+    String displayShowMarginLabel();
+    
+    /**
+     * Translated "Show whitespace characters"
+     *
+     * @return translated "Show whitespace characters"
+     */
+    @DefaultMessage("Show whitespace characters")
+    @Key("displayShowInvisiblesLabel")
+    String displayShowInvisiblesLabel();
 
+    /**
+     * Translated "Show indent guides"
+     *
+     * @return translated "Show indent guides"
+     */
+    @DefaultMessage("Show indent guides")
+    @Key("displayShowIndentGuidesLabel")
+    String displayShowIndentGuidesLabel();
+    
+    /**
+     * Translated "Blinking cursor"
+     *
+     * @return translated "Blinking cursor"
+     */
+    @DefaultMessage("Blinking cursor")
+    @Key("displayBlinkingCursorLabel")
+    String displayBlinkingCursorLabel();
+    
+    /**
+     * Translated "Allow scroll past end of document"
+     *
+     * @return translated "Allow scroll past end of document"
+     */
+    @DefaultMessage("Allow scroll past end of document")
+    @Key("displayScrollPastEndOfDocumentLabel")
+    String displayScrollPastEndOfDocumentLabel();
+    
+    
+    /**
+     * Translated "Allow drag and drop of text"
+     *
+     * @return translated "Allow drag and drop of text"
+     */
+    @DefaultMessage("Allow drag and drop of text")
+    @Key("displayEnableTextDragLabel")
+    String displayEnableTextDragLabel();
+    
+    /**
+     * Translated "Fold Style:"
+     *
+     * @return translated "Fold Style:"
+     */
+    @DefaultMessage("Fold Style:")
+    @Key("displayFoldStyleLabel")
+    String displayFoldStyleLabel();
 }

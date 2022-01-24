@@ -164,21 +164,23 @@ public class EditingPreferencesPane extends PreferencesPane
 
       VerticalTabPanel displayPanel = new VerticalTabPanel(ElementIds.EDIT_DISPLAY_PREFS);
       displayPanel.add(headerLabel(constants_.generalHeaderLabel()));
-      displayPanel.add(checkboxPref(prefs_.highlightSelectedWord()));
-      displayPanel.add(checkboxPref(prefs_.highlightSelectedLine()));
-      displayPanel.add(checkboxPref(prefs_.showLineNumbers()));
-      displayPanel.add(tight(showMargin_ = checkboxPref(prefs_.showMargin(), false /*defaultSpace*/)));
+      displayPanel.add(checkboxPref(constants_.displayHighlightSelectedWordLabel(), prefs_.highlightSelectedWord()));
+      displayPanel.add(checkboxPref(constants_.displayHighlightSelectedLineLabel(), prefs_.highlightSelectedLine()));
+      displayPanel.add(checkboxPref(constants_.displayShowLineNumbersLabel(), prefs_.showLineNumbers()));
+      displayPanel.add(tight(showMargin_ = checkboxPref(constants_.displayShowMarginLabel(), prefs_.showMargin(), false /*defaultSpace*/)));
       displayPanel.add(indent(marginCol_ = numericPref(prefs_.marginColumn())));
-      displayPanel.add(checkboxPref(prefs_.showInvisibles()));
-      displayPanel.add(checkboxPref(prefs_.showIndentGuides()));
-      displayPanel.add(checkboxPref(prefs_.blinkingCursor()));
-      displayPanel.add(checkboxPref(prefs_.scrollPastEndOfDocument()));
-      displayPanel.add(checkboxPref(prefs_.enableTextDrag()));
+      displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
+      displayPanel.add(checkboxPref(constants_.displayShowIndentGuidesLabel(), prefs_.showIndentGuides()));
+      displayPanel.add(checkboxPref(constants_.displayBlinkingCursorLabel(), prefs_.blinkingCursor()));
+      displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
+      displayPanel.add(checkboxPref(constants_.displayEnableTextDragLabel(), prefs_.enableTextDrag()));
       displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));
       displayPanel.add(extraSpaced(
          checkboxPref(prefs_.rainbowParentheses(), false /* defaultSpace */)));
 
-      foldMode_ = new SelectWidget((Prefs.EnumValue) prefs_.foldStyle(),
+      foldMode_ = new SelectWidget(
+            constants_.displayFoldStyleLabel(),
+            (Prefs.EnumValue) prefs_.foldStyle(),
             false,
             true,
             false);
