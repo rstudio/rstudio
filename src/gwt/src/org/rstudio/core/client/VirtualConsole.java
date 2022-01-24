@@ -802,7 +802,6 @@ public class VirtualConsole
          else 
          {
             AnchorElement anchor = Document.get().createAnchorElement();
-            anchor.setHref(hyperlink_.url);
             anchor.setAttribute("params", hyperlink_.params);
             if (className != null)
                anchor.addClassName(clazz);
