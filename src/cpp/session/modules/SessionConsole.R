@@ -47,7 +47,7 @@
     # file://some/file/path
     file <- sub("file://", "", url)
     line <- -1L
-    line <- -1L
+    col <- -1L
     
     if (!is.null(params$line)) {
       line <- as.numeric(params$line)
