@@ -53,5 +53,11 @@ public class NullCompletionManager implements CompletionManager
    public void detach()
    {
    }
+   
+   public boolean canContinueCompletionsAfterBackspace()
+   {
+      return true;
+   }
+   
 
 }

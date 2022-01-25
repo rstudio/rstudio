@@ -128,6 +128,14 @@ public abstract class DelegatingCompletionManager implements CompletionManager
       CompletionManager manager = getCurrentCompletionManager();
       manager.close();
    }
+   
+   @Override
+   public boolean canContinueCompletionsAfterBackspace()
+   {
+      CompletionManager manager = getCurrentCompletionManager();
+      return manager.canContinueCompletionsAfterBackspace();
+   }
+   
 
    @Override
    public void onPaste(final PasteEvent event)

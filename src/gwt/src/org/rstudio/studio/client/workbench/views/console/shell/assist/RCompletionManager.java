@@ -2158,6 +2158,12 @@ public class RCompletionManager implements CompletionManager
       helpRequest_.schedule(milliseconds);
    }
    
+   public boolean canContinueCompletionsAfterBackspace()
+   {
+      return true;
+   }
+   
+   
    private boolean isDisabled()
    {
       // Disable the completion manager while a snippet tabstop

@@ -149,10 +149,29 @@ public class YamlCompletionManager extends CompletionManagerBase
    }
    
    @Override
+   public boolean canContinueCompletionsAfterBackspace()
+   {
+      // see what the line will look like after the backspace
+      String line = docDisplay_.getCurrentLine();
+      line = line.substring(0, docDisplay_.getCursorPosition().getColumn() - 1);
+
+      // check for empty
+      return !line.trim().isEmpty();
+   }
+   
+   @Override
    public boolean allowInComment()
    {
       return true;
    }
+   
+   @Override
+   public boolean isBoundaryCharacter(char ch)
+   {
+      return ch == ':' || ch == ' '; 
+   }
+   
+
    
    private final YamlEditorToolsProviders providers_ = new YamlEditorToolsProviders();
 

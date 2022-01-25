@@ -506,10 +506,17 @@ public abstract class CompletionManagerBase
             // associated action
             if (keyCode == KeyCodes.KEY_BACKSPACE)
             {
-               Scheduler.get().scheduleDeferred(() ->
+               if (canContinueCompletionsAfterBackspace())
                {
-                  beginSuggest(false, false, false);
-               });
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     beginSuggest(false, false, false);
+                  });
+               } 
+               else
+               {
+                  invalidatePendingRequests();
+               }
                
                return false;
             }
@@ -633,6 +640,11 @@ public abstract class CompletionManagerBase
       
       }
       
+      return true;
+   }
+   
+   public boolean canContinueCompletionsAfterBackspace()
+   {
       return true;
    }
    

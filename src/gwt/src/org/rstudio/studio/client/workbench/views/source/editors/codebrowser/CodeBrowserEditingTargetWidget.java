@@ -212,6 +212,13 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          {
          }
          
+         @Override
+         public boolean canContinueCompletionsAfterBackspace()
+         {
+            return true;
+         }
+         
+         
       }); 
       
       initWidget(panel_);

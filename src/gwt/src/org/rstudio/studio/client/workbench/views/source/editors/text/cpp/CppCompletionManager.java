@@ -407,6 +407,11 @@ public class CppCompletionManager implements CompletionManager
       private CompletionPosition completionPosition_;
    }
 
+   public boolean canContinueCompletionsAfterBackspace()
+   {
+      return true;
+   }
+   
 
    private CppCompletionPopupMenu getCompletionPopup()
    {
