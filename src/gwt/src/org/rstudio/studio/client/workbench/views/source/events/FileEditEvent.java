@@ -41,24 +41,18 @@ public class FileEditEvent extends GwtEvent<FileEditEvent.Handler>
       public native final FilePosition getFilePosition() /*-{
          return this.position;
       }-*/;
-
-      public native final String getCallback() /*-{
-         return this.callback;
-      }-*/;
    }
 
    public FileEditEvent(Data data)
    {
       file_ = data.getFile();
       position_ = data.getFilePosition();
-      callback_ = data.getCallback();
    }
    
    public FileEditEvent(FileSystemItem file)
    {
       file_ = file;
       position_ = null;
-      callback_ = null;
    }
 
    public FileSystemItem getFile()
@@ -69,11 +63,6 @@ public class FileEditEvent extends GwtEvent<FileEditEvent.Handler>
    public FilePosition getFilePosition()
    {
       return position_;
-   }
-
-   public String getCallback()
-   {
-      return callback_;
    }
 
    @Override
@@ -90,6 +79,5 @@ public class FileEditEvent extends GwtEvent<FileEditEvent.Handler>
 
    private final FileSystemItem file_;
    private final FilePosition position_;
-   private final String callback_;
 }
 

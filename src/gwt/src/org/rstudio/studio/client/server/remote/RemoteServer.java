@@ -2026,17 +2026,6 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void invokeFileEditCallback(String handle, 
-                                      String file, 
-                                      ServerRequestCallback<Void> requestCallback)
-   {
-      JSONArray params = new JSONArray();
-      params.set(0, new JSONString(handle));
-      params.set(1, new JSONString(file));
-      sendRequest(RPC_SCOPE, INVOKE_FILE_EDIT_CALLBACK, params, requestCallback);
-   }
-
-   @Override
    public void createProject(String projectFile,
                              NewPackageOptions newPackageOptions,
                              NewShinyAppOptions newShinyAppOptions,
@@ -6652,7 +6641,6 @@ public class RemoteServer implements Server
    private static final String MANIPULATOR_PLOT_CLICKED = "manipulator_plot_clicked";
 
    private static final String EXECUTE_R_CODE = "execute_r_code";
-   private static final String INVOKE_FILE_EDIT_CALLBACK = "invoke_file_edit_callback";
 
    private static final String GET_NEW_PROJECT_CONTEXT = "get_new_project_context";
    private static final String GET_NEW_SESSION_URL = "get_new_session_url";

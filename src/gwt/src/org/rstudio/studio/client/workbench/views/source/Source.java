@@ -2281,12 +2281,6 @@ public class Source implements InsertSourceEvent.Handler,
          FileSystemItem file = event.getFile();
          file.setFocusOnNavigate(true);
          fileTypeRegistry_.editFile(file, event.getFilePosition());
-
-         String callback = event.getCallback();
-         if (callback.length() > 0)
-         {
-            server_.invokeFileEditCallback(callback, event.getFile().getPath(), new VoidServerRequestCallback());
-         }
       }
    }
 
