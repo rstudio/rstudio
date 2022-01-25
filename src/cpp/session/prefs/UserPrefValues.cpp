@@ -1532,6 +1532,19 @@ core::Error UserPrefValues::setDocumentAuthor(std::string val)
 }
 
 /**
+ * Use current date when rendering document
+ */
+bool UserPrefValues::rmdAutoDate()
+{
+   return readPref<bool>("rmd_auto_date");
+}
+
+core::Error UserPrefValues::setRmdAutoDate(bool val)
+{
+   return writePref("rmd_auto_date", val);
+}
+
+/**
  * The path to the preferred R Markdown template.
  */
 std::string UserPrefValues::rmdPreferredTemplatePath()
@@ -3119,6 +3132,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShinyBackgroundJobs,
       kPlumberViewerType,
       kDocumentAuthor,
+      kRmdAutoDate,
       kRmdPreferredTemplatePath,
       kRmdViewerType,
       kShowPublishDiagnostics,

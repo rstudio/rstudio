@@ -177,6 +177,11 @@ public class TextBoxWithButton extends Composite
       useDefaultValue_ = useDefaultValue;
    }
 
+   public void setPlaceholder(String text)
+   {
+      textBox_.getElement().setPropertyString("placeholder", text);
+   }
+
    public void setText(String text)
    {
       String oldText = getText();

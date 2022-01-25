@@ -56,6 +56,20 @@ public class SelectWidget extends Composite
          isMultipleSelect, horizontalLayout, listOnLeft);
    }
 
+   /**
+    * Infers SelectWidget values, and default text from PrevValue
+    * @param enumValue
+    */
+   public SelectWidget(String title,
+                       EnumValue enumValue,
+                       boolean isMultipleSelect,
+                       boolean horizontalLayout,
+                       boolean listOnLeft)
+   {
+      this(title, enumValue.getReadableValues(), enumValue.getAllowedValues(),
+         isMultipleSelect, horizontalLayout, listOnLeft);
+   }
+
    public SelectWidget(String label)
    {
       this(label, null, false);
@@ -121,6 +135,7 @@ public class SelectWidget extends Composite
          values = options;
 
       listBox_ = new ListBox();
+      listBox_.getElement().getStyle().setProperty("minHeight", "20px");
       listBox_.setMultipleSelect(isMultipleSelect);
 
       // set the element ID if one is provided, otherwise let it get auto generated

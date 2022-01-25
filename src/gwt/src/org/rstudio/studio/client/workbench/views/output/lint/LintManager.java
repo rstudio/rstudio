@@ -314,7 +314,7 @@ public class LintManager
                         docDisplay_.getFileType().isR();                  
                   if ((isRmd || isRmdRChunk) && userPrefs_.showDiagnosticsYaml().getValue())
                   {
-                     yamlLinter_.getLint(yamlLint -> {
+                     yamlLinter_.getLint(context.explicit, yamlLint -> {
                         JsArray<LintItem> allLint = JsArray.createArray().cast();
                         for (int i = 0; i < lint.length(); i++)
                            allLint.push(lint.get(i));
@@ -339,7 +339,7 @@ public class LintManager
    
    private void performYamlLintRequest(final LintContext context)
    {
-      yamlLinter_.getLint(lint -> {
+      yamlLinter_.getLint(context.explicit, lint -> {
          showLint(context, lint, false);
       });
    }
