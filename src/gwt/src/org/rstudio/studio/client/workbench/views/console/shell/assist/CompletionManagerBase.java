@@ -340,9 +340,19 @@ public abstract class CompletionManagerBase
          completionCache_.flush();
    }
    
-   // this is a stub to help handle redirection that's done via
+   // This is a stub to help handle redirection that's done via
    // the DelegatingCompletionManager class, without requiring every
-   // sub-class to know about the delegation being done
+   // sub-class to know about the delegation being done.
+   //
+   // The DelegatingCompletionManager class overrides this method,
+   // thereby allowing CompletionManagerBase to "know" what the active
+   // completion manager is in multi-mode documents.
+   //
+   // For single-mode documents, we just return null, and use the
+   // default implementation's behavior. Or, if the subclass has
+   // overridden our method, then that method will be visible first
+   // and used anyway.
+   
    @Override
    public CompletionManager getActiveCompletionManager()
    {
