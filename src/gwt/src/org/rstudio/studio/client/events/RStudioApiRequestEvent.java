@@ -150,6 +150,9 @@ public class RStudioApiRequestEvent extends GwtEvent<RStudioApiRequestEvent.Hand
       }
       
       public final native String getPath() /*-{ return this["path"]; }-*/;
+      public final native int getRow() /*-{ return this["row"]; }-*/;
+      public final native int getColumn() /*-{ return this["column"]; }-*/;
+      public final native boolean getMoveCursor() /*-{ return this["moveCursor"]; }-*/;
    }
    
    public static class DocumentNewData extends JavaScriptObject
