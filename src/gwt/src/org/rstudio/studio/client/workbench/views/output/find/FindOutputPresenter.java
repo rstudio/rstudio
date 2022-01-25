@@ -222,6 +222,8 @@ public class FindOutputPresenter extends BasePresenter
             for (String pattern : dialogState_.getExcludeFilePatterns())
                excludeFilePatterns.push(pattern);
 
+            // this event is only ever triggered when dialogState_.isRegex() is true
+            // so we don't need to check for and handle dialogState_.isWholeWord() here
             server_.previewReplace(dialogState_.getQuery(),
                                    dialogState_.isRegex(),
                                    !dialogState_.isCaseSensitive(),
@@ -302,8 +304,12 @@ public class FindOutputPresenter extends BasePresenter
                         for (String pattern : dialogState_.getExcludeFilePatterns())
                            excludeFilePatterns.push(pattern);
 
-                        server_.completeReplace(dialogState_.getQuery(),
-                                                dialogState_.isRegex(),
+                        String serverQuery = dialogState_.getQuery();
+                        if (dialogState_.isWholeWord())
+                           serverQuery = "\\b" + serverQuery + "\\b";
+
+                        server_.completeReplace(serverQuery,
+                                                dialogState_.isRegex() || dialogState_.isWholeWord(),
                                                 !dialogState_.isCaseSensitive(),
                                                 searchPath,
                                                 includeFilePatterns,
