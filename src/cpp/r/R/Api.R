@@ -303,7 +303,9 @@
    # then use a separate API (this allows the API to work regardless of
    # whether we're in source or visual mode)
    if (identical(line, -1L) && identical(col, -1L))
-      return(invisible(.Call("rs_fileEdit", filePath, PACKAGE = "(embedding)")))
+   {
+      return(invisible(sapply(filePath, .rs.api.documentOpen)))
+   } 
 
    # send event to client
    .rs.enqueClientEvent("jump_to_function", list(
