@@ -154,6 +154,12 @@ public class YamlCompletionManager extends CompletionManagerBase
       return true;
    }
    
+   @Override
+   protected boolean isCompletionCharacter(char ch)
+   {
+      return ch != ':' && ch != ' ' && ch != '\t';
+   }
+   
    private final YamlEditorToolsProviders providers_ = new YamlEditorToolsProviders();
 
    private final CompletionContext context_;
