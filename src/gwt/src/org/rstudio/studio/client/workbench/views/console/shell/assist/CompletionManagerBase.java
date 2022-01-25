@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.core.client.GWT;
+
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
@@ -57,7 +58,9 @@ import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 public abstract class CompletionManagerBase
-      implements CompletionRequestContext.Host
+      implements CompletionRequestContext.Host,
+                 CompletionManager,
+                 CompletionManagerCommon
 {
    public abstract void goToHelp();
    public abstract void goToDefinition();
@@ -337,14 +340,44 @@ public abstract class CompletionManagerBase
          completionCache_.flush();
    }
    
+   // this is a stub to help handle redirection that's done via
+   // the DelegatingCompletionManager class, without requring every
+   // sub-class to know about the delegation being done
+   
+   @Override
+   public CompletionManager getActiveCompletionManager()
+   {
+      return (CompletionManager) null;
+   }
+   
    // Subclasses should override this to provide extra (e.g. context) completions.
    protected void addExtraCompletions(String token, List<QualifiedName> completions)
    {
+      CompletionManager manager = getActiveCompletionManager();
+      if (manager instanceof CompletionManagerBase)
+      {
+         CompletionManagerBase delegate = (CompletionManagerBase) manager;
+         delegate.addExtraCompletions(token, completions);
+      }
    }
    
    // Subclasses can override this if they want different behavior in
    // amending completions appropriate to their type
    protected String onCompletionSelected(QualifiedName requestedCompletion)
+   {
+      CompletionManager manager = getActiveCompletionManager();
+      if (manager instanceof CompletionManagerBase)
+      {
+         CompletionManagerBase delegate = (CompletionManagerBase) manager;
+         return delegate.onCompletionSelected(requestedCompletion);
+      }
+      else
+      {
+         return onCompletionSelectedDefault(requestedCompletion);
+      }
+   }
+   
+   protected String onCompletionSelectedDefault(QualifiedName requestedCompletion)
    {
       String value = requestedCompletion.name;
       int type = requestedCompletion.type;
@@ -368,6 +401,20 @@ public abstract class CompletionManagerBase
    // e.g. displaying a tooltip or similar
    protected void onCompletionInserted(QualifiedName completion)
    {
+      CompletionManager manager = getActiveCompletionManager();
+      if (manager instanceof CompletionManagerBase)
+      {
+         CompletionManagerBase delegate = (CompletionManagerBase) manager;
+         delegate.onCompletionInserted(completion);
+      }
+      else
+      {
+         onCompletionInsertedDefault(completion);
+      }
+   }
+      
+   protected void onCompletionInsertedDefault(QualifiedName completion)
+   {
       int type = completion.type;
       if (RCompletionType.isFunctionType(type))
       {
@@ -390,6 +437,20 @@ public abstract class CompletionManagerBase
    // considered part of identifiers / are relevant to a completion context.
    protected boolean isBoundaryCharacter(char ch)
    {
+      CompletionManager manager = getActiveCompletionManager();
+      if (manager instanceof CompletionManagerBase)
+      {
+         CompletionManagerBase delegate = (CompletionManagerBase) manager;
+         return delegate.isBoundaryCharacter(ch);
+      }
+      else
+      {
+         return isBoundaryCharacterDefault(ch);
+      }
+   }
+      
+   protected boolean isBoundaryCharacterDefault(char ch)
+   {
       boolean valid =
             Character.isLetterOrDigit(ch) ||
             ch == '.' ||
@@ -401,6 +462,20 @@ public abstract class CompletionManagerBase
    // Subclasses can override based on what characters might want to trigger
    // completions, or force a new completion request.
    protected boolean isTriggerCharacter(char ch)
+   {
+      CompletionManager manager = getActiveCompletionManager();
+      if (manager instanceof CompletionManagerBase)
+      {
+         CompletionManagerBase delegate = (CompletionManagerBase) manager;
+         return delegate.isTriggerCharacter(ch);
+      }
+      else
+      {
+         return isTriggerCharacterDefault(ch);
+      }
+   }
+      
+   protected boolean isTriggerCharacterDefault(char ch)
    {
       return false;
    }
