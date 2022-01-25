@@ -47,3 +47,5 @@ GSYMS
 GTAGS
 TODO-INTERNAL
 *.pid
+
+node_modules/
