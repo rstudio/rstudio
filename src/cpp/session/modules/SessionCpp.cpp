@@ -21,7 +21,6 @@
 #include <core/Exec.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RPackageInfo.hpp>
-#include <core/regex/RegexMatch.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -51,14 +50,12 @@ std::string cppProjectStyleImpl()
    const core::r_util::RPackageInfo& info = context.packageInfo();
    const std::string& linkingTo = info.linkingTo();
    
-   boost::regex patternCpp11("cpp11");
-   if (core::regex_utils::search(linkingTo, patternCpp11)) 
+   if (boost::algorithm::contains(linkingTo, "cpp11")) 
    {
       return "cpp11";
    }
    
-   boost::regex patternRcpp("Rcpp");
-   if (core::regex_utils::search(linkingTo, patternRcpp)) 
+   if (boost::algorithm::contains(linkingTo, "Rcpp")) 
    {
       return "Rcpp";
    }
