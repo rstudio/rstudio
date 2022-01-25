@@ -1,19 +1,3 @@
-const { createFullPackageFileName } = require('./scripts/create-full-package-file-name.js');
-// This function makes sure that the correct filename is created and saved for the final DMG file.
-createFullPackageFileName();
-
-const dmgSize = {
-  height: 450,
-  width: 801,
-};
-const iconSize = Math.round((dmgSize.width * 12.3) / 100);
-
-const dmgIconPosition = { x: Math.round((dmgSize.width * 29.23) / 100), y: Math.round((dmgSize.height * 57.99) / 100) };
-const dmgApplicationsPosition = {
-  x: Math.round((dmgSize.width * 68.69) / 100),
-  y: Math.round((dmgSize.height * 57.99) / 100),
-};
-
 const config = {
   hooks: {
     postPackage: async (forgeConfig, options) => {
@@ -63,34 +47,7 @@ const config = {
     {
       name: '@electron-forge/maker-rpm',
       config: {},
-    },
-    {
-      name: '@electron-forge/maker-dmg',
-      config: {
-        format: 'ULFO',
-        name: 'Rstudio-electron-app',
-        background: './resources/background/dmg-background.tiff',
-        icon: './resources/icons/RStudio.icns',
-        iconSize,
-        additionalDMGOptions: {
-          window: {
-            size: dmgSize,
-          },
-        },
-        contents: [
-          {
-            ...dmgIconPosition,
-            type: 'file',
-            path: __dirname + '/out/RStudio-darwin-x64/RStudio.app',
-          },
-          {
-            ...dmgApplicationsPosition,
-            type: 'link',
-            path: '/Applications',
-          },
-        ],
-      },
-    },
+    }
   ],
   plugins: [
     [
