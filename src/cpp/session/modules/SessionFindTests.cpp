@@ -278,7 +278,7 @@ TEST_CASE("SessionFind")
    SECTION("Replace regex with quantifiers")
    {
       std::string line("helllooo");
-      const std::string regex("l+o+");
+      const std::string regex("l+o+X?");
       const std::string replacement("LO!");
       Replacer replacer(false);
       const size_t matchOn = 2;
@@ -303,6 +303,36 @@ TEST_CASE("SessionFind")
       replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
       CHECK(line.compare("good and more!") == 0);
       CHECK(replaceMatchOff == 3);
+   }
+
+   SECTION("Replace regex with bounded repeat and alternation")
+   {
+      std::string line("11 cats");
+      const std::string regex("\\d{2} (cat|dog)");
+      const std::string replacement("x");
+      Replacer replacer(false);
+      const size_t matchOn = 0;
+      const size_t matchOff = 5;
+      size_t replaceMatchOff;
+
+      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+      CHECK(line.compare("xs") == 0);
+      CHECK(replaceMatchOff == 0);
+   }
+
+   SECTION("Replace regex with square brackets and literal special characters")
+   {
+      std::string line("How are you? Mr. (x)");
+      const std::string regex("\\? [A-Z][a-z]{0,2}\\. \\(\\w\\)");
+      const std::string replacement("\\?!");
+      Replacer replacer(false);
+      const size_t matchOn = 11;
+      const size_t matchOff = 19;
+      size_t replaceMatchOff;
+
+      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+      CHECK(line.compare("How are you?!") == 0);
+      CHECK(replaceMatchOff == 12);
    }
 
 }
