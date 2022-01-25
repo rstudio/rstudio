@@ -4,7 +4,11 @@ import { execSync } from 'child_process';
 import { makeUniversalApp } from '@electron/universal';
 import { rm } from 'fs/promises';
 
-const [ node, script, x64AppPath, arm64AppPath, outPath ] = process.argv;
+const { node, script, x64AppPath, arm64AppPath, outPath } = process.argv;
+
+console.log("Merging electron...");
+console.log("args:");
+console.log({ node, script, x64AppPath, arm64AppPath, outPath });
 
 // build universal application in temporary directory,
 // then merge it all together when we're done
