@@ -639,7 +639,7 @@
    if (attr(output, "status") != 0) {
      errors <- paste(readLines(tmp), collapse = "\n")
      
-     .rs.stopf("Error while executing %s %s:\n%s", conda, paste(args, collapse=" "), errors)
+     .rs.stopf("Error executing %s %s:\n%s", conda, paste(args, collapse = " "), errors)
    }
    json <- .rs.fromJSON(paste(output, collapse = "\n"))
    envList <- unlist(json$envs)
