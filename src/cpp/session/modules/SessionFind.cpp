@@ -1757,8 +1757,7 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-      boost::regex_constants::syntax_option_type flags = boost::regex::perl | boost::regex::icase;
-      boost::regex find(findRegex, flags);
+      boost::regex find(findRegex, boost::regex::icase);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
