@@ -327,8 +327,6 @@
         escaped = escaped.replace(/[(][.][.][.][)]$/, "");
       } 
 
-      console.log(meta);
-
       escaped =
         "<i>" +
         escaped +
