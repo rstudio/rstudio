@@ -741,7 +741,7 @@ public abstract class CompletionManagerBase
       if (docDisplay_.isCursorInSingleLineString(allowInComment()))
          return false;
       
-      if (isCompletionCharacter(docDisplay_.getCharacterAtCursor()))
+      if (!isCompletionCharacter(docDisplay_.getCharacterAtCursor()))
          return false;
          
       String currentLine = docDisplay_.getCurrentLine();
