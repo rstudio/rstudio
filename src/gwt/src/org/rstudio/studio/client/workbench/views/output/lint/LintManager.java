@@ -172,7 +172,8 @@ public class LintManager
          public void onSourceFileSaveCompleted(
                SourceFileSaveCompletedEvent event)
          {
-            if (!docDisplay_.isFocused())
+            boolean isEmbedded = docDisplay_.getEditorBehavior().equals(EditorBehavior.AceBehaviorEmbedded);
+            if (!docDisplay_.isFocused() && !isEmbedded)
                return;
             
             if (userPrefs_.diagnosticsOnSave().getValue())
