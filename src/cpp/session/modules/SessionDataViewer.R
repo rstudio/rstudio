@@ -89,11 +89,11 @@
 
 .rs.addFunction("formatDataColumnList", function(col, ...)
 {
-   classes <- sapply(col, function(x) {
-      class(x)[[1L]]
-   })
-   sizes <- sapply(col, length)
-   paste0("<", classes, " [", sizes, "]>" )
+   formatted <- as.character(col)
+   large <- nchar(formatted) > 50L
+   formatted <- substr(formatted, 1, 50L)
+   formatted <- paste0(formatted, ifelse(large, " (...)", ""))
+   formatted
 })
 
 .rs.addFunction("formatDataColumnDefault", function(col, ...)
