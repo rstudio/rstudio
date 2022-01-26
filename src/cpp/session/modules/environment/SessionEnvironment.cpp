@@ -820,6 +820,10 @@ void onDetectChanges(module_context::ChangeSource /* source */)
    if (!s_monitoring)
       return;
 
+   // This operation may use the R runtime so don't run it if this RPC was run in the offline thread
+   if (!core::thread::isMainThread())
+      return;
+
    // Check for Python changes
    if (s_environmentLanguage == kEnvironmentLanguagePython &&
        !s_monitoredPythonModule.empty())
