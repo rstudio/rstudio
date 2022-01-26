@@ -52,8 +52,11 @@ echo "[i] Running codesign on package: ${package}"
 codesign-directory "${package}"
 
 echo "[i] Validating codesign signature"
-if ! codesign -dv --verbose=4 "${package}"; then
-	echo "[x] codesign failed [error code $?]"
+codesign -dv --verbose=4 "${package}"
+status=$?
+
+if [ "${status}" != "0" ]; then
+	echo "[x] codesign failed [error code ${status}]"
 	exit 1
 fi
 

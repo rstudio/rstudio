@@ -46,7 +46,7 @@ file(
 # if that output does not exist and needs to be created
 add_custom_command(
    WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
-   COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${YARN} make
+   COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${YARN} package
    OUTPUT "${ELECTRON_BUILD_DIR}/out"
 )
 

@@ -46,7 +46,7 @@ endif()
 execute_process(
    COMMAND
       "@CMAKE_CURRENT_SOURCE_DIR@/scripts/codesign-package.sh"
-      "@CMAKE_INSTALL_PREFIX@"
+      "@CMAKE_INSTALL_PREFIX@/RStudio.app"
       ${CODESIGN_FLAGS}
    WORKING_DIRECTORY
       "@CMAKE_INSTALL_PREFIX@"
