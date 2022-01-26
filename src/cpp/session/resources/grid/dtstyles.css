@@ -151,6 +151,12 @@ table.dataTable {
     min-width: 35px;
 }
 
+.truncated {
+    color: #abacad;
+    font-size: smaller;
+    font-style: italic;
+}
+
 .filterPopup {
     position: absolute;
     overflow: hidden;
@@ -325,10 +331,6 @@ th:focus {
 
 .manualSize, .autoSize {
     table-layout: fixed;
-}
-
-#rsGridData.manualSize {
-    display: table;
 }
 
 .cell, .headerCell {
