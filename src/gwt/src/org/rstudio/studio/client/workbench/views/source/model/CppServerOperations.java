@@ -47,7 +47,11 @@ public interface CppServerOperations extends BuildServerOperations
                 String docPath,
                 ServerRequestCallback<JsArray<CppDiagnostic>> requestCallback);
 
-   void projectGuessCppStyle(
-                ServerRequestCallback<String> requestCallback);                           
+   void cppProjectStyle(
+                ServerRequestCallback<String> requestCallback);  
+                
+   void cppSourceFile(
+                String path, 
+                ServerRequestCallback<Void> requestCallback);         
 
 }

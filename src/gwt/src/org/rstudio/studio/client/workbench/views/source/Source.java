@@ -913,7 +913,7 @@ public class Source implements InsertSourceEvent.Handler,
    @Handler
    public void onNewCppDoc()
    {
-      server_.projectGuessCppStyle(new ServerRequestCallback<String>()
+      server_.cppProjectStyle(new ServerRequestCallback<String>()
       {
 
          @Override
