@@ -116,7 +116,13 @@ export function removeStaleOptionsLockfile(): void {
 }
 
 export function rsessionExeName(): string {
-  return process.platform === 'win32' ? 'rsession.exe' : 'rsession';
+
+  switch (process.platform) {
+    case 'darwin': return process.arch === 'arm64' ? 'rsession-arm64' : 'rsession';
+    case 'win32': return 'rsession.exe';
+    default: return 'rsession';
+  }
+
 }
 
 // used to help find built C++ sources in developer configurations

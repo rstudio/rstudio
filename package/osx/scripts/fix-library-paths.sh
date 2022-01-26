@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# fix-library-paths-electron.sh
+# fix-library-paths.sh
 #
 # Copyright (C) 2022 by RStudio, PBC
 #
@@ -15,38 +15,37 @@
 #
 #
 
-
 if [ "$#" = "0" ]; then
    echo "Usage: $0 [frameworks directory] [prefix] [files]"
    exit 0
 fi
 
-IFS=":"
+# The FILES argument can be a glob, e.g. '*.dylib', which may not exist
+# for local package builds (which might only have build components
+# for the current architecture).
+shopt -s nullglob
 
 DIR="$1"
 PREFIX="$2"
-FILES=$3
-echo "FIXPATHS: $FILES"
+FILES="$3"
 
 cd "$DIR"
 for FILE in ${FILES}; do
-   
-   echo "\n\nFILE: $FILE\n\n"
 
-   install_name_tool -id "$FILE" $FILE
+   install_name_tool -id "${FILE}" "${FILE}"
 
-#    LIBPATHS=$( \
-#       otool -L "$FILE" | \
-#       tail -n+2 | \
-#       cut -d' ' -f1 | \
-#       sed 's|\t||g' | \
-#       grep -E 'homebrew|local'
-#    )
+   LIBPATHS=$( \
+      otool -L "${FILE}" | \
+      tail -n+2 | \
+      cut -d' ' -f1 | \
+      sed 's|\t||g' | \
+      grep -E 'homebrew|local'
+   )
 
-#    for LIBPATH in "${LIBPATHS}"; do
-#       OLD="${LIBPATH}"
-#       NEW="${PREFIX}/$(basename "${OLD}")"
-#       install_name_tool -change "${OLD}" "${NEW}" "$FILE"
-#    done
+   for LIBPATH in ${LIBPATHS}; do
+      OLD="${LIBPATH}"
+      NEW="${PREFIX}/$(basename "${OLD}")"
+      install_name_tool -change "${OLD}" "${NEW}" "${FILE}"
+   done
 
 done

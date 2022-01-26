@@ -1053,6 +1053,15 @@ public interface StudioClientApplicationConstants extends com.google.gwt.i18n.cl
     String useSystemDefaultText();
 
     /**
+     * Translated "User-specified...".
+     *
+     * @return translated "User-specified..."
+     */
+    @DefaultMessage("User-specified...")
+    @Key("userSpecifiedText")
+    String userSpecifiedText();
+
+    /**
      * Translated "Manage License...".
      *
      * @return translated "Manage License..."
