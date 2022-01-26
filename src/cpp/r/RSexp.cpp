@@ -35,6 +35,7 @@
 #include <core/Macros.hpp>
 #include <core/Log.hpp>
 #include <core/DateTime.hpp>
+#include <core/Thread.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
@@ -374,6 +375,9 @@ void listEnvironment(SEXP env,
                      Protect* pProtect,
                      std::vector<Variable>* pVariables)
 {
+   if (!ASSERT_MAIN_THREAD())
+      return;
+
    // reset passed vars
    pVariables->clear();
    
@@ -425,6 +429,9 @@ void listEnvironment(SEXP env,
 
 void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables)
 {
+   if (!ASSERT_MAIN_THREAD())
+      return;
+
    // reset passed vars
    pVariables->clear();
 

@@ -118,4 +118,8 @@ public class YamlEditorContext extends JavaScriptObject
       return this.position;
    }-*/;
    
+   public native final boolean getExplicit() /*-{
+      return this.explicit;
+   }-*/;
+   
 }
