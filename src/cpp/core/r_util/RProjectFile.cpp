@@ -1108,6 +1108,10 @@ Error writeProjectFile(const FilePath& projectFilePath,
             {
                build.append("PackageCleanBeforeInstall: Yes\n");
             }
+            else 
+            {
+               build.append("PackageCleanBeforeInstall: No\n");
+            }
 
             if (!config.packagePath.empty())
             {
