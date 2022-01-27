@@ -24,15 +24,6 @@ const config = {
       name: '@electron-forge/maker-rpm',
       config: {},
     },
-    {
-      // we don't actually use the created zipfile; this is just a hack
-      // to make sure electron forge does the other packaging steps we
-      // want it to do without complaining we don't have any packaging
-      // steps defined
-      name: '@electron-forge/maker-zip',
-      platforms: ['darwin'],
-      config: {},
-    }
   ],
   plugins: [
     [
