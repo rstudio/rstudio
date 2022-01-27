@@ -97,7 +97,7 @@ public class VisualModeLintSource implements LintSource
          item.setEndRow(item.getEndRow() + 1);
       }
 
-      chunk_.showLint(lint);
+      chunk_.showLint(lint, false);
    }
 
    @Override
