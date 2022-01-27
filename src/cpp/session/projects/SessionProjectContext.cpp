@@ -855,6 +855,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.buildType = std::string();
    defaultConfig.tutorialPath = std::string();
    defaultConfig.packageUseDevtools = prefs::userPrefs().useDevtools();
+   defaultConfig.packageCleanBeforeInstall = prefs::userPrefs().cleanBeforeInstall();
    return defaultConfig;
 }
 

@@ -1636,6 +1636,11 @@ private:
              module_context::isMinimumDevtoolsInstalled();
    }
 
+   bool cleanBeforeInstall()
+   {
+      return projectConfig().packageCleanBeforeInstall;
+   }
+
 public:
    virtual ~Build() = default;
 

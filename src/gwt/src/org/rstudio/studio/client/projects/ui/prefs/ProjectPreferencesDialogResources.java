@@ -41,6 +41,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String buildToolsRoxygenize();
       String buildToolsCheckBox();
       String buildToolsDevtools();
+      String buildToolsCleanBeforeInstall();
       String previewWebsite();
       String directorySelector();
       String websiteOutputFormat();

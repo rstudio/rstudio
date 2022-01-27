@@ -390,6 +390,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["root_document"] = config.rootDocument;
    configJson["build_type"] = config.buildType;
    configJson["package_use_devtools"] = config.packageUseDevtools;
+   configJson["package_clean_before_install"] = config.packageCleanBeforeInstall;
    configJson["package_path"] = config.packagePath;
    configJson["package_install_args"] = config.packageInstallArgs;
    configJson["package_build_args"] = config.packageBuildArgs;
@@ -631,6 +632,7 @@ Error writeProjectConfig(const json::Object& configJson)
                     configJson,
                     "build_type", config.buildType,
                     "package_use_devtools", config.packageUseDevtools,
+                    "package_clean_before_install", config.packageCleanBeforeInstall,
                     "package_path", config.packagePath,
                     "package_install_args", config.packageInstallArgs,
                     "package_build_args", config.packageBuildArgs,
