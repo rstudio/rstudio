@@ -471,6 +471,7 @@ try {
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
           trigger_external_build('IDE/macos-pipeline')
+          trigger_external_build('IDE/macos-electron')
         }
 
         parallel parallel_containers
