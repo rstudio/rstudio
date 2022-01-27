@@ -636,8 +636,9 @@
    args <- c("env", "list", "--json", "--quiet")
    tmp <- tempfile()
    output <- system2(conda, args, stdout = TRUE, stderr = tmp)
-   exit_code <- attr(output, "status")
-   if ( !is.null(exit_code) && !identical(exit_code, 0)) {
+   
+   status <- .rs.nullCoalesce(attr(output, "status", exact = TRUE), 0L)
+   if (!identical(status, 0L)) {
      errors <- paste(readLines(tmp), collapse = "\n")
      .rs.stopf("Error executing %s %s:\n%s", conda, paste(args, collapse = " "), errors)
    }
