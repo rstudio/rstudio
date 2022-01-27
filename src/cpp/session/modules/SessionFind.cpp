@@ -1757,11 +1757,7 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-
-      // egrep (grep -E) flavor regex includes POSIX ERE
-      boost::regex_constants::syntax_option_type flags = boost::regex::egrep & boost::regex::bk_vbar;
-      flags = flags | boost::regex::icase;
-      boost::regex find(findRegex, flags);
+      boost::regex find(findRegex, boost::regex::icase);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
@@ -1786,8 +1782,7 @@ core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-      boost::regex_constants::syntax_option_type flags = boost::regex::egrep & boost::regex::bk_vbar;
-      boost::regex find(findRegex, flags);
+      boost::regex find(findRegex);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
