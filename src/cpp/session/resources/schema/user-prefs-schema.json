@@ -1149,6 +1149,12 @@
             "title": "Use the devtools R package if available",
             "description": "Whether to use the devtools R package."
         },
+        "clean_before_install": {
+            "type": "boolean",
+            "default": true,
+            "title": "Clean before install", 
+            "description": "Clean before install."
+        },
         "use_internet2": {
             "type": "boolean",
             "default": true,
