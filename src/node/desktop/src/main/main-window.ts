@@ -31,6 +31,7 @@ import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-
 import { CloseServerSessions } from './session-servers-overlay';
 import { waitForUrlWithTimeout } from './utils';
 import { DesktopBrowserWindow } from './desktop-browser-window';
+import { i18n } from '../locales/i18n-manager';
 
 export function closeAllSatellites(mainWindow: BrowserWindow): void {
   const topLevels = BrowserWindow.getAllWindows();
@@ -177,7 +178,7 @@ export class MainWindow extends GwtWindow {
       logger().logError(error);
 
       dialog.showMessageBoxSync(this.window, {
-        message: 'The R session failed to start.',
+        message: i18n.__('rSessionFailedToStart'),
         type: 'error',
         title: appState().activation().editionName(),
       });

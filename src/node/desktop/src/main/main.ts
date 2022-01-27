@@ -23,6 +23,7 @@ import { Application, kLogLevel } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
 import { createStandaloneErrorDialog } from './utils';
+import { i18n } from '../locales/i18n-manager';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -39,7 +40,7 @@ class RStudioMain {
       await this.startup();
     } catch (error: unknown) {
       const err = safeError(error);
-      await createStandaloneErrorDialog('Unhandled Exception', err.message);
+      await createStandaloneErrorDialog(i18n.__('unhandledException'), err.message);
       console.error(err.message); // logging possibly not available this early in startup
       app.exit(1);
     }

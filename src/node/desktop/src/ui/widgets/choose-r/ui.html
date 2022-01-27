@@ -1,37 +1,80 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Choose R Installation</title>
+    <title id="i18n-chooseRInstallation"></title>
   </head>
 
   <body>
-    <p>RStudio requires an existing installation of R.</p>
-    <p>Please select the version of R to use.</p>
+    <p id="i18n-rstudioRequiresAnExistingRInstallationTitle"></p>
+    <p id="i18n-rstudioRequiresAnExistingRInstallationSubtitle"></p>
 
     <div>
       <input type="radio" id="use-default-64" name="r" value="use-default-64" checked />
-      <label for="use-default-64">Use your machine's default 64-bit version of R</label>
+      <label for="use-default-64" id="i18n-useYourMachineDefault64BitR"></label>
     </div>
 
     <div>
       <input type="radio" id="use-default-32" name="r" value="use-default-32" />
-      <label for="use-default-32">Use your machine's default 32-bit version of R</label>
+      <label for="use-default-32" id="i18n-useYourMachineDefault32BitR"></label>
     </div>
 
     <div>
       <input type="radio" id="use-custom" name="r" value="use-custom" />
-      <label for="use-custom">Choose a specific version of R:</label>
+      <label for="use-custom" id="i18n-chooseASpecificVersionOfR"></label>
     </div>
 
     <select id="select" class="select" name="select" size="7"></select>
 
     <div class="footer-left">
-      <button id="button-browse" class="button" type="button">Browse...</button>
+      <button id="button-browse" class="button" type="button"></button>
     </div>
 
     <div class="footer-right">
-      <button id="button-ok" class="button" type="button">OK</button>
-      <button id="button-cancel" class="button" type="button">Cancel</button>
+      <button id="button-ok" class="button" type="button"></button>
+      <button id="button-cancel" class="button" type="button"></button>
     </div>
   </body>
+  <script type="module">
+    import { i18n } from '../../locales/i18n-manager';
+
+    const addI18n = () => {
+      const i18nIds = [
+        'chooseRInstallation',
+        'rstudioRequiresAnExistingRInstallationTitle',
+        'rstudioRequiresAnExistingRInstallationSubtitle',
+        'useYourMachineDefault64BitR',
+        'useYourMachineDefault32BitR',
+        'chooseASpecificVersionOfR',
+        'browseDots',
+        'okCaps',
+        'cancel',
+      ].map((id) => 'i18n-' + id);
+
+      try {
+        i18nIds.forEach((id) => {
+          let elementId = id;
+          switch (id.replace('i18n-', '')) {
+            case 'browseDots':
+              elementId = 'button-browse';
+              break;
+            case 'okCaps':
+              elementId = 'button-ok';
+              break;
+            case 'cancel':
+              elementId = 'button-cancel';
+              break;
+            default:
+              break;
+          }
+          document.getElementById(elementId).innerHTML = i18n.__(id.replace('i18n-', ''));
+        });
+      } catch (err) {
+        console.log('Error occurred when loading i18n: ', err);
+      }
+    };
+
+    window.addEventListener('load', function () {
+      addI18n();
+    });
+  </script>
 </html>

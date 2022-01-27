@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <title>Initializing R</title>
+    <title id="i18n-initializingR"></title>
     <style>
       h1 {
         margin-left: auto;
@@ -51,7 +51,7 @@
         viewBox="0 0 724 561"
         style="position: absolute; top: 0; left: 0"
       >
-        <title>R Logo</title>
+        <title id="i18n-rLogo"></title>
         <defs>
           <linearGradient
             id="gradientFill-1"
@@ -91,8 +91,38 @@
       </svg>
     </div>
 
-    <h1>Initializing R</h1>
+    <h1 id="i18n-initializingR"></h1>
 
-    <p>The R session is initializing &mdash; please wait a moment...</p>
+    <p id="i18n-theRsessionIsInitializing"></p>
   </body>
+  <script type="module">
+    import { i18n } from '../../locales/i18n-manager';
+
+    const addI18n = () => {
+      const i18nIds = ['initializingR', 'rLogo', 'initializingR'].map((id) => 'i18n-' + id);
+
+      try {
+        i18nIds.forEach((id) => {
+          let elementId = id;
+          switch (id.replace('i18n-', '')) {
+            case 'theRsessionIsInitializing':
+              document.getElementById(elementId).innerHTML =
+                i18n.__(id.replace('i18n-', '')) +
+                ' &mdash; ' +
+                i18n.__('pleaseWaitAMomentDotsLowerCase'.replace('i18n-', ''));
+              break;
+            default:
+              document.getElementById(elementId).innerHTML = i18n.__(id.replace('i18n-', ''));
+              break;
+          }
+        });
+      } catch (err) {
+        console.log('Error occurred when loading i18n: ', err);
+      }
+    };
+
+    window.addEventListener('load', function () {
+      addI18n();
+    });
+  </script>
 </html>

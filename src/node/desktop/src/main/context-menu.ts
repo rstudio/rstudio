@@ -15,6 +15,7 @@
 
 import { BrowserWindow, clipboard, dialog, Menu } from 'electron';
 import path from 'path';
+import { i18n } from '../locales/i18n-manager';
 import { createStandaloneErrorDialog } from './utils';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
@@ -26,7 +27,7 @@ function showContextMenuImageTemplate(
   return [
     // Save Image As...
     {
-      label: 'Save Image As...',
+      label: i18n.__('saveImageAsDots'),
       click: async () => {
         // ask the user for a download file path.  in theory, we could let the
         // default download handler do this, but Electron appears to barf if the
@@ -34,9 +35,9 @@ function showContextMenuImageTemplate(
         const webContents = event.sender;
         const window = BrowserWindow.fromWebContents(webContents) as BrowserWindow;
         const downloadPath = dialog.showSaveDialogSync(window, {
-          title: 'Save Image As',
+          title: i18n.__('saveImageAs'),
           defaultPath: path.basename(params.srcURL),
-          buttonLabel: 'Save',
+          buttonLabel: ('save'),
           properties: ['createDirectory'],
         });
 
@@ -53,12 +54,12 @@ function showContextMenuImageTemplate(
           item.once('done', (event, state) => {
             switch (state) {
               case 'cancelled': {
-                dialog.showErrorBox('Error Downloading Image', 'The download was cancelled.');
+                dialog.showErrorBox(i18n.__('errorDownloadingImage'), i18n.__('downloadCancelledMessage'));
                 break;
               }
 
               case 'interrupted': {
-                dialog.showErrorBox('Error Downloading Image', 'The download was interrupted.');
+                dialog.showErrorBox(i18n.__('errorDownloadingImage'), i18n.__('downloadInterruptedMessage'));
                 break;
               }
             }
@@ -72,7 +73,7 @@ function showContextMenuImageTemplate(
 
     // Copy Image
     {
-      label: 'Copy Image',
+      label: i18n.__('copyImage'),
       click: () => {
         event.sender.copyImageAt(params.x, params.y);
       },
@@ -80,7 +81,7 @@ function showContextMenuImageTemplate(
 
     // Copy Image Address
     {
-      label: 'Copy Image Address',
+      label: i18n.__('copyImageAddress'),
       click: () => {
         clipboard.writeText(params.srcURL);
       },
@@ -98,7 +99,7 @@ function showContextMenuImageTemplate(
 
     // Inspect Element
     {
-      label: 'Inspect Element',
+      label: i18n.__('inspectElement'),
       click: () => {
         event.sender.inspectElement(params.x, params.y);
       },
@@ -129,19 +130,19 @@ function showContextMenuTextTemplate(
   if (params.editFlags.canCopy) {
     template.push({ role: 'copy' });
   } else {
-    template.push({ label: 'Copy', enabled: false });
+    template.push({ label: i18n.__('copy'), enabled: false });
   }
 
   if (params.editFlags.canPaste) {
     template.push({ role: 'paste' });
   } else {
-    template.push({ label: 'Paste', enabled: false });
+    template.push({ label: i18n.__('paste'), enabled: false });
   }
 
   if (params.editFlags.canSelectAll) {
     template.push({ role: 'selectAll' });
   } else {
-    template.push({ label: 'Select All', enabled: false });
+    template.push({ label: i18n.__('selectAll'), enabled: false });
   }
 
   template.push({ type: 'separator' });
@@ -149,7 +150,7 @@ function showContextMenuTextTemplate(
   template.push({ role: 'reload' });
 
   template.push({
-    label: 'Inspect Element',
+    label: i18n.__('inspectElement'),
     click: () => {
       event.sender.inspectElement(params.x, params.y);
     },

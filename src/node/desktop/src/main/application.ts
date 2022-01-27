@@ -39,6 +39,7 @@ import { GwtCallback } from './gwt-callback';
 import { prepareEnvironment, promptUserForR } from './detect-r';
 import { PendingWindow } from './pending-window';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
+import { i18n } from '../locales/i18n-manager';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -118,13 +119,16 @@ export class Application implements AppState {
     if (!app.isPackaged) {
       // sanity checking for dev config
       if (!confPath.existsSync()) {
-        await createStandaloneErrorDialog('Dev Mode Config', `conf: ${confPath.getAbsolutePath()} not found.'`);
+        await createStandaloneErrorDialog(
+          i18n.__('devModeConfig'),
+          `${i18n.__('confColon')} ${confPath.getAbsolutePath()} ${i18n.__('notFoundDotLowercase')}'`,
+        );
         return exitFailure();
       }
       if (!this.sessionPath.existsSync()) {
         await createStandaloneErrorDialog(
-          'Dev Mode Config',
-          `rsession: ${this.sessionPath.getAbsolutePath()} not found.'`,
+          i18n.__('devModeConfig'),
+          `rsession: ${this.sessionPath.getAbsolutePath()} ${i18n.__('notFoundDotLowercase')}'`,
         );
         return exitFailure();
       }
@@ -148,8 +152,8 @@ export class Application implements AppState {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
         await createStandaloneErrorDialog(
-          'Error Finding R',
-          'RStudio failed to find any R installations on the system.',
+          i18n.__('errorFindingR'),
+          i18n.__('rstudioFailedToFindRInstalationsOnTheSystem'),
         );
         console.log(preflightError);
         return exitFailure();
@@ -164,7 +168,10 @@ export class Application implements AppState {
     // prepare the R environment
     const prepareError = prepareEnvironment();
     if (prepareError) {
-      await createStandaloneErrorDialog('Error Finding R', 'RStudio failed to find any R installations on the system.');
+      await createStandaloneErrorDialog(
+        i18n.__('errorFindingR'),
+        i18n.__('rstudioFailedToFindRInstalationsOnTheSystem'),
+      );
       console.log(prepareError);
       return exitFailure();
     }
