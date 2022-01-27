@@ -119,11 +119,11 @@ export function removeStaleOptionsLockfile(): void {
 export function rsessionExeName(): string {
   switch (process.platform) {
     case 'darwin':
-      return process.arch === 'arm64' ? 'rsession-arm64' : 'rsession';
-    case 'win32':
-      return 'rsession.exe';
-    default:
-      return 'rsession';
+      // the packaged app renames the arm64 rsession binary to rsession-arm64
+      // a dev build or unpackaged build would still have the binary named rsession
+      return process.arch === 'arm64' && app.isPackaged ? 'rsession-arm64' : 'rsession';
+    case 'win32': return 'rsession.exe';
+    default: return 'rsession';
   }
 }
 
