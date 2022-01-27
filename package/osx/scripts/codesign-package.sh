@@ -27,6 +27,7 @@ shift
 codesign_args=("$@")
 
 codesign-file () {
+	echo "codesign: '$1'"
 	codesign "${codesign_args[@]}" "$1"
 }
 
@@ -48,15 +49,28 @@ codesign-directory () {
 
 }
 
+codesign-validate () {
+
+	local status
+
+	echo "- '$1'"
+	codesign -dv --verbose=4 "$1"
+	status=$?
+
+	if [ "${status}" != "0" ]; then
+		echo "[x] codesign failed [error code ${status}]"
+		exit 1
+	fi
+
+}
+
 echo "[i] Running codesign on package: ${package}"
 codesign-directory "${package}"
 
-echo "[i] Validating codesign signature"
-codesign -dv --verbose=4 "${package}"
-status=$?
+echo "[i] Re-signing RStudio binary"
+codesign "${package}/Contents/MacOS/RStudio"
 
-if [ "${status}" != "0" ]; then
-	echo "[x] codesign failed [error code ${status}]"
-	exit 1
-fi
+echo "[i] Validating signatures"
+codesign-validate "${package}"
+codesign-validate "${package}/Contents/MacOS/RStudio"
 
