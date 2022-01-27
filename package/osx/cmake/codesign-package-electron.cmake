@@ -1,5 +1,5 @@
 #
-# codesign-package.cmake
+# codesign-package-electron.cmake
 #
 # Copyright (C) 2022 by RStudio, PBC
 #
@@ -17,7 +17,7 @@ cmake_minimum_required(VERSION 3.19)
 
 # CMake's message is suppressed during install stage so just use echo here
 function(echo MESSAGE)
-	execute_process(COMMAND echo "-- ${MESSAGE}")
+   execute_process(COMMAND echo "-- ${MESSAGE}")
 endfunction()
 
 # flags to pass to codesign executable
