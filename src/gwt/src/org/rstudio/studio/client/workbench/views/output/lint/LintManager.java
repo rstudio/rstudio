@@ -172,7 +172,9 @@ public class LintManager
          public void onSourceFileSaveCompleted(
                SourceFileSaveCompletedEvent event)
          {
-            if (!docDisplay_.isFocused())
+            // Skip if source doesn't want to be linted on save (this can change based on
+            // the source's focus status so we have to check every time)
+            if (!source_.lintOnSave())
                return;
             
             if (userPrefs_.diagnosticsOnSave().getValue())

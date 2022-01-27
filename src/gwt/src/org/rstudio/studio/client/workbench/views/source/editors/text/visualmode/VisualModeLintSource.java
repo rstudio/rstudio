@@ -110,6 +110,15 @@ public class VisualModeLintSource implements LintSource
          chunk_.getAceInstance().getDocumentEnd());
    }
 
+   @Override
+   public boolean lintOnSave()
+   {
+      // Individual chunks of code aren't linted on save in visual mode;
+      // lint on save happens in the outer editor and results are forwarded
+      // into chunks.
+      return false;
+   }
+
    private final VisualModeChunk chunk_;
    private final TextEditingTarget parent_;
 }
