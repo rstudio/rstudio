@@ -15,6 +15,8 @@
 #
 #
 
+set -e
+
 if [ "$#" = "0" ] || [ "$1" = "--help" ]; then
 	echo "Usage: codesign-package.sh [package] [codesign arguments...]"
 	exit 0
@@ -49,28 +51,11 @@ codesign-directory () {
 
 }
 
-codesign-validate () {
-
-	local status
-
-	echo "- '$1'"
-	codesign -dv --verbose=4 "$1"
-	status=$?
-
-	if [ "${status}" != "0" ]; then
-		echo "[x] codesign failed [error code ${status}]"
-		exit 1
-	fi
-
-}
-
 echo "[i] Running codesign on package: ${package}"
 codesign-directory "${package}"
 
 echo "[i] Re-signing RStudio binary"
-codesign "${package}/Contents/MacOS/RStudio"
+codesign-file "${package}/Contents/MacOS/RStudio"
 
 echo "[i] Validating signatures"
-codesign-validate "${package}"
-codesign-validate "${package}/Contents/MacOS/RStudio"
-
+codesign -vvv --deep --strict "${package}"
