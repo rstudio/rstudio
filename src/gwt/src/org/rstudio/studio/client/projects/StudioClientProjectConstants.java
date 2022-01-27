@@ -1945,11 +1945,11 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String btnConfigureRoxygenLabel();
 
     /**
-     * Translated "Install and Restart &mdash; R CMD INSTALL additional options:".
+     * Translated "Install Package &mdash; R CMD INSTALL additional options:".
      *
-     * @return translated "Install and Restart &mdash; R CMD INSTALL additional options:"
+     * @return translated "Install Package &mdash; R CMD INSTALL additional options:"
      */
-    @DefaultMessage("Install and Restart &mdash; R CMD INSTALL additional options:")
+    @DefaultMessage("Install Package &mdash; R CMD INSTALL additional options:")
     @Key("installMdashArgument")
     String installMdashArgument();
 
