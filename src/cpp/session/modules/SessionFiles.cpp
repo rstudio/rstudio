@@ -1300,6 +1300,18 @@ void handleFileExportRequest(const http::Request& request,
    }
 }
 
+SEXP rs_getACP()
+{
+   int codepage = 0;
+
+#ifdef _WIN32
+   codepage = GetACP();
+#endif
+
+   r::sexp::Protect protect;
+   return r::sexp::create(codepage, &protect);
+}
+
 SEXP rs_pathInfo(SEXP pathSEXP)
 {
    try
@@ -1397,8 +1409,9 @@ Error initialize()
    // subscribe to events
    events().onClientInit.connect(bind(onClientInit));
 
-   RS_REGISTER_CALL_METHOD(rs_readLines, 1);
-   RS_REGISTER_CALL_METHOD(rs_pathInfo, 1);
+   RS_REGISTER_CALL_METHOD(rs_getACP);
+   RS_REGISTER_CALL_METHOD(rs_pathInfo);
+   RS_REGISTER_CALL_METHOD(rs_readLines);
 
    // install handlers
    using boost::bind;

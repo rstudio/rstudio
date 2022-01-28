@@ -13,14 +13,7 @@
 #
 #
 
-.rs.addFunction("listFilesImpl", function(path = ".",
-                                          pattern = NULL,
-                                          all.files = FALSE,
-                                          full.names = FALSE,
-                                          recursive = FALSE,
-                                          ignore.case = FALSE,
-                                          include.dirs = FALSE,
-                                          no.. = FALSE)
+.rs.addFunction("listFilesImplOne", function(path, full.names, callback)
 {
    # R may fail to invoke list.files() on a path that cannot be represented in
    # the native encoding, so just move to that directory, list the available
@@ -29,31 +22,46 @@
    if (inherits(owd, "error"))
       return(character())
    
+   # return home when we're done
    on.exit(setwd(owd), add = TRUE)
    
    # list the files
-   files <- .Internal(
-      list.files(
-         ".",
-         pattern,
-         all.files,
-         FALSE,
-         recursive,
-         ignore.case,
-         include.dirs,
-         no..
-      )
-   )
+   files <- callback()
    
-   # mark encoding
-   Encoding(files) <- "UTF-8"
+   # mark encoding if we're UTF-8
+   if (.rs.platform.isWindows)
+   {
+      acp <- .Call("rs_getACP", PACKAGE = "(embedding)")
+      if (identical(acp, 65001L))
+      {
+         Encoding(files) <- "UTF-8"
+         path <- enc2utf8(path)
+      }
+   }
    
    # if full.names was set, we'll need to prepend the original path
    # to the created file names
    if (full.names)
       files <- paste(enc2utf8(path), files, sep = "/")
    
+   # return file paths
    files
+   
+})
+
+.rs.addFunction("listFilesImpl", function(path = ".",
+                                          full.names = FALSE,
+                                          callback)
+{
+   data <- vector("list", length(path))
+   
+   for (i in seq_along(data))
+   {
+      data[[i]] <- .rs.listFilesImplOne(path, full.names, callback)
+   }
+   
+   all <- unlist(data, recursive = TRUE, use.names = FALSE)
+   .rs.enc2native(all)
 })
 
 .rs.addFunction("listFiles", function(path = ".",
@@ -65,75 +73,29 @@
                                       include.dirs = FALSE,
                                       no.. = FALSE)
 {
-   data <- vector("list", length(path))
-   
-   for (i in seq_along(path))
-   {
-      data[[i]] <- .rs.listFilesImpl(
-         path[[i]],
-         pattern,
-         all.files,
-         full.names,
-         recursive,
-         ignore.case,
-         include.dirs,
-         no..
+   .rs.listFilesImpl(path, full.names, function() {
+      .Internal(
+         list.files(
+            ".",
+            pattern,
+            all.files,
+            FALSE,
+            recursive,
+            ignore.case,
+            include.dirs,
+            no..
+         )
       )
-   }
-   
-   all <- unlist(data, recursive = TRUE, use.names = FALSE)
-   .rs.enc2native(all)
-})
-
-.rs.addFunction("listDirsImpl", function(path = ".",
-                                         pattern = NULL,
-                                         all.files = FALSE,
-                                         full.names = FALSE,
-                                         recursive = FALSE,
-                                         ignore.case = FALSE,
-                                         include.dirs = FALSE,
-                                         no.. = FALSE)
-{
-   # R may fail to invoke list.files() on a path that cannot be represented in
-   # the native encoding, so just move to that directory, list the available
-   # files, then return that list
-   owd <- tryCatch(setwd(owd), condition = identity)
-   if (inherits(owd, "error"))
-      return(character())
-   
-   on.exit(setwd(owd), add = TRUE)
-   
-   # list the files
-   files <- .Internal(list.dirs(".", FALSE, recursive))
-   
-   # mark encoding
-   Encoding(files) <- "UTF-8"
-   
-   # if full.names was set, we'll need to prepend the original path
-   # to the created file names
-   if (full.names)
-      files <- paste(enc2utf8(path), files, sep = "/")
-   
-   files
+   })
 })
 
 .rs.addFunction("listDirs", function(path = ".",
                                      full.names = TRUE,
                                      recursive = TRUE)
 {
-   data <- vector("list", length(path))
-   
-   for (i in seq_along(path))
-   {
-      data[[i]] <- .rs.listDirsImpl(
-         path[[i]],
-         full.names,
-         recursive
-      )
-   }
-   
-   all <- unlist(data, recursive = TRUE, use.names = FALSE)
-   .rs.enc2native(all)
+   .rs.listFilesImpl(path, full.names, function() {
+      .Internal(list.dirs(".", FALSE, recursive))
+   })
 })
 
 .rs.addFunction("listZipFile", function(zipfile)
