@@ -37,7 +37,7 @@
                                                      include.dirs = FALSE,
                                                      no.. = FALSE)
    {
-      "RStudio hook: restore original with `.rs.files.replaceBindings()`"
+      "RStudio hook: restore original with `.rs.files.restoreBindings()`"
       .rs.listFiles(
          path,
          pattern,
@@ -54,7 +54,7 @@
                                                     full.names = TRUE,
                                                     recursive = TRUE)
    {
-      "RStudio hook: restore original with `.rs.files.replaceBindings()`"
+      "RStudio hook: restore original with `.rs.files.restoreBindings()`"
       .rs.listDirs(path, full.names, recursive)
    })
    
