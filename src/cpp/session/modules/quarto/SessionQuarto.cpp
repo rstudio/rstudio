@@ -921,8 +921,9 @@ QuartoConfig quartoConfig(bool refresh)
             s_quartoConfig = QuartoConfig();
             return s_quartoConfig;
          }
+         string_utils::convertLineEndings(&result.stdOut, string_utils::LineEndingPosix);
          std::vector<std::string> paths;
-         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n\r"));
+         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n"));
          if (paths.size() >= 2)
          {
             s_quartoConfig.bin_path = string_utils::systemToUtf8(paths[0]);
