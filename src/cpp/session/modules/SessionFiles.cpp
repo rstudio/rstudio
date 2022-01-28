@@ -1429,10 +1429,10 @@ Error initialize()
       (bind(registerRpcMethod, "move_files", moveFiles))
       (bind(registerRpcMethod, "rename_file", renameFile))
       (bind(registerRpcMethod, "touch_file", touchFile))
-      (bind(registerUriHandler, "/files", handleFilesRequest))
-      (bind(registerUploadHandler, "/upload", handleFileUploadRequestAsync))
-      (bind(registerUriHandler, "/export", handleFileExportRequest))
       (bind(registerRpcMethod, "complete_upload", completeUpload))
+      (bind(registerUriHandler, "/files", handleFilesRequest))
+      (bind(registerUriHandler, "/export", handleFileExportRequest))
+      (bind(registerUploadHandler, "/upload", handleFileUploadRequestAsync))
       (bind(sourceModuleRFile, "SessionFiles.R"))
       (bind(quotas::initialize));
    return initBlock.execute();

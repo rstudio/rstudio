@@ -13,6 +13,65 @@
 #
 #
 
+.rs.setVar("files.savedBindings", new.env(parent = emptyenv()))
+
+# these hooks are added to support RStudio's transition into
+# the use of a UTF-8 code page
+.rs.addFunction("files.replaceBindings", function()
+{
+   # save old implementations, in case we need to restore them
+   bindings <- c("list.files", "list.dirs", "dir")
+   for (binding in bindings)
+   {
+      original <- get(binding, envir = baseenv(), inherits = FALSE)
+      assign(binding, original, envir = .rs.files.savedBindings)
+   }
+   
+   # now, replace bindings
+   .rs.replaceBinding("list.files", "base", function(path = ".",
+                                                     pattern = NULL,
+                                                     all.files = FALSE,
+                                                     full.names = FALSE,
+                                                     recursive = FALSE,
+                                                     ignore.case = FALSE,
+                                                     include.dirs = FALSE,
+                                                     no.. = FALSE)
+   {
+      "RStudio hook: restore original with `.rs.files.replaceBindings()`."
+      .rs.listFiles(
+         path,
+         pattern,
+         all.files,
+         full.names,
+         recursive,
+         ignore.case,
+         include.dirs,
+         no..
+      )
+   })
+
+   .rs.replaceBinding("list.dirs", "base", function(path = ".",
+                                                    full.names = TRUE,
+                                                    recursive = TRUE)
+   {
+      "RStudio hook: restore original with `.rs.files.replaceBindings()`."
+      .rs.listDirs(path, full.names, recursive)
+   })
+   
+   # dir and list.files should refer to the same thing
+   .rs.replaceBinding("dir", "base", list.files)
+   
+})
+
+# this is provided just in case users need an escape hatch
+# from our overridden list.files() implementations on windows
+.rs.addFunction("files.restoreBindings", function()
+{
+   bindings <- ls(envir = .rs.files.savedBindings)
+   for (binding in bindings)
+      .rs.replaceBinding(binding, "base", .rs.files.savedBindings[[binding]])
+})
+
 .rs.addFunction("listFilesImplOne", function(path, full.names, callback)
 {
    # R may fail to invoke list.files() on a path that cannot be represented in
@@ -42,7 +101,7 @@
    # if full.names was set, we'll need to prepend the original path
    # to the created file names
    if (full.names)
-      files <- paste(enc2utf8(path), files, sep = "/")
+      files <- paste(path, files, sep = "/")
    
    # return file paths
    files
@@ -54,14 +113,11 @@
                                           callback)
 {
    data <- vector("list", length(path))
-   
    for (i in seq_along(data))
-   {
       data[[i]] <- .rs.listFilesImplOne(path, full.names, callback)
-   }
    
    all <- unlist(data, recursive = TRUE, use.names = FALSE)
-   .rs.enc2native(all)
+   .rs.enc2native(sort(all))
 })
 
 .rs.addFunction("listFiles", function(path = ".",

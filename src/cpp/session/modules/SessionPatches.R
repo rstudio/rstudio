@@ -42,56 +42,7 @@
 # On Windows, because we now set the active code page to UTF-8,
 # we need to be careful to ensure the outputs from list.files(), list.dirs()
 # and dir() have their encoding properly marked. We do this here.
-if (.rs.platform.isWindows && getRversion() < "4.2.0")
+if (.rs.platform.isWindows)
 {
-   .rs.replaceBinding("list.files", "base", function(path = ".",
-                                                     pattern = NULL,
-                                                     all.files = FALSE,
-                                                     full.names = FALSE,
-                                                     recursive = FALSE,
-                                                     ignore.case = FALSE,
-                                                     include.dirs = FALSE,
-                                                     no.. = FALSE)
-   {
-      .rs.listFiles(
-         path,
-         pattern,
-         all.files,
-         full.names,
-         recursive,
-         ignore.case,
-         include.dirs,
-         no..
-      )
-   })
-   
-   .rs.replaceBinding("dir", "base", function(path = ".",
-                                              pattern = NULL,
-                                              all.files = FALSE,
-                                              full.names = FALSE,
-                                              recursive = FALSE,
-                                              ignore.case = FALSE,
-                                              include.dirs = FALSE,
-                                              no.. = FALSE)
-   {
-      .rs.listFiles(
-         path,
-         pattern,
-         all.files,
-         full.names,
-         recursive,
-         ignore.case,
-         include.dirs,
-         no..
-      )
-   })
-   
-   .rs.replaceBinding("list.dirs", "base", function(path = ".",
-                                                    full.names = TRUE,
-                                                    recursive = TRUE)
-   {
-      .rs.listDirs(path, full.names, recursive)
-   })
-   
+   .rs.files.replaceBindings()
 }
-   
