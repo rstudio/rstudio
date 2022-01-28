@@ -1406,6 +1406,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
       cmd <<  "grep";
       cmd << "-I"; // ignore binaries
+      cmd << "-E"; // extended regexp
       cmd << "--untracked"; // include files not tracked by git...
       cmd << "--exclude-standard"; // but exclude gitignore
       cmd << "-rHn";
@@ -1431,6 +1432,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    }
    else
    {
+      cmd << "-E"; // extended regexp
       cmd << "--binary-files=without-match";
       cmd << "-rHn";
       cmd << "--color=always";
@@ -1753,7 +1755,7 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-      boost::regex find(findRegex, boost::regex::grep | boost::regex::icase);
+      boost::regex find(findRegex, boost::regex::icase);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
@@ -1778,7 +1780,7 @@ core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-      boost::regex find(findRegex, boost::regex::grep);
+      boost::regex find(findRegex);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;

@@ -73,3 +73,23 @@ test_that("file listings are correct", {
 
 })
 
+test_that("we can list UTF-8 file paths", {
+   
+   tdir <- tempfile()
+   dir.create(tdir)
+   owd <- setwd(tdir)
+   on.exit(setwd(owd), add = TRUE)
+   
+   name <- enc2utf8("\u4e2d\u6587")    # "中文"
+   dir.create(name)
+   file.create(paste(name, name, sep = "/"))
+   
+   expect_equal(list.files(), name)
+   expect_equal(list.files(getwd()), name)
+   expect_equal(list.files(getwd(), full.names = TRUE), paste(getwd(), name, sep = "/"))
+   
+   all <- list.files(recursive = TRUE)
+   expect_equal(all, paste(name, name, sep = "/"))
+   
+})
+
