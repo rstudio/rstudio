@@ -37,7 +37,7 @@
                                                      include.dirs = FALSE,
                                                      no.. = FALSE)
    {
-      "RStudio hook: restore original with `.rs.files.replaceBindings()`."
+      "RStudio hook: restore original with `.rs.files.replaceBindings()`"
       .rs.listFiles(
          path,
          pattern,
@@ -54,7 +54,7 @@
                                                     full.names = TRUE,
                                                     recursive = TRUE)
    {
-      "RStudio hook: restore original with `.rs.files.replaceBindings()`."
+      "RStudio hook: restore original with `.rs.files.replaceBindings()`"
       .rs.listDirs(path, full.names, recursive)
    })
    
@@ -78,7 +78,7 @@
    # the native encoding, so just move to that directory, list the available
    # files, then return that list
    owd <- tryCatch(setwd(path), condition = identity)
-   if (inherits(owd, "error"))
+   if (inherits(owd, "condition"))
       return(character())
    
    # return home when we're done
