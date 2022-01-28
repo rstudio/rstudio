@@ -1422,11 +1422,11 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # iconv will return NA for any strings that we couldn't
    # re-encode into the native encoding -- replace those
    # back with their UTF-8 originals
-   native[is.na(native)] <- text[is.na(native)]
+   failed <- is.na(native)
+   native[failed] <- text[failed]
    
    # return the converted string
    native
-   
 })
 
 .rs.addFunction("initTools", function()
