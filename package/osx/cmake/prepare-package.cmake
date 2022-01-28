@@ -86,6 +86,31 @@ else()
 
 endif()
 
+if(@RSTUDIO_ELECTRON@)
+
+   # find out where x64 homebrew lives
+   if(EXISTS "$ENV{HOME}/homebrew/x86_64")
+      set(HOMEBREW_X64_PREFIX "$ENV{HOME}/homebrew/x86_64")
+   else()
+      set(HOMEBREW_X64_PREFIX "/usr/local")
+   endif()
+   
+   # copy required Homebrew libraries
+   set(HOMEBREW_LIBS gettext krb5 libpq openssl@1.1 sqlite3)
+   
+   file(MAKE_DIRECTORY "${X64_FRAMEWORKS_DIRECTORY}")
+   foreach(LIB ${HOMEBREW_LIBS})
+      set(LIBPATH "${HOMEBREW_X64_PREFIX}/opt/${LIB}/lib")
+      file(GLOB LIBFILES "${LIBPATH}/*.dylib")
+      foreach(LIBFILE ${LIBFILES})
+         file(
+            COPY "${LIBFILE}"
+            DESTINATION "${X64_FRAMEWORKS_DIRECTORY}")
+      endforeach()
+   endforeach()
+
+endif()
+
 # fix library paths on x86_64 components
 execute_process(
    COMMAND
