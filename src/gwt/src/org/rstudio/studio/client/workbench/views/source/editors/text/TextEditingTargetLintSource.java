@@ -104,5 +104,20 @@ public class TextEditingTargetLintSource implements LintSource
       return "";
    }
 
+   @Override
+   public boolean lintOnSave()
+   {
+      // If the source editor is focused, we should lint when the document is saved.
+      if (target_.getDocDisplay().isFocused())
+         return true;
+
+      // Alternately, if this is the active tab and the visual editor is active, we should
+      // still lint on save; the lint results will be forward to the visual editor.
+      else if (target_.isActivated() && target_.isVisualEditorActive())
+         return true;
+
+      return false;
+   }
+
    private final TextEditingTarget target_;
 }
