@@ -44,5 +44,10 @@
 # and dir() have their encoding properly marked. We do this here.
 if (.rs.platform.isWindows)
 {
-   .rs.files.replaceBindings()
+   setHook("rstudio.sessionInit", function(...)
+   {
+      enabled <- getOption("rstudio.enableFileHooks", default = TRUE)
+      if (identical(enabled, TRUE))
+         .rs.files.replaceBindings()
+   })
 }

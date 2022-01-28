@@ -74,6 +74,11 @@
 
 .rs.addFunction("listFilesImplOne", function(path, full.names, callback)
 {
+   # if the working directory no longer exists, then our attempt to setwd()
+   # and come home would fail -- in that case, just give up
+   if (!file.exists(getwd()))
+      return(callback(path = path, full.names = full.names))
+   
    # R may fail to invoke list.files() on a path that cannot be represented in
    # the native encoding, so just move to that directory, list the available
    # files, then return that list
@@ -84,8 +89,9 @@
    # return home when we're done
    on.exit(setwd(owd), add = TRUE)
    
-   # list the files
-   files <- callback()
+   # list the files in the current directory
+   # (we pass `full.names = FALSE` as we handle this ourselves below)
+   files <- callback(path = ".", full.names = FALSE)
    
    # mark encoding if we're UTF-8
    if (.rs.platform.isWindows)
@@ -129,13 +135,13 @@
                                       include.dirs = FALSE,
                                       no.. = FALSE)
 {
-   .rs.listFilesImpl(path, full.names, function() {
+   .rs.listFilesImpl(path, full.names, function(path, full.names) {
       .Internal(
          list.files(
-            ".",
+            path,
             pattern,
             all.files,
-            FALSE,
+            full.names,
             recursive,
             ignore.case,
             include.dirs,
@@ -149,8 +155,8 @@
                                      full.names = TRUE,
                                      recursive = TRUE)
 {
-   .rs.listFilesImpl(path, full.names, function() {
-      .Internal(list.dirs(".", FALSE, recursive))
+   .rs.listFilesImpl(path, full.names, function(path, full.names) {
+      .Internal(list.dirs(path, full.names, recursive))
    })
 })
 
