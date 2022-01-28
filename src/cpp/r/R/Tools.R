@@ -1147,10 +1147,6 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    # get reference to original binding
    original <- get(binding, envir = namespace)
    
-   # remove srcref on override
-   if (is.function(override))
-      override <- utils::removeSource(override)
-   
    # replace the binding
    if (is.function(override))
       environment(override) <- namespace
