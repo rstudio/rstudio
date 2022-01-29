@@ -598,7 +598,7 @@ export class FilePath {
    * Gets the parent directory of this file path.
    */
   getParent(): FilePath {
-    throw Error('getParent is NYI');
+    return new FilePath(path.dirname(this.path));
   }
 
   /**
