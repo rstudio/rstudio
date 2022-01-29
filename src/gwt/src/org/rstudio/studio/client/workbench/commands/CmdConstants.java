@@ -3195,7 +3195,7 @@ public interface CmdConstants extends Constants {
     // buildAll
     @DefaultStringValue("Install Package") // $NON-NLS-1$
     String buildAllLabel();
-    @DefaultStringValue("Install Package") // $NON-NLS-1$
+    @DefaultStringValue("Install") // $NON-NLS-1$
     String buildAllButtonLabel();
     @DefaultStringValue("_Install Package") // $NON-NLS-1$
     String buildAllMenuLabel();
@@ -3257,6 +3257,8 @@ public interface CmdConstants extends Constants {
     String checkPackageDesc();
     
     // testPackage
+    @DefaultStringValue("Test") // $NON-NLS-1$
+    String testPackageButtonLabel();
     @DefaultStringValue("_Test Package") // $NON-NLS-1$
     String testPackageMenuLabel();
     @DefaultStringValue("Run tests for package") // $NON-NLS-1$

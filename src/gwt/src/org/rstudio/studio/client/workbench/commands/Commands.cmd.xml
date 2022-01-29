@@ -3582,7 +3582,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="buildAll"
         label="Install Package"
-        buttonLabel="Install Package"
+        buttonLabel="Install"
         menuLabel="_Install Package"
         desc="Install the package and restart R"
         windowMode="main"
@@ -3637,7 +3637,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="_Test Package"
         desc="Run tests for package"
         windowMode="background"
-        context="packageDevelopment"/>
+        context="packageDevelopment"
+        buttonLabel= "Test"/>
 
    <cmd id="testTestthatFile"
         label="Run testthat Tests"
