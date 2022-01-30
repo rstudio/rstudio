@@ -29,7 +29,6 @@ shift
 codesign_args=("$@")
 
 codesign-file () {
-	echo "codesign: '$1'"
 	codesign "${codesign_args[@]}" "$1"
 }
 
