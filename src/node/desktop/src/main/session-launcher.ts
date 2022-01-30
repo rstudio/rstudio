@@ -71,7 +71,6 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
   const env = Object.assign({}, process.env);
 
   if (process.platform === 'darwin') {
-
     // Create fallback library path (use TMPDIR so it's user-specific):
     // reticulate needs to do some DYLD_FALLBACK_LIBRARY_PATH shenanigans to work with Anaconda Python;
     // the solution is to have RStudio launch with a special DYLD_FALLBACK_LIBRARY_PATH, and let
@@ -94,7 +93,6 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     // x86 or arm64 versions of the libraries in the launched rsession
     const path = absPath.getAbsolutePath();
     if (process.arch === 'arm64') {
-
       const fileInfo = execSync(`/usr/bin/file "${rLib}"`, { encoding: 'utf-8' });
       if (fileInfo.indexOf('arm64') === -1 && fileInfo.indexOf('x86_64') !== -1) {
         argList = ['-x86_64', '-e', dyldArg, path, ...argList];
@@ -103,12 +101,10 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
         argList = ['-arm64', '-e', dyldArg, path, ...argList];
         absPath = new FilePath('/usr/bin/arch');
       }
-
     } else {
       argList = ['-x86_64', '-e', dyldArg, path, ...argList];
       absPath = new FilePath('/usr/bin/arch');
     }
-
   }
 
   logger().logDebug(`Launching: ${absPath.getAbsolutePath()} ${argList.join(' ')}`);
