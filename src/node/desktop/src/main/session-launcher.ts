@@ -503,7 +503,6 @@ export class SessionLauncher {
 
     // on macOS, we need to look at R and figure out if we should be trying to run
     // with the arm64 session binary (rsession-arm64) or with the x64 session binary (rsession)
-    let sessionPath = this.sessionPath;
     if (app.isPackaged && process.platform === 'darwin') {
       const rHome = getenv('R_HOME');
       const rLibPath = `${rHome}/lib/libR.dylib`
@@ -511,14 +510,14 @@ export class SessionLauncher {
       const fileInfo = execSync(`/usr/bin/file "${rLibPath}"`, { encoding: 'utf-8' });
       logger().logDebug(fileInfo);
       if (fileInfo.indexOf('arm64') !== -1) {
-        sessionPath = sessionPath.getParent().completeChildPath('rsession-arm64');
-        logger().logDebug(`R is arm64; using ${sessionPath}`);
+        this.sessionPath = this.sessionPath.getParent().completeChildPath('rsession-arm64');
+        logger().logDebug(`R is arm64; using ${this.sessionPath}`);
       } else {
-        logger().logDebug(`R is x86_64; using ${sessionPath}`);
+        logger().logDebug(`R is x86_64; using ${this.sessionPath}`);
       }
     }
 
-    const sessionProc = launchProcess(sessionPath, argList);
+    const sessionProc = launchProcess(this.sessionPath, argList);
     sessionProc.on('error', (err) => {
       // Unable to start rsession (at all)
       logger().logError(err);
