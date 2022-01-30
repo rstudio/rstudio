@@ -116,12 +116,12 @@ export function removeStaleOptionsLockfile(): void {
 }
 
 export function rsessionExeName(): string {
-
   switch (process.platform) {
-    case 'win32': return 'rsession.exe';
-    default: return 'rsession';
+    case 'win32':
+      return 'rsession.exe';
+    default:
+      return 'rsession';
   }
-
 }
 
 // used to help find built C++ sources in developer configurations

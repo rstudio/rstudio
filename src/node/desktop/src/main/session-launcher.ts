@@ -66,7 +66,6 @@ function fallbackLibraryPath(): string {
 }
 
 function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
-
   // create local copy of environment
   const env = Object.assign({}, process.env);
 
@@ -149,7 +148,6 @@ export class SessionLauncher {
   // but that isn't a thing in TypeScript (at least not without some ugly workarounds)
   // so giving a different name.
   private launchFirst(): Err {
-
     // build a new new launch context
     const launchContext = this.buildLaunchContext();
 
@@ -480,7 +478,6 @@ export class SessionLauncher {
   }
 
   private launchSession(argList: string[]): ChildProcess {
-
     // always remove the abend log path before launching
     const error = abendLogPath().removeIfExistsSync();
     if (error) {
@@ -501,7 +498,7 @@ export class SessionLauncher {
     // with the arm64 session binary (rsession-arm64) or with the x64 session binary (rsession)
     if (app.isPackaged && process.platform === 'darwin') {
       const rHome = getenv('R_HOME');
-      const rLibPath = `${rHome}/lib/libR.dylib`
+      const rLibPath = `${rHome}/lib/libR.dylib`;
       logger().logDebug(`$ /usr/bin/file "${rLibPath}"`);
       const fileInfo = execSync(`/usr/bin/file "${rLibPath}"`, { encoding: 'utf-8' });
       logger().logDebug(fileInfo);
