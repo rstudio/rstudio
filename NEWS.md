@@ -1,6 +1,20 @@
-## RStudio 2022-02.0 "Prairie Trillium" Release Notes
+## RStudio 2022-06.0 "Spotted Wakerobin" Release Notes
 
 ### New
+- Source marker `message` can contain ANSI SGR codes for setting style and color (#9010)
+- Linux/MacOS: Executing a code selection that encounters an error will stop execution of remaining code (#3014)
+
+#### R
+- Added support for using the AGG renderer (as provided by the ragg package) as a graphics backend for inline plot execution; also added support for using the backend graphics device requested by the knitr `dev` chunk option (#9931)
+
+### Fixed
+- Fixed notebook execution handling of knitr `message=FALSE` chunk option to suppress messages if the option is set to FALSE (#9436)
+- Fixed plot export to PDF options (#9185)
+- `.rs.formatDataColumnDispatch()` iterates through classes of `x` (#10073)
+- Fixed Find in Files whole-word replace option, so that when "Whole word" is checked, only file matches containing the whole word are replaced, as displayed in the preview (#9813)
+- Adds support for POSIX extended regular expressions with backreferences in Find in Files find and replace modes, so that special regex characters such as `+` and `?`, `|`, `(`, etc do not need to be escaped, and other ERE escape sequences such as `\b`, `\w`, and `\d` are now supported (#9344). This matches the behavior of R's own `grep()` function, but note that backslashes do not need to be escaped (as they typically are in R strings).
+
+### Breaking
 
 #### Visual Mode
 
@@ -61,6 +75,7 @@
 * Fixed shortcut conflict on German keyboard (#9276)
 * Updated shinymod snippet for Shiny modules (#10009)
 * Fixed an issue where `conda install` could fail within a Git Bash terminal on Windows (#10283)
+* Add a -G option to `rsandbox` to allow configuring the effective group of the process (#3214)
 
 ### Fixed
 
@@ -78,6 +93,7 @@
 * Fixed Duplicate --session-collab-server when launching R session (pro #3106)
 * Fixed errors when opening or saving Rmarkdown documents when R is busy (#9868)
 * Fixed issue with SLES 12 builds using OpenSSL 1.1 instead of 1.0.2
+* The source button uses `cpp11::source_cpp()` on C++ files that have `[[cpp11::register]]` decorations (#10387)
 
 ### Breaking
 

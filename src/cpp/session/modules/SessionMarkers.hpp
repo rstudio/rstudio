@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include <session/SessionModuleContext.hpp>
 #include <shared_core/json/Json.hpp>
 
 namespace rstudio {
@@ -32,6 +33,7 @@ namespace modules {
 namespace markers {
 
 core::json::Object markersStateAsJson();
+std::vector<module_context::SourceMarker> markersForFile(const std::string& path);
 
 core::Error initialize();
    

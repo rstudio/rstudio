@@ -33,7 +33,6 @@ set(MODIFIED_PATH "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")
 # the desktop project's relative path in the application structure
 set(ELECTRON_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "")
 set(ELECTRON_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}" CACHE INTERNAL "")
-file(REMOVE_RECURSE "${ELECTRON_BUILD_DIR}")
 file(MAKE_DIRECTORY "${ELECTRON_BUILD_DIR}")
 file(
    COPY "${CMAKE_CURRENT_SOURCE_DIR}/"
@@ -41,13 +40,19 @@ file(
    REGEX "/out$" EXCLUDE
    REGEX "/node_modules$" EXCLUDE)
 
+# define source dependencies
+file(GLOB_RECURSE DESKTOP_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.ts")
+list(APPEND DESKTOP_SOURCES package.json forge.config.js)
+
 # define custom command for building RStudio with Electron
 # note that OUTPUT tells CMake that this command should be used
 # if that output does not exist and needs to be created
 add_custom_command(
-   WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
-   COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${YARN} make
    OUTPUT "${ELECTRON_BUILD_DIR}/out"
+   DEPENDS "${DESKTOP_SOURCES}"
+   COMMENT "Building desktop (Electron ${UNAME_M})"
+   WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+   COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${YARN} package
 )
 
 # define a target, indicating that building this target

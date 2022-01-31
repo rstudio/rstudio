@@ -42,11 +42,16 @@ const size_t rMatchOff = 10;
 const size_t caseMatchOn = 21;
 const size_t caseMatchOff = 27;
 
-const std::string kFindRegex("\\([a-z]\\)\\1\\{2\\}\\([a-z]\\)\\2\\{2\\}");
+const std::string kFindRegex("([a-z])\\1{2}([a-z])\\2{2}");
 const std::string kReplaceRegex("\\1\\2\\1\\2");
 
 const std::string kGrepPattern("aba \033[01m\033[KOOOkkk\033[m\033[K okab AAOO awesome aa abab");
 const std::string kGitGrepPattern("aba \033[1;31mOOOkkk\033[m okab AAOO awesome aa abab");
+
+const std::string kWordBoundaryRegex("\\bgreat\\b");
+const size_t wMatchOn = 15;
+const size_t wMatchOff = 20;
+const std::string kLineNoMatch("RStudio is the greatest");
 } // anonymous namespace
 
 TEST_CASE("SessionFind")
@@ -104,6 +109,30 @@ TEST_CASE("SessionFind")
          &replaceMatchOff);
       CHECK(line.compare("aba OOOkkk okab AAOO abab aa abab") == 0);
       CHECK(replaceMatchOff == 25);
+   }
+
+   SECTION("Replace regex word boundaries")
+   {
+      std::string line(kLine);
+      size_t replaceMatchOff;
+
+      Replacer replacer(true);
+      replacer.replaceRegex(matchOn, matchOff, kWordBoundaryRegex, kReplaceString,
+                            &line, &replaceMatchOff);
+      CHECK(line.compare("RStudio is awesome") == 0);
+      CHECK(replaceMatchOff == 18);
+   }
+
+   SECTION("Replace regex word boundaries - no match")
+   {
+      std::string line(kLineNoMatch);
+      size_t replaceMatchOff;
+
+      Replacer replacer(true);
+      replacer.replaceRegex(wMatchOn, wMatchOff, kWordBoundaryRegex, kReplaceString,
+                            &line, &replaceMatchOff);
+      CHECK(line.compare("RStudio is the greatest") == 0);
+      CHECK(replaceMatchOff == wMatchOff);
    }
 
    SECTION("Replace ASCII encoding")
@@ -244,6 +273,66 @@ TEST_CASE("SessionFind")
       boost::cmatch match;
       CHECK(regex_utils::search(kGitGrepPattern.c_str(), match, regex));
       CHECK(match[2].str().compare("1") == 0);
+   }
+
+   SECTION("Replace regex with quantifiers")
+   {
+      std::string line("helllooo");
+      const std::string regex("l+o+X?");
+      const std::string replacement("LO!");
+      Replacer replacer(false);
+      const size_t matchOn = 2;
+      const size_t matchOff = 7;
+      size_t replaceMatchOff;
+
+      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+      CHECK(line.compare("heLO!") == 0);
+      CHECK(replaceMatchOff == 4);
+   }
+
+   SECTION("Replace regex with quantifiers, word character, and backreferences")
+   {
+      std::string line("good, !@$ good and more!");
+      const std::string regex("^(\\w+)(\\W+)\\1");
+      const std::string replacement("\\1");
+      Replacer replacer(false);
+      const size_t matchOn = 0;
+      const size_t matchOff = 13;
+      size_t replaceMatchOff;
+
+      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+      CHECK(line.compare("good and more!") == 0);
+      CHECK(replaceMatchOff == 3);
+   }
+
+   SECTION("Replace regex with bounded repeat and alternation")
+   {
+      std::string line("11 cats");
+      const std::string regex("\\d{2} (cat|dog)");
+      const std::string replacement("x");
+      Replacer replacer(false);
+      const size_t matchOn = 0;
+      const size_t matchOff = 5;
+      size_t replaceMatchOff;
+
+      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+      CHECK(line.compare("xs") == 0);
+      CHECK(replaceMatchOff == 0);
+   }
+
+   SECTION("Replace regex with square brackets and literal special characters")
+   {
+      std::string line("How are you? Mr. (x)");
+      const std::string regex("\\? [A-Z][a-z]{0,2}\\. \\(\\w\\)");
+      const std::string replacement("\\?!");
+      Replacer replacer(false);
+      const size_t matchOn = 11;
+      const size_t matchOff = 19;
+      size_t replaceMatchOff;
+
+      replacer.replaceRegex(matchOn, matchOff, regex, replacement, &line, &replaceMatchOff);
+      CHECK(line.compare("How are you?!") == 0);
+      CHECK(replaceMatchOff == 12);
    }
 
 }

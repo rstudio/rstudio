@@ -10,8 +10,7 @@
   "scripts": {
     "clean": "ts-node scripts/clean.ts",
     "lint": "eslint ./src ./test",
-    "make": "wrap () { set -e ; yarn ; yarn run clean ; electron-forge make $*; ./scripts/rename-dmg.sh;}; wrap",
-    "package": "electron-forge package",
+    "package": "yarn && electron-forge package",
     "start": "electron-forge start",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
@@ -58,7 +57,7 @@
     "mocha": "^8.4.0",
     "node-loader": "^2.0.0",
     "nyc": "^15.1.0",
-    "playwright": "^1.16.3",
+    "playwright": "^1.18.1",
     "prettier": "^2.4.1",
     "recursive-copy": "^2.0.13",
     "sinon": "^12.0.1",

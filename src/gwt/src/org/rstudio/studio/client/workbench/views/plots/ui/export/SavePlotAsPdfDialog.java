@@ -342,12 +342,14 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                PaperSize paperSize = paperSizeEditor_.selectedPaperSize();
                double width = paperSize.getWidth();
                double height = paperSize.getHeight();
-               if (!isPortraitOrientation())
-               {
-                  width = paperSize.getHeight();
-                  height = paperSize.getWidth();
-               }
-               
+
+               // This is more intuitive for the user to get an aspect ratio based on
+               // portrait/landscape selection regardless of the paper size's aspect ratio
+               width = isPortraitOrientation() ? Math.min(paperSize.getHeight(), paperSize.getWidth())
+                  : Math.max(paperSize.getHeight(), paperSize.getWidth());
+               height = isPortraitOrientation() ? Math.max(paperSize.getHeight(), paperSize.getWidth())
+                  : Math.min(paperSize.getHeight(), paperSize.getWidth());
+
                server_.savePlotAsPdf(targetPath, 
                                      width,
                                      height,
@@ -500,6 +502,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
             {
                setCustomPaperSize(width, height);
                sizeIndex = paperSizes_.size() - 1;
+               paperSizeListBox_.setItemText(sizeIndex, constants_.customLabel());
             }
             
             // select 

@@ -45,6 +45,7 @@ struct Callbacks
    void (*showMessage)(const char*);
    int (*readConsole)(const char *, CONSOLE_BUFFER_CHAR*, int, int);
    void (*writeConsoleEx)(const char *, int, int);
+   void (*resetConsole)();
    int (*editFile)(const char*);
    void (*busy)(int);
    int (*chooseFile)(int, char *, int);

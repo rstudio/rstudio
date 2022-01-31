@@ -207,10 +207,10 @@ void detectQuartoInstallation()
 {
 #ifdef QUARTO_ENABLED
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.3.42");
+   const Version kQuartoRequiredVersion("0.3.69");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.3.42");
+   const Version kQuartoRecommendedVersion("0.3.69");
 
    // reset
    s_userInstalledPath = FilePath();
@@ -921,8 +921,9 @@ QuartoConfig quartoConfig(bool refresh)
             s_quartoConfig = QuartoConfig();
             return s_quartoConfig;
          }
+         string_utils::convertLineEndings(&result.stdOut, string_utils::LineEndingPosix);
          std::vector<std::string> paths;
-         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n\r"));
+         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n"));
          if (paths.size() >= 2)
          {
             s_quartoConfig.bin_path = string_utils::systemToUtf8(paths[0]);

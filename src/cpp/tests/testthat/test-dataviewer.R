@@ -15,6 +15,23 @@
 
 context("data viewer")
 
+test_that(".rs.formatDataColumnDispatch() iterates over the classes", {
+    registerS3method("[", "foo",  function(x, ...) {
+        structure(NextMethod(), class = class(x))
+    })
+    registerS3method("format", "foo", function(x, ...) {
+        rep("Hi there!", length(x))
+    })
+    
+    x <- structure("x", class = c("foo", "bar", "character"))
+    expect_equal(.rs.formatDataColumnDispatch(x), "Hi there!")
+    expect_equal(.rs.formatDataColumn(x, 1, 1), "Hi there!")
+
+    x <- structure("x", class = c("bar", "foo", "character"))
+    expect_equal(.rs.formatDataColumnDispatch(x), "Hi there!")
+    expect_equal(.rs.formatDataColumn(x, 1, 1), "Hi there!")
+})
+
 test_that(".rs.flattenFrame() handles matrices and data frames", {
    tbl1 <- data.frame(x = 1:2)
    df_col <- data.frame(y = 1:2, z = 1:2)

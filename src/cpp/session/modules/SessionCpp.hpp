@@ -1,5 +1,5 @@
 /*
- * r-user-data.ts
+ * SessionCpp.hpp
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -13,13 +13,25 @@
  *
  */
 
-import { Err } from './err';
+#ifndef SESSION_CPP_HPP
+#define SESSION_CPP_HPP
 
-export const kRStudioInitialWorkingDir = 'RS_INITIAL_WD';
-export const kRStudioInitialEnvironment = 'RS_INITIAL_ENV';
-export const kRStudioInitialProject = 'RS_INITIAL_PROJECT';
-
-export enum SessionType {
-  SessionTypeDesktop = 0,
-  SessionTypeServer = 1,
+namespace rstudio {
+namespace core {
+   class Error;
 }
+}
+
+namespace rstudio {
+namespace session {
+namespace modules {
+namespace cpp {
+
+core::Error initialize();
+   
+} // namespace cpp
+} // namespace modules
+} // namespace session
+} // namespace rstudio
+
+#endif

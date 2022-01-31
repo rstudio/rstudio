@@ -194,6 +194,7 @@ struct RCallbacks
    boost::function<void(const std::string&, core::FilePath&, bool)> showFile;
    boost::function<void(const std::string&, int)> consoleWrite;
    boost::function<void()> consoleHistoryReset;
+   boost::function<void()> consoleReset;
    boost::function<bool(double*, double*)> locator;
    boost::function<core::FilePath(bool)> chooseFile;
    boost::function<int(const std::string&)> editFile;

@@ -13,10 +13,10 @@
  *
  */
 
-import { app, dialog } from 'electron';
+import { app } from 'electron';
 
 import { ConsoleLogger } from '../core/console-logger';
-import { LogLevel, parseCommandLineLogLevel, setLogger, setLoggerLevel } from '../core/logger';
+import { logLevel, LogLevel, parseCommandLineLogLevel, setLogger, setLoggerLevel } from '../core/logger';
 import { safeError } from '../core/err';
 
 import { Application, kLogLevel } from './application';
@@ -42,6 +42,9 @@ class RStudioMain {
       const err = safeError(error);
       await createStandaloneErrorDialog(i18n.__('unhandledException'), err.message);
       console.error(err.message); // logging possibly not available this early in startup
+      if (logLevel() === LogLevel.DEBUG) {
+        console.error(err.stack);
+      }
       app.exit(1);
     }
   }

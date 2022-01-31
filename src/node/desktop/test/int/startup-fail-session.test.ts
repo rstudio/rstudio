@@ -36,6 +36,7 @@ describe('Startup With Failing RSession', () => {
 
   it('Shows launch failure page if session fails to launch', async function () {
     // check that page is loaded with H1 containing "Error Starting R"
+    await window.waitForSelector('#launch_failed');
     const h1 = await window.innerText('h1');
     assert.equal(h1, 'Error Starting R');
   });

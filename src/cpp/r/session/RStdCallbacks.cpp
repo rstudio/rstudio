@@ -469,6 +469,11 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
    CATCH_UNEXPECTED_EXCEPTION
 }
 
+void RResetConsole()
+{
+   s_callbacks.consoleReset();
+}
+
 // NOTE: Win32 doesn't receive this callback
 int REditFile(const char* file)
 {

@@ -1,5 +1,5 @@
 #
-# codesign-package.cmake
+# codesign-package-electron.cmake
 #
 # Copyright (C) 2022 by RStudio, PBC
 #
@@ -13,14 +13,12 @@
 #
 #
 
+cmake_minimum_required(VERSION 3.19)
+
 # CMake's message is suppressed during install stage so just use echo here
 function(echo MESSAGE)
-	execute_process(COMMAND echo "-- ${MESSAGE}")
+   execute_process(COMMAND echo "-- ${MESSAGE}")
 endfunction()
-
-# don't follow symlinks in GLOB_RECURSE
-cmake_policy(SET CMP0009 NEW)
-cmake_policy(SET CMP0011 NEW)
 
 # flags to pass to codesign executable
 set(CODESIGN_FLAGS
@@ -45,19 +43,15 @@ else()
    list(APPEND CODESIGN_FLAGS -s -)
 endif()
 
-list(APPEND CODESIGN_TARGETS "${CMAKE_INSTALL_PREFIX}/RStudio.app")
+execute_process(
+   COMMAND
+      "@CMAKE_CURRENT_SOURCE_DIR@/scripts/codesign-package.sh"
+      "@CMAKE_INSTALL_PREFIX@/RStudio.app"
+      ${CODESIGN_FLAGS}
+   WORKING_DIRECTORY
+      "@CMAKE_INSTALL_PREFIX@"
+   OUTPUT_VARIABLE CODESIGN_OUTPUT ECHO_OUTPUT_VARIABLE
+   ERROR_VARIABLE CODESIGN_ERROR ECHO_ERROR_VARIABLE
+   COMMAND_ERROR_IS_FATAL ANY
+)
 
-file(GLOB_RECURSE CODESIGN_PLUGINS "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/plugins")
-list(APPEND CODESIGN_TARGETS ${CODESIGN_PLUGINS})
-
-file(GLOB_RECURSE CODESIGN_FRAMEWORKS "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/Frameworks")
-list(APPEND CODESIGN_TARGETS ${CODESIGN_FRAMEWORKS})
-
-file(GLOB_RECURSE CODESIGN_MACOS "${CMAKE_INSTALL_PREFIX}/RStudio.app/Contents/MacOS")
-list(APPEND CODESIGN_TARGETS ${CODESIGN_MACOS})
-
-# deep sign all targets
-foreach(CODESIGN_TARGET ${CODESIGN_TARGETS})
-   echo("Signing ${CODESIGN_TARGET}")
-	execute_process(COMMAND codesign ${CODESIGN_FLAGS} "${CODESIGN_TARGET}")
-endforeach()

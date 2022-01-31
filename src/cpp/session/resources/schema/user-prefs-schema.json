@@ -801,10 +801,10 @@
             "description": "The default name to use as the document author when creating new documents."
         },
         "rmd_auto_date": {
-          "type": "boolean",
-          "default": false,
-          "title": "Use current date when rendering document",
-          "description": "Use current date when rendering document"
+            "type": "boolean",
+            "default": false,
+            "title": "Use current date when rendering document",
+            "description": "Use current date when rendering document"
         },
         "rmd_preferred_template_path": {
             "type": "string",

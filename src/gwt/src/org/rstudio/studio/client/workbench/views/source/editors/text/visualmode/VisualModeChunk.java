@@ -222,7 +222,7 @@ public class VisualModeChunk
             @Override
             public void execute(Boolean showLineNumbers)
             {
-               showLint(lint_);
+               showLint(lint_, false);
             }
          }
       ));
@@ -819,8 +819,9 @@ public class VisualModeChunk
     * Shows lint results in the chunk.
     *
     * @param lint The lint results to show.
+    * @param cancelPending Whether to cancel pending lint requests after showing this lint.
     */
-   public void showLint(JsArray<LintItem> lint)
+   public void showLint(JsArray<LintItem> lint, boolean cancelPending)
    {
       // Save lint so we can redraw it when necessary
       lint_ = lint;
@@ -872,6 +873,13 @@ public class VisualModeChunk
                state.setTitle(item.getText());
             }
          }
+      }
+
+      // Cancel any pending lint operation if requested. This ensures that lint arriving from the
+      // outer editor doesn't get immediately overwritten by pending lint requests from this inner editor.
+      if (cancelPending)
+      {
+         lintManager_.cancelPending();
       }
    }
 

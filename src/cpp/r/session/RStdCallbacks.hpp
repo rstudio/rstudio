@@ -32,6 +32,7 @@ InternalCallbacks* stdInternalCallbacks();
 int RReadConsole(const char *pmt, CONSOLE_BUFFER_CHAR* buf, int buflen, int hist);
 void RShowMessage(const char* msg);
 void RWriteConsoleEx (const char *buf, int buflen, int otype);
+void RResetConsole();
 int REditFile(const char* file);
 void RBusy(int which);
 int RChooseFile (int newFile, char *buf, int len);

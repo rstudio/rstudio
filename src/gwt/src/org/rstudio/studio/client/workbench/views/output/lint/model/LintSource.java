@@ -94,4 +94,11 @@ public interface LintSource
     * @return Code to lint, or empty string for all code.
     */
    public String getCode();
+
+   /**
+    * Indicates whether the document should be linted after a save operation.
+    *
+    * @return Whether to lint the document on save.
+    */
+   public boolean lintOnSave();
 }

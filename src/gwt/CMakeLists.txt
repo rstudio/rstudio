@@ -70,8 +70,38 @@ if(GWT_BUILD)
       message(FATAL_ERROR "ant not found (required to build GWT)")
    endif()
 
+   # depend on Java source files
+   file(GLOB_RECURSE GWT_SOURCE_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*")
+
+   # generated during GWT build command
+   set(GWT_BUILD_TIMESTAMP "${CMAKE_CURRENT_BINARY_DIR}/timestamp")
+
+   # define GWT build
+   add_custom_command(
+      OUTPUT
+         "${GWT_BUILD_TIMESTAMP}"
+      DEPENDS
+         "${GWT_SOURCE_FILES}"
+      WORKING_DIRECTORY
+         "${CMAKE_CURRENT_SOURCE_DIR}"
+      COMMENT
+         "Building GWT sources"
+      COMMAND
+         ${ANT}
+         -Dbuild.dir="${GWT_BIN_DIR}"
+         -Dwww.dir="${GWT_WWW_DIR}"
+         -Dextras.dir="${GWT_EXTRAS_DIR}"
+         -Dlib.dir="${GWT_LIB_DIR}"
+         -Dgwt.xmx="${GWT_XMX}"
+         -Dgwt.xss="${GWT_XSS}"
+         -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}"
+      COMMAND
+         "${CMAKE_COMMAND}" -E touch "${GWT_BUILD_TIMESTAMP}")
+
    # invoke ant to build
-   add_custom_target(gwt_build ALL)
+   add_custom_target(
+      gwt_build ALL
+      DEPENDS "${GWT_BUILD_TIMESTAMP}")
 
    # wait for major C++ work to complete before running the GWT build;
    # the Java compiler often runs out of resources when a parallel C++
@@ -84,18 +114,6 @@ if(GWT_BUILD)
       add_dependencies(gwt_build rsession)
    endif()
 
-   add_custom_command(
-      TARGET gwt_build
-      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-      COMMAND
-         ${ANT}
-         -Dbuild.dir="${GWT_BIN_DIR}"
-         -Dwww.dir="${GWT_WWW_DIR}"
-         -Dextras.dir="${GWT_EXTRAS_DIR}"
-         -Dlib.dir="${GWT_LIB_DIR}"
-         -Dgwt.xmx="${GWT_XMX}"
-         -Dgwt.xss="${GWT_XSS}"
-         -Dgwt.main.module="org.rstudio.studio.${GWT_MAIN_MODULE}")
 endif()
 
 if(NOT DEFINED GWT_COPY)

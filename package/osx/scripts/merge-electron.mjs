@@ -11,6 +11,9 @@ const [ node, script, x64AppPath, arm64AppPath, outPath ] = process.argv;
 const tmpPath = `${outPath}.tmp`;
 
 // merge the two builds together
+console.log("# Building universal Desktop application.")
+console.log(`- [i] x64AppPath: ${x64AppPath}`)
+console.log(`- [i] arm64AppPath: ${arm64AppPath}`)
 await makeUniversalApp({
   x64AppPath: x64AppPath,
   arm64AppPath: arm64AppPath,
@@ -19,7 +22,9 @@ await makeUniversalApp({
 });
 
 // use rsync to move them into the final install path
-execSync(`rsync -azvhP "${tmpPath}/" "${outPath}/"`, { stdio: 'inherit' });
+console.log("- [i] Merging desktop and session packages ...")
+execSync(`rsync -a "${tmpPath}/" "${outPath}/"`, { stdio: 'inherit' });
+console.log("- [i] Done!")
 
 // clean up
 await rm(tmpPath, { recursive: true });

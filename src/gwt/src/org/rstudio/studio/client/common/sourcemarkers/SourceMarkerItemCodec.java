@@ -15,15 +15,19 @@
 package org.rstudio.studio.client.common.sourcemarkers;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.*;
-
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableRowElement;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
 public class SourceMarkerItemCodec
@@ -92,9 +96,12 @@ public class SourceMarkerItemCodec
 
       TableCellElement tdMsg = Document.get().createTDElement();
       tdMsg.setClassName(resources_.styles().messageCell());
-      tdMsg.setInnerHTML(entry.getMessage().trim());
+
+      VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(tdMsg);
+      vc.submit(entry.getMessage());
+
       tr.appendChild(tdMsg);
-      
+
       TableCellElement tdDiscButton = maybeCreateDisclosureButton(entry);
       if (tdDiscButton != null)
          tr.appendChild(tdDiscButton);
