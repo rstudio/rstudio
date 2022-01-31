@@ -13,6 +13,7 @@
  *
  */
 
+#define R_INTERNAL_FUNCTIONS
 
 #include "SessionFiles.hpp"
 
@@ -26,6 +27,8 @@
 #include <gsl/gsl>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
@@ -65,7 +68,21 @@
 #include "SessionFilesListingMonitor.hpp"
 #include "SessionGit.hpp"
 
+#ifdef BOOST_WINDOWS_API
+# define kEmptyString L""
+# define kDotPath L"."
+# define kDotDotPath L".."
+#else
+# define kEmptyString ""
+# define kDotPath "."
+# define kDotDotPath ".."
+#endif
+
 using namespace rstudio::core;
+
+extern "C" {
+void Rf_sortVector(SEXP s, Rboolean decreasing);
+}
 
 namespace rstudio {
 namespace session {
@@ -1347,6 +1364,250 @@ SEXP rs_pathInfo(SEXP pathSEXP)
    return R_NilValue;
 }
 
+struct ListFilesOptions
+{
+   bool allFiles;
+   bool fullNames;
+   bool recursive;
+   bool includeDirs;
+   bool noDotDot;
+};
+
+class ListFilesAcceptAll
+{
+public:
+   bool operator()(const boost::filesystem::path& path)
+   {
+      return true;
+   }
+};
+
+class ListFilesAcceptMatching
+{
+public:
+#ifdef BOOST_WINDOWS_API
+   typedef boost::wregex regex_type;
+   typedef std::wstring string_type;
+#else
+   typedef boost::regex regex_type;
+   typedef std::string string_type;
+#endif
+   
+   ListFilesAcceptMatching(const string_type& pattern, int flags)
+      : pattern_(pattern, flags)
+   {
+   }
+   
+   bool operator()(const boost::filesystem::path& path)
+   {
+      return boost::regex_search(path.native(), pattern_);
+   }
+   
+private:
+   regex_type pattern_;
+};
+
+template <typename F>
+void listFilesImpl(
+      const boost::filesystem::path& path,
+      const boost::filesystem::path& prefix,
+      const ListFilesOptions& options,
+      F&& accept,
+      std::vector<boost::filesystem::path>* pResult)
+{
+   // include '.', '..' if requested
+   if (options.allFiles && !options.noDotDot)
+   {
+      for (auto&& path : { kDotPath, kDotDotPath })
+      {
+         if (accept(path))
+         {
+            if (prefix.empty())
+            {
+               pResult->push_back(path);
+            }
+            else
+            {
+               pResult->push_back(prefix / path);
+            }
+         }
+      }
+   }
+   
+   // iterate over other files in the directory
+   try
+   {
+      boost::filesystem::directory_iterator it(path);
+      boost::filesystem::directory_iterator end;
+      for (; it != end; it++)
+      {
+         // skip hidden files if requested
+         auto&& name = it->path().filename();
+         if (!options.allFiles && name.size() > 0 && *name.c_str() == name.dot)
+            continue;
+
+         // check for valid name
+         if (!accept(name))
+            continue;
+         
+         // add path
+         pResult->push_back(prefix.empty() ? name : prefix / name);
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+   
+}
+
+template <typename F>
+void listFilesRecursiveImpl(
+      const boost::filesystem::path& path,
+      const boost::filesystem::path& prefix,
+      const ListFilesOptions& options,
+      F&& accept,
+      std::vector<boost::filesystem::path>* pResult)
+{
+   try
+   {
+      boost::this_thread::interruption_point();
+      
+      boost::filesystem::directory_iterator it(path);
+      boost::filesystem::directory_iterator end;
+      for (; it != end; it++)
+      {
+         // skip hidden files if requested
+         auto&& name = it->path().filename();
+         if (!options.allFiles && name.size() > 0 && *name.c_str() == name.dot)
+            continue;
+
+         // construct new prefix
+         auto newPrefix = prefix.empty() ? name : prefix / name;
+         
+         if (boost::filesystem::is_directory(it->status()))
+         {
+            if (options.includeDirs && accept(name))
+               pResult->push_back(newPrefix);
+            listFilesRecursiveImpl(it->path(), newPrefix, options, accept, pResult);
+         }
+         
+         // NOTE: in recursive directory listings, R ignores broken symlinks?
+         else
+         {
+            if (accept(name))
+               pResult->push_back(newPrefix);
+         }
+      }
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+}
+
+template <typename F>
+void listFilesDispatch(
+      const std::vector<boost::filesystem::path>& paths,
+      const ListFilesOptions& options,
+      F&& accept,
+      std::vector<boost::filesystem::path>* pResult)
+{
+   if (options.recursive)
+   {
+      for (auto&& path : paths)
+      {
+         auto prefix = options.fullNames ? path : kEmptyString;
+         listFilesRecursiveImpl(path, prefix, options, accept, pResult);
+      }
+   }
+   else
+   {
+      for (auto&& path : paths)
+      {
+         auto prefix = options.fullNames ? path : kEmptyString;
+         listFilesImpl(path, prefix, options, accept, pResult);
+      }
+   }
+}
+
+SEXP rs_listFiles(SEXP pathSEXP,
+                  SEXP patternSEXP,
+                  SEXP allFilesSEXP,
+                  SEXP fullNamesSEXP,
+                  SEXP recursiveSEXP,
+                  SEXP ignoreCaseSEXP,
+                  SEXP includeDirsSEXP,
+                  SEXP noDotDotSEXP)
+{
+   try
+   {
+      // files to vector to fill
+      std::vector<boost::filesystem::path> result;
+
+      std::vector<boost::filesystem::path> paths;
+      if (TYPEOF(pathSEXP) == STRSXP)
+      {
+         auto vmax = vmaxget();
+         for (int i = 0, n = r::sexp::length(pathSEXP); i < n; i++)
+         {
+            const char* utf8Path = Rf_translateCharUTF8(STRING_ELT(pathSEXP, i));
+#ifdef BOOST_WINDOWS_API
+            paths.push_back(string_utils::utf8ToWide(utf8Path));
+#else
+            paths.push_back(utf8Path);
+#endif
+         }
+         vmaxset(vmax);
+      }
+
+      // unwrap parameters from R
+      ListFilesOptions options;
+
+      // fill other options
+      options.allFiles = r::sexp::asLogical(allFilesSEXP);
+      options.fullNames = r::sexp::asLogical(fullNamesSEXP);
+      options.recursive = r::sexp::asLogical(recursiveSEXP);
+      options.includeDirs = r::sexp::asLogical(includeDirsSEXP);
+      options.noDotDot = r::sexp::asLogical(noDotDotSEXP);
+      
+      // list files
+      std::string pattern = r::sexp::asString(patternSEXP);
+      if (pattern.empty())
+      {
+         listFilesDispatch(paths, options, ListFilesAcceptAll(), &result);
+      }
+      else
+      {
+         int flags = boost::regex::perl;
+         
+         bool ignoreCase = r::sexp::asLogical(ignoreCaseSEXP);
+         if (ignoreCase)
+            flags |= boost::regex::icase;
+         
+         listFilesDispatch(paths, options, ListFilesAcceptMatching(pattern, flags), &result);
+      }
+
+      // now, get the paths back as UTF-8 strings
+      std::vector<std::string> utf8Paths(result.size());
+      std::transform(
+               result.begin(),
+               result.end(),
+               utf8Paths.begin(),
+               [](const boost::filesystem::path& path)
+      {
+#ifdef BOOST_WINDOWS_API
+         return core::string_utils::wideToUtf8(path.native());
+#else
+         return path.native();
+#endif
+      });
+      
+      // return to R
+      r::sexp::Protect protect;
+      SEXP resultSEXP = r::sexp::createUtf8(utf8Paths, &protect);
+      Rf_sortVector(resultSEXP, (Rboolean) 0);
+      return resultSEXP;
+   }
+   CATCH_UNEXPECTED_EXCEPTION;
+   
+   return R_NilValue;
+}
+
 SEXP rs_readLines(SEXP filePathSEXP)
 {
    FilePath filePath(r::sexp::asString(filePathSEXP));
@@ -1397,8 +1658,9 @@ Error initialize()
    // subscribe to events
    events().onClientInit.connect(bind(onClientInit));
 
-   RS_REGISTER_CALL_METHOD(rs_readLines, 1);
-   RS_REGISTER_CALL_METHOD(rs_pathInfo, 1);
+   RS_REGISTER_CALL_METHOD(rs_listFiles);
+   RS_REGISTER_CALL_METHOD(rs_readLines);
+   RS_REGISTER_CALL_METHOD(rs_pathInfo);
 
    // install handlers
    using boost::bind;

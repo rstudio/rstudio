@@ -1529,6 +1529,21 @@ SEXP createUtf8(const FilePath& filePath, Protect* pProtect)
    return createUtf8(filePath.getAbsolutePath(), pProtect);
 }
 
+SEXP createUtf8(const std::vector<std::string>& data, Protect* pProtect)
+{
+   SEXP strSEXP;
+   pProtect->add(strSEXP = Rf_allocVector(STRSXP, data.size()));
+   
+   for (std::size_t i = 0, n = data.size(); i < n; i++)
+   {
+      SEXP charSEXP;
+      pProtect->add(charSEXP = Rf_mkCharLenCE(data[i].c_str(), data[i].size(), CE_UTF8));
+      SET_STRING_ELT(strSEXP, i, charSEXP);
+   }
+   
+   return strSEXP;
+}
+
 SEXP createRawVector(const std::string& data, Protect* pProtect)
 {
    SEXP rawSEXP;
