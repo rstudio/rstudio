@@ -496,7 +496,7 @@ export class SessionLauncher {
 
     // on macOS, we need to look at R and figure out if we should be trying to run
     // with the arm64 session binary (rsession-arm64) or with the x64 session binary (rsession)
-    if (app.isPackaged && process.platform === 'darwin') {
+    if (app.isPackaged && process.platform === 'darwin' && process.arch === 'arm64') {
       const rHome = getenv('R_HOME');
       const rLibPath = `${rHome}/lib/libR.dylib`;
       logger().logDebug(`$ /usr/bin/file "${rLibPath}"`);
