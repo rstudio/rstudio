@@ -1,5 +1,5 @@
 /*
- * logger.ts
+ * winston-logger.ts
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -13,43 +13,58 @@
  *
  */
 
+import winston from 'winston';
+
 import { getenv } from './environment';
 import { safeError } from './err';
-import { Logger, LogLevel, logLevel, showDiagnosticsOutput } from './logger';
+import { FilePath } from './file-path';
+import { Logger, logLevel, showDiagnosticsOutput } from './logger';
 
 /**
- * A Logger using console.log()
+ * A Logger using winston package: https://www.npmjs.com/package/winston
  */
-export class ConsoleLogger implements Logger {
-  logError(err: unknown): void {
-    if (logLevel() >= LogLevel.ERR) {
-      const safeErr = safeError(err);
-      console.log(safeErr);
+export class WinstonLogger implements Logger {
+  logger: winston.Logger;
+
+  constructor(logFile: FilePath, level: winston.level) {
+    this.logger = winston.createLogger({ level: level });
+
+    if (!logFile.isEmpty()) {
     }
+
+    // also log to console if stdout attached to a tty
+    if (process.stdout.isTTY) {
+      this.logger.add(new winston.transports.Console({ format: winston.format.simple() }));
+    }
+  }
+
+  logLevel(): winston.level {
+    return this.logger.level;
+  }
+
+  setLogLevel(level: winston.level): void {
+    this.logger.level = level;
+  }
+
+  logError(err: unknown): void {
+    const safeErr = safeError(err);
+    this.logger.log('error', err);
   }
 
   logErrorMessage(message: string): void {
-    if (logLevel() >= LogLevel.ERR) {
-      console.log(message);
-    }
+    this.logger.log('error', message);
   }
 
   logWarning(warning: string): void {
-    if (logLevel() >= LogLevel.WARN) {
-      console.log(warning);
-    }
+    this.logger.log('warn', warning);
   }
 
   logInfo(message: string): void {
-    if (logLevel() >= LogLevel.INFO) {
-      console.log(message);
-    }
+    this.logger.log('info', message);
   }
 
   logDebug(message: string): void {
-    if (logLevel() >= LogLevel.DEBUG) {
-      console.log(message);
-    }
+    this.logger.log('debug', message);
   }
 
   logDiagnostic(message: string): void {
