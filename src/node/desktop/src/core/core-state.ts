@@ -13,7 +13,7 @@
  *
  */
 
-import { LogOptions, LogLevel } from './logger';
+import { LogOptions, NullLogger } from './logger';
 
 /**
  * Global singleton containing state for 'core' routines
@@ -49,6 +49,6 @@ class CoreStateImpl implements CoreState {
 
   constructor() {
     this.instance = coreStateInstanceCounter++;
-    this.logOptions = { logLevel: LogLevel.ERR, showDiagnostics: false };
+    this.logOptions = { logger: new NullLogger(), showDiagnostics: false };
   }
 }

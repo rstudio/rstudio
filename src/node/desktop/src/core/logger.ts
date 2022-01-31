@@ -13,20 +13,14 @@
  *
  */
 
-import { coreState } from './core-state';
+import winston from 'winston';
 
-/**
- * Enum representing logging detail level
- */
-export enum LogLevel {
-  OFF = 0, // No messages will be logged
-  ERR = 1, // Error messages will be logged
-  WARN = 2, // Warning and error messages will be logged
-  INFO = 3, // Info, warning, and error messages will be logged
-  DEBUG = 4, // All messages will be logged
-}
+import { coreState } from './core-state';
+import { FilePath } from './file-path';
 
 export interface Logger {
+  logLevel(): winston.level;
+  setLogLevel(level: winston.level): void;
   logError(err: unknown): void;
   logErrorMessage(message: string): void;
   logWarning(warning: string): void;
@@ -37,12 +31,19 @@ export interface Logger {
 }
 
 export interface LogOptions {
-  logger?: Logger;
-  logLevel: LogLevel;
-  showDiagnostics: boolean;
+  logger: Logger;
+  showDiagnostics: boolean; // special class of console logging enabled via '--run-diagnostics'
 }
 
 export class NullLogger implements Logger {
+  level: winston.level = 'error';
+
+  logLevel(): winston.level {
+    return this.level;
+  }
+  setLogLevel(level: winston.level): void {
+    this.level = level;
+  }
   logError(err: unknown): void {}
   logErrorMessage(message: string): void {}
   logInfo(message: string): void {}
@@ -52,19 +53,18 @@ export class NullLogger implements Logger {
   logDiagnosticEnvVar(name: string): void {}
 }
 
+/**
+ * @returns Global logger instance
+ */
 export function logger(): Logger {
-  const logger = coreState().logOptions.logger;
-  if (!logger) {
-    throw Error('Logger not set');
-  }
-  return logger;
+  return coreState().logOptions.logger;
 }
 
 /**
  * @returns Current logging level
  */
-export function logLevel(): LogLevel {
-  return coreState().logOptions.logLevel;
+export function logLevel(): winston.level {
+  return coreState().logOptions.logger.logLevel();
 }
 
 export function setLogger(logger: Logger): void {
@@ -82,30 +82,28 @@ export function showDiagnosticsOutput(): boolean {
 /**
  * @param level minimum logging level
  */
-export function setLoggerLevel(level: LogLevel): void {
-  coreState().logOptions.logLevel = level;
+export function setLoggerLevel(level: winston.level): void {
+  coreState().logOptions.logger.setLogLevel(level);
 }
 
 /**
- * Convert a string log level (e.g. 'WARN') to LogLevel enum.
+ * Convert a command-line log level string (e.g. 'WARN') to enum type string.
  *
- * @param level String representation of log level
+ * @param level Command-line string representation of log level
  * @param defaultLevel Default logging level if unable to parse input
- * @returns LogLevel enum value
+ * @returns string enum value for logging level
  */
-export function parseCommandLineLogLevel(level: string, defaultLevel: LogLevel): LogLevel {
+export function parseCommandLineLogLevel(level: string, defaultLevel: winston.level): winston.level {
   level = level.toUpperCase();
   switch (level) {
-    case 'OFF':
-      return LogLevel.OFF;
     case 'ERR':
-      return LogLevel.ERR;
+      return 'error';
     case 'WARN':
-      return LogLevel.WARN;
+      return 'warn';
     case 'INFO':
-      return LogLevel.INFO;
+      return 'info';
     case 'DEBUG':
-      return LogLevel.DEBUG;
+      return 'debug';
     default:
       return defaultLevel;
   }
