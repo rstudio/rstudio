@@ -151,7 +151,7 @@ export class Application implements AppState {
           'Error Finding R',
           'RStudio failed to find any R installations on the system.',
         );
-        console.log(preflightError);
+        logger().logError(preflightError);
         return exitFailure();
       }
 
@@ -165,7 +165,7 @@ export class Application implements AppState {
     const prepareError = prepareEnvironment();
     if (prepareError) {
       await createStandaloneErrorDialog('Error Finding R', 'RStudio failed to find any R installations on the system.');
-      console.log(prepareError);
+      logger().logError(prepareError);
       return exitFailure();
     }
 

@@ -48,8 +48,12 @@ export class WinstonLogger implements Logger {
   }
 
   logError(err: unknown): void {
+    this.logErrorAtLevel('error', err);
+  }
+
+  logErrorAtLevel(level: winston.level, err: unknown): void {
     const safeErr = safeError(err);
-    this.logger.log('error', err);
+    this.logger.log(level, err);
   }
 
   logErrorMessage(message: string): void {
