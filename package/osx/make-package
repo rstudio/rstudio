@@ -74,6 +74,12 @@ on-exit () {
 
 trap on-exit EXIT
 
+if [ "$(uname -m)" = "arm64" ]; then
+   HOMEBREW_PREFIX="/opt/homebrew"
+else
+   HOMEBREW_PREFIX="/usr/local"
+fi
+
 # build / install directories
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
 ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
@@ -307,7 +313,7 @@ if [ "${build_package}" = "1" ]; then
    find-program CMAKE cmake        \
       "${HOME}/opt/bin"            \
       "${HOME}/homebrew/arm64/bin" \
-      "/usr/local/bin"
+      "${HOMEBREW_PREFIX}/bin"
 
    # remove an existing install directory
    rm -rf "${INSTALL_DIR}"
