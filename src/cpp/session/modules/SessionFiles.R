@@ -13,6 +13,29 @@
 #
 #
 
+.rs.addFunction("listFiles", function(path = ".",
+                                      pattern = NULL,
+                                      all.files = FALSE,
+                                      full.names = FALSE,
+                                      recursive = FALSE,
+                                      ignore.case = FALSE,
+                                      include.dirs = FALSE,
+                                      no.. = FALSE)
+{
+   .Call(
+      "rs_listFiles",
+      path.expand(as.character(path)),
+      as.character(pattern),
+      as.logical(all.files),
+      as.logical(full.names),
+      as.logical(recursive),
+      as.logical(ignore.case),
+      as.logical(include.dirs),
+      as.logical(no..),
+      PACKAGE = "(embedding)"
+   )
+})
+
 .rs.addFunction("listZipFile", function(zipfile)
 {
    as.character(utils::unzip(zipfile, list=TRUE)$Name)
