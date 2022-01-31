@@ -190,6 +190,10 @@ if [ "${clean}" = "1" ]; then
    rm -rf "${ELECTRON_SOURCE_DIR}/.webpack"
    rm -rf "${ELECTRON_SOURCE_DIR}/out"
 
+   # cleanup Electron packaging directories
+   rm -rf "${ELECTRON_SOURCE_DIR}/../desktop-build-arm64"
+   rm -rf "${ELECTRON_SOURCE_DIR}/../desktop-build-x86_64"
+
    # move back to package dir
    cd "${PKG_DIR}"
 
