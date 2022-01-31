@@ -24,7 +24,7 @@ describe('Logger', () => {
     clearCoreSingleton();
   });
 
- it('can be set and fetched', () => {
+  it('can be set and fetched', () => {
     const f = new NullLogger();
     setLogger(f);
     const fetched = logger();
