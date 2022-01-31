@@ -30,6 +30,7 @@ export class WinstonLogger implements Logger {
     this.logger = winston.createLogger({ level: level });
 
     if (!logFile.isEmpty()) {
+      this.logger.add(new winston.transports.File({ filename: logFile.getAbsolutePath() }));
     }
 
     // also log to console if stdout attached to a tty

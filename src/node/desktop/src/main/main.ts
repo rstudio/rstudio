@@ -23,7 +23,7 @@ import { FilePath } from '../core/file-path';
 import { Application, kLogLevel } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
-import { createStandaloneErrorDialog } from './utils';
+import { createStandaloneErrorDialog, userLogPath } from './utils';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -62,9 +62,8 @@ class RStudioMain {
 
     const rstudio = new Application();
 
-    const logLevel = parseCommandLineLogLevel(app.commandLine.getSwitchValue(kLogLevel), 'error');
-    // TODO (gary): set log path
-    setLogger(new WinstonLogger(new FilePath(), logLevel));
+    const logLevel = parseCommandLineLogLevel(app.commandLine.getSwitchValue(kLogLevel), 'warn');
+    setLogger(new WinstonLogger(userLogPath().completeChildPath('rdesktop.log'), logLevel));
     setApplication(rstudio);
 
     if (!parseStatus(await rstudio.beforeAppReady())) {
