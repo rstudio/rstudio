@@ -16,7 +16,7 @@
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
-import { logLevel } from '../core/logger';
+import { logger, logLevel } from '../core/logger';
 
 const kProportionalFont = 'Font.ProportionalFont';
 const kFixWidthFont = 'Font.FixWidthFont';
@@ -168,9 +168,7 @@ export class DesktopOptionsImpl {
     try {
       this.restoreMainWindowBoundsImpl(mainWindow);
     } catch (e: unknown) {
-      if (logLevel() == 'debug') {
-        console.log(e);
-      }
+      logger().logErrorAtLevel('debug', e);
     }
   }
 

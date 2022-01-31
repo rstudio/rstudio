@@ -22,6 +22,7 @@ export interface Logger {
   logLevel(): winston.level;
   setLogLevel(level: winston.level): void;
   logError(err: unknown): void;
+  logErrorAtLevel(level: winston.level, err: unknown): void;
   logErrorMessage(message: string): void;
   logWarning(warning: string): void;
   logInfo(message: string): void;
@@ -44,7 +45,10 @@ export class NullLogger implements Logger {
   setLogLevel(level: winston.level): void {
     this.level = level;
   }
-  logError(err: unknown): void {}
+  logError(err: unknown): void {
+    this.logErrorAtLevel('error', err);
+  }
+  logErrorAtLevel(level: winston.level, err: unknown): void {}
   logErrorMessage(message: string): void {}
   logInfo(message: string): void {}
   logWarning(warning: string): void {}
