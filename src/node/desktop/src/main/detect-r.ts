@@ -199,8 +199,9 @@ function scanForRPosix(): Expected<string> {
   // otherwise, look in some hard-coded locations
   const defaultLocations = ['/opt/local/bin/R', '/usr/local/bin/R', '/usr/bin/R'];
 
-  // also check framework directory for macOS
+  // also check framework directory and homebrew ARM locations for macOS
   if (process.platform === 'darwin') {
+    defaultLocations.push('/opt/homebrew/bin/R');
     defaultLocations.push('/Library/Frameworks/R.framework/Resources/bin/R');
   }
 
