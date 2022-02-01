@@ -17,8 +17,6 @@ package org.rstudio.studio.client.workbench.views.output.lint;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -27,7 +25,6 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.RetinaStyleInjector;
@@ -369,17 +366,6 @@ public class LintManager
       }
       else
          finalLint = lint;
-
-      for (int i = 0; i < finalLint.length(); i++) {
-         LintItem lintItem = finalLint.get(i);
-         DivElement element = Document.get().createDivElement();
-         VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(element);
-
-         vc.submit(lintItem.getText());
-         String renderedText = element.getInnerHTML();
-
-         lintItem.setText(renderedText);
-      }
 
       if (spellcheck && userPrefs_.realTimeSpellchecking().getValue())
       {

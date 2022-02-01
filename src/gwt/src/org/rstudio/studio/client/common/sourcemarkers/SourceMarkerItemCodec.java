@@ -98,6 +98,7 @@ public class SourceMarkerItemCodec
       tdMsg.setClassName(resources_.styles().messageCell());
 
       VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(tdMsg);
+      vc.setPreserveHTML(true);
       vc.submit(entry.getMessage());
 
       tr.appendChild(tdMsg);

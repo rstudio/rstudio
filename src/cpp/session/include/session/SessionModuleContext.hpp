@@ -852,6 +852,23 @@ struct SourceMarker
         showErrorList(showErrorList)
    {
    }
+
+   SourceMarker(Type type,
+                const core::FilePath& path,
+                int line,
+                int column,
+                const core::html_utils::HTML& message,
+                bool showErrorList,
+                bool isCustom)
+      : type(type),
+        path(path),
+        line(line),
+        column(column),
+        message(message),
+        showErrorList(showErrorList),
+        isCustom(isCustom)
+   {
+   }
    
    explicit operator bool() const
    {
@@ -864,6 +881,7 @@ struct SourceMarker
    int column;
    core::html_utils::HTML message;
    bool showErrorList;
+   bool isCustom;
 };
 
 SourceMarker::Type sourceMarkerTypeFromString(const std::string& type);
@@ -882,6 +900,15 @@ struct SourceMarkerSet
    }
 
    SourceMarkerSet(const std::string& name,
+                   const std::vector<SourceMarker>& markers,
+                   bool isDiagnostics)
+      : name(name),
+        markers(markers),
+        isDiagnostics(isDiagnostics)
+   {
+   }
+
+   SourceMarkerSet(const std::string& name,
                    const core::FilePath& basePath,
                    const std::vector<SourceMarker>& markers)
       : name(name),
@@ -890,11 +917,23 @@ struct SourceMarkerSet
    {
    }
 
+   SourceMarkerSet(const std::string& name,
+                   const core::FilePath& basePath,
+                   const std::vector<SourceMarker>& markers,
+                   bool isDiagnostics)
+      : name(name),
+        basePath(basePath),
+        markers(markers),
+        isDiagnostics(isDiagnostics)
+   {
+   }
+
    bool empty() const { return name.empty(); }
 
    std::string name;
    core::FilePath basePath;
    std::vector<SourceMarker> markers;
+   bool isDiagnostics;
 };
 
 enum MarkerAutoSelect
