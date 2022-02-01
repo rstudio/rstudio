@@ -72,52 +72,10 @@
       }
     </style>
     <script>
-      // Function to copy problem report to clipboard
-      var copyProblemReport = function () {
-        // Find the <textarea> containing the problem report
-        var report = document.getElementById('problem_report');
-        if (!report) {
-          return;
-        }
-
-        // Fill in the user agent
-        report.value = report.value.replace('user_agent', navigator.userAgent);
-
-        // Replace all variables
-        replaceReportVar(report, 'version');
-        replaceReportVar(report, 'launch_failed');
-        replaceReportVar(report, 'exit_code');
-        replaceReportVar(report, 'process_error');
-        replaceReportVar(report, 'process_output');
-        replaceReportVar(report, 'log_file');
-        replaceReportVar(report, 'log_content');
-
-        // Select all the text in the report
-        report.focus();
-        report.select();
-
-        // Attempt to copy the text to the clipboard
-        if (document.execCommand('copy')) {
-          alert(i18next.t('problemReportCopiedToClipboard'));
-        } else {
-          alert(i18next.t('couldNotCopyProblemReportToClipboard'));
-        }
-      };
-
       var replaceVar = function (varName) {
         try {
           window.desktop.getStartupErrorInfo(varName, (result) => {
             document.getElementById(varName).innerHTML = result;
-          });
-        } catch (err) {
-          console.error(err);
-        }
-      };
-
-      var replaceReportVar = function (report, varName) {
-        try {
-          window.desktop.getStartupErrorInfo('!' + varName, (result) => {
-            report.value = report.value.replace('#' + varName + '#', result);
           });
         } catch (err) {
           console.error(err);
@@ -274,7 +232,7 @@ Standard output:
 ```
                 </textarea
       >
-      <input type="button" id="i18n-copyProblemReport" onclick="copyProblemReport()" />
+      <input type="button" id="i18n-copyProblemReport" />
     </form>
   </body>
 </html>
