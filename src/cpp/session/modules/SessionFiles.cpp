@@ -1552,6 +1552,32 @@ SEXP finalizePaths(const std::vector<boost::filesystem::path>& paths)
    return resultSEXP;
 }
 
+void validatePath(SEXP pathSEXP)
+{
+   if (TYPEOF(pathSEXP) != STRSXP)
+      Rf_error("invalid '%s' argument", "path");
+}
+
+void validatePattern(SEXP patternSEXP)
+{
+   bool validPattern =
+         TYPEOF(patternSEXP) == STRSXP &&
+         LENGTH(patternSEXP) > 0 &&
+         STRING_ELT(patternSEXP, 0) != NA_STRING;
+
+   if (!validPattern && LENGTH(patternSEXP) != 0)
+      Rf_error("invalid '%s' argument", "pattern");
+}
+
+bool validateLogical(SEXP valueSEXP, const char* name)
+{
+   int value = Rf_asLogical(valueSEXP);
+   if (value == NA_LOGICAL)
+      Rf_error("invalid '%s' argument", name);
+
+   return value != 0;
+}
+
 SEXP rs_listFiles(SEXP pathSEXP,
                   SEXP patternSEXP,
                   SEXP allFilesSEXP,
@@ -1563,6 +1589,18 @@ SEXP rs_listFiles(SEXP pathSEXP,
 {
    try
    {
+      // validate parameters
+      validatePath(pathSEXP);
+      validatePattern(patternSEXP);
+
+      // validate logical parameters
+      bool allFiles     = validateLogical(allFilesSEXP,    "all.files");
+      bool fullNames    = validateLogical(fullNamesSEXP,   "full.names");
+      bool recursive    = validateLogical(recursiveSEXP,   "recursive");
+      bool ignoreCase   = validateLogical(ignoreCaseSEXP,  "ignore.case");
+      bool includeDirs  = validateLogical(includeDirsSEXP, "include.dirs");
+      bool noDotDot     = validateLogical(noDotDotSEXP,    "no..");
+
       std::vector<boost::filesystem::path> result;
       std::vector<boost::filesystem::path> paths = initializePaths(pathSEXP);
 
@@ -1570,14 +1608,14 @@ SEXP rs_listFiles(SEXP pathSEXP,
       ListFilesOptions options;
 
       // fill other options
-      options.allFiles = r::sexp::asLogical(allFilesSEXP);
-      options.fullNames = r::sexp::asLogical(fullNamesSEXP);
-      options.recursive = r::sexp::asLogical(recursiveSEXP);
+      options.allFiles     = allFiles;
+      options.fullNames    = fullNames;
+      options.recursive    = recursive;
       options.includeFiles = true;
-      options.includeDirs = r::sexp::asLogical(includeDirsSEXP);
-      options.noDotDot = r::sexp::asLogical(noDotDotSEXP);
-      
-      // list files
+      options.includeDirs  = includeDirs;
+      options.noDotDot     = noDotDot;
+
+      // read pattern (need to be careful to handle NAs)
 #ifdef BOOST_WINDOWS_API
       std::wstring pattern = core::string_utils::utf8ToWide(
                r::sexp::asUtf8String(patternSEXP));
@@ -1592,8 +1630,6 @@ SEXP rs_listFiles(SEXP pathSEXP,
       else
       {
          int flags = boost::regex::perl;
-         
-         bool ignoreCase = r::sexp::asLogical(ignoreCaseSEXP);
          if (ignoreCase)
             flags |= boost::regex::icase;
 
@@ -1621,6 +1657,13 @@ SEXP rs_listDirs(SEXP pathSEXP,
 {
    try
    {
+      // validate parameters
+      validatePath(pathSEXP);
+
+      // validate logical parameters
+      bool fullNames = validateLogical(fullNamesSEXP, "full.names");
+      bool recursive = validateLogical(recursiveSEXP, "recursive");
+
       std::vector<boost::filesystem::path> result;
       std::vector<boost::filesystem::path> paths = initializePaths(pathSEXP);
 
@@ -1629,8 +1672,8 @@ SEXP rs_listDirs(SEXP pathSEXP,
 
       // fill other options
       options.allFiles = true;
-      options.fullNames = r::sexp::asLogical(fullNamesSEXP);
-      options.recursive = r::sexp::asLogical(recursiveSEXP);
+      options.fullNames = fullNames;
+      options.recursive = recursive;
       options.includeFiles = false;
       options.includeDirs = true;
       options.noDotDot = true;

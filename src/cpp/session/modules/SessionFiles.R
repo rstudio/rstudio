@@ -38,7 +38,8 @@
                                                      no.. = FALSE)
    {
       "RStudio hook: restore original with `.rs.files.restoreBindings()`"
-      .rs.listFiles(
+      .Call(
+         "rs_listFiles",
          path,
          pattern,
          all.files,
@@ -46,7 +47,8 @@
          recursive,
          ignore.case,
          include.dirs,
-         no..
+         no..,
+         PACKAGE = "(embedding)"
       )
    })
 
@@ -55,7 +57,13 @@
                                                     recursive = TRUE)
    {
       "RStudio hook: restore original with `.rs.files.restoreBindings()`"
-      .rs.listDirs(path, full.names, recursive)
+      .Call(
+         "rs_listDirs",
+         path,
+         full.names,
+         recursive,
+         PACKAGE = "(embedding)"
+      )
    })
 
    # dir and list.files should refer to the same thing
@@ -83,14 +91,14 @@
 {
    .Call(
       "rs_listFiles",
-      path.expand(as.character(path)),
-      as.character(pattern),
-      as.logical(all.files),
-      as.logical(full.names),
-      as.logical(recursive),
-      as.logical(ignore.case),
-      as.logical(include.dirs),
-      as.logical(no..),
+      path,
+      pattern,
+      all.files,
+      full.names,
+      recursive,
+      ignore.case,
+      include.dirs,
+      no..,
       PACKAGE = "(embedding)"
    )
 })
@@ -101,9 +109,9 @@
 {
    .Call(
       "rs_listDirs",
-      path.expand(as.character(path)),
-      as.logical(full.names),
-      as.logical(recursive),
+      path,
+      full.names,
+      recursive,
       PACKAGE = "(embedding)"
    )
 })
