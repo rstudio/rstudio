@@ -45,6 +45,7 @@
 * RStudio now supports the experimental UTF-8 UCRT builds of R (#9824)
 * Preliminary support for R graphics engine version 15 in R 4.2.0. (#10058)
 * Default file download method in Windows for R 4.2 and above changed from `wininet` to `libcurl` (#10163)
+* `list.files()` and `list.dirs()` now handle international characters on Windows (#10451)
 
 #### Misc
 
