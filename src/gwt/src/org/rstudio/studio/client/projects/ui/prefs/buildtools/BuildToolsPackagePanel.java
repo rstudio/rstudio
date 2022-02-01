@@ -64,6 +64,10 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
          
       });
       
+      cleanBeforeInstall_ = checkBox(constants_.cleanBeforeInstallLabel());
+      cleanBeforeInstall_.addStyleName(RES.styles().buildToolsCleanBeforeInstall());
+      add(cleanBeforeInstall_);
+
       chkUseDevtools_ = checkBox(
             constants_.chkUseDevtoolsCaption());
       chkUseDevtools_.addStyleName(RES.styles().buildToolsDevtools());
@@ -130,6 +134,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    {
       installAdditionalArguments_.setText("--no-multiarch --with-keep.source");
       chkUseDevtools_.setValue(true);
+      cleanBeforeInstall_.setValue(true);
    }
 
    @Override
@@ -152,6 +157,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       boolean showRoxygenize = config.hasPackageRoxygenize() ||
                                options.getBuildContext().isRoxygen2Installed();
       roxygenizePanel_.setVisible(showRoxygenize);
+      cleanBeforeInstall_.setValue(config.getPackageCleanBeforeInstall());
       chkUseDevtools_.setValue(config.getPackageUseDevtools());
       chkUseRoxygen_.setValue(config.hasPackageRoxygenize());
       chkUseRoxygen_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -181,6 +187,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    {
       RProjectConfig config = options.getConfig();
       config.setPackageUseDevtools(chkUseDevtools_.getValue());
+      config.setPackageCleanBeforeInstall(cleanBeforeInstall_.getValue());
       config.setPackagePath(pathSelector_.getText());
       config.setPackageInstallArgs(installAdditionalArguments_.getText());
       config.setPackageBuildArgs(buildAdditionalArguments_.getText());
@@ -206,6 +213,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    
    private VerticalPanel roxygenizePanel_;
    private CheckBox chkUseRoxygen_;
+   private CheckBox cleanBeforeInstall_;
    private CheckBox chkUseDevtools_;
    private ThemedButton btnConfigureRoxygen_;
    

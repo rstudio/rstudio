@@ -31,6 +31,8 @@
 * Add ability to insert citation for R Packages (#8921)
 * Fixed BetterBibTeX detection on Linux (#10007)
 * Fixed DT tables being squashed in the viewer pane (#10276)
+* "Clean and Rebuild" and "Install and Restart" have been merged into "Install Package", the "Project Options > Build" gains a "clean before install" option to toggle the --preclean flag. 
+* The Build toolbar changes to "Install | Test | Check | More v"
 
 #### RStudio Workbench
 

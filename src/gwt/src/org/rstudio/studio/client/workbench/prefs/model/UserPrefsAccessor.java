@@ -2432,6 +2432,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Clean before install.
+    */
+   public PrefValue<Boolean> cleanBeforeInstall()
+   {
+      return bool(
+         "clean_before_install",
+         _constants.cleanBeforeInstallTitle(), 
+         _constants.cleanBeforeInstallDescription(), 
+         true);
+   }
+
+   /**
     * Whether to use Internet2 for networking on R for Windows.
     */
    public PrefValue<Boolean> useInternet2()
@@ -3634,6 +3646,8 @@ public class UserPrefsAccessor extends Prefs
          rsaKeyPath().setValue(layer, source.getString("rsa_key_path"));
       if (source.hasKey("use_devtools"))
          useDevtools().setValue(layer, source.getBool("use_devtools"));
+      if (source.hasKey("clean_before_install"))
+         cleanBeforeInstall().setValue(layer, source.getBool("clean_before_install"));
       if (source.hasKey("use_internet2"))
          useInternet2().setValue(layer, source.getBool("use_internet2"));
       if (source.hasKey("use_secure_download"))
@@ -3929,6 +3943,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalPath());
       prefs.add(rsaKeyPath());
       prefs.add(useDevtools());
+      prefs.add(cleanBeforeInstall());
       prefs.add(useInternet2());
       prefs.add(useSecureDownload());
       prefs.add(cleanupAfterRCmdCheck());

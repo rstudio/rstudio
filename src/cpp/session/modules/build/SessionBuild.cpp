@@ -756,7 +756,7 @@ private:
          std::string extraArgs = projectConfig().packageInstallArgs;
 
          // add --preclean if this is a rebuild all
-         if (collectForcePackageRebuild() || (type == kRebuildAll))
+         if (collectForcePackageRebuild() || (type == kRebuildAll) || cleanBeforeInstall() )
          {
             if (!boost::algorithm::contains(extraArgs, "--preclean"))
                rCmd << "--preclean";
@@ -1634,6 +1634,11 @@ private:
    {
       return projectConfig().packageUseDevtools &&
              module_context::isMinimumDevtoolsInstalled();
+   }
+
+   bool cleanBeforeInstall()
+   {
+      return projectConfig().packageCleanBeforeInstall;
    }
 
 public:

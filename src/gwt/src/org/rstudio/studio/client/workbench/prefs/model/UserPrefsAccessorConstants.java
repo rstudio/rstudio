@@ -1413,6 +1413,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String useDevtoolsDescription();
 
    /**
+    * Clean before install.
+    */
+   @DefaultStringValue("Clean before install")
+   String cleanBeforeInstallTitle();
+   @DefaultStringValue("Clean before install.")
+   String cleanBeforeInstallDescription();
+
+   /**
     * Whether to use Internet2 for networking on R for Windows.
     */
    @DefaultStringValue("")

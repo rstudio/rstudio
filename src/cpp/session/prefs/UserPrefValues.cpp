@@ -2221,6 +2221,19 @@ core::Error UserPrefValues::setUseDevtools(bool val)
 }
 
 /**
+ * Clean before install.
+ */
+bool UserPrefValues::cleanBeforeInstall()
+{
+   return readPref<bool>("clean_before_install");
+}
+
+core::Error UserPrefValues::setCleanBeforeInstall(bool val)
+{
+   return writePref("clean_before_install", val);
+}
+
+/**
  * Whether to use Internet2 for networking on R for Windows.
  */
 bool UserPrefValues::useInternet2()
@@ -3185,6 +3198,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalPath,
       kRsaKeyPath,
       kUseDevtools,
+      kCleanBeforeInstall,
       kUseInternet2,
       kUseSecureDownload,
       kCleanupAfterRCmdCheck,
