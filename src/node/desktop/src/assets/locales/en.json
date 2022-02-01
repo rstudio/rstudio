@@ -64,7 +64,7 @@
   "rNotFound": "R not found",
   "couldNotLocateAnRInstallationOnTheSystem": "Could not locate an R installation on the system.",
   "unimplemented": "Unimplemented",
-  "callbackNyiLowercase": "callback NYI",
+  "callbackNyiLowercase": "{{ipcName}} callback NYI",
   "unhandledException": "Unhandled Exception",
   "rSessionFatalError": "The R session had a fatal error.",
   "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "This error was very likely caused by R attempting to load packages from a different incompatible version of R on your system. Please remove other versions of R and/or remove environment variables that reference libraries from other versions of R before proceeding.",
