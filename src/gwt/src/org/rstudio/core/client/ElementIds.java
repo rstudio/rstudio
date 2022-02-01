@@ -236,6 +236,8 @@ public class ElementIds
    public static String getNewRmdTitle() { return getElementId(NEW_RMD_TITLE); }
    public final static String NEW_RMD_AUTHOR = "new_rmd_author";
    public static String getNewRmdAuthor() { return getElementId(NEW_RMD_AUTHOR); }
+   public final static String NEW_RMD_DATE = "new_rmd_date";
+   public static String getNewRmdDate() { return getElementId(NEW_RMD_DATE); }
    public final static String NEW_RMD_TEMPLATE_LABEL = "new_rmd_template_label";
    public static String getNewRmdTemplateLabel() { return getElementId(NEW_RMD_TEMPLATE_LABEL); }
    public final static String NEW_RMD_TEMPLATE = "new_rmd_template";
