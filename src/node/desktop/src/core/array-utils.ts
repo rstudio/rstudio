@@ -47,7 +47,7 @@ export function nextLowest(val: number, choices: number[]): number {
 
 /**
  * @param strArray Array to search
- * @param prefix String prefix to match 
+ * @param prefix String prefix to match
  * @returns Value of first array member starting with `prefix` (with `prefix` removed) or
  * empty string if no matches.
  */
