@@ -178,7 +178,7 @@ export class MainWindow extends GwtWindow {
       logger().logError(error);
 
       dialog.showMessageBoxSync(this.window, {
-        message: i18next.t('rSessionFailedToStart'),
+        message: i18next.t('mainWindowTs.rSessionFailedToStart'),
         type: 'error',
         title: appState().activation().editionName(),
       });

@@ -706,8 +706,8 @@ export class GwtCallback extends EventEmitter {
     const focusedWindow = BrowserWindow.getFocusedWindow();
 
     const dialogOptions = {
-      title: i18next.t('unimplemented'),
-      message: i18next.t('callbackNyiLowercase', { ipcName }),
+      title: i18next.t('gwtCallbackTs.unimplemented'),
+      message: i18next.t('gwtCallbackTs.callbackNyiLowercase', { ipcName }),
     };
 
     if (focusedWindow) {

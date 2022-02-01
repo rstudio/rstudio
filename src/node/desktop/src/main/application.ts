@@ -120,15 +120,17 @@ export class Application implements AppState {
       // sanity checking for dev config
       if (!confPath.existsSync()) {
         await createStandaloneErrorDialog(
-          i18next.t('devModeConfig'),
-          `${i18next.t('confColon')} ${confPath.getAbsolutePath()} ${i18next.t('notFoundDotLowercase')}'`,
+          i18next.t('applicationTs.devModeConfig'),
+          `${i18next.t('applicationTs.confColon')} ${confPath.getAbsolutePath()} ${i18next.t(
+            'applicationTs.notFoundDotLowercase',
+          )}'`,
         );
         return exitFailure();
       }
       if (!this.sessionPath.existsSync()) {
         await createStandaloneErrorDialog(
-          i18next.t('devModeConfig'),
-          `rsession: ${this.sessionPath.getAbsolutePath()} ${i18next.t('notFoundDotLowercase')}'`,
+          i18next.t('applicationTs.devModeConfig'),
+          `rsession: ${this.sessionPath.getAbsolutePath()} ${i18next.t('applicationTs.notFoundDotLowercase')}'`,
         );
         return exitFailure();
       }
@@ -152,8 +154,8 @@ export class Application implements AppState {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
         await createStandaloneErrorDialog(
-          i18next.t('errorFindingR'),
-          i18next.t('rstudioFailedToFindRInstalationsOnTheSystem'),
+          i18next.t('applicationTs.errorFindingR'),
+          i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
         );
         console.log(preflightError);
         return exitFailure();
@@ -169,8 +171,8 @@ export class Application implements AppState {
     const prepareError = prepareEnvironment();
     if (prepareError) {
       await createStandaloneErrorDialog(
-        i18next.t('errorFindingR'),
-        i18next.t('rstudioFailedToFindRInstalationsOnTheSystem'),
+        i18next.t('applicationTs.errorFindingR'),
+        i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
       );
       console.log(prepareError);
       return exitFailure();

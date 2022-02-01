@@ -22,7 +22,7 @@ import i18next from 'i18next';
 const loadPageLocalization = () => {
   initI18n();
 
-  window.onload = () => {
+  window.addEventListener('load', () => {
     const i18nIds = [
       'cannotConnectToR',
       'rstudioCantEstablishAConnectionToR',
@@ -43,24 +43,24 @@ const loadPageLocalization = () => {
     try {
       i18nIds.forEach((id) => {
         const reducedId = id.replace('i18n-', '');
-        const element = document.getElementById(id) as HTMLSelectElement;
+        const element = document.getElementById(id) as HTMLElement;
 
         switch (reducedId) {
           case 'retry_url':
-            (document.getElementById('retry_url') as HTMLSelectElement).innerHTML = i18next.t('retry');
+            (document.getElementById('retry_url') as HTMLElement).innerHTML = i18next.t('uiFolder.retry');
             break;
           case 'ifYouveCustomizedRSessionCreation':
-            (element.innerHTML = i18next.t(reducedId)), { rProfileFileExtension: '<samp>~/.Rprofile</samp>),' };
+            (element.innerHTML = i18next.t('uiFolder.' + reducedId)), { rProfileFileExtension: '<samp>~/.Rprofile</samp>),' };
             break;
           default:
-            element.innerHTML = i18next.t(reducedId);
+            element.innerHTML = i18next.t('uiFolder.' + reducedId);
             break;
         }
       });
     } catch (err) {
       console.log('Error occurred when loading i18n: ', err);
     }
-  };
+  });
 };
 
 loadPageLocalization();

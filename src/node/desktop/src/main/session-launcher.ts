@@ -578,7 +578,7 @@ export class SessionLauncher {
   }
 
   launchFailedErrorMessage(): string {
-    let errMsg = i18next.t('rSessionFatalError');
+    let errMsg = i18next.t('sessionLauncherTs.rSessionFatalError');
 
     // check for abend log
     const abendLogMessage = this.collectAbendLogMessage();
@@ -586,7 +586,7 @@ export class SessionLauncher {
     // check for R version mismatch
     if (abendLogMessage.includes('arguments passed to .Internal')) {
       // eslint-disable-next-line max-len
-      errMsg = errMsg + '\n\n' + i18next.t('errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion');
+      errMsg = errMsg + '\n\n' + i18next.t('sessionLauncherTs.errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion');
     }
 
     if (abendLogMessage) {

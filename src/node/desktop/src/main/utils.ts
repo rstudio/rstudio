@@ -180,7 +180,7 @@ function findBuildRootImpl(rootDir: string): string {
 
 function rsessionNotFoundError(): Error {
   const workingDirectory = '' + process.cwd();
-  const message = i18next.t('rsessionNotFoundError', { workingDirectory });
+  const message = i18next.t('utilsTs.rsessionNotFoundError', { workingDirectory });
 
   return Error(message);
 }

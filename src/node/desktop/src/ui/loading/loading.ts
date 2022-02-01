@@ -22,27 +22,27 @@ import i18next from 'i18next';
 const loadPageLocalization = () => {
   initI18n();
 
-  window.onload = () => {
+  window.addEventListener('load', () => {
     const i18nIds = ['initializingR', 'rLogo', 'initializingR', 'theRsessionIsInitializing'].map((id) => 'i18n-' + id);
 
     try {
       i18nIds.forEach((id) => {
         const reducedId = id.replace('i18n-', '');
-        const element = document.getElementById(id) as HTMLSelectElement;
+        const element = document.getElementById(id) as HTMLElement;
 
         switch (reducedId) {
           case 'theRsessionIsInitializing':
-            element.innerHTML = i18next.t(reducedId, { mdash: '&mdash;' });
+            element.innerHTML = i18next.t('uiFolder.' + reducedId, { mdash: '&mdash;' });
             break;
           default:
-            element.innerHTML = i18next.t(reducedId);
+            element.innerHTML = i18next.t('uiFolder.' + reducedId);
             break;
         }
       });
     } catch (err) {
       console.log('Error occurred when loading i18n: ', err);
     }
-  };
+  });
 };
 
 loadPageLocalization();

@@ -43,8 +43,8 @@ interface REnvironment {
 }
 
 function showRNotFoundError(error?: Error): void {
-  const message = error?.message ?? i18next.t('couldNotLocateAnRInstallationOnTheSystem') ?? '';
-  void createStandaloneErrorDialog(i18next.t('rNotFound'), message);
+  const message = error?.message ?? i18next.t('detectRTs.couldNotLocateAnRInstallationOnTheSystem') ?? '';
+  void createStandaloneErrorDialog(i18next.t('detectRTs.rNotFound'), message);
 }
 
 function executeCommand(command: string): Expected<string> {

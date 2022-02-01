@@ -82,7 +82,7 @@ buttonBrowse.addEventListener('click', () => {
 const loadPageLocalization = () => {
   initI18n();
 
-  window.onload = () => {
+  window.addEventListener('load', () => {
     const i18nIds = [
       'chooseRInstallation',
       'rstudioRequiresAnExistingRInstallationTitle',
@@ -98,7 +98,7 @@ const loadPageLocalization = () => {
     try {
       i18nIds.forEach((id) => {
         const reducedId = id.replace('i18n-', '');
-        const element = document.getElementById(id) as HTMLSelectElement;
+        const element = document.getElementById(id) as HTMLElement;
 
         switch (reducedId) {
           case 'browseDots':
@@ -113,12 +113,12 @@ const loadPageLocalization = () => {
           default:
             break;
         }
-        element.innerHTML = i18next.t(reducedId);
+        element.innerHTML = i18next.t('uiFolder.' + reducedId);
       });
     } catch (err) {
       console.log('Error occurred when loading i18n: ', err);
     }
-  };
+  });
 };
 
 loadPageLocalization();
