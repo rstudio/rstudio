@@ -1594,6 +1594,19 @@ bool validateLogical(SEXP valueSEXP, const char* name)
    return value != 0;
 }
 
+boost::filesystem::path::string_type extractPattern(SEXP patternSEXP)
+{
+   if (LENGTH(patternSEXP) == 0)
+      return boost::filesystem::path::string_type();
+   
+   const char* pattern = Rf_translateCharUTF8(STRING_ELT(patternSEXP, 0));
+#ifdef BOOST_WINDOWS_API
+   return string_utils::utf8ToWide(pattern);
+#else
+   return pattern;
+#endif
+}
+
 SEXP rs_listFiles(SEXP pathSEXP,
                   SEXP patternSEXP,
                   SEXP allFilesSEXP,
@@ -1631,13 +1644,8 @@ SEXP rs_listFiles(SEXP pathSEXP,
       options.includeDirs  = includeDirs;
       options.noDotDot     = noDotDot;
 
-      // read pattern (need to be careful to handle NAs)
-#ifdef BOOST_WINDOWS_API
-      std::wstring pattern = core::string_utils::utf8ToWide(
-               r::sexp::asUtf8String(patternSEXP));
-#else
-      std::string pattern = r::sexp::asString(patternSEXP);
-#endif
+      // read and handle pattern
+      auto pattern = extractPattern(patternSEXP);
       if (pattern.empty())
       {
          auto matcher = ListFilesAcceptAll();
