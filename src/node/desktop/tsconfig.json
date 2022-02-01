@@ -14,7 +14,7 @@
       "*": ["node_modules/*"]
     },
     "lib": ["es2020", "DOM"],
-    "resolveJsonModule": true,
+    "resolveJsonModule": true
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules"],

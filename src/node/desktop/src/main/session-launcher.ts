@@ -586,7 +586,10 @@ export class SessionLauncher {
     // check for R version mismatch
     if (abendLogMessage.includes('arguments passed to .Internal')) {
       // eslint-disable-next-line max-len
-      errMsg = errMsg + '\n\n' + i18next.t('sessionLauncherTs.errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion');
+      errMsg =
+        errMsg +
+        '\n\n' +
+        i18next.t('sessionLauncherTs.errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion');
     }
 
     if (abendLogMessage) {
