@@ -13,11 +13,15 @@
  *
  */
 
+/* eslint-disable @typescript-eslint/no-implicit-any-catch */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+
 import { Callbacks } from './preload';
+import { initI18n } from '../../../main/i18n-manager';
+import i18next from 'i18next';
 
 import './styles.css';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 declare global {
   interface Window {
     callbacks: Callbacks;
@@ -74,3 +78,47 @@ buttonCancel.addEventListener('click', () => {
 buttonBrowse.addEventListener('click', () => {
   window.callbacks.browse();
 });
+
+const loadPageLocalization = () => {
+  initI18n();
+
+  window.onload = () => {
+    const i18nIds = [
+      'chooseRInstallation',
+      'rstudioRequiresAnExistingRInstallationTitle',
+      'rstudioRequiresAnExistingRInstallationSubtitle',
+      'useYourMachineDefault64BitR',
+      'useYourMachineDefault32BitR',
+      'chooseASpecificVersionOfR',
+      'browseDots',
+      'okCaps',
+      'cancel',
+    ].map((id) => 'i18n-' + id);
+
+    try {
+      i18nIds.forEach((id) => {
+        const reducedId = id.replace('i18n-', '');
+        const element = document.getElementById(id) as HTMLSelectElement;
+
+        switch (reducedId) {
+          case 'browseDots':
+            id = 'button-browse';
+            break;
+          case 'okCaps':
+            id = 'button-ok';
+            break;
+          case 'cancel':
+            id = 'button-cancel';
+            break;
+          default:
+            break;
+        }
+        element.innerHTML = i18next.t(reducedId);
+      });
+    } catch (err) {
+      console.log('Error occurred when loading i18n: ', err);
+    }
+  };
+};
+
+loadPageLocalization();

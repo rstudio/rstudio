@@ -14,3 +14,53 @@
  */
 
 // Placeholder required by Webpack / Electron-Forge
+
+/* eslint-disable @typescript-eslint/no-implicit-any-catch */
+import { initI18n } from '../../main/i18n-manager';
+import i18next from 'i18next';
+
+const loadPageLocalization = () => {
+  initI18n();
+
+  window.onload = () => {
+    const i18nIds = [
+      'cannotConnectToR',
+      'rstudioCantEstablishAConnectionToR',
+      'theRSessionIsTakingAnUnusuallyLongTimeToStart',
+      'rstudioIsUnableToCommunicateWithR',
+      'pleaseTryTheFollowing',
+      'theRSessionIsTakingAnUnusuallyLongTimeToStart',
+      'ifYouveCustomizedRSessionCreation',
+      'ifYouAreUsingAFirewallOrAntivirus',
+      'runRguiRAppOrRInATerminalToEnsure',
+      'furtherTroubleshootingHelpCanBeFound',
+      'troubleshootingRstudioStartup',
+      'retry_url',
+      'warning',
+      'rLogo',
+    ].map((id) => 'i18n-' + id);
+
+    try {
+      i18nIds.forEach((id) => {
+        const reducedId = id.replace('i18n-', '');
+        const element = document.getElementById(id) as HTMLSelectElement;
+
+        switch (reducedId) {
+          case 'retry_url':
+            (document.getElementById('retry_url') as HTMLSelectElement).innerHTML = i18next.t('retry');
+            break;
+          case 'ifYouveCustomizedRSessionCreation':
+            (element.innerHTML = i18next.t(reducedId)), { rProfileFileExtension: '<samp>~/.Rprofile</samp>),' };
+            break;
+          default:
+            element.innerHTML = i18next.t(reducedId);
+            break;
+        }
+      });
+    } catch (err) {
+      console.log('Error occurred when loading i18n: ', err);
+    }
+  };
+};
+
+loadPageLocalization();

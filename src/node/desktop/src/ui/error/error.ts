@@ -14,3 +14,63 @@
  */
 
 // Placeholder required by Webpack / Electron-Forge
+
+/* eslint-disable @typescript-eslint/no-implicit-any-catch */
+import { initI18n } from '../../main/i18n-manager';
+import i18next from 'i18next';
+
+const loadPageLocalization = () => {
+  initI18n();
+
+  window.onload = () => {
+    const i18nIds = [
+      'errorStartingR',
+      'rLogo',
+      'errorStartingR',
+      'rSessionFailedToStart',
+      'rstudioVersion',
+      'output',
+      'nextSteps',
+      'rCanFailToStartupForManyReasons',
+      'investigateAnyErrorsAbove',
+      'makeSureThatRStartsUpCorrectly',
+      'fullyUninstallAllVersionsOfRFromYourMachine',
+      'removeStartupCustomizationsSuchAs',
+      'ifPostingThisReportOnlineUseTheCopyProblemReport',
+      'furtherTroubleshootingHelpCanBeFound',
+      'troubleshootingRstudioStartup',
+      'copyProblemReport',
+    ].map((id) => 'i18n-' + id);
+
+    try {
+      i18nIds.forEach((id) => {
+        const reducedId = id.replace('i18n-', '');
+        const element = document.getElementById(id) as HTMLSelectElement;
+
+        switch (reducedId) {
+          case 'removeStartupCustomizationsSuchAs':
+            element.innerHTML = i18next.t(reducedId, {
+              rProfileFileExtension: '<samp>.Rprofile</samp>',
+            });
+            break;
+          case 'rSessionExitedWithCode':
+            element.innerHTML = i18next.t(reducedId, {
+              exitCode: '<strong><span id="exit_code"></span></strong>',
+            });
+            break;
+          case 'copyProblemReport':
+            element.value = i18next.t(reducedId);
+            break;
+          default:
+            element.innerHTML = i18next.t(reducedId);
+
+            break;
+        }
+      });
+    } catch (err) {
+      console.log('Error occurred when loading i18n: ', err);
+    }
+  };
+};
+
+loadPageLocalization();
