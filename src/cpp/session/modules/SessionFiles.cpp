@@ -1715,7 +1715,14 @@ SEXP rs_listDirs(SEXP pathSEXP,
 
       return finalizePaths(result);
    }
+   catch (ListFilesInterruptedException&)
+   {
+      // nothing to do (no need to log)
+   }
    CATCH_UNEXPECTED_EXCEPTION;
+   
+   // note: will longjmp if an interrupt is pending
+   r::exec::checkUserInterrupt();
    
    return R_NilValue;
 }
