@@ -1408,6 +1408,10 @@ private:
    regex_type pattern_;
 };
 
+class ListFilesInterruptedException : public std::exception
+{
+};
+
 template <typename F>
 void listFilesImpl(
       const boost::filesystem::path& path,
@@ -1423,6 +1427,10 @@ void listFilesImpl(
       boost::filesystem::directory_iterator end;
       for (; it != end; it++)
       {
+         // check for interrupts
+         if (r::exec::interruptsPending())
+            throw ListFilesInterruptedException();
+
          // skip hidden files if requested
          auto&& name = it->path().filename();
          if (!options.allFiles && name.size() > 0 && *name.c_str() == name.dot)
@@ -1455,7 +1463,10 @@ void listFilesImpl(
          }
       }
    }
-   CATCH_UNEXPECTED_EXCEPTION
+   catch (boost::filesystem::filesystem_error&)
+   {
+      // swallow boost filesystem errors
+   }
    
 }
 
@@ -1592,8 +1603,15 @@ SEXP rs_listFiles(SEXP pathSEXP,
 
       return finalizePaths(result);
    }
+   catch (ListFilesInterruptedException&)
+   {
+      // nothing to do (no need to log)
+   }
    CATCH_UNEXPECTED_EXCEPTION;
-   
+
+   // note: will longjmp if an interrupt is pending
+   r::exec::checkUserInterrupt();
+
    return R_NilValue;
 }
 
