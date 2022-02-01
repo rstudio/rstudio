@@ -157,7 +157,7 @@ export class Application implements AppState {
           i18next.t('applicationTs.errorFindingR'),
           i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
         );
-        console.log(preflightError);
+        logger().logError(preflightError);
         return exitFailure();
       }
 
@@ -174,7 +174,7 @@ export class Application implements AppState {
         i18next.t('applicationTs.errorFindingR'),
         i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
       );
-      console.log(prepareError);
+      logger().logError(prepareError);
       return exitFailure();
     }
 

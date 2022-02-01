@@ -15,14 +15,15 @@
 
 import { app } from 'electron';
 
-import { ConsoleLogger } from '../core/console-logger';
-import { logLevel, LogLevel, parseCommandLineLogLevel, setLogger, setLoggerLevel } from '../core/logger';
+import { logLevel, parseCommandLineLogLevel, setLogger, setLoggerLevel } from '../core/logger';
 import { safeError } from '../core/err';
+import { WinstonLogger } from '../core/winston-logger';
+import { FilePath } from '../core/file-path';
 
 import { Application, kLogLevel } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
-import { createStandaloneErrorDialog } from './utils';
+import { createStandaloneErrorDialog, userLogPath } from './utils';
 
 import { initI18n } from './i18n-manager';
 import i18next from 'i18next';
@@ -44,7 +45,7 @@ class RStudioMain {
       const err = safeError(error);
       await createStandaloneErrorDialog(i18next.t('mainTs.unhandledException'), err.message);
       console.error(err.message); // logging possibly not available this early in startup
-      if (logLevel() === LogLevel.DEBUG) {
+      if (logLevel() === 'debug') {
         console.error(err.stack);
       }
       app.exit(1);
@@ -63,8 +64,9 @@ class RStudioMain {
     }
 
     const rstudio = new Application();
-    setLogger(new ConsoleLogger());
-    setLoggerLevel(parseCommandLineLogLevel(app.commandLine.getSwitchValue(kLogLevel), LogLevel.ERR));
+
+    const logLevel = parseCommandLineLogLevel(app.commandLine.getSwitchValue(kLogLevel), 'warn');
+    setLogger(new WinstonLogger(userLogPath().completeChildPath('rdesktop.log'), logLevel));
     setApplication(rstudio);
 
     if (!parseStatus(await rstudio.beforeAppReady())) {
