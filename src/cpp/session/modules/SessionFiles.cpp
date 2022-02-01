@@ -1369,6 +1369,7 @@ struct ListFilesOptions
    bool allFiles;
    bool fullNames;
    bool recursive;
+   bool includeFiles;
    bool includeDirs;
    bool noDotDot;
 };
@@ -1422,14 +1423,7 @@ void listFilesImpl(
       {
          if (accept(path))
          {
-            if (prefix.empty())
-            {
-               pResult->push_back(path);
-            }
-            else
-            {
-               pResult->push_back(prefix / path);
-            }
+            pResult->push_back(prefix.empty() ? path : prefix / path);
          }
       }
    }
@@ -1446,12 +1440,20 @@ void listFilesImpl(
          if (!options.allFiles && name.size() > 0 && *name.c_str() == name.dot)
             continue;
 
-         // check for valid name
-         if (!accept(name))
-            continue;
+         // construct new prefix
+         auto newPrefix = prefix.empty() ? name : prefix / name;
          
-         // add path
-         pResult->push_back(prefix.empty() ? name : prefix / name);
+         if (boost::filesystem::is_directory(it->status()))
+         {
+            // ignore options.includeDirs in non-recursive listings
+            if (accept(name))
+               pResult->push_back(newPrefix);
+         }
+         else
+         {
+            if (options.includeFiles && accept(name))
+               pResult->push_back(newPrefix);
+         }
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
@@ -1488,11 +1490,9 @@ void listFilesRecursiveImpl(
                pResult->push_back(newPrefix);
             listFilesRecursiveImpl(it->path(), newPrefix, options, accept, pResult);
          }
-         
-         // NOTE: in recursive directory listings, R ignores broken symlinks?
          else
          {
-            if (accept(name))
+            if (options.includeFiles && accept(name))
                pResult->push_back(newPrefix);
          }
       }
@@ -1511,18 +1511,73 @@ void listFilesDispatch(
    {
       for (auto&& path : paths)
       {
-         auto prefix = options.fullNames ? path : kEmptyString;
-         listFilesRecursiveImpl(path, prefix, options, accept, pResult);
+         if (boost::filesystem::exists(path))
+         {
+            auto prefix = options.fullNames ? path : kEmptyString;
+            listFilesRecursiveImpl(path, prefix, options, accept, pResult);
+         }
       }
    }
    else
    {
       for (auto&& path : paths)
       {
-         auto prefix = options.fullNames ? path : kEmptyString;
-         listFilesImpl(path, prefix, options, accept, pResult);
+         if (boost::filesystem::exists(path))
+         {
+            auto prefix = options.fullNames ? path : kEmptyString;
+            listFilesImpl(path, prefix, options, accept, pResult);
+         }
       }
    }
+}
+
+std::vector<boost::filesystem::path> initializePaths(SEXP pathSEXP)
+{
+   std::vector<boost::filesystem::path> paths;
+   if (TYPEOF(pathSEXP) != STRSXP)
+      return paths;
+   
+   auto vmax = vmaxget();
+   for (int i = 0, n = r::sexp::length(pathSEXP); i < n; i++)
+   {
+      SEXP charSEXP = STRING_ELT(pathSEXP, i);
+      if (charSEXP == NA_STRING)
+         continue;
+
+      const char* utf8Path = Rf_translateCharUTF8(charSEXP);
+#ifdef BOOST_WINDOWS_API
+      paths.push_back(string_utils::utf8ToWide(utf8Path));
+#else
+      paths.push_back(utf8Path);
+#endif
+   }
+   vmaxset(vmax);
+   
+   return paths;
+}
+
+SEXP finalizePaths(const std::vector<boost::filesystem::path>& paths)
+{
+   // now, get the paths back as UTF-8 strings
+   std::vector<std::string> utf8Paths(paths.size());
+   std::transform(
+            paths.begin(),
+            paths.end(),
+            utf8Paths.begin(),
+            [](const boost::filesystem::path& path)
+   {
+#ifdef BOOST_WINDOWS_API
+      return core::string_utils::wideToUtf8(path.native());
+#else
+      return path.native();
+#endif
+   });
+
+   // return to R
+   r::sexp::Protect protect;
+   SEXP resultSEXP = r::sexp::createUtf8(utf8Paths, &protect);
+   Rf_sortVector(resultSEXP, (Rboolean) 0);
+   return resultSEXP;
 }
 
 SEXP rs_listFiles(SEXP pathSEXP,
@@ -1536,24 +1591,8 @@ SEXP rs_listFiles(SEXP pathSEXP,
 {
    try
    {
-      // files to vector to fill
       std::vector<boost::filesystem::path> result;
-
-      std::vector<boost::filesystem::path> paths;
-      if (TYPEOF(pathSEXP) == STRSXP)
-      {
-         auto vmax = vmaxget();
-         for (int i = 0, n = r::sexp::length(pathSEXP); i < n; i++)
-         {
-            const char* utf8Path = Rf_translateCharUTF8(STRING_ELT(pathSEXP, i));
-#ifdef BOOST_WINDOWS_API
-            paths.push_back(string_utils::utf8ToWide(utf8Path));
-#else
-            paths.push_back(utf8Path);
-#endif
-         }
-         vmaxset(vmax);
-      }
+      std::vector<boost::filesystem::path> paths = initializePaths(pathSEXP);
 
       // unwrap parameters from R
       ListFilesOptions options;
@@ -1562,6 +1601,7 @@ SEXP rs_listFiles(SEXP pathSEXP,
       options.allFiles = r::sexp::asLogical(allFilesSEXP);
       options.fullNames = r::sexp::asLogical(fullNamesSEXP);
       options.recursive = r::sexp::asLogical(recursiveSEXP);
+      options.includeFiles = true;
       options.includeDirs = r::sexp::asLogical(includeDirsSEXP);
       options.noDotDot = r::sexp::asLogical(noDotDotSEXP);
       
@@ -1582,26 +1622,49 @@ SEXP rs_listFiles(SEXP pathSEXP,
          listFilesDispatch(paths, options, ListFilesAcceptMatching(pattern, flags), &result);
       }
 
-      // now, get the paths back as UTF-8 strings
-      std::vector<std::string> utf8Paths(result.size());
-      std::transform(
-               result.begin(),
-               result.end(),
-               utf8Paths.begin(),
-               [](const boost::filesystem::path& path)
-      {
-#ifdef BOOST_WINDOWS_API
-         return core::string_utils::wideToUtf8(path.native());
-#else
-         return path.native();
-#endif
-      });
+      return finalizePaths(result);
+   }
+   CATCH_UNEXPECTED_EXCEPTION;
+   
+   return R_NilValue;
+}
+
+SEXP rs_listDirs(SEXP pathSEXP,
+                 SEXP fullNamesSEXP,
+                 SEXP recursiveSEXP)
+{
+   try
+   {
+      std::vector<boost::filesystem::path> result;
+      std::vector<boost::filesystem::path> paths = initializePaths(pathSEXP);
+
+      // unwrap parameters from R
+      ListFilesOptions options;
+
+      // fill other options
+      options.allFiles = true;
+      options.fullNames = r::sexp::asLogical(fullNamesSEXP);
+      options.recursive = r::sexp::asLogical(recursiveSEXP);
+      options.includeFiles = false;
+      options.includeDirs = true;
+      options.noDotDot = true;
       
-      // return to R
-      r::sexp::Protect protect;
-      SEXP resultSEXP = r::sexp::createUtf8(utf8Paths, &protect);
-      Rf_sortVector(resultSEXP, (Rboolean) 0);
-      return resultSEXP;
+      // list files
+      listFilesDispatch(paths, options, ListFilesAcceptAll(), &result);
+      
+      // for recursive list.dirs() calls, we need to also include
+      // the requested path itself
+      if (options.recursive)
+      {
+         for (auto&& path : paths)
+         {
+            result.insert(
+                     result.begin(), 
+                     options.fullNames ? path : boost::filesystem::path());
+         }
+      }
+
+      return finalizePaths(result);
    }
    CATCH_UNEXPECTED_EXCEPTION;
    
@@ -1659,6 +1722,7 @@ Error initialize()
    events().onClientInit.connect(bind(onClientInit));
 
    RS_REGISTER_CALL_METHOD(rs_listFiles);
+   RS_REGISTER_CALL_METHOD(rs_listDirs);
    RS_REGISTER_CALL_METHOD(rs_readLines);
    RS_REGISTER_CALL_METHOD(rs_pathInfo);
 
