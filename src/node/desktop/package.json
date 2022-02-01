@@ -42,7 +42,6 @@
     "@typescript-eslint/parser": "^5.4.0",
     "@vercel/webpack-asset-relocator-loader": "1.7.0",
     "chai": "^4.3.4",
-    "copy-webpack-plugin": "^10.2.4",
     "css-loader": "^6.5.1",
     "electron": "^16.0.7",
     "electron-mocha": "^10.1.0",
