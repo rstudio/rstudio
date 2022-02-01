@@ -13,8 +13,6 @@
  *
  */
 
-// Placeholder required by Webpack / Electron-Forge
-
 /* eslint-disable @typescript-eslint/no-implicit-any-catch */
 import { initI18n } from '../../main/i18n-manager';
 import i18next from 'i18next';
