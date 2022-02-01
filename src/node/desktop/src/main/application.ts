@@ -39,7 +39,7 @@ import { GwtCallback } from './gwt-callback';
 import { prepareEnvironment, promptUserForR } from './detect-r';
 import { PendingWindow } from './pending-window';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
-import { i18n } from '../locales/i18n-manager';
+import i18next from 'i18next';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -120,15 +120,15 @@ export class Application implements AppState {
       // sanity checking for dev config
       if (!confPath.existsSync()) {
         await createStandaloneErrorDialog(
-          i18n.__('devModeConfig'),
-          `${i18n.__('confColon')} ${confPath.getAbsolutePath()} ${i18n.__('notFoundDotLowercase')}'`,
+          i18next.t('devModeConfig'),
+          `${i18next.t('confColon')} ${confPath.getAbsolutePath()} ${i18next.t('notFoundDotLowercase')}'`,
         );
         return exitFailure();
       }
       if (!this.sessionPath.existsSync()) {
         await createStandaloneErrorDialog(
-          i18n.__('devModeConfig'),
-          `rsession: ${this.sessionPath.getAbsolutePath()} ${i18n.__('notFoundDotLowercase')}'`,
+          i18next.t('devModeConfig'),
+          `rsession: ${this.sessionPath.getAbsolutePath()} ${i18next.t('notFoundDotLowercase')}'`,
         );
         return exitFailure();
       }
@@ -152,8 +152,8 @@ export class Application implements AppState {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
         await createStandaloneErrorDialog(
-          i18n.__('errorFindingR'),
-          i18n.__('rstudioFailedToFindRInstalationsOnTheSystem'),
+          i18next.t('errorFindingR'),
+          i18next.t('rstudioFailedToFindRInstalationsOnTheSystem'),
         );
         console.log(preflightError);
         return exitFailure();
@@ -169,8 +169,8 @@ export class Application implements AppState {
     const prepareError = prepareEnvironment();
     if (prepareError) {
       await createStandaloneErrorDialog(
-        i18n.__('errorFindingR'),
-        i18n.__('rstudioFailedToFindRInstalationsOnTheSystem'),
+        i18next.t('errorFindingR'),
+        i18next.t('rstudioFailedToFindRInstalationsOnTheSystem'),
       );
       console.log(prepareError);
       return exitFailure();

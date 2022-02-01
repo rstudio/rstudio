@@ -15,8 +15,8 @@
 
 import { BrowserWindow, clipboard, dialog, Menu } from 'electron';
 import path from 'path';
-import { i18n } from '../locales/i18n-manager';
 import { createStandaloneErrorDialog } from './utils';
+import i18next from 'i18next';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
@@ -27,7 +27,7 @@ function showContextMenuImageTemplate(
   return [
     // Save Image As...
     {
-      label: i18n.__('saveImageAsDots'),
+      label: i18next.t('saveImageAsDots'),
       click: async () => {
         // ask the user for a download file path.  in theory, we could let the
         // default download handler do this, but Electron appears to barf if the
@@ -35,9 +35,9 @@ function showContextMenuImageTemplate(
         const webContents = event.sender;
         const window = BrowserWindow.fromWebContents(webContents) as BrowserWindow;
         const downloadPath = dialog.showSaveDialogSync(window, {
-          title: i18n.__('saveImageAs'),
+          title: i18next.t('saveImageAs'),
           defaultPath: path.basename(params.srcURL),
-          buttonLabel: ('save'),
+          buttonLabel: 'save',
           properties: ['createDirectory'],
         });
 
@@ -54,12 +54,12 @@ function showContextMenuImageTemplate(
           item.once('done', (event, state) => {
             switch (state) {
               case 'cancelled': {
-                dialog.showErrorBox(i18n.__('errorDownloadingImage'), i18n.__('downloadCancelledMessage'));
+                dialog.showErrorBox(i18next.t('errorDownloadingImage'), i18next.t('downloadCancelledMessage'));
                 break;
               }
 
               case 'interrupted': {
-                dialog.showErrorBox(i18n.__('errorDownloadingImage'), i18n.__('downloadInterruptedMessage'));
+                dialog.showErrorBox(i18next.t('errorDownloadingImage'), i18next.t('downloadInterruptedMessage'));
                 break;
               }
             }
@@ -73,7 +73,7 @@ function showContextMenuImageTemplate(
 
     // Copy Image
     {
-      label: i18n.__('copyImage'),
+      label: i18next.t('copyImage'),
       click: () => {
         event.sender.copyImageAt(params.x, params.y);
       },
@@ -81,7 +81,7 @@ function showContextMenuImageTemplate(
 
     // Copy Image Address
     {
-      label: i18n.__('copyImageAddress'),
+      label: i18next.t('copyImageAddress'),
       click: () => {
         clipboard.writeText(params.srcURL);
       },
@@ -93,13 +93,11 @@ function showContextMenuImageTemplate(
     },
 
     // Reload
-    {
-      role: 'reload',
-    },
+    { label: i18next.t('reload'), role: 'reload' },
 
     // Inspect Element
     {
-      label: i18n.__('inspectElement'),
+      label: i18next.t('inspectElement'),
       click: () => {
         event.sender.inspectElement(params.x, params.y);
       },
@@ -122,35 +120,35 @@ function showContextMenuTextTemplate(
   const template: ContextMenuItem[] = [];
 
   if (params.editFlags.canCut) {
-    template.push({ role: 'cut' });
+    template.push({ label: i18next.t('cut'), role: 'cut' });
   } else {
-    template.push({ label: 'Cut', enabled: false });
+    template.push({ label: i18next.t('cut'), enabled: false });
   }
 
   if (params.editFlags.canCopy) {
-    template.push({ role: 'copy' });
+    template.push({ label: i18next.t('copy'), role: 'copy' });
   } else {
-    template.push({ label: i18n.__('copy'), enabled: false });
+    template.push({ label: i18next.t('copy'), enabled: false });
   }
 
   if (params.editFlags.canPaste) {
-    template.push({ role: 'paste' });
+    template.push({ label: i18next.t('paste'), role: 'paste' });
   } else {
-    template.push({ label: i18n.__('paste'), enabled: false });
+    template.push({ label: i18next.t('paste'), enabled: false });
   }
 
   if (params.editFlags.canSelectAll) {
-    template.push({ role: 'selectAll' });
+    template.push({ label: i18next.t('selectAll'), role: 'selectAll' });
   } else {
-    template.push({ label: i18n.__('selectAll'), enabled: false });
+    template.push({ label: i18next.t('selectAll'), enabled: false });
   }
 
   template.push({ type: 'separator' });
 
-  template.push({ role: 'reload' });
+  template.push({ label: i18next.t('reload'), role: 'reload' });
 
   template.push({
-    label: i18n.__('inspectElement'),
+    label: i18next.t('inspectElement'),
     click: () => {
       event.sender.inspectElement(params.x, params.y);
     },

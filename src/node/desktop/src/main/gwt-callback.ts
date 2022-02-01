@@ -32,7 +32,7 @@ import { appState } from './app-state';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { userHomePath } from '../core/user';
 import { activateWindow } from './window-utils';
-import { i18n } from '../locales/i18n-manager';
+import i18next from 'i18next';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -706,8 +706,8 @@ export class GwtCallback extends EventEmitter {
     const focusedWindow = BrowserWindow.getFocusedWindow();
 
     const dialogOptions = {
-      title: i18n.__('unimplemented'),
-      message: `${ipcName} ${i18n.__('callbackNyiLowercase')}`,
+      title: i18next.t('unimplemented'),
+      message: i18next.t('callbackNyiLowercase', { ipcName }),
     };
 
     if (focusedWindow) {

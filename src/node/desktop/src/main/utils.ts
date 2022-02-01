@@ -30,7 +30,7 @@ import { Err } from '../core/err';
 
 import { productInfo } from './product-info';
 import { MainWindow } from './main-window';
-import { i18n } from '../locales/i18n-manager';
+import i18next from 'i18next';
 
 export function initializeSharedSecret(): void {
   const sharedSecret = randomString() + randomString() + randomString();
@@ -179,8 +179,8 @@ function findBuildRootImpl(rootDir: string): string {
 }
 
 function rsessionNotFoundError(): Error {
-  const message =
-    i18n.__('rsessionNotFoundError') + '\n' + '(' + i18n.__('workingDirectoryColon') + ' ' + process.cwd() + ')';
+  const workingDirectory = '' + process.cwd();
+  const message = i18next.t('rsessionNotFoundError', { workingDirectory });
 
   return Error(message);
 }
