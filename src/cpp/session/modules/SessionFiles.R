@@ -15,19 +15,18 @@
 
 .rs.setVar("files.savedBindings", new.env(parent = emptyenv()))
 
+# save old implementations, in case we need to restore them
+bindings <- c("list.files", "list.dirs", "dir")
+for (binding in bindings)
+{
+   original <- get(binding, envir = baseenv(), inherits = FALSE)
+   assign(binding, original, envir = .rs.files.savedBindings)
+}
+
 # these hooks are added to support RStudio's transition into
 # the use of a UTF-8 code page
 .rs.addFunction("files.replaceBindings", function()
 {
-   # save old implementations, in case we need to restore them
-   bindings <- c("list.files", "list.dirs", "dir")
-   for (binding in bindings)
-   {
-      original <- get(binding, envir = baseenv(), inherits = FALSE)
-      assign(binding, original, envir = .rs.files.savedBindings)
-   }
-
-   # now, replace bindings
    .rs.replaceBinding("list.files", "base", function(path = ".",
                                                      pattern = NULL,
                                                      all.files = FALSE,
