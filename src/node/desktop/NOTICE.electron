@@ -13,6 +13,7 @@ used by these components are included below):
 - line-reader (npm)
 - uuid (npm)
 - winston (npm)
+- i18next (npm)
 
 Electron License
 ----------------------------------------------------------------------
