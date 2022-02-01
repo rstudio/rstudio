@@ -1431,7 +1431,9 @@ void listFilesImpl(
          // construct new prefix
          auto newPrefix = prefix.empty() ? name : prefix / name;
          
-         if (boost::filesystem::is_directory(it->status()))
+         // check if this file is a directory (ignore errors)
+         boost::system::error_code ec;
+         if (boost::filesystem::is_directory(it->status(ec)))
          {
             if (options.recursive)
             {
@@ -1467,7 +1469,9 @@ void listFilesDispatch(
    // iterate through other files
    for (auto&& path : paths)
    {
-      if (boost::filesystem::exists(path))
+      // check for existence (swallow other errors)
+      boost::system::error_code ec;
+      if (boost::filesystem::exists(path, ec))
       {
          auto prefix = options.fullNames ? path : kEmptyString;
          listFilesImpl(path, prefix, options, accept, pResult);
