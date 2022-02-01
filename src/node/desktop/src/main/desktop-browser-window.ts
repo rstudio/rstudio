@@ -252,7 +252,7 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   avoidMoveCursorIfNecessary(): void {
     if (process.platform === 'darwin') {
-      this.executeJavaScript("document.body.className = document.body.className + ' avoid-move-cursor'").catch(
+      this.executeJavaScript('document.body.className = document.body.className + " avoid-move-cursor"').catch(
         (error) => {
           logger().logError(error);
         },

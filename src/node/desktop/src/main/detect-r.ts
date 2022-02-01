@@ -16,7 +16,6 @@
 import path from 'path';
 
 import { execSync, spawnSync } from 'child_process';
-import { dialog } from 'electron';
 import { existsSync } from 'fs';
 import { EOL } from 'os';
 
@@ -26,6 +25,7 @@ import { logger } from '../core/logger';
 import { Err, success, safeError } from '../core/err';
 import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
 import { createStandaloneErrorDialog } from './utils';
+import i18next from 'i18next';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -42,8 +42,8 @@ interface REnvironment {
 }
 
 function showRNotFoundError(error?: Error): void {
-  const message = error?.message ?? 'Could not locate an R installation on the system.';
-  void createStandaloneErrorDialog('R not found', message);
+  const message = error?.message ?? i18next.t('detectRTs.couldNotLocateAnRInstallationOnTheSystem') ?? '';
+  void createStandaloneErrorDialog(i18next.t('detectRTs.rNotFound'), message);
 }
 
 function executeCommand(command: string): Expected<string> {

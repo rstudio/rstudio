@@ -25,6 +25,9 @@ import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
 import { createStandaloneErrorDialog, userLogPath } from './utils';
 
+import { initI18n } from './i18n-manager';
+import i18next from 'i18next';
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 if (require('electron-squirrel-startup') as boolean) {
@@ -40,7 +43,7 @@ class RStudioMain {
       await this.startup();
     } catch (error: unknown) {
       const err = safeError(error);
-      await createStandaloneErrorDialog('Unhandled Exception', err.message);
+      await createStandaloneErrorDialog(i18next.t('mainTs.unhandledException'), err.message);
       console.error(err.message); // logging possibly not available this early in startup
       if (logLevel() === 'debug') {
         console.error(err.stack);
@@ -79,5 +82,7 @@ class RStudioMain {
 }
 
 // Startup
+initI18n();
+
 const main = new RStudioMain();
 void main.main();

@@ -39,6 +39,7 @@ import { GwtCallback } from './gwt-callback';
 import { prepareEnvironment, promptUserForR } from './detect-r';
 import { PendingWindow } from './pending-window';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
+import i18next from 'i18next';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -118,13 +119,18 @@ export class Application implements AppState {
     if (!app.isPackaged) {
       // sanity checking for dev config
       if (!confPath.existsSync()) {
-        await createStandaloneErrorDialog('Dev Mode Config', `conf: ${confPath.getAbsolutePath()} not found.'`);
+        await createStandaloneErrorDialog(
+          i18next.t('applicationTs.devModeConfig'),
+          `${i18next.t('applicationTs.confColon')} ${confPath.getAbsolutePath()} ${i18next.t(
+            'applicationTs.notFoundDotLowercase',
+          )}'`,
+        );
         return exitFailure();
       }
       if (!this.sessionPath.existsSync()) {
         await createStandaloneErrorDialog(
-          'Dev Mode Config',
-          `rsession: ${this.sessionPath.getAbsolutePath()} not found.'`,
+          i18next.t('applicationTs.devModeConfig'),
+          `rsession: ${this.sessionPath.getAbsolutePath()} ${i18next.t('applicationTs.notFoundDotLowercase')}'`,
         );
         return exitFailure();
       }
@@ -148,8 +154,8 @@ export class Application implements AppState {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
         await createStandaloneErrorDialog(
-          'Error Finding R',
-          'RStudio failed to find any R installations on the system.',
+          i18next.t('applicationTs.errorFindingR'),
+          i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
         );
         logger().logError(preflightError);
         return exitFailure();
@@ -164,7 +170,10 @@ export class Application implements AppState {
     // prepare the R environment
     const prepareError = prepareEnvironment();
     if (prepareError) {
-      await createStandaloneErrorDialog('Error Finding R', 'RStudio failed to find any R installations on the system.');
+      await createStandaloneErrorDialog(
+        i18next.t('applicationTs.errorFindingR'),
+        i18next.t('applicationTs.rstudioFailedToFindRInstalationsOnTheSystem'),
+      );
       logger().logError(prepareError);
       return exitFailure();
     }
