@@ -67,6 +67,5 @@
   "unhandledException": "Unhandled Exception",
   "rSessionFatalError": "The R session had a fatal error.",
   "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "This error was very likely caused by R attempting to load packages from a different incompatible version of R on your system. Please remove other versions of R and/or remove environment variables that reference libraries from other versions of R before proceeding.",
-  "rsessionNotFoundError": "Could not find rsession executable. Try setting the \"RSTUDIO_CPP_BUILD_OUTPUT\" environment variable to the location where src/cpp was built.",
-  "workingDirectoryColon": "Working directory:"
+  "rsessionNotFoundError": "Could not find rsession executable. Try setting the \"RSTUDIO_CPP_BUILD_OUTPUT\" environment variable to the location where src/cpp was built.\n( Working directory: {{workingDirectory}} )"
 }
