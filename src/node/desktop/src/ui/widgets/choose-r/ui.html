@@ -34,47 +34,4 @@
       <button id="button-cancel" class="button" type="button"></button>
     </div>
   </body>
-  <script type="module">
-    import { i18n } from '../../locales/i18n-manager';
-
-    const addI18n = () => {
-      const i18nIds = [
-        'chooseRInstallation',
-        'rstudioRequiresAnExistingRInstallationTitle',
-        'rstudioRequiresAnExistingRInstallationSubtitle',
-        'useYourMachineDefault64BitR',
-        'useYourMachineDefault32BitR',
-        'chooseASpecificVersionOfR',
-        'browseDots',
-        'okCaps',
-        'cancel',
-      ].map((id) => 'i18n-' + id);
-
-      try {
-        i18nIds.forEach((id) => {
-          let elementId = id;
-          switch (id.replace('i18n-', '')) {
-            case 'browseDots':
-              elementId = 'button-browse';
-              break;
-            case 'okCaps':
-              elementId = 'button-ok';
-              break;
-            case 'cancel':
-              elementId = 'button-cancel';
-              break;
-            default:
-              break;
-          }
-          document.getElementById(elementId).innerHTML = i18n.__(id.replace('i18n-', ''));
-        });
-      } catch (err) {
-        console.log('Error occurred when loading i18n: ', err);
-      }
-    };
-
-    window.addEventListener('load', function () {
-      addI18n();
-    });
-  </script>
 </html>

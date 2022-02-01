@@ -71,53 +71,7 @@
         width: 1px;
       }
     </style>
-    <script type="module">
-      import { i18n } from '../../locales/i18n-manager';
-
-      const addI18n = () => {
-        const i18nIds = [
-          'errorStartingR',
-          'rLogo',
-          'errorStartingR',
-          'rSessionFailedToStart',
-          'rstudioVersion',
-          'output',
-          'nextSteps',
-          'rCanFailToStartupForManyReasons',
-          'investigateAnyErrorsAbove',
-          'makeSureThatRStartsUpCorrectly',
-          'fullyUninstallAllVersionsOfRFromYourMachine',
-          'removeStartupCustomizationsSuchAs',
-          'ifPostingThisReportOnlineUseTheCopyProblemReport',
-          'furtherTroubleshootingHelpCanBeFound',
-          'troubleshootingRstudioStartup',
-          'copyProblemReport',
-        ].map((id) => 'i18n-' + id);
-
-        try {
-          i18nIds.forEach((id) => {
-            switch (id.replace('i18n-', '')) {
-              case 'removeStartupCustomizationsSuchAs':
-                document.getElementById(id).innerHTML =
-                  i18n.__(id.replace('i18n-', '')) + ' <samp>.Rprofile</samp> ' + i18n.__('fileIfPresent');
-                break;
-              case 'rSessionExitedWithCode':
-                document.getElementById(id).innerHTML =
-                  i18n.__(id.replace('i18n-', '')) + ' <strong><span id="exit_code"></span></strong>.';
-                break;
-              case 'copyProblemReport':
-                document.getElementById(id).value = i18n.__(id.replace('i18n-', ''));
-                break;
-              default:
-                document.getElementById(id).innerHTML = i18n.__(id.replace('i18n-', ''));
-                break;
-            }
-          });
-        } catch (err) {
-          console.log('Error occurred when loading i18n: ', err);
-        }
-      };
-
+    <script>
       // Function to copy problem report to clipboard
       var copyProblemReport = function () {
         // Find the <textarea> containing the problem report
@@ -144,9 +98,9 @@
 
         // Attempt to copy the text to the clipboard
         if (document.execCommand('copy')) {
-          alert(i18n.__('problemReportCopiedToClipboard'));
+          alert(i18next.t('problemReportCopiedToClipboard'));
         } else {
-          alert(i18n.__('couldNotCopyProblemReportToClipboard'));
+          alert(i18next.t('couldNotCopyProblemReportToClipboard'));
         }
       };
 
@@ -172,8 +126,6 @@
 
       // When the page loads, inject the local user agent into the version information
       window.addEventListener('load', function () {
-        addI18n();
-
         replaceVar('version');
         var ver = document.getElementById('version');
         if (ver) {

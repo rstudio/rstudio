@@ -95,34 +95,4 @@
 
     <p id="i18n-theRsessionIsInitializing"></p>
   </body>
-  <script type="module">
-    import { i18n } from '../../locales/i18n-manager';
-
-    const addI18n = () => {
-      const i18nIds = ['initializingR', 'rLogo', 'initializingR'].map((id) => 'i18n-' + id);
-
-      try {
-        i18nIds.forEach((id) => {
-          let elementId = id;
-          switch (id.replace('i18n-', '')) {
-            case 'theRsessionIsInitializing':
-              document.getElementById(elementId).innerHTML =
-                i18n.__(id.replace('i18n-', '')) +
-                ' &mdash; ' +
-                i18n.__('pleaseWaitAMomentDotsLowerCase'.replace('i18n-', ''));
-              break;
-            default:
-              document.getElementById(elementId).innerHTML = i18n.__(id.replace('i18n-', ''));
-              break;
-          }
-        });
-      } catch (err) {
-        console.log('Error occurred when loading i18n: ', err);
-      }
-    };
-
-    window.addEventListener('load', function () {
-      addI18n();
-    });
-  </script>
 </html>

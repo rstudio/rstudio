@@ -36,53 +36,10 @@
         text-decoration: none;
       }
     </style>
-    <script type="module">
+    <script>
       // When the page loads, inject the retry URL
-      import { i18n } from '../../locales/i18n-manager';
-
-      const addI18n = () => {
-        const i18nIds = [
-          'cannotConnectToR',
-          'rstudioCantEstablishAConnectionToR',
-          'theRSessionIsTakingAnUnusuallyLongTimeToStart',
-          'rstudioIsUnableToCommunicateWithR',
-          'pleaseTryTheFollowing',
-          'theRSessionIsTakingAnUnusuallyLongTimeToStart',
-          'ifYouveCustomizedRSessionCreation',
-          'ifYouAreUsingAFirewallOrAntivirus',
-          'runRguiRAppOrRInATerminalToEnsure',
-          'furtherTroubleshootingHelpCanBeFound',
-          'troubleshootingRstudioStartup',
-          'retry_url',
-          'warning',
-          'rLogo',
-        ].map((id) => 'i18n-' + id);
-
-        try {
-          i18nIds.forEach((id) => {
-            switch (id.replace('i18n-', '')) {
-              case 'retry_url':
-                document.getElementById('retry_url').innerHTML = i18n.__('retry');
-                break;
-              case 'ifYouveCustomizedRSessionCreation':
-                document.getElementById(id).innerHTML =
-                  i18n.__(id.replace('i18n-', '')) +
-                  ' <samp>~/.Rprofile</samp>), ' +
-                  i18n.__('considerTemporarilyRemovingIt');
-                break;
-              default:
-                document.getElementById(id).innerHTML = i18n.__(id.replace('i18n-', ''));
-                break;
-            }
-          });
-        } catch (err) {
-          console.log('Error occurred when loading i18n: ', err);
-        }
-      };
 
       window.addEventListener('load', function () {
-        addI18n();
-
         try {
           window.desktop.getStartupErrorInfo('!retry_url', (result) => {
             document.getElementById('retry_url').href = result;
