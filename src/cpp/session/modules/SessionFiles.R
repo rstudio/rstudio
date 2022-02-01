@@ -36,6 +36,19 @@
    )
 })
 
+.rs.addFunction("listDirs", function(path = ".",
+                                     full.names = TRUE,
+                                     recursive = TRUE)
+{
+   .Call(
+      "rs_listDirs",
+      path.expand(as.character(path)),
+      as.logical(full.names),
+      as.logical(recursive),
+      PACKAGE = "(embedding)"
+   )
+})
+
 .rs.addFunction("listZipFile", function(zipfile)
 {
    as.character(utils::unzip(zipfile, list=TRUE)$Name)
