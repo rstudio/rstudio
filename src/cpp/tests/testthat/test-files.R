@@ -75,6 +75,10 @@ test_that("file listings are correct", {
 
 test_that("our list.files, list.dirs hooks function as expected", {
    
+   # use native R routines
+   .rs.files.restoreBindings()
+   on.exit(.rs.files.replaceBindings(), add = TRUE)
+   
    # work in temporary directory
    tdir <- tempfile()
    dir.create(tdir)
@@ -105,8 +109,15 @@ test_that("our list.files, list.dirs hooks function as expected", {
       on.exit(Sys.setlocale(locale = "English"), add = TRUE)
    }
    
+   paths <- list(
+      ".",
+      getwd(),
+      file.path("..", basename(getwd())),
+      "ThisPathDoesNotExist"
+   )
+   
    arglist <- list(
-      path = list("."),
+      path = paths,
       pattern = list(NULL, "[.]R$"),
       all.files = list(FALSE, TRUE),
       full.names = list(FALSE, TRUE),
@@ -120,7 +131,7 @@ test_that("our list.files, list.dirs hooks function as expected", {
    for (i in seq_along(crossed)) {
       
       args <- crossed[[i]]
-      lhs <- do.call(.rs.files.savedBindings[["list.files"]], args)
+      lhs <- do.call(list.files, args)
       rhs <- do.call(.rs.listFiles, args)
       
       if (.rs.platform.isWindows)
@@ -129,5 +140,28 @@ test_that("our list.files, list.dirs hooks function as expected", {
       expect_equal(lhs, rhs)
       
    }
+   
+   arglist <- list(
+      path = paths,
+      full.names = list(FALSE, TRUE),
+      recursive = list(FALSE, TRUE)
+   )
+   
+   crossed <- purrr::cross(arglist)
+   for (i in seq_along(crossed)) {
+      
+      args <- crossed[[i]]
+      lhs <- do.call(list.dirs, args)
+      rhs <- do.call(.rs.listDirs, args)
+      
+      if (.rs.platform.isWindows)
+         Encoding(lhs) <- "UTF-8"
+      
+      expect_equal(lhs, rhs)
+      
+   }
+   
+   setwd(owd)
+   unlink(tdir, recursive = TRUE)
    
 })

@@ -1639,14 +1639,18 @@ SEXP rs_listDirs(SEXP pathSEXP,
       listFilesDispatch(paths, options, ListFilesAcceptAll(), &result);
       
       // for recursive list.dirs() calls, we need to also include
-      // the requested path itself
+      // the requested path itself, but only if it exists
       if (options.recursive)
       {
          for (auto&& path : paths)
          {
-            result.insert(
-                     result.begin(), 
-                     options.fullNames ? path : boost::filesystem::path());
+            boost::system::error_code ec;
+            if (boost::filesystem::exists(path, ec))
+            {
+               result.insert(
+                        result.begin(),
+                        options.fullNames ? path : boost::filesystem::path());
+            }
          }
       }
 
