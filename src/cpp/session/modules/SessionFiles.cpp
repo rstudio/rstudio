@@ -1560,13 +1560,29 @@ void validatePath(SEXP pathSEXP)
 
 void validatePattern(SEXP patternSEXP)
 {
-   bool validPattern =
+   // allow NULL
+   if (TYPEOF(patternSEXP) == NILSXP)
+      return;
+
+   // allow character vectors
+   // note that all elements but the first are ignored
+   bool hasValidPattern =
          TYPEOF(patternSEXP) == STRSXP &&
          LENGTH(patternSEXP) > 0 &&
          STRING_ELT(patternSEXP, 0) != NA_STRING;
 
-   if (!validPattern && LENGTH(patternSEXP) != 0)
-      Rf_error("invalid '%s' argument", "pattern");
+   if (hasValidPattern)
+      return;
+
+   // allow empty character vectors
+   bool isEmptyCharacterVector =
+         TYPEOF(patternSEXP) == STRSXP &&
+         LENGTH(patternSEXP) == 0;
+
+   if (isEmptyCharacterVector)
+      return;
+
+   Rf_error("invalid '%s' argument", "pattern");
 }
 
 bool validateLogical(SEXP valueSEXP, const char* name)
