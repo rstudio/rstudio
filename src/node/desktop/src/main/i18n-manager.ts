@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-implicit-any-catch */
 /*
  * i18n-manager.ts
  *
@@ -13,17 +14,22 @@
  *
  */
 
-import { I18n } from 'i18n';
-import path from 'path';
+import i18next from 'i18next';
+import * as en from '../assets/locales/en.json';
 
-const i18n = new I18n();
+const initI18n = () => {
+  i18next
+    .init({
+      debug: true,
+      resources: {
+        en: { translation: en },
+      },
+      fallbackLng: 'en',
+    })
+    .catch((err) => {
+      console.log('Error when initializing i18next: ');
+      console.log(err);
+    });
+};
 
-const directory = path.join(__dirname);
-console.log('locales directory: ' + directory);
-i18n.configure({
-  locales: ['en'],
-  directory,
-  defaultLocale: 'en',
-});
-
-export { i18n };
+export { initI18n };
