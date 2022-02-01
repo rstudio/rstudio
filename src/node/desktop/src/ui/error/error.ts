@@ -18,7 +18,6 @@
 /* eslint-disable @typescript-eslint/no-implicit-any-catch */
 import { initI18n } from '../../main/i18n-manager';
 import i18next from 'i18next';
-import { rejects } from 'assert';
 
 const loadPageLocalization = () => {
   initI18n();
@@ -105,12 +104,6 @@ const copyProblemReport = async () => {
     report = await replaceReportVar(report, 'log_content');
 
     reportElement.value = report;
-
-    // const newTextArea = document.createElement('textarea');
-    // document.body.appendChild(newTextArea);
-    // newTextArea.value = report;
-    // newTextArea.select();
-    // newTextArea.setSelectionRange(0, 99999);
 
     // Select all the text in the report
     reportElement.focus();

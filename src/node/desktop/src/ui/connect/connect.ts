@@ -1,3 +1,5 @@
+/* eslint-disable indent */
+/* eslint-disable max-len */
 /*
  * connect.ts
  *
@@ -50,7 +52,8 @@ const loadPageLocalization = () => {
             (document.getElementById('retry_url') as HTMLElement).innerHTML = i18next.t('uiFolder.retry');
             break;
           case 'ifYouveCustomizedRSessionCreation':
-            (element.innerHTML = i18next.t('uiFolder.' + reducedId)), { rProfileFileExtension: '<samp>~/.Rprofile</samp>),' };
+            (element.innerHTML = i18next.t('uiFolder.' + reducedId)),
+              { rProfileFileExtension: '<samp>~/.Rprofile</samp>),' };
             break;
           default:
             element.innerHTML = i18next.t('uiFolder.' + reducedId);

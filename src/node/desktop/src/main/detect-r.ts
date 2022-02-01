@@ -16,7 +16,6 @@
 import path from 'path';
 
 import { execSync, spawnSync } from 'child_process';
-import { dialog } from 'electron';
 import { existsSync } from 'fs';
 import { EOL } from 'os';
 
