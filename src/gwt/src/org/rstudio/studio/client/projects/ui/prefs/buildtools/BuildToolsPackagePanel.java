@@ -16,7 +16,7 @@
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.PackagesHelpLink;
@@ -68,8 +68,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       cleanBeforeInstall_.addStyleName(RES.styles().buildToolsCleanBeforeInstall());
       add(cleanBeforeInstall_);
 
-      chkUseDevtools_ = checkBox(
-            constants_.chkUseDevtoolsCaption());
+      chkUseDevtools_ = checkBox(constants_.chkUseDevtoolsCaption());
       chkUseDevtools_.addStyleName(RES.styles().buildToolsDevtools());
       add(chkUseDevtools_);
       
@@ -78,7 +77,8 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       HorizontalPanel rocletPanel = new HorizontalPanel();
       chkUseRoxygen_ = checkBox(constants_.chkUseRoxygenCaption());
       rocletPanel.add(chkUseRoxygen_);
-      btnConfigureRoxygen_ = new ThemedButton(constants_.btnConfigureRoxygenLabel());
+      btnConfigureRoxygen_ = new SmallButton(constants_.btnConfigureRoxygenLabel());
+      btnConfigureRoxygen_.getElement().getStyle().setMarginLeft(12, Unit.PX);
       btnConfigureRoxygen_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -215,7 +215,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    private CheckBox chkUseRoxygen_;
    private CheckBox cleanBeforeInstall_;
    private CheckBox chkUseDevtools_;
-   private ThemedButton btnConfigureRoxygen_;
+   private SmallButton btnConfigureRoxygen_;
    
    private WorkbenchContext workbenchContext_;
    private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
