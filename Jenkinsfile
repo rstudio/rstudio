@@ -376,11 +376,15 @@ try {
         parallel_containers["windows"] = {
           node('windows') {
             stage('prepare container') {
-               checkout scm
-               docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                 def image_tag = "windows-${rstudioReleaseBranch}"
-                 windows_image = docker.image("jenkins/ide:" + image_tag)
-               }
+              checkout scm
+              docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                def image_tag = "windows-${rstudioReleaseBranch}"
+                windows_image = docker.image("jenkins/ide:" + image_tag)
+
+                retry(5) {
+                  windows_image.pull()
+                }
+              }
             }
             windows_image.inside() {
               stage('dependencies') {
