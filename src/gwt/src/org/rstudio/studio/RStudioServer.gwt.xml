@@ -1,8 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.8.2//EN" "http://www.gwtproject.org/doctype/2.9.0/gwt-module.dtd">
+
+<!--
+   While this module is used for compilation of RStudio Server, it also
+   needs to be able to serve the front-end for RStudio Desktop, for remote
+   desktop configurations. For that reason, we don't try to explicitly set
+   'rstudio.desktop' or 'rstudio.electron' below.
+-->
+
 <module rename-to="rstudio">
    <inherits name="org.rstudio.studio.RStudio" />
    <set-property name="compiler.stackMode" value="native"/>
-   <set-property name="rstudio.desktop" value="false"/>
-   <set-property name="rstudio.electron" value="false"/>
 </module>
