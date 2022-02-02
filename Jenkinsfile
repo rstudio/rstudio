@@ -149,12 +149,6 @@ def sentry_upload(type, flavor) {
   }
 }
 
-def jenkins_user_build_args() {
-  def jenkins_uid = sh (script: 'id -u jenkins', returnStdout: true).trim()
-  def jenkins_gid = sh (script: 'id -g jenkins', returnStdout: true).trim()
-  return " --build-arg JENKINS_UID=${jenkins_uid} --build-arg JENKINS_GID=${jenkins_gid}"
-}
-
 def get_type_from_os(os) {
   def type
   // groovy switch case regex is broken in pipeline
@@ -240,7 +234,7 @@ try {
             stage('set up versioning') {
                 prepareWorkspace()
 
-                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args(), retry_image_pull: 5)
+                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", retry_image_pull: 5)
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
@@ -291,7 +285,7 @@ try {
                               pullBuildPush(image_name: 'jenkins/ide',
                                 dockerfile: "docker/jenkins/Dockerfile.${current_image.os}-${current_image.arch}",
                                 image_tag: image_tag,
-                                build_args: github_args + " " + jenkins_user_build_args(),
+                                build_args: github_args,
                                 retry_image_pull: 5)
                             }
                         }
@@ -307,32 +301,14 @@ try {
               checkout scm
               withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
                 def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
-                def dockerfile = "-f docker/jenkins/Dockerfile.windows"
-                def container
-                // the following is adapted from pullBuildPush with the
-                // omission of Unix-isms
-                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                  def image_cache
-                  def image_name = "jenkins/ide"
-                  def image_tag = "windows-${rstudioReleaseBranch}"
-                  def cache_tag = image_tag
-                  def build_args = github_args
-                  def docker_context = '.'
-                  try {
-                    image_cache = docker.image(image_name + ':' + cache_tag)
-                    retry(5) {
-                      image_cache.pull()
-                    }
-                  } catch(e) { // docker.image throws a generic exception.
-                    echo 'Windows container image not found; expect build to take a bit longer.'
-                  }
-
-                  echo 'Building Windows container image'
-                  container = docker.build(image_name + ':' + image_tag, "--cache-from ${image_cache.imageName()} ${build_args} ${dockerfile} ${docker_context}")
-
-                  echo 'Pushing Windows container'
-                  container.push()
-                }
+                pullBuildPush(image_name: 'jenkins/ide',
+                  dockerfile: "docker/jenkins/Dockerfile.windows",
+                  image_tag: "windows-${rstudioReleaseBranch}",
+                  build_args: github_args,
+                  build_arg_jenkins_uid: null, // Ensure linux-only step is not run on windows (id -u jenkins)
+                  build_arg_jenkins_gid: null, // Ensure linux-only step is not run on windows (id -g jenkins)
+                  build_arg_docker_gid: null, // Ensure linux-only step is not run on windows (stat -c %g /var/run/docker.sock)
+                  retry_image_pull: 5)
               }
             }
           }
