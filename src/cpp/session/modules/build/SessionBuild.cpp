@@ -569,8 +569,8 @@ private:
       // check for required version of roxygen
       if (!module_context::isMinimumRoxygenInstalled())
       {
-         terminateWithError("roxygen2 v4.0 (or later) required to "
-                            "generate documentation");
+         terminateWithError(
+                  "roxygen2 (>= 4.1.0) is required to generate documentation");
       }
 
       // make a copy of options so we can customize the environment
@@ -1616,18 +1616,29 @@ private:
                        boost::str(fmt % exitStatus));
       enqueBuildCompleted();
    }
+   
+   void terminateWithErrorImpl(const std::string& message)
+   {
+      enqueBuildOutput(module_context::kCompileOutputError, message);
+      enqueBuildCompleted();
+   }
 
    void terminateWithError(const std::string& context,
                            const Error& error)
    {
-      std::string msg = "Error " + context + ": " + error.getSummary();
-      terminateWithError(msg);
+      std::string msg = string_utils::sprintf(
+               "Error %s: %s\n",
+               context.c_str(),
+               error.getSummary().c_str());
+      terminateWithErrorImpl(msg);
    }
 
-   void terminateWithError(const std::string& msg)
+   void terminateWithError(const std::string& message)
    {
-      enqueBuildOutput(module_context::kCompileOutputError, msg);
-      enqueBuildCompleted();
+      std::string msg = core::string_utils::sprintf(
+               "Error: %s\n",
+               message.c_str());
+      terminateWithErrorImpl(msg);
    }
 
    bool useDevtools()
