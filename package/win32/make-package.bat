@@ -1,8 +1,24 @@
 @echo off
 set PACKAGE_DIR="%CD%"
 
+setlocal
+
+set BUILD_GWT=1
+set RSTUDIO_TARGET=Desktop
+
+if "%1" == "--help" goto :showhelp
+if "%1" == "-h" goto :showhelp
+if "%1" == "/?" goto :showhelp
+
+for %%A in (%*) do (
+      if /I "%%A" == "clean" set CLEANBUILD=1
+      if /I "%%A" == "quick" set QUICK=1
+      if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
+      if /I "%%A" == "nogwt" set BUILD_GWT=0
+)
+
 REM clean if requested
-if "%1" == "clean" (
+if defined CLEANBUILD (
       call clean-build.bat
       if exist CMakeCache.txt del CMakeCache.txt
 )
@@ -12,11 +28,10 @@ for %%F in (ant cmake) do (
       where /q %%F
       if ERRORLEVEL 1 (
             echo '%%F' not found on PATH; exiting
+            endlocal
             exit /b 1
       )
 )
-
-setlocal
 
 REM Build for desktop
 set GWT_MAIN_MODULE=RStudioDesktop
@@ -40,6 +55,7 @@ if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
 
 REM Package these files into a shorter path to workaround windows max path of 260
+REM Must match CPACK_PACKAGE_DIRECTORY set in rstudio/package/win32/CMakeLists.txt
 set PKG_TEMP_DIR=c:\temp\ide-build
 if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Packages"
 
@@ -55,22 +71,23 @@ call VsDevCmd.bat -arch=amd64 -startdir=none -host_arch=amd64 -winsdk=10.0.17134
 popd
 
 cmake -G "Ninja" ^
-      -DRSTUDIO_TARGET=Desktop ^
+      -DRSTUDIO_TARGET=%RSTUDIO_TARGET% ^
       -DCMAKE_BUILD_TYPE=%CMAKE_BUILD_TYPE% ^
       -DRSTUDIO_PACKAGE_BUILD=1 ^
       -DCMAKE_C_COMPILER=cl ^
       -DCMAKE_CXX_COMPILER=cl ^
+      -DGWT_BUILD=%BUILD_GWT% ^
       ..\..\.. || goto :error
 cmake --build . --config %CMAKE_BUILD_TYPE% -- %MAKEFLAGS% || goto :error
 
 cd ..
 
 REM perform 32-bit build and install it into the 64-bit tree
-call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %1 || goto :error
+call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || goto :error
 
 REM create packages
 cd "%BUILD_DIR%"
-if not "%1" == "quick" cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
+if not defined QUICK cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
 if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
 cd ..
 
@@ -91,3 +108,11 @@ goto :EOF
 :error
 echo Failed to build RStudio! Error: %ERRORLEVEL%
 exit /b %ERRORLEVEL%
+
+:showhelp
+echo make-package [clean] [quick] [electron] [nogwt]
+echo     clean: full rebuild
+echo     quick: skip creation of setup package
+echo     electron: build Electron instead of Qt desktop (NYI)
+echo     nogwt: use results of last GWT build
+exit /b 0
