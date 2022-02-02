@@ -108,7 +108,9 @@ pipeline {
 
           // this job is going to run on a macOS slave, which cannot use an instance-profile
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-            sh "aws s3 cp src/node/desktop/out/make/${packageFile} ${buildDest}"
+            retry(5) {
+              sh "aws s3 cp src/node/desktop/out/make/${packageFile} ${buildDest}"
+            }
           }
 
           // Removed temporarily until Electron is the main version
