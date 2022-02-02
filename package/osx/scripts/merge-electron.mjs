@@ -4,7 +4,7 @@ import { execSync } from 'child_process';
 import { existsSync, rmSync } from 'fs';
 import { makeUniversalApp } from '@electron/universal';
 
-const [ node, script, x64AppPath, arm64AppPath, outPath ] = process.argv;
+const [node, script, x64AppPath, arm64AppPath, outPath] = process.argv;
 
 // for x64, we don't build a universal application; instead,
 // we just copy the x64 Electron bits directly into the package
@@ -32,7 +32,7 @@ if (hasArm64Build) {
   console.log("# Building x86_64 Electron application");
   console.log(`- [i] x64AppPath: ${x64AppPath}`)
   tmpPath = x64AppPath;
-  
+
 }
 
 // use rsync to move them into the final install path
