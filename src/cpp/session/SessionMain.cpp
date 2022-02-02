@@ -127,6 +127,7 @@
 #include "modules/SessionAskSecret.hpp"
 #include "modules/SessionAuthoring.hpp"
 #include "modules/SessionBreakpoints.hpp"
+#include "modules/SessionCpp.hpp"
 #include "modules/SessionHTMLPreview.hpp"
 #include "modules/SessionClipboard.hpp"
 #include "modules/SessionCodeSearch.hpp"
@@ -554,6 +555,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::code_search::initialize)
       (modules::clipboard::initialize)
       (modules::clang::initialize)
+      (modules::cpp::initialize)
       (modules::connections::initialize)
       (modules::files::initialize)
       (modules::find::initialize)
@@ -952,6 +954,11 @@ void rConsoleHistoryReset()
    resetJson["preserve_ui_context"] = false;
    ClientEvent event(kConsoleResetHistory, resetJson);
    rsession::clientEventQueue().add(event);
+}
+
+void rConsoleReset()
+{
+   rsession::console_input::clearConsoleInputBuffer();
 }
 
 bool rLocator(double* x, double* y)
@@ -2303,6 +2310,7 @@ int main(int argc, char * const argv[])
       rCallbacks.busy = rBusy;
       rCallbacks.consoleWrite = rConsoleWrite;
       rCallbacks.consoleHistoryReset = rConsoleHistoryReset;
+      rCallbacks.consoleReset = rConsoleReset;
       rCallbacks.locator = rLocator;
       rCallbacks.deferredInit = rDeferredInit;
       rCallbacks.suspended = rSuspended;

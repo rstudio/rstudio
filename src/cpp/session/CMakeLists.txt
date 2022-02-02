@@ -164,6 +164,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionClipboard.cpp
    modules/SessionCrashHandler.cpp
    modules/SessionConsole.cpp
+   modules/SessionCpp.cpp
    modules/SessionDependencies.cpp
    modules/SessionDependencyList.cpp
    modules/SessionDiagnostics.cpp
@@ -704,14 +705,14 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
               DESTINATION "${RSTUDIO_INSTALL_BIN}/x86")
    endif()
 
-   # install gnudiff, mysys_ssh, and sumatra-pdf on windows
+   # install gnudiff, gnugrep, mysys_ssh, and sumatra-pdf on windows
    if(WIN32)
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnudiff"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})
-      install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnugrep"
+      install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/gnugrep/3.0"
               USE_SOURCE_PERMISSIONS
-              DESTINATION  ${RSTUDIO_INSTALL_BIN})
+              DESTINATION  "${RSTUDIO_INSTALL_BIN}/gnugrep")
       install(DIRECTORY "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/msys-ssh-1000-18"
               USE_SOURCE_PERMISSIONS
               DESTINATION  ${RSTUDIO_INSTALL_BIN})

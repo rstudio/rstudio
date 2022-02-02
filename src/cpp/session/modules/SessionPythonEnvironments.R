@@ -634,7 +634,14 @@
    
    # ask it for environments
    args <- c("env", "list", "--json", "--quiet")
-   output <- system2(conda, args, stdout = TRUE, stderr = FALSE)
+   tmp <- tempfile()
+   output <- system2(conda, args, stdout = TRUE, stderr = tmp)
+   
+   status <- .rs.nullCoalesce(attr(output, "status", exact = TRUE), 0L)
+   if (!identical(status, 0L)) {
+     errors <- paste(readLines(tmp), collapse = "\n")
+     .rs.stopf("Error executing %s %s:\n%s", conda, paste(args, collapse = " "), errors)
+   }
    json <- .rs.fromJSON(paste(output, collapse = "\n"))
    envList <- unlist(json$envs)
    

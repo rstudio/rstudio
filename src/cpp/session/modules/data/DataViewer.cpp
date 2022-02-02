@@ -942,6 +942,9 @@ void onDetectChanges(module_context::ChangeSource source)
 {
    DROP_RECURSIVE_CALLS;
 
+   if (!core::thread::isMainThread())
+      return;
+
    // unlikely that data will change outside of a REPL
    if (source != module_context::ChangeSourceREPL) 
       return;

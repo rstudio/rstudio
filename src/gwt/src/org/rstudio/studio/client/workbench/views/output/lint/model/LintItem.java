@@ -14,11 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint.model;
 
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 public class LintItem extends JavaScriptObject
 {
@@ -69,6 +68,10 @@ public class LintItem extends JavaScriptObject
    public final native String getText() /*-{
       return this["text"];
    }-*/;
+
+   public final native void setText(String text) /*-{
+      this["text"] = text;
+   }-*/;
    
    public final native String getType() /*-{
       return this["type"];
@@ -101,11 +104,11 @@ public class LintItem extends JavaScriptObject
          var type = items[key]["type"];
          if (type === "style" || type === "note")
             type = "info";
-            
+
          aceAnnotations.push({
             row: items[key]["start.row"],
             column: items[key]["start.column"],
-            text: items[key]["text"],
+            html: items[key]["text"],
             type: type
          });
       }

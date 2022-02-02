@@ -7,6 +7,6 @@
    <set-property name="rstudio.electron" value="false"/>
    <set-property name="user.agent" value="safari"/>
    <!-- dev language for i18n development -->
-   <extend-property name="locale" values="dev"/>
-   <!--<set-property name="locale" value="fr"/>-->
+   <extend-property name="locale" values="en,fr,dev"/>
+   <!--<set-property name="locale" value="dev"/>-->
 </module>

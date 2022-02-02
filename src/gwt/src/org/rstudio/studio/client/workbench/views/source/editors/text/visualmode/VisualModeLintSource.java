@@ -97,7 +97,7 @@ public class VisualModeLintSource implements LintSource
          item.setEndRow(item.getEndRow() + 1);
       }
 
-      chunk_.showLint(lint);
+      chunk_.showLint(lint, false);
    }
 
    @Override
@@ -108,6 +108,15 @@ public class VisualModeLintSource implements LintSource
       return chunk_.getAceInstance().getCode(
          Position.create(1, 0),
          chunk_.getAceInstance().getDocumentEnd());
+   }
+
+   @Override
+   public boolean lintOnSave()
+   {
+      // Individual chunks of code aren't linted on save in visual mode;
+      // lint on save happens in the outer editor and results are forwarded
+      // into chunks.
+      return false;
    }
 
    private final VisualModeChunk chunk_;

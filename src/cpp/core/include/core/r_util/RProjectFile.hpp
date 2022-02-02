@@ -64,10 +64,12 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 struct RProjectBuildDefaults
 {
    RProjectBuildDefaults()
-      : useDevtools(true)
+      : useDevtools(true), 
+        cleanBeforeInstall(true)
    {
    }
    bool useDevtools;
+   bool cleanBeforeInstall;
 };
 
 struct RProjectConfig
@@ -96,6 +98,7 @@ struct RProjectConfig
         packageCheckArgs(),
         packageRoxygenize(),
         packageUseDevtools(false),
+        packageCleanBeforeInstall(true),
         makefilePath(),
         websitePath(),
         customScriptPath(),
@@ -139,6 +142,7 @@ struct RProjectConfig
    std::string packageCheckArgs;
    std::string packageRoxygenize;
    bool packageUseDevtools;
+   bool packageCleanBeforeInstall;
    std::string makefilePath;
    std::string websitePath;
    std::string customScriptPath;

@@ -11,7 +11,7 @@
 double sum(cpp11::doubles x) {
     double total = 0.0;
     for (double value: x) {
-        total += x;
+        total += value;
     }
     return total;
 }

@@ -2587,38 +2587,3 @@
    getNamespace(envir)
    
 })
-
-.rs.addJsonRpcHandler("project_guess_cpp_style", function(inDirectory = .rs.getProjectDirectory()) 
-{
-   # give up if this is not a project or not a package
-   if (is.null(inDirectory))
-      return(.rs.scalar(""))
-
-   DESCRIPTION <- file.path(inDirectory, "DESCRIPTION")
-   if (!file.exists(DESCRIPTION))
-      return(.rs.scalar(""))
-
-   # check if Rcpp or cpp11 is mentioned in LinkingTo:
-   LinkingTo <- tryCatch(
-      read.dcf(DESCRIPTION, all = TRUE)$LinkingTo, 
-      error = function(e) {
-         NULL
-      }
-   )      
-
-   if (!is.null(LinkingTo)) {
-      if (grepl("Rcpp", LinkingTo)) {
-         return(.rs.scalar("Rcpp"))
-      } else if (grepl("cpp11", LinkingTo)) {
-         return(.rs.scalar("cpp11"))
-      }
-   }
-
-   # check if cpp11 is vendored
-   if (file.exists(file.path(inDirectory, "inst", "include", "cpp11.hpp"))) {
-      return(.rs.scalar("cpp11"))
-   }
-
-   # give up, i.e. use the user preference
-   .rs.scalar("")
-})

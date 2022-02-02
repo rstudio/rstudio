@@ -26,6 +26,7 @@
 
 #include <functional>
 
+#include <boost/optional.hpp>
 #include <shared_core/Error.hpp>
 
 namespace rstudio {
@@ -181,13 +182,14 @@ Error restoreRoot();
 Error restorePrivileges();
 
 /**
- * @brief Temporarily drops privileges from root to the requested user.
+ * @brief Temporarily drops privileges from root to the requested user and group.
  *
  * @param in_user   The user to which to drop privileges.
+ * @param in_group   The group to which to drop privileges.
  *
- * @return Success if privileges could be dropped to the requested user; Error otherwise.
+ * @return Success if privileges could be dropped to the requested user and group; Error otherwise.
  */
-Error temporarilyDropPrivileges(const User& in_user);
+Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidType>& in_group);
 
 } // namespace posix
 } // namespace system

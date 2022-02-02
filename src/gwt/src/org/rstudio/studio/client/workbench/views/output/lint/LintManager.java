@@ -14,9 +14,20 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.RetinaStyleInjector;
@@ -39,15 +50,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppComp
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
 import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlDocumentLinter;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
-
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
 
 import java.util.List;
 
@@ -172,7 +174,9 @@ public class LintManager
          public void onSourceFileSaveCompleted(
                SourceFileSaveCompletedEvent event)
          {
-            if (!docDisplay_.isFocused())
+            // Skip if source doesn't want to be linted on save (this can change based on
+            // the source's focus status so we have to check every time)
+            if (!source_.lintOnSave())
                return;
             
             if (userPrefs_.diagnosticsOnSave().getValue())
@@ -366,6 +370,17 @@ public class LintManager
       else
          finalLint = lint;
 
+      for (int i = 0; i < finalLint.length(); i++) {
+         LintItem lintItem = finalLint.get(i);
+         DivElement element = Document.get().createDivElement();
+         VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(element);
+
+         vc.submit(lintItem.getText());
+         String renderedText = element.getInnerHTML();
+
+         lintItem.setText(renderedText);
+      }
+
       if (spellcheck && userPrefs_.realTimeSpellchecking().getValue())
       {
          source_.getSpellingTarget().getLint(new ServerRequestCallback<JsArray<LintItem>>()
@@ -389,12 +404,28 @@ public class LintManager
       else
          source_.showLint(finalLint);
    }
-   
+
+   /**
+    * Schedule a lint operation.
+    *
+    * @param milliseconds The number of milliseconds to delay before linting.
+    */
    public void schedule(int milliseconds)
    {
       timer_.schedule(milliseconds);
    }
-   
+
+   /**
+    * Cancel a pending lint operation, if any.
+    */
+   public void cancelPending()
+   {
+      if (timer_ != null && timer_.isRunning())
+      {
+         timer_.cancel();
+      }
+   }
+
    public void lint(boolean showMarkers,
                     boolean explicit,
                     boolean excludeCurrentStatement)

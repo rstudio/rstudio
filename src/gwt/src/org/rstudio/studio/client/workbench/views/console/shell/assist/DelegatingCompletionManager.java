@@ -32,7 +32,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 
-public abstract class DelegatingCompletionManager implements CompletionManager 
+public abstract class DelegatingCompletionManager
+      implements CompletionManager,
+                 CompletionManagerCommon
 {
    public DelegatingCompletionManager(DocDisplay docDisplay, CompletionContext context)
    {
@@ -51,7 +53,7 @@ public abstract class DelegatingCompletionManager implements CompletionManager
    
    protected abstract void initialize(Map<Mode, CompletionManager> managers);
    
-   private CompletionManager getCurrentCompletionManager()
+   public CompletionManager getActiveCompletionManager()
    {
       Mode mode = DocumentMode.getModeForCursorPosition(docDisplay_);
       
@@ -79,7 +81,7 @@ public abstract class DelegatingCompletionManager implements CompletionManager
    @Override
    public boolean previewKeyDown(NativeEvent event)
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       if (manager.previewKeyDown(event))
          return true;
       
@@ -97,35 +99,35 @@ public abstract class DelegatingCompletionManager implements CompletionManager
    @Override
    public boolean previewKeyPress(char charCode)
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       return manager.previewKeyPress(charCode);
    }
 
    @Override
    public void goToHelp()
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       manager.goToHelp();
    }
 
    @Override
    public void goToDefinition()
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       manager.goToDefinition();
    }
 
    @Override
    public void codeCompletion()
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       manager.codeCompletion();
    }
 
    @Override
    public void close()
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       manager.close();
    }
 

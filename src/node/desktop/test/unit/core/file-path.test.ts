@@ -780,7 +780,6 @@ describe('FilePath', () => {
       assert.throws(() => fp1.getChildrenRecursive());
       assert.throws(() => fp1.getFileMode());
       assert.throws(() => fp1.getMimeContentType());
-      assert.throws(() => fp1.getParent());
       assert.throws(() => fp1.getRelativePath(fp2));
       assert.throws(() => fp1.getSize());
       assert.throws(() => fp1.getSizeRecursive());

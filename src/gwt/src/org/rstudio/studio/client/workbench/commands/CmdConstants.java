@@ -3193,11 +3193,11 @@ public interface CmdConstants extends Constants {
     String rstudioLicenseMenuLabel();
     
     // buildAll
-    @DefaultStringValue("Install and Restart") // $NON-NLS-1$
+    @DefaultStringValue("Install Package") // $NON-NLS-1$
     String buildAllLabel();
-    @DefaultStringValue("Install and Restart") // $NON-NLS-1$
+    @DefaultStringValue("Install") // $NON-NLS-1$
     String buildAllButtonLabel();
-    @DefaultStringValue("_Install and Restart") // $NON-NLS-1$
+    @DefaultStringValue("_Install Package") // $NON-NLS-1$
     String buildAllMenuLabel();
     @DefaultStringValue("Install the package and restart R") // $NON-NLS-1$
     String buildAllDesc();
@@ -3257,6 +3257,8 @@ public interface CmdConstants extends Constants {
     String checkPackageDesc();
     
     // testPackage
+    @DefaultStringValue("Test") // $NON-NLS-1$
+    String testPackageButtonLabel();
     @DefaultStringValue("_Test Package") // $NON-NLS-1$
     String testPackageMenuLabel();
     @DefaultStringValue("Run tests for package") // $NON-NLS-1$

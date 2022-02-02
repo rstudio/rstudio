@@ -298,6 +298,7 @@ namespace prefs {
 #define kTerminalPath "terminal_path"
 #define kRsaKeyPath "rsa_key_path"
 #define kUseDevtools "use_devtools"
+#define kCleanBeforeInstall "clean_before_install"
 #define kUseInternet2 "use_internet2"
 #define kUseSecureDownload "use_secure_download"
 #define kCleanupAfterRCmdCheck "cleanup_after_r_cmd_check"
@@ -1418,6 +1419,12 @@ public:
     */
    bool useDevtools();
    core::Error setUseDevtools(bool val);
+
+   /**
+    * Clean before install.
+    */
+   bool cleanBeforeInstall();
+   core::Error setCleanBeforeInstall(bool val);
 
    /**
     * Whether to use Internet2 for networking on R for Windows.

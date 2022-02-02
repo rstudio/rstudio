@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <title>Error Starting R</title>
+    <title id="i18n-errorStartingR"></title>
     <style>
       h1 {
         margin-left: auto;
@@ -72,52 +72,10 @@
       }
     </style>
     <script>
-      // Function to copy problem report to clipboard
-      var copyProblemReport = function () {
-        // Find the <textarea> containing the problem report
-        var report = document.getElementById('problem_report');
-        if (!report) {
-          return;
-        }
-
-        // Fill in the user agent
-        report.value = report.value.replace('user_agent', navigator.userAgent);
-
-        // Replace all variables
-        replaceReportVar(report, 'version');
-        replaceReportVar(report, 'launch_failed');
-        replaceReportVar(report, 'exit_code');
-        replaceReportVar(report, 'process_error');
-        replaceReportVar(report, 'process_output');
-        replaceReportVar(report, 'log_file');
-        replaceReportVar(report, 'log_content');
-
-        // Select all the text in the report
-        report.focus();
-        report.select();
-
-        // Attempt to copy the text to the clipboard
-        if (document.execCommand('copy')) {
-          alert('Problem report copied to clipboard.');
-        } else {
-          alert('Could not copy problem report to clipboard.');
-        }
-      };
-
       var replaceVar = function (varName) {
         try {
           window.desktop.getStartupErrorInfo(varName, (result) => {
             document.getElementById(varName).innerHTML = result;
-          });
-        } catch (err) {
-          console.error(err);
-        }
-      };
-
-      var replaceReportVar = function (report, varName) {
-        try {
-          window.desktop.getStartupErrorInfo('!' + varName, (result) => {
-            report.value = report.value.replace('#' + varName + '#', result);
           });
         } catch (err) {
           console.error(err);
@@ -153,7 +111,7 @@
         viewBox="0 0 724 561"
         style="position: absolute; top: 0; left: 0"
       >
-        <title>R Logo</title>
+        <title id="i18n-rLogo"></title>
         <defs>
           <linearGradient
             id="gradientFill-1"
@@ -200,46 +158,39 @@
         viewBox="0 0 24 24"
         style="position: absolute; bottom: 0; left: 0"
       >
-        <title>Warning</title>
+        <title id="i18n-warning"></title>
         <path
           d="M12 5.177l8.631 15.823h-17.262l8.631-15.823zm0-4.177l-12 22h24l-12-22zm-1 9h2v6h-2v-6zm1 9.75c-.689 0-1.25-.56-1.25-1.25s.561-1.25 1.25-1.25 1.25.56 1.25 1.25-.561 1.25-1.25 1.25z"
         />
       </svg>
     </div>
-    <h1>Error Starting R</h1>
-    <p>The R session failed to start.</p>
-    <h2>RStudio Version</h2>
+    <h1 id="i18n-errorStartingR"></h1>
+    <p id="i18n-rSessionFailedToStart"></p>
+    <h2 id="i18n-rstudioVersion"></h2>
     <code id="version"></code>
-    <h2>Error Message</h2>
+    <h2 id="i18n-errorMessage"></h2>
     <code id="launch_failed"></code>
-    <h2>Process Output</h2>
-    <p>
-      The R session process exited with code <strong><span id="exit_code"></span></strong>.
-    </p>
-    <h3>Errors</h3>
+    <h2 id="i18n-processOutput"></h2>
+    <p id="i18n-rSessionExitedWithCode"></p>
+    <h3 id="i18n-errors"></h3>
     <code id="process_error" class="error"></code>
-    <h3>Output</h3>
+    <h3 id="i18n-output"></h3>
     <code id="process_output" class="output"></code>
-    <h2>Recent Log</h2>
+    <h2 id="i18n-recentLog"></h2>
     <em id="log_file"></em>
     <code id="log_content"></code>
-    <h2>Next Steps</h2>
-    <p>R can fail to start up for many reasons. The following may help you resolve the problem:</p>
+    <h2 id="i18n-nextSteps"></h2>
+    <p id="i18n-rCanFailToStartupForManyReasons"></p>
     <ul>
-      <li>Investigate any errors above.</li>
-      <li>Make sure that R starts up correctly outside RStudio (using RGui, R.app, or R in a terminal).</li>
-      <li>
-        Fully uninstall all versions of R from your machine, and reinstall the version you wish to use with RStudio.
-      </li>
-      <li>Remove startup customizations such as an <samp>.Rprofile</samp> file, if present.</li>
-      <li>
-        If posting this report online, use the Copy Problem Report button below to generate a textual version of this
-        diagnostic.
-      </li>
+      <li id="i18n-investigateAnyErrorsAbove"></li>
+      <li id="i18n-makeSureThatRStartsUpCorrectly"></li>
+      <li id="i18n-fullyUninstallAllVersionsOfRFromYourMachine"></li>
+      <li id="i18n-removeStartupCustomizationsSuchAs"></li>
+      <li id="i18n-ifPostingThisReportOnlineUseTheCopyProblemReport"></li>
     </ul>
-    <p>Further troubleshooting help can be found on our website:</p>
+    <p id="i18n-furtherTroubleshootingHelpCanBeFound"></p>
     <p>
-      <a href="https://www.rstudio.org/links/troubleshooting_startup">Troubleshooting RStudio Startup</a>
+      <a href="https://www.rstudio.org/links/troubleshooting_startup" id="i18n-troubleshootingRstudioStartup"></a>
     </p>
     <p></p>
     <form>
@@ -281,7 +232,7 @@ Standard output:
 ```
                 </textarea
       >
-      <input type="button" value="Copy Problem Report" onclick="copyProblemReport()" />
+      <input type="button" id="i18n-copyProblemReport" />
     </form>
   </body>
 </html>

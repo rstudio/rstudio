@@ -503,7 +503,7 @@ public class StringUtil
       return prefix;
    }
 
-   private static boolean isWhitespace(char c)
+   public static boolean isWhitespace(char c)
    {
       switch (c)
       {

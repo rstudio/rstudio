@@ -1,0 +1,90 @@
+{
+  "contextMenu": {
+    "saveImageAsDots": "Save image as...",
+    "saveImageAs": "Save image as",
+    "copyImage": "Copy Image",
+    "reload": "Reload",
+    "copyImageAddress": "Copy Image Address",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "selectAll": "Select All",
+    "inspectElement": "Inspect Element",
+    "errorDownloadingImage": "Error downloading image",
+    "downloadCancelledMessage": "The download was cancelled.",
+    "downloadInterruptedMessage": "The download was interrupted.",
+    "save": "Save"
+  },
+  "uiFolder": {
+    "chooseRInstallation": "Choose R Installation",
+    "rstudioRequiresAnExistingRInstallationTitle": "RStudio requires an existing installation of R.",
+    "rstudioRequiresAnExistingRInstallationSubtitle": "Please select the version of R to use.",
+    "useYourMachineDefault64BitR": "Use your machine's default 64-bit version of R",
+    "useYourMachineDefault32BitR": "Use your machine's default 32-bit version of R",
+    "chooseASpecificVersionOfR": "Choose a specific version of R:",
+    "browseDots": "Browse...",
+    "okCaps": "OK",
+    "cancel": "Cancel",
+    "errorStartingR": "Error Starting R",
+    "problemReportCopiedToClipboard": "Problem report copied to clipboard.",
+    "couldNotCopyProblemReportToClipboard": "Could not copy problem report to clipboard.",
+    "rLogo": "R Logo",
+    "warning": "Warning",
+    "rstudioVersion": "RStudio Version",
+    "errorMessage": "Error Message",
+    "processOutput": "Process Output",
+    "rSessionExitedWithCode": "The R session process exited with code {{- exitCode}}.",
+    "errors": "Errors",
+    "output": "Output",
+    "recentLog": "Recent Log",
+    "nextSteps": "Next Steps",
+    "rCanFailToStartupForManyReasons": "R can fail to start up for many reasons. The following may help you resolve the problem:",
+    "investigateAnyErrorsAbove": "Investigate any errors above.",
+    "makeSureThatRStartsUpCorrectly": "Make sure that R starts up correctly outside RStudio (using RGui, R.app, or R in a terminal).",
+    "fullyUninstallAllVersionsOfRFromYourMachine": "Fully uninstall all versions of R from your machine, and reinstall the version you wish to use with RStudio.",
+    "removeStartupCustomizationsSuchAs": "Remove startup customizations such as an {{- rProfileFileExtension}} file, if present.",
+    "ifPostingThisReportOnlineUseTheCopyProblemReport": "If posting this report online, use the Copy Problem Report button below to generate a textual version of this diagnostic.",
+    "furtherTroubleshootingHelpCanBeFound": "Further troubleshooting help can be found on our website:",
+    "troubleshootingRstudioStartup": "Troubleshooting RStudio Startup",
+    "copyProblemReport": "Copy Problem Report",
+    "cannotConnectToR": "Cannot Connect to R",
+    "rstudioCantEstablishAConnectionToR": "RStudio can't establish a connection to R. This usually indicates one of the following:",
+    "theRSessionIsTakingAnUnusuallyLongTimeToStart": "The R session is taking an unusually long time to start, perhaps because of slow operations in startup scripts or slow network drive access.",
+    "rstudioIsUnableToCommunicateWithR": "RStudio is unable to communicate with R over a local network port, possibly because of firewall restrictions or anti-virus software.",
+    "pleaseTryTheFollowing": "Please try the following:",
+    "ifYouveCustomizedRSessionCreation": "If you've customized R session creation by creating an R profile (e.g. located at {{- rProfileFileExtension}} consider temporarily removing it.",
+    "ifYouAreUsingAFirewallOrAntivirus": "If you are using a firewall or antivirus software which guards access to local network ports, add an exclusion for the RStudio and rsession executables.",
+    "runRguiRAppOrRInATerminalToEnsure": "Run RGui, R.app, or R in a terminal to ensure that R itself starts up correctly.",
+    "retry": "Retry",
+    "initializingR": "Initializing R",
+    "theRsessionIsInitializing": "The R session is initializing {{- mdash}} please wait a moment..."
+  },
+  "applicationTs": {
+    "devModeConfig": "Dev Mode Config",
+    "confColon": "conf:",
+    "notFoundDotLowercase": "not found.",
+    "errorFindingR": "Error Finding R",
+    "rstudioFailedToFindRInstalationsOnTheSystem": "RStudio failed to find any R installations on the system."
+  },
+  "detectRTs": {
+    "rNotFound": "R not found",
+    "couldNotLocateAnRInstallationOnTheSystem": "Could not locate an R installation on the system."
+  },
+  "gwtCallbackTs": {
+    "unimplemented": "Unimplemented",
+    "callbackNyiLowercase": "{{ipcName}} callback NYI"
+  },
+  "mainTs": {
+    "unhandledException": "Unhandled Exception"
+  },
+  "sessionLauncherTs": {
+    "rSessionFatalError": "The R session had a fatal error.",
+    "errorWasCausedByRAttemptingToLoadPackagesFromADifferentIncompatibleRVersion": "This error was very likely caused by R attempting to load packages from a different incompatible version of R on your system. Please remove other versions of R and/or remove environment variables that reference libraries from other versions of R before proceeding."
+  },
+  "utilsTs": {
+    "rsessionNotFoundError": "Could not find rsession executable. Try setting the \"RSTUDIO_CPP_BUILD_OUTPUT\" environment variable to the location where src/cpp was built.\n( Working directory: {{workingDirectory}} )"
+  },
+  "mainWindowTs": {
+    "rSessionFailedToStart": "The R session failed to start."
+  }
+}

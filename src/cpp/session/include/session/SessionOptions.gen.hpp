@@ -341,7 +341,7 @@ protected:
       value<std::string>(&gnudiffPath_)->default_value("bin/gnudiff"),
       "Specifies the path to gnudiff utilities (Windows-only).")
       ("external-gnugrep-path",
-      value<std::string>(&gnugrepPath_)->default_value("bin/gnugrep"),
+      value<std::string>(&gnugrepPath_)->default_value("bin/gnugrep/3.0"),
       "Specifies the path to gnugrep utilities (Windows-only).")
       ("external-msysssh-path",
       value<std::string>(&msysSshPath_)->default_value("bin/msys-ssh-1000-18"),

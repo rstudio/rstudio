@@ -30,6 +30,7 @@ import { Err } from '../core/err';
 
 import { productInfo } from './product-info';
 import { MainWindow } from './main-window';
+import i18next from 'i18next';
 
 export function initializeSharedSecret(): void {
   const sharedSecret = randomString() + randomString() + randomString();
@@ -116,13 +117,12 @@ export function removeStaleOptionsLockfile(): void {
 }
 
 export function rsessionExeName(): string {
-
   switch (process.platform) {
-    case 'darwin': return process.arch === 'arm64' ? 'rsession-arm64' : 'rsession';
-    case 'win32': return 'rsession.exe';
-    default: return 'rsession';
+    case 'win32':
+      return 'rsession.exe';
+    default:
+      return 'rsession';
   }
-
 }
 
 // used to help find built C++ sources in developer configurations
@@ -179,13 +179,8 @@ function findBuildRootImpl(rootDir: string): string {
 }
 
 function rsessionNotFoundError(): Error {
-  const message =
-    'Could not find rsession executable. ' +
-    'Try setting the "RSTUDIO_CPP_BUILD_OUTPUT" environment variable ' +
-    'to the location where src/cpp was built.\n' +
-    '(Working directory: ' +
-    process.cwd() +
-    ')';
+  const workingDirectory = '' + process.cwd();
+  const message = i18next.t('utilsTs.rsessionNotFoundError', { workingDirectory });
 
   return Error(message);
 }

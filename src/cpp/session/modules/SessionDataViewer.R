@@ -41,11 +41,17 @@
 
 .rs.addFunction("formatDataColumnDispatch", function(col, ...)
 {
-   formatter <- utils::getS3method(
-      "format",
-      class = class(col),
-      optional = TRUE
-   )
+   formatter <- NULL
+   for (class in class(col))
+   {
+      formatter <- utils::getS3method(
+         "format",
+         class = class,
+         optional = TRUE
+      )
+      if (!is.null(formatter))
+         break
+   }
    
    if (is.null(formatter))
       return(NULL)

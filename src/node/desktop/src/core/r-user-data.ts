@@ -23,16 +23,3 @@ export enum SessionType {
   SessionTypeDesktop = 0,
   SessionTypeServer = 1,
 }
-
-/**
- * This routine migrates user state data from its home in RStudio 1.3 and prior
- * (usually ~/.rstudio) to its XDG-compliant home in RStudio 1.4 and later
- * (~/.local/share/rstudio or $XDG_DATA_HOME).
- *
- * This is a one-time migration that cleans up the old folder.
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function migrateUserStateIfNecessary(sessionType: SessionType): Err {
-  // TODO Implement migrateUserStateIfNecessary()
-  return new Error('migrateUserStateIfNecessary NYI');
-}
