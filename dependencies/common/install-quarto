@@ -26,7 +26,7 @@ if [ "$(arch)" = "aarch64" ]; then
 fi
 
 # variables that control download + installation process
-QUARTO_VERSION="0.3.74"
+QUARTO_VERSION="0.3.80"
 QUARTO_SUBDIR="quarto"
 QUARTO_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/quarto/${QUARTO_VERSION}"
 
