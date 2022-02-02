@@ -78,7 +78,9 @@ def s3_upload(type, flavor, os, arch) {
   def buildDest =  "s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
   
   // copy installer to s3
-  sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
+  retry(5) {
+    sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
+  }
 
   // forward declare tarball filenames
   def tarballFile = ""
@@ -97,7 +99,9 @@ def s3_upload(type, flavor, os, arch) {
     ).trim()
 
     sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
-    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} ${buildDest}"
+    retry(5) {
+      sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} ${buildDest}"
+    }
   }
 
   // update daily build redirect
@@ -177,11 +181,13 @@ def limit_builds(containers) {
 }
 
 def prepareWorkspace(){ // accessory to clean workspace and checkout
-  step([$class: 'WsCleanup'])
-  checkout scm
-  // record the commit for invoking downstream builds
-  rstudioBuildCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-  sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
+  retry(5) {
+    step([$class: 'WsCleanup'])
+    checkout scm
+    // record the commit for invoking downstream builds
+    rstudioBuildCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+    sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
+  }
 }
 
 // forward declare version vars
@@ -428,9 +434,12 @@ try {
                 bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.zip package\\win32\\build\\${packageName}.zip"
 
                 // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-                  bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
-                  bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
+                  retry(5) {
+                    bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
+                    bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
+                  }
                 }
 
               }
