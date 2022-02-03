@@ -39,15 +39,17 @@ public class DesktopMenuCallback implements MenuCallback
                  StringUtil.notNull(command.getMenuLabel(true)),
                  StringUtil.notNull(command.getTooltip()),
                  StringUtil.notNull(command.getShortcutRaw()),
-                 command.isCheckable());
+                 command.isCheckable(),
+                 command.isVisible());
    }
 
    private native void addCommand(String cmdId,
                                   String label,
                                   String tooltip,
                                   String shortcut,
-                                  boolean isCheckable) /*-{
-      $wnd.desktopMenuCallback.addCommand(cmdId, label, tooltip, shortcut, isCheckable);
+                                  boolean isCheckable,
+                                  boolean isVisible) /*-{
+      $wnd.desktopMenuCallback.addCommand(cmdId, label, tooltip, shortcut, isCheckable, isVisible);
    }-*/;
 
    public native final void addSeparator() /*-{

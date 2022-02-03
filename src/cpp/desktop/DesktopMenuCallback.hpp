@@ -45,7 +45,8 @@ public Q_SLOTS:
                     QString label,
                     QString tooltip,
                     QString shortcut,
-                    bool isCheckable);
+                    bool isCheckable,
+                    bool isVisible);
     void addSeparator();
     void endMenu();
     void endMainMenu();
