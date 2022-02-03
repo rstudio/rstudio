@@ -471,21 +471,14 @@ try {
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
           trigger_external_build('IDE/macos-pipeline')
+
+          // Ensure we don't build automation on the branches that don't exist
+          if (("${rstudioReleaseBranch}" != "release-ghost-orchid") && ("${rstudioReleaseBranch}" != "v1.4-juliet-rose")) {
+            trigger_external_build('IDE/qa-opensource-automation')
+          }
         }
 
         parallel parallel_containers
-
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/main') {
-          trigger_external_build('IDE/qa-opensource-automation')
-        }
-
-        // trigger downstream pro artifact builds if we're finished building
-        // the pro variants
-        // additionally, run qa-autotest against the version we've just built
-        if (env.JOB_NAME == 'IDE/pro-pipeline/master') {
-          trigger_external_build('IDE/qa-autotest')
-          trigger_external_build('IDE/qa-automation')
-        }
 
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
     }
