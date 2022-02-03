@@ -15,7 +15,7 @@
 
 // TODO clean this up
 
-import { ipcMain, dialog, BrowserWindow, webFrameMain, shell, screen } from 'electron';
+import { ipcMain, dialog, BrowserWindow, webFrameMain, shell, screen, app } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 
 import EventEmitter from 'events';
@@ -703,6 +703,11 @@ export class GwtCallback extends EventEmitter {
   }
 
   static unimpl(ipcName: string): void {
+
+    if (app.isPackaged) {
+      return;
+    }
+
     const focusedWindow = BrowserWindow.getFocusedWindow();
 
     const dialogOptions = {
@@ -715,6 +720,7 @@ export class GwtCallback extends EventEmitter {
     } else {
       void dialog.showMessageBox(dialogOptions);
     }
+
   }
 
   collectPendingQuitRequest(): PendingQuit {
