@@ -1375,6 +1375,17 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       LOG_ERROR(error);
       encodedString = grepOptions.searchPattern();
    }
+   std::string encodedDirectory;
+   error = r::util::iconvstr(grepOptions.directory(),
+                             "UTF-8",
+                             encoding,
+                             false,
+                             &encodedDirectory);
+   if (error)
+   {
+      LOG_ERROR(error);
+      encodedDirectory = grepOptions.directory();
+   }
 
    *pStream << encodedString << std::endl;
    pStream.reset(); // release file handle
