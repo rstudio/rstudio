@@ -26,8 +26,15 @@ export function getMenuBridge() {
       ipcRenderer.send('menu_begin', label);
     },
 
-    addCommand: (cmdId: string, label: string, tooltip: string, shortcut: string, isChecked: boolean) => {
-      ipcRenderer.send('menu_add_command', cmdId, label, tooltip, shortcut, isChecked);
+    addCommand: (
+      cmdId: string,
+      label: string,
+      tooltip: string,
+      shortcut: string,
+      isChecked: boolean,
+      isVisible: boolean,
+    ) => {
+      ipcRenderer.send('menu_add_command', cmdId, label, tooltip, shortcut, isChecked, isVisible);
     },
 
     addSeparator: () => {

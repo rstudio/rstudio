@@ -112,8 +112,16 @@ export class MenuCallback extends EventEmitter {
 
     ipcMain.on(
       'menu_add_command',
-      (event, cmdId: string, label: string, tooltip: string, shortcut: string, checkable: boolean) => {
-        this.addCommand(cmdId, label, tooltip, shortcut, checkable);
+      (
+        event,
+        cmdId: string,
+        label: string,
+        tooltip: string,
+        shortcut: string,
+        checkable: boolean,
+        visible: boolean,
+      ) => {
+        this.addCommand(cmdId, label, tooltip, shortcut, checkable, visible);
       },
     );
 
@@ -279,7 +287,14 @@ export class MenuCallback extends EventEmitter {
     Menu.setApplicationMenu(this.mainMenu);
   }
 
-  addCommand(cmdId: string, label: string, tooltip: string, shortcut: string, checkable: boolean): void {
+  addCommand(
+    cmdId: string,
+    label: string,
+    tooltip: string,
+    shortcut: string,
+    checkable: boolean,
+    visible: boolean,
+  ): void {
     const menuItemOpts: MenuItemConstructorOptions = {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       label: label,
@@ -295,6 +310,7 @@ export class MenuCallback extends EventEmitter {
     if (shortcut.length > 0) {
       menuItemOpts.accelerator = this.convertShortcut(shortcut);
     }
+    menuItemOpts.visible = visible;
 
     // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
     // populate those here when discovered
