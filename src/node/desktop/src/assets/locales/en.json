@@ -88,5 +88,5 @@
   },
   "mainWindowTs": {
     "rSessionFailedToStart": "The R session failed to start."
-  },
+  }
 }
