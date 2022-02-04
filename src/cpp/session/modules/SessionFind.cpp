@@ -1397,7 +1397,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
 
    // Filepaths received from the client will be UTF-8 encoded;
    // convert to system encoding here.
-   FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory());
+   FilePath dirPath = module_context::resolveAliasedPath(encodedDirectory);
 
 #ifdef _WIN32
    shell_utils::ShellCommand cmd(gnuGrepPath.completePath("grep"));
