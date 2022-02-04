@@ -16,6 +16,8 @@
     "save": "Save"
   },
   "uiFolder": {
+    "chooseRExecutable": "Choose R Executable",
+    "rExecutable": "R Executable",
     "chooseRInstallation": "Choose R Installation",
     "rstudioRequiresAnExistingRInstallationTitle": "RStudio requires an existing installation of R.",
     "rstudioRequiresAnExistingRInstallationSubtitle": "Please select the version of R to use.",

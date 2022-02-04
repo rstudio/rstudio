@@ -98,7 +98,6 @@ const loadPageLocalization = () => {
     try {
       i18nIds.forEach((id) => {
         const reducedId = id.replace('i18n-', '');
-        const element = document.getElementById(id) as HTMLElement;
 
         switch (reducedId) {
           case 'browseDots':
@@ -113,6 +112,8 @@ const loadPageLocalization = () => {
           default:
             break;
         }
+
+        const element = document.getElementById(id) as HTMLElement;
         element.innerHTML = i18next.t('uiFolder.' + reducedId);
       });
     } catch (err) {
