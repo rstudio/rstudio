@@ -149,6 +149,12 @@ def sentry_upload(type, flavor) {
   }
 }
 
+def jenkins_user_build_args() {
+  def jenkins_uid = sh (script: 'id -u jenkins', returnStdout: true).trim()
+  def jenkins_gid = sh (script: 'id -g jenkins', returnStdout: true).trim()
+  return " --build-arg JENKINS_UID=${jenkins_uid} --build-arg JENKINS_GID=${jenkins_gid}"
+}
+
 def get_type_from_os(os) {
   def type
   // groovy switch case regex is broken in pipeline
@@ -232,7 +238,7 @@ try {
             stage('set up versioning') {
                 prepareWorkspace()
 
-                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", retry_image_pull: 5)
+                container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args(), retry_image_pull: 5)
                 container.inside() {
                     stage('bump version') {
                         def rstudioVersion = sh (
@@ -283,7 +289,7 @@ try {
                               pullBuildPush(image_name: 'jenkins/ide',
                                 dockerfile: "docker/jenkins/Dockerfile.${current_image.os}-${current_image.arch}",
                                 image_tag: image_tag,
-                                build_args: github_args,
+                                build_args: github_args + " " + jenkins_user_build_args(),
                                 retry_image_pull: 5)
                             }
                         }
