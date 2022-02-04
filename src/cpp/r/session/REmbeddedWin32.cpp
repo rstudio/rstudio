@@ -57,6 +57,12 @@
 # undef WriteConsole
 #endif
 
+// needed for compilation with older versions of R
+#ifndef R_SIZE_T
+# include <cstddef>
+# define R_SIZE_T std::size_t
+#endif
+
 extern "C" void R_ProcessEvents(void);
 extern "C" void R_CleanUp(SA_TYPE, int, int);
 extern "C" void cmdlineoptions(int, char**);
