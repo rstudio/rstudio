@@ -301,7 +301,9 @@ void runEmbeddedR(const core::FilePath& rHome,
       if (rLibrary != nullptr)
       {
          // added with R 4.2.0
-         setHook(rLibrary, "ptr_R_ResetConsole", callbacks.resetConsole);
+         Error error = setHook(rLibrary, "ptr_R_ResetConsole", callbacks.resetConsole);
+         if (error)
+            LOG_ERROR(error);
       }
    }
 
