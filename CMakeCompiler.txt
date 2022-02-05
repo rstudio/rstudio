@@ -86,6 +86,9 @@ if(MSVC)
   # multi-process compilation
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 
+  # incremental linking
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL")
+
   # silence some warnings (mostly out of our control) + set debug level
   add_definitions(
     -D_CRT_NONSTDC_NO_DEPRECATE

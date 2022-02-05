@@ -63,6 +63,7 @@
 # define R_SIZE_T std::size_t
 #endif
 
+
 extern "C" void R_ProcessEvents(void);
 extern "C" void R_CleanUp(SA_TYPE, int, int);
 extern "C" void cmdlineoptions(int, char**);
@@ -105,7 +106,6 @@ typedef struct
     UImode CharacterMode;
     void (*WriteConsoleEx)(const char *, int, int);
     Rboolean EmitEmbeddedUTF8;
-    void (*ResetConsole)(void);
 
 } RStartup;
 } // extern "C"
@@ -234,6 +234,20 @@ void initializeMaxMemory(const core::FilePath& rHome)
          initializeMaxMemoryViaCmdLineOptions();
 }
 
+template <typename T>
+Error setHook(const core::system::Library& library,
+             const char* name,
+             T hook)
+{
+   void* pSymbol = nullptr;
+   Error error = core::system::loadSymbol(library, name, &pSymbol);
+   if (error)
+      return error;
+
+   *(T*) pSymbol = hook;
+   return Success();
+}
+
 } // end anonymous namespace
 
 void runEmbeddedR(const core::FilePath& rHome,
@@ -280,7 +294,16 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->ShowMessage = showMessage;
    pRP->YesNoCancel = askYesNoCancel;
    pRP->Busy = callbacks.busy;
-   pRP->ResetConsole = callbacks.resetConsole;
+
+   {
+      // extra hooks
+      core::system::Library rLibrary("R.dll");
+      if (rLibrary != nullptr)
+      {
+         // added with R 4.2.0
+         setHook(rLibrary, "ptr_R_ResetConsole", callbacks.resetConsole);
+      }
+   }
 
    // set internal callbacks
    pInternal->cleanUp = R_CleanUp;
