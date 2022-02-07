@@ -54,6 +54,7 @@ json::Object sourceMarkerSetAsJson(const module_context::SourceMarkerSet& set)
       jsonSet["base_path"] = basePath;
    }
    jsonSet["markers"] = sourceMarkersAsJson(set.markers);
+   jsonSet["is_diagnostics"] = set.isDiagnostics;
    return jsonSet;
 }
 
@@ -130,10 +131,12 @@ public:
          {
             std::string name, basePath;
             json::Array markersJson;
+            bool isDiagnostics;
             Error error = json::readObject(setJson.getObject(),
                                            "name", name,
                                            "base_path", basePath,
-                                           "markers", markersJson);
+                                           "markers", markersJson,
+                                           "is_diagnostics", isDiagnostics);
             if (error)
             {
                LOG_ERROR(error);
@@ -180,7 +183,7 @@ public:
                        resolveAliasedPath(basePath) :
                        FilePath();
 
-            markerSets.push_back(SourceMarkerSet(name, base, markers));
+            markerSets.push_back(SourceMarkerSet(name, base, markers, isDiagnostics));
          }
       }
 
@@ -242,11 +245,14 @@ public:
 
       for (const module_context::SourceMarkerSet& markerSet : markerSets_)
       {
-         for (const module_context::SourceMarker& marker : markerSet.markers)
+         if (!markerSet.isDiagnostics)
          {
-            if (marker.path == resolvedPath)
+            for (const module_context::SourceMarker& marker : markerSet.markers)
             {
-               markers.push_back(marker);
+               if (marker.path == resolvedPath)
+               {
+                  markers.push_back(marker);
+               }
             }
          }
       }
@@ -405,6 +411,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
                 safe_convert::numberTo<double, int>(line, 1),
                 safe_convert::numberTo<double, int>(column, 1),
                 core::html_utils::HTML(message, messageHTML),
+                true,
                 true);
 
             markers.push_back(marker);
