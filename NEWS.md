@@ -13,6 +13,7 @@
 - `.rs.formatDataColumnDispatch()` iterates through classes of `x` (#10073)
 - Fixed Find in Files whole-word replace option, so that when "Whole word" is checked, only file matches containing the whole word are replaced, as displayed in the preview (#9813)
 - Adds support for POSIX extended regular expressions with backreferences in Find in Files find and replace modes, so that special regex characters such as `+` and `?`, `|`, `(`, etc do not need to be escaped, and other ERE escape sequences such as `\b`, `\w`, and `\d` are now supported (#9344). This matches the behavior of R's own `grep()` function, but note that backslashes do not need to be escaped (as they typically are in R strings).
+- `.rs.api.navigateToFile()` is now synchronous and returns document id (#8938)
 
 ### Breaking
 

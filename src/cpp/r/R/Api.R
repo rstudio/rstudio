@@ -276,19 +276,6 @@
       stop(filePath, " does not exist.")
    }
    
-   # transform numeric line, column values to integer
-   if (is.numeric(line))
-      line <- as.integer(line)
-   
-   if (is.numeric(col))
-      col <- as.integer(col)
-
-   # validate line/col arguments
-   if (!is.integer(line) || length(line) != 1 ||
-       !is.integer(col)  || length(col) != 1) {
-      stop("line and column must be numeric values.")
-   }
-
    if (hasFile)
    {
       # expand and alias for client
@@ -299,20 +286,7 @@
       }
    }
    
-   # if we're requesting navigation without a specific cursor position,
-   # then use a separate API (this allows the API to work regardless of
-   # whether we're in source or visual mode)
-   if (identical(line, -1L) && identical(col, -1L))
-      return(invisible(.Call("rs_fileEdit", filePath, PACKAGE = "(embedding)")))
-
-   # send event to client
-   .rs.enqueClientEvent("jump_to_function", list(
-      file_name     = .rs.scalar(filePath),
-      line_number   = .rs.scalar(line),
-      column_number = .rs.scalar(col),
-      move_cursor   = .rs.scalar(moveCursor)))
-
-   invisible(NULL)
+   .rs.api.documentOpen(filePath, line = line, col = col, moveCursor = moveCursor)
 })
 
 .rs.addFunction("validateAndTransformLocation", function(location)
@@ -694,10 +668,28 @@
    response$id
 })
 
-.rs.addApiFunction("documentOpen", function(path) {
+.rs.addApiFunction("documentOpen", function(path, 
+                                            line = -1L, 
+                                            col = -1L, 
+                                            moveCursor = TRUE) {
+   # transform numeric line, column values to integer
+   if (is.numeric(line))
+      line <- as.integer(line)
    
+   if (is.numeric(col))
+      col <- as.integer(col)
+
+   # validate line/col arguments
+   if (!is.integer(line) || length(line) != 1 ||
+       !is.integer(col)  || length(col) != 1) {
+      stop("line and column must be numeric values.")
+   }
+
    payload <- list(
-      path = .rs.scalar(path)
+      path = .rs.scalar(path), 
+      row = .rs.scalar(line), 
+      column = .rs.scalar(col), 
+      moveCursor = .rs.scalar(isTRUE(moveCursor))
    )
    
    request <- .rs.api.createRequest(

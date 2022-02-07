@@ -3103,12 +3103,17 @@ public class Source implements InsertSourceEvent.Handler,
       else if (type == RStudioApiRequestEvent.TYPE_DOCUMENT_OPEN)
       {
          RStudioApiRequestEvent.DocumentOpenData data = requestEvent.getPayload().cast();
-         final String path = data.getPath();
+         final String path = data.getPath();  
          columnManager_.editFile(path, new ResultCallback<EditingTarget, ServerError>()
          {
             @Override
             public void onSuccess(final EditingTarget result)
             {
+               if (data.getRow() != -1) 
+               {
+                  columnManager_.scrollToPosition(FilePosition.create(data.getRow(), data.getColumn()), data.getMoveCursor());
+               }
+
                // focus opened document (note that we may need to suppress
                // attempts by the shell widget to steal focus here)
                events_.fireEvent(new SuppressNextShellFocusEvent());
