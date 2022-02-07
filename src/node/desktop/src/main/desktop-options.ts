@@ -16,6 +16,7 @@
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
+import { logger, logLevel } from '../core/logger';
 
 const kProportionalFont = 'Font.ProportionalFont';
 const kFixWidthFont = 'Font.FixWidthFont';
@@ -164,6 +165,14 @@ export class DesktopOptionsImpl {
 
   // Note: screen can only be used after the 'ready' event has been emitted
   public restoreMainWindowBounds(mainWindow: BrowserWindow): void {
+    try {
+      this.restoreMainWindowBoundsImpl(mainWindow);
+    } catch (e: unknown) {
+      logger().logErrorAtLevel('debug', e);
+    }
+  }
+
+  private restoreMainWindowBoundsImpl(mainWindow: BrowserWindow): void {
     const savedBounds = this.windowBounds();
 
     // Check if saved bounds is still in one of the available displays

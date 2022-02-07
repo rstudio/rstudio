@@ -2798,7 +2798,17 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.getEditor().getCursorPositionScreen();
    }
+   
+   public int getCursorRow()
+   {
+      return getSession().getSelection().getCursor().getRow();
+   }
 
+   public int getCursorColumn()
+   {
+      return getSession().getSelection().getCursor().getColumn();
+   }
+   
    public void setCursorPosition(Position position)
    {
       getSession().getSelection().setSelectionRange(

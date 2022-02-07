@@ -1538,15 +1538,14 @@ public class UserPrefsAccessor extends Prefs
    /**
     * C++ template.
     */
-    public PrefValue<String> cppTemplate()
-    {
-       return string(
-          "cpp_template",
-          _constants.cppTemplateTitle(), 
-          _constants.cppTemplateDescription(), 
-          "Rcpp");
-    }
- 
+   public PrefValue<String> cppTemplate()
+   {
+      return string(
+         "cpp_template",
+         _constants.cppTemplateTitle(), 
+         _constants.cppTemplateDescription(), 
+         "Rcpp");
+   }
 
    /**
     * Whether to restore the last opened source documents when RStudio starts up.
@@ -1683,16 +1682,15 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to use current date when rendering document
+    * Use current date when rendering document
     */
    public PrefValue<Boolean> rmdAutoDate()
    {
       return bool(
-         "rmd_auto_date", 
-         _constants.rmdAutoDateTitle(),
+         "rmd_auto_date",
+         _constants.rmdAutoDateTitle(), 
          _constants.rmdAutoDateDescription(), 
-         false
-      );
+         false);
    }
 
    /**
@@ -2430,6 +2428,18 @@ public class UserPrefsAccessor extends Prefs
          "use_devtools",
          _constants.useDevtoolsTitle(), 
          _constants.useDevtoolsDescription(), 
+         true);
+   }
+
+   /**
+    * Clean before install.
+    */
+   public PrefValue<Boolean> cleanBeforeInstall()
+   {
+      return bool(
+         "clean_before_install",
+         _constants.cleanBeforeInstallTitle(), 
+         _constants.cleanBeforeInstallDescription(), 
          true);
    }
 
@@ -3530,6 +3540,8 @@ public class UserPrefsAccessor extends Prefs
          plumberViewerType().setValue(layer, source.getString("plumber_viewer_type"));
       if (source.hasKey("document_author"))
          documentAuthor().setValue(layer, source.getString("document_author"));
+      if (source.hasKey("rmd_auto_date"))
+         rmdAutoDate().setValue(layer, source.getBool("rmd_auto_date"));
       if (source.hasKey("rmd_preferred_template_path"))
          rmdPreferredTemplatePath().setValue(layer, source.getString("rmd_preferred_template_path"));
       if (source.hasKey("rmd_viewer_type"))
@@ -3634,6 +3646,8 @@ public class UserPrefsAccessor extends Prefs
          rsaKeyPath().setValue(layer, source.getString("rsa_key_path"));
       if (source.hasKey("use_devtools"))
          useDevtools().setValue(layer, source.getBool("use_devtools"));
+      if (source.hasKey("clean_before_install"))
+         cleanBeforeInstall().setValue(layer, source.getBool("clean_before_install"));
       if (source.hasKey("use_internet2"))
          useInternet2().setValue(layer, source.getBool("use_internet2"));
       if (source.hasKey("use_secure_download"))
@@ -3876,6 +3890,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(shinyBackgroundJobs());
       prefs.add(plumberViewerType());
       prefs.add(documentAuthor());
+      prefs.add(rmdAutoDate());
       prefs.add(rmdPreferredTemplatePath());
       prefs.add(rmdViewerType());
       prefs.add(showPublishDiagnostics());
@@ -3928,6 +3943,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalPath());
       prefs.add(rsaKeyPath());
       prefs.add(useDevtools());
+      prefs.add(cleanBeforeInstall());
       prefs.add(useInternet2());
       prefs.add(useSecureDownload());
       prefs.add(cleanupAfterRCmdCheck());

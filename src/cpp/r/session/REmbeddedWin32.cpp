@@ -49,16 +49,67 @@
 #include <Rembedded.h>
 #include <graphapp.h>
 
+#ifdef ReadConsole
+# undef ReadConsole
+#endif
+
+#ifdef WriteConsole
+# undef WriteConsole
+#endif
+
+// needed for compilation with older versions of R
+#ifndef R_SIZE_T
+# include <cstddef>
+# define R_SIZE_T std::size_t
+#endif
+
 extern "C" void R_ProcessEvents(void);
 extern "C" void R_CleanUp(SA_TYPE, int, int);
 extern "C" void cmdlineoptions(int, char**);
 
 extern "C" {
-   __declspec(dllimport) UImode CharacterMode;
+__declspec(dllimport) UImode CharacterMode;
 }
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
+
+// local copy of R startup struct, with support for R_ResetConsole
+extern "C" {
+typedef struct
+{
+    Rboolean R_Quiet;
+    Rboolean R_NoEcho;
+    Rboolean R_Interactive;
+    Rboolean R_Verbose;
+    Rboolean LoadSiteFile;
+    Rboolean LoadInitFile;
+    Rboolean DebugInitFile;
+    SA_TYPE RestoreAction;
+    SA_TYPE SaveAction;
+    R_SIZE_T vsize;
+    R_SIZE_T nsize;
+    R_SIZE_T max_vsize;
+    R_SIZE_T max_nsize;
+    R_SIZE_T ppsize;
+    int NoRenviron;
+
+    char* rhome;
+    char* home;
+    int (*ReadConsole)(const char *, char *, int, int);
+    void (*WriteConsole)(const char *, int);
+    void (*CallBack)(void);
+    void (*ShowMessage)(const char *);
+    int (*YesNoCancel)(const char *);
+    void (*Busy)(int);
+    UImode CharacterMode;
+    void (*WriteConsoleEx)(const char *, int, int);
+    Rboolean EmitEmbeddedUTF8;
+    void (*ResetConsole)(void);
+
+} RStartup;
+} // extern "C"
+
 
 namespace rstudio {
 namespace r {
@@ -200,9 +251,9 @@ void runEmbeddedR(const core::FilePath& rHome,
    initializeMaxMemory(rHome);
 
    // setup params structure
-   structRstart rp;
-   Rstart pRP = &rp;
-   ::R_DefParams(pRP);
+   RStartup rp;
+   RStartup* pRP = &rp;
+   ::R_DefParams((Rstart) pRP);
 
    // set paths (copy to new string so we can provide char*)
    std::string* pRHome = new std::string(
@@ -214,11 +265,7 @@ void runEmbeddedR(const core::FilePath& rHome,
 
    // more configuration
    pRP->CharacterMode = RGui;
-#if R_VERSION < R_Version(4, 0, 0)
-   pRP->R_Slave = FALSE;
-#else
    pRP->R_NoEcho = FALSE;
-#endif
    pRP->R_Quiet = quiet ? TRUE : FALSE;
    pRP->R_Interactive = TRUE;
    pRP->SaveAction = defaultSaveAction;
@@ -233,6 +280,7 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->ShowMessage = showMessage;
    pRP->YesNoCancel = askYesNoCancel;
    pRP->Busy = callbacks.busy;
+   pRP->ResetConsole = callbacks.resetConsole;
 
    // set internal callbacks
    pInternal->cleanUp = R_CleanUp;
@@ -244,7 +292,7 @@ void runEmbeddedR(const core::FilePath& rHome,
    ::R_set_command_line_arguments(argc, const_cast<char**>(argv));
 
    // set params
-   ::R_SetParams(pRP);
+   ::R_SetParams((Rstart) pRP);
 
    // clear console input buffer
    ::FlushConsoleInputBuffer(GetStdHandle(STD_INPUT_HANDLE));

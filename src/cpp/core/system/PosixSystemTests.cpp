@@ -16,8 +16,10 @@
 #ifndef _WIN32
 
 #include <core/system/PosixSystem.hpp>
+#include <core/system/PosixGroup.hpp>
 #include <signal.h>
 #include <sys/wait.h>
+#include <unistd.h>
 
 #include <tests/TestThat.hpp>
 
@@ -349,6 +351,161 @@ test_context("PosixSystemTests")
       }
    }
 #endif // !__APPLE__
+}
+
+User s_testUser;
+group::Group s_testGroup;
+
+void initUserAndGroup(std::string username, std::string groupname)
+{
+   bool isRoot = core::system::effectiveUserIsRoot();
+   CHECK(isRoot);
+   if (!isRoot)
+      ::_exit(1);
+
+   // get user info
+   Error error = User::getUserFromIdentifier(username, s_testUser);
+   if (error)
+   {
+      LOG_ERROR(error);
+      ::_exit(1);
+   }
+
+   // get group info if one was provided
+   error = group::groupFromName(groupname, &s_testGroup);
+   if (error)
+   {
+      LOG_ERROR(error);
+      ::_exit(1);
+   }
+}
+
+TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
+{
+   test_that("init")
+   {
+#ifdef __linux__
+      initUserAndGroup("nobody", "nogroup");
+#endif // __linux__
+#ifdef __APPLE__
+      initUserAndGroup("nobody", "everyone");
+#endif // __APPLE__
+   }
+
+   test_that("temporarilyDropPriv uses primary group")
+   {
+      // drop privs to the unprivileged user
+      Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), false);
+      expect_true(error == Success());
+
+      // check real and effective user
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      expect_true(ruid == 0);
+      expect_true(euid == s_testUser.getUserId());
+
+      // check real and effective group
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      expect_true(rgid == 0);
+      // since we didn't provide a target group, we expect the target user's primary group
+      expect_true(egid == s_testUser.getGroupId());
+
+      error = restorePriv();
+      expect_true(error == Success());
+   }
+
+   test_that("temporarilyDropPriv uses alternate group")
+   {
+      // drop privs to the unprivileged user and target group
+      Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), s_testGroup.name, false);
+      expect_true(error == Success());
+
+      // check real and effective user
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      expect_true(ruid == 0);
+      expect_true(euid == s_testUser.getUserId());
+
+      // check real and effective group
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      expect_true(rgid == 0);
+      // since we provided a target group, we now expect the target group
+      expect_true(egid == s_testGroup.groupId);
+
+      error = restorePriv();
+      expect_true(error == Success());
+   }
+}
+
+
+TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
+{
+   test_that("init")
+   {
+#ifdef __linux__
+      initUserAndGroup("nobody", "nogroup");
+#endif // __linux__
+#ifdef __APPLE__
+      initUserAndGroup("nobody", "everyone");
+#endif // __APPLE__
+   }
+
+   test_that("permanentlyDropPriv uses primary group")
+   {
+      // drop privs to the unprivileged user
+      Error error = permanentlyDropPriv(s_testUser.getUsername().c_str());
+      expect_true(error == Success());
+
+      // check real and effective user
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      expect_true(ruid == s_testUser.getUserId());
+      expect_true(euid == s_testUser.getUserId());
+
+      // check real and effective group
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      // since we didn't provide a target group, we expect the target user's primary group
+      expect_true(rgid == s_testUser.getGroupId());
+      expect_true(egid == s_testUser.getGroupId());
+   }
+}
+
+TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
+{
+   test_that("init")
+   {
+#ifdef __linux__
+      // TODO: This isn't a great test case on linux because nogroup is nobody's primary group.
+      // Ideally there would be an alternate group we could use, but no others exist by default.
+      initUserAndGroup("nobody", "nogroup");
+#endif // __linux__
+#ifdef __APPLE__
+      initUserAndGroup("nobody", "everyone");
+#endif // __APPLE__
+   }
+
+   test_that("permanentlyDropPriv uses alternate group")
+   {
+      // drop privs to the unprivileged user and target group
+      Error error = permanentlyDropPriv(s_testUser.getUsername().c_str(), s_testGroup.name);
+      expect_true(error == Success());
+
+      // check real and effective user
+      uid_t ruid = getuid();
+      uid_t euid = geteuid();
+      expect_true(ruid == s_testUser.getUserId());
+      expect_true(euid == s_testUser.getUserId());
+
+      // check real and effective group
+      gid_t rgid = getgid();
+      gid_t egid = getegid();
+      // since we didn't provide a target group, we expect the target user's primary group
+      expect_true(rgid == s_testGroup.groupId);
+      expect_true(egid == s_testGroup.groupId);
+   }
 }
 
 } // end namespace tests

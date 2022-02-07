@@ -21,6 +21,7 @@
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Exec.hpp>
+#include <core/Thread.hpp>
 #include <core/Predicate.hpp>
 #include <shared_core/FilePath.hpp>
 #include <core/BoostErrors.hpp>
@@ -738,6 +739,8 @@ void detectChanges(bool activatePlots)
 
 void onDetectChanges(module_context::ChangeSource source)
 {
+   if (!core::thread::isMainThread())
+      return;
    bool activatePlots = source == module_context::ChangeSourceREPL;
    detectChanges(activatePlots);
 }

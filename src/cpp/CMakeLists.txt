@@ -483,8 +483,10 @@ endif()
 message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}")
 
 if(UNIX)
+
    find_package(OpenSSL REQUIRED)
    include_directories(SYSTEM "${OPENSSL_INCLUDE_DIR}")
+
 endif()
 
 if(WIN32)

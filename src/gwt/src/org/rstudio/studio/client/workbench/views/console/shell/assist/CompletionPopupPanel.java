@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -89,6 +90,20 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          @Override
          public void onPreviewNativeEvent(NativePreviewEvent previewEvent)
          {
+            // any click outside the container or help popup should dismiss
+            // (we need this here b/c we don't seem to be getting onBlur
+            // events when the ace editor is in embedded mode
+            if (previewEvent.getTypeInt() == Event.ONMOUSEDOWN)
+            {
+               Element targetEl = previewEvent.getNativeEvent().getEventTarget().cast();
+               if (!help_.getElement().isOrHasChild(targetEl) &&
+                  (container_ == null) || 
+                  (container_.getElement() == null) || 
+                  !container_.getElement().isOrHasChild(targetEl))
+               {
+                  hideAll();
+               }
+            }
             if (previewEvent.getTypeInt() == Event.ONKEYDOWN)
             {
                NativeEvent event = previewEvent.getNativeEvent();
@@ -382,7 +397,19 @@ public class CompletionPopupPanel extends ThemedPopupPanel
    {
       if (!completionListIsOnScreen())
          return;
+      
+      // don't show if there's no description
+      if (StringUtil.isNullOrEmpty(description))
+         return;
 
+      // strip ": " off the end
+      value = value.replace(": ", "");
+      
+      // add <p> around description (use an inline style b/c we aren't
+      // sure how other users of the help tooltip construct their 
+      // elements/css and don't want our tweaks to regress them)
+      description = "<p style='padding-left: 3px;'>" + description + "</p>";
+      
       help_.displayParameterHelp(value, description, false);
       resolveHelpPosition(!StringUtil.isNullOrEmpty(description));
       

@@ -210,6 +210,7 @@ namespace prefs {
 #define kPlumberViewerTypeWindow "window"
 #define kPlumberViewerTypeBrowser "browser"
 #define kDocumentAuthor "document_author"
+#define kRmdAutoDate "rmd_auto_date"
 #define kRmdPreferredTemplatePath "rmd_preferred_template_path"
 #define kRmdViewerType "rmd_viewer_type"
 #define kRmdViewerTypeWindow "window"
@@ -297,6 +298,7 @@ namespace prefs {
 #define kTerminalPath "terminal_path"
 #define kRsaKeyPath "rsa_key_path"
 #define kUseDevtools "use_devtools"
+#define kCleanBeforeInstall "clean_before_install"
 #define kUseInternet2 "use_internet2"
 #define kUseSecureDownload "use_secure_download"
 #define kCleanupAfterRCmdCheck "cleanup_after_r_cmd_check"
@@ -1041,7 +1043,7 @@ public:
    core::Error setPackagesPaneEnabled(bool val);
 
    /**
-    * Whether to use RCPP templates.
+    * C++ template.
     */
    std::string cppTemplate();
    core::Error setCppTemplate(std::string val);
@@ -1099,6 +1101,12 @@ public:
     */
    std::string documentAuthor();
    core::Error setDocumentAuthor(std::string val);
+
+   /**
+    * Use current date when rendering document
+    */
+   bool rmdAutoDate();
+   core::Error setRmdAutoDate(bool val);
 
    /**
     * The path to the preferred R Markdown template.
@@ -1411,6 +1419,12 @@ public:
     */
    bool useDevtools();
    core::Error setUseDevtools(bool val);
+
+   /**
+    * Clean before install.
+    */
+   bool cleanBeforeInstall();
+   core::Error setCleanBeforeInstall(bool val);
 
    /**
     * Whether to use Internet2 for networking on R for Windows.

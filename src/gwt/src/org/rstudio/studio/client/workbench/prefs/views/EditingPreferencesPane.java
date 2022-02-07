@@ -70,25 +70,36 @@ public class EditingPreferencesPane extends PreferencesPane
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
       editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
-      editingPanel.add(indent(tabWidth_ = numericPref(1, UserPrefs.MAX_TAB_WIDTH, prefs_.numSpacesForTab())));
+      editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
+            prefs_.numSpacesForTab())));
       tabWidth_.setWidth("36px");
-      editingPanel.add(checkboxPref(prefs_.autoDetectIndentation()));
-      editingPanel.add(checkboxPref(prefs_.insertMatching()));
-      editingPanel.add(checkboxPref(prefs_.insertNativePipeOperator()));
-      editingPanel.add(checkboxPref(prefs_.reindentOnPaste()));
-      editingPanel.add(checkboxPref(prefs_.verticallyAlignArgumentsIndent()));
+      editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
+            constants_.editingAutoDetectIndentationDesc()));
+      editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
+      editingPanel.add(checkboxPref(constants_.editingInsertNativePipeOperatorLabel(),
+            prefs_.insertNativePipeOperator()));
+      editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
+      editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref(prefs_.softWrapRFiles()));
-      editingPanel.add(checkboxPref(prefs_.continueCommentsOnNewline()));
-      editingPanel.add(checkboxPref(prefs_.highlightWebLink()));
+      editingPanel.add(checkboxPref(
+            constants_.editingContinueCommentsOnNewlineLabel(),
+            prefs_.continueCommentsOnNewline(),
+            constants_.editingContinueCommentsOnNewlineDesc()));
+      editingPanel.add(checkboxPref(
+            constants_.editingHighlightWebLinkLabel(),
+            prefs_.highlightWebLink(),
+            constants_.editingHighlightWebLinkDesc()));
 
-      delimiterSurroundWidget_ = new SelectWidget((Prefs.EnumValue) prefs_.surroundSelection(),
+      delimiterSurroundWidget_ = new SelectWidget(constants_.editingSurroundSelectionLabel(),
+         (Prefs.EnumValue) prefs_.surroundSelection(),
          false,
          true,
          false);
       editingPanel.add(delimiterSurroundWidget_);
 
       HorizontalPanel keyboardPanel = new HorizontalPanel();
-      editorMode_ = new SelectWidget((Prefs.EnumValue) prefs_.editorKeybindings(),
+      editorMode_ = new SelectWidget(constants_.editingKeybindingsLabel(),
+                                     (Prefs.EnumValue) prefs_.editorKeybindings(),
                                      false,
                                      true,
                                      false);
@@ -113,13 +124,11 @@ public class EditingPreferencesPane extends PreferencesPane
       Label executionLabel = headerLabel(constants_.editingExecutionLabel());
       editingPanel.add(executionLabel);
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      editingPanel.add(checkboxPref(prefs_.focusConsoleAfterExec()));
+      editingPanel.add(checkboxPref(constants_.editingFocusConsoleAfterExecLabel(), prefs_.focusConsoleAfterExec()));
 
-      // DEBUG: Before i18n, this had ctrl+enter hard coded into the description as a way of indicating to reader what
-      // this "execution" setting meant.  Current translation does not include that, but maybe we could map the
-      // translated shortcut value here as well (ctrl+enter doesn't HAVE to be the shortcut, although it is probably a
-      // good guess).  Alternative could be to add the text here or in the preference's title.
-      executionBehavior_ = new SelectWidget((Prefs.EnumValue) prefs_.executionBehavior(),
+      executionBehavior_ = new SelectWidget(
+            constants_.editingExecutionBehaviorLabel(),
+            (Prefs.EnumValue) prefs_.executionBehavior(),
             false,
             true,
             false);
@@ -155,21 +164,23 @@ public class EditingPreferencesPane extends PreferencesPane
 
       VerticalTabPanel displayPanel = new VerticalTabPanel(ElementIds.EDIT_DISPLAY_PREFS);
       displayPanel.add(headerLabel(constants_.generalHeaderLabel()));
-      displayPanel.add(checkboxPref(prefs_.highlightSelectedWord()));
-      displayPanel.add(checkboxPref(prefs_.highlightSelectedLine()));
-      displayPanel.add(checkboxPref(prefs_.showLineNumbers()));
-      displayPanel.add(tight(showMargin_ = checkboxPref(prefs_.showMargin(), false /*defaultSpace*/)));
+      displayPanel.add(checkboxPref(constants_.displayHighlightSelectedWordLabel(), prefs_.highlightSelectedWord()));
+      displayPanel.add(checkboxPref(constants_.displayHighlightSelectedLineLabel(), prefs_.highlightSelectedLine()));
+      displayPanel.add(checkboxPref(constants_.displayShowLineNumbersLabel(), prefs_.showLineNumbers()));
+      displayPanel.add(tight(showMargin_ = checkboxPref(constants_.displayShowMarginLabel(), prefs_.showMargin(), false /*defaultSpace*/)));
       displayPanel.add(indent(marginCol_ = numericPref(prefs_.marginColumn())));
-      displayPanel.add(checkboxPref(prefs_.showInvisibles()));
-      displayPanel.add(checkboxPref(prefs_.showIndentGuides()));
-      displayPanel.add(checkboxPref(prefs_.blinkingCursor()));
-      displayPanel.add(checkboxPref(prefs_.scrollPastEndOfDocument()));
-      displayPanel.add(checkboxPref(prefs_.enableTextDrag()));
+      displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
+      displayPanel.add(checkboxPref(constants_.displayShowIndentGuidesLabel(), prefs_.showIndentGuides()));
+      displayPanel.add(checkboxPref(constants_.displayBlinkingCursorLabel(), prefs_.blinkingCursor()));
+      displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
+      displayPanel.add(checkboxPref(constants_.displayEnableTextDragLabel(), prefs_.enableTextDrag()));
       displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));
       displayPanel.add(extraSpaced(
          checkboxPref(prefs_.rainbowParentheses(), false /* defaultSpace */)));
 
-      foldMode_ = new SelectWidget((Prefs.EnumValue) prefs_.foldStyle(),
+      foldMode_ = new SelectWidget(
+            constants_.displayFoldStyleLabel(),
+            (Prefs.EnumValue) prefs_.foldStyle(),
             false,
             true,
             false);
@@ -179,9 +190,9 @@ public class EditingPreferencesPane extends PreferencesPane
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
 
       savePanel.add(headerLabel(constants_.generalHeaderLabel()));
-      savePanel.add(checkboxPref(prefs_.autoAppendNewline()));
-      savePanel.add(checkboxPref(prefs_.stripTrailingWhitespace()));
-      savePanel.add(checkboxPref(prefs_.restoreSourceDocumentCursorPosition()));
+      savePanel.add(checkboxPref(constants_.savingAutoAppendNewLineLabel(), prefs_.autoAppendNewline()));
+      savePanel.add(checkboxPref(constants_.savingStripTrailingWhitespaceLabel(), prefs_.stripTrailingWhitespace()));
+      savePanel.add(checkboxPref(constants_.savingRestoreSourceDocumentCursorPositionLabel(), prefs_.restoreSourceDocumentCursorPosition()));
 
       Label serializationLabel = headerLabel(constants_.editingSerializationLabel());
       serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
@@ -194,7 +205,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       savePanel.add(lessSpaced(encoding_ = new TextBoxWithButton(
-            prefs_.defaultEncoding().getTitle(),
+            constants_.savingDefaultEncodingLabel(),
             "",
             constants_.editingSavePanelAction(),
             null,
@@ -236,15 +247,17 @@ public class EditingPreferencesPane extends PreferencesPane
       setEncoding(prefs_.defaultEncoding().getGlobalValue());
 
       savePanel.add(spacedBefore(headerLabel(constants_.editingSavePanelAutosave())));
-      savePanel.add(checkboxPref(prefs_.saveBeforeSourcing()));
-      savePanel.add(checkboxPref(prefs_.autoSaveOnBlur()));
-      autoSaveOnIdle_ = new SelectWidget((Prefs.EnumValue) prefs_.autoSaveOnIdle(),
+      savePanel.add(checkboxPref(constants_.savingSaveBeforeSourcingLabel(), prefs_.saveBeforeSourcing()));
+      savePanel.add(checkboxPref(constants_.savingAutoSaveOnBlurLabel(), prefs_.autoSaveOnBlur()));
+      autoSaveOnIdle_ = new SelectWidget(
+            constants_.savingAutoSaveOnIdleLabel(),
+            (Prefs.EnumValue) prefs_.autoSaveOnIdle(),
             false,
             true,
             false);
       savePanel.add(autoSaveOnIdle_);
       autoSaveIdleMs_ = new SelectWidget(
-            prefs_.autoSaveIdleMs().getTitle(),
+            constants_.savingAutoSaveIdleMsLabel(),
             new String[] {
                "500ms",
                "1000ms",
@@ -274,7 +287,9 @@ public class EditingPreferencesPane extends PreferencesPane
 
       completionPanel.add(headerLabel(constants_.editingCompletionPanel()));
 
-      showCompletions_ = new SelectWidget((Prefs.EnumValue) prefs_.codeCompletion(),
+      showCompletions_ = new SelectWidget(
+            constants_.completionCodeCompletionLabel(),
+            (Prefs.EnumValue) prefs_.codeCompletion(),
             false,
             true,
             false);
@@ -282,7 +297,9 @@ public class EditingPreferencesPane extends PreferencesPane
       spaced(showCompletions_);
       completionPanel.add(showCompletions_);
 
-      final CheckBox alwaysCompleteInConsole = checkboxPref(prefs_.consoleCodeCompletion());
+      final CheckBox alwaysCompleteInConsole = checkboxPref(
+            constants_.completionConsoleCodeCompletionLabel(),
+            prefs_.consoleCodeCompletion());
       completionPanel.add(alwaysCompleteInConsole);
 
       showCompletions_.addChangeHandler(new ChangeHandler()
@@ -297,10 +314,14 @@ public class EditingPreferencesPane extends PreferencesPane
       });
 
       final CheckBox insertParensAfterFunctionCompletionsCheckbox =
-           checkboxPref(prefs_.insertParensAfterFunctionCompletion());
+           checkboxPref(
+                 constants_.completionInsertParensAfterFunctionCompletion(),
+                 prefs_.insertParensAfterFunctionCompletion());
 
       final CheckBox showSignatureTooltipsCheckbox =
-           checkboxPref(prefs_.showFunctionSignatureTooltips());
+           checkboxPref(
+                 constants_.completionShowFunctionSignatureTooltipsLabel(),
+                 prefs_.showFunctionSignatureTooltips());
 
       addEnabledDependency(
             insertParensAfterFunctionCompletionsCheckbox,
@@ -309,17 +330,26 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
       completionPanel.add(showSignatureTooltipsCheckbox);
 
-      completionPanel.add(checkboxPref(prefs_.showHelpTooltipOnIdle()));
-      completionPanel.add(checkboxPref(prefs_.insertSpacesAroundEquals()));
-      completionPanel.add(checkboxPref(prefs_.tabCompletion()));
-      completionPanel.add(checkboxPref(prefs_.tabMultilineCompletion()));
-
+      completionPanel.add(checkboxPref(
+            constants_.completionShowHelpTooltipOnIdleLabel(),
+            prefs_.showHelpTooltipOnIdle()));
+      completionPanel.add(checkboxPref(
+            constants_.completionInsertSpacesAroundEqualsLabel(),
+            prefs_.insertSpacesAroundEquals()));
+      completionPanel.add(checkboxPref(
+            constants_.completionTabCompletionLabel(),
+            prefs_.tabCompletion()));
+      completionPanel.add(checkboxPref(
+            constants_.completionTabMultilineCompletionLabel(),
+            prefs_.tabMultilineCompletion()));
 
       Label otherLabel = headerLabel(constants_.editingDiagOtherLabel());
       otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       completionPanel.add(otherLabel);
 
-      showCompletionsOther_ = new SelectWidget((Prefs.EnumValue) prefs_.codeCompletionOther(),
+      showCompletionsOther_ = new SelectWidget(
+            constants_.completionCodeCompletionOtherLabel(),
+            (Prefs.EnumValue) prefs_.codeCompletionOther(),
             false,
             true,
             false);
@@ -335,23 +365,30 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(delayLabel);
 
       completionPanel.add(nudgeRightPlus(alwaysCompleteChars_ =
-          numericPref(1, 99, prefs_.codeCompletionCharacters())));
+          numericPref(constants_.completionCodeCompletionCharactersLabel(), 1, 99, prefs_.codeCompletionCharacters())));
       completionPanel.add(nudgeRightPlus(alwaysCompleteDelayMs_ =
-          numericPref(0, 9999, prefs_.codeCompletionDelay())));
+          numericPref(constants_.completionCodeCompletionDelayLabel(), 0, 9999, prefs_.codeCompletionDelay())));
 
 
       VerticalTabPanel diagnosticsPanel = new VerticalTabPanel(ElementIds.EDIT_DIAGNOSTICS_PREFS);
       diagnosticsPanel.add(headerLabel(constants_.editingDiagnosticsPanel()));
-      final CheckBox chkShowRDiagnostics = checkboxPref(prefs_.showDiagnosticsR());
+      final CheckBox chkShowRDiagnostics = checkboxPref(
+            constants_.diagnosticsShowDiagnosticsRLabel(), prefs_.showDiagnosticsR());
       diagnosticsPanel.add(chkShowRDiagnostics);
 
       final VerticalPanel rOptionsPanel = new VerticalPanel();
-      rOptionsPanel.add(checkboxPref(prefs_.diagnosticsInRFunctionCalls()));
-      rOptionsPanel.add(checkboxPref(prefs_.checkArgumentsToRFunctionCalls()));
-      rOptionsPanel.add(checkboxPref(prefs_.checkUnexpectedAssignmentInFunctionCall()));
-      rOptionsPanel.add(checkboxPref(prefs_.warnIfNoSuchVariableInScope()));
-      rOptionsPanel.add(checkboxPref(prefs_.warnVariableDefinedButNotUsed()));
-      rOptionsPanel.add(checkboxPref(prefs_.styleDiagnostics()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsInRFunctionCallsLabel(), prefs_.diagnosticsInRFunctionCalls()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsCheckArgumentsToRFunctionCallsLabel(), prefs_.checkArgumentsToRFunctionCalls()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel(),
+            prefs_.checkUnexpectedAssignmentInFunctionCall()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsWarnIfNoSuchVariableInScopeLabel(), prefs_.warnIfNoSuchVariableInScope()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsWarnVariableDefinedButNotUsedLabel(), prefs_.warnVariableDefinedButNotUsed()));
+      rOptionsPanel.add(checkboxPref(constants_.diagnosticsStyleDiagnosticsLabel(), prefs_.styleDiagnostics()));
       rOptionsPanel.setVisible(prefs_.showDiagnosticsR().getValue());
       chkShowRDiagnostics.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
@@ -362,19 +399,24 @@ public class EditingPreferencesPane extends PreferencesPane
       });
 
       diagnosticsPanel.add(rOptionsPanel);
-      diagnosticsPanel.add(checkboxPref(prefs_.autoDiscoverPackageDependencies()));
+      diagnosticsPanel.add(checkboxPref(
+            constants_.diagnosticsAutoDiscoverPackageDependenciesLabel(),
+            prefs_.autoDiscoverPackageDependencies()));
 
       Label diagOtherLabel = headerLabel(constants_.editingOtherLabel());
       diagnosticsPanel.add(spacedBefore(diagOtherLabel));
-      diagnosticsPanel.add(checkboxPref(prefs_.showDiagnosticsCpp()));
-      diagnosticsPanel.add(checkboxPref(prefs_.showDiagnosticsOther()));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsShowDiagnosticsCppLabel(), prefs_.showDiagnosticsCpp()));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsShowDiagnosticsYamlLabel(), prefs_.showDiagnosticsYaml()));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsShowDiagnosticsOtherLabel(), prefs_.showDiagnosticsOther()));
 
       Label diagShowLabel = headerLabel(constants_.editingDiagShowLabel());
       diagnosticsPanel.add(spacedBefore(diagShowLabel));
-      diagnosticsPanel.add(checkboxPref(prefs_.diagnosticsOnSave()));
-      diagnosticsPanel.add(tight(checkboxPref(prefs_.backgroundDiagnostics(), false /*defaultSpace*/)));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsOnSaveLabel(), prefs_.diagnosticsOnSave()));
+      diagnosticsPanel.add(tight(checkboxPref(constants_.diagnosticsBackgroundDiagnosticsLabel(),
+            prefs_.backgroundDiagnostics(), false /*defaultSpace*/)));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
-            numericPref(0, 9999, prefs_.backgroundDiagnosticsDelayMs())));
+            numericPref(constants_.diagnosticsBackgroundDiagnosticsDelayMsLabel(), 0, 9999, 
+                  prefs_.backgroundDiagnosticsDelayMs())));
 
       HelpLink diagnosticsHelpLink = new DiagnosticsHelpLink();
       diagnosticsHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);

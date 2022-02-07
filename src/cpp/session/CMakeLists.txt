@@ -164,6 +164,7 @@ set(SESSION_SOURCE_FILES
    modules/SessionClipboard.cpp
    modules/SessionCrashHandler.cpp
    modules/SessionConsole.cpp
+   modules/SessionCpp.cpp
    modules/SessionDependencies.cpp
    modules/SessionDependencyList.cpp
    modules/SessionDiagnostics.cpp

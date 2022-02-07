@@ -114,6 +114,18 @@ public class TextEditingTargetSpelling extends SpellingContext
                   Position wordStart = docDisplay_.positionFromIndex(r.start);
                   Position wordEnd = docDisplay_.positionFromIndex(r.end);
 
+                  // bail if this is a yaml comment
+                  if (docDisplay_.getFileType().isRmd())
+                  {
+                     Scope scope = docDisplay_.getChunkAtPosition(wordStart);
+                     if (scope != null && scope.isChunk())
+                     {
+                        String line = docDisplay_.getLine(wordStart.getRow());
+                        if (line.trim().startsWith("#|"))
+                           continue;
+                     }
+                  }
+                  
                   lint.push(LintItem.create(wordStart.getRow(), wordStart.getColumn(), wordEnd.getRow(), wordEnd.getColumn(), constants_.spellcheck(), "spelling"));
                }
             }

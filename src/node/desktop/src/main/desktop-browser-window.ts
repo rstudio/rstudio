@@ -96,11 +96,10 @@ export class DesktopBrowserWindow extends EventEmitter {
           cssOrigin: 'author',
         })
         .then((result) => {
-          console.log('Custom Styles Added Successfully');
+          logger().logDebug('Custom Styles Added Successfully');
         })
         .catch((error) => {
-          console.log('Error when adding custom styles');
-          console.log(error);
+          logger().logError(error);
         });
 
       // Uncomment to have all windows show dev tools by default
@@ -253,7 +252,7 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   avoidMoveCursorIfNecessary(): void {
     if (process.platform === 'darwin') {
-      this.executeJavaScript("document.body.className = document.body.className + ' avoid-move-cursor'").catch(
+      this.executeJavaScript('document.body.className = document.body.className + " avoid-move-cursor"').catch(
         (error) => {
           logger().logError(error);
         },

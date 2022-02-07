@@ -174,7 +174,9 @@ public class LintManager
          public void onSourceFileSaveCompleted(
                SourceFileSaveCompletedEvent event)
          {
-            if (!docDisplay_.isFocused())
+            // Skip if source doesn't want to be linted on save (this can change based on
+            // the source's focus status so we have to check every time)
+            if (!source_.lintOnSave())
                return;
             
             if (userPrefs_.diagnosticsOnSave().getValue())
@@ -314,7 +316,7 @@ public class LintManager
                         docDisplay_.getFileType().isR();                  
                   if ((isRmd || isRmdRChunk) && userPrefs_.showDiagnosticsYaml().getValue())
                   {
-                     yamlLinter_.getLint(yamlLint -> {
+                     yamlLinter_.getLint(context.explicit, yamlLint -> {
                         JsArray<LintItem> allLint = JsArray.createArray().cast();
                         for (int i = 0; i < lint.length(); i++)
                            allLint.push(lint.get(i));
@@ -339,7 +341,7 @@ public class LintManager
    
    private void performYamlLintRequest(final LintContext context)
    {
-      yamlLinter_.getLint(lint -> {
+      yamlLinter_.getLint(context.explicit, lint -> {
          showLint(context, lint, false);
       });
    }
@@ -402,12 +404,28 @@ public class LintManager
       else
          source_.showLint(finalLint);
    }
-   
+
+   /**
+    * Schedule a lint operation.
+    *
+    * @param milliseconds The number of milliseconds to delay before linting.
+    */
    public void schedule(int milliseconds)
    {
       timer_.schedule(milliseconds);
    }
-   
+
+   /**
+    * Cancel a pending lint operation, if any.
+    */
+   public void cancelPending()
+   {
+      if (timer_ != null && timer_.isRunning())
+      {
+         timer_.cancel();
+      }
+   }
+
    public void lint(boolean showMarkers,
                     boolean explicit,
                     boolean excludeCurrentStatement)

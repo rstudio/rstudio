@@ -39,3 +39,15 @@
    parallel:::setDefaultClusterOptions(setup_strategy = "sequential")
 })
 
+# On Windows, because we now set the active code page to UTF-8,
+# we need to be careful to ensure the outputs from list.files(), list.dirs()
+# and dir() have their encoding properly marked. We do this here.
+if (.rs.platform.isWindows)
+{
+   setHook("rstudio.sessionInit", function(...)
+   {
+      enabled <- getOption("rstudio.enableFileHooks", default = TRUE)
+      if (identical(enabled, TRUE))
+         .rs.files.replaceBindings()
+   })
+}

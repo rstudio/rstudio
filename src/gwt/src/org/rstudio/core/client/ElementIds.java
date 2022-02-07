@@ -236,6 +236,8 @@ public class ElementIds
    public static String getNewRmdTitle() { return getElementId(NEW_RMD_TITLE); }
    public final static String NEW_RMD_AUTHOR = "new_rmd_author";
    public static String getNewRmdAuthor() { return getElementId(NEW_RMD_AUTHOR); }
+   public final static String NEW_RMD_DATE = "new_rmd_date";
+   public static String getNewRmdDate() { return getElementId(NEW_RMD_DATE); }
    public final static String NEW_RMD_TEMPLATE_LABEL = "new_rmd_template_label";
    public static String getNewRmdTemplateLabel() { return getElementId(NEW_RMD_TEMPLATE_LABEL); }
    public final static String NEW_RMD_TEMPLATE = "new_rmd_template";
@@ -324,6 +326,7 @@ public class ElementIds
       PRIMARY_CRAN("primary_cran"),
       PRO_JOB_DIR("pro_job_dir"),
       PRO_JOB_SCRIPT("pro_job_script"),
+      PRO_R_HOME("job_launcher_pro_r_home"),
       PRO_NEW_SESSION_DIR("pro_new_session_dir"),
       PROJECT_PARENT("project_parent"),
       PROJECT_REPO_DIR("project_repo_dir"),

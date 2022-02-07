@@ -74,9 +74,15 @@ on-exit () {
 
 trap on-exit EXIT
 
+if [ "$(uname -m)" = "arm64" ]; then
+   HOMEBREW_PREFIX="/opt/homebrew"
+else
+   HOMEBREW_PREFIX="/usr/local"
+fi
+
 # build / install directories
 GWT_SRC_DIR="${PKG_DIR}/../../src/gwt"
-ELECTRON_SRC_DIR="${PKG_DIR}/../../src/node/desktop"
+ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
 
 BUILD_DIR_X86_64="${PKG_DIR}/build"
 BUILD_DIR_ARM64="${PKG_DIR}/build-arm64"
@@ -158,6 +164,7 @@ for arg in "$@"; do
    --build-package=*)  build_package=${arg#*=} ;;
    --build-dmg=*)      build_dmg=${arg#*=} ;;
    --use-creds=*)      use_creds=${arg#*=} ;;
+   --electron)         rstudio_target=Electron ;;
    --rstudio-target=*) rstudio_target=${arg#*=} ;;
    *)                  echo "Ignoring unrecognized argument '${arg}'"
    esac
@@ -170,14 +177,8 @@ then
    exit 1
 fi
 
-if [ "${rstudio_target}" = "Electron" ]
-then
-   # At the moment only support building Electron for Intel
-   build_x86_64=1
-else
-   case "${arch}" in *arm64*)  build_arm64=1  ;; esac
-   case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
-fi
+case "${arch}" in *arm64*)  build_arm64=1  ;; esac
+case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
 
 if [ "${clean}" = "1" ]; then
 
@@ -192,8 +193,12 @@ if [ "${clean}" = "1" ]; then
    fi
 
    # cleanup Electron project
-   rm -rf "${ELECTRON_SRC_DIR}/.webpack"
-   rm -rf "${ELECTRON_SRC_DIR}/out"
+   rm -rf "${ELECTRON_SOURCE_DIR}/.webpack"
+   rm -rf "${ELECTRON_SOURCE_DIR}/out"
+
+   # cleanup Electron packaging directories
+   rm -rf "${ELECTRON_SOURCE_DIR}/../desktop-build-arm64"
+   rm -rf "${ELECTRON_SOURCE_DIR}/../desktop-build-x86_64"
 
    # move back to package dir
    cd "${PKG_DIR}"
@@ -245,13 +250,13 @@ if [ -n "${build_x86_64}" ]; then
    info "Done!"
 
 
-   if [ "${build_package}" != "1" ]; then
-      # don't need to build here, it will happen during the packaging step below,
-      # otherwise the lengthy GWT build will happen twice (it isn't incremental)
-      info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
-      arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
-      info "Done!"
-   fi
+   info "Building for x86_64 with flags '${MAKEFLAGS}' ..."
+   export npm_config_arch=x64
+   export npm_config_target_arch=x64
+   arch -x86_64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
+   unset npm_config_arch
+   unset npm_config_target_arch
+   info "Done!"
 
 fi
 
@@ -279,6 +284,7 @@ if [ -n "${build_arm64}" ]; then
    arch -arm64 "${CMAKE}"                                   \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo                     \
       -DCMAKE_OSX_DEPLOYMENT_TARGET="10.12"                 \
+      -DCMAKE_INSTALL_PREFIX="${INSTALL_DIR}"               \
       -DRSESSION_ALTERNATE_BUILD=1                          \
       -DRSTUDIO_TARGET=${rstudio_target}                    \
       -DRSTUDIO_PACKAGE_BUILD=1                             \
@@ -290,7 +296,11 @@ if [ -n "${build_arm64}" ]; then
    info "Done!"
 
    info "Building for arm64 with flags '${MAKEFLAGS}' ..."
+   export npm_config_arch=arm64
+   export npm_config_target_arch=arm64
    arch -arm64 "${CMAKE}" --build . --target all -- ${MAKEFLAGS}
+   unset npm_config_arch
+   unset npm_config_target_arch
    info "Done!"
 
 fi
@@ -303,7 +313,7 @@ if [ "${build_package}" = "1" ]; then
    find-program CMAKE cmake        \
       "${HOME}/opt/bin"            \
       "${HOME}/homebrew/arm64/bin" \
-      "/usr/local/bin"
+      "${HOMEBREW_PREFIX}/bin"
 
    # remove an existing install directory
    rm -rf "${INSTALL_DIR}"
@@ -313,20 +323,8 @@ if [ "${build_package}" = "1" ]; then
    cd "${BUILD_DIR_X86_64}"
    "${CMAKE}" --build . --target install -- ${MAKEFLAGS}
 
-   if [ "${rstudio_target}" = "Electron" ]; then
-      OLDPATH="${PATH}"
-      NODEPATH="$(dirname "${NODE}")"
-      YARNPATH="$(dirname "${YARN}")"
-      PATH="${NODEPATH}:${YARNPATH}:${OLDPATH}"
+   if [ "${build_dmg}" = "1" ]; then
 
-      # Build and package the Electron app.
-      cd "${ELECTRON_SRC_DIR}"
-      ./scripts/update-json-version.sh "$RSTUDIO_VERSION_FULL"
-      yarn make
-      cd "${PKG_DIR}"
-      PATH="${OLDPATH}"
-
-   elif [ "${build_dmg}" = "1" ]; then
       # move to target directory
       cd "${INSTALL_DIR}"
 
@@ -348,6 +346,8 @@ if [ "${build_package}" = "1" ]; then
 
       # move to expected location in build folder
       mv "${RSTUDIO_BUNDLE_NAME}.dmg" "${BUILD_DIR_X86_64}/"
+
+      info "'${BUILD_DIR_X86_64}/${RSTUDIO_BUNDLE_NAME}.dmg' has been created."
 
    fi
 

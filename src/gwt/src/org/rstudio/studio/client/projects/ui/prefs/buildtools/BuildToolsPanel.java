@@ -28,6 +28,7 @@ import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -219,6 +220,7 @@ public abstract class BuildToolsPanel extends VerticalPanel
    {
       CheckBox chk = new CheckBox(caption);
       chk.addStyleName(RES.styles().buildToolsCheckBox());
+      chk.getElement().getStyle().setMarginBottom(4, Unit.PX);
       return chk;
    }
    

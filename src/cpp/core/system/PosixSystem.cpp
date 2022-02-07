@@ -2444,11 +2444,29 @@ bool effectiveUserIsRoot()
 Error temporarilyDropPriv(const std::string& newUsername,
                           bool chownLogDir)
 {
+   return temporarilyDropPriv(newUsername, std::string(), chownLogDir);
+}
+
+Error temporarilyDropPriv(const std::string& newUsername,
+                          const std::string& newGroupname,
+                          bool chownLogDir)
+{
    // get user info
    User user;
    Error error = User::getUserFromIdentifier(newUsername, user);
    if (error)
       return error;
+
+   // get group info if one was provided
+   boost::optional<GidType> groupOpt;
+   if (!newGroupname.empty())
+   {
+      group::Group group;
+      error = group::groupFromName(newGroupname, &group);
+      if (error)
+         return error;
+      groupOpt = group.groupId;
+   }
 
    // before changing the process user, ensure it becomes the new
    // owner of any file logs so we can ensure that we can keep writing to them
@@ -2457,7 +2475,7 @@ Error temporarilyDropPriv(const std::string& newUsername,
    // can create new log files after giving up root privilege
    core::log::refreshAllLogDestinations(core::log::RefreshParams{ user, chownLogDir });
 
-   return posix::temporarilyDropPrivileges(user);
+   return posix::temporarilyDropPrivileges(user, groupOpt);
 }
 
 Error restorePriv()
@@ -2470,13 +2488,31 @@ Error restorePriv()
 
 Error permanentlyDropPriv(const std::string& newUsername)
 {
+   return permanentlyDropPriv(newUsername, std::string());
+}
+
+Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
+{
    // get user info
    User user;
    Error error = User::getUserFromIdentifier(newUsername, user);
    if (error)
       return error;
 
-   // Refresh the destinations without providing a user since we are have the parent processes's file destinations 
+   // get group info if one was provided
+   boost::optional<GidType> groupOpt;
+   if (!newGroupname.empty())
+   {
+      group::Group group;
+      error = group::groupFromName(newGroupname, &group);
+      if (error)
+         return error;
+      groupOpt = group.groupId;
+   }
+
+   GidType targetGID = groupOpt.value_or(user.getGroupId());
+
+   // Refresh the destinations without providing a user since we are have the parent processes's file destinations
    // and don't want to change the ownership of the log files to newUsername. We do still want to make sure we are set up to log in case
    // there are errors before we call ::execve - in particular, for syslog
    core::log::refreshAllLogDestinations();
@@ -2485,17 +2521,22 @@ Error permanentlyDropPriv(const std::string& newUsername)
    errno = 0;
 
    // supplemental group list
+   // NOTE: We are intentionally specifying the user's primary group here
+   // regardless of whether an alternate group is provided. This so all of
+   // the user's groups are maintained for the new process. Initializing
+   // with the alternate group results in the process running with only a single
+   // group.
    if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
-   if (::setresgid(user.getGroupId(), user.getGroupId(), user.getGroupId()) < 0)
+   if (::setresgid(targetGID, targetGID, targetGID) < 0)
       return systemError(errno, ERROR_LOCATION);
    // verify
    gid_t rgid, egid, sgid;
    if (::getresgid(&rgid, &egid, &sgid) < 0)
       return systemError(errno, ERROR_LOCATION);
-   if (rgid != user.getGroupId() || egid != user.getGroupId() || sgid != user.getGroupId())
+   if (rgid != targetGID || egid != targetGID || sgid != targetGID)
       return systemError(EACCES, ERROR_LOCATION);
 
    // set user
@@ -2521,6 +2562,11 @@ namespace {
 
 Error permanentlyDropPriv(const std::string& newUsername)
 {
+   return permanentlyDropPriv(newUsername, std::string());
+}
+
+Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname)
+{
    // clear error state
    errno = 0;
 
@@ -2530,15 +2576,33 @@ Error permanentlyDropPriv(const std::string& newUsername)
    if (error)
       return error;
 
+   // get group info if one was provided
+   boost::optional<GidType> groupOpt;
+   if (!newGroupname.empty())
+   {
+      group::Group group;
+      error = group::groupFromName(newGroupname, &group);
+      if (error)
+         return error;
+      groupOpt = group.groupId;
+   }
+
+   GidType targetGID = groupOpt.value_or(user.getGroupId());
+
    // supplemental group list
+   // NOTE: We are intentionally specifying the user's primary group here
+   // regardless of whether an alternate group is provided. This so all of
+   // the user's groups are maintained for the new process. Initializing
+   // with the alternate group results in the process running with only a single
+   // group.
    if (::initgroups(user.getUsername().c_str(), user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group
-   if (::setregid(user.getGroupId(), user.getGroupId()) < 0)
+   if (::setregid(targetGID, targetGID) < 0)
       return systemError(errno, ERROR_LOCATION);
    // verify
-   if (::getgid() != user.getGroupId() || ::getegid() != user.getGroupId())
+   if (::getgid() != targetGID || ::getegid() != targetGID)
       return systemError(EACCES, ERROR_LOCATION);
 
    // set user
@@ -2562,4 +2626,3 @@ Error restoreRoot()
 } // namespace system
 } // namespace core
 } // namespace rstudio
-

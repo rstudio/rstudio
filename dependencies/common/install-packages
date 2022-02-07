@@ -106,7 +106,7 @@ if [[ ! -w $RPKGLIB ]]; then
 fi
 
 # install packages needed to run tests
-for RPKG in rmarkdown renv testthat xml2 yaml; do
+for RPKG in purrr rmarkdown renv testthat xml2 yaml; do
     RINSTALLCMD="if("'!'"require($RPKG, quietly = TRUE)) { install.packages('$RPKG', lib='$RPKGLIB', repos='https://cran.rstudio.com/') }"
     echo "> $RINSTALLCMD"
     Rscript -e "$RINSTALLCMD"

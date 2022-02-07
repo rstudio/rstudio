@@ -114,8 +114,8 @@ public class StanCompletionManager extends CompletionManagerBase
    }
    
    @Override
-   protected void addExtraCompletions(String token,
-                                      List<QualifiedName> completions)
+   public void addExtraCompletions(String token,
+                                   List<QualifiedName> completions)
    {
       Set<String> discoveredIdentifiers = new HashSet<>();
       

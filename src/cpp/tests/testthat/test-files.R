@@ -73,3 +73,95 @@ test_that("file listings are correct", {
 
 })
 
+test_that("our list.files, list.dirs hooks function as expected", {
+   
+   # use native R routines
+   .rs.files.restoreBindings()
+   on.exit(.rs.files.replaceBindings(), add = TRUE)
+   
+   # work in temporary directory
+   tdir <- tempfile()
+   dir.create(tdir)
+   owd <- setwd(tdir)
+   on.exit(setwd(owd), add = TRUE)
+   
+   # create a bunch of sample files
+   file.create(".hidden")
+   
+   file.create("file")
+   
+   dir.create("dir")
+   dir.create("dir/subdir")
+   file.create("dir/subdir/file")
+   
+   dir.create("empty")
+   
+   dir.create("hasEmptyDir")
+   dir.create("hasEmptyDir/empty")
+   
+   nihao <- enc2utf8("\u4f60\u597d")  # 你好
+   dir.create(nihao)
+   file.create(paste(nihao, "file", sep = "/"))
+   file.create(paste(nihao, "R", sep = "."))
+   
+   if (.rs.platform.isWindows && getRversion() < "4.2.0") {
+      Sys.setlocale(locale = "Chinese")
+      on.exit(Sys.setlocale(locale = "English"), add = TRUE)
+   }
+   
+   paths <- list(
+      ".",
+      getwd(),
+      file.path("..", basename(getwd())),
+      "ThisPathDoesNotExist"
+   )
+   
+   arglist <- list(
+      path = paths,
+      pattern = list(NULL, "[.]R$"),
+      all.files = list(FALSE, TRUE),
+      full.names = list(FALSE, TRUE),
+      recursive = list(FALSE, TRUE),
+      ignore.case = list(FALSE, TRUE),
+      include.dirs = list(FALSE, TRUE),
+      no.. = list(FALSE, TRUE)
+   )
+   
+   crossed <- purrr::cross(arglist)
+   for (i in seq_along(crossed)) {
+      
+      args <- crossed[[i]]
+      lhs <- do.call(list.files, args)
+      rhs <- do.call(.rs.listFiles, args)
+      
+      if (.rs.platform.isWindows)
+         Encoding(lhs) <- "UTF-8"
+      
+      expect_equal(lhs, rhs)
+      
+   }
+   
+   arglist <- list(
+      path = paths,
+      full.names = list(FALSE, TRUE),
+      recursive = list(FALSE, TRUE)
+   )
+   
+   crossed <- purrr::cross(arglist)
+   for (i in seq_along(crossed)) {
+      
+      args <- crossed[[i]]
+      lhs <- do.call(list.dirs, args)
+      rhs <- do.call(.rs.listDirs, args)
+      
+      if (.rs.platform.isWindows)
+         Encoding(lhs) <- "UTF-8"
+      
+      expect_equal(lhs, rhs)
+      
+   }
+   
+   setwd(owd)
+   unlink(tdir, recursive = TRUE)
+   
+})

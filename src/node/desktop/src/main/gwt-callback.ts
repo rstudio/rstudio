@@ -15,7 +15,7 @@
 
 // TODO clean this up
 
-import { ipcMain, dialog, BrowserWindow, webFrameMain, shell, screen } from 'electron';
+import { ipcMain, dialog, BrowserWindow, webFrameMain, shell, screen, app } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 
 import EventEmitter from 'events';
@@ -32,6 +32,7 @@ import { appState } from './app-state';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { userHomePath } from '../core/user';
 import { activateWindow } from './window-utils';
+import i18next from 'i18next';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -702,18 +703,24 @@ export class GwtCallback extends EventEmitter {
   }
 
   static unimpl(ipcName: string): void {
-    const focusedWindow = BrowserWindow.getFocusedWindow();
-    if (focusedWindow) {
-      void dialog.showMessageBox(focusedWindow, {
-        title: 'Unimplemented',
-        message: `${ipcName} callback NYI`,
-      });
-    } else {
-      void dialog.showMessageBox({
-        title: 'Unimplemented',
-        message: `${ipcName} callback NYI`,
-      });
+
+    if (app.isPackaged) {
+      return;
     }
+
+    const focusedWindow = BrowserWindow.getFocusedWindow();
+
+    const dialogOptions = {
+      title: i18next.t('gwtCallbackTs.unimplemented'),
+      message: i18next.t('gwtCallbackTs.callbackNyiLowercase', { ipcName }),
+    };
+
+    if (focusedWindow) {
+      void dialog.showMessageBox(focusedWindow, dialogOptions);
+    } else {
+      void dialog.showMessageBox(dialogOptions);
+    }
+
   }
 
   collectPendingQuitRequest(): PendingQuit {

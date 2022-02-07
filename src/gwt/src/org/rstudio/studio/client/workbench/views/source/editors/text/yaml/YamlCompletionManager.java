@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.yaml;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
@@ -88,7 +89,7 @@ public class YamlCompletionManager extends CompletionManagerBase
          return false;
       
       // call for completions
-      YamlEditorContext editorContext = YamlEditorContext.create(context_, docDisplay_);
+      YamlEditorContext editorContext = YamlEditorContext.create(true, context_, docDisplay_);
       provider.getCompletions(editorContext, (res) -> {
          
          // default "empty" completion response
@@ -152,6 +153,12 @@ public class YamlCompletionManager extends CompletionManagerBase
    public boolean allowInComment()
    {
       return true;
+   }
+   
+   @Override
+   protected boolean isCompletionCharacter(char ch)
+   {
+      return !StringUtil.isWhitespace(ch) && (ch != ':');
    }
    
    private final YamlEditorToolsProviders providers_ = new YamlEditorToolsProviders();

@@ -153,4 +153,40 @@ public interface PaletteConstants extends Messages {
     @DefaultMessage("Setting")
     @Key("settingText")
     String settingText();
+
+    /**
+     * Translate "Ctrl".
+     *
+     * @return the translated value
+     */
+    @DefaultMessage("Ctrl")
+    @Key("commandCtrl")
+    String commandCtrl();
+
+    /**
+     * Translate "Alt".
+     *
+     * @return the translated value
+     */
+    @DefaultMessage("Alt")
+    @Key("commandAlt")
+    String commandAlt();
+
+    /**
+     * Translate "Shift".
+     *
+     * @return the translated value
+     */
+    @DefaultMessage("Shift")
+    @Key("commandShift")
+    String commandShift();
+
+    /**
+     * Translate "Cmd".
+     *
+     * @return the translated value
+     */
+    @DefaultMessage("Cmd")
+    @Key("commandCmd")
+    String commandCmd();
 }

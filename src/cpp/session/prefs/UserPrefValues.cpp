@@ -1532,6 +1532,19 @@ core::Error UserPrefValues::setDocumentAuthor(std::string val)
 }
 
 /**
+ * Use current date when rendering document
+ */
+bool UserPrefValues::rmdAutoDate()
+{
+   return readPref<bool>("rmd_auto_date");
+}
+
+core::Error UserPrefValues::setRmdAutoDate(bool val)
+{
+   return writePref("rmd_auto_date", val);
+}
+
+/**
  * The path to the preferred R Markdown template.
  */
 std::string UserPrefValues::rmdPreferredTemplatePath()
@@ -2205,6 +2218,19 @@ bool UserPrefValues::useDevtools()
 core::Error UserPrefValues::setUseDevtools(bool val)
 {
    return writePref("use_devtools", val);
+}
+
+/**
+ * Clean before install.
+ */
+bool UserPrefValues::cleanBeforeInstall()
+{
+   return readPref<bool>("clean_before_install");
+}
+
+core::Error UserPrefValues::setCleanBeforeInstall(bool val)
+{
+   return writePref("clean_before_install", val);
 }
 
 /**
@@ -3119,6 +3145,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShinyBackgroundJobs,
       kPlumberViewerType,
       kDocumentAuthor,
+      kRmdAutoDate,
       kRmdPreferredTemplatePath,
       kRmdViewerType,
       kShowPublishDiagnostics,
@@ -3171,6 +3198,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalPath,
       kRsaKeyPath,
       kUseDevtools,
+      kCleanBeforeInstall,
       kUseInternet2,
       kUseSecureDownload,
       kCleanupAfterRCmdCheck,

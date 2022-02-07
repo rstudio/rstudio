@@ -86,8 +86,7 @@ public class NewDirectoryNavigationPage
       if (sessionInfo.getQuartoConfig().enabled) {
          pages.add(new NewQuartoDefaultProjectPage());
          pages.add(new NewQuartoWebsiteProjectPage());
-         // blog commented out until quarto blogs are available in cll
-         // pages.add(new NewQuartoBlogProjectPage());
+         pages.add(new NewQuartoBlogProjectPage());
          pages.add(new NewQuartoBookProjectPage());
       }
       

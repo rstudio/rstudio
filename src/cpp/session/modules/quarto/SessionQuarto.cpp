@@ -55,6 +55,12 @@
 
 using namespace rstudio::core;
 
+// ignored unused functions when quarto not enabled
+#ifndef QUARTO_ENABLED
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 namespace rstudio {
 namespace session {
 
@@ -148,22 +154,63 @@ std::tuple<FilePath,Version> userInstalledQuarto()
    return std::make_tuple(FilePath(), Version());
 }
 
-#ifndef QUARTO_ENABLED
-
-void detectQuartoInstallation()
+core::FilePath quartoConfigFilePath(const FilePath& dirPath)
 {
-   return;
+   FilePath quartoYml = dirPath.completePath("_quarto.yml");
+   if (quartoYml.exists())
+      return quartoYml;
+
+   FilePath quartoYaml = dirPath.completePath("_quarto.yaml");
+   if (quartoYaml.exists())
+      return quartoYaml;
+
+   return FilePath();
 }
 
-#else
+
+bool projectHasQuartoContent()
+{
+   using namespace session::projects;
+   const ProjectContext& context = projectContext();
+   if (context.hasProject())
+   {
+      if (!quartoConfigFilePath(context.directory()).isEmpty())
+      {
+         return true;
+      }
+      else
+      {
+         // look for a qmd file at the top level
+         std::vector<FilePath> files;
+         Error error = context.directory().getChildren(files);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return false;
+         }
+         for (auto file : files)
+         {
+            if (file.getExtensionLowerCase() == ".qmd")
+               return true;
+         }
+         return false;
+      }
+   }
+   else
+   {
+      return false;
+   }
+}
+
 
 void detectQuartoInstallation()
 {
+#ifdef QUARTO_ENABLED
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.3.24");
+   const Version kQuartoRequiredVersion("0.3.105");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.3.24");
+   const Version kQuartoRecommendedVersion("0.3.105");
 
    // reset
    s_userInstalledPath = FilePath();
@@ -198,10 +245,20 @@ void detectQuartoInstallation()
    }
 
 
-   // proceed to use embedded version only if the user has explicitly enabled quarto
-   // (i.e. "auto" mode never uses the emedded version)
+   // auto mode will enable quarto if we are in a project w/ _quarto.yml
+   // or a qmd file at the root, otherwise not
    if (session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledAuto)
-      return;
+   {
+      if (projectHasQuartoContent())
+      {
+         session::prefs::userPrefs().setQuartoEnabled(kQuartoEnabledEnabled);
+      }
+      else
+      {
+         return;
+      }
+   }
+
 
    // embedded version of quarto (subject to required version)
 #ifndef WIN32
@@ -227,28 +284,15 @@ void detectQuartoInstallation()
    {
       showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
    }
+#endif
 }
 
-#endif
 
 bool quartoIsInstalled()
 {
    return !s_quartoPath.isEmpty();
 }
 
-
-core::FilePath quartoConfigFilePath(const FilePath& dirPath)
-{
-   FilePath quartoYml = dirPath.completePath("_quarto.yml");
-   if (quartoYml.exists())
-      return quartoYml;
-
-   FilePath quartoYaml = dirPath.completePath("_quarto.yaml");
-   if (quartoYaml.exists())
-      return quartoYaml;
-
-   return FilePath();
-}
 
 core::FilePath quartoProjectConfigFile(const core::FilePath& filePath)
 {
@@ -877,8 +921,9 @@ QuartoConfig quartoConfig(bool refresh)
             s_quartoConfig = QuartoConfig();
             return s_quartoConfig;
          }
+         string_utils::convertLineEndings(&result.stdOut, string_utils::LineEndingPosix);
          std::vector<std::string> paths;
-         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n\r"));
+         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n"));
          if (paths.size() >= 2)
          {
             s_quartoConfig.bin_path = string_utils::systemToUtf8(paths[0]);
@@ -1005,6 +1050,7 @@ bool projectIsQuarto()
       return false;
    }
 }
+
 
 FilePath quartoProjectConfigFile(const core::FilePath& filePath)
 {
@@ -1254,3 +1300,8 @@ Error initialize()
 } // namespace modules
 } // namespace session
 } // namespace rstudio
+
+#ifndef QUARTO_ENABLED
+#pragma GCC diagnostic pop
+#endif
+

@@ -467,10 +467,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          {
             if (event.shouldExecute())
             {
-               processCommandEntry(event.getCode(), event.shouldEcho());
+               String commandText = event.shouldEcho() ? view_.processCommandEntry() : event.getCode();
+               processCommandEntry(commandText, event.shouldEcho());
 
-               if (previousInput.length() > 0)
-                  display.setText(previousInput);
+               display.setText(previousInput);
             }
 
             if (!event.shouldExecute() || event.shouldFocus())

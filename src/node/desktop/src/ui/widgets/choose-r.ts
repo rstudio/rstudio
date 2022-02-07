@@ -18,6 +18,9 @@ import { findDefault32Bit, findDefault64Bit } from '../../main/detect-r';
 import { logger } from '../../core/logger';
 import { ModalDialog } from '../modal-dialog';
 
+import { initI18n } from '../../main/i18n-manager';
+import i18next from 'i18next';
+
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
@@ -27,6 +30,7 @@ export class ChooseRModalWindow extends ModalDialog<string | null> {
   constructor(rInstalls: string[]) {
     super(CHOOSE_R_WEBPACK_ENTRY, CHOOSE_R_PRELOAD_WEBPACK_ENTRY);
     this.rInstalls = rInstalls;
+    initI18n();
   }
 
   async onShowModal(): Promise<string | null> {
@@ -54,9 +58,9 @@ export class ChooseRModalWindow extends ModalDialog<string | null> {
 
       ipcMain.on('browse', () => {
         const response = dialog.showOpenDialogSync(this, {
-          title: 'Choose R Executable',
+          title: i18next.t('uiFolder.chooseRExecutable'),
           properties: ['openFile'],
-          filters: [{ name: 'R Executable', extensions: ['exe'] }],
+          filters: [{ name: i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
         });
 
         if (response) {

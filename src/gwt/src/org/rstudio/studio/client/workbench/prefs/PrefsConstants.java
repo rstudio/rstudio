@@ -4484,5 +4484,528 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Cancel")
     @Key("editingCancelShortcuts")
     String editingCancelShortcuts();
+    
+    /**
+     * Translated "Tab width"
+     *
+     * @return translated "Tab width"
+     */
+    @DefaultMessage("Tab width")
+    @Key("editingTabWidthLabel")
+    String editingTabWidthLabel();
+    
+    /**
+     * Translated "Auto-detect code indentation"
+     *
+     * @return translated "Auto-detect code indentation"
+     */
+    @DefaultMessage("Auto-detect code indentation")
+    @Key("editingAutoDetectIndentationLabel")
+    String editingAutoDetectIndentationLabel();
+    
+    /**
+     * Translated "Auto-detect code indentation"
+     *
+     * @return translated "When enabled, the indentation for documents not part of an RStudio project will be automatically detected."
+     */
+    @DefaultMessage("When enabled, the indentation for documents not part of an RStudio project will be automatically detected.")
+    @Key("editingAutoDetectIndentationDesc")
+    String editingAutoDetectIndentationDesc();
+    
+    /**
+     * Translated "Insert matching parens/quotes"
+     *
+     * @return translated "Insert matching parens/quotes"
+     */
+    @DefaultMessage("Insert matching parens/quotes")
+    @Key("editingInsertMatchingLabel")
+    String editingInsertMatchingLabel();
+    
+    /**
+     * Translated "Use native pipe operator, |> (requires R 4.1+)"
+     *
+     * @return translated "Use native pipe operator, |> (requires R 4.1+)"
+     */
+    @DefaultMessage("Use native pipe operator, |> (requires R 4.1+)")
+    @Key("editingInsertNativePipeOperatorLabel")
+    String editingInsertNativePipeOperatorLabel();
+    
+    /**
+     * Translated "Auto-indent code after paste"
+     *
+     * @return translated "Auto-indent code after paste"
+     */
+    @DefaultMessage("Auto-indent code after paste")
+    @Key("editingReindentOnPasteLabel")
+    String editingReindentOnPasteLabel();
+    
+    /**
+     * Translated "Vertically align arguments in auto-indent"
+     *
+     * @return translated "Vertically align arguments in auto-indent"
+     */
+    @DefaultMessage("Vertically align arguments in auto-indent")
+    @Key("editingVerticallyAlignArgumentsIndentLabel")
+    String editingVerticallyAlignArgumentsIndentLabel();
 
+    /**
+     * Translated "Continue comment when inserting new line"
+     *
+     * @return translated "Continue comment when inserting new line"
+     */
+    @DefaultMessage("Continue comment when inserting new line")
+    @Key("editingContinueCommentsOnNewlineLabel")
+    String editingContinueCommentsOnNewlineLabel();
+    
+    /**
+     * Translated "When enabled, pressing Enter will continue comments on new lines. Press Shift + Enter to exit a comment."
+     *
+     * @return translated "When enabled, pressing Enter will continue comments on new lines. Press Shift + Enter to exit a comment."
+     */
+    @DefaultMessage("When enabled, pressing Enter will continue comments on new lines. Press Shift + Enter to exit a comment.")
+    @Key("editingContinueCommentsOnNewlineDesc")
+    String editingContinueCommentsOnNewlineDesc();
+    
+    /**
+     * Translated "Enable hyperlink highlighting in editor"
+     *
+     * @return translated "Enable hyperlink highlighting in editor"
+     */
+    @DefaultMessage("Enable hyperlink highlighting in editor")
+    @Key("editingHighlightWebLinkLabel")
+    String editingHighlightWebLinkLabel();
+    
+    /**
+     * Translated "When enabled, hyperlinks in comments will be underlined and clickable."
+     *
+     * @return translated "When enabled, hyperlinks in comments will be underlined and clickable."
+     */
+    @DefaultMessage("When enabled, hyperlinks in comments will be underlined and clickable.")
+    @Key("editingHighlightWebLinkDesc")
+    String editingHighlightWebLinkDesc();
+    
+    /**
+     * Translated "Surround selection on text insertion:"
+     *
+     * @return translated "Surround selection on text insertion:"
+     */
+    @DefaultMessage("Surround selection on text insertion:")
+    @Key("editingSurroundSelectionLabel")
+    String editingSurroundSelectionLabel();
+    
+    /**
+     * Translated "Keybindings:"
+     *
+     * @return translated "Keybindings:"
+     */
+    @DefaultMessage("Keybindings:")
+    @Key("editingKeybindingsLabel")
+    String editingKeybindingsLabel();
+
+    /**
+     * Translated "Focus console after executing from source"
+     *
+     * @return translated "Focus console after executing from source"
+     */
+    @DefaultMessage("Focus console after executing from source")
+    @Key("editingFocusConsoleAfterExecLabel")
+    String editingFocusConsoleAfterExecLabel();
+    
+    /**
+     * Translated "Ctrl+Enter executes:"
+     *
+     * @return translated "Ctrl+Enter executes:"
+     */
+    @DefaultMessage("Ctrl+Enter executes:")
+    @Key("editingExecutionBehaviorLabel")
+    String editingExecutionBehaviorLabel();
+    
+    /**
+     * Translated "Highlight selected word"
+     *
+     * @return translated "Highlight selected word"
+     */
+    @DefaultMessage("Highlight selected word")
+    @Key("displayHighlightSelectedWordLabel")
+    String displayHighlightSelectedWordLabel();
+    
+    /**
+     * Translated "Highlight selected line"
+     *
+     * @return translated "Highlight selected line"
+     */
+    @DefaultMessage("Highlight selected line")
+    @Key("displayHighlightSelectedLineLabel")
+    String displayHighlightSelectedLineLabel();
+    
+    /**
+      * Translated "Show line numbers"
+      *
+      * @return translated "Show line numbers"
+      */
+    @DefaultMessage("Show line numbers")
+    @Key("displayShowLineNumbersLabel")
+    String displayShowLineNumbersLabel();
+    
+    /**
+     * Translated "Show margin"
+     *
+     * @return translated "Show margin"
+     */
+    @DefaultMessage("Show margin")
+    @Key("displayShowMarginLabel")
+    String displayShowMarginLabel();
+    
+    /**
+     * Translated "Show whitespace characters"
+     *
+     * @return translated "Show whitespace characters"
+     */
+    @DefaultMessage("Show whitespace characters")
+    @Key("displayShowInvisiblesLabel")
+    String displayShowInvisiblesLabel();
+
+    /**
+     * Translated "Show indent guides"
+     *
+     * @return translated "Show indent guides"
+     */
+    @DefaultMessage("Show indent guides")
+    @Key("displayShowIndentGuidesLabel")
+    String displayShowIndentGuidesLabel();
+    
+    /**
+     * Translated "Blinking cursor"
+     *
+     * @return translated "Blinking cursor"
+     */
+    @DefaultMessage("Blinking cursor")
+    @Key("displayBlinkingCursorLabel")
+    String displayBlinkingCursorLabel();
+    
+    /**
+     * Translated "Allow scroll past end of document"
+     *
+     * @return translated "Allow scroll past end of document"
+     */
+    @DefaultMessage("Allow scroll past end of document")
+    @Key("displayScrollPastEndOfDocumentLabel")
+    String displayScrollPastEndOfDocumentLabel();
+    
+    
+    /**
+     * Translated "Allow drag and drop of text"
+     *
+     * @return translated "Allow drag and drop of text"
+     */
+    @DefaultMessage("Allow drag and drop of text")
+    @Key("displayEnableTextDragLabel")
+    String displayEnableTextDragLabel();
+    
+    /**
+     * Translated "Fold Style:"
+     *
+     * @return translated "Fold Style:"
+     */
+    @DefaultMessage("Fold Style:")
+    @Key("displayFoldStyleLabel")
+    String displayFoldStyleLabel();
+    
+    /**
+     * Translated "Ensure that source files end with newline"
+     *
+     * @return translated "Ensure that source files end with newline"
+     */
+    @DefaultMessage("Ensure that source files end with newline")
+    @Key("savingAutoAppendNewLineLabel")
+    String savingAutoAppendNewLineLabel();
+
+    /**
+     * Translated "Strip trailing horizontal whitespace when saving"
+     *
+     * @return translated "Strip trailing horizontal whitespace when saving"
+     */
+    @DefaultMessage("Strip trailing horizontal whitespace when saving")
+    @Key("savingStripTrailingWhitespaceLabel")
+    String savingStripTrailingWhitespaceLabel();
+    
+    /**
+     * Translated "Restore last cursor position when opening file"
+     *
+     * @return translated "Restore last cursor position when opening file"
+     */
+    @DefaultMessage("Restore last cursor position when opening file")
+    @Key("savingRestoreSourceDocumentCursorPositionLabel")
+    String savingRestoreSourceDocumentCursorPositionLabel();
+    
+    /**
+     * Translated "Default text encoding:"
+     *
+     * @return translated "Default text encoding:"
+     */
+    @DefaultMessage("Default text encoding:")
+    @Key("savingDefaultEncodingLabel")
+    String savingDefaultEncodingLabel();
+
+    /**
+     * Translated "Always save R scripts before sourcing"
+     *
+     * @return translated "Always save R scripts before sourcing"
+     */
+    @DefaultMessage("Always save R scripts before sourcing")
+    @Key("savingSaveBeforeSourcingLabel")
+    String savingSaveBeforeSourcingLabel();
+
+    /**
+     * Translated "Automatically save when editor loses focus"
+     *
+     * @return translated "Automatically save when editor loses focus"
+     */
+    @DefaultMessage("Automatically save when editor loses focus")
+    @Key("savingAutoSaveOnBlurLabel")
+    String savingAutoSaveOnBlurLabel();
+    
+    /**
+     * Translated "When editor is idle:"
+     *
+     * @return translated "When editor is idle:"
+     */
+    @DefaultMessage("When editor is idle:")
+    @Key("savingAutoSaveOnIdleLabel")
+    String savingAutoSaveOnIdleLabel();
+    
+    /**
+     * Translated "Idle period:"
+     *
+     * @return translated "Idle period:"
+     */
+    @DefaultMessage("Idle period:")
+    @Key("savingAutoSaveIdleMsLabel")
+    String savingAutoSaveIdleMsLabel();
+    
+    /**
+     * Translated "Show code completions:"
+     *
+     * @return translated "Show code completions:"
+     */
+    @DefaultMessage("Show code completions:")
+    @Key("completionCodeCompletionLabel")
+    String completionCodeCompletionLabel();
+    
+    /**
+     * Translated "Show code completions:"
+     *
+     * @return translated "Show code completions:"
+     */
+    @DefaultMessage("Show code completions:")
+    @Key("completionCodeCompletionOtherLabel")
+    String completionCodeCompletionOtherLabel();
+    
+    /**
+     * Translated "Allow automatic completions in console"
+     *
+     * @return translated "Allow automatic completions in console"
+     */
+    @DefaultMessage("Allow automatic completions in console")
+    @Key("completionConsoleCodeCompletionLabel")
+    String completionConsoleCodeCompletionLabel();
+    
+    /**
+     * Translated "Insert parentheses after function completions"
+     *
+     * @return translated "Insert parentheses after function completions"
+     */
+    @DefaultMessage("Insert parentheses after function completions")
+    @Key("completionInsertParensAfterFunctionCompletion")
+    String completionInsertParensAfterFunctionCompletion();
+    
+    /**
+     * Translated "Show help tooltip after function completions"
+     *
+     * @return translated "Show help tooltip after function completions"
+     */
+    @DefaultMessage("Show help tooltip after function completions")
+    @Key("completionShowFunctionSignatureTooltipsLabel")
+    String completionShowFunctionSignatureTooltipsLabel();
+    
+    /**
+     * Translated "Show help tooltip on cursor idle"
+     *
+     * @return translated "Show help tooltip on cursor idle"
+     */
+    @DefaultMessage("Show help tooltip on cursor idle")
+    @Key("completionShowHelpTooltipOnIdleLabel")
+    String completionShowHelpTooltipOnIdleLabel();
+    
+    /**
+     * Translated "Insert spaces around equals for argument completions"
+     *
+     * @return translated "Insert spaces around equals for argument completions"
+     */
+    @DefaultMessage("Insert spaces around equals for argument completions")
+    @Key("completionInsertSpacesAroundEqualsLabel")
+    String completionInsertSpacesAroundEqualsLabel();
+    
+    /**
+     * Translated "Use tab for autocompletions"
+     *
+     * @return translated "Use tab for autocompletions"
+     */
+    @DefaultMessage("Use tab for autocompletions")
+    @Key("completionTabCompletionLabel")
+    String completionTabCompletionLabel();
+    
+    /**
+     * Translated "Use tab for multiline autocompletions"
+     *
+     * @return translated "Use tab for multiline autocompletions"
+     */
+    @DefaultMessage("Use tab for multiline autocompletions")
+    @Key("completionTabMultilineCompletionLabel")
+    String completionTabMultilineCompletionLabel();
+    
+    /**
+     * Translated "Show completions after characters entered:"
+     *
+     * @return translated "Show completions after characters entered:"
+     */
+    @DefaultMessage("Show completions after characters entered:")
+    @Key("completionCodeCompletionCharactersLabel")
+    String completionCodeCompletionCharactersLabel();
+    
+    /**
+     * Translated "Show completions after keyboard idle (ms):"
+     *
+     * @return translated "Show completions after keyboard idle (ms):"
+     */
+    @DefaultMessage("Show completions after keyboard idle (ms):")
+    @Key("completionCodeCompletionDelayLabel")
+    String completionCodeCompletionDelayLabel();
+    
+    /**
+     * Translated "Show diagnostics for R"
+     *
+     * @return translated "Show diagnostics for R"
+     */
+    @DefaultMessage("Show diagnostics for R")
+    @Key("diagnosticsShowDiagnosticsRLabel")
+    String diagnosticsShowDiagnosticsRLabel();
+    
+    /**
+     * Translated "Enable diagnostics within R function calls"
+     *
+     * @return translated "Enable diagnostics within R function calls"
+     */
+    @DefaultMessage("Enable diagnostics within R function calls")
+    @Key("diagnosticsInRFunctionCallsLabel")
+    String diagnosticsInRFunctionCallsLabel();
+    
+    /**
+     * Translated "Check arguments to R function calls"
+     *
+     * @return translated "Check arguments to R function calls"
+     */
+    @DefaultMessage("Check arguments to R function calls")
+    @Key("diagnosticsCheckArgumentsToRFunctionCallsLabel")
+    String diagnosticsCheckArgumentsToRFunctionCallsLabel();
+    
+    /**
+     * Translated "Check usage of '<-' in function call"
+     *
+     * @return translated "Check usage of '<-' in function call"
+     */
+    @DefaultMessage("Check usage of '<-' in function call")
+    @Key("diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel")
+    String diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel();
+    
+    /**
+     * Translated "Warn if variable used has no definition in scope"
+     *
+     * @return translated "Warn if variable used has no definition in scope"
+     */
+    @DefaultMessage("Warn if variable used has no definition in scope")
+    @Key("diagnosticsWarnIfNoSuchVariableInScopeLabel")
+    String diagnosticsWarnIfNoSuchVariableInScopeLabel();
+    
+    /**
+     * Translated "Warn if variable is defined but not used"
+     *
+     * @return translated "Warn if variable is defined but not used"
+     */
+    @DefaultMessage("Warn if variable is defined but not used")
+    @Key("diagnosticsWarnVariableDefinedButNotUsedLabel")
+    String diagnosticsWarnVariableDefinedButNotUsedLabel();
+    
+    /**
+     * Translated "Provide R style diagnostics (e.g. whitespace)"
+     *
+     * @return translated "Provide R style diagnostics (e.g. whitespace)"
+     */
+    @DefaultMessage("Provide R style diagnostics (e.g. whitespace)")
+    @Key("diagnosticsStyleDiagnosticsLabel")
+    String diagnosticsStyleDiagnosticsLabel();
+    
+    /**
+     * Translated "Prompt to install missing R packages discovered in R source files"
+     *
+     * @return translated "Prompt to install missing R packages discovered in R source files"
+     */
+    @DefaultMessage("Prompt to install missing R packages discovered in R source files")
+    @Key("diagnosticsAutoDiscoverPackageDependenciesLabel")
+    String diagnosticsAutoDiscoverPackageDependenciesLabel();
+    
+    /**
+     * Translated "Show diagnostics for C/C++"
+     *
+     * @return translated "Show diagnostics for C/C++"
+     */
+    @DefaultMessage("Show diagnostics for C/C++")
+    @Key("diagnosticsShowDiagnosticsCppLabel")
+    String diagnosticsShowDiagnosticsCppLabel();
+    
+    /**
+     * Translated "Show diagnostics for YAML"
+     *
+     * @return translated "Show diagnostics for YAML"
+     */
+    @DefaultMessage("Show diagnostics for YAML")
+    @Key("diagnosticsShowDiagnosticsYamlLabel")
+    String diagnosticsShowDiagnosticsYamlLabel();
+    
+    /**
+     * Translated "Show diagnostics for JavaScript, HTML, and CSS"
+     *
+     * @return translated "Show diagnostics for JavaScript, HTML, and CSS"
+     */
+    @DefaultMessage("Show diagnostics for JavaScript, HTML, and CSS")
+    @Key("diagnosticsShowDiagnosticsOtherLabel")
+    String diagnosticsShowDiagnosticsOtherLabel();
+    
+    /**
+     * Translated "Show diagnostics whenever source files are saved"
+     *
+     * @return translated "Show diagnostics whenever source files are saved"
+     */
+    @DefaultMessage("Show diagnostics whenever source files are saved")
+    @Key("diagnosticsOnSaveLabel")
+    String diagnosticsOnSaveLabel();
+    
+    /**
+     * Translated "Show diagnostics after keyboard is idle for a period of time"
+     *
+     * @return translated "Show diagnostics after keyboard is idle for a period of time"
+     */
+    @DefaultMessage("Show diagnostics after keyboard is idle for a period of time")
+    @Key("diagnosticsBackgroundDiagnosticsLabel")
+    String diagnosticsBackgroundDiagnosticsLabel();
+    
+    /**
+     * Translated "Keyboard idle time (ms):"
+     *
+     * @return translated "Keyboard idle time (ms):"
+     */
+    @DefaultMessage("Keyboard idle time (ms):")
+    @Key("diagnosticsBackgroundDiagnosticsDelayMsLabel")
+    String diagnosticsBackgroundDiagnosticsDelayMsLabel();
+    
 }

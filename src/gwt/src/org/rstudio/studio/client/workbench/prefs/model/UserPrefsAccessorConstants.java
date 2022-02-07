@@ -907,7 +907,7 @@ public interface UserPrefsAccessorConstants extends Constants {
     */
    @DefaultStringValue("C++ template")
    String cppTemplateTitle();
-   @DefaultStringValue("C++ template")
+   @DefaultStringValue("C++ template.")
    String cppTemplateDescription();
 
    /**
@@ -983,6 +983,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String documentAuthorDescription();
 
    /**
+    * Use current date when rendering document
+    */
+   @DefaultStringValue("Use current date when rendering document")
+   String rmdAutoDateTitle();
+   @DefaultStringValue("Use current date when rendering document")
+   String rmdAutoDateDescription();
+
+   /**
     * The path to the preferred R Markdown template.
     */
    @DefaultStringValue("Path to preferred R Markdown template")
@@ -997,14 +1005,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String rmdViewerTypeTitle();
    @DefaultStringValue("Where to display R Markdown documents when they have completed rendering.")
    String rmdViewerTypeDescription();
-
-   /**
-    * Whether to use current date when rendering document.
-    */
-   @DefaultStringValue("Use current date when rendering document")
-   String rmdAutoDateTitle();
-   @DefaultStringValue("Use current date when rendering document.")
-   String rmdAutoDateDescription();
 
    /**
     * Whether to show verbose diagnostic information when publishing content.
@@ -1411,6 +1411,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String useDevtoolsTitle();
    @DefaultStringValue("Whether to use the devtools R package.")
    String useDevtoolsDescription();
+
+   /**
+    * Clean before install.
+    */
+   @DefaultStringValue("Clean before install")
+   String cleanBeforeInstallTitle();
+   @DefaultStringValue("Clean before install.")
+   String cleanBeforeInstallDescription();
 
    /**
     * Whether to use Internet2 for networking on R for Windows.

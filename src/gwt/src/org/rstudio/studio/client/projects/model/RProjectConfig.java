@@ -190,9 +190,17 @@ public class RProjectConfig extends JavaScriptObject
    public native final boolean getPackageUseDevtools() /*-{
       return this.package_use_devtools;
    }-*/;
-   
+
    public native final void setPackageUseDevtools(boolean useDevtools) /*-{
       this.package_use_devtools = useDevtools;
+   }-*/;
+   
+   public native final boolean getPackageCleanBeforeInstall() /*-{
+      return this.package_clean_before_install;
+   }-*/;
+
+   public native final void setPackageCleanBeforeInstall(boolean cleanBeforeInstall) /*-{
+      this.package_clean_before_install = cleanBeforeInstall;
    }-*/;
    
    public native final String getPackagePath() /*-{
