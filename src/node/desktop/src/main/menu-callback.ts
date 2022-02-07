@@ -77,37 +77,11 @@ export class MenuCallback extends EventEmitter {
   constructor() {
     super();
     ipcMain.on('menu_begin_main', () => {
-      this.mainMenu = new Menu();
-      if (process.platform === 'darwin') {
-        this.mainMenu.append(new MenuItem({ role: 'appMenu' }));
-      }
+      this.beginMain();
     });
 
     ipcMain.on('menu_begin', (event, label: string) => {
-      const subMenu = new Menu();
-      const opts: MenuItemConstructorOptions = { submenu: subMenu, label: label, id: menuIdFromLabel(label) };
-      if (label === '&File') {
-        opts.role = 'fileMenu';
-      } else if (label === '&Edit') {
-        opts.role = 'editMenu';
-      } else if (label === '&View') {
-        opts.role = 'viewMenu';
-      } else if (label === '&Help') {
-        opts.role = 'help';
-      } else if (label === '&Tools') {
-        this.lastWasTools = true;
-      } else if (label === 'Dia&gnostics') {
-        this.lastWasDiagnostics = true;
-      }
-
-      const menuItem = new MenuItem(opts);
-      this.menuItemTemplates.set(menuItem, opts);
-      if (this.menuStack.length == 0) {
-        this.mainMenu?.append(menuItem);
-      } else {
-        this.addToCurrentMenu(menuItem);
-      }
-      this.menuStack.push(subMenu);
+      this.menuBegin(label);
     });
 
     ipcMain.on(
@@ -230,6 +204,40 @@ export class MenuCallback extends EventEmitter {
       this.updateMenus(Array.from(this.setShortcutQueue.values()));
       this.setShortcutQueue.clear();
     });
+  }
+
+  beginMain(): void {
+    this.mainMenu = new Menu();
+    if (process.platform === 'darwin') {
+      this.mainMenu.append(new MenuItem({ role: 'appMenu' }));
+    }
+  }
+
+  menuBegin(label: string): void {
+    const subMenu = new Menu();
+    const opts: MenuItemConstructorOptions = { submenu: subMenu, label: label, id: menuIdFromLabel(label) };
+    if (label === '&File') {
+      opts.role = 'fileMenu';
+    } else if (label === '&Edit') {
+      opts.role = 'editMenu';
+    } else if (label === '&View') {
+      opts.role = 'viewMenu';
+    } else if (label === '&Help') {
+      opts.role = 'help';
+    } else if (label === '&Tools') {
+      this.lastWasTools = true;
+    } else if (label === 'Dia&gnostics') {
+      this.lastWasDiagnostics = true;
+    }
+
+    const menuItem = new MenuItem(opts);
+    this.menuItemTemplates.set(menuItem, opts);
+    if (this.menuStack.length == 0) {
+      this.mainMenu?.append(menuItem);
+    } else {
+      this.addToCurrentMenu(menuItem);
+    }
+    this.menuStack.push(subMenu);
   }
 
   /**
