@@ -2461,10 +2461,18 @@ Error temporarilyDropPriv(const std::string& newUsername,
    boost::optional<GidType> groupOpt;
    if (!newGroupname.empty())
    {
+      // verify that the user is a member of the provided group
+      bool belongs = false;
+      userBelongsToGroup(user, newGroupname, &belongs);
+
+      if (!belongs)
+         return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
+
       group::Group group;
       error = group::groupFromName(newGroupname, &group);
       if (error)
          return error;
+
       groupOpt = group.groupId;
    }
 
@@ -2503,10 +2511,18 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    boost::optional<GidType> groupOpt;
    if (!newGroupname.empty())
    {
+      // verify that the user is a member of the provided group
+      bool belongs = false;
+      userBelongsToGroup(user, newGroupname, &belongs);
+
+      if (!belongs)
+         return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
+
       group::Group group;
       error = group::groupFromName(newGroupname, &group);
       if (error)
          return error;
+
       groupOpt = group.groupId;
    }
 
@@ -2580,10 +2596,18 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    boost::optional<GidType> groupOpt;
    if (!newGroupname.empty())
    {
+      // verify that the user is a member of the provided group
+      bool belongs = false;
+      userBelongsToGroup(user, newGroupname, &belongs);
+
+      if (!belongs)
+         return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
+
       group::Group group;
       error = group::groupFromName(newGroupname, &group);
       if (error)
          return error;
+
       groupOpt = group.groupId;
    }
 
