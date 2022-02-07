@@ -17,12 +17,15 @@
 {
    pythonPath <- Sys.getenv("RETICULATE_PYTHON", unset = NA)
    
+   if (is.na(pythonPath))
+      pythonPath <- Sys.getenv("RETICULATE_PYTHON_FALLBACK", unset = NA)
+   
    info <- if (is.na(pythonPath))
    {
       .rs.python.invalidInterpreter(
          path = pythonPath,
          type = NULL,
-         reason = "RETICULATE_PYTHON is unset."
+         reason = "RETICULATE_PYTHON and RETICULATE_PYTHON_FALLBACK are unset."
       )
    }
    else
@@ -123,7 +126,7 @@
    }
    
    # check some pre-defined environment variables
-   vars <- c("RENV_PYTHON", "RETICULATE_PYTHON")
+   vars <- c("RENV_PYTHON", "RETICULATE_PYTHON", "RETICULATE_PYTHON_FALLBACK")
    for (var in vars)
    {
       value <- Sys.getenv(var, unset = NA)
@@ -143,6 +146,59 @@
    prefsPython <- .rs.readUiPref("python_path")
    if (file.exists(prefsPython))
       return(path.expand(prefsPython))
+   
+   # on Windows, help users find a default version of Python if possible
+   if (.rs.platform.isWindows)
+   {
+     pythonPath <- .rs.python.findWindowsPython()
+     if (file.exists(pythonPath))
+       return(pythonPath)
+   }
+   
+   # look for python + python3 on the PATH
+   if (!.rs.platform.isWindows)
+   {
+     python3 <- Sys.which("python3")
+     if (nzchar(python3) && python3 != "/usr/bin/python3")
+       return(python3)
+     
+     python <- Sys.which("python")
+     if (nzchar(python) && python != "/usr/bin/python")
+     {
+       info <- .rs.python.interpreterInfo(python, NULL)
+       version <- numeric_version(info$version, strict = FALSE)
+       if (!is.na(version) && version >= "3.2")
+         return(python)
+     }
+   }
+   
+   # if the user has Anaconda installed, then try auto-activating
+   # the base environment of that Anaconda installation
+   conda <- .rs.python.findCondaBinary()
+   if (file.exists(conda))
+   {
+     pythonPath <- if (.rs.platform.isWindows) "../python.exe" else "../bin/python"
+     python <- file.path(dirname(conda), pythonPath)
+     if (file.exists(python))
+       return(python)
+   }
+   
+   # fall back to versions of python in /usr/bin if available
+   if (!.rs.platform.isWindows)
+   {
+     python3 <- Sys.which("python3")
+     if (nzchar(python3) && python3 == "/usr/bin/python3")
+       return(python3)
+     
+     python <- Sys.which("python")
+     if (nzchar(python) && python == "/usr/bin/python")
+     {
+       info <- .rs.python.interpreterInfo(python, NULL)
+       version <- numeric_version(info$version, strict = FALSE)
+       if (!is.na(version) && version >= "3.2")
+         return(python)
+     }
+   }
    
    # no python found; return empty string placeholder
    ""
@@ -229,8 +285,8 @@
          .rs.prependToPath(dirname(condaPath))
    }
    
-   # also set RETICULATE_PYTHON so this python is used by default
-   Sys.setenv(RETICULATE_PYTHON = pythonPath)
+   # also set RETICULATE_PYTHON_FALLBACK so this python is used by default
+   Sys.setenv(RETICULATE_PYTHON_FALLBACK = pythonPath)
    
    # return path to python
    invisible(pythonPath)

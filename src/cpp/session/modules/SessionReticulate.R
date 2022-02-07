@@ -2077,6 +2077,11 @@ options(reticulate.repl.teardown = function()
    if (!is.null(python))
       return(path.expand(python))
    
+   # Use existing RETICULATE_PYTHON_FALLBACK if set
+   python <- Sys.getenv("RETICULATE_PYTHON_FALLBACK", unset = NA)
+   if (!is.na(python))
+     return(python)
+   
    # if reticulate is installed, then try to load it and ask what
    # version of Python it would choose to bind to.
    #
