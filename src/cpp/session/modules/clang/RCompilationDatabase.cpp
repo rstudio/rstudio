@@ -290,24 +290,25 @@ std::vector<std::string> parseCompilationResults(const std::string& results)
       if (regex_utils::search(line, re))
       {
          // extract compilation args
-         std::vector<std::string> args = extractCompileArgs(line);
-
-#ifdef _WIN32
-         // remove collision with built-in compilation arguments
-         // (we need to ensure system headers are included in the right order)
-         auto version = r::version_info::currentRVersion();
-         if (version.versionMajor() == 4 && version.versionMinor() >= 2)
-         {
-            for (auto&& arg : args)
-               if (arg.find("x86_64-w64-mingw32.static.posix") == std::string::npos)
-                  compileArgs.push_back(arg);
-         }
-#endif
-
+         compileArgs = extractCompileArgs(line);
+         
          // we found the compilation line; we're done parsing
          break;
       }
    }
+   
+#ifdef _WIN32
+   // remove collision with built-in compilation arguments
+   // (we need to ensure system headers are included in the right order)
+   auto version = r::version_info::currentRVersion();
+   if (version.versionMajor() == 4 && version.versionMinor() >= 2)
+   {
+      core::algorithm::expel_if(compileArgs, [](const std::string& arg)
+      {
+         return arg.find("x86_64-w64-mingw32.static.posix") != std::string::npos;
+      });
+   }
+#endif
 
    if (verbose(3))
    {
