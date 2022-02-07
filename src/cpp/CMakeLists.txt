@@ -640,8 +640,6 @@ else()
       # add desktop subprojects if we aren't building in server only mode
       if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
          add_subdirectory(diagnostics)
-      endif()
-      if(RSTUDIO_DESKTOP)
          add_subdirectory(desktop)
       endif()
 

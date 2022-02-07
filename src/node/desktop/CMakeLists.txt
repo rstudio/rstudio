@@ -26,19 +26,25 @@ endif()
 include("${CMAKE_CURRENT_LIST_DIR}/../CMakeNodeTools.txt")
 
 # ensure yarn and node are on the path
-set(MODIFIED_PATH "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")
+if (NOT WIN32)
+   set(MODIFIED_PATH "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")
+endif()
 
-# copy sources to build directory. note that the build directory cannot
-# be the "true" CMake directory as some files are resolved relative to
-# the desktop project's relative path in the application structure
 set(ELECTRON_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "")
-set(ELECTRON_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}" CACHE INTERNAL "")
-file(MAKE_DIRECTORY "${ELECTRON_BUILD_DIR}")
-file(
-   COPY "${CMAKE_CURRENT_SOURCE_DIR}/"
-   DESTINATION "${ELECTRON_BUILD_DIR}/"
-   REGEX "/out$" EXCLUDE
-   REGEX "/node_modules$" EXCLUDE)
+if (APPLE)
+   # copy sources to build directory. note that the build directory cannot
+   # be the "true" CMake directory as some files are resolved relative to
+   # the desktop project's relative path in the application structure
+   set(ELECTRON_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}" CACHE INTERNAL "")
+   file(MAKE_DIRECTORY "${ELECTRON_BUILD_DIR}")
+   file(
+      COPY "${CMAKE_CURRENT_SOURCE_DIR}/"
+      DESTINATION "${ELECTRON_BUILD_DIR}/"
+      REGEX "/out$" EXCLUDE
+      REGEX "/node_modules$" EXCLUDE)
+else()
+   set(ELECTRON_BUILD_DIR "${ELECTRON_SOURCE_DIR}" CACHE INTERNAL "")
+endif()
 
 # define source dependencies
 file(GLOB_RECURSE DESKTOP_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.ts")
@@ -47,13 +53,27 @@ list(APPEND DESKTOP_SOURCES package.json forge.config.js)
 # define custom command for building RStudio with Electron
 # note that OUTPUT tells CMake that this command should be used
 # if that output does not exist and needs to be created
-add_custom_command(
-   OUTPUT "${ELECTRON_BUILD_DIR}/out"
-   DEPENDS "${DESKTOP_SOURCES}"
-   COMMENT "Building desktop (Electron ${UNAME_M})"
-   WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
-   COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${YARN} package
-)
+if (WIN32)
+
+   add_custom_command(
+      OUTPUT "${ELECTRON_BUILD_DIR}/out"
+      DEPENDS "${DESKTOP_SOURCES}"
+      COMMENT "Building desktop (Electron ${UNAME_M})"
+      WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+      COMMAND ${YARN} package
+   )
+
+else()
+
+   add_custom_command(
+      OUTPUT "${ELECTRON_BUILD_DIR}/out"
+      DEPENDS "${DESKTOP_SOURCES}"
+      COMMENT "Building desktop (Electron ${UNAME_M})"
+      WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
+      COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${YARN} package
+   )
+
+endif()
 
 # define a target, indicating that building this target
 # requires that aforementioned OUTPUT file
@@ -69,3 +89,7 @@ if(TARGET gwt_build)
    add_dependencies(electron_build gwt_build)
 endif()
 
+# install binary
+if (WIN32)
+   install(DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-win32-x64/" DESTINATION "${RSTUDIO_INSTALL_ELECTRON}")
+endif()

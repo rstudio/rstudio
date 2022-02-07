@@ -71,9 +71,14 @@ if(UNIX)
       COMMAND uname -m
       OUTPUT_VARIABLE UNAME_M
       OUTPUT_STRIP_TRAILING_WHITESPACE)
-   message(STATUS "Machine architecture: ${UNAME_M}")
 
+elseif(WIN32)
+   set(UNAME_M $ENV{PROCESSOR_ARCHITECTURE})
+else()
+   set(UNAME_M UnknownArchitecture)
 endif()
+
+message(STATUS "Machine architecture: ${UNAME_M}")
 
 # default to debug builds
 if(NOT CMAKE_BUILD_TYPE)
@@ -289,12 +294,22 @@ if (APPLE)
       set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources)
    endif()
 else()
-   if (RSTUDIO_SESSION_WIN32)
-     set(RSTUDIO_INSTALL_BIN x86)
+   if (RSTUDIO_ELECTRON)
+      if (RSTUDIO_SESSION_WIN32)
+         set(RSTUDIO_INSTALL_BIN resources/app/bin/x86)
+      else()
+         set(RSTUDIO_INSTALL_BIN resources/app/bin)
+      endif()
+      set(RSTUDIO_INSTALL_SUPPORTING resources/app)
+      set(RSTUDIO_INSTALL_ELECTRON .)
    else()
-     set(RSTUDIO_INSTALL_BIN bin)
+      if (RSTUDIO_SESSION_WIN32)
+         set(RSTUDIO_INSTALL_BIN x86)
+      else()
+         set(RSTUDIO_INSTALL_BIN bin)
+      endif()
+      set(RSTUDIO_INSTALL_SUPPORTING .)
    endif()
-   set(RSTUDIO_INSTALL_SUPPORTING .)
 endif()
 
 # if the install prefix is /usr/local then tweak as appropriate

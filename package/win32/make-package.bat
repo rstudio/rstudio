@@ -13,6 +13,7 @@ if "%1" == "/?" goto :showhelp
 for %%A in (%*) do (
       if /I "%%A" == "clean" set CLEANBUILD=1
       if /I "%%A" == "quick" set QUICK=1
+      if /I "%%A" == "nozip" set NOZIP=1
       if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
       if /I "%%A" == "nogwt" set BUILD_GWT=0
 )
@@ -51,6 +52,14 @@ if "%CMAKE_BUILD_TYPE%" == "Debug" set BUILD_DIR=build-debug
 
 REM perform 64-bit build
 cd "%PACKAGE_DIR%"
+
+REM Select the appropriate NSIS template
+if "%RSTUDIO_TARGET%" == "Electron" (
+      copy cmake\modules\NSIS.template.in.electron cmake\modules\NSIS.template.in
+) else (
+      copy cmake\modules\NSIS.template.in.qt cmake\modules\NSIS.template.in
+)
+
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
 cd "%BUILD_DIR%"
 
@@ -58,6 +67,8 @@ REM Package these files into a shorter path to workaround windows max path of 26
 REM Must match CPACK_PACKAGE_DIRECTORY set in rstudio/package/win32/CMakeLists.txt
 set PKG_TEMP_DIR=c:\temp\ide-build
 if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Packages"
+
+
 
 REM Configure and build the project. (Note that Windows / MSVC builds require
 REM that we specify the build type both at configure time and at build time)
@@ -88,18 +99,18 @@ call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || go
 REM create packages
 cd "%BUILD_DIR%"
 if not defined QUICK cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
-if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
+if not defined NOZIP (
+      if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
+)
 cd ..
 
-echo "Before moving files in %PKG_TEMP_DIR%:"
-dir "%PKG_TEMP_DIR%"
 move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
 move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
-echo "After moving files to %PACKAGE_DIR%\%BUILD_DIR%:"
-dir "%PACKAGE_DIR%\%BUILD_DIR%"
 
 REM emit NSIS error output if present
-if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
+if not defined QUICK (
+      if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
+)
 
 REM reset modified environment variables (PATH)
 endlocal
@@ -110,9 +121,10 @@ echo Failed to build RStudio! Error: %ERRORLEVEL%
 exit /b %ERRORLEVEL%
 
 :showhelp
-echo make-package [clean] [quick] [electron] [nogwt]
+echo make-package [clean] [quick] [nozip] [electron] [nogwt]
 echo     clean: full rebuild
 echo     quick: skip creation of setup package
+echo     nozip: skip creation of ZIP file
 echo     electron: build Electron instead of Qt desktop (NYI)
 echo     nogwt: use results of last GWT build
 exit /b 0
