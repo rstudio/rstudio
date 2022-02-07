@@ -19,7 +19,9 @@ import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppMenuItem;
 import org.rstudio.core.client.command.CommandHandler;
+import org.rstudio.core.client.command.impl.DesktopMenuCallback;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -129,6 +131,10 @@ public class MRUList
       if (hideClearOnEmpty_)
          clearCommand_.setVisible(clearCommand_.isEnabled());
       manageCommands(mruEntries_, mruCmds_);
+      if (Desktop.hasDesktopFrame())
+      {
+         DesktopMenuCallback.commitCommandShortcuts();
+      }
    }
 
    protected void manageCommands(List<String> entries, AppCommand[] commands)
