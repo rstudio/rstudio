@@ -355,8 +355,9 @@ test_context("PosixSystemTests")
 
 User s_testUser;
 group::Group s_testGroup;
+group::Group s_testNonMemberGroup;
 
-void initUserAndGroup(std::string username, std::string groupname)
+void initUserAndGroup(std::string username, std::string groupname, std::string nonmember_groupname)
 {
    bool isRoot = core::system::effectiveUserIsRoot();
    CHECK(isRoot);
@@ -371,8 +372,16 @@ void initUserAndGroup(std::string username, std::string groupname)
       ::_exit(1);
    }
 
-   // get group info if one was provided
+   // get group info. user should be a member of this group.
    error = group::groupFromName(groupname, &s_testGroup);
+   if (error)
+   {
+      LOG_ERROR(error);
+      ::_exit(1);
+   }
+
+   // get secondary group info. user should not be a member of this group.
+   error = group::groupFromName(nonmember_groupname, &s_testNonMemberGroup);
    if (error)
    {
       LOG_ERROR(error);
@@ -385,10 +394,10 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
    test_that("init")
    {
 #ifdef __linux__
-      initUserAndGroup("nobody", "nogroup");
+      initUserAndGroup("nobody", "nogroup", "users");
 #endif // __linux__
 #ifdef __APPLE__
-      initUserAndGroup("nobody", "everyone");
+      initUserAndGroup("nobody", "nobody", "daemon");
 #endif // __APPLE__
    }
 
@@ -437,6 +446,16 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
       error = restorePriv();
       expect_true(error == Success());
    }
+
+   test_that("temporarilyDropPriv checks group membership with alternate group")
+   {
+      // try dropping privs to a target group that target user does not belong to
+      Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), s_testNonMemberGroup.name, false);
+      expect_true(error.getCode() == boost::system::errc::permission_denied);
+
+      error = restorePriv();
+      expect_true(error == Success());
+   }
 }
 
 
@@ -445,10 +464,10 @@ TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
    test_that("init")
    {
 #ifdef __linux__
-      initUserAndGroup("nobody", "nogroup");
+      initUserAndGroup("nobody", "nogroup", "users");
 #endif // __linux__
 #ifdef __APPLE__
-      initUserAndGroup("nobody", "everyone");
+      initUserAndGroup("nobody", "nobody", "daemon");
 #endif // __APPLE__
    }
 
@@ -478,13 +497,18 @@ TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
    test_that("init")
    {
 #ifdef __linux__
-      // TODO: This isn't a great test case on linux because nogroup is nobody's primary group.
-      // Ideally there would be an alternate group we could use, but no others exist by default.
-      initUserAndGroup("nobody", "nogroup");
+      initUserAndGroup("nobody", "nogroup", "users");
 #endif // __linux__
 #ifdef __APPLE__
-      initUserAndGroup("nobody", "everyone");
+      initUserAndGroup("nobody", "nobody", "daemon");
 #endif // __APPLE__
+   }
+
+   test_that("permanentlyDropPriv checks group membership with alternate group")
+   {
+      // try dropping privs to a target group that target user does not belong to
+      Error error = permanentlyDropPriv(s_testUser.getUsername().c_str(), s_testNonMemberGroup.name);
+      expect_true(error.getCode() == boost::system::errc::permission_denied);
    }
 
    test_that("permanentlyDropPriv uses alternate group")
@@ -502,7 +526,7 @@ TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
       // check real and effective group
       gid_t rgid = getgid();
       gid_t egid = getegid();
-      // since we didn't provide a target group, we expect the target user's primary group
+      // since we provided a target group, we now expect the target group
       expect_true(rgid == s_testGroup.groupId);
       expect_true(egid == s_testGroup.groupId);
    }
