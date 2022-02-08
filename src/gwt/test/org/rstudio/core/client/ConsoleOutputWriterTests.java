@@ -17,7 +17,10 @@ package org.rstudio.core.client;
 import java.util.List;
 
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.console.model.VirtualConsoleServerOperations;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
@@ -81,12 +84,21 @@ public class ConsoleOutputWriterTests extends GWTTestCase
       public final boolean screenReaderEnabled_ = false;
    }
 
+   private static class FakeVirtualConsoleServerOperations implements VirtualConsoleServerOperations
+   {
+
+      @Override
+      public void consoleFollowHyperlink(String url, String text, String params,
+            ServerRequestCallback<Void> requestCallback) {}
+      
+   }
+
    private static class VCFactory implements VirtualConsoleFactory
    {
       @Override
       public VirtualConsole create(Element elem)
       {
-         return new VirtualConsole(elem, new FakePrefs());
+         return new VirtualConsole(elem, new FakePrefs(), new FakeVirtualConsoleServerOperations());
       }
    }
 
