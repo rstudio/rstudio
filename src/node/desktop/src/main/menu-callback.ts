@@ -257,7 +257,7 @@ export class MenuCallback extends EventEmitter {
         const itemTemplate = this.menuItemTemplates.get(item);
         if (!itemTemplate) {
           // no itemTemplate found (separators, for example)
-          targetMenu.append(item);
+          this.addToMenu(targetMenu, item);
           continue;
         }
 
@@ -285,14 +285,33 @@ export class MenuCallback extends EventEmitter {
         }
 
         this.menuItemTemplates.set(newMenuItem, newItemTemplate);
-        targetMenu.append(newMenuItem);
+        this.addToMenu(targetMenu, newMenuItem);
       }
+
+      targetMenu.items = targetMenu.items.filter((item, idx, arr) => {
+        if (item.type !== 'separator') {
+          return true;
+        }
+        const prevItem = arr[idx - 1];
+        return (
+          idx !== 0 && // no separators at the top
+          prevItem.type !== 'separator' && // no consecutive separators
+          idx != arr.length - 1 // no separators at the bottom
+        );
+      });
     };
 
     recursiveCopy(mainMenu, newMenu);
     this.mainMenu = newMenu;
 
     Menu.setApplicationMenu(this.mainMenu);
+  }
+
+  addToMenu(menu: Menu, item: MenuItem) {
+    // invisible items are not added because it interferes with the separator logic
+    if (item.visible) {
+      menu.append(item);
+    }
   }
 
   addCommand(

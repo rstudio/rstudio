@@ -14,9 +14,9 @@ module.exports = {
     sourceType: 'module',
   },
 
-  plugins: ['@typescript-eslint'],
+  plugins: ['@typescript-eslint', 'prettier'],
 
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
 
   rules: {
     'no-empty-function': 1, // will only show a warning
