@@ -488,25 +488,34 @@ if(WIN32)
 
 endif()
 
-if(WIN32)
-    set(RSESSION_RC "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc")
-endif()
-
 # define executable
-add_stripped_executable(
-   rsession
-   ${RSESSION_RC}
-   ${SESSION_SOURCE_FILES}
-   ${SESSION_HEADER_FILES})
-
-# define UTF-8 executable for Windows
 if(WIN32)
-   set(RSESSION_RC "${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc")
+
+   # define shared object library (avoid re-compiling source files twice)
+   add_library(rsession-objects OBJECT
+       ${SESSION_SOURCE_FILES}
+       ${SESSION_HEADER_FILES})
+
+   # main executable
+   add_stripped_executable(
+      rsession
+      "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
+      $<TARGET_OBJECTS:rsession-objects>)
+
+   # UTF-8 alternative
    add_stripped_executable(
       rsession-utf8
+      "${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc"
+      $<TARGET_OBJECTS:rsession-objects>)
+
+else()
+
+   add_stripped_executable(
+      rsession
       ${RSESSION_RC}
       ${SESSION_SOURCE_FILES}
       ${SESSION_HEADER_FILES})
+
 endif()
 
 # skip libR RPATH at development time
