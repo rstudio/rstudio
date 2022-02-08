@@ -57,7 +57,7 @@
          <rw:FormListBox ui:field="listPresetFilePatterns_"
                     styleName="{style.presetFilePatterns}">
             <g:item value=""><ui:msg key="allFiles">All Files</ui:msg></g:item>
-            <g:item value="*.r, *.R, *.rnw, *.Rnw, *.rmd, *.Rmd, *.rmarkdown, *.Rmarkdown, *.qmd, *.Qmd, *.md, *.rhtml, *.Rhtml, *.h, *.hpp, *.c, *.cpp"><ui:msg key="commonRSourceFiles">Common R source files (R, C/C++, Rnw, Rmd, Rhtml)</ui:msg></g:item>
+            <g:item value="*.r, *.R, *.rnw, *.Rnw, *.rmd, *.Rmd, *.rmarkdown, *.Rmarkdown, *.qmd, *.Qmd, *.md, *.rhtml, *.Rhtml, *.h, *.hpp, *.c, *.cpp"><ui:msg key="commonRSourceFiles">Common source files (R, C/C++, Markdown, Rnw, Rhtml)</ui:msg></g:item>
             <g:item value="*.r, *.R"><ui:msg key="rScripts">R Scripts</ui:msg></g:item>
             <g:item value="packageSource"><ui:msg key="packageSources">Package Sources (R/ , src/)</ui:msg></g:item>
             <g:item value="packageTests"><ui:msg key="packageTests">Package Tests (tests/)</ui:msg></g:item>
