@@ -419,7 +419,7 @@ public class VirtualConsole
                      end,
                      overlap.clazz,
                      text.substring((text.length() - (amountTrimmed - range.length))),
-                     preserveHTML_
+                     preserveHTML_,
                      overlap.hyperlink_);
                insertions.add(remainder);
                if (parent_ != null)
