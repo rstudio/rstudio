@@ -3,6 +3,7 @@
 ### New
 - Source marker `message` can contain ANSI SGR codes for setting style and color (#9010)
 - Linux/MacOS: Executing a code selection that encounters an error will stop execution of remaining code (#3014)
+- Added support for hyperlinks in the console and build pane (#1941)
 
 #### R
 - Added support for using the AGG renderer (as provided by the ragg package) as a graphics backend for inline plot execution; also added support for using the backend graphics device requested by the knitr `dev` chunk option (#9931)
