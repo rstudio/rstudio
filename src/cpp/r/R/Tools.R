@@ -28,13 +28,10 @@ assign(".rs.toolsEnv", function()
 }, envir = .rs.Env)
 
 # target environment for symbol lookup, with all necessary base packages
-.rs.ApiEnv <- new.env(parent = as.environment("package:stats"))
-
-# allow access to api env from helper function
-assign(".rs.apiEnv", function()
+assign(".rs.symbolLookupEnv", function()
 {
-   .rs.ApiEnv
-}, envir = .rs.ApiEnv)
+   new.env(parent = .rs.toolsEnv())
+}, envir = .rs.Env)
 
 #' Add a function to the 'tools:rstudio' environment.
 #' 
@@ -91,7 +88,9 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("addApiFunction", function(name, FN)
 {
    fullName <- paste("api.", name, sep = "")
-   .rs.addFunction(fullName, FN, envir = .rs.ApiEnv)
+   envir <- .rs.symbolLookupEnv()
+   environment(FN) <- envir
+   .rs.addFunction(fullName, FN, envir = envir)
 })
 
 .rs.addFunction("setVar", function(name, var)
