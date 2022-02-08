@@ -196,9 +196,12 @@ if has-scope "core"; then
 
    # Invoke the *DropPrivTests separately because they must run as root
    # We need separate invokations because we cannot restore privs between test cases of PermanentlyDropPrivs
-   runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} TemporarilyDropPrivTests"
-   runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} PermanentlyDropPrivPrimaryTests"
-   runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} PermanentlyDropPrivAlternateTests"
+   # Skip these tests in CI for MacOS builds
+   if [ -z "${JENKINS_URL}" ] || [ "$(uname)" != "Darwin" ]; then
+      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} TemporarilyDropPrivTests"
+      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} PermanentlyDropPrivPrimaryTests"
+      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} PermanentlyDropPrivAlternateTests"
+   fi
 
    if [ -e "@CMAKE_CURRENT_BINARY_DIR@/server_core/rstudio-server-core-tests" ]; then
       section "Running 'server_core' tests"

@@ -12,6 +12,9 @@
 - Fixed notebook execution handling of knitr `message=FALSE` chunk option to suppress messages if the option is set to FALSE (#9436)
 - Fixed plot export to PDF options (#9185)
 - `.rs.formatDataColumnDispatch()` iterates through classes of `x` (#10073)
+- Fixed Find in Files whole-word replace option, so that when "Whole word" is checked, only file matches containing the whole word are replaced, as displayed in the preview (#9813)
+- Adds support for POSIX extended regular expressions with backreferences in Find in Files find and replace modes, so that special regex characters such as `+` and `?`, `|`, `(`, etc do not need to be escaped, and other ERE escape sequences such as `\b`, `\w`, and `\d` are now supported (#9344). This matches the behavior of R's own `grep()` function, but note that backslashes do not need to be escaped (as they typically are in R strings).
+- `.rs.api.navigateToFile()` is now synchronous and returns document id (#8938)
 
 ### Breaking
 
@@ -30,6 +33,8 @@
 * Add ability to insert citation for R Packages (#8921)
 * Fixed BetterBibTeX detection on Linux (#10007)
 * Fixed DT tables being squashed in the viewer pane (#10276)
+* "Clean and Rebuild" and "Install and Restart" have been merged into "Install Package", the "Project Options > Build" gains a "clean before install" option to toggle the --preclean flag. 
+* The Build toolbar changes to "Install | Test | Check | More v"
 
 #### RStudio Workbench
 
@@ -47,13 +52,18 @@
 * Disable session SSL for Code Server 3.9.3 and support auth changes in Code Server 3.11.0 (Pro #3111)
 * Show user's full name, or proxied auth display name, in Project Sharing presence indicator (Pro #3121)
 * Allow users to specify R version in launcher jobs (Pro #1046)
+* Show additional environment information in the IDE Job Launcher dialog (Pro #3110)
+* Allow users to specify custom path to R_HOME in the IDE Job Launcher when the target cluster or image do not match the current environment (Pro #3110)
 * Fixed bug with customized display names and launcher sessions (Pro #3217)
+* Removed some unnecessary warnings in the RStudio VS Code Extension when using Dash (Ext #98)
+* Added a link to a help article about using VS Code Sessions in RStudio Workbench
 
 #### R
 
 * RStudio now supports the experimental UTF-8 UCRT builds of R (#9824)
 * Preliminary support for R graphics engine version 15 in R 4.2.0. (#10058)
 * Default file download method in Windows for R 4.2 and above changed from `wininet` to `libcurl` (#10163)
+* `list.files()` and `list.dirs()` now handle international characters on Windows (#10451)
 
 #### Misc
 
@@ -88,6 +98,7 @@
 * Fixed Duplicate --session-collab-server when launching R session (pro #3106)
 * Fixed errors when opening or saving Rmarkdown documents when R is busy (#9868)
 * Fixed issue with SLES 12 builds using OpenSSL 1.1 instead of 1.0.2
+* The source button uses `cpp11::source_cpp()` on C++ files that have `[[cpp11::register]]` decorations (#10387)
 
 ### Breaking
 

@@ -34,7 +34,8 @@ public class YamlEditorContext extends JavaScriptObject
    {
    }
    
-   public static YamlEditorContext create(CompletionContext context,
+   public static YamlEditorContext create(boolean explicit,
+                                          CompletionContext context,
                                           DocDisplay docDisplay)
    {
       // determine file type
@@ -70,14 +71,15 @@ public class YamlEditorContext extends JavaScriptObject
         context.getQuartoEngine(),
         docDisplay.getCurrentLineUpToCursor(),
         docDisplay.getCode(),
-        docDisplay.getCursorPosition()
+        docDisplay.getCursorPosition(),
+        explicit
       );
    }
    
    private static native YamlEditorContext create(
      String path, String filetype, boolean embedded,
      String[] formats, String[] projectFormats, String engine,
-     String line, String code, Position position) /*-{
+     String line, String code, Position position, boolean explicit) /*-{
      return { 
         path: path,
         filetype: filetype,
@@ -87,7 +89,8 @@ public class YamlEditorContext extends JavaScriptObject
         engine: engine,
         line: line, 
         code: code,
-        position: position
+        position: position,
+        explicit: explicit
      };
   }-*/;
    
@@ -113,6 +116,10 @@ public class YamlEditorContext extends JavaScriptObject
    
    public native final Position getPosition() /*-{
       return this.position;
+   }-*/;
+   
+   public native final boolean getExplicit() /*-{
+      return this.explicit;
    }-*/;
    
 }

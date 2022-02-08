@@ -847,6 +847,9 @@ void detectReposChanges()
 
 void onDetectChanges(module_context::ChangeSource source)
 {
+   if (!core::thread::isMainThread())
+      return;
+
    if (source == module_context::ChangeSourceREPL)
       detectReposChanges();
 

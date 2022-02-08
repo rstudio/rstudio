@@ -137,6 +137,11 @@ if(NOT DEFINED RSTUDIO_DESKTOP)
    endif()
 endif()
 
+# make sure RSTUDIO_ELECTRON is defined so it can be used in configure_file
+if(NOT DEFINED RSTUDIO_ELECTRON)
+   set(RSTUDIO_ELECTRON FALSE)
+endif()
+
 # override if requested
 if(RSTUDIO_NO_DESKTOP)
    set(RSTUDIO_DESKTOP FALSE)
@@ -275,9 +280,14 @@ endif()
 message(STATUS "Using RStudio tools root: ${RSTUDIO_TOOLS_ROOT}")
 
 # special install directories for apple desktop
-if (APPLE AND RSTUDIO_DESKTOP)
-   set(RSTUDIO_INSTALL_BIN RStudio.app/Contents/MacOS)
-   set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources)
+if (APPLE)
+   if (RSTUDIO_ELECTRON)
+      set(RSTUDIO_INSTALL_BIN        RStudio.app/Contents/Resources/app/bin)
+      set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources/app)
+   else()
+      set(RSTUDIO_INSTALL_BIN        RStudio.app/Contents/MacOS)
+      set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources)
+   endif()
 else()
    if (RSTUDIO_SESSION_WIN32)
      set(RSTUDIO_INSTALL_BIN x86)
@@ -419,7 +429,18 @@ if(APPLE)
 
    # set OPENSSL_ROOT_DIR if unset
    if(NOT DEFINED OPENSSL_ROOT_DIR)
-      set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl" CACHE INTERNAL "")
+
+      # Homebrew now defaults to OpenSSL 3, but some older formulae that
+      # we use require OpenSSL 1.1. Try to force CMake to use that OpenSSL.
+      file(GLOB OPENSSL_ROOT_CANDIDATE "${HOMEBREW_PREFIX}/Cellar/openssl@1.1/*")
+      if(EXISTS "${OPENSSL_ROOT_CANDIDATE}")
+         set(OPENSSL_ROOT_DIR "${OPENSSL_ROOT_CANDIDATE}" CACHE INTERNAL "")
+      elseif(EXISTS "${HOMEBREW_PREFIX}/opt/openssl@1.1")
+         set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl@1.1" CACHE INTERNAL "")
+      else()
+         set(OPENSSL_ROOT_DIR "${HOMEBREW_PREFIX}/opt/openssl" CACHE INTERNAL "")
+      endif()
+
    endif()
 
 endif()

@@ -43,31 +43,31 @@ public class HelpButton extends FocusWidget
    
    public static void addHelpButton(SelectWidget selectWidget,
                                     String rstudioLinkName,
-                                    String title)
+                                    String altText)
    {
-      addHelpButton(selectWidget, rstudioLinkName, title, kDefaultTopMargin);
+      addHelpButton(selectWidget, rstudioLinkName, altText, kDefaultTopMargin);
    }
    
    public static void addHelpButton(SelectWidget selectWidget,
                                     String rstudioLinkName,
-                                    String title,
+                                    String altText,
                                     int marginTop)
    {
-      selectWidget.addWidget(createHelpButton(rstudioLinkName, title, marginTop));
+      selectWidget.addWidget(createHelpButton(rstudioLinkName, altText, marginTop));
    }
 
-   public static HelpButton createHelpButton(String rstudioLinkName, String title)
+   public static HelpButton createHelpButton(String rstudioLinkName, String altText)
    {
-      return createHelpButton(rstudioLinkName, title, kDefaultTopMargin);
+      return createHelpButton(rstudioLinkName, altText, kDefaultTopMargin);
    }
    
   
-   public static HelpButton createHelpButton(String rstudioLinkName, String title, int marginTop)
+   public static HelpButton createHelpButton(String rstudioLinkName, String altText, int marginTop)
    {
-      HelpButton helpButton = new HelpButton(rstudioLinkName, false, title);
+      HelpButton helpButton = new HelpButton(rstudioLinkName, false, altText);
       Style style = helpButton.getElement().getStyle();
       style.setMarginTop(marginTop, Unit.PX);
-      style.setMarginLeft(4, Unit.PX);
+      style.setMarginLeft(2, Unit.PX);
       return helpButton;
    }
    
@@ -84,53 +84,64 @@ public class HelpButton extends FocusWidget
 
    /**
     * @param rstudioLinkName
-    * @param title a11y name
+    * @param altText a11y name
     */
-   public HelpButton(String rstudioLinkName, String title)
+   public HelpButton(String rstudioLinkName, String altText)
    {
-      this(rstudioLinkName, true, title);
+      this(rstudioLinkName, true, altText);
    }
 
    /**
     * @param rstudioLinkName
     * @param includeVersionInfo
-    * @param title a11y name
+    * @param altText a11y name
     */
    public HelpButton(final String rstudioLinkName,
                      final boolean includeVersionInfo,
-                     final String title)
+                     final String altText)
    {
-      this(title, event -> {
+      this(altText, event -> {
          GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
          globalDisplay.openRStudioLink(rstudioLinkName, includeVersionInfo);
       });
    }
    
-   public HelpButton(final URL url, final String title)
+   public HelpButton(final URL url, final String altText)
    {
-      this(title, event -> {
+      this(altText, event -> {
          GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
          globalDisplay.openWindow(url.toString());
       });
    }
    
-   public HelpButton(String title, ClickHandler handler)
+   public HelpButton(String altText, ClickHandler handler)
    {
       ButtonElement button = Document.get().createPushButtonElement();
       button.setClassName("rstudio-HelpButton");
 
       Image helpImage = new Image(new ImageResource2x(ThemeResources.INSTANCE.help2x()));
       helpImage.getElement().getStyle().setCursor(Cursor.POINTER);
-      helpImage.setAltText(title);
+      helpImage.setAltText(altText);
       button.insertFirst(helpImage.getElement());
       setElement(button);
       
       addClickHandler(handler);
+
+      this.helpImage_ = helpImage;
    }
-   
 
    public HandlerRegistration addClickHandler(ClickHandler handler)
    {
       return addDomHandler(handler, ClickEvent.getType());
    }
+
+   public void setTitle(String title) {
+      this.helpImage_.setTitle(title);
+   }
+
+   public void setAltText(String altText) {
+      this.helpImage_.setAltText(altText);
+   }
+
+   private Image helpImage_;
 }

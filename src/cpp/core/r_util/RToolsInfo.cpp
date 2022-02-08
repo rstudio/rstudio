@@ -291,8 +291,8 @@ std::string RToolsInfo::url(const std::string& repos) const
 
    if (name() == "4.2")
    {
-      // TODO: waiting for stable CRAN link
-      url = "https://www.r-project.org/nosvn/winutf8/ucrt3/rtools42-RTVER.exe";
+      // TODO: replace with CRAN URL once available
+      url = "https://rstudio.org/links/rtools42";
    }
    else if (name() == "4.0")
    {

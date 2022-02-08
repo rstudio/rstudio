@@ -43,8 +43,10 @@ FORMULAS=(
    krb5
    libpq
    openjdk@11
-   openssl
+   openssl@1.1
    ninja
+   node
+   npm
    pidof
    postgresql
    r

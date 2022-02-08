@@ -379,7 +379,7 @@ public class VisualModeChunks implements ChunkDefinition.Provider
          JsArray<LintItem> items = chunkLint.get(chunk);
          if (items != null && items.length() > 0)
          {
-            chunk.showLint(items);
+            chunk.showLint(items, true);
          }
       }
    }

@@ -78,7 +78,9 @@ def s3_upload(type, flavor, os, arch) {
   def buildDest =  "s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
   
   // copy installer to s3
-  sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
+  retry(5) {
+    sh "aws s3 cp ${buildFolder}/${packageFile} ${buildDest}"
+  }
 
   // forward declare tarball filenames
   def tarballFile = ""
@@ -97,7 +99,9 @@ def s3_upload(type, flavor, os, arch) {
     ).trim()
 
     sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
-    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} ${buildDest}"
+    retry(5) {
+      sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile} ${buildDest}"
+    }
   }
 
   // update daily build redirect
@@ -177,11 +181,11 @@ def limit_builds(containers) {
 }
 
 def prepareWorkspace(){ // accessory to clean workspace and checkout
-  step([$class: 'WsCleanup'])
-  checkout scm
-  // record the commit for invoking downstream builds
-  rstudioBuildCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
-  sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
+    step([$class: 'WsCleanup'])
+    checkout scm
+    // record the commit for invoking downstream builds
+    rstudioBuildCommit = sh(returnStdout: true, script: 'git rev-parse HEAD').trim()
+    sh 'git reset --hard && git clean -ffdx' // lifted from rstudio/connect
 }
 
 // forward declare version vars
@@ -301,32 +305,14 @@ try {
               checkout scm
               withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "github_login")]) {
                 def github_args = "--build-arg GITHUB_LOGIN=${github_login}"
-                def dockerfile = "-f docker/jenkins/Dockerfile.windows"
-                def container
-                // the following is adapted from pullBuildPush with the
-                // omission of Unix-isms
-                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                  def image_cache
-                  def image_name = "jenkins/ide"
-                  def image_tag = "windows-${rstudioReleaseBranch}"
-                  def cache_tag = image_tag
-                  def build_args = github_args
-                  def docker_context = '.'
-                  try {
-                    image_cache = docker.image(image_name + ':' + cache_tag)
-                    retry(5) {
-                      image_cache.pull()
-                    }
-                  } catch(e) { // docker.image throws a generic exception.
-                    echo 'Windows container image not found; expect build to take a bit longer.'
-                  }
-
-                  echo 'Building Windows container image'
-                  container = docker.build(image_name + ':' + image_tag, "--cache-from ${image_cache.imageName()} ${build_args} ${dockerfile} ${docker_context}")
-
-                  echo 'Pushing Windows container'
-                  container.push()
-                }
+                pullBuildPush(image_name: 'jenkins/ide',
+                  dockerfile: "docker/jenkins/Dockerfile.windows",
+                  image_tag: "windows-${rstudioReleaseBranch}",
+                  build_args: github_args,
+                  build_arg_jenkins_uid: null, // Ensure linux-only step is not run on windows (id -u jenkins)
+                  build_arg_jenkins_gid: null, // Ensure linux-only step is not run on windows (id -g jenkins)
+                  build_arg_docker_gid: null, // Ensure linux-only step is not run on windows (stat -c %g /var/run/docker.sock)
+                  retry_image_pull: 5)
               }
             }
           }
@@ -376,11 +362,15 @@ try {
         parallel_containers["windows"] = {
           node('windows') {
             stage('prepare container') {
-               checkout scm
-               docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                 def image_tag = "windows-${rstudioReleaseBranch}"
-                 windows_image = docker.image("jenkins/ide:" + image_tag)
-               }
+              checkout scm
+              docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                def image_tag = "windows-${rstudioReleaseBranch}"
+                windows_image = docker.image("jenkins/ide:" + image_tag)
+
+                retry(5) {
+                  windows_image.pull()
+                }
+              }
             }
             windows_image.inside() {
               stage('dependencies') {
@@ -424,9 +414,12 @@ try {
                 bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.zip package\\win32\\build\\${packageName}.zip"
 
                 // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-                  bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
-                  bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
+                  retry(5) {
+                    bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
+                    bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
+                  }
                 }
 
               }
@@ -471,20 +464,16 @@ try {
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
           trigger_external_build('IDE/macos-pipeline')
+          trigger_external_build('IDE/macos-electron')
         }
 
         parallel parallel_containers
 
-        if (env.JOB_NAME == 'IDE/open-source-pipeline/main') {
+        // Ensure we don't build automation on the branches that don't exist
+        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline') &&
+            ("${rstudioReleaseBranch}" != "release-ghost-orchid") &&
+            ("${rstudioReleaseBranch}" != "v1.4-juliet-rose")) {
           trigger_external_build('IDE/qa-opensource-automation')
-        }
-
-        // trigger downstream pro artifact builds if we're finished building
-        // the pro variants
-        // additionally, run qa-autotest against the version we've just built
-        if (env.JOB_NAME == 'IDE/pro-pipeline/master') {
-          trigger_external_build('IDE/qa-autotest')
-          trigger_external_build('IDE/qa-automation')
         }
 
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"

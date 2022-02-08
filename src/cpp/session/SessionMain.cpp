@@ -127,6 +127,7 @@
 #include "modules/SessionAskSecret.hpp"
 #include "modules/SessionAuthoring.hpp"
 #include "modules/SessionBreakpoints.hpp"
+#include "modules/SessionCpp.hpp"
 #include "modules/SessionHTMLPreview.hpp"
 #include "modules/SessionClipboard.hpp"
 #include "modules/SessionCodeSearch.hpp"
@@ -554,6 +555,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::code_search::initialize)
       (modules::clipboard::initialize)
       (modules::clang::initialize)
+      (modules::cpp::initialize)
       (modules::connections::initialize)
       (modules::files::initialize)
       (modules::find::initialize)

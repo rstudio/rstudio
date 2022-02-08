@@ -1397,4 +1397,130 @@ public interface CoreClientConstants extends com.google.gwt.i18n.client.Messages
     @Key("chooseFileCaption")
     String chooseFileCaption();
 
+    /**
+     * Translated "Ctrl+".
+     *
+     * @return translated "Ctrl+"
+     */
+    @DefaultMessage("Ctrl+")
+    @Key("keyComboCtrl")
+    String keyComboCtrl();
+
+    /**
+     * Translated "Alt+".
+     *
+     * @return translated "Alt+"
+     */
+    @DefaultMessage("Alt+")
+    @Key("keyComboAlt")
+    String keyComboAlt();
+
+    /**
+     * Translated "Shift+".
+     *
+     * @return translated "Shift+"
+     */
+    @DefaultMessage("Shift+")
+    @Key("keyComboShift")
+    String keyComboShift();
+
+    /**
+     * Translated "Cmd+".
+     *
+     * @return translated "Cmd+"
+     */
+    @DefaultMessage("Cmd+")
+    @Key("keyComboCmd")
+    String keyComboCmd();
+
+    /**
+     * Translated "Enter".
+     *
+     * @return translated "Enter"
+     */
+    @DefaultMessage("Enter")
+    @Key("keyNameEnter")
+    String keyNameEnter();
+
+    /**
+     * Translated "Left".
+     *
+     * @return translated "Left"
+     */
+    @DefaultMessage("Left")
+    @Key("keyNameLeft")
+    String keyNameLeft();
+
+    /**
+     * Translated "Right".
+     *
+     * @return translated "Right"
+     */
+    @DefaultMessage("Right")
+    @Key("keyNameRight")
+    String keyNameRight();
+
+    /**
+     * Translated "Up".
+     *
+     * @return translated "Up"
+     */
+    @DefaultMessage("Up")
+    @Key("keyNameUp")
+    String keyNameUp();
+
+    /**
+     * Translated "Down".
+     *
+     * @return translated "Down"
+     */
+    @DefaultMessage("Down")
+    @Key("keyNameDown")
+    String keyNameDown();
+
+    /**
+     * Translated "Tab".
+     *
+     * @return translated "Tab"
+     */
+    @DefaultMessage("Tab")
+    @Key("keyNameTab")
+    String keyNameTab();
+
+    /**
+     * Translated "PageUp".
+     *
+     * @return translated "PageUp"
+     */
+    @DefaultMessage("PageUp")
+    @Key("keyNamePageUp")
+    String keyNamePageUp();
+
+    /**
+     * Translated "PageDown".
+     *
+     * @return translated "PageDown"
+     */
+    @DefaultMessage("PageDown")
+    @Key("keyNamePageDown")
+    String keyNamePageDown();
+
+    /**
+     * Translated "Backspace".
+     *
+     * @return translated "Backspace"
+     */
+    @DefaultMessage("Backspace")
+    @Key("keyNameBackspace")
+    String keyNameBackspace();
+
+    /**
+     * Translated "Space".
+     *
+     * @return translated "Space"
+     */
+    @DefaultMessage("Space")
+    @Key("keyNameSpace")
+    String keyNameSpace();
+
 }

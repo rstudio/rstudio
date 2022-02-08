@@ -15,7 +15,11 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.Command;
+import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintSource;
@@ -92,6 +96,18 @@ public class TextEditingTargetLintSource implements LintSource
       }
       else
       {
+         for (int i = 0; i < lint.length(); i++) {
+            LintItem lintItem = lint.get(i);
+            DivElement element = Document.get().createDivElement();
+            VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(element);
+
+            vc.setPreserveHTML(true);
+            vc.submit(lintItem.getText());
+            String renderedText = element.getInnerHTML();
+
+            lintItem.setText(renderedText);
+         }
+
          target_.getDocDisplay().showLint(lint);
       }
    }
@@ -102,6 +118,21 @@ public class TextEditingTargetLintSource implements LintSource
       // Returning nothing here causes the server to retrieve the code to
       // lint from the source database.
       return "";
+   }
+
+   @Override
+   public boolean lintOnSave()
+   {
+      // If the source editor is focused, we should lint when the document is saved.
+      if (target_.getDocDisplay().isFocused())
+         return true;
+
+      // Alternately, if this is the active tab and the visual editor is active, we should
+      // still lint on save; the lint results will be forward to the visual editor.
+      else if (target_.isActivated() && target_.isVisualEditorActive())
+         return true;
+
+      return false;
    }
 
    private final TextEditingTarget target_;

@@ -20,7 +20,7 @@ import { ElectronApplication, Page } from 'playwright';
 import { getWindowTitles, launch, setTimeoutPromise } from './int-utils';
 import { typeConsoleCommand } from './console';
 
-describe('Display secondary utility windows', () => {
+describe.skip('Display secondary utility windows', () => {
   let electronApp: ElectronApplication;
   let window: Page;
 

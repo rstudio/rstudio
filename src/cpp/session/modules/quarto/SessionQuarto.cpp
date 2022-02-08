@@ -55,6 +55,12 @@
 
 using namespace rstudio::core;
 
+// ignored unused functions when quarto not enabled
+#ifndef QUARTO_ENABLED
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 namespace rstudio {
 namespace session {
 
@@ -148,16 +154,6 @@ std::tuple<FilePath,Version> userInstalledQuarto()
    return std::make_tuple(FilePath(), Version());
 }
 
-#ifndef QUARTO_ENABLED
-
-void detectQuartoInstallation()
-{
-   return;
-}
-
-#else
-
-
 core::FilePath quartoConfigFilePath(const FilePath& dirPath)
 {
    FilePath quartoYml = dirPath.completePath("_quarto.yml");
@@ -206,13 +202,15 @@ bool projectHasQuartoContent()
    }
 }
 
+
 void detectQuartoInstallation()
 {
+#ifdef QUARTO_ENABLED
    // required quarto version (quarto features don't work w/o it)
-   const Version kQuartoRequiredVersion("0.3.32");
+   const Version kQuartoRequiredVersion("0.3.114");
 
    // recommended quarto version (a bit more pestery than required)
-   const Version kQuartoRecommendedVersion("0.3.32");
+   const Version kQuartoRecommendedVersion("0.3.114");
 
    // reset
    s_userInstalledPath = FilePath();
@@ -286,9 +284,9 @@ void detectQuartoInstallation()
    {
       showQuartoVersionWarning(embeddedVersion, kQuartoRequiredVersion);
    }
+#endif
 }
 
-#endif
 
 bool quartoIsInstalled()
 {
@@ -923,8 +921,9 @@ QuartoConfig quartoConfig(bool refresh)
             s_quartoConfig = QuartoConfig();
             return s_quartoConfig;
          }
+         string_utils::convertLineEndings(&result.stdOut, string_utils::LineEndingPosix);
          std::vector<std::string> paths;
-         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n\r"));
+         boost::algorithm::split(paths, result.stdOut, boost::algorithm::is_any_of("\n"));
          if (paths.size() >= 2)
          {
             s_quartoConfig.bin_path = string_utils::systemToUtf8(paths[0]);
@@ -1301,3 +1300,8 @@ Error initialize()
 } // namespace modules
 } // namespace session
 } // namespace rstudio
+
+#ifndef QUARTO_ENABLED
+#pragma GCC diagnostic pop
+#endif
+

@@ -234,7 +234,8 @@ void MenuCallback::addCommand(QString commandId,
                               QString label,
                               QString tooltip,
                               QString shortcut,
-                              bool checkable)
+                              bool checkable,
+                              bool isVisible)
 {
 
    adjustShortcutForPlatform(&shortcut);
@@ -292,6 +293,7 @@ void MenuCallback::addCommand(QString commandId,
       pAction->setToolTip(tooltip);
       if (checkable)
          pAction->setCheckable(true);
+      pAction->setVisible(isVisible);
 
       auto* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
       connect(pBinder, SIGNAL(manageCommand(QString, QAction*)),

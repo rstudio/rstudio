@@ -115,6 +115,11 @@ public class VirtualConsole
       virtualizedDisableOverride_ = override;
    }
 
+   public void setPreserveHTML(boolean preserveHTML)
+   {
+      preserveHTML_ = preserveHTML;
+   }
+
    public boolean isVirtualized()
    {
       return !virtualizedDisableOverride_ && prefs_.limitConsoleVisible() && parent_ != null;
@@ -260,7 +265,7 @@ public class VirtualConsole
       else
       {
          // create a new output range with this class
-         final ClassRange newRange = new ClassRange(cursor_, clazz, text, hyperlink_);
+         final ClassRange newRange = new ClassRange(cursor_, clazz, text, preserveHTML_, hyperlink_);
          appendChild(newRange.element);
          class_.put(cursor_, newRange);
       }
@@ -413,7 +418,8 @@ public class VirtualConsole
                ClassRange remainder = new ClassRange(
                      end,
                      overlap.clazz,
-                     text.substring((text.length() - (amountTrimmed - range.length))), 
+                     text.substring((text.length() - (amountTrimmed - range.length))),
+                     preserveHTML_
                      overlap.hyperlink_);
                insertions.add(remainder);
                if (parent_ != null)
@@ -781,11 +787,13 @@ public class VirtualConsole
    }
    private class ClassRange
    {
-      public ClassRange(int pos, String className, String text, Hyperlink hyperlink)
+      public ClassRange(int pos, String className, String text, boolean isHTML, Hyperlink hyperlink)
       {
          clazz  = className;
          start = pos;
          length = text.length();
+         isHTML_ = isHTML;
+        
          hyperlink_ = hyperlink;
          
          if (hyperlink_ == null) 
@@ -810,31 +818,43 @@ public class VirtualConsole
             element = anchor;
          }
 
-         element.setInnerText(text);
-
+         setText(text);
+        
          if (captureNewElements_)
             newElements_.add(element);
+      }
+
+      private void setText(String text)
+      {
+         if (isHTML_)
+         {
+            element.setInnerHTML(text);
+         }
+         else
+         {
+            element.setInnerText(text);
+         }
       }
 
       public void trimLeft(int delta)
       {
          length -= delta;
          start += delta;
-         element.setInnerText(element.getInnerText().substring(delta));
+         setText(element.getInnerText().substring(delta));
       }
 
       public void trimRight(int delta)
       {
          length -= delta;
          String text = element.getInnerText();
-         element.setInnerText(text.substring(0, text.length() - delta));
+         setText(text.substring(0, text.length() - delta));
       }
 
       public void appendLeft(String content, int delta)
       {
          length += content.length() - delta;
          start -= (content.length() - delta);
-         element.setInnerText(content +
+         setText(content +
                element.getInnerText().substring(delta));
       }
 
@@ -842,21 +862,21 @@ public class VirtualConsole
       {
          length += content.length() - delta;
          String text = text();
-         element.setInnerText(text.substring(0,
+         setText(text.substring(0,
                text.length() - delta) + content);
       }
 
       public void overwrite(String content, int pos)
       {
          String text = element.getInnerText();
-         element.setInnerText(
+         setText(
                text.substring(0, pos) + content +
                text.substring(pos + content.length()));
       }
 
       public String text()
       {
-         return element.getInnerText();
+         return isHTML_ ? element.getInnerHTML() : element.getInnerText();
       }
 
       public void clearText()
@@ -875,12 +895,16 @@ public class VirtualConsole
       public int start;
       public final Element element;
       public final Hyperlink hyperlink_;
+      private boolean isHTML_;
    }
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
 
    // only a select few panes should be virtualized. default it to off everywhere.
    private boolean virtualizedDisableOverride_ = true;
+
+   // allows &entity_name; entities like &amp;
+   private boolean preserveHTML_ = false;
 
    private final StringBuilder output_ = new StringBuilder();
    private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();

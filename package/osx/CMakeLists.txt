@@ -32,9 +32,20 @@ set(
    CACHE INTERNAL "")
 
 # developer-id code signing
-if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD AND NOT RSTUDIO_ELECTRON)
-   configure_and_install("cmake/fix-library-paths.cmake")
-   configure_and_install("cmake/codesign-package.cmake")
+if(RSTUDIO_PACKAGE_BUILD AND NOT RSESSION_ALTERNATE_BUILD)
+
+   if(RSTUDIO_ELECTRON)
+      configure_and_install("cmake/merge-electron.cmake")
+   endif()
+
+   configure_and_install("cmake/prepare-package.cmake")
+
+   if(RSTUDIO_ELECTRON)
+      configure_and_install("cmake/codesign-package-electron.cmake")
+   else()
+      configure_and_install("cmake/codesign-package.cmake")
+   endif()
+
 endif()
 
 # package attributes

@@ -1,7 +1,5 @@
-#!/usr/bin/env bash
-
 #
-# update-yarn
+# SessionCpp.R
 #
 # Copyright (C) 2022 by RStudio, PBC
 #
@@ -15,9 +13,20 @@
 #
 #
 
-set -e
-cd $(dirname "${BASH_SOURCE[0]}")/..
-source "../../../dependencies/tools/rstudio-tools.sh"
+.rs.addFunction("cppSourceFile", function(file)
+{
+   lines <- .rs.tryCatch(readLines(file, warn = FALSE))
+   call <- call("fun", file)
+   
+   if (is.character(lines) && any(grepl("cpp11::register", lines)))
+      call[[1L]] <- quote(cpp11::cpp_source)
+   else 
+      call[[1L]] <- quote(Rcpp::sourceCpp)
 
-section Installing/updating components...
-PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 yarn
+    deparse(call)
+})
+
+.rs.addJsonRpcHandler("cpp_source_file", function(file)
+{
+   .rs.api.sendToConsole(.rs.cppSourceFile(file))
+})

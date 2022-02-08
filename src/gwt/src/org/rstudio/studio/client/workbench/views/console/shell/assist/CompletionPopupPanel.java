@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -89,6 +90,20 @@ public class CompletionPopupPanel extends ThemedPopupPanel
          @Override
          public void onPreviewNativeEvent(NativePreviewEvent previewEvent)
          {
+            // any click outside the container or help popup should dismiss
+            // (we need this here b/c we don't seem to be getting onBlur
+            // events when the ace editor is in embedded mode
+            if (previewEvent.getTypeInt() == Event.ONMOUSEDOWN)
+            {
+               Element targetEl = previewEvent.getNativeEvent().getEventTarget().cast();
+               if (!help_.getElement().isOrHasChild(targetEl) &&
+                  (container_ == null) || 
+                  (container_.getElement() == null) || 
+                  !container_.getElement().isOrHasChild(targetEl))
+               {
+                  hideAll();
+               }
+            }
             if (previewEvent.getTypeInt() == Event.ONKEYDOWN)
             {
                NativeEvent event = previewEvent.getNativeEvent();
