@@ -17,6 +17,10 @@ project(SESSION)
 
 add_subdirectory(workers)
 
+if(WIN32 AND NOT RSTUDIO_SESSION_WIN32)
+   set(RSTUDIO_WIN32_BUILD_UTF8_SESSION TRUE)
+endif()
+
 # verify that install-dictionaries, install-mathjax, install-pandoc,
 # and install-rmarkdown have been run as required
 
@@ -466,21 +470,26 @@ if(WIN32)
       ${CMAKE_CURRENT_SOURCE_DIR}/rsession.rc.in
       ${CMAKE_CURRENT_BINARY_DIR}/rsession.rc)
 
-   # configure rsession-utf8.rc
-   set(RSESSION_EXE_MANIFEST "rsession-utf8.exe.manifest")
-   configure_file(
-      ${CMAKE_CURRENT_SOURCE_DIR}/rsession.rc.in
-      ${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc)
-
    # configure manifest
    configure_file(
       ${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest
       ${CMAKE_CURRENT_BINARY_DIR}/rsession.exe.manifest COPYONLY)
 
-   # configure manifest
-   configure_file(
-      ${CMAKE_CURRENT_SOURCE_DIR}/rsession-utf8.exe.manifest
-      ${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.exe.manifest COPYONLY)
+   # similar for UTF-8 session
+   if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
+
+      # configure rsession-utf8.rc
+      set(RSESSION_EXE_MANIFEST "rsession-utf8.exe.manifest")
+      configure_file(
+         ${CMAKE_CURRENT_SOURCE_DIR}/rsession.rc.in
+         ${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc)
+
+      # configure manifest
+      configure_file(
+         ${CMAKE_CURRENT_SOURCE_DIR}/rsession-utf8.exe.manifest
+         ${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.exe.manifest COPYONLY)
+
+   endif()
 
    if(NOT RSTUDIO_SESSION_WIN32)
       add_subdirectory(consoleio)
@@ -503,10 +512,12 @@ if(WIN32)
       $<TARGET_OBJECTS:rsession-objects>)
 
    # UTF-8 alternative
-   add_stripped_executable(
-      rsession-utf8
-      "${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc"
-      $<TARGET_OBJECTS:rsession-objects>)
+   if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
+      add_stripped_executable(
+         rsession-utf8
+         "${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc"
+         $<TARGET_OBJECTS:rsession-objects>)
+   endif()
 
 else()
 
@@ -547,7 +558,7 @@ set(SESSION_LIBRARIES
    ${CRASHPAD_LIBRARIES})
 
 target_link_libraries(rsession ${SESSION_LIBRARIES})
-if(WIN32)
+if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
    target_link_libraries(rsession-utf8 ${SESSION_LIBRARIES})
 endif()
 
@@ -555,7 +566,7 @@ if(APPLE)
    target_link_libraries(rsession "-undefined dynamic_lookup")
 else()
    target_link_libraries(rsession "${LIBR_LIBRARIES}")
-   if(WIN32)
+   if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
       target_link_libraries(rsession-utf8 "${LIBR_LIBRARIES}")
    endif()
 endif()
@@ -582,7 +593,7 @@ endif()
 
 # install binary
 install(TARGETS rsession DESTINATION "${RSTUDIO_INSTALL_BIN}")
-if(WIN32)
+if(RSTUDIO_WIN32_BUILD_UTF8_SESSION)
     install(TARGETS rsession-utf8 DESTINATION "${RSTUDIO_INSTALL_BIN}")
 endif()
 
