@@ -991,6 +991,12 @@ Function .onInit
 
   ; Loop through all open windows--we want one that has window class "QWidget"
   ; or "Qt5WindowIcon" and title containing "RStudio"
+  ;
+  ; TODO: for Electron, the window class is "Chrome_WidgetWin_1", but the same window
+  ; class is used by Chrome, Edge, and other Electron apps, so relying on that and
+  ; "RStudio" in the title would also match Chrome tabs (e.g. the RStudio download page).
+  ; So, we need something different to handle the Electron case. Maybe look for running
+  ; rstudio.exe (there's an ancient nsProcess plugin for NSIS that does this).
   search_loop:
    FindWindow  $0  ""  ""  0  $0
     IntCmp  $0  0  not_running
