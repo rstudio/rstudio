@@ -366,7 +366,6 @@ else()
    set(SESSION_SOURCE_FILES ${SESSION_SOURCE_FILES}
       http/SessionWin32HttpConnectionListener.cpp
       modules/build/SessionInstallRtools.cpp
-      "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc"
    )
 endif()
 
@@ -460,24 +459,55 @@ include_directories(
 link_directories(${R_GRAPHICS_HANDLER_SYSTEM_LIBRARY_DIRS})
 
 if(WIN32)
+
    # configure rsession.rc
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsession.rc.in
-                   ${CMAKE_CURRENT_BINARY_DIR}/rsession.rc)
+   set(RSESSION_EXE_MANIFEST "rsession.exe.manifest")
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/rsession.rc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/rsession.rc)
 
+   # configure rsession-utf8.rc
+   set(RSESSION_EXE_MANIFEST "rsession-utf8.exe.manifest")
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/rsession.rc.in
+      ${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc)
 
-   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest
-                   ${CMAKE_CURRENT_BINARY_DIR}/rsession.exe.manifest COPYONLY)
+   # configure manifest
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/rsession.exe.manifest
+      ${CMAKE_CURRENT_BINARY_DIR}/rsession.exe.manifest COPYONLY)
+
+   # configure manifest
+   configure_file(
+      ${CMAKE_CURRENT_SOURCE_DIR}/rsession-utf8.exe.manifest
+      ${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.exe.manifest COPYONLY)
 
    if(NOT RSTUDIO_SESSION_WIN32)
       add_subdirectory(consoleio)
    endif()
+
+endif()
+
+if(WIN32)
+    set(RSESSION_RC "${CMAKE_CURRENT_BINARY_DIR}/rsession.rc")
 endif()
 
 # define executable
 add_stripped_executable(
    rsession
+   ${RSESSION_RC}
    ${SESSION_SOURCE_FILES}
    ${SESSION_HEADER_FILES})
+
+# define UTF-8 executable for Windows
+if(WIN32)
+   set(RSESSION_RC "${CMAKE_CURRENT_BINARY_DIR}/rsession-utf8.rc")
+   add_stripped_executable(
+      rsession-utf8
+      ${RSESSION_RC}
+      ${SESSION_SOURCE_FILES}
+      ${SESSION_HEADER_FILES})
+endif()
 
 # skip libR RPATH at development time
 if(RSTUDIO_DEVELOPMENT OR RSTUDIO_RUN_IN_PLACE)
@@ -491,12 +521,12 @@ if(WIN32)
 endif()
 if(APPLE)
    find_library(MAC_APPKIT_LIBRARY NAMES AppKit)
-   set (SESSION_SYSTEM_LIBRARIES
-        ${SESSION_SYSTEM_LIBRARIES}
-        ${MAC_APPKIT_LIBRARY})
+   set(SESSION_SYSTEM_LIBRARIES
+      ${SESSION_SYSTEM_LIBRARIES}
+      ${MAC_APPKIT_LIBRARY})
 endif()
 
-target_link_libraries(rsession
+set(SESSION_LIBRARIES
    rstudio-core
    rstudio-core-hunspell
    rstudio-core-synctex
@@ -506,13 +536,20 @@ target_link_libraries(rsession
    rstudio-session-workers
    ${SESSION_SYSTEM_LIBRARIES}
    ${CMAKE_DL_LIBS}
-   ${CRASHPAD_LIBRARIES}
-)
+   ${CRASHPAD_LIBRARIES})
+
+target_link_libraries(rsession ${SESSION_LIBRARIES})
+if(WIN32)
+   target_link_libraries(rsession-utf8 ${SESSION_LIBRARIES})
+endif()
 
 if(APPLE)
    target_link_libraries(rsession "-undefined dynamic_lookup")
 else()
    target_link_libraries(rsession "${LIBR_LIBRARIES}")
+   if(WIN32)
+      target_link_libraries(rsession-utf8 "${LIBR_LIBRARIES}")
+   endif()
 endif()
 
 if(RSTUDIO_SERVER)
@@ -537,6 +574,9 @@ endif()
 
 # install binary
 install(TARGETS rsession DESTINATION "${RSTUDIO_INSTALL_BIN}")
+if(WIN32)
+    install(TARGETS rsession-utf8 DESTINATION "${RSTUDIO_INSTALL_BIN}")
+endif()
 
 # include resources, R scripts and binaries if this isn't a session 32-bit build
 if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
