@@ -67,9 +67,20 @@ restore-java-home () {
    fi
 }
 
-# ensure JAVA_HOME restored on exit if necessary
+set-version () {
+   pushd ${ELECTRON_SOURCE_DIR}
+   ${YARN} json -I -f package.json -e "this.version=\"$1\""
+   popd
+}
+
+restore-package-version () {
+   set-version 99.9.9
+}
+
+# ensure JAVA_HOME and package.json restored on exit if necessary
 on-exit () {
    restore-java-home
+   restore-package-version
 }
 
 trap on-exit EXIT
@@ -175,6 +186,12 @@ if [ "${rstudio_target}" != "Desktop" ] && [ "${rstudio_target}" != "Electron" ]
 then
    echo "error: must specify --rstudio-target=Desktop|Electron (default Desktop)"
    exit 1
+fi
+
+if [ "${rstudio_target}" = "Electron" ]
+then
+   # put version into package.json
+   set-version ${RSTUDIO_VERSION_FULL}
 fi
 
 case "${arch}" in *arm64*)  build_arm64=1  ;; esac
@@ -354,8 +371,9 @@ if [ "${build_package}" = "1" ]; then
    info "Done!"
 fi
 
-# clean up JAVA_HOME
+# clean up
 restore-java-home
+restore-package-version
 
 cd "${PKG_DIR}"
 
