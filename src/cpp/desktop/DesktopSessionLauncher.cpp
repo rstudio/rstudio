@@ -559,6 +559,8 @@ void SessionLauncher::onLaunchFirstSession()
 
 namespace {
 
+#ifdef _WIN32
+
 FilePath resolveSessionPathWin32(const FilePath& defaultPath)
 {
    // if we're running with a UCRT build of R, then we'll
@@ -607,6 +609,8 @@ FilePath resolveSessionPathWin32(const FilePath& defaultPath)
 
    return sessionUtf8Path;
 }
+
+#endif
 
 } // end anonymous namespace
 
