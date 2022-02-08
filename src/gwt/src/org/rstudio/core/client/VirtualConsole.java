@@ -481,7 +481,7 @@ public class VirtualConsole
          if (cursor_ == output_.length() && !class_.isEmpty())
             appendText(text, clazz, forceNewRange);
          else
-            insertText(new ClassRange(start, clazz, text, hyperlink_));
+            insertText(new ClassRange(start, clazz, text, preserveHTML_, hyperlink_));
       }
 
       output_.replace(start, end, text);
