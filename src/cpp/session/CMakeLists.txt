@@ -512,7 +512,6 @@ else()
 
    add_stripped_executable(
       rsession
-      ${RSESSION_RC}
       ${SESSION_SOURCE_FILES}
       ${SESSION_HEADER_FILES})
 
