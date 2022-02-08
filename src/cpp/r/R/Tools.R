@@ -27,6 +27,15 @@ assign(".rs.toolsEnv", function()
    .rs.Env
 }, envir = .rs.Env)
 
+# target environment for symbol lookup, with all necessary base packages
+.rs.ApiEnv <- new.env(parent = as.environment("package:stats"))
+
+# allow access to api env from helper function
+assign(".rs.apiEnv", function()
+{
+   .rs.ApiEnv
+}, envir = .rs.ApiEnv)
+
 #' Add a function to the 'tools:rstudio' environment.
 #' 
 #' This environment is placed on the search path, and so is accessible and
@@ -62,7 +71,7 @@ assign(".rs.addFunction", function(name, FN, attrs = list(), envir = .rs.toolsEn
 # force helper function to also execute in tools environment
 environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
-# add a global (non-scoped) variable to the tools:rstudio environment
+# add a glob    al (non-scoped) variable to the tools:rstudio environment
 .rs.addFunction("addGlobalVariable", function(name, var)
 {
    envir <- .rs.toolsEnv()
@@ -82,7 +91,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("addApiFunction", function(name, FN)
 {
    fullName <- paste("api.", name, sep = "")
-   .rs.addFunction(fullName, FN, envir = globalenv())
+   .rs.addFunction(fullName, FN, envir = .rs.ApiEnv)
 })
 
 .rs.addFunction("setVar", function(name, var)
