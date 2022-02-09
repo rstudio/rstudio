@@ -191,14 +191,14 @@ void syncConsoleColorEnv()
          core::system::setenv("CLICOLOR_FORCE", "1");
       
       // Allow cli::style_hyperlink()
-      core::system::setenv("R_CLI_HYPERLINKS", "true");
+      core::system::setenv("RSTUDIO_CLI_HYPERLINKS", "true");
    }
    else
    {
       core::system::unsetenv("RSTUDIO_CONSOLE_COLOR");
       core::system::unsetenv("TERM");
       core::system::unsetenv("CLICOLOR_FORCE");
-      core::system::unsetenv("R_CLI_HYPERLINKS");
+      core::system::unsetenv("RSTUDIO_CLI_HYPERLINKS");
    }
 }
 
