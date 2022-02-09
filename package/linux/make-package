@@ -62,7 +62,7 @@ then
    cd $PACKAGE_DIR
 fi
 
-if [ "$1" == "Desktop" ]
+if [ "$1" = "Desktop" ] || [ "$1" == "Electron" ]
 then
   INSTALL_DIR=rstudio
 else
