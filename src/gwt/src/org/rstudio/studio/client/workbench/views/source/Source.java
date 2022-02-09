@@ -3109,19 +3109,31 @@ public class Source implements InsertSourceEvent.Handler,
             @Override
             public void onSuccess(final EditingTarget result)
             {
-               if (data.getRow() != -1) 
+               // suppress attempts by the shell widget to steal focus here
+               events_.fireEvent(new SuppressNextShellFocusEvent());
+               
+               Command finish = () -> {
+                  result.focus();
+                  result.ensureCursorVisible();
+                  
+                  JsObject response = JsObject.createJsObject();
+                  response.setString("id", result.getId());
+                  server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               };
+
+               int row = data.getRow();
+               if (row != -1) 
                {
-                  columnManager_.scrollToPosition(FilePosition.create(data.getRow(), data.getColumn()), data.getMoveCursor());
+                  int column = Math.max(data.getColumn(), 1);
+                  SourcePosition srcPosition = SourcePosition.create(
+                     data.getRow() - 1,
+                     column - 1);
+                  result.navigateToPosition(
+                     srcPosition, false, false, data.getMoveCursor(), finish);
+               } else {
+                  finish.execute();
                }
 
-               // focus opened document (note that we may need to suppress
-               // attempts by the shell widget to steal focus here)
-               events_.fireEvent(new SuppressNextShellFocusEvent());
-               result.focus();
-
-               JsObject response = JsObject.createJsObject();
-               response.setString("id", result.getId());
-               server_.rstudioApiResponse(response, new VoidServerRequestCallback());
             }
 
             @Override
