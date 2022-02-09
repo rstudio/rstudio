@@ -87,7 +87,7 @@
    pythonCommands <- c("py", "python", "python3")
    available <- nzchar(Sys.which(pythonCommands))
 
-   if !any(available)
+   if (!any(available))
       return("")
    else
       pythonCommand <- pythonCommands[available][1]
