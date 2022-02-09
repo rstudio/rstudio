@@ -669,7 +669,7 @@
       path <- .rs.normalizePath(path, winslash = "/", mustWork = TRUE)
       homeDir <- path.expand("~")
       if (identical(substr(path, 1, nchar(homeDir)), homeDir)) {
-         filePpathath <- file.path("~", substring(path, nchar(homeDir) + 2))
+         path <- file.path("~", substring(path, nchar(homeDir) + 2))
       }
    }
 
