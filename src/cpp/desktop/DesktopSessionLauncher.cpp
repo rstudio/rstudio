@@ -25,12 +25,14 @@
 #include <core/http/TcpIpBlockingClient.hpp>
 #include <core/text/TemplateFilter.hpp>
 
+#include <shared_core/SafeConvert.hpp>
+
 #include <core/WaitUtils.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <core/r_util/RUserData.hpp>
-#include <shared_core/SafeConvert.hpp>
 
 #include <QPushButton>
 
@@ -555,6 +557,63 @@ void SessionLauncher::onLaunchFirstSession()
    }
 }
 
+namespace {
+
+#ifdef _WIN32
+
+FilePath resolveSessionPathWin32(const FilePath& defaultPath)
+{
+   // if we're running with a UCRT build of R, then we'll
+   // want to launch with rsession-utf8 if it's available
+   FilePath sessionUtf8Path = defaultPath.getParent().completeChildPath("rsession-utf8.exe");
+   if (!sessionUtf8Path.exists())
+      return defaultPath;
+
+   // get path to R home
+   FilePath rHome = FilePath(core::system::getenv("R_HOME"));
+
+   // first, try 64-bit executable; if that doesn't exist,
+   // then fall back to the 32-bit one instead
+   FilePath rExe = rHome.completeChildPath("bin/x64/Rterm.exe");
+   if (!rExe.exists())
+   {
+      rExe = rHome.completeChildPath("bin/i386/Rterm.exe");
+      if (!rExe.exists())
+      {
+         LOG_ERROR(fileNotFoundError(rExe, ERROR_LOCATION));
+         return defaultPath;
+      }
+   }
+
+   // ask Rterm.exe if UCRT is supported
+   core::system::ProcessOptions options;
+   options.detachProcess = true;
+
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram(
+            rExe.getAbsolutePath(),
+            { "-s", "-e", "cat(R.version$crt)" },
+            options,
+            &result);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return defaultPath;
+   }
+
+   // check for ucrt
+   bool isUcrtBuild = result.stdOut.find("ucrt") != std::string::npos;
+   if (!isUcrtBuild)
+      return defaultPath;
+
+   return sessionUtf8Path;
+}
+
+#endif
+
+} // end anonymous namespace
+
 Error SessionLauncher::launchSession(const QStringList& argList,
                                      QProcess** ppRSessionProcess)
 {
@@ -562,8 +621,9 @@ Error SessionLauncher::launchSession(const QStringList& argList,
    Error error = abendLogPath().removeIfExists();
    if (error)
       LOG_ERROR(error);
+
    
-#ifdef __APPLE__
+#if defined(__APPLE__)
    
    // we need indirection through arch to handle arm64
    if (sessionPath_.getFilename() == "rsession-arm64")
@@ -608,6 +668,15 @@ Error SessionLauncher::launchSession(const QStringList& argList,
                            ppRSessionProcess));
    }
    
+#elif defined(_WIN32)
+
+   FilePath sessionPath = resolveSessionPathWin32(sessionPath_);
+   return parent_process_monitor::wrapFork(
+         boost::bind(launchProcess,
+                     sessionPath.getAbsolutePath(),
+                     argList,
+                     ppRSessionProcess));
+   
 #else
 
    return parent_process_monitor::wrapFork(
@@ -615,7 +684,7 @@ Error SessionLauncher::launchSession(const QStringList& argList,
                      sessionPath_.getAbsolutePath(),
                      argList,
                      ppRSessionProcess));
-   
+
 #endif
 }
 
