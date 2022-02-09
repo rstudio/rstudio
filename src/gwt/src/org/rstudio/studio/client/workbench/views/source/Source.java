@@ -1758,7 +1758,7 @@ public class Source implements InsertSourceEvent.Handler,
          return;
       FilePosition pos = FilePosition.create(event.getLine(),
          event.getColumn());
-      columnManager_.scrollToPosition(pos, event.getMoveCursor());
+      columnManager_.scrollToPosition(pos, event.getMoveCursor(), null);
    }
 
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
@@ -3109,10 +3109,10 @@ public class Source implements InsertSourceEvent.Handler,
             @Override
             public void onSuccess(final EditingTarget result)
             {
-               // suppress attempts by the shell widget to steal focus here
-               events_.fireEvent(new SuppressNextShellFocusEvent());
-               
                Command finish = () -> {
+                  // suppress attempts by the shell widget to steal focus here
+                  events_.fireEvent(new SuppressNextShellFocusEvent());
+               
                   result.focus();
                   result.ensureCursorVisible();
                   
@@ -3124,16 +3124,11 @@ public class Source implements InsertSourceEvent.Handler,
                int row = data.getRow();
                if (row != -1) 
                {
-                  int column = Math.max(data.getColumn(), 1);
-                  SourcePosition srcPosition = SourcePosition.create(
-                     data.getRow() - 1,
-                     column - 1);
-                  result.navigateToPosition(
-                     srcPosition, false, false, data.getMoveCursor(), finish);
+                  FilePosition position = FilePosition.create(row, Math.max(data.getColumn(), 1));
+                  columnManager_.scrollToPosition(position, data.getMoveCursor(), finish);
                } else {
                   finish.execute();
                }
-
             }
 
             @Override
