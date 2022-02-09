@@ -3124,8 +3124,11 @@ public class Source implements InsertSourceEvent.Handler,
                int row = data.getRow();
                if (row != -1) 
                {
-                  FilePosition position = FilePosition.create(row, Math.max(data.getColumn(), 1));
-                  columnManager_.scrollToPosition(position, data.getMoveCursor(), finish);
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     FilePosition position = FilePosition.create(row, Math.max(data.getColumn(), 1));
+                     columnManager_.scrollToPosition(position, data.getMoveCursor(), finish);
+                  });
                } else {
                   finish.execute();
                }
