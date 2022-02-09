@@ -515,7 +515,34 @@ public class EnvironmentPresenter extends BasePresenter
    void onLoadWorkspace()
    {
       view_.bringToFront();
-      consoleDispatcher_.chooseFileThenExecuteCommand(constants_.loadWorkspace(), "load");
+
+      server_.isFunctionMasked(
+         "load",
+         "base",
+         new ServerRequestCallback<Boolean>()
+         {
+            public void onResponseReceived(Boolean isMasked)
+            {
+               String code = isMasked
+                  ? "base::load"
+                  : "load";
+
+               consoleDispatcher_.chooseFileThenExecuteCommand(
+                  constants_.loadWorkspace(),
+                  code);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+
+               consoleDispatcher_.chooseFileThenExecuteCommand(
+                  constants_.loadWorkspace(),
+                  "load");
+
+            };
+         });
    }
 
    void onImportDatasetFromFile()

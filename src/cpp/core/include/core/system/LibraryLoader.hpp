@@ -18,17 +18,61 @@
 
 #include <string>
 
+#include <boost/noncopyable.hpp>
+
+#include <shared_core/Error.hpp>
+
+#include <core/Log.hpp>
+
 namespace rstudio {
 namespace core {
 
-class Error;
-
 namespace system {
 
-Error loadLibrary(const std::string& libPath, void** ppLib);
-Error verifyLibrary(const std::string& libPath);
-Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol);
-Error closeLibrary(void* pLib);
+core::Error loadLibrary(const std::string& libPath, void** ppLib);
+core::Error verifyLibrary(const std::string& libPath);
+core::Error loadSymbol(void* pLib, const std::string& name, void** ppSymbol);
+core::Error closeLibrary(void* pLib);
+
+class Library : boost::noncopyable
+{
+public:
+
+   explicit Library(const std::string& library)
+      : pLib_(nullptr)
+   {
+      core::Error error = loadLibrary(library, &pLib_);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   ~Library()
+   {
+      try
+      {
+         if (pLib_)
+         {
+            core::Error error = closeLibrary(pLib_);
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+      catch (...)
+      {
+
+      }
+   }
+
+   operator void*() const
+   {
+      return pLib_;
+   }
+
+private:
+   void* pLib_;
+};
+
+
 
 } // namespace system
 } // namespace core
