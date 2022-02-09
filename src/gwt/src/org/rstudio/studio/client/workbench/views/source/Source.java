@@ -3124,6 +3124,7 @@ public class Source implements InsertSourceEvent.Handler,
                int row = data.getRow();
                if (row != -1) 
                {
+                  // give ace time to render before scrolling to position
                   Scheduler.get().scheduleDeferred(() ->
                   {
                      FilePosition position = FilePosition.create(row, Math.max(data.getColumn(), 1));
