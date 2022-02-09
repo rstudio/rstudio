@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script>
+      const toolbar = document.createElement('div');
+      toolbar.id = 'custom-toolbar';
+
+      const createButton = (iconPath, tooltip, onClick) => {
+        const button = document.createElement('div');
+        button.id = 'custom-toolbar_button-' + tooltip.replace(/ /g, '-');
+        button.classList.add('custom-toolbar_button');
+        button.title = tooltip;
+
+        button.onclick = onClick;
+
+        button.style = '';
+
+        const icon = document.createElement('img');
+        icon.src = iconPath;
+        icon.alt = tooltip;
+        icon.id = 'custom-toolbar_icon-' + tooltip.replace(/ /g, '-');
+        icon.classList.add('custom-toolbar_icon');
+
+        button.appendChild(icon);
+
+        return button;
+      };
+
+      const buttonLeft = createButton('./back.png', 'arrowLeft tooltip', () => {
+        console.log('arrow left clicked');
+      });
+      const buttonRight = createButton('./forward.png', 'arrowRight tooltip', () => {
+        console.log('arrow right clicked');
+      });
+      const buttonRefresh = createButton('./reload.png', 'reload tooltip', () => {
+        console.log('refresh clicked');
+      });
+
+      //   const buttonLeft = createButton('./back_mac@2x.png', 'arrowLeft tooltip', () => {
+      //     console.log('arrow left clicked');
+      //   });
+      //   const buttonRight = createButton('./forward_mac@2x.png', 'arrowRight tooltip', () => {
+      //     console.log('arrow right clicked');
+      //   });
+      //   const buttonRefresh = createButton('./reload_mac@2x.png', 'reload tooltip', () => {
+      //     console.log('refresh clicked');
+      //   });
+
+      toolbar.appendChild(buttonLeft);
+      toolbar.appendChild(buttonRight);
+      toolbar.appendChild(buttonRefresh);
+
+      window.addEventListener('load', () => {
+        document.body.appendChild(toolbar);
+      });
+      window.onload = () => {
+        [...new Array(400)].forEach((_, i) => {
+          const div = document.createElement('div');
+          div.style = 'width:100px;height:100px;background:red;';
+          div.innerText = 'test ' + i;
+          document.body.appendChild(div);
+        });
+
+        document.body.prepend(toolbar);
+      };
+
+      var styles = `
+      #custom-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        background: gray;
+        padding: 4px;
+        background-color: rgb(239, 239, 239);
+        border-bottom: 1px solid rgb(214, 214, 214);
+        position: fixed;
+        top:0;
+      }
+
+      body{
+          padding-top:29px;
+      }
+
+      .custom-toolbar_button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+        margin-right: 8px;
+
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      .custom-toolbar_icon {
+        width: 26px;
+        height: 20px;
+      }
+
+      .custom-toolbar_icon:active {
+        filter: brightness(80%) saturate(150%);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        #custom-toolbar {
+          background-color: rgb(48, 48, 48);
+          border-bottom: 1px solid rgb(12, 31, 48);
+        }
+      }
+`;
+
+      var styleSheet = document.createElement('style');
+    //   styleSheet.type = 'text/css';
+      styleSheet.innerText = styles;
+      document.head.appendChild(styleSheet);
+    </script>
+    <style>
+      /* #custom-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
+        background: gray;
+        padding: 4px;
+        background-color: rgb(239, 239, 239);
+        border-bottom: 1px solid rgb(214, 214, 214);
+      }
+
+      .custom-toolbar_button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        cursor: pointer;
+        margin-right: 8px;
+
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      .custom-toolbar_icon {
+        width: 26px;
+        height: 20px;
+      }
+
+      .custom-toolbar_icon:active {
+        filter: brightness(80%) saturate(150%);
+      }
+
+      @media (prefers-color-scheme: dark) {
+        #custom-toolbar {
+          background-color: rgb(48, 48, 48);
+          border-bottom: 1px solid rgb(12, 31, 48);
+        }
+      } */
+    </style>
+  </head>
+  <body></body>
+</html>
