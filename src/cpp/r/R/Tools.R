@@ -68,7 +68,7 @@ assign(".rs.addFunction", function(name, FN, attrs = list(), envir = .rs.toolsEn
 # force helper function to also execute in tools environment
 environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
-# add a glob    al (non-scoped) variable to the tools:rstudio environment
+# add a global (non-scoped) variable to the tools:rstudio environment
 .rs.addFunction("addGlobalVariable", function(name, var)
 {
    envir <- .rs.toolsEnv()
