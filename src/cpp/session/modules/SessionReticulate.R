@@ -2074,7 +2074,7 @@ options(reticulate.repl.teardown = function()
    # if the user has configured RStudio to use a particular version
    # of Python, then use that
    python <- .rs.readUiPref("python_path")
-   if (!is.null(python))
+   if (!is.null(python) && !identical(python, ""))
       return(path.expand(python))
    
    # Use existing RETICULATE_PYTHON_FALLBACK if set
