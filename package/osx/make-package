@@ -24,6 +24,51 @@ source "${PKG_DIR}/../../dependencies/tools/rstudio-tools.sh"
 GWT_MAIN_MODULE=RStudioDesktop
 export GWT_MAIN_MODULE
 
+function help() {
+    cat <<EOF
+usage: make-package [options]
+
+Build RStudio Desktop (Qt or Electron) and redistributable package (DMG) on a Mac.
+
+Specify version by setting environment variables. The default is 99.9.9.
+
+Examples
+  RSTUDIO_VERSION_MAJOR=2022 RSTUDIO_VERSION_MINOR=7 RSTUDIO_VERSION_PATCH=1 RSTUDIO_VERSION_SUFFIX=-daily+321 ./make-package clean --electron
+
+Options
+  clean, --clean
+        Perform a clean build. Default is an incremental build.
+
+  --arch=<architecture>
+        Command-separated list of architectures to build for. Default is 
+        "x86_64,arm64" on an M1 Mac, and "x86_64" on an Intel Mac.
+
+  --install
+        Install the built RStudio.app to /Applications/RStudio-Devel.app.
+
+  --build-gwt=[0|1], --gwt-build=[0|1]
+        Whether to rebuild GWT; default is yes (1).
+
+  --copy-gwt=[0|1], --gwt-copy=[0|1]
+        Whether to copy the GWT build output into the application; default is yes (1).
+
+  --build-package=[0|1]
+        Whether to produce an app bundle (RStudio.app); default is yes (1).
+
+  --build-dmg=[0|1]
+        Whether to produce a redistributable package (DMG); default is yes (1).
+
+  --use-creds=[0|1]
+        Whether to use RStudio credentials for codesigning; default is yes (1) when running via
+        Jenkins, otherwise false (0).
+
+  --electron, --rstudio-target=Electron
+        Whether to build the Electron version of RStudio; default is to build the Qt
+        version.
+EOF
+exit 1
+}
+
 # used to ensure JAVA_HOME points at a version of Java compatible
 # with the version of GWT sources we use for compilation
 set-java-home () {
@@ -180,7 +225,7 @@ for arg in "$@"; do
    --use-creds=*)      use_creds=${arg#*=} ;;
    --electron)         rstudio_target=Electron ;;
    --rstudio-target=*) rstudio_target=${arg#*=} ;;
-   *)                  echo "Ignoring unrecognized argument '${arg}'"
+   *)                  help ;;
    esac
 
 done
