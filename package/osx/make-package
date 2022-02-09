@@ -68,9 +68,11 @@ restore-java-home () {
 }
 
 set-version () {
-   pushd ${ELECTRON_SOURCE_DIR}
-   ${YARN} json -I -f package.json -e "this.version=\"$1\""
-   popd
+   if [ "${rstudio_target}" = "Electron" ]; then
+      pushd ${ELECTRON_SOURCE_DIR}
+      ${YARN} json -I -f package.json -e "this.version=\"$1\""
+      popd
+   fi
 }
 
 restore-package-version () {
