@@ -70,6 +70,7 @@ restore-java-home () {
 set-version () {
    if [ "${rstudio_target}" = "Electron" ]; then
       pushd ${ELECTRON_SOURCE_DIR}
+      ${YARN}
       ${YARN} json -I -f package.json -e "this.version=\"$1\""
       popd
    fi
@@ -190,11 +191,8 @@ then
    exit 1
 fi
 
-if [ "${rstudio_target}" = "Electron" ]
-then
-   # put version into package.json
-   set-version ${RSTUDIO_VERSION_FULL}
-fi
+# put version into package.json
+set-version ${RSTUDIO_VERSION_FULL}
 
 case "${arch}" in *arm64*)  build_arm64=1  ;; esac
 case "${arch}" in *x86_64*) build_x86_64=1 ;; esac
