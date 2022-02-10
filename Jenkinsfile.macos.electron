@@ -74,7 +74,7 @@ pipeline {
             // attempt to run cpp unit tests
             // problems with rsession finding openssl, so those tests
             // are disabled until we solve it (#6890)
-            sh "cd package/osx/build/src/cpp && ./rstudio-tests"
+            sh "cd package/osx/build/src/cpp && ./rstudio-tests && cd ../../../../../src/node/desktop/ && yarn && yarn lint && yarn test"
           } catch(err) {
              currentBuild.result = "UNSTABLE"
           }
