@@ -38,7 +38,7 @@ import {
   userLogPath,
   waitForUrlWithTimeout,
 } from './utils';
-import { productInfo } from './product-info';
+import { buildInfo } from './build-info';
 import { DesktopOptions } from './desktop-options';
 import i18next from 'i18next';
 
@@ -286,7 +286,7 @@ export class SessionLauncher {
     // String mapping of template codes to diagnostic information
     const vars = new Map<string, string>();
 
-    const info = productInfo();
+    const info = buildInfo();
     const gitCommit = info.RSTUDIO_GIT_COMMIT.substr(0, 8);
 
     // Create version string
