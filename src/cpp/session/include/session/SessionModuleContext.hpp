@@ -834,7 +834,8 @@ struct SourceMarker
    };
 
    SourceMarker()
-      : type(Empty)
+      : type(Empty),
+      isCustom(false)
    {
    }
 
@@ -849,7 +850,8 @@ struct SourceMarker
         line(line),
         column(column),
         message(message),
-        showErrorList(showErrorList)
+        showErrorList(showErrorList),
+        isCustom(false)
    {
    }
 
@@ -895,7 +897,8 @@ struct SourceMarkerSet
    SourceMarkerSet(const std::string& name,
                    const std::vector<SourceMarker>& markers)
       : name(name),
-        markers(markers)
+        markers(markers),
+        isDiagnostics(false)
    {
    }
 
@@ -913,7 +916,8 @@ struct SourceMarkerSet
                    const std::vector<SourceMarker>& markers)
       : name(name),
         basePath(basePath),
-        markers(markers)
+        markers(markers),
+        isDiagnostics(false)
    {
    }
 
