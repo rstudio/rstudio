@@ -33,8 +33,8 @@ export interface BuildInfo {
 // -----------------------------------------------------------------------------
 export function buildInfo(): BuildInfo {
   return {
-    RSTUDIO_VERSION: '2022.7.1-daily+321',
-    RSTUDIO_BUILD_DATE: '2022-02-09',
+    RSTUDIO_VERSION: '9999.9.9-daily+999',
+    RSTUDIO_BUILD_DATE: '2022-02-02',
     RSTUDIO_COPYRIGHT_YEAR: '2022',
     RSTUDIO_VERSION_PATCH: 1,
     RSTUDIO_R_MAJOR_VERSION_REQUIRED: 3,
@@ -42,6 +42,6 @@ export function buildInfo(): BuildInfo {
     RSTUDIO_R_PATCH_VERSION_REQUIRED: 1,
     RSTUDIO_PACKAGE_OS: 'Unknown OS',
     RSTUDIO_GIT_COMMIT: 'c58914566b7f443d4311d7d7da944e4ad49f2baa',
-    RSTUDIO_RELEASE_NAME: 'Spotted Wakerobin',
+    RSTUDIO_RELEASE_NAME: 'Developer Build',
   };
 }
