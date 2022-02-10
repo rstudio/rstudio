@@ -276,15 +276,15 @@ if(NOT RSTUDIO_ELECTRON)
 
    # include directories
    include_directories(
-   include
-   ${CORE_SOURCE_DIR}/include
-   ${SHARED_CORE_SOURCE_DIR}/include
-   ${OPENSSL_INCLUDE_DIR}
-   ${CMAKE_CURRENT_SOURCE_DIR}
-   ${CMAKE_CURRENT_BINARY_DIR}
-   ${EXT_SOURCE_DIR}
-   ${SESSION_SOURCE_DIR}/include
-   ${TESTS_INCLUDE_DIR}
+      include
+      ${CORE_SOURCE_DIR}/include
+      ${SHARED_CORE_SOURCE_DIR}/include
+      ${OPENSSL_INCLUDE_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}
+      ${CMAKE_CURRENT_BINARY_DIR}
+      ${EXT_SOURCE_DIR}
+      ${SESSION_SOURCE_DIR}/include
+      ${TESTS_INCLUDE_DIR}
    )
 
    # ensure moc files are generated
@@ -675,15 +675,15 @@ elseif(WIN32 AND NOT RSTUDIO_SESSION_WIN32)
 
    # include directories
    include_directories(
-   include
-   ${CORE_SOURCE_DIR}/include
-   ${SHARED_CORE_SOURCE_DIR}/include
-   ${OPENSSL_INCLUDE_DIR}
-   ${CMAKE_CURRENT_SOURCE_DIR}
-   ${CMAKE_CURRENT_BINARY_DIR}
-   ${EXT_SOURCE_DIR}
-   ${SESSION_SOURCE_DIR}/include
-   ${TESTS_INCLUDE_DIR}
+      include
+      ${CORE_SOURCE_DIR}/include
+      ${SHARED_CORE_SOURCE_DIR}/include
+      ${OPENSSL_INCLUDE_DIR}
+      ${CMAKE_CURRENT_SOURCE_DIR}
+      ${CMAKE_CURRENT_BINARY_DIR}
+      ${EXT_SOURCE_DIR}
+      ${SESSION_SOURCE_DIR}/include
+      ${TESTS_INCLUDE_DIR}
    )
 
    add_subdirectory(urlopener)
