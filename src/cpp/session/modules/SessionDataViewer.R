@@ -92,7 +92,7 @@
    formatted <- as.character(col)
    large <- nchar(formatted) > 50L
    formatted <- substr(formatted, 1, 50L)
-   formatted <- paste0(formatted, ifelse(large, " (...)", ""))
+   formatted <- paste0(formatted, ifelse(large, " [...]", ""))
    formatted
 })
 

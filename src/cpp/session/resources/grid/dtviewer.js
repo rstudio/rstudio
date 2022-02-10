@@ -322,16 +322,10 @@
     // special additional rendering for cells which themselves contain data frames or lists:
     // these include an icon that can be clicked to view contents
     if (clazz === "dataCell" || clazz === "listCell") {
-      var truncated = escaped.endsWith("(...)");
-      if (clazz == "listCell" && truncated) {
-        escaped = escaped.replace(/[(][.][.][.][)]$/, "");
-      } 
-
       escaped =
         "<i>" +
         escaped +
         "</i> " +
-        (truncated ? "<span class='truncated'>(...)</span>" : "" ) + 
         '<a class="viewerLink" href="javascript:window.' +
         (clazz === "dataCell" ? "dataViewerCallback" : "listViewerCallback") +
         "(" +
@@ -1274,6 +1268,7 @@
       type: "POST",
     })
       .done(function (result) {
+        console.log(result);
         callback(result);
       })
       .fail(function (jqXHR) {
