@@ -17,6 +17,7 @@
 
 import { BrowserWindow } from 'electron';
 import * as fs from 'fs';
+import { logger } from '../core/logger';
 
 export interface ToolbarData {
   buttons: {
@@ -31,12 +32,7 @@ export class ToolbarManager {
 
   async createToolbar(window: BrowserWindow, toolbarData: ToolbarData) {
     const jsScript =
-      'console.log("windowOnload");' +
-      this.addToolbarJsAsText() +
-      ';' +
-      this.addStylesJsAsText() +
-      ';' +
-      this.addButtonsJsAsText(toolbarData);
+      this.addToolbarJsAsText() + ';' + this.addStylesJsAsText() + ';' + this.addButtonsJsAsText(toolbarData);
 
     try {
       await window.webContents.executeJavaScript(jsScript);
@@ -44,11 +40,14 @@ export class ToolbarManager {
       // eslint-disable-next-line @typescript-eslint/no-implicit-any-catch
     } catch (err: any) {
       if (err.message !== 'An object could not be cloned.') {
-        console.log('Error message: ', err.message);
-        console.error('Error ', err, ' when trying to create toolbar with data: ', toolbarData);
-        console.log('---------------------------');
-        console.log('JS Script for Toolbar: ');
-        console.log(jsScript);
+        const error =
+          'Error message: ' +
+          err.message +
+          '\nError when trying to create toolbar with data:\n' +
+          toolbarData +
+          '\n---------------------------\nJS Script for Toolbar:\n' +
+          jsScript;
+        logger().logError(error);
       }
     }
   }
