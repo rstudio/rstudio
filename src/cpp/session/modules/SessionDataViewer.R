@@ -89,9 +89,14 @@
 
 .rs.addFunction("formatDataColumnList", function(col, ...)
 {
+   limit <- .rs.readUserPref("data_viewer_max_cell_size")
+   if (is.null(limit)) {
+      limit <- 50L
+   }
+
    formatted <- as.character(col)
-   large <- nchar(formatted) > 50L
-   formatted <- substr(formatted, 1, 50L)
+   large <- nchar(formatted) > limit
+   formatted <- substr(formatted, 1, limit)
    formatted <- paste0(formatted, ifelse(large, " [...]", ""))
    formatted
 })
