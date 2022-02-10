@@ -1,7 +1,10 @@
 @echo off
-set PACKAGE_DIR="%CD%"
 
 setlocal
+set PACKAGE_DIR="%CD%"
+set ELECTRON_SOURCE_DIR=%PACKAGE_DIR%\..\..\src\node\desktop
+
+call %PACKAGE_DIR%\..\..\dependencies\tools\rstudio-tools.cmd
 
 set BUILD_GWT=1
 set RSTUDIO_TARGET=Desktop
@@ -34,6 +37,25 @@ for %%F in (ant cmake) do (
       )
 )
 
+REM find node
+set NODE_DIR=%PACKAGE_DIR%\..\..\dependencies\common\node\%RSTUDIO_NODE_VERSION%
+set NODE=%NODE_DIR%\node.exe
+if not exist %NODE% (
+      echo node.exe not found at %NODE_DIR%; exiting
+      endlocal
+      exit /b 1
+)
+echo Using node: %NODE%
+
+REM find yarn
+set YARN=%NODE_DIR%\yarn
+if not exist %YARN% (
+      echo yarn not found at %NODE_DIR%; exiting
+      endlocal
+      exit /b 1
+)
+echo Using yarn: %YARN%
+
 REM Build for desktop
 set GWT_MAIN_MODULE=RStudioDesktop
 
@@ -45,6 +67,16 @@ REM Remove Git from PATH (otherwise cmake complains about 'sh.exe')
 call set PATH=%PATH:C:\Program Files (x86)\Git\bin=%
 call set PATH=%PATH:C:\Program Files\Git\bin=%
 
+REM Build RStudio version suffix
+if not defined RSTUDIO_VERSION_MAJOR set RSTUDIO_VERSION_MAJOR=99
+if not defined RSTUDIO_VERSION_MINOR set RSTUDIO_VERSION_MINOR=9
+if not defined RSTUDIO_VERSION_PATCH set RSTUDIO_VERSION_PATCH=9
+if not defined RSTUDIO_VERSION_SUFFIX set RSTUDIO_VERSION_SUFFIX=-dev+999
+set RSTUDIO_VERSION_FULL=%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%%RSTUDIO_VERSION_SUFFIX%
+
+REM put version into package.json
+call :set-version %RSTUDIO_VERSION_FULL%
+
 REM Establish build dir
 set BUILD_DIR=build
 if "%CMAKE_BUILD_TYPE%" == "" set CMAKE_BUILD_TYPE=RelWithDebInfo
@@ -55,9 +87,9 @@ cd "%PACKAGE_DIR%"
 
 REM Select the appropriate NSIS template
 if "%RSTUDIO_TARGET%" == "Electron" (
-      copy cmake\modules\NSIS.template.in.electron cmake\modules\NSIS.template.in
+      copy cmake\modules\NSIS.template.in.electron cmake\modules\NSIS.template.in >nul
 ) else (
-      copy cmake\modules\NSIS.template.in.qt cmake\modules\NSIS.template.in
+      copy cmake\modules\NSIS.template.in.qt cmake\modules\NSIS.template.in >nul
 )
 
 if not exist "%BUILD_DIR%" mkdir "%BUILD_DIR%"
@@ -67,8 +99,6 @@ REM Package these files into a shorter path to workaround windows max path of 26
 REM Must match CPACK_PACKAGE_DIRECTORY set in rstudio/package/win32/CMakeLists.txt
 set PKG_TEMP_DIR=c:\temp\ide-build
 if exist "%PKG_TEMP_DIR%/_CPack_Packages" rmdir /s /q "%PKG_TEMP_DIR%\_CPack_Packages"
-
-
 
 REM Configure and build the project. (Note that Windows / MSVC builds require
 REM that we specify the build type both at configure time and at build time)
@@ -113,6 +143,7 @@ if not defined QUICK (
 )
 
 REM reset modified environment variables (PATH)
+call :restore-package-version
 endlocal
 goto :EOF
 
@@ -128,3 +159,17 @@ echo     nozip: skip creation of ZIP file
 echo     electron: build Electron instead of Qt desktop (NYI)
 echo     nogwt: use results of last GWT build
 exit /b 0
+
+:set-version
+if "%RSTUDIO_TARGET%" == "Electron" (
+      pushd %ELECTRON_SOURCE_DIR%
+      call %YARN%
+      call %YARN% json -I -f package.json -e "this.version=\"%~1\""
+      popd
+)
+exit /b 0
+
+:restore-package-version
+call :set-version 99.9.9
+exit /b 0
+
