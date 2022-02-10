@@ -7843,7 +7843,7 @@ wildcard@^2.0.0:
   resolved "https://registry.yarnpkg.com/wildcard/-/wildcard-2.0.0.tgz#a77d20e5200c6faaac979e4b3aadc7b3dd7f8fec"
   integrity sha512-JcKqAHLPxcdb9KM49dufGXn2x3ssnfjbcaQdLlfZsL9rH9wgDQjUtDxbo8NE0F6SFvydeu1VhZe7hZuHsB2/pw==
 
-winston-daily-rotate-file@^4.6.0:
+winston-daily-rotate-file@4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/winston-daily-rotate-file/-/winston-daily-rotate-file-4.6.0.tgz#0295e5b11625e9ee670b0102a3ade3e9dd35ad73"
   integrity sha512-mvpFb1LYmTvh/vz0dIS/aDCwEm0cvDa8D/tE4xWwdUYolD250wf+n0y1PZ2xr7fbvTLF/PQYqXtFIFrmog03Ow==
