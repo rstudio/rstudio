@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, nativeImage, shell, WebContents } from 'electron';
+import { BrowserWindow, shell, WebContents } from 'electron';
 import { IpcMainEvent } from 'electron/main';
 
 import path from 'path';
