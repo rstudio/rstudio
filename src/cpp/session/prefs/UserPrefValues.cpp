@@ -2429,7 +2429,7 @@ core::Error UserPrefValues::setDataViewerMaxColumns(int val)
 }
 
 /**
- * The maximum number of characters to show in a data viewer cell
+ * The maximum number of characters to show in a data viewer cell.
  */
 int UserPrefValues::dataViewerMaxCellSize()
 {

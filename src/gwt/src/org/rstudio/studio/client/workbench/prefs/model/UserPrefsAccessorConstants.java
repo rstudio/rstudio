@@ -1541,11 +1541,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String dataViewerMaxColumnsDescription();
 
    /**
-    * The maximum number of characters to show in a data viewer cell
+    * The maximum number of characters to show in a data viewer cell.
     */
    @DefaultStringValue("Maximum number of character in data viewer cells")
    String dataViewerMaxCellSizeTitle();
-   @DefaultStringValue("The maximum number of characters to show in a data viewer cell")
+   @DefaultStringValue("The maximum number of characters to show in a data viewer cell.")
    String dataViewerMaxCellSizeDescription();
 
    /**

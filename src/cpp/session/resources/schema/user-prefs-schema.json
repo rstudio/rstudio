@@ -1264,7 +1264,7 @@
             "type": "integer",
             "default": 50,
             "title": "Maximum number of character in data viewer cells", 
-            "description": "The maximum number of characters to show in a data viewer cell"
+            "description": "The maximum number of characters to show in a data viewer cell."
         },
         "enable_screen_reader": {
             "type": "boolean",

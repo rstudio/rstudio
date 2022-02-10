@@ -1518,7 +1518,7 @@ public:
    core::Error setDataViewerMaxColumns(int val);
 
    /**
-    * The maximum number of characters to show in a data viewer cell
+    * The maximum number of characters to show in a data viewer cell.
     */
    int dataViewerMaxCellSize();
    core::Error setDataViewerMaxCellSize(int val);
