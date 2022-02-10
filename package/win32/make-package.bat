@@ -7,6 +7,9 @@ set ELECTRON_SOURCE_DIR=%PACKAGE_DIR%\..\..\src\node\desktop
 call %PACKAGE_DIR%\..\..\dependencies\tools\rstudio-tools.cmd
 
 set BUILD_GWT=1
+set QUICK=
+set NOZIP=
+set CLEANBUILD=
 set RSTUDIO_TARGET=Desktop
 
 if "%1" == "--help" goto :showhelp
@@ -128,19 +131,22 @@ call make-install-win32.bat "%PACKAGE_DIR%\%BUILD_DIR%\src\cpp\session" %* || go
 
 REM create packages
 cd "%BUILD_DIR%"
-if not defined QUICK cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
+if not defined QUICK (
+      echo Creating NSIS setup package...
+      cpack -C "%CMAKE_BUILD_TYPE%" -G NSIS
+      REM emit NSIS error output if present
+      if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
+      move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
+)
+
 if not defined NOZIP (
-      if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
+      if "%CMAKE_BUILD_TYPE%" == "RelWithDebInfo" (
+            echo Creating ZIP package...
+            cpack -C "%CMAKE_BUILD_TYPE%" -G ZIP
+            move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
+      )
 )
 cd ..
-
-move "%PKG_TEMP_DIR%\*.exe" "%PACKAGE_DIR%\%BUILD_DIR%"
-move "%PKG_TEMP_DIR%\*.zip" "%PACKAGE_DIR%\%BUILD_DIR%"
-
-REM emit NSIS error output if present
-if not defined QUICK (
-      if exist "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log" type "%PKG_TEMP_DIR%\_CPack_Packages\win64\NSIS\NSISOutput.log"
-)
 
 REM reset modified environment variables (PATH)
 call :restore-package-version
