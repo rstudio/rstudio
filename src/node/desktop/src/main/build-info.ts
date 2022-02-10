@@ -33,7 +33,7 @@ export interface BuildInfo {
 // -----------------------------------------------------------------------------
 export function buildInfo(): BuildInfo {
   return {
-    RSTUDIO_VERSION: '9999.9.9-daily+999',
+    RSTUDIO_VERSION: '9999.9.9-dev+999',
     RSTUDIO_BUILD_DATE: '2022-02-02',
     RSTUDIO_COPYRIGHT_YEAR: '2022',
     RSTUDIO_VERSION_PATCH: 1,
