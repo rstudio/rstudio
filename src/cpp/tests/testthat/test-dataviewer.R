@@ -39,7 +39,7 @@ test_that(".rs.formatDataColumn() truncates lists", {
     )
     x <- .rs.formatDataColumn(col, 1, 2)
     expect_equal(
-        grepl("[(][.]{3}[)]$", x), 
+        grepl("\\[\\.{3}\\]$", x), 
         c(TRUE, FALSE)
     )
 })
