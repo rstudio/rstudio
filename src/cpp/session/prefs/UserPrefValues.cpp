@@ -2429,6 +2429,19 @@ core::Error UserPrefValues::setDataViewerMaxColumns(int val)
 }
 
 /**
+ * The maximum number of characters to show in a data viewer cell
+ */
+int UserPrefValues::dataViewerMaxCellSize()
+{
+   return readPref<int>("data_viewer_max_cell_size");
+}
+
+core::Error UserPrefValues::setDataViewerMaxCellSize(int val)
+{
+   return writePref("data_viewer_max_cell_size", val);
+}
+
+/**
  * Support accessibility aids such as screen readers (RStudio Server).
  */
 bool UserPrefValues::enableScreenReader()
@@ -3214,6 +3227,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSubmitCrashReports,
       kDefaultRVersion,
       kDataViewerMaxColumns,
+      kDataViewerMaxCellSize,
       kEnableScreenReader,
       kTypingStatusDelayMs,
       kReducedMotion,
