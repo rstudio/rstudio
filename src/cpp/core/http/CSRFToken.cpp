@@ -51,10 +51,26 @@ std::string setCSRFTokenCookie(const http::Request& request,
             true, // HTTP only
             secure);
 
+   // NOTE: Remove block when GO is not supported ======================================
+   // Set the old cookie as well, for backward compatibility
+   http::Cookie oldCookie(
+            request,
+            kOldCSRFTokenCookie,
+            csrfToken,
+            path,
+            sameSite,
+            true, // HTTP only
+            secure);
+   // ==================================================================================
+
    // set expiration for cookie
    if (expiresFromNow.is_initialized())
+   {
       cookie.setExpires(*expiresFromNow);
+      oldCookie.setExpires(*expiresFromNow);
+   }
 
+   pResponse->addCookie(cookie);
    pResponse->addCookie(cookie);
    return csrfToken;
 }
@@ -64,12 +80,26 @@ bool validateCSRFForm(const http::Request& request,
 {
    // extract token from HTTP cookie (set above)
    std::string headerToken = request.cookieValue(kCSRFTokenCookie);
+
+   // NOTE: Remove block when GO is not supported ======================================
+   // If the token is empty, extract the old version
+   if (headerToken.empty())
+      headerToken = request.cookieValue(kOldCSRFTokenCookie);
+   // ==================================================================================
+
+
    http::Fields fields;
 
    // parse the form and check for a matching token
    http::util::parseForm(request.body(), &fields);
    std::string bodyToken = http::util::fieldValue<std::string>(fields,
          kCSRFTokenCookie, "");
+
+   // NOTE: Remove block when GO is not supported ======================================
+   // If the token is empty, extract the old version
+   if (bodyToken.empty())
+      bodyToken = http::util::fieldValue<std::string>(fields, kOldCSRFTokenCookie, "");
+   // ==================================================================================
 
    // report an error if they don't match
    if (headerToken.empty() || bodyToken != headerToken) 
@@ -86,11 +116,24 @@ bool validateCSRFForm(const http::Request& request,
 bool validateCSRFHeaders(const http::Request& request)
 {
    std::string headerToken = request.headerValue(kCSRFTokenHeader);
+
+   // NOTE: Remove block when GO is not supported ======================================
+   // Fallback on the old version for backward compatibility
+   if (headerToken.empty())
+      headerToken = request.headerValue(kOldCSRFTokenHeader);
+   // ==================================================================================
+
    std::string cookieToken = request.cookieValue(kCSRFTokenCookie);
+
+   // NOTE: Remove block when GO is not supported ======================================
+   // Fallback on the old version for backward compatilbity
+   if (cookieToken.empty())
+      cookieToken = request.cookieValue(kOldCSRFTokenCookie);
+   // ==================================================================================
+
    if (headerToken.empty() || headerToken != cookieToken)
-   {
       return false;
-   }
+
    return true;
 }
 
