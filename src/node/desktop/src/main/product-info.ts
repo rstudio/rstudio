@@ -25,19 +25,3 @@ export interface ProductInfo {
   RSTUDIO_GIT_COMMIT: string;
   RSTUDIO_RELEASE_NAME: string;
 }
-
-export function productInfo(): ProductInfo {
-  // TODO: probably need to generate this via cmake?
-  return {
-    RSTUDIO_VERSION: '99.9.9',
-    RSTUDIO_BUILD_DATE: '2021-07-06',
-    RSTUDIO_COPYRIGHT_YEAR: '2021',
-    RSTUDIO_VERSION_PATCH: 9,
-    RSTUDIO_R_MAJOR_VERSION_REQUIRED: 3,
-    RSTUDIO_R_MINOR_VERSION_REQUIRED: 0,
-    RSTUDIO_R_PATCH_VERSION_REQUIRED: 1,
-    RSTUDIO_PACKAGE_OS: 'Unknown OS',
-    RSTUDIO_GIT_COMMIT: '6a2652d1273439fa3615c8608f38591016cd490b',
-    RSTUDIO_RELEASE_NAME: 'Prairie Trillium',
-  };
-}

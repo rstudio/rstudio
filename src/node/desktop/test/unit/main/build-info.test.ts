@@ -1,5 +1,5 @@
 /*
- * product-info.test.ts
+ * build-info.test.ts
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -16,11 +16,11 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
-import { productInfo } from '../../../src/main/product-info';
+import { buildInfo } from '../../../src/main/build-info';
 
 describe('ProductInfo', () => {
   it('productInfo returns version string', () => {
-    const info = productInfo();
+    const info = buildInfo();
     assert.isNotEmpty(info.RSTUDIO_VERSION);
   });
 });

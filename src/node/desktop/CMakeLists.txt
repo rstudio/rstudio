@@ -22,6 +22,14 @@ if(APPLE)
                   ${CMAKE_CURRENT_BINARY_DIR}/mac-terminal)
 endif()
 
+# Configure into the source directory during builds. This will
+# leave a modified file in the source tree. This is OK in our
+# build environment since we start with a clean repo for each
+# build but will be mildly annoying on a dev machine when using
+# make-package (typically only done while working ON make-package).
+configure_file (${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts.in
+                ${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts)
+
 # defines NODEJS, NODEJS_PATH, YARN, YARN_PATH
 include("${CMAKE_CURRENT_LIST_DIR}/../CMakeNodeTools.txt")
 
