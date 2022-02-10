@@ -14,7 +14,6 @@
  */
 
 import { BrowserWindow, nativeImage, shell, WebContents } from 'electron';
-// import { nativeImage } from 'electron/common';
 import { IpcMainEvent } from 'electron/main';
 
 import path from 'path';
