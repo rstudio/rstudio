@@ -416,10 +416,6 @@ if [ "${build_package}" = "1" ]; then
    info "Done!"
 fi
 
-# clean up
-restore-java-home
-restore-package-version
-
 cd "${PKG_DIR}"
 
 if [ "${install}" = "1" ]; then
