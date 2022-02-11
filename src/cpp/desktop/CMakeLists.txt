@@ -31,9 +31,9 @@ if(NOT RSTUDIO_ELECTRON)
          else()
             # Qt named compiler folder varies by platform
             if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-            set(QT_COMPILER "gcc_64")
+               set(QT_COMPILER "gcc_64")
             else()
-            set(QT_COMPILER "gcc")
+               set(QT_COMPILER "gcc")
             endif()
          endif()
 
@@ -42,7 +42,7 @@ if(NOT RSTUDIO_ELECTRON)
          # find the newest installed Qt version among the versions we build
          # against
          foreach(QT_CANDIDATE ${QT_CANDIDATES})
-            
+
             set(QT_VERSION_SUBDIR "${QT_CANDIDATE}")
 
             set(QMAKE_QT50_SDK "/opt/RStudio-QtSDK/Qt${QT_CANDIDATE}/${QT_VERSION_SUBDIR}/${QT_COMPILER}")
@@ -71,7 +71,7 @@ if(NOT RSTUDIO_ELECTRON)
    else()
       # Windows
       set(QT_VERSION "5.12.8")
-      set(QT_VERSION_SUBDIR "${QT_VERSION}")   
+      set(QT_VERSION_SUBDIR "${QT_VERSION}")
       if(NOT QT_QMAKE_EXECUTABLE)
 
          set(QMAKE_QT50_SDK "C:\\Qt\\Qt${QT_VERSION}\\${QT_VERSION_SUBDIR}\\msvc2017_64")
@@ -140,7 +140,7 @@ if(NOT RSTUDIO_ELECTRON)
    # disable clang warnings for qt sources
    if(APPLE)
       add_definitions(-Wno-unused-private-field
-                     -Wno-uninitialized)
+                      -Wno-uninitialized)
    endif()
 
    # configure NOTICE file into build directory so it can be read at dev time
@@ -150,40 +150,41 @@ if(NOT RSTUDIO_ELECTRON)
    # include files
    file(GLOB_RECURSE DESKTOP_HEADER_FILES "*.h*")
    if (NOT WIN32)
-   list(REMOVE_ITEM DESKTOP_HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/DesktopChooseRHome.hpp)
+      list(REMOVE_ITEM DESKTOP_HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/DesktopChooseRHome.hpp)
    endif (NOT WIN32)
 
    set(MOC_DESKTOP_HEADER_FILES ${DESKTOP_HEADER_FILES})
    list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
-   ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qtsingleapplication/qtlockedfile.h
-   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopDetectRHome.hpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopOptions.hpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopRVersion.hpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNetworkProxyFactory.hpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopProgressActivator.hpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopComUtils.hpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopOfficeViewer.hpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopWordViewer.hpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/DesktopPowerpointViewer.hpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
-   ${CMAKE_CURRENT_SOURCE_DIR}/DockTileView.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/qtsingleapplication/qtlockedfile.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopDetectRHome.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopOptions.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopRVersion.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopNetworkProxyFactory.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopProgressActivator.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopUtils.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopComUtils.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopOfficeViewer.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopWordViewer.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopPowerpointViewer.hpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/desktop-config.h.in
+      ${CMAKE_CURRENT_SOURCE_DIR}/DockTileView.hpp
    )
 
    if(WIN32)
       list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
-      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopPosixApplication.hpp)
+         ${CMAKE_CURRENT_SOURCE_DIR}/DesktopPosixApplication.hpp
+      )
    endif()
    if(WIN32 OR APPLE)
       list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
-      ${CMAKE_CURRENT_SOURCE_DIR}/synctex/evince/EvinceDaemon.hpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/synctex/evince/EvinceWindow.hpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/synctex/evince/EvinceSynctex.hpp
+         ${CMAKE_CURRENT_SOURCE_DIR}/synctex/evince/EvinceDaemon.hpp
+         ${CMAKE_CURRENT_SOURCE_DIR}/synctex/evince/EvinceWindow.hpp
+         ${CMAKE_CURRENT_SOURCE_DIR}/synctex/evince/EvinceSynctex.hpp
       )
    endif()
    if(NOT WIN32)
       list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
-      ${CMAKE_CURRENT_SOURCE_DIR}/synctex/sumatra/SumatraSynctex.hpp
+         ${CMAKE_CURRENT_SOURCE_DIR}/synctex/sumatra/SumatraSynctex.hpp
       )
    endif()
    if(NOT APPLE)
@@ -197,81 +198,81 @@ if(NOT RSTUDIO_ELECTRON)
 
    # source files
    set(DESKTOP_SOURCE_FILES
-   DesktopActivationOverlay.cpp
-   DesktopSessionServersOverlay.cpp
-   DesktopBrowserWindow.cpp
-   DesktopDownloadItemHelper.cpp
-   DesktopGwtCallback.cpp
-   DesktopGwtWindow.cpp
-   DesktopInfo.cpp
-   DesktopInputDialog.cpp
-   DesktopMain.cpp
-   DesktopMainWindow.cpp
-   DesktopMenuCallback.cpp
-   DesktopNetworkProxyFactory.cpp
-   DesktopOptions.cpp
-   DesktopUtils.cpp
-   DesktopWebPage.cpp
-   DesktopWebView.cpp
-   DesktopWebProfile.cpp
-   DesktopWindowTracker.cpp
-   DesktopRCommandEvaluator.cpp
-   DesktopSatelliteWindow.cpp
-   DesktopSecondaryWindow.cpp
-   DesktopSessionLauncher.cpp
-   DesktopSlotBinders.cpp
-   DesktopSubMenu.cpp
-   DesktopSynctex.cpp
-   DesktopJobLauncherOverlay.cpp
-   RemoteDesktopSessionLauncherOverlay.cpp
-   3rdparty/qtsingleapplication/qtsingleapplication.cpp
-   3rdparty/qtsingleapplication/qtlocalpeer.cpp
+      DesktopActivationOverlay.cpp
+      DesktopSessionServersOverlay.cpp
+      DesktopBrowserWindow.cpp
+      DesktopDownloadItemHelper.cpp
+      DesktopGwtCallback.cpp
+      DesktopGwtWindow.cpp
+      DesktopInfo.cpp
+      DesktopInputDialog.cpp
+      DesktopMain.cpp
+      DesktopMainWindow.cpp
+      DesktopMenuCallback.cpp
+      DesktopNetworkProxyFactory.cpp
+      DesktopOptions.cpp
+      DesktopUtils.cpp
+      DesktopWebPage.cpp
+      DesktopWebView.cpp
+      DesktopWebProfile.cpp
+      DesktopWindowTracker.cpp
+      DesktopRCommandEvaluator.cpp
+      DesktopSatelliteWindow.cpp
+      DesktopSecondaryWindow.cpp
+      DesktopSessionLauncher.cpp
+      DesktopSlotBinders.cpp
+      DesktopSubMenu.cpp
+      DesktopSynctex.cpp
+      DesktopJobLauncherOverlay.cpp
+      RemoteDesktopSessionLauncherOverlay.cpp
+      3rdparty/qtsingleapplication/qtsingleapplication.cpp
+      3rdparty/qtsingleapplication/qtlocalpeer.cpp
    )
 
    if(WIN32)
-   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
-      DesktopChooseRHome.cpp
-      DesktopComUtils.cpp
-      DesktopOfficeViewer.cpp
-      DesktopPowerpointViewer.cpp
-      DesktopRVersion.cpp
-      DesktopWin32ApplicationLaunch.cpp
-      DesktopWin32DetectRHome.cpp
-      DesktopWin32ProgressActivator.cpp
-      DesktopWordViewer.cpp
-      synctex/sumatra/SumatraSynctex.cpp
-      "${CMAKE_CURRENT_BINARY_DIR}/rstudio.rc"
-   )
-   list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
-      ${CMAKE_CURRENT_SOURCE_DIR}/DesktopPosixApplication.hpp
-   )
-   else()
-   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
-      DesktopPosixApplication.cpp
-      DesktopPosixApplicationLaunch.cpp
-      DesktopPosixDetectRHome.cpp
-   )
-   if(NOT APPLE)
       set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
-         synctex/evince/EvinceDaemon.cpp
-         synctex/evince/EvinceSynctex.cpp
-         synctex/evince/EvinceWindow.cpp
+         DesktopChooseRHome.cpp
+         DesktopComUtils.cpp
+         DesktopOfficeViewer.cpp
+         DesktopPowerpointViewer.cpp
+         DesktopRVersion.cpp
+         DesktopWin32ApplicationLaunch.cpp
+         DesktopWin32DetectRHome.cpp
+         DesktopWin32ProgressActivator.cpp
+         DesktopWordViewer.cpp
+         synctex/sumatra/SumatraSynctex.cpp
+         "${CMAKE_CURRENT_BINARY_DIR}/rstudio.rc"
       )
-   endif()
+      list(REMOVE_ITEM MOC_DESKTOP_HEADER_FILES
+         ${CMAKE_CURRENT_SOURCE_DIR}/DesktopPosixApplication.hpp
+      )
+   else()
+      set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+         DesktopPosixApplication.cpp
+         DesktopPosixApplicationLaunch.cpp
+         DesktopPosixDetectRHome.cpp
+      )
+      if(NOT APPLE)
+         set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+            synctex/evince/EvinceDaemon.cpp
+            synctex/evince/EvinceSynctex.cpp
+            synctex/evince/EvinceWindow.cpp
+         )
+      endif()
    endif(WIN32)
 
    if(APPLE)
-   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
-      DesktopUtilsMac.mm
-      DesktopGwtCallbackMac.mm
-      DockMenu.cpp
-      DockTileView.mm
-      ScriptCommand.mm
-   )
+      set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+         DesktopUtilsMac.mm
+         DesktopGwtCallbackMac.mm
+         DockMenu.cpp
+         DockTileView.mm
+         ScriptCommand.mm
+      )
    else()
-   set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
-      DockTileView.cpp
-   )
+      set(DESKTOP_SOURCE_FILES ${DESKTOP_SOURCE_FILES}
+         DockTileView.cpp
+      )
    endif()
 
    # include directories
@@ -327,7 +328,9 @@ if(NOT RSTUDIO_ELECTRON)
    if(APPLE OR WIN32 OR
       RSTUDIO_PACKAGE_BUILD OR
       (${QT_LIBRARY_DIR} MATCHES ".*QtSDK.*"))
-   set(RSTUDIO_BUNDLE_QT TRUE)
+
+      set(RSTUDIO_BUNDLE_QT TRUE)
+
    endif()
 
    set(RSTUDIO_QTMODULES
