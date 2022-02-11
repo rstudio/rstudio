@@ -31,6 +31,7 @@
 
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/SessionSuspend.hpp>
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -117,6 +118,14 @@ std::set<std::string> implicitlyAvailablePackages(const FilePath& filePath)
 }
 
 namespace {
+
+SEXP rs_suspendSession(SEXP forceSEXP, SEXP exitStatusSEXP)
+{
+   bool force = r::sexp::asLogical(forceSEXP);
+   int exitStatus = r::sexp::asInteger(exitStatusSEXP);
+   session::suspend::suspendSession(force, exitStatus);
+   return R_NilValue;
+}
 
 SEXP rs_fromJSON(SEXP objectSEXP)
 {
@@ -317,12 +326,13 @@ SEXP rs_runAsyncRProcess(SEXP codeSEXP,
 
 Error initialize()
 {
-   RS_REGISTER_CALL_METHOD(rs_fromJSON, 1);
-   RS_REGISTER_CALL_METHOD(rs_fromYAML, 1);
-   RS_REGISTER_CALL_METHOD(rs_isNullExternalPointer, 1);
-   RS_REGISTER_CALL_METHOD(rs_readIniFile, 1);
-   RS_REGISTER_CALL_METHOD(rs_rResourcesPath, 0);
-   RS_REGISTER_CALL_METHOD(rs_runAsyncRProcess, 3);
+   RS_REGISTER_CALL_METHOD(rs_suspendSession);
+   RS_REGISTER_CALL_METHOD(rs_fromJSON);
+   RS_REGISTER_CALL_METHOD(rs_fromYAML);
+   RS_REGISTER_CALL_METHOD(rs_isNullExternalPointer);
+   RS_REGISTER_CALL_METHOD(rs_readIniFile);
+   RS_REGISTER_CALL_METHOD(rs_rResourcesPath);
+   RS_REGISTER_CALL_METHOD(rs_runAsyncRProcess);
    
    using boost::bind;
    using namespace module_context;
