@@ -120,17 +120,22 @@ install-yarn-packages() {
    fi
 }
 
+PACKAGE_VERSION_SET=0
 set-version () {
    if [ "${rstudio_target}" = "Electron" ]; then
       pushd ${ELECTRON_SOURCE_DIR}
       install-yarn-packages
       ${YARN} json -I -f package.json -e "this.version=\"$1\""
+      PACKAGE_VERSION_SET=1
       popd
    fi
 }
 
 restore-package-version () {
-   set-version 99.9.9
+   if [ "${PACKAGE_VERSION_SET}" = "1" ]; then
+      set-version 99.9.9
+      PACKAGE_VERSION_SET=0
+   fi
 }
 
 # ensure JAVA_HOME and package.json restored on exit if necessary
