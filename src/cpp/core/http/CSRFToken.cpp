@@ -71,7 +71,7 @@ std::string setCSRFTokenCookie(const http::Request& request,
    }
 
    pResponse->addCookie(cookie);
-   pResponse->addCookie(cookie);
+   pResponse->addCookie(oldCookie);
    return csrfToken;
 }
 
