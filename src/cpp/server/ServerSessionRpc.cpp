@@ -169,8 +169,8 @@ void validationLoginHandler(
    // serviced by the session itself (which provides CSRF validation via the session's client ID),
    // we take this additional precaution
    const core::http::Request& request = pConnection->request();
-   std::string headerToken = request.headerValue(kCSRFTokenHeader);
-   std::string cookieToken = request.cookieValue(kCSRFTokenCookie);
+   std::string headerToken = core::http::getCSRFTokenHeader(request);
+   std::string cookieToken = core::http::getCSRFTokenCookie(request);
    if (headerToken.empty())
    {
       LOG_WARNING_MESSAGE("Attempt to request URL " + request.uri() + " without CSRF token");
