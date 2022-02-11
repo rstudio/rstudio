@@ -3130,7 +3130,9 @@ public class Source implements InsertSourceEvent.Handler,
                      FilePosition position = FilePosition.create(row, Math.max(data.getColumn(), 1));
                      columnManager_.scrollToPosition(position, data.getMoveCursor(), finish);
                   });
-               } else {
+               }
+               else
+               {
                   finish.execute();
                }
             }
