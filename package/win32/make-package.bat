@@ -21,6 +21,7 @@ for %%A in (%*) do (
       if /I "%%A" == "quick" set QUICK=1
       if /I "%%A" == "nozip" set NOZIP=1
       if /I "%%A" == "electron" set RSTUDIO_TARGET=Electron
+      if /I "%%A" == "desktop" set RSTUDIO_TARGET=Desktop
       if /I "%%A" == "nogwt" set BUILD_GWT=0
 )
 
@@ -158,11 +159,12 @@ echo Failed to build RStudio! Error: %ERRORLEVEL%
 exit /b %ERRORLEVEL%
 
 :showhelp
-echo make-package [clean] [quick] [nozip] [electron] [nogwt]
+echo make-package [clean] [quick] [nozip] [electron] [desktop] [nogwt]
 echo     clean: full rebuild
 echo     quick: skip creation of setup package
 echo     nozip: skip creation of ZIP file
-echo     electron: build Electron instead of Qt desktop (NYI)
+echo     electron: build Electron instead of Qt desktop
+echo     desktop: build Qt desktop (default)
 echo     nogwt: use results of last GWT build
 exit /b 0
 

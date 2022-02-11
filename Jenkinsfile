@@ -378,12 +378,13 @@ try {
         // build each windows variant in parallel
         for (int i = 0; i < windows_containers.size(); i++) {
           def index = i
-          parallel_containers["windows"] = {
+          parallel_containers["${windows_containers[i].os}-${windows_containers[i].flavor}"] = {
+            def current_container = windows_containers[index]
             node('windows') {
               stage('prepare container') {
                 checkout scm
                 docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                  def image_tag = "windows-${rstudioReleaseBranch}"
+                  def image_tag = "${current_container.os}-${rstudioReleaseBranch}"
                   windows_image = docker.image("jenkins/ide:" + image_tag)
 
                   retry(5) {
@@ -400,7 +401,7 @@ try {
                 }
                 stage('build'){
                   def env = "set \"RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor}\" && set \"RSTUDIO_VERSION_MINOR=${rstudioVersionMinor}\" && set \"RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}\" && set \"RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}\""
-                  bat "cd package/win32 && ${env} && set \"PACKAGE_OS=Windows\" && make-package.bat clean && cd ../.."
+                  bat "cd package/win32 && ${env} && set \"PACKAGE_OS=Windows\" && make-package.bat clean ${current_container.flavor} && cd ../.."
                 }
                 stage('tests'){
                   try {
@@ -426,7 +427,7 @@ try {
                   def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
                   packageVersion = packageVersion.replace('+', '-')
 
-                  def buildDest = "s3://rstudio-ide-build/desktop/windows"
+                  def buildDest = "s3://rstudio-ide-build/${current_container.flavor}/windows"
                   def packageName = "RStudio-${packageVersion}"
 
                   // strip unhelpful suffixes from filenames
@@ -457,24 +458,26 @@ try {
                     }
 
                     // publish the build (self installing exe)
-                    def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
+                    def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.exe -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
                     println stdout
 
                     // publish the build (installer-less zip)
-                    stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.zip -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.zip -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
+                    stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.zip -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.zip -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
                     println stdout
                   }
                 }
                 stage('upload debug symbols') {
-                  // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
-                  bat '''
-                  cd package\\win32\\build
-                    FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
-                  '''
+                  if (current_container.flavor == "desktop") {
+                    // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
+                    bat '''
+                    cd package\\win32\\build
+                      FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
+                    '''
 
-                  // upload the breakpad symbols
-                  withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-                    bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                    // upload the breakpad symbols
+                    withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+                      bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                    }
                   }
                 }
               }
