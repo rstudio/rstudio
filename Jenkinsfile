@@ -299,8 +299,7 @@ try {
         }
 
         def windows_containers = [
-          [os: 'windows', arch: 'x86_64', flavor: 'desktop',  variant: '', package_os: 'Windows'],
-          [os: 'windows', arch: 'x86_64', flavor: 'electron', variant: '', package_os: 'Windows']
+          [os: 'windows', arch: 'x86_64', flavor: 'desktop',  variant: '', package_os: 'Windows']
         ]
  
         // prepare container for windows builder
