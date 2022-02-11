@@ -149,7 +149,7 @@ void handleFileRequest(const FileRequestOptions& options,
       vars["server_homepage"] = options.serverHomepagePath;
 
       // read existing CSRF token
-      std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
+      std::string csrfToken = core::http::getCSRFTokenCookie(request);
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
       vars["csrf_token_meta"] = kCSRFTokenCookie;
 

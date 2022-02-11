@@ -109,7 +109,7 @@ void signIn(const core::http::Request& request,
    }
 
    // re-use existing cookie refreshing its expiration or set new if not present
-   std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
+   std::string csrfToken = core::http::getCSRFTokenCookie(request);
    csrfToken = core::http::setCSRFTokenCookie(request,
                                               getCookieExpiry(false),
                                               csrfToken,
@@ -357,7 +357,7 @@ void setSignInCookies(const core::http::Request& request,
                       bool staySignedIn,
                       core::http::Response* pResponse)
 {
-   std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
+   std::string csrfToken = core::http::getCSRFTokenCookie(request);
    bool secureCookie = isSecureCookie(request);
    boost::posix_time::time_duration validity = getCookieExpiry(true).get();
    boost::optional<boost::posix_time::time_duration> expiry = getCookieExpiry(staySignedIn);

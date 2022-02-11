@@ -62,6 +62,13 @@ inline core::Error sendSessionRequest(const std::string& uri,
    std::string token = core::system::generateUuid();
    request.setHeader(kCSRFTokenHeader, token);
    request.addCookie(kCSRFTokenCookie, token);
+
+   // NOTE: Remove block when GO is not supported ======================================
+   // Set the old cookie and header as well, for backward compatibility
+   request.setHeader(kOldCSRFTokenHeader, token);
+   request.addCookie(kOldCSRFTokenCookie, token);
+   // ==================================================================================
+   
    request.setBody(body);
 
    // first, attempt to send a plain old http request
