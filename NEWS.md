@@ -4,3 +4,4 @@ RStudio 1.4 "Evergreen Rose"
 * Fixed an issue where RStudio Desktop Pro could fail when connecting to remote sessions via https (Pro #2651)
 * Fixed a crash that can occur when opening a VS Code session behind a path-rewriting proxy (Pro #2699)
 * Updated embedded nginx to 1.20.1 (Pro #2676)
+* Blocked access to code-server's `/absproxy/<port>` url (Pro #3275)
