@@ -667,10 +667,7 @@
    {
       # expand and alias for client
       path <- .rs.normalizePath(path, winslash = "/", mustWork = TRUE)
-      homeDir <- path.expand("~")
-      if (identical(substr(path, 1, nchar(homeDir)), homeDir)) {
-         path <- file.path("~", substring(path, nchar(homeDir) + 2))
-      }
+      path <- .rs.createAliasedPath(path)
    }
 
    # transform numeric line, column values to integer
