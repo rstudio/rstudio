@@ -1265,6 +1265,7 @@ private:
                excludeArgs_.push_back("--exclude=" + filePattern.getString());
          }
       }
+      excludeArgs_.push_back("--exclude-dir=cloud.noindex");
    }
 
    void processIncludeFilePatterns()
