@@ -1758,7 +1758,7 @@ public class Source implements InsertSourceEvent.Handler,
          return;
       FilePosition pos = FilePosition.create(event.getLine(),
          event.getColumn());
-      columnManager_.scrollToPosition(pos, event.getMoveCursor());
+      columnManager_.scrollToPosition(pos, event.getMoveCursor(), null);
    }
 
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
@@ -3109,19 +3109,32 @@ public class Source implements InsertSourceEvent.Handler,
             @Override
             public void onSuccess(final EditingTarget result)
             {
-               if (data.getRow() != -1) 
+               Command finish = () -> {
+                  // suppress attempts by the shell widget to steal focus here
+                  events_.fireEvent(new SuppressNextShellFocusEvent());
+               
+                  result.focus();
+                  result.ensureCursorVisible();
+                  
+                  JsObject response = JsObject.createJsObject();
+                  response.setString("id", result.getId());
+                  server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               };
+
+               int row = data.getRow();
+               if (row != -1) 
                {
-                  columnManager_.scrollToPosition(FilePosition.create(data.getRow(), data.getColumn()), data.getMoveCursor());
+                  // give ace time to render before scrolling to position
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     FilePosition position = FilePosition.create(row, Math.max(data.getColumn(), 1));
+                     columnManager_.scrollToPosition(position, data.getMoveCursor(), finish);
+                  });
                }
-
-               // focus opened document (note that we may need to suppress
-               // attempts by the shell widget to steal focus here)
-               events_.fireEvent(new SuppressNextShellFocusEvent());
-               result.focus();
-
-               JsObject response = JsObject.createJsObject();
-               response.setString("id", result.getId());
-               server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               else
+               {
+                  finish.execute();
+               }
             }
 
             @Override

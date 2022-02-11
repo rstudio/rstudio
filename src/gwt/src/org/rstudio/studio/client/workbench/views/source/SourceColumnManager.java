@@ -1845,7 +1845,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       activeColumn_.fireDocTabsChanged();
    }
 
-   public void scrollToPosition(FilePosition position, boolean moveCursor)
+   public void scrollToPosition(FilePosition position, boolean moveCursor, Command onNavigationCompleted)
    {
       // ensure we have an active source column
       getActive();
@@ -1856,7 +1856,7 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
             position.getLine() - 1,
             position.getColumn() - 1);
          activeColumn_.getActiveEditor().navigateToPosition(
-            srcPosition, false, false, moveCursor, null);
+            srcPosition, false, false, moveCursor, onNavigationCompleted);
       }
    }
 
