@@ -115,8 +115,11 @@ const loadPageLocalization = () => {
             break;
         }
 
-        const element = document.getElementById(id) as HTMLElement;
-        element.innerHTML = i18next.t('uiFolder.' + reducedId);
+        const elements = document.querySelectorAll(`div[id^="${id}"]`);
+
+        elements.forEach((element) => {
+          element.innerHTML = i18next.t('uiFolder.' + reducedId);
+        });
       });
     } catch (err) {
       console.log('Error occurred when loading i18n: ', err);
