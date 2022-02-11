@@ -24,18 +24,22 @@ const loadPageLocalization = () => {
     const i18nIds = ['initializingR', 'rLogo', 'initializingR', 'theRsessionIsInitializing'].map((id) => 'i18n-' + id);
 
     try {
+      document.title = i18next.t('uiFolder.initializingR');
+
       i18nIds.forEach((id) => {
         const reducedId = id.replace('i18n-', '');
-        const element = document.getElementById(id) as HTMLElement;
+        const elements = document.querySelectorAll(`div[id^="${id}"]`);
 
-        switch (reducedId) {
-          case 'theRsessionIsInitializing':
-            element.innerHTML = i18next.t('uiFolder.' + reducedId, { mdash: '&mdash;' });
-            break;
-          default:
-            element.innerHTML = i18next.t('uiFolder.' + reducedId);
-            break;
-        }
+        elements.forEach((element) => {
+          switch (reducedId) {
+            case 'theRsessionIsInitializing':
+              element.innerHTML = i18next.t('uiFolder.' + reducedId, { mdash: '&mdash;' });
+              break;
+            default:
+              element.innerHTML = i18next.t('uiFolder.' + reducedId);
+              break;
+          }
+        });
       });
     } catch (err) {
       console.log('Error occurred when loading i18n: ', err);

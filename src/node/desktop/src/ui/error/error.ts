@@ -41,28 +41,32 @@ const loadPageLocalization = () => {
     ].map((id) => 'i18n-' + id);
 
     try {
+      document.title = i18next.t('uiFolder.errorStartingR');
+
       i18nIds.forEach((id) => {
         const reducedId = id.replace('i18n-', '');
-        const element = document.getElementById(id) as HTMLElement;
+        const elements = document.querySelectorAll(`div[id^="${id}"]`);
 
-        switch (reducedId) {
-          case 'removeStartupCustomizationsSuchAs':
-            element.innerHTML = i18next.t('uiFolder.' + reducedId, {
-              rProfileFileExtension: '<samp>.Rprofile</samp>',
-            });
-            break;
-          case 'rSessionExitedWithCode':
-            element.innerHTML = i18next.t('uiFolder.' + reducedId, {
-              exitCode: '<strong><span id="exit_code"></span></strong>',
-            });
-            break;
-          case 'copyProblemReport':
-            (document.getElementById(id) as HTMLInputElement).value = i18next.t('uiFolder.' + reducedId);
-            break;
-          default:
-            element.innerHTML = i18next.t('uiFolder.' + reducedId);
-            break;
-        }
+        elements.forEach((element) => {
+          switch (reducedId) {
+            case 'removeStartupCustomizationsSuchAs':
+              element.innerHTML = i18next.t('uiFolder.' + reducedId, {
+                rProfileFileExtension: '<samp>.Rprofile</samp>',
+              });
+              break;
+            case 'rSessionExitedWithCode':
+              element.innerHTML = i18next.t('uiFolder.' + reducedId, {
+                exitCode: '<strong><span id="exit_code"></span></strong>',
+              });
+              break;
+            case 'copyProblemReport':
+              (document.getElementById(id) as HTMLInputElement).value = i18next.t('uiFolder.' + reducedId);
+              break;
+            default:
+              element.innerHTML = i18next.t('uiFolder.' + reducedId);
+              break;
+          }
+        });
       });
     } catch (err) {
       console.log('Error occurred when loading i18n: ', err);
