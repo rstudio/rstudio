@@ -206,8 +206,8 @@ void handleTutorialHomeRequest(const http::Request& request,
    {
       std::stringstream clickHere;
       clickHere << "<a"
-                   << " aria-label\"Install learnr\""
-                   << " class=\"rstudio-tutorials-install-learnr-link\""
+                   << " aria-label\"Install shiny\""
+                   << " class=\"rstudio-tutorials-install-shiny-link\""
                    << " href=\"javascript:void(0)\""
                    << " onclick=\"window.parent.tutorialUpdateShiny(); return false;\">"
                    << "click here"
