@@ -190,7 +190,8 @@ void handleTutorialRunRequest(const http::Request& request,
    pResponse->setFile(loadingPath, request);
 }
 
-bool haveMinimumShinyForTutorials() {
+bool haveMinimumShinyForTutorials()
+{
    return module_context::isPackageVersionInstalled("shiny", "1.6.0");
 }
 
