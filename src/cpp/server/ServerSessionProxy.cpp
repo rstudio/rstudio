@@ -802,6 +802,7 @@ http::Headers getAuthCookies(const http::Response& response)
    http::Headers authCookies;
    for (const http::Header& cookie : response.getCookies({ 
       kCSRFTokenCookie,
+      kOldCSRFTokenCookie,
       kUserIdCookie,
       kUserListCookie,
       kPersistAuthCookie }))
