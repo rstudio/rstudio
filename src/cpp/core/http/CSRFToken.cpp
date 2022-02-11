@@ -75,17 +75,36 @@ std::string setCSRFTokenCookie(const http::Request& request,
    return csrfToken;
 }
 
+std::string getCSRFTokenCookie(const Request& request)
+{
+   std::string tokenCookie = request.cookieValue(kCSRFTokenCookie);
+   // NOTE: Remove block when GO is not supported ======================================
+   // If the token is empty, extract the old version
+   if (tokenCookie.empty())
+      tokenCookie = request.cookieValue(kOldCSRFTokenCookie);
+   // ==================================================================================
+
+   return tokenCookie;
+}
+
+std::string getCSRFTokenHeader(const Request& request)
+{
+   std::string headerToken = request.headerValue(kCSRFTokenHeader);
+
+   // NOTE: Remove block when GO is not supported ======================================
+   // Fallback on the old version for backward compatibility
+   if (headerToken.empty())
+      headerToken = request.headerValue(kOldCSRFTokenHeader);
+   // ==================================================================================
+
+   return headerToken;
+}
+
 bool validateCSRFForm(const http::Request& request, 
                       http::Response* pResponse)
 {
    // extract token from HTTP cookie (set above)
-   std::string headerToken = request.cookieValue(kCSRFTokenCookie);
-
-   // NOTE: Remove block when GO is not supported ======================================
-   // If the token is empty, extract the old version
-   if (headerToken.empty())
-      headerToken = request.cookieValue(kOldCSRFTokenCookie);
-   // ==================================================================================
+   std::string headerToken = getCSRFTokenCookie(request);
 
 
    http::Fields fields;
@@ -115,21 +134,9 @@ bool validateCSRFForm(const http::Request& request,
 
 bool validateCSRFHeaders(const http::Request& request)
 {
-   std::string headerToken = request.headerValue(kCSRFTokenHeader);
 
-   // NOTE: Remove block when GO is not supported ======================================
-   // Fallback on the old version for backward compatibility
-   if (headerToken.empty())
-      headerToken = request.headerValue(kOldCSRFTokenHeader);
-   // ==================================================================================
-
-   std::string cookieToken = request.cookieValue(kCSRFTokenCookie);
-
-   // NOTE: Remove block when GO is not supported ======================================
-   // Fallback on the old version for backward compatilbity
-   if (cookieToken.empty())
-      cookieToken = request.cookieValue(kOldCSRFTokenCookie);
-   // ==================================================================================
+   std::string cookieToken = getCSRFTokenCookie(request);
+   std::string headerToken = getCSRFTokenHeader(request);
 
    if (headerToken.empty() || headerToken != cookieToken)
       return false;
