@@ -41,6 +41,8 @@ const loadPageLocalization = () => {
     ].map((id) => 'i18n-' + id);
 
     try {
+      document.title = i18next.t('uiFolder.errorStartingR');
+
       i18nIds.forEach((id) => {
         const reducedId = id.replace('i18n-', '');
         const element = document.getElementById(id) as HTMLElement;

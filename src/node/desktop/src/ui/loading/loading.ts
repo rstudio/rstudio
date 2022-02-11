@@ -24,6 +24,8 @@ const loadPageLocalization = () => {
     const i18nIds = ['initializingR', 'rLogo', 'initializingR', 'theRsessionIsInitializing'].map((id) => 'i18n-' + id);
 
     try {
+      document.title = i18next.t('uiFolder.initializingR');
+
       i18nIds.forEach((id) => {
         const reducedId = id.replace('i18n-', '');
         const element = document.getElementById(id) as HTMLElement;
