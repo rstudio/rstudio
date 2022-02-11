@@ -63,11 +63,11 @@ inline core::Error sendSessionRequest(const std::string& uri,
    request.setHeader(kCSRFTokenHeader, token);
    request.addCookie(kCSRFTokenCookie, token);
 
-   // NOTE: Remove block when GO is not supported ======================================
+   // NOTE: Remove block when Ghost Orchid 2021.09 is not supported ======================================
    // Set the old cookie and header as well, for backward compatibility
    request.setHeader(kOldCSRFTokenHeader, token);
    request.addCookie(kOldCSRFTokenCookie, token);
-   // ==================================================================================
+   // ====================================================================================================
    
    request.setBody(body);
 

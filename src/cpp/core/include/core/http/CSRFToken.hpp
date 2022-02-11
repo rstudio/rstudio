@@ -25,10 +25,10 @@
 #define kCSRFTokenHeader "X-RS-CSRF-Token"
 #define kCSRFTokenCookie "rs-csrf-token"
 
-// NOTE: Remove block when GO is not supported ======================================
+// NOTE: Remove block when Ghost Orchid 2021.09 is not supported ======================================
 #define kOldCSRFTokenHeader "X-CSRF-Token"
 #define kOldCSRFTokenCookie "csrf-token"
-// ==================================================================================
+// ====================================================================================================
 
 namespace rstudio {
 namespace core {

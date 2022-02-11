@@ -51,7 +51,7 @@ std::string setCSRFTokenCookie(const http::Request& request,
             true, // HTTP only
             secure);
 
-   // NOTE: Remove block when GO is not supported ======================================
+   // NOTE: Remove block when Ghost Orchid 2021.09 is not supported ======================================
    // Set the old cookie as well, for backward compatibility
    http::Cookie oldCookie(
             request,
@@ -61,7 +61,7 @@ std::string setCSRFTokenCookie(const http::Request& request,
             sameSite,
             true, // HTTP only
             secure);
-   // ==================================================================================
+   // ====================================================================================================
 
    // set expiration for cookie
    if (expiresFromNow.is_initialized())
@@ -78,11 +78,11 @@ std::string setCSRFTokenCookie(const http::Request& request,
 std::string getCSRFTokenCookie(const Request& request)
 {
    std::string tokenCookie = request.cookieValue(kCSRFTokenCookie);
-   // NOTE: Remove block when GO is not supported ======================================
+   // NOTE: Remove block when Ghost Orchid 2021.09 is not supported ======================================
    // If the token is empty, extract the old version
    if (tokenCookie.empty())
       tokenCookie = request.cookieValue(kOldCSRFTokenCookie);
-   // ==================================================================================
+   // ====================================================================================================
 
    return tokenCookie;
 }
@@ -91,11 +91,11 @@ std::string getCSRFTokenHeader(const Request& request)
 {
    std::string headerToken = request.headerValue(kCSRFTokenHeader);
 
-   // NOTE: Remove block when GO is not supported ======================================
+   // NOTE: Remove block when Ghost Orchid 2021.09 is not supported ======================================
    // Fallback on the old version for backward compatibility
    if (headerToken.empty())
       headerToken = request.headerValue(kOldCSRFTokenHeader);
-   // ==================================================================================
+   // ====================================================================================================
 
    return headerToken;
 }
@@ -114,11 +114,11 @@ bool validateCSRFForm(const http::Request& request,
    std::string bodyToken = http::util::fieldValue<std::string>(fields,
          kCSRFTokenCookie, "");
 
-   // NOTE: Remove block when GO is not supported ======================================
+   // NOTE: Remove block when Ghost Orchid 2021.09 is not supported ======================================
    // If the token is empty, extract the old version
    if (bodyToken.empty())
       bodyToken = http::util::fieldValue<std::string>(fields, kOldCSRFTokenCookie, "");
-   // ==================================================================================
+   // ====================================================================================================
 
    // report an error if they don't match
    if (headerToken.empty() || bodyToken != headerToken) 
