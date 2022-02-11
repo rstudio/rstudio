@@ -190,12 +190,33 @@ void handleTutorialRunRequest(const http::Request& request,
    pResponse->setFile(loadingPath, request);
 }
 
+bool haveMinimumShinyForTutorials()
+{
+   return module_context::isPackageVersionInstalled("shiny", "1.6.0");
+}
+
 void handleTutorialHomeRequest(const http::Request& request,
                                http::Response* pResponse)
 {
    using namespace string_utils;
    
    std::stringstream ss;
+
+   bool ok = haveMinimumShinyForTutorials();
+   if (!ok)
+   {
+      std::stringstream clickHere;
+      clickHere << "<a"
+                   << " aria-label\"Install shiny\""
+                   << " class=\"rstudio-tutorials-install-shiny-link\""
+                   << " href=\"javascript:void(0)\""
+                   << " onclick=\"window.parent.tutorialUpdateShiny(); return false;\">"
+                   << "click here"
+                   << "</a>";
+         
+      ss << "<p>Version 1.6.0 of the <code>shiny</code> package is required to run tutorials for RStudio.</p>"
+         << "<p>Please " << clickHere.str() << " to update the <code>shiny</code> package.</p>";
+   }
    
    if (tutorialIndex().empty())
    {
@@ -223,78 +244,81 @@ void handleTutorialHomeRequest(const http::Request& request,
       ss << "</div>";
    }
    
-   for (auto entry : tutorialIndex())
+   if (ok)
    {
-      std::string pkgName = entry.first;
-      std::vector<TutorialInfo> tutorials = entry.second;
-      if (tutorials.empty())
-         continue;
-
-      for (auto tutorial : tutorials)
+      for (auto entry : tutorialIndex())
       {
-         ss << "<div class=\"rstudio-tutorials-section\">";
-         
-         ss << "<div class=\"rstudio-tutorials-label-container\">";
-         
-         std::string title = (tutorial.title.empty())
-               ? "[Untitled tutorial]"
-               : htmlEscape(tutorial.title);
-         
-         ss << "<span role=\"heading\" aria-level=\"2\" class=\"rstudio-tutorials-label\">"
-            << title
-            << "</span>";
-         
-         ss << "<span class=\"rstudio-tutorials-run-container\">"
+         std::string pkgName = entry.first;
+         std::vector<TutorialInfo> tutorials = entry.second;
+         if (tutorials.empty())
+            continue;
+
+         for (auto tutorial : tutorials)
+         {
+            ss << "<div class=\"rstudio-tutorials-section\">";
             
-            << "<button"
-            << " class=\"rstudio-tutorials-run-button\""
-            << " aria-label=\"Start tutorial '" << htmlEscape(tutorial.name, true) << "' from package '" << htmlEscape(pkgName, true) << "'\""
-            << " onclick=\"window.parent.tutorialRun('" << htmlEscape(tutorial.name, true) << "', '" << htmlEscape(pkgName, true) << "')\""
-            << ">"
+            ss << "<div class=\"rstudio-tutorials-label-container\">";
+            
+            std::string title = (tutorial.title.empty())
+                  ? "[Untitled tutorial]"
+                  : htmlEscape(tutorial.title);
+            
+            ss << "<span role=\"heading\" aria-level=\"2\" class=\"rstudio-tutorials-label\">"
+               << title
+               << "</span>";
+            
+            ss << "<span class=\"rstudio-tutorials-run-container\">"
                
-            << "<span class=\"rstudio-tutorials-run-button-label\">Start Tutorial</span>"
-            << "<span class=\"rstudio-tutorials-run-button-icon\">&#x25b6</span>"
-            << "</button>"
-            << "</span>";
-         
-         ss << "</div>";
-         
-         ss << "<div class=\"rstudio-tutorials-sublabel\">"
-            << pkgName << ": " << htmlEscape(tutorial.name)
-            << "</div>";
-         
-         if (tutorial.description.empty())
-         {
-            ss << "<div class=\"rstudio-tutorials-description rstudio-tutorials-description-empty\">"
-               << "<p>[No description available.]</p>"
-               << "</div>";
-         }
-         else
-         {
-            std::string descriptionHtml;
-            Error error = core::markdown::markdownToHTML(
-                     tutorial.description,
-                     core::markdown::Extensions(),
-                     core::markdown::HTMLOptions(),
-                     &descriptionHtml);
+               << "<button"
+               << " class=\"rstudio-tutorials-run-button\""
+               << " aria-label=\"Start tutorial '" << htmlEscape(tutorial.name, true) << "' from package '" << htmlEscape(pkgName, true) << "'\""
+               << " onclick=\"window.parent.tutorialRun('" << htmlEscape(tutorial.name, true) << "', '" << htmlEscape(pkgName, true) << "')\""
+               << ">"
+                  
+               << "<span class=\"rstudio-tutorials-run-button-label\">Start Tutorial</span>"
+               << "<span class=\"rstudio-tutorials-run-button-icon\">&#x25b6</span>"
+               << "</button>"
+               << "</span>";
             
-            if (error)
+            ss << "</div>";
+            
+            ss << "<div class=\"rstudio-tutorials-sublabel\">"
+               << pkgName << ": " << htmlEscape(tutorial.name)
+               << "</div>";
+            
+            if (tutorial.description.empty())
             {
-               LOG_ERROR(error);
-               descriptionHtml = tutorial.description;
+               ss << "<div class=\"rstudio-tutorials-description rstudio-tutorials-description-empty\">"
+                  << "<p>[No description available.]</p>"
+                  << "</div>";
+            }
+            else
+            {
+               std::string descriptionHtml;
+               Error error = core::markdown::markdownToHTML(
+                        tutorial.description,
+                        core::markdown::Extensions(),
+                        core::markdown::HTMLOptions(),
+                        &descriptionHtml);
+               
+               if (error)
+               {
+                  LOG_ERROR(error);
+                  descriptionHtml = tutorial.description;
+               }
+               
+               ss << "<div class=\"rstudio-tutorials-description\">"
+                  << descriptionHtml
+                  << "</div>";
             }
             
-            ss << "<div class=\"rstudio-tutorials-description\">"
-               << descriptionHtml
-               << "</div>";
+            ss << "</div>";
+            
          }
          
-         ss << "</div>";
-         
       }
-      
    }
-   
+
    std::map<std::string, std::string> vars;
    
    std::string tutorialsHtml = ss.str();

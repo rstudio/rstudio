@@ -29,6 +29,7 @@
 @external rstudio-tutorials-footer;
 @external rstudio-tutorials-footer-text;
 @external rstudio-tutorials-install-learnr-link;
+@external rstudio-tutorials-install-shiny-link;
 
 /* Scrollbars */
 
@@ -214,6 +215,10 @@
 }
 
 .rstudio-themes-dark-menus .rstudio-tutorials-install-learnr-link:link {
+   color: rgb(118, 171, 221);
+}
+
+.rstudio-themes-dark-menus .rstudio-tutorials-install-shiny-link:link {
    color: rgb(118, 171, 221);
 }
 
