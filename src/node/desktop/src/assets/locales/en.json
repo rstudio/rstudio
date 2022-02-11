@@ -59,7 +59,8 @@
     "runRguiRAppOrRInATerminalToEnsure": "Run RGui, R.app, or R in a terminal to ensure that R itself starts up correctly.",
     "retry": "Retry",
     "initializingR": "Initializing R",
-    "theRsessionIsInitializing": "The R session is initializing {{- mdash}} please wait a moment..."
+    "theRsessionIsInitializing": "The R session is initializing {{- mdash}} please wait a moment...",
+    "rSessionFailedToStart": "The R session failed to start."
   },
   "applicationTs": {
     "devModeConfig": "Dev Mode Config",
