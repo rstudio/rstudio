@@ -382,6 +382,61 @@ public class TutorialPane
       return frame_.addHandler(handler, TutorialNavigateEvent.TYPE);
    }
 
+   private void updateShiny()
+   {
+      new ImmediatelyInvokedFunctionExpression()
+      {
+         private HandlerRegistration handler_;
+         private ProgressIndicator progress_;
+
+         private final String errorCaption = constants_.errorInstallingShiny();
+         private final String errorMessage =
+               constants_.errorInstallingShinyMessage();
+
+         @Override
+         protected void invoke()
+         {
+            // double-check that we were able to successfully install shiny
+            progress_ = globalDisplay_.getProgressIndicator(errorCaption);
+            handler_ = events_.addHandler(ConsolePromptEvent.TYPE, new ConsolePromptEvent.Handler()
+            {
+               @Override
+               public void onConsolePrompt(ConsolePromptEvent event)
+               {
+                  handler_.removeHandler();
+
+                  server_.isPackageInstalled("shiny", "1.6.0", new ServerRequestCallback<Boolean>()
+                  {
+                     @Override
+                     public void onResponseReceived(Boolean installed)
+                     {
+                        if (!installed)
+                        {
+                           progress_.onError(errorMessage);
+                           return;
+                        }
+
+                        progress_.onCompleted();
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        progress_.onError(errorMessage);
+                     }
+                  });
+               }
+            });
+
+            // fire console event installing learnr
+            progress_.onProgress(constants_.installingShinyCaption());
+            SendToConsoleEvent event = new SendToConsoleEvent("install.packages(\"shiny\")", true);
+            events_.fireEvent(event);
+         }
+      };
+   }
+
    private void installLearnr()
    {
       new ImmediatelyInvokedFunctionExpression()
@@ -450,6 +505,11 @@ public class TutorialPane
       $wnd.tutorialInstallLearnr = $entry(function() {
          self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::installLearnr()();
       });
+
+      $wnd.tutorialUpdateShiny = $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::updateShiny()();
+      });
+
 
    }-*/;
 
