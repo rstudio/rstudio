@@ -676,6 +676,10 @@ else()
          endif()
       endif()
 
+      if(RSTUDIO_ELECTRON AND WIN32)
+         configure_file(rstudio-tests.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests.bat @ONLY)
+      endif()
+
       # add server subprojects if we aren't building in desktop only mode
       if(RSTUDIO_SERVER)
          add_subdirectory(server)

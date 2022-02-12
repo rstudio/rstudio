@@ -299,7 +299,8 @@ try {
         }
 
         def windows_containers = [
-          [os: 'windows', arch: 'x86_64', flavor: 'desktop',  variant: '', package_os: 'Windows']
+          [os: 'windows', arch: 'x86_64', flavor: 'desktop',  variant: '', package_os: 'Windows'],
+          [os: 'windows', arch: 'x86_64', flavor: 'electron', variant: '', package_os: 'Windows']
         ]
  
         // prepare container for windows builder
@@ -451,9 +452,9 @@ try {
                   withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
 
                     // derive product
-                    def product="desktop"
+                    def product = "${current_container.flavor}"
                     if (rstudioVersionSuffix.contains("pro")) {
-                        product = "desktop-pro"
+                      product = "${current_container.flavor}-pro"
                     }
 
                     // publish the build (self installing exe)
