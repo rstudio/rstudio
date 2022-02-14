@@ -295,7 +295,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
    private void manageExcludeFilePattern()
    {
-      // disable 'Standard Git exclusions' when directory is not a git repository
+      // disable 'Files matched by .gitignore' when directory is not a git repository
       // or git is not installed
       // this should come first as it may change the value of listPresetExcludeFilePatterns
       if (!gitStatus_ ||
