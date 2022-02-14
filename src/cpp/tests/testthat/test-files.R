@@ -75,6 +75,13 @@ test_that("file listings are correct", {
 
 test_that("our list.files, list.dirs hooks function as expected", {
    
+   # these tests are only reliable with R 4.2.0, as they need R's native
+   # list.files routine to be able to list files with Chinese names
+   # and setting the locale seems insufficient for some cases
+   skip_if(getRversion() < "4.2.0")
+   
+   library(testthat)
+   
    # use native R routines
    .rs.files.restoreBindings()
    on.exit(.rs.files.replaceBindings(), add = TRUE)
@@ -104,14 +111,10 @@ test_that("our list.files, list.dirs hooks function as expected", {
    file.create(paste(nihao, "file", sep = "/"))
    file.create(paste(nihao, "R", sep = "."))
    
-   if (.rs.platform.isWindows && getRversion() < "4.2.0") {
-      Sys.setlocale(locale = "Chinese")
-      on.exit(Sys.setlocale(locale = "English"), add = TRUE)
-   }
-   
    paths <- list(
       ".",
       getwd(),
+      chartr("/", "\\", getwd()),
       file.path("..", basename(getwd())),
       "ThisPathDoesNotExist"
    )
