@@ -75,6 +75,8 @@ test_that("file listings are correct", {
 
 test_that("our list.files, list.dirs hooks function as expected", {
    
+   library(testthat)
+   
    # use native R routines
    .rs.files.restoreBindings()
    on.exit(.rs.files.replaceBindings(), add = TRUE)
@@ -99,20 +101,19 @@ test_that("our list.files, list.dirs hooks function as expected", {
    dir.create("hasEmptyDir")
    dir.create("hasEmptyDir/empty")
    
-   nihao <- enc2utf8("\u4f60\u597d")  # 你好
-   dir.create(nihao)
-   file.create(paste(nihao, "file", sep = "/"))
-   file.create(paste(nihao, "R", sep = "."))
-   
-   if (.rs.platform.isWindows && getRversion() < "4.2.0") {
-      Sys.setlocale(locale = "Chinese")
-      on.exit(Sys.setlocale(locale = "English"), add = TRUE)
+   if (identical(R.version$crt, "ucrt")) {
+      nihao <- enc2utf8("\u4f60\u597d")  # 你好
+      dir.create(nihao)
+      file.create(paste(nihao, "file", sep = "/"))
+      file.create(paste(nihao, "R", sep = "."))
    }
    
    paths <- list(
       ".",
       getwd(),
+      chartr("/", "\\", getwd()),
       file.path("..", basename(getwd())),
+      paste("..", basename(getwd()), sep = "\\"),
       "ThisPathDoesNotExist"
    )
    

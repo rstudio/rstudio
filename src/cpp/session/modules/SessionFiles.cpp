@@ -70,10 +70,12 @@
 
 #ifdef BOOST_WINDOWS_API
 # define kEmptyString L""
+# define kForwardSlash L"/"
 # define kDotPath L"."
 # define kDotDotPath L".."
 #else
 # define kEmptyString ""
+# define kForwardSlash "/"
 # define kDotPath "."
 # define kDotDotPath ".."
 #endif
@@ -1412,6 +1414,24 @@ class ListFilesInterruptedException : public std::exception
 {
 };
 
+boost::filesystem::path listFilesResult(
+      const boost::filesystem::path& prefix,
+      const boost::filesystem::path& name)
+{
+   // if we don't have a prefix, return the name as-is
+   if (prefix.empty())
+      return name;
+
+   // otherwise, create path and use '/' separator
+   // R preserves native separators in the prefix, but not in
+   // any of the listed path entries
+   auto path = prefix;
+   path += kForwardSlash;
+   path += name;
+   return path;
+
+}
+
 template <typename F>
 void listFilesImpl(
       const boost::filesystem::path& path,
@@ -1437,7 +1457,7 @@ void listFilesImpl(
             continue;
 
          // construct new prefix
-         auto newPrefix = prefix.empty() ? name : prefix / name;
+         auto newPrefix = listFilesResult(prefix, name);
          
          // check if this file is a directory (ignore errors)
          boost::system::error_code ec;
@@ -1490,11 +1510,11 @@ void listFilesDispatch(
          // include '.', '..' if requested
          if (options.allFiles && !options.noDotDot && !options.recursive)
          {
-            for (auto&& path : { kDotPath, kDotDotPath })
+            for (auto&& name : { kDotPath, kDotDotPath })
             {
-               if (accept(path))
+               if (accept(name))
                {
-                  pResult->push_back(prefix.empty() ? path : prefix / path);
+                  pResult->push_back(listFilesResult(prefix, name));
                }
             }
          }
@@ -1539,7 +1559,9 @@ SEXP finalizePaths(const std::vector<boost::filesystem::path>& paths)
             [](const boost::filesystem::path& path)
    {
 #ifdef BOOST_WINDOWS_API
-      return core::string_utils::wideToUtf8(path.generic_wstring());
+      // NOTE: we need to preserve path components (e.g. mixed slashes)
+      // as-is, so avoid using 'generic' APIs
+      return core::string_utils::wideToUtf8(path.wstring());
 #else
       return path.native();
 #endif
