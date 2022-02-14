@@ -277,6 +277,7 @@ export class MenuCallback extends EventEmitter {
           continue;
         }
 
+        currentMenuItemTemplate.visible = newMenuItemTemplate.visible;
         if (!newMenuItemTemplate.visible && !newMenuItemTemplate.role) continue;
 
         const { submenu } = newMenuItemTemplate;

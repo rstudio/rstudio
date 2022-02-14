@@ -20,7 +20,7 @@ import { MenuCallback } from '../../../src/main/menu-callback';
 
 const separatorTemplate: MenuItemConstructorOptions = { type: 'separator' };
 
-describe('MenuCallback', () => {
+describe('WIPMenuCallback', () => {
   it('can be constructed', () => {
     const callback = new MenuCallback();
     assert.isObject(callback);
@@ -141,5 +141,80 @@ describe('MenuCallback', () => {
       1,
       'expected "Clear recent" menu item',
     );
+  });
+
+  it('can change a command visibility that causes unnecessary separators', () => {
+    const callback = new MenuCallback();
+    const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
+
+    callback.beginMain();
+    callback.menuBegin('&Build');
+
+    callback.addCommand('buildAll', 'Build All', '', '', false, true);
+    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addCommand('buildSourcePackage', 'Build Source Package', '', '', false, false);
+    callback.addCommand('buildBinaryPackage', 'Build Binary Package', '', '', false, false);
+    callback.addCommand('testPackage', 'Test Package', '', '', false, false);
+    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addCommand('configure_build', 'Configure Build Tools', '', '', false, true);
+
+    // debugger;
+    callback.updateMenus([]);
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 3, 'expected 3 menu items to start');
+
+    callback.updateMenus([{ id: 'buildAll', visible: false }]);
+    callback.updateMenus([{ id: 'buildSourcePackage', visible: true }]);
+    callback.updateMenus([{ id: 'buildBinaryPackage', visible: true }]);
+    callback.updateMenus([{ id: 'testPackage', visible: true }]);
+
+    assert.strictEqual(
+      callback.mainMenu?.items[menuIdx].submenu?.items.length,
+      5,
+      'expected 5 menu items after changing text',
+    );
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[0].id, 'buildSourcePackage');
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[1].id, 'buildBinaryPackage');
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[2].id, 'testPackage');
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[3].type, 'separator');
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[4].id, 'configure_build');
+  });
+
+  /*
+        <menu label="_Build">
+         <cmd refid="devtoolsLoadAll"/>
+         <cmd refid="buildAll"/>
+         <cmd refid="rebuildAll"/>
+         <cmd refid="cleanAll"/>
+         <separator/>
+         <cmd refid="serveQuartoSite"/>
+         <separator/>
+         <cmd refid="testPackage"/>
+         <separator/>
+         <cmd refid="checkPackage"/>
+         <separator/>
+         <cmd refid="buildSourcePackage"/>
+         <cmd refid="buildBinaryPackage"/>
+         <separator/>
+         <cmd refid="roxygenizePackage"/>
+         <separator/>
+         <cmd refid="stopBuild"/>
+         <separator/>
+         <cmd refid="buildToolsProjectSetup"/>
+      </menu>
+  */
+
+  it('can update menu item visibility', () => {
+    const callback = new MenuCallback();
+    const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
+
+    callback.beginMain();
+    callback.menuBegin('&Build');
+
+    callback.addCommand('build_all', 'Build All', '', '', false, true);
+    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addCommand('install_package', 'Install Package', '', '', false, false);
+    callback.addCommand('test_package', 'Test Package', '', '', false, false);
+    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addCommand('configure_build', 'Configure Build Tools', '', '', false, true);
   });
 });
