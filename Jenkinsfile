@@ -369,10 +369,11 @@ try {
 
                 retry(5) {
                   windows_image.pull()
+                  image_name = windows_image.imageName()
                 }
               }
             }
-            windows_image.inside() {
+            docker.image(image_name).inside() {
               stage('dependencies') {
                   withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
                     bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
