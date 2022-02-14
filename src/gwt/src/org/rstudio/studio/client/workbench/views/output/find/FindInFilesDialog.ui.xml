@@ -74,7 +74,7 @@
          <rw:FormListBox ui:field="listPresetExcludeFilePatterns_"
                     styleName="{style.presetFilePatterns}">
             <g:item value=""> <ui:msg key="noneText">None</ui:msg></g:item>
-            <g:item value="gitExclusions"><ui:msg key="gitExclusionsText">Standard Git exclusions</ui:msg></g:item>
+            <g:item value="gitExclusions"><ui:msg key="gitExclusionsText">Files matched by .gitignore</ui:msg></g:item>
             <g:item value="custom"><ui:msg key="customText">Custom Filter</ui:msg></g:item>
          </rw:FormListBox>
          <div ui:field="divExcludeCustomFilter_">
