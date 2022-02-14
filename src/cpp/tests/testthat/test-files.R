@@ -75,11 +75,6 @@ test_that("file listings are correct", {
 
 test_that("our list.files, list.dirs hooks function as expected", {
    
-   # these tests are only reliable with R 4.2.0, as they need R's native
-   # list.files routine to be able to list files with Chinese names
-   # and setting the locale seems insufficient for some cases
-   skip_if(getRversion() < "4.2.0")
-   
    library(testthat)
    
    # use native R routines
@@ -106,16 +101,19 @@ test_that("our list.files, list.dirs hooks function as expected", {
    dir.create("hasEmptyDir")
    dir.create("hasEmptyDir/empty")
    
-   nihao <- enc2utf8("\u4f60\u597d")  # 你好
-   dir.create(nihao)
-   file.create(paste(nihao, "file", sep = "/"))
-   file.create(paste(nihao, "R", sep = "."))
+   if (identical(R.version$crt, "ucrt")) {
+      nihao <- enc2utf8("\u4f60\u597d")  # 你好
+      dir.create(nihao)
+      file.create(paste(nihao, "file", sep = "/"))
+      file.create(paste(nihao, "R", sep = "."))
+   }
    
    paths <- list(
       ".",
       getwd(),
       chartr("/", "\\", getwd()),
       file.path("..", basename(getwd())),
+      paste("..", basename(getwd()), sep = "\\"),
       "ThisPathDoesNotExist"
    )
    
