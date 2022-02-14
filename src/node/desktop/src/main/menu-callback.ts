@@ -65,8 +65,11 @@ export class MenuCallback extends EventEmitter {
   menuStack: Menu[] = [];
   actions = new Map<string, MenuItem>();
 
-  // keep a list of templates around so we can re-build the menus with them
-  private menuItemTemplates = new Map<MenuItem, MenuItemConstructorOptions>();
+  // keep a list of templates referenced by id so we can re-build the menus with them
+  private menuItemTemplates = new Map<string, MenuItemConstructorOptions>();
+
+  // keep a list of templates referenced by menu so we can re-build the menu
+  private menuTemplates = new Map<Menu, Array<MenuItemConstructorOptions>>();
 
   lastWasTools = false;
   lastWasDiagnostics = false;
@@ -100,14 +103,17 @@ export class MenuCallback extends EventEmitter {
     );
 
     ipcMain.on('menu_add_separator', () => {
-      const separator = new MenuItem({ type: 'separator' });
-      this.addToCurrentMenu(separator);
+      const separatorTemplate: MenuItemConstructorOptions = { type: 'separator' };
+      const separator = new MenuItem(separatorTemplate);
+      this.addToCurrentMenu(separator, separatorTemplate);
     });
 
     ipcMain.on('menu_end', () => {
       if (this.lastWasDiagnostics) {
         this.lastWasDiagnostics = false;
-        this.addToCurrentMenu(new MenuItem({ role: 'toggleDevTools' }));
+        const template: MenuItemConstructorOptions = { role: 'toggleDevTools' };
+        const menuItem = new MenuItem(template);
+        this.addToCurrentMenu(menuItem, template);
       }
 
       this.menuStack.pop();
@@ -132,7 +138,7 @@ export class MenuCallback extends EventEmitter {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.visible = visible;
-        const template = this.menuItemTemplates.get(item);
+        const template = this.menuItemTemplates.get(item.id);
         if (template) template.visible = visible;
       }
     });
@@ -141,7 +147,7 @@ export class MenuCallback extends EventEmitter {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.enabled = enabled;
-        const template = this.menuItemTemplates.get(item);
+        const template = this.menuItemTemplates.get(item.id);
         if (template) template.enabled = enabled;
       }
     });
@@ -150,7 +156,7 @@ export class MenuCallback extends EventEmitter {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.checked = checked;
-        const template = this.menuItemTemplates.get(item);
+        const template = this.menuItemTemplates.get(item.id);
         if (template) template.checked = checked;
       }
     });
@@ -163,7 +169,7 @@ export class MenuCallback extends EventEmitter {
       const item = this.getMenuItemById(commandId);
       if (item) {
         item.label = label;
-        const template = this.menuItemTemplates.get(item);
+        const template = this.menuItemTemplates.get(item.id);
         if (template) template.label = label;
       }
     });
@@ -182,7 +188,7 @@ export class MenuCallback extends EventEmitter {
       //   if the "commit" event is not called before then
       const item = this.getMenuItemById(commandId);
       if (item) {
-        const template = this.menuItemTemplates.get(item);
+        const template = this.menuItemTemplates.get(item.id);
         if (!template) return;
 
         const accelerator = this.convertShortcut(shortcut);
@@ -209,13 +215,20 @@ export class MenuCallback extends EventEmitter {
   beginMain(): void {
     this.mainMenu = new Menu();
     if (process.platform === 'darwin') {
-      this.mainMenu.append(new MenuItem({ role: 'appMenu' }));
+      const appMenu: MenuItemConstructorOptions = { role: 'appMenu', visible: true };
+      this.addToCurrentMenu(new MenuItem(appMenu), appMenu);
+      // this.mainMenu.append(new MenuItem(appMenu));
     }
   }
 
   menuBegin(label: string): void {
     const subMenu = new Menu();
-    const opts: MenuItemConstructorOptions = { submenu: subMenu, label: label, id: menuIdFromLabel(label) };
+    const opts: MenuItemConstructorOptions = {
+      submenu: subMenu,
+      label: label,
+      id: menuIdFromLabel(label),
+      visible: true,
+    };
     if (label === '&File') {
       opts.role = 'fileMenu';
     } else if (label === '&Edit') {
@@ -231,19 +244,19 @@ export class MenuCallback extends EventEmitter {
     }
 
     const menuItem = new MenuItem(opts);
-    this.menuItemTemplates.set(menuItem, opts);
-    if (this.menuStack.length == 0) {
-      this.mainMenu?.append(menuItem);
-    } else {
-      this.addToCurrentMenu(menuItem);
-    }
+    this.menuItemTemplates.set(menuItem.id, opts);
+    this.addToCurrentMenu(menuItem, opts);
     this.menuStack.push(subMenu);
   }
 
   /**
-   * Uses a list of templates to update existing menu items by reconstructing the entire app menu
+   * Uses a list of templates to update existing menu items by reconstructing the entire app menu.
    *
-   * this function performs updates ONLY -- it does not add or remove anything
+   * This function performs will also clean up unnecessary menu items such as hidden items or
+   * unnecessary separators. It is important that this updates the menu templates since hidden items
+   * and unnecessary separators are not added to menus. Hidden items are not added so that the
+   * separator logic can remove unnecessary separators. Unnecessary separators are removed because
+   * they cannot be hidden on Linux/Windows.
    * @param items a list of MenuItemConstructorOptions that will overwrite existing menu items
    */
   updateMenus(items: MenuItemConstructorOptions[]): void {
@@ -253,40 +266,32 @@ export class MenuCallback extends EventEmitter {
     const newMenu = new Menu();
 
     const recursiveCopy = (currentMenu: Menu, targetMenu: Menu) => {
-      for (const item of currentMenu.items) {
-        const itemTemplate = this.menuItemTemplates.get(item);
-        if (!itemTemplate) {
-          // no itemTemplate found (separators, for example)
-          this.addToMenu(targetMenu, item);
+      const currentMenuTemplate = this.menuTemplates.get(currentMenu) ?? [];
+
+      for (const currentMenuItemTemplate of currentMenuTemplate) {
+        const foundMenuItemTemplate = items.find((item) => item.id === currentMenuItemTemplate.id);
+        const newMenuItemTemplate = { ...currentMenuItemTemplate, ...foundMenuItemTemplate };
+
+        if (newMenuItemTemplate.type === 'separator') {
+          this.addToMenu(targetMenu, new MenuItem(newMenuItemTemplate));
           continue;
         }
 
-        const foundTemplate = items.find((item) => item.id === itemTemplate.id);
-        const newItemTemplate = { ...itemTemplate, ...foundTemplate };
+        if (!newMenuItemTemplate.visible && !newMenuItemTemplate.role) continue;
 
-        // remove the current entry, as it will be replaced later
-        this.menuItemTemplates.delete(item);
-
-        // itemTemplate can have a submenu, but that needs to be copied through iteration
-        // to avoid copying by reference
-        const { submenu } = newItemTemplate;
-
+        const { submenu } = newMenuItemTemplate;
         if (submenu instanceof Menu) {
           const newSubmenu = new Menu();
           recursiveCopy(submenu as Menu, newSubmenu);
-          newItemTemplate.submenu = newSubmenu;
+          newMenuItemTemplate.submenu = newSubmenu;
         }
 
-        const newMenuItem = new MenuItem(newItemTemplate);
-
-        // replace the existing item with the new item in the actions list
-        if (this.actions.delete(item.id)) {
-          this.actions.set(item.id, newMenuItem);
-        }
-
-        this.menuItemTemplates.set(newMenuItem, newItemTemplate);
+        const newMenuItem = new MenuItem(newMenuItemTemplate);
+        this.actions.set(newMenuItem.id, newMenuItem);
         this.addToMenu(targetMenu, newMenuItem);
       }
+
+      this.menuTemplates.set(targetMenu, currentMenuTemplate);
 
       targetMenu.items = targetMenu.items.filter((item, idx, arr) => {
         if (item.type !== 'separator') {
@@ -367,14 +372,27 @@ export class MenuCallback extends EventEmitter {
 
     const menuItem = new MenuItem(menuItemOpts);
     this.actions.set(cmdId, menuItem);
-    this.menuItemTemplates.set(menuItem, menuItemOpts);
-    this.addToCurrentMenu(menuItem);
+    this.menuItemTemplates.set(menuItem.id, menuItemOpts);
+    this.addToCurrentMenu(menuItem, menuItemOpts);
   }
 
-  addToCurrentMenu(menuItem: MenuItem): void {
+  addToCurrentMenu(menuItem: MenuItem, itemTemplate: MenuItemConstructorOptions): void {
+    let menu;
     if (this.menuStack.length > 0) {
-      this.menuStack[this.menuStack.length - 1].append(menuItem);
+      menu = this.menuStack[this.menuStack.length - 1];
+    } else {
+      if (!this.mainMenu) {
+        return;
+      }
+      menu = this.mainMenu;
     }
+    menu.append(menuItem);
+    let submenuItems = this.menuTemplates.get(menu);
+    if (!submenuItems) {
+      submenuItems = new Array<MenuItemConstructorOptions>();
+      this.menuTemplates.set(menu, submenuItems);
+    }
+    submenuItems.push(itemTemplate);
   }
 
   getMenuItemById(id: string): MenuItem | undefined {
