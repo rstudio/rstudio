@@ -1423,7 +1423,7 @@ boost::filesystem::path listFilesResult(
       return name;
 
    // otherwise, create path and use '/' separator
-   // R preserevs native separators in the prefix, but not in
+   // R preserves native separators in the prefix, but not in
    // any of the listed path entries
    auto path = prefix;
    path += kForwardSlash;
