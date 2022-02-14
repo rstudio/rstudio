@@ -1510,11 +1510,11 @@ void listFilesDispatch(
          // include '.', '..' if requested
          if (options.allFiles && !options.noDotDot && !options.recursive)
          {
-            for (auto&& path : { kDotPath, kDotDotPath })
+            for (auto&& name : { kDotPath, kDotDotPath })
             {
-               if (accept(path))
+               if (accept(name))
                {
-                  pResult->push_back(listFilesResult(prefix, path));
+                  pResult->push_back(listFilesResult(prefix, name));
                }
             }
          }
