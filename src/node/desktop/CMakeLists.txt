@@ -97,7 +97,10 @@ if(TARGET gwt_build)
    add_dependencies(electron_build gwt_build)
 endif()
 
-# install binary
+# install binary (except on macOS, which uses a different approach for bundling Electron due
+# to additional steps related to creation of a Universal x64/M1 image)
 if (WIN32)
    install(DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-win32-x64/" DESTINATION "${RSTUDIO_INSTALL_ELECTRON}")
+elseif (LINUX)
+   install(DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-linux-x64/" DESTINATION "${RSTUDIO_INSTALL_ELECTRON}")
 endif()

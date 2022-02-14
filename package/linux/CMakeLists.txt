@@ -72,7 +72,7 @@ if(RSTUDIO_SERVER)
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
   set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libsqlite3-0, libpq5, ")
 
-elseif(RSTUDIO_DESKTOP)
+elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
 
    # debian control files
   set(DEBIAN_POSTINST postinst-desktop.in)
