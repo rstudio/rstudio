@@ -74,13 +74,23 @@ if(RSTUDIO_SERVER)
 
 elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
 
-   # debian control files
-  set(DEBIAN_POSTINST postinst-desktop.in)
-  set(DEBIAN_POSTRM postrm-desktop.in)
+  if(RSTUDIO_DESKTOP)
+    # debian control files (Qt)
+    set(DEBIAN_POSTINST postinst-desktop.in)
+    set(DEBIAN_POSTRM postrm-desktop.in)
 
-  # rpm scripts
-  set(RPM_POSTINST postinst-desktop.sh.in)
-  set(RPM_POSTRM postrm-desktop.sh.in)
+    # rpm scripts (Qt)
+    set(RPM_POSTINST postinst-desktop.sh.in)
+    set(RPM_POSTRM postrm-desktop.sh.in)
+  else()
+    # debian control files (Electron)
+    set(DEBIAN_POSTINST postinst-electron.in)
+    set(DEBIAN_POSTRM postrm-electron.in)
+
+    # rpm scripts (Electron)
+    set(RPM_POSTINST postinst-electron.sh.in)
+    set(RPM_POSTRM postrm-electron.sh.in)
+  endif()
 
   # rpm dependencies
   string(FIND "${RSTUDIO_PACKAGE_OS}" "SUSE" SUSE_POS)

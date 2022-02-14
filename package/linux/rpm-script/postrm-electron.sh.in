@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# errors shouldn't cause script to exit
+set +e 
+
+# only remove things if this is an uninstall
+if [ "$1" = 0 ]
+then
+   # remove softlink to rstudio
+   rm -f /usr/bin/rstudio
+
+   # remove openssl softlinks
+   rm -f ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.1.0.0
+   rm -f ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.1.0.0
+fi
+
+# clear error termination state
+set -e
