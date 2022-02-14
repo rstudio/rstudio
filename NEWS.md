@@ -1,4 +1,4 @@
-RStudio 1.4 "Trampled Dandelion"
+RStudio 1.4 "Evergreen Rose"
 
 * Removed the breaking change introduced in Juliet Rose that changed the behavior of the X-Forwarded-Proto header when RSW is behind a proxy server (Pro #2657)
 * Fixed an issue where RStudio Desktop Pro could fail when connecting to remote sessions via https (Pro #2651)
