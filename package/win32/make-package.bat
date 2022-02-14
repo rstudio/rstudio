@@ -11,6 +11,7 @@ set QUICK=
 set NOZIP=
 set CLEANBUILD=
 set RSTUDIO_TARGET=Desktop
+set PACKAGE_VERSION_SET=
 
 if "%1" == "--help" goto :showhelp
 if "%1" == "-h" goto :showhelp
@@ -78,8 +79,8 @@ if not defined RSTUDIO_VERSION_PATCH set RSTUDIO_VERSION_PATCH=9
 if not defined RSTUDIO_VERSION_SUFFIX set RSTUDIO_VERSION_SUFFIX=-dev+999
 set RSTUDIO_VERSION_FULL=%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%%RSTUDIO_VERSION_SUFFIX%
 
-REM put version into package.json
-call :set-version %RSTUDIO_VERSION_FULL%
+REM put version and product name into package.json
+call :set-version %RSTUDIO_VERSION_FULL% rstudio
 
 REM Establish build dir
 set BUILD_DIR=build
@@ -168,16 +169,48 @@ echo     desktop: build Qt desktop (default)
 echo     nogwt: use results of last GWT build
 exit /b 0
 
+REM For a full package build the package.json file gets modified with the 
+REM desired build version and product name, and the build-info.ts source file 
+REM gets modified with details on the build (date, git-commit, etc). We try to 
+REM put these back to their original state at the end of the package build.
 :set-version
 if "%RSTUDIO_TARGET%" == "Electron" (
       pushd %ELECTRON_SOURCE_DIR%
       call %YARN%
+
+      REM Set package.json info
+      call :save-original-file package.json
       call %YARN% json -I -f package.json -e "this.version=\"%~1\""
+      call %YARN% json -I -f package.json -e "this.productName=\"%~2\""
+
+      REM Keep a backup of build-info.ts so we can restore it
+      call :save-original-file src\main\build-info.ts
+
+      set PACKAGE_VERSION_SET=1
       popd
 )
 exit /b 0
 
 :restore-package-version
-call :set-version 99.9.9
+if defined PACKAGE_VERSION_SET (
+      pushd %ELECTRON_SOURCE_DIR%
+      call :restore-original-file package.json
+      call :restore-original-file src\main\build-info.ts
+      set PACKAGE_VERSION_SET=
+      popd
+)
+exit /b 0
+
+REM create a copy of a file in the same folder with .original extension
+:save-original-file
+copy %~1 %~1.original
+exit /b 0
+
+REM restore a file previously saved with save-original-file
+:restore-original-file
+if exist %~1.modified del %~1.modified
+move %~1 %~1.modified
+move %~1.original %~1
+del %~1.modified
 exit /b 0
 

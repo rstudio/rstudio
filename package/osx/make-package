@@ -120,12 +120,23 @@ install-yarn-packages() {
    fi
 }
 
+# For a full package build the package.json file gets modified with the 
+# desired build version, and the build-info.ts source file gets modified with
+# details on the build (date, git-commit, etc). We try to put these back to
+# their original state at the end of the package build.
 PACKAGE_VERSION_SET=0
 set-version () {
    if [ "${rstudio_target}" = "Electron" ]; then
+
+      # Set package.json info
       pushd ${ELECTRON_SOURCE_DIR}
       install-yarn-packages
+      save-original-file package.json
       ${YARN} json -I -f package.json -e "this.version=\"$1\""
+
+      # Keep a backup of build-info.ts so we can restore it
+      save-original-file src/main/build-info.ts
+
       PACKAGE_VERSION_SET=1
       popd
    fi
@@ -133,8 +144,11 @@ set-version () {
 
 restore-package-version () {
    if [ "${PACKAGE_VERSION_SET}" = "1" ]; then
-      set-version 99.9.9
+      pushd ${ELECTRON_SOURCE_DIR}
+      restore-original-file package.json
+      restore-original-file src/main/build-info.ts
       PACKAGE_VERSION_SET=0
+      popd
    fi
 }
 
@@ -249,7 +263,7 @@ then
    exit 1
 fi
 
-# put version into package.json
+# configure Electron build info
 set-version ${RSTUDIO_VERSION_FULL}
 
 case "${arch}" in *arm64*)  build_arm64=1  ;; esac
