@@ -20,7 +20,6 @@ import * as en from '../assets/locales/en.json';
 const initI18n = () => {
   i18next
     .init({
-      debug: true,
       resources: {
         en: { translation: en },
       },
