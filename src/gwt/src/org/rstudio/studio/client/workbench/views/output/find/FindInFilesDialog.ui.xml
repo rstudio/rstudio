@@ -73,8 +73,8 @@
       <p><rw:FormLabel ui:field="labelExcludeFilePatterns_" text="Exclude these files:"><ui:attribute name="text" key="excludeFiles"/></rw:FormLabel>
          <rw:FormListBox ui:field="listPresetExcludeFilePatterns_"
                     styleName="{style.presetFilePatterns}">
-            <g:item value="gitExclusions"><ui:msg key="gitExclusionsText">Files matched by .gitignore</ui:msg></g:item>
             <g:item value=""> <ui:msg key="noneText">None</ui:msg></g:item>
+            <g:item value="gitExclusions"><ui:msg key="gitExclusionsText">Files matched by .gitignore</ui:msg></g:item>
             <g:item value="custom"><ui:msg key="customText">Custom Filter</ui:msg></g:item>
          </rw:FormListBox>
          <div ui:field="divExcludeCustomFilter_">
