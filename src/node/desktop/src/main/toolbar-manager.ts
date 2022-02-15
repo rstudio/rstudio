@@ -56,6 +56,9 @@ export class ToolbarManager {
     const toolbar = ` 
       const toolbar = document.createElement('div');
       toolbar.id = 'custom-toolbar';
+      toolbar.setAttribute('aria-label', 'Navigation');
+      toolbar.setAttribute('role', 'toolbar');
+      
       document.body.prepend(toolbar);
     `;
 
@@ -94,11 +97,19 @@ export class ToolbarManager {
           -moz-user-select: none;
           -ms-user-select: none;
           user-select: none;
+
+          border: none !important;
+          background: none !important;
+          padding: 0 !important;
         }
 
         .custom-toolbar_icon {
           width: 26px;
           height: 20px;
+          margin: 0 !important;
+          border: none !important;
+          background: none !important;
+          padding: 0 !important;
         }
 
         .custom-toolbar_icon:active {
@@ -122,12 +133,13 @@ export class ToolbarManager {
 
   addButtonsJsAsText(toolbarData: ToolbarData) {
     let addButtonsFn = `
-      const createButton = (iconPath, tooltip, onClick) => {
-        const button = document.createElement('div');
+      const createButton = (iconPath, tooltip, onClick, index) => {
+        const button = document.createElement('button');
         button.id = 'custom-toolbar_button-' + tooltip.replace(/ /g, '-');
         button.classList.add('custom-toolbar_button');
         button.title = tooltip;
-
+        button.setAttribute('aria-label', tooltip);
+        button.setAttribute('tabindex', index + 1);
         button.onclick = onClick;
 
         const icon = document.createElement('img');
@@ -138,6 +150,11 @@ export class ToolbarManager {
 
         button.appendChild(icon);
 
+        if ( index == 0 ){
+          button.focus();
+          button.blur();
+        }
+
         return button;
       };    
     `;
@@ -145,7 +162,7 @@ export class ToolbarManager {
     toolbarData.buttons.forEach((button, index) => {
       addButtonsFn += `const button${index} = createButton('${this.convertImagePathToBase64(button.iconPath)}', '${
         button.tooltip
-      }', ${button.onClick});
+      }', ${button.onClick}, ${index});
       document.getElementById('custom-toolbar').appendChild(button${index});`;
     });
 
