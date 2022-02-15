@@ -1260,6 +1260,12 @@
             "title": "Maximum number of columns in data viewer",
             "description": "The maximum number of columns to show at once in the data viewer."
         },
+        "data_viewer_max_cell_size": {
+            "type": "integer",
+            "default": 50,
+            "title": "Maximum number of character in data viewer cells", 
+            "description": "The maximum number of characters to show in a data viewer cell."
+        },
         "enable_screen_reader": {
             "type": "boolean",
             "default": false,

@@ -37,7 +37,7 @@ void handleHelpHomeRequest(const core::http::Request& request,
 
    
 } // namespace help
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

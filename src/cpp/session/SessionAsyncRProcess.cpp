@@ -101,7 +101,7 @@ void AsyncRProcess::start(const char* rCommand,
    // On Windows, we turn the vector of strings into a single
    // string to send over the command line, so we must ensure
    // that the arguments following '-e' are quoted, so that
-   // they are all interpretted as a single argument (rather
+   // they are all interpreted as a single argument (rather
    // than multiple arguments) to '-e'.
 
 #ifdef _WIN32

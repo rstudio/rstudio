@@ -33,7 +33,7 @@ bool isMonitoringDirectory(const core::FilePath& directory);
 core::Error initialize();
                        
 } // namespace files
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

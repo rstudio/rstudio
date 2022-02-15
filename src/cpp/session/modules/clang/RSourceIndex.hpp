@@ -36,7 +36,7 @@ bool isIndexableFile(const core::FileInfo& fileInfo,
                      const core::FilePath& pkgIncludeDir);
 
 } // namespace clang
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

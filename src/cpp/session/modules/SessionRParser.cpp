@@ -1044,7 +1044,7 @@ bool extractInfoFromFunctionDefinition(
 
 
 // Extract formals from the underlying object mapped by the symbol, or expression,
-// at the cursor. This involves (potentially) evaluating the expresion forming
+// at the cursor. This involves (potentially) evaluating the expression forming
 // the function object, e.g.
 //
 //     foo$bar(baz, bat)
@@ -1370,7 +1370,7 @@ public:
       if (cursor.contentEquals(L"file_test"))
          pCall->functionInfo().infoForFormal("y").setMissingnessHandled(true);
       
-      // 'globalVariables' doens't need 'package' argument
+      // 'globalVariables' doesn't need 'package' argument
       if (cursor.contentEquals(L"globalVariables") ||
           cursor.contentEquals(L"vignetteEngine"))
       {
@@ -1794,7 +1794,7 @@ void validateFunctionCall(RTokenCursor cursor,
    }
    
    // Error on missing arguments to call. If the user is passing down '...',
-   // we'll avoid this check and assume it's being inheritted from the parent
+   // we'll avoid this check and assume it's being inherited from the parent
    // function.
    if (!core::algorithm::contains(matched.unnamedArguments(), "..."))
    {

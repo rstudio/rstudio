@@ -66,7 +66,7 @@ function CodeBlock(s, attr)
     end
   end
   
-  -- thereom
+  -- theorem
   -- https://bookdown.org/yihui/bookdown/markdown-extensions-by-bookdown.html#theorems
   local theorem_types = 
   {

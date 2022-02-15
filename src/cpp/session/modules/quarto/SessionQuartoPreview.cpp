@@ -479,7 +479,7 @@ Error initialize()
    return initBlock.execute();
 }
 
-} // namespace prevew
+} // namespace preview
 } // namespace quarto
 } // namespace modules
 

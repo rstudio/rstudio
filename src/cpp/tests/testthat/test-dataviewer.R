@@ -32,6 +32,18 @@ test_that(".rs.formatDataColumnDispatch() iterates over the classes", {
     expect_equal(.rs.formatDataColumn(x, 1, 1), "Hi there!")
 })
 
+test_that(".rs.formatDataColumn() truncates lists", {
+    col <- list(
+        paste0(rep("a", 100), collapse = ""), 
+        "small"
+    )
+    x <- .rs.formatDataColumn(col, 1, 2)
+    expect_equal(
+        grepl("\\[\\.{3}\\]$", x), 
+        c(TRUE, FALSE)
+    )
+})
+
 test_that(".rs.flattenFrame() handles matrices and data frames", {
    tbl1 <- data.frame(x = 1:2)
    df_col <- data.frame(y = 1:2, z = 1:2)

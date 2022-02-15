@@ -114,7 +114,7 @@
    if (engine %in% c("", "qt5agg"))
       Sys.setenv(MPLENGINE = "tkAgg")
    
-   # update default version of Python to be used when reticulate is laoded
+   # update default version of Python to be used when reticulate is loaded
    .rs.registerPackageLoadHook("reticulate", function(...)
    {
       python <- .rs.readUiPref("python_path")
@@ -1092,7 +1092,7 @@
              cursor$moveToPreviousToken() &&
              (cursor$tokenValue() == "]" || cursor$tokenType() %in% "identifier"))
          {
-            # find code to be evaluted that will produce function
+            # find code to be evaluated that will produce function
             endToken   <- cursor$peek()
             cursor$moveToStartOfEvaluation()
             startToken <- cursor$peek()

@@ -477,7 +477,7 @@ std::string getResumedMessage()
 {
    boost::posix_time::ptime suspensionTimestamp = module_context::activeSession().suspensionTime();
 
-   // Assume suspension never occured if there's no suspensionTimestamp
+   // Assume suspension never occurred if there's no suspensionTimestamp
    if (suspensionTimestamp == boost::posix_time::not_a_date_time)
    {
       boost::posix_time::ptime lastResumed = module_context::activeSession().lastResumed();

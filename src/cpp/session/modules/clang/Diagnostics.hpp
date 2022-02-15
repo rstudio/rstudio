@@ -38,7 +38,7 @@ core::Error getCppDiagnostics(const core::json::JsonRpcRequest& request,
                               core::json::JsonRpcResponse* pResponse);
    
 } // namespace clang
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

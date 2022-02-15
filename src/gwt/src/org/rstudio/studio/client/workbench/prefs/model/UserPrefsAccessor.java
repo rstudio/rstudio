@@ -2646,6 +2646,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The maximum number of characters to show in a data viewer cell.
+    */
+   public PrefValue<Integer> dataViewerMaxCellSize()
+   {
+      return integer(
+         "data_viewer_max_cell_size",
+         _constants.dataViewerMaxCellSizeTitle(), 
+         _constants.dataViewerMaxCellSizeDescription(), 
+         50);
+   }
+
+   /**
     * Support accessibility aids such as screen readers (RStudio Server).
     */
    public PrefValue<Boolean> enableScreenReader()
@@ -3678,6 +3690,8 @@ public class UserPrefsAccessor extends Prefs
          defaultRVersion().setValue(layer, source.getObject("default_r_version"));
       if (source.hasKey("data_viewer_max_columns"))
          dataViewerMaxColumns().setValue(layer, source.getInteger("data_viewer_max_columns"));
+      if (source.hasKey("data_viewer_max_cell_size"))
+         dataViewerMaxCellSize().setValue(layer, source.getInteger("data_viewer_max_cell_size"));
       if (source.hasKey("enable_screen_reader"))
          enableScreenReader().setValue(layer, source.getBool("enable_screen_reader"));
       if (source.hasKey("typing_status_delay_ms"))
@@ -3959,6 +3973,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(submitCrashReports());
       prefs.add(defaultRVersion());
       prefs.add(dataViewerMaxColumns());
+      prefs.add(dataViewerMaxCellSize());
       prefs.add(enableScreenReader());
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());

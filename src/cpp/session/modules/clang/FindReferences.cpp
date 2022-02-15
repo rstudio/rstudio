@@ -100,7 +100,7 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
       // check for matching USR
       if (equalUSR(referencedCursor.getUSR(), pData->USR))
       {
-         // tokenize to extract identifer location for cursors that
+         // tokenize to extract identifier location for cursors that
          // represent larger source constructs
          FileRange foundRange;
          libclang::Tokens tokens(pData->tu, cursor.getExtent());
@@ -108,7 +108,7 @@ CXChildVisitResult findReferencesVisitor(CXCursor cxCursor,
 
          // for constructors & destructors we search backwards so that the
          // match is for the constructor identifier rather than the class
-         // identifer
+         // identifier
          unsigned numTokens = tokens.numTokens();
          if (referencedCursor.getKind() == CXCursor_Constructor ||
              referencedCursor.getKind() == CXCursor_Destructor)

@@ -318,7 +318,7 @@
     }
 
     var escaped = escapeHtml(data);
-
+    
     // special additional rendering for cells which themselves contain data frames or lists:
     // these include an icon that can be clicked to view contents
     if (clazz === "dataCell" || clazz === "listCell") {

@@ -638,7 +638,7 @@ void getWebCollectionsForUser(std::string key,
          }
       }
 
-      // associate cache specs with download requests (so we can propogate the version)
+      // associate cache specs with download requests (so we can propagate the version)
       for (ZoteroCollectionSpec cacheSpec : cacheSpecs)
       {
          auto it = std::find_if(pDownloads->begin(), pDownloads->end(), [cacheSpec](const DownloadRequest& request) {

@@ -119,10 +119,7 @@ public class EnvironmentObjects extends ResizeComposite
    public void onResize()
    {
       super.onResize();
-      if (pendingCallFramePanelSize_)
-      {
-         autoSizeCallFramePanel();
-      }
+      autoSizeCallFramePanel();
    }
 
    public void setContextDepth(int contextDepth)
@@ -243,31 +240,6 @@ public class EnvironmentObjects extends ResizeComposite
    public void setCallFrames(JsArray<CallFrame> frameList, boolean autoSize)
    {
       callFramePanel_.setCallFrames(frameList, contextDepth_);
-
-      // if not auto-sizing we're done
-      if (!autoSize)
-         return;
-
-      // if the parent panel has layout information, auto-size the call frame
-      // panel (let GWT go first so the call frame panel visibility has
-      // taken effect)
-      if (splitPanel.getOffsetHeight() > 0)
-      {
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            @Override
-            public void execute()
-            {
-               autoSizeCallFramePanel();
-            }
-         });
-      }
-      else
-      {
-         // wait until the split panel has layout information to compute the
-         // correct size of the call frame panel
-         pendingCallFramePanelSize_ = true;
-      }
    }
 
    public void setEnvironmentName(String environmentName)
@@ -654,35 +626,45 @@ public class EnvironmentObjects extends ResizeComposite
 
    private void autoSizeCallFramePanel()
    {
+      // nothing to do if minimized
+      if (callFramePanel_.isMinimized()) 
+         return;
+
+      if (callFramePanelHeight_ > 0) {
+         // here if the has already been sized before
+
+         // update because the panel might have changed size as we only listen
+         // to resizes of the host panel
+         callFramePanelHeight_ = callFramePanel_.getOffsetHeight();
+   
+         if (callFramePanelHeight_ < splitPanel.getOffsetHeight()) 
+         {
+            // good enough if there is enough space for it. no resize needed.
+            return;
+         }
+         // otherwise, act if it had not been set before and recalculate
+      }
+
       // after setting the frames, resize the call frame panel to neatly
       // wrap the new list, up to a maximum of 2/3 of the height of the
       // split panel.
-      int desiredCallFramePanelSize =
-            callFramePanel_.getDesiredPanelHeight();
-
+      int desiredCallFramePanelSize = callFramePanel_.getDesiredPanelHeight();
       if (splitPanel.getOffsetHeight() > 0)
       {
          desiredCallFramePanelSize = Math.min(
-                 desiredCallFramePanelSize,
-                 (int)(0.66 * splitPanel.getOffsetHeight()));
+               desiredCallFramePanelSize,
+               (int)(0.66 * splitPanel.getOffsetHeight()));
       }
+      
+      // cache the height
+      callFramePanelHeight_ = desiredCallFramePanelSize;
 
-      // if the panel is minimized, just update the cached height so it'll
-      // get set to what we want when/if the panel is restored
-      if (callFramePanel_.isMinimized())
-      {
-         callFramePanelHeight_ = desiredCallFramePanelSize;
-      }
-      else
-      {
-         splitPanel.setWidgetSize(
-               callFramePanel_, desiredCallFramePanelSize);
-         callFramePanel_.onResize();
-         if (objectDisplay_ != null)
-            objectDisplay_.onResize();
-      }
-
-      pendingCallFramePanelSize_ = false;
+      splitPanel.setWidgetSize(
+            callFramePanel_, callFramePanelHeight_);
+      callFramePanel_.onResize();
+      if (objectDisplay_ != null)
+         objectDisplay_.onResize();
+      
    }
 
 
@@ -780,7 +762,6 @@ public class EnvironmentObjects extends ResizeComposite
    // deferred settings--set on load but not applied until we have data.
    private int deferredScrollPosition_ = 0;
    private JsArrayString deferredExpandedObjects_;
-   private boolean pendingCallFramePanelSize_ = false;
    private Integer deferredObjectDisplayType_ = OBJECT_LIST_VIEW;
    private int gridRenderRetryCount_ = 0;
 

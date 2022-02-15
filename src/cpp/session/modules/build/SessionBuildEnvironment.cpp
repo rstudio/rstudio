@@ -113,7 +113,7 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
     if (rToolsOnPath)
     {
        // perform an extra check to see if the version on the path is not
-       // compatible with the currenly running version of R
+       // compatible with the currently running version of R
        r_util::RToolsInfo rTools = scanPathForRTools();
        if (!rTools.empty())
        {

@@ -110,7 +110,7 @@ public:
       Error error = r::exec::evaluateString(code, &packages);
       if (error)
       {
-         // log error if it wasn't merly a null return value
+         // log error if it wasn't merely a null return value
          if (error != r::errc::UnexpectedDataTypeError)
             LOG_ERROR(error);
          return;

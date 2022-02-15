@@ -907,7 +907,7 @@ void handleInternalMarkdownPreviewRequest(
             LOG_ERROR(error);
       }
 
-      // modify outpout then write back to client
+      // modify output then write back to client
       modifyOutputForPreview(&previewHtml);
       pResponse->setDynamicHtml(previewHtml, request);
    }

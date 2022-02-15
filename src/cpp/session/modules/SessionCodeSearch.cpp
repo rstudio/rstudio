@@ -538,7 +538,7 @@ public:
          if (!entry.hasIndex())
             continue;
 
-         // bail if this is an exluded context
+         // bail if this is an excluded context
          if (excludeContexts.find(entry.pIndex->context()) !=
              excludeContexts.end())
          {
@@ -575,7 +575,7 @@ public:
          if (!entry.hasIndex())
             continue;
 
-         // bail if this is an exluded context
+         // bail if this is an excluded context
          if (excludeContexts.find(entry.pIndex->context()) !=
              excludeContexts.end())
          {
@@ -1498,7 +1498,7 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
       break;
    }
 
-   // calcluate extra info
+   // calculate extra info
    std::string extraInfo;
    if (rSourceItem.signature().size() > 0)
    {
@@ -2164,7 +2164,7 @@ json::Object createFunctionDefinition(const std::string& name,
       }
    }
 
-   // check find status and return appropriate definiton
+   // check find status and return appropriate definition
    if (!error)
    {
       if (!r::sexp::isNull(functionSEXP))

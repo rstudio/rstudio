@@ -114,7 +114,7 @@ Error parseQuotaInfo(const std::string& quotaInfo, QuotaInfo* pInfo)
       {
          switch(resultIndex++)
          {
-            // ingore first entry (device)
+            // ignore first entry (device)
             case 0:
                break;
             

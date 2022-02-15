@@ -48,7 +48,7 @@ core::Error evaluateRmdParams(const std::string& docId);
 core::Error initialize();
 
 } // namespace rmarkdown
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

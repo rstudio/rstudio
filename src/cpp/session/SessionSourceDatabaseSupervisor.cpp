@@ -403,7 +403,7 @@ Error removeAndRecreate(const FilePath& dir)
 //      a lock on them -- for volumes that don't support locks this will
 //      always be an error so we'll never be able to recover an orphan dir
 //
-// In some multi-machine cases it's actually possible for two proccesses
+// In some multi-machine cases it's actually possible for two processes
 // to both get a lock on the same file. For this reason if we are running
 // multi-machine (i.e. load balancing enabled) we don't attempt orphan
 // recovery because it could result in one session stealing the other's
