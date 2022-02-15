@@ -327,10 +327,6 @@ th:focus {
     table-layout: fixed;
 }
 
-#rsGridData.manualSize {
-    display: table;
-}
-
 .cell, .headerCell {
     position: relative;
 }

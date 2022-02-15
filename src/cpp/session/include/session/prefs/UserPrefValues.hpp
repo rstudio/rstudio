@@ -318,6 +318,7 @@ namespace prefs {
 #define kDefaultRVersionLabel "label"
 #define kDefaultRVersionModule "module"
 #define kDataViewerMaxColumns "data_viewer_max_columns"
+#define kDataViewerMaxCellSize "data_viewer_max_cell_size"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
@@ -1515,6 +1516,12 @@ public:
     */
    int dataViewerMaxColumns();
    core::Error setDataViewerMaxColumns(int val);
+
+   /**
+    * The maximum number of characters to show in a data viewer cell.
+    */
+   int dataViewerMaxCellSize();
+   core::Error setDataViewerMaxCellSize(int val);
 
    /**
     * Support accessibility aids such as screen readers (RStudio Server).
