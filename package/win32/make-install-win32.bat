@@ -17,7 +17,7 @@ if defined CLEANBUILD (
 )
 
 REM perform 32-bit build
-mkdir %WIN32_BUILD_PATH%
+if not exist %WIN32_BUILD_PATH% mkdir %WIN32_BUILD_PATH%
 cd %WIN32_BUILD_PATH%
 if exist CMakeCache.txt del CMakeCache.txt
 

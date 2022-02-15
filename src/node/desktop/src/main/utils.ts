@@ -28,7 +28,6 @@ import { userHomePath } from '../core/user';
 import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../core/wait-utils';
 import { Err } from '../core/err';
 
-import { productInfo } from './product-info';
 import { MainWindow } from './main-window';
 import i18next from 'i18next';
 
@@ -63,7 +62,7 @@ export interface VersionInfo {
 
 export function getComponentVersions(): string {
   const componentVers: VersionInfo = process.versions;
-  componentVers['rstudio'] = productInfo().RSTUDIO_VERSION;
+  componentVers['rstudio'] = app.getVersion();
   return JSON.stringify(componentVers, null, 2);
 }
 

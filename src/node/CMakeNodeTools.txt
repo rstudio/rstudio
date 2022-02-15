@@ -76,15 +76,27 @@ else()
 
 endif()
 
+get_filename_component(NODEJS_PATH ${NODEJS} DIRECTORY CACHE)
+
 # yarn
-find_program(YARN
-   NAMES yarn
-   NO_DEFAULT_PATH
-   PATHS "$ENV{HOME}/.yarn/bin")
+if(UNIX)
+
+   find_program(YARN
+      NAMES yarn
+      NO_DEFAULT_PATH
+      PATHS "$ENV{HOME}/.yarn/bin")
+
+elseif(WIN32)
+
+   find_program(YARN
+      NAMES yarn
+      NO_DEFAULT_PATH
+      PATHS "${NODEJS_PATH}")
+
+endif()
+
 if (NOT YARN)
    find_program(YARN NAMES yarn)
-else()
-
 endif()
 
 if(YARN)
@@ -100,7 +112,6 @@ set(YARN "${YARN}" CACHE INTERNAL "")
 set(NPM "${NPM}" CACHE INTERNAL "")
 
 # create paths from programs
-get_filename_component(NODEJS_PATH ${NODEJS} DIRECTORY CACHE)
 get_filename_component(YARN_PATH ${YARN} DIRECTORY CACHE)
 get_filename_component(NPM_PATH ${NPM} DIRECTORY CACHE)
 

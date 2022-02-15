@@ -1,5 +1,20 @@
 #!/usr/bin/env bash
 
+#
+# make-package (linux)
+#
+# Copyright (C) 2022 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
 set -e
 
 PKG_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -11,22 +26,78 @@ PREV_WD=$(pwd)
 # raise the limit on number of open files
 ulimit -n 2048
 
-PACKAGE_DIR=`pwd`
+function help() {
+    cat <<EOF
+usage: make-package target package [clean]
 
-if [ "$1" != "Desktop" ] && [ "$1" != "Electron" ] && [ "$1" != "Server" ]
+Build RStudio (Qt Desktop, Electron, or Server) and redistributable package for Linux.
+
+Specify version by setting environment variables. The default is 99.9.9.
+
+Examples
+  RSTUDIO_VERSION_MAJOR=2022 RSTUDIO_VERSION_MINOR=7 RSTUDIO_VERSION_PATCH=1 RSTUDIO_VERSION_SUFFIX=-daily+321 ./make-package Server DEB
+
+Positional Arguments
+  target -- build target
+    One of "Desktop", "Electron", or "Server"
+
+  package
+    One of "DEB" or "RPM"
+
+Options
+  clean
+    Perform a clean build; default is incremental build.
+EOF
+exit 1
+}
+
+YARN_INSTALLED=0
+install-yarn-packages() {
+   if [ "${YARN_INSTALLED}" = "0" ]; then
+      ${YARN}
+      YARN_INSTALLED=1
+   fi
+}
+
+set-version () {
+   if [ "${rstudio_target}" = "Electron" ]; then
+      pushd ${ELECTRON_SOURCE_DIR}
+      install-yarn-packages
+      ${YARN} json -I -f package.json -e "this.version=\"$1\""
+      popd
+   fi
+}
+
+restore-package-version () {
+   set-version 99.9.9
+}
+
+# ensure package.json restored on exit
+on-exit () {
+   restore-package-version
+}
+
+trap on-exit EXIT
+
+PACKAGE_DIR=`pwd`
+RSTUDIO_TARGET=$1
+PACKAGE_TARGET=$2
+CLEAN=$3
+
+if [ "$RSTUDIO_TARGET" != "Desktop" ] && [ "$RSTUDIO_TARGET" != "Electron" ] && [ "$RSTUDIO_TARGET" != "Server" ]
 then
-   echo "error: must specify Desktop, Electron or Server as configuration"
+   help
    exit 1
 fi
 
-if [ "$2" != "DEB" ] && [ "$2" != "RPM" ]
+if [ "$PACKAGE_TARGET" != "DEB" ] && [ "$PACKAGE_TARGET" != "RPM" ]
 then
-   echo "error: must specify DEB or RPM as package target"
+   help
    exit 1
 fi
 
 # set up GWT module
-if [ "$1" = "Desktop" ] || [ "$1" == "Electron" ]; then
+if [ "$RSTUDIO_TARGET" = "Desktop" ] || [ "$RSTUDIO_TARGET" == "Electron" ]; then
    GWT_MAIN_MODULE=RStudioDesktop
 else
    GWT_MAIN_MODULE=RStudioServer
@@ -39,9 +110,9 @@ then
    if test -z "$CMAKE_BUILD_TYPE"
    then
       CMAKE_BUILD_TYPE=RelWithDebInfo
-      BUILD_DIR=build-$1-$2
+      BUILD_DIR=build-$RSTUDIO_TARGET-$PACKAGE_TARGET
    else
-      BUILD_DIR=build-$1-$2-$CMAKE_BUILD_TYPE
+      BUILD_DIR=build-$RSTUDIO_TARGET-$PACKAGE_TARGET-$CMAKE_BUILD_TYPE
    fi
 fi
 
@@ -49,7 +120,7 @@ fi
 BUILD_DIR=$(readlink -f "$BUILD_DIR")
 
 # clean if requested
-if [ "$3" == "clean" ]
+if [ "$CLEAN" == "clean" ]
 then
    # remove existing build dir
    rm -rf $BUILD_DIR
@@ -62,12 +133,24 @@ then
    cd $PACKAGE_DIR
 fi
 
-if [ "$1" == "Desktop" ]
+if [ "$RSTUDIO_TARGET" = "Desktop" ] || [ "$RSTUDIO_TARGET" == "Electron" ]
 then
   INSTALL_DIR=rstudio
 else
   INSTALL_DIR=rstudio-server
 fi
+
+# build RStudio version suffix
+RSTUDIO_VERSION_ARRAY=(
+   "${RSTUDIO_VERSION_MAJOR-99}"
+   "${RSTUDIO_VERSION_MINOR-9}"
+   "${RSTUDIO_VERSION_PATCH-9}"
+)
+
+RSTUDIO_VERSION_FULL=$(IFS="."; echo "${RSTUDIO_VERSION_ARRAY[*]}")"${RSTUDIO_VERSION_SUFFIX}"
+
+# put version into package.json
+set-version ${RSTUDIO_VERSION_FULL}
 
 set +x
 
@@ -98,7 +181,7 @@ else
 fi
 
 cmake -G"${CMAKE_GENERATOR}"                           \
-      -DRSTUDIO_TARGET=$1                              \
+      -DRSTUDIO_TARGET=$RSTUDIO_TARGET                 \
       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE             \
       -DRSTUDIO_PACKAGE_BUILD=1                        \
       -DCMAKE_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}" \
@@ -110,11 +193,11 @@ cmake -G"${CMAKE_GENERATOR}"                           \
 
 cmake --build . --target all -- ${MAKEFLAGS}
 
-if [ "$2" != "DEB" ]
+if [ "$PACKAGE_TARGET" != "DEB" ]
 then
-   fakeroot cpack --verbose --debug -G "$2"
+   fakeroot cpack --verbose --debug -G "$PACKAGE_TARGET"
 else
-   cpack --verbose --debug -G $2
+   cpack --verbose --debug -G $PACKAGE_TARGET
 
    # Fix permissions for non-development builds
    if [ -z "${RSTUDIO_DEVELOPMENT_BUILD}" ]

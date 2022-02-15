@@ -75,6 +75,9 @@ pipeline {
             // problems with rsession finding openssl, so those tests
             // are disabled until we solve it (#6890)
             sh "cd package/osx/build/src/cpp && ./rstudio-tests"
+            
+            // electron tests not working in CI environment, under investigation
+            // sh "cd ../../../../../src/node/desktop/ && $HOME/.yarn/bin/yarn && $HOME/.yarn/bin/yarn test"
           } catch(err) {
              currentBuild.result = "UNSTABLE"
           }

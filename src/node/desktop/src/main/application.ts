@@ -20,7 +20,6 @@ import { FilePath } from '../core/file-path';
 import { generateRandomPort } from '../core/system';
 import { logger, enableDiagnosticsOutput } from '../core/logger';
 
-import { productInfo } from './product-info';
 import {
   createStandaloneErrorDialog,
   findComponents,
@@ -192,7 +191,7 @@ export class Application implements AppState {
   initCommandLine(argv: string[]): ProgramStatus {
     // look for a version check request; if we have one, just do that and exit
     if (argv.indexOf(kVersion) > -1) {
-      console.log(productInfo().RSTUDIO_VERSION);
+      console.log(app.getVersion());
       return exitSuccess();
     }
 

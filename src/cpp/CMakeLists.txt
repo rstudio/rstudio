@@ -650,8 +650,6 @@ else()
       # add desktop subprojects if we aren't building in server only mode
       if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
          add_subdirectory(diagnostics)
-      endif()
-      if(RSTUDIO_DESKTOP)
          add_subdirectory(desktop)
       endif()
 
@@ -676,6 +674,10 @@ else()
             configure_file(rstudio.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio.bat @ONLY)
             configure_file(rstudio-tests.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests.bat @ONLY)
          endif()
+      endif()
+
+      if(RSTUDIO_ELECTRON AND WIN32)
+         configure_file(rstudio-tests.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests.bat @ONLY)
       endif()
 
       # add server subprojects if we aren't building in desktop only mode

@@ -136,7 +136,7 @@
   info$mode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
   info$edition <- .Call("rs_rstudioEdition", PACKAGE = "(embedding)")
   info$version <- .Call("rs_rstudioVersion", PACKAGE = "(embedding)")
-  info$version <- base::package_version(info$version)
+  info$version <- package_version(info$version)
   info$long_version <- .Call("rs_rstudioLongVersion", PACKAGE = "(embedding)")
   info$release_name <- .Call("rs_rstudioReleaseName", PACKAGE = "(embedding)")
   info
@@ -267,25 +267,6 @@
                                               col = -1L,
                                               moveCursor = TRUE)
 {
-   # validate file argument
-   hasFile <- !is.null(filePath) && length(filePath) > 0
-   if (hasFile && !is.character(filePath)) {
-      stop("filePath must be a character")
-   }
-   if (hasFile && !file.exists(filePath)) {
-      stop(filePath, " does not exist.")
-   }
-   
-   if (hasFile)
-   {
-      # expand and alias for client
-      filePath <- .rs.normalizePath(filePath, winslash = "/", mustWork = TRUE)
-      homeDir <- path.expand("~")
-      if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
-         filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
-      }
-   }
-   
    .rs.api.documentOpen(filePath, line = line, col = col, moveCursor = moveCursor)
 })
 
@@ -672,6 +653,23 @@
                                             line = -1L, 
                                             col = -1L, 
                                             moveCursor = TRUE) {
+
+   # validate path argument
+   hasFile <- !is.null(path) && length(path) > 0
+   if (hasFile && !is.character(path)) {
+      stop("path must be a character")
+   }
+   if (hasFile && !file.exists(path)) {
+      stop(path, " does not exist.")
+   }
+   
+   if (hasFile)
+   {
+      # expand and alias for client
+      path <- .rs.normalizePath(path, winslash = "/", mustWork = TRUE)
+      path <- .rs.createAliasedPath(path)
+   }
+
    # transform numeric line, column values to integer
    if (is.numeric(line))
       line <- as.integer(line)

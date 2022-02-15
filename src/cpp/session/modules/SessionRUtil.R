@@ -13,6 +13,14 @@
 #
 #
 
+.rs.addFunction("suspendSession", function(force = FALSE, exitStatus = 0L)
+{
+   .Call("rs_suspendSession",
+         as.logical(force),
+         as.integer(exitStatus),
+         PACKAGE = "(embedding)")
+})
+
 .rs.addFunction("enc2native", function(text)
 {
    # try converting to native encoding

@@ -14,6 +14,7 @@
  */
 
 import winston from 'winston';
+import DailyRotateFile from 'winston-daily-rotate-file';
 
 import { getenv } from './environment';
 import { safeError } from './err';
@@ -30,7 +31,15 @@ export class WinstonLogger implements Logger {
     this.logger = winston.createLogger({ level: level });
 
     if (!logFile.isEmpty()) {
-      this.logger.add(new winston.transports.File({ filename: logFile.getAbsolutePath() }));
+      const logName = `${logFile.getStem()}.%DATE%${logFile.getExtension()}`;
+      this.logger.add(
+        new DailyRotateFile({
+          filename: logName,
+          dirname: logFile.getParent().getAbsolutePath(),
+          datePattern: 'YYYY-MM-DD',
+          frequency: '1d',
+        }),
+      );
     }
 
     // also log to console if stdout attached to a tty
