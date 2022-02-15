@@ -1268,7 +1268,6 @@
       type: "POST",
     })
       .done(function (result) {
-        console.log(result);
         callback(result);
       })
       .fail(function (jqXHR) {
