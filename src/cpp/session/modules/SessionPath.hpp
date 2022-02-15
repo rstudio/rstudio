@@ -32,7 +32,7 @@ namespace path {
 core::Error initialize();
    
 } // namespace path
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

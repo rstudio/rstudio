@@ -26,7 +26,7 @@ sourceWithProgress <- function(script,               # path to R script
                                importRdata = NULL,   # RData file to import on start 
                                exportRdata = NULL    # RData file to export when done
                                ) {
-   # create a new enviroment to host any values created; make its parent the global env so any
+   # create a new environment to host any values created; make its parent the global env so any
    # variables inside this function's environment aren't visible to the script
    sourceEnv <- new.env(parent = globalenv())
 

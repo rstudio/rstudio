@@ -473,7 +473,7 @@
    )
    
    # some calls might be very large when deparsed, especially when
-   # they include R objects which have already been evaluted. this
+   # they include R objects which have already been evaluated. this
    # happens most often with calls like:
    #
    #   do.call("fn", list(object))

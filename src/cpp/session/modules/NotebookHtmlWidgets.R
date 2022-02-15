@@ -134,7 +134,7 @@
    x$sizingPolicy$viewer.padding <- 0
    x$sizingPolicy$viewer.fill <- TRUE
 
-   # make width dinamic to size correctly non-figured
+   # make width dynamic to size correctly non-figured
    if (!is.null(x$sizingPolicy$knitr) && identical(x$sizingPolicy$knitr$figure, FALSE)) {
       x$sizingPolicy$defaultWidth <- "auto"
       x$sizingPolicy$browser$fill <- FALSE

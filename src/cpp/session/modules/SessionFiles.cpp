@@ -97,7 +97,7 @@ namespace {
 // monitor for file listings
 FilesListingMonitor s_filesListingMonitor;
 
-// make sure that monitoring persists accross suspended sessions
+// make sure that monitoring persists across suspended sessions
 const char * const kFilesMonitoredPath = "files.monitored-path";
 
 void onSuspend(Settings* pSettings)
@@ -551,7 +551,7 @@ void handleFilesRequest(const http::Request& request,
    // validate the uri
    if (prefix.length() >= uri.length() ||    // prefix longer than uri
        uri.find(prefix) != 0 ||              // uri doesn't start with prefix
-       uri.find("..") != std::string::npos)  // uri has inavlid char sequence
+       uri.find("..") != std::string::npos)  // uri has invalid char sequence
    {
       pResponse->setNotFoundError(request);
       return;
@@ -1035,7 +1035,7 @@ bool handleFileUploadRequestAsync(const http::Request& request,
    {
       if (pUploadState->targetDirectory.empty())
       {
-         // now we need to read the target directory metadata field by reading backwords from the buffer
+         // now we need to read the target directory metadata field by reading backwards from the buffer
          std::string searchStr = "\r\n" + getBoundary(request) + "\r\n";
          size_t pos = formData.rfind(searchStr);
          if (pos == std::string::npos)
@@ -1340,7 +1340,7 @@ SEXP rs_pathInfo(SEXP pathSEXP)
       if (filePath.isEmpty())
          throw r::exec::RErrorException("invalid path: " + path);
 
-      // create path info vector (use json repsesentation to force convertion
+      // create path info vector (use json repsesentation to force conversion
       // to VECSXP rather than STRSXP)
       json::Object pathInfo;
       pathInfo["path"] = filePath.getAbsolutePath();

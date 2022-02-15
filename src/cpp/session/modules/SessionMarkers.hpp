@@ -38,7 +38,7 @@ std::vector<module_context::SourceMarker> markersForFile(const std::string& path
 core::Error initialize();
    
 } // namespace markers
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

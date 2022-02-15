@@ -78,7 +78,7 @@ Error QuartoJob::start()
    using namespace jobs;
    JobActions jobActions;
    // note that we pass raw 'this' b/c the "stop" action will never be executed after we
-   // hit onCompleted (becuase our status won't be "running"). if we passed shared_from_this
+   // hit onCompleted (because our status won't be "running"). if we passed shared_from_this
    // then we'd be keeping this object around forever (because jobs are never discarded).
    jobActions.push_back(std::make_pair("stop", boost::bind(&QuartoJob::stop, this)));
    pJob_ = addJob(name(), "", "", 0, false, JobRunning, JobTypeSession, false, R_NilValue, jobActions, true, {});

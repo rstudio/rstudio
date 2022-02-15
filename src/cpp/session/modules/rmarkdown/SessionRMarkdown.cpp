@@ -695,7 +695,7 @@ private:
          // it's conceivable that there would be other forceMaximize
          // scenarios or that other types of previews where an output file
          // was already in hand would NOT want to do a forceMaximize. We're
-         // leaving this coupling for now to minimze the scope of the change
+         // leaving this coupling for now to minimize the scope of the change
          // required to allow website previews to restore the viewer pane, we
          // may want a more intrusive change if/when we discover other
          // scenarios.
@@ -779,7 +779,7 @@ private:
                                                    (targetFile_.getParent(), allOutput_);
       if (!outputFile.isEmpty())
       {
-         // record ouptut file
+         // record output file
          outputFile_ = outputFile;
 
          // see if the quarto module wants to handle the preview

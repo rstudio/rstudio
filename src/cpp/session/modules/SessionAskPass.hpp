@@ -48,7 +48,7 @@ core::Error askForPassword(const std::string& prompt,
 core::Error initialize();
    
 } // namespace ask_pass
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

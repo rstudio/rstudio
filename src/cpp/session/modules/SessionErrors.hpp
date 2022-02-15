@@ -33,7 +33,7 @@ core::Error initialize();
 core::json::Value errorStateAsJson();
 
 } // namespace errors
-} // namepace modules
+} // namespace modules
 } // namespace session
 } // namespace rstudio
 

@@ -541,7 +541,7 @@ Error addTheme(const json::JsonRpcRequest& request,
  *
  * @param request       The request to remove the theme. The first parameter should be the name of
  *                      the theme.
- * @param pResponse     The response. Empty if succesful; error otherwise.
+ * @param pResponse     The response. Empty if successful; error otherwise.
  *
  * @return `Success` on a successful removal; an error otherwise.
  */

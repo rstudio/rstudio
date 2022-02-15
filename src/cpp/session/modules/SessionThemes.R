@@ -286,7 +286,7 @@
                     gsub(
                        "([^0-9A-Z])([A-Z])", # Insert hyphen before capital letters which are not immediately preceded by a digit or another capital letter
                        "\\1-\\2",
-                       gsub("(?:'|\"|\\(([^\\)]*)\\))", "\\1", # Remove special characters and antyhing encased in parantheses
+                       gsub("(?:'|\"|\\(([^\\)]*)\\))", "\\1", # Remove special characters and anything encased in parentheses
                             gsub("&","-and-", # Replace & with And
                                  gsub("\\s", "-", string)))))))) # Replace whitespace with hyphen
    }
@@ -501,7 +501,7 @@
    value
 })
 
-# Recursivley parses a dictionary element from a tmtheme document and raises the correct errors.
+# Recursively parses a dictionary element from a tmtheme document and raises the correct errors.
 #
 # @param dictElement    The element to parse.
 # @param keyName        The name of the dictionary.
@@ -845,7 +845,7 @@
    # Get the name of the file without extension.
    fileName <- basename(themePath)
    
-   # Get the name of the theme either from the first occurence of "rs-theme-name:" in the css or 
+   # Get the name of the theme either from the first occurrence of "rs-theme-name:" in the css or 
    # the name of the file.
    themeLines <- readLines(themePath, encoding = "UTF-8", warn = FALSE)
    name <- .rs.getThemeName(paste0(themeLines, collapse = "\n"), fileName)

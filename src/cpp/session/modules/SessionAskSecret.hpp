@@ -52,7 +52,7 @@ core::Error askForSecret(const std::string& name,
 core::Error initialize();
    
 } // namespace ask_secret
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

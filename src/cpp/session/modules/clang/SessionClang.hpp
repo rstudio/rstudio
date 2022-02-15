@@ -36,7 +36,7 @@ bool isAvailable();
 core::Error initialize();
    
 } // namespace clang
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

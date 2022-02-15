@@ -88,7 +88,7 @@ void searchDefinitions(const std::string& term,
 core::Error initializeDefinitionIndex();
 
 } // namespace clang
-} // namepace modules
+} // namespace modules
 } // namespace session
 } // namespace rstudio
 

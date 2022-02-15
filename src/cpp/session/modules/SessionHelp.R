@@ -402,7 +402,7 @@ options(help_type = "html")
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {
    # If 'src' is the name of something on the searchpath, get that object
-   # from the seach path, then attempt to get help based on that object
+   # from the search path, then attempt to get help based on that object
    pos <- match(src, search(), nomatch = -1L)
    if (pos >= 0)
    {

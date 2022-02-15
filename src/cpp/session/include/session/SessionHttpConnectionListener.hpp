@@ -32,7 +32,7 @@
       be handled and foreground R thread will continue waiting in a loop.
 
    2) Periodically during R_PolledEvents. This allows the client to remain
-      responsive even while computations are being peformed.
+      responsive even while computations are being performed.
 
  If a request pulled off the queue by the main thread can potentially be
  executed in a background thread (e.g. file or source operation) then it
@@ -50,8 +50,8 @@
  required package could be unloaded during a computation). This sort of
  interaction is currently permitted by the OSX client and is considered OK
  presumably because the user directly manipulated the environment and therefore
- won't be suprised if his computation changes. The tradeoff is that operations
- that are read-only and highly useful to peform during computations (e.g.
+ won't be surprised if his computation changes. The tradeoff is that operations
+ that are read-only and highly useful to perform during computations (e.g.
  requesting completions or syntax checking in source mode, browsing objects,
  searching and viewing help, etc.) are allowed to execute thus maintaining
  a high level of interactivity in the client even when long computations
@@ -61,7 +61,7 @@
  http handlers as requiring more stringent serialization. For example, they
  could be queued and executed only when the REPL loop comes back to the top.
  Note however that if too many of these requests are queued then browser
- request throttling may come into play and start queing ALL requests which
+ request throttling may come into play and start queueing ALL requests which
  exceed the browser limit. For this reason we will start with the position
  that nested execution of R handlers during computation is OK and back off
  only as necessary.
@@ -79,7 +79,7 @@ namespace core {
 namespace rstudio {
 namespace session {
 
-// global initialization (allows instantation of listener which
+// global initialization (allows instantiation of listener which
 // implements the protocol appropriate for our current configuration)
 void initializeHttpConnectionListener();
 

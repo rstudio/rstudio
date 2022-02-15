@@ -227,7 +227,7 @@ void onDocPendingRemove(boost::shared_ptr<source_database::SourceDocument> pDoc)
                pDoc->path(), pDoc->id(), kSavedCtx);
 
       // only perform the copy if the saved branch is stale (older than the
-      // uncomitted branch)
+      // uncommitted branch)
       if (target.getLastWriteTime() < chunkDefsFile.getLastWriteTime())
       {
          // remove the old chunk definition file to make way for the new one 

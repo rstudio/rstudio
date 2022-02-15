@@ -258,7 +258,7 @@ Error getFunctionState(const json::JsonRpcRequest& request,
 }
 
 // Sets a breakpoint on a single copy of a function. Invoked several times to
-// look for function copies in alternate environemnts. Returns true if a
+// look for function copies in alternate environments. Returns true if a
 // breakpoint was set; false otherwise.
 bool setBreakpoint(const std::string& functionName,
                    const std::string& fileName,

@@ -123,7 +123,7 @@ public:
    {
       // split into lines so we can determine the line numbers for the chunks
       // NOTE: will need to read this using global/project encoding if we
-      // want to look for text outside of theh orignal error parsing
+      // want to look for text outside of theh original error parsing
       // scenario (which only required ascii)
       std::string rnwContents;
       Error error = core::readStringFromFile(rnwFilePath, &rnwContents);
