@@ -40,7 +40,7 @@ bool isSuspendable();
 core::Error initialize();
    
 } // namespace environment
-} // namepace modules
+} // namespace modules
 } // namespace session
 } // namespace rstudio
 

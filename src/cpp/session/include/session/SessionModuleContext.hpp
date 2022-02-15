@@ -520,7 +520,7 @@ std::string normalizeVcsOverride(const std::string& vcsOverride);
 
 core::FilePath shellWorkingDirectory();
 
-// persist state accross suspend and resume
+// persist state across suspend and resume
    
 typedef boost::function<void (const r::session::RSuspendOptions&,
                               core::Settings*)> SuspendFunction;

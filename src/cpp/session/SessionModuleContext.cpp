@@ -1600,7 +1600,7 @@ Error installPackage(const std::string& pkgPath, const std::string& libPath)
       installCommand << "\"" + libPath + "\"";
    }
 
-   // add pakage path
+   // add package path
    installCommand << "\"" + pkgPath + "\"";
    core::system::ProcessResult result;
 

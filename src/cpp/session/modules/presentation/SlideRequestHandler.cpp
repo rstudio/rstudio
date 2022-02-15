@@ -448,7 +448,7 @@ std::string fixupLink(const boost::cmatch& match)
          return match[0];
       }
 
-      // bulid the call
+      // build the call
       std::string onClick;
       if (href.size() > colonLoc+2)
       {

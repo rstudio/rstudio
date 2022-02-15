@@ -832,7 +832,7 @@ bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const std::string& renderOutput,
                          bool validateExtendedType)
 {
-   // don't do anyting if user prefs are set to no preview
+   // don't do anything if user prefs are set to no preview
    if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeNone)
       return false;
 
@@ -944,7 +944,7 @@ QuartoConfig quartoConfig(bool refresh)
          // look for a config file in the project directory
          FilePath configFile = quartoConfigFilePath(context.directory());
 
-         // if we don't find one, then chase up the directory heirarchy until we find one
+         // if we don't find one, then chase up the directory hierarchy until we find one
          if (!configFile.exists())
             configFile = quartoProjectConfigFile(context.directory());
 

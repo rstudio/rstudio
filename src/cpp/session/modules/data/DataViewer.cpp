@@ -122,7 +122,7 @@ namespace {
  *    
  *    When a request for data arrives, we check to see if the data requested is
  *    a subset of the data already in our working copy. If it is, we use the
- *    working copy as a starting postion rather than the original or cached
+ *    working copy as a starting position rather than the original or cached
  *    object.
  *
  *    This allows us to efficiently perform operations on very large datasets
@@ -189,7 +189,7 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
    else if (outerType == "character")
    {
       // characters are a subset if the outer string is within the inner one
-      // (i.e. a seach for "walnuts" (inner) is within "walnut" (outer))
+      // (i.e. a search for "walnuts" (inner) is within "walnut" (outer))
       return inner.find(outer) != std::string::npos;
    }
    
@@ -204,7 +204,7 @@ typedef enum
 } DimType;
 
 // returns dimensions of an object safely--assumes dimension to be 0 unless we
-// can succesfully obtain dimensions
+// can successfully obtain dimensions
 int safeDim(SEXP data, DimType dimType)
 {
    r::sexp::Protect protect;

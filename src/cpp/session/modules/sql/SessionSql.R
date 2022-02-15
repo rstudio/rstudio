@@ -372,7 +372,7 @@
 .rs.addFunction("db.listTables", function(conn, schema = NULL)
 {
    # work around issue in odbc where requests for table names
-   # faile when a schema is specified
+   # fail when a schema is specified
    if ("odbc" %in% loadedNamespaces() && inherits(conn, "OdbcConnection"))
       return(odbc::dbListTables(conn, schema = schema))
    

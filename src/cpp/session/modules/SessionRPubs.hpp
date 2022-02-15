@@ -33,7 +33,7 @@ namespace rpubs {
 core::Error initialize();
    
 } // namespace rpubs
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

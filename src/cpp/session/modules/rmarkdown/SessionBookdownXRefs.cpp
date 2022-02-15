@@ -358,7 +358,7 @@ json::Array indexEntriesToXRefs(const std::vector<XRefIndexEntry>& entries, bool
       }
    }
 
-   // read in referece-keys.txt so we can detect entires w/ suffixes
+   // read in referece-keys.txt so we can detect entries w/ suffixes
    std::map<std::string,int> multiKeys;
    if (isBookdownProject)
       multiKeys = readMultiKeys();

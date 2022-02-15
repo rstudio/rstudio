@@ -29,7 +29,7 @@ core::Error goToCppDefinition(const core::json::JsonRpcRequest& request,
                               core::json::JsonRpcResponse* pResponse);
    
 } // namespace clang
-} // namepace modules
+} // namespace modules
 } // namespace session
 } // namespace rstudio
 

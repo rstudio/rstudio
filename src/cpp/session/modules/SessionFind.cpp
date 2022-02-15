@@ -503,7 +503,7 @@ private:
          return (Error(
                   errc::findCategory(),
                   errc::PermissionsError,
-                  "A permissions error occured during replace operation.",
+                  "A permissions error occurred during replace operation.",
                   ERROR_LOCATION));
       }
       return Success();
@@ -576,7 +576,7 @@ private:
             inputStream_.reset();
             outputStream_.reset();
 
-// Unneccesary on Windows because this only sets write permissions which we
+// Unnecessary on Windows because this only sets write permissions which we
 // already know are correct if we are writing.
 // This needs to happen after outputStream is flushed
 #ifndef _WIN32
@@ -684,7 +684,7 @@ private:
    void subtractOffsetIntegerToJsonArray(
        json::Value newValue, int offset, json::Array* pJsonArray)
    {
-      // make sure negative values (errors) don't become positve
+      // make sure negative values (errors) don't become positive
       if (newValue.getInt() < 0)
          newValue = json::Value(newValue.getInt() - offset);
       pJsonArray->push_back(gsl::narrow_cast<int>(newValue.getInt() + offset));

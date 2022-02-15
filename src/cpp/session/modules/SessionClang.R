@@ -27,7 +27,7 @@
 })
 
 .rs.addFunction("isClangAvailable", function() {
-   cat("Attemping to load libclang for", R.version$platform, "\n")
+   cat("Attempting to load libclang for", R.version$platform, "\n")
    .Call("rs_isLibClangAvailable", PACKAGE = "(embedding)")
 })
 
