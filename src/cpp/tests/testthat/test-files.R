@@ -94,6 +94,7 @@ test_that("our list.files, list.dirs hooks function as expected", {
    
    dir.create("dir")
    dir.create("dir/subdir")
+   file.create("dir/file")
    file.create("dir/subdir/file")
    
    dir.create("empty")
@@ -110,6 +111,10 @@ test_that("our list.files, list.dirs hooks function as expected", {
    
    paths <- list(
       ".",
+      "./",
+      ".\\",
+      ".//",
+      ".\\/",
       getwd(),
       chartr("/", "\\", getwd()),
       file.path("..", basename(getwd())),

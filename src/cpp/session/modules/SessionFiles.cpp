@@ -71,11 +71,13 @@
 #ifdef BOOST_WINDOWS_API
 # define kEmptyString L""
 # define kForwardSlash L"/"
+# define kBackSlash L"\\"
 # define kDotPath L"."
 # define kDotDotPath L".."
 #else
 # define kEmptyString ""
 # define kForwardSlash "/"
+# define kBackSlash "\\"
 # define kDotPath "."
 # define kDotDotPath ".."
 #endif
@@ -1374,6 +1376,7 @@ struct ListFilesOptions
    bool includeFiles;
    bool includeDirs;
    bool noDotDot;
+   bool checkTrailingSeparator;
 };
 
 class ListFilesAcceptAll
@@ -1414,9 +1417,10 @@ class ListFilesInterruptedException : public std::exception
 {
 };
 
-boost::filesystem::path listFilesResult(
+boost::filesystem::path listFilesPrefix(
       const boost::filesystem::path& prefix,
-      const boost::filesystem::path& name)
+      const boost::filesystem::path& name,
+      const ListFilesOptions& options)
 {
    // if we don't have a prefix, return the name as-is
    if (prefix.empty())
@@ -1432,6 +1436,55 @@ boost::filesystem::path listFilesResult(
 
 }
 
+boost::filesystem::path listFilesResult(
+      const boost::filesystem::path& prefix,
+      const boost::filesystem::path& name,
+      const ListFilesOptions& options)
+{
+   // if we don't have a prefix, return the name as-is
+   if (prefix.empty())
+      return name;
+
+   // otherwise, create path and use '/' separator
+   // R preserves native separators in the prefix, but not in
+   // any of the listed path entries
+   auto path = prefix;
+
+#ifdef BOOST_WINDOWS_API
+
+   // on Windows, R doesn't append a trailing separator
+   // if the path already ends with a trailing separator.
+   // this is mainly relevant to calls like
+   //
+   //    list.files("./", full.names = TRUE, recursive = TRUE)
+   //
+   // so we need to be careful to preserve the path prefix
+   // correctly, while trimming the prefix for new results.
+   //
+   // interestingly, this caveat seems to apply only for
+   // list.files(), and not list.dirs()
+   if (options.checkTrailingSeparator)
+   {
+      bool hasTrailingSeparator =
+            boost::algorithm::ends_with(path.wstring(), kForwardSlash) ||
+            boost::algorithm::ends_with(path.wstring(), kBackSlash);
+
+      if (!hasTrailingSeparator)
+         path += kForwardSlash;
+   }
+   else
+   {
+      path += kForwardSlash;
+   }
+#else
+   path += kForwardSlash;
+#endif
+
+   path += name;
+
+   return path;
+}
+
 template <typename F>
 void listFilesImpl(
       const boost::filesystem::path& path,
@@ -1443,6 +1496,7 @@ void listFilesImpl(
    // iterate over other files in the directory
    try
    {
+      // TODO: we need to sanitize paths that end with '.' for Windows
       boost::filesystem::directory_iterator it(path);
       boost::filesystem::directory_iterator end;
       for (; it != end; it++)
@@ -1456,8 +1510,8 @@ void listFilesImpl(
          if (!options.allFiles && name.size() > 0 && *name.c_str() == name.dot)
             continue;
 
-         // construct new prefix
-         auto newPrefix = listFilesResult(prefix, name);
+         // construct file listing result
+         auto result = listFilesResult(prefix, name, options);
          
          // check if this file is a directory (ignore errors)
          boost::system::error_code ec;
@@ -1466,20 +1520,23 @@ void listFilesImpl(
             if (options.recursive)
             {
                if (options.includeDirs && accept(name))
-                  pResult->push_back(newPrefix);
-               listFilesImpl(it->path(), newPrefix, options, accept, pResult);
+                  pResult->push_back(result);
+
+               // recurse
+               auto newPrefix = listFilesPrefix(prefix, name, options);
+               listFilesImpl(it->path(), listFilesPrefix(prefix, name, options), options, accept, pResult);
             }
             else
             {
                // ignore options.includeDirs in non-recursive listings
                if (accept(name))
-                  pResult->push_back(newPrefix);
+                  pResult->push_back(result);
             }
          }
          else
          {
             if (options.includeFiles && accept(name))
-               pResult->push_back(newPrefix);
+               pResult->push_back(result);
          }
       }
    }
@@ -1514,7 +1571,7 @@ void listFilesDispatch(
             {
                if (accept(name))
                {
-                  pResult->push_back(listFilesResult(prefix, name));
+                  pResult->push_back(listFilesResult(prefix, name, options));
                }
             }
          }
@@ -1659,12 +1716,13 @@ SEXP rs_listFiles(SEXP pathSEXP,
       ListFilesOptions options;
 
       // fill other options
-      options.allFiles     = allFiles;
-      options.fullNames    = fullNames;
-      options.recursive    = recursive;
-      options.includeFiles = true;
-      options.includeDirs  = includeDirs;
-      options.noDotDot     = noDotDot;
+      options.allFiles               = allFiles;
+      options.fullNames              = fullNames;
+      options.recursive              = recursive;
+      options.includeFiles           = true;
+      options.includeDirs            = includeDirs;
+      options.noDotDot               = noDotDot;
+      options.checkTrailingSeparator = true;
 
       // read and handle pattern
       auto pattern = extractPattern(patternSEXP);
@@ -1723,6 +1781,7 @@ SEXP rs_listDirs(SEXP pathSEXP,
       options.includeFiles = false;
       options.includeDirs = true;
       options.noDotDot = true;
+      options.checkTrailingSeparator = false;
       
       // list files
       listFilesDispatch(paths, options, ListFilesAcceptAll(), &result);
