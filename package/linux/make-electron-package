@@ -52,7 +52,7 @@ fi
 ./make-package Electron $1 $2 $3
 
 # make tar.gz
-BUILD_DIR=build-Desktop-$1
+BUILD_DIR=build-Electron-$1
 if test -n "$CMAKE_BUILD_TYPE"
 then
   BUILD_DIR=$BUILD_DIR-$CMAKE_BUILD_TYPE
