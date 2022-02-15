@@ -14,6 +14,7 @@
  */
 
 import { assert } from 'chai';
+import { debug } from 'console';
 import { MenuItem, MenuItemConstructorOptions } from 'electron';
 import { describe } from 'mocha';
 import { MenuCallback } from '../../../src/main/menu-callback';
@@ -58,7 +59,8 @@ describe('WIPMenuCallback', () => {
     assert.strictEqual(command?.label, 'Command');
 
     callback.updateMenus([{ id: 'a_command', label: 'New Label' }]);
-    const updatedCommand = callback.getMenuItemById('a_command');
+
+    const updatedCommand = callback.mainMenu?.getMenuItemById('a_command');
     assert.strictEqual(updatedCommand?.label, 'New Label');
     assert.isTrue(updatedCommand?.visible);
     assert.isFalse(updatedCommand?.checked);
@@ -80,7 +82,7 @@ describe('WIPMenuCallback', () => {
 
     assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 1);
 
-    const updatedCommand = callback.getMenuItemById('a_command');
+    const updatedCommand = callback.mainMenu?.getMenuItemById('a_command');
     assert.isTrue(updatedCommand?.visible);
   });
 
@@ -158,14 +160,15 @@ describe('WIPMenuCallback', () => {
     callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
     callback.addCommand('configure_build', 'Configure Build Tools', '', '', false, true);
 
-    // debugger;
     callback.updateMenus([]);
     assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 3, 'expected 3 menu items to start');
 
-    callback.updateMenus([{ id: 'buildAll', visible: false }]);
-    callback.updateMenus([{ id: 'buildSourcePackage', visible: true }]);
-    callback.updateMenus([{ id: 'buildBinaryPackage', visible: true }]);
-    callback.updateMenus([{ id: 'testPackage', visible: true }]);
+    callback.setCommandVisibility('buildAll', false);
+    callback.setCommandVisibility('buildSourcePackage', true);
+    callback.setCommandVisibility('buildBinaryPackage', true);
+    callback.setCommandVisibility('testPackage', true);
+
+    callback.updateMenus([]);
 
     assert.strictEqual(
       callback.mainMenu?.items[menuIdx].submenu?.items.length,

@@ -62,7 +62,7 @@ export class MenuCallback extends EventEmitter {
   static ZOOM_OUT = 'menu-callback-zoom_out';
 
   mainMenu: Menu | null = null;
-  menuStack: Menu[] = [];
+  menuStack: MenuItemConstructorOptions[][] = [];
   actions = new Map<string, MenuItem>();
 
   // keep a list of templates referenced by id so we can re-build the menus with them
@@ -134,47 +134,27 @@ export class MenuCallback extends EventEmitter {
 
     // for all events that modify commands, their templates must also be modified!
 
-    ipcMain.on('menu_set_command_visible', (event, commandId: string, visible: boolean) => {
-      const item = this.getMenuItemById(commandId);
-      if (item) {
-        item.visible = visible;
-        const template = this.menuItemTemplates.get(item.id);
-        if (template) template.visible = visible;
-      }
+    ipcMain.on('menu_set_command_visible', (_event, commandId: string, visible: boolean) => {
+      this.setCommandVisibility(commandId, visible);
     });
 
-    ipcMain.on('menu_set_command_enabled', (event, commandId: string, enabled: boolean) => {
-      const item = this.getMenuItemById(commandId);
-      if (item) {
-        item.enabled = enabled;
-        const template = this.menuItemTemplates.get(item.id);
-        if (template) template.enabled = enabled;
-      }
+    ipcMain.on('menu_set_command_enabled', (_event, commandId: string, enabled: boolean) => {
+      this.setCommandEnabled(commandId, enabled);
     });
 
-    ipcMain.on('menu_set_command_checked', (event, commandId: string, checked: boolean) => {
-      const item = this.getMenuItemById(commandId);
-      if (item) {
-        item.checked = checked;
-        const template = this.menuItemTemplates.get(item.id);
-        if (template) template.checked = checked;
-      }
+    ipcMain.on('menu_set_command_checked', (_event, commandId: string, checked: boolean) => {
+      this.setCommandChecked(commandId, checked);
     });
 
     ipcMain.on('menu_set_main_menu_enabled', () => {
       /* do nothing */
     });
 
-    ipcMain.on('menu_set_command_label', (event, commandId: string, label: string) => {
-      const item = this.getMenuItemById(commandId);
-      if (item) {
-        item.label = label;
-        const template = this.menuItemTemplates.get(item.id);
-        if (template) template.label = label;
-      }
+    ipcMain.on('menu_set_command_label', (_event, commandId: string, label: string) => {
+      this.setCommandLabel(commandId, label);
     });
 
-    ipcMain.on('menu_set_command_shortcut', (event, commandId: string, shortcut: string | null) => {
+    ipcMain.on('menu_set_command_shortcut', (_event, commandId: string, shortcut: string | null) => {
       // Electron doesn't support modifying shortcut of an existing MenuItem;
       // We have to recreate the application menus whenever* we
       // get this call. For more on this Electron limitation:
@@ -222,7 +202,7 @@ export class MenuCallback extends EventEmitter {
   }
 
   menuBegin(label: string): void {
-    const subMenu = new Menu();
+    const subMenu = new Array<MenuItemConstructorOptions>();
     const opts: MenuItemConstructorOptions = {
       submenu: subMenu,
       label: label,
@@ -249,69 +229,154 @@ export class MenuCallback extends EventEmitter {
     this.menuStack.push(subMenu);
   }
 
+  setCommandVisibility(id: string, newVisibility: boolean) {
+    const template = this.menuItemTemplates.get(id);
+    if (template) template.visible = newVisibility;
+  }
+
+  setCommandEnabled(id: string, newEnablement: boolean) {
+    const template = this.menuItemTemplates.get(id);
+    if (template) template.enabled = newEnablement;
+  }
+
+  setCommandChecked(id: string, newChecked: boolean) {
+    const template = this.menuItemTemplates.get(id);
+    if (template) template.checked = newChecked;
+  }
+
+  setCommandLabel(id: string, newLabel: string) {
+    const template = this.menuItemTemplates.get(id);
+    if (template) template.label = newLabel;
+  }
+
+  updateMenus(items: MenuItemConstructorOptions[]): void {
+    const mainMenu = this.mainMenu;
+    if (!mainMenu) return;
+
+    const recursiveCopy = (menuItemTemplates: MenuItemConstructorOptions[]) => {
+      const newMenuTemplate = new Array<MenuItemConstructorOptions>();
+
+      for (const menuItemTemplate of menuItemTemplates) {
+        const foundMenuItemTemplate = items.find((item) => item.id === menuItemTemplate.id);
+        let referenceMenuItemTemplate;
+        if (menuItemTemplate.id) {
+          referenceMenuItemTemplate = this.menuItemTemplates.get(menuItemTemplate.id) ?? {};
+        }
+        const newMenuItemTemplate = { ...menuItemTemplate, ...referenceMenuItemTemplate, ...foundMenuItemTemplate };
+
+        if (newMenuItemTemplate.type === 'separator') {
+          newMenuTemplate.push(newMenuItemTemplate);
+          continue;
+        }
+
+        if (newMenuItemTemplate.id) {
+          this.menuItemTemplates.set(newMenuItemTemplate.id, newMenuItemTemplate);
+        }
+
+        if (!newMenuItemTemplate.visible && !newMenuItemTemplate.role) continue;
+
+        const { submenu } = menuItemTemplate;
+        if (submenu instanceof Array) {
+          newMenuItemTemplate.submenu = recursiveCopy(submenu as Array<MenuItemConstructorOptions>);
+        }
+
+        newMenuTemplate.push(newMenuItemTemplate);
+      }
+
+      return newMenuTemplate.filter((item, idx, arr) => {
+        if (item.type !== 'separator') {
+          return true;
+        }
+        const prevItem = arr[idx - 1];
+        return idx !== 0 && prevItem.type !== 'separator' && idx != arr.length - 1;
+      });
+    };
+
+    const mainMenuTemplate = this.menuTemplates.get(mainMenu);
+    if (mainMenuTemplate) {
+      const newMainMenuTemplate = recursiveCopy(mainMenuTemplate);
+      this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
+      this.menuTemplates.set(this.mainMenu, mainMenuTemplate);
+    }
+
+    Menu.setApplicationMenu(this.mainMenu);
+  }
+
   /**
    * Uses a list of templates to update existing menu items by reconstructing the entire app menu.
    *
    * This function performs will also clean up unnecessary menu items such as hidden items or
    * unnecessary separators. It is important that this updates the menu templates since hidden items
    * and unnecessary separators are not added to menus. Hidden items are not added so that the
-   * separator logic can remove unnecessary separators. Unnecessary separators are removed because
+   * separator logic can remove unnecessary separators. Unnecessary separators are removed b
+   * ecause
    * they cannot be hidden on Linux/Windows.
    * @param items a list of MenuItemConstructorOptions that will overwrite existing menu items
    */
-  updateMenus(items: MenuItemConstructorOptions[]): void {
-    const mainMenu = this.mainMenu;
-    if (!mainMenu) return;
+  // updateMenus(items: MenuItemConstructorOptions[]): void {
+  //   const mainMenu = this.mainMenu;
+  //   if (!mainMenu) return;
 
-    const newMenu = new Menu();
+  //   // const newMenu = new Menu();
 
-    const recursiveCopy = (currentMenu: Menu, targetMenu: Menu) => {
-      const currentMenuTemplate = this.menuTemplates.get(currentMenu) ?? [];
+  //   const recursiveCopy = (currentMenu: Menu) => {
+  //     const currentMenuTemplate = this.menuTemplates.get(currentMenu) ?? [];
+  //     let newMenuTemplate = new Array<MenuItemConstructorOptions>();
 
-      for (const currentMenuItemTemplate of currentMenuTemplate) {
-        const foundMenuItemTemplate = items.find((item) => item.id === currentMenuItemTemplate.id);
-        const newMenuItemTemplate = { ...currentMenuItemTemplate, ...foundMenuItemTemplate };
+  //     for (const currentMenuItemTemplate of currentMenuTemplate) {
+  //       const foundMenuItemTemplate = items.find((item) => item.id === currentMenuItemTemplate.id);
+  //       const newMenuItemTemplate = { ...currentMenuItemTemplate, ...foundMenuItemTemplate };
 
-        if (newMenuItemTemplate.type === 'separator') {
-          this.addToMenu(targetMenu, new MenuItem(newMenuItemTemplate));
-          continue;
-        }
+  //       if (newMenuItemTemplate.type === 'separator') {
+  //         // this.addToMenu(targetMenu, new MenuItem(newMenuItemTemplate));
+  //         newMenuTemplate.push(newMenuItemTemplate);
+  //         continue;
+  //       }
 
-        currentMenuItemTemplate.visible = newMenuItemTemplate.visible;
-        if (!newMenuItemTemplate.visible && !newMenuItemTemplate.role) continue;
+  //       currentMenuItemTemplate.visible = newMenuItemTemplate.visible;
+  //       if (!newMenuItemTemplate.visible && !newMenuItemTemplate.role) continue;
 
-        const { submenu } = newMenuItemTemplate;
-        if (submenu instanceof Menu) {
-          const newSubmenu = new Menu();
-          recursiveCopy(submenu as Menu, newSubmenu);
-          newMenuItemTemplate.submenu = newSubmenu;
-        }
+  //       const { submenu } = currentMenuItemTemplate;
+  //       if (submenu instanceof Menu) {
+  //         const submenuTemplate = recursiveCopy(submenu as Menu);
+  //         newMenuItemTemplate.submenu = submenuTemplate;
+  //       }
 
-        const newMenuItem = new MenuItem(newMenuItemTemplate);
-        this.actions.set(newMenuItem.id, newMenuItem);
-        this.addToMenu(targetMenu, newMenuItem);
-      }
+  //       const newMenuItem = new MenuItem(newMenuItemTemplate);
+  //       this.actions.set(newMenuItem.id, newMenuItem);
+  //       // this.addToMenu(targetMenu);
+  //       if (newMenuItemTemplate.visible) newMenuTemplate.push(newMenuItemTemplate);
+  //     }
 
-      this.menuTemplates.set(targetMenu, currentMenuTemplate);
+  //     // this.menuTemplates.set(targetMenu, currentMenuTemplate);
 
-      targetMenu.items = targetMenu.items.filter((item, idx, arr) => {
-        if (item.type !== 'separator') {
-          return true;
-        }
-        const prevItem = arr[idx - 1];
-        return (
-          idx !== 0 && // no separators at the top
-          prevItem.type !== 'separator' && // no consecutive separators
-          idx != arr.length - 1 // no separators at the bottom
-        );
-      });
-    };
+  //     newMenuTemplate = newMenuTemplate.filter((item, idx, arr) => {
+  //       if (item.type !== 'separator') {
+  //         return true;
+  //       }
+  //       const prevItem = arr[idx - 1];
+  //       return idx !== 0 && prevItem.type !== 'separator' && idx != arr.length - 1;
+  //     });
+  //     return newMenuTemplate;
+  //     // targetMenu.items = targetMenu.items.filter((item, idx, arr) => {
+  //     //   if (item.type !== 'separator') {
+  //     //     return true;
+  //     //   }
+  //     //   const prevItem = arr[idx - 1];
+  //     //   return (
+  //     //     idx !== 0 && // no separators at the top
+  //     //     prevItem.type !== 'separator' && // no consecutive separators
+  //     //     idx != arr.length - 1 // no separators at the bottom
+  //     //   );
+  //     // });
+  //   };
 
-    recursiveCopy(mainMenu, newMenu);
-    this.mainMenu = newMenu;
+  //   const template = recursiveCopy(mainMenu);
+  //   this.mainMenu = Menu.buildFromTemplate(template);
+  //   this.menuTemplates.set(this.mainMenu, template);
 
-    Menu.setApplicationMenu(this.mainMenu);
-  }
+  //   Menu.setApplicationMenu(this.mainMenu);
+  // }
 
   addToMenu(menu: Menu, item: MenuItem) {
     // invisible items are not added because it interferes with the separator logic
@@ -378,22 +443,26 @@ export class MenuCallback extends EventEmitter {
   }
 
   addToCurrentMenu(menuItem: MenuItem, itemTemplate: MenuItemConstructorOptions): void {
-    let menu;
+    let menu: MenuItemConstructorOptions[] | undefined;
     if (this.menuStack.length > 0) {
       menu = this.menuStack[this.menuStack.length - 1];
     } else {
       if (!this.mainMenu) {
         return;
       }
-      menu = this.mainMenu;
+      menu = this.menuTemplates.get(this.mainMenu);
+      if (!menu) {
+        menu = new Array<MenuItemConstructorOptions>();
+        this.menuTemplates.set(this.mainMenu, menu);
+      }
     }
-    menu.append(menuItem);
-    let submenuItems = this.menuTemplates.get(menu);
-    if (!submenuItems) {
-      submenuItems = new Array<MenuItemConstructorOptions>();
-      this.menuTemplates.set(menu, submenuItems);
-    }
-    submenuItems.push(itemTemplate);
+    menu.push(itemTemplate);
+    // let menuItemsTemplate = this.menuTemplates.get(menu);
+    // if (!menuItemsTemplate) {
+    //   menuItemsTemplate = new Array<MenuItemConstructorOptions>();
+    //   this.menuTemplates.set(menu, menuItemsTemplate);
+    // }
+    // menuItemsTemplate.push(itemTemplate);
   }
 
   getMenuItemById(id: string): MenuItem | undefined {
