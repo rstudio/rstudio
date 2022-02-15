@@ -44,7 +44,7 @@ export class ToolbarManager {
           'Error message: ' +
           err.message +
           '\nError when trying to create toolbar with data:\n' +
-          toolbarData +
+          JSON.stringify(toolbarData) +
           '\n---------------------------\nJS Script for Toolbar:\n' +
           jsScript;
         logger().logError(error);
