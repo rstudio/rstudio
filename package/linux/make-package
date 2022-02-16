@@ -163,9 +163,19 @@ fi
 
 ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
 
-# find yarn -- TODO gary - work in progress, commenting out to unbreak build
-# find-program YARN yarn \
-#    "${HOME}/.yarn/bin"
+# find node
+RSTUDIO_NODE_VERSION=14.17.5
+find-program NODE node \
+   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}bin" \
+   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+
+# yarn needs node on the path
+NODE_PATH=$(dirname "${NODE}")
+PATH="${NODE_PATH}:${PATH}"
+
+# find yarn
+find-program YARN yarn \
+   "${HOME}/.yarn/bin"
 
 # build RStudio version suffix
 RSTUDIO_VERSION_ARRAY=(
