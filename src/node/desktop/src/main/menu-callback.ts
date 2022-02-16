@@ -68,7 +68,6 @@ export class MenuCallback extends EventEmitter {
   private menuItemTemplates = new Map<string, MenuItemConstructorOptions>();
 
   // keep a list of templates referenced by menu so we can re-build the menu
-  private menuTemplates = new Map<Menu, Array<MenuItemConstructorOptions>>();
   private mainMenuTemplate: MenuItemConstructorOptions[] = new Array<MenuItemConstructorOptions>();
 
   lastWasTools = false;
@@ -253,7 +252,7 @@ export class MenuCallback extends EventEmitter {
   }
 
   /**
-   * Reconstructs the entire app menu using the _menuTemplates_. Do not update the menu item.
+   * Reconstructs the entire app menu using the _mainMenuTemplate_. Do not update the menu item.
    *
    * This function performs will also clean up unnecessary menu items such as hidden items or
    * unnecessary separators. It is important that this updates the menu templates since hidden items
@@ -313,7 +312,6 @@ export class MenuCallback extends EventEmitter {
 
     const newMainMenuTemplate = recursiveCopy(this.mainMenuTemplate);
     this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
-    this.menuTemplates.set(this.mainMenu, this.mainMenuTemplate);
 
     Menu.setApplicationMenu(this.mainMenu);
   }
@@ -379,7 +377,6 @@ export class MenuCallback extends EventEmitter {
       menu = this.menuStack[this.menuStack.length - 1];
     } else {
       menu = new Array<MenuItemConstructorOptions>();
-      this.menuTemplates.set(this.mainMenu, this.mainMenuTemplate);
       this.mainMenuTemplate.push(itemTemplate);
     }
     menu.push(itemTemplate);
