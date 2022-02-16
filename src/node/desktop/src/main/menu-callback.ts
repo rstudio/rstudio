@@ -168,7 +168,6 @@ export class MenuCallback extends EventEmitter {
     if (process.platform === 'darwin') {
       const appMenu: MenuItemConstructorOptions = { role: 'appMenu', visible: true };
       this.addToCurrentMenu(new MenuItem(appMenu), appMenu);
-      // this.mainMenu.append(new MenuItem(appMenu));
     }
   }
 
@@ -315,13 +314,6 @@ export class MenuCallback extends EventEmitter {
     }
 
     Menu.setApplicationMenu(this.mainMenu);
-  }
-
-  addToMenu(menu: Menu, item: MenuItem) {
-    // invisible items are not added because it interferes with the separator logic
-    if (item.visible) {
-      menu.append(item);
-    }
   }
 
   addCommand(
