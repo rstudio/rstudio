@@ -14,7 +14,7 @@
  */
 
 import { assert } from 'chai';
-import { MenuItem, MenuItemConstructorOptions } from 'electron';
+import { MenuItemConstructorOptions } from 'electron';
 import { describe } from 'mocha';
 import { MenuCallback } from '../../../src/main/menu-callback';
 
@@ -23,12 +23,22 @@ const separatorTemplate: MenuItemConstructorOptions = { type: 'separator' };
 describe('MenuCallback', () => {
   it('can be constructed', () => {
     const callback = new MenuCallback();
-    assert.isObject(callback);
+    const menuCount = process.platform === 'darwin' ? 2 : 1; // adjust for MacOS app menu
+    callback.beginMain();
+    callback.menuBegin('&File');
+
+    callback.updateMenus();
+    assert.strictEqual(callback.mainMenu?.items.length, menuCount, 'expected correct top level menu count');
   });
 
   it('can add a command', () => {
     const callback = new MenuCallback();
+    callback.beginMain();
+    callback.menuBegin('&File');
+
     callback.addCommand('a_new_command', 'Test Command', '', 'Cmd+Shift+T', false, true);
+    callback.updateMenus();
+
     assert.isObject(callback.getMenuItemById('a_new_command'));
   });
 
@@ -72,22 +82,26 @@ describe('MenuCallback', () => {
   it('can change visibility for a command', () => {
     const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
+    const menuCount = process.platform === 'darwin' ? 2 : 1;
 
     callback.beginMain();
     callback.menuBegin('&File');
-    callback.addCommand('a_command', 'Initially hidden', '', '', false, false);
+    callback.addCommand('a_command', 'Command', '', '', false, true);
+    callback.addCommand('a_hidden_command', 'Initially hidden', '', '', false, false);
+    callback.addCommand('a_visible_command', 'Initially visible', '', '', false, true);
 
     callback.updateMenus();
 
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 0);
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 2);
 
-    callback.setCommandVisibility('a_command', true);
+    callback.setCommandVisibility('a_hidden_command', true);
     callback.updateMenus();
 
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 1);
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 3);
 
-    const updatedCommand = callback.mainMenu?.getMenuItemById('a_command');
+    const updatedCommand = callback.mainMenu?.getMenuItemById('a_hidden_command');
     assert.isTrue(updatedCommand?.visible);
+    assert.strictEqual(callback.mainMenu?.items.length, menuCount, 'expected correct top level menu count');
   });
 
   it('can remove unnecessary separators', () => {
@@ -97,12 +111,12 @@ describe('MenuCallback', () => {
     callback.beginMain();
     callback.menuBegin('&File');
 
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addToCurrentMenu(separatorTemplate);
     callback.addCommand('a_command', 'Command', '', '', false, true); // expected
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate); // expected
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addToCurrentMenu(separatorTemplate); // expected
+    callback.addToCurrentMenu(separatorTemplate);
     callback.addCommand('another_command', 'Another Command', '', '', false, true); // expected
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addToCurrentMenu(separatorTemplate);
 
     callback.updateMenus();
 
@@ -116,9 +130,9 @@ describe('MenuCallback', () => {
     callback.beginMain();
     callback.menuBegin('&File');
 
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addToCurrentMenu(separatorTemplate);
     callback.addCommand('a_command', 'Command', '', '', false, true); // expected
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addToCurrentMenu(separatorTemplate);
     callback.addCommand('a_hidden_command', 'Hidden Command', '', '', false, false);
 
     callback.updateMenus();
@@ -126,9 +140,10 @@ describe('MenuCallback', () => {
     assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 1);
   });
 
-  it('can contain submenus', () => {
+  it('can contain a submenu', () => {
     const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
+    const menuCount = process.platform === 'darwin' ? 2 : 1;
 
     callback.beginMain();
     callback.menuBegin('&File');
@@ -137,7 +152,7 @@ describe('MenuCallback', () => {
     callback.addCommand('mru0', '', '', '', false, false);
     callback.addCommand('mru1', '', '', '', false, false);
     callback.addCommand('mru2', '', '', '', false, false);
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addToCurrentMenu(separatorTemplate);
     callback.addCommand('clear_recent', 'Clear recent', '', '', false, true);
 
     callback.updateMenus();
@@ -147,6 +162,33 @@ describe('MenuCallback', () => {
       1,
       'expected "Clear recent" menu item',
     );
+    assert.strictEqual(callback.mainMenu?.items.length, menuCount, 'expected correct top level menu count');
+  });
+
+  it('can rebuild the main menu', () => {
+    const callback = new MenuCallback();
+    const menuCount = process.platform === 'darwin' ? 2 : 1; // adjust for MacOS app menu
+
+    callback.beginMain();
+    callback.menuBegin('&File');
+    callback.menuEnd();
+
+    callback.updateMenus();
+
+    assert.strictEqual(callback.mainMenu?.items.length, menuCount, 'expected correct top level menu count');
+
+    callback.beginMain();
+    callback.menuBegin('&File');
+    callback.menuBegin('Recent Files');
+    callback.menuEnd();
+
+    callback.addCommand('mru0', '', '', '', false, false);
+    callback.addCommand('mru1', '', '', '', false, false);
+    callback.addCommand('mru2', '', '', '', false, false);
+
+    callback.updateMenus();
+
+    assert.strictEqual(callback.mainMenu?.items.length, menuCount, 'expected correct top level menu count');
   });
 
   it('can change a command visibility that causes unnecessary separators', () => {
@@ -157,11 +199,11 @@ describe('MenuCallback', () => {
     callback.menuBegin('&Build');
 
     callback.addCommand('buildAll', 'Build All', '', '', false, true);
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addToCurrentMenu(separatorTemplate);
     callback.addCommand('buildSourcePackage', 'Build Source Package', '', '', false, false);
     callback.addCommand('buildBinaryPackage', 'Build Binary Package', '', '', false, false);
     callback.addCommand('testPackage', 'Test Package', '', '', false, false);
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
+    callback.addToCurrentMenu(separatorTemplate);
     callback.addCommand('configure_build', 'Configure Build Tools', '', '', false, true);
 
     callback.updateMenus();

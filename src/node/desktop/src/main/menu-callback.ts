@@ -61,7 +61,7 @@ export class MenuCallback extends EventEmitter {
   static ZOOM_IN = 'menu-callback-zoom_in';
   static ZOOM_OUT = 'menu-callback-zoom_out';
 
-  mainMenu: Menu | null = null;
+  mainMenu: Menu = new Menu();
   menuStack: MenuItemConstructorOptions[][] = [];
 
   // keep a list of templates referenced by id so we can re-build the menus with them
@@ -69,6 +69,7 @@ export class MenuCallback extends EventEmitter {
 
   // keep a list of templates referenced by menu so we can re-build the menu
   private menuTemplates = new Map<Menu, Array<MenuItemConstructorOptions>>();
+  private mainMenuTemplate: MenuItemConstructorOptions[] = new Array<MenuItemConstructorOptions>();
 
   lastWasTools = false;
   lastWasDiagnostics = false;
@@ -102,28 +103,11 @@ export class MenuCallback extends EventEmitter {
 
     ipcMain.on('menu_add_separator', () => {
       const separatorTemplate: MenuItemConstructorOptions = { type: 'separator' };
-      const separator = new MenuItem(separatorTemplate);
-      this.addToCurrentMenu(separator, separatorTemplate);
+      this.addToCurrentMenu(separatorTemplate);
     });
 
     ipcMain.on('menu_end', () => {
-      if (this.lastWasDiagnostics) {
-        this.lastWasDiagnostics = false;
-        const template: MenuItemConstructorOptions = { role: 'toggleDevTools' };
-        const menuItem = new MenuItem(template);
-        this.addToCurrentMenu(menuItem, template);
-      }
-
-      this.menuStack.pop();
-
-      if (this.lastWasTools) {
-        this.lastWasTools = false;
-
-        // add the Window menu on mac
-        if (process.platform === 'darwin') {
-          this.mainMenu?.append(new MenuItem({ role: 'windowMenu' }));
-        }
-      }
+      this.menuEnd();
     });
 
     ipcMain.on('menu_end_main', () => {
@@ -164,10 +148,14 @@ export class MenuCallback extends EventEmitter {
   }
 
   beginMain(): void {
+    // Create a new menu and clear the template
+    // GWT redefines and rebuilds the entire menu in some cases
     this.mainMenu = new Menu();
+    this.mainMenuTemplate = new Array<MenuItemConstructorOptions>();
+
     if (process.platform === 'darwin') {
       const appMenu: MenuItemConstructorOptions = { role: 'appMenu', visible: true };
-      this.addToCurrentMenu(new MenuItem(appMenu), appMenu);
+      this.addToCurrentMenu(appMenu);
     }
   }
 
@@ -193,10 +181,30 @@ export class MenuCallback extends EventEmitter {
       this.lastWasDiagnostics = true;
     }
 
-    const menuItem = new MenuItem(opts);
-    this.menuItemTemplates.set(menuItem.id, opts);
-    this.addToCurrentMenu(menuItem, opts);
+    if (opts.id) {
+      this.menuItemTemplates.set(opts.id, opts);
+    }
+    this.addToCurrentMenu(opts);
     this.menuStack.push(subMenu);
+  }
+
+  menuEnd(): void {
+    if (this.lastWasDiagnostics) {
+      this.lastWasDiagnostics = false;
+      const template: MenuItemConstructorOptions = { role: 'toggleDevTools' };
+      this.addToCurrentMenu(template);
+    }
+
+    this.menuStack.pop();
+
+    if (this.lastWasTools) {
+      this.lastWasTools = false;
+
+      // add the Window menu on mac
+      if (process.platform === 'darwin') {
+        this.mainMenu.append(new MenuItem({ role: 'windowMenu' }));
+      }
+    }
   }
 
   setCommandShortcut(id: string, shortcut: string | null) {
@@ -257,9 +265,6 @@ export class MenuCallback extends EventEmitter {
    *
    */
   updateMenus(): void {
-    const mainMenu = this.mainMenu;
-    if (!mainMenu) return;
-
     /**
      * Builds the final list of menu items using the given menu template
      *
@@ -306,12 +311,9 @@ export class MenuCallback extends EventEmitter {
       });
     };
 
-    const mainMenuTemplate = this.menuTemplates.get(mainMenu);
-    if (mainMenuTemplate) {
-      const newMainMenuTemplate = recursiveCopy(mainMenuTemplate);
-      this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
-      this.menuTemplates.set(this.mainMenu, mainMenuTemplate);
-    }
+    const newMainMenuTemplate = recursiveCopy(this.mainMenuTemplate);
+    this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
+    this.menuTemplates.set(this.mainMenu, this.mainMenuTemplate);
 
     Menu.setApplicationMenu(this.mainMenu);
   }
@@ -325,7 +327,6 @@ export class MenuCallback extends EventEmitter {
     visible: boolean,
   ): void {
     const menuItemOpts: MenuItemConstructorOptions = {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       label: label,
       id: cmdId,
       click: (menuItem, _browserWindow, _event) => {
@@ -369,22 +370,17 @@ export class MenuCallback extends EventEmitter {
 
     const menuItem = new MenuItem(menuItemOpts);
     this.menuItemTemplates.set(menuItem.id, menuItemOpts);
-    this.addToCurrentMenu(menuItem, menuItemOpts);
+    this.addToCurrentMenu(menuItemOpts);
   }
 
-  addToCurrentMenu(_menuItem: MenuItem, itemTemplate: MenuItemConstructorOptions): void {
+  addToCurrentMenu(itemTemplate: MenuItemConstructorOptions): void {
     let menu: MenuItemConstructorOptions[] | undefined;
     if (this.menuStack.length > 0) {
       menu = this.menuStack[this.menuStack.length - 1];
     } else {
-      if (!this.mainMenu) {
-        return;
-      }
-      menu = this.menuTemplates.get(this.mainMenu);
-      if (!menu) {
-        menu = new Array<MenuItemConstructorOptions>();
-        this.menuTemplates.set(this.mainMenu, menu);
-      }
+      menu = new Array<MenuItemConstructorOptions>();
+      this.menuTemplates.set(this.mainMenu, this.mainMenuTemplate);
+      this.mainMenuTemplate.push(itemTemplate);
     }
     menu.push(itemTemplate);
   }
