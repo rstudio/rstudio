@@ -149,6 +149,11 @@ public class RStudioThemedFrame extends RStudioFrame
             // Add OS tag to the frame so that it can apply OS-specific CSS if
             // needed.
             body.addClassName(BrowseCap.operatingSystem());
+            
+            // Add flat theme class. None of our own CSS should use this, but many
+            // third party themes developed against earlier versions of RStudio
+            // (2021.09 and older) use it extensively in selectors.
+            body.addClassName("rstudio-themes-flat");
          }
       }
    }
