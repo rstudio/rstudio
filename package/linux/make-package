@@ -173,9 +173,9 @@ find-program NODE node \
 NODE_PATH=$(dirname "${NODE}")
 PATH="${NODE_PATH}:${PATH}"
 
-# find yarn
-find-program YARN yarn \
-   "${HOME}/.yarn/bin"
+# find yarn -- TODO Gary -- this is still failing on official builds
+#find-program YARN yarn \
+#   "${HOME}/.yarn/bin"
 
 # build RStudio version suffix
 RSTUDIO_VERSION_ARRAY=(
