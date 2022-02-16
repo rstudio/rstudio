@@ -272,13 +272,20 @@ bool handleRShowDocFile(const core::FilePath& filePath)
 }
 
 // javascript callbacks to inject into page
-const char * const kJsCallbacks =
-      "<script type=\"text/javascript\">\n"
-      "if (window.parent.helpNavigated)\n"
-      "   window.parent.helpNavigated(document, window);\n"
-      "if (window.parent.helpKeydown)\n"
-      "   window.onkeydown = function(e) {window.parent.helpKeydown(e);}\n"
-      "</script>\n";
+const char * const kJsCallbacks = R"EOF(
+<script type="text/javascript">
+
+   if (window.parent.helpNavigated)
+      window.parent.helpNavigated(document, window);
+
+   if (window.parent.helpKeydown)
+      window.onkeydown = function(e) { window.parent.helpKeydown(e); }
+
+   if (window.parent.helpMousedown)
+      window.onmousedown = function(e) { window.parent.helpMousedown(e); }
+
+</script>
+)EOF";
 
 
 class HelpFontSizeFilter : public boost::iostreams::aggregate_filter<char>

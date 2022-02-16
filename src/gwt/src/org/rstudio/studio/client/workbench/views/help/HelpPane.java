@@ -44,6 +44,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
@@ -51,6 +52,7 @@ import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.ElementEx;
+import org.rstudio.core.client.dom.EventProperty;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
@@ -117,6 +119,7 @@ public class HelpPane extends WorkbenchPane
          null,
          false,
          true);
+      
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-HelpFrame");
       frame_.addStyleName("ace_editor_theme");
@@ -263,12 +266,14 @@ public class HelpPane extends WorkbenchPane
       }
 
       var thiz = this;
+      
       $wnd.helpNavigated = function(document, win) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::helpNavigated(Lcom/google/gwt/dom/client/Document;)(document);
          addEventHandler(win, "unload", function () {
             thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::unload()();
          });
       };
+      
       $wnd.helpNavigate = function(url) {
          if (url.length)
             thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::showHelp(Ljava/lang/String;)(url);
@@ -277,6 +282,11 @@ public class HelpPane extends WorkbenchPane
       $wnd.helpKeydown = function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleKeyDown(Lcom/google/gwt/dom/client/NativeEvent;)(e);
       };
+      
+      $wnd.helpMousedown = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseDown(*)(e);
+      };
+      
    }-*/;
 
 
@@ -331,6 +341,23 @@ public class HelpPane extends WorkbenchPane
          // since this is a shortcut handled by the main window
          // we set focus to it
          WindowEx.get().focus();
+      }
+   }
+   
+   private void handleMouseDown(NativeEvent event)
+   {
+      int button = EventProperty.button(event);
+      if (button == EventProperty.MOUSE_BACKWARD)
+      {
+         event.stopPropagation();
+         event.preventDefault();
+         commands_.helpBack().execute();
+      }
+      else if (button == EventProperty.MOUSE_FORWARD)
+      {
+         event.stopPropagation();
+         event.preventDefault();
+         commands_.helpForward().execute();
       }
    }
 
