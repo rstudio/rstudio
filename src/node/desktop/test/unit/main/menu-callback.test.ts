@@ -14,14 +14,13 @@
  */
 
 import { assert } from 'chai';
-import { debug } from 'console';
 import { MenuItem, MenuItemConstructorOptions } from 'electron';
 import { describe } from 'mocha';
 import { MenuCallback } from '../../../src/main/menu-callback';
 
 const separatorTemplate: MenuItemConstructorOptions = { type: 'separator' };
 
-describe('WIPMenuCallback', () => {
+describe('MenuCallback', () => {
   it('can be constructed', () => {
     const callback = new MenuCallback();
     assert.isObject(callback);
@@ -35,9 +34,12 @@ describe('WIPMenuCallback', () => {
 
   it('can set initial visibility for command', () => {
     const callback = new MenuCallback();
+    callback.beginMain();
+    callback.menuBegin('&File');
 
     callback.addCommand('an_invisible_command', 'Invisible Command', '', 'Cmd+Shift+I', false, false);
     callback.addCommand('a_visible_command', 'Visible Command', '', 'Cmd+Shift+V', false, true);
+    callback.updateMenus();
 
     const invisibleCommand = callback.getMenuItemById('an_invisible_command');
     const visibleCommand = callback.getMenuItemById('a_visible_command');
@@ -58,7 +60,8 @@ describe('WIPMenuCallback', () => {
     assert.isObject(command);
     assert.strictEqual(command?.label, 'Command');
 
-    callback.updateMenus([{ id: 'a_command', label: 'New Label' }]);
+    callback.setCommandLabel('a_command', 'New Label');
+    callback.updateMenus();
 
     const updatedCommand = callback.mainMenu?.getMenuItemById('a_command');
     assert.strictEqual(updatedCommand?.label, 'New Label');
@@ -74,11 +77,12 @@ describe('WIPMenuCallback', () => {
     callback.menuBegin('&File');
     callback.addCommand('a_command', 'Initially hidden', '', '', false, false);
 
-    callback.updateMenus([]);
+    callback.updateMenus();
 
     assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 0);
 
-    callback.updateMenus([{ id: 'a_command', visible: true }]);
+    callback.setCommandVisibility('a_command', true);
+    callback.updateMenus();
 
     assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 1);
 
@@ -100,7 +104,7 @@ describe('WIPMenuCallback', () => {
     callback.addCommand('another_command', 'Another Command', '', '', false, true); // expected
     callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
 
-    callback.updateMenus([]);
+    callback.updateMenus();
 
     assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 3);
   });
@@ -117,7 +121,7 @@ describe('WIPMenuCallback', () => {
     callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
     callback.addCommand('a_hidden_command', 'Hidden Command', '', '', false, false);
 
-    callback.updateMenus([]);
+    callback.updateMenus();
 
     assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 1);
   });
@@ -136,7 +140,7 @@ describe('WIPMenuCallback', () => {
     callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
     callback.addCommand('clear_recent', 'Clear recent', '', '', false, true);
 
-    callback.updateMenus([]);
+    callback.updateMenus();
     assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 1, 'expected "Recent files" menu');
     assert.strictEqual(
       callback.mainMenu?.items[menuIdx].submenu?.items[0].submenu?.items.length,
@@ -160,7 +164,7 @@ describe('WIPMenuCallback', () => {
     callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
     callback.addCommand('configure_build', 'Configure Build Tools', '', '', false, true);
 
-    callback.updateMenus([]);
+    callback.updateMenus();
     assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 3, 'expected 3 menu items to start');
 
     callback.setCommandVisibility('buildAll', false);
@@ -168,7 +172,7 @@ describe('WIPMenuCallback', () => {
     callback.setCommandVisibility('buildBinaryPackage', true);
     callback.setCommandVisibility('testPackage', true);
 
-    callback.updateMenus([]);
+    callback.updateMenus();
 
     assert.strictEqual(
       callback.mainMenu?.items[menuIdx].submenu?.items.length,
@@ -182,42 +186,23 @@ describe('WIPMenuCallback', () => {
     assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[4].id, 'configure_build');
   });
 
-  /*
-        <menu label="_Build">
-         <cmd refid="devtoolsLoadAll"/>
-         <cmd refid="buildAll"/>
-         <cmd refid="rebuildAll"/>
-         <cmd refid="cleanAll"/>
-         <separator/>
-         <cmd refid="serveQuartoSite"/>
-         <separator/>
-         <cmd refid="testPackage"/>
-         <separator/>
-         <cmd refid="checkPackage"/>
-         <separator/>
-         <cmd refid="buildSourcePackage"/>
-         <cmd refid="buildBinaryPackage"/>
-         <separator/>
-         <cmd refid="roxygenizePackage"/>
-         <separator/>
-         <cmd refid="stopBuild"/>
-         <separator/>
-         <cmd refid="buildToolsProjectSetup"/>
-      </menu>
-  */
-
-  it('can update menu item visibility', () => {
+  it('can update a command shortcut', () => {
     const callback = new MenuCallback();
     const menuIdx = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
-    callback.menuBegin('&Build');
+    callback.menuBegin('&File');
 
-    callback.addCommand('build_all', 'Build All', '', '', false, true);
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
-    callback.addCommand('install_package', 'Install Package', '', '', false, false);
-    callback.addCommand('test_package', 'Test Package', '', '', false, false);
-    callback.addToCurrentMenu(new MenuItem(separatorTemplate), separatorTemplate);
-    callback.addCommand('configure_build', 'Configure Build Tools', '', '', false, true);
+    callback.addCommand('a_shortcut_cmd', 'Shortcut Command', '', 'Cmd+K', false, true);
+    callback.updateMenus();
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 1, 'expected 1 menu item to start');
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[0].accelerator, 'CommandOrControl+K');
+
+    callback.setCommandShortcut('a_shortcut_cmd', 'Cmd+Shift+G');
+
+    // setCommandShortcut calls this already but on a debounce timer so it's called immediately here for the test
+    callback.updateMenus();
+
+    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[0].accelerator, 'CommandOrControl+Shift+G');
   });
 });
