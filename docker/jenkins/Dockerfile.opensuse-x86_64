@@ -30,6 +30,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     openssl-devel \
     pam-devel \
     pango-devel \
+    patchelf \
     postgresql-devel \
     python \
     R \
