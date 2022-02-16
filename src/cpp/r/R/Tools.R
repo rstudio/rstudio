@@ -591,7 +591,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 {
    # TODO: figure out how to print the args (...) as part of the message
    
-   # run the original function (f). setup condition handlers soley so that
+   # run the original function (f). setup condition handlers solely so that
    # we can correctly print the name of the function called in error
    # and warning messages -- otherwise R prints "original(...)"
    withCallingHandlers(

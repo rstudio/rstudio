@@ -83,7 +83,7 @@ void ConsoleHistory::add(const std::string& command)
          if (line.empty())
             continue;
          
-         // add this line if its not a duplciate
+         // add this line if its not a duplicate
          if (!removeDuplicates_ ||
              historyBuffer_.empty() ||
              (line != historyBuffer_.back()))

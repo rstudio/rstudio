@@ -107,18 +107,18 @@ scanPublicOptions "session"
 
 echo "## Hidden Options"
 
-# Indicates whether a hidden server option is errornously present in the documentation
+# Indicates whether a hidden server option is erroneously present in the documentation
 scanSomeOptions "server" "isHidden"
 
-# Indicates whether a hidden session option is errornously present in the documentation. A server option with the same name may be there instead.
+# Indicates whether a hidden session option is erroneously present in the documentation. A server option with the same name may be there instead.
 scanSomeOptions "session" "isHidden"
 
 echo "## Deprecated Options"
 
-# Indicates whether a deprecated session option is errornously present in the documentation. A server option with the same name may be there instead.
+# Indicates whether a deprecated session option is erroneously present in the documentation. A server option with the same name may be there instead.
 scanSomeOptions "session" "isDeprecated"
 
-# Indicates whether a deprecated server option is errornously present in the documentation
+# Indicates whether a deprecated server option is erroneously present in the documentation
 scanSomeOptions "server" "isDeprecated"
 
 echo "## Code Options"

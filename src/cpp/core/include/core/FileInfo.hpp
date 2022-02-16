@@ -25,7 +25,7 @@
 
 #include <shared_core/FilePath.hpp>
 
-// TODO: satisfy outselves that it is safe to query for symlink status
+// TODO: satisfy ourselves that it is safe to query for symlink status
 // in all cases and eliminate its "optional" semantics
 
 namespace rstudio {
@@ -46,7 +46,7 @@ public:
 
    // NOTE: this constructor will NOT read symlink info from the passed
    // FilePath object. this is because we want to restrict reading of
-   // symlink to status to funcitons that are expressly symlink aware
+   // symlink to status to functions that are expressly symlink aware
    // (this is because the behavior of reading symlink status is not
    // fully known and we don't want to make a change underneath our
    // entire codebase which does this universally (note that we've been

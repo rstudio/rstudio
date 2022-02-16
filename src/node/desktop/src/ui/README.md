@@ -40,7 +40,7 @@ behaviours in the widget.
 An optional CSS stylesheet. To be applied to the HTML content after the page
 has been loaded. Note that the CSS stylesheet contents are transferred via
 Electron IPC, so if your widget has a custom stylesheet you should ensure
-`preload.ts` receives that CSS and applies the style in an appropraite channel.
+`preload.ts` receives that CSS and applies the style in an appropriate channel.
 
 ## Modal Widgets
 

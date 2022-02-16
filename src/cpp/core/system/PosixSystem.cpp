@@ -566,7 +566,7 @@ namespace {
 // worst case scenario - close all file descriptors possible
 // this can be EXTREMELY slow when max fd is set to a high value
 // note: this conditional should actually never be true
-// as all linux systems have /proc/self - this is perserved in the codebase
+// as all linux systems have /proc/self - this is preserved in the codebase
 // as a remainder of what was being done in the recent past
 Error closeFileDescriptorsFrom(int fdStart)
 {

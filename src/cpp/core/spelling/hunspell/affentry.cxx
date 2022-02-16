@@ -926,7 +926,7 @@ specific character position in the word.
 For prefixes, it does this by setting bit 0 if that char is valid 
 in the first position, bit 1 if valid in the second position, and so on. 
 
-If a bit is not set, then that char is not valid for that postion in the
+If a bit is not set, then that char is not valid for that position in the
 word.
 
 If working with suffixes bit 0 is used for the character closest 

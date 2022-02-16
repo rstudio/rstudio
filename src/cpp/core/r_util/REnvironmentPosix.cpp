@@ -310,7 +310,7 @@ bool validateRScriptPath(const std::string& rScriptPath,
       return false;
    }
 
-   // error if it is a directry
+   // error if it is a directory
    else if (rBinaryPath.isDirectory())
    {
       *pErrMsg = "R script path (" + rBinaryPath.getAbsolutePath() +
@@ -823,7 +823,7 @@ std::string rLibraryPath(const FilePath& rHomePath,
    // place R library path at front
    libraryPaths.push_back(rLibPath.getAbsolutePath());
    
-   // pass along default (inheritted) library paths
+   // pass along default (inherited) library paths
    std::string defaultLibraryPaths = core::system::getenv(kLibraryPathEnvVariable);
  
    // on macOS, we need to initialize with a default set of library paths
@@ -831,7 +831,7 @@ std::string rLibraryPath(const FilePath& rHomePath,
 #ifdef __APPLE__
    if (defaultLibraryPaths.empty())
    {
-      // if this isn't set explicitly then initalize it with the default
+      // if this isn't set explicitly then initialize it with the default
       // of $HOME/lib:/usr/local/lib:/usr/lib. See documentation here:
       // http://developer.apple.com/library/ios/#documentation/system/conceptual/manpages_iphoneos/man3/dlopen.3.html
       //
@@ -957,7 +957,7 @@ Error rVersion(const FilePath& rHomePath,
 
 /*
 We've observed that Ubuntu 14.10 no longer passes the LANG environment
-variable to daemon processes so we lose the automatic inheritence of
+variable to daemon processes so we lose the automatic inheritance of
 LANG from the system default. For this case we'll do automatic detection
 and setting of LANG.
 */

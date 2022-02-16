@@ -67,7 +67,7 @@ FileInfo convertToFileInfo(const FilePath& filePath, bool yield, int *pCount)
 // enumerated however we merely log errors for children. this reflects
 // the notion that a top-level failure will report major problems
 // (e.g. permission to access a volume/drive) whereas errors which
-// occur in children are more likely to refect some idiosyncratic
+// occur in children are more likely to reflect some idiosyncratic
 // problem with a child dir or file, and we don't want that to
 // interfere with the caller getting a listing of everything else
 // and proceeding with its work
@@ -99,8 +99,8 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    if (error)
       return error;
 
-   // convert to FileInfo and sort using alphasort equivilant (for
-   // compatability with scandir, which is what is used in our
+   // convert to FileInfo and sort using alphasort equivalent (for
+   // compatibility with scandir, which is what is used in our
    // posix-specific implementation
    int count = 0;
    std::vector<FileInfo> childrenFileInfo;

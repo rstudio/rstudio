@@ -20,7 +20,7 @@
 #include <core/RegexUtils.hpp>
 #include <shared_core/SafeConvert.hpp>
 
-// per-platform synctex implemetnations
+// per-platform synctex implementations
 #if defined(Q_OS_MAC)
 
 #elif defined(Q_OS_WIN)
@@ -123,7 +123,7 @@ SynctexViewerInfo Synctex::desktopViewerInfo()
 
 Synctex* Synctex::create(MainWindow* pMainWindow)
 {
-   // per-platform synctex implemetnations
+   // per-platform synctex implementations
 #if defined(Q_OS_MAC)
    return new Synctex(pMainWindow);
 #elif defined(Q_OS_WIN)

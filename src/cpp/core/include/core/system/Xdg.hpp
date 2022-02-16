@@ -90,7 +90,7 @@ FilePath systemConfigFile(const std::string& filename);
 // and why.
 FilePath findSystemConfigFile(const std::string& context, const std::string& filename);
 
-// Sets relevant XDG environment varibles
+// Sets relevant XDG environment variables
 void forwardXdgEnvVars(Options *pEnvironment);
 
 } // namespace xdg

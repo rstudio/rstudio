@@ -22,7 +22,7 @@ cmake_policy(SET CMP0043 NEW)
 if(NOT RSTUDIO_ELECTRON)
 
    # on unix prefer qtsdk installs over system-level libraries. note this
-   # can be overriden by defining QT_QMAKE_EXECUTABLE when invoking cmake
+   # can be overridden by defining QT_QMAKE_EXECUTABLE when invoking cmake
    if(NOT WIN32)
       # prefer rstudio qtsdk install then home qtsdk install
       if(NOT QT_QMAKE_EXECUTABLE)

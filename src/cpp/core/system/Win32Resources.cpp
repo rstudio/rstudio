@@ -64,7 +64,7 @@ Error getTotalMemory(long *pTotalKb, MemoryProvider *pProvider)
    return Success();
 }
 
-} // namespace sytem
+} // namespace system
 } // namespace core
 } // namespace rstudio
 

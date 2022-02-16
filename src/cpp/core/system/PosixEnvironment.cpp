@@ -64,7 +64,7 @@ void unsetenv(const std::string& name)
 }
 
 
-} // namespace sytem
+} // namespace system
 } // namespace core
 } // namespace rstudio
 

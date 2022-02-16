@@ -40,7 +40,7 @@ export function generateRandomPort(): number {
 }
 
 export function localPeer(port: number): string {
-  // local peer used for named-pipe communcation on Windows
+  // local peer used for named-pipe communication on Windows
   return `\\\\.\\pipe\\${port.toString()}-rsession`;
 }
 

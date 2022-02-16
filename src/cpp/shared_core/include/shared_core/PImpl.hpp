@@ -55,7 +55,7 @@
  * This macro should be included in the private or protected section of a classes declaration.
  * struct OwningClass::Impl should be defined in the definition file before defining OwningClass.
  *
- * @param in_memeberName    The name of the private implementation member variable (e.g. m_impl).
+ * @param in_memberName    The name of the private implementation member variable (e.g. m_impl).
  */
 #define PRIVATE_IMPL_SHARED(in_memberName)   \
    PRIVATE_IMPL_START                        \

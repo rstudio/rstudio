@@ -250,7 +250,7 @@ Error save(const FilePath& statePath)
    if (error)
       return error;
    
-   // iterate throught the search path (build a list as we go). set 
+   // iterate through the search path (build a list as we go). set 
    // .GlobalEnv and package:base as bookends of the list (note this code
    // is based on the implementation of do_search)
    std::vector<std::string> searchPathElements;
@@ -260,7 +260,7 @@ Error save(const FilePath& statePath)
         envSEXP != R_BaseEnv;
         envSEXP = ENCLOS(envSEXP))
    {
-      // screen out UserDefinedDatabase elements (attempting to perisist
+      // screen out UserDefinedDatabase elements (attempting to persist
       // a UserDefinedDatabase caused mischief in at least one case (e.g. see
       // RProtoBuf:DescriptorPool) so we exclude it globally.
       if (r::sexp::inherits(envSEXP, "UserDefinedDatabase"))

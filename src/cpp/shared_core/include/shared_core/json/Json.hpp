@@ -1430,14 +1430,14 @@ public:
    /**
     * @brief Gets the value at the back of the JSON array.
     *
-    * @return The value at the back of the JSON array or an empty value, if the array is emtpy.
+    * @return The value at the back of the JSON array or an empty value, if the array is empty.
     */
    Value getBack() const;
 
    /**
     * @brief Gets the value at the front of the JSON array.
     *
-    * @return The value at the front of the JSON array or an empty value, if the array is emtpy.
+    * @return The value at the front of the JSON array or an empty value, if the array is empty.
     */
    Value getFront() const;
 
@@ -1918,7 +1918,7 @@ enum class JsonReadError
 Error jsonReadError(JsonReadError in_errorCode, const std::string& in_message, const ErrorLocation& in_errorLocation);
 
 /**
- * @brief Checks whether the supplied error is a "missing memeber" error.
+ * @brief Checks whether the supplied error is a "missing member" error.
  *
  * @param in_error      The error to check.
  *

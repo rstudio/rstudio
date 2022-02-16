@@ -26,7 +26,7 @@ namespace core {
 namespace http {
 
 // NOTE: The URL class is a part of shared endpoint and association caches
-// in our open-id implemetnation. we therefore need to make sure that
+// in our open-id implementation. we therefore need to make sure that
 // copying a URL or accessing its members never falls prey to ref-counted 
 // strings which are (potentially) not threadsafe. To work around this we do
 // manual assignment of all strings during copy and assignment and have 
