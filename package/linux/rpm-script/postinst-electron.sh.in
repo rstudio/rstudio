@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# errors shouldn't cause script to exit
+set +e 
+
+# create softlink to rstudio in /usr/bin
+ln -f -s ${CMAKE_INSTALL_PREFIX}/rstudio /usr/bin/rstudio
+
+# create openssl softlinks based off Fedora version 
+if test -f /etc/fedora-release
+then
+  if test -d /usr/lib64 || test -d /lib64
+  then
+    architecture_dir='lib64'
+  else
+    architecture_dir='lib'
+  fi
+
+  compare_versions() { test "$(echo "$@" | tr " " "\n" | sort -V | head -n 1)" != "$1"; }
+  version_number=$(cat /etc/fedora-release | sed 's/[^0-9,.]*//g')
+
+  # verify if release version number is greater than 25
+  if compare_versions $version_number 25
+  then
+    ln -s -f /$architecture_dir/libssl.so.10 ${CMAKE_INSTALL_PREFIX}/bin/libssl.so.1.0.0
+    ln -s -f /$architecture_dir/libcrypto.so.10 ${CMAKE_INSTALL_PREFIX}/bin/libcrypto.so.1.0.0
+  fi
+fi
+
+# update mime database
+update-mime-database /usr/share/mime
+
+# clear error termination state
+set -e

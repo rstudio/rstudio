@@ -87,7 +87,7 @@ def s3_upload(type, flavor, os, arch) {
   def renamedTarballFile = ""
   
   // add installer-less tarball if desktop
-  if (flavor == "desktop") {
+  if (flavor == "desktop" || flavor == "electron") {
     tarballFile = sh (
       script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
       returnStdout: true
@@ -123,6 +123,8 @@ def s3_upload(type, flavor, os, arch) {
     if (rstudioVersionSuffix.contains("pro")) {
         if (product == "desktop") {
             product = "desktop-pro"
+        } else if (product == "electron") {
+            product = "electron-pro"
         } else if (product == "server") {
             product = "workbench"
         }
@@ -219,17 +221,18 @@ try {
 
     timestamps {
         def containers = [
-          [os: 'opensuse',   arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'OpenSUSE'],
-          [os: 'opensuse15', arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'OpenSUSE 15'],
-          [os: 'opensuse15', arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'OpenSUSE 15'],
-          [os: 'centos7',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'CentOS 7'],
-          [os: 'centos7',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'CentOS 7'],
-          [os: 'bionic',     arch: 'amd64',  flavor: 'server',  variant: '',    package_os: 'Ubuntu Bionic'],
-          [os: 'bionic',     arch: 'amd64',  flavor: 'desktop', variant: '',    package_os: 'Ubuntu Bionic'],
-          [os: 'debian9',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'Debian 9'],
-          [os: 'debian9',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'Debian 9'],
-          [os: 'rhel8',    arch: 'x86_64', flavor: 'server',  variant: '',    package_os: 'RHEL 8'],
-          [os: 'rhel8',    arch: 'x86_64', flavor: 'desktop', variant: '',    package_os: 'RHEL 8']
+          [os: 'opensuse',   arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'OpenSUSE'],
+          [os: 'opensuse15', arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'OpenSUSE 15'],
+          [os: 'opensuse15', arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'OpenSUSE 15'],
+          [os: 'centos7',    arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'CentOS 7'],
+          [os: 'centos7',    arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'CentOS 7'],
+          [os: 'bionic',     arch: 'amd64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Bionic'],
+          [os: 'bionic',     arch: 'amd64',  flavor: 'desktop',  variant: '',  package_os: 'Ubuntu Bionic'],
+          [os: 'bionic',     arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Bionic'],
+          [os: 'debian9',    arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'Debian 9'],
+          [os: 'debian9',    arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'Debian 9'],
+          [os: 'rhel8',      arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
+          [os: 'rhel8',      arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'RHEL 8']
         ]
         containers = limit_builds(containers)
 

@@ -59,17 +59,38 @@ install-yarn-packages() {
    fi
 }
 
+# For a full package build the package.json file gets modified with the 
+# desired build version and product name, and the build-info.ts source 
+# file gets modified with details on the build (date, git-commit, etc).
+# We try to put these back to their original state at the end of the 
+# package build.
+PACKAGE_VERSION_SET=0
 set-version () {
-   if [ "${rstudio_target}" = "Electron" ]; then
+   if [ "$RSTUDIO_TARGET" = "Electron" ]; then
       pushd ${ELECTRON_SOURCE_DIR}
       install-yarn-packages
+
+      # Set package.json info
+      save-original-file package.json
       ${YARN} json -I -f package.json -e "this.version=\"$1\""
+      ${YARN} json -I -f package.json -e "this.productName=\"$2\""
+
+      # Keep a backup of build-info.ts so we can restore it
+      save-original-file src/main/build-info.ts
+
+      PACKAGE_VERSION_SET=1
       popd
    fi
 }
 
 restore-package-version () {
-   set-version 99.9.9
+   if [ "${PACKAGE_VERSION_SET}" = "1" ]; then
+      pushd ${ELECTRON_SOURCE_DIR}
+      restore-original-file package.json
+      restore-original-file src/main/build-info.ts
+      PACKAGE_VERSION_SET=0
+      popd
+   fi
 }
 
 # ensure package.json restored on exit
@@ -140,6 +161,12 @@ else
   INSTALL_DIR=rstudio-server
 fi
 
+ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
+
+# find yarn
+find-program YARN yarn \
+   "${HOME}/.yarn/bin"
+
 # build RStudio version suffix
 RSTUDIO_VERSION_ARRAY=(
    "${RSTUDIO_VERSION_MAJOR-99}"
@@ -150,7 +177,7 @@ RSTUDIO_VERSION_ARRAY=(
 RSTUDIO_VERSION_FULL=$(IFS="."; echo "${RSTUDIO_VERSION_ARRAY[*]}")"${RSTUDIO_VERSION_SUFFIX}"
 
 # put version into package.json
-set-version ${RSTUDIO_VERSION_FULL}
+set-version ${RSTUDIO_VERSION_FULL} rstudio
 
 set +x
 
