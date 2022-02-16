@@ -105,7 +105,7 @@ void collectFileChangeEvents(PreviousIterator prevBegin,
    std::copy(currBegin, currEnd, std::back_inserter(curr));
    std::sort(curr.begin(), curr.end(), fileInfoPathLessThan);
 
-   // initalize the iterators
+   // initialize the iterators
    std::vector<FileInfo>::iterator prevIt = prev.begin();
    std::vector<FileInfo>::iterator currIt = curr.begin();
 

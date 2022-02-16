@@ -95,7 +95,7 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids);
 typedef boost::function<bool (const ProcessInfo&)> ProcessFilter;
 
 // get process by process name, or all processes if process name is empty
-// optionally allows supressing of errors - recommended in most cases
+// optionally allows suppressing of errors - recommended in most cases
 // as such errors are generally transient and benign
 core::Error processInfo(const std::string& process,
                         std::vector<ProcessInfo>* pInfo,

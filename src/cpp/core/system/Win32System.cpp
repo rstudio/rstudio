@@ -759,7 +759,7 @@ Error copyMetafileToClipboard(const FilePath& path)
    if (error)
       return error;
 
-   // emtpy the clipboard
+   // empty the clipboard
    if (!::EmptyClipboard())
    {
       return LAST_SYSTEM_ERROR();

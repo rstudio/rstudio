@@ -28,7 +28,7 @@ namespace system {
 
 namespace {
 
-// wraper for waitPid which tries again for EINTR
+// wrapper for waitPid which tries again for EINTR
 int waitPid(PidType pid, int* pStatus)
 {
    for (;;)
@@ -54,7 +54,7 @@ void ChildProcessTracker::addProcess(PidType pid, ExitHandler exitHandler)
 
 void ChildProcessTracker::notifySIGCHILD()
 {
-   // We make a copy of hte active pids so that we can do the reaping
+   // We make a copy of the active pids so that we can do the reaping
    // outside of the pidsMutex_. This is an extra conservative precaution
    // in case there is ever an issue with waitpid blocking.
    std::map<PidType,ExitHandler> processes = activeProcesses();
@@ -108,7 +108,7 @@ void ChildProcessTracker::attemptToReapProcess(
          LOG_WARNING_MESSAGE(boost::str(fmt % pid % status));
       }
    }
-   // error occured
+   // error occurred
    else if (result == -1)
    {
       Error error = systemError(errno, ERROR_LOCATION);

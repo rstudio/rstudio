@@ -26,7 +26,7 @@
 //
 // If you have received this program directly from RStudio pursuant
 // to the terms of a commercial license then tree.hh is covered 
-// under this same commerical license.
+// under this same commercial license.
 //
 
 /** \mainpage tree.hh

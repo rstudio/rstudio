@@ -52,7 +52,7 @@ describe('Utils', () => {
   it('devicePixelRatio returns 1.0', () => {
     assert.strictEqual(Utils.devicePixelRatio(), 1.0);
   });
-  it('randomString genereates a random string', () => {
+  it('randomString generates a random string', () => {
     const str1 = Utils.randomString();
     const str2 = Utils.randomString();
     const str3 = Utils.randomString();

@@ -155,7 +155,7 @@ void doSignIn(const http::Request& request,
       password = request.formFieldValue("password");
    }
 
-   // tranform to local username
+   // transform to local username
    username = auth::handler::userIdentifierToLocalUsername(username);
 
    overlay::onUserPasswordUnavailable(username);

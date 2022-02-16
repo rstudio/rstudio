@@ -18,7 +18,7 @@
 #include <core/BoostThread.hpp>
 
 // we define BOOST_USE_WINDOWS_H on mingw64 to work around some
-// incompatabilities. however, this prevents the interprocess headers
+// incompatibilities. however, this prevents the interprocess headers
 // from compiling so we undef it in this localized context
 #if defined(__GNUC__) && defined(_WIN64)
    #undef BOOST_USE_WINDOWS_H

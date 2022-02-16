@@ -91,7 +91,7 @@ void runEmbeddedR(const core::FilePath& /*rHome*/,    // ignored on posix
    //
    //   1) set R_Quiet so we startup without a banner
    //
-   //   2) set LoadInitFile to supress execution of .Rprofile
+   //   2) set LoadInitFile to suppress execution of .Rprofile
    //
    //   3) we also need to make sure that .First is not executed. this is
    //      taken care of via the fact that we set RestoreAction to SA_NORESTORE
@@ -201,7 +201,7 @@ void logDLError(const std::string& message, const ErrorLocation& location)
 // state which we couldn't rid ourselves of.
 //
 // Note that in researching the way R implements QCF_SET_FRONT I discovered
-// that a depricated API is called AND an explicit call to SetFront. Another
+// that a deprecated API is called AND an explicit call to SetFront. Another
 // way to go would be to call the TransformProcessType API:
 //
 //   http://www.cocoadev.com/index.pl?TransformProcessType
@@ -337,7 +337,7 @@ void initializePolledEventHandler(void (*newPolledEventHandler)(void))
 // to make sure all subsequent R code is executed without any
 // event handlers (appropriate since the forked child is headless).
 // the prefix "permanently" is used because we explicitly don't
-// handle the abilty to restore event handling by calling
+// handle the ability to restore event handling by calling
 // initializePolledEventHandler -- this is because we overwrite
 // s_oldPolledEventHandler with NULL, thus losing any reference
 // we have to a R_PolledEvents value that existed before our

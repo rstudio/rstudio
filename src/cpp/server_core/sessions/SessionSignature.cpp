@@ -74,7 +74,7 @@ Error signRequest(const std::string& rsaPrivateKey,
    if (error)
       return error;
 
-   // stamp signature on the reuqest
+   // stamp signature on the request
    request.setHeader(kRStudioMessageSignature, signatureHeader);
    return Success();
 }

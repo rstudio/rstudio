@@ -18,7 +18,7 @@ It can be cumbersome to generate the correct schema file names as they include a
 
 This will generate a file like `20200226141952248123456_AddNewTable.sql`. To generate schemas files that are database specific, leave off the `sql` part of the command, which will generate a schema file for each supported database type.
 
-You should not generate both a `.sql` and specific database extension types for the same migration. In this case, both migrations would be run, but this is nonsensical. You should either generate one `.sql` migration for the generic case, or one migration for each specific targetted database, not both.
+You should not generate both a `.sql` and specific database extension types for the same migration. In this case, both migrations would be run, but this is nonsensical. You should either generate one `.sql` migration for the generic case, or one migration for each specific targeted database, not both.
 
 ### Dev Schema Updates
 

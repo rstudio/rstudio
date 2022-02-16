@@ -318,7 +318,7 @@ bool isRecoverableByRestart(const Error& error)
       // (see: http://blogs.msdn.com/b/oldnewthing/archive/2011/08/12/10195186.aspx)
       error.getCode() == ERROR_NOTIFY_ENUM_DIR ||
 
-      // error which some users have observed occuring if a network
+      // error which some users have observed occurring if a network
       // volume is being monitored and there are too many simultaneous
       // reads and writes
       error.getCode() == ERROR_TOO_MANY_CMDS;
@@ -439,7 +439,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,
    }
 
    // check for buffer overflow. this means there are too many file changes
-   // for the systme to keep up with -- in this case try to restart monitoring
+   // for the system to keep up with -- in this case try to restart monitoring
    // (after a 1 second delay) and repeat the restart up to 10 times
    if (dwNumberOfBytesTransfered == 0)
    {

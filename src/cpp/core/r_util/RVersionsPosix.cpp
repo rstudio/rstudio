@@ -311,7 +311,7 @@ std::vector<RVersion> enumerateRVersions(
 #endif
 
    // sort the versions using stable sort
-   // this gaurantees that versions specified in the versions file will come first
+   // this guarantees that versions specified in the versions file will come first
    // this makes sure that versions that have user-defined metadata (such as labels)
    // will not be erased in the subsequent erase call, but the equivalent default versions that were
    // found will be erased instead

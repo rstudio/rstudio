@@ -597,7 +597,7 @@ int main(int argc, char * const argv[])
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 
-         // Refresh the loggers after succesful daemonize to clear out old FDs
+         // Refresh the loggers after successful daemonize to clear out old FDs
          core::log::refreshAllLogDestinations();
 
          // set file creation mask to 022 (might have inherted 0 from init)

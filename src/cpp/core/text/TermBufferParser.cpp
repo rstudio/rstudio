@@ -168,7 +168,7 @@ struct ParseMetadata
    // was a supported escape sequence found?
    bool haveSupportedSeq;
 
-   // number string as it is extraced from sequence
+   // number string as it is extracted from sequence
    std::string numberStr;
 
    // current character

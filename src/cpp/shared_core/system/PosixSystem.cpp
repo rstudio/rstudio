@@ -303,7 +303,7 @@ Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidTy
    if (::geteuid() != in_user.getUserId())
       return systemError(EACCES, ERROR_LOCATION);
 
-   // save privilleged user id
+   // save privileged user id
    s_privUid = oldEUID;
 
    // success

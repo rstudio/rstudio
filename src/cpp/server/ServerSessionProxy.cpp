@@ -118,7 +118,7 @@ Error launchSessionRecovery(
       const r_util::SessionContext& context)
 {
    // if this request is marked as requiring an existing
-   // session then return session unavilable error
+   // session then return session unavailable error
    if (requiresSession(request))
    {
       LOG_DEBUG_MESSAGE("Failed to connect to session for user: " + context.username +

@@ -163,7 +163,7 @@ private:
    mutable std::string httpVersion_;
 
    // grant friendship to subclasses and parsers so they can 
-   // direclty manipulate fields
+   // directly manipulate fields
    friend class Response; // done to ensure body_ can be assigned to directly
                           // with no intermediate std::string copies made
    friend class RequestParser;

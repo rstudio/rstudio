@@ -1143,7 +1143,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 # API for sending + receiving arbitrary requests from rstudioapi
-# added in RStudio v1.4; not used univerally by older APIs but useful
+# added in RStudio v1.4; not used universally by older APIs but useful
 # as a framework for any new functions that might be added
 
 #' @param type The event type. See '.rs.api.events' for the set

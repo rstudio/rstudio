@@ -51,7 +51,7 @@ void stop();
 
 // opaque handle to a registration (used to unregister). the id field
 // is included so that handles have additional uniqueness beyond the
-// value of the pData pointer (which could be duplicated accross monitors
+// value of the pData pointer (which could be duplicated across monitors
 // depending upon the order of allocations/deallocations)
 struct Handle
 {

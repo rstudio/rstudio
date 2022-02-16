@@ -15,7 +15,7 @@ read -r -d '' USAGE <<- EOF
 Run RStudio unit tests. Available flags:
 
 --help    Show this help.
---scope   Run only tests wtih the given scope (core, rserver, rsession, r).
+--scope   Run only tests with the given scope (core, rserver, rsession, r).
 --filter  Run a subset of R tests, matching the requested filter.
 EOF
 
@@ -44,7 +44,7 @@ findLibSegFault() {
       return 0
    fi
 
-   # if already set, nothign to do
+   # if already set, nothing to do
    if [ -n "${RSESSION_DIAGNOSTICS_LIBSEGFAULT}" ]; then
       return 0
    fi
@@ -195,7 +195,7 @@ if has-scope "core"; then
    runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} '~[requiresRoot]'"
 
    # Invoke the *DropPrivTests separately because they must run as root
-   # We need separate invokations because we cannot restore privs between test cases of PermanentlyDropPrivs
+   # We need separate invocations because we cannot restore privs between test cases of PermanentlyDropPrivs
    # Skip these tests in CI for MacOS builds
    if [ -z "${JENKINS_URL}" ] || [ "$(uname)" != "Darwin" ]; then
       runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} TemporarilyDropPrivTests"

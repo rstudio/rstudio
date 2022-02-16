@@ -99,7 +99,7 @@ FilePath resolveXdgDir(
    std::string env = getenv(rstudioEnvVar);
    if (env.empty())
    {
-      // The RStudio environment variable specifices the final path; if it isn't
+      // The RStudio environment variable specifies the final path; if it isn't
       // set we will need to append "rstudio" to the path later.
       finalPath = false;
       env = getenv(xdgEnvVar);

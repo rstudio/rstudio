@@ -191,7 +191,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
       return pathNotFoundError(projectFile.getAbsolutePath(), ERROR_LOCATION);
    }
 
-   // test for writeabilty of parent
+   // test for writeability of parent
    if (!file_utils::isDirectoryWriteable(projectFile.getParent()))
    {
       *pUserErrMsg = "the project directory is not writeable";

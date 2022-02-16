@@ -283,7 +283,7 @@ makeGlobalThemeDir <- function()
 }
 
 # Test getRgbColor =================================================================================
-test_that("rgb coversion from hex format works", {
+test_that("rgb conversion from hex format works", {
    # All lowercase
    expect_equal(.rs.getRgbColor("#ffffff"), c(255, 255, 255))
 

@@ -382,7 +382,7 @@ void listEnvironment(SEXP env,
    pVariables->clear();
    
    // get the list of environment vars (protect locally because we 
-   // we don't acutally return this list to the caller
+   // we don't actually return this list to the caller
    SEXP envVarsSEXP;
    Protect rProtect(envVarsSEXP = R_lsInternal(env, includeAll ? TRUE : FALSE));
 

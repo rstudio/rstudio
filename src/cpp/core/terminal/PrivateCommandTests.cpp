@@ -254,7 +254,7 @@ test_context("Private Terminal Command Tests")
       expect_true(ops.writesEof.size() == ops.writes.size());
    }
 
-   test_that("command not issued if user hasn't entered a new command since last private comand")
+   test_that("command not issued if user hasn't entered a new command since last private command")
    {
       PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
 
