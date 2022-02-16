@@ -70,19 +70,20 @@
          </div>
       </p>
 
-      <p><rw:FormLabel ui:field="labelExcludeFilePatterns_" text="Exclude these files:"><ui:attribute name="text" key="excludeFiles"/></rw:FormLabel>
-         <rw:FormListBox ui:field="listPresetExcludeFilePatterns_"
-                    styleName="{style.presetFilePatterns}">
-            <g:item value=""> <ui:msg key="noneText">None</ui:msg></g:item>
-            <g:item value="gitExclusions"><ui:msg key="gitExclusionsText">Files matched by .gitignore</ui:msg></g:item>
-            <g:item value="custom"><ui:msg key="customText">Custom Filter</ui:msg></g:item>
-         </rw:FormListBox>
-         <div ui:field="divExcludeCustomFilter_">
-            <g:TextBox ui:field="txtExcludeFilePattern_" styleName="{style.filePattern}"/>
-            <br/>
-            <span ui:field="spanExcludePatternExample_" class="{style.example}"><ui:msg key="exampleText">Example: *.R, *.r, *.csv. Separate multiple types with commas.</ui:msg></span>
-         </div>
-      </p>
+      <div ui:field="divExcludeGitIgnore_">
+         <rw:FormCheckBox elementId="{ElementIds.getExcludeGitIgnore}" ui:field="checkboxExcludeGitIgnore_" text="Exclude files matched by .gitignore">
+            <ui:attribute name="text" key="gitExclusionsText"/>
+         </rw:FormCheckBox>
+      </div>
+
+      <rw:FormCheckBox elementId="{ElementIds.getExcludeCustom}" ui:field="checkboxExcludeCustom_" text="Exclude these files:">
+            <ui:attribute name="text" key="customExclusionsText"/>
+      </rw:FormCheckBox>
+      <div ui:field="divExcludeCustomFilter_">
+         <g:TextBox ui:field="txtExcludeFilePattern_" styleName="{style.filePattern}"/>
+         <br/>
+         <span ui:field="spanExcludePatternExample_" class="{style.example}"><ui:msg key="exampleText">Example: *.R, *.r, *.csv. Separate multiple types with commas.</ui:msg></span>
+      </div>
    </g:HTMLPanel>
 
 </ui:UiBinder>
