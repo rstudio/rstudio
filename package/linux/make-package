@@ -163,9 +163,9 @@ fi
 
 ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
 
-# find yarn
-find-program YARN yarn \
-   "${HOME}/.yarn/bin"
+# find yarn -- TODO gary - work in progress, commenting out to unbreak build
+# find-program YARN yarn \
+#    "${HOME}/.yarn/bin"
 
 # build RStudio version suffix
 RSTUDIO_VERSION_ARRAY=(
