@@ -560,7 +560,7 @@ wchar_t RTokenizer::peek(std::size_t lookahead)
    // iterators here we need to make sure we don't construct an iterator
    // that points outside of the string from which it was derived
    // this is a safer way of checking pos_ + lookahead >= data_.end()
-   if (UNLIKELY(data_.end() - pos_ < lookahead))
+   if (UNLIKELY(data_.end() - pos_ <= lookahead))
       return 0;
 
    return *(pos_ + lookahead);
