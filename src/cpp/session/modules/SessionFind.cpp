@@ -1313,7 +1313,6 @@ void addDirectoriesToCommand(
    bool packageSourceFlag, bool packageTestsFlag,
    const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
 {
-   // not sure if EscapeFilesOnly can be removed or is necessary for an edge case
    *pCmd << "--";
    if (!(packageSourceFlag || packageTestsFlag))
       *pCmd << string_utils::utf8ToSystem(directoryPath.getAbsolutePath());
