@@ -176,6 +176,8 @@ PATH="${NODE_PATH}:${PATH}"
 # find yarn -- TODO Gary -- this is still failing on official builds
 #find-program YARN yarn \
 #   "${HOME}/.yarn/bin"
+echo YARN DETECTION DEBUGGING: HOME resolving to: "${HOME}"
+echo tilde resolving to: ~
 
 # build RStudio version suffix
 RSTUDIO_VERSION_ARRAY=(
