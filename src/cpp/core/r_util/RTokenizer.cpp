@@ -556,7 +556,7 @@ wchar_t RTokenizer::peek()
 
 wchar_t RTokenizer::peek(std::size_t lookahead)
 {
-   if (lookahead < data_.size() && pos_ >= data_.end() - lookahead)
+   if (lookahead < data_.size() && pos_ >= (data_.end() - lookahead))
       return 0;
    else
       return *(pos_ + lookahead);
