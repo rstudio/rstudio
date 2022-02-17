@@ -205,14 +205,10 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
             checkboxRegex_.setValue(false);
       });
 
-      listPresetFilePatterns_.addChangeHandler(new ChangeHandler()
+      listPresetFilePatterns_.addChangeHandler(event ->
       {
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            manageFilePattern();
-         }
-      });
+         manageFilePattern();
+      });       
       manageFilePattern();
 
       checkboxExcludeCustom_.addValueChangeHandler(event ->
@@ -220,13 +216,9 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
          manageExcludeFilePattern();
       });
 
-      txtSearchPattern_.addKeyUpHandler(new KeyUpHandler()
+      txtSearchPattern_.addKeyUpHandler(event -> 
       {
-         @Override
-         public void onKeyUp(KeyUpEvent event)
-         {
-            updateOkButtonEnabled();
-         }
+         updateOkButtonEnabled();
       });
    }
 
