@@ -1314,7 +1314,7 @@ void addDirectoriesToCommand(
    const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
 {
    // not sure if EscapeFilesOnly can be removed or is necessary for an edge case
-   *pCmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
+   *pCmd << "--";
    if (!(packageSourceFlag || packageTestsFlag))
       *pCmd << string_utils::utf8ToSystem(directoryPath.getAbsolutePath());
    else if (packageSourceFlag)
@@ -1464,8 +1464,12 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    error = module_context::processSupervisor().runCommand(cmd,
                                                           options,
                                                           callbacks);
-   if (error)
+   if (error){
+      LOG_ERROR_MESSAGE("Failed when executing: " + std::string(cmd));
+      LOG_ERROR(error);
       return error;
+   }
+
 
    findResults().onFindBegin(ptrGrepOp->handle(),
                              grepOptions.searchPattern(),
