@@ -1316,7 +1316,7 @@ private:
       // always exclude cloud.noindex
       if (gitFlag_)
       {
-         excludeArgs_.push_back(":!cloud.noindex/");
+         excludeArgs_.push_back(":!**/cloud.noindex/");
       }
       else
       {
