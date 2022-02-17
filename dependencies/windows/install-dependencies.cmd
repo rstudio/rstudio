@@ -23,7 +23,7 @@ set GIN_FILE=gin-2.1.2.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
 
-set GNUGREP_VERSION=3.6
+set GNUGREP_VERSION=3.0
 set GNUGREP_NAME=gnugrep-%GNUGREP_VERSION%
 set GNUGREP_FILE=%GNUGREP_NAME%.zip
 
