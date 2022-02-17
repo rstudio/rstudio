@@ -1536,8 +1536,6 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
          grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
    }
 
-   std::cout << std::string(cmd) << std::endl;
-
    // Clear existing results
    findResults().clear();
 
