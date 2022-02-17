@@ -1691,7 +1691,7 @@ core::Error initialize()
    return initBlock.execute();
 }
 
-#define kColorEscapePattern "(?:\x1B\\[\\d*m)"
+#define kColorEscapePattern "(?:\x1B\\[\\d*m)?"
 
 // used to match and separate pieces of output generated
 // by grep (or git grep)
@@ -1711,9 +1711,9 @@ boost::regex getGrepOutputRegex(bool isGitGrep)
       //    \033[32m1\033[m                      // row number
       //    \033[36m:\033[m                      // separator
       //    \033[1;31mhello[m, goodbye           // matched line
-
-      // NOTE: the colors are intentionally captured as part of the
-      // file paths in some cases
+      //
+      // note that the matched line will contain embedded ANSI color escapes,
+      // used to mark where the query matched in the line
       return boost::regex(
                "^"
                kColorEscapePattern "([^\x1B]*)" kColorEscapePattern
