@@ -175,19 +175,10 @@ find-program NPM npm \
 # yarn needs node on the path
 NODE_PATH=$(dirname "${NODE}")
 PATH="${NODE_PATH}:${PATH}"
-echo YARN DETECTION DEBUGGING: MODIFIED PATH: "${PATH}"
-echo Contents of NODE_PATH:
-ls -l "${NODE_PATH}"
-echo Contents of ${HOME}:
-ls -la ${HOME}
-echo END YARN DETECTION DEBUGGING
-
-# install yarn
-${NPM} install --global yarn
 
 # find yarn
-find-program YARN yarn \
-   "${HOME}/.yarn/bin"
+#find-program YARN yarn \
+#   "${HOME}/.yarn/bin"
 
 # build RStudio version suffix
 RSTUDIO_VERSION_ARRAY=(
