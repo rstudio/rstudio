@@ -209,10 +209,10 @@ find-program NODE node \
    "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
 find-program NPM npm \
-   "${PKG_DIR}../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
 find-program NPX npx \
-   "${PKG_DIR}../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
    
 # determine architectures to build for
