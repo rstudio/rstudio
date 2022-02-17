@@ -1694,7 +1694,7 @@ core::Error initialize()
 #define kColorEscapePattern "(?:\x1B\\[\\d*m)"
 
 // used to match and separate pieces of output generated
-// by git (or git grep)
+// by grep (or git grep)
 boost::regex getGrepOutputRegex(bool isGitGrep)
 {
    if (isGitGrep)
