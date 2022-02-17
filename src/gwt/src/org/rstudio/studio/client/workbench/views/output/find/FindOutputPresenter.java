@@ -509,6 +509,8 @@ public class FindOutputPresenter extends BasePresenter
          !dialogState_.isCaseSensitive(),
          searchPath,
          includeFilePatterns,
+         dialogState_.getUseGitGrep(),
+         dialogState_.getExcludeGitIgnore(),
          excludeFilePatterns,
          new SimpleRequestCallback<String>()
          {
@@ -563,6 +565,9 @@ public class FindOutputPresenter extends BasePresenter
                      Debug.logError(error);
                   }
                });
+            } else 
+            {
+               dialog.setGitStatus(false);
             }
 
             fileServer_.isPackageDirectory(dialog.getDirectory(),

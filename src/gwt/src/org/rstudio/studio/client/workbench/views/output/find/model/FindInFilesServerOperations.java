@@ -26,6 +26,8 @@ public interface FindInFilesServerOperations
                   boolean ignoreCase,
                   FileSystemItem directory,
                   JsArrayString includeFilePatterns,
+                  boolean useGitGrep, 
+                  boolean excludeGitIgnore,
                   JsArrayString excludeFilePatterns,
                   ServerRequestCallback<String> requestCallback);
 

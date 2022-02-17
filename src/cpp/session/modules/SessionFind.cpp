@@ -1192,13 +1192,15 @@ class GrepOptions : public boost::noncopyable
 public:
 
    GrepOptions(std::string search, std::string directory,
-      json::Array includeFilePatterns, json::Array excludeFilePatterns,
+      json::Array includeFilePatterns, bool gitFlag, bool excludeGitIgnore, json::Array excludeFilePatterns,
       bool asRegex, bool ignoreCase) :
       asRegex_(asRegex),
       ignoreCase_(ignoreCase),
       searchPattern_(search),
       directory_(directory),
       includeFilePatterns_(includeFilePatterns),
+      gitFlag_(gitFlag),
+      excludeGitIgnore_(excludeGitIgnore),
       excludeFilePatterns_(excludeFilePatterns)
    {
       processIncludeFilePatterns();
@@ -1228,6 +1230,11 @@ public:
    const json::Array& includeFilePatterns() const
    {
       return includeFilePatterns_;
+   }
+
+   bool excludeGitIgnore() const
+   {
+      return excludeGitIgnore_;
    }
 
    const json::Array& excludeFilePatterns() const
@@ -1273,6 +1280,8 @@ private:
    const std::string searchPattern_;
    const std::string directory_;
    const json::Array includeFilePatterns_;
+   bool gitFlag_;
+   bool excludeGitIgnore_;
    const json::Array excludeFilePatterns_;
 
    // derived from includeFilePatterns
@@ -1282,11 +1291,9 @@ private:
 
    // derived from excludeFilePatterns
    std::vector<std::string> excludeArgs_;
-   bool gitFlag_;
-
+   
    void processExcludeFilePatterns()
    {
-      gitFlag_ = false;
       for (json::Value filePattern : excludeFilePatterns_)
       {
          if (filePattern.getType() != json::Type::STRING)
@@ -1294,13 +1301,28 @@ private:
          else
          {
             std::string excludeText = boost::algorithm::trim_copy(filePattern.getString());
-            if (excludeText.compare("gitExclusions") == 0)
-               gitFlag_ = true;
-            else if (!excludeText.empty())
-               excludeArgs_.push_back("--exclude=" + filePattern.getString());
+
+            if (gitFlag_)
+            {
+               excludeArgs_.push_back(":!" + excludeText);
+            }
+            else 
+            {
+               excludeArgs_.push_back("--exclude=" + excludeText);
+            }
          }
       }
-      excludeArgs_.push_back("--exclude-dir=cloud.noindex");
+
+      // always exclude cloud.noindex
+      if (gitFlag_)
+      {
+         excludeArgs_.push_back(":!cloud.noindex/");
+      }
+      else
+      {
+         excludeArgs_.push_back("--exclude-dir=cloud.noindex");
+      }
+      
    }
 
    void processIncludeFilePatterns()
@@ -1319,7 +1341,16 @@ private:
             else if (includeText.compare("packageTests") == 0)
                packageTestsFlag_ = true;
             else if (!includeText.empty())
-               includeArgs_.push_back("--include=" + filePattern.getString());
+           {
+              if (gitFlag_)
+              {
+                 includeArgs_.push_back(includeText);
+              }
+              else
+              {
+                 includeArgs_.push_back("--include=" + includeText);
+              }
+           }   
          }
       }
    }
@@ -1445,7 +1476,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "grep";
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
-      cmd << "--exclude-standard"; // but exclude gitignore
+      cmd << (grepOptions.excludeGitIgnore() ? "--exclude-standard" : "--no-exclude-standard");
       cmd << "-rHn";
       cmd << "--color=always";
       if (grepOptions.ignoreCase())
@@ -1461,12 +1492,23 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       addDirectoriesToCommand(
          grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
 
-      if (grepOptions.anyPackageFlag() &&
-          !grepOptions.includeArgs().empty())
+      for (std::string arg : grepOptions.excludeArgs())
+         cmd << arg;
+      
+      if (grepOptions.anyPackageFlag()
       {
-         LOG_DEBUG_MESSAGE(
-                  "Unknown include argument(s): " + boost::join(grepOptions.includeArgs(), ", "));
+         if (!grepOptions.includeArgs().empty())
+         {
+            LOG_DEBUG_MESSAGE(
+               "Unknown include argument(s): " + boost::join(grepOptions.includeArgs(), ", "));
+         }
       }
+      else 
+      {
+         for (std::string arg : grepOptions.includeArgs())
+            cmd << arg;
+      }
+      
    }
    else
    {
@@ -1493,6 +1535,8 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       addDirectoriesToCommand(
          grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
    }
+
+   std::cout << std::string(cmd) << std::endl;
 
    // Clear existing results
    findResults().clear();
@@ -1531,6 +1575,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
    bool asRegex, ignoreCase;
    std::string directory;
    json::Array includeFilePatterns, excludeFilePatterns;
+   bool useGitGrep, excludeGitIgnore;
 
    Error error = json::readParams(request.params,
                                   &searchString,
@@ -1538,11 +1583,13 @@ core::Error beginFind(const json::JsonRpcRequest& request,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
+                                  &useGitGrep,
+                                  &excludeGitIgnore,
                                   &excludeFilePatterns);
    if (error)
       return error;
 
-   GrepOptions grepOptions(searchString, directory, includeFilePatterns, excludeFilePatterns,
+   GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
       asRegex, ignoreCase);
    error = runGrepOperation(grepOptions, ReplaceOptions(), nullptr, pResponse);
    return error;
@@ -1575,6 +1622,8 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    std::string replacePattern;
    bool asRegex, ignoreCase;
    std::string directory;
+   bool excludeGitIgnore;
+   bool useGitGrep;
    json::Array includeFilePatterns, excludeFilePatterns;
 
    Error error = json::readParams(request.params,
@@ -1583,6 +1632,8 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
+                                  &useGitGrep,
+                                  &excludeGitIgnore,
                                   &excludeFilePatterns,
                                   &replacePattern);
    if (error)
@@ -1590,7 +1641,7 @@ core::Error previewReplace(const json::JsonRpcRequest& request,
    if (!asRegex)
       LOG_DEBUG_MESSAGE("Regex should be true during preview");
 
-   GrepOptions grepOptions(searchString, directory, includeFilePatterns, excludeFilePatterns,
+   GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
       asRegex, ignoreCase);
    ReplaceOptions replaceOptions(replacePattern);
    replaceOptions.preview = true;
@@ -1606,6 +1657,8 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    std::string searchString;
    std::string replacePattern;
    std::string directory;
+   bool useGitGrep;
+   bool excludeGitIgnore;
    json::Array includeFilePatterns, excludeFilePatterns;
    // only used to estimate progress
    int originalFindCount;
@@ -1616,6 +1669,8 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
                                   &ignoreCase,
                                   &directory,
                                   &includeFilePatterns,
+                                  &useGitGrep,
+                                  &excludeGitIgnore,
                                   &excludeFilePatterns,
                                   &originalFindCount,
                                   &replacePattern);
@@ -1626,7 +1681,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
    // and not overly frequent
    static const int kUpdatePercent = 5;
    LocalProgress* pProgress = new LocalProgress(originalFindCount, kUpdatePercent);
-   GrepOptions grepOptions(searchString, directory, includeFilePatterns, excludeFilePatterns,
+   GrepOptions grepOptions(searchString, directory, includeFilePatterns, useGitGrep, excludeGitIgnore, excludeFilePatterns,
       asRegex, ignoreCase);
    ReplaceOptions replaceOptions(replacePattern);
 
