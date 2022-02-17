@@ -31,7 +31,7 @@ PLATFORM="$(uname)-$(arch)"
 case "${PLATFORM}" in
 
 "Darwin-i386")   NODE_FILE="node-v${NODE_VERSION}-darwin-x64" ;;
-"Darwin-arm64")  NODE_FILE="node-v${NODE_VERSION}-darwin-x64" ;;  ## FIXME
+"Darwin-arm64")  NODE_FILE="node-v${NODE_VERSION}-darwin-arm64" ;;
 "Linux-x86_64")  NODE_FILE="node-v${NODE_VERSION}-linux-x64" ;;
 "Linux-aarch64") NODE_FILE="node-v${NODE_VERSION}-linux-arm64" ;;
 *)
