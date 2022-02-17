@@ -1311,30 +1311,30 @@ struct ReplaceOptions
 
 void addDirectoriesToCommand(
    bool packageSourceFlag, bool packageTestsFlag,
-   const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
+   const std::string directoryPath, shell_utils::ShellCommand* pCmd)
 {
    *pCmd << "--";
    if (!(packageSourceFlag || packageTestsFlag))
-      *pCmd << string_utils::utf8ToSystem(directoryPath.getAbsolutePath());
+      *pCmd << string_utils::utf8ToSystem(directoryPath);
    else if (packageSourceFlag)
    {
-      FilePath rPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/R"));
-      FilePath srcPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/src"));
+      FilePath rPath(string_utils::utf8ToSystem(directoryPath + "/R"));
+      FilePath srcPath(string_utils::utf8ToSystem(directoryPath + "/src"));
       if (rPath.exists())
          *pCmd << rPath;
       if (srcPath.exists())
          *pCmd << srcPath;
       else if (!rPath.exists())
          LOG_WARNING_MESSAGE(
-            "Package source directories not found in " + directoryPath.getAbsolutePath());
+            "Package source directories not found in " + directoryPath);
    }
    else
    {
-      FilePath testsPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/tests"));
+      FilePath testsPath(string_utils::utf8ToSystem(directoryPath + "/tests"));
       if (testsPath.exists())
          *pCmd << testsPath;
       else
-         LOG_WARNING_MESSAGE("Package test directory not found in " + directoryPath.getAbsolutePath());
+         LOG_WARNING_MESSAGE("Package test directory not found in " + directoryPath);
    }
 }
 
@@ -1387,6 +1387,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    // Filepaths received from the client will be UTF-8 encoded;
    // convert to system encoding here.
    FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory());
+   std::string dirPathAbsolute = dirPath.getAbsolutePath();
 
 #ifdef _WIN32
    shell_utils::ShellCommand cmd(gnuGrepPath.completePath("grep"));
@@ -1403,7 +1404,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-c" << "grep.extendedRegexp=false";
       cmd << "-c" << "grep.fullName=false";
       cmd << "-C";
-      cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
+      cmd << string_utils::utf8ToSystem(dirPathAbsolute);
       cmd << "grep";
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
@@ -1421,7 +1422,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       else
          cmd << "-F";
       addDirectoriesToCommand(
-         grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
+         grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPathAbsolute, &cmd);
 
       if (grepOptions.anyPackageFlag() &&
           !grepOptions.includeArgs().empty())
@@ -1454,7 +1455,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       for (std::string arg : grepOptions.excludeArgs())
          cmd << arg;
       addDirectoriesToCommand(
-         grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
+         grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPathAbsolute, &cmd);
    }
 
    // Clear existing results
