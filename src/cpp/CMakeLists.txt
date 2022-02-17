@@ -319,7 +319,17 @@ add_definitions(-DRSTUDIO_BOOST_SIGNALS_VERSION=2)
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 if(NOT DEFINED RSTUDIO_CRASHPAD_ENABLED)
-   
+
+   # linking of crashpad relies on link-time code generation (/LTCG),
+   # which precludes the use of incremental linking (/INCREMENTAL). this implies
+   # that, when crashpad is enabled, incremental re-builds of RStudio
+   # will be very slow, because RStudio is built as a giant static executable.
+   # for that reason, we disable crashpad by default in development builds
+   if(WIN32 AND NOT RSTUDIO_PACKAGE_BUILD)
+      message(STATUS "Crashpad disabled by default in Windows development builds")
+      set(RSTUDIO_CRASHPAD_ENABLED FALSE)
+    endif()
+
    if(APPLE AND UNAME_M STREQUAL arm64)
       message(STATUS "Crashpad not yet supported on M1 macOS machines; disabling Crashpad")
       set(RSTUDIO_CRASHPAD_ENABLED FALSE)
@@ -640,8 +650,6 @@ else()
       # add desktop subprojects if we aren't building in server only mode
       if(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
          add_subdirectory(diagnostics)
-      endif()
-      if(RSTUDIO_DESKTOP)
          add_subdirectory(desktop)
       endif()
 
@@ -666,6 +674,10 @@ else()
             configure_file(rstudio.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio.bat @ONLY)
             configure_file(rstudio-tests.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests.bat @ONLY)
          endif()
+      endif()
+
+      if(RSTUDIO_ELECTRON AND WIN32)
+         configure_file(rstudio-tests.bat.in ${CMAKE_CURRENT_BINARY_DIR}/rstudio-tests.bat @ONLY)
       endif()
 
       # add server subprojects if we aren't building in desktop only mode

@@ -134,7 +134,7 @@ public:
       if (request_.host().empty())
          request_.setHost(getDefaultHostHeader());
 
-      // connect and write request (implmented in a protocol
+      // connect and write request (implemented in a protocol
       // specific manner by subclassees)
       connectAndWriteRequest();
    }
@@ -369,7 +369,7 @@ private:
             }
          }
 
-         // if we aren't alrady past the maximum wait time then
+         // if we aren't already past the maximum wait time then
          // wait the appropriate interval and attempt connection again
          if (boost::posix_time::microsec_clock::universal_time() <
              connectionRetryContext_.stopTryingTime)

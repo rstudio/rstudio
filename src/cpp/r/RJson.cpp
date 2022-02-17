@@ -15,7 +15,7 @@
 
 /* Convert R objects to json, conversions are performed as follows:
 
-1) R nil values are converted to null. you can explicity return nil
+1) R nil values are converted to null. you can explicitly return nil
    from a function using "return ()"
 
 2) R vectors of primitive types are returned to json & GWT as follows:
@@ -30,7 +30,7 @@
    json objects (with each named list element constituting an object field)
  
 4) R new style lists (VECSXP) without named elements (or with only some elements
-   named) are returned as a json array. this array may be heterogenous and 
+   named) are returned as a json array. this array may be heterogeneous and 
    therefore not readily mappable to a JS overlay type so in general this 
    scenario should be avoided.
  

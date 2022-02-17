@@ -298,6 +298,7 @@ namespace prefs {
 #define kTerminalPath "terminal_path"
 #define kRsaKeyPath "rsa_key_path"
 #define kUseDevtools "use_devtools"
+#define kCleanBeforeInstall "clean_before_install"
 #define kUseInternet2 "use_internet2"
 #define kUseSecureDownload "use_secure_download"
 #define kCleanupAfterRCmdCheck "cleanup_after_r_cmd_check"
@@ -317,6 +318,7 @@ namespace prefs {
 #define kDefaultRVersionLabel "label"
 #define kDefaultRVersionModule "module"
 #define kDataViewerMaxColumns "data_viewer_max_columns"
+#define kDataViewerMaxCellSize "data_viewer_max_cell_size"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
 #define kReducedMotion "reduced_motion"
@@ -1420,6 +1422,12 @@ public:
    core::Error setUseDevtools(bool val);
 
    /**
+    * Clean before install.
+    */
+   bool cleanBeforeInstall();
+   core::Error setCleanBeforeInstall(bool val);
+
+   /**
     * Whether to use Internet2 for networking on R for Windows.
     */
    bool useInternet2();
@@ -1508,6 +1516,12 @@ public:
     */
    int dataViewerMaxColumns();
    core::Error setDataViewerMaxColumns(int val);
+
+   /**
+    * The maximum number of characters to show in a data viewer cell.
+    */
+   int dataViewerMaxCellSize();
+   core::Error setDataViewerMaxCellSize(int val);
 
    /**
     * Support accessibility aids such as screen readers (RStudio Server).

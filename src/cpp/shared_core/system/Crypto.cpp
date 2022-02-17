@@ -319,7 +319,7 @@ Error decryptAndBase64Decode(
    if (error)
       return error;
 
-   // covert the decrypted bytes into the original string
+   // convert the decrypted bytes into the original string
    out_decrypted.reserve(decrypted.size());
    std::copy(decrypted.begin(), decrypted.end(), std::back_inserter(out_decrypted));
 

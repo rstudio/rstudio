@@ -300,7 +300,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       {
          // Manually adding message to the console here instead of using consoleWriteOutput()
          // to avoid it ending up in the history and printing out every time this session
-         // resumes/reloads and potentially resulting in an unecessarily long list of
+         // resumes/reloads and potentially resulting in an unnecessarily long list of
          // previous resumed messages
          actionsObject["data"].getArray().push_back(resumeMsg);
          actionsObject["type"].getArray().push_back(kConsoleActionOutput);

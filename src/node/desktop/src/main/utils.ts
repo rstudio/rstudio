@@ -28,8 +28,8 @@ import { userHomePath } from '../core/user';
 import { WaitResult, WaitTimeoutFn, waitWithTimeout } from '../core/wait-utils';
 import { Err } from '../core/err';
 
-import { productInfo } from './product-info';
 import { MainWindow } from './main-window';
+import i18next from 'i18next';
 
 export function initializeSharedSecret(): void {
   const sharedSecret = randomString() + randomString() + randomString();
@@ -62,7 +62,7 @@ export interface VersionInfo {
 
 export function getComponentVersions(): string {
   const componentVers: VersionInfo = process.versions;
-  componentVers['rstudio'] = productInfo().RSTUDIO_VERSION;
+  componentVers['rstudio'] = app.getVersion();
   return JSON.stringify(componentVers, null, 2);
 }
 
@@ -178,13 +178,8 @@ function findBuildRootImpl(rootDir: string): string {
 }
 
 function rsessionNotFoundError(): Error {
-  const message =
-    'Could not find rsession executable. ' +
-    'Try setting the "RSTUDIO_CPP_BUILD_OUTPUT" environment variable ' +
-    'to the location where src/cpp was built.\n' +
-    '(Working directory: ' +
-    process.cwd() +
-    ')';
+  const workingDirectory = '' + process.cwd();
+  const message = i18next.t('utilsTs.rsessionNotFoundError', { workingDirectory });
 
   return Error(message);
 }

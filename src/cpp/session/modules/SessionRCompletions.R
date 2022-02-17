@@ -702,7 +702,7 @@ assign(x = ".rs.acCompletionTypes",
       if (any(sapply(readers, identical, object)))
          object <- utils::read.table
       
-      # Similarily for write.csv
+      # Similarly for write.csv
       writers <- list(
          utils::write.csv,
          utils::write.csv2
@@ -2214,7 +2214,7 @@ assign(x = ".rs.acCompletionTypes",
       if (token == "")
          return(.rs.emptyCompletions(excludeOtherCompletions = TRUE))
       
-      # Otherwise, complete from the seach path + available packages
+      # Otherwise, complete from the search path + available packages
       completions <- Reduce(.rs.appendCompletions, list(
          .rs.getCompletionsSearchPath(token),
          .rs.getCompletionsNAMESPACE(token, documentId),
@@ -3443,7 +3443,7 @@ assign(x = ".rs.acCompletionTypes",
    
    ## If we detect that particular 'library' calls are in the source document,
    ## and those packages are actually available (but the package is not currently loaded),
-   ## then we get an asynchronously-updated set of completions. We enocde them as 'context'
+   ## then we get an asynchronously-updated set of completions. We encode them as 'context'
    ## completions just so the user has a small hint that, even though we provide the
    ## completions, the package isn't actually loaded.
    packages <- .rs.listInferredPackages(documentId)

@@ -1413,6 +1413,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String useDevtoolsDescription();
 
    /**
+    * Clean before install.
+    */
+   @DefaultStringValue("Clean before install")
+   String cleanBeforeInstallTitle();
+   @DefaultStringValue("Clean before install.")
+   String cleanBeforeInstallDescription();
+
+   /**
     * Whether to use Internet2 for networking on R for Windows.
     */
    @DefaultStringValue("")
@@ -1531,6 +1539,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String dataViewerMaxColumnsTitle();
    @DefaultStringValue("The maximum number of columns to show at once in the data viewer.")
    String dataViewerMaxColumnsDescription();
+
+   /**
+    * The maximum number of characters to show in a data viewer cell.
+    */
+   @DefaultStringValue("Maximum number of character in data viewer cells")
+   String dataViewerMaxCellSizeTitle();
+   @DefaultStringValue("The maximum number of characters to show in a data viewer cell.")
+   String dataViewerMaxCellSizeDescription();
 
    /**
     * Support accessibility aids such as screen readers (RStudio Server).

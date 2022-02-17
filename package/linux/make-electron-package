@@ -1,6 +1,88 @@
 #!/usr/bin/env bash
 
+#
+# make-electron-package (linux)
+#
+# Copyright (C) 2022 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
 set -e
+function help() {
+    cat <<EOF
+usage: make-electron-package package [clean]
+
+Build RStudio Electron-based Desktop and redistributable package for Linux.
+
+Specify version by setting environment variables. The default is 99.9.9.
+
+Examples
+  RSTUDIO_VERSION_MAJOR=2022 RSTUDIO_VERSION_MINOR=7 RSTUDIO_VERSION_PATCH=1 RSTUDIO_VERSION_SUFFIX=-daily+321 ./make-electron-package DEB
+
+Positional Arguments
+  package
+    One of "DEB" or "RPM"
+
+Options
+  clean
+    Perform a clean build; default is incremental build.
+EOF
+exit 1
+}
+
+# sanity check command-line arguments
+PACKAGE_TARGET=$1
+CLEAN=$2
+
+if [ "$PACKAGE_TARGET" != "DEB" ] && [ "$PACKAGE_TARGET" != "RPM" ]
+then
+   help
+   exit 1
+fi
+
 
 # make Electron package
 ./make-package Electron $1 $2 $3
+
+# make tar.gz
+BUILD_DIR=build-Electron-$1
+if test -n "$CMAKE_BUILD_TYPE"
+then
+  BUILD_DIR=$BUILD_DIR-$CMAKE_BUILD_TYPE
+fi
+
+# switch to build dir and determine name of package root
+CURRENT_DIR=`pwd`
+PACKAGE_DIR=$CURRENT_DIR/$BUILD_DIR/_CPack_Packages/Linux/$1
+cd $PACKAGE_DIR
+PACKAGE_ROOT=`ls -d rstudio-*/`
+PACKAGE_ROOT=${PACKAGE_ROOT%/}
+
+# tarball name
+if [ "$1" == "DEB" ]
+then
+  PLATFORM=debian
+else
+  PLATFORM=fedora
+fi
+PACKAGE_TAR=$PACKAGE_DIR/$PACKAGE_ROOT-$PLATFORM.tar.gz
+
+# form version string; append suffix if present
+VERSIONED_RSTUDIO="rstudio-${RSTUDIO_VERSION_MAJOR}.${RSTUDIO_VERSION_MINOR}.${RSTUDIO_VERSION_PATCH}$RSTUDIO_VERSION_SUFFIX"
+
+# copy rstudio dir to local (versioned) dir and make tarball
+rm -rf ${VERSIONED_RSTUDIO}
+cp -R ${PACKAGE_ROOT}/usr/lib/rstudio ${VERSIONED_RSTUDIO}
+
+# create tarball
+tar -c -z -f $PACKAGE_TAR ${VERSIONED_RSTUDIO}
+
+# back to current dir
+cd $CURRENT_DIR

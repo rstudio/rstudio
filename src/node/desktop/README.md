@@ -14,7 +14,7 @@ Instead of using the `showErrorBox` function from the `electron` module.
 
 ## Formatting
 
-To format the entire project just run `yarn format`. You are encouraged to run this before every commit to avoid unecessary merge conflicts in the future.
+To format the entire project just run `yarn format`. You are encouraged to run this before every commit to avoid unnecessary merge conflicts in the future.
 Some code errors shall also arise due to it. Please install `Prettier` VS Code extension so you can run the formatter from a shortcut, or run it from the terminal.
 
 ## Command-line

@@ -78,7 +78,7 @@ if [ -n "${FLAVOR}" ]; then
    download "$CRASHPAD_PRE_BUILT_ROOT_URL/$ARCHIVE_FOLDER/crashpad-${FLAVOR}$ARCHIVE_EXT"
    tar xvf "crashpad-${FLAVOR}$ARCHIVE_EXT"
    if ! test -e "$CRASHPAD_BIN_DIR/crashpad_handler"; then
-      echo "An error occured installing pre-built Crashpad binaries - $CRASHPAD_BIN_DIR/crashpad_handler does not exist"
+      echo "An error occurred installing pre-built Crashpad binaries - $CRASHPAD_BIN_DIR/crashpad_handler does not exist"
       exit 1
    else
       rm "./crashpad-${FLAVOR}$ARCHIVE_EXT"

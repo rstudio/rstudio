@@ -21,7 +21,8 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
 
 public interface ConsoleServerOperations extends CodeToolsServerOperations,
-                                                 HistoryServerOperations
+                                                 HistoryServerOperations, 
+                                                 VirtualConsoleServerOperations
 {
    // adapt to the language of code being sent to console
    void adaptToLanguage(String language,

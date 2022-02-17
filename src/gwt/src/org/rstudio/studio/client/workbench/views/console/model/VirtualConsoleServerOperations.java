@@ -1,5 +1,5 @@
 /*
- * product-info.test.ts
+ * VirtualConsoleServerOperations.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -12,15 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.views.console.model;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.Void;
 
-import { describe } from 'mocha';
-import { assert } from 'chai';
-
-import { productInfo } from '../../../src/main/product-info';
-
-describe('ProductInfo', () => {
-  it('productInfo returns version string', () => {
-    const info = productInfo();
-    assert.isNotEmpty(info.RSTUDIO_VERSION);
-  });
-});
+public interface VirtualConsoleServerOperations {
+    void consoleFollowHyperlink(String url, String text, String params, ServerRequestCallback<Void> requestCallback);
+}

@@ -40,7 +40,7 @@ void ammendResults(const std::string& formatName,
 
 } // namespace presentation
 } // namespace rmarkdown
-} // namepace modules
+} // namespace modules
 } // namespace session
 } // namespace rstudio
 

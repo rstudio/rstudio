@@ -27,6 +27,12 @@ assign(".rs.toolsEnv", function()
    .rs.Env
 }, envir = .rs.Env)
 
+# target environment for symbol lookup, with all necessary base packages
+assign(".rs.symbolLookupEnv", function()
+{
+   new.env(parent = .rs.toolsEnv())
+}, envir = .rs.Env)
+
 #' Add a function to the 'tools:rstudio' environment.
 #' 
 #' This environment is placed on the search path, and so is accessible and
@@ -82,7 +88,9 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 .rs.addFunction("addApiFunction", function(name, FN)
 {
    fullName <- paste("api.", name, sep = "")
-   .rs.addFunction(fullName, FN, envir = globalenv())
+   envir <- .rs.symbolLookupEnv()
+   environment(FN) <- envir
+   .rs.addFunction(fullName, FN, envir = envir)
 })
 
 .rs.addFunction("setVar", function(name, var)
@@ -583,7 +591,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 {
    # TODO: figure out how to print the args (...) as part of the message
    
-   # run the original function (f). setup condition handlers soley so that
+   # run the original function (f). setup condition handlers solely so that
    # we can correctly print the name of the function called in error
    # and warning messages -- otherwise R prints "original(...)"
    withCallingHandlers(

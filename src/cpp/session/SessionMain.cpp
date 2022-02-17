@@ -2009,7 +2009,7 @@ int main(int argc, char * const argv[])
          core::system::setenv(kRSessionStandalonePortNumber, options.wwwPort());
       }
 
-      // ensure we aren't being started as a low (priviliged) account
+      // ensure we aren't being started as a low (privileged) account
       if (serverMode &&
           !options.verifyInstallation() &&
           core::system::currentUserIsPrivilleged(options.authMinimumUserId()))
@@ -2333,7 +2333,7 @@ int main(int argc, char * const argv[])
       error = rstudio::r::session::run(rOptions, rCallbacks);
       if (error)
       {
-          // this is logically equivilant to R_Suicide
+          // this is logically equivalent to R_Suicide
           logExitEvent(Event(kSessionScope, kSessionSuicideEvent));
 
           // return failure

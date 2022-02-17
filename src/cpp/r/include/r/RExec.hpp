@@ -44,7 +44,7 @@ namespace rstudio {
 namespace r {
 namespace exec {
 
-// safe (no r error longjump) execution of abritrary nullary function
+// safe (no r error longjump) execution of arbitrary nullary function
 core::Error executeSafely(boost::function<void()> function);
 
 typedef boost::function<bool()> MainThreadFunction;
@@ -66,7 +66,7 @@ private:
    T* pReturn_;
 };
  
-// safe (no r error longjump) execution of abritrary nullary function w/ return
+// safe (no r error longjump) execution of arbitrary nullary function w/ return
 template <typename T>
 core::Error executeSafely(boost::function<T()> function, T* pReturn)
 {

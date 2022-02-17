@@ -345,7 +345,7 @@ bool ProcessSupervisor::poll()
       // executing R code (e.g. via onContinue) which can in term end up
       // executing background tasks that result in a call to processSupervisor
       // runProgram or runCommand. This would then result in a push_back on
-      // the children vector and if this requried a realloc would invalidate
+      // the children vector and if this required a realloc would invalidate
       // all of the iterators currently pointing into the container
       std::vector<boost::shared_ptr<AsyncChildProcess> > children = pImpl_->children;
       std::for_each(children.begin(),

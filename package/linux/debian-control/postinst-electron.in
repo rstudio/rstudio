@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# errors shouldn't cause script to exit
+set +e 
+
+# create softlink to rstudio /usr/bin
+ln -f -s ${CMAKE_INSTALL_PREFIX}/rstudio /usr/bin/rstudio
+
+# clear error termination state
+set -e

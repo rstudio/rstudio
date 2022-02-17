@@ -84,7 +84,8 @@
    .rs.api.sourceMarkers(
       name = "Diagnostics",
       markers = markers,
-      basePath = .rs.getProjectDirectory()
+      basePath = .rs.getProjectDirectory(),
+      isDiagnostics = true
    )
 })
 

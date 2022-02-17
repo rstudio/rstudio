@@ -2221,6 +2221,19 @@ core::Error UserPrefValues::setUseDevtools(bool val)
 }
 
 /**
+ * Clean before install.
+ */
+bool UserPrefValues::cleanBeforeInstall()
+{
+   return readPref<bool>("clean_before_install");
+}
+
+core::Error UserPrefValues::setCleanBeforeInstall(bool val)
+{
+   return writePref("clean_before_install", val);
+}
+
+/**
  * Whether to use Internet2 for networking on R for Windows.
  */
 bool UserPrefValues::useInternet2()
@@ -2413,6 +2426,19 @@ int UserPrefValues::dataViewerMaxColumns()
 core::Error UserPrefValues::setDataViewerMaxColumns(int val)
 {
    return writePref("data_viewer_max_columns", val);
+}
+
+/**
+ * The maximum number of characters to show in a data viewer cell.
+ */
+int UserPrefValues::dataViewerMaxCellSize()
+{
+   return readPref<int>("data_viewer_max_cell_size");
+}
+
+core::Error UserPrefValues::setDataViewerMaxCellSize(int val)
+{
+   return writePref("data_viewer_max_cell_size", val);
 }
 
 /**
@@ -3185,6 +3211,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalPath,
       kRsaKeyPath,
       kUseDevtools,
+      kCleanBeforeInstall,
       kUseInternet2,
       kUseSecureDownload,
       kCleanupAfterRCmdCheck,
@@ -3200,6 +3227,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSubmitCrashReports,
       kDefaultRVersion,
       kDataViewerMaxColumns,
+      kDataViewerMaxCellSize,
       kEnableScreenReader,
       kTypingStatusDelayMs,
       kReducedMotion,

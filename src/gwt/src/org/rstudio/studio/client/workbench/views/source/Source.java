@@ -1758,7 +1758,7 @@ public class Source implements InsertSourceEvent.Handler,
          return;
       FilePosition pos = FilePosition.create(event.getLine(),
          event.getColumn());
-      columnManager_.scrollToPosition(pos, event.getMoveCursor());
+      columnManager_.scrollToPosition(pos, event.getMoveCursor(), null);
    }
 
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
@@ -3103,20 +3103,38 @@ public class Source implements InsertSourceEvent.Handler,
       else if (type == RStudioApiRequestEvent.TYPE_DOCUMENT_OPEN)
       {
          RStudioApiRequestEvent.DocumentOpenData data = requestEvent.getPayload().cast();
-         final String path = data.getPath();
+         final String path = data.getPath();  
          columnManager_.editFile(path, new ResultCallback<EditingTarget, ServerError>()
          {
             @Override
             public void onSuccess(final EditingTarget result)
             {
-               // focus opened document (note that we may need to suppress
-               // attempts by the shell widget to steal focus here)
-               events_.fireEvent(new SuppressNextShellFocusEvent());
-               result.focus();
+               Command finish = () -> {
+                  // suppress attempts by the shell widget to steal focus here
+                  events_.fireEvent(new SuppressNextShellFocusEvent());
+               
+                  result.focus();
+                  result.ensureCursorVisible();
+                  
+                  JsObject response = JsObject.createJsObject();
+                  response.setString("id", result.getId());
+                  server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               };
 
-               JsObject response = JsObject.createJsObject();
-               response.setString("id", result.getId());
-               server_.rstudioApiResponse(response, new VoidServerRequestCallback());
+               int row = data.getRow();
+               if (row != -1) 
+               {
+                  // give ace time to render before scrolling to position
+                  Scheduler.get().scheduleDeferred(() ->
+                  {
+                     FilePosition position = FilePosition.create(row, Math.max(data.getColumn(), 1));
+                     columnManager_.scrollToPosition(position, data.getMoveCursor(), finish);
+                  });
+               }
+               else
+               {
+                  finish.execute();
+               }
             }
 
             @Override

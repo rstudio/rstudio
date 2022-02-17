@@ -167,7 +167,7 @@
      (is.null(yamlFrontMatter[["output"]]) && !is.null(yamlFrontMatter[["format"]])) ||
      # quarto extended type
      identical(.Call("rs_detectExtendedType", file), "quarto-document") ||
-     # plain markdown file w/ "jupyter" metdata
+     # plain markdown file w/ "jupyter" metadata
      (.rs.endsWith(file, ".md") && !is.null(yamlFrontMatter[["jupyter"]]))
   }
 
@@ -188,7 +188,7 @@
             "html"))
           "rmarkdown::run"
        else 
-          # this situation is nonsensical (runtime: shiny only makse sense for
+          # this situation is nonsensical (runtime: shiny only makes sense for
           # HTML-based output formats)
           ""
      }, error = function(e) {

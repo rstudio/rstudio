@@ -382,7 +382,7 @@ void listEnvironment(SEXP env,
    pVariables->clear();
    
    // get the list of environment vars (protect locally because we 
-   // we don't acutally return this list to the caller
+   // we don't actually return this list to the caller
    SEXP envVarsSEXP;
    Protect rProtect(envVarsSEXP = R_lsInternal(env, includeAll ? TRUE : FALSE));
 
@@ -1517,9 +1517,8 @@ SEXP createUtf8(const std::string& data, Protect* pProtect)
    SEXP strSEXP;
    pProtect->add(strSEXP = Rf_allocVector(STRSXP, 1));
 
-   SEXP charSEXP;
-   pProtect->add(charSEXP = Rf_mkCharLenCE(data.c_str(), data.size(), CE_UTF8));
-
+   // protection not required as long as we immediately assign into protected STRSXP
+   SEXP charSEXP = Rf_mkCharLenCE(data.c_str(), data.size(), CE_UTF8);
    SET_STRING_ELT(strSEXP, 0, charSEXP);
    return strSEXP;
 }
@@ -1527,6 +1526,21 @@ SEXP createUtf8(const std::string& data, Protect* pProtect)
 SEXP createUtf8(const FilePath& filePath, Protect* pProtect)
 {
    return createUtf8(filePath.getAbsolutePath(), pProtect);
+}
+
+SEXP createUtf8(const std::vector<std::string>& data, Protect* pProtect)
+{
+   SEXP strSEXP;
+   pProtect->add(strSEXP = Rf_allocVector(STRSXP, data.size()));
+   
+   for (std::size_t i = 0, n = data.size(); i < n; i++)
+   {
+      // protection not required as long as we immediately assign into protected STRSXP
+      SEXP charSEXP = Rf_mkCharLenCE(data[i].c_str(), data[i].size(), CE_UTF8);
+      SET_STRING_ELT(strSEXP, i, charSEXP);
+   }
+   
+   return strSEXP;
 }
 
 SEXP createRawVector(const std::string& data, Protect* pProtect)

@@ -751,7 +751,7 @@ module_context::SourceMarkerSet asSourceMarkerSet(const LintItems& items,
                            core::html_utils::HTML(item.message),
                            true));
    }
-   return SourceMarkerSet("Diagnostics", markers);
+   return SourceMarkerSet("Diagnostics", markers, true);
 }
 
 module_context::SourceMarkerSet asSourceMarkerSet(
@@ -777,7 +777,7 @@ module_context::SourceMarkerSet asSourceMarkerSet(
       }
    }
    
-   return SourceMarkerSet("Diagnostics", markers);
+   return SourceMarkerSet("Diagnostics", markers, true);
 }
 
 Error lintRSourceDocument(const json::JsonRpcRequest& request,

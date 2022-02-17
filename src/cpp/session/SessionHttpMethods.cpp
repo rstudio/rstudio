@@ -780,7 +780,7 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
             // Discard any buffered input
             console_input::clearConsoleInputBuffer();
 
-            // aknowledge request
+            // acknowledge request
             ptrConnection->sendJsonRpcResponse();
 
             // only accept interrupts while R is processing input

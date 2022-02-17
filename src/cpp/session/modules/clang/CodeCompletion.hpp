@@ -34,7 +34,7 @@ core::Error getCppCompletions(const core::json::JsonRpcRequest& request,
 void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths);
 
 } // namespace clang
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

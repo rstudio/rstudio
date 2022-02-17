@@ -40,10 +40,10 @@
               </rw:row>
               <rw:row>
                 <rw:customCell>
-                   <rw:FormLabel for="{ElementIds.getNewRmdAuthor}" styleName="{resources.styles.topLabel}">Date:</rw:FormLabel>
+                   <rw:FormLabel for="{ElementIds.getNewRmdDate}" styleName="{resources.styles.topLabel}">Date:</rw:FormLabel>
                 </rw:customCell>
                 <rw:customCell>
-                   <rw:FormTextBox elementId="{ElementIds.getNewRmdAuthor}" styleName="{resources.styles.textBox}" 
+                   <rw:FormTextBox elementId="{ElementIds.getNewRmdDate}" styleName="{resources.styles.textBox}" 
                                    ui:field="txtDate_"/>   
                 </rw:customCell>
               </rw:row>

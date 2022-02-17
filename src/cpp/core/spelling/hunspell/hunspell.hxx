@@ -123,7 +123,7 @@ public:
 
   /* other */
 
-  /* get extra word characters definied in affix file for tokenization */
+  /* get extra word characters defined in affix file for tokenization */
   const char * get_wordchars();
   unsigned short * get_wordchars_utf16(int * len);
 

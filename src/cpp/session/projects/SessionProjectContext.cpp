@@ -191,7 +191,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
       return pathNotFoundError(projectFile.getAbsolutePath(), ERROR_LOCATION);
    }
 
-   // test for writeabilty of parent
+   // test for writeability of parent
    if (!file_utils::isDirectoryWriteable(projectFile.getParent()))
    {
       *pUserErrMsg = "the project directory is not writeable";
@@ -855,6 +855,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.buildType = std::string();
    defaultConfig.tutorialPath = std::string();
    defaultConfig.packageUseDevtools = prefs::userPrefs().useDevtools();
+   defaultConfig.packageCleanBeforeInstall = prefs::userPrefs().cleanBeforeInstall();
    return defaultConfig;
 }
 

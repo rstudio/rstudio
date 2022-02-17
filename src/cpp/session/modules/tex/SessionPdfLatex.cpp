@@ -348,7 +348,7 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
 //
 //  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458
 //
-// this code is a port of the simillar logic which exists in the
+// this code is a port of the similar logic which exists in the
 // tools::texi2dvi function (but the regex for detecting citation
 // warnings was made a bit more liberal)
 //

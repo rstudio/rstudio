@@ -35,6 +35,8 @@
    # otherwise, delegate to internal methods
    if (is.numeric(col))
       .rs.formatDataColumnNumeric(col, ...)
+   else if (is.list(col) && !is.data.frame(col))
+      .rs.formatDataColumnList(col, ...)
    else
       .rs.formatDataColumnDefault(col, ...)
 })
@@ -83,6 +85,20 @@
    
    # return formatted values
    vals
+})
+
+.rs.addFunction("formatDataColumnList", function(col, ...)
+{
+   limit <- .rs.readUserPref("data_viewer_max_cell_size")
+   if (is.null(limit)) {
+      limit <- 50L
+   }
+
+   formatted <- as.character(col)
+   large <- nchar(formatted) > limit
+   formatted <- substr(formatted, 1, limit)
+   formatted <- paste0(formatted, ifelse(large, " [...]", ""))
+   formatted
 })
 
 .rs.addFunction("formatDataColumnDefault", function(col, ...)

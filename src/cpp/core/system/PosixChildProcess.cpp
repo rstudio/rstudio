@@ -836,7 +836,7 @@ Error ChildProcess::run()
          pImpl_->init(pid, fdMaster);
       }
 
-      // standard mode: close unused pipes & wire streams to approprite fds
+      // standard mode: close unused pipes & wire streams to appropriate fds
       else
       {
          // close unused pipes
@@ -1053,7 +1053,7 @@ void AsyncChildProcess::poll()
    {
       if (!callbacks_.onContinue(*this))
       {
-         // terminate the proces
+         // terminate the process
          Error error = terminate();
          if (error)
             LOG_ERROR(error);

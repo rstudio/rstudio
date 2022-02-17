@@ -489,7 +489,7 @@ Error RFunction::call(SEXP evalNS,
    // assign the function to the first element of the call
    SETCAR(callSEXP, functionSEXP_);
    
-   // assign parameters to the subseqent elements of the call
+   // assign parameters to the subsequent elements of the call
    SEXP nextSlotSEXP = CDR(callSEXP);
    for (auto it = params_.begin(); it != params_.end(); ++it)
    {

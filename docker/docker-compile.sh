@@ -11,14 +11,14 @@
 #     docker-compile.sh IMAGE-NAME FLAVOR-NAME [VERSION]
 #
 # where the image name is the platform and architecture, the flavor name is
-# the kind of package you wish to build (desktop or server), and the version
-# is the number to assign to the resulting build.
+# the kind of package you wish to build (desktop, electron or server), and the
+# version is the number to assign to the resulting build.
 #
 # For example:
 # 
-#     docker-compile.sh centos7-amd64 desktop 1.2.345
+#     docker-compile.sh rhel8-x86_64 desktop 1.2.345
 #
-# will produce an RPM of RStudio Desktop from the 64bit CentOS 7 container, 
+# will produce an RPM of RStudio Desktop from the 64bit RHEL8 container, 
 # with build version 1.2.345, in your package/linux/ directory.
 #
 # For convenience, this script will build the required image if it doesn't
@@ -59,6 +59,7 @@ if [ -z "$IMAGE" ] || [ -z "$FLAVOR" ]; then
     ls -f docker/jenkins/Dockerfile.* | sed -e 's/.*Dockerfile.//'
     echo -e "\nValid flavors:\n"
     echo -e "desktop"
+    echo -e "electron"
     echo -e "server"
     exit 1
 fi
@@ -121,7 +122,7 @@ ENV="$ENV GIT_COMMIT=$(git rev-parse HEAD)"
 ENV="$ENV BUILD_ID=local"
 
 # infer make parallelism
-if hash sysctl 2>/dev/null; then
+if [ "$(uname)" = "Darwin" ]; then
     # macos; Docker for Mac defaults to half of host's cores
     JVALUE=$(( `sysctl -n hw.ncpu` / 2 ))
     ENV="$ENV MAKEFLAGS=-j${JVALUE}"

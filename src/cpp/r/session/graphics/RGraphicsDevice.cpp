@@ -363,7 +363,7 @@ void GD_Close(pDevDesc dev)
       handler::destroy(pDC);
 
       // explicitly free and then null out the dev pointer of the GEDevDesc
-      // This is to avoid incompatabilities between the heap we are compiled with
+      // This is to avoid incompatibilities between the heap we are compiled with
       // and the heap R is compiled with (we observed this to a problem with
       // 64-bit R)
       std::free(s_pGEDevDesc->dev);
@@ -705,7 +705,7 @@ Error saveSnapshot(const core::FilePath& snapshotFile,
    if (error)
       return error;
    
-   // save snaphot file
+   // save snapshot file
    error = r::exec::RFunction(".rs.saveGraphics",
                               string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
    if (error)
@@ -826,7 +826,7 @@ Error initialize(
 void setSize(int width, int height, double devicePixelRatio)
 {
    // only set if the values have changed (prevents unnecessary plot 
-   // invalidations from occuring)
+   // invalidations from occurring)
    if ( width != s_width || height != s_height || devicePixelRatio != s_devicePixelRatio)
    {
       s_width = width;

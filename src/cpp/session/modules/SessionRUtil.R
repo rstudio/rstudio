@@ -13,6 +13,29 @@
 #
 #
 
+.rs.addFunction("suspendSession", function(force = FALSE, exitStatus = 0L)
+{
+   .Call("rs_suspendSession",
+         as.logical(force),
+         as.integer(exitStatus),
+         PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("enc2native", function(text)
+{
+   # try converting to native encoding
+   native <- iconv(text, from = "UTF-8", to = "")
+
+   # iconv will return NA for any strings that we couldn't
+   # re-encode into the native encoding -- replace those
+   # back with their UTF-8 originals
+   failed <- is.na(native)
+   native[failed] <- text[failed]
+
+   # return the converted string
+   native
+})
+
 .rs.addFunction("isNullExternalPointer", function(object)
 {
    .Call("rs_isNullExternalPointer", object, PACKAGE = "(embedding)")

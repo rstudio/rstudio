@@ -34,7 +34,7 @@ void checkQuotaStatus();
    
 } // namespace quotas
 } // namespace files
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

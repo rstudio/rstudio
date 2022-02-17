@@ -923,7 +923,7 @@ Error SchemaUpdater::getSchemaTableColumnCount(int* pColumnCount)
    Error error;
    if (connection_->driverName() == SQLITE_DRIVER)
    {
-      // This query is explicity a SELECT * because we use the # of columns to determine if 
+      // This query is explicitly a SELECT * because we use the # of columns to determine if 
       // we're pre- or post- GhostOrchid
       Query query = connection_->query(std::string("SELECT * FROM ") + SCHEMA_TABLE);
       Rowset rows;

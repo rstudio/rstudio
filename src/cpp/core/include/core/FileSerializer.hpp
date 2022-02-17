@@ -273,7 +273,7 @@ Error readStructVectorFromFile(const core::FilePath& filePath,
 
 
 
-// convenince methods for simple string collections
+// convenience methods for simple string collections
 ReadCollectionAction parseString(const std::string& line, std::string* pStr);
 std::string stringifyString(const std::string& str);
 

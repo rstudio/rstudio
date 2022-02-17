@@ -136,7 +136,7 @@
   info$mode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
   info$edition <- .Call("rs_rstudioEdition", PACKAGE = "(embedding)")
   info$version <- .Call("rs_rstudioVersion", PACKAGE = "(embedding)")
-  info$version <- base::package_version(info$version)
+  info$version <- package_version(info$version)
   info$long_version <- .Call("rs_rstudioLongVersion", PACKAGE = "(embedding)")
   info$release_name <- .Call("rs_rstudioReleaseName", PACKAGE = "(embedding)")
   info
@@ -267,52 +267,7 @@
                                               col = -1L,
                                               moveCursor = TRUE)
 {
-   # validate file argument
-   hasFile <- !is.null(filePath) && length(filePath) > 0
-   if (hasFile && !is.character(filePath)) {
-      stop("filePath must be a character")
-   }
-   if (hasFile && !file.exists(filePath)) {
-      stop(filePath, " does not exist.")
-   }
-   
-   # transform numeric line, column values to integer
-   if (is.numeric(line))
-      line <- as.integer(line)
-   
-   if (is.numeric(col))
-      col <- as.integer(col)
-
-   # validate line/col arguments
-   if (!is.integer(line) || length(line) != 1 ||
-       !is.integer(col)  || length(col) != 1) {
-      stop("line and column must be numeric values.")
-   }
-
-   if (hasFile)
-   {
-      # expand and alias for client
-      filePath <- .rs.normalizePath(filePath, winslash = "/", mustWork = TRUE)
-      homeDir <- path.expand("~")
-      if (identical(substr(filePath, 1, nchar(homeDir)), homeDir)) {
-         filePath <- file.path("~", substring(filePath, nchar(homeDir) + 2))
-      }
-   }
-   
-   # if we're requesting navigation without a specific cursor position,
-   # then use a separate API (this allows the API to work regardless of
-   # whether we're in source or visual mode)
-   if (identical(line, -1L) && identical(col, -1L))
-      return(invisible(.Call("rs_fileEdit", filePath, PACKAGE = "(embedding)")))
-
-   # send event to client
-   .rs.enqueClientEvent("jump_to_function", list(
-      file_name     = .rs.scalar(filePath),
-      line_number   = .rs.scalar(line),
-      column_number = .rs.scalar(col),
-      move_cursor   = .rs.scalar(moveCursor)))
-
-   invisible(NULL)
+   .rs.api.documentOpen(filePath, line = line, col = col, moveCursor = moveCursor)
 })
 
 .rs.addFunction("validateAndTransformLocation", function(location)
@@ -694,10 +649,45 @@
    response$id
 })
 
-.rs.addApiFunction("documentOpen", function(path) {
+.rs.addApiFunction("documentOpen", function(path, 
+                                            line = -1L, 
+                                            col = -1L, 
+                                            moveCursor = TRUE) {
+
+   # validate path argument
+   hasFile <- !is.null(path) && length(path) > 0
+   if (hasFile && !is.character(path)) {
+      stop("path must be a character")
+   }
+   if (hasFile && !file.exists(path)) {
+      stop(path, " does not exist.")
+   }
    
+   if (hasFile)
+   {
+      # expand and alias for client
+      path <- .rs.normalizePath(path, winslash = "/", mustWork = TRUE)
+      path <- .rs.createAliasedPath(path)
+   }
+
+   # transform numeric line, column values to integer
+   if (is.numeric(line))
+      line <- as.integer(line)
+   
+   if (is.numeric(col))
+      col <- as.integer(col)
+
+   # validate line/col arguments
+   if (!is.integer(line) || length(line) != 1 ||
+       !is.integer(col)  || length(col) != 1) {
+      stop("line and column must be numeric values.")
+   }
+
    payload <- list(
-      path = .rs.scalar(path)
+      path = .rs.scalar(path), 
+      row = .rs.scalar(line), 
+      column = .rs.scalar(col), 
+      moveCursor = .rs.scalar(isTRUE(moveCursor))
    )
    
    request <- .rs.api.createRequest(
@@ -1153,7 +1143,7 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 })
 
 # API for sending + receiving arbitrary requests from rstudioapi
-# added in RStudio v1.4; not used univerally by older APIs but useful
+# added in RStudio v1.4; not used universally by older APIs but useful
 # as a framework for any new functions that might be added
 
 #' @param type The event type. See '.rs.api.events' for the set

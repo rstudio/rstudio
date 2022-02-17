@@ -30,7 +30,7 @@ namespace core {
 namespace system {
 
 // interface for AsioAsyncChildProcess
-// primarly used for testing
+// primarily used for testing
 class IAsioAsyncChildProcess
 {
 public:

@@ -1,8 +1,3 @@
-const { createFullPackageFileName } = require('./scripts/create-full-package-file-name.js');
-
-// This function makes sure that the correct filename is created and saved for the final DMG file.
-createFullPackageFileName();
-
 const config = {
   makers: [
     {

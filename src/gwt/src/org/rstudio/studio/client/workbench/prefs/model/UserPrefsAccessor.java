@@ -2432,6 +2432,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Clean before install.
+    */
+   public PrefValue<Boolean> cleanBeforeInstall()
+   {
+      return bool(
+         "clean_before_install",
+         _constants.cleanBeforeInstallTitle(), 
+         _constants.cleanBeforeInstallDescription(), 
+         true);
+   }
+
+   /**
     * Whether to use Internet2 for networking on R for Windows.
     */
    public PrefValue<Boolean> useInternet2()
@@ -2630,6 +2642,18 @@ public class UserPrefsAccessor extends Prefs
          "data_viewer_max_columns",
          _constants.dataViewerMaxColumnsTitle(), 
          _constants.dataViewerMaxColumnsDescription(), 
+         50);
+   }
+
+   /**
+    * The maximum number of characters to show in a data viewer cell.
+    */
+   public PrefValue<Integer> dataViewerMaxCellSize()
+   {
+      return integer(
+         "data_viewer_max_cell_size",
+         _constants.dataViewerMaxCellSizeTitle(), 
+         _constants.dataViewerMaxCellSizeDescription(), 
          50);
    }
 
@@ -3634,6 +3658,8 @@ public class UserPrefsAccessor extends Prefs
          rsaKeyPath().setValue(layer, source.getString("rsa_key_path"));
       if (source.hasKey("use_devtools"))
          useDevtools().setValue(layer, source.getBool("use_devtools"));
+      if (source.hasKey("clean_before_install"))
+         cleanBeforeInstall().setValue(layer, source.getBool("clean_before_install"));
       if (source.hasKey("use_internet2"))
          useInternet2().setValue(layer, source.getBool("use_internet2"));
       if (source.hasKey("use_secure_download"))
@@ -3664,6 +3690,8 @@ public class UserPrefsAccessor extends Prefs
          defaultRVersion().setValue(layer, source.getObject("default_r_version"));
       if (source.hasKey("data_viewer_max_columns"))
          dataViewerMaxColumns().setValue(layer, source.getInteger("data_viewer_max_columns"));
+      if (source.hasKey("data_viewer_max_cell_size"))
+         dataViewerMaxCellSize().setValue(layer, source.getInteger("data_viewer_max_cell_size"));
       if (source.hasKey("enable_screen_reader"))
          enableScreenReader().setValue(layer, source.getBool("enable_screen_reader"));
       if (source.hasKey("typing_status_delay_ms"))
@@ -3929,6 +3957,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(terminalPath());
       prefs.add(rsaKeyPath());
       prefs.add(useDevtools());
+      prefs.add(cleanBeforeInstall());
       prefs.add(useInternet2());
       prefs.add(useSecureDownload());
       prefs.add(cleanupAfterRCmdCheck());
@@ -3944,6 +3973,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(submitCrashReports());
       prefs.add(defaultRVersion());
       prefs.add(dataViewerMaxColumns());
+      prefs.add(dataViewerMaxCellSize());
       prefs.add(enableScreenReader());
       prefs.add(typingStatusDelayMs());
       prefs.add(reducedMotion());

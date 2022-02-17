@@ -1925,7 +1925,7 @@
       })
    })
    
-   # Convert to a list, and ensure each element is interpretted as a scalar
+   # Convert to a list, and ensure each element is interpreted as a scalar
    # (rather than an array containing a single element)
    result <- as.list(chunkOptionsEnv)
    for (i in seq_along(result))

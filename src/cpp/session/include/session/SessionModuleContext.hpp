@@ -520,7 +520,7 @@ std::string normalizeVcsOverride(const std::string& vcsOverride);
 
 core::FilePath shellWorkingDirectory();
 
-// persist state accross suspend and resume
+// persist state across suspend and resume
    
 typedef boost::function<void (const r::session::RSuspendOptions&,
                               core::Settings*)> SuspendFunction;
@@ -834,7 +834,8 @@ struct SourceMarker
    };
 
    SourceMarker()
-      : type(Empty)
+      : type(Empty),
+      isCustom(false)
    {
    }
 
@@ -849,7 +850,25 @@ struct SourceMarker
         line(line),
         column(column),
         message(message),
-        showErrorList(showErrorList)
+        showErrorList(showErrorList),
+        isCustom(false)
+   {
+   }
+
+   SourceMarker(Type type,
+                const core::FilePath& path,
+                int line,
+                int column,
+                const core::html_utils::HTML& message,
+                bool showErrorList,
+                bool isCustom)
+      : type(type),
+        path(path),
+        line(line),
+        column(column),
+        message(message),
+        showErrorList(showErrorList),
+        isCustom(isCustom)
    {
    }
    
@@ -864,6 +883,7 @@ struct SourceMarker
    int column;
    core::html_utils::HTML message;
    bool showErrorList;
+   bool isCustom;
 };
 
 SourceMarker::Type sourceMarkerTypeFromString(const std::string& type);
@@ -877,7 +897,17 @@ struct SourceMarkerSet
    SourceMarkerSet(const std::string& name,
                    const std::vector<SourceMarker>& markers)
       : name(name),
-        markers(markers)
+        markers(markers),
+        isDiagnostics(false)
+   {
+   }
+
+   SourceMarkerSet(const std::string& name,
+                   const std::vector<SourceMarker>& markers,
+                   bool isDiagnostics)
+      : name(name),
+        markers(markers),
+        isDiagnostics(isDiagnostics)
    {
    }
 
@@ -886,7 +916,19 @@ struct SourceMarkerSet
                    const std::vector<SourceMarker>& markers)
       : name(name),
         basePath(basePath),
-        markers(markers)
+        markers(markers),
+        isDiagnostics(false)
+   {
+   }
+
+   SourceMarkerSet(const std::string& name,
+                   const core::FilePath& basePath,
+                   const std::vector<SourceMarker>& markers,
+                   bool isDiagnostics)
+      : name(name),
+        basePath(basePath),
+        markers(markers),
+        isDiagnostics(isDiagnostics)
    {
    }
 
@@ -895,6 +937,7 @@ struct SourceMarkerSet
    std::string name;
    core::FilePath basePath;
    std::vector<SourceMarker> markers;
+   bool isDiagnostics;
 };
 
 enum MarkerAutoSelect

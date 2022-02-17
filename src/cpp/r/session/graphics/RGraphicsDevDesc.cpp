@@ -28,7 +28,7 @@ namespace dev_desc {
 
 namespace {
 
-// this template is used to copy graphics device paramters
+// this template is used to copy graphics device parameters
 // common to all graphics device versions; newly-added
 // members should be initialized explicitly separately
 template <typename T>

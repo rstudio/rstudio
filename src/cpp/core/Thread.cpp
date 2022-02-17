@@ -30,7 +30,7 @@ namespace thread {
 namespace {
 
 // main thread id
-// we initialize this statically but the value can be overriden
+// we initialize this statically but the value can be overridden
 // via initializeMainThreadId() if necessary
 boost::thread::id s_mainThreadId = boost::this_thread::get_id();
 

@@ -77,7 +77,7 @@ FilePath currentCSIDLPersonalHomePath()
    }
    else
    {
-      log::logWarningMessage("Unable to retreive user home path. HRESULT:  " +
+      log::logWarningMessage("Unable to retrieve user home path. HRESULT:  " +
                           safe_convert::numberToString(hr));
       return FilePath();
    }
@@ -100,7 +100,7 @@ FilePath defaultCSIDLPersonalHomePath()
    }
    else
    {
-      log::logWarningMessage("Unable to retreive user home path. HRESULT:  " +
+      log::logWarningMessage("Unable to retrieve user home path. HRESULT:  " +
                           safe_convert::numberToString(hr));
       return FilePath();
    }

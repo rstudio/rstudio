@@ -86,7 +86,7 @@ class LineDebugState
       int lastDebugLine;
 };
 
-// The environment monitor and friends do work in reponse to events in R.
+// The environment monitor and friends do work in response to events in R.
 // In rare cases, this work can trigger the same events in R that are
 // being responded to, leading to unwanted recursion. This simple guard
 // increments the given counter on construction (and decrements on destruction)
@@ -226,9 +226,9 @@ SEXP rs_isAltrep(SEXP obj)
 
 // Construct a simulated source reference from a context containing a
 // function being debugged, and either the context containing the current
-// invocation or a string containing the last debug ouput from R.
+// invocation or a string containing the last debug output from R.
 // We use this to highlight portions of deparsed functions when visually
-// stepping through code for which source references are unvailable.
+// stepping through code for which source references are unavailable.
 SEXP simulatedSourceRefsOfContext(const r::context::RCntxt& context,
                                   const r::context::RCntxt& lineContext,
                                   const LineDebugState* pLineDebugState)
@@ -894,7 +894,7 @@ void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
          pLineDebugState->reset();
       }
 
-      // start monitoring the enviroment at the new depth
+      // start monitoring the environment at the new depth
       s_pEnvironmentMonitor->setMonitoredEnvironment(environmentTop);
       *pContextDepth = depth;
       *pCurrentContext = context;

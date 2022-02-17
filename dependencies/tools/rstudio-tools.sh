@@ -469,3 +469,24 @@ export RSTUDIO_TOOLS_ROOT
 
 # version of node.js used for building
 export RSTUDIO_NODE_VERSION="14.17.5"
+
+# create a copy of a file in the same folder with .original extension
+save-original-file () {
+
+	local ORIGINAL_FILE="$1"
+	local SAVED_FILE="$1.original"
+	cp $ORIGINAL_FILE $SAVED_FILE
+}
+
+# restore a file previously saved with save-original-file
+restore-original-file () {
+
+	local ORIGINAL_FILE="$1"
+	local SAVED_FILE="$1.original"
+	local MODIFIED_FILE="$1.modified"
+
+	rm -f $MODIFIED_FILE
+	mv $ORIGINAL_FILE $MODIFIED_FILE
+	mv $SAVED_FILE $ORIGINAL_FILE
+	rm -f $MODIFIED_FILE
+}

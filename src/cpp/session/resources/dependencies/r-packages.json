@@ -35,6 +35,11 @@
             "location": "cran",
             "source": false
         },
+        "checkmate": {
+            "version": "1.0",
+            "location": "cran",
+            "source": false
+        },
         "crayon": {
             "version": "1.3.4",
             "location": "cran",
@@ -62,6 +67,11 @@
         },
         "evaluate": {
             "version": "0.13",
+            "location": "cran",
+            "source": false
+        },
+        "fastmap": {
+            "version": "1.1.0",
             "location": "cran",
             "source": false
         },
@@ -190,6 +200,11 @@
             "location": "cran",
             "source": false
         },
+        "rappdirs": {
+            "version": "0.3.0",
+            "location": "cran",
+            "source": false
+        },
         "rJava": {
             "version": "0.4-15",
             "location": "cran",
@@ -227,6 +242,11 @@
         },
         "roxygen2": {
             "version": "6.0.1",
+            "location": "cran",
+            "source": false
+        },
+        "rprojroot": {
+            "version": "1.0",
             "location": "cran",
             "source": false
         },
@@ -280,6 +300,11 @@
             "location": "cran",
             "source": false
         },
+        "withr": {
+            "version": "1.0.0",
+            "location": "cran",
+            "source": false
+        },
         "xfun": {
             "version": "0.21",
             "location": "cran",
@@ -304,23 +329,23 @@
     "features": {
         "roxygen": {
             "description": "R Package Documentation",
-            "packages": [ 
-                "roxygen2" 
+            "packages": [
+                "roxygen2"
             ]
         },
         "theme_conversion": {
             "description": "Theme Conversion",
-            "packages": [ 
-                "xm2" 
+            "packages": [
+                "xml2"
             ]
         },
         "r2d3": {
             "description": "R2D3",
-            "packages": [ 
-                "htmltools", 
-                "htmlwidgets", 
-                "jsonlite", 
-                "r2d3" 
+            "packages": [
+                "htmltools",
+                "htmlwidgets",
+                "jsonlite",
+                "r2d3"
             ]
         },
         "packrat": {
@@ -331,10 +356,10 @@
         },
         "plumber": {
             "description": "Plumber R APIs",
-            "packages": [ 
-                "R6", 
-                "stringi", 
-                "jsonlite", 
+            "packages": [
+                "R6",
+                "stringi",
+                "jsonlite",
                 "httpuv",
                 "crayon",
                 "plumber"

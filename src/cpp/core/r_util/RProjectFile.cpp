@@ -285,6 +285,7 @@ void setBuildPackageDefaults(const std::string& packagePath,
 {
    pConfig->buildType = kBuildTypePackage;
    pConfig->packageUseDevtools = buildDefaults.useDevtools;
+   pConfig->packageCleanBeforeInstall = buildDefaults.cleanBeforeInstall;
    pConfig->packagePath = packagePath;
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
 }
@@ -786,6 +787,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->packageUseDevtools = false;
    }
 
+   // extract package clean before install
+   it = dcfFields.find("PackageCleanBeforeInstall");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->packageCleanBeforeInstall)))
+         return requiredFieldError("PackageCleanBeforeInstall", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->packageCleanBeforeInstall = true;
+   }
+
    // extract makefile path
    it = dcfFields.find("MakefilePath");
    if (it != dcfFields.end())
@@ -1089,6 +1102,15 @@ Error writeProjectFile(const FilePath& projectFilePath,
             if (config.packageUseDevtools)
             {
                build.append("PackageUseDevtools: Yes\n");
+            }
+
+            if (config.packageCleanBeforeInstall)
+            {
+               build.append("PackageCleanBeforeInstall: Yes\n");
+            }
+            else 
+            {
+               build.append("PackageCleanBeforeInstall: No\n");
             }
 
             if (!config.packagePath.empty())

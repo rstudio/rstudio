@@ -457,7 +457,7 @@ std::string generateScopeId(const std::vector<std::string>& reserved)
    std::string id = core::string_utils::toLower(
                                  core::system::generateShortenedUuid());
 
-   // ensure 8 chracters
+   // ensure 8 characters
    if (id.length() != kProjectIdLen)
    {
       if (id.length() > kProjectIdLen)

@@ -1,15 +1,16 @@
 
 import 'process';
 import { execSync } from 'child_process';
+import { existsSync, rmSync } from 'fs';
 import { makeUniversalApp } from '@electron/universal';
-import { rm } from 'fs/promises';
 
-const [ node, script, x64AppPath, arm64AppPath, outPath ] = process.argv;
+const [node, script, x64AppPath, arm64AppPath, outPath] = process.argv;
 
 // for x64, we don't build a universal application; instead,
 // we just copy the x64 Electron bits directly into the package
 let tmpPath = "";
-if (process.arch === 'arm64') {
+let hasArm64Build = existsSync(arm64AppPath);
+if (hasArm64Build) {
 
   // build universal application in temporary directory,
   // then merge it all together when we're done
@@ -31,7 +32,7 @@ if (process.arch === 'arm64') {
   console.log("# Building x86_64 Electron application");
   console.log(`- [i] x64AppPath: ${x64AppPath}`)
   tmpPath = x64AppPath;
-  
+
 }
 
 // use rsync to move them into the final install path
@@ -40,7 +41,7 @@ execSync(`rsync -a "${tmpPath}/" "${outPath}/"`, { stdio: 'inherit' });
 console.log("- [i] Done!")
 
 // clean up
-if (process.arch === 'arm64') {
-  await rm(tmpPath, { recursive: true });
+if (hasArm64Build) {
+  rmSync(tmpPath, { recursive: true });
 }
 

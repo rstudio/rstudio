@@ -174,7 +174,7 @@ bool isIpAddress(const std::string& addr);
 // querying the DNS system
 bool isNetworkAddress(const std::string& str);
 
-// determins if the given request is request to upgrade the connection to a websocket
+// determines if the given request is request to upgrade the connection to a websocket
 bool isWSUpgradeRequest(const Request& request);
 
 // does the given error represent SSL truncation/shutdown?

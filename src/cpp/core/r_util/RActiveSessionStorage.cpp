@@ -174,5 +174,5 @@ namespace
         return std::make_shared<FileActiveSessionStorage>(FileActiveSessionStorage(scratchPath));
     }
 } // namespace r_util
-} // namepsace core
+} // namespace core
 } // namespace rstudio

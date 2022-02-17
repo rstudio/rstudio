@@ -82,7 +82,7 @@ void setenv(Options* pEnvironment,
       pEnvironment->push_back(std::make_pair(name, value));
 }
 
-// remove an enviroment variable from an Options structure
+// remove an environment variable from an Options structure
 void unsetenv(Options* pEnvironment, const std::string& name)
 {
    pEnvironment->erase(std::remove_if(pEnvironment->begin(),
@@ -127,7 +127,7 @@ void addToPath(std::string* pPath,
    *pPath = modifyPath(*pPath, filePath, prepend);
 }
 
-// add to the PATH within an Options struture
+// add to the PATH within an Options structure
 void addToPath(Options* pEnvironment,
                const std::string& filePath,
                bool prepend)

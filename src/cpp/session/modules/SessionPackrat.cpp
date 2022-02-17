@@ -542,7 +542,7 @@ bool getPendingActions(PackratActionType action, bool useCached,
       return (cachedResult[action] = true);
    }
 
-   // if an empty list comes back, we can savely resolve the state
+   // if an empty list comes back, we can safely resolve the state
    if (r::sexp::length(actions) == 0)
       return (cachedResult[action] = false);
 

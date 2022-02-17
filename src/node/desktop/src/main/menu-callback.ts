@@ -77,43 +77,25 @@ export class MenuCallback extends EventEmitter {
   constructor() {
     super();
     ipcMain.on('menu_begin_main', () => {
-      this.mainMenu = new Menu();
-      if (process.platform === 'darwin') {
-        this.mainMenu.append(new MenuItem({ role: 'appMenu' }));
-      }
+      this.beginMain();
     });
 
     ipcMain.on('menu_begin', (event, label: string) => {
-      const subMenu = new Menu();
-      const opts: MenuItemConstructorOptions = { submenu: subMenu, label: label, id: menuIdFromLabel(label) };
-      if (label === '&File') {
-        opts.role = 'fileMenu';
-      } else if (label === '&Edit') {
-        opts.role = 'editMenu';
-      } else if (label === '&View') {
-        opts.role = 'viewMenu';
-      } else if (label === '&Help') {
-        opts.role = 'help';
-      } else if (label === '&Tools') {
-        this.lastWasTools = true;
-      } else if (label === 'Dia&gnostics') {
-        this.lastWasDiagnostics = true;
-      }
-
-      const menuItem = new MenuItem(opts);
-      this.menuItemTemplates.set(menuItem, opts);
-      if (this.menuStack.length == 0) {
-        this.mainMenu?.append(menuItem);
-      } else {
-        this.addToCurrentMenu(menuItem);
-      }
-      this.menuStack.push(subMenu);
+      this.menuBegin(label);
     });
 
     ipcMain.on(
       'menu_add_command',
-      (event, cmdId: string, label: string, tooltip: string, shortcut: string, checkable: boolean) => {
-        this.addCommand(cmdId, label, tooltip, shortcut, checkable);
+      (
+        event,
+        cmdId: string,
+        label: string,
+        tooltip: string,
+        shortcut: string,
+        checkable: boolean,
+        visible: boolean,
+      ) => {
+        this.addCommand(cmdId, label, tooltip, shortcut, checkable, visible);
       },
     );
 
@@ -224,6 +206,40 @@ export class MenuCallback extends EventEmitter {
     });
   }
 
+  beginMain(): void {
+    this.mainMenu = new Menu();
+    if (process.platform === 'darwin') {
+      this.mainMenu.append(new MenuItem({ role: 'appMenu' }));
+    }
+  }
+
+  menuBegin(label: string): void {
+    const subMenu = new Menu();
+    const opts: MenuItemConstructorOptions = { submenu: subMenu, label: label, id: menuIdFromLabel(label) };
+    if (label === '&File') {
+      opts.role = 'fileMenu';
+    } else if (label === '&Edit') {
+      opts.role = 'editMenu';
+    } else if (label === '&View') {
+      opts.role = 'viewMenu';
+    } else if (label === '&Help') {
+      opts.role = 'help';
+    } else if (label === '&Tools') {
+      this.lastWasTools = true;
+    } else if (label === 'Dia&gnostics') {
+      this.lastWasDiagnostics = true;
+    }
+
+    const menuItem = new MenuItem(opts);
+    this.menuItemTemplates.set(menuItem, opts);
+    if (this.menuStack.length == 0) {
+      this.mainMenu?.append(menuItem);
+    } else {
+      this.addToCurrentMenu(menuItem);
+    }
+    this.menuStack.push(subMenu);
+  }
+
   /**
    * Uses a list of templates to update existing menu items by reconstructing the entire app menu
    *
@@ -241,7 +257,7 @@ export class MenuCallback extends EventEmitter {
         const itemTemplate = this.menuItemTemplates.get(item);
         if (!itemTemplate) {
           // no itemTemplate found (separators, for example)
-          targetMenu.append(item);
+          this.addToMenu(targetMenu, item);
           continue;
         }
 
@@ -269,8 +285,20 @@ export class MenuCallback extends EventEmitter {
         }
 
         this.menuItemTemplates.set(newMenuItem, newItemTemplate);
-        targetMenu.append(newMenuItem);
+        this.addToMenu(targetMenu, newMenuItem);
       }
+
+      targetMenu.items = targetMenu.items.filter((item, idx, arr) => {
+        if (item.type !== 'separator') {
+          return true;
+        }
+        const prevItem = arr[idx - 1];
+        return (
+          idx !== 0 && // no separators at the top
+          prevItem.type !== 'separator' && // no consecutive separators
+          idx != arr.length - 1 // no separators at the bottom
+        );
+      });
     };
 
     recursiveCopy(mainMenu, newMenu);
@@ -279,7 +307,21 @@ export class MenuCallback extends EventEmitter {
     Menu.setApplicationMenu(this.mainMenu);
   }
 
-  addCommand(cmdId: string, label: string, tooltip: string, shortcut: string, checkable: boolean): void {
+  addToMenu(menu: Menu, item: MenuItem) {
+    // invisible items are not added because it interferes with the separator logic
+    if (item.visible) {
+      menu.append(item);
+    }
+  }
+
+  addCommand(
+    cmdId: string,
+    label: string,
+    tooltip: string,
+    shortcut: string,
+    checkable: boolean,
+    visible: boolean,
+  ): void {
     const menuItemOpts: MenuItemConstructorOptions = {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       label: label,
@@ -295,6 +337,7 @@ export class MenuCallback extends EventEmitter {
     if (shortcut.length > 0) {
       menuItemOpts.accelerator = this.convertShortcut(shortcut);
     }
+    menuItemOpts.visible = visible;
 
     // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
     // populate those here when discovered

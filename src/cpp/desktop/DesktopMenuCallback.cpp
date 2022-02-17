@@ -113,7 +113,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    }
    
    // on macOS, these bindings are hooked up on the GWT side (mainly to ensure
-   // that zoom requests targetted to a GWT window work as expected)
+   // that zoom requests targeted to a GWT window work as expected)
 #ifndef Q_OS_MAC
    else if (commandId == QStringLiteral("zoomActualSize"))
    {
@@ -234,7 +234,8 @@ void MenuCallback::addCommand(QString commandId,
                               QString label,
                               QString tooltip,
                               QString shortcut,
-                              bool checkable)
+                              bool checkable,
+                              bool isVisible)
 {
 
    adjustShortcutForPlatform(&shortcut);
@@ -292,6 +293,7 @@ void MenuCallback::addCommand(QString commandId,
       pAction->setToolTip(tooltip);
       if (checkable)
          pAction->setCheckable(true);
+      pAction->setVisible(isVisible);
 
       auto* pBinder = new MenuActionBinder(menuStack_.top(), pAction);
       connect(pBinder, SIGNAL(manageCommand(QString, QAction*)),

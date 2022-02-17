@@ -288,7 +288,7 @@ void saveDevMode(Settings* pSettings)
       // turn dev mode off -- this is important so that dev mode undoes
       // its manipulations of the prompt and libpaths before they are saved
       // suppress output to eliminate dev_mode OFF message
-      // ignore error on purpose -- will happen if devtools isn't intalled
+      // ignore error on purpose -- will happen if devtools isn't installed
       r::session::utils::SuppressOutputInScope suppressOutput;
       error = r::exec::RFunction("devtools:::dev_mode", false).call();
    }

@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
-    <title>Cannot Connect to R</title>
+    <title id="i18n-cannotConnectToR"></title>
     <style>
       h1 {
         margin-left: auto;
@@ -38,6 +38,7 @@
     </style>
     <script>
       // When the page loads, inject the retry URL
+
       window.addEventListener('load', function () {
         try {
           window.desktop.getStartupErrorInfo('!retry_url', (result) => {
@@ -62,7 +63,7 @@
         viewBox="0 0 724 561"
         style="position: absolute; top: 0; left: 0"
       >
-        <title>R Logo</title>
+        <title id="i18n-rLogo"></title>
         <defs>
           <linearGradient
             id="gradientFill-1"
@@ -109,42 +110,30 @@
         viewBox="0 0 24 24"
         style="position: absolute; bottom: 0; left: 0"
       >
-        <title>Warning</title>
+        <title id="i18n-warning"></title>
         <path
           d="M12 5.177l8.631 15.823h-17.262l8.631-15.823zm0-4.177l-12 22h24l-12-22zm-1 9h2v6h-2v-6zm1 9.75c-.689 0-1.25-.56-1.25-1.25s.561-1.25 1.25-1.25 1.25.56 1.25 1.25-.561 1.25-1.25 1.25z"
         />
       </svg>
     </div>
-    <h1>Cannot Connect to R</h1>
-    <p>RStudio can't establish a connection to R. This usually indicates one of the following:</p>
+    <h1 id="i18n-cannotConnectToR"></h1>
+    <p id="i18n-rstudioCantEstablishAConnectionToR"></p>
     <ul>
-      <li>
-        The R session is taking an unusually long time to start, perhaps because of slow operations in startup scripts
-        or slow network drive access.
-      </li>
-      <li>
-        RStudio is unable to communicate with R over a local network port, possibly because of firewall restrictions or
-        anti-virus software.
-      </li>
+      <li id="i18n-theRSessionIsTakingAnUnusuallyLongTimeToStart"></li>
+      <li id="i18n-rstudioIsUnableToCommunicateWithR"></li>
     </ul>
-    <p>Please try the following:</p>
+    <p id="i18n-pleaseTryTheFollowing"></p>
     <ul>
-      <li>
-        If you've customized R session creation by creating an R profile (e.g. located at <samp>~/.Rprofile</samp>),
-        consider temporarily removing it.
-      </li>
-      <li>
-        If you are using a firewall or antivirus software which guards access to local network ports, add an exclusion
-        for the RStudio and rsession executables.
-      </li>
-      <li>Run RGui, R.app, or R in a terminal to ensure that R itself starts up correctly.</li>
+      <li id="i18n-ifYouveCustomizedRSessionCreation"></li>
+      <li id="i18n-ifYouAreUsingAFirewallOrAntivirus"></li>
+      <li id="i18n-runRguiRAppOrRInATerminalToEnsure"></li>
     </ul>
-    <p>Further troubleshooting help can be found on our website:</p>
+    <p id="i18n-furtherTroubleshootingHelpCanBeFound"></p>
     <p>
-      <a href="https://www.rstudio.org/links/troubleshooting_startup">Troubleshooting RStudio Startup</a>
+      <a href="https://www.rstudio.org/links/troubleshooting_startup" id="i18n-troubleshootingRstudioStartup"></a>
     </p>
     <p style="text-align: center; margin-top: 50px">
-      <a id="retry_url" class="reload"> Retry </a>
+      <a id="retry_url" class="reload"></a>
     </p>
   </body>
 </html>

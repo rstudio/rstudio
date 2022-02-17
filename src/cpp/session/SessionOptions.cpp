@@ -323,7 +323,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       rpostback. However, we really ought to communicate
       it in a more secure manner than this, at least on
       Windows where even within the same user session some
-      processes can have different priviliges (integrity
+      processes can have different privileges (integrity
       levels) than others. For example, using a named pipe
       with proper SACL to retrieve the shared secret, where
       the name of the pipe is in an environment variable. */

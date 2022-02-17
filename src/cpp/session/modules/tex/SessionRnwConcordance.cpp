@@ -277,7 +277,7 @@ FileAndLine Concordances::texLine(const FileAndLine& rnwLine) const
    if (rnwLine.filePath().isEmpty())
       return FileAndLine();
 
-   // inspect concordance where input file is equivilant to rnw file
+   // inspect concordance where input file is equivalent to rnw file
    std::vector<Concordance> rnwFileConcords;
    algorithm::copy_if(
       concordances_.begin(),

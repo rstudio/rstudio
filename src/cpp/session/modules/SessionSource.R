@@ -77,7 +77,7 @@
       'ISO-8859-7', #'Windows-1253',
       # Cyrillic
       #'ISO-8859-5', 'MacCyrillic', 'KOI8-R', 'Windows-1251',
-      # Ukranian
+      # Ukrainian
       #'KOI8-U',
       # Simplified Chinese
       'GB2312', #'HZ-GB-2312',

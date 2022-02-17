@@ -15,14 +15,18 @@
 
 import { app } from 'electron';
 
-import { ConsoleLogger } from '../core/console-logger';
-import { logLevel, LogLevel, parseCommandLineLogLevel, setLogger, setLoggerLevel } from '../core/logger';
+import { logLevel, parseCommandLineLogLevel, setLogger, setLoggerLevel } from '../core/logger';
 import { safeError } from '../core/err';
+import { WinstonLogger } from '../core/winston-logger';
+import { FilePath } from '../core/file-path';
 
 import { Application, kLogLevel } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
-import { createStandaloneErrorDialog } from './utils';
+import { createStandaloneErrorDialog, userLogPath } from './utils';
+
+import { initI18n } from './i18n-manager';
+import i18next from 'i18next';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -39,9 +43,9 @@ class RStudioMain {
       await this.startup();
     } catch (error: unknown) {
       const err = safeError(error);
-      await createStandaloneErrorDialog('Unhandled Exception', err.message);
+      await createStandaloneErrorDialog(i18next.t('mainTs.unhandledException'), err.message);
       console.error(err.message); // logging possibly not available this early in startup
-      if (logLevel() === LogLevel.DEBUG) {
+      if (logLevel() === 'debug') {
         console.error(err.stack);
       }
       app.exit(1);
@@ -60,8 +64,9 @@ class RStudioMain {
     }
 
     const rstudio = new Application();
-    setLogger(new ConsoleLogger());
-    setLoggerLevel(parseCommandLineLogLevel(app.commandLine.getSwitchValue(kLogLevel), LogLevel.ERR));
+
+    const logLevel = parseCommandLineLogLevel(app.commandLine.getSwitchValue(kLogLevel), 'warn');
+    setLogger(new WinstonLogger(userLogPath().completeChildPath('rdesktop.log'), logLevel));
     setApplication(rstudio);
 
     if (!parseStatus(await rstudio.beforeAppReady())) {
@@ -77,5 +82,7 @@ class RStudioMain {
 }
 
 // Startup
+initI18n();
+
 const main = new RStudioMain();
 void main.main();

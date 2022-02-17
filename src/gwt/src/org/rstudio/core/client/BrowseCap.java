@@ -269,5 +269,10 @@ public class BrowseCap
          if (isFirefox())
             Document.get().getBody().addClassName("ubuntu_mono_firefox");
       }
+
+      // Add flat theme class. None of our own CSS should use this, but many
+      // third party themes developed against earlier versions of RStudio
+      // (2021.09 and older) use it extensively in selectors.
+      Document.get().getBody().addClassName("rstudio-themes-flat");
    }
 }
