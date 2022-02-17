@@ -30,12 +30,12 @@ endif()
 configure_file (${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts.in
                 ${CMAKE_CURRENT_SOURCE_DIR}/src/main/build-info.ts)
 
-# defines NODEJS, NODEJS_PATH, YARN, YARN_PATH
+# defines NODEJS, NODEJS_PATH
 include("${CMAKE_CURRENT_LIST_DIR}/../CMakeNodeTools.txt")
 
-# ensure yarn and node are on the path
+# ensure node is on the path
 if (NOT WIN32)
-   set(MODIFIED_PATH "${NODEJS_PATH}:${YARN_PATH}:$ENV{PATH}")
+   set(MODIFIED_PATH "${NODEJS_PATH}:$ENV{PATH}")
 endif()
 
 set(ELECTRON_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "")
@@ -68,7 +68,7 @@ if (WIN32)
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Building desktop (Electron ${UNAME_M})"
       WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
-      COMMAND ${YARN} package
+      COMMAND ${NPM} run package
    )
 
 else()
@@ -78,7 +78,7 @@ else()
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Building desktop (Electron ${UNAME_M})"
       WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
-      COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${YARN} package
+      COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${NPM} run package
    )
 
 endif()

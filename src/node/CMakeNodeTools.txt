@@ -32,10 +32,11 @@ if(APPLE AND UNAME_M STREQUAL arm64)
    # make sure we're using arm64 binaries of node / npm for arm64 builds
    set(NODEJS "${HOMEBREW_PREFIX}/bin/node")
    set(NPM "${HOMEBREW_PREFIX}/bin/npm")
+   set(NPX "${HOMEBREW_PREFIX}/bin/npx")
 
 else()
 
-   # Detect node.js, npm, and yarn; prefer versions supplied by the dependency
+   # Detect node.js, npm, npx, and yarn; prefer versions supplied by the dependency
    # scripts but fall back to whatever is found on path.
 
    # node.js
@@ -74,6 +75,24 @@ else()
       message(FATAL_ERROR "npm not found (required for rsw-homepage)")
    endif()
 
+   # npx
+   find_program(NPX
+      NAMES npx
+      PATH_SUFFIXES "bin"
+      NO_DEFAULT_PATH 
+      PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
+
+   if (NOT NPX)
+      find_program(NPX NAMES npx)
+   endif()
+
+   if(NPX)
+      message(STATUS "Using npx: ${NPX}")
+   else()
+      message(STATUS "npx not found (required for Electron)")
+   endif()
+
 endif()
 
 get_filename_component(NODEJS_PATH ${NODEJS} DIRECTORY CACHE)
@@ -110,6 +129,7 @@ endif()
 set(NODEJS "${NODEJS}" CACHE INTERNAL "")
 set(YARN "${YARN}" CACHE INTERNAL "")
 set(NPM "${NPM}" CACHE INTERNAL "")
+set(NPX "${NPX}" CACHE INTERNAL "")
 
 # create paths from programs
 get_filename_component(YARN_PATH ${YARN} DIRECTORY CACHE)
