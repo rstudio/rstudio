@@ -629,8 +629,8 @@ private:
       const char* inputPos = pContent->c_str();
       const char* end = inputPos + pContent->size();
       boost::cmatch match;
-      while (regex_utils::search(
-               inputPos, match, getColorEncodingRegex(findResults().gitFlag())))
+      boost::regex pattern = getColorEncodingRegex(findResults().gitFlag());
+      while (regex_utils::search(inputPos, match, pattern))
       {
          // decode the current match, and append it
          std::string matchedString(inputPos, inputPos + match.position());
@@ -754,8 +754,8 @@ private:
       std::size_t charactersProcessed = 0;
       boost::cmatch match;
       std::string cleanLine;
-
-      while (regex_utils::search(inputPos, match, getColorEncodingRegex(findResults().gitFlag())))
+      boost::regex pattern = getColorEncodingRegex(findResults().gitFlag());
+      while (regex_utils::search(inputPos, match, pattern))
       {
          std::string matchedString(inputPos, inputPos + match.position());
          inputPos += match.position() + match.length();
@@ -972,23 +972,21 @@ private:
 
          errorMessage.clear();
          boost::smatch match;
-         if (regex_utils::match(
-               line, match, getGrepOutputRegex(findResults().gitFlag())) &&
-             match.size() > 1)
+         boost::regex pattern = getGrepOutputRegex(findResults().gitFlag());
+         if (regex_utils::match(line, match, pattern) && match.size() > 1)
          {
             // extract filename from match
             std::string file = module_context::createAliasedPath(FilePath(match[1]));
 
             // replace the leading '.' with the directory name
-            file = workingDir_ + file.substr(1);
-
-            // git grep returns the path within the repo
-            // we use this combined with the find request's directory
-            // to locate the file on the user's system
-            if (findResults().gitFlag())
+            // (git grep doesn't prepend a '.' so we need to be careful here)
+            if (boost::algorithm::starts_with(file, "."))
             {
-               file.insert(0, "/");
-               file.insert(0, findResults().path());
+               file = workingDir_ + file.substr(1);
+            }
+            else if (findResults().gitFlag())
+            {
+               file = workingDir_ + "/" + file;
             }
 
             // normal skip heuristics
@@ -1432,6 +1430,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    {
       cmd = shell_utils::ShellCommand("git");
       // -c is used to override potential user-defined git parameters
+      cmd << "-c" << "core.quotepath=false";
       cmd << "-c" << "grep.lineNumber=true";
       cmd << "-c" << "grep.column=false";
       cmd << "-c" << "grep.patternType=default";
@@ -1692,24 +1691,55 @@ core::Error initialize()
    return initBlock.execute();
 }
 
+#define kColorEscapePattern "(?:\x1B\\[\\d*m)"
+
+// used to match and separate pieces of output generated
+// by git (or git grep)
 boost::regex getGrepOutputRegex(bool isGitGrep)
 {
-   boost::regex regex;
    if (isGitGrep)
-      regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+)\x1B\\[\\d+?m:\x1B\\[m(\\d+)\x1B\\[36m:\x1B\\[m(.*)");
+   {
+      // example output from git grep, matching 'hello' in a file called 'hello'
+      // with a line containing text 'hello, goodbye'
+      //
+      //    \033[35mhello\033[m\033[36m:\033[m\033[32m1\033[m\033[36m:\033[m\033[1;31mhello[m, goodbye
+      //
+      // or, split up
+      //
+      //    \033[35mhello\033[m                  // file path
+      //    \033[36m:\033[m                      // separator
+      //    \033[32m1\033[m                      // row number
+      //    \033[36m:\033[m                      // separator
+      //    \033[1;31mhello[m, goodbye           // matched line
+
+      // NOTE: the colors are intentionally captured as part of the
+      // file paths in some cases
+      return boost::regex(
+               "^"
+               kColorEscapePattern "([^\x1B]*)" kColorEscapePattern
+               kColorEscapePattern ":" kColorEscapePattern
+               kColorEscapePattern "(\\d+)" kColorEscapePattern
+               kColorEscapePattern ":" kColorEscapePattern
+               "(.*)");
+   }
    else
-      regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)");
-   return regex;
+   {
+      return boost::regex("^([^:]+):(\\d+):(.*)");
+   }
 }
 
+// regular expression used to find color boundaries for matches
+// within a line emitted via grep (or git grep)
 boost::regex getColorEncodingRegex(bool isGitGrep)
 {
-   boost::regex regex;
    if (isGitGrep)
-      regex = boost::regex("\x1B\\[((\\d+)?(\\;)?\\d+)?m");
+   {
+      return boost::regex("\x1B\\[((\\d+)?(\\;)?\\d+)?m");
+   }
    else
-      regex = boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?");
-   return regex;
+   {
+      return boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?");
+   }
 }
 
 
