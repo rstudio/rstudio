@@ -954,8 +954,12 @@ private:
                line, match, getGrepOutputRegex(findResults().gitFlag())) &&
              match.size() > 1)
          {
-            std::string file = module_context::createAliasedPath(
-                  FilePath(string_utils::systemToUtf8(match[1])));
+            // TODO: on Windows, even if text output might be UTF-8, the filenames
+            // themselves appear to be in the native locale? so we need to convert
+            // from the system encoding to UTF-8 here
+            auto text = string_utils::systemToUtf8(match[1]);
+            std::string file = module_context::createAliasedPath(FilePath(text));
+
             // git grep returns the path within the repo
             // we use this combined with the find request's directory
             // to locate the file on the user's system
@@ -1316,11 +1320,13 @@ void addDirectoriesToCommand(
    // not sure if EscapeFilesOnly can be removed or is necessary for an edge case
    *pCmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
    if (!(packageSourceFlag || packageTestsFlag))
-      *pCmd << string_utils::utf8ToSystem(directoryPath.getAbsolutePath());
+   {
+      *pCmd << directoryPath.getAbsolutePath();
+   }
    else if (packageSourceFlag)
    {
-      FilePath rPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/R"));
-      FilePath srcPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/src"));
+      FilePath rPath(directoryPath.getAbsolutePath() + "/R");
+      FilePath srcPath(directoryPath.getAbsolutePath() + "/src");
       if (rPath.exists())
          *pCmd << rPath;
       if (srcPath.exists())
@@ -1331,7 +1337,7 @@ void addDirectoriesToCommand(
    }
    else
    {
-      FilePath testsPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/tests"));
+      FilePath testsPath(directoryPath.getAbsolutePath() + "/tests");
       if (testsPath.exists())
          *pCmd << testsPath;
       else
@@ -1348,12 +1354,15 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    core::system::environment(&childEnv);
    core::system::setenv(&childEnv, "GREP_COLOR", "01");
    core::system::setenv(&childEnv, "GREP_COLORS", "ne:fn=:ln=:se=:mt=01");
+
 #ifdef _WIN32
+   // put our copy of grep on the PATH
    FilePath gnuGrepPath = session::options().gnugrepPath();
    core::system::addToPath(
             &childEnv,
             string_utils::utf8ToSystem(gnuGrepPath.getAbsolutePath()));
 #endif
+
    options.environment = childEnv;
 
    // Put the grep pattern in a file
@@ -1404,7 +1413,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-c" << "grep.extendedRegexp=false";
       cmd << "-c" << "grep.fullName=false";
       cmd << "-C";
-      cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
+      cmd << dirPath.getAbsolutePath();
       cmd << "grep";
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
