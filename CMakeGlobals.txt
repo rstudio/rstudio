@@ -228,9 +228,6 @@ endif()
 # pandoc version
 set(PANDOC_VERSION "2.16.2" CACHE INTERNAL "Pandoc version")
 
-# gnu grep version
-set(GNUGREP_VERSION "3.6" CACHE INTERNAL "Grep version")
-
 # quarto support
 if(LINUX AND UNAME_M STREQUAL aarch64)
    # disabled on linux aarch64
