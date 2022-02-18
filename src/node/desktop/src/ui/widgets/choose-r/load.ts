@@ -115,7 +115,7 @@ const loadPageLocalization = () => {
             break;
         }
 
-        const elements = document.querySelectorAll(`div[id^="${id}"]`);
+        const elements = document.querySelectorAll(`[id=${id}]`);
 
         elements.forEach((element) => {
           element.innerHTML = i18next.t('uiFolder.' + reducedId);
