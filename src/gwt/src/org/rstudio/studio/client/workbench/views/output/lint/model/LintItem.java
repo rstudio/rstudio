@@ -1,7 +1,7 @@
 /*
  * LintItem.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,11 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint.model;
 
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 
 public class LintItem extends JavaScriptObject
 {
@@ -45,7 +44,11 @@ public class LintItem extends JavaScriptObject
    public final native int getStartRow() /*-{
       return this["start.row"];
    }-*/;
-   
+
+   public final native void setStartRow(int row) /*-{
+      this["start.row"] = row;
+   }-*/;
+
    public final native int getStartColumn() /*-{
       return this["start.column"];
    }-*/;
@@ -53,13 +56,21 @@ public class LintItem extends JavaScriptObject
    public final native int getEndRow() /*-{
       return this["end.row"];
    }-*/;
-   
+
+   public final native void setEndRow(int row) /*-{
+      this["end.row"] = row;
+   }-*/;
+
    public final native int getEndColumn() /*-{
       return this["end.column"];
    }-*/;
    
    public final native String getText() /*-{
       return this["text"];
+   }-*/;
+
+   public final native void setText(String text) /*-{
+      this["text"] = text;
    }-*/;
    
    public final native String getType() /*-{
@@ -93,11 +104,11 @@ public class LintItem extends JavaScriptObject
          var type = items[key]["type"];
          if (type === "style" || type === "note")
             type = "info";
-            
+
          aceAnnotations.push({
             row: items[key]["start.row"],
             column: items[key]["start.column"],
-            text: items[key]["text"],
+            html: items[key]["text"],
             type: type
          });
       }

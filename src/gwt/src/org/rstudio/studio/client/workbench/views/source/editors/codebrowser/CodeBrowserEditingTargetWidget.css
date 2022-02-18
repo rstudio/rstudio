@@ -1,11 +1,11 @@
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 
 .captionLabel {
    font-weight: bold;
    color: #494949;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .captionLabel {
+.rstudio-themes-dark .captionLabel {
    color: #FFF;
 }
 
@@ -23,7 +23,7 @@
    padding-right: 6px;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .functionNamespace {
+.rstudio-themes-dark .functionNamespace {
    color: #DDD;
 }
 
@@ -31,7 +31,7 @@
    margin-bottom: 2px;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .dropDownImage {
+.rstudio-themes-dark .dropDownImage {
    filter: invert(100%) brightness(90%) saturate(90%);
 }
 
@@ -40,6 +40,6 @@
    color: #717171;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .readOnly {
+.rstudio-themes-dark .readOnly {
    color: #DDD;
 }

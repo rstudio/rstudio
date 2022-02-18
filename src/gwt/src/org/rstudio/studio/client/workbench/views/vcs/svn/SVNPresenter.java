@@ -1,7 +1,7 @@
 /*
  * SVNPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ContextMenuEvent;
 import com.google.gwt.event.dom.client.ContextMenuHandler;
@@ -33,6 +34,7 @@ import org.rstudio.studio.client.vcs.VCSApplicationParams;
 import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.vcs.BaseVcsPresenter;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ProcessCallback;
 import org.rstudio.studio.client.workbench.views.vcs.common.VCSFileOpener;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
@@ -165,8 +167,8 @@ public class SVNPresenter extends BaseVcsPresenter
    public void onVcsCleanup()
    {
       server_.svnCleanup(new ProcessCallback(
-                                         "SVN Cleanup",
-                                         "Cleaning up working directory...",
+                                         constants_.svnCleanup(),
+                                         constants_.cleaningUpWorkingDirectoryEllipses(),
                                          750)); // pad progress for feedback
    }
 
@@ -203,9 +205,8 @@ public class SVNPresenter extends BaseVcsPresenter
       else
       {
          globalDisplay_.showMessage(MessageDialog.INFO,
-                                    "No Changes to File",
-                                    "There are no changes to the file \"" +
-                                    file.getName() + "\" to diff.");
+                                    constants_.noChangesToFile(),
+                                    constants_.noChangesToFileTODiff(file.getName()));
       }
 
    }
@@ -236,5 +237,6 @@ public class SVNPresenter extends BaseVcsPresenter
    private final SVNCommandHandler commandHandler_;
    private final SVNState svnState_;
    private final SatelliteManager satelliteManager_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 
 }

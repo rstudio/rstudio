@@ -1,7 +1,7 @@
 /*
  * ServerDatabase.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 
 #include <server_core/ServerDatabase.hpp>
+#include <server_core/ServerLicense.hpp>
 #include <server_core/ServerKeyObfuscation.hpp>
 #include <server_core/http/SecureCookie.hpp>
 
@@ -48,7 +49,8 @@ constexpr const char* kDefaultSqliteDatabaseDirectory = "/var/lib/rstudio-server
 constexpr const char* kDatabaseHost = "host";
 constexpr const char* kDefaultDatabaseHost = "localhost";
 constexpr const char* kDatabaseName = "database";
-constexpr const char* kDefaultDatabaseName = "rstudio";
+constexpr const char* kDefaultWorkbenchDatabaseName = "rstudio";
+constexpr const char* kDefaultOpenSourceDatabaseName = "rstudio-os";
 constexpr const char* kDatabasePort = "port";
 constexpr const char* kDefaultPostgresqlDatabasePort = "5432";
 constexpr const char* kDatabaseUsername = "username";
@@ -103,7 +105,7 @@ Error readOptions(const std::string& databaseConfigFile,
    // if not specified, fall back to system configuration
    FilePath optionsFile = !databaseConfigFile.empty() ?
             FilePath(databaseConfigFile) :
-            core::system::xdg::systemConfigFile(kConfigFile);
+            core::system::xdg::findSystemConfigFile("database configuration", kConfigFile);
    
    Settings settings;
    Error error = settings.initialize(optionsFile);
@@ -116,13 +118,23 @@ Error readOptions(const std::string& databaseConfigFile,
 
    bool checkConfFilePermissions = false;
 
+   std::string defaultDatabaseName;
+   if (license::isProfessionalEdition()) 
+   {
+      defaultDatabaseName = kDefaultWorkbenchDatabaseName;
+   }
+   else 
+   {
+      defaultDatabaseName = kDefaultOpenSourceDatabaseName;
+   }
+
    if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
    {
       SqliteConnectionOptions options;
 
       // get the database directory - if not specified, we fallback to a hardcoded default path
       FilePath databaseDirectory = FilePath(settings.get(kSqliteDatabaseDirectory, kDefaultSqliteDatabaseDirectory));
-      FilePath databaseFile = databaseDirectory.completeChildPath("rstudio.sqlite");
+      FilePath databaseFile = databaseDirectory.completeChildPath(defaultDatabaseName + ".sqlite");
       options.file = databaseFile.getAbsolutePath();
       options.poolSize = settings.getInt(kConnectionPoolSize, 0);
 
@@ -139,7 +151,24 @@ Error readOptions(const std::string& databaseConfigFile,
          // always ensure the database file user is correct, if specified
          error = databaseFile.changeOwnership(databaseFileUser.get());
          if (error)
+         {
+            error.addProperty("server-user", databaseFileUser.get().getUsername());
+            error.addProperty("description", "Unable to change ownership of database file");
             return error;
+         }
+
+#ifndef _WIN32
+         error = databaseDirectory.changeOwnership(databaseFileUser.get());
+         if (error)
+         {
+            bool writable = false;
+            Error writableError = databaseDirectory.isWriteable(writable);
+            if (writableError || !writable)
+            {
+                LOG_ERROR_MESSAGE("Sqllite database directory: " + databaseDirectory.getAbsolutePath() + " must be writable by: " + databaseFileUser.get().getUsername());
+            }
+         }
+#endif
       }
 
       LOG_INFO_MESSAGE("Connecting to sqlite3 database at " + options.file);
@@ -148,7 +177,8 @@ Error readOptions(const std::string& databaseConfigFile,
    else if (boost::iequals(databaseProvider, kDatabaseProviderPostgresql))
    {
       PostgresqlConnectionOptions options;
-      options.database = settings.get(kDatabaseName, kDefaultDatabaseName);
+
+      options.database = settings.get(kDatabaseName, defaultDatabaseName);
       options.host = settings.get(kDatabaseHost, kDefaultDatabaseHost);
       options.username = settings.get(kDatabaseUsername, kDefaultPostgresqlDatabaseUsername);
       options.password = settings.get(kDatabasePassword, std::string());
@@ -165,7 +195,7 @@ Error readOptions(const std::string& databaseConfigFile,
       *pOptions = options;
 
       if (!options.connectionUri.empty() &&
-          (options.database != kDefaultDatabaseName ||
+          (options.database != defaultDatabaseName ||
            options.host != kDefaultDatabaseHost ||
            options.username != kDefaultPostgresqlDatabaseUsername ||
            options.port != kDefaultPostgresqlDatabasePort ||

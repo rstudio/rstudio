@@ -1,7 +1,7 @@
 /*
  * RmdTemplateOptionsDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,12 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.rmarkdown.RMarkdownConstants;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatterOutputOptions;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplate;
@@ -49,12 +50,13 @@ public class RmdTemplateOptionsDialog
          OperationWithInput<RmdTemplateOptionsDialog.Result> onSaved,
          Operation onCancelled)
    {
-      super("Edit " + (isShiny ? "Shiny " : "R Markdown ") + 
-            template.getName() + " Options", Roles.getDialogRole(), onSaved, onCancelled);
-      setWidth("425px");
-      setHeight(
-         RStudioThemes.isFlat() ? "430px" : "450px"
+      super(constants_.editTemplateOptionsCaption(isShiny ? "Shiny " : "R Markdown ", template.getName()),
+              Roles.getDialogRole(),
+              onSaved,
+              onCancelled
       );
+      setWidth("425px");
+      setHeight("430px");
       templateOptions_ = new RmdTemplateOptionsWidget(!isShiny);
       templateOptions_.setDocument(document);
       templateOptions_.setTemplate(template, false, frontMatter);
@@ -83,4 +85,6 @@ public class RmdTemplateOptionsDialog
    }
 
    RmdTemplateOptionsWidget templateOptions_;
+
+   private static final RMarkdownConstants constants_ = GWT.create(RMarkdownConstants.class);
 }

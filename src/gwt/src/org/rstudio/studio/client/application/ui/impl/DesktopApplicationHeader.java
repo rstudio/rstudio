@@ -1,7 +1,7 @@
 /*
  * DesktopApplicationHeader.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ApplicationQuit;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.Desktop;
@@ -44,7 +45,6 @@ import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.UpdateCheckResult;
 import org.rstudio.studio.client.application.ui.ApplicationHeader;
 import org.rstudio.studio.client.application.ui.GlobalToolbar;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.debugging.ErrorManager;
 import org.rstudio.studio.client.events.EditEvent;
@@ -126,8 +126,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       {
          final SessionInfo sessionInfo = session.getSessionInfo();
 
-         isFlatTheme_ = RStudioThemes.isFlat(pUIPrefs_.get());
-
          if (Desktop.isRemoteDesktop())
             addSignoutToolbar();
 
@@ -200,7 +198,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       toolbar_.getWrapper().addStyleName(styles.desktopGlobalToolbarWrapper());
-      toolbar_.addStyleName(styles.desktopGlobalToolbar());
    }
 
    @Override
@@ -247,7 +244,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
          ToolbarButton signOutButton = new ToolbarButton(
                ToolbarButton.NoText,
-               "Sign out",
+               constants_.signOutButtonText(),
                new ImageResource2x(RESOURCES.signOut2x()),
                event -> eventBus_.fireEvent(new LogoutRequestedEvent()));
 
@@ -346,8 +343,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       if (port == 0)
       {
          globalDisplay_.showErrorMessage(
-               "Error Opening Devtools",
-               "The Chromium devtools server could not be activated.");
+               constants_.errorOpeningDevToolsCaption(),
+               constants_.cannotActivateDevtoolsMessage());
       }
       else
       {
@@ -379,7 +376,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    public int getPreferredHeight()
    {
       if (toolbar_.isVisible())
-         return isFlatTheme_ ? 29 : 32;
+         return 29;
       else
          return 5;
    }
@@ -403,8 +400,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage("Error Checking for Updates",
-                  "An error occurred while checking for updates: "
+            globalDisplay_.showErrorMessage(constants_.errorCheckingUpdatesMessage(),
+                  constants_.errorOccurredCheckingUpdatesMessage()
                   + error.getMessage());
          }
       });
@@ -432,13 +429,13 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          ArrayList<String> elementIds = new ArrayList<>();
          ArrayList<Operation> buttonOperations = new ArrayList<>();
 
-         buttonLabels.add("Quit and Download...");
+         buttonLabels.add(constants_.quitDownloadButtonLabel());
          elementIds.add(ElementIds.DIALOG_YES_BUTTON);
          buttonOperations.add(new Operation() {
             @Override
             public void execute()
             {
-               appQuit_.prepareForQuit("Update RStudio", new QuitContext()
+               appQuit_.prepareForQuit(constants_.updateRStudioCaption(), new QuitContext()
                {
                   @Override
                   public void onReadyToQuit(boolean saveChanges)
@@ -450,7 +447,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
             }
          });
 
-         buttonLabels.add("Remind Later");
+         buttonLabels.add(constants_.remindLaterButtonLabel());
          elementIds.add(ElementIds.DIALOG_NO_BUTTON);
          buttonOperations.add(new Operation() {
             @Override
@@ -464,7 +461,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          // Only provide the option to ignore the update if it's not urgent.
          if (result.getUpdateUrgency() == 0)
          {
-            buttonLabels.add("Ignore Update");
+            buttonLabels.add(constants_.ignoreUpdateButtonLabel());
             elementIds.add(ElementIds.DIALOG_CANCEL_BUTTON);
             buttonOperations.add(new Operation() {
                @Override
@@ -477,7 +474,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          }
 
          globalDisplay_.showGenericDialog(GlobalDisplay.MSG_QUESTION,
-               "Update Available",
+               constants_.updateAvailableCaption(),
                result.getUpdateMessage(),
                buttonLabels,
                elementIds,
@@ -486,8 +483,8 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       else if (manual)
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-                              "No Update Available",
-                              "You're using the newest version of RStudio.");
+                              constants_.noUpdateAvailableCaption(),
+                              constants_.usingNewestVersionMessage());
       }
    }
 
@@ -606,6 +603,6 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    private IgnoredUpdates ignoredUpdates_;
    private boolean ignoredUpdatesDirty_ = false;
    private ApplicationQuit appQuit_;
-   private Boolean isFlatTheme_ = false;
    private WebApplicationHeaderOverlay overlay_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

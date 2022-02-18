@@ -1,7 +1,7 @@
 /*
  * SessionClientEventQueue.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -78,6 +78,11 @@ void ClientEventQueue::add(const ClientEvent& event)
    {
       if (event.data().getType() == json::Type::STRING)
          LOG_DEBUG_MESSAGE("Queued event: " + event.typeName() + ": " + event.data().getString());
+      else if (event.typeName() == "busy")
+      {
+         bool val = event.data().getObject()["value"].getBool();
+         LOG_DEBUG_MESSAGE("Queued event: " + event.typeName() + ": " + safe_convert::numberToString(val));
+      }
       else
          LOG_DEBUG_MESSAGE("Queued event: " + event.typeName());
    }

@@ -1,7 +1,7 @@
 /*
  * NewRMarkdownDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,24 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.event.dom.client.ChangeEvent;
+import com.google.gwt.event.dom.client.ChangeHandler;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiFactory;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.HTMLPanel;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.RadioButton;
+import com.google.gwt.user.client.ui.TextBox;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -29,6 +47,8 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.common.newdocument.NewDocumentResources;
+import org.rstudio.studio.client.common.newdocument.TemplateMenuItem;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownContext;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
@@ -40,38 +60,24 @@ import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateChooser;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
-import com.google.gwt.uibinder.client.UiBinder;
-import com.google.gwt.uibinder.client.UiFactory;
-import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.ui.HTMLPanel;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RadioButton;
-import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
 {
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
    public static class RmdNewDocument
    {  
-      public RmdNewDocument(String template, String author, String title, 
+      public RmdNewDocument(String template, String author, String title, String date, 
                             String format, boolean isShiny)
       {
          template_ = template;
          title_ = title;
          author_ = author;
+         date_ = date;
          isShiny_ = isShiny;
          format_ = format;
-         result_ = toJSO(author, title, format, isShiny);
+         result_ = toJSO(author, title, date, format, isShiny);
       }
       
       public String getTemplate()
@@ -87,6 +93,11 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       public String getTitle()
       {
          return title_;
+      }
+
+      public String getDate()
+      {
+         return date_;
       }
       
       public boolean isShiny()
@@ -106,17 +117,19 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       
       private final JavaScriptObject toJSO(String author, 
                                            String title, 
+                                           String date,
                                            String format, 
                                            boolean isShiny)
       {
          RmdFrontMatter result = RmdFrontMatter.create();
-         result.applyCreateOptions(author, title, format, isShiny);
+         result.applyCreateOptions(author, title, date, format, isShiny);
          return result;
       }
 
       private final String template_;
       private final String author_;
       private final String title_;
+      private final String date_;
       private final boolean isShiny_;
       private final String format_;
       private final JavaScriptObject result_;
@@ -156,51 +169,42 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    {
    }
    
-   public interface NewRmdStyle extends CssResource
-   {
-      String outputFormat();
-      String outputFormatName();
-      String outputFormatChoice();
-      String outputFormatDetails();
-      String outputFormatIcon();
-   }
-
-   public interface Resources extends ClientBundle
-   {
-      @Source("MarkdownPresentationIcon_2x.png")
-      ImageResource presentationIcon2x();
-
-      @Source("MarkdownDocumentIcon_2x.png")
-      ImageResource documentIcon2x();
-
-      @Source("MarkdownOptionsIcon_2x.png")
-      ImageResource optionsIcon2x();
-      
-      @Source("MarkdownTemplateIcon_2x.png")
-      ImageResource templateIcon2x();
-
-      @Source("MarkdownShinyIcon_2x.png")
-      ImageResource shinyIcon2x();
-   }
 
    public NewRMarkdownDialog(
          RMarkdownServerOperations server,
          RMarkdownContext context,
          WorkbenchContext workbench,
-         String author,
+         UserPrefs prefs,
          OperationWithInput<Result> operation)
    {
-      super("New R Markdown", Roles.getDialogRole(), operation);
+      super(constants_.newRMarkdown(), Roles.getDialogRole(), operation);
       server_ = server;
       context_ = context;
       templateChooser_ = new RmdTemplateChooser(server_);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       formatOptions_ = new ArrayList<>();
-      style.ensureInjected();
-      txtAuthor_.setText(author);
-      txtTitle_.setText("Untitled");
-      Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), "Templates");
+      resources.styles().ensureInjected();
+      txtAuthor_.setText(prefs.documentAuthor().getGlobalValue());
+      txtTitle_.setText(constants_.untitledCapitalized());
+      checkboxAutoDate_.setText(prefs.rmdAutoDate().getDescription());
+      
+      boolean auto = prefs.rmdAutoDate().getGlobalValue();
+      txtDate_.setText(getISODate());
+      txtDate_.setEnabled(!auto);
+
+      checkboxAutoDate_.setValue(auto);
+      checkboxAutoDate_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+
+         @Override
+         public void onValueChange(ValueChangeEvent<Boolean> event) {
+            Boolean auto = event.getValue();
+            prefs.rmdAutoDate().setGlobalValue(auto);
+            txtDate_.setEnabled(!auto);
+         }
+      });
+      
+      Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), constants_.templatesCapitalized());
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -263,7 +267,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       updateOptions(getSelectedTemplate());
       
       // Add option to create empty document
-      ThemedButton emptyDoc = new ThemedButton("Create Empty Document", evt ->
+      ThemedButton emptyDoc = new ThemedButton(constants_.createEmptyDocument(), evt ->
       {
          closeDialog();
          if (operation != null)
@@ -276,7 +280,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiFactory
    public HelpLink makeHelpCaption()
    {
-      return new HelpLink("Using Shiny with R Markdown",
+      return new HelpLink(constants_.usingShinyWithRMarkdown(),
                           "using_rmarkdown_shiny");
    }
    
@@ -320,6 +324,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
             new RmdNewDocument(getSelectedTemplate(), 
                                txtAuthor_.getText().trim(), 
                                txtTitle_.getText().trim(), 
+                               checkboxAutoDate_.getValue() ? "`r Sys.Date()`" : txtDate_.getText().trim(),
                                formatName,
                                isShiny),
             templateChooser_.getChosenTemplate(),
@@ -380,9 +385,9 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       if (shiny)
       {
          templateFormatPanel_.add(createFormatOption(SHINY_DOC_NAME, 
-               "Create an HTML document with interactive Shiny components."));
+               constants_.shinyDocNameDescription()));
          templateFormatPanel_.add(createFormatOption(SHINY_PRESENTATION_NAME, 
-               "Create an IOSlides presentation with interactive Shiny components."));
+               constants_.shinyPresentationNameDescription()));
       }
       else 
       {
@@ -426,6 +431,10 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       }
    }
    
+   private native String getISODate() /*-{
+      return new Date().toISOString().substring(0, 10);
+   }-*/;
+
    private void populateTemplates()
    {
       templateChooser_.populateTemplates();
@@ -439,34 +448,35 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private Widget createFormatOption(String name, String description)
    {
       HTMLPanel formatWrapper = new HTMLPanel("");
-      formatWrapper.setStyleName(style.outputFormat());
+      formatWrapper.setStyleName(resources.styles().outputFormat());
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
-      sb.appendHtmlConstant("<span class=\"" + style.outputFormatName() + 
+      sb.appendHtmlConstant("<span class=\"" + resources.styles().outputFormatName() + 
                             "\">");
       sb.appendEscaped(name);
       sb.appendHtmlConstant("</span>");
       RadioButton button = new RadioButton("DefaultOutputFormat", 
                                            sb.toSafeHtml().asString(), true);
-      button.addStyleName(style.outputFormatChoice());
+      button.addStyleName(resources.styles().outputFormatChoice());
       formatOptions_.add(button);
       formatWrapper.add(button);
       Label label = new Label(description);
-      label.setStyleName(style.outputFormatDetails());
+      label.setStyleName(resources.styles().outputFormatDetails());
       formatWrapper.add(label);
       return formatWrapper;
    }
    
    @UiField TextBox txtAuthor_;
    @UiField TextBox txtTitle_;
+   @UiField TextBox txtDate_;
    @UiField WidgetListBox<TemplateMenuItem> listTemplates_;
-   @UiField NewRmdStyle style;
-   @UiField Resources resources;
+   @UiField NewDocumentResources resources;
    @UiField HTMLPanel templateFormatPanel_;
    @UiField HTMLPanel newTemplatePanel_;
    @UiField HTMLPanel existingTemplatePanel_;
    @UiField(provided=true) RmdTemplateChooser templateChooser_;
    @UiField HTMLPanel shinyInfoPanel_;
-
+   @UiField CheckBox checkboxAutoDate_;
+   
    private final Widget mainWidget_;
    private List<RadioButton> formatOptions_;
    private JsArray<RmdTemplate> templates_;
@@ -476,8 +486,8 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    private final RMarkdownContext context_;
    private final RMarkdownServerOperations server_;
    
-   private final static String TEMPLATE_CHOOSE_EXISTING = "From Template";
-   private final static String TEMPLATE_SHINY = "Shiny";
-   private final static String SHINY_DOC_NAME = "Shiny Document";
-   private final static String SHINY_PRESENTATION_NAME = "Shiny Presentation";
+   private final static String TEMPLATE_CHOOSE_EXISTING = constants_.fromTemplate();
+   private final static String TEMPLATE_SHINY = constants_.shinyCapitalized();
+   private final static String SHINY_DOC_NAME = constants_.shinyDocument();
+   private final static String SHINY_PRESENTATION_NAME = constants_.shinyPresentation();
 }

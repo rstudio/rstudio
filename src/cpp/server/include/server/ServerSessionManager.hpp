@@ -1,7 +1,7 @@
 /*
  * ServerSessionManager.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,6 +63,7 @@ public:
    core::Error launchSession(boost::asio::io_service& ioService,
                              const core::r_util::SessionContext& context,
                              const core::http::Request& request,
+                             bool &launched,
                              const core::http::ResponseHandler& onLaunch = core::http::ResponseHandler(),
                              const core::http::ErrorHandler& onError = core::http::ErrorHandler());
    void removePendingLaunch(const core::r_util::SessionContext& context);
@@ -95,6 +96,8 @@ private:
    core::Error launchAndTrackSession(
                         boost::asio::io_service&,
                         const core::r_util::SessionLaunchProfile& profile);
+
+   void cleanStalePendingLaunches();
 
 private:
    // pending launches

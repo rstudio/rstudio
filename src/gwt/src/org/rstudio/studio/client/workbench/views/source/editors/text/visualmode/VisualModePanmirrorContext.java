@@ -1,7 +1,7 @@
 /*
  * VisualModePanmirrorContext.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
@@ -34,12 +35,15 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
+import org.rstudio.studio.client.quarto.QuartoHelper;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ImagePreviewer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.XRefNavigationEvent;
@@ -135,10 +139,15 @@ public class VisualModePanmirrorContext
          {
             return resourcePath;
          }
+         
+         String hugoAsset = pathToHugoAsset(path);
+         if (hugoAsset != null)
+         {
+            return hugoAsset;
+         }
          else
          {
-            // try for hugo asset
-            return pathToHugoAsset(path);
+            return pathToQuartoSiteAsset(path);
          }
       };
 
@@ -224,7 +233,7 @@ public class VisualModePanmirrorContext
             for (int i=0; i<imageUris.length(); i++)
             {
                String uri = imageUris.get(i);
-               if (isValidURL(uri))
+               if (isHttpURL(uri))
                {
                   resolvedUris.push(uri);
                }
@@ -232,9 +241,13 @@ public class VisualModePanmirrorContext
                {
                   String path = uiContext.mapPathToResource.map(uri);
                   if (path != null)
+                  {
                      resolvedUris.push(path);
+                  }
                   else
+                  {
                      unresolvedUris.push(uri);
+                  }
                }
             }
 
@@ -242,7 +255,7 @@ public class VisualModePanmirrorContext
             if (unresolvedUris.length() > 0)
             {
                FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
-               String imagesDir = resourceDir.completePath("images");
+               String imagesDir = resourceDir.completePath(constants_.images());
                server_.rmdImportImages(unresolvedUris, imagesDir, new SimpleRequestCallback<JsArrayString>() {
                   @Override
                   public void onResponseReceived(JsArrayString importedUris)
@@ -273,9 +286,10 @@ public class VisualModePanmirrorContext
       return uiContext;
    }
 
-   private native boolean isValidURL(String url)  /*-{
+   private native boolean isHttpURL(String url)  /*-{
       try {
-         new URL(url);
+         url = new URL(url);
+         return url.protocol === "http:" || url.protocol === "https:";
       } catch (_) {
          return false;
       }
@@ -314,14 +328,33 @@ public class VisualModePanmirrorContext
          return null;
       }
    }
+   
+   private String pathToQuartoSiteAsset(String path)
+   {
+      QuartoConfig config = sessionInfo_.getQuartoConfig();
+      if (QuartoHelper.isQuartoWebsiteDoc(path, config))
+      {
+         FileSystemItem file = FileSystemItem.createFile(path);
+         FileSystemItem siteDir = FileSystemItem.createDir(config.project_dir);
+         String assetPath = file.getPathRelativeTo(siteDir);
+         if (assetPath != null)
+            return "/" + assetPath;
+      }
+      
+      return null;
+   }
 
    private String resolvePath(String path)
    {
       String hugoPath = hugoAssetPath(path);
       if (hugoPath != null)
          return hugoPath;
-      else
-         return path;
+      
+      String quartoPath = quartoSiteAssetPath(path);
+      if (quartoPath != null)
+         return quartoPath;
+      
+      return path;
    }
 
 
@@ -333,6 +366,21 @@ public class VisualModePanmirrorContext
       if (format_.isHugoProjectDocument() && asset.startsWith("/"))
       {
          return hugoStaticDirs().get(0).completePath(asset.substring(1));
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
+   private String quartoSiteAssetPath(String asset)
+   {
+      QuartoConfig config = sessionInfo_.getQuartoConfig();
+      if (format_.isQuartoDocument() && 
+          asset.startsWith("/") && 
+          QuartoHelper.isQuartoWebsiteConfig(config))
+      {
+         return FileSystemItem.createDir(config.project_dir).completePath(asset.substring(1));
       }
       else
       {
@@ -389,4 +437,5 @@ public class VisualModePanmirrorContext
    private SessionInfo sessionInfo_;
    private EventBus events_;
    private RMarkdownServerOperations server_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

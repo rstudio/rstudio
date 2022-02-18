@@ -1,7 +1,7 @@
 /*
  * KeyMap.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,6 @@ package org.rstudio.core.client.command;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.CommandWith2Args;
 import org.rstudio.core.client.DirectedGraph;
 import org.rstudio.core.client.Mutable;

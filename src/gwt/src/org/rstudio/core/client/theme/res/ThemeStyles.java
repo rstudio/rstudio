@@ -1,7 +1,7 @@
 /*
  * ThemeStyles.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,16 +28,6 @@ public interface ThemeStyles extends CssResource
 {
    public static ThemeStyles INSTANCE = ThemeResources.INSTANCE.themeStyles();
 
-   String NW();
-   String N();
-   String NE();
-   String W();
-   String C();
-   String E();
-   String SW();
-   String S();
-   String SE();
-
    String windowframe();
 
    String primaryWindowFrameHeader();
@@ -63,7 +53,6 @@ public interface ThemeStyles extends CssResource
    String rstheme_secondaryToolbar();
    String secondaryToolbarPanel();
    String globalToolbar();
-   String desktopGlobalToolbar();
    String webGlobalToolbar();
    String webHeaderBarCommandsProjectMenu();
    String toolbarButton();
@@ -217,4 +206,8 @@ public interface ThemeStyles extends CssResource
    String noLogo();
 
    String launcherJobRunButton();
+
+   String gutterInfo();
+   String gutterWarning();
+   String gutterError();
 }

@@ -1,7 +1,7 @@
 /*
  * LauncherJobsTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
@@ -87,4 +88,5 @@ public class LauncherJobsTab extends DelayLoadWorkbenchTab<LauncherJobsPresenter
    }
    
    final Shim shim_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

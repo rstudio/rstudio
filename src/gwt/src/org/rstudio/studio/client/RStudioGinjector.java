@@ -1,7 +1,7 @@
 /*
  * RStudioGinjector.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -76,6 +76,7 @@ import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorCrossrefServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorDOIServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorDataCiteServer;
+import org.rstudio.studio.client.panmirror.server.PanmirrorEnvironmentServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorPubMedServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorXRefServer;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServer;
@@ -88,8 +89,10 @@ import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
 import org.rstudio.studio.client.projects.ui.newproject.NewDirectoryPage;
 import org.rstudio.studio.client.projects.ui.newproject.NewPackagePage;
+import org.rstudio.studio.client.projects.ui.newproject.NewQuartoProjectPage;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
+import org.rstudio.studio.client.quarto.ui.NewQuartoDocumentDialog;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFramePane;
 import org.rstudio.studio.client.rmarkdown.ui.RmdOutputFrameSatellite;
@@ -169,6 +172,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCppHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetQuartoHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceBackgroundHighlighter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorBackgroundLinkHighlighter;
@@ -189,9 +193,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeConfirm;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModePanmirrorFormat;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeSpelling;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlEditorToolsProviderQuarto;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeMarkdownWriter;
 import org.rstudio.studio.client.workbench.views.source.editors.text.visualmode.VisualModeNavigation;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNCommandHandler;
+import org.rstudio.studio.client.workbench.views.viewer.quarto.QuartoConnection;
 import org.rstudio.studio.client.workbench.views.environment.ClearAllDialog;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImport;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDialog;
@@ -237,6 +243,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(TextEditingTargetSqlHelper sqlHelper);
    void injectMembers(TextEditingTargetChunks chunks);
    void injectMembers(TextEditingTargetPackageDependencyHelper packageDependencyHelper);
+   void injectMembers(TextEditingTargetQuartoHelper quartoHelper);
    void injectMembers(EditingTargetCodeExecution codeExecution);
    void injectMembers(LocalRepositoriesWidget localRepositoriesWidget);
    void injectMembers(CppCompletionRequest request);
@@ -320,6 +327,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PanmirrorDOIServer panmirrorDOIServer);
    void injectMembers(PanmirrorXRefServer panmirrorXRefServer);
    void injectMembers(PanmirrorZoteroServer panmirrorZoteroServer);
+   void injectMembers(PanmirrorEnvironmentServer panmirrorEnvironmentServer);
    void injectMembers(PanmirrorDialogs panmirrorEditorUI);
    void injectMembers(PanmirrorWidget panmirrorWidget);
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
@@ -340,6 +348,11 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SourceColumnManager columnManager);
    void injectMembers(PythonPreferencesPaneBase<?> pane);
    void injectMembers(ConsoleInterpreterVersion version);
+   void injectMembers(NewQuartoDocumentDialog newQuartoDocumentDialog);
+   void injectMembers(NewQuartoProjectPage newProjectPage);
+   void injectMembers(QuartoConnection quartoMessageBus);
+   void injectMembers(YamlEditorToolsProviderQuarto yamlCompletionSourceQuarto);
+
 
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

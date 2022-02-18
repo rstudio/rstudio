@@ -1,7 +1,7 @@
 /*
  * WebContentFileType.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,8 @@ public class WebContentFileType extends TextFileType
                       EditorLanguage editorLanguage,
                       String defaultExtension,
                       ImageResource icon,
-                      boolean isMarkdown)
+                      boolean isMarkdown,
+                      boolean canSourceOnSave)
    {
       super(id, 
             label, 
@@ -37,7 +38,7 @@ public class WebContentFileType extends TextFileType
             defaultExtension,
             icon,
             true,    // word-wrap
-            false, 
+            canSourceOnSave, 
             isMarkdown, // allow code execution in markdown 
             false, 
             false,

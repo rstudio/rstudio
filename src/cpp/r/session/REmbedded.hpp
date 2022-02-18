@@ -1,7 +1,7 @@
 /*
  * REmbedded.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,7 @@ struct Callbacks
    void (*showMessage)(const char*);
    int (*readConsole)(const char *, CONSOLE_BUFFER_CHAR*, int, int);
    void (*writeConsoleEx)(const char *, int, int);
+   void (*resetConsole)();
    int (*editFile)(const char*);
    void (*busy)(int);
    int (*chooseFile)(int, char *, int);

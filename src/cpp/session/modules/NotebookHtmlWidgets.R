@@ -1,7 +1,7 @@
 #
 # NotebookHtmlWidgets.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -134,7 +134,7 @@
    x$sizingPolicy$viewer.padding <- 0
    x$sizingPolicy$viewer.fill <- TRUE
 
-   # make width dinamic to size correctly non-figured
+   # make width dynamic to size correctly non-figured
    if (!is.null(x$sizingPolicy$knitr) && identical(x$sizingPolicy$knitr$figure, FALSE)) {
       x$sizingPolicy$defaultWidth <- "auto"
       x$sizingPolicy$browser$fill <- FALSE

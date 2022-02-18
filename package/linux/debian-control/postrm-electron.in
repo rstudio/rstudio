@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# errors shouldn't cause script to exit
+set +e 
+
+# remove softlink to rstudio 
+rm -f /usr/bin/rstudio
+
+# clear error termination state
+set -e

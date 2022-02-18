@@ -1,7 +1,7 @@
 /*
  * SendToConsoleEvent.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,6 +41,7 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Hand
       public final native boolean shouldRaise()   /*-{ return !!this["raise"];   }-*/;
       public final native boolean shouldFocus()   /*-{ return !!this["focus"];   }-*/;
       public final native boolean shouldAnimate() /*-{ return !!this["animate"]; }-*/;
+      public final native boolean shouldEcho()    /*-{ return !!this["echo"]; }-*/;
    }
   
    public SendToConsoleEvent()
@@ -76,7 +77,8 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Hand
             data.shouldExecute(),
             data.shouldRaise(),
             data.shouldFocus(),
-            data.shouldAnimate());
+            data.shouldAnimate(), 
+            data.shouldEcho());
    }
    
    public SendToConsoleEvent(String code, 
@@ -103,12 +105,24 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Hand
                              boolean focus,
                              boolean animate)
    {
+      this(code, language, execute, raise, focus, animate, true);
+   }
+
+   public SendToConsoleEvent(String code,
+                             String language,
+                             boolean execute, 
+                             boolean raise,
+                             boolean focus,
+                             boolean animate, 
+                             boolean echo)
+   {
       code_ = code;
       language_ = language;
       execute_ = execute;
       raise_ = raise;
       focus_ = focus;
       animate_ = animate;
+      echo_ = echo;
    }
    
 
@@ -141,6 +155,11 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Hand
    {
       return animate_;
    }
+
+   public boolean shouldEcho()
+   {
+      return echo_;
+   }
    
    @Override
    public int focusMode()
@@ -167,4 +186,5 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Hand
    private boolean focus_;
    private boolean raise_;
    private boolean animate_;
+   private boolean echo_;
 }

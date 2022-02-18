@@ -1,7 +1,7 @@
 /*
  * DesktopWebPage.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -167,6 +167,12 @@ void WebPage::init()
    connect(this, &QWebEnginePage::linkHovered, onLinkHovered);
    connect(profile(), &QWebEngineProfile::downloadRequested, onDownloadRequested);
    connect(profile(), &WebProfile::urlIntercepted, this, &WebPage::onUrlIntercepted, Qt::DirectConnection);
+
+   // we were playing with trying to get fullscreen requests to work -- implelmenting this callback is part
+   // of the solution, however the fullscreen you get just fills the rstudio window. to get it fully working
+   // you would need to them chain on the rstudio window also going fullscreen, and then create a gesture for
+   // exiting fullscreen (e.g. the Esc key). for now we disable this b/c we haven't done this additional work
+   // connect(this, &QWebEnginePage::fullScreenRequested, this, &WebPage::acceptFullScreen, Qt::DirectConnection);
 }
 
 void WebPage::setBaseUrl(const QUrl& baseUrl)
@@ -187,6 +193,11 @@ void WebPage::closeWindow(QString name)
    BrowserWindow* pWindow = s_windowTracker.getWindow(name);
    if (pWindow)
       desktop::closeWindow(pWindow);
+}
+
+// https://stackoverflow.com/questions/43078450/how-to-make-qwebengineview-go-fullscreen-qt-5-8
+void WebPage::acceptFullScreen(QWebEngineFullScreenRequest request){
+   request.accept();
 }
 
 void WebPage::prepareForWindow(const PendingWindow& pendingWindow)
@@ -441,6 +452,13 @@ bool WebPage::acceptNavigationRequest(const QUrl &url,
    {
       return true;
    }
+   // allow presentation urls to be handled internally by Qt. note that the client is responsible for
+   // ensuring that non-local tutorial urls are appropriately sandboxed.
+   else if (!presentationUrl().isEmpty() &&
+            url.toString().startsWith(presentationUrl()))
+   {
+      return true;
+   }
    // allow tutorial urls to be handled internally by Qt. note that the client is responsible for 
    // ensuring that non-local tutorial urls are appropriately sandboxed.
    else if (!tutorialUrl().isEmpty() &&
@@ -514,6 +532,11 @@ void WebPage::setViewerUrl(const QString& viewerUrl)
    setPaneUrl(viewerUrl, &viewerUrl_);
 }
 
+void WebPage::setPresentationUrl(const QString& presentationUrl)
+{
+   setPaneUrl(presentationUrl, &presentationUrl_);
+}
+
 QString WebPage::tutorialUrl()
 {
    if (tutorialUrl_.isEmpty())
@@ -544,6 +567,22 @@ QString WebPage::viewerUrl()
 
    // return our own viewer URL
    return viewerUrl_;
+}
+
+QString WebPage::presentationUrl()
+{
+   if (presentationUrl_.isEmpty())
+   {
+      // if we don't know the viewer URL ourselves but we're a child window, ask our parent
+      BrowserWindow *parent = dynamic_cast<BrowserWindow*>(view()->window());
+      if (parent != nullptr && parent->opener() != nullptr)
+      {
+         return parent->opener()->presentationUrl();
+      }
+   }
+
+   // return our own presentation URL
+   return presentationUrl_;
 }
 
 void WebPage::setShinyDialogUrl(const QString &shinyDialogUrl)

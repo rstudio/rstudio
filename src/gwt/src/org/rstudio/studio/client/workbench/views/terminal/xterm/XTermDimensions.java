@@ -1,7 +1,7 @@
 /*
  * XTermDimensions.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,16 +16,14 @@
 package org.rstudio.studio.client.workbench.views.terminal.xterm;
 
 import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsProperty;
 import jsinterop.annotations.JsType;
 
 /**
  * Size of xterm in rows and columns of text.
- * https://github.com/xtermjs/xterm.js/blob/4.7.0/addons/xterm-addon-fit/typings/xterm-addon-fit.d.ts
  */
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class XTermDimensions
 {
-   @JsProperty public native int getCols();
-   @JsProperty public native int getRows();
+   public int cols;
+   public int rows;
 }

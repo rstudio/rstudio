@@ -1,7 +1,7 @@
 /*
  * History.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.history;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayNumber;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -317,7 +318,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
          @Override
          public void onError(ServerError error)
          {
-            globalDisplay_.showErrorMessage("Error While Retrieving History",
+            globalDisplay_.showErrorMessage(constants_.errorRetrievingHistoryCaption(),
                                            error.getUserMessage());
          }
       });
@@ -445,7 +446,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
    {
       view_.bringToFront();
 
-      consoleDispatcher_.chooseFileThenExecuteCommand("Load History",
+      consoleDispatcher_.chooseFileThenExecuteCommand(constants_.loadHistoryCaption(),
                                                       "loadhistory");
    }
 
@@ -453,7 +454,7 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
    {
       view_.bringToFront();
 
-      consoleDispatcher_.saveFileAsThenExecuteCommand("Save History As",
+      consoleDispatcher_.saveFileAsThenExecuteCommand(constants_.saveHistoryAsCaption(),
                                                       ".Rhistory",
                                                       false,
                                                       "savehistory");
@@ -468,8 +469,8 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
       if (selectedRowIndexes.size() < 1)
       {
          globalDisplay_.showErrorMessage(
-                              "Error",
-                              "No history entries currently selected.");
+                              constants_.errorCaption(),
+                              constants_.noHistoryEntriesSelectedMessage());
          return;
       }
 
@@ -478,14 +479,13 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
 
       globalDisplay_.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
-            "Confirm Remove Entries",
-            "Are you sure you want to remove the selected entries from " +
-            "the history?",
+            constants_.confirmRemoveEntriesCaption(),
+            constants_.confirmRemoveEntriesMessage(),
 
             new ProgressOperation() {
                public void execute(final ProgressIndicator indicator)
                {
-                  indicator.onProgress("Removing items...");
+                  indicator.onProgress(constants_.removingItemsProgressMessage());
 
                   // for each selected row index we need to calculate
                   // the offset from the bottom
@@ -514,13 +514,13 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
 
       globalDisplay_.showYesNoMessage(
          GlobalDisplay.MSG_WARNING,
-         "Confirm Clear History",
-         "Are you sure you want to clear all history entries?",
+         constants_.confirmClearHistoryCaption(),
+         constants_.confirmClearHistoryMessage(),
 
          new ProgressOperation() {
             public void execute(final ProgressIndicator indicator)
             {
-               indicator.onProgress("Clearing history...");
+               indicator.onProgress(constants_.clearingHistoryProgressMessage());
                server_.clearHistory(
                      new VoidServerRequestCallback(indicator));
             }
@@ -663,4 +663,5 @@ public class History extends BasePresenter implements SelectionCommitEvent.Handl
    private HistoryServerOperations server_;
    private final Session session_;
    private final ConsoleDispatcher consoleDispatcher_;
+   private static final HistoryConstants constants_ = GWT.create(HistoryConstants.class);
 }

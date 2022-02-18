@@ -1,7 +1,7 @@
 /*
  * RVersionsScanner.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -158,7 +158,8 @@ std::vector<r_util::RVersion> RVersionsScanner::getRVersions()
 
    // read additional user-specified R home directories
    std::vector<r_util::RVersion> rEntries;
-   FilePath userRDirsPath = core::system::xdg::systemConfigFile("r-versions");
+   FilePath userRDirsPath = core::system::xdg::findSystemConfigFile(
+         "R version metadata", "r-versions");
    if (userRDirsPath.exists())
    {
       std::string contents;

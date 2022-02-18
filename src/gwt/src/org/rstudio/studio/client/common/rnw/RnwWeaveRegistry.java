@@ -1,7 +1,7 @@
 /*
  * RnwWeaveRegistry.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,8 @@ package org.rstudio.studio.client.common.rnw;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 
 import com.google.gwt.core.client.JsArray;
@@ -56,7 +58,7 @@ public class RnwWeaveRegistry
                str.append(" ");
          }
          if (i == (typeNames.length - 2))
-            str.append("and ");
+            str.append(constants_.andText());
       }
       return str.toString();
    }
@@ -90,4 +92,5 @@ public class RnwWeaveRegistry
    
    private final Provider<Session> pSession_;
    private ArrayList<RnwWeave> weaveTypes_ = null;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

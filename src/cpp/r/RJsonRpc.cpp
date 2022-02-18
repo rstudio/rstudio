@@ -1,7 +1,7 @@
 /*
  * RJsonRpc.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,7 +40,7 @@
   that these and any other errors which occur during json rpc calls are
   both reported as errors to the rpc caller as well as printed to the 
   console (this is because we use r::engine::evaluateExpressions for calling
-  the method and have yet to figure out how to supress it from printing
+  the method and have yet to figure out how to suppress it from printing
   messages to the console). 
 */
 
@@ -84,7 +84,7 @@ Error callRHandler(const std::string& functionName,
                    SEXP* pResult,
                    sexp::Protect* pProtect)
 {
-   // intialize the function
+   // initialize the function
    r::exec::RFunction rFunction(functionName);
    
    // add params

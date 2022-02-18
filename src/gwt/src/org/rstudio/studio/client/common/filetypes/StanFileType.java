@@ -1,7 +1,7 @@
 /*
  * StanFileType.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,11 @@ package org.rstudio.studio.client.common.filetypes;
 
 import java.util.HashSet;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -34,7 +36,7 @@ public class StanFileType extends PreviewableFromRFileType
    
    public String getPreviewButtonText()
    {
-      return "Check";
+      return constants_.checkPreviewButtonText();
    }
    
    @Override
@@ -51,4 +53,5 @@ public class StanFileType extends PreviewableFromRFileType
       result.add(commands.reindent());
       return result;
    }
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

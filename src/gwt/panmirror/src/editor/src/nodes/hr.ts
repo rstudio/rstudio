@@ -1,7 +1,7 @@
 /*
  * hr.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -59,7 +59,7 @@ const extension = (context: ExtensionContext) => {
         new ProsemirrorCommand(
           EditorCommandId.HorizontalRule,
           [],
-          insertNode(schema.nodes.horizontal_rule),
+          insertNode(schema.nodes.horizontal_rule, {}, true),
           hrOmniInsert(ui),
         ),
       ];
@@ -85,6 +85,7 @@ const extension = (context: ExtensionContext) => {
 function hrOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Horizontal Rule'),
+    keywords: ["hr"],
     description: ui.context.translateText('Line that spans across the page'),
     group: OmniInsertGroup.Content,
     priority: 1,

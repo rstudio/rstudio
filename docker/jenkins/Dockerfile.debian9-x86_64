@@ -2,10 +2,16 @@ FROM debian:stretch
 
 ENV OPERATING_SYSTEM=debian_9
 
-# update apt repository to cloudfront's mirror
+# update apt repository to cloudfront's mirror and add cran35 to apt sources
 RUN set -x \
     && sed -i "s/deb.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
-    && sed -i "s/security.debian.org/cloudfront.debian.net/" /etc/apt/sources.list
+    && sed -i "s/security.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
+    && export DEBIAN_FRONTEND=noninteractive \
+    && apt-get update \
+    && apt-get install -y gnupg1 \
+    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys '95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7' \
+    && echo 'deb http://cran.rstudio.com/bin/linux/debian stretch-cran35/' >> /etc/apt/sources.list \
+    && apt-get update
 
 # update system
 RUN set -x \
@@ -34,6 +40,7 @@ RUN apt-get update -y && apt-get install -y \
     libpq-dev \
     libsqlite3-dev \
     libxml2-dev \
+    ninja-build \
     procps \
     uuid-dev \
     make \
@@ -89,7 +96,7 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common debian9
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/

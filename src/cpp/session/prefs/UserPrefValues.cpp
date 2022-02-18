@@ -1,6 +1,6 @@
 /* UserPrefValues.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -401,7 +401,7 @@ core::Error UserPrefValues::setShowIndentGuides(bool val)
 }
 
 /**
- * Whether continue comments (by inserting the comment character) after adding a new line.
+ * Whether to continue comments (by inserting the comment character) after adding a new line.
  */
 bool UserPrefValues::continueCommentsOnNewline()
 {
@@ -648,7 +648,20 @@ core::Error UserPrefValues::setShowDiagnosticsCpp(bool val)
 }
 
 /**
- * Whether to show diagnostic messages for other types of code (not R or C++).
+ * Whether to show diagnostic messages for YAML code as you type.
+ */
+bool UserPrefValues::showDiagnosticsYaml()
+{
+   return readPref<bool>("show_diagnostics_yaml");
+}
+
+core::Error UserPrefValues::setShowDiagnosticsYaml(bool val)
+{
+   return writePref("show_diagnostics_yaml", val);
+}
+
+/**
+ * Whether to show diagnostic messages for other types of code (not R, C++, or YAML).
  */
 bool UserPrefValues::showDiagnosticsOther()
 {
@@ -1194,19 +1207,6 @@ core::Error UserPrefValues::setSourceWithEcho(bool val)
 }
 
 /**
- * Whether to initialize new projects with a Git repo by default.
- */
-bool UserPrefValues::newProjectGitInit()
-{
-   return readPref<bool>("new_project_git_init");
-}
-
-core::Error UserPrefValues::setNewProjectGitInit(bool val)
-{
-   return writePref("new_project_git_init", val);
-}
-
-/**
  * The default engine to use when processing Sweave documents.
  */
 std::string UserPrefValues::defaultSweaveEngine()
@@ -1402,16 +1402,16 @@ core::Error UserPrefValues::setPackagesPaneEnabled(bool val)
 }
 
 /**
- * Whether to use RCPP templates.
+ * C++ template.
  */
-bool UserPrefValues::useRcppTemplate()
+std::string UserPrefValues::cppTemplate()
 {
-   return readPref<bool>("use_rcpp_template");
+   return readPref<std::string>("cpp_template");
 }
 
-core::Error UserPrefValues::setUseRcppTemplate(bool val)
+core::Error UserPrefValues::setCppTemplate(std::string val)
 {
-   return writePref("use_rcpp_template", val);
+   return writePref("cpp_template", val);
 }
 
 /**
@@ -1529,6 +1529,19 @@ std::string UserPrefValues::documentAuthor()
 core::Error UserPrefValues::setDocumentAuthor(std::string val)
 {
    return writePref("document_author", val);
+}
+
+/**
+ * Use current date when rendering document
+ */
+bool UserPrefValues::rmdAutoDate()
+{
+   return readPref<bool>("rmd_auto_date");
+}
+
+core::Error UserPrefValues::setRmdAutoDate(bool val)
+{
+   return writePref("rmd_auto_date", val);
 }
 
 /**
@@ -1922,16 +1935,16 @@ core::Error UserPrefValues::setBusyDetection(std::string val)
 }
 
 /**
- * A whitelist of apps that should not be considered busy in the Terminal.
+ * A list of apps that should not be considered busy in the Terminal.
  */
-core::json::Array UserPrefValues::busyWhitelist()
+core::json::Array UserPrefValues::busyExclusionList()
 {
-   return readPref<core::json::Array>("busy_whitelist");
+   return readPref<core::json::Array>("busy_exclusion_list");
 }
 
-core::Error UserPrefValues::setBusyWhitelist(core::json::Array val)
+core::Error UserPrefValues::setBusyExclusionList(core::json::Array val)
 {
-   return writePref("busy_whitelist", val);
+   return writePref("busy_exclusion_list", val);
 }
 
 /**
@@ -2026,6 +2039,32 @@ core::Error UserPrefValues::setConsoleDoubleClickSelect(bool val)
 }
 
 /**
+ * Whether the 'Auto Suspension Blocked' icon should appear in the R Console toolbar.
+ */
+bool UserPrefValues::consoleSuspendBlockedNotice()
+{
+   return readPref<bool>("console_suspend_blocked_notice");
+}
+
+core::Error UserPrefValues::setConsoleSuspendBlockedNotice(bool val)
+{
+   return writePref("console_suspend_blocked_notice", val);
+}
+
+/**
+ * How long to wait before warning that automatic session suspension has been paused. Higher values for less frequent notices.
+ */
+int UserPrefValues::consoleSuspendBlockedNoticeDelay()
+{
+   return readPref<int>("console_suspend_blocked_notice_delay");
+}
+
+core::Error UserPrefValues::setConsoleSuspendBlockedNoticeDelay(int val)
+{
+   return writePref("console_suspend_blocked_notice_delay", val);
+}
+
+/**
  * Whether a git repo should be initialized inside new projects by default.
  */
 bool UserPrefValues::newProjGitInit()
@@ -2036,6 +2075,19 @@ bool UserPrefValues::newProjGitInit()
 core::Error UserPrefValues::setNewProjGitInit(bool val)
 {
    return writePref("new_proj_git_init", val);
+}
+
+/**
+ * Whether an renv environment should be created inside new projects by default.
+ */
+bool UserPrefValues::newProjUseRenv()
+{
+   return readPref<bool>("new_proj_use_renv");
+}
+
+core::Error UserPrefValues::setNewProjUseRenv(bool val)
+{
+   return writePref("new_proj_use_renv", val);
 }
 
 /**
@@ -2166,6 +2218,19 @@ bool UserPrefValues::useDevtools()
 core::Error UserPrefValues::setUseDevtools(bool val)
 {
    return writePref("use_devtools", val);
+}
+
+/**
+ * Clean before install.
+ */
+bool UserPrefValues::cleanBeforeInstall()
+{
+   return readPref<bool>("clean_before_install");
+}
+
+core::Error UserPrefValues::setCleanBeforeInstall(bool val)
+{
+   return writePref("clean_before_install", val);
 }
 
 /**
@@ -2361,6 +2426,19 @@ int UserPrefValues::dataViewerMaxColumns()
 core::Error UserPrefValues::setDataViewerMaxColumns(int val)
 {
    return writePref("data_viewer_max_columns", val);
+}
+
+/**
+ * The maximum number of characters to show in a data viewer cell.
+ */
+int UserPrefValues::dataViewerMaxCellSize()
+{
+   return readPref<int>("data_viewer_max_cell_size");
+}
+
+core::Error UserPrefValues::setDataViewerMaxCellSize(int val)
+{
+   return writePref("data_viewer_max_cell_size", val);
 }
 
 /**
@@ -2637,6 +2715,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingShowMargin(bool val)
 }
 
 /**
+ * Whether to show line numbers in the code editors used in visual mode
+ */
+bool UserPrefValues::visualMarkdownCodeEditorLineNumbers()
+{
+   return readPref<bool>("visual_markdown_code_editor_line_numbers");
+}
+
+core::Error UserPrefValues::setVisualMarkdownCodeEditorLineNumbers(bool val)
+{
+   return writePref("visual_markdown_code_editor_line_numbers", val);
+}
+
+/**
  * The default visual editing mode font size, in points
  */
 int UserPrefValues::visualMarkdownEditingFontSizePoints()
@@ -2909,6 +3000,45 @@ core::Error UserPrefValues::setSessionProtocolDebug(bool val)
    return writePref("session_protocol_debug", val);
 }
 
+/**
+ * When enabled, if the active project contains a Python virtual environment, then RStudio will automatically activate this environment on startup.
+ */
+bool UserPrefValues::pythonProjectEnvironmentAutomaticActivate()
+{
+   return readPref<bool>("python_project_environment_automatic_activate");
+}
+
+core::Error UserPrefValues::setPythonProjectEnvironmentAutomaticActivate(bool val)
+{
+   return writePref("python_project_environment_automatic_activate", val);
+}
+
+/**
+ * When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.
+ */
+bool UserPrefValues::checkNullExternalPointers()
+{
+   return readPref<bool>("check_null_external_pointers");
+}
+
+core::Error UserPrefValues::setCheckNullExternalPointers(bool val)
+{
+   return writePref("check_null_external_pointers", val);
+}
+
+/**
+ * Enable IDE features for the Quarto publishing system.
+ */
+std::string UserPrefValues::quartoEnabled()
+{
+   return readPref<std::string>("quarto_enabled");
+}
+
+core::Error UserPrefValues::setQuartoEnabled(std::string val)
+{
+   return writePref("quarto_enabled", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2960,6 +3090,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowFunctionSignatureTooltips,
       kShowDiagnosticsR,
       kShowDiagnosticsCpp,
+      kShowDiagnosticsYaml,
       kShowDiagnosticsOther,
       kStyleDiagnostics,
       kDiagnosticsOnSave,
@@ -3002,7 +3133,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kToolbarVisible,
       kDefaultProjectLocation,
       kSourceWithEcho,
-      kNewProjectGitInit,
       kDefaultSweaveEngine,
       kDefaultLatexProgram,
       kUseRoxygen,
@@ -3018,7 +3148,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kRealTimeSpellchecking,
       kNavigateToBuildError,
       kPackagesPaneEnabled,
-      kUseRcppTemplate,
+      kCppTemplate,
       kRestoreSourceDocuments,
       kHandleErrorsInUserCodeOnly,
       kAutoExpandErrorTracebacks,
@@ -3028,6 +3158,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShinyBackgroundJobs,
       kPlumberViewerType,
       kDocumentAuthor,
+      kRmdAutoDate,
       kRmdPreferredTemplatePath,
       kRmdViewerType,
       kShowPublishDiagnostics,
@@ -3058,7 +3189,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowLauncherJobsTab,
       kLauncherJobsSort,
       kBusyDetection,
-      kBusyWhitelist,
+      kBusyExclusionList,
       kKnitWorkingDir,
       kDocOutlineShow,
       kLatexPreviewOnCursorIdle,
@@ -3066,7 +3197,10 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGlobalTheme,
       kGitDiffIgnoreWhitespace,
       kConsoleDoubleClickSelect,
+      kConsoleSuspendBlockedNotice,
+      kConsoleSuspendBlockedNoticeDelay,
       kNewProjGitInit,
+      kNewProjUseRenv,
       kRootDocument,
       kShowUserHomePage,
       kReuseSessionsForProjectLinks,
@@ -3077,6 +3211,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kTerminalPath,
       kRsaKeyPath,
       kUseDevtools,
+      kCleanBeforeInstall,
       kUseInternet2,
       kUseSecureDownload,
       kCleanupAfterRCmdCheck,
@@ -3092,6 +3227,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSubmitCrashReports,
       kDefaultRVersion,
       kDataViewerMaxColumns,
+      kDataViewerMaxCellSize,
       kEnableScreenReader,
       kTypingStatusDelayMs,
       kReducedMotion,
@@ -3113,6 +3249,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingShowMargin,
+      kVisualMarkdownCodeEditorLineNumbers,
       kVisualMarkdownEditingFontSizePoints,
       kVisualMarkdownCodeEditor,
       kZoteroLibraries,
@@ -3134,6 +3271,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kMemoryQueryIntervalSeconds,
       kTerminalPythonIntegration,
       kSessionProtocolDebug,
+      kPythonProjectEnvironmentAutomaticActivate,
+      kCheckNullExternalPointers,
+      kQuartoEnabled,
    });
 }
    

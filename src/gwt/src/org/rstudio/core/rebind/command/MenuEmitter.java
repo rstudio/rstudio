@@ -1,7 +1,7 @@
 /*
  * MenuEmitter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -140,11 +140,14 @@ public class MenuEmitter
             new ClassSourceFileComposerFactory(packageName_, className);
       factory.addImport("org.rstudio.core.client.Debug");
       factory.addImport("org.rstudio.core.client.command.MenuCallback");
+      factory.addImport("com.google.gwt.core.client.GWT");
+      factory.addImport("org.rstudio.studio.client.workbench.commands.CmdConstants");
       SourceWriter writer = factory.createSourceWriter(context_, printWriter);
 
       emitFields(writer);
       emitConstructor(writer, className);
       emitMethod(writer);
+      emitI18n(writer);
       writer.outdent();
       writer.println("}");
       context_.commit(logger_, printWriter);
@@ -181,6 +184,12 @@ public class MenuEmitter
       writer.println("}");
    }
 
+   private void emitI18n(SourceWriter writer)
+   {
+      writer.println("private MenuConstants " + i18n_constants_name + " = GWT.create(MenuConstants.class);");
+   }
+
+
    private void emitMenu(SourceWriter writer, Element el, String menuName) throws UnableToCompleteException
    {
       AccessKeyTracker accessKeys = new AccessKeyTracker(menuName);
@@ -205,10 +214,11 @@ public class MenuEmitter
          }
          else if (child.getTagName().equals("menu"))
          {
-            String label = child.getAttribute("label");
-            writer.println("callback.beginMenu(\"" +
-                           Generator.escape(label) +
-                           "\");");
+            String childLabel = child.getAttribute("label");
+            String label = menuName + "$" + childLabel;
+            String label_for_emit = this.i18n_constants_name + "." + parse_label_for_i18n(label) + "Label()";
+            writer.println("callback.beginMenu(" + label_for_emit + ");");
+
             emitMenu(writer, child, label);
             writer.println("callback.endMenu();");
             accessKeys.processMenu(label);
@@ -228,6 +238,17 @@ public class MenuEmitter
       accessKeys.report();
    }
 
+   /**
+    * Replaces characters that cannot be in an interface name with "_"
+    */
+   private String parse_label_for_i18n(String label)
+   {
+      String result = label.replaceAll("[^0-9a-zA-Z_$]", "_");
+
+      // Collapse runs of underscores into a single underscore
+      return result.replaceAll("_+", "_");
+   }
+
    private final TreeLogger logger_;
    private final GeneratorContext context_;
    private final JClassType bundleType_;
@@ -235,4 +256,5 @@ public class MenuEmitter
    private final Element menuEl_;
    private final String packageName_;
    private final Map<String, Element> commandProps_;
+   private final String i18n_constants_name = "_constants";
 }

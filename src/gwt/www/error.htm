@@ -47,7 +47,7 @@
    <div id="view" class="container">
 
    <form method="post" id="signOutForm" action="auth-sign-out">
-     <input type="hidden" name="csrf-token" id="csrf-token"/>
+     <input type="hidden" name="rs-csrf-token" id="rs-csrf-token"/>
      <div class="header-box">
        <img alt class="logo-image" id="logo" src="/images/rstudio-logo.png" />
        <span class="username">
@@ -76,8 +76,8 @@
       document.getElementById("logo").src = getBaseUri() + "/images/rstudio-logo.png";
       document.getElementById("url").href = getBaseUri() + "/home";
 
-      document.getElementById('csrf-token').value =
-         document.cookie.match(RegExp('(?:^|;\\s*)csrf-token=([^;]*)'))[1];
+      document.getElementById('rs-csrf-token').value =
+         document.cookie.match(RegExp('(?:^|;\\s*)rs-csrf-token=([^;]*)'))[1];
 
    </script>
 

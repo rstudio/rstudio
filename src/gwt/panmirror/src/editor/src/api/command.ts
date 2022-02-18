@@ -1,7 +1,7 @@
 /*
  * command.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@ import { isList } from './list';
 import { OmniInsert } from './omni_insert';
 import { EditorUIPrefs, kListSpacingTight } from './ui';
 import { selectionIsWithinRange, selectionHasRange } from './selection';
+import { requiresTrailingP, insertTrailingP } from './trailing_p';
 
 export enum EditorCommandId {
   // text editing
@@ -91,6 +92,7 @@ export enum EditorCommandId {
 
   // insert
   OmniInsert = '12F96C13-38C1-4266-A0A1-E871D8C709FB',
+  Table = 'CBD3ACC6-B2A3-457D-885C-EDA600F6FC67',
   Link = '842FCB9A-CA61-4C5F-A0A0-43507B4B3FA9',
   RemoveLink = '072D2084-218D-4A34-AF1F-7E196AF684B2',
   Image = '808220A3-2B83-4CB6-BCC1-46565D54FA47',
@@ -112,6 +114,8 @@ export enum EditorCommandId {
   EnDash = 'C32AFE32-0E57-4A16-9C39-88EB1D82B8B4',
   NonBreakingSpace = 'CF6428AB-F36E-446C-8661-2781B2CD1169',
   HardLineBreak = '3606FF87-866C-4729-8F3F-D065388FC339',
+  Tabset = '7327AF95-3EA7-42C8-8C42-D4CB0D15CAE4',
+  Callout = 'DC86C28A-0140-4EB5-A745-2C1EFA55C94D',
 
   // raw
   TexInline = 'CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864',
@@ -132,12 +136,21 @@ export enum EditorCommandId {
   StanCodeChunk = '65D33344-CBE9-438C-B337-A538F8D7FCE5',
   ExecuteCurentRmdChunk = '31C799F3-EF18-4F3A-92E6-51F7A3193A1B',
   ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B',
+  ExpandChunk = '0226518C-559A-4BFC-A5BD-244BEE8175AA',
+  CollapseChunk = '4AFBBC0C-A6DA-4019-B85F-374636E349C3',
+  ExpandAllChunks = 'B217913B-67C9-457F-B766-7FCCB502F611',
+  CollapseAllChunks = '9907A864-D707-4410-93A4-07871A8C43A6',
 
   // outline
   GoToNextSection = 'AE827BDA-96F8-4E84-8030-298D98386765',
   GoToPreviousSection = 'E6AA728C-2B75-4939-9123-0F082837ACDF',
   GoToNextChunk = '50DD6E51-13B5-4F1E-A46B-6A33EB1609D9',
-  GoToPreviousChunk = '8D105D33-78FE-4A98-8195-6B71361424C5'
+  GoToPreviousChunk = '8D105D33-78FE-4A98-8195-6B71361424C5',
+
+  // slides
+  InsertSlidePause = 'FCA8BF2E-2668-4919-92FC-02083EB48246',
+  InsertSlideNotes = '9C709915-02BE-4F4F-9CEB-50E17973C9BE',
+  InsertSlideColumns = 'AE62D05F-1415-4E1F-84AE-753EE2393002'
 }
 
 export interface EditorCommand {
@@ -338,10 +351,9 @@ export function toggleBlockType(type: NodeType, toggletype: NodeType, attrs = {}
     // if the type has pandoc attrs then see if we can transfer from the existing node
     let pandocAttr: any = {};
     if (pandocAttrInSpec(type.spec)) {
-      const predicate = (n: ProsemirrorNode) => pandocAttrAvailable(n.attrs);
-      const node = findParentNode(predicate)(state.selection);
-      if (node) {
-        pandocAttr = pandocAttrFrom(node.node.attrs);
+      const parentNode = state.selection.$anchor.node();
+      if (parentNode && pandocAttrAvailable(parentNode.attrs)) {
+        pandocAttr = pandocAttrFrom(parentNode.attrs);
       }
     }
 
@@ -361,14 +373,22 @@ export function toggleWrap(type: NodeType, attrs?: { [key: string]: any }): Comm
   };
 }
 
-export function insertNode(nodeType: NodeType, attrs = {}): CommandFn {
+export function insertNode(nodeType: NodeType, attrs = {}, selectAfter = false): CommandFn {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void) => {
     if (!canInsertNode(state, nodeType)) {
       return false;
     }
 
     if (dispatch) {
-      dispatch(state.tr.replaceSelectionWith(nodeType.create(attrs)));
+      const tr = state.tr;
+      tr.replaceSelectionWith(nodeType.create(attrs));
+      if (selectAfter) {
+        if (requiresTrailingP(tr.selection)) {
+          insertTrailingP(tr);
+          setTextSelection(tr.selection.to + 1, 1)(tr);
+        }
+      }
+      dispatch(tr);
     }
 
     return true;

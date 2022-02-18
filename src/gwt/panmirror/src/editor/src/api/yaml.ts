@@ -1,7 +1,7 @@
 /*
  * yaml.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeWithPos } from 'prosemirror-utils';
 import { EditorView } from 'prosemirror-view';
+import { EditorState } from 'prosemirror-state';
 
 import yaml from 'js-yaml';
 
@@ -55,6 +56,17 @@ export function yamlMetadataNodes(doc: ProsemirrorNode) {
 
 export function isYamlMetadataNode(node: ProsemirrorNode) {
   return node.type === node.type.schema.nodes.yaml_metadata;
+}
+
+export function titleFromState(state: EditorState) {
+  const yamlNodes = yamlMetadataNodes(state.doc);
+  for (const yamlNode of yamlNodes) {
+    const title = titleFromYamlMetadataNode(yamlNode.node);
+    if (title) {
+      return title;
+    }
+  }
+  return '';
 }
 
 export function titleFromYamlMetadataNode(node: ProsemirrorNode) {
@@ -105,9 +117,10 @@ export function firstYamlBlock(code: string): { [key: string]: any } | null {
   }
 }
 
-export function parseYaml(yamlCode: string) {
+export function parseYaml(yamlCode: string) : unknown {
   try {
-    const yamlParsed = yaml.safeLoad(yamlCode, {
+    
+    const yamlParsed = yaml.load(yamlCode, {
       onWarning: logException,
     });
     return yamlParsed;
@@ -119,7 +132,7 @@ export function parseYaml(yamlCode: string) {
 
 export function toYamlCode(obj: any): string | null {
   try {
-    const yamlCode = yaml.safeDump(obj);
+    const yamlCode = yaml.dump(obj);
     return yamlCode;
   } catch (e) {
     logException(e);

@@ -1,7 +1,7 @@
 /*
  * PamMain.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,7 @@ int main(int argc, char * const argv[])
    { 
       // initialize log
       core::log::setProgramId("rserver-pam");
-      core::system::initializeSystemLog("rserver-pam", core::log::LogLevel::WARN);
+      core::system::initializeLog("rserver-pam", core::log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

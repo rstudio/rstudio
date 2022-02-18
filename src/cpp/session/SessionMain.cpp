@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,6 +64,7 @@
 #include <core/system/Crypto.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/LibraryLoader.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/Xdg.hpp>
 
@@ -115,7 +116,6 @@
 #include "SessionInit.hpp"
 #include "SessionMainProcess.hpp"
 #include "SessionRpc.hpp"
-#include "SessionSuspend.hpp"
 #include "SessionOfflineService.hpp"
 
 #include <session/SessionRUtil.hpp>
@@ -127,7 +127,9 @@
 #include "modules/SessionAskSecret.hpp"
 #include "modules/SessionAuthoring.hpp"
 #include "modules/SessionBreakpoints.hpp"
+#include "modules/SessionCpp.hpp"
 #include "modules/SessionHTMLPreview.hpp"
+#include "modules/SessionClipboard.hpp"
 #include "modules/SessionCodeSearch.hpp"
 #include "modules/SessionConfigFile.hpp"
 #include "modules/SessionConsole.hpp"
@@ -181,6 +183,7 @@
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/rmarkdown/SessionRmdNotebook.hpp"
 #include "modules/rmarkdown/SessionBookdown.hpp"
+#include "modules/quarto/SessionQuarto.hpp"
 #include "modules/shiny/SessionShiny.hpp"
 #include "modules/sql/SessionSql.hpp"
 #include "modules/stan/SessionStan.hpp"
@@ -209,6 +212,7 @@
 #include "modules/SessionSVN.hpp"
 
 #include <session/SessionConsoleProcess.hpp>
+#include <session/SessionSuspend.hpp>
 
 #include <session/projects/ProjectsSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
@@ -237,6 +241,12 @@ using namespace rsession::client_events;
 // forward-declare overlay methods
 namespace rstudio {
 namespace session {
+
+namespace {
+
+std::string s_fallbackLibraryPath;
+
+} // end anonymous namespace
 
 bool disableExecuteRprofile()
 {
@@ -453,11 +463,13 @@ Error runPreflightScript()
 
 // implemented below
 void stopMonitorWorkerThread();
+Error ensureLibRSoValid();
 
 void exitEarly(int status)
 {
    stopMonitorWorkerThread();
    FileLock::cleanUp();
+   FilePath(s_fallbackLibraryPath).removeIfExists();
    ::exit(status);
 }
 
@@ -541,7 +553,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::crypto::initialize)
 #endif
       (modules::code_search::initialize)
+      (modules::clipboard::initialize)
       (modules::clang::initialize)
+      (modules::cpp::initialize)
       (modules::connections::initialize)
       (modules::files::initialize)
       (modules::find::initialize)
@@ -559,6 +573,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::cran_mirrors::initialize)
       (modules::profiler::initialize)
       (modules::viewer::initialize)
+      (modules::quarto::initialize)
       (modules::rmarkdown::initialize)
       (modules::rmarkdown::notebook::initialize)
       (modules::rmarkdown::templates::initialize)
@@ -682,14 +697,21 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    using namespace rsession::client_events;
    if (rsession::persistentState().hadAbend() && !options().standalone())
    {
-      LOG_ERROR_MESSAGE("session hadabend");
-
+      LOG_ERROR_MESSAGE("The previous R session terminated abnormally");
       ClientEvent abendWarningEvent(kAbendWarning);
       rsession::clientEventQueue().add(abendWarningEvent);
    }
 
    if (s_printCharsetWarning)
       rstudio::r::exec::warning("Character set is not UTF-8; please change your locale");
+
+   error = ensureLibRSoValid();
+   if (error)
+   {
+      rstudio::r::session::reportWarningToConsole(error.getProperty("description")
+         + ". Please contact your system administrator to correct this libR.so install.");
+      LOG_ERROR(error);
+   }
 
    // propagate console history options
    rstudio::r::session::consoleHistory().setRemoveDuplicates(
@@ -742,6 +764,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 
    // success!
    return Success();
+}
+
+void rInitComplete()
+{
+   module_context::events().onInitComplete();
 }
 
 void notifyIfRVersionChanged()
@@ -813,11 +840,11 @@ int rEditFile(const std::string& file)
 
    // wait for edit_completed
    json::JsonRpcRequest request;
+
    bool succeeded = http_methods::waitForMethod(kEditCompleted,
                                         editEvent,
                                         suspend::disallowSuspend,
                                         &request);
-
    if (!succeeded)
       return false;
 
@@ -862,11 +889,11 @@ FilePath rChooseFile(bool newFile)
 
    // wait for choose_file_completed
    json::JsonRpcRequest request;
+
    bool succeeded = http_methods::waitForMethod(kChooseFileCompleted,
                                         chooseFileEvent,
                                         suspend::disallowSuspend,
                                         &request);
-
    if (!succeeded)
       return FilePath();
 
@@ -929,6 +956,11 @@ void rConsoleHistoryReset()
    rsession::clientEventQueue().add(event);
 }
 
+void rConsoleReset()
+{
+   rsession::console_input::clearConsoleInputBuffer();
+}
+
 bool rLocator(double* x, double* y)
 {
    // since locator can be called in a loop we need to checkForChanges
@@ -942,11 +974,11 @@ bool rLocator(double* x, double* y)
 
    // wait for locator_completed
    json::JsonRpcRequest request;
+
    bool succeeded = http_methods::waitForMethod(kLocatorCompleted,
                                         locatorEvent,
                                         suspend::disallowSuspend,
                                         &request);
-
    if (!succeeded)
       return false;
 
@@ -1113,13 +1145,13 @@ bool rHandleUnsavedChanges()
 
    // wait for method
    json::JsonRpcRequest request;
+
    bool succeeded = http_methods::waitForMethod(
                         kHandleUnsavedChangesCompleted,
                         boost::bind(http_methods::waitForMethodInitFunction,
                                     event),
                         suspend::disallowSuspend,
                         &request);
-
    if (!succeeded)
       return false;
 
@@ -1542,6 +1574,7 @@ UserPrompt::Response showUserPrompt(const UserPrompt& userPrompt)
 
    // wait for user_prompt_completed
    json::JsonRpcRequest request;
+
    http_methods::waitForMethod(kUserPromptCompleted,
                        userPromptEvent,
                        suspend::disallowSuspend,
@@ -1704,6 +1737,39 @@ bool ensureUtf8Charset()
 #endif
 }
 
+/*
+ * If linux couldn't load libR.so while the rsession binary was loading, it may
+ * have loaded a different libR.so from one of the default library locations:
+ * /lib/
+ * /usr/local/lib/
+ * /usr/local/lib64/R/
+ * etc.
+ * This is usually a system installation of R, potentially with a different
+ * version of R than this session is configured to run.
+ *
+ * This can put the session in a state where it thinks it's running one version
+ * of R, with all R libraries and paths set for version A, but the actual R
+ * version we're running is some version B. We check for that here so we can
+ * alert the user once R has completely loaded.
+ */
+Error ensureLibRSoValid()
+{
+#ifdef __linux__
+   std::string libPath = rsession::module_context::rHomeDir() + "/lib/libR.so";
+   Error libError = core::system::verifyLibrary(libPath);
+   if (libError)
+   {
+      libError.addProperty("description", "R shared object (" + libPath + ") failed load test with error: " + libError.getProperty("dlerror") +
+         "\nLinux may have loaded a different libR.so than requested. "
+         "This can result in \"package was built under R version X.Y.Z\" user warnings and R_HOME/R version mismatches."
+         "\nR_HOME: " + rsession::module_context::rHomeDir() +
+         "\nR Version: " + rsession::module_context::rVersion());
+      return libError;
+   }
+#endif
+   return Success();
+}
+
 // io_service for performing monitor work on the thread
 boost::asio::io_service s_monitorIoService;
 
@@ -1741,10 +1807,13 @@ void initMonitorClient()
 } // anonymous namespace
 
 // run session
-int main (int argc, char * const argv[])
+int main(int argc, char * const argv[])
 {
    try
    {
+      // save fallback library path
+      s_fallbackLibraryPath = core::system::getenv("RSTUDIO_FALLBACK_LIBRARY_PATH");
+      
       // sleep on startup if requested (mainly for debugging)
       std::string sleepOnStartup = core::system::getenv("RSTUDIO_SESSION_SLEEP_ON_STARTUP");
       if (!sleepOnStartup.empty())
@@ -1755,13 +1824,31 @@ int main (int argc, char * const argv[])
             boost::this_thread::sleep(boost::posix_time::seconds(sleepDuration));
          }
       }
+      
+      // initialize thread id
+      core::thread::initializeMainThreadId(boost::this_thread::get_id());
+      core::system::setEnableCallbacksRequireMainThread(true);
+
+      // terminate immediately with given exit code (for testing/debugging)
+      std::string exitOnStartup = core::system::getenv("RSTUDIO_SESSION_EXIT_ON_STARTUP");
+      if (!exitOnStartup.empty())
+      {
+         int exitCode = core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
+
+         std::cerr << "RSession terminating with exit code " << exitCode << " as requested.\n";
+         std::cout << "RSession will now exit.\n";
+         return core::safe_convert::stringTo<int>(exitOnStartup, EXIT_FAILURE);
+      }
 
       // initialize log so we capture all errors including ones which occur
       // reading the config file (if we are in desktop mode then the log
       // will get re-initialized below)
       std::string programId = "rsession-" + core::system::username();
       core::log::setProgramId(programId);
-      core::system::initializeSystemLog(programId, core::log::LogLevel::WARN);
+      core::system::initializeLog(programId,
+                                  core::log::LogLevel::WARN,
+                                  core::system::xdg::userLogDir(),
+                                  true); // force log dir to be under user's home directory
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
@@ -1845,7 +1932,10 @@ int main (int argc, char * const argv[])
       // reflect stderr logging
       if (options.logStderr())
          log::addLogDestination(
-            std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(log::LogLevel::WARN)));
+            std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(
+                                                     core::system::generateShortenedUuid(),
+                                                     log::LogLevel::WARN,
+                                                     log::LogMessageFormatType::PRETTY)));
 
       // initialize monitor but stop its thread on exit
       initMonitorClient();
@@ -1859,7 +1949,7 @@ int main (int argc, char * const argv[])
       if (!options.standalone() && !options.verifyInstallation())
       {
          core::log::addLogDestination(
-            monitor::client().createLogDestination(log::LogLevel::WARN, options.programIdentity()));
+            monitor::client().createLogDestination(core::system::generateShortenedUuid(), log::LogLevel::WARN, options.programIdentity()));
       }
 
       // initialize file lock config
@@ -1877,7 +1967,8 @@ int main (int argc, char * const argv[])
          {
             core::system::initializeLog(options.programIdentity(),
                                         core::log::LogLevel::WARN,
-                                        options.userLogPath());
+                                        options.userLogPath(),
+                                        true); // force log dir to be under user's home directory
          }
       }
 
@@ -1893,7 +1984,7 @@ int main (int argc, char * const argv[])
       // Mirror the R getOptions("width") value in an environment variable
       core::system::setenv("RSTUDIO_CONSOLE_WIDTH",
                safe_convert::numberToString(rstudio::r::options::kDefaultWidth));
-
+ 
       // set the rstudio user identity environment variable (can differ from
       // username in debug configurations). this is provided so that
       // rpostback knows what local stream to connect back to
@@ -1918,7 +2009,7 @@ int main (int argc, char * const argv[])
          core::system::setenv(kRSessionStandalonePortNumber, options.wwwPort());
       }
 
-      // ensure we aren't being started as a low (priviliged) account
+      // ensure we aren't being started as a low (privileged) account
       if (serverMode &&
           !options.verifyInstallation() &&
           core::system::currentUserIsPrivilleged(options.authMinimumUserId()))
@@ -2112,23 +2203,29 @@ int main (int argc, char * const argv[])
       if (!desktopMode) // ignore r-libs-user in desktop mode
          rOptions.rLibsUser = options.rLibsUser();
 
+      // name of the source of the CRAN repo value (for logging)
+      std::string source;
+
       // CRAN repos configuration follows; order of precedence is:
       //
-      // 1. The user's personal preferences file (rstudio-prefs.json) or system-level version of
-      //    same
-      // 2. The repo settings specified in the loaded version of R
-      // 3. The session's repo settings (in rsession.conf/repos.conf)
-      // 4. The server's repo settings
-      // 5. The default repo settings from the preferences schema (user-prefs-schema.json)
-      // 6. If all else fails, cran.rstudio.com
+      // 1. The user's personal preferences file (rstudio-prefs.json), if CRAN repo editing is
+      //    permitted by policy
+      // 2. The system-wide preferences file (rstudio-prefs.json)
+      // 3. The repo settings specified in the loaded version of R
+      // 4. The session's repo settings (in rsession.conf/repos.conf)
+      // 5. The server's repo settings
+      // 6. The default repo settings from the preferences schema (user-prefs-schema.json)
+      // 7. If all else fails, cran.rstudio.com
       std::string layerName;
       auto val = prefs::userPrefs().readValue(kCranMirror, &layerName);
-      if (val && (layerName == kUserPrefsUserLayer ||
+      if (val && ((options.allowCRANReposEdit() && layerName == kUserPrefsUserLayer) ||
                   layerName == kUserPrefsSystemLayer))
       {
-         // There is a user-scoped value, so use it
+         // If we got here, either (a) there is a user value and the user is allowed to set their
+         // own CRAN repos, or (b) there's a system value, which we always respect
          rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
          rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
+         source = layerName + "-level preference file";
       }
       else if (!core::system::getenv("RSTUDIO_R_REPO").empty())
       {
@@ -2141,34 +2238,43 @@ int main (int argc, char * const argv[])
          {
             std::string reposConfig = Options::parseReposConfig(reposFile);
             loadCranRepos(reposConfig, &rOptions);
+            source = reposFile.getAbsolutePath() + " via RSTUDIO_R_REPO environment variable";
          }
          else
          {
             rOptions.rCRANUrl = repo;
+            source = "RSTUDIO_R_REPO environment variable";
          }
       }
       else if (!options.rCRANMultipleRepos().empty())
       {
          // repo was specified in a repos file
          loadCranRepos(options.rCRANMultipleRepos(), &rOptions);
+         source = "repos file";
       }
       else if (!options.rCRANUrl().empty())
       {
          // Global server option
          rOptions.rCRANUrl = options.rCRANUrl();
+         source = "global session option";
       }
       else if (val && layerName == kUserPrefsDefaultLayer)
       {
          // If we found defaults in the prefs schema, use them.
          rOptions.rCRANUrl = prefs::userPrefs().getCRANMirror().url;
          rOptions.rCRANSecondary = prefs::userPrefs().getCRANMirror().secondary;
+         source = "preference defaults";
       }
       else
       {
          // Hard-coded repo of last resort so we don't wind up without a repo setting (users will
          // not be able to install packages without one)
          rOptions.rCRANUrl = "https://cran.rstudio.com/";
+         source = "hard-coded default";
       }
+
+      LOG_INFO_MESSAGE("Set CRAN URL for session to '" + rOptions.rCRANUrl + "' (source: " +
+            source + ")");
 
       rOptions.useInternet2 = prefs::userPrefs().useInternet2();
       rOptions.rCompatibleGraphicsEngineVersion =
@@ -2196,6 +2302,7 @@ int main (int argc, char * const argv[])
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;
       rCallbacks.init = rInit;
+      rCallbacks.initComplete = rInitComplete;
       rCallbacks.consoleRead = console_input::rConsoleRead;
       rCallbacks.editFile = rEditFile;
       rCallbacks.showFile = rShowFile;
@@ -2203,6 +2310,7 @@ int main (int argc, char * const argv[])
       rCallbacks.busy = rBusy;
       rCallbacks.consoleWrite = rConsoleWrite;
       rCallbacks.consoleHistoryReset = rConsoleHistoryReset;
+      rCallbacks.consoleReset = rConsoleReset;
       rCallbacks.locator = rLocator;
       rCallbacks.deferredInit = rDeferredInit;
       rCallbacks.suspended = rSuspended;
@@ -2225,7 +2333,7 @@ int main (int argc, char * const argv[])
       error = rstudio::r::session::run(rOptions, rCallbacks);
       if (error)
       {
-          // this is logically equivilant to R_Suicide
+          // this is logically equivalent to R_Suicide
           logExitEvent(Event(kSessionScope, kSessionSuicideEvent));
 
           // return failure

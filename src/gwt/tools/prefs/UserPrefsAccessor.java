@@ -1,6 +1,6 @@
 /* UserPrefsAccessor.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,8 @@ import org.rstudio.core.client.JsArrayUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.gwt.core.client.GWT;
 
 
 /**
@@ -59,4 +61,6 @@ public class UserPrefsAccessor extends Prefs
    public static final int LAYER_SYSTEM   = 2;
    public static final int LAYER_USER     = 3;
    public static final int LAYER_PROJECT  = 4;
+
+   private UserPrefsAccessorConstants _constants = GWT.create(UserPrefsAccessorConstants.class);
 }

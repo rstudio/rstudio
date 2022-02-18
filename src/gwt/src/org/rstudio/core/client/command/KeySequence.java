@@ -1,7 +1,7 @@
 /*
  * KeySequence.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -186,7 +186,7 @@ public class KeySequence
          return false;
 
       for (int i = 0; i < keyCombinations_.size(); i++)
-         if (keyCombinations_.get(i) != other.keyCombinations_.get(i))
+         if (!keyCombinations_.get(i).equals(other.keyCombinations_.get(i)))
             return false;
 
       return true;

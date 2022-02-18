@@ -1,7 +1,7 @@
 /*
  * NewPlumberAPI.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -166,7 +166,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       super(caption, Roles.getDialogRole(), operation);
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      setOkButtonCaption("Create");
+      setOkButtonCaption(constants_.create());
 
       loadAndPersistClientState();
 
@@ -177,12 +177,12 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       apiNameTextBox_.addStyleName(RES.styles().apiNameTextBox());
       DomUtils.setPlaceholder(apiNameTextBox_, "Name");
       addTextFieldValidator(apiNameTextBox_);
-      FormLabel apiNameLabel = new FormLabel("API name:", apiNameTextBox_);
+      FormLabel apiNameLabel = new FormLabel(constants_.apiNameColon(), apiNameTextBox_);
       apiNameLabel.addStyleName(RES.styles().label());
       controls.add(apiNameLabel);
       controls.add(apiNameTextBox_);
       directoryChooserTextBox_ = new DirectoryChooserTextBox(
-         "Create within directory:",
+         constants_.createWithinDirectoryColon(),
          ElementIds.TextBoxButtonId.PLUMBER_DIR,
          null);
       directoryChooserTextBox_.setText(defaultParentDirectory());
@@ -199,7 +199,7 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       container_.add(controls);
 
       HelpLink plumberHelpLink_ = new HelpLink(
-         "Plumber APIs",
+         constants_.plumberAPIs(),
          "about_plumber",
          false);
       plumberHelpLink_.getElement().getStyle().setMarginTop(4, Unit.PX);
@@ -213,11 +213,11 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
       if (!isValidAPIName(appName))
       {
          String message = appName.isEmpty()
-               ? "The API name must not be empty"
-               : "Invalid application name";
+               ? constants_.apiNameMustNotBeEmpty()
+               : constants_.invalidApplicationName();
 
          globalDisplay_.showErrorMessage(
-               "Invalid API Name",
+               constants_.invalidApiName(),
                message,
                apiNameTextBox_);
          return false;
@@ -293,4 +293,5 @@ public class NewPlumberAPI extends ModalDialog<NewPlumberAPI.Result>
    static {
       RES.styles().ensureInjected();
    }
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

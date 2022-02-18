@@ -1,7 +1,7 @@
 /*
  * r.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -180,15 +180,20 @@ var snippets = [
    {
       name: "shinymod",
       content: [
-         '${1:name}_UI <- function(id) {',
+         '${1:name}UI <- function(id) {',
          '  ns <- NS(id)',
          '  tagList(',
          '    ${0}',
          '  )',
          '}',
          '',
-         '${1:name} <- function(input, output, session) {',
-         '  ',
+         '${1:name}Server <- function(id) {',
+         '  moduleServer(',
+         '    id,',
+         '    function(input, output, session) {',
+         '      ',
+         '    }',
+         '  )',
          '}'
       ].join("\n")
    }

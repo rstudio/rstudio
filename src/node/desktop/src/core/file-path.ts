@@ -1,7 +1,7 @@
 /*
  * file-path.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,14 +16,31 @@
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 
+import { logger } from './logger';
 import path from 'path';
-import { Err, Success } from './err';
-import { User } from './user';
+import { Err, success, safeError } from './err';
+import { userHomePath } from './user';
+import { err, Expected, ok } from './expected';
 
+/** An Error containing 'path' that triggered the error */
+export class FilePathError extends Error {
+  path: string;
+  constructor(message: string, path: string) {
+    super(message);
+    this.path = path;
+  }
+}
 
-export interface FilePathWithError {
-  err?: Err;
-  path: FilePath;
+const homePathAlias = '~/';
+const homePathLeafAlias = '~';
+
+function normalizeSeparators(path: string, separator = '/') {
+  return path.replace(/[\\/]/g, separator);
+}
+
+function normalizeSeparatorsNative(path: string) {
+  const separator = process.platform === 'win32' ? '\\' : '/';
+  return normalizeSeparators(path, separator);
 }
 
 /**
@@ -31,34 +48,49 @@ export interface FilePathWithError {
  * regular file, etc.)
  */
 export class FilePath {
-  private path: string;
-  static homePathAlias = '~/';
-  static homePathLeafAlias = '~';
-
-  constructor(path: string = '') {
-    this.path = FilePath.fromString(path);
-  }
+  constructor(private path: string = '') {}
 
   /**
    * Get string representation of object, for debugging purposes
    */
   toString(): string {
-    return this.path;
+    return this.getAbsolutePath();
   }
 
   /**
    * Compare this object with another; returns true if they refer to the same
    * path (exact match).
+   *
+   * Note that paths which resolve to the same path, but are not stored the
+   * same, are considered different -- for example, /a/b and /a/b/../b are
+   * not considered identical.
    */
   equals(filePath: FilePath): boolean {
-    return this.path == filePath.path;
+    return normalizeSeparators(this.path) === normalizeSeparators(filePath.path);
   }
 
   /**
    * Creates a path in which the user home path will be replaced by the ~ alias.
    */
   static createAliasedPath(filePath: FilePath, userHomePath: FilePath): string {
-    throw Error("createAliasedPath is NYI");
+    // first, retrieve and normalize paths
+    const file = filePath.getAbsolutePath();
+    const home = userHomePath.getAbsolutePath();
+    if (file === home) {
+      return homePathLeafAlias;
+    }
+
+    // try to compute home-relative path -- if that fails,
+    // or the computed path does not appear to be relative,
+    // then just return the original file path
+    const relative = path.relative(home, file);
+    if (!relative || path.isAbsolute(relative) || relative.startsWith('..')) {
+      return file;
+    }
+
+    // we computed a relative path; prefix it with tilde
+    const aliased = path.join(homePathLeafAlias, relative);
+    return normalizeSeparators(aliased);
   }
 
   /**
@@ -69,53 +101,70 @@ export class FilePath {
       return false;
     }
 
-    let p = FilePath.fromString(filePath);
+    const p = filePath;
     try {
       return fs.existsSync(p);
-    } catch (err) {
-      FilePath.logErrorWithPath(p, err);
+    } catch (err: unknown) {
+      logger().logError(err);
       return false;
     }
   }
 
   /**
    * Checks whether the specified path exists.
+   *
+   * Returns Promise<boolean>; do not use without 'await' or * .then().
+   *
+   * For example, this can give the WRONG result:
+   *
+   * if (FilePath.existsAync(file)) { WRONG USAGE always true, a Promise is truthy }
+   *
+   * Use either:
+   *
+   * if (await FilePath.existsAsync(file)) { ...}
+   *
+   * or
+   *
+   * if (FilePath.existsAsync(file).then((result) => { if (result) { ... } }
    */
-  static async exists(filePath: string): Promise<boolean> {
+  static async existsAsync(filePath: string): Promise<boolean> {
     if (!filePath) {
       return false;
     }
 
-    let p = FilePath.fromString(filePath);
+    const p = filePath;
     try {
       await fsPromises.access(p);
       return true;
-    } catch (err) {
-      FilePath.logErrorWithPath(p, err);
+    } catch (err: unknown) {
+      logger().logError(err);
       return false;
     }
   }
 
   /**
-   * Checks whether the two provided files are equal, ignoring case. Two files are equal 
+   * Checks whether the two provided files are equal, ignoring case. Two files are equal
    * if their absolute paths are equal.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static isEqualCaseInsensitive(filePath1: FilePath, filePath2: FilePath): boolean {
-    throw Error("isEqualCaseInsensitive is NYI");
+    throw Error('isEqualCaseInsensitive is NYI');
   }
 
   /**
    * Checks whether the specified path is a root path or a relative path.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static isRootPath(filePath: string): boolean {
-    throw Error("isRootPath is NYI");
+    throw Error('isRootPath is NYI');
   }
 
   /**
    * Changes the current working directory to the specified path.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   static makeCurrent(filePath: string): Err {
-    throw Error("makeCurrent (static) is NYI");
+    throw Error('makeCurrent (static) is NYI');
   }
 
   /**
@@ -123,12 +172,12 @@ export class FilePath {
    */
   static resolveAliasedPathSync(aliasedPath: string, userHomePath: FilePath): FilePath {
     // Special case for empty string or "~"
-    if (!aliasedPath || aliasedPath == this.homePathLeafAlias) {
+    if (!aliasedPath || aliasedPath == homePathLeafAlias) {
       return userHomePath;
     }
 
     // if the path starts with the home alias then substitute the home path
-    if (aliasedPath.startsWith(this.homePathAlias)) {
+    if (aliasedPath.startsWith(homePathAlias)) {
       return new FilePath(path.join(userHomePath.getAbsolutePath(), aliasedPath.substr(1)));
     } else {
       // no aliasing, this is either an absolute path or path
@@ -145,20 +194,20 @@ export class FilePath {
   static safeCurrentPathSync(revertToPath: FilePath): FilePath {
     try {
       return new FilePath(process.cwd());
-    } catch (err) {
-      FilePath.logError(err);
+    } catch (err: unknown) {
+      logger().logError(err);
     }
 
     // revert to the specified path if it exists, otherwise
     // take the user home path from the system
     let safePath = revertToPath;
     if (!fs.existsSync(safePath.path)) {
-      safePath = User.getUserHomePath();
+      safePath = userHomePath();
     }
 
-    let error = safePath.makeCurrentPath();
+    const error = safePath.makeCurrentPath();
     if (error) {
-      FilePath.logError(error);
+      logger().logError(error);
     }
 
     return safePath;
@@ -172,20 +221,20 @@ export class FilePath {
   static async safeCurrentPath(revertToPath: FilePath): Promise<FilePath> {
     try {
       return new FilePath(process.cwd());
-    } catch (err) {
-      FilePath.logError(err);
+    } catch (err: unknown) {
+      logger().logError(err);
     }
 
     // revert to the specified path if it exists, otherwise
     // take the user home path from the system
     let safePath = revertToPath;
-    if (! await FilePath.exists(safePath.path)) {
-      safePath = User.getUserHomePath();
+    if (!(await FilePath.existsAsync(safePath.path))) {
+      safePath = userHomePath();
     }
 
-    let error = safePath.makeCurrentPath();
+    const error = safePath.makeCurrentPath();
     if (error) {
-      FilePath.logError(error);
+      logger().logError(error);
     }
 
     return safePath;
@@ -194,26 +243,28 @@ export class FilePath {
   /**
    * Creates a randomly named file in the temp directory.
    */
-  static tempFilePath(extension?: string): FilePathWithError {
-    throw Error("tempFilePath is NYI");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  static tempFilePath(extension?: string): Expected<FilePath> {
+    throw Error('tempFilePath is NYI');
   }
 
   /**
    * Creates a file with a random name in the specified directory.
    */
-  static uniqueFilePath(basePath: string, extension?: string): FilePathWithError {
-    throw Error("uniqueFilePath is NYI");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  static uniqueFilePath(basePath: string, extension?: string): Expected<FilePath> {
+    throw Error('uniqueFilePath is NYI');
   }
 
   /**
    * Changes the file mode to the specified file mode (Posix-only). Pass in the posix file mode
    * string, e.g. rwxr-xr-x
    */
-  changeFileMode(fileModeStr: string, setStickyBit: boolean = false): Err {
-    if (process.platform === 'win32')
-      return Success(); // no-op on Windows
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  changeFileMode(fileModeStr: string, setStickyBit = false): Err {
+    if (process.platform === 'win32') return success(); // no-op on Windows
 
-    throw Error("changeFileMode is NYI");
+    throw Error('changeFileMode is NYI');
   }
 
   /**
@@ -234,11 +285,12 @@ export class FilePath {
    * refers to a path strictly within this one (i.e. ".." isn't allowed).
    */
   completeChildPath(filePath: string): FilePath {
-    let result = this.completeChildPathWithErrorResult(filePath);
-    if (!!result.err) {
-      FilePath.logError(result.err);
+    const [path, error] = this.completeChildPathWithErrorResult(filePath);
+    if (error) {
+      logger().logError(error);
+      return this;
     }
-    return result.path;
+    return path;
   }
 
   /**
@@ -248,27 +300,28 @@ export class FilePath {
    * `filePath` is the path to get as a child of this path. Must be a relative path that
    * refers to a path strictly within this one (i.e. ".." isn't allowed).
    */
-  completeChildPathWithErrorResult(filePath: string): FilePathWithError {
+  completeChildPathWithErrorResult(filePath: string): Expected<FilePath> {
     try {
       if (!filePath) {
-        return { path: this };
+        return ok(this);
       }
 
       // confirm this is a relative path
-      let relativePath = FilePath.fromString(filePath);
+      const relativePath = filePath;
       if (path.isAbsolute(relativePath)) {
         throw Error('absolute path not permitted');
       }
 
-      let childPath = this.completePath(filePath);
+      const childPath = this.completePath(filePath);
 
       if (!childPath.isWithin(this)) {
-        return { err: new Error('child path must be inside parent path'), path: this };
+        return err(new FilePathError('child path must be inside parent path', this.getAbsolutePath()));
       }
 
-      return { path: childPath };
-    } catch (e) {
-      return { err: e, path: this };
+      return ok(childPath);
+    } catch (e: unknown) {
+      const error = safeError(e);
+      return err(new FilePathError(error.message, this.getAbsolutePath()));
     }
   }
 
@@ -276,64 +329,66 @@ export class FilePath {
    * Completes the provided path relative to this path. If the provided path is not relative,
    * it will be returned as is. Relative paths such as ".." are permitted.
    */
-  completePath(filePath: string): FilePath {
+  completePath(stem: string): FilePath {
     try {
-      return new FilePath(FilePath.fs_path2str(FilePath.fs_complete(filePath, this.path)));
-    } catch (err) {
-      FilePath.logError(err);
+      return new FilePath(normalizeSeparators(path.resolve(this.path, stem)));
+    } catch (err: unknown) {
+      logger().logError(err);
       return this;
     }
   }
   /**
    * Copies this file path to the specified location.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   copy(targetPath: FilePath, overwrite = false): Err {
-    throw Error("copy is NYI");
+    throw Error('copy is NYI');
   }
 
   /**
    * Copies this directory recursively to the specified location.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   copyDirectoryRecursive(targetPath: FilePath, overwrite = false): Err {
-    throw Error("copyDirectoryRecursive is NYI");
+    throw Error('copyDirectoryRecursive is NYI');
   }
 
   /**
    * Creates the specified directory, relative to this directory.
    */
-  createDirectorySync(filePath: string = ''): Err {
+  createDirectorySync(filePath = ''): Err {
     let targetDirectory: string;
     if (!filePath) {
       targetDirectory = this.path;
     } else {
-      targetDirectory = FilePath.fs_complete(filePath, this.path);
+      targetDirectory = path.resolve(this.path, filePath);
     }
 
     try {
       fs.mkdirSync(targetDirectory, { recursive: true });
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
-    return Success();
+    return success();
   }
 
   /**
    * Creates the specified directory, relative to this directory.
    */
-  async createDirectory(filePath: string = ''): Promise<Err> {
+  async createDirectory(filePath = ''): Promise<Err> {
     let targetDirectory: string;
     if (!filePath) {
       targetDirectory = this.path;
     } else {
-      targetDirectory = FilePath.fs_complete(filePath, this.path);
+      targetDirectory = path.resolve(this.path, filePath);
     }
 
     try {
       await fsPromises.mkdir(targetDirectory, { recursive: true });
-    } catch (err) {
-      return err;
+    } catch (err: unknown) {
+      return safeError(err);
     }
-    return Success();
+    return success();
   }
 
   /**
@@ -343,7 +398,7 @@ export class FilePath {
     if (!this.existsSync()) {
       return this.createDirectorySync();
     } else {
-      return Success();
+      return success();
     }
   }
 
@@ -351,10 +406,10 @@ export class FilePath {
    * Creates this directory, if it does not exist.
    */
   async ensureDirectory(): Promise<Err> {
-    if (!await this.exists()) {
-      return await this.createDirectory();
+    if (!(await this.existsAsync())) {
+      return this.createDirectory();
     } else {
-      return Success();
+      return success();
     }
   }
 
@@ -371,24 +426,38 @@ export class FilePath {
   existsSync(): boolean {
     try {
       return !this.isEmpty() && fs.existsSync(this.path);
-    } catch (err) {
-      FilePath.logErrorWithPath(this.path, err);
+    } catch (err: unknown) {
+      logger().logError(err);
       return false;
     }
   }
 
   /**
    * Checks whether this file path exists in the file system.
+   *
+   * Returns Promise<boolean>; do not use without 'await' or * .then().
+   *
+   * For example, this can give the WRONG result:
+   *
+   * if (file.existsAync()) { WRONG USAGE always true, a Promise is truthy }
+   *
+   * Use either:
+   *
+   * if (await file.existsAsync()) { ...}
+   *
+   * or
+   *
+   * if (file.existsAsync().then((result) => { if (result) { ... } }
    */
-  async exists(): Promise<boolean> {
+  async existsAsync(): Promise<boolean> {
     try {
       if (this.isEmpty()) {
         return false;
       }
       await fsPromises.access(this.path);
       return true;
-    } catch (err) {
-      FilePath.logErrorWithPath(this.path, err);
+    } catch (err: unknown) {
+      logger().logError(err);
       return false;
     }
   }
@@ -396,15 +465,15 @@ export class FilePath {
   /**
    * Gets the full absolute representation of this file path.
    */
-  getAbsolutePath() {
-    return FilePath.fs_path2str(this.path);
+  getAbsolutePath(): string {
+    return normalizeSeparators(this.path);
   }
 
   /**
    * Gets the full absolute representation of this file path in native format.
    */
   getAbsolutePathNative(): string {
-    throw Error("getAbsolutePathNative is NYI");
+    return normalizeSeparatorsNative(this.path);
   }
 
   /**
@@ -413,16 +482,15 @@ export class FilePath {
    */
   getCanonicalPathSync(): string {
     if (this.isEmpty()) {
-      return "";
+      return '';
     }
 
     try {
-      return FilePath.fs_path2str(fs.realpathSync(this.path));
+      return normalizeSeparators(fs.realpathSync(this.path));
+    } catch (err: unknown) {
+      logger().logError(err);
     }
-    catch (err) {
-      FilePath.logErrorWithPath(this.path, err);
-    }
-    return "";
+    return '';
   }
 
   /**
@@ -431,30 +499,48 @@ export class FilePath {
    */
   async getCanonicalPath(): Promise<string> {
     if (this.isEmpty()) {
-      return "";
+      return '';
     }
 
     try {
-      return FilePath.fs_path2str(await fsPromises.realpath(this.path));
+      return await fsPromises.realpath(this.path);
+    } catch (err: unknown) {
+      logger().logError(err);
     }
-    catch (err) {
-      FilePath.logErrorWithPath(this.path, err);
-    }
-    return "";
+
+    return '';
   }
 
   /**
    * Gets the children of this directory. Sub-directories will not be traversed.
    */
   getChildren(filePaths: Array<FilePath>): Err {
-    throw Error("getChildren is NYI");
+    if (!this.existsSync()) {
+      return new Error(`File not found: ${this.getAbsolutePath()}`);
+    }
+
+    let dir: fs.Dir | undefined = undefined;
+    try {
+      dir = fs.opendirSync(this.getAbsolutePath());
+      const files = fs.readdirSync(this.getAbsolutePath());
+      for (const file of files) {
+        filePaths.push(this.completeChildPath(file));
+      }
+    } catch (err: unknown) {
+      return safeError(err);
+    } finally {
+      if (dir) {
+        dir.closeSync();
+      }
+    }
+    return success();
   }
 
   /**
    * Gets the children of this directory recursively. Sub-directories will be traversed.
    */
   getChildrenRecursive(/*iterationFunction: RecursiveIterationFunction*/): Err {
-    throw Error("getChildrenRecursive is NYI");
+    throw Error('getChildrenRecursive is NYI');
   }
 
   /**
@@ -477,7 +563,7 @@ export class FilePath {
    * Gets the posix file mode of this file or directory (Posix-only)
    */
   getFileMode(/*fileMode: FileMode*/): Err {
-    throw Error("getFileMode is NYI");
+    throw Error('getFileMode is NYI');
   }
 
   /**
@@ -495,8 +581,7 @@ export class FilePath {
     try {
       const stats = fs.statSync(this.path);
       return stats.mtimeMs;
-    }
-    catch {
+    } catch {
       return 0;
     }
   }
@@ -504,101 +589,112 @@ export class FilePath {
   /**
    * Gets the mime content type of this file.
    */
-  getMimeContentType(defaultType = "text/plain"): string {
-    throw Error("getMimeContentType is NYI");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  getMimeContentType(defaultType = 'text/plain'): string {
+    throw Error('getMimeContentType is NYI');
   }
 
   /**
    * Gets the parent directory of this file path.
    */
   getParent(): FilePath {
-    throw Error("getParent is NYI");
+    return new FilePath(path.dirname(this.path));
   }
 
   /**
    * Gets the lexically normal representation of this file path, with . and ..
    * components resolved and/or removed.
    */
-  getLexicallyNormalPath() {
-    return FilePath.fs_path2str(path.normalize(this.path));
+  getLexicallyNormalPath(): string {
+    return normalizeSeparators(path.normalize(this.path));
   }
 
   /**
    * Gets the representation of this path, relative to the provided path.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   getRelativePath(parentPath: FilePath): string {
-    throw Error("getRelativePath is NYI");
+    throw Error('getRelativePath is NYI');
   }
 
   /**
    * Gets the size of this file path in bytes.
    */
   getSize(): number {
-    throw Error("getSize is NYI");
+    throw Error('getSize is NYI');
   }
 
   /**
    * Gets the size of this file path and all sub-directories and files in it, in bytes.
    */
   getSizeRecursive(): number {
-    throw Error("getSizeRecursive is NYI");
+    throw Error('getSizeRecursive is NYI');
   }
 
   /**
    * Gets only the name of the file, excluding the extension.
    */
   getStem(): string {
-    throw Error("getStem is NYI");
+    // If this is just a path to a directory, then there is no filename or stem.
+    if (this.path.endsWith('/') || this.path.endsWith('\\')) {
+      return '';
+    }
+
+    const components = path.parse(this.path);
+    return components.name;
   }
 
   /**
    * Checks whether this file has the specified extension.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   hasExtension(extension: string): boolean {
-    throw Error("hasExtension is NYI");
+    throw Error('hasExtension is NYI');
   }
 
   /**
    * Checks whether this file has the specified extension when it is converted to lower case.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   hasExtensionLowerCase(extension: string): boolean {
-    throw Error("hasExtensionLowerCase is NYI");
+    throw Error('hasExtensionLowerCase is NYI');
   }
 
   /**
    * Checks whether this file has a text mime content type.
    */
   hasTextMimeType(): boolean {
-    throw Error("hasTextMimeType is NYI");
+    throw Error('hasTextMimeType is NYI');
   }
 
   /**
    * Checks whether this file path is a directory.
    */
   isDirectory(): boolean {
-    throw Error("isDirectory is NYI");
+    throw Error('isDirectory is NYI');
   }
 
   /**
    * Checks whether this file path contains a path or not.
    */
-  isEmpty() {
+  isEmpty(): boolean {
     return !this.path;
   }
 
   /**
-   * Checks whether this file path points to the same location in the filesystem as 
+   * Checks whether this file path points to the same location in the filesystem as
    * the specified file path.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   isEquivalentTo(other: FilePath): boolean {
-    throw Error("isEquivalentTo is NYI");
+    throw Error('isEquivalentTo is NYI');
   }
 
   /**
    * Checks whether this file path is a hidden file or directory.
    */
   isHidden(): boolean {
-    throw Error("isHidden is NYI");
+    throw Error('isHidden is NYI');
   }
 
   /**
@@ -607,7 +703,7 @@ export class FilePath {
    * @return True if this file path is a Windows junction; false otherwise.
    */
   isJunction(): boolean {
-    throw Error("isJunction is NYI");
+    throw Error('isJunction is NYI');
   }
 
   /**
@@ -619,21 +715,21 @@ export class FilePath {
    * @return Success if the readability of this file could be checked; Error otherwise. (e.g. EACCES).
    */
   isReadable(): Error | boolean {
-    throw Error("isReadable is NYI");
+    throw Error('isReadable is NYI');
   }
 
   /**
    * Checks whether this file path is a regular file.
    */
   isRegularFile(): boolean {
-    throw Error("isRegularFile is NYI");
+    throw Error('isRegularFile is NYI');
   }
 
   /**
    * Checks whether this file path is a symbolic link.
    */
   isSymlink(): boolean {
-    throw Error("isSymLink is NYI");
+    throw Error('isSymLink is NYI');
   }
 
   /**
@@ -650,45 +746,24 @@ export class FilePath {
       return true;
     }
 
-    // Make the paths lexically normal so that e.g. foo/../bar isn't considered a child of foo.
-    let child = new FilePath(this.getLexicallyNormalPath());
-    let parent = new FilePath(scopePath.getLexicallyNormalPath());
+    // Try to resolve scopePath within our parent
+    const parent = path.resolve(scopePath.path);
+    const child = path.resolve(this.path);
 
-    // Easy test: We can't possibly be in this scope path if it has more components than we do
-    if (parent.path.length > child.path.length) {
+    // Form relative path.
+    const relative = path.relative(parent, child);
+    if (!relative) {
       return false;
     }
 
-    const childDetail = path.parse(child.path);
-    const parentDetail = path.parse(parent.path);
-    if (childDetail.root !== parentDetail.root) {
-      return false;
-    }
-
-    // Find the first path element that differs. Stop when we reach the end of the parent
-    // path, or a "." path component, which signifies the end of a directory (/foo/bar/.)
-    const childDirs = childDetail.dir.split(/[\/\\]/);
-    const parentDirs = parentDetail.dir.split(/[\/\\]/);
-    childDirs.push(childDetail.base);
-    parentDirs.push(parentDetail.base);
-    for (let i = 0; i < parentDirs.length; i++) {
-      if (parentDirs[i] === '.') {
-        break;
-      }
-      if (parentDirs[i] !== childDirs[i]) {
-        return false;
-      }
-    }
-
-    // No differing path element found
-    return true;
+    return !relative.startsWith('..') && !path.isAbsolute(relative);
   }
 
   /**
    * Checks whether this file path is writeable.
    */
   isWriteable(): boolean | Error {
-    throw Error("isWriteable is NYI");
+    throw Error('isWriteable is NYI');
   }
 
   /**
@@ -702,9 +777,9 @@ export class FilePath {
 
     try {
       process.chdir(this.path);
-      return Success();
-    } catch (err) {
-      return err;
+      return success();
+    } catch (err: unknown) {
+      return safeError(err);
     }
   }
 
@@ -712,49 +787,85 @@ export class FilePath {
    * Moves the current directory to the specified directory.
    */
   move(/*targetPath: FilePath, type: MoveType = MoveCrossDevice, overwrite = false*/): Err {
-    throw Error("move is NYI");
+    throw Error('move is NYI');
   }
 
   /**
    * Performs an indirect move by copying this directory to the target and then deleting this directory.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   moveIndirect(targetPath: FilePath, overwrite = false): Err {
-    throw Error("moveIndirect is NYI");
+    throw Error('moveIndirect is NYI');
   }
 
   /**
    * Opens this file for read.
    */
   openForRead(/*std:: shared_ptr<std:: istream>& out_stream*/): Err {
-    throw Error("openForRead is NYI");
+    throw Error('openForRead is NYI');
   }
 
   /**
    * Opens this file for write.
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   openForWrite(/*std:: shared_ptr<std:: ostream>& out_stream,*/ truncate = true): Err {
-    throw Error("openForWrite is NYI");
+    throw Error('openForWrite is NYI');
   }
 
   /**
    * Removes this file or directory from the filesystem.
    */
-  remove(): Err {
-    throw Error("remove is NYI");
+  async remove(): Promise<Err> {
+    try {
+      await fsPromises.rm(this.path, { recursive: true });
+    } catch (err: unknown) {
+      return safeError(err);
+    }
+    return success();
   }
 
   /**
    * Removes this file or directory from the filesystem, if it exists.
    */
-  removeIfExists(): Err {
-    throw Error("removeIfExists is NYI");
+  async removeIfExists(): Promise<Err> {
+    try {
+      await fsPromises.rm(this.path, { force: true, recursive: true });
+    } catch (err: unknown) {
+      return safeError(err);
+    }
+    return success();
+  }
+
+  /**
+   * Removes this file or directory from the filesystem.
+   */
+  removeSync(): Err {
+    try {
+      fs.rmSync(this.path, { recursive: true });
+    } catch (err: unknown) {
+      return safeError(err);
+    }
+    return success();
+  }
+
+  /**
+   * Removes this file or directory from the filesystem, if it exists.
+   */
+  removeIfExistsSync(): Err {
+    try {
+      fs.rmSync(this.path, { force: true, recursive: true });
+    } catch (err: unknown) {
+      return safeError(err);
+    }
+    return success();
   }
 
   /**
    * Removes the directory represented by this FilePath, if it exists, and recreates it.
    */
   resetDirectory(): Err {
-    throw Error("resetDirectory is NYI");
+    throw Error('resetDirectory is NYI');
   }
 
   /**
@@ -762,55 +873,20 @@ export class FilePath {
    * is not a symbolic link, the original FilePath is returned.
    */
   resolveSymlink(): FilePath {
-    throw Error("resolveSymlink is NYI");
+    throw Error('resolveSymlink is NYI');
   }
 
   /**
    * Sets the last time that this file was modified to the specified time.
    */
   setLastWriteTime(/*std::time_t in_time = ::time(nullptr)*/): void {
-    throw Error("setLastWriteTime is NYI");
+    throw Error('setLastWriteTime is NYI');
   }
 
   /**
    * Checks if a file can be written to by opening the file.
    */
   testWritePermissions(): Err {
-    throw Error("testWritePermissions is NYI");
-  }
-
-  // -------------------------
-  // Internal helper functions
-  // -------------------------
-
-  static logErrorWithPath(path: string, error: Error) {
-    // TODO logging
-    // console.error(error.message + ": " + path);
-  }
-
-  static logError(error: Error) {
-    // TODO logging
-    // console.error(error.message);
-  }
-
-  // Analogous to BOOST_FS_COMPLETE in FilePath.cpp
-  static fs_complete(p: string, base: string) {
-    return path.resolve(base, p);
-  }
-
-  // Analogous to BOOST_FS_PATH2STR
-  static fs_path2str(p: string): string {
-    // TODO do we need this (i.e. on Windows?)
-    return p;
-  }
-
-  static fromString(value: string): string {
-    // TODO do we need this (i.e. on Windows?)
-    return value;
-  }
-
-  static toString(value: string): string {
-    // TODO do we need this (i.e. on Windows?)
-    return value;
+    throw Error('testWritePermissions is NYI');
   }
 }

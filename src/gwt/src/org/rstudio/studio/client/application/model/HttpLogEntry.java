@@ -1,7 +1,7 @@
 /*
  * HttpLogEntry.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.application.model;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 
 import java.util.Date;
 
@@ -40,17 +42,17 @@ public class HttpLogEntry extends JavaScriptObject
       switch(getType())
       {
       case CONNECTION_RECEIVED:
-         return "Connection Received";
+         return constants_.connectionReceivedType();
       case CONNECTION_DEQUEUED :
-         return "Connection Dequeued";
+         return constants_.connectionDequeuedType();
       case CONNECTION_RESPONDED:
-         return "Connection Responded";
+         return constants_.connectionRespondedType();
       case CONNECTION_TERMINATED:
-         return "Connection Terminated";
+         return constants_.connectionTerminatedType();
       case CONNECTION_ERROR:
-         return "Connection Error";
+         return constants_.connectionErrorType();
       default:
-         return "(Unknown)";
+         return constants_.connectionUnknownType();
       }
    }
 
@@ -69,4 +71,5 @@ public class HttpLogEntry extends JavaScriptObject
       return this.ts;
    }-*/;
 
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

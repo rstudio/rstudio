@@ -1,7 +1,7 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,8 @@ public abstract class
    public abstract AppCommand newD3Doc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
+   public abstract AppCommand newQuartoDoc();
+   public abstract AppCommand newQuartoPres();
    public abstract AppCommand newRShinyApp();
    public abstract AppCommand newRHTMLDoc();
    public abstract AppCommand newRDocumentationDoc();
@@ -69,6 +71,7 @@ public abstract class
    public abstract AppCommand previewSql();
    public abstract AppCommand sourceActiveDocument();
    public abstract AppCommand sourceActiveDocumentWithEcho();
+   public abstract AppCommand runDocumentFromServerDotR();
    public abstract AppCommand executeCode();
    public abstract AppCommand executeCodeWithoutMovingCursor();
    public abstract AppCommand executeCodeWithoutFocus();
@@ -120,6 +123,7 @@ public abstract class
    public abstract AppCommand browseCheatSheets();
    public abstract AppCommand toggleRmdVisualMode();
    public abstract AppCommand enableProsemirrorDevTools();
+   public abstract AppCommand quartoRenderDocument();
    public abstract AppCommand knitDocument();
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();
@@ -247,6 +251,27 @@ public abstract class
 
    // Files
    public abstract AppCommand newFolder();
+   // ---
+   public abstract AppCommand touchSourceDoc();
+   public abstract AppCommand touchTextDoc();
+   public abstract AppCommand touchCDoc();
+   public abstract AppCommand touchCppDoc();
+   public abstract AppCommand touchHeaderDoc();
+   public abstract AppCommand touchMarkdownDoc();
+   public abstract AppCommand touchPythonDoc();
+   public abstract AppCommand touchShellDoc();
+   public abstract AppCommand touchStanDoc();
+   public abstract AppCommand touchHtmlDoc();
+   public abstract AppCommand touchJavaScriptDoc();
+   public abstract AppCommand touchCssDoc();
+   public abstract AppCommand touchD3Doc();
+   public abstract AppCommand touchSweaveDoc();
+   public abstract AppCommand touchRMarkdownDoc();
+   public abstract AppCommand touchQuartoDoc();
+   public abstract AppCommand touchRShinyApp();
+   public abstract AppCommand touchRHTMLDoc();
+   public abstract AppCommand touchSqlDoc();
+   // ---
    public abstract AppCommand uploadFile();
    public abstract AppCommand copyFile();
    public abstract AppCommand copyFileTo();
@@ -260,6 +285,8 @@ public abstract class
    public abstract AppCommand goToWorkingDir();
    public abstract AppCommand setAsWorkingDir();
    public abstract AppCommand copyFilesPaneCurrentDirectory();
+   public abstract AppCommand openFilesInSinglePane();
+   public abstract AppCommand openEachFileInColumns();
    public abstract AppCommand setWorkingDirToFilesPane();
    public abstract AppCommand showFolder();
 
@@ -304,6 +331,18 @@ public abstract class
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand clearPresentationCache();
+   
+   // Presentation2
+   public abstract AppCommand activatePresentation2();
+   public abstract AppCommand layoutZoomPresentation2();
+   public abstract AppCommand presentation2Home();
+   public abstract AppCommand presentation2Next();
+   public abstract AppCommand presentation2Prev();
+   public abstract AppCommand presentation2Edit();
+   public abstract AppCommand presentation2Present();
+   public abstract AppCommand presentation2PresentFromBeginning();
+   public abstract AppCommand presentation2Print();
+   public abstract AppCommand refreshPresentation2();
 
    // View
    public abstract AppCommand showToolbar();
@@ -444,6 +483,7 @@ public abstract class
    public abstract AppCommand showPublishingOptions();
    public abstract AppCommand showPythonOptions();
    public abstract AppCommand modifyKeyboardShortcuts();
+   public abstract AppCommand editCodeSnippets();
    public abstract AppCommand showCommandPalette();
    public abstract AppCommand clearCommandPaletteMru();
 
@@ -521,6 +561,7 @@ public abstract class
    public abstract AppCommand viewerSaveAsImage();
    public abstract AppCommand viewerSaveAsWebPage();
    public abstract AppCommand viewerCopyToClipboard();
+   public abstract AppCommand viewerEditSource();
 
    // Application
    public abstract AppCommand newSession();
@@ -546,6 +587,7 @@ public abstract class
    public abstract AppCommand buildAll();
    public abstract AppCommand devtoolsLoadAll();
    public abstract AppCommand rebuildAll();
+   public abstract AppCommand serveQuartoSite();
    public abstract AppCommand cleanAll();
    public abstract AppCommand buildSourcePackage();
    public abstract AppCommand buildBinaryPackage();

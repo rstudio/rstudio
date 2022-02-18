@@ -1,7 +1,7 @@
 /*
  * CreateBranchDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
@@ -51,6 +52,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
 {
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
    public static class Input
    {
       public Input(String branch, String remote, boolean push)
@@ -96,7 +98,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    {
       super(caption, Roles.getDialogRole(), onCreateBranch);
       
-      setOkButtonCaption("Create");
+      setOkButtonCaption(constants_.createCapitalized());
       enableOkButton(false);
       
       container_ = new VerticalPanel();
@@ -120,7 +122,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          }
       });
       
-      sbRemote_ = new SelectWidget("Remote:");
+      sbRemote_ = new SelectWidget(constants_.remoteColon());
       sbRemote_.addChangeHandler(new ChangeHandler()
       {
          @Override
@@ -131,7 +133,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          }
       });
       
-      btnAddRemote_ = new SmallButton("Add Remote...");
+      btnAddRemote_ = new SmallButton(constants_.addRemoteEllipses());
       btnAddRemote_.addClickHandler(new ClickHandler()
       {
          @Override
@@ -157,7 +159,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
             }
             
             AddRemoteDialog dialog = new AddRemoteDialog(
-                  "Add Remote",
+                  constants_.addRemote(),
                   remoteUrl,
                   onAddRemote);
             
@@ -165,7 +167,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
          }
       });
       
-      cbPush_ = new CheckBox("Sync branch with remote");
+      cbPush_ = new CheckBox(constants_.syncBranchWithRemote());
       cbPush_.setVisible(sbRemote_.getValue() != REMOTE_NONE);
       cbPush_.setValue(true);
       
@@ -173,7 +175,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       LayoutGrid ctrBranch = new LayoutGrid(1, 2);
       ctrBranch.setWidth("100%");
-      FormLabel branchLabel = new FormLabel("Branch Name:", tbBranch_);
+      FormLabel branchLabel = new FormLabel(constants_.branchNameColon(), tbBranch_);
       ctrBranch.setWidget(0, 0, branchLabel);
       ctrBranch.setWidget(0, 1, tbBranch_);
       

@@ -82,7 +82,7 @@ The following sections list all of the properties that can be specified within a
 
 ### options
 
-The options property is a string dictionary, where each entry is a category of options to specify. Within each category, you may specfy multiple `option` objects that may have the following properties.
+The options property is a string dictionary, where each entry is a category of options to specify. Within each category, you may specify multiple `option` objects that may have the following properties.
 
 | Property   |      Description     | 
 |----------|-------------|

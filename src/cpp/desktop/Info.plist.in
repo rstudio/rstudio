@@ -139,6 +139,20 @@
          <key>LSIsAppleDefaultForType</key>
          <true/>
       </dict>
+       <dict>
+         <key>CFBundleTypeExtensions</key>
+         <array>
+             <string>qmd</string>
+         </array>
+         <key>CFBundleTypeIconFile</key>
+         <string>QuartoMarkdown.icns</string>
+         <key>CFBundleTypeName</key>
+         <string>Quarto Markdown File</string>
+         <key>CFBundleTypeRole</key>
+         <string>Editor</string>
+         <key>LSIsAppleDefaultForType</key>
+         <true/>
+      </dict>
       <dict>
          <key>CFBundleTypeExtensions</key>
          <array>

@@ -1,7 +1,7 @@
 /*
  * pandoc_to_prosemirror.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -121,6 +121,7 @@ class Parser {
         parser.writeTokens(this, tokens);
       },
       logUnrecognized: state.logUnrecognized.bind(state),
+      logExampleList: state.logExampleList.bind(state),
       isNodeOpen: state.isNodeOpen.bind(state),
     };
 
@@ -144,6 +145,7 @@ class Parser {
       doc: state.doc(),
       line_wrapping: lineWrapping,
       unrecognized: state.unrecognized(),
+      example_lists: state.hasExampleLists(),
       unparsed_meta: ast.meta,
     };
   }
@@ -328,6 +330,7 @@ class ParserState {
   private marks: Mark[];
   private footnoteNumber: number;
   private unrecognizedTokens: string[];
+  private exampleLists: boolean;
 
   constructor(schema: Schema) {
     this.schema = schema;
@@ -336,6 +339,7 @@ class ParserState {
     this.marks = Mark.none;
     this.footnoteNumber = 1;
     this.unrecognizedTokens = [];
+    this.exampleLists = false;
   }
 
   public doc(): ProsemirrorNode {
@@ -347,6 +351,10 @@ class ParserState {
 
   public unrecognized(): string[] {
     return this.unrecognizedTokens;
+  }
+
+  public hasExampleLists(): boolean {
+    return this.exampleLists;
   }
 
   public writeText(text: string) {
@@ -413,6 +421,10 @@ class ParserState {
     if (!this.unrecognizedTokens.includes(type)) {
       this.unrecognizedTokens.push(type);
     }
+  }
+
+  public logExampleList() {
+    this.exampleLists = true;
   }
 
   public isNodeOpen(type: NodeType) {

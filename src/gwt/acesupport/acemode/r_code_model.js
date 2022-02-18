@@ -1,7 +1,7 @@
 /*
  * r_code_model.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1505,6 +1505,12 @@ var RCodeModel = function(session, tokenizer,
             row - 10
          );
 
+         // Special case for new function definitions.
+         var line = this.$session.getLine(row);
+         if (/\bfunction\s*\(\s*$/.test(line)) {
+            return this.$getIndent(row) + tab + tab;
+         }
+
          // Used to add extra whitspace if the next line is a continuation of the
          // previous line (i.e. the last significant token is a binary operator).
          var continuationIndent = "";
@@ -1553,6 +1559,7 @@ var RCodeModel = function(session, tokenizer,
                }
             }
          }
+
          else if (prevToken
                      && prevToken.token.type === "keyword"
                      && (prevToken.token.value === "repeat" || prevToken.token.value === "else"))

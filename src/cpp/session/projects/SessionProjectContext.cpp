@@ -1,7 +1,7 @@
 /*
  * SessionProjectContext.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -191,7 +191,7 @@ Error ProjectContext::startup(const FilePath& projectFile,
       return pathNotFoundError(projectFile.getAbsolutePath(), ERROR_LOCATION);
    }
 
-   // test for writeabilty of parent
+   // test for writeability of parent
    if (!file_utils::isDirectoryWriteable(projectFile.getParent()))
    {
       *pUserErrMsg = "the project directory is not writeable";
@@ -259,6 +259,19 @@ Error ProjectContext::startup(const FilePath& projectFile,
    scratchPath_ = scratchPath;
    sharedScratchPath_ = sharedScratchPath;
    config_ = config;
+
+   // look for directories that contain python environments
+   std::vector<FilePath> children;
+   error = directory_.getChildren(children);
+   if (error)
+      LOG_ERROR(error);
+   algorithm::copy_if(children.begin(), children.end(),
+                      std::back_inserter(pythonEnvs_), [](const FilePath& child) {
+      return child.isDirectory() &&
+            (child.completeChildPath("pyvenv.cfg").exists() ||
+             child.completeChildPath("conda-meta").exists());
+   });
+
 
    // assume true so that the initial files pane listing doesn't register
    // a duplicate monitor. if it turns out to be false then this can be
@@ -496,6 +509,9 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       // don't monitor things in .Rproj.user
       "/.Rproj.user",
 
+      // don't monitor things in .quarto
+      "/.quarto",
+
       // ignore things within a .git folder
       "/.git",
       
@@ -505,8 +521,10 @@ std::vector<std::string> fileMonitorIgnoredComponents()
 
       // ignore files within an renv or packrat library
       "/renv/library",
+      "/renv/python",
       "/renv/staging",
       "/packrat/lib",
+      "/packrat/src"
       
       // ignore things marked .noindex
       ".noindex"
@@ -518,6 +536,15 @@ std::vector<std::string> fileMonitorIgnoredComponents()
    for (auto&& userIgnore : userIgnores)
       if (userIgnore.isString())
          ignores.push_back(userIgnore.getString());
+
+   // don't monitor python envs
+   if (projects::projectContext().hasProject())
+   {
+      const std::vector<FilePath>& envs = projects::projectContext().pythonEnvs();
+      std::transform(envs.begin(), envs.end(), std::back_inserter(ignores), [](const FilePath& envPath) {
+         return "/" + envPath.getRelativePath(projects::projectContext().directory());
+      });
+   }
    
    // return vector of ignored components
    return ignores;
@@ -828,6 +855,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.buildType = std::string();
    defaultConfig.tutorialPath = std::string();
    defaultConfig.packageUseDevtools = prefs::userPrefs().useDevtools();
+   defaultConfig.packageCleanBeforeInstall = prefs::userPrefs().cleanBeforeInstall();
    return defaultConfig;
 }
 

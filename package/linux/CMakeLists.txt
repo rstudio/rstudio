@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -72,15 +72,25 @@ if(RSTUDIO_SERVER)
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
   set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libsqlite3-0, libpq5, ")
 
-elseif(RSTUDIO_DESKTOP)
+elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
 
-   # debian control files
-  set(DEBIAN_POSTINST postinst-desktop.in)
-  set(DEBIAN_POSTRM postrm-desktop.in)
+  if(RSTUDIO_DESKTOP)
+    # debian control files (Qt)
+    set(DEBIAN_POSTINST postinst-desktop.in)
+    set(DEBIAN_POSTRM postrm-desktop.in)
 
-  # rpm scripts
-  set(RPM_POSTINST postinst-desktop.sh.in)
-  set(RPM_POSTRM postrm-desktop.sh.in)
+    # rpm scripts (Qt)
+    set(RPM_POSTINST postinst-desktop.sh.in)
+    set(RPM_POSTRM postrm-desktop.sh.in)
+  else()
+    # debian control files (Electron)
+    set(DEBIAN_POSTINST postinst-electron.in)
+    set(DEBIAN_POSTRM postrm-electron.in)
+
+    # rpm scripts (Electron)
+    set(RPM_POSTINST postinst-electron.sh.in)
+    set(RPM_POSTRM postrm-electron.sh.in)
+  endif()
 
   # rpm dependencies
   string(FIND "${RSTUDIO_PACKAGE_OS}" "SUSE" SUSE_POS)
@@ -189,10 +199,13 @@ if(DEFINED RSTUDIO_PACKAGE_FILE_NAME_OVERRIDE)
 else()
   set(RSTUDIO_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}")
 endif()
+
 set(CPACK_PACKAGE_FILE_NAME "${RSTUDIO_PACKAGE_FILE_NAME}${RSTUDIO_PACKAGE_SUFFIX}${CPACK_PACKAGE_VERSION}-${PACKAGE_ARCHITECTURE}")
 if(NOT ${CMAKE_BUILD_TYPE} STREQUAL "Release")
    set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}-${CMAKE_BUILD_TYPE}")
 endif()
+
+string(REPLACE "+" "-" CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_FILE_NAME}")
 string(TOLOWER "${CPACK_PACKAGE_FILE_NAME}" CPACK_PACKAGE_FILE_NAME)
 
 # variables to be re-used in package description fields
@@ -202,7 +215,7 @@ set(PACKAGE_LONG_DESCRIPTION "RStudio is a set of integrated tools designed to h
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION}\n ${PACKAGE_LONG_DESCRIPTION}")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${PACKAGE_ARCHITECTURE}")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS} libc6 (>= 2.7)")
-set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "r-base (>= ${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED})")
+set(CPACK_DEBIAN_PACKAGE_SUGGESTS "r-base (>= ${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED})")
 
 # rpm-specific
 set(CPACK_RPM_PACKAGE_SUMMARY "${CPACK_PACKAGE_NAME}")

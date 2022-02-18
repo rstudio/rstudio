@@ -1,7 +1,7 @@
 /*
  * HeaderPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,18 +39,14 @@ public class HeaderPanel extends Composite
       @Source("HeaderPanel.css")
       Styles styles();
 
-      ImageResource headerPanelLeft();
       @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
       ImageResource headerPanelTile();
-      ImageResource headerPanelRight();
    }
 
    interface Styles extends CssResource
    {
       String panel();
-      String left();
       String center();
-      String right();
    }
 
    interface MyUiBinder extends UiBinder<Widget, HeaderPanel> {}

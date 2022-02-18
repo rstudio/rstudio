@@ -1,7 +1,7 @@
 /*
  * PanimrroHTMLDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.panmirror.dialogs;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -33,6 +34,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
 
 import jsinterop.annotations.JsFunction;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 
 public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
 {
@@ -111,7 +113,7 @@ public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
       String error = validate_.validate();
       if (error != null)
       {
-         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage("Error", error,
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(constants_.errorCaption(), error,
                new CanFocus()
                {
                   @Override
@@ -160,5 +162,6 @@ public class PanmirrorHTMLDialog extends ModalDialog<Boolean>
 
    private JsVoidFunction focus_;
    private ValidateFn validate_;
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 
 }

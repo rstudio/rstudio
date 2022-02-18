@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -102,6 +102,7 @@ set(CORE_SOURCE_FILES
    markdown/sundown/markdown.c
    markdown/sundown/stack.c
    r_util/RActiveSessions.cpp
+   r_util/RActiveSessionStorage.cpp
    r_util/RPackageInfo.cpp
    r_util/RProjectFile.cpp
    r_util/RSessionContext.cpp

@@ -66,8 +66,8 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
       section("Downloading SOCI sources")
       download(soci_url, destfile = "soci.tar.gz")
 	  section("Unzipping SOCI sources")
-	  exec("7z.exe", "e", "soci.tar.gz")
-	  exec("7z.exe", "x", "soci.tar")
+	  exec("7z.exe", "-aoa", "e", "soci.tar.gz")
+	  exec("7z.exe", "-aoa", "x", "soci.tar")
    }
 
    # create build directories

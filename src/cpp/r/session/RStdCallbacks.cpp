@@ -1,7 +1,7 @@
 /*
  * RStdCallbacks.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -112,7 +112,7 @@ SA_TYPE saveAsk()
       // The Rf_jump_to_top_level doesn't work (freezes the process) with
       // 64-bit mingw due to the way it does stack unwinding. Since this is
       // a farily obscure gesture (quit from command line then cancel the quit)
-      // we just eliminate the possiblity of it on windows
+      // we just eliminate the possibility of it on windows
 #ifndef _WIN32
       prompt += "/c";
 #endif
@@ -267,10 +267,10 @@ InternalCallbacks* stdInternalCallbacks()
    return &s_internalCallbacks;
 }
 
-int RReadConsole (const char *pmt,
-                  CONSOLE_BUFFER_CHAR* buf,
-                  int buflen,
-                  int hist)
+int RReadConsole(const char *pmt,
+                 CONSOLE_BUFFER_CHAR* buf,
+                 int buflen,
+                 int hist)
 {
    try
    {
@@ -360,7 +360,7 @@ int RReadConsole (const char *pmt,
             std::string::size_type inputLen = rInput.length();
             
             // add to console actions and history (if requested). note that
-            // we add the user's input rather than any tranformed input we
+            // we add the user's input rather than any transformed input we
             // created as a result of a shell escape
             consoleActions().add(kConsoleActionInput, consoleInput.text);
             if (addToHistory && !isInjectedBrowserCommand(consoleInput.text))
@@ -467,6 +467,11 @@ void RWriteConsoleEx (const char *buf, int buflen, int otype)
       }
    }
    CATCH_UNEXPECTED_EXCEPTION
+}
+
+void RResetConsole()
+{
+   s_callbacks.consoleReset();
 }
 
 // NOTE: Win32 doesn't receive this callback
@@ -629,7 +634,7 @@ void Raddhistory(SEXP call, SEXP op, SEXP args, SEXP env)
 void RSuicide(const char* s)
 {
    // We need to write this to stderr so the parent process (rstudio) can pick up the error message and display it 
-   // to the user in case the session log file is not accessbile.
+   // to the user in case the session log file is not accessible.
    std::cerr << s << std::endl;
    s_callbacks.suicide(s);
    s_internalCallbacks.suicide(s);
@@ -663,7 +668,7 @@ void rSuicide(const std::string& msg)
 //   (2) In desktop mode we don't receive termination oriented events such
 //       as quit, suicide, and cleanup. This means that the desktop process
 //       must simply detect that we have exited and terminate itself. It also
-//       means that cleanup of our http damons, file monitoring, etc. never
+//       means that cleanup of our http daemons, file monitoring, etc. never
 //       occurs (not an issue b/c our process is going away but worth noting)
 //
 void RCleanUp(SA_TYPE saveact, int status, int runLast)

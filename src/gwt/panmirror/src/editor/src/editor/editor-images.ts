@@ -1,7 +1,7 @@
 /*
  * editor-images.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -94,6 +94,14 @@ import rChunkImage from './images/omni_insert/r_chunk.png';
 import rChunkDarkImage from './images/omni_insert/r_chunk_dark.png';
 import rcppChunkImage from './images/omni_insert/rcpp_chunk.png';
 import rcppChunkDarkImage from './images/omni_insert/rcpp_chunk_dark.png';
+import tabsetImage from './images/omni_insert/tabset.png';
+import tabsetDarkImage from './images/omni_insert/tabset_dark.png';
+import slideColumns from './images/omni_insert/slide_columns.png';
+import slideColumnsDark from './images/omni_insert/slide_columns_dark.png';
+import slidePause from './images/omni_insert/slide_pause.png';
+import slidePauseDark from './images/omni_insert/slide_pause_dark.png';
+import slideNotes from './images/omni_insert/slide_notes.png';
+import slideNotesDark from './images/omni_insert/slide_notes_dark.png';
 
 import articleImage from './images/citations/article.png';
 import articleDarkImage from './images/citations/article_dark.png';
@@ -121,6 +129,7 @@ import webImage from './images/citations/web.png';
 import webDarkImage from './images/citations/web_dark.png';
 import zoteroOverlayImage from './images/citations/zotero-overlay.png';
 import localSourcesImage from './images/citations/insert/local-sources.png';
+import packageImage from './images/citations/insert/packages.png';
 import bibliographyImage from './images/citations/insert/bibliography.png';
 import bibliographyFolderImage from './images/citations/insert/bibliography-folder.png';
 import zoteroRootImage from './images/citations/insert/zotero-root.png';
@@ -130,6 +139,27 @@ import doiImage from './images/citations/insert/doi.png';
 import crossRefImage from './images/citations/insert/crossref.png';
 import pubmedImage from './images/citations/insert/pubmed.png';
 import dataciteImage from './images/citations/insert/datacite.png';
+
+import equationXRefImage from './images/xref/equation.png';
+import equationXRefDarkImage from './images/xref/equation_dark.png';
+import sectionXRefImage from './images/xref/section.png';
+import sectionXRefDarkImage from './images/xref/section_dark.png';
+import listingXRefImage from './images/xref/listing.png';
+import listingXRefDarkImage from './images/xref/listing.png';
+import tableXRefImage from './images/xref/table.png';
+import tableXRefDarkImage from './images/xref/table_dark.png';
+import figureXRefImage from './images/xref/figure.png';
+import figureXRefDarkImage from './images/xref/figure_dark.png';
+import theoremXRefImage from './images/xref/theorem.png';
+import theoremXRefDarkImage from './images/xref/theorem_dark.png';
+
+import allXRefInsertImage from './images/xref/insert/all.png';
+import equationXRefInsertImage from './images/xref/insert/equation.png';
+import sectionXRefInsertImage from './images/xref/insert/section.png';
+import listingXRefInsertImage from './images/xref/insert/listing.png';
+import tableXRefInsertImage from './images/xref/insert/table.png';
+import figureXRefInsertImage from './images/xref/insert/figure.png';
+import theoremXRefInsertImage from './images/xref/insert/theorem.png';
 
 import tagDelete from './images/widgets/tag-delete.png';
 import tagEdit from './images/widgets/tag-edit.png';
@@ -215,6 +245,14 @@ export function defaultEditorUIImages(): EditorUIImages {
       r_chunk_dark: rChunkDarkImage,
       rcpp_chunk: rcppChunkImage,
       rcpp_chunk_dark: rcppChunkDarkImage,
+      tabset: tabsetImage,
+      tabset_dark: tabsetDarkImage,
+      slide_columns: slideColumns,
+      slide_columns_dark: slideColumnsDark,
+      slide_notes: slideNotes,
+      slide_notes_dark: slideNotesDark,
+      slide_pause: slidePause,
+      slide_pause_dark: slidePauseDark
     },
     citations: {
       article: articleImage,
@@ -243,6 +281,7 @@ export function defaultEditorUIImages(): EditorUIImages {
       web_dark: webDarkImage,
       zoteroOverlay: zoteroOverlayImage,
       local_sources: localSourcesImage,
+      packages: packageImage,
       bibligraphy: bibliographyImage,
       bibligraphy_folder: bibliographyFolderImage,
       zotero_library: zoteroLibraryImage,
@@ -252,6 +291,27 @@ export function defaultEditorUIImages(): EditorUIImages {
       crossref: crossRefImage,
       pubmed: pubmedImage,
       datacite: dataciteImage,
+    },
+    xrefs: {
+      section: sectionXRefImage,
+      section_dark: sectionXRefDarkImage,
+      figure: figureXRefImage,
+      figure_dark: figureXRefDarkImage,
+      table: tableXRefImage,
+      table_dark: tableXRefDarkImage,
+      listing: listingXRefImage,
+      listing_dark: listingXRefDarkImage,
+      equation: equationXRefImage,
+      equation_dark: equationXRefDarkImage,
+      theorem: theoremXRefImage,
+      theorem_dark: theoremXRefDarkImage,
+      type_all: allXRefInsertImage,
+      type_section: sectionXRefInsertImage,
+      type_equation: equationXRefInsertImage,
+      type_figure: figureXRefInsertImage,
+      type_table: tableXRefInsertImage,
+      type_listing: listingXRefInsertImage,
+      type_theorem: theoremXRefInsertImage
     },
     widgets: {
       tag_delete: tagDelete,

@@ -1,7 +1,7 @@
 /*
  * r_matching_brace_outdent.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -25,14 +25,17 @@ define("mode/r_matching_brace_outdent", ["require", "exports", "module"], functi
       this.codeModel = codeModel;
    };
 
-   (function()
-   {
+   (function() {
+
       this.checkOutdent = function(state, line, input) {
+
+         // Is the user inserting a bracket on a line that contains
+         // only whitespace? If so, try to 'repair' the indent if necessary.
          if (/^\s+$/.test(line) && /^\s*[\{\}\)\]]/.test(input))
             return true;
 
-         // This is the case of a newline being inserted on a line that only
-         // contains }
+         // Is the user inserting a newline on a line containing only '}'?
+         // If so, we will want to re-indent that line.
          if (/^\s*}\s*$/.test(line) && input == "\n")
             return true;
 
@@ -52,11 +55,11 @@ define("mode/r_matching_brace_outdent", ["require", "exports", "module"], functi
       };
 
       this.autoOutdent = function(state, session, row) {
+
          if (row === 0)
-            return 0;
+            return;
 
          var line = session.getLine(row);
-
          var match = line.match(/^(\s*[\}\)\]])/);
          if (match)
          {
@@ -66,7 +69,7 @@ define("mode/r_matching_brace_outdent", ["require", "exports", "module"], functi
             if (!openBracePos || openBracePos.row == row) return 0;
 
             var indent = this.codeModel.getIndentForOpenBrace(openBracePos);
-            session.replace(new Range(row, 0, row, column-1), indent);
+            session.replace(new Range(row, 0, row, column - 1), indent);
          }
 
          match = line.match(/^(\s*\{)/);
@@ -76,7 +79,10 @@ define("mode/r_matching_brace_outdent", ["require", "exports", "module"], functi
             var indent = this.codeModel.getBraceIndent(row - 1);
             session.replace(new Range(row, 0, row, column - 1), indent);
          }
+
       };
+
    }).call(RMatchingBraceOutdent.prototype);
+
    exports.RMatchingBraceOutdent = RMatchingBraceOutdent;
 });

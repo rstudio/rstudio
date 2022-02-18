@@ -1,7 +1,7 @@
 /*
  * PlotsPanePreviewer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ImageFrame;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
+import org.rstudio.studio.client.workbench.views.plots.PlotsConstants;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 
 import com.google.gwt.dom.client.Document;
@@ -54,7 +55,7 @@ public class PlotsPanePreviewer implements ExportPlotPreviewer
    {
       if (imageFrame_ == null)
       {
-         imageFrame_ = new ImageFrame("Plot Preview");
+         imageFrame_ = new ImageFrame(constants_.plotPreviewTitle());
          imageFrame_.setUrl("about:blank");
          imageFrame_.setSize("100%", "100%");
          imageFrame_.setMarginHeight(0);
@@ -107,4 +108,5 @@ public class PlotsPanePreviewer implements ExportPlotPreviewer
    
    protected final PlotsServerOperations server_;
    private final boolean limitToScreen_;
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * EditSnippetsPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import javax.inject.Inject;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Size;
@@ -40,6 +41,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
+import org.rstudio.studio.client.workbench.snippets.SnippetsConstants;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetData;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
@@ -69,11 +71,11 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    public EditSnippetsDialog()
    {
       super(Roles.getDialogRole());
-      setText("Edit Snippets");
+      setText(constants_.editSnippetsText());
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       addCancelButton();
-      ThemedButton saveButton = new ThemedButton("Save", new ClickHandler() {
+      ThemedButton saveButton = new ThemedButton(constants_.saveTitle(), new ClickHandler() {
          public void onClick(ClickEvent event) 
          {
             attemptSaveAndClose();
@@ -81,7 +83,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
       });
       addButton(saveButton, ElementIds.DIALOG_OK_BUTTON);
       
-      addLeftWidget(new HelpLink("Using Code Snippets", "code_snippets"));
+      addLeftWidget(new HelpLink(constants_.usingCodeSnippetsText(), "code_snippets"));
    }
    
    @Inject
@@ -191,7 +193,7 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
             {
                snippetTypes_.setSelectedIndex(i);
                globalDisplay_.showErrorMessage(
-                "Error Applying Snippets (" + snippets.getFileTypeLabel() + ")",
+                 constants_.applyingSnippetsError(snippets.getFileTypeLabel()),
                  ex.getDescription());
                return; // early return (don't close dialog)
             }  
@@ -313,6 +315,6 @@ public class EditSnippetsDialog extends ModalDialogBase implements TextDisplay
    private FontSizeManager fontSizeManager_;
    private UserPrefs uiPrefs_;
    private LintServerOperations server_;
-  
+   private static final SnippetsConstants constants_ = GWT.create(SnippetsConstants.class);
 
 }

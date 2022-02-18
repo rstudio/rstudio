@@ -1,7 +1,7 @@
 /*
  * editor-menus.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 import { EditorMenuItem, EditorUI } from '../api/ui';
 import { tableMenu } from '../api/table';
 import { EditorCommandId, EditorCommand } from '../api/command';
-import { Editor } from './editor';
 
 export interface EditorMenus {
   format: EditorMenuItem[];
@@ -123,16 +122,40 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
         ]
       : []),
     { separator: true },
-    { command: EditorCommandId.Citation },
-    { command: EditorCommandId.CrossReference },
-    { command: EditorCommandId.Footnote },
-    { separator: true },
+    { command: EditorCommandId.Table },
     { command: EditorCommandId.Image },
     { command: EditorCommandId.Link },
-    { command: EditorCommandId.HorizontalRule },
+    { command: EditorCommandId.Shortcode },
+    ...(haveAnyOf(commands, EditorCommandId.Citation, EditorCommandId.CrossReference, EditorCommandId.Footnote)
+    ? [
+      { separator: true },
+      { command: EditorCommandId.Citation },
+      { command: EditorCommandId.CrossReference },
+      { command: EditorCommandId.Footnote },
+    ] : []),
+    ...(haveAnyOf(commands, EditorCommandId.InsertSlideNotes, EditorCommandId.InsertSlidePause, EditorCommandId.InsertSlideColumns)
+    ? [
+      { separator: true },
+      { command: EditorCommandId.InsertSlideColumns },
+      { command: EditorCommandId.InsertSlidePause },
+      { command: EditorCommandId.InsertSlideNotes }
+    ] : []),
+    { separator: true },
+    ...(haveAnyOf(commands, EditorCommandId.InlineMath, EditorCommandId.DisplayMath)
+    ? [
+        {
+          text: ui.context.translateText('LaTeX Math'),
+          subMenu: {
+            items: [
+              { command: EditorCommandId.InlineMath },
+              { command: EditorCommandId.DisplayMath },
+            ],
+          },
+        },
+      ]
+    : []),
     ...(haveAnyOf(commands, EditorCommandId.DefinitionList)
       ? [
-          { separator: true },
           {
             text: ui.context.translateText('Definition'),
             subMenu: {
@@ -146,10 +169,6 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
           },
         ]
       : []),
-    { separator: true },
-    { command: EditorCommandId.InlineMath },
-    { command: EditorCommandId.DisplayMath },
-    { separator: true },
     {
       text: ui.context.translateText('Special Characters'),
       subMenu: {
@@ -168,14 +187,29 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     },
     { separator: true },
     { command: EditorCommandId.ParagraphInsert },
-    { command: EditorCommandId.CodeBlockFormat },
     { command: EditorCommandId.InsertDiv },
-    { command: EditorCommandId.YamlMetadata },
+    { command: EditorCommandId.HorizontalRule },
+    ...(haveAnyOf(commands, EditorCommandId.Tabset)
+     ? [
+      { separator: true },
+      { command: EditorCommandId.Tabset },
+      { command: EditorCommandId.Callout },
+     ] : []),
     { separator: true },
-    { command: EditorCommandId.Shortcode },
+    { command: EditorCommandId.CodeBlockFormat },
+    { command: EditorCommandId.YamlMetadata },
     { separator: true },
     { command: EditorCommandId.HTMLComment },
   ];
+}
+
+
+function haveReferenceMenu(commands: EditorCommand[]) {
+  return haveAnyOf(commands, 
+    EditorCommandId.Citation,
+    EditorCommandId.CrossReference,
+    EditorCommandId.Footnote
+  );
 }
 
 function haveAnyOf(commands: EditorCommand[], ...ids: EditorCommandId[]) {

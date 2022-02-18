@@ -1,7 +1,7 @@
 /*
  * omni_insert.tsx
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@ import { OmniInserter, omniInsertGroupCompare, omniInsertPriorityCompare } from 
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 
 import { EditorUI } from '../../api/ui';
-import { placeholderDecoration, emptyNodePlaceholderPlugin } from '../../api/placeholder';
+import { placeholderDecoration } from '../../api/placeholder';
 import { kAddToHistoryTransaction } from '../../api/transaction';
 
 import './omni_insert-completion.css';
@@ -84,9 +84,9 @@ export function omniInsertCompletionHandler(
           view.dispatch(tr);
         }
 
-        // if this is a dismiss of an omni_insert mark then the command
-        // isn't part of 'natural' typing into the document, so remove it
-      } else if (isOmniInsertCommandActive(view.state.selection)) {
+      // the activation of omni_insert wasn't part of 'natural' typing
+      // in the document so remove it
+      } else {
         removeCommandText();
       }
       return Promise.resolve();
@@ -97,7 +97,7 @@ export function omniInsertCompletionHandler(
       key: command => command.id,
       width: 320,
       height: 46,
-      maxVisible: 5,
+      maxVisible: 6,
     },
   };
 }
@@ -153,7 +153,7 @@ const OmniInserterView: React.FC<OmniInserter> = inserter => {
       <tbody>
         <tr>
           <td className={'pm-omni-insert-icon'}>
-            <img className={'pm-block-border-color'} src={inserter.image()} alt="" />
+            <img className={'pm-block-border-color'} src={inserter.image()} alt=""  draggable="false"/>
           </td>
           <td>
             <div className={'pm-omni-insert-name pm-completion-list-item-text'}>{inserter.name}</div>

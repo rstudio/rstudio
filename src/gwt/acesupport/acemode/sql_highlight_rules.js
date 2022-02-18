@@ -1,7 +1,7 @@
 /*
  * sql_highlight_rules.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is Jeffrey Arnold
  * Portions created by the Initial Developer are Copyright (C) 2014
@@ -60,6 +60,9 @@ define("mode/sql_highlight_rules", ["require", "exports", "module"], function(re
             token : "comment",
             start : "/\\*",
             end : "\\*/"
+        }, {
+            token: "comment",
+            regex: "^#.*$"
         }, {
           token : "comment.doc.tag",
           regex : "\\?[a-zA-Z_][a-zA-Z0-9_$]*"

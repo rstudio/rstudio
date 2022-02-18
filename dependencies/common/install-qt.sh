@@ -39,6 +39,11 @@
 #############################################################################
 set -eu
 
+if [ "$(arch)" = "aarch64" ]; then
+    echo "install-qt not yet available for aarch64"
+    exit 0
+fi
+
 function help() {
     cat <<EOF
 usage: install-qt [options] [components]

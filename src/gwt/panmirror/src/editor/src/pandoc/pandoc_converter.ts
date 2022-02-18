@@ -1,7 +1,7 @@
 /*
  * pandoc_converter.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 
 import { Schema, Node as ProsemirrorNode } from 'prosemirror-model';
+import { findChildren } from 'prosemirror-utils';
 
 import {
   PandocServer,
@@ -38,6 +39,7 @@ import { ExtensionManager } from '../editor/editor-extensions';
 
 import { pandocToProsemirror } from './pandoc_to_prosemirror';
 import { pandocFromProsemirror } from './pandoc_from_prosemirror';
+import { isParagraphNode } from '../api/paragraph';
 
 export type PandocLineWrapping = 'none' | 'column' | 'sentence';
 
@@ -45,6 +47,7 @@ export interface PandocToProsemirrorResult {
   doc: ProsemirrorNode;
   line_wrapping: PandocLineWrapping;
   unrecognized: string[];
+  example_lists: boolean;
   unparsed_meta: { [key: string]: any };
 }
 
@@ -92,8 +95,13 @@ export class PandocConverter {
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
     // we always need to read with auto_identifiers so we can catch any auto-generated ids
     // required to fulfill links inside the document (we will strip out heading ids that
-    // aren't explicit or a link target using the heading_ids returned with the ast). we also
-    // disable 'smart' b/c that causes pandoc to insert non-breaking spaces before selected
+    // aren't explicit or a link target using the heading_ids returned with the ast). 
+    //
+    // we always read all forms of tables (since they can always be written back out as raw_html)
+    //
+    // we also always read math (since it can always be output as 'asciimath')
+    //
+    // we  disable 'smart' b/c that causes pandoc to insert non-breaking spaces before selected
     // abbreviations like e.g. rather, we do our own implementation of 'smart' when we read
     // PandocTokenType.Str from the ast
 
@@ -101,7 +109,9 @@ export class PandocConverter {
     const autoIds = format.extensions.gfm_auto_identifiers ? 'gfm_auto_identifiers' : 'auto_identifiers';
     const targetFormat = adjustedFormat(
       format.fullName,
-      ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds],
+      ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds, 
+      'grid_tables', 'pipe_tables', 'multiline_tables', 'simple_tables',
+      'tex_math_dollars'],
       ['smart'],
     );
 
@@ -171,7 +181,7 @@ export class PandocConverter {
     ); // always disable
 
     // disable selected format options
-    format = pandocFormatWith(format, disabledFormatOptions(format, doc), '');
+    format = pandocFormatWith(format, disabledFormatOptions(format, pandocFormat, doc), '');
 
     // prepare pandoc options
     let pandocOptions: string[] = [];
@@ -222,7 +232,7 @@ function adjustedFormat(format: string, extensions: string[], disabled: string[]
   return newFormat;
 }
 
-function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
+function disabledFormatOptions(format: string, pandocFormat: PandocFormat, doc: ProsemirrorNode) {
   // (prefer pipe and grid tables). users can still force the availability of these by
   // adding those format flags but all known markdown variants that support tables also
   // support pipe tables so this seems unlikely to ever be required.
@@ -230,7 +240,8 @@ function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
 
   // if there are tables with inline R code then disable grid tables (as the inline
   // R code will mess up the column boundaries)
-  if (haveTableCellsWithInlineRcode(doc)) {
+  if (haveTableCellsWithInlineRcode(doc) || 
+     (!gridTablesRequired(doc) && pandocFormat.extensions.pipe_tables)) {
     disabledTableTypes += '-grid_tables';
   }
 
@@ -243,6 +254,28 @@ function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
 
   // return
   return disabledTableTypes;
+}
+
+function gridTablesRequired(doc: ProsemirrorNode) {
+  const schema = doc.type.schema;
+  const isTableCell = (node: ProsemirrorNode) => node.type === schema.nodes.table_cell || node.type === schema.nodes.table_header;
+  return findChildren(doc, isTableCell).some(cell => {
+    // various things require grid tables (basically anyting that requires embedded newlines)
+
+    // multiple blocks
+    if (cell.node.childCount > 1) {
+      return true;
+    }
+
+    // non paragraph block
+    if (!isParagraphNode(cell.node.firstChild)) {
+      return true;
+    }
+
+    // paragraph with hard break
+    const paraNode = cell.node.firstChild!;
+    return findChildren(paraNode, node => node.type === schema.nodes.hard_break).length > 0;
+  }); 
 }
 
 function wrapOptions(options: PandocWriterOptions) {

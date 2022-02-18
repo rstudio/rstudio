@@ -1,7 +1,7 @@
 /*
  * MainSplitPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,12 +26,10 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.NotifyingSplitLayoutPanel;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -126,12 +124,9 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
    @Inject
    public MainSplitPanel(EventBus events,
-                         Session session,
-                         UserPrefs uiPrefs)
+                         Session session)
    {
-      super(
-         RStudioThemes.isFlat(uiPrefs) ? 7 : 3,
-         events);
+      super(7, events);
       
       session_ = session;
       addSplitterResizedHandler(this);

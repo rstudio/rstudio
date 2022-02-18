@@ -1,7 +1,7 @@
 /*
  * ConsoleInputEvent.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,8 +19,9 @@ import com.google.gwt.event.shared.GwtEvent;
 
 public class ConsoleInputEvent extends GwtEvent<ConsoleInputEvent.Handler>
 {
-   public static final int FLAG_CANCEL = 1;
-   public static final int FLAG_EOF    = 2;
+   public static final int FLAG_CANCEL  = 1;
+   public static final int FLAG_EOF     = 2;
+   public static final int FLAG_NO_ECHO = 4;
    
    public ConsoleInputEvent(String input,
                             String console,

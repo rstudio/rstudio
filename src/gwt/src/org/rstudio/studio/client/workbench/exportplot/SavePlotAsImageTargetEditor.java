@@ -1,7 +1,7 @@
 /*
  * SavePlotAsImageTargetEditor.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.exportplot;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
@@ -49,7 +50,7 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
       grid.setCellPadding(0);
     
       imageFormatListBox_ = new ListBox();
-      FormLabel imageFormatLabel = new FormLabel("Image format:", imageFormatListBox_);
+      FormLabel imageFormatLabel = new FormLabel(constants_.imageFormatLabel(), imageFormatListBox_);
       imageFormatLabel.setStylePrimaryName(styles.exportTargetLabel());
           
       grid.setWidget(0, 0, imageFormatLabel);
@@ -66,7 +67,7 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
       imageFormatListBox_.setStylePrimaryName(styles.imageFormatListBox());
       grid.setWidget(0, 1, imageFormatListBox_);
            
-      ThemedButton directoryButton = new ThemedButton("Directory...");
+      ThemedButton directoryButton = new ThemedButton(constants_.directoryButtonTitle());
       directoryButton.setStylePrimaryName(styles.directoryButton());
       directoryButton.getElement().getStyle().setMarginLeft(-2, Unit.PX);
       grid.setWidget(1, 0, directoryButton);
@@ -75,7 +76,7 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
          public void onClick(ClickEvent event)
          {
             fileDialogs_.chooseFolder(
-               "Choose Directory",
+               constants_.chooseDirectoryCaption(),
                fileSystemContext_,
                FileSystemItem.createDir(directoryTextBox_.getText().trim()),
                new ProgressOperationWithInput<FileSystemItem>() {
@@ -100,7 +101,7 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
       
       directoryTextBox_ = new TextBox();
       directoryTextBox_.setReadOnly(true);
-      Roles.getTextboxRole().setAriaLabelProperty(directoryTextBox_.getElement(), "Selected Directory");
+      Roles.getTextboxRole().setAriaLabelProperty(directoryTextBox_.getElement(), constants_.selectedDirectoryLabel());
 
       setDirectory(context_.getDirectory());
       directoryTextBox_.setStylePrimaryName(styles.directoryTextBox());
@@ -109,7 +110,7 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
       fileNameTextBox_ = new TextBox();
       fileNameTextBox_.setText(context.getUniqueFileStem());
       fileNameTextBox_.setStylePrimaryName(styles.fileNameTextBox());
-      FormLabel fileNameLabel = new FormLabel("File name:", fileNameTextBox_);
+      FormLabel fileNameLabel = new FormLabel(constants_.fileNameText(), fileNameTextBox_);
       fileNameLabel.setStylePrimaryName(styles.fileNameLabel());
       grid.setWidget(2, 0, fileNameLabel);
       grid.setWidget(2, 1, fileNameTextBox_);
@@ -168,4 +169,5 @@ public class SavePlotAsImageTargetEditor extends Composite implements CanFocus
    
    private final FileDialogs fileDialogs_ = 
       RStudioGinjector.INSTANCE.getFileDialogs();
+   private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 }

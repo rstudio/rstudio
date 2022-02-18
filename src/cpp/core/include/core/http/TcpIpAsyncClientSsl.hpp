@@ -1,7 +1,7 @@
 /*
  * TcpIpAsyncClientSsl.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,14 +41,16 @@ public:
                        const std::string& certificateAuthority = std::string(),
                        const boost::posix_time::time_duration& connectionTimeout =
                           boost::posix_time::time_duration(boost::posix_time::pos_infin),
-                       const std::string& hostname = std::string() )
+                       const std::string& hostname = std::string(),
+                       const std::string& verifyAddress = std::string())
      : AsyncClient<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >(ioService),
        sslContext_(boost::asio::ssl::context::sslv23_client),
        address_(address),
        port_(port),
        verify_(verify),
        certificateAuthority_(certificateAuthority),
-       connectionTimeout_(connectionTimeout)
+       connectionTimeout_(connectionTimeout),
+       verifyAddress_(verifyAddress)
    {
       ssl::initializeSslContext(&sslContext_, verify, certificateAuthority);
 
@@ -97,8 +99,9 @@ private:
       if (verify_)
       {
          ptrSslStream_->set_verify_callback(
-                            boost::asio::ssl::rfc2818_verification(address_));
+                            boost::asio::ssl::rfc2818_verification(verifyAddress_.empty() ? address_ : verifyAddress_));
       }
+
       ptrSslStream_->async_handshake(
             boost::asio::ssl::stream_base::client,
             boost::bind(&TcpIpAsyncClientSsl::handleHandshake,
@@ -144,6 +147,7 @@ private:
    bool verify_;
    std::string certificateAuthority_;
    boost::posix_time::time_duration connectionTimeout_;
+   std::string verifyAddress_;
 };
 
 

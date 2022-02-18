@@ -1,7 +1,7 @@
 /*
  * ProjectSourceControlPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsHelpLink;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.RProjectVcsContext;
@@ -57,7 +58,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       globalDisplay_ = globalDisplay;
       server_ = server;
 
-      vcsSelect_ = new SelectWidget("Version control system:", new String[]{});
+      vcsSelect_ = new SelectWidget(constants_.vcsSelectLabel(), new String[]{});
       spaced(vcsSelect_);
       add(vcsSelect_);
       vcsSelect_.addChangeHandler(new ChangeHandler() {
@@ -104,7 +105,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Git/SVN";
+      return constants_.gitLabel();
    }
 
    @Override
@@ -181,18 +182,18 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       if (vcs == VCSConstants.GIT_ID)
       {
          StringBuilder label = new StringBuilder();
-         label.append("Origin: ");
+         label.append(constants_.originLabel());
          String originUrl = vcsContext_.getGitRemoteOriginUrl();
          if (originUrl.length() == 0)
             originUrl = NO_REMOTE_ORIGIN;
-         lblOrigin_.setOrigin("Origin:", originUrl);
+         lblOrigin_.setOrigin(constants_.lblOrigin(), originUrl);
          lblOrigin_.setVisible(true);
          vcsSelect_.removeStyleName(RES.styles().vcsSelectExtraSpaced());
 
       }
       else if (vcs == VCSConstants.SVN_ID)
       {
-         lblOrigin_.setOrigin("Repo:",
+         lblOrigin_.setOrigin(constants_.repoCaption(),
                               vcsContext_.getSvnRepositoryRoot());
          lblOrigin_.setVisible(true);
          vcsSelect_.removeStyleName(RES.styles().vcsSelectExtraSpaced());
@@ -209,7 +210,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    private void confirmGitRepo(final Command onConfirmed)
    {
       final ProgressIndicator indicator = getProgressIndicator();
-      indicator.onProgress("Checking for git repository...");
+      indicator.onProgress(constants_.confirmGitRepoLabel());
 
       final String projDir =
                session_.getSessionInfo().getActiveProjectDir().getPath();
@@ -229,9 +230,8 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
             {
                globalDisplay_.showYesNoMessage(
                   MessageDialog.QUESTION,
-                  "Confirm New Git Repository",
-                  "Do you want to initialize a new git repository " +
-                  "for this project?",
+                  constants_.confirmGitRepoCaption(),
+                  constants_.confirmGitRepoMessage(),
                   false,
                   new Operation() {
                      @Override
@@ -310,6 +310,7 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
       private Label lblOrigin_;
    }
 
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
    private final GitServerOperations server_;
@@ -318,9 +319,9 @@ public class ProjectSourceControlPreferencesPane extends ProjectPreferencesPane
    private OriginLabel lblOrigin_;
    private RProjectVcsContext vcsContext_;
 
-   private static final String NONE = "(None)";
+   private static final String NONE = constants_.noneProjectSourceControlLabel();
 
-   private static final String NO_REMOTE_ORIGIN  ="None";
+   private static final String NO_REMOTE_ORIGIN  =constants_.noneLabel();
 
    private static final ProjectPreferencesDialogResources RES =
                                     ProjectPreferencesDialogResources.INSTANCE;

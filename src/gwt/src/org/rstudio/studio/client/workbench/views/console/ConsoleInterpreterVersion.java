@@ -1,7 +1,7 @@
 /*
  * ConsoleInterpreterVersion.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -82,7 +83,8 @@ public class ConsoleInterpreterVersion
       label_.addStyleName(isTabbedView
             ? RES.styles().labelTabbed()
             : RES.styles().labelUntabbed());
-      
+      ElementIds.assignElementId(label_, ElementIds.CONSOLE_INTERPRETER_VERSION + (isTabbedView ? "_tabbed" : ""));
+
       if (isPythonActive())
       {
          container_.add(pythonLogo_);
@@ -169,7 +171,7 @@ public class ConsoleInterpreterVersion
    
    private String rVersionLabel()
    {
-      String version = "(unknown)";
+      String version = constants_.unknownLabel();
       
       try
       {
@@ -243,5 +245,6 @@ public class ConsoleInterpreterVersion
    {
       RES.styles().ensureInjected();
    }
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 
 }

@@ -1,7 +1,7 @@
 /*
  * CompletionCache.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -89,16 +89,22 @@ public class CompletionCache
       
       // Extract the vector elements of the completion string
       JsArrayString completions = original.getCompletions();
+      JsArrayString display     = original.getCompletionsDisplay();
       JsArrayString packages    = original.getPackages();
       JsArrayBoolean quote      = original.getQuote();
       JsArrayInteger type       = original.getType();
+      JsArrayBoolean suggestOnAccept = original.getSuggestOnAccept();
+      JsArrayBoolean replaceToEnd = original.getReplaceToEnd();
       JsArrayString meta        = original.getMeta();
       
       // Now, generate narrowed versions of the above
       final JsVectorString completionsNarrow = JsVectorString.createVector().cast();
+      final JsVectorString displayNarrow     = JsVectorString.createVector().cast();
       final JsVectorString packagesNarrow    = JsVectorString.createVector().cast();
       final JsVectorBoolean quoteNarrow      = JsVectorBoolean.createVector().cast();
       final JsVectorInteger typeNarrow       = JsVectorInteger.createVector().cast();
+      final JsArrayBoolean suggestOnAcceptNarrow = JsVectorBoolean.createVector().cast();
+      final JsArrayBoolean replaceToEndNarrow = JsVectorBoolean.createVector().cast();
       final JsVectorString metaNarrow        = JsVectorString.createVector().cast();
       
       for (int i = 0, n = completions.length(); i < n; i++)
@@ -107,9 +113,12 @@ public class CompletionCache
          if (isSubsequence)
          {
             completionsNarrow.push(completions.get(i));
+            displayNarrow.push(display.get(i));
             packagesNarrow.push(packages.get(i));
             quoteNarrow.push(quote.get(i));
             typeNarrow.push(type.get(i));
+            suggestOnAcceptNarrow.push(suggestOnAccept.get(i));
+            replaceToEndNarrow.push(replaceToEnd.get(i));
             metaNarrow.push(meta.get(i));
          }
       }
@@ -146,18 +155,24 @@ public class CompletionCache
       
       // Finally, re-arrange our vectors.
       final JsVectorString completionsSorted = JsVectorString.createVector().cast();
+      final JsVectorString displaySorted     = JsVectorString.createVector().cast();
       final JsVectorString packagesSorted    = JsVectorString.createVector().cast();
       final JsVectorBoolean quoteSorted      = JsVectorBoolean.createVector().cast();
       final JsVectorInteger typeSorted       = JsVectorInteger.createVector().cast();
+      final JsVectorBoolean suggestOnAcceptSorted = JsVectorBoolean.createVector().cast();
+      final JsVectorBoolean replaceToEndSorted = JsVectorBoolean.createVector().cast();
       final JsVectorString metaSorted        = JsVectorString.createVector().cast();
       
       for (int i = 0, n = indices.size(); i < n; i++)
       {
          int index = indices.get(i);
          completionsSorted.push(completionsNarrow.get(index));
+         displaySorted.push(displayNarrow.get(index));
          packagesSorted.push(packagesNarrow.get(index));
          quoteSorted.push(quoteNarrow.get(index));
          typeSorted.push(typeNarrow.get(index));
+         suggestOnAcceptSorted.push(suggestOnAcceptNarrow.get(index));
+         replaceToEndSorted.push(replaceToEndNarrow.get(index));
          metaSorted.push(metaNarrow.get(index));
       }
       
@@ -165,9 +180,12 @@ public class CompletionCache
       return Completions.createCompletions(
             token,
             completionsSorted.cast(),
+            displaySorted.cast(),
             packagesSorted.cast(),
             quoteSorted.cast(),
             typeSorted.cast(),
+            suggestOnAcceptSorted.cast(),
+            replaceToEndSorted.cast(),
             metaSorted.cast(),
             original.getGuessedFunctionName(),
             original.getExcludeOtherCompletions(),

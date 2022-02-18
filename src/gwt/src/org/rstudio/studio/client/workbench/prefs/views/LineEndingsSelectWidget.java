@@ -1,7 +1,7 @@
 /*
  * LineEndingsSelectWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,9 @@ package org.rstudio.studio.client.workbench.prefs.views;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import com.google.gwt.core.client.GWT;
 
 public class LineEndingsSelectWidget extends SelectWidget
 {
@@ -29,7 +31,7 @@ public class LineEndingsSelectWidget extends SelectWidget
    
    public LineEndingsSelectWidget(boolean includeDefault)
    {
-      super("Line ending conversion:",
+      super(constants_.lineEndingConversion(),
             getLineEndingsCaptions(includeDefault),
             getLineEndingsValues(includeDefault),
             false, 
@@ -41,11 +43,11 @@ public class LineEndingsSelectWidget extends SelectWidget
    {
       ArrayList<String> captions = new ArrayList<>();
       if (includeDefault)
-         captions.add("(Use Default)");
-      captions.add("None");
-      captions.add("Platform Native");
-      captions.add("Posix (LF)");
-      captions.add("Windows (CR/LF)");
+         captions.add(constants_.useDefaultParentheses());
+      captions.add(constants_.none());
+      captions.add(constants_.platformNative());
+      captions.add(constants_.posixLF());
+      captions.add(constants_.windowsCRLF());
       
       return captions.toArray(new String[0]);
    }
@@ -62,5 +64,5 @@ public class LineEndingsSelectWidget extends SelectWidget
       
       return values.toArray(new String[0]);
    }
-   
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

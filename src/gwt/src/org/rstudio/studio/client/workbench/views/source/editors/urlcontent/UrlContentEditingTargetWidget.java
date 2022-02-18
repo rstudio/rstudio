@@ -1,7 +1,7 @@
 /*
  * UrlContentEditingTargetWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.urlcontent;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.StringUtil;
@@ -24,6 +25,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 
 public class UrlContentEditingTargetWidget extends Composite
@@ -68,12 +70,13 @@ public class UrlContentEditingTargetWidget extends Composite
    public void setAccessibleName(String name)
    {
       if (StringUtil.isNullOrEmpty(name))
-         name = "Untitled URL Browser";
-      Roles.getTabpanelRole().setAriaLabelProperty(panel_.getElement(), name + " URL Browser");
+         name = constants_.untitledUrlBrowser();
+      Roles.getTabpanelRole().setAriaLabelProperty(panel_.getElement(), constants_.accessibleNameBrowser(name));
    }
 
    private final Commands commands_;
    private RStudioThemedFrame frame_;
    private final PanelWithToolbars panel_;
    private SourceColumn column_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

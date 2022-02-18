@@ -1,7 +1,7 @@
 /*
  * VisualMode.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,8 +18,8 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.BrowseCap;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
@@ -38,6 +38,7 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
@@ -65,7 +66,9 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsSource;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
@@ -128,7 +131,7 @@ public class VisualMode implements VisualModeEditorSync,
       
       // create peer helpers
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
-      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, this);
+      visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, releaseOnDismiss, this);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
       visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
@@ -200,7 +203,7 @@ public class VisualMode implements VisualModeEditorSync,
    {
       findReplaceButton_ = new ToolbarButton(
          ToolbarButton.NoText,
-         "Find/Replace",
+         constants_.findOrReplace(),
          FindReplaceBar.getFindIcon(),
          (event) -> {
             HasFindReplace findReplace = getFindReplace();
@@ -331,55 +334,63 @@ public class VisualMode implements VisualModeEditorSync,
                   PanmirrorCode markdown = Js.uncheckedCast(obj);
                   rv.arrive(() ->
                   {
-                     if (markdown == null)
+                     try
                      {
-                        // note that ready.execute() is never called in the error case
-                        return;
-                     }
-
-                     // we are about to mutate the document, so create a single
-                     // shot handler that will adjust the known position of
-                     // items in the outline (we do this opportunistically
-                     // unless executing code)
-                     if (markdown.location != null && syncType != SyncType.SyncTypeExecution)
-                     {
-                         alignScopeTreeAfterUpdate(markdown.location);
-                     }
-                     
-                     // apply diffs unless the wrap column changed (too expensive)
-                     if (!writerOptions.wrapChanged) 
-                     {
-                        TextEditorContainer.Changes changes = toEditorChanges(markdown);
-                        getSourceEditor().applyChanges(changes, syncType == SyncType.SyncTypeActivate); 
-                     }
-                     else
-                     {
-                        getSourceEditor().setCode(markdown.code);
-                     }
-                     
-                     // if the format comment has changed then show the reload prompt
-                     if (panmirrorFormatConfig_.requiresReload())
-                     {
-                        view_.showPanmirrorFormatChanged(() ->
+                        if (markdown == null)
                         {
-                           // dismiss the warning bar
-                           view_.hideWarningBar();
-                           // this will trigger the refresh b/c the format changed
-                           syncFromEditorIfActivated();
-                          
-                        });
+                           // note that ready.execute() is never called in the error case
+                           return;
+                        }
+   
+                        // we are about to mutate the document, so create a single
+                        // shot handler that will adjust the known position of
+                        // items in the outline (we do this opportunistically
+                        // unless executing code)
+                        if (markdown.location != null && syncType != SyncType.SyncTypeExecution)
+                        {
+                            alignScopeTreeAfterUpdate(markdown.location);
+                        }
+                        
+                        // apply diffs unless the wrap column changed (too expensive)
+                        if (!writerOptions.wrapChanged) 
+                        {
+                           TextEditorContainer.Changes changes = toEditorChanges(markdown);
+                           getSourceEditor().applyChanges(changes, syncType == SyncType.SyncTypeActivate); 
+                        }
+                        else
+                        {
+                           getSourceEditor().setCode(markdown.code);
+                        }
+                        
+                        // if the format comment has changed then show the reload prompt
+                        if ((panmirrorFormatConfig_ != null) && panmirrorFormatConfig_.requiresReload())
+                        {
+                           view_.showPanmirrorFormatChanged(() ->
+                           {
+                              // dismiss the warning bar
+                              view_.hideWarningBar();
+                              // this will trigger the refresh b/c the format changed
+                              syncFromEditorIfActivated();
+                             
+                           });
+                        }
+                        
+                        if (markdown.location != null && syncType == SyncType.SyncTypeExecution)
+                        {
+                           // if syncing for execution, force a rebuild of the scope tree 
+                           alignScopeOutline(markdown.location);
+                        }
+   
+                        // invoke ready callback if supplied
+                        if (ready != null)
+                        {
+                           ready.execute();
+                        }
                      }
-                     
-                     if (markdown.location != null && syncType == SyncType.SyncTypeExecution)
+                     catch(Exception ex)
                      {
-                        // if syncing for execution, force a rebuild of the scope tree 
-                        alignScopeOutline(markdown.location);
-                     }
-
-                     // invoke ready callback if supplied
-                     if (ready != null)
-                     {
-                        ready.execute();
+                        Debug.logToConsole("Unexpected error occurred during syncToEditor");
+                        Debug.logException(ex);
                      }
                   }, true);  
                } 
@@ -516,7 +527,7 @@ public class VisualMode implements VisualModeEditorSync,
                       */
                      if (JsObject.keys(result.unparsed_meta).length > 0)
                      {
-                        view_.showWarningBar("Unable to activate visual mode (unsupported front matter format or non top-level YAML block)");
+                        view_.showWarningBar(constants_.unableToActivateVisualModeYAML());
                         allDone.execute(false);
                         return;
                      }
@@ -524,7 +535,15 @@ public class VisualMode implements VisualModeEditorSync,
                      // if we failed to extract a source capsule then don't switch (as the user will have lost data)
                      if (hasSourceCapsule(result.canonical))
                      {
-                        view_.showWarningBar("Unable to activate visual mode (error parsing code chunks out of document)");
+                        view_.showWarningBar(constants_.unableToActivateVisualModeParsingCode());
+                        allDone.execute(false);
+                        return;
+                     }
+                     
+                     // if we have example lists then don't switdch
+                     if (result.example_lists)
+                     {
+                        view_.showWarningBar(constants_.unableToActivateVisualModeDocumentContains());
                         allDone.execute(false);
                         return;
                      }
@@ -584,15 +603,16 @@ public class VisualMode implements VisualModeEditorSync,
                               PanmirrorPandocFormat format = panmirror_.getPandocFormat();
                               if (result.unrecognized.length > 0) 
                               {
-                                 view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
+                                 view_.showWarningBar(constants_.unrecognizedPandocTokens(String.join(", ", result.unrecognized)));
                               } 
                               else if (format.warnings.invalidFormat.length() > 0)
                               {
-                                 view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+                                 view_.showWarningBar(constants_.invalidPandocFormat(format.warnings.invalidFormat));
                               }
                               else if (format.warnings.invalidOptions.length > 0)
                               {
-                                 view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
+                                 view_.showWarningBar(constants_.unsupportedExtensionsForMarkdown(
+                                         String.join(", ", format.warnings.invalidOptions)));;
                               }
                            });         
                         }, 
@@ -628,7 +648,7 @@ public class VisualMode implements VisualModeEditorSync,
                // ensure that no source capsules have snuck in
                if (hasSourceCapsule(markdown))
                {
-                  view_.showWarningBar("Unable to reformat to canonical markdown (parsing error, please report this to RStudio)");
+                  view_.showWarningBar(constants_.unableToParseMarkdownPleaseReport());
                   completed.execute(null);  
                }
                /*
@@ -697,19 +717,9 @@ public class VisualMode implements VisualModeEditorSync,
       
       // disable commands
       disableForVisualMode(
-        // Disabled since diagnostics aren't active in visual mode
-        commands_.showDiagnosticsActiveDocument(),
-
         // Disabled since we can't meaningfully select instances in several
         // embedded editors simultaneously
         commands_.findSelectAll(),
-
-        // Disabled since code folding doesn't work in embedded editors (there's
-        // no gutter in which to toggle folds)
-        commands_.fold(),
-        commands_.foldAll(),
-        commands_.unfold(),
-        commands_.unfoldAll(),
 
         // Disabled since we don't have line numbers in the visual editor
         commands_.goToLine()
@@ -819,6 +829,8 @@ public class VisualMode implements VisualModeEditorSync,
          commands_.runSelectionAsJob(),
          commands_.runSelectionAsLauncherJob(),
          commands_.sendToTerminal(),
+         commands_.yankAfterCursor(),
+         commands_.yankBeforeCursor()
       };
 
       for (AppCommand command : commands)
@@ -849,6 +861,26 @@ public class VisualMode implements VisualModeEditorSync,
    public void goToPreviousChunk()
    {
       panmirror_.execCommand(PanmirrorCommands.GoToPreviousChunk);
+   }
+   
+   public void fold()
+   {
+      panmirror_.execCommand(PanmirrorCommands.CollapseChunk);
+   }
+   
+   public void unfold()
+   {
+      panmirror_.execCommand(PanmirrorCommands.ExpandChunk);
+   }
+   
+   public void foldAll()
+   {
+      panmirror_.execCommand(PanmirrorCommands.CollapseAllChunks);
+   }
+   
+   public void unfoldAll()
+   {
+      panmirror_.execCommand(PanmirrorCommands.ExpandAllChunks);
    }
 
    public HasFindReplace getFindReplace()
@@ -950,6 +982,16 @@ public class VisualMode implements VisualModeEditorSync,
       return true;
    }
    
+   public PresentationEditorLocation getPresentationEditorLocation()
+   {
+      return panmirror_.getPresentationEditorLocation();
+   }
+   
+   public void navigateToPresentationEditorLocation(PresentationEditorLocation location)
+   {
+      panmirror_.navigateToPresentationEditorLocation(location);
+   }
+   
    public void activateDevTools()
    {
       withPanmirror(() -> {
@@ -1000,6 +1042,16 @@ public class VisualMode implements VisualModeEditorSync,
    {
       return visualModeChunks_.getChunkDefs();
    }
+
+   /**
+    * Nudges the timer that runs to save the collapsed state of visual mode chunks.
+    * This is heavily debounced since it changes frequently (chunk position is
+    * used as an index key)
+    */
+   public void nudgeSaveCollapseState()
+   {
+      visualModeChunks_.nudgeSaveCollapseState();
+   }
    
    public ChunkDefinition getChunkDefAtRow(int row)
    {
@@ -1032,6 +1084,16 @@ public class VisualMode implements VisualModeEditorSync,
          return null;
       }
       return chunk.getScope();
+   }
+
+   /**
+    * Shows lint items in the visual editor.
+    *
+    * @param lint An array of lint items.
+    */
+   public void showLint(JsArray<LintItem> lint)
+   {
+      visualModeChunks_.showLint(lint);
    }
    
    /**
@@ -1079,7 +1141,7 @@ public class VisualMode implements VisualModeEditorSync,
          
          if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
          {
-            label.appendEscaped("Chunk " + item.sequence);
+            label.appendEscaped(constants_.chunkSequence(item.sequence));
             if (!StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
             {
                label.appendEscaped(": " + item.title);
@@ -1213,8 +1275,8 @@ public class VisualMode implements VisualModeEditorSync,
                panmirror_.showOutline(establishOutlineVisible(), getOutlineWidth());
                
                // show find replace button
-               findReplaceButton_.setVisible(true);
-               
+               view_.showVisualModeFindReplaceButton(true);
+                  
                // activate widget
                editorContainer.activateWidget(panmirror_, focus);
                
@@ -1272,7 +1334,7 @@ public class VisualMode implements VisualModeEditorSync,
             unmanageCommands();
             
             // hide find replace button
-            findReplaceButton_.setVisible(false);
+            view_.showVisualModeFindReplaceButton(false);
             
             editorContainer.activateEditor(focus); 
             
@@ -1364,6 +1426,10 @@ public class VisualMode implements VisualModeEditorSync,
     */
    private void syncStatusBarLocation()
    {
+      // bail if no panmirror
+      if (panmirror_ == null)
+         return;
+      
       // Get the current outline so we can look up details of the selection
       PanmirrorOutlineItem[] items = panmirror_.getOutline();
       String targetId = panmirror_.getSelection().navigation_id;
@@ -1377,7 +1443,7 @@ public class VisualMode implements VisualModeEditorSync,
          //
          // We also show this when beneath the top level YAML metadata region,
          // if present.
-         target_.updateStatusBarLocation("(Top Level)", StatusBar.SCOPE_TOP_LEVEL);
+         target_.updateStatusBarLocation(constants_.topLevelParentheses(), StatusBar.SCOPE_TOP_LEVEL);
       }
       else
       {
@@ -1391,7 +1457,7 @@ public class VisualMode implements VisualModeEditorSync,
          else if (StringUtil.equals(item.type, PanmirrorOutlineItemType.RmdChunk))
          {
             type = StatusBar.SCOPE_CHUNK;
-            title = "Chunk " + item.sequence;
+            title = constants_.chunkSequence(item.sequence);
             if (!StringUtil.equals(item.title, PanmirrorOutlineItemType.RmdChunk))
             {
                title += ": " + item.title;
@@ -1446,14 +1512,15 @@ public class VisualMode implements VisualModeEditorSync,
          PanmirrorContext context = createPanmirrorContext(); 
          PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
-         PanmirrorWidget.create(context, visualModeFormat_.formatSource(), 
-                                options, widgetOptions, kCreationProgressDelayMs, (panmirror) -> {
+         PanmirrorWidget.FormatSource formatSource = visualModeFormat_.formatSource();
+         PanmirrorWidget.create(context, formatSource, options, widgetOptions, view_.getMarkdownToolbar(), kCreationProgressDelayMs, 
+            (panmirror) -> {
          
             // save reference to panmirror
             panmirror_ = panmirror;
             
             // track format comment (used to detect when we need to reload for a new format)
-            panmirrorFormatConfig_ = new VisualModeReloadChecker(view_);
+            panmirrorFormatConfig_ = new VisualModeReloadChecker(formatSource);
             
             // remove some keybindings that conflict with the ide
             // (currently no known conflicts)
@@ -1735,7 +1802,7 @@ public class VisualMode implements VisualModeEditorSync,
    { 
       if (this.docDisplay_.hasActiveCollabSession())
       {
-         return "You cannot enter visual mode while using realtime collaboration.";
+         return constants_.cantEnterVisualModeUsingRealtime();
       }
       else
       {
@@ -1881,7 +1948,8 @@ public class VisualMode implements VisualModeEditorSync,
    
    // priority task queue for expensive calls to panmirror_.setMarkdown
    // (currently active tab bumps itself up in priority)
-   private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);     
+   private static PreemptiveTaskQueue setMarkdownQueue_ = new PreemptiveTaskQueue(true, false);
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }
 
 

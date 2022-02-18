@@ -1,7 +1,7 @@
 /*
  * SessionFind.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,6 +67,22 @@ namespace {
 const size_t MAX_COUNT = 1000;
 
 const size_t MAX_LINE_LENGTH = 3000;
+
+bool debugging()
+{
+   return !core::system::getenv("RSTUDIO_GREP_DEBUG").empty();
+}
+
+FilePath gnuGrepPath()
+{
+   // allow override, for testing
+   std::string overridePath = core::system::getenv("RSTUDIO_GREP_PATH");
+   if (!overridePath.empty())
+      return FilePath(overridePath);
+
+   // otherwise, use option
+   return options().gnugrepPath();
+}
 
 // Reflects the estimated current progress made in performing a replace
 class LocalProgress : public boost::noncopyable
@@ -379,26 +395,29 @@ private:
 
 FindInFilesState& findResults()
 {
-   static FindInFilesState* s_pFindResults = nullptr;
-   if (s_pFindResults == nullptr)
-      s_pFindResults = new FindInFilesState();
-   return *s_pFindResults;
+   static FindInFilesState instance;
+   return instance;
 }
 
 class GrepOperation : public boost::enable_shared_from_this<GrepOperation>
 {
 public:
-   static boost::shared_ptr<GrepOperation> create(const std::string& encoding,
+   static boost::shared_ptr<GrepOperation> create(const std::string& workingDir,
+                                                  const std::string& encoding,
                                                   const FilePath& tempFile)
    {
-      return boost::shared_ptr<GrepOperation>(new GrepOperation(encoding,
-                                                                tempFile));
+      return boost::shared_ptr<GrepOperation>(
+               new GrepOperation(workingDir, encoding, tempFile));
    }
 
 private:
-   GrepOperation(const std::string& encoding,
+   GrepOperation(const std::string& workingDir,
+                 const std::string& encoding,
                  const FilePath& tempFile)
-      : firstDecodeError_(true), encoding_(encoding), tempFile_(tempFile)
+      : workingDir_(workingDir),
+        encoding_(encoding),
+        tempFile_(tempFile),
+        firstDecodeError_(true)
    {
       handle_ = core::system::generateUuid(false);
    }
@@ -503,7 +522,7 @@ private:
          return (Error(
                   errc::findCategory(),
                   errc::PermissionsError,
-                  "A permissions error occured during replace operation.",
+                  "A permissions error occurred during replace operation.",
                   ERROR_LOCATION));
       }
       return Success();
@@ -576,7 +595,7 @@ private:
             inputStream_.reset();
             outputStream_.reset();
 
-// Unneccesary on Windows because this only sets write permissions which we
+// Unnecessary on Windows because this only sets write permissions which we
 // already know are correct if we are writing.
 // This needs to happen after outputStream is flushed
 #ifndef _WIN32
@@ -610,8 +629,8 @@ private:
       const char* inputPos = pContent->c_str();
       const char* end = inputPos + pContent->size();
       boost::cmatch match;
-      while (regex_utils::search(
-               inputPos, match, getColorEncodingRegex(findResults().gitFlag())))
+      boost::regex pattern = getColorEncodingRegex(findResults().gitFlag());
+      while (regex_utils::search(inputPos, match, pattern))
       {
          // decode the current match, and append it
          std::string matchedString(inputPos, inputPos + match.position());
@@ -684,7 +703,7 @@ private:
    void subtractOffsetIntegerToJsonArray(
        json::Value newValue, int offset, json::Array* pJsonArray)
    {
-      // make sure negative values (errors) don't become positve
+      // make sure negative values (errors) don't become positive
       if (newValue.getInt() < 0)
          newValue = json::Value(newValue.getInt() - offset);
       pJsonArray->push_back(gsl::narrow_cast<int>(newValue.getInt() + offset));
@@ -735,8 +754,8 @@ private:
       std::size_t charactersProcessed = 0;
       boost::cmatch match;
       std::string cleanLine;
-
-      while (regex_utils::search(inputPos, match, getColorEncodingRegex(findResults().gitFlag())))
+      boost::regex pattern = getColorEncodingRegex(findResults().gitFlag());
+      while (regex_utils::search(inputPos, match, pattern))
       {
          std::string matchedString(inputPos, inputPos + match.position());
          inputPos += match.position() + match.length();
@@ -909,16 +928,22 @@ private:
    bool shouldSkipFile(std::string file)
    {
       return (file.find("/.Rproj.user/") != std::string::npos ||
+              file.find("/.quarto/") != std::string::npos ||
               file.find("/.git/") != std::string::npos ||
               file.find("/.svn/") != std::string::npos ||
               file.find("/packrat/lib/") != std::string::npos ||
               file.find("/packrat/src/") != std::string::npos ||
               file.find("/renv/library/") != std::string::npos ||
+              file.find("/renv/python/") != std::string::npos ||
+              file.find("/renv/staging/") != std::string::npos ||
               file.find("/.Rhistory") != std::string::npos);
    }
 
    void onStdout(const core::system::ProcessOperations& /*ops*/, const std::string& data)
    {
+      if (debugging())
+         std::cerr << "stdout: " << data << std::endl;
+
       json::Array files;
       json::Array lineNums;
       json::Array contents;
@@ -930,11 +955,10 @@ private:
 
       int recordsToProcess = MAX_COUNT + 1 - findResults().resultCount();
       if (recordsToProcess < 0)
-         recordsToProcess = 0;
+         recordsToProcess = 0; 
 
-      std::string websiteOutputDir = module_context::websiteOutputDir();
-      if (!websiteOutputDir.empty())
-         websiteOutputDir = "/" + websiteOutputDir + "/";
+      // directories that should be ignored (e.g. virtual envs, website outpu
+      std::vector<FilePath> ignoreDirs = module_context::ignoreContentDirs();
 
       stdOutBuf_.append(data);
       size_t nextLineStart = 0;
@@ -948,24 +972,30 @@ private:
 
          errorMessage.clear();
          boost::smatch match;
-         if (regex_utils::match(
-               line, match, getGrepOutputRegex(findResults().gitFlag())) &&
-             match.size() > 1)
+         boost::regex pattern = getGrepOutputRegex(findResults().gitFlag());
+         if (regex_utils::match(line, match, pattern) && match.size() > 1)
          {
-            std::string file = module_context::createAliasedPath(
-                  FilePath(string_utils::systemToUtf8(match[1])));
-            // git grep returns the path within the repo
-            // we use this combined with the find request's directory
-            // to locate the file on the user's system
-            if (findResults().gitFlag())
+            // extract filename from match
+            std::string file = module_context::createAliasedPath(FilePath(match[1]));
+
+            // replace the leading '.' with the directory name
+            // (git grep doesn't prepend a '.' so we need to be careful here)
+            if (boost::algorithm::starts_with(file, "."))
             {
-               file.insert(0, "/");
-               file.insert(0, findResults().path());
+               file = workingDir_ + file.substr(1);
+            }
+            else if (findResults().gitFlag())
+            {
+               file = workingDir_ + "/" + file;
             }
 
-            if (shouldSkipFile(file) ||
-                (!websiteOutputDir.empty() &&
-                 file.find(websiteOutputDir) != std::string::npos))
+            // normal skip heuristics
+            if (shouldSkipFile(file))
+               continue;
+
+            // contained in content dir
+            FilePath fullPath(module_context::resolveAliasedPath(file));
+            if (module_context::isIgnoredContent(fullPath, ignoreDirs))
                continue;
 
             int lineNum = safe_convert::stringTo<int>(std::string(match[2]), -1);
@@ -997,7 +1027,6 @@ private:
                 !(findResults().preview() &&
                   findResults().replacePattern().empty()))
             {
-               FilePath fullPath(module_context::resolveAliasedPath(file));
                // check if we are looking at a new file
                if (currentFile_.empty() || currentFile_ != fullPath.getAbsolutePath())
                {
@@ -1117,6 +1146,9 @@ private:
 
    void onStderr(const core::system::ProcessOperations& /*ops*/, const std::string& data)
    {
+      if (debugging())
+         std::cerr << "stderr: " << data << std::endl;
+
       LOG_ERROR_MESSAGE("grep: " + data);
       if (boost::algorithm::icontains(data, "not a git repository"))
          module_context::showErrorMessage("Not a Git Repository", data);
@@ -1131,21 +1163,25 @@ private:
          tempFile_.removeIfExists();
    }
 
-   bool firstDecodeError_;
+private:
+   std::string workingDir_;
    std::string encoding_;
    FilePath tempFile_;
+   bool firstDecodeError_;
    std::string stdOutBuf_;
    std::string handle_;
    std::string currentFile_;
    FilePath tempReplaceFile_;
    std::shared_ptr<std::istream> inputStream_;
    std::shared_ptr<std::ostream> outputStream_;
+#ifndef _WIN32
    boost::filesystem::perms filePermissions_;
+#endif
    int inputLineNum_;
    bool fileSuccess_;
 };
 
-} // namespace
+} // end anonymous namespace
 
 class GrepOptions : public boost::noncopyable
 {
@@ -1260,6 +1296,7 @@ private:
                excludeArgs_.push_back("--exclude=" + filePattern.getString());
          }
       }
+      excludeArgs_.push_back("--exclude-dir=cloud.noindex");
    }
 
    void processIncludeFilePatterns()
@@ -1304,30 +1341,34 @@ struct ReplaceOptions
 };
 
 void addDirectoriesToCommand(
-   bool packageSourceFlag, bool packageTestsFlag,
-   const FilePath& directoryPath, shell_utils::ShellCommand* pCmd)
+      bool packageSourceFlag,
+      bool packageTestsFlag,
+      const FilePath& directoryPath,
+      shell_utils::ShellCommand* pCmd)
 {
    // not sure if EscapeFilesOnly can be removed or is necessary for an edge case
    *pCmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
    if (!(packageSourceFlag || packageTestsFlag))
-      *pCmd << string_utils::utf8ToSystem(directoryPath.getAbsolutePath());
+   {
+      *pCmd << ".";
+   }
    else if (packageSourceFlag)
    {
-      FilePath rPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/R"));
-      FilePath srcPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/src"));
+      FilePath rPath(directoryPath.getAbsolutePath() + "/R");
+      FilePath srcPath(directoryPath.getAbsolutePath() + "/src");
       if (rPath.exists())
-         *pCmd << rPath;
+         *pCmd << "./R";
       if (srcPath.exists())
-         *pCmd << srcPath;
+         *pCmd << "./src";
       else if (!rPath.exists())
          LOG_WARNING_MESSAGE(
             "Package source directories not found in " + directoryPath.getAbsolutePath());
    }
    else
    {
-      FilePath testsPath(string_utils::utf8ToSystem(directoryPath.getAbsolutePath() + "/tests"));
+      FilePath testsPath(directoryPath.getAbsolutePath() + "/tests");
       if (testsPath.exists())
-         *pCmd << testsPath;
+         *pCmd << "./tests";
       else
          LOG_WARNING_MESSAGE("Package test directory not found in " + directoryPath.getAbsolutePath());
    }
@@ -1342,12 +1383,13 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    core::system::environment(&childEnv);
    core::system::setenv(&childEnv, "GREP_COLOR", "01");
    core::system::setenv(&childEnv, "GREP_COLORS", "ne:fn=:ln=:se=:mt=01");
+
 #ifdef _WIN32
-   FilePath gnuGrepPath = session::options().gnugrepPath();
-   core::system::addToPath(
-            &childEnv,
-            string_utils::utf8ToSystem(gnuGrepPath.getAbsolutePath()));
+   // put our copy of grep on the PATH
+   FilePath grepPath = gnuGrepPath();
+   core::system::addToPath(&childEnv, grepPath.getAbsolutePathNative());
 #endif
+
    options.environment = childEnv;
 
    // Put the grep pattern in a file
@@ -1374,32 +1416,29 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    *pStream << encodedString << std::endl;
    pStream.reset(); // release file handle
 
-   boost::shared_ptr<GrepOperation> ptrGrepOp = GrepOperation::create(encoding,
-                                                                      tempFile);
-   core::system::ProcessCallbacks callbacks =
-                                       ptrGrepOp->createProcessCallbacks();
-
-   // Filepaths received from the client will be UTF-8 encoded;
-   // convert to system encoding here.
    FilePath dirPath = module_context::resolveAliasedPath(grepOptions.directory());
+   auto ptrGrepOp = GrepOperation::create(dirPath.getAbsolutePath(), encoding, tempFile);
+   core::system::ProcessCallbacks callbacks = ptrGrepOp->createProcessCallbacks();
 
 #ifdef _WIN32
-   shell_utils::ShellCommand cmd(gnuGrepPath.completePath("grep"));
+   shell_utils::ShellCommand cmd(grepPath.completePath("grep"));
 #else
    shell_utils::ShellCommand cmd("grep");
 #endif
+
    if (grepOptions.gitFlag())
    {
       cmd = shell_utils::ShellCommand("git");
       // -c is used to override potential user-defined git parameters
+      cmd << "-c" << "core.quotepath=false";
       cmd << "-c" << "grep.lineNumber=true";
       cmd << "-c" << "grep.column=false";
       cmd << "-c" << "grep.patternType=default";
       cmd << "-c" << "grep.extendedRegexp=false";
       cmd << "-c" << "grep.fullName=false";
       cmd << "-C";
-      cmd << string_utils::utf8ToSystem(dirPath.getAbsolutePath());
-      cmd <<  "grep";
+      cmd << dirPath.getAbsolutePath();
+      cmd << "grep";
       cmd << "-I"; // ignore binaries
       cmd << "--untracked"; // include files not tracked by git...
       cmd << "--exclude-standard"; // but exclude gitignore
@@ -1411,7 +1450,9 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       // escaping double quotes, etc.
       cmd << "-f";
       cmd << tempFile;
-      if (!grepOptions.asRegex())
+      if (grepOptions.asRegex())
+         cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
+      else
          cmd << "-F";
       addDirectoriesToCommand(
          grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
@@ -1419,9 +1460,8 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       if (grepOptions.anyPackageFlag() &&
           !grepOptions.includeArgs().empty())
       {
-         for (std::string arg : grepOptions.includeArgs())
-            LOG_DEBUG_MESSAGE(
-               "Unknown include argument(s): " + boost::join(grepOptions.includeArgs(), ", "));
+         LOG_DEBUG_MESSAGE(
+                  "Unknown include argument(s): " + boost::join(grepOptions.includeArgs(), ", "));
       }
    }
    else
@@ -1438,11 +1478,13 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       // escaping double quotes, etc.
       cmd << "-f";
       cmd << tempFile;
-      if (!grepOptions.asRegex())
+      if (grepOptions.asRegex())
+         cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
+      else
          cmd << "-F";
-      for (std::string arg : grepOptions.includeArgs())
+      for (auto&& arg : grepOptions.includeArgs())
          cmd << arg;
-      for (std::string arg : grepOptions.excludeArgs())
+      for (auto&& arg : grepOptions.excludeArgs())
          cmd << arg;
       addDirectoriesToCommand(
          grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
@@ -1451,9 +1493,14 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
    // Clear existing results
    findResults().clear();
 
-   error = module_context::processSupervisor().runCommand(cmd,
-                                                          options,
-                                                          callbacks);
+   // Use working directory
+   options.workingDir = dirPath;
+
+   if (debugging())
+      std::cerr << cmd.string() << std::endl;
+
+   // Run command
+   error = module_context::processSupervisor().runCommand(cmd, options, callbacks);
    if (error)
       return error;
 
@@ -1644,24 +1691,55 @@ core::Error initialize()
    return initBlock.execute();
 }
 
+#define kColorEscapePattern "(?:\x1B\\[\\d*m)?"
+
+// used to match and separate pieces of output generated
+// by grep (or git grep)
 boost::regex getGrepOutputRegex(bool isGitGrep)
 {
-   boost::regex regex;
    if (isGitGrep)
-      regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+)\x1B\\[\\d+?m:\x1B\\[m(\\d+)\x1B\\[36m:\x1B\\[m(.*)");
+   {
+      // example output from git grep, matching 'hello' in a file called 'hello'
+      // with a line containing text 'hello, goodbye'
+      //
+      //    \033[35mhello\033[m\033[36m:\033[m\033[32m1\033[m\033[36m:\033[m\033[1;31mhello[m, goodbye
+      //
+      // or, split up
+      //
+      //    \033[35mhello\033[m                  // file path
+      //    \033[36m:\033[m                      // separator
+      //    \033[32m1\033[m                      // row number
+      //    \033[36m:\033[m                      // separator
+      //    \033[1;31mhello[m, goodbye           // matched line
+      //
+      // note that the matched line will contain embedded ANSI color escapes,
+      // used to mark where the query matched in the line
+      return boost::regex(
+               "^"
+               kColorEscapePattern "([^\x1B]*)" kColorEscapePattern
+               kColorEscapePattern ":" kColorEscapePattern
+               kColorEscapePattern "(\\d+)" kColorEscapePattern
+               kColorEscapePattern ":" kColorEscapePattern
+               "(.*)");
+   }
    else
-      regex = boost::regex("^((?:[a-zA-Z]:)?[^:]+):(\\d+):(.*)");
-   return regex;
+   {
+      return boost::regex("^([^:]+):(\\d+):(.*)");
+   }
 }
 
+// regular expression used to find color boundaries for matches
+// within a line emitted via grep (or git grep)
 boost::regex getColorEncodingRegex(bool isGitGrep)
 {
-   boost::regex regex;
    if (isGitGrep)
-      regex = boost::regex("\x1B\\[((\\d+)?(\\;)?\\d+)?m");
+   {
+      return boost::regex("\x1B\\[((\\d+)?(\\;)?\\d+)?m");
+   }
    else
-      regex = boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?");
-   return regex;
+   {
+      return boost::regex("\x1B\\[(\\d\\d)?m(\x1B\\[K)?");
+   }
 }
 
 
@@ -1748,7 +1826,7 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-      boost::regex find(findRegex, boost::regex::grep | boost::regex::icase);
+      boost::regex find(findRegex, boost::regex::icase);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;
@@ -1773,7 +1851,7 @@ core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
 {
    try
    {
-      boost::regex find(findRegex, boost::regex::grep);
+      boost::regex find(findRegex);
       core::Error error = completeReplace(find, replaceRegex, matchOn, matchOff, pLine,
          pReplaceMatchOff);
       return error;

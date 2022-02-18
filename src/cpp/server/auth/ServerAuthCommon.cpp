@@ -1,7 +1,7 @@
 /*
  * ServerAuthCommon.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,6 +53,8 @@ bool mainPageFilter(const core::http::Request& request,
    std::string userIdentifier = auth::handler::getUserIdentifier(request, true);
    if (userIdentifier.empty())
    {
+      LOG_DEBUG_MESSAGE("Request for main page with no user-identifier - redirecting to login page: " + request.uri());
+
       // otherwise redirect to sign-in
       clearSignInCookies(request, pResponse);
       redirectToLoginPage(request, pResponse, request.uri());
@@ -100,12 +102,14 @@ void signIn(const core::http::Request& request,
       {
          appUri = "./" + appUri;
       }
+      LOG_DEBUG_MESSAGE("Signed in user: " + username + " redirecting to: " + appUri);
+
       pResponse->setMovedTemporarily(request, appUri);
       return;
    }
 
    // re-use existing cookie refreshing its expiration or set new if not present
-   std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
+   std::string csrfToken = core::http::getCSRFTokenCookie(request);
    csrfToken = core::http::setCSRFTokenCookie(request,
                                               getCookieExpiry(false),
                                               csrfToken,
@@ -115,6 +119,7 @@ void signIn(const core::http::Request& request,
                                               pResponse);
    // add the token to the sign-in form
    variables["csrf_token"] = csrfToken;
+   variables["csrf_token_meta"] = kCSRFTokenCookie;
 
    loadLoginPage(request, pResponse, templatePath, formAction, variables);
 }
@@ -125,6 +130,7 @@ bool validateSignIn(const core::http::Request& request,
    // a csrf token should always be present on the sign in form
    if (!core::http::validateCSRFForm(request, pResponse))
    {
+      LOG_ERROR_MESSAGE("Failed to validate sign-in with invalid CSRF form");
       return false;
    }
    return true;
@@ -135,6 +141,7 @@ ErrorType checkUser(const std::string& username, bool authenticated)
    // ensure user is valid
    if (!server::auth::validateUser(username))
    {
+      LOG_DEBUG_MESSAGE("Validate user failed for: " + username + (authenticated ? " authenticated" : " not authenticated"));
       // notify monitor of failed login
       using namespace monitor;
       client().logEvent(Event(kAuthScope,
@@ -148,6 +155,7 @@ ErrorType checkUser(const std::string& username, bool authenticated)
    // ensure user is not throttled from logging in
    if (auth::handler::isUserSignInThrottled(username))
    {
+      LOG_DEBUG_MESSAGE("User throttled: " + username + (authenticated ? " authenticated" : " not authenticated"));
       using namespace monitor;
       client().logEvent(Event(kAuthScope,
                               kAuthLoginThrottledEvent,
@@ -174,6 +182,7 @@ ErrorType checkUser(const std::string& username, bool authenticated)
 
    if (!isLicensed)
    {
+      LOG_DEBUG_MESSAGE("User not licensed: " + username + (authenticated ? " authenticated" : " not authenticated"));
       using namespace monitor;
       client().logEvent(Event(kAuthScope,
                               kAuthLoginUnlicensedEvent,
@@ -225,6 +234,9 @@ bool doSignIn(const core::http::Request& request,
       appUri = "/" + appUri;
    }
    setSignInCookies(request, username, persist, pResponse);
+
+   LOG_DEBUG_MESSAGE("Sign in for user: " + username + " redirecting to: " + appUri);
+
    pResponse->setMovedTemporarily(request, appUri);
    return true;
 }
@@ -237,6 +249,7 @@ std::string signOut(const core::http::Request& request,
    // validate sign-out request
    if (!core::http::validateCSRFForm(request, pResponse))
    {
+      LOG_ERROR_MESSAGE("Failed to validate sign-out with invalid CSRF form");
       return "";
    }
    // register logout with monitor if we have the username
@@ -262,6 +275,9 @@ std::string signOut(const core::http::Request& request,
    {
       signOutUrl = core::http::URL::uncomplete(request.baseUri(), signOutUrl);
    }
+
+   LOG_DEBUG_MESSAGE("Sign out for user: " + username + " redirecting to: " + signOutUrl);
+
    pResponse->setMovedTemporarily(request, signOutUrl);
    return username;
 }
@@ -341,7 +357,7 @@ void setSignInCookies(const core::http::Request& request,
                       bool staySignedIn,
                       core::http::Response* pResponse)
 {
-   std::string csrfToken = request.cookieValue(kCSRFTokenCookie);
+   std::string csrfToken = core::http::getCSRFTokenCookie(request);
    bool secureCookie = isSecureCookie(request);
    boost::posix_time::time_duration validity = getCookieExpiry(true).get();
    boost::optional<boost::posix_time::time_duration> expiry = getCookieExpiry(staySignedIn);
@@ -422,6 +438,60 @@ void prepareHandler(handler::Handler& handler,
       handler.signOut = boost::bind(signOut, _1, _2, getUserIdentifierArg, signOutUrl);
    }
    handler.refreshAuthCookies = boost::bind(setSignInCookies, _1, _2, _3, _4);
+}
+
+std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
+{
+   static core::thread::ThreadsafeMap<std::string, std::string> cache;
+   std::string username = userIdentifier;
+
+   if (cache.contains(userIdentifier))
+   {
+      username = cache.get(userIdentifier);
+   }
+   else
+   {
+      // The username returned from this function is eventually used to create
+      // a local stream path, so it's important that it agree with the system
+      // view of the username (as that's what the session uses to form the
+      // stream path), which is why we do a username => username transform
+      // here. See case 5413 for details.
+      core::system::User user;
+      // This call getpwnam - that will return the passwd line that matches this user identifier
+      Error error = core::system::User::getUserFromIdentifier(userIdentifier, user);
+      if (error)
+      {
+         // log the error and return the original user identifier as a fallback
+         error.addProperty("description", "Error converting userIdentifier to username");
+         LOG_ERROR(error);
+      }
+      else
+      {
+         // This gets the passwd entry for the user-id - this is what the session will do so
+         // when a uid is aliased, we need to go back to the uid for the real username
+         error = core::system::User::getUserFromIdentifier(user.getUserId(), user);
+         if (error)
+         {
+            // log the error and return the original user identifier as a fallback
+            error.addProperty("description", "Error converting uid to username");
+            LOG_ERROR(error);
+         }
+         else
+         {
+            username = user.getUsername();
+
+            if (username != userIdentifier)
+               LOG_DEBUG_MESSAGE("Auth handler mapped incoming user identifier: " + userIdentifier + " to system username: " + username);
+         }
+      }
+
+      // cache the username -- we do this even if the lookup fails since
+      // otherwise we're likely to keep hitting (and logging) the error on
+      // every request
+      cache.set(userIdentifier, username);
+   }
+
+   return username;
 }
 
 } // namespace common

@@ -2,7 +2,7 @@
 /*
  * RenderRmdOutputTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 
 public class RenderRmdOutputTab
    extends DelayLoadWorkbenchTab<RenderRmdOutputPresenter>
@@ -58,7 +59,7 @@ public class RenderRmdOutputTab
                              Commands commands,
                              final Session session)
    {
-      super("R Markdown", shim);
+      super("Render", shim);
       shim_ = shim;
 
       GWT.<Binder>create(Binder.class).bind(commands, shim_);
@@ -88,4 +89,5 @@ public class RenderRmdOutputTab
    }
 
    private final Shim shim_;
+   private static final OutputConstants constants_ = com.google.gwt.core.client.GWT.create(OutputConstants.class);
 }

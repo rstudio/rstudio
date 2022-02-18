@@ -1,7 +1,7 @@
 /*
  * TerminalPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -132,7 +132,7 @@ public class TerminalPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Terminal Tab");
+      Toolbar toolbar = new Toolbar(constants_.terminalTabLabel());
 
       toolbar.addLeftWidget(commands_.previousTerminal().createToolbarButton());
       toolbar.addLeftWidget(commands_.nextTerminal().createToolbarButton());
@@ -357,7 +357,7 @@ public class TerminalPane extends WorkbenchPane
                @Override
                public void onFailure(String msg)
                {
-                  globalDisplay_.showErrorMessage("Terminal Creation Failure", msg);
+                  globalDisplay_.showErrorMessage(constants_.terminalCreationFailureCaption(), msg);
                   Debug.log(msg);
                   creatingTerminal_ = false;
                }
@@ -447,13 +447,12 @@ public class TerminalPane extends WorkbenchPane
          if (visibleTerminal.getHasChildProcs())
          {
             globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                  "Close " + visibleTerminal.getTitle(),
-                  "Are you sure you want to exit the terminal named \"" +
-                        visibleTerminal.getCaption() + "\"? Any running jobs will be terminated.",
+                  constants_.closeCaption(visibleTerminal.getTitle()),
+                  constants_.closeMessage(visibleTerminal.getCaption()),
                   false,
                   visibleTerminal::terminate,
                   this::setFocusOnVisible,
-                  this::setFocusOnVisible, "Terminate", "Cancel", true);
+                  this::setFocusOnVisible, constants_.terminateLabel(), constants_.cancelLabel(), true);
          }
          else
          {
@@ -506,8 +505,8 @@ public class TerminalPane extends WorkbenchPane
       }
       final String origCaption = visibleTerminal.getCaption();
 
-      globalDisplay_.promptForText("Rename Terminal",
-            "Please enter the new terminal name:",
+      globalDisplay_.promptForText(constants_.renameTerminalTitle(),
+            constants_.renameTerminalLabel(),
             origCaption,
             newCaption ->
             {
@@ -525,8 +524,8 @@ public class TerminalPane extends WorkbenchPane
                            if (!result)
                            {
                               globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-                                    "Name already in use",
-                                    "Please enter a unique name.");
+                                    constants_.nameAlreadyInUseCaption(),
+                                    constants_.nameAlreadyInUseMessage());
                               // failed, put back original caption on client
                               renameVisibleTerminalInClient(origCaption);
                            }
@@ -648,7 +647,7 @@ public class TerminalPane extends WorkbenchPane
       if (terminalSessionsPanel_ != null)
       {
          int total = terminalSessionsPanel_.getTerminalCount();
-         dump.append("Loaded TerminalSessions: ");
+         dump.append(constants_.loadedTerminalSessionsLabel());
          dump.append(total);
          dump.append("\n");
          for (int i = 0; i < total; i++)
@@ -660,7 +659,7 @@ public class TerminalPane extends WorkbenchPane
             }
             else
             {
-               dump.append("Handle: '");
+               dump.append(constants_.handleLabel());
                String handle = session.getHandle();
                if (handle == null)
                {
@@ -670,7 +669,7 @@ public class TerminalPane extends WorkbenchPane
                {
                   dump.append(handle);
                }
-               dump.append("' Caption: '");
+               dump.append(constants_.captionLabel());
                String caption = session.getCaption();
                if (caption == null)
                {
@@ -859,7 +858,7 @@ public class TerminalPane extends WorkbenchPane
             @Override
             public void onFailure(String msg)
             {
-               globalDisplay_.showErrorMessage("Terminal Reconnection Failure", msg);
+               globalDisplay_.showErrorMessage(constants_.terminalReconnectionErrorMessage(), msg);
                Debug.log(msg);
             }
          });
@@ -870,7 +869,7 @@ public class TerminalPane extends WorkbenchPane
       ConsoleProcessInfo existing = terminals_.getMetadataForHandle(event.getTerminalHandle());
       if (existing == null)
       {
-         globalDisplay_.showErrorMessage("Error", "Tried to switch to unknown terminal handle.");
+         globalDisplay_.showErrorMessage(constants_.errorCaption(), constants_.errorMessage());
          return;
       }
 
@@ -899,7 +898,7 @@ public class TerminalPane extends WorkbenchPane
                @Override
                public void onFailure(String msg)
                {
-                  globalDisplay_.showErrorMessage("Terminal Reconnection Failure", msg);
+                  globalDisplay_.showErrorMessage(constants_.terminalReconnectionErrorMessage(), msg);
                   Debug.log(msg);
                }
             });
@@ -1054,7 +1053,7 @@ public class TerminalPane extends WorkbenchPane
             @Override
             public void onFailure(String msg)
             {
-               globalDisplay_.showErrorMessage("Terminal Reconnection Failure", msg);
+               globalDisplay_.showErrorMessage(constants_.terminalReconnectionErrorMessage(), msg);
                Debug.log(msg);
             }
          });
@@ -1169,4 +1168,5 @@ public class TerminalPane extends WorkbenchPane
    private final Provider<FontSizeManager> pFontSizeManager_;
    private final UserPrefs uiPrefs_;
    private final WorkbenchContext workbenchContext_;
+   private static final TerminalConstants constants_ = com.google.gwt.core.client.GWT.create(TerminalConstants.class);
 }

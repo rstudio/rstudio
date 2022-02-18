@@ -1,7 +1,7 @@
 /*
  * FileIcon.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,22 +14,26 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Image;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
 public class FileIcon
 {
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
+
    private static final FileIconResources ICONS = FileIconResources.INSTANCE;
 
    public static final FileIcon PUBLIC_FOLDER_ICON =
-         new FileIcon(new ImageResource2x(ICONS.iconPublicFolder2x()), "Public Folder");
+         new FileIcon(new ImageResource2x(ICONS.iconPublicFolder2x()), constants_.publicFolderDesc());
 
    public static final FileIcon FOLDER_ICON =
-         new FileIcon(new ImageResource2x(ICONS.iconFolder2x()), "Folder");
+         new FileIcon(new ImageResource2x(ICONS.iconFolder2x()), constants_.folderDesc());
 
    public static final FileIcon TEXT_ICON =
-         new FileIcon(new ImageResource2x(ICONS.iconText2x()), "Text file");
+         new FileIcon(new ImageResource2x(ICONS.iconText2x()), constants_.textFileDesc());
 
    public static final FileIcon CSV_ICON =
          new FileIcon(new ImageResource2x(ICONS.iconCsv2x()), "CSV");
@@ -38,7 +42,7 @@ public class FileIcon
          new FileIcon(new ImageResource2x(ICONS.iconPdf2x()), "PDF");
 
    public static final FileIcon IMAGE_ICON =
-         new FileIcon(new ImageResource2x(ICONS.iconPng2x()), "Image file");
+         new FileIcon(new ImageResource2x(ICONS.iconPng2x()), constants_.imageFileDesc());
 
    public static final FileIcon RDATA_ICON =
          new FileIcon(new ImageResource2x(ICONS.iconRdata2x()), "RData");
@@ -50,16 +54,16 @@ public class FileIcon
          new FileIcon(new ImageResource2x(ICONS.iconRproject2x()), "RProject");
 
    public static final FileIcon PARENT_FOLDER_ICON =
-         new FileIcon(new ImageResource2x(ICONS.iconUpFolder2x()), "Parent folder");
+         new FileIcon(new ImageResource2x(ICONS.iconUpFolder2x()), constants_.parentFolderDesc());
 
    public static final FileIcon OBJECT_EXPLORER_ICON =
-         new FileIcon(new ImageResource2x(ICONS.iconObjectExplorer2x()), "Explore object");
+         new FileIcon(new ImageResource2x(ICONS.iconObjectExplorer2x()), constants_.exploreObjectDesc());
 
    public static final FileIcon CODE_BROWSER_ICON =
-         new FileIcon(new ImageResource2x(ICONS.iconSourceViewer2x()), "R source viewer");
+         new FileIcon(new ImageResource2x(ICONS.iconSourceViewer2x()), constants_.rSourceViewerDesc());
 
    public static final FileIcon PROFILER_ICON =
-         new FileIcon(new ImageResource2x(FileIconResources.INSTANCE.iconProfiler2x()), "Profiler");
+         new FileIcon(new ImageResource2x(FileIconResources.INSTANCE.iconProfiler2x()), constants_.profilerDesc());
 
    public FileIcon(ImageResource imageResource, String description)
    {
@@ -93,7 +97,6 @@ public class FileIcon
       icon.setAltText(getDescription());
       return icon;
    }
-
    private ImageResource imageResource_;
    private String description_;
 }

@@ -1,7 +1,7 @@
 /*
  * FileSystemItem.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -355,6 +355,8 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "jpe",   "image/jpeg" );
       MIME_TYPES.put( "png",   "image/png" );
       MIME_TYPES.put( "js",    "text/javascript" );
+      MIME_TYPES.put( "ojs",   "text/javascript" );
+      MIME_TYPES.put( "ts",    "text/x-typescript" );
       MIME_TYPES.put( "pdf",   "application/pdf" );
       MIME_TYPES.put( "svg",   "image/svg+xml" );
       MIME_TYPES.put( "swf",   "application/x-shockwave-flash" );
@@ -408,6 +410,7 @@ public class FileSystemItem extends JavaScriptObject
       MIME_TYPES.put( "rnw",   "text/x-r-sweave");
       MIME_TYPES.put( "rtex",  "text/x-r-sweave");
       MIME_TYPES.put( "rmd",   "text/x-r-markdown");
+      MIME_TYPES.put( "qmd",   "text/x-quarto-markdown");
       MIME_TYPES.put( "rhtml", "text/x-r-html");
       MIME_TYPES.put( "rpres", "text/x-r-presentation");
       MIME_TYPES.put( "rout",  "text/plain");

@@ -1,7 +1,7 @@
 #
 # SessionPackages.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -40,7 +40,7 @@
 # delegate to the system tar binary specified in TAR. On OS X, R may set TAR to
 # /usr/bin/gnutar, which exists prior to Mavericks (10.9) but not in later
 # rleases of the OS. In the special case wherein the TAR environment variable
-# on OS X is set to a non-existant gnutar and there exists a tar at
+# on OS X is set to a non-existent gnutar and there exists a tar at
 # /usr/bin/tar, tell R to use that binary instead.
 if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
     identical(Sys.getenv("TAR"), "/usr/bin/gnutar") && 
@@ -581,6 +581,50 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       stringsAsFactors = FALSE
    )
    
+})
+
+.rs.addJsonRpcHandler("get_package_citations", function(packageName, libraryPath)
+{
+   toPerson <- function(author) {
+      list(
+         given = author[["given"]],
+         family = .rs.scalar(author[["family"]]),
+         email = .rs.scalar(author[["email"]]),
+         role = .rs.scalar(author[["role"]])
+      )
+   }
+   
+   cites <- citation(packageName)
+   lapply(unclass(cites), function(cite) {
+      list(
+         # bibtex type
+         type = .rs.scalar(attr(cite, "bibtype")),
+         
+         title = .rs.scalar(cite[["title"]]),
+         url = .rs.scalar(cite[["url"]]),
+         note = .rs.scalar(cite[["note"]]),
+         doi = .rs.scalar(cite[["doi"]]),
+         
+         publisher = .rs.scalar(cite[["publisher"]]),
+         institution = .rs.scalar(cite[["institution"]]),
+         address = .rs.scalar(cite[["address"]]),
+         
+         journal = .rs.scalar(cite[["journal"]]),
+         year = .rs.scalar(cite[["year"]]),
+         booktitle = .rs.scalar(cite[["booktitle"]]),
+         chapter = .rs.scalar(cite[["chapter"]]),
+         number = .rs.scalar(cite[["number"]]),
+         volume = .rs.scalar(cite[["volume"]]),
+         pages = .rs.scalar(cite[["pages"]]),
+         series = .rs.scalar(cite[["series"]]),
+         school = .rs.scalar(cite[["school"]]),
+         
+         
+         # person
+         author = lapply(unclass(cite[["author"]]), toPerson),
+         editor = lapply(unclass(cite[["editor"]]), toPerson)
+      )
+   })
 })
 
 .rs.addJsonRpcHandler("get_package_news_url", function(packageName, libraryPath)
@@ -1260,8 +1304,9 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       getRversion() >= "3.3" && .rs.haveRequiredRSvnRev(69197)
    }
 
-   # Check whether we are running R 3.2 and whether we have libcurl
+   # Check whether we are running R 3.2+, R 4.2+, and whether we have libcurl
    isR32 <- getRversion() >= "3.2"
+   isR42 <- getRversion() >= "4.2"
    haveLibcurl <- isR32 && capabilities("libcurl") && libcurlHandles404()
    
    # Utility function to bind to libcurl or a fallback utility (e.g. wget)
@@ -1277,12 +1322,14 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # Determine the right secure download method per-system
    sysName <- Sys.info()[['sysname']]
    
-   # For windows we prefer binding directly to wininet if we can (since
-   # that doesn't rely on the value of setInternet2). If it's R <= 3.1
-   # then we can use "internal" for https so long as internet2 is enabled 
-   # (we don't use libcurl on Windows because it doesn't check certs).
+   # For windows, with R versions >= 3.2 to <= 4.1, we prefer binding directly to wininet
+   # if we can (since that doesn't rely on the value of setInternet2).
+   # In R 4.2+ wininet is deprecated, so we use libcurl instead when available.
+   # If it's R <= 3.1 then we can use "internal" for https so long as internet2 is enabled
    if (identical(sysName, "Windows")) {
-      if (isR32)
+      if (isR42 && haveLibcurl)
+         "libcurl"
+      else if (isR32)
          "wininet"
       else if (isTRUE(.rs.setInternet2(NA)))
          "internal"
@@ -1550,6 +1597,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       
       # we're done!
       packages
+      
    }
    
    # prepare directory for discovery of available packages

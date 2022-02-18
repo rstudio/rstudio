@@ -1,7 +1,7 @@
 /*
  * PanmirrorZoteroServer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.panmirror.server;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.promise.PromiseServerRequestCallback;
 import org.rstudio.studio.client.RStudioGinjector;
 
@@ -27,6 +28,7 @@ import elemental2.promise.Promise;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
 import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 import jsinterop.annotations.JsType;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 
 @JsType
 public class PanmirrorZoteroServer
@@ -57,7 +59,7 @@ public class PanmirrorZoteroServer
       return new Promise<>(
             (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
                server_.zoteroGetCollections(file, collections, cached, useCache,
-                     new PromiseServerRequestCallback<>(resolve, reject, "Loading Collections...", 2000));
+                     new PromiseServerRequestCallback<>(resolve, reject, constants_.loadingCollectionsProgressText(), 2000));
             });
    }
 
@@ -75,7 +77,7 @@ public class PanmirrorZoteroServer
       return new Promise<>(
             (ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
                server_.zoteroGetActiveCollectionSpecs(file, collections,
-                  new PromiseServerRequestCallback<>(resolve, reject, "Reading Collections...", 2000));
+                  new PromiseServerRequestCallback<>(resolve, reject, constants_.readingCollectionsProgressText(), 2000));
             });
    }
    
@@ -94,6 +96,7 @@ public class PanmirrorZoteroServer
          );
       });
    }
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 
    PanmirrorZoteroServerOperations server_;
 }

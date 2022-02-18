@@ -1,7 +1,7 @@
 /*
  * ShinyApplication.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,13 @@
  */
 package org.rstudio.studio.client.shiny;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Command;
+import com.google.inject.Inject;
+import com.google.inject.Provider;
+import com.google.inject.Singleton;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
@@ -25,11 +29,12 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.dom.WindowCloseMonitor;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
-import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.ApplicationInterrupt.InterruptHandler;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
 import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
@@ -47,14 +52,15 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.events.JobUpdatedEvent;
+import org.rstudio.studio.client.workbench.views.jobs.model.Job;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
+import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.user.client.Command;
-import com.google.inject.Inject;
-import com.google.inject.Provider;
-import com.google.inject.Singleton;
+import java.util.ArrayList;
+import java.util.List;
 
 @Singleton
 public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
@@ -77,6 +83,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                            JobsServerOperations jobsServer,
                            GlobalDisplay display,
                            DependencyManager dependencyManager,
+                           JobManager jobManager,
                            ApplicationInterrupt interrupt)
    {
       eventBus_ = eventBus;
@@ -89,6 +96,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       isBusy_ = false;
       currentViewType_ = UserPrefs.SHINY_VIEWER_TYPE_NONE;
       dependencyManager_ = dependencyManager;
+      jobManager_ = jobManager;
       interrupt_ = interrupt;
       params_ = new ArrayList<>();
       
@@ -132,6 +140,38 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       }
       else if (event.getParams().getState() == ShinyApplicationParams.STATE_STOPPED)
       {
+         // If this Shiny application was running in the background, we're responsible for ending the job.
+         if (event.getParams().isBackgroundApp())
+         {
+            if (StringUtil.equals(stoppingId_, event.getParams().getId()))
+            {
+               // This application ended because we asked it to; no need to stop the job (it's already in the process
+               // of stopping)
+               stoppingId_ = null;
+            }
+            else
+            {
+               for (ShinyApplicationParams params: params_)
+               {
+                  if (StringUtil.equals(params.getId(), event.getParams().getId()))
+                  {
+                     // If we got here, the Shiny application that was stopped corresponds to a background job. If the
+                     // job is still running, stop it.
+                     Job job = jobManager_.getJob(params.getId());
+                     if (job != null)
+                     {
+                        if (job.state == JobConstants.STATE_RUNNING)
+                        {
+                           params.setState(ShinyApplicationParams.STATE_STOPPING);
+                           stopShinyBackgroundJob(params.getId(), null);
+                        }
+                     }
+
+                     break;
+                  }
+               }
+            }
+         }
          params_.removeIf(params -> params.getId() == event.getParams().getId());
       }
    }
@@ -292,10 +332,46 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
             });
             return;
          }
+         else if (StringUtil.equals(destination, BACKGROUND_APP) && params.isBackgroundApp())
+         {
+            // This app is running in the background; we need to restart it. This is a multi-step process
+            // since it is not possible to replay a currently running job; we must first stop it and wait
+            // for it to terminate, and only then initiate a replay.
+
+            // Stop the background job -- this returns immediately (it's an async call)
+            params.setState(ShinyApplicationParams.STATE_STOPPING);
+            stopShinyBackgroundJob(params.getId(), () ->
+            {
+               // Now wait for a JobUpdatedEvent that tells us that the job has actually stopped.
+               final Value<HandlerRegistration> reg = new Value<>(null);
+               reg.setValue(eventBus_.addHandler(JobUpdatedEvent.TYPE, evt ->
+               {
+                  if (StringUtil.equals(params.getId(), evt.getData().job.id) &&
+                     evt.getData().job.state != JobConstants.STATE_RUNNING)
+                  {
+                     // The job is now stopped; replay it
+                     jobsServer_.executeJobAction(params.getId(), JobConstants.ACTION_REPLAY,
+                        new VoidServerRequestCallback()
+                        {
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              display_.showErrorMessage(constants_.reloadFailErrorCaption(),
+                                 constants_.reloadFailErrorMsg(error.getMessage()));
+                           }
+                        });
+                     // Clean up event handler
+                     reg.getValue().removeHandler();
+                  }
+               }));
+            });
+
+            return;
+         }
       }
       
       // Nothing else running, start this app.
-      dependencyManager_.withShiny("Running Shiny applications",
+      dependencyManager_.withShiny(constants_.runningShinyUserAction(),
             new Command() {
                @Override
                public void execute()
@@ -374,31 +450,46 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
       {
          if (appState.getId() == ShinyApplicationParams.ID_FOREGROUND)
          {
-            // Foreground apps: interrupt R itself
-            if (commands_.interruptR().isEnabled()) 
+            // If this app is running in the foreground, stop it now. Background jobs will be stopped when we fire the
+            // status event (below).
+            if (commands_.interruptR().isEnabled())
                commands_.interruptR().execute();
-         }
-         else
-         {
-            // Background apps: stop the associated job
-            jobsServer_.executeJobAction(appState.getId(), "stop", 
-                  new VoidServerRequestCallback()
-            {
-               @Override
-               public void onError(ServerError error)
-               {
-                  display_.showErrorMessage("Failed to Stop", 
-                        "Could not stop the Shiny application.\n\n" + 
-                        error.getMessage());
-               }
-            });
          }
          appState.setState(ShinyApplicationParams.STATE_STOPPED);
       }
       eventBus_.fireEvent(new ShinyApplicationStatusEvent(
             (ShinyApplicationParams) params.cast()));
    }
-   
+
+   /**
+    * Stops the Shiny background job associated with the given ID
+    */
+   private void stopShinyBackgroundJob(String id, Command onSuccess)
+   {
+      // Save the ID of the job we are stopping; this allows us to distinguish between jobs that we stopped ourselves
+      // and jobs that were ended for other reasons.
+      stoppingId_ = id;
+      jobsServer_.executeJobAction(id, JobConstants.ACTION_STOP,
+         new VoidServerRequestCallback()
+         {
+            @Override
+            public void onSuccess()
+            {
+               if (onSuccess != null)
+               {
+                  onSuccess.execute();
+               }
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               display_.showErrorMessage(constants_.failedToStopErrorCaption(),
+                  constants_.failedToStopErrorMsg(error.getMessage()));
+            }
+         });
+   }
+
    private final native void exportShinyAppClosedCallback()/*-{
       var registry = this;     
       $wnd.notifyShinyAppClosed = $entry(
@@ -474,7 +565,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                   @Override
                   public void onError(ServerError error)
                   {
-                     display_.showErrorMessage("Shiny App Launch Failed", 
+                     display_.showErrorMessage(constants_.launchFailedErrorCaption(),
                                                error.getMessage());
                   }
                });
@@ -493,7 +584,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
                   @Override
                   public void onError(ServerError error)
                   {
-                     display_.showErrorMessage("Shiny App Background Launch Failed", 
+                     display_.showErrorMessage(constants_.backgroundLaunchFailedErrorCaption(),
                                                error.getMessage());
                   }
                });
@@ -560,6 +651,7 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    
    private final EventBus eventBus_;
    private final SatelliteManager satelliteManager_;
+   private final JobManager jobManager_;
    private final DependencyManager dependencyManager_;
    private final Commands commands_;
    private final Provider<UserPrefs> pPrefs_;
@@ -574,7 +666,10 @@ public class ShinyApplication implements ShinyApplicationStatusEvent.Handler,
    private boolean stopOnNextClose_ = true;
    private String satelliteClosePath_ = null;
    private String currentViewType_;
-   
+   private String stoppingId_ = null;
+
    public static final String FOREGROUND_APP = "foreground";
    public static final String BACKGROUND_APP = "background";
+
+   private static final ShinyConstants constants_ = GWT.create(ShinyConstants.class);
 }

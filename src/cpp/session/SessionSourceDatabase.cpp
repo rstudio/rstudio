@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -688,46 +688,50 @@ Error get(const std::string& id, bool includeContents, boost::shared_ptr<SourceD
       }
    }
    
-   if (propertiesPath.exists())
-   {
-      // read the contents of the file
-      std::string properties;
-      Error error = readStringFromFile(propertiesPath,
-                                       &properties,
-                                       options().sourceLineEnding());
-      if (error)
-         return error;
+   if (!propertiesPath.exists())
+      return core::fileNotFoundError(propertiesPath, ERROR_LOCATION);
    
-      // parse the json
-      json::Value value;
-      if (value.parse(properties))
-      {
-         return systemError(boost::system::errc::invalid_argument,
-                            ERROR_LOCATION);
-      }
-      
-      // initialize doc from json
-      json::Object jsonDoc = value.getObject();
-      
-      // migration: if we have a 'contents' field, but no '-contents' side-car
-      // file, perform a one-time generation of that sidecar file from contents
-      error = attemptContentsMigration(jsonDoc, propertiesPath);
-      if (error)
-         LOG_ERROR(error);
-      
-      if (includeContents && !contents.empty())
-         jsonDoc["contents"] = contents;
-      
-      if (jsonDoc.find("contents") == jsonDoc.end())
-         jsonDoc["contents"] = std::string();
-      
-      return pDoc->readFromJson(&jsonDoc);
-   }
-   else
+   // read the contents of the file
+   std::string properties;
+   Error error = readStringFromFile(propertiesPath,
+                                    &properties,
+                                    options().sourceLineEnding());
+   if (error)
+      return error;
+   
+   // parse the json
+   json::Value value;
+   if (value.parse(properties))
    {
-      return systemError(boost::system::errc::no_such_file_or_directory,
-                         ERROR_LOCATION);
+      Error error = systemError(boost::system::errc::invalid_argument, ERROR_LOCATION);
+      error.addProperty("path", propertiesPath);
+      return error;
    }
+   
+   // validate we got a JSON object
+   if (!value.isObject())
+   {
+      Error error = systemError(boost::system::errc::protocol_error, ERROR_LOCATION);
+      error.addProperty("path", propertiesPath);
+      return error;
+   }
+   
+   // initialize doc from json
+   json::Object jsonDoc = value.getObject();
+   
+   // migration: if we have a 'contents' field, but no '-contents' side-car
+   // file, perform a one-time generation of that sidecar file from contents
+   error = attemptContentsMigration(jsonDoc, propertiesPath);
+   if (error)
+      LOG_ERROR(error);
+   
+   if (includeContents && !contents.empty())
+      jsonDoc["contents"] = contents;
+   
+   if (jsonDoc.find("contents") == jsonDoc.end())
+      jsonDoc["contents"] = std::string();
+   
+   return pDoc->readFromJson(&jsonDoc);
 }
 
 Error getDurableProperties(const std::string& path, json::Object* pProperties)
@@ -745,6 +749,7 @@ bool isSourceDocument(const FilePath& filePath)
        filename == "lock_file" ||
        filename == "suspend_file" ||
        filename == "restart_file" ||
+       boost::algorithm::starts_with(filename, ".rstudio-lock") ||
        boost::algorithm::ends_with(filename, kContentsSuffix))
    {
       return false;
@@ -821,7 +826,7 @@ bool isSafeSourceDocument(const FilePath& docDbPath,
 }
 
 
-Error list(std::vector<boost::shared_ptr<SourceDocument> >* pDocs)
+Error list(std::vector<boost::shared_ptr<SourceDocument>>* pDocs)
 {
    std::vector<FilePath> files;
    Error error = source_database::path().getChildren(files);
@@ -986,6 +991,22 @@ Error rename(const FilePath& from, const FilePath& to)
    return error;
 }
 
+core::Error detectExtendedType(const core::FilePath& filePath, std::string* pExtendedType)
+{
+   std::string id;
+   Error error = source_database::getId(filePath, &id);
+   if (error)
+      return error;
+
+   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument);
+   error = source_database::get(id, pDoc);
+   if (error)
+      return error;
+
+   *pExtendedType = module_context::events().onDetectSourceExtendedType(pDoc);
+   return Success();
+}
+
 namespace {
 
 void onQuit()
@@ -1034,11 +1055,11 @@ void onRemoveAll()
 
 SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
 {
-   if (!r::exec::isMainThread())
+   if (!ASSERT_MAIN_THREAD())
    {
-      LOG_ERROR_MESSAGE("rs_getDocumentProperties called from non main thread");
       return R_NilValue;
    }
+   
    Error error;
    FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP));
    bool includeContents = r::sexp::asLogical(includeContentsSEXP);
@@ -1047,7 +1068,6 @@ SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
    error = source_database::getId(path, &id);
    if (error)
    {
-      LOG_ERROR(error);
       return R_NilValue;
    }
 
@@ -1063,6 +1083,20 @@ SEXP rs_getDocumentProperties(SEXP pathSEXP, SEXP includeContentsSEXP)
    SEXP object = pDoc->toRObject(&protect, includeContents);
    return object;
 }
+
+SEXP rs_detectExtendedType(SEXP pathSEXP)
+{
+   FilePath path = module_context::resolveAliasedPath(r::sexp::safeAsString(pathSEXP));
+
+   std::string extendedType;
+   Error error = source_database::detectExtendedType(path, &extendedType);
+   if (error)
+      return R_NilValue;
+
+   r::sexp::Protect protect;
+   return r::sexp::create(extendedType, &protect);
+}
+
 
 } // anonymous namespace
 
@@ -1080,6 +1114,7 @@ Error initialize()
       return error;
 
    RS_REGISTER_CALL_METHOD(rs_getDocumentProperties, 2);
+   RS_REGISTER_CALL_METHOD(rs_detectExtendedType, 1);
 
    events().onDocUpdated.connect(onDocUpdated);
    events().onDocRemoved.connect(onDocRemoved);

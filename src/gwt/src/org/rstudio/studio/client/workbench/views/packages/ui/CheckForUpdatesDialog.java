@@ -1,7 +1,7 @@
 /*
  * CheckForUpdatesDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.packages.PackagesConstants;
 import org.rstudio.studio.client.workbench.views.packages.model.PackageUpdate;
 import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
 
@@ -45,7 +46,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
                                 OperationWithInput<ArrayList<PackageUpdate>> checkOperation,
                                 Operation cancelOperation)
    {
-      super("Update Packages", "Install Updates", Roles.getDialogRole(), updatesDS, checkOperation, cancelOperation);
+      super(constants_.updatePackagesCaption(), constants_.installUpdatesCaption(), Roles.getDialogRole(), updatesDS, checkOperation, cancelOperation);
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       indicator_ = addProgressIndicator();
@@ -64,8 +65,8 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
    {
       globalDisplay_.showMessage(
             MessageDialog.INFO, 
-            "Check for Updates", 
-            "All packages are up to date.");
+            constants_.checkForUpdatesCaption(),
+            constants_.checkForUpdatesMessage());
    }
 
    @Override
@@ -77,7 +78,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
             return action.getActionInfo().getPackageName();
          } 
       };  
-      table.addColumn(nameColumn, "Package");
+      table.addColumn(nameColumn, constants_.packageHeader());
       table.setColumnWidth(nameColumn, 28, Unit.PCT);
 
       TextColumn<PendingAction> installedColumn = new TextColumn<PendingAction>() {
@@ -86,7 +87,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
             return action.getActionInfo().getInstalled();
          } 
       };  
-      table.addColumn(installedColumn, "Installed");
+      table.addColumn(installedColumn, constants_.installedHeader());
       table.setColumnWidth(installedColumn, 28, Unit.PCT);
 
       TextColumn<PendingAction> availableColumn = new TextColumn<PendingAction>() {
@@ -95,7 +96,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
             return action.getActionInfo().getAvailable();
          } 
       };  
-      table.addColumn(availableColumn, "Available");
+      table.addColumn(availableColumn, constants_.availableHeader());
       table.setColumnWidth(availableColumn, 28, Unit.PCT);
 
       ImageButtonColumn<PendingAction> newsColumn =
@@ -105,7 +106,7 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
                      
                      public void execute(PendingAction action)
                      {
-                        indicator_.onProgress("Opening NEWS...");
+                        indicator_.onProgress(constants_.openingNewsProgressMessage());
                         server_.getPackageNewsUrl(
                               action.getActionInfo().getPackageName(),
                               action.getActionInfo().getLibPath(),
@@ -128,8 +129,8 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
 
                      }
                   },
-                  "Show package NEWS");
-      table.addColumn(newsColumn, "NEWS");
+                  constants_.showPackageNewsTitle());
+      table.addColumn(newsColumn, constants_.newsHeader());
       table.setColumnWidth(newsColumn, 16, Unit.PCT);
    }
 
@@ -144,9 +145,8 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
       if (url == null || url.length() == 0)
       {
          globalDisplay_.showErrorMessage(
-               "Error Opening NEWS",
-               "This package does not have a NEWS file or RStudio was unable to determine " +
-               "an appropriate NEWS URL for this package.");
+               constants_.errorOpeningNewsCaption(),
+               constants_.errorOpeningNewsMessage());
          return;
       }
       
@@ -160,4 +160,5 @@ public class CheckForUpdatesDialog extends PackageActionConfirmationDialog<Packa
    // Injected ----
    private GlobalDisplay globalDisplay_;
    private PackagesServerOperations server_;
+   private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 }

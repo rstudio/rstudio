@@ -1,7 +1,7 @@
 /*
  * SessionDirty.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,7 +54,7 @@ namespace {
 // end up with a 'dirty' workspace. not a big deal considering how infrequently
 // quit occurs in server mode.
 // TODO: this now affects switching projects after a suspend. we should try
-// to figure out how to preserve dirty state of the workspace accross suspend
+// to figure out how to preserve dirty state of the workspace across suspend
 int s_lastSaveAction = r::session::kSaveActionAsk;
 
 // list of dirty documents (if it's empty then no document save is required)

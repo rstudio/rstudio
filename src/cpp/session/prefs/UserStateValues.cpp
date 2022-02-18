@@ -1,6 +1,6 @@
 /* UserPrefValues.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -335,6 +335,19 @@ core::Error UserStateValues::setZoteroDataDir(std::string val)
    return writePref("zotero_data_dir", val);
 }
 
+/**
+ * Sync source editor to Quarto website preview navigation.
+ */
+bool UserStateValues::quartoWebsiteSyncEditor()
+{
+   return readPref<bool>("quarto_website_sync_editor");
+}
+
+core::Error UserStateValues::setQuartoWebsiteSyncEditor(bool val)
+{
+   return writePref("quarto_website_sync_editor", val);
+}
+
 std::vector<std::string> UserStateValues::allKeys()
 {
    return std::vector<std::string>({
@@ -362,6 +375,7 @@ std::vector<std::string> UserStateValues::allKeys()
       kZoteroUseBetterBibtex,
       kZoteroApiKey,
       kZoteroDataDir,
+      kQuartoWebsiteSyncEditor,
    });
 }
    

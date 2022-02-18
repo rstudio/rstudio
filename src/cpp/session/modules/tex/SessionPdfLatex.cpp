@@ -1,7 +1,7 @@
 /*
  * SessionPdfLatex.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -348,7 +348,7 @@ bool latexProgramForFile(const core::tex::TexMagicComments& magicComments,
 //
 //  http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=534458
 //
-// this code is a port of the simillar logic which exists in the
+// this code is a port of the similar logic which exists in the
 // tools::texi2dvi function (but the regex for detecting citation
 // warnings was made a bit more liberal)
 //

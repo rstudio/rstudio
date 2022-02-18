@@ -1,7 +1,7 @@
 /*
  * PanmirrorServer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ public class PanmirrorServer
       this.zotero = new PanmirrorZoteroServer();
       this.xref = new PanmirrorXRefServer();
       this.doi = new PanmirrorDOIServer();
+      this.environment = new PanmirrorEnvironmentServer();
    }
    
    public PanmirrorPandocServer pandoc;
@@ -41,4 +42,5 @@ public class PanmirrorServer
    public PanmirrorZoteroServer zotero;
    public PanmirrorXRefServer xref;
    public PanmirrorDOIServer doi;
+   public PanmirrorEnvironmentServer environment;
 }

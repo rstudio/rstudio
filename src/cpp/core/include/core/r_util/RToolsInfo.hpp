@@ -1,7 +1,7 @@
 /*
  * RToolsInfo.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,7 +66,7 @@ private:
 std::ostream& operator<<(std::ostream& os, const RToolsInfo& info);
 
 void scanForRTools(bool usingMingwGcc49,
-                   const std::string& rtoolsHomeEnvVar,
+                   const std::string& rVersion,
                    std::vector<RToolsInfo>* pRTools);
 
 template <typename T>

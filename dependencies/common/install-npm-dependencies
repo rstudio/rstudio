@@ -16,92 +16,26 @@
 #
 
 set -e
-
 source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
-section "Installing NPM"
 
-# variables that control download + installation process
-NODE_VERSION="10.19.0"
-NODE_ROOT="node"
-NODE_SUBDIR="${NODE_ROOT}/${NODE_VERSION}"
-NODE_BASE_URL="https://nodejs.org/dist/v${NODE_VERSION}/"
-
-
-# install node if we need it
-if [ ! -d "${NODE_SUBDIR}" ]; then
-
-  # complete url based on platform
-  PLATFORM="$(uname)-$(getconf LONG_BIT)"
-  case "${PLATFORM}" in
-
-  "Darwin-64")
-    NODE_FILE="node-v${NODE_VERSION}-darwin-x64"
-    ;;
-
-  "Linux-64")
-    NODE_FILE="node-v${NODE_VERSION}-linux-x64"
-    ;;
-
-  *)
-    echo "Node binaries not available for platform '${PLATFORM}'."
-    exit 0
-    ;;
-  esac
-  NODE_ARCHIVE="${NODE_FILE}.tar.gz"
-  NODE_URL="${NODE_BASE_URL}${NODE_ARCHIVE}"
-
-  # enter node direcror
-  mkdir -p "${NODE_ROOT}"
-  pushd "${NODE_ROOT}"
-
-  # download and extract
-  echo "Downloading ${NODE_FILE} from ${NODE_URL}"
-  download "${NODE_URL}" "${NODE_ARCHIVE}"
-  extract "${NODE_ARCHIVE}"
-  rm -f "${NODE_ARCHIVE}"
-
-  # rename to use just the version
-  mv "${NODE_FILE}" "${NODE_VERSION}"
-
-  # and we're done!
-  popd
-
-else
-  echo "Node ${NODE_VERSION} already installed"
+# ensure RSTUDIO_NODE_VERSION is set
+if [ -z "${RSTUDIO_NODE_VERSION}" ]; then
+	echo "internal error: RSTUDIO_NODE_VERSION is not set"
+	exit 1
 fi
 
+# set up node variables common to scripts
+export NODE_VERSION="${RSTUDIO_NODE_VERSION}"
+export NODE_ROOT="node"
+export NODE_SUBDIR="${NODE_ROOT}/${NODE_VERSION}"
+export NODE_BASE_URL="https://nodejs.org/dist/v${NODE_VERSION}/"
 
-# determine node bin path then prepend to installation path
-DEPS_DIR=`pwd`
-NODE_BIN="${DEPS_DIR}/${NODE_SUBDIR}/bin"
-INSTALL_PATH="${NODE_BIN}:${PATH}"
+# install node
+./install-node
 
-# install yarn if necessary
-if [ ! -x "$(command -v yarn)" ]; then
-  YARN_INSTALL_SCRIPT="yarn-install.sh"
-  download "https://yarnpkg.com/install.sh" "${YARN_INSTALL_SCRIPT}"
-  chmod +x "${YARN_INSTALL_SCRIPT}"
-  PATH=${INSTALL_PATH} ./$YARN_INSTALL_SCRIPT
-  rm $YARN_INSTALL_SCRIPT
-  INSTALL_PATH="${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin:${INSTALL_PATH}"
-else
-  YARN_VERSION=`PATH=${INSTALL_PATH} yarn --version`
-  echo "Yarn ${YARN_VERSION} already installed"
-fi
-
-# panmirror dependencies
-if [ -d "/opt/rstudio-tools/panmirror" ]; then
-  # install dependencies from /opt/rstudio-tools if present
-  pushd /opt/rstudio-tools/panmirror
-else
-  # otherwise, use source tree
-  pushd ../../src/gwt/panmirror/src/editor
-fi
-
-PATH=${INSTALL_PATH} yarn config set ignore-engines true
-PATH=${INSTALL_PATH} yarn install
-
-popd
-
-
+# install yarn
+case "$(uname -sm)" in
+"Linux aarch64") ./install-yarn-linux-aarch64 ;;
+*)               ./install-yarn               ;;
+esac
 

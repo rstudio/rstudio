@@ -1,7 +1,7 @@
 /*
  * SessionHttpConnectionListenerImpl.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,6 +51,7 @@
 #include "../SessionUriHandlers.hpp"
 #include "../SessionHttpMethods.hpp"
 #include "../SessionRpc.hpp"
+#include "../SessionInit.hpp"
 
 
 namespace rstudio {
@@ -80,6 +81,11 @@ class HttpConnectionListenerImpl : public HttpConnectionListener,
 {  
 protected:
    HttpConnectionListenerImpl() : started_(false) {}
+
+   void setSslContext(boost::shared_ptr<boost::asio::ssl::context> context)
+   {
+      sslContext_ = context;
+   }
 
    // COPYING: boost::noncopyable
    
@@ -207,6 +213,7 @@ private:
       // create the connection
       ptrNextConnection_.reset( new HttpConnectionImpl<ProtocolType>(
             ioService(),
+            sslContext_,
             boost::bind(
                  &HttpConnectionListenerImpl<ProtocolType>::onHeadersParsed,
                  this,
@@ -343,7 +350,7 @@ private:
             eventsActive_ = false;
          }
          if (options().handleOfflineEnabled() && options().handleOfflineTimeoutMs() == 0 &&
-             rpc::isOfflineableRequest(ptrHttpConnection))
+             rpc::isOfflineableRequest(ptrHttpConnection) && init::isSessionInitialized())
          {
             // TODO: handleOffline - should these be put into a separate queue and run in a dedicated thread?
             if (http_methods::protocolDebugEnabled())
@@ -404,6 +411,8 @@ private:
    bool started_;
    // Set when the first get_events request is received - ensure async rpc not used until client is ready to listen
    bool eventsActive_;
+
+   boost::shared_ptr<boost::asio::ssl::context> sslContext_;
 };
 
 } // namespace session

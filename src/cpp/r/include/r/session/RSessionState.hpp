@@ -1,7 +1,7 @@
 /*
  * RSessionState.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,7 +44,7 @@ bool save(const core::FilePath& statePath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
-          const std::string& envVarSaveBlacklist);
+          const std::string& ephemeralEnvVars);
 
 bool saveMinimal(const core::FilePath& statePath,
                  bool saveGlobalEnvironment);

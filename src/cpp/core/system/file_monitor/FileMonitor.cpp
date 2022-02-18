@@ -1,7 +1,7 @@
 /*
  * FileMonitor.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -299,7 +299,7 @@ Error discoverAndProcessFileChanges(
    if (error)
       return error;
 
-   // handle recursive vs. non-recursive scan differnetly
+   // handle recursive vs. non-recursive scan differently
    if (recursive)
    {
       // check for changes on full subtree
@@ -404,7 +404,7 @@ Handle registerMonitor(const core::FilePath& filePath,
 // unregister a file monitor
 void unregisterMonitor(Handle handle);
 
-// stop the monitor. allows for optinal global cleanup and/or waiting
+// stop the monitor. allows for optional global cleanup and/or waiting
 // for termination state on the monitor thread
 void stop();
 

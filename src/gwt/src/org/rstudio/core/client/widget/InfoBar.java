@@ -1,7 +1,7 @@
 /*
  * InfoBar.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import java.util.List;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
@@ -122,37 +123,37 @@ public class InfoBar extends Composite
       int n = packages.size();
       if (n == 1)
       {
-         message = "Package " + packages.get(0) + " required but is not installed.";
+         message = constants_.package1Message(packages.get(0));
       }
       else if (n == 2)
       {
-         message = "Packages " + packages.get(0) + " and " + packages.get(1) + " required but are not installed.";
+         message = constants_.packages2Message(packages.get(0),packages.get(1));
       }
       else if (n == 3)
       {
-         message = "Packages " + packages.get(0) + ", " + packages.get(1) + ", and " + packages.get(2) + " required but are not installed.";
+         message = constants_.packages3Message(packages.get(0),packages.get(1),packages.get(2));
       }
       else
       {
-         message = "Packages " + packages.get(0) + ", " + packages.get(1) + ", and " + (n - 2) + " others required but are not installed.";
+         message = constants_.otherPackagesMessage(packages.get(0),packages.get(1),packages.get(2));
       }
       
       setText(message);
 
-      labelRight_.add(label("Install", () -> {
+      labelRight_.add(label(constants_.installText(), () -> {
          onInstall.execute();
       }));
 
-      labelRight_.add(label("Don't Show Again", () -> {
+      labelRight_.add(label(constants_.donnotShowAgain(), () -> {
          onDismiss.execute();
       }));
    }
    
    public void showPanmirrorFormatChanged(Command onReload)
    {
-      setText("Markdown format changes require a reload of the visual editor.");
+      setText(constants_.showPanmirrorText());
       labelRight_.clear();
-      labelRight_.add(label("Reload Now", () -> {
+      labelRight_.add(label(constants_.reloadNowText(), () -> {
          onReload.execute();
       }));
    }
@@ -161,18 +162,18 @@ public class InfoBar extends Composite
                                                  Command onInstall)
    {
       setText(message);
-      labelRight_.add(label("Install TinyTeX", () -> { onInstall.execute(); }));
+      labelRight_.add(label(constants_.installTinyTexText(), () -> { onInstall.execute(); }));
    }
    
    public void showReadOnlyWarning(List<String> alternatives)
    {
       if (alternatives.size() == 0)
       {
-         setText("This document is read only.");
+         setText(constants_.showReadOnlyWarningText());
       }
       else
       {
-         setText("This document is read only. Generated from:");
+         setText(constants_.showReadOnlyWarningGeneratedText());
          for (String alternative : alternatives)
          {
             labelRight_.add(label(alternative, () -> {
@@ -213,4 +214,5 @@ public class InfoBar extends Composite
 
    interface MyBinder extends UiBinder<Widget, InfoBar>{}
    private static MyBinder binder = GWT.create(MyBinder.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

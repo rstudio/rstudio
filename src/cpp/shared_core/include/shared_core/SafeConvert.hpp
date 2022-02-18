@@ -1,7 +1,7 @@
 /*
  * SafeConvert.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -33,7 +33,6 @@
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
 
-#include <shared_core/Logger.hpp>
 #include <shared_core/Error.hpp>
 
 namespace rstudio {
@@ -111,7 +110,7 @@ T stringTo(const std::string& in_strValue,
 }
 
 /**
- * @brief Coverts a number to string value.
+ * @brief Converts a number to string value.
  *
  * @param in_input                  The number to convert.
  * @param in_localeIndependent      Whether to perform the conversion independent of locale. Default: true.
@@ -136,7 +135,7 @@ inline std::string numberToString(double in_input, bool in_localeIndependent = t
 }
 
 /**
- * @brief Coverts a number to string value.
+ * @brief Converts a number to string value.
  *
  * @tparam T                        The type of the number.
  * @param in_input                  The number to convert.
@@ -163,7 +162,7 @@ std::string numberToString(T input, bool localeIndependent = true)
 }
 
 /**
- * @brief Coverts a number to the specified type.
+ * @brief Converts a number to the specified type.
  *
  * @tparam TInput                   The type of the number.
  * @tparam TOutput                  The type to which to convert the number.
@@ -186,7 +185,7 @@ TOutput numberTo(TInput input, TOutput defaultValue)
 }
 
 /**
- * @brief Coverts a number to the specified type.
+ * @brief Converts a number to the specified type.
  *
  * @tparam TInput                   The type of the number.
  * @tparam TOutput                  The type to which to convert the number.

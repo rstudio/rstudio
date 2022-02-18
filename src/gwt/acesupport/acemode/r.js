@@ -1,7 +1,7 @@
 /*
  * r.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -94,26 +94,6 @@ define("mode/r", ["require", "exports", "module"], function(require, exports, mo
          }
 
          return "";
-      };
-
-      this.transformAction = function(state, action, editor, session, text) {
-         if (action === 'insertion' && text === "\n") {
-
-            // If newline in a doxygen comment, continue the comment
-            var pos = editor.getSelectionRange().start;
-            var docLine = session.doc.getLine(pos.row);
-            var match = /^((\s*#+')\s*)/.exec(docLine);
-            if (match && editor.getSelectionRange().start.column >= match[2].length) {
-               return {text: "\n" + match[1]};
-            }
-
-            // If newline in a plumber comment, continue the comment
-            match = /^((\s*#+\*)\s*)/.exec(docLine);
-            if (match && editor.getSelectionRange().start.column >= match[2].length) {
-               return {text: "\n" + match[1]};
-            }
-         }
-         return false;
       };
 
       this.$id = "mode/r";

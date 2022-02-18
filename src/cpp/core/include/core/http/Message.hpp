@@ -1,7 +1,7 @@
 /*
  * Message.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -163,7 +163,7 @@ private:
    mutable std::string httpVersion_;
 
    // grant friendship to subclasses and parsers so they can 
-   // direclty manipulate fields
+   // directly manipulate fields
    friend class Response; // done to ensure body_ can be assigned to directly
                           // with no intermediate std::string copies made
    friend class RequestParser;

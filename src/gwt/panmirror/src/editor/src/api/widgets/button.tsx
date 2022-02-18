@@ -1,7 +1,7 @@
 /*
  * button.tsx
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -83,7 +83,7 @@ export const ImageButton = React.forwardRef<HTMLButtonElement, ImageButtonProps>
       ref={ref}
       tabIndex={props.tabIndex}
     >
-      <img src={props.image} alt={props.title} />
+      <img src={props.image} alt={props.title} draggable="false"/>
     </button>
   );
 });

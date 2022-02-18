@@ -1,7 +1,7 @@
 #
 # SessionSql.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,7 @@
 #
 #
 
-.rs.setVar("sql.connectionBlacklist", new.env(parent = emptyenv()))
+.rs.setVar("sql.defunctConnections", new.env(parent = emptyenv()))
 
 .rs.addJsonRpcHandler("sql_get_completions", function(...)
 {
@@ -226,10 +226,10 @@
       return(character())
    
    # purge any disconnected connections (avoid keeping a live reference)
-   keys <- ls(envir = .rs.sql.connectionBlacklist)
+   keys <- ls(envir = .rs.sql.defunctConnections)
    for (key in keys)
-      if (!DBI::dbIsValid(.rs.sql.connectionBlacklist[[key]]))
-         rm(key, envir = .rs.sql.connectionBlacklist)
+      if (!DBI::dbIsValid(.rs.sql.defunctConnections[[key]]))
+         rm(key, envir = .rs.sql.defunctConnections)
    
    # if the user has opted out of completions altogether
    # then just use context completions
@@ -237,17 +237,17 @@
    if (timeout == 0)
       return(character())
    
-   # check and see whether we've blacklisted this connection
+   # check and see whether we've marked the connection as defunct
    id <- digest::digest(conn)
-   if (!is.null(.rs.sql.connectionBlacklist[[id]]))
+   if (!is.null(.rs.sql.defunctConnections[[id]]))
       return(character())
    
-   # request completions; if we take too long then blacklist further
-   # attempts to get completions
+   # request completions; if we take too long then mark the connection as 
+   # defunct to avoid further attempts to get completions
    time <- system.time(tables <- .rs.tryCatch(DBI::dbListTables(conn)))
    if (time[["user.self"]] > timeout)
    {
-      .rs.sql.connectionBlacklist[[id]] <- conn
+      .rs.sql.defunctConnections[[id]] <- conn
       return(character())
    }
    
@@ -372,7 +372,7 @@
 .rs.addFunction("db.listTables", function(conn, schema = NULL)
 {
    # work around issue in odbc where requests for table names
-   # faile when a schema is specified
+   # fail when a schema is specified
    if ("odbc" %in% loadedNamespaces() && inherits(conn, "OdbcConnection"))
       return(odbc::dbListTables(conn, schema = schema))
    

@@ -1,7 +1,7 @@
 /*
  * PanmirrorUIPrefs.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,6 +67,11 @@ public class PanmirrorUIPrefs {
    public Boolean zoteroUseBetterBibtex()
    {
       return pUserState_.get().zoteroUseBetterBibtex().getValue();
+   }
+   
+   public Boolean packageListingEnabled()
+   {
+      return pUIPrefs_.get().packagesPaneEnabled().getValue();
    }
 
    public String bibliographyDefaultType()

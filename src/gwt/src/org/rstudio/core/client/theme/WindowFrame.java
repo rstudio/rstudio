@@ -1,7 +1,7 @@
 /*
  * WindowFrame.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,12 +50,6 @@ public class WindowFrame extends Composite
 
       final ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
 
-      border_ = new ShadowBorder();
-      border_.setSize("100%", "100%");
-
-      borderPositioner_ = new SimplePanel();
-      borderPositioner_.add(border_);
-
       maximizeButton_ = new WindowFrameButton(accessibleName, WindowState.MAXIMIZE);
       maximizeButton_.setClassId(ClassIds.PANEL_MAX_BTN, name);
       maximizeButton_.setStylePrimaryName(styles.maximize());
@@ -72,26 +66,20 @@ public class WindowFrame extends Composite
       frame_.setStylePrimaryName(styles.windowframe());
       frame_.addStyleName(styles.windowFrameObject());
 
-      frame_.add(borderPositioner_);
-      frame_.setWidgetTopBottom(borderPositioner_, 0, Style.Unit.PX,
-                                                   0, Style.Unit.PX);
-      frame_.setWidgetLeftRight(borderPositioner_, 0, Style.Unit.PX,
-                                                   0, Style.Unit.PX);
-
       frame_.add(minimizeButton_);
       frame_.setWidgetTopHeight(minimizeButton_,
-            ShadowBorder.TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
+            TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
             14, Style.Unit.PX);
       frame_.setWidgetRightWidth(minimizeButton_,
-            ShadowBorder.RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
+            RIGHT_SHADOW_WIDTH + 25, Style.Unit.PX,
             14, Style.Unit.PX);
 
       frame_.add(maximizeButton_);
       frame_.setWidgetTopHeight(maximizeButton_,
-                                ShadowBorder.TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
+                                TOP_SHADOW_WIDTH + 4, Style.Unit.PX,
                                 14, Style.Unit.PX);
       frame_.setWidgetRightWidth(maximizeButton_,
-                                 ShadowBorder.RIGHT_SHADOW_WIDTH + 7, Style.Unit.PX,
+                                 RIGHT_SHADOW_WIDTH + 7, Style.Unit.PX,
                                  14, Style.Unit.PX);
 
       buttonsArea_ = new FlowPanel();
@@ -194,11 +182,11 @@ public class WindowFrame extends Composite
          frame_.add(main_);
          frame_.setWidgetLeftRight(
                main_,
-               ShadowBorder.LEFT_SHADOW_WIDTH, Style.Unit.PX,
-               ShadowBorder.RIGHT_SHADOW_WIDTH, Style.Unit.PX);
+               LEFT_SHADOW_WIDTH, Style.Unit.PX,
+               RIGHT_SHADOW_WIDTH, Style.Unit.PX);
          frame_.setWidgetTopBottom(main_,
-               ShadowBorder.CONTENT_REGION_TOP, Style.Unit.PX,
-               ShadowBorder.BOTTOM_SHADOW_WIDTH, Style.Unit.PX);
+               CONTENT_REGION_TOP, Style.Unit.PX,
+               BOTTOM_SHADOW_WIDTH, Style.Unit.PX);
       }
    }
 
@@ -224,18 +212,18 @@ public class WindowFrame extends Composite
          frame_.add(header_);
          frame_.setWidgetLeftRight(
                header_,
-               ShadowBorder.LEFT_SHADOW_WIDTH, Style.Unit.PX,
-               ShadowBorder.RIGHT_SHADOW_WIDTH + 39, Style.Unit.PX);
+               LEFT_SHADOW_WIDTH, Style.Unit.PX,
+               RIGHT_SHADOW_WIDTH + 39, Style.Unit.PX);
          frame_.setWidgetTopHeight(
                header_,
-               ShadowBorder.TOP_SHADOW_WIDTH, Style.Unit.PX,
-               ShadowBorder.TITLEBAR_REGION_BOTTOM, Style.Unit.PX);
+               TOP_SHADOW_WIDTH, Style.Unit.PX,
+               TITLEBAR_REGION_BOTTOM, Style.Unit.PX);
       }
    }
 
    /**
     * Puts a widget in the whole space (includes both header and main content
-    * areas--i.e. everything inside the shadow border).
+    * areas--i.e. everything inside the border).
     */
    public void setFillWidget(Widget widget)
    {
@@ -281,11 +269,11 @@ public class WindowFrame extends Composite
 
          frame_.add(fill_);
          frame_.setWidgetLeftRight(fill_,
-               ShadowBorder.LEFT_SHADOW_WIDTH, Style.Unit.PX,
-               ShadowBorder.RIGHT_SHADOW_WIDTH, Style.Unit.PX);
+               LEFT_SHADOW_WIDTH, Style.Unit.PX,
+               RIGHT_SHADOW_WIDTH, Style.Unit.PX);
          frame_.setWidgetTopBottom(fill_,
-               ShadowBorder.TOP_SHADOW_WIDTH, Style.Unit.PX,
-               ShadowBorder.BOTTOM_SHADOW_WIDTH, Style.Unit.PX);
+               TOP_SHADOW_WIDTH, Style.Unit.PX,
+               BOTTOM_SHADOW_WIDTH, Style.Unit.PX);
       }
    }
 
@@ -393,8 +381,6 @@ public class WindowFrame extends Composite
    }
 
    private final LayoutPanel frame_;
-   private final ShadowBorder border_;
-   private final SimplePanel borderPositioner_;
    private final WindowFrameButton maximizeButton_;
    private final WindowFrameButton minimizeButton_;
    private Widget main_;
@@ -406,6 +392,12 @@ public class WindowFrame extends Composite
    private Widget previousHeader_;
    private final FlowPanel buttonsArea_;
 
+   private static final int TOP_SHADOW_WIDTH = 3,
+                            LEFT_SHADOW_WIDTH = 3,
+                            RIGHT_SHADOW_WIDTH = 3,
+                            BOTTOM_SHADOW_WIDTH = 5,
+                            TITLEBAR_REGION_BOTTOM = 26,
+                            CONTENT_REGION_TOP = 26;
    // Injected ----
    private EventBus events_;
    String name_;

@@ -1,0 +1,39 @@
+body {
+  background-color: rgb(240, 240, 240);
+  font-size: 9pt;
+  font-family: 'Helvetica', 'Arial', sans-serif;
+}
+
+label {
+  vertical-align: 2px;
+}
+
+.select {
+  margin-top: 6px;
+  width: 100%;
+}
+
+.select option {
+  font-size: 9pt;
+  padding: 2px 4px;
+}
+
+.footer-left {
+  position: fixed;
+  bottom: 8px;
+  left: 12px;
+}
+
+.footer-right {
+  position: fixed;
+  bottom: 8px;
+  right: 12px;
+}
+
+.button {
+  width: 72px;
+  padding: 3px 4px;
+  margin: 4px 0 4px 4px;
+  font-size: 8pt;
+  user-select: none;
+}

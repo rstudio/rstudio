@@ -1,7 +1,7 @@
 /*
  * DomUtils.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,8 @@ import com.google.gwt.core.client.JsArrayMixed;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.Style.Position;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.HasAllKeyHandlers;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -30,8 +32,6 @@ import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
 import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.*;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
@@ -1047,18 +1047,6 @@ public class DomUtils
          el.setSelectionRange(start, end);
    }-*/;
 
-   public static final native void copyCodeToClipboard(String text) /*-{
-      var copyElem = document.createElement('pre');
-      copyElem.contentEditable = true;
-      document.body.appendChild(copyElem);
-      copyElem.innerHTML = text;
-      copyElem.unselectable = "off";
-      copyElem.focus();
-      document.execCommand('SelectAll');
-      document.execCommand("Copy", false, null);
-      document.body.removeChild(copyElem);
-   }-*/;
-
    public static final String extractCssValue(String className,
          String propertyName)
    {
@@ -1111,23 +1099,27 @@ public class DomUtils
       return result;
    }-*/;
 
-   public static int getCharacterWidth(int clientWidth, int offsetWidth,
-         String style)
+   public static int getCharacterWidth(int clientWidth,
+                                       int offsetWidth,
+                                       String style)
    {
-      // create width checker label and add it to the root panel
-      Label widthChecker = new Label();
-      widthChecker.setStylePrimaryName(style);
+      // create width checker element and add it to the document
+      PreElement widthChecker = Document.get().createPreElement();
+      widthChecker.getStyle().setPosition(Position.ABSOLUTE);
+      widthChecker.getStyle().setLeft(-1000, Unit.PX);
+      widthChecker.getStyle().setTop(-1000, Unit.PX);
+      widthChecker.addClassName(style);
       FontSizer.applyNormalFontSize(widthChecker);
-      RootPanel.get().add(widthChecker, -1000, -1000);
+      Document.get().getBody().appendChild(widthChecker);
 
       // put the text into the label, measure it, and remove it
       String text = new String("abcdefghijklmnopqrstuvwzyz0123456789");
-      widthChecker.setText(text);
+      widthChecker.setInnerText(text);
       int labelWidth = widthChecker.getOffsetWidth();
-      RootPanel.get().remove(widthChecker);
+      widthChecker.removeFromParent();
 
       // compute the points per character
-      float pointsPerCharacter = (float)labelWidth / (float)text.length();
+      double pointsPerCharacter = (double) labelWidth / (double) text.length();
 
       // compute client width
       if (clientWidth == offsetWidth)
@@ -1141,12 +1133,12 @@ public class DomUtils
 
       // compute character width (add pad so characters aren't flush to right)
       final int RIGHT_CHARACTER_PAD = 2;
-      int width = Math.round((float)clientWidth / pointsPerCharacter) -
-            RIGHT_CHARACTER_PAD;
-
+      int computedWidth = (int) Math.floor(clientWidth / pointsPerCharacter);
+      int adjustedWidth = computedWidth - RIGHT_CHARACTER_PAD;
+      
       // enforce a minimum width
       final int MINIMUM_WIDTH = 30;
-      return Math.max(width, MINIMUM_WIDTH);
+      return Math.max(adjustedWidth, MINIMUM_WIDTH);
    }
 
    public static int getCharacterWidth(Element ele, String style)
@@ -1338,29 +1330,6 @@ public class DomUtils
       return el.getBoundingClientRect();
    }-*/;
 
-   public static final native void copyToClipboard(String text)
-   /*-{
-      if (window.clipboardData && window.clipboardData.setData) {
-         // Internet Explorer-specific code path to prevent textarea being shown while dialog is visible.
-         clipboardData.setData("Text", text);
-      }
-      else if (document.queryCommandSupported && document.queryCommandSupported("copy")) {
-         var textarea = document.createElement("textarea");
-         textarea.textContent = text;
-         textarea.style.position = "fixed";  // Prevent scrolling to bottom of page in Microsoft Edge.
-         document.body.appendChild(textarea);
-         textarea.select();
-         try {
-            document.execCommand("copy");  // Security exception may be thrown by some browsers.
-         }
-         catch (ex) {
-            console.warn("Copy to clipboard failed.", ex);
-         }
-         finally {
-            document.body.removeChild(textarea);
-         }
-      }
-   }-*/;
 
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;

@@ -1,7 +1,7 @@
 /*
  * DesktopMenuCallback.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,15 +39,17 @@ public class DesktopMenuCallback implements MenuCallback
                  StringUtil.notNull(command.getMenuLabel(true)),
                  StringUtil.notNull(command.getTooltip()),
                  StringUtil.notNull(command.getShortcutRaw()),
-                 command.isCheckable());
+                 command.isCheckable(),
+                 command.isVisible());
    }
 
    private native void addCommand(String cmdId,
                                   String label,
                                   String tooltip,
                                   String shortcut,
-                                  boolean isCheckable) /*-{
-      $wnd.desktopMenuCallback.addCommand(cmdId, label, tooltip, shortcut, isCheckable);
+                                  boolean isCheckable,
+                                  boolean isVisible) /*-{
+      $wnd.desktopMenuCallback.addCommand(cmdId, label, tooltip, shortcut, isCheckable, isVisible);
    }-*/;
 
    public native final void addSeparator() /*-{
@@ -90,6 +92,28 @@ public class DesktopMenuCallback implements MenuCallback
    private native static final void setCommandCheckedImpl(String commandId, boolean checked, JavaScriptObject callbacks)
    /*-{
       callbacks.setCommandChecked(commandId, checked);
+   }-*/;
+
+   public static final void setCommandShortcut(String commandId, String shortcut)
+   {
+      setCommandShortcutImpl(commandId, shortcut, MENU_CALLBACKS);
+   }
+
+   private native static final void setCommandShortcutImpl(String commandId, String shortcut, JavaScriptObject callbacks)
+   /*-{
+      callbacks.setCommandShortcut(commandId, shortcut);
+   }-*/;
+
+   public static final void commitCommandShortcuts()
+   {
+      commitCommandShortcutsImpl(MENU_CALLBACKS);
+   }
+
+   private native static final void commitCommandShortcutsImpl(JavaScriptObject callbacks)
+   /*-{
+      // MAY NOT BE DEFINED
+      if (callbacks.commitCommandShortcuts)
+         callbacks.commitCommandShortcuts();
    }-*/;
 
    public native static final void setMainMenuEnabled(boolean enabled)

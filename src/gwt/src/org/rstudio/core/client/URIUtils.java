@@ -1,7 +1,7 @@
 /*
  * URIUtils.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,7 +56,7 @@ public class URIUtils
       // ensure URL is absolute
       String absolute = DomUtils.makeAbsoluteUrl(url);
       
-      // extract host and see if it's on the whitelist of loopback hosts
+      // extract host and see if it's on the list of known loopback hosts
       String host = StringUtil.getHostFromUrl(absolute);
       return host.equals("localhost") || host.equals("127.0.0.1") || host.equals("::1");
    }

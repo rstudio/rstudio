@@ -1,7 +1,7 @@
 /*
  * ConsolePreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
@@ -22,6 +23,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 
@@ -35,20 +37,20 @@ public class ConsolePreferencesPane extends PreferencesPane
       prefs_ = prefs;
       res_ = res;
 
-      add(headerLabel("Display"));
-      add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
-      add(checkboxPref("Different color for error or message output (requires restart)", prefs_.highlightConsoleErrors()));
-      add(checkboxPref("Limit visible console output (requires restart)", prefs_.limitVisibleConsole()));
+      add(headerLabel(constants_.consoleDisplayLabel()));
+      add(checkboxPref(constants_.consoleSyntaxHighlightingLabel(), prefs_.syntaxColorConsole()));
+      add(checkboxPref(constants_.consoleDifferentColorLabel(), prefs_.highlightConsoleErrors()));
+      add(checkboxPref(constants_.consoleLimitVariableLabel(), prefs_.limitVisibleConsole()));
       NumericValueWidget limitLengthPref =
-         numericPref("Limit output line length to:", prefs_.consoleLineLengthLimit());
+         numericPref(constants_.consoleLimitOutputLengthLabel(), prefs_.consoleLineLengthLimit());
       add(nudgeRightPlus(limitLengthPref));
 
       consoleColorMode_ = new SelectWidget(
-         "ANSI Escape Codes:",
+         constants_.consoleANSIEscapeCodesLabel(),
          new String[] {
-            "Show ANSI colors",
-            "Remove ANSI codes",
-            "Ignore ANSI codes (1.0 behavior)"
+            constants_.consoleColorModeANSIOption(),
+            constants_.consoleColorModeRemoveANSIOption(),
+            constants_.consoleColorModeIgnoreANSIOption()
          },
          new String[] {
             UserPrefs.ANSI_CONSOLE_MODE_ON,
@@ -60,18 +62,20 @@ public class ConsolePreferencesPane extends PreferencesPane
          false);
       add(consoleColorMode_);
 
-      Label debuggingLabel = headerLabel("Debugging");
+      Label debuggingLabel = headerLabel(constants_.debuggingHeaderLabel());
       spacedBefore(debuggingLabel);
       add(debuggingLabel);
       add(spaced(checkboxPref(
-         "Automatically expand tracebacks in error inspector",
+         constants_.debuggingExpandTracebacksLabel(),
          prefs_.autoExpandErrorTracebacks(),
          true /*defaultSpaced*/)));
 
-      Label otherLabel = headerLabel("Other");
+      Label otherLabel = headerLabel(constants_.otherHeaderCaption());
       spacedBefore(otherLabel);
       add(otherLabel);
-      add(spaced(checkboxPref("Double-click to select words", prefs_.consoleDoubleClickSelect())));
+      add(spaced(checkboxPref(constants_.otherDoubleClickLabel(), prefs_.consoleDoubleClickSelect())));
+      add(spaced(checkboxPref(constants_.warnAutoSuspendPausedLabel(), prefs_.consoleSuspendBlockedNotice())));
+      add(indent(numericPref(constants_.numSecondsToDelayWarningLabel(), prefs_.consoleSuspendBlockedNoticeDelay())));
    }
 
    @Override
@@ -83,7 +87,7 @@ public class ConsolePreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Console";
+      return constants_.consoleLabel();
    }
 
    @Override
@@ -129,4 +133,5 @@ public class ConsolePreferencesPane extends PreferencesPane
    // Injected
    private final UserPrefs prefs_;
    private final PreferencesDialogResources res_;
+   private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

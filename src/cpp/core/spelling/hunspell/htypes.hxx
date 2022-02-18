@@ -25,7 +25,7 @@ struct hentry
   unsigned short * astr;  // affix flag vector
   struct   hentry * next; // next word with same hash code
   struct   hentry * next_homonym; // next homonym word (with same hash code)
-  char     var;       // variable fields (only for special pronounciation yet)
+  char     var;       // variable fields (only for special pronunciation yet)
   char     word[1];   // variable-length word (8-bit or UTF-8 encoding)
 };
 

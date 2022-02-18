@@ -1,7 +1,7 @@
 /*
  * EditingPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -47,6 +48,8 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
@@ -65,72 +68,45 @@ public class EditingPreferencesPane extends PreferencesPane
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
-      editingPanel.add(headerLabel("General"));
-      editingPanel.add(tight(spacesForTab_ = checkboxPref("Insert spaces for tab", prefs.useSpacesForTab(),
-            false /*defaultSpace*/)));
-      editingPanel.add(indent(tabWidth_ = numericPref("Tab width", 1, UserPrefs.MAX_TAB_WIDTH,
-            prefs.numSpacesForTab())));
+      editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
+      editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
+      editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
+            prefs_.numSpacesForTab())));
       tabWidth_.setWidth("36px");
+      editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
+            constants_.editingAutoDetectIndentationDesc()));
+      editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
+      editingPanel.add(checkboxPref(constants_.editingInsertNativePipeOperatorLabel(),
+            prefs_.insertNativePipeOperator()));
+      editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
+      editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
+      editingPanel.add(checkboxPref(prefs_.softWrapRFiles()));
       editingPanel.add(checkboxPref(
-            "Auto-detect code indentation",
-            prefs_.autoDetectIndentation(),
-            "When enabled, the indentation for documents not part of an RStudio project " +
-            "will be automatically detected."));
-      editingPanel.add(checkboxPref("Insert matching parens/quotes", prefs_.insertMatching()));
-      editingPanel.add(checkboxPref("Use native pipe operator, |> (requires R 4.1+)",
-         prefs_.insertNativePipeOperator()));
-      editingPanel.add(checkboxPref("Auto-indent code after paste", prefs_.reindentOnPaste()));
-      editingPanel.add(checkboxPref("Vertically align arguments in auto-indent", prefs_.verticallyAlignArgumentsIndent()));
-      editingPanel.add(checkboxPref("Soft-wrap R source files", prefs_.softWrapRFiles()));
-      editingPanel.add(checkboxPref(
-            "Continue comment when inserting new line",
+            constants_.editingContinueCommentsOnNewlineLabel(),
             prefs_.continueCommentsOnNewline(),
-            "When enabled, pressing Enter will continue comments on new lines. " +
-            "Press Shift + Enter to exit a comment."));
+            constants_.editingContinueCommentsOnNewlineDesc()));
       editingPanel.add(checkboxPref(
-            "Enable hyperlink highlighting in editor",
+            constants_.editingHighlightWebLinkLabel(),
             prefs_.highlightWebLink(),
-            "When enabled, hyperlinks in comments will be underlined and clickable. "));
+            constants_.editingHighlightWebLinkDesc()));
 
-      delimiterSurroundWidget_ = new SelectWidget(
-            "Surround selection on text insertion:",
-            new String[] {
-                  "Never",
-                  "Quotes",
-                  "Quotes & Brackets"
-            },
-            new String[] {
-                  UserPrefs.SURROUND_SELECTION_NEVER,
-                  UserPrefs.SURROUND_SELECTION_QUOTES,
-                  UserPrefs.SURROUND_SELECTION_QUOTES_AND_BRACKETS
-            },
-            false,
-            true,
-            false);
+      delimiterSurroundWidget_ = new SelectWidget(constants_.editingSurroundSelectionLabel(),
+         (Prefs.EnumValue) prefs_.surroundSelection(),
+         false,
+         true,
+         false);
       editingPanel.add(delimiterSurroundWidget_);
 
       HorizontalPanel keyboardPanel = new HorizontalPanel();
-      editorMode_ = new SelectWidget(
-            "Keybindings:",
-            new String[] {
-                  "Default",
-                  "Vim",
-                  "Emacs",
-                  "Sublime Text"
-            },
-            new String[] {
-                  UserPrefs.EDITOR_KEYBINDINGS_DEFAULT,
-                  UserPrefs.EDITOR_KEYBINDINGS_VIM,
-                  UserPrefs.EDITOR_KEYBINDINGS_EMACS,
-                  UserPrefs.EDITOR_KEYBINDINGS_SUBLIME,
-            },
-            false,
-            true,
-            false);
+      editorMode_ = new SelectWidget(constants_.editingKeybindingsLabel(),
+                                     (Prefs.EnumValue) prefs_.editorKeybindings(),
+                                     false,
+                                     true,
+                                     false);
       editorMode_.getElement().getStyle().setMarginBottom(0, Unit.PX);
 
       keyboardPanel.add(editorMode_);
-      SmallButton editShortcuts = new SmallButton("Modify Keyboard Shortcuts...");
+      SmallButton editShortcuts = new SmallButton(constants_.editingEditShortcuts());
       editShortcuts.getElement().getStyle().setMarginLeft(15, Unit.PX);
       editShortcuts.addClickHandler(new ClickHandler() {
          @Override
@@ -145,38 +121,29 @@ public class EditingPreferencesPane extends PreferencesPane
       lessSpaced(keyboardPanel);
       editingPanel.add(keyboardPanel);
 
-      Label executionLabel = headerLabel("Execution");
+      Label executionLabel = headerLabel(constants_.editingExecutionLabel());
       editingPanel.add(executionLabel);
       executionLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
-      editingPanel.add(checkboxPref("Focus console after executing from source", prefs_.focusConsoleAfterExec()));
+      editingPanel.add(checkboxPref(constants_.editingFocusConsoleAfterExecLabel(), prefs_.focusConsoleAfterExec()));
 
       executionBehavior_ = new SelectWidget(
-            "Ctrl+Enter executes: ",
-            new String[] {
-               "Current line",
-               "Multi-line R statement",
-               "Multiple consecutive R lines"
-            },
-            new String[] {
-               UserPrefs.EXECUTION_BEHAVIOR_LINE,
-               UserPrefs.EXECUTION_BEHAVIOR_STATEMENT,
-               UserPrefs.EXECUTION_BEHAVIOR_PARAGRAPH
-            },
+            constants_.editingExecutionBehaviorLabel(),
+            (Prefs.EnumValue) prefs_.executionBehavior(),
             false,
             true,
             false);
       executionBehavior_.getElement().getStyle().setMarginBottom(0, Unit.PX);
       editingPanel.add(executionBehavior_);
 
-      Label snippetsLabel = headerLabel("Snippets");
+      Label snippetsLabel = headerLabel(constants_.editingSnippetsLabel());
       snippetsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       editingPanel.add(snippetsLabel);
 
       HorizontalPanel panel = new HorizontalPanel();
-      CheckBox enableSnippets = checkboxPref("Enable code snippets", prefs_.enableSnippets());
+      CheckBox enableSnippets = checkboxPref(prefs_.enableSnippets());
       panel.add(enableSnippets);
 
-      SmallButton editSnippets = new SmallButton("Edit Snippets...");
+      SmallButton editSnippets = new SmallButton(constants_.editSnippetsButtonLabel());
       editSnippets.getElement().getStyle().setMarginTop(1, Unit.PX);
       editSnippets.getElement().getStyle().setMarginLeft(5, Unit.PX);
       editSnippets.addClickHandler(new ClickHandler() {
@@ -188,7 +155,7 @@ public class EditingPreferencesPane extends PreferencesPane
       });
       panel.add(editSnippets);
 
-      HelpButton snippetHelp = new HelpButton("code_snippets", "Help on code snippets");
+      HelpButton snippetHelp = new HelpButton("code_snippets", constants_.editingSnippetHelpTitle());
       snippetHelp.getElement().getStyle().setMarginTop(2, Unit.PX);
       snippetHelp.getElement().getStyle().setMarginLeft(6, Unit.PX);
       panel.add(snippetHelp);
@@ -196,32 +163,24 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(panel);
 
       VerticalTabPanel displayPanel = new VerticalTabPanel(ElementIds.EDIT_DISPLAY_PREFS);
-      displayPanel.add(headerLabel("General"));
-      displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
-      displayPanel.add(checkboxPref("Highlight selected line", prefs.highlightSelectedLine()));
-      displayPanel.add(checkboxPref("Show line numbers", prefs.showLineNumbers()));
-      displayPanel.add(tight(showMargin_ = checkboxPref("Show margin",
-            prefs.showMargin(), false /*defaultSpace*/)));
-      displayPanel.add(indent(marginCol_ = numericPref("Margin column", prefs.marginColumn())));
-      displayPanel.add(checkboxPref("Show whitespace characters", prefs_.showInvisibles()));
-      displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
-      displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
-      displayPanel.add(checkboxPref("Allow scroll past end of document", prefs_.scrollPastEndOfDocument()));
-      displayPanel.add(checkboxPref("Allow drag and drop of text", prefs_.enableTextDrag()));
-      displayPanel.add(checkboxPref("Highlight R function calls", prefs_.highlightRFunctionCalls()));
+      displayPanel.add(headerLabel(constants_.generalHeaderLabel()));
+      displayPanel.add(checkboxPref(constants_.displayHighlightSelectedWordLabel(), prefs_.highlightSelectedWord()));
+      displayPanel.add(checkboxPref(constants_.displayHighlightSelectedLineLabel(), prefs_.highlightSelectedLine()));
+      displayPanel.add(checkboxPref(constants_.displayShowLineNumbersLabel(), prefs_.showLineNumbers()));
+      displayPanel.add(tight(showMargin_ = checkboxPref(constants_.displayShowMarginLabel(), prefs_.showMargin(), false /*defaultSpace*/)));
+      displayPanel.add(indent(marginCol_ = numericPref(prefs_.marginColumn())));
+      displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
+      displayPanel.add(checkboxPref(constants_.displayShowIndentGuidesLabel(), prefs_.showIndentGuides()));
+      displayPanel.add(checkboxPref(constants_.displayBlinkingCursorLabel(), prefs_.blinkingCursor()));
+      displayPanel.add(checkboxPref(constants_.displayScrollPastEndOfDocumentLabel(), prefs_.scrollPastEndOfDocument()));
+      displayPanel.add(checkboxPref(constants_.displayEnableTextDragLabel(), prefs_.enableTextDrag()));
+      displayPanel.add(checkboxPref(prefs_.highlightRFunctionCalls()));
       displayPanel.add(extraSpaced(
-         checkboxPref("Rainbow parentheses", prefs_.rainbowParentheses(), false /* defaultSpace */)));
+         checkboxPref(prefs_.rainbowParentheses(), false /* defaultSpace */)));
 
       foldMode_ = new SelectWidget(
-            "Fold Style:",
-            new String[] {
-                  "Start Only",
-                  "Start and End"
-            },
-            new String[] {
-                  UserPrefs.FOLD_STYLE_BEGIN_ONLY,
-                  UserPrefs.FOLD_STYLE_BEGIN_AND_END
-            },
+            constants_.displayFoldStyleLabel(),
+            (Prefs.EnumValue) prefs_.foldStyle(),
             false,
             true,
             false);
@@ -230,12 +189,12 @@ public class EditingPreferencesPane extends PreferencesPane
 
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
 
-      savePanel.add(headerLabel("General"));
-      savePanel.add(checkboxPref("Ensure that source files end with newline", prefs_.autoAppendNewline()));
-      savePanel.add(checkboxPref("Strip trailing horizontal whitespace when saving", prefs_.stripTrailingWhitespace()));
-      savePanel.add(checkboxPref("Restore last cursor position when opening file", prefs_.restoreSourceDocumentCursorPosition()));
+      savePanel.add(headerLabel(constants_.generalHeaderLabel()));
+      savePanel.add(checkboxPref(constants_.savingAutoAppendNewLineLabel(), prefs_.autoAppendNewline()));
+      savePanel.add(checkboxPref(constants_.savingStripTrailingWhitespaceLabel(), prefs_.stripTrailingWhitespace()));
+      savePanel.add(checkboxPref(constants_.savingRestoreSourceDocumentCursorPositionLabel(), prefs_.restoreSourceDocumentCursorPosition()));
 
-      Label serializationLabel = headerLabel("Serialization");
+      Label serializationLabel = headerLabel(constants_.editingSerializationLabel());
       serializationLabel.getElement().getStyle().setPaddingTop(14, Unit.PX);
       savePanel.add(serializationLabel);
 
@@ -246,9 +205,9 @@ public class EditingPreferencesPane extends PreferencesPane
 
       encodingValue_ = prefs_.defaultEncoding().getGlobalValue();
       savePanel.add(lessSpaced(encoding_ = new TextBoxWithButton(
-            "Default text encoding:",
+            constants_.savingDefaultEncodingLabel(),
             "",
-            "Change...",
+            constants_.editingSavePanelAction(),
             null,
             ElementIds.TextBoxButtonId.TEXT_ENCODING,
             true,
@@ -285,29 +244,20 @@ public class EditingPreferencesPane extends PreferencesPane
       nudgeRight(encoding_);
       textBoxWithChooser(encoding_);
       spaced(encoding_);
-      setEncoding(prefs.defaultEncoding().getGlobalValue());
+      setEncoding(prefs_.defaultEncoding().getGlobalValue());
 
-      savePanel.add(spacedBefore(headerLabel("Auto-save")));
-      savePanel.add(checkboxPref("Always save R scripts before sourcing", prefs.saveBeforeSourcing()));
-      savePanel.add(checkboxPref("Automatically save when editor loses focus", prefs_.autoSaveOnBlur()));
+      savePanel.add(spacedBefore(headerLabel(constants_.editingSavePanelAutosave())));
+      savePanel.add(checkboxPref(constants_.savingSaveBeforeSourcingLabel(), prefs_.saveBeforeSourcing()));
+      savePanel.add(checkboxPref(constants_.savingAutoSaveOnBlurLabel(), prefs_.autoSaveOnBlur()));
       autoSaveOnIdle_ = new SelectWidget(
-            "When editor is idle: ",
-            new String[] {
-               "Backup unsaved changes",
-               "Save and write changes",
-               "Do nothing"
-            },
-            new String[] {
-               UserPrefs.AUTO_SAVE_ON_IDLE_BACKUP,
-               UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT,
-               UserPrefs.AUTO_SAVE_ON_IDLE_NONE
-            },
+            constants_.savingAutoSaveOnIdleLabel(),
+            (Prefs.EnumValue) prefs_.autoSaveOnIdle(),
             false,
             true,
             false);
       savePanel.add(autoSaveOnIdle_);
       autoSaveIdleMs_ = new SelectWidget(
-            "Idle period: ",
+            constants_.savingAutoSaveIdleMsLabel(),
             new String[] {
                "500ms",
                "1000ms",
@@ -335,20 +285,11 @@ public class EditingPreferencesPane extends PreferencesPane
 
       VerticalTabPanel completionPanel = new VerticalTabPanel(ElementIds.EDIT_COMPLETION_PREFS);
 
-      completionPanel.add(headerLabel("R and C/C++"));
+      completionPanel.add(headerLabel(constants_.editingCompletionPanel()));
 
       showCompletions_ = new SelectWidget(
-            "Show code completions:",
-            new String[] {
-                  "Automatically",
-                  "When Triggered ($, ::)",
-                  "Manually (Tab)"
-            },
-            new String[] {
-                  UserPrefs.CODE_COMPLETION_ALWAYS,
-                  UserPrefs.CODE_COMPLETION_TRIGGERED,
-                  UserPrefs.CODE_COMPLETION_MANUAL
-            },
+            constants_.completionCodeCompletionLabel(),
+            (Prefs.EnumValue) prefs_.codeCompletion(),
             false,
             true,
             false);
@@ -357,8 +298,8 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(showCompletions_);
 
       final CheckBox alwaysCompleteInConsole = checkboxPref(
-            "Allow automatic completions in console",
-            prefs.consoleCodeCompletion());
+            constants_.completionConsoleCodeCompletionLabel(),
+            prefs_.consoleCodeCompletion());
       completionPanel.add(alwaysCompleteInConsole);
 
       showCompletions_.addChangeHandler(new ChangeHandler()
@@ -373,12 +314,14 @@ public class EditingPreferencesPane extends PreferencesPane
       });
 
       final CheckBox insertParensAfterFunctionCompletionsCheckbox =
-           checkboxPref("Insert parentheses after function completions",
-                 prefs.insertParensAfterFunctionCompletion());
+           checkboxPref(
+                 constants_.completionInsertParensAfterFunctionCompletion(),
+                 prefs_.insertParensAfterFunctionCompletion());
 
       final CheckBox showSignatureTooltipsCheckbox =
-           checkboxPref("Show help tooltip after function completions",
-                 prefs.showFunctionSignatureTooltips());
+           checkboxPref(
+                 constants_.completionShowFunctionSignatureTooltipsLabel(),
+                 prefs_.showFunctionSignatureTooltips());
 
       addEnabledDependency(
             insertParensAfterFunctionCompletionsCheckbox,
@@ -387,63 +330,66 @@ public class EditingPreferencesPane extends PreferencesPane
       completionPanel.add(insertParensAfterFunctionCompletionsCheckbox);
       completionPanel.add(showSignatureTooltipsCheckbox);
 
-      completionPanel.add(checkboxPref("Show help tooltip on cursor idle", prefs.showHelpTooltipOnIdle()));
-      completionPanel.add(checkboxPref("Insert spaces around equals for argument completions", prefs.insertSpacesAroundEquals()));
-      completionPanel.add(checkboxPref("Use tab for autocompletions", prefs.tabCompletion()));
-      completionPanel.add(checkboxPref("Use tab for multiline autocompletions", prefs.tabMultilineCompletion()));
+      completionPanel.add(checkboxPref(
+            constants_.completionShowHelpTooltipOnIdleLabel(),
+            prefs_.showHelpTooltipOnIdle()));
+      completionPanel.add(checkboxPref(
+            constants_.completionInsertSpacesAroundEqualsLabel(),
+            prefs_.insertSpacesAroundEquals()));
+      completionPanel.add(checkboxPref(
+            constants_.completionTabCompletionLabel(),
+            prefs_.tabCompletion()));
+      completionPanel.add(checkboxPref(
+            constants_.completionTabMultilineCompletionLabel(),
+            prefs_.tabMultilineCompletion()));
 
-
-      Label otherLabel = headerLabel("Other Languages");
+      Label otherLabel = headerLabel(constants_.editingDiagOtherLabel());
       otherLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       completionPanel.add(otherLabel);
 
       showCompletionsOther_ = new SelectWidget(
-            "Show code completions:",
-            new String[] {
-                  "Automatically",
-                  "Manually (Ctrl+Space) "
-            },
-            new String[] {
-                  UserPrefs.CODE_COMPLETION_OTHER_ALWAYS,
-                  UserPrefs.CODE_COMPLETION_OTHER_MANUAL
-            },
+            constants_.completionCodeCompletionOtherLabel(),
+            (Prefs.EnumValue) prefs_.codeCompletionOther(),
             false,
             true,
             false);
       completionPanel.add(showCompletionsOther_);
 
-      Label otherTip = new Label(
-        "Keyword and text-based completions are supported for several other " +
-        "languages including JavaScript, HTML, CSS, Python, and SQL.");
+      Label otherTip = new Label(constants_.editingOtherTip());
       otherTip.addStyleName(baseRes.styles().infoLabel());
       completionPanel.add(nudgeRightPlus(otherTip));
 
 
-      Label delayLabel = headerLabel("Completion Delay");
+      Label delayLabel = headerLabel(constants_.editingHeaderLabel());
       delayLabel.getElement().getStyle().setMarginTop(14, Unit.PX);
       completionPanel.add(delayLabel);
 
       completionPanel.add(nudgeRightPlus(alwaysCompleteChars_ =
-          numericPref("Show completions after characters entered:", 1, 99,
-                      prefs.codeCompletionCharacters())));
+          numericPref(constants_.completionCodeCompletionCharactersLabel(), 1, 99, prefs_.codeCompletionCharacters())));
       completionPanel.add(nudgeRightPlus(alwaysCompleteDelayMs_ =
-          numericPref("Show completions after keyboard idle (ms):", 0, 9999,
-                      prefs.codeCompletionDelay())));
+          numericPref(constants_.completionCodeCompletionDelayLabel(), 0, 9999, prefs_.codeCompletionDelay())));
 
 
       VerticalTabPanel diagnosticsPanel = new VerticalTabPanel(ElementIds.EDIT_DIAGNOSTICS_PREFS);
-      diagnosticsPanel.add(headerLabel("R Diagnostics"));
-      final CheckBox chkShowRDiagnostics = checkboxPref("Show diagnostics for R", prefs.showDiagnosticsR());
+      diagnosticsPanel.add(headerLabel(constants_.editingDiagnosticsPanel()));
+      final CheckBox chkShowRDiagnostics = checkboxPref(
+            constants_.diagnosticsShowDiagnosticsRLabel(), prefs_.showDiagnosticsR());
       diagnosticsPanel.add(chkShowRDiagnostics);
 
       final VerticalPanel rOptionsPanel = new VerticalPanel();
-      rOptionsPanel.add(checkboxPref("Enable diagnostics within R function calls", prefs.diagnosticsInRFunctionCalls()));
-      rOptionsPanel.add(checkboxPref("Check arguments to R function calls", prefs.checkArgumentsToRFunctionCalls()));
-      rOptionsPanel.add(checkboxPref("Check usage of '<-' in function call", prefs.checkUnexpectedAssignmentInFunctionCall()));
-      rOptionsPanel.add(checkboxPref("Warn if variable used has no definition in scope", prefs.warnIfNoSuchVariableInScope()));
-      rOptionsPanel.add(checkboxPref("Warn if variable is defined but not used", prefs.warnVariableDefinedButNotUsed()));
-      rOptionsPanel.add(checkboxPref("Provide R style diagnostics (e.g. whitespace)", prefs.styleDiagnostics()));
-      rOptionsPanel.setVisible(prefs.showDiagnosticsR().getValue());
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsInRFunctionCallsLabel(), prefs_.diagnosticsInRFunctionCalls()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsCheckArgumentsToRFunctionCallsLabel(), prefs_.checkArgumentsToRFunctionCalls()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsCheckUnexpectedAssignmentInFunctionCallLabel(),
+            prefs_.checkUnexpectedAssignmentInFunctionCall()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsWarnIfNoSuchVariableInScopeLabel(), prefs_.warnIfNoSuchVariableInScope()));
+      rOptionsPanel.add(checkboxPref(
+            constants_.diagnosticsWarnVariableDefinedButNotUsedLabel(), prefs_.warnVariableDefinedButNotUsed()));
+      rOptionsPanel.add(checkboxPref(constants_.diagnosticsStyleDiagnosticsLabel(), prefs_.styleDiagnostics()));
+      rOptionsPanel.setVisible(prefs_.showDiagnosticsR().getValue());
       chkShowRDiagnostics.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -453,20 +399,24 @@ public class EditingPreferencesPane extends PreferencesPane
       });
 
       diagnosticsPanel.add(rOptionsPanel);
-      diagnosticsPanel.add(checkboxPref("Prompt to install missing R packages discovered in R source files", prefs.autoDiscoverPackageDependencies()));
+      diagnosticsPanel.add(checkboxPref(
+            constants_.diagnosticsAutoDiscoverPackageDependenciesLabel(),
+            prefs_.autoDiscoverPackageDependencies()));
 
-      Label diagOtherLabel = headerLabel("Other Languages");
+      Label diagOtherLabel = headerLabel(constants_.editingOtherLabel());
       diagnosticsPanel.add(spacedBefore(diagOtherLabel));
-      diagnosticsPanel.add(checkboxPref("Show diagnostics for C/C++", prefs.showDiagnosticsCpp()));
-      diagnosticsPanel.add(checkboxPref("Show diagnostics for JavaScript, HTML, and CSS", prefs.showDiagnosticsOther()));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsShowDiagnosticsCppLabel(), prefs_.showDiagnosticsCpp()));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsShowDiagnosticsYamlLabel(), prefs_.showDiagnosticsYaml()));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsShowDiagnosticsOtherLabel(), prefs_.showDiagnosticsOther()));
 
-      Label diagShowLabel = headerLabel("Show Diagnostics");
+      Label diagShowLabel = headerLabel(constants_.editingDiagShowLabel());
       diagnosticsPanel.add(spacedBefore(diagShowLabel));
-      diagnosticsPanel.add(checkboxPref("Show diagnostics whenever source files are saved", prefs.diagnosticsOnSave()));
-      diagnosticsPanel.add(tight(checkboxPref("Show diagnostics after keyboard is idle for a period of time",
-            prefs.backgroundDiagnostics(), false /*defaultSpace*/)));
+      diagnosticsPanel.add(checkboxPref(constants_.diagnosticsOnSaveLabel(), prefs_.diagnosticsOnSave()));
+      diagnosticsPanel.add(tight(checkboxPref(constants_.diagnosticsBackgroundDiagnosticsLabel(),
+            prefs_.backgroundDiagnostics(), false /*defaultSpace*/)));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
-            numericPref("Keyboard idle time (ms):", 0, 9999, prefs.backgroundDiagnosticsDelayMs())));
+            numericPref(constants_.diagnosticsBackgroundDiagnosticsDelayMsLabel(), 0, 9999, 
+                  prefs_.backgroundDiagnosticsDelayMs())));
 
       HelpLink diagnosticsHelpLink = new DiagnosticsHelpLink();
       diagnosticsHelpLink.getElement().getStyle().setMarginTop(12, Unit.PX);
@@ -474,13 +424,13 @@ public class EditingPreferencesPane extends PreferencesPane
       diagnosticsPanel.add(diagnosticsHelpLink);
 
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Editing");
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.editingTabPanel());
       tabPanel.setSize("435px", "533px");
-      tabPanel.add(editingPanel, "Editing", editingPanel.getBasePanelId());
-      tabPanel.add(displayPanel, "Display", displayPanel.getBasePanelId());
-      tabPanel.add(savePanel, "Saving", savePanel.getBasePanelId());
-      tabPanel.add(completionPanel, "Completion", completionPanel.getBasePanelId());
-      tabPanel.add(diagnosticsPanel, "Diagnostics", diagnosticsPanel.getBasePanelId());
+      tabPanel.add(editingPanel, constants_.editingTabPanel(), editingPanel.getBasePanelId());
+      tabPanel.add(displayPanel, constants_.editingTabPanelDisplayPanel(), displayPanel.getBasePanelId());
+      tabPanel.add(savePanel, constants_.editingTabPanelSavePanel(), savePanel.getBasePanelId());
+      tabPanel.add(completionPanel, constants_.editingTabPanelCompletionPanel(), completionPanel.getBasePanelId());
+      tabPanel.add(diagnosticsPanel, constants_.editingTabPanelDiagnosticsPanel(), diagnosticsPanel.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -598,7 +548,7 @@ public class EditingPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Code";
+      return constants_.codePaneLabel();
    }
 
    private void setEncoding(String encoding)
@@ -630,4 +580,6 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget autoSaveIdleMs_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
+
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

@@ -1,4 +1,4 @@
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 @external histBar;
 
@@ -20,12 +20,7 @@
 
 .dataGridWidget {
    font-size: 9pt;
-   background-color: white;
    outline: none;
-}
-
-.rstudio-themes-flat .dataGridWidget {
-  background-color: inherit;
 }
 
 .dataGridWidget > div {
@@ -51,8 +46,6 @@
 .dataGridHeader {
   border-bottom: 1px solid #d6dadc;
   border-right: 1px solid #d6dadc;
-  border-top: 1px solid white;
-  border-left: 1px solid white;
   padding: 1px 2px;
   text-align: left;
   font-weight: normal;
@@ -61,15 +54,10 @@
   background-color: #eeeff1;
   overflow: hidden;
   cursor: default;
+  height: 16px;
 }
 
-.rstudio-themes-flat .dataGridHeader {
-   border-top: none;
-   border-left: none;
-   height: 16px;
-}
-
-.rstudio-themes-flat .rstudio-themes-dark .dataGridHeader {
+.rstudio-themes-dark .dataGridHeader {
   border-top: 0px;
   border-left: 0px;
   color: white;
@@ -105,10 +93,6 @@
 }
 
 .dataGridLastColumnHeader {
-
-}
-
-.rstudio-themes-flat .dataGridLastColumnHeader {
   border-right: none;
 }
 
@@ -124,7 +108,7 @@
 
 }
 
-.rstudio-themes-flat .dataGridSortedHeaderAscending img {
+.dataGridSortedHeaderAscending img {
   width: 0px !important;
   height: 0px !important;
   background: none !important;
@@ -138,7 +122,7 @@
 
 }
 
-.rstudio-themes-flat .dataGridSortedHeaderDescending img {
+.dataGridSortedHeaderDescending img {
   width: 0px !important;
   height: 0px !important;
   background: none !important;
@@ -213,17 +197,17 @@
   border: selectionBorderWidth solid transparent;
 }
 
-.rstudio-themes-flat .rstudio-themes-default .dataGridHeader {
+.rstudio-themes-default .dataGridHeader {
    background: THEME_DEFAULT_BACKGROUND;
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridHeader {
+.rstudio-themes-dark-grey .dataGridHeader {
    background: THEME_DARKGREY_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .dataGridHeader {
+.rstudio-themes-alternate .dataGridHeader {
    background: THEME_ALTERNATE_BACKGROUND;
    border-color: THEME_ALTERNATE_BORDER;
 }

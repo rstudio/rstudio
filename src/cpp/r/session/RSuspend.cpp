@@ -1,7 +1,7 @@
 /*
  * RSuspend.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,7 +70,7 @@ bool saveSessionState(const RSuspendOptions& options,
                                      utils::isServerMode(),
                                      options.excludePackages,
                                      disableSaveCompression,
-                                     options.envVarSaveBlacklist);
+                                     options.ephemeralEnvVars);
    }
 }
    
@@ -148,9 +148,9 @@ bool suspend(const RSuspendOptions& options,
    }
 }
 
-bool suspend(bool force, int status, const std::string& envVarSaveBlacklist)
+bool suspend(bool force, int status, const std::string& ephemeralEnvVars)
 {
-   return suspend(RSuspendOptions(status, envVarSaveBlacklist),
+   return suspend(RSuspendOptions(status, ephemeralEnvVars),
                   s_suspendedSessionPath,
                   false,
                   force);

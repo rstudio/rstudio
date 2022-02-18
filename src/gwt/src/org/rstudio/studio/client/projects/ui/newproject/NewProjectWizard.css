@@ -1,4 +1,8 @@
 
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+@external fixedWidthFont;
+
 .wizardWidget {
    margin-left: 2px;
 }
@@ -12,7 +16,7 @@
 }
 
 .wizardSpacer {
-   height: 7px;
+   height: 6px;
 }
 
 
@@ -56,3 +60,21 @@
 .invalidPkgName {
    background-color: #f2dede;
 }
+
+.quartoProjectTypeSelect {
+   margin-top: 2px;
+   height: 21px;
+}
+
+.quartoEngineSelect {
+   margin-right: 8px;
+   margin-bottom: 5px;
+}
+
+
+.quartoVenvPackages[type="text"] {
+  font-family: fixedWidthFont;
+  margin-top: -1px;
+  margin-left: 6px;
+}
+

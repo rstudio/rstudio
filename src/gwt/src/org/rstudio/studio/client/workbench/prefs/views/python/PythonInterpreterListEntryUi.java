@@ -4,6 +4,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.icons.code.CodeIcons;
 import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
@@ -41,17 +42,17 @@ public class PythonInterpreterListEntryUi extends Composite
       if (StringUtil.equals(type, "conda"))
       {
          resource = new ImageResource2x(CodeIcons.INSTANCE.conda2x());
-         altText = "Conda Environment";
+         altText = constants_.condaEnvironment();
       }
       else if (StringUtil.equals(type, "virtualenv"))
       {
          resource = new ImageResource2x(CodeIcons.INSTANCE.virtualenv2x());
-         altText = "Virtual Environment";
+         altText = constants_.virtualEnvironment();
       }
       else
       {
          resource = new ImageResource2x(CodeIcons.INSTANCE.python2x());
-         altText = "Python Interpreter";
+         altText = constants_.pythonInterpreter();
       }
       
       Image image = new Image(resource);
@@ -66,7 +67,7 @@ public class PythonInterpreterListEntryUi extends Composite
    
    private final Label createUiPath()
    {
-      return new Label("[" + interpreter_.getPath() + "]");
+      return new Label(interpreter_.getPath());
    }
    
    public final Image getIcon()
@@ -97,4 +98,6 @@ public class PythonInterpreterListEntryUi extends Composite
    @UiField(provided = true) final Image uiIcon_;
    @UiField(provided = true) final Label uiVersion_;
    @UiField(provided = true) final Label uiPath_;
+
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

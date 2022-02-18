@@ -1,7 +1,7 @@
 /*
  * editor-theme.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -335,6 +335,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-ace-first-line-meta .ace_text-layer .ace_line_group:first-child,
     .pm-ace-first-line-meta .ace_text-layer .ace_line_group:first-child span {
       color: ${theme.lightTextColor} !important;
+    }
+    .pm-ace-collapsed.pm-ace-focused {
+      border-color: ${theme.paneBorderColor} !important;
     }
     .ProseMirror-gapcursor:after {
       border-top: 1px solid ${theme.textColor};

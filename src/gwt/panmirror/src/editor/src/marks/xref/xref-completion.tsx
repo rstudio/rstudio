@@ -1,7 +1,7 @@
 /*
  * xref-completion.tsx
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,7 +73,7 @@ export function xrefCompletionHandler(ui: EditorUI, server: XRefServer): Complet
 }
 
 class FuseIndex {
-  private fuse: Fuse<XRef, Fuse.IFuseOptions<XRef>>;
+  private fuse: Fuse<XRef>;
 
   private keys: Fuse.FuseOptionKeyObject[] = [
     { name: 'id', weight: 20 },
@@ -195,7 +195,11 @@ const kEqType = {
     ui.prefs.darkMode() ? ui.images.omni_insert?.math_display_dark : ui.images.omni_insert?.math_display,
 };
 
-const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
+const kTableType =  {
+  image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark : ui.images.omni_insert?.table),
+};
+
+export const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
   h1: {
     image: (ui: EditorUI) =>
       ui.prefs.darkMode() ? ui.images.omni_insert?.heading1_dark : ui.images.omni_insert?.heading1,
@@ -215,9 +219,8 @@ const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined
   fig: {
     image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark : ui.images.omni_insert?.image),
   },
-  tab: {
-    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark : ui.images.omni_insert?.table),
-  },
+  tab: kTableType,
+  tbl:kTableType,
   eq: kEqType,
   thm: kEqType,
   lem: kEqType,
@@ -227,4 +230,35 @@ const kXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined
   def: kEqType,
   exm: kGenericType,
   exr: kGenericType,
+};
+
+const kTheoremType = {
+  image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.theorem_dark : ui.images.xrefs?.theorem)
+};
+
+
+export const kQuartoXRefTypes: { [key: string]: { image: (ui: EditorUI) => string | undefined } } = {
+  sec: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.section_dark : ui.images.xrefs?.section)
+  },
+  fig: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.figure_dark : ui.images.xrefs?.figure),
+  },
+  tbl: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.table_dark : ui.images.xrefs?.table),
+  },
+  lst: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.listing_dark : ui.images.xrefs?.listing),
+  },
+  eq: {
+    image: (ui: EditorUI) => (ui.prefs.darkMode() ? ui.images.xrefs?.equation_dark : ui.images.xrefs?.equation)
+  },
+  thm: kTheoremType,
+  lem: kTheoremType,
+  cor: kTheoremType,
+  prp: kTheoremType,
+  cnj: kTheoremType,
+  def: kTheoremType,
+  exm: kTheoremType,
+  exr: kTheoremType,
 };

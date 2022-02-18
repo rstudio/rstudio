@@ -1,7 +1,7 @@
 /*
  * AceTheme.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 
 /**
  * Represents an editor theme.
@@ -35,11 +37,11 @@ public class AceTheme extends UserStateAccessor.Theme
    {
       if (isDark)
       {
-         return create("Tomorrow Night", "theme/default/tomorrow_night.rstheme", true);
+         return create(constants_.tomorrowNight(), "theme/default/tomorrow_night.rstheme", true);
       }
       else
       {
-         return create("Textmate (default)", "theme/default/textmate.rstheme", false);
+         return create(constants_.textmateDefaultParentheses(), "theme/default/textmate.rstheme", false);
       }
    }
 
@@ -93,5 +95,5 @@ public class AceTheme extends UserStateAccessor.Theme
       else
          return " ace_constant ace_language";
    }
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

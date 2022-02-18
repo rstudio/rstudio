@@ -1,7 +1,7 @@
 #
 # test-themes.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -283,7 +283,7 @@ makeGlobalThemeDir <- function()
 }
 
 # Test getRgbColor =================================================================================
-test_that("rgb coversion from hex format works", {
+test_that("rgb conversion from hex format works", {
    # All lowercase
    expect_equal(.rs.getRgbColor("#ffffff"), c(255, 255, 255))
 
@@ -1415,27 +1415,19 @@ test_that("parseTmTheme handles incorrect input", {
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed1.tmTheme")),
-      sprintf(
-         "error parsing attribute name [68]",
-         inputFileLocation),
+      "error parsing attribute name [68]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed2.tmTheme")),
-      sprintf(
-         "Opening and ending tag mismatch: string line 223 and notstring [76]",
-         inputFileLocation),
+      "Opening and ending tag mismatch: string line 223 and notstring [76]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed3.tmTheme")),
-      sprintf(
-         "StartTag: invalid element name [68]",
-         inputFileLocation),
+      "StartTag: invalid element name [68]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "Malformed4.tmTheme")),
-      sprintf(
-         "StartTag: invalid element name [68]",
-         inputFileLocation),
+      "StartTag: invalid element name [68]",
       fixed = TRUE)
    expect_error(
       .rs.parseTmTheme(file.path(inputFileLocation, "errorthemes", "MissingKeyEnd.tmTheme")),

@@ -1,7 +1,7 @@
 #
 # SessionHelp.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -90,7 +90,7 @@ options(help_type = "html")
    payload = paste(
       "<h3>R Custom HTTP Handler Not Found</h3>",
       "<p>Unable to locate custom HTTP handler for",
-      "<i>", path, "</i>",
+      "<i>", .rs.htmlEscape(path), "</i>",
       "<p>Is the package which implements this HTTP handler loaded?</p>")
    
    list(payload, "text/html", character(), 404)
@@ -402,7 +402,7 @@ options(help_type = "html")
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {
    # If 'src' is the name of something on the searchpath, get that object
-   # from the seach path, then attempt to get help based on that object
+   # from the search path, then attempt to get help based on that object
    pos <- match(src, search(), nomatch = -1L)
    if (pos >= 0)
    {

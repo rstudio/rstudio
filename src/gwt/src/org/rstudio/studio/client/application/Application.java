@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,6 +46,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DocumentEx;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
@@ -158,7 +159,8 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(FileUploadEvent.TYPE, this);
       events.addHandler(AriaLiveStatusEvent.TYPE, this);
-
+      events.addHandler(ClipboardActionEvent.TYPE, this);
+      
       // register for uncaught exceptions
       uncaughtExHandler.register();
    }
@@ -238,7 +240,7 @@ public class Application implements ApplicationEventHandlers
                ArrayList<String> elementIds = new ArrayList<>();
                ArrayList<Operation> buttonOperations = new ArrayList<>();
 
-               buttonLabels.add("Retry");
+               buttonLabels.add(constants_.retryButtonLabel());
                elementIds.add(ElementIds.DIALOG_RETRY_BUTTON);
                buttonOperations.add(() ->
                {
@@ -249,14 +251,12 @@ public class Application implements ApplicationEventHandlers
                // we display a special dialog for license limit issues
                // to allow the user to attempt to re-launch the session
                globalDisplay_.showGenericDialog(GlobalDisplay.MSG_ERROR,
-                                              "Licensing Limit Reached",
-                                              error.getUserMessage() + "\n\n" +
-                                                 "Please quit any unused running sessions and try again, " +
-                                                 "or contact your administrator to update your license.",
+                                              constants_.licensingLimitCaption(),
+                                              constants_.quitRunningSessionsMessage(error.getUserMessage()),
                                               buttonLabels, elementIds, buttonOperations, 0);
             }
-            else if (StringUtil.equals(error.getUserMessage(), "Unable to connect to service") ||
-                     StringUtil.equals(error.getUserMessage(), "Error occurred during transmission"))
+            else if (StringUtil.equals(error.getUserMessage(), constants_.unableToConnectMessage()) ||
+                     StringUtil.equals(error.getUserMessage(), constants_.errorTransmissionMessage()))
             {
                ArrayList<String> buttonLabels = new ArrayList<>();
                ArrayList<String> elementIds = new ArrayList<>();
@@ -268,7 +268,7 @@ public class Application implements ApplicationEventHandlers
                String homepageLink = DomUtils.getLinkHref("server-homepage");
                if (!StringUtil.isNullOrEmpty(homepageLink))
                {
-                  buttonLabels.add("Go Home");
+                  buttonLabels.add(constants_.goHomeButtonLabel());
                   elementIds.add(ElementIds.DIALOG_HOME_BUTTON);
                   buttonOperations.add(() ->
                   {
@@ -276,21 +276,20 @@ public class Application implements ApplicationEventHandlers
                   });
                }
 
-               buttonLabels.add("Retry");
+               buttonLabels.add(constants_.retryButtonLabel());
                elementIds.add(ElementIds.DIALOG_RETRY_BUTTON);
                buttonOperations.add(() ->
                {
                   Window.Location.reload();
                });
                globalDisplay_.showGenericDialog(GlobalDisplay.MSG_ERROR,
-                                              "Cannot Connect to R Session",
-                                              "Could not connect to the R session on RStudio Server.\n\n" +
-                                              error.getUserMessage() + " (" + error.getCode() + ")",
+                                              constants_.cannotConnectRCaption(),
+                                              constants_.cannotConnectRMessage(error.getUserMessage() , error.getCode()),
                                               buttonLabels, elementIds, buttonOperations, 0);
             }
             else
             {
-               globalDisplay_.showErrorMessage("RStudio Initialization Error",
+               globalDisplay_.showErrorMessage(constants_.rStudioInitializationErrorCaption(),
                                                error.getUserMessage());
             }
          }
@@ -434,7 +433,29 @@ public class Application implements ApplicationEventHandlers
       if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs, event.getSeverity()))
          view_.reportStatus(event.getMessage(), delayMs, event.getSeverity());
    }
-
+   
+   @Override
+   public void onClipboardAction(ClipboardActionEvent event)
+   {
+      ClipboardActionEvent.Data data = event.getData();
+      
+      switch (data.getType())
+      {
+      
+      case SET:
+      {
+         Clipboard.setText(data.getText());
+         return;
+      }
+      
+      default:
+      {
+         Debug.log("Unimplemented clipboard action '" + data.getText() + "'");
+      }
+      
+      }
+   }
+   
    @Override
    public void onServerOffline(ServerOfflineEvent event)
    {
@@ -476,19 +497,19 @@ public class Application implements ApplicationEventHandlers
       if (customDocsURL.length() > 0)
          globalDisplay_.openWindow(customDocsURL);
       else
-         globalDisplay_.openRStudioLink("docs");
+         globalDisplay_.openRStudioLink(constants_.helpUsingRStudioLinkName());
    }
 
    @Handler
    public void onRstudioCommunityForum()
    {
-      globalDisplay_.openRStudioLink("community-forum");
+      globalDisplay_.openRStudioLink(constants_.communityForumLinkName());
    }
 
    @Handler
    public void onRstudioSupport()
    {
-      globalDisplay_.openRStudioLink("support");
+      globalDisplay_.openRStudioLink(constants_.rStudioSupportLinkName());
    }
 
    @Handler
@@ -539,7 +560,7 @@ public class Application implements ApplicationEventHandlers
    public void onLogFocusedElement()
    {
       Element el = DomUtils.getActiveElement();
-      DomUtils.dump(el, "Focused Element: ");
+      DomUtils.dump(el, constants_.focusedElementLabel());
    }
 
    @Handler
@@ -555,7 +576,7 @@ public class Application implements ApplicationEventHandlers
       {
       case SessionSerializationAction.LOAD_DEFAULT_WORKSPACE:
          view_.showSerializationProgress(
-                         "Loading workspace" + getSuffix(event),
+                         constants_.loadingWorkspaceMessage() + getSuffix(event),
                          false, // non-modal, appears to user as std latency
                          500,   // willing to show progress earlier since
                                 // this will always be at workbench startup
@@ -563,7 +584,7 @@ public class Application implements ApplicationEventHandlers
          break;
       case SessionSerializationAction.SAVE_DEFAULT_WORKSPACE:
          view_.showSerializationProgress(
-                          "Saving workspace image" + getSuffix(event),
+                          constants_.savingWorkspaceImageMessage() + getSuffix(event),
                           true, // modal, inputs will fall dead anyway
                           0,    // show immediately
                           0);   // no timeout
@@ -571,7 +592,7 @@ public class Application implements ApplicationEventHandlers
       case SessionSerializationAction.SUSPEND_SESSION:
          events_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.SESSION_SUSPEND));
          view_.showSerializationProgress(
-                          "Backing up R session...",
+                          constants_.backingUpRSessionMessage(),
                           true,    // modal, inputs will fall dead anyway
                           0,       // show immediately
                           60000);  // timeout after 60 seconds. this is done
@@ -582,7 +603,7 @@ public class Application implements ApplicationEventHandlers
          break;
       case SessionSerializationAction.RESUME_SESSION:
          view_.showSerializationProgress(
-                          "Resuming R session...",
+                          constants_.backingUpRSessionMessage(),
                           false, // non-modal, appears to user as std latency
                           2000,  // don't show this for reasonable restore time
                                  // (happens inline while using a running
@@ -626,9 +647,9 @@ public class Application implements ApplicationEventHandlers
       String targetPath = action.getTargetPath();
       if (targetPath != null)
       {
-         String verb = " from ";
+         String verb = " " + constants_.fromText();
          if (action.getType() == SessionSerializationAction.SAVE_DEFAULT_WORKSPACE)
-            verb = " to ";
+            verb = " " + constants_.toText();
          return verb + targetPath + "...";
       }
       else
@@ -647,7 +668,7 @@ public class Application implements ApplicationEventHandlers
    public void onSwitchToRVersion(final SwitchToRVersionEvent event)
    {
       final ApplicationQuit applicationQuit = pApplicationQuit_.get();
-      applicationQuit.prepareForQuit("Switch R Version", new QuitContext() {
+      applicationQuit.prepareForQuit(constants_.switchRVersionCaption(), new QuitContext() {
          public void onReadyToQuit(boolean saveChanges)
          {
             // see if we have a project (otherwise switch to "None")
@@ -859,10 +880,10 @@ public class Application implements ApplicationEventHandlers
       int restoreWorkspace = info.getInitOptions().restoreWorkspace();
       if (restoreWorkspace == SessionInitOptions.RESTORE_WORKSPACE_NO)
       {
-         warning += "The workspace was not restored";
+         warning += constants_.workspaceNotRestoredMessage();
          if (info.getInitOptions().runRprofile() == SessionInitOptions.RUN_RPROFILE_NO)
          {
-            warning += ", and startup scripts were not executed";
+            warning += constants_.startupScriptsNotExecutedMessage();
          }
          warning += ".";
       }
@@ -870,12 +891,12 @@ public class Application implements ApplicationEventHandlers
       {
          int runRprofile = info.getInitOptions().runRprofile();
          if (runRprofile == SessionInitOptions.RUN_RPROFILE_NO)
-            warning += "Startup scripts were not executed.";
+            warning += constants_.startupScriptsErrorMessage();
       }
       if (!StringUtil.isNullOrEmpty(warning))
       {
          globalDisplay_.showWarningBar(false,
-               "This R session was started in safe mode. " + warning);
+               constants_.rSessionSafeModeMessage() + warning);
       }
    }
 
@@ -1092,7 +1113,7 @@ public class Application implements ApplicationEventHandlers
       if (!Desktop.hasDesktopFrame())
       {
          if (sessionInfo.getMultiSession())
-            commands_.newSession().setMenuLabel("New Session...");
+            commands_.newSession().setMenuLabel(constants_.newSessionMenuLabel());
          else
             commands_.newSession().remove();
       }
@@ -1323,8 +1344,9 @@ public class Application implements ApplicationEventHandlers
 
    private boolean fileUploadInProgress_ = false;
 
-   private final String CSRF_TOKEN_FIELD = "csrf-token";
+   private final String CSRF_TOKEN_FIELD = "rs-csrf-token";
 
    private ClientStateUpdater clientStateUpdaterInstance_;
    private RootLayoutPanel rootPanel_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

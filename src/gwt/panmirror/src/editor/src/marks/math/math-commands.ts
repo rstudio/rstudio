@@ -1,7 +1,7 @@
 /*
  * math-commands.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,9 @@ import { canInsertNode } from '../../api/node';
 import { EditorUI } from '../../api/ui';
 import { OmniInsert, OmniInsertGroup } from '../../api/omni_insert';
 import { MathType, delimiterForType } from '../../api/math';
+import { EditorView } from 'prosemirror-view';
+import { getMarkRange, getMarkAttrs } from '../../api/mark';
+import { EditorFormat, kQuartoDocType } from '../../api/format';
 
 export class InsertInlineMathCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
@@ -98,4 +101,61 @@ export function insertMath(selection: Selection, type: MathType, allowNewline: b
   tr.addMark(from, to, mathMark);
   const pos = tr.mapping.map(selection.head) - delim.length - (content ? 1 : 0);
   return setTextSelection(pos)(tr).scrollIntoView();
+}
+
+export function editMathAttributesEnabled(
+  format: EditorFormat, 
+  state: EditorState, 
+  range?: { from: number, to: number } | false
+) {
+  if (format.docTypes.includes(kQuartoDocType)) {
+    if (!range) {
+      range = getMarkRange(state.selection.$from, state.schema.marks.math);
+    }
+    if (range) {
+      const mathAttrs = getMarkAttrs(state.doc, range, state.schema.marks.math);
+      return mathAttrs.type === MathType.Display;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+}
+
+export function editMathAttributes(ui: EditorUI) {
+  
+  return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+    
+    // look one position ahead in case this resulted from a click on the edit attributes button
+    const mathRange = getMarkRange(
+      state.doc.resolve(state.selection.from+1), 
+      state.schema.marks.math
+    ) as { from: number; to: number };
+    if (!mathRange) {
+      // always return true so the edit button always displays
+      return true;
+    }
+
+    async function asyncEditMath() {
+      if (dispatch) {
+       
+        const mathAttrs = getMarkAttrs(state.doc, mathRange, state.schema.marks.math);
+        const id = await ui.dialogs.editMath(mathAttrs.id || "");
+        if (id !== null) {
+          const tr = state.tr;
+          const mark = state.schema.marks.math.create({ ...mathAttrs, id: id.length > 0 ? id : null });
+          tr.removeMark(mathRange.from, mathRange.to, state.schema.marks.math);
+          tr.addMark(mathRange.from, mathRange.to, mark);
+          dispatch(tr);
+        }
+        if (view) {
+          view.focus();
+        }
+      }
+    }
+    asyncEditMath();
+
+    return true;
+  };
 }

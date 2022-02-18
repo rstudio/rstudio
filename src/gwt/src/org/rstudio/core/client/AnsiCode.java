@@ -1,7 +1,7 @@
 /*
  * AnsiEscapeCode.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -740,6 +740,14 @@ public class AnsiCode
 
    // Match partial potential ANSI SGR escape sequences
    public static final Pattern SGR_PARTIAL_ESCAPE_PATTERN = Pattern.create(SGR_PARTIAL_REGEX);
+
+   // RegEx to match hyperlinks escape codes
+   // OSC 8 ; [params] ; [url] ; \7
+   public static final String HYPERLINK_REGEX = 
+      "^\u001b\\]8;([^;]*);([^\7]*)\7";
+
+   // Match hyperlink
+   public static final Pattern HYPERLINK_PATTERN = Pattern.create(HYPERLINK_REGEX);
 
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();

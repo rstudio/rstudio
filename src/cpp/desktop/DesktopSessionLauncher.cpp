@@ -1,7 +1,7 @@
 /*
  * DesktopSessionLauncher.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,12 +25,14 @@
 #include <core/http/TcpIpBlockingClient.hpp>
 #include <core/text/TemplateFilter.hpp>
 
+#include <shared_core/SafeConvert.hpp>
+
 #include <core/WaitUtils.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
+#include <core/system/ShellUtils.hpp>
 #include <core/r_util/RUserData.hpp>
-#include <shared_core/SafeConvert.hpp>
 
 #include <QPushButton>
 
@@ -53,6 +55,37 @@ namespace {
 
 std::string s_launcherToken;
 
+#ifdef Q_OS_DARWIN
+
+std::string fallbackLibraryPathImpl()
+{
+   // The macOS documentation for tempnam state:
+   //
+   //    The tempnam() function is similar to tmpnam(), but provides the ability
+   //    to specify the directory which will contain the temporary file and the
+   //    file name prefix.
+   //
+   //    The environment variable TMPDIR (if set), the argument dir (if non-NULL),
+   //    the directory P_tmpdir, and the directory /tmp are tried, in the listed
+   //    order, as directories in which to store the temporary file.
+   //
+   // but that does not appear to actually be true (TMPDIR is ignored)
+   // so we explicitly read it and use it here.
+   const char* dir = ::getenv("TMPDIR");
+   if (dir == nullptr)
+      dir = P_tmpdir;
+   
+   return tempnam(dir, "rstudio-fallback-library-path-");
+}
+
+std::string fallbackLibraryPath()
+{
+   static std::string instance = fallbackLibraryPathImpl();
+   return instance;
+}
+
+#endif
+
 void launchProcess(const std::string& absPath,
                    const QStringList& argList,
                    QProcess** ppProc)
@@ -62,6 +95,9 @@ void launchProcess(const std::string& absPath,
    process->setArguments(argList);
    
 #ifdef Q_OS_DARWIN
+   
+   QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+   
    // on macOS with the hardened runtime, we can no longer rely on dyld
    // to lazy-load symbols from libR.dylib; to resolve this, we use
    // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
@@ -70,14 +106,30 @@ void launchProcess(const std::string& absPath,
    FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
    if (rLib.exists())
    {
-      QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
-      
       environment.insert(
                QStringLiteral("DYLD_INSERT_LIBRARIES"),
                QString::fromStdString(rLib.getAbsolutePathNative()));
       
-      process->setProcessEnvironment(environment);
    }
+   
+   // create fallback library path (use TMPDIR so it's user-specific)
+   std::string libraryPath = fallbackLibraryPath();
+
+   // set it in environment variable (to be used by R)
+   environment.insert(
+            QStringLiteral("RSTUDIO_FALLBACK_LIBRARY_PATH"),
+            QString::fromStdString(libraryPath));
+
+   // and ensure it's placed on the fallback library path
+   QString dyldFallbackLibraryPath = environment.value(QStringLiteral("DYLD_FALLBACK_LIBRARY_PATH"));
+   dyldFallbackLibraryPath.append(QStringLiteral(":"));
+   dyldFallbackLibraryPath.append(QString::fromStdString(libraryPath));
+   environment.insert(
+            QStringLiteral("DYLD_FALLBACK_LIBRARY_PATH"),
+            dyldFallbackLibraryPath);
+   
+   process->setProcessEnvironment(environment);
+   
 #endif
    
    if (options().runDiagnostics())
@@ -505,6 +557,63 @@ void SessionLauncher::onLaunchFirstSession()
    }
 }
 
+namespace {
+
+#ifdef _WIN32
+
+FilePath resolveSessionPathWin32(const FilePath& defaultPath)
+{
+   // if we're running with a UCRT build of R, then we'll
+   // want to launch with rsession-utf8 if it's available
+   FilePath sessionUtf8Path = defaultPath.getParent().completeChildPath("rsession-utf8.exe");
+   if (!sessionUtf8Path.exists())
+      return defaultPath;
+
+   // get path to R home
+   FilePath rHome = FilePath(core::system::getenv("R_HOME"));
+
+   // first, try 64-bit executable; if that doesn't exist,
+   // then fall back to the 32-bit one instead
+   FilePath rExe = rHome.completeChildPath("bin/x64/Rterm.exe");
+   if (!rExe.exists())
+   {
+      rExe = rHome.completeChildPath("bin/i386/Rterm.exe");
+      if (!rExe.exists())
+      {
+         LOG_ERROR(fileNotFoundError(rExe, ERROR_LOCATION));
+         return defaultPath;
+      }
+   }
+
+   // ask Rterm.exe if UCRT is supported
+   core::system::ProcessOptions options;
+   options.detachProcess = true;
+
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram(
+            rExe.getAbsolutePath(),
+            { "-s", "-e", "cat(R.version$crt)" },
+            options,
+            &result);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return defaultPath;
+   }
+
+   // check for ucrt
+   bool isUcrtBuild = result.stdOut.find("ucrt") != std::string::npos;
+   if (!isUcrtBuild)
+      return defaultPath;
+
+   return sessionUtf8Path;
+}
+
+#endif
+
+} // end anonymous namespace
+
 Error SessionLauncher::launchSession(const QStringList& argList,
                                      QProcess** ppRSessionProcess)
 {
@@ -512,8 +621,9 @@ Error SessionLauncher::launchSession(const QStringList& argList,
    Error error = abendLogPath().removeIfExists();
    if (error)
       LOG_ERROR(error);
+
    
-#ifdef __APPLE__
+#if defined(__APPLE__)
    
    // we need indirection through arch to handle arm64
    if (sessionPath_.getFilename() == "rsession-arm64")
@@ -558,6 +668,15 @@ Error SessionLauncher::launchSession(const QStringList& argList,
                            ppRSessionProcess));
    }
    
+#elif defined(_WIN32)
+
+   FilePath sessionPath = resolveSessionPathWin32(sessionPath_);
+   return parent_process_monitor::wrapFork(
+         boost::bind(launchProcess,
+                     sessionPath.getAbsolutePath(),
+                     argList,
+                     ppRSessionProcess));
+   
 #else
 
    return parent_process_monitor::wrapFork(
@@ -565,7 +684,7 @@ Error SessionLauncher::launchSession(const QStringList& argList,
                      sessionPath_.getAbsolutePath(),
                      argList,
                      ppRSessionProcess));
-   
+
 #endif
 }
 

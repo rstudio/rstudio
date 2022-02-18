@@ -49,6 +49,7 @@ RUN apt-get update && \
     libxml2-dev \
     libxslt1-dev \
     lsof \
+    ninja-build \
     openjdk-8-jdk \
     p7zip-full \
     pkg-config \
@@ -103,7 +104,7 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common bionic
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/

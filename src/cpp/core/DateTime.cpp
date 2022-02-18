@@ -1,7 +1,7 @@
 /*
  * DateTime.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 
 #include <core/DateTime.hpp>
+#include <shared_core/DateTime.hpp>
 
 #include "boost/date_time/c_local_time_adjustor.hpp"
 #include <boost/date_time/local_time/local_time.hpp>
@@ -81,45 +82,7 @@ std::string millisecondsSinceEpochAsString(double ms)
    boost::posix_time::ptime time =
                    date_time::timeFromMillisecondsSinceEpoch(static_cast<int64_t>(ms));
 
-   return date_time::format(time, "%d %b %Y %H:%M:%S");
-}
-
-bool parseUtcTimeFromIsoString(const std::string& timeStr,
-                               boost::posix_time::ptime *pOutTime)
-{
-   return parseUtcTimeFromFormatString(timeStr,
-                                       "%Y-%m-%d %H:%M:%S %ZP",
-                                       pOutTime);
-}
-
-const std::string kIso8601Format {"%Y-%m-%dT%H:%M:%S%FZ"};
-
-bool parseUtcTimeFromIso8601String(const std::string& timeStr,
-                                   boost::posix_time::ptime *pOutTime)
-{
-   return parseUtcTimeFromFormatString(timeStr, kIso8601Format, pOutTime);
-}
-
-bool parseUtcTimeFromFormatString(const std::string& timeStr,
-                                  const std::string& formatStr,
-                                  boost::posix_time::ptime *pOutTime)
-{
-   using namespace boost::local_time;
-
-   std::stringstream ss(timeStr);
-   local_time_input_facet* ifc = new local_time_input_facet(formatStr);
-
-   ss.imbue(std::locale(ss.getloc(), ifc));
-
-   local_date_time ldt(not_a_date_time);
-
-   if (ss >> ldt)
-   {
-      *pOutTime = ldt.utc_time();
-      return true;
-   }
-
-   return false;
+   return core::date_time::format(time, "%d %b %Y %H:%M:%S");
 }
 
 boost::posix_time::time_duration getUtcOffset()
@@ -147,7 +110,6 @@ std::string getUtcOffsetString()
 
    return out.str();
 }
-
    
 } // namespace date_time
 } // namespace core 

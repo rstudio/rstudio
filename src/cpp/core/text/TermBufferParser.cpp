@@ -1,7 +1,7 @@
 /*
  * TermBufferParser.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -168,7 +168,7 @@ struct ParseMetadata
    // was a supported escape sequence found?
    bool haveSupportedSeq;
 
-   // number string as it is extraced from sequence
+   // number string as it is extracted from sequence
    std::string numberStr;
 
    // current character

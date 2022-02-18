@@ -1,7 +1,7 @@
 /*
  * SessionHelp.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -182,7 +182,7 @@ bool isHttpdErrorPayload(SEXP payloadSEXP)
 
 // hook the browseURL function to look for calls to the R internal http
 // server. for custom URLs remap the address to remote and then fire
-// the browse_url event. for help URLs fire the appropraite show_help event
+// the browse_url event. for help URLs fire the appropriate show_help event
 bool handleLocalHttpUrl(const std::string& url)
 {
    // check for custom
@@ -400,7 +400,7 @@ void handleHttpdResult(SEXP httpdSEXP,
    // NOTE: this function is a port of process_request in Rhttpd.c
    // (that function is coupled to sending its results via the R http daemon, 
    // since we need to send the results via our daemon we need our own
-   // implemetnation of the function). The port was completed 10/28/2009 so 
+   // implementation of the function). The port was completed 10/28/2009 so 
    // diffs in this function subsequent to that should be accounted for
    
    // defaults
@@ -698,7 +698,7 @@ void handleRdPreviewRequest(const http::Request& request,
                             const Filter& filter,
                             http::Response* pResponse)
 {
-   // read parmaeters
+   // read parameters
    std::string file = request.queryParamValue("file");
    if (file.empty())
    {
@@ -831,7 +831,7 @@ void handleHttpdRequest(const std::string& location,
       return;
    }
 
-   // evalute the handler
+   // evaluate the handler
    r::sexp::Protect rp;
    SEXP httpdSEXP;
    Error error = r::exec::executeSafely<SEXP>(

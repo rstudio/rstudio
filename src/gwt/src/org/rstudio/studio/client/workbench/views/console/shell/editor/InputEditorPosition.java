@@ -1,7 +1,7 @@
 /*
  * InputEditorPosition.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,9 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.console.shell.editor;
+
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 
 public abstract class InputEditorPosition implements Comparable<InputEditorPosition>
 {
@@ -67,7 +70,7 @@ public abstract class InputEditorPosition implements Comparable<InputEditorPosit
    @Override
    public String toString()
    {
-      return "Position " + getPosition();
+      return constants_.positionText(getPosition());
    }
 
    protected abstract int compareLineTo(Object other);
@@ -89,4 +92,5 @@ public abstract class InputEditorPosition implements Comparable<InputEditorPosit
 
    private final Object line_;
    private final int position_;
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * GlobalToolbar.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
@@ -26,6 +27,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.ui.addins.AddinsToolbarButton;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
@@ -44,7 +46,7 @@ public class GlobalToolbar extends Toolbar
    public GlobalToolbar(Commands commands,
                         Provider<CodeSearch> pCodeSearch)
    {
-      super("Main");
+      super(constants_.mainLabel());
 
       commands_ = commands;
       pCodeSearch_ = pCodeSearch;
@@ -56,9 +58,12 @@ public class GlobalToolbar extends Toolbar
       newMenu_ = new ToolbarPopupMenu();
       newMenu_.addItem(commands.newSourceDoc().createMenuItem(false));
       newMenu_.addSeparator();
-      newMenu_.addItem(commands.newRNotebook().createMenuItem(false));
+      newMenu_.addItem(commands.newQuartoDoc().createMenuItem(false));
+      newMenu_.addItem(commands.newQuartoPres().createMenuItem(false));
       newMenu_.addSeparator();
+      newMenu_.addItem(commands.newRNotebook().createMenuItem(false));
       newMenu_.addItem(commands.newRMarkdownDoc().createMenuItem(false));
+      newMenu_.addSeparator();
       newMenu_.addItem(commands.newRShinyApp().createMenuItem(false));
       newMenu_.addItem(commands.newRPlumberDoc().createMenuItem(false));
       newMenu_.addSeparator();
@@ -71,13 +76,12 @@ public class GlobalToolbar extends Toolbar
       newMenu_.addSeparator();
       newMenu_.addItem(commands.newSweaveDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRHTMLDoc().createMenuItem(false));
-      newMenu_.addItem(commands.newRPresentationDoc().createMenuItem(false));
       newMenu_.addItem(commands.newRDocumentationDoc().createMenuItem(false));
 
       // create and add new menu
       StandardIcons icons = StandardIcons.INSTANCE;
       newButton_ = new ToolbarMenuButton(ToolbarButton.NoText,
-                                                          "New File",
+                                                          constants_.newFileTitle(),
                                                           new ImageResource2x(icons.stock_new2x()),
                                                           newMenu_);
       ElementIds.assignElementId(newButton_, ElementIds.NEW_FILE_MENUBUTTON);
@@ -110,7 +114,7 @@ public class GlobalToolbar extends Toolbar
       mruMenu.addItem(commands.clearRecentFiles().createMenuItem(false));
 
       ToolbarMenuButton mruButton = new ToolbarMenuButton(ToolbarButton.NoText,
-                                                          "Open recent files",
+                                                          constants_.openRecentFilesTitle(),
                                                           mruMenu,
                                                           false);
       ElementIds.assignElementId(mruButton, ElementIds.OPEN_MRU_MENUBUTTON);
@@ -185,7 +189,7 @@ public class GlobalToolbar extends Toolbar
 
          ToolbarMenuButton vcsButton = new ToolbarMenuButton(
                ToolbarButton.NoText,
-               "Version control",
+               constants_.versionControlTitle(),
                vcsIcon,
                vcsMenu);
          ElementIds.assignElementId(vcsButton, ElementIds.VCS_MENUBUTTON);
@@ -217,11 +221,12 @@ public class GlobalToolbar extends Toolbar
       paneLayoutMenu.addItem(commands_.layoutZoomVcs().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomBuild().createMenuItem(false));
       paneLayoutMenu.addItem(commands_.layoutZoomConnections().createMenuItem(false));
+      paneLayoutMenu.addItem(commands_.layoutZoomPresentation2().createMenuItem(false));
 
       ImageResource paneLayoutIcon = new ImageResource2x(ThemeResources.INSTANCE.paneLayoutIcon2x());
       ToolbarMenuButton paneLayoutButton = new ToolbarMenuButton(
             ToolbarButton.NoText,
-            "Workspace Panes",
+            constants_.workspacePanesTitle(),
             paneLayoutIcon,
             paneLayoutMenu);
       ElementIds.assignElementId(paneLayoutButton, ElementIds.PANELAYOUT_MENUBUTTON);
@@ -266,4 +271,5 @@ public class GlobalToolbar extends Toolbar
    private final Provider<CodeSearch> pCodeSearch_;
    private final Widget searchWidget_;
    private final FocusContext codeSearchFocusContext_ = new FocusContext();
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * attr_edit-command.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,24 +24,33 @@ import { pandocAttrInSpec } from '../../api/pandoc_attr';
 import { getSelectionMarkRange } from '../../api/mark';
 import { EditorCommandId, ProsemirrorCommand } from '../../api/command';
 
-import { kEditAttrShortcut } from './attr_edit';
 import { AttrEditOptions } from '../../api/attr_edit';
 import { pandocAutoIdentifier, gfmAutoIdentifier } from '../../api/pandoc_id';
 import { PandocExtensions } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
+import { kEditAttrShortcut } from '../../api/attr_edit/attr_edit-decoration';
+import { EditorFormat } from '../../api/format';
+import { editMathAttributesEnabled, editMathAttributes } from '../../marks/math/math-commands';
 
 export class AttrEditCommand extends ProsemirrorCommand {
-  constructor(ui: EditorUI, pandocExtensions: PandocExtensions, editors: AttrEditOptions[]) {
-    super(EditorCommandId.AttrEdit, [kEditAttrShortcut], attrEditCommandFn(ui, pandocExtensions, editors));
+  constructor(ui: EditorUI, format: EditorFormat, pandocExtensions: PandocExtensions, editors: AttrEditOptions[]) {
+    super(EditorCommandId.AttrEdit, [kEditAttrShortcut], attrEditCommandFn(ui, format, pandocExtensions, editors));
   }
 }
 
 export function attrEditCommandFn(
   ui: EditorUI, 
+  format: EditorFormat,
   pandocExtensions: PandocExtensions, 
   editors: AttrEditOptions[]
 ) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+    
+    // give math attributes first crack (in case it's inside a node with attributes)
+    if (editMathAttributesEnabled(format, state)) {
+      return editMathAttributes(ui)(state, dispatch, view);
+    }
+    
     // see if there is an active mark with attrs or a parent node with attrs
     const marks = state.storedMarks || state.selection.$head.marks();
     const mark = marks.find((m: Mark) => pandocAttrInSpec(m.type.spec));
@@ -81,7 +90,7 @@ export function attrEditCommandFn(
         if (mark) {
           await editMarkAttrs(mark, state, dispatch, ui);
         } else {
-          await editNodeAttrs(node!, pos, state, dispatch, ui, pandocExtensions);
+          await editNodeAttrs(pos, state, dispatch, ui, pandocExtensions);
         }
         if (view) {
           view.focus();
@@ -114,7 +123,7 @@ export function attrEditNodeCommandFn(nodeWithPos: NodeWithPos,
     // generic editor
     async function asyncEditAttrs() {
       if (dispatch) {
-        await editNodeAttrs(node!, pos, state, dispatch, ui, pandocExtensions);
+        await editNodeAttrs(pos, state, dispatch, ui, pandocExtensions);
         if (view) {
           view.focus();
         }
@@ -153,22 +162,27 @@ async function editMarkAttrs(
 }
 
 async function editNodeAttrs(
-  node: ProsemirrorNode,
   pos: number,
   state: EditorState,
   dispatch: (tr: Transaction<any>) => void,
   ui: EditorUI,
   pandocExtensions: PandocExtensions,
 ): Promise<void> {
-  const attrs = node.attrs;
-  const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node, pandocExtensions));
-  if (result) {
-    dispatch(
-      state.tr.setNodeMarkup(pos, node.type, {
-        ...attrs,
-        ...result.attr,
-      }),
-    );
+  const node = state.doc.nodeAt(pos);
+  if (node) {
+    const attrs = node.attrs;
+    const result = await ui.dialogs.editAttr({ ...attrs }, idHint(node, pandocExtensions));
+    if (result) {
+      const tr = state.tr;
+      const targetNode = tr.doc.nodeAt(pos);
+      if (targetNode) {
+        tr.setNodeMarkup(pos, targetNode.type, {
+          ...attrs,
+          ...result.attr,
+        }),
+        dispatch(tr);
+      }
+    }
   }
 }
 

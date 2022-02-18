@@ -1,7 +1,7 @@
 /*
  * FileLock.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -118,6 +118,9 @@ bool FileLock::verifyInitialized()
 
 void FileLock::initialize(FileLock::LockType fallbackLockType)
 {
+   // Nothing to do if already initialized
+   if (s_isInitialized) return;
+
    // read settings
    FilePath locksConfPath = core::system::xdg::systemConfigFile(kLocksConfFile);
 
@@ -139,7 +142,11 @@ void FileLock::initialize(FileLock::LockType fallbackLockType)
          ? fallbackLockType
          : stringToLockType(lockTypePref, fallbackLockType);
 #endif
-
+   
+   // symlinks
+   bool useSymlinks = settings.getBool("use-symlinks", false);
+   FileLock::s_useSymlinks = useSymlinks;
+   
    // timeout interval
    double timeoutInterval = getFieldPositive(settings, "timeout-interval", kDefaultTimeoutInterval);
    FileLock::s_timeoutInterval = boost::posix_time::seconds(static_cast<long>(timeoutInterval));
@@ -159,6 +166,7 @@ void FileLock::initialize(FileLock::LockType fallbackLockType)
    std::stringstream ss;
    ss << "(PID " << ::getpid() << "): Initialized file locks ("
       << "lock-type=" << lockTypeToString(FileLock::s_defaultType) << ", "
+      << "use-symlinks=" << (useSymlinks ? "true" : "false") << ", "
       << "timeout-interval=" << FileLock::s_timeoutInterval.total_seconds() << "s, "
       << "refresh-rate=" << FileLock::s_refreshRate.total_seconds() << "s, "
       << "log-file=" << logFile << ")"
@@ -229,6 +237,7 @@ boost::posix_time::seconds FileLock::s_timeoutInterval(static_cast<long>(kDefaul
 boost::posix_time::seconds FileLock::s_refreshRate(static_cast<long>(kDefaultRefreshRate));
 bool FileLock::s_loggingEnabled(false);
 bool FileLock::s_isLoadBalanced(false);
+bool FileLock::s_useSymlinks(false);
 FilePath FileLock::s_logFile;
 
 boost::shared_ptr<FileLock> FileLock::create(LockType type)

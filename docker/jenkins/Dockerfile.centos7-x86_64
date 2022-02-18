@@ -33,6 +33,7 @@ RUN yum install -y \
     lsof \
     make \
     mariadb-libs \
+    ninja-build \
     openssl-devel \
     p7zip \
     p7zip-plugins \
@@ -99,7 +100,7 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-common"
+RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-common centos7"
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/

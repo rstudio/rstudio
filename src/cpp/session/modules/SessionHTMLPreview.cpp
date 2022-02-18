@@ -1,7 +1,7 @@
 /*
  * SessionHTMLPreview.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -907,7 +907,7 @@ void handleInternalMarkdownPreviewRequest(
             LOG_ERROR(error);
       }
 
-      // modify outpout then write back to client
+      // modify output then write back to client
       modifyOutputForPreview(&previewHtml);
       pResponse->setDynamicHtml(previewHtml, request);
    }

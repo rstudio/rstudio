@@ -1,7 +1,7 @@
 /*
  * editor-extensions.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -77,6 +77,7 @@ import behaviorInsertSymbolEmoji from '../behaviors/insert_symbol/insert_symbol-
 import beahviorInsertSpecialCharacters from '../behaviors/insert_symbol/insert_special_characters';
 import behaviorNbsp from '../behaviors/nbsp';
 import behaviorRemoveSection from '../behaviors/remove_section';
+import behaviorSlides from '../behaviors/slides';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -101,7 +102,7 @@ import nodeFootnote from '../nodes/footnote/footnote';
 import nodeRawBlock from '../nodes/raw_block';
 import nodeYamlMetadata from '../nodes/yaml_metadata/yaml_metadata';
 import nodeRmdCodeChunk from '../nodes/rmd_chunk/rmd_chunk';
-import nodeDiv from '../nodes/div';
+import nodeDiv from '../nodes/div/div';
 import nodeLineBlock from '../nodes/line_block';
 import nodeTable from '../nodes/table/table';
 import nodeDefinitionList from '../nodes/definition_list/definition_list';
@@ -109,7 +110,7 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 import nodeHtmlPreserve from '../nodes/html_preserve';
 
 // extension/plugin factories
-import { acePlugins } from '../optional/ace/ace';
+import { aceExtension } from '../optional/ace/ace';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
 import { codeViewClipboardPlugin } from '../api/code';
 
@@ -140,6 +141,7 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
     behaviorFind,
     behaviorSpellingInteractive,
     behaviorClearFormatting,
+    behaviorSlides
   ]);
 
   // optional extensions
@@ -201,14 +203,16 @@ export function initExtensions(context: ExtensionContext, extensions?: readonly 
   // in the chain registers something the later extensions are able to see it
   manager.register([
     // bindings to 'Edit Attribute' command and UI adornment
-    attrEditExtension(context.pandocExtensions, context.ui, manager.attrEditors()),
+    attrEditExtension(context.pandocExtensions, context.ui, context.format, manager.attrEditors()),
   ]);
 
   // additional plugins derived from extensions
   const codeViews = manager.codeViews();
   const plugins: Plugin[] = [];
   if (context.options.codeEditor === 'ace') {
-    plugins.push(...acePlugins(codeViews, context));
+    manager.register([
+      aceExtension(codeViews)
+    ]);
   }
   plugins.push(codeViewClipboardPlugin(codeViews));
 
@@ -273,6 +277,7 @@ export class ExtensionManager {
 
   public pandocTokensFilters(): readonly PandocTokensFilterFn[] {
     return this.collectFrom({
+      mark: mark => [mark.pandoc.tokensFilter],
       node: node => [node.pandoc.tokensFilter],
     });
   }

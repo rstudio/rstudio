@@ -1,7 +1,7 @@
 /*
  * PreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,13 +37,43 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
    }
 
    /**
+    * Create a checkbox that infers label/title from the PerfValue and uses the `lessSpaced` margin style
+    *
+    * Provides a convenience to reduce boilerplate when parsing PerfValues
+    *
+    * @param prefValue boolean preference to bind to
+    * @return CheckBox
+    */
+   protected CheckBox checkboxPref(final PrefValue<Boolean> prefValue)
+   {
+      return checkboxPref(prefValue, true /*defaultSpaced*/);
+   }
+
+   /**
+    * Create a checkbox that infers label/title from the PerfValue
+    *
+    * Provides a convenience to reduce boilerplate when parsing PerfValues
+    *
+    * @param prefValue boolean preference to bind to
+    * @return CheckBox
+    */
+   protected CheckBox checkboxPref(final PrefValue<Boolean> prefValue,
+                                   boolean defaultSpaced)
+   {
+      // Note that properties map such that:
+      //    prefValue.title --> checkboxPref.label
+      //    prefValue.description --> checkboxPref.title
+      return checkboxPref(prefValue.getTitle(), prefValue, prefValue.getDescription() /*title*/, defaultSpaced /*defaultSpaced*/);
+   }
+
+   /**
     * Create a checkbox bound to a user preference with `lessSpaced` margin style.
     * @param label checkbox label
     * @param prefValue boolean preference to bind to
     * @return CheckBox
     */
    protected CheckBox checkboxPref(String label,
-         final PrefValue<Boolean> prefValue)
+                                   final PrefValue<Boolean> prefValue)
    {
       return checkboxPref(label, prefValue, null /*title*/, true /*defaultSpaced*/);
    }
@@ -108,6 +138,16 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
    }
 
    /**
+    * Prompt for integer preference value in range [0 - maxint] with label inferred from prefValue
+    */
+   protected NumericValueWidget numericPref(final PrefValue<Integer> prefValue)
+   {
+      return numericPref(NumericValueWidget.ZeroMinimum,
+         NumericValueWidget.NoMaximum,
+         prefValue);
+   }
+
+   /**
     * Prompt for integer preference value in range [0 - maxint]
     */
    protected NumericValueWidget numericPref(String label,
@@ -116,6 +156,21 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
       return numericPref(label, NumericValueWidget.ZeroMinimum,
             NumericValueWidget.NoMaximum,
             prefValue);
+   }
+
+   protected NumericValueWidget numericPref(Integer minValue,
+                                            Integer maxValue,
+                                            final PrefValue<Integer> prefValue)
+   {
+      return numericPref(minValue, maxValue, prefValue, true);
+   }
+
+   protected NumericValueWidget numericPref(Integer minValue,
+                                            Integer maxValue,
+                                            final PrefValue<Integer> prefValue,
+                                            boolean defaultSpaced)
+   {
+      return numericPref(prefValue.getTitle(), minValue, maxValue, prefValue, defaultSpaced);
    }
 
    protected NumericValueWidget numericPref(String label,

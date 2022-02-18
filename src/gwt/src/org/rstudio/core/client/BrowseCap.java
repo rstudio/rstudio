@@ -1,7 +1,7 @@
 /*
  * BrowseCap.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -158,8 +158,6 @@ public class BrowseCap
 
    public static double devicePixelRatio()
    {
-      // TODO: validate that we can rely on browser to report even
-      // on desktop clients
       return getDevicePixelRatio();
    }
 
@@ -195,6 +193,7 @@ public class BrowseCap
    private static native final double getDevicePixelRatio() /*-{
       try
       {
+         // use explicitly declared device pixel ratio if present
          if ('devicePixelRatio' in $wnd)
             return $wnd.devicePixelRatio;
          else
@@ -270,5 +269,10 @@ public class BrowseCap
          if (isFirefox())
             Document.get().getBody().addClassName("ubuntu_mono_firefox");
       }
+
+      // Add flat theme class. None of our own CSS should use this, but many
+      // third party themes developed against earlier versions of RStudio
+      // (2021.09 and older) use it extensively in selectors.
+      Document.get().getBody().addClassName("rstudio-themes-flat");
    }
 }

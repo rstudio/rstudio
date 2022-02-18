@@ -1,7 +1,7 @@
 /*
  * RmdRenderResult.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
         is_shiny_document: true,
         preview_slide: doc.preview_slide,
         slide_navigation: doc.slide_navigation,
+        is_quarto: doc.is_quarto,
         runtime: doc.runtime,
         viewed: false
      };
@@ -55,6 +56,10 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
    
    public native final String getTargetEncoding() /*-{
       return this.target_encoding;
+   }-*/;
+
+   public native final boolean isQuarto() /*-{
+      return this.is_quarto;
    }-*/;
    
    public native final int getTargetLine() /*-{
@@ -125,14 +130,21 @@ public class RmdRenderResult extends RmdSlideNavigationInfo
 
    public final boolean isHtmlPresentation()
    {
-      return (isShinyDocument() || isHtml()) && getFormatName().endsWith(
-                  RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX);
+      return (isShinyDocument() || isHtml()) && 
+              (getFormatName().endsWith(RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX) ||
+               isRevealjsPresentation());
+   }
+   
+   public final boolean isRevealjsPresentation()
+   {
+      return getFormatName().contains("revealjs");
    }
    
    public final boolean isHtmlDashboard()
    {
-      return (isShinyDocument() || isHtml()) && getFormatName().endsWith(
-            RmdOutputFormat.OUTPUT_DASHBOARD_SUFFIX);
+      return (isShinyDocument() || isHtml()) && 
+              (getFormatName().endsWith(RmdOutputFormat.OUTPUT_DASHBOARD_SUFFIX) ||
+               getFormatName().contains("dashboard"));
    }
    
    public final boolean getRestoreAnchor()

@@ -1,7 +1,7 @@
 /*
  * auto_brace_insert.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -22,6 +22,21 @@ define("mode/auto_brace_insert", ["require", "exports", "module"], function(requ
    var Range = require("ace/range").Range;
    var TextMode = require("ace/mode/text").Mode;
 
+   function isCursorWithinCompatibleMatchingParens(session, position, prevChar, currentChar)
+   {
+      // Don't place closing parenthesis for function argument lists on its own line.
+      var token = session.getTokenAt(position.row, position.column - 1);
+      if (token && token.value === 'function')
+         return false;
+
+      return (
+         prevChar === "{" && currentChar === "}" ||
+         prevChar === "(" && currentChar === ")" ||
+         prevChar === "[" && currentChar === "]"
+      );
+   }
+   
+
    (function() {
 
       // modes can override these to provide for
@@ -32,6 +47,7 @@ define("mode/auto_brace_insert", ["require", "exports", "module"], function(requ
          '"': '"',
          "{": "}"
       };
+
       this.$reOpen = /^[(["{]$/;
       this.$reClose = /^[)\]"}]$/;
 
@@ -51,9 +67,12 @@ define("mode/auto_brace_insert", ["require", "exports", "module"], function(requ
                       position.column == cursor.column;
 
          if (typing) {
+
             var postRng = Range.fromPoints(position, {
                row: position.row,
-               column: position.column + 1});
+               column: position.column + 1
+            });
+
             var postChar = session.doc.getTextRange(postRng);
             if (this.$reClose.test(postChar) && postChar == text) {
                session.selection.moveCursorTo(postRng.end.row,
@@ -72,13 +91,16 @@ define("mode/auto_brace_insert", ["require", "exports", "module"], function(requ
          }
 
          var endPos = __insert.call(session, position, text);
+
          // Is this an open paren?
          if (typing && this.$reOpen.test(text)) {
+
             // Is the next char not a character or number?
             var nextCharRng = Range.fromPoints(endPos, {
                row: endPos.row,
                column: endPos.column + 1
             });
+
             var nextChar = session.doc.getTextRange(nextCharRng);
             if (this.$reStop.test(nextChar) || nextChar.length == 0) {
                if (this.allowAutoInsert(session, endPos, this.$complements[text])) {
@@ -87,22 +109,24 @@ define("mode/auto_brace_insert", ["require", "exports", "module"], function(requ
                }
             }
          }
+
          else if (typing && text === "\n") {
+
             var rangeEnd = this.$moveRight(session.doc, endPos);
             var currentChar = session.doc.getTextRange(Range.fromPoints(endPos, rangeEnd));
-            if ((prevChar === "{" && currentChar === "}") ||
-                (prevChar === "(" && currentChar === ")") ||
-                (prevChar === "[" && currentChar === "]"))
+            if (isCursorWithinCompatibleMatchingParens(session, position, prevChar, currentChar))
             {
                var indent;
                if (this.getIndentForOpenBrace)
                   indent = this.getIndentForOpenBrace(this.$moveLeft(session.doc, position));
                else
                   indent = this.$getIndent(session.doc.getLine(endPos.row - 1));
+
                session.doc.insert(endPos, "\n" + indent);
                session.selection.moveCursorTo(endPos.row, endPos.column, false);
             }
          }
+
          return endPos;
       };
 

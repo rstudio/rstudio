@@ -1,7 +1,7 @@
 /*
  * DocUpdateSentinel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.model;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -29,6 +30,7 @@ import org.rstudio.core.client.Barrier.Token;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.patch.SubstringDiff;
 import org.rstudio.core.client.widget.Operation;
@@ -45,6 +47,7 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Fold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.VimMarks;
@@ -136,10 +139,12 @@ public class DocUpdateSentinel
 
       prefs_.autoSaveOnIdle().bind((String behavior) ->
       {
-         if (behavior == UserPrefs.AUTO_SAVE_ON_IDLE_BACKUP)
+         if (StringUtil.isNullOrEmpty(sourceDoc_.getPath()) ||
+             StringUtil.equals(behavior, UserPrefs.AUTO_SAVE_ON_IDLE_BACKUP))
          {
             // Set up the debounced auto-save method when the preference is
-            // enabled
+            // enabled. This is always enabled when we don't have a path because
+            // it isn't possible to do other kinds of saving in this case.
             createAutosaver();
          }
          else if (autosaver_ != null)
@@ -171,9 +176,7 @@ public class DocUpdateSentinel
             public void onWindowClosing(ClosingEvent event)
             {
                if (changesPending_)
-                  event.setMessage("Some of your source edits are still being " +
-                        "backed up. If you continue, your latest " +
-                        "changes may be lost. Do you want to continue?");
+                  event.setMessage(constants_.editsStillBeingBackedUp());
             }
          });
       }
@@ -304,14 +307,13 @@ public class DocUpdateSentinel
                {
                   // do not show the error if it is a transient autosave related issue - this can occur fairly frequently
                   // when attempting to save files that are being backed up by external software
-                  if (!message.contains("The process cannot access the file because it is being used by another process"))
+                  if (!message.contains(constants_.processStillBeingUsedTextEditingTarget()))
                   {
                      loggedAutosaveError_ = true;
 
                      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                           "Error Autosaving File",
-                           "RStudio was unable to autosave this file. You may need " +
-                                 "to restart RStudio.");
+                           constants_.errorAutosavingFile(),
+                           constants_.rStudioUnableToAutosave());
                   }
                }
 
@@ -369,6 +371,15 @@ public class DocUpdateSentinel
    {
       if (autosaver_ != null)
          autosaver_.suspend();
+
+      // If the user pref indicates we should do a full save on idle, turn off the autosaver,
+      // which may have been on if the file han't been previously saved.
+      if (autosaver_ != null &&
+          !StringUtil.isNullOrEmpty(path) &&
+          StringUtil.equals(prefs_.autoSaveOnIdle().getValue(), UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT))
+      {
+         autosaver_ = null;
+      }
 
       doSave(path, fileType, encoding, retryWrite, new ProgressIndicator()
       {
@@ -430,8 +441,7 @@ public class DocUpdateSentinel
          // report error to progress indicator if present
          if (progress != null)
          {
-            progress.onError("Could not save " + path + ": " +
-                             ex.getMessage());
+            progress.onError(constants_.couldNotSavePathPlusMessage(path, ex.getMessage()));
          }
       }
 
@@ -546,8 +556,7 @@ public class DocUpdateSentinel
                   if (progress != null)
                   {
                      String errorMessage =
-                           "Error saving " + path + ": " +
-                                 error.getUserMessage();
+                           constants_.errorSavingPathPlusMessage(path, error.getUserMessage());
 
                      progress.onError(errorMessage);
                   }
@@ -769,6 +778,33 @@ public class DocUpdateSentinel
                }
             });
    }
+   
+   public static void modifyProperties(SourceServerOperations server,
+                                       SourceDocument document,
+                                       final HashMap<String, String> properties,
+                                       final ProgressIndicator progress)
+   {
+      server.modifyDocumentProperties(
+            document.getId(),
+            properties,
+            new ServerRequestCallback<Void>()
+            {
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  if (progress != null)
+                     progress.onError(error.getUserMessage());
+               }
+
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  if (progress != null)
+                     progress.onCompleted();
+               }
+            });
+   }
 
    public void modifyProperties(final HashMap<String, String> properties)
    {
@@ -953,6 +989,6 @@ public class DocUpdateSentinel
 
    public final static String PROPERTY_TRUE = "true";
    public final static String PROPERTY_FALSE = "false";
-
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 
 }

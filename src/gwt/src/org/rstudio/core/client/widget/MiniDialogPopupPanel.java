@@ -1,7 +1,7 @@
 /*
  * MiniDialogPopupPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -68,7 +70,7 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
       toolsPanel.setStyleName(ThemeStyles.INSTANCE.miniDialogTools());
       ToolbarButton hideButton = new ToolbarButton(
             ToolbarButton.NoText,
-            "Close",
+            constants_.closeText(),
             new ImageResource2x(ThemeResources.INSTANCE.closeChevron2x()),
             new ClickHandler() { 
                public void onClick(ClickEvent event)
@@ -118,4 +120,5 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
    private VerticalPanel verticalPanel_;
    private Label captionLabel_;
    private FocusContext focusContext_ = new FocusContext();
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * JobConstants.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,9 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.jobs.model;
+
+import com.google.gwt.core.client.GWT;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 
 public class JobConstants
 {
@@ -43,16 +46,17 @@ public class JobConstants
       switch(state)
       {
          case JobConstants.STATE_RUNNING:
-            return "Running";
+            return constants_.runningState();
          case JobConstants.STATE_IDLE:
-            return "Idle";
+            return constants_.idleState();
          case JobConstants.STATE_CANCELLED:
-            return "Cancelled";
+            return constants_.cancelledState();
          case JobConstants.STATE_FAILED:
-            return "Failed";
+            return constants_.failedState();
          case JobConstants.STATE_SUCCEEDED:
-            return "Succeeded";
+            return constants_.succeededState();
       }
-      return "Unknown " + state;
+      return constants_.unknownState(state);
    }
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

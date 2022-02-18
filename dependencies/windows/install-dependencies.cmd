@@ -2,7 +2,18 @@
 
 setlocal
 
+call ..\tools\rstudio-tools.cmd
+
 set PATH=%CD%\tools;%PATH%
+
+REM Check for required tools on the PATH.
+for %%X in (R.exe 7z.exe cmake.exe) do (
+  where /q %%X
+  if ERRORLEVEL 1 (
+    echo ERROR: %%X is not available on the PATH; cannot proceed.
+    exit /b
+  )
+)
 
 set WGET_ARGS=-c --no-check-certificate
 set UNZIP_ARGS=-q
@@ -11,7 +22,11 @@ set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
 set GIN_FILE=gin-2.1.2.zip
 set JUNIT_FILE=junit-4.9b3.jar
 set GNUDIFF_FILE=gnudiff.zip
-set GNUGREP_FILE=gnugrep-2.5.4.zip
+
+set GNUGREP_VERSION=3.0
+set GNUGREP_NAME=gnugrep-%GNUGREP_VERSION%
+set GNUGREP_FILE=%GNUGREP_NAME%.zip
+
 set MSYS_SSH_FILE=msys-ssh-1000-18.zip
 set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
@@ -20,15 +35,18 @@ set OPENSSL_FILES=openssl-1.1.1i.zip
 set BOOST_FILES=boost-1.69.0-win-msvc141.zip
 set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
 
-set PANDOC_VERSION=2.11.4
+set PANDOC_VERSION=2.16.2
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
+
+set QUARTO_VERSION=0.9.16
+set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
 set LIBCLANG_VERSION=5.0.2
 set LIBCLANG_NAME=libclang-windows-%LIBCLANG_VERSION%
 set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 
-set NODE_VERSION=10.19.0
+set NODE_VERSION=%RSTUDIO_NODE_VERSION%
 set NODE_ROOT=node
 set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
 set NODE_BASE_URL=https://nodejs.org/dist/v%NODE_VERSION%/
@@ -43,11 +61,11 @@ if not exist gnudiff (
   del "%GNUDIFF_FILE%"
 )
 
-if not exist gnugrep (
+if not exist gnugrep\%GNUGREP_VERSION% (
   wget %WGET_ARGS% "%BASEURL%%GNUGREP_FILE%"
-  mkdir gnugrep
+  mkdir gnugrep\%GNUGREP_VERSION%
   echo Unzipping %GNUGREP_FILE%
-  unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep
+  unzip %UNZIP_ARGS% "%GNUGREP_FILE%" -d gnugrep\%GNUGREP_VERSION%
   del "%GNUGREP_FILE%"
 )
 
@@ -148,6 +166,18 @@ if not exist pandoc\%PANDOC_VERSION% (
   rmdir /s /q %PANDOC_NAME%
 )
 
+
+
+wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
+echo Unzipping Quarto %QUARTO_FILE%
+rmdir /s /q quarto
+mkdir quarto
+cd quarto
+unzip %UNZIP_ARGS% ..\%QUARTO_FILE%
+cd ..
+del %QUARTO_FILE%
+
+
 if not exist libclang\%LIBCLANG_VERSION% (
   wget %WGET_ARGS% "%BASEURL%%LIBCLANG_FILE%"
   echo Unzipping %LIBCLANG_FILE%
@@ -175,6 +205,12 @@ pushd ..\..\src\gwt\panmirror\src\editor
 call yarn install
 popd
 
+if exist C:\Windows\py.exe (
+  pushd ..\..\src\gwt\tools\i18n-helpers\
+  py -3 -m venv VENV
+  VENV\Scripts\pip install --disable-pip-version-check -r commands.cmd.xml\requirements.txt
+  popd
+)
 
 call install-packages.cmd
 

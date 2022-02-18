@@ -1,7 +1,7 @@
 /*
  * SessionAsyncRProcess.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -101,7 +101,7 @@ void AsyncRProcess::start(const char* rCommand,
    // On Windows, we turn the vector of strings into a single
    // string to send over the command line, so we must ensure
    // that the arguments following '-e' are quoted, so that
-   // they are all interpretted as a single argument (rather
+   // they are all interpreted as a single argument (rather
    // than multiple arguments) to '-e'.
 
 #ifdef _WIN32
@@ -174,7 +174,7 @@ void AsyncRProcess::start(const char* rCommand,
    
    // update environment used for child process
    options.environment = childEnv;
-
+   
    core::system::ProcessCallbacks cb;
    using namespace module_context;
    cb.onContinue = boost::bind(&AsyncRProcess::onContinue,

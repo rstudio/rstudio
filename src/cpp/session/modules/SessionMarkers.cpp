@@ -1,7 +1,7 @@
 /*
  * SessionMarkers.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,6 +54,7 @@ json::Object sourceMarkerSetAsJson(const module_context::SourceMarkerSet& set)
       jsonSet["base_path"] = basePath;
    }
    jsonSet["markers"] = sourceMarkersAsJson(set.markers);
+   jsonSet["is_diagnostics"] = set.isDiagnostics;
    return jsonSet;
 }
 
@@ -130,10 +131,12 @@ public:
          {
             std::string name, basePath;
             json::Array markersJson;
+            bool isDiagnostics;
             Error error = json::readObject(setJson.getObject(),
                                            "name", name,
                                            "base_path", basePath,
-                                           "markers", markersJson);
+                                           "markers", markersJson,
+                                           "is_diagnostics", isDiagnostics);
             if (error)
             {
                LOG_ERROR(error);
@@ -180,7 +183,7 @@ public:
                        resolveAliasedPath(basePath) :
                        FilePath();
 
-            markerSets.push_back(SourceMarkerSet(name, base, markers));
+            markerSets.push_back(SourceMarkerSet(name, base, markers, isDiagnostics));
          }
       }
 
@@ -231,6 +234,30 @@ public:
       }
 
       return obj;
+   }
+
+   std::vector<module_context::SourceMarker> findMarkers(const std::string& path) const
+   {
+      std::vector<module_context::SourceMarker> markers;
+      // replace home alias to home path
+      core::FilePath resolvedPath = core::FilePath::resolveAliasedPath(
+          path, system::User::getUserHomePath());
+
+      for (const module_context::SourceMarkerSet& markerSet : markerSets_)
+      {
+         if (!markerSet.isDiagnostics)
+         {
+            for (const module_context::SourceMarker& marker : markerSet.markers)
+            {
+               if (marker.path == resolvedPath)
+               {
+                  markers.push_back(marker);
+               }
+            }
+         }
+      }
+
+      return markers;
    }
 
 private:
@@ -384,6 +411,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
                 safe_convert::numberTo<double, int>(line, 1),
                 safe_convert::numberTo<double, int>(column, 1),
                 core::html_utils::HTML(message, messageHTML),
+                true,
                 true);
 
             markers.push_back(marker);
@@ -469,6 +497,11 @@ void writeSourceMarkers(bool terminatedNormally)
 json::Object markersStateAsJson()
 {
    return sourceMarkers().stateAsJson();
+}
+
+std::vector<module_context::SourceMarker> markersForFile(const std::string& path)
+{
+   return sourceMarkers().findMarkers(path);
 }
 
 Error initialize()

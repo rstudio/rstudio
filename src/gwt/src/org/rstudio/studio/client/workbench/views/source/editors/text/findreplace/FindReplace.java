@@ -1,7 +1,7 @@
 /*
  * FindReplace.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.findreplace;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -30,6 +31,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -69,7 +71,7 @@ public class FindReplace
       editor_ = editor;
       display_ = display;
       globalDisplay_ = globalDisplay;
-      errorCaption_ = showingReplace ? "Find/Replace" : "Find";
+      errorCaption_ = showingReplace ? constants_.findOrReplace() : constants_.findCapitalized();
 
       HasValue<Boolean> caseSensitive = display_.getCaseSensitive();
       caseSensitive.setValue(defaultCaseSensitive_);
@@ -298,7 +300,7 @@ public class FindReplace
             {
                globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
                                           errorCaption_,
-                                          "No more occurrences.");
+                                          constants_.noMoreOccurrences());
             }
             else
             {
@@ -317,7 +319,7 @@ public class FindReplace
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
                errorCaption_,
-               "Invalid search term.");
+               constants_.invalidSearchTerm());
 
          return false;
       }
@@ -437,7 +439,7 @@ public class FindReplace
       }
       globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
                                  errorCaption_,
-                                 occurrences + " occurrences replaced.");
+                                 constants_.numberOfOccurrencesReplaced(occurrences));
    }
 
    private String substitute(final Match match,
@@ -584,4 +586,5 @@ public class FindReplace
    private static boolean defaultWrapSearch_ = true;
    private static boolean defaultRegex_ = false;
    private static boolean defaultWholeWord_ = false;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

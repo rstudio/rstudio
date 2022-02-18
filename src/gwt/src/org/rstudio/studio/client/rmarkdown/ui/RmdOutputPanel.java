@@ -1,7 +1,7 @@
 /*
  * RmdOutputPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rmarkdown.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
@@ -46,6 +47,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarLabel;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.rmarkdown.RMarkdownConstants;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -164,10 +166,10 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
       fileLabelSeparator_ = toolbar.addLeftSeparator();
       ToolbarButton popoutButton = 
             commands.viewerPopout().createToolbarButton();
-      popoutButton.setText("Open in Browser");
+      popoutButton.setText(constants_.openInBrowserButtonText());
       toolbar.addLeftWidget(popoutButton);
 
-      findTextBox_ = new FindTextBox("Find");
+      findTextBox_ = new FindTextBox(constants_.findTextBoxCueText());
       findTextBox_.setIconVisible(true);
       findTextBox_.setOverrideWidth(120);
       findTextBox_.getElement().getStyle().setMarginRight(6, Unit.PX);
@@ -203,8 +205,8 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
             {
                RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(
                      MessageDialog.INFO,
-                     "Find in Page", 
-                     "No occurrences found",
+                     constants_.findInPageCaption(),
+                     constants_.noOccurrencesFoundMsg(),
                      findInputSource);
             }     
          }
@@ -226,7 +228,7 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    @Override
    protected AnchorableFrame createFrame(String url)
    {
-      AnchorableFrame frame = new AnchorableFrame("Rmd Output Panel");
+      AnchorableFrame frame = new AnchorableFrame(constants_.rmdOutputPanelTitle());
       
       // allow full screen
       Element el = frame.getElement();
@@ -520,4 +522,6 @@ public class RmdOutputPanel extends SatelliteFramePanel<AnchorableFrame>
    private ShinyFrameHelper shinyFrame_;
    
    private HandlerManager handlerManager_ = new HandlerManager(this);
+
+   private static final RMarkdownConstants constants_ = GWT.create(RMarkdownConstants.class);
 }

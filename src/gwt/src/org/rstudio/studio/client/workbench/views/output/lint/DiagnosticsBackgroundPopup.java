@@ -1,7 +1,7 @@
 /*
  * DiagnosticsBackgroundPopup.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.output.lint;
 
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -228,7 +229,7 @@ public class DiagnosticsBackgroundPopup
       hidePopup();
       popup_ = new DiagnosticsPopupPanel(text, range);
       final Rectangle coords = editor_.toScreenCoordinates(range);
-      popup_.setTitle("Diagnostics");
+      popup_.setTitle(constants_.diagnosticsLabel());
       popup_.setPopupPositionAndShow(new PositionCallback()
       {
          @Override
@@ -300,5 +301,6 @@ public class DiagnosticsBackgroundPopup
    static {
       RES.styles().ensureInjected();
    }
+   private static final OutputConstants constants_ = com.google.gwt.core.client.GWT.create(OutputConstants.class);
 
 }

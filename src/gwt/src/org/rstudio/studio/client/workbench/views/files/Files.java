@@ -1,7 +1,7 @@
 /*
  * Files.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,20 +22,29 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.ParallelCommandList;
+import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.Clipboard;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
+import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenFileInBrowserEvent;
 import org.rstudio.studio.client.common.filetypes.events.RenameSourceFileEvent;
 import org.rstudio.studio.client.events.RStudioApiRequestEvent;
@@ -51,6 +60,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportPresenter;
@@ -59,10 +69,13 @@ import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.files.model.FileChange;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.events.SourcePathChangedEvent;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
 import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Files
       extends BasePresenter
@@ -153,6 +166,7 @@ public class Files
                 FileTypeRegistry fileTypeRegistry,
                 ConsoleDispatcher consoleDispatcher,
                 WorkbenchContext workbenchContext,
+                PaneManager paneManager,
                 DataImportPresenter dataImportPresenter)
    {
       super(view);
@@ -171,6 +185,7 @@ public class Files
       pFilesUpload_ = pFilesUpload;
       pFileExport_ = pFileExport;
       pPrefs_ = pPrefs;
+      paneManager_ = paneManager;
       dataImportPresenter_ = dataImportPresenter;
 
       ((Binder)GWT.create(Binder.class)).bind(commands, this);
@@ -363,15 +378,15 @@ public class Files
    void onNewFolder()
    {
       globalDisplay_.promptForText(
-            "New Folder",
-            "Please enter the new folder name",
+              constants_.newFolderTitle(),
+              constants_.newFolderNameLabel(),
             null,
             new ProgressOperationWithInput<String>()
             {
                public void execute(String input,
                                    final ProgressIndicator progress)
                {
-                  progress.onProgress("Creating folder...");
+                  progress.onProgress(constants_.creatingFolderProgressLabel());
 
                   String folderPath = currentPath_.completePath(input);
                   FileSystemItem folder = FileSystemItem.createDir(folderPath);
@@ -381,6 +396,61 @@ public class Files
                         new VoidServerRequestCallback(progress));
                }
             });
+   }
+   
+   @Handler
+   void onTouchSourceDoc() {
+      touchFile(FileTypeRegistry.R);
+   }
+
+   @Handler
+   void onTouchRMarkdownDoc() {
+      touchFile(FileTypeRegistry.RMARKDOWN);
+   }
+
+   @Handler
+   void onTouchQuartoDoc() {
+      touchFile(FileTypeRegistry.QUARTO);
+   }
+
+   @Handler
+   void onTouchTextDoc() {
+      touchFile(FileTypeRegistry.TEXT);
+   }
+
+   @Handler
+   void onTouchCppDoc() {
+      touchFile(FileTypeRegistry.CPP);
+   }
+
+   @Handler
+   void onTouchPythonDoc() {
+      touchFile(FileTypeRegistry.PYTHON);
+   }
+
+   @Handler
+   void onTouchSqlDoc() {
+      touchFile(FileTypeRegistry.SQL);
+   }
+
+   @Handler
+   void onTouchStanDoc() {
+      touchFile(FileTypeRegistry.STAN);
+   }
+
+   @Handler
+   void onTouchD3Doc() {
+      touchFile(FileTypeRegistry.JS);
+   }
+
+   @Handler
+   void onTouchSweaveDoc() {
+      touchFile(FileTypeRegistry.SWEAVE);
+   }
+
+   @Handler
+   void onTouchRHTMLDoc() {
+      touchFile(FileTypeRegistry.RHTML);
    }
 
    void onUploadFile()
@@ -413,8 +483,8 @@ public class Files
       if (selectedFiles.size() > 1)
       {
          globalDisplay_.showErrorMessage(
-                           "Multiple Items Selected",
-                           "Please select a single file or folder to copy");
+                           constants_.multipleItemsSelectedCaption(),
+                           constants_.multipleItemsSelectedMessage());
          return;
       }
 
@@ -423,7 +493,7 @@ public class Files
          initialFile = initialFile.getParentPath();
 
       view_.showFilePicker(
-                        "Choose Destination",
+              constants_.chooseDestinationTitle(),
                         fileSystemContext_,
                         initialFile,
                         new ProgressOperationWithInput<FileSystemItem>() {
@@ -470,7 +540,7 @@ public class Files
          return;
 
       view_.showFolderPicker(
-                        "Choose Folder",
+                        constants_.chooseFolderTitle(),
                         fileSystemContext_,
                         currentPath_,
                         new ProgressOperationWithInput<FileSystemItem>() {
@@ -492,12 +562,12 @@ public class Files
                if (file.getPath() == targetDir.getPath() ||
                    fileParent.getPath() == targetDir.getPath())
                {
-                  progress.onError("Invalid target folder");
+                  progress.onError(constants_.invalidTargetFolderErrorMessage());
                   return;
                }
             }
 
-            progress.onProgress("Moving files...");
+            progress.onProgress(constants_.movingFilesLabel());
 
             view_.selectNone();
 
@@ -512,8 +582,8 @@ public class Files
    @Handler
    void onExportFiles()
    {
-      pFileExport_.get().export("Export Files",
-                                "selected file(s)",
+      pFileExport_.get().export(constants_.exportFilesCaption(),
+                                constants_.selectedFilesCaption(),
                                 currentPath_,
                                 view_.getSelectedFiles());
    }
@@ -525,15 +595,11 @@ public class Files
       ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
 
       // validation: some selection exists
-      if  (selectedFiles.size() == 0)
-         return;
-
-      // validation: no more than one file selected
-      if  (selectedFiles.size() > 1)
+      if (selectedFiles.size() != 1)
       {
          globalDisplay_.showErrorMessage(
-                           "Invalid Selection",
-                           "Please select only one file to rename");
+               constants_.invalidSelectionCaption(),
+               constants_.invalidSelectionMessage());
          return;
       }
 
@@ -553,8 +619,21 @@ public class Files
       final ArrayList<FileSystemItem> selectedFiles = view_.getSelectedFiles();
 
       // validation: some selection exists
-      if  (selectedFiles.size() == 0)
+      String message = constants_.permanentDeleteMessage();
+      if (selectedFiles.size() == 0)
+      {
          return;
+      }
+      else if (selectedFiles.size() == 1)
+      {
+         message += selectedFiles.get(0).getName();
+      }
+      else
+      {
+         message += constants_.selectedFilesMessage(selectedFiles.size());
+      }
+      message += constants_.cannotBeUndoneMessage();
+
 
       // validation -- not prohibited move of public folder
       if (!validateNotRestrictedFolder(selectedFiles, "deleted"))
@@ -563,12 +642,12 @@ public class Files
       // confirm delete then execute it
       globalDisplay_.showYesNoMessage(
                         GlobalDisplay.MSG_QUESTION,
-                        "Confirm Delete",
-                        "Are you sure you want to delete the selected files?",
+                        constants_.confirmDeleteCaption(),
+                        message,
                         new ProgressOperation() {
                            public void execute(final ProgressIndicator progress)
                            {
-                              progress.onProgress("Deleting files...");
+                              progress.onProgress(constants_.deletingFilesLabel());
 
                               view_.selectNone();
 
@@ -590,8 +669,8 @@ public class Files
             if (file.isPublicFolder())
             {
                globalDisplay_.showErrorMessage(
-                     "Error",
-                     "The Public folder cannot be " + verb + ".");
+                     constants_.errorCaption(),
+                     constants_.publicFolderMessage(verb));
                return false;
             }
          }
@@ -608,7 +687,212 @@ public class Files
 
    void onCopyFilesPaneCurrentDirectory()
    {
-      DomUtils.copyCodeToClipboard(currentPath_.getPath());
+      Clipboard.setText(currentPath_.getPath());
+   }
+
+   /**
+   * the purpose of this function is specifically to pre-screen selected files for the following:
+   *  - the file must NOT be a directory
+   *  - the file must NOT already be open in a source editor 
+   *  - if the file is an RNotebook (.nb[.html]), then make sure that only ONE .RMarkdown (.Rmd) 
+   *    file is selected
+   *  - aggregate any errors encountered opening RNotebooks and display them at once
+   *
+   * @param onCompleted a callback passed {@code <List<FileSystemItem>>}, which is the screened 
+   *                    list of selected files
+   */
+   private void getUnopenedSelectedFiles(final CommandWithArg<List<FileSystemItem>> onCompleted)
+   {
+      final SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+      final ArrayList<String> selectedFilePaths = new ArrayList<>(); 
+
+      final List<String> errors = new ArrayList<>();
+
+      // Use parallelCommandList to execute these requests as fast as possible in parallel, asynchronously
+      ParallelCommandList commandList = new ParallelCommandList(new Command()
+      {
+         @Override
+         public void execute() 
+         {
+            if (errors.size() > 0)
+            {
+               String caption = constants_.errorOpeningFilesCaption();
+               String errorMsg = constants_.fileErrorMessage(errors.size());
+               errorMsg += constants_.errorMessage();
+               for (String err : errors) 
+               {
+                  errorMsg += "\n" + err;
+               }
+               globalDisplay_.showErrorMessage(caption, errorMsg);
+               return;
+            }
+            final ArrayList<FileSystemItem> selectedFiles = new ArrayList<>(); 
+            selectedFilePaths.forEach((String path) -> {
+               selectedFiles.add(FileSystemItem.createFile(path));
+            });
+            onCompleted.execute(selectedFiles);
+         }
+      });
+
+
+      final List<FileSystemItem> notebooks = new ArrayList<>();
+
+      // pre-process to make sure there aren't any directories, and that already-open files do not count
+      // towards the column limit. Take notebooks out for additional processing.
+      for (FileSystemItem item : view_.getSelectedFiles()) 
+      {
+         if (!item.isDirectory() && !mgr.openFileAlreadyOpen(item, null))
+         {
+            TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(item);
+            if (fileType.isRNotebook())
+               notebooks.add(item);
+            else
+               selectedFilePaths.add(item.getPath());
+         }
+      }
+
+      for (FileSystemItem notebook : notebooks)
+      {
+         commandList.addCommand(new SerializedCommand()
+         {
+            @Override
+            public void onExecute(final Command continuation)
+            {
+               final String rnbPath = notebook.getPath();
+               final String rmdPath = FilePathUtils.filePathSansExtension(rnbPath) + ".Rmd";
+
+               mgr.extractRmdFile(
+                     notebook,
+                     new ResultCallback<SourceDocumentResult, ServerError>()
+                     {
+                        @Override
+                        public void onSuccess(SourceDocumentResult doc)
+                        {
+                           // this means the operation succeeded; add ONLY the Rmd file to the list
+                           // if it is not already open in a source editor
+                           final FileSystemItem rmdFile = FileSystemItem.createFile(rmdPath);
+                           if (!selectedFilePaths.contains(rmdPath)  &&
+                               !mgr.openFileAlreadyOpen(rmdFile, null))
+                              selectedFilePaths.add(rmdPath);
+
+                           continuation.execute();
+                        }
+
+                        @Override
+                        public void onFailure(ServerError error)
+                        {
+                           String message = constants_.failedToOpenMessage(notebook.getName(), error.getUserMessage());
+                           errors.add(message);
+                           continuation.execute();
+                        }
+                     });
+            }
+         });
+      }
+
+      commandList.run();
+   }
+
+   @Handler
+   void onOpenFilesInSinglePane()
+   {
+      // getUnopenedSelectedFiles aggregates RNotebook errors together, so use
+      // it to get the selected files instead. Otherwise any RNotebook-related
+      // opening errors stack over each other unpleasantly
+      getUnopenedSelectedFiles(new CommandWithArg<List<FileSystemItem>>()
+      {
+         @Override
+         public void execute(List<FileSystemItem> selectedFiles)
+         {
+            final SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+
+            for (FileSystemItem item : selectedFiles) 
+            {
+               if (!item.isDirectory())
+               {
+                  mgr.openFile(item);
+               }
+            }
+
+            view_.selectNone();
+         }
+      });
+   }
+
+
+   @Handler
+   void onOpenEachFileInColumns()
+   {
+      getUnopenedSelectedFiles(new CommandWithArg<List<FileSystemItem>>()
+      {
+         @Override
+         public void execute(List<FileSystemItem> selectedFiles)
+         {
+            final SourceColumnManager mgr = RStudioGinjector.INSTANCE.getSourceColumnManager();
+
+            if (selectedFiles.size() == 0)
+            {
+               view_.selectNone();
+               return;
+            }
+
+            // only open available:
+            // get the current number of remaining columns available
+            // all of the remaining files that cannot fit will be dumped into the the last-opened column
+            // there is a +1 here because the columnList includes the "non-additional" source pane
+            final int columnsRemaining = PaneManager.MAX_COLUMN_COUNT - mgr.getColumnList().size() + 1; 
+
+            // if there aren't any remaining cols then just open the files anyway and see what happens
+            if (columnsRemaining <= 0) 
+            {
+               for (FileSystemItem item : selectedFiles) 
+               {
+                  mgr.openFile(item);
+               }
+               return;
+            }
+
+            final List<FileSystemItem> openInColumns = 
+               selectedFiles.subList(0, Math.min(selectedFiles.size(), columnsRemaining));
+
+            // open these asynchronously IN-ORDER
+            SerializedCommandQueue openCommands = new SerializedCommandQueue();
+
+            for (FileSystemItem item : openInColumns)
+            {
+               openCommands.addCommand(new SerializedCommand()
+               {
+                  @Override
+                  public void onExecute(final Command continuation)
+                  {
+                     paneManager_.openFileInNewColumn(item, continuation);
+                  }
+               });
+            }
+
+            // open the remaining selected files in whichever column happens to be active at that point
+            openCommands.addCommand(new SerializedCommand()
+            {
+               @Override
+               public void onExecute(final Command continuation)
+               {
+                  if (columnsRemaining < selectedFiles.size()) 
+                  {
+                     final List<FileSystemItem> openRegular = selectedFiles.subList(columnsRemaining, selectedFiles.size());
+
+                     for (FileSystemItem item : openRegular) 
+                     {
+                        mgr.openFile(item);
+                     }
+                  }
+                  continuation.execute();
+               }
+            });
+
+            openCommands.run();
+            view_.selectNone();
+         }
+      });
    }
 
    @Handler
@@ -781,16 +1065,89 @@ public class Files
       }
    }
 
+   // generate a filename based on the file type and currentPath_ variable
+   private FileSystemItem getDefaultFileName(TextFileType fileType) 
+   {
+      String defaultExt = fileType.getDefaultExtension();
+
+      // extension has a '.' at the start, so remove that in the default name
+      String newFileDefaultName = "Untitled" + defaultExt.toUpperCase().substring(1) + defaultExt;
+      String path = currentPath_.completePath(newFileDefaultName);
+      FileSystemItem newTempFile = FileSystemItem.createFile(path);
+      return newTempFile;
+   }
+   
+   private void touchFile(final TextFileType fileType)
+   {
+      // prepare default information about the new file
+      FileSystemItem newTempFile = getDefaultFileName(fileType);
+      String formattedExt = fileType.getDefaultExtension().toUpperCase().substring(1);
+      
+      // guard for reentrancy
+      if (inputPending_)
+         return;
+      
+      inputPending_ = true;
+
+      // prompt for new file name then execute the operation
+      globalDisplay_.promptForText(constants_.createNewFileTitle(formattedExt),
+                                   constants_.enterFileNameLabel(),
+                                   newTempFile.getName(),
+                                   0,
+                                   newTempFile.getStem().length(),
+                                   null,
+                                   new ProgressOperationWithInput<String>()
+      {
+         public void execute(final String input, final ProgressIndicator progress)
+         {
+            // no longer waiting for user to input
+            inputPending_ = false;
+
+            progress.onProgress(constants_.creatingFileLabel());
+
+            String path = currentPath_.completePath(input);
+            final FileSystemItem newFile = FileSystemItem.createFile(path);
+
+            // execute on the server
+            server_.touchFile(newFile, new VoidServerRequestCallback(progress)
+            {
+               @Override
+               protected void onSuccess()
+               {
+                  // if we were successful, refresh list and open in source editor
+                  onRefreshFiles();
+                  fileTypeRegistry_.openFile(newFile);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  String errCaption = constants_.blankFileFailedCaption();
+                  String errMsg = constants_.blankFileFailedMessage(fileType.getDefaultExtension(), input, error.getUserMessage());
+                  globalDisplay_.showErrorMessage(errCaption, errMsg);
+                  progress.onCompleted();
+               }
+            });
+         }
+      },
+      () ->
+      {
+         // clear pending input flag when operation is canceled
+         inputPending_ = false;
+      });
+   }
+
    private void renameFile(FileSystemItem file)
    {
       // guard for reentrancy
-      if (renaming_)
+      if (inputPending_)
          return;
-      renaming_ = true;
+      
+      inputPending_ = true;
 
       // prompt for new file name then execute the rename
-      globalDisplay_.promptForText("Rename File",
-                                   "Please enter the new file name:",
+      globalDisplay_.promptForText(constants_.renameFileTitle(),
+                                   constants_.renameFileCaption(),
                                    file.getName(),
                                    0,
                                    file.getStem().length(),
@@ -799,10 +1156,10 @@ public class Files
         public void execute(String input,
                             final ProgressIndicator progress)
         {
-            // no longer waiting fo user to rename
-            renaming_ = false;
+            // no longer waiting for user to rename
+            inputPending_ = false;
 
-            progress.onProgress("Renaming file...");
+            progress.onProgress(constants_.renamingFileProgressMessage());
 
             String path = file.getParentPath().completePath(input);
             final FileSystemItem target =
@@ -813,7 +1170,7 @@ public class Files
             // clear selection
             view_.selectNone();
 
-            // pre-emptively rename in the UI then fallback to refreshing
+            // preemptively rename in the UI then fallback to refreshing
             // the view if there is an error
             view_.renameFile(file, target);
 
@@ -844,7 +1201,7 @@ public class Files
       () ->
       {
          // clear rename flag when operation is canceled
-         renaming_ = false;
+         inputPending_ = false;
       });
    }
 
@@ -885,5 +1242,8 @@ public class Files
    private static final String KEY_SORT_ORDER = "sortOrder";
    private JsArray<ColumnSortInfo> columnSortOrder_ = null;
    private DataImportPresenter dataImportPresenter_;
-   private boolean renaming_ = false;
+   private boolean inputPending_ = false;
+
+   private final PaneManager paneManager_;
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

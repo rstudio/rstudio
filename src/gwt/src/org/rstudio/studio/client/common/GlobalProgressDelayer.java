@@ -1,7 +1,7 @@
 /*
  * GlobalProgressDelayer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.common;
 
 import org.rstudio.core.client.widget.ProgressIndicator;
-
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 
 public class GlobalProgressDelayer
@@ -72,7 +72,7 @@ public class GlobalProgressDelayer
    {
       if (indicator_ == null)
       {
-         indicator_ = globalDisplay_.getProgressIndicator("Error");
+         indicator_ = globalDisplay_.getProgressIndicator(constants_.errorCaption());
          indicator_.onProgress(progressMessage_);
       }
    }
@@ -81,4 +81,5 @@ public class GlobalProgressDelayer
    private String progressMessage_;
    private Timer timer_;
    private ProgressIndicator indicator_ = null;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

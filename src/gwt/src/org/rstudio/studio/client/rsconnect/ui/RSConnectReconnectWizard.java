@@ -1,7 +1,7 @@
 /*
  * RSConnectReconnectWizard.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,10 +15,12 @@
 package org.rstudio.studio.client.rsconnect.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
@@ -34,7 +36,7 @@ public class RSConnectReconnectWizard
          String serverUrl,
          ProgressOperationWithInput<NewRSConnectAccountResult> onCompleted) 
    {
-      super("Reconnect Account", "Connect Account", Roles.getDialogRole(),
+      super(constants_.reconnectAccount(), constants_.connectAccount(), Roles.getDialogRole(),
             new NewRSConnectAccountInput(server, display), 
             new NewRSConnectAuthPage(),
             onCompleted);
@@ -56,5 +58,6 @@ public class RSConnectReconnectWizard
             account.getServer(), serverUrl, account.getName());
       authPage.setIntermediateResult(result);
    }
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }
 

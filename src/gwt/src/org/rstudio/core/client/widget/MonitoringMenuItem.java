@@ -1,7 +1,7 @@
 /*
  * MonitoringMenuItem.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 
@@ -60,8 +62,8 @@ public abstract class MonitoringMenuItem extends CheckableMenuItem
    public String getLabel()
    {
       return monitoredValue_
-            ? "Refresh Automatically"
-            : "Manual Refresh Only";
+            ? constants_.refreshAutomaticallyLabel()
+            : constants_.manualRefreshLabel();
    }
 
    @Override
@@ -83,5 +85,6 @@ public abstract class MonitoringMenuItem extends CheckableMenuItem
    private final ToolbarButton refreshButton_;
    private final ImageResource2x autoRefreshImage_;
    private final ImageResource2x manualRefreshImage_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }
 

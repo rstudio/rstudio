@@ -1,7 +1,7 @@
 /*
  * SessionMainProcess.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,8 +31,6 @@ namespace {
 // fork state
 boost::thread::id s_mainThreadId;
 bool s_wasForked = false;
-
-boost::thread_specific_ptr<bool> t_isMainThread;
 
 } // anonymous namespace
 
@@ -81,17 +79,12 @@ void setupForkHandlers()
 
 bool isMainThread()
 {
-   return t_isMainThread.get();
+   return s_mainThreadId == boost::this_thread::get_id();
 }
 
 void initThreadId()
 {
    s_mainThreadId = boost::this_thread::get_id();
-   t_isMainThread.reset(new bool{true});
-
-   // Give the R exec library a function it can call to validate the main thread for better diagnostics when
-   // R functions are run on the wrong thread
-   rstudio::r::exec::initMainThread(isMainThread);
 }
 
 bool haveActiveChildren()

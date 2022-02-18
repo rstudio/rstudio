@@ -1,7 +1,7 @@
 /*
  * ShowPublicKeyDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
 public class ShowPublicKeyDialog extends ModalDialogBase
 {
@@ -46,7 +47,7 @@ public class ShowPublicKeyDialog extends ModalDialogBase
       
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
       
-      ThemedButton closeButton = new ThemedButton("Close", event -> closeDialog());
+      ThemedButton closeButton = new ThemedButton(constants_.closeButtonLabel(), event -> closeDialog());
       addOkButton(closeButton);
    }
    
@@ -58,8 +59,7 @@ public class ShowPublicKeyDialog extends ModalDialogBase
       int mod = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : 
                                          KeyboardShortcut.CTRL;
       String cmdText = new KeyCombination("c", 'C', mod).toString(true);
-      HTML label = new HTML("Press " + cmdText + 
-                            " to copy the key to the clipboard");
+      HTML label = new HTML(constants_.pressLabel(cmdText));
       label.addStyleName(RES.styles().viewPublicKeyLabel());
       panel.add(label);
       ElementIds.assignElementId(label, ElementIds.PUBLIC_KEY_LABEL);
@@ -114,4 +114,5 @@ public class ShowPublicKeyDialog extends ModalDialogBase
    
    private final String publicKey_;
    private TextArea textArea_;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

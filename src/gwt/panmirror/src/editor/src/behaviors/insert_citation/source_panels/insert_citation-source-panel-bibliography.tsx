@@ -1,7 +1,7 @@
 /*
  * insert_citation-panel-bibliography.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,13 +26,14 @@ import {
   BibliographySource,
 } from '../../../api/bibliography/bibliography';
 import { kZoteroProviderKey } from '../../../api/bibliography/bibliography-provider_zotero';
-import { kLocalBiliographyProviderKey } from '../../../api/bibliography/bibliography-provider_local';
+import { kLocalBibliographyProviderKey } from '../../../api/bibliography/bibliography-provider_local';
 import { formatAuthors, formatIssuedDate, createUniqueCiteId } from '../../../api/cite';
 import {
   CitationSourcePanelProvider,
   CitationSourcePanelProps,
   CitationListEntry,
   CitationSourceListStatus,
+  CitationSourcePanelSearchResult,
 } from './insert_citation-source-panel';
 import { CitationSourceTypeheadSearchPanel } from './insert_citation-source-panel-typeahead-search';
 import { imageForType } from '../../../api/csl';
@@ -84,7 +85,7 @@ export function bibliographySourcePanel(
       };
     },
     warningMessage: bibliographyManager.warning(),
-    typeAheadSearch: (searchTerm: string, selectedNode: NavigationTreeNode, existingCitationIds: string[]) => {
+    typeAheadSearch: (searchTerm: string, selectedNode: NavigationTreeNode, existingCitationIds: string[], onResults: (result: CitationSourcePanelSearchResult) => void) => {
       const providerForNode = (node: NavigationTreeNode): string | undefined => {
         // The node could be the root node, no provider
         return node.type === kAllLocalSourcesRootNodeType ? undefined : node.type;
@@ -94,7 +95,7 @@ export function bibliographySourcePanel(
         // The node could be a provider root or a collection
         return node.type !== kAllLocalSourcesRootNodeType &&
           node.key !== kZoteroProviderKey &&
-          node.key !== kLocalBiliographyProviderKey
+          node.key !== kLocalBibliographyProviderKey
           ? node.key
           : undefined;
       };
@@ -106,17 +107,10 @@ export function bibliographySourcePanel(
       const uniqueSources = uniqby(sources, source => source.id);
 
       const citations = toCitationListEntries(uniqueSources, existingCitationIds, ui);
-      return {
+      onResults({
         citations,
         status: citations.length > 0 ? CitationSourceListStatus.default : CitationSourceListStatus.noResults,
         statusMessage: citations.length > 0 ? '' : ui.context.translateText('No items'),
-      };
-    },
-    search: (_searchTerm: string, _selectedNode: NavigationTreeNode, _existingCitationIds: string[]) => {
-      return Promise.resolve({
-        citations: [],
-        status: CitationSourceListStatus.default,
-        statusMessage: '',
       });
     },
   };
@@ -131,8 +125,8 @@ export const BibligraphySourcePanel = React.forwardRef<HTMLDivElement, CitationS
             {props.warningMessage}
           </div>
         ) : (
-          undefined
-        )}
+            undefined
+          )}
         <CitationSourceTypeheadSearchPanel
           height={props.height}
           citations={props.citations}
@@ -158,7 +152,7 @@ function rootImageForProvider(providerKey: string, ui: EditorUI) {
   switch (providerKey) {
     case kZoteroProviderKey:
       return ui.images.citations?.zotero_root;
-    case kLocalBiliographyProviderKey:
+    case kLocalBibliographyProviderKey:
       return ui.images.citations?.bibligraphy;
   }
 }
@@ -171,7 +165,7 @@ function folderImageForProvider(providerKey: string, hasParent: boolean, ui: Edi
       } else {
         return ui.images.citations?.zotero_library;
       }
-    case kLocalBiliographyProviderKey:
+    case kLocalBibliographyProviderKey:
       return ui.images.citations?.bibligraphy_folder;
   }
 }
@@ -233,7 +227,7 @@ function toCitationListEntries(
   return sources.map(source => {
     return {
       id:
-        source.providerKey === kLocalBiliographyProviderKey || useBetterBibTex
+        source.providerKey === kLocalBibliographyProviderKey || useBetterBibTex
           ? source.id
           : createUniqueCiteId(existingCitationIds, source.id),
       isIdEditable: source.providerKey === kZoteroProviderKey && !useBetterBibTex,

@@ -1,19 +1,10 @@
 @def MODIFIED_COLOUR #cdefcd;
 @def CUSTOM_COLOUR #EFF;
 
-@external rstudio-themes-flat;
-
 /* DataGrid styling / overrides */
 /* Avoid GWT's inset styling for selected cells */
 .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedRowCell:active,
 .dataGridKeyboardSelectedRowCell:hover, .dataGridKeyboardSelectedRowCell:focus {
-   border-top: 1px solid #FFF !important;
-   border-left: 1px solid #FFF !important;
-   border-right: 1px solid #FFF !important;
-}
-
-.rstudio-themes-flat .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedRowCell:active,
-.rstudio-themes-flat .dataGridKeyboardSelectedRowCell:hover, .dataGridKeyboardSelectedRowCell:focus {
    border-top: 0px solid #FFF !important;
    border-left: 0px solid #FFF !important;
    border-right: 0px solid #FFF !important;
@@ -31,7 +22,7 @@
    min-height: 18px !important;
 }
 
-.rstudio-themes-flat .dataGridWidget thead > tr {
+.dataGridWidget thead > tr {
    height: 18px;
 }
 
@@ -99,31 +90,31 @@ fieldset.showChoice {
    margin: 0;
 }
 
-.rstudio-themes-flat .dataGridWidget {
+.dataGridWidget {
    background: #FFF;
 }
 
-.rstudio-themes-flat .dataGridOddRowCell,
-.rstudio-themes-flat .dataGridEvenRowCell {
+.dataGridOddRowCell,
+.dataGridEvenRowCell {
    border: none;
 }
 
-.rstudio-themes-flat .dataGridCell:first-child {
+.dataGridCell:first-child {
    border-left: 2px solid #FFF;
 }
 
-.rstudio-themes-flat .dataGridCell:first-child div {
+.dataGridCell:first-child div {
    margin-left: -1px;
 }
 
-.rstudio-themes-flat .dataGridKeyboardSelectedRowCell:first-child, .dataGridKeyboardSelectedRowCell:first-child:active,
-.rstudio-themes-flat .dataGridKeyboardSelectedRowCell:first-child:hover, .dataGridKeyboardSelectedRowCell:first-child:focus {
+.dataGridKeyboardSelectedRowCell:first-child, .dataGridKeyboardSelectedRowCell:first-child:active,
+.dataGridKeyboardSelectedRowCell:first-child:hover, .dataGridKeyboardSelectedRowCell:first-child:focus {
    border-left: 2px solid #0AF !important;
 }
 
-.rstudio-themes-flat .dataGridKeyboardSelectedRowCell:first-child div {
+.dataGridKeyboardSelectedRowCell:first-child div {
 }
 
-.rstudio-themes-flat .dataGridWidget {
+.dataGridWidget {
    border: 1px solid #ddd;
 }

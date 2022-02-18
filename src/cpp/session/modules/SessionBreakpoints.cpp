@@ -1,7 +1,7 @@
 /*
  * SessionBreakpoints.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -258,7 +258,7 @@ Error getFunctionState(const json::JsonRpcRequest& request,
 }
 
 // Sets a breakpoint on a single copy of a function. Invoked several times to
-// look for function copies in alternate environemnts. Returns true if a
+// look for function copies in alternate environments. Returns true if a
 // breakpoint was set; false otherwise.
 bool setBreakpoint(const std::string& functionName,
                    const std::string& fileName,

@@ -1,7 +1,7 @@
 /*
  * FindOutputCodec.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.TableCellElement;
 import com.google.gwt.dom.client.TableRowElement;
@@ -21,6 +22,7 @@ import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputResources.Styles;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
 
@@ -42,8 +44,7 @@ public class FindOutputCodec
          TableCellElement td = Document.get().createTDElement();
          td.setClassName(styles_.overflowWarning());
          td.setColSpan(2);
-         td.setInnerText("More than 1000 matching lines were found. " +
-                         "Only the first 1000 lines are shown.");
+         td.setInnerText(constants_.overFlowMessage());
          tr.appendChild(td);
          return tr;
       }
@@ -124,4 +125,5 @@ public class FindOutputCodec
 
    private static final String DATA_FILE = "data-file";
    private static final String DATA_LINE = "data-line";
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

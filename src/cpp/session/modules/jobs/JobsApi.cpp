@@ -1,7 +1,7 @@
 /*
  * JobsApi.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -82,10 +82,12 @@ boost::shared_ptr<Job> addJob(
       const std::string& status,
       const std::string& group,
       int progress,
+      bool confirmTermination,
       JobState state,
       JobType type,
       bool autoRemove,
       SEXP actions,
+      JobActions cppActions,
       bool show,
       std::vector<std::string> tags)
 {
@@ -99,9 +101,9 @@ boost::shared_ptr<Job> addJob(
          ::time(0), /*recorded*/
          0, /*started*/
          0, /*completed*/
-         name, status, group, progress, state, type,
+         name, status, group, progress, confirmTermination, state, type,
          "" /*cluster*/,
-         autoRemove, actions, show,
+         autoRemove, actions, cppActions, show,
          true, /*saveOutput*/ 
          tags);
 }
@@ -115,11 +117,13 @@ boost::shared_ptr<Job> addJob(
       const std::string& status,
       const std::string& group,
       int progress,
+      bool confirmTermination,
       JobState state,
       JobType type,
       const std::string& cluster,
       bool autoRemove,
       SEXP actions,
+      JobActions cppActions,
       bool show,
       bool saveOutput,
       std::vector<std::string> tags)
@@ -127,7 +131,7 @@ boost::shared_ptr<Job> addJob(
    // create the job!
    boost::shared_ptr<Job> pJob = boost::make_shared<Job>(
          id, recorded, started, completed, name, status, group, 0 /* completed units */,
-         progress, state, type, cluster, autoRemove, actions, show, saveOutput, tags);
+         progress, confirmTermination, state, type, cluster, autoRemove, actions, cppActions, show, saveOutput, tags);
 
    // cache job and notify client
    s_jobs[id] = pJob;

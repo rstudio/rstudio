@@ -1,7 +1,7 @@
 /*
  * MinimizedWindowFrame.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,12 +15,14 @@
 package org.rstudio.core.client.theme;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.ClassIds;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.events.HasWindowStateChangeHandlers;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.WindowState;
@@ -58,7 +60,7 @@ public class MinimizedWindowFrame
       layout_.addStyleName(themeStyles.rstheme_minimizedWindowObject());
 
       Roles.getRegionRole().set(layout_.getElement());
-      Roles.getRegionRole().setAriaLabelProperty(layout_.getElement(), accessibleName + " minimized");
+      Roles.getRegionRole().setAriaLabelProperty(layout_.getElement(),  constants_.minimizedTabListRole(accessibleName));
 
       int leftPadding = title != null ? 8 : 4;
       layout_.addWest(createDiv(themeStyles.left()), leftPadding);
@@ -153,4 +155,5 @@ public class MinimizedWindowFrame
 
    private ClickDockLayoutPanel layout_;
    private Widget extraWidget_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

@@ -8,7 +8,7 @@
   width: 1px;
   background: #bbbbbb
 }
-.ace_editor, .rstudio-themes-flat.ace_editor_theme .profvis-flamegraph, .rstudio-themes-flat.ace_editor_theme, .rstudio-themes-flat .ace_editor_theme {
+.ace_editor, .ace_editor_theme .profvis-flamegraph, .ace_editor_theme {
   background-color: #eeeeee;
   color: #333333
 }
@@ -181,6 +181,8 @@
 .xtermInvertBgColor { background-color: #333333; }
 .xtermBold { font-weight: bold; }
 .xtermUnderline { text-decoration: underline; }
+.xtermHyperlink { cursor: pointer; }
+.xtermHyperlink:hover { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }
@@ -697,7 +699,7 @@
 .xtermBgColor254 { background-color: #e4e4e4; }
 .xtermColor255 { color: #eeeeee !important; }
 .xtermBgColor255 { background-color: #eeeeee; }
-.rstudio-themes-flat.editor_dark.ace_editor_theme a {
+.editor_dark.ace_editor_theme a {
    color: #FFF !important;
 }
 

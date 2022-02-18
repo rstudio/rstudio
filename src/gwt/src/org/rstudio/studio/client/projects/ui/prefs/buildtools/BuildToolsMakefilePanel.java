@@ -1,7 +1,7 @@
 /*
  * BuildToolsMakefilePanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 
@@ -25,10 +26,10 @@ public class BuildToolsMakefilePanel extends BuildToolsPanel
 {
    public BuildToolsMakefilePanel()
    {
-      pathSelector_ = new DirectorySelector("Makefile directory:");
+      pathSelector_ = new DirectorySelector(constants_.pathSelectorMakefileDirLabel());
       add(pathSelector_);
 
-      txtMakefileArgs_ = new AdditionalArguments("Additional arguments:");
+      txtMakefileArgs_ = new AdditionalArguments(constants_.txtMakefileArgs());
       Style style = txtMakefileArgs_.getElement().getStyle();
       style.setMarginTop(2, Unit.PX);
       add(txtMakefileArgs_);
@@ -54,4 +55,5 @@ public class BuildToolsMakefilePanel extends BuildToolsPanel
 
    private PathSelector pathSelector_;
    private AdditionalArguments txtMakefileArgs_;
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
 }

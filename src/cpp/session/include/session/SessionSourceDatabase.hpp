@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,8 @@
 #define kSourceDocumentTypeSQL       "sql"
 #define kSourceDocumentTypeShell     "sh"
 #define kSourceDocumentTypeSweave    "sweave"
+#define kSourceDocumentTypeQuartoMarkdown "quarto_markdown"
+
 
 
 namespace rstudio {
@@ -138,7 +140,8 @@ public:
       type_ = type;
    }
    
-   bool isRMarkdownDocument() const { return type_ == kSourceDocumentTypeRMarkdown; }
+   bool isRMarkdownDocument() const { return type_ == kSourceDocumentTypeRMarkdown ||
+                                             type_ == kSourceDocumentTypeQuartoMarkdown; }
    
    // is this an R, or potentially R-containing, source file?
    // TODO: Export these types as an 'enum' and provide converters.
@@ -148,6 +151,7 @@ public:
                type_ == kSourceDocumentTypeSweave ||
                type_ == kSourceDocumentTypeRSource ||
                type_ == kSourceDocumentTypeRMarkdown ||
+               type_ == kSourceDocumentTypeQuartoMarkdown ||
                type_ == kSourceDocumentTypeRHTML ||
                type_ == kSourceDocumentTypeCpp);
    }
@@ -209,6 +213,7 @@ core::Error getPath(const std::string& id, core::FilePath* pPath);
 core::Error getId(const std::string& path, std::string* pId);
 core::Error getId(const core::FilePath& path, std::string* pId);
 core::Error rename(const core::FilePath& from, const core::FilePath& to);
+core::Error detectExtendedType(const core::FilePath& filePath, std::string* pExtendedType);
 
 // source database events
 struct Events : boost::noncopyable

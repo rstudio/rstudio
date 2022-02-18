@@ -1,7 +1,7 @@
 /*
  * ServerOptions.gen.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -225,12 +225,9 @@ protected:
       value<int>(&monitorIntervalSeconds_)->default_value(60),
       "The interval in seconds at which the monitor is probed for new data.");
 
-   FilePath defaultConfigPath = core::system::xdg::systemConfigFile("rserver.conf");
+   FilePath defaultConfigPath = core::system::xdg::findSystemConfigFile("rserver configuration", "rserver.conf");
    std::string configFile = defaultConfigPath.exists() ?
       defaultConfigPath.getAbsolutePath() : "";
-   if (!configFile.empty())
-      LOG_INFO_MESSAGE("Reading rserver configuration from " + configFile);
-
    return program_options::OptionsDescription("rserver", configFile);
 }
 

@@ -1,7 +1,7 @@
 /*
  * AboutDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,16 +15,22 @@
 
 package org.rstudio.studio.client.application.ui;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Window;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.dom.Clipboard;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.common.GlobalDisplay;
 
 public class AboutDialog extends ModalDialogBase
 {
@@ -33,13 +39,27 @@ public class AboutDialog extends ModalDialogBase
       super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
 
-      setText("About " + editionInfo_.editionName());
-      ThemedButton OKButton = new ThemedButton("OK", (ClickEvent) -> closeDialog());
+      setText(constants_.title(editionInfo_.editionName()));
+
+      ThemedButton copyVersionButton = new ThemedButton(constants_.copyVersionButtonTitle(), (ClickEvent) ->
+      {
+         Clipboard.setText("RStudio " + info.version + " " +
+            "\"" + info.release_name + "\" " + info.build_type +
+            " (" + info.commit + ", " + info.date + ") " +
+            constants_.forText() + info.os + "\n" +
+            Window.Navigator.getUserAgent());
+         RStudioGinjector.INSTANCE.getGlobalDisplay().showMessage(GlobalDisplay.MSG_INFO, constants_.versionCopiedText(),
+                 constants_.versionInformationCopiedText());
+      });
+      addButton(copyVersionButton, constants_.copyVersionButton());
+
+      ThemedButton OKButton = new ThemedButton(constants_.okBtn(), (ClickEvent) -> closeDialog());
       addOkButton(OKButton);
 
       if (editionInfo_.proLicense() && Desktop.hasDesktopFrame())
       {
-         ThemedButton licenseButton = new ThemedButton("Manage License...", (ClickEvent) ->  {
+         ThemedButton licenseButton = new ThemedButton(constants_.manageLicenseBtn(), (ClickEvent) ->
+         {
             closeDialog();
             editionInfo_.showLicense();
          });
@@ -47,7 +67,7 @@ public class AboutDialog extends ModalDialogBase
       }
       contents_ = new AboutDialogContents(info, editionInfo_);
       setARIADescribedBy(contents_.getDescriptionElement());
-      setWidth("600px");
+      setWidth("600px"); //$NON-NLS-1$
    }
 
    @Override
@@ -70,4 +90,5 @@ public class AboutDialog extends ModalDialogBase
 
    private AboutDialogContents contents_;
    private ProductEditionInfo editionInfo_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

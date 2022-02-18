@@ -1,7 +1,7 @@
 /*
  * r_highlight_rules.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -41,7 +41,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
   var RoxygenHighlightRules = function()
   {
     var rules = {};
-
 
     rules["start"] = [
       {
@@ -229,15 +228,21 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         next  : "start"
       },
       {
+        // R Markdown chunk metadata comments
+        token : "comment.doc.tag",
+        regex : "#[|].*$",
+        next  : "start"
+      },
+      {
         // Begin Roxygen with todo
         token : ["comment", "comment.keyword.operator"],
-        regex : "(#+'\\s*)(TODO|FIXME)\\b",
+        regex : "(#+['*]\\s*)(TODO|FIXME)\\b",
         next  : "rd-start"
       },
       {
         // Roxygen
         token : "comment",
-        regex : "#+'",
+        regex : "#+['*]",
         next  : "rd-start"
       },
       {
@@ -317,7 +322,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     rules["#quoted-identifier"] = [
       {
         token : "identifier",
-        regex : "`.*?`",
+        regex : "[`](?:(?:\\\\.)|(?:[^`\\\\]))*?[`]",
         merge : false,
         next  : "start"
       }
@@ -440,6 +445,14 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       }
     ];
 
+    rules["#knitr-embed"] = [
+      {
+        token: "constant.language",
+        regex: "^[<][<][^>]+[>][>]$",
+        merge: false
+      }
+    ];
+
     rules["#text"] = [
       {
         token : "text",
@@ -452,7 +465,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       "#comment", "#string", "#number",
       "#package-access", "#quoted-identifier",
       "#function-call-or-keyword", "#keyword-or-identifier",
-      "#operator", "#text"
+      "#knitr-embed", "#operator", "#text"
     ]);
 
     rules["afterDollar"] = include([

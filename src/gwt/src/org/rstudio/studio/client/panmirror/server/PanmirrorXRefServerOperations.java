@@ -1,7 +1,7 @@
 /*
  * PanmirrorXRefServerOperations.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,9 +19,13 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JavaScriptObject;
 
+
 public interface PanmirrorXRefServerOperations 
 {
    void xrefIndexForFile(String file, ServerRequestCallback<JavaScriptObject> callback);
    void xrefForId(String file, String id, ServerRequestCallback<JavaScriptObject> callback);
+   void quartoXrefIndexForFile(String file, ServerRequestCallback<JavaScriptObject> callback);
+   void quartoXrefForId(String file, String id, ServerRequestCallback<JavaScriptObject> callback);
+   
 }
 

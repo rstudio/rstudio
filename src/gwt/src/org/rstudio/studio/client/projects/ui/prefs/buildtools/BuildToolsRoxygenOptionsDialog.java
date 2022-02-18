@@ -1,7 +1,7 @@
 /*
  * BuildToolsRoxygenOptionsDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectAutoRoxygenizeOptions;
 
 import com.google.gwt.core.client.GWT;
@@ -39,7 +40,7 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
                BuildToolsRoxygenOptions options,
                OperationWithInput<BuildToolsRoxygenOptions> operation)
    {
-      super("Roxygen Options", Roles.getDialogRole(), operation);
+      super(constants_.roxygenOptionsCaption(), Roles.getDialogRole(), operation);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
       chkRocletRd_.setValue(options.getRocletRd());
@@ -96,5 +97,6 @@ public class BuildToolsRoxygenOptionsDialog extends ModalDialog<BuildToolsRoxyge
    CheckBox chkRunForBuildAndReload_;
    
    
-   private Widget mainWidget_; 
+   private Widget mainWidget_;
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * ViewerPanePreviewer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.views.viewer.ViewerConstants;
 
 public class ViewerPanePreviewer implements ExportPlotPreviewer
 {
@@ -41,7 +42,7 @@ public class ViewerPanePreviewer implements ExportPlotPreviewer
    {
       if (frame_ == null)
       {
-         frame_ = new RStudioFrame("Viewer Pane Preview");
+         frame_ = new RStudioFrame(constants_.viewerPanePreviewTitle());
          frame_.setUrl(url_);
          frame_.setSize("100%", "100%");
          frame_.setStylePrimaryName(
@@ -65,4 +66,6 @@ public class ViewerPanePreviewer implements ExportPlotPreviewer
    private RStudioFrame frame_ = null;
 
    protected final String url_;
+   private static final ViewerConstants constants_ = com.google.gwt.core.client.GWT.create(ViewerConstants.class);
+
 }

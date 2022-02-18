@@ -1,7 +1,7 @@
 /*
  * JobsPresenterEventHandlersImpl.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.events;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -26,6 +27,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
@@ -137,6 +139,16 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
       }
    }
    
+   @Override
+   public void onJobsActivate(JobsActivateEvent event)
+   {
+      display_.bringToFront();
+      String jobId = event.getJobId();
+      if (jobId != null)
+         selectJob(jobId, false, false);;
+      
+   }
+   
    private boolean isSupportedJobType(int jobType)
    {
       return jobType == jobType_;
@@ -200,7 +212,7 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
          {
             // CONSIDER: this error is unlikely, but it'd be nicer to show the
             // job output anyway, with a non-modal error in it
-            globalDisplay_.showErrorMessage("Cannot retrieve job output",
+            globalDisplay_.showErrorMessage(constants_.cannotRetrieveJobOutputCaption(),
                   error.getMessage());
          }
       });
@@ -220,4 +232,5 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
    private Provider<JobManager> pJobManager_;
    private Provider<LauncherJobManager> pLauncherJobManager_;
    private EventBus eventBus_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

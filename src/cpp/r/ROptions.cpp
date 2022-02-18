@@ -1,7 +1,7 @@
 /*
  * ROptions.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,9 +18,11 @@
 
 #include <boost/format.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/FilePath.hpp>
 #include <shared_core/SafeConvert.hpp>
+
+#include <core/Log.hpp>
+#include <core/Thread.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
@@ -78,11 +80,11 @@ int getBuildOptionWidth()
 
 SEXP getOption(const std::string& name)
 {
-   if (!r::exec::isMainThread())
+   if (!ASSERT_MAIN_THREAD("Reading R option: " + name))
    {
-      LOG_ERROR_MESSAGE("R.getOption: " + name + " made from non-main thread");
       return R_NilValue;
    }
+
    return Rf_GetOption(Rf_install(name.c_str()), R_BaseEnv);
 }
 

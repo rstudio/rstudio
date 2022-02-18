@@ -1,7 +1,7 @@
 /*
  * AsyncServerImpl.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -259,7 +259,7 @@ public:
 
       // gracefully stop all open connections to ensure they are freed
       // before our io service (socket acceptor) is freed - if this is
-      // not gauranteed, boost will crash when attempting to free socket objects
+      // not guaranteed, boost will crash when attempting to free socket objects
       //
       // note that we create a copy of the connections list here because as connections
       // are closed, they will remove themselves from the list

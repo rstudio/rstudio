@@ -1,7 +1,7 @@
 /*
  * ThemedButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,6 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.DataResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FocusWidget;
@@ -42,58 +41,13 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
    {
       @Source("ThemedButton.css")
       Styles styles();
-
-      @Source("buttonLeftFocusEnabled.png")
-      DataResource buttonLeftFocusEnabled();
-      @Source("buttonLeftFocusSelected.png")
-      DataResource buttonLeftFocusSelected();
-      @Source("buttonLeftFocusPressed.png")
-      DataResource buttonLeftFocusPressed();
-      @Source("buttonLeftEnabled.png")
-      DataResource buttonLeftEnabled();
-      @Source("buttonLeftDisabled.png")
-      DataResource buttonLeftDisabled();
-      @Source("buttonLeftSelected.png")
-      DataResource buttonLeftSelected();
-      @Source("buttonLeftPressed.png")
-      DataResource buttonLeftPressed();
-      @Source("buttonRightFocusEnabled.png")
-      DataResource buttonRightFocusEnabled();
-      @Source("buttonRightFocusSelected.png")
-      DataResource buttonRightFocusSelected();
-      @Source("buttonRightFocusPressed.png")
-      DataResource buttonRightFocusPressed();
-      @Source("buttonRightEnabled.png")
-      DataResource buttonRightEnabled();
-      @Source("buttonRightDisabled.png")
-      DataResource buttonRightDisabled();
-      @Source("buttonRightSelected.png")
-      DataResource buttonRightSelected();
-      @Source("buttonRightPressed.png")
-      DataResource buttonRightPressed();
-      @Source("buttonTileFocusEnabled.png")
-      DataResource buttonTileFocusEnabled();
-      @Source("buttonTileFocusSelected.png")
-      DataResource buttonTileFocusSelected();
-      @Source("buttonTileFocusPressed.png")
-      DataResource buttonTileFocusPressed();
-      @Source("buttonTileEnabled.png")
-      DataResource buttonTileEnabled();
-      @Source("buttonTileDisabled.png")
-      DataResource buttonTileDisabled();
-      @Source("buttonTileSelected.png")
-      DataResource buttonTileSelected();
-      @Source("buttonTilePressed.png")
-      DataResource buttonTilePressed();
    }
 
    interface Styles extends CssResource
    {
       String themedButton();
       String left();
-      String buttonLeft();
       String buttonCenter();
-      String buttonRight();
       String buttonContent();
       String tight();
    }

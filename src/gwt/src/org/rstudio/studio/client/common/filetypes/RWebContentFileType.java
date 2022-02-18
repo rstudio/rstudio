@@ -1,7 +1,7 @@
 /*
  * RWebContentFileType.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,12 +36,24 @@ public class RWebContentFileType extends TextFileType
    }
    
    RWebContentFileType(String id,
+         String label,
+         EditorLanguage editorLanguage,
+         String defaultExtension,
+         ImageResource icon,
+         boolean isMarkdown,
+         boolean previewIsKnit)
+   {
+      this(id, label, editorLanguage, defaultExtension, icon, isMarkdown, previewIsKnit, false);
+   }
+   
+   RWebContentFileType(String id,
                        String label,
                        EditorLanguage editorLanguage,
                        String defaultExtension,
                        ImageResource icon,
                        boolean isMarkdown,
-                       boolean previewIsKnit)
+                       boolean previewIsKnit,
+                       boolean sourceOnSave)
    {
       super(id, 
             label, 
@@ -49,7 +61,7 @@ public class RWebContentFileType extends TextFileType
             defaultExtension,
             icon,
             true,    // word-wrap
-            false, 
+            sourceOnSave, 
             true, 
             true, 
             false,

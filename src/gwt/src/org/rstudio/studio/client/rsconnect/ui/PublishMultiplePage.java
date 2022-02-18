@@ -1,7 +1,7 @@
 /*
  * PublishMultiplePage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,11 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
@@ -30,7 +32,7 @@ public class PublishMultiplePage
    public PublishMultiplePage(String title, String subTitle, ImageResource icon,
          RSConnectPublishInput input)
    {
-      super(title, subTitle, "What do you want to publish?", 
+      super(title, subTitle, constants_.publishMultiplePageCaption(),
             icon, null, createPages(input));
    }
    
@@ -40,14 +42,10 @@ public class PublishMultiplePage
    {
       ArrayList<WizardPage<RSConnectPublishInput, 
                            RSConnectPublishResult>> pages = new ArrayList<>();
-      String singleTitle = "Publish just this document";
-      String singleSubtitle = "Only the document " + 
-                              input.getSourceRmd().getName() + 
-                              " will be published.";
-      String multipleTitle = "Publish all documents in the directory";
-      String multipleSubtitle = "All of the documents in the directory " + 
-                                input.getSourceRmd().getParentPathString() + 
-                                " will be published.";
+      String singleTitle = constants_.publishMultiplePagSingleTitle();
+      String singleSubtitle = constants_.publishMultiplePagSingleSubtitle(input.getSourceRmd().getName());
+      String multipleTitle = constants_.publishMultiplePageTitle();
+      String multipleSubtitle = constants_.publishMultiplePageSubtitle(input.getSourceRmd().getParentPathString());
       if (input.isShiny() || !input.hasDocOutput())
       {
          pages.add(new PublishFilesPage(singleTitle, singleSubtitle, 
@@ -77,4 +75,5 @@ public class PublishMultiplePage
       }
       return pages;
    }
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

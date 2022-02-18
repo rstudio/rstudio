@@ -1,7 +1,7 @@
 /*
  * text.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,5 +57,13 @@ export function stripQuotes(text: string) {
 }
 
 export function equalsIgnoreCase(str1: string, str2: string) {
-  return str1.localeCompare(str2, undefined, { sensitivity: 'accent' }) === 0;
+  if (!str1 && !!str2) {
+    return false;
+  } else if (!!str1 && !str2) {
+    return false;
+  } else if (str1 === str2) {
+    return true;
+  } else {
+    return str1.localeCompare(str2, undefined, { sensitivity: 'accent' }) === 0;
+  }
 }

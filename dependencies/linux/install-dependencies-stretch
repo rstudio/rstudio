@@ -2,7 +2,7 @@
 #
 # install-dependencies-stretch
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -32,11 +32,13 @@ sudo apt-get -y install \
   clang \
   clang-4.0 \
   cmake \
+  curl \
   debsigs \
   dpkg-sig \
   expect \
   fakeroot \
   gcc \
+  git \
   gnupg1 \
   libacl1-dev \
   libacl1-dev \
@@ -58,8 +60,11 @@ sudo apt-get -y install \
   make \
   mesa-common-dev \
   openjdk-8-jdk  \
+  p7zip-full \
   patchelf \
   python \
+  python3 \
+  python3-venv \
   r-base \
   rrdtool \
   uuid-dev \
@@ -77,6 +82,13 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common debian9
 cd ../linux
 
+# Python packages for i18n
+if [ -x "$(command -v python3)" ]; then
+  pushd ../../src/gwt/tools/i18n-helpers
+  python3 -m venv VENV
+  ./VENV/bin/pip install --disable-pip-version-check -r commands.cmd.xml/requirements.txt
+  popd
+fi 

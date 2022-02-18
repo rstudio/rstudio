@@ -1,7 +1,7 @@
 /*
  * RTokenizer.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -141,17 +141,9 @@ public:
    }
    
    // allow direct use in conditional statements (nullability)
-   typedef void (*unspecified_bool_type)();
-   static void unspecified_bool_true() {}
-   operator unspecified_bool_type() const
+   explicit operator bool() const
    {
-      return offset_ == static_cast<std::size_t>(-1) ?
-                                             0 :
-                                             unspecified_bool_true;
-   }
-   bool operator!() const
-   {
-      return offset_ == static_cast<std::size_t>(-1);
+      return offset_ != static_cast<std::size_t>(-1);
    }
    
    std::wstring::const_iterator begin() const
@@ -213,12 +205,12 @@ private:
    Error matchRawStringLiteral(RToken* pToken);
    
    RToken matchWhitespace();
-   RToken matchStringLiteral();
    RToken matchNumber();
    RToken matchIdentifier();
-   RToken matchQuotedIdentifier();
    RToken matchComment();
+   RToken matchDelimited();
    RToken matchUserOperator();
+   RToken matchKnitrEmbeddedChunk();
    RToken matchOperator();
    bool eol();
    wchar_t peek();

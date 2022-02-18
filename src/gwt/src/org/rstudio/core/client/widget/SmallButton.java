@@ -1,7 +1,7 @@
 /*
  * SmallButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,9 +26,6 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.resources.client.ImageResource.ImageOptions;
-import com.google.gwt.resources.client.ImageResource.RepeatStyle;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FocusWidget;
@@ -47,19 +44,12 @@ public class SmallButton extends FocusWidget
    {
       @Source("SmallButton.css")
       Styles styles();
-
-      ImageResource smallButtonLeft();
-      ImageResource smallButtonRight();
-      @ImageOptions(repeatStyle = RepeatStyle.Horizontal)
-      ImageResource smallButtonTile();
    }
 
    interface Styles extends CssResource
    {
       String smallButton();
-      String buttonLeft();
       String buttonCenter();
-      String buttonRight();
       String buttonContent();
    }
 

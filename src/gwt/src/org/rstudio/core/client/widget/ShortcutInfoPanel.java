@@ -1,7 +1,7 @@
 /*
  * ShortcutInfoPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,12 +13,6 @@
  *
  */
 package org.rstudio.core.client.widget;
-
-import java.util.List;
-
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.ShortcutInfo;
-import org.rstudio.core.client.command.ShortcutManager;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
@@ -34,6 +28,12 @@ import com.google.gwt.user.client.ui.FocusPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.command.ShortcutInfo;
+import org.rstudio.core.client.command.ShortcutManager;
+
+import java.util.List;
 
 public class ShortcutInfoPanel extends Composite
 {
@@ -71,7 +71,7 @@ public class ShortcutInfoPanel extends Composite
    
    protected String getHeaderText()
    {
-      return "Keyboard Shortcut Quick Reference";
+      return constants_.shortcutHeaderText();
    }
    
    protected Widget getShortcutContent()
@@ -79,42 +79,45 @@ public class ShortcutInfoPanel extends Composite
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
       List<ShortcutInfo> shortcuts = 
             ShortcutManager.INSTANCE.getActiveShortcutInfo();
-      String[][] groupNames = { 
-            new String[] { "Tabs", "Panes", "Files", "Main Menu (Server)" },
-            new String[] { "Source Navigation", "Execute" },
-            new String[] { "Source Editor", "Debug", "Accessibility" }, 
-            new String[] { "Source Control", "Build", "Console", "Terminal", "Other" }
+      String[][] groupNames = {
+              new String[]{"Tabs", "Panes", "Files", "Main Menu (Server)"},
+              new String[]{"Source Navigation", "Execute"},
+              new String[]{"Source Editor", "Debug", "Accessibility"},
+              new String[]{"Source Control", "Build", "Console", "Terminal", "Other"}
+      };
+      String[][] groupNamesI18n = {
+              new String[] { constants_.tabsGroupName(), constants_.panesGroupName(), constants_.filesGroupName(), constants_.mainMenuGroupName() },
+              new String[] { constants_.sourceNavigationGroupName(), constants_.executeGroupName() },
+              new String[] { constants_.sourceEditorGroupName(), constants_.debugGroupName(), constants_.accessibilityGroupName() },
+              new String[] { constants_.sourceControlGroupName(), constants_.buildGroupName(), constants_.consoleGroupName(), constants_.terminalGroupName(), constants_.otherGroupName() }
       };
       int pctWidth = 100 / groupNames.length;
       sb.appendHtmlConstant("<table width='100%'><tr>");
-      for (String[] colGroupNames: groupNames)
+      for (int i = 0; i < groupNames.length; i++)
       {
          sb.appendHtmlConstant("<td width='" + pctWidth + "%'>");
-         for (String colGroupName: colGroupNames)
+         for (int j = 0; j < groupNames[i].length; j++)
          {
             sb.appendHtmlConstant("<h2>");
-            sb.appendEscaped(colGroupName);
+            sb.appendEscaped(groupNamesI18n[i][j]);
             sb.appendHtmlConstant("</h2><table>");
-            for (int i = 0; i < shortcuts.size(); i++)
-            {
-               ShortcutInfo info = shortcuts.get(i);
+            for (ShortcutInfo info : shortcuts) {
                if (info.getDescription() == null ||
-                   info.getShortcuts().size() == 0 || 
-                   info.getGroupName() != colGroupName)
-               {
+                       info.getShortcuts().isEmpty() ||
+                       !info.getGroupName().equals(groupNames[i][j])) {
                   continue;
                }
                sb.appendHtmlConstant("<tr><td><strong>");
                sb.appendHtmlConstant(
-                     StringUtil.joinStrings(info.getShortcuts(), ", "));
+                       StringUtil.joinStrings(info.getShortcuts(), ", "));
                sb.appendHtmlConstant("</strong></td><td>");
                sb.appendEscaped(info.getDescription());
                sb.appendHtmlConstant("</td></tr>");
             }
             sb.appendHtmlConstant("</table>");
-            if (colGroupName == "Panes")
+            if (groupNames[i][j].equals("Panes"))
             {
-               sb.appendHtmlConstant("<p>Add Shift to zoom (maximize) pane.</p>");
+               sb.appendHtmlConstant("<p>"+ constants_.addShiftPTag() + "</p>");
             }
          }
          sb.appendHtmlConstant("</td>");
@@ -133,4 +136,5 @@ public class ShortcutInfoPanel extends Composite
    @UiField FocusPanel focusPanel;
    @UiField Anchor shortcutDocLink;
    @UiField Label headerLabel;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

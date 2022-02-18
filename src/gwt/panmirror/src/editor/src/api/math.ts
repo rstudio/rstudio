@@ -1,7 +1,7 @@
 /*
  * math.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,11 +13,17 @@
  *
  */
 
+import { EditorState } from 'prosemirror-state';
+
 import { EditorUI } from './ui';
 import { PandocToken } from './pandoc';
+import { markIsActive, getMarkAttrs } from './mark';
 
 export const kMathType = 0;
 export const kMathContent = 1;
+
+// additional field we stick into the AST for quarto crossref ids
+export const kMathId = 2;
 
 export enum MathType {
   Inline = 'InlineMath',
@@ -63,3 +69,12 @@ export function stringifyMath(tok: PandocToken) {
   const delimter = delimiterForType(tok.c[kMathType].t);
   return delimter + tok.c[kMathContent] + delimter;
 }
+
+export function mathTypeIsActive(state: EditorState, type: MathType) {
+  const schema = state.schema;
+  return (
+    markIsActive(state, schema.marks.math) &&
+    getMarkAttrs(state.doc, state.selection, schema.marks.math).type === type
+  );
+}
+

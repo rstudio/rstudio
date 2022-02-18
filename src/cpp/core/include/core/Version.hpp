@@ -1,7 +1,7 @@
 /*
  * Version.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -61,6 +61,11 @@ public:
       pieces_.push_back(versionMajor);
       pieces_.push_back(versionMinor);
       pieces_.push_back(versionPatch);
+   }
+
+   bool empty() const
+   {
+      return pieces_.empty();
    }
    
    int versionMajor() const

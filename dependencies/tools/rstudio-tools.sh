@@ -3,7 +3,7 @@
 #
 # rstudio-tools.sh -- Bash toolkit used in dependency scripts
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -78,6 +78,20 @@ sudo-if-necessary-for () {
 		echo "Execution of '$0' requires root privileges for access to '$1'"
 		shift
 		rerun-as-root "$@"
+	fi
+
+}
+
+mkdir-sudo-if-necessary () {
+
+	# If the directory does not exist, try to create it without sudo
+	if ! [ -e "$1" ]; then
+		mkdir -p "$1" &> /dev/null || true
+	fi
+
+	# Still not there, create with sudo
+	if ! [ -e "$1" ]; then
+		sudo -E mkdir -p "$1"
 	fi
 
 }
@@ -183,6 +197,10 @@ require-program () {
 
 is-verbose () {
 	[ -n "${VERBOSE}" ] && [ "${VERBOSE}" != "0" ]
+}
+
+is-m1-mac () {
+	[ "$(arch)" = "arm64" ]
 }
 
 # Download a single file
@@ -293,6 +311,12 @@ platform () {
 		# Detect Fedora
 		if grep -siq "fedora" /etc/redhat-release; then
 			echo "fedora"
+			return 0
+		fi
+
+		# Detect Rocky Linux (used for RHEL8)
+		if grep -siq "rocky" /etc/redhat-release; then
+			echo "rocky"
 			return 0
 		fi
 
@@ -409,6 +433,10 @@ is-centos () {
 	[ "$(platform)" = "centos" ]
 }
 
+is-rhel () {
+	[ "$(platform)" = "rocky" ]
+}
+
 is-fedora () {
 	[ "$(platform)" = "fedora" ]
 }
@@ -439,3 +467,26 @@ fi
 
 export RSTUDIO_TOOLS_ROOT
 
+# version of node.js used for building
+export RSTUDIO_NODE_VERSION="16.14.0"
+
+# create a copy of a file in the same folder with .original extension
+save-original-file () {
+
+	local ORIGINAL_FILE="$1"
+	local SAVED_FILE="$1.original"
+	cp $ORIGINAL_FILE $SAVED_FILE
+}
+
+# restore a file previously saved with save-original-file
+restore-original-file () {
+
+	local ORIGINAL_FILE="$1"
+	local SAVED_FILE="$1.original"
+	local MODIFIED_FILE="$1.modified"
+
+	rm -f $MODIFIED_FILE
+	mv $ORIGINAL_FILE $MODIFIED_FILE
+	mv $SAVED_FILE $ORIGINAL_FILE
+	rm -f $MODIFIED_FILE
+}

@@ -1,7 +1,7 @@
 /*
  * PanmirrorEditListDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,16 +21,21 @@ import java.util.List;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListCapabilities;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListIncremental;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListType;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style.Display;
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -44,7 +49,7 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
                                   PanmirrorListCapabilities capabilities,
                                   OperationWithInput<PanmirrorListProps> operation)
    {
-      super("List", Roles.getDialogRole(), operation, () -> {
+      super(constants_.listLabel(), Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
@@ -62,7 +67,23 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
          orderedOptionsPanel_.setVisible(listType_.getValue().equals(PanmirrorListType.Ordered));
       });
       
+      
+      listIncremental_.setChoices(new String[] {
+          constants_.defaultChoiceList(),
+          constants_.incrementalChoiceList(),
+          constants_.nonIncrementalChoiceList()
+      }, new String[] {
+         PanmirrorListIncremental.Default,
+         PanmirrorListIncremental.Incremental,
+         PanmirrorListIncremental.Nonincremental
+      });
+      labelIncremental_.setVisible(capabilities.incremental);
+      listIncremental_.setVisible(capabilities.incremental);
+      
+      
       tight_.getElement().setId(ElementIds.VISUAL_MD_LIST_TIGHT);
+      tight_.getElement().getStyle().setDisplay(Display.INLINE_BLOCK);
+      tight_.getElement().getStyle().setMarginTop(6, Unit.PX);
       
       startingNumber_.setMin(1);
       
@@ -72,13 +93,13 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
       
       List<String> numberStyleChoices = new ArrayList<>();
       numberStyleChoices.add("DefaultStyle");
-      numberStyleChoices.add("Decimal");
+      numberStyleChoices.add(constants_.decimalChoice());
       numberStyleChoices.add("LowerRoman");
       numberStyleChoices.add("UpperRoman");
       numberStyleChoices.add("LowerAlpha");
       numberStyleChoices.add("UpperAlpha");
       if (capabilities.example) {
-         numberStyleChoices.add("Example");
+         numberStyleChoices.add(constants_.exampleChoice());
       }
       numberStyle_.setChoices(numberStyleChoices.toArray(new String[] {}));
       
@@ -91,6 +112,7 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
 
       
       listType_.setValue(props.type);
+      listIncremental_.setValue(props.incremental);
       tight_.setValue(props.tight);
       startingNumber_.setValue(props.order + "");
       numberStyle_.setValue(props.number_style);
@@ -111,6 +133,7 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
    {
       PanmirrorListProps result = new PanmirrorListProps();
       result.type = listType_.getValue();
+      result.incremental = listIncremental_.getValue();
       result.tight = tight_.getValue();
       result.order = StringUtil.parseInt(startingNumber_.getValue(), 1);
       result.number_style = capabilities_.fancy ? numberStyle_.getValue() : "DefaultStyle";
@@ -132,11 +155,14 @@ public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
    
    private Widget mainWidget_;
 
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
+
    @UiField SelectWidget listType_;
+   @UiField FormLabel labelIncremental_;
+   @UiField SelectWidget listIncremental_;
    @UiField CheckBox tight_;
    @UiField VerticalPanel orderedOptionsPanel_;
    @UiField NumericTextBox startingNumber_;
    @UiField SelectWidget numberStyle_;
    @UiField SelectWidget numberDelimiter_;
-   
 }

@@ -1,7 +1,7 @@
 /*
  * config.h.in
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,12 @@
  */
 
 #define RSTUDIO_VERSION "${CPACK_PACKAGE_VERSION}"
+#define RSTUDIO_VERSION_MAJOR "${CPACK_PACKAGE_VERSION_MAJOR}"
+#define RSTUDIO_VERSION_MINOR "${CPACK_PACKAGE_VERSION_MINOR}"
+#define RSTUDIO_VERSION_PATCH "${CPACK_PACKAGE_VERSION_PATCH}"
+#define RSTUDIO_VERSION_SUFFIX "${CPACK_PACKAGE_VERSION_SUFFIX}"
 #define RSTUDIO_RELEASE_NAME "${RSTUDIO_RELEASE_NAME}"
+#define RSTUDIO_BUILD_TYPE "${RSTUDIO_BUILD_TYPE}"
 #define RSTUDIO_GIT_REVISION_HASH "${RSTUDIO_GIT_REVISION_HASH}"
 #define RSTUDIO_GIT_COMMIT "${RSTUDIO_GIT_COMMIT}"
 #define RSTUDIO_BUILD_ID "${RSTUDIO_BUILD_ID}"

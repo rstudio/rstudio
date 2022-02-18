@@ -1,6 +1,5 @@
 @charset "UTF-8";
 
-@external rstudio-themes-flat;
 @external rstudio-themes-dark;
 @external rstudio-themes-scrollbars;
 @external editor_dark;
@@ -10,44 +9,44 @@
 @external even;
 
 /* Default to white text on black in editor_dark themes */
-.rstudio-themes-flat.editor_dark {
+.editor_dark {
    color: white;
    background: none;
 }
 
-.rstudio-themes-flat.editor_dark div#TOC,
-.rstudio-themes-flat.editor_dark h1,
-.rstudio-themes-flat.editor_dark h2,
-.rstudio-themes-flat.editor_dark h3,
-.rstudio-themes-flat.editor_dark h4,
-.rstudio-themes-flat.editor_dark table {
+.editor_dark div#TOC,
+.editor_dark h1,
+.editor_dark h2,
+.editor_dark h3,
+.editor_dark h4,
+.editor_dark table {
    color: white !important;
    background: none !important;
 }
 
-.rstudio-themes-flat.editor_dark.ace_editor_theme p,
-.rstudio-themes-flat.editor_dark.ace_editor_theme a,
+.editor_dark.ace_editor_theme p,
+.editor_dark.ace_editor_theme a,
 .rstudio-themes-dark.editor_dark.ace_editor_theme div {
    color: white !important;
 }
 
-.rstudio-themes-flat.editor_dark h1,
-.rstudio-themes-flat.editor_dark h2,
-.rstudio-themes-flat.editor_dark h3,
-.rstudio-themes-flat.editor_dark h4 {
+.editor_dark h1,
+.editor_dark h2,
+.editor_dark h3,
+.editor_dark h4 {
    border-color: #6A6A6A !important;
 }
 
-.rstudio-themes-flat.editor_dark ::selection {
+.editor_dark ::selection {
    background-color: #CCC;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
-.rstudio-themes-flat.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {
+.rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
+.rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {
    background: #FFF;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme a.sourceLine {
+.rstudio-themes-dark.editor_dark.ace_editor_theme a.sourceLine {
    color: #A3A3A3 !important;
 }
 
@@ -55,38 +54,38 @@
   * This rule is used to preserve the default background + highlighting for
   * the Arguments section of the documentation.
   */
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme h3 + pre {
+.rstudio-themes-dark.editor_dark.ace_editor_theme h3 + pre {
    color: #DEDEDE;
    background: none;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme pre,
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme pre code {
+.rstudio-themes-dark.editor_dark.ace_editor_theme pre,
+.rstudio-themes-dark.editor_dark.ace_editor_theme pre code {
    background-color: #333;
    color: #F7F7F7;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme p code {
+.rstudio-themes-dark.editor_dark.ace_editor_theme p code {
    color: white !important;
    background: none;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme table thead,
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme table tr.even {
+.rstudio-themes-dark.editor_dark.ace_editor_theme table thead,
+.rstudio-themes-dark.editor_dark.ace_editor_theme table tr.even {
    background-color: #333 !important;
    border-color: #999 !important;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme table tr.odd {
+.rstudio-themes-dark.editor_dark.ace_editor_theme table tr.odd {
    border-color: #999 !important;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme table th,
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme table td {
+.rstudio-themes-dark.editor_dark.ace_editor_theme table th,
+.rstudio-themes-dark.editor_dark.ace_editor_theme table td {
    border-color: #666 !important;
 }
 
-.rstudio-themes-flat.rstudio-themes-dark.editor_dark.ace_editor_theme blockquote {
+.rstudio-themes-dark.editor_dark.ace_editor_theme blockquote {
    background-color: #333 !important;
    border-radius: 3px;
 }

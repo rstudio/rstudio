@@ -1,7 +1,7 @@
 /*
  * DelegatingCompletionManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,8 @@ import java.util.Map;
 
 import org.rstudio.core.client.MapUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.common.filetypes.DocumentMode;
 import org.rstudio.studio.client.common.filetypes.DocumentMode.Mode;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
@@ -30,7 +32,9 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 
-public abstract class DelegatingCompletionManager implements CompletionManager 
+public abstract class DelegatingCompletionManager
+      implements CompletionManager,
+                 CompletionManagerCommon
 {
    public DelegatingCompletionManager(DocDisplay docDisplay, CompletionContext context)
    {
@@ -49,7 +53,7 @@ public abstract class DelegatingCompletionManager implements CompletionManager
    
    protected abstract void initialize(Map<Mode, CompletionManager> managers);
    
-   private CompletionManager getCurrentCompletionManager()
+   public CompletionManager getActiveCompletionManager()
    {
       Mode mode = DocumentMode.getModeForCursorPosition(docDisplay_);
       
@@ -61,6 +65,14 @@ public abstract class DelegatingCompletionManager implements CompletionManager
          return completionManagerMap_.get(DocumentMode.Mode.R);
       }
       
+      // if we're in R or Python mode, but completing for embedded YAML comments
+      // then use the YAML completion manager instead
+      if (completionManagerMap_.containsKey(DocumentMode.Mode.YAML) &&
+         isRequestingCompletionsForYamlOptions(mode))
+      {
+         return completionManagerMap_.get(DocumentMode.Mode.YAML);
+      }
+      
       if (completionManagerMap_.containsKey(mode))
          return completionManagerMap_.get(mode);
       return nullManager_;
@@ -69,7 +81,7 @@ public abstract class DelegatingCompletionManager implements CompletionManager
    @Override
    public boolean previewKeyDown(NativeEvent event)
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       if (manager.previewKeyDown(event))
          return true;
       
@@ -87,35 +99,35 @@ public abstract class DelegatingCompletionManager implements CompletionManager
    @Override
    public boolean previewKeyPress(char charCode)
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       return manager.previewKeyPress(charCode);
    }
 
    @Override
    public void goToHelp()
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       manager.goToHelp();
    }
 
    @Override
    public void goToDefinition()
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       manager.goToDefinition();
    }
 
    @Override
    public void codeCompletion()
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       manager.codeCompletion();
    }
 
    @Override
    public void close()
    {
-      CompletionManager manager = getCurrentCompletionManager();
+      CompletionManager manager = getActiveCompletionManager();
       manager.close();
    }
 
@@ -166,6 +178,18 @@ public abstract class DelegatingCompletionManager implements CompletionManager
          return false;
       
       return true;
+   }
+   
+   private boolean isRequestingCompletionsForYamlOptions(DocumentMode.Mode mode)
+   {  
+      // only available in R and Python right now
+      if (mode != Mode.R && mode != Mode.PYTHON)
+         return false;
+      
+      String line = docDisplay_.getCurrentLineUpToCursor(); 
+      Pattern pattern = Pattern.create("^\\s*#[|]\\s*.*$", "");
+      Match match = pattern.match(line, 0);
+      return match != null;
    }
 
    private final DocDisplay docDisplay_;

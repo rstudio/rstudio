@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetRMarkdownHelper.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+import com.google.gwt.core.client.GWT;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
@@ -143,13 +144,24 @@ public class TextEditingTargetRMarkdownHelper
          return extendedType;
       }
    }
+   
+   public void withRMarkdownPackage(String userAction, final Command onReady)
+   {
+      withRMarkdownPackage(userAction, false,  new CommandWithArg<RMarkdownContext>() {
+         @Override
+         public void execute(RMarkdownContext arg)
+         {
+            onReady.execute();
+         }
+     });
+  }
 
    public void withRMarkdownPackage(
           final String userAction,
           final boolean isShinyDoc,
           final CommandWithArg<RMarkdownContext> onReady)
    {
-      withRMarkdownPackage("R Markdown", userAction, isShinyDoc, onReady);
+      withRMarkdownPackage(constants_.rMarkdown(), userAction, isShinyDoc, onReady);
    }
 
    public void withRMarkdownPackage(
@@ -187,7 +199,7 @@ public class TextEditingTargetRMarkdownHelper
                // check if this is a Shiny Doc
                if (isShinyDoc)
                {
-                  dependencyManager_.withShiny("Running shiny documents",
+                  dependencyManager_.withShiny(constants_.runningShinyDocuments(),
                                                callReadyCommand);
                }
                else
@@ -201,7 +213,7 @@ public class TextEditingTargetRMarkdownHelper
    public void renderNotebookv2(final DocUpdateSentinel sourceDoc,
          final String viewerType)
    {
-      withRMarkdownPackage("Compiling notebooks from R scripts",
+      withRMarkdownPackage(constants_.compilingNotebooks(),
                            false,
          new CommandWithArg<RMarkdownContext>() {
             @Override
@@ -326,9 +338,9 @@ public class TextEditingTargetRMarkdownHelper
                                final String viewerType)
    {
       withRMarkdownPackage(type == RmdOutput.TYPE_NOTEBOOK ?
-                              "R Notebook" :
-                              "R Markdown",
-                           "Rendering R Markdown documents",
+                              constants_.rNotebook() :
+                              constants_.rMarkdown(),
+                           constants_.renderingR(),
                            type == RmdOutput.TYPE_SHINY,
                            new CommandWithArg<RMarkdownContext>() {
          @Override
@@ -351,7 +363,7 @@ public class TextEditingTargetRMarkdownHelper
    public void renderRMarkdownSource(final String source,
                                      final boolean isShinyDoc)
    {
-      withRMarkdownPackage("Rendering R Markdown documents",
+      withRMarkdownPackage(constants_.renderingR(),
                            isShinyDoc,
             new CommandWithArg<RMarkdownContext>() {
          @Override
@@ -551,12 +563,16 @@ public class TextEditingTargetRMarkdownHelper
 
    public boolean isRuntimeShinyPrerendered(String yaml)
    {
-      return getRuntime(yaml) == RmdFrontMatter.SHINY_PRERENDERED_RUNTIME;
+      String runtime = getRuntime(yaml);
+      return runtime == RmdFrontMatter.SHINY_PRERENDERED_RUNTIME ||
+             runtime == RmdFrontMatter.SHINY_RMD_RUNTIME ||
+             getIsShinyServer(yaml);
    }
 
    public boolean isRuntimeShiny(String yaml)
    {
-      return getRuntime(yaml).startsWith(RmdFrontMatter.SHINY_RUNTIME);
+      return getRuntime(yaml).startsWith(RmdFrontMatter.SHINY_RUNTIME) ||
+             isRuntimeShinyPrerendered(yaml);
    }
 
    private String getRuntime(String yaml)
@@ -577,6 +593,37 @@ public class TextEditingTargetRMarkdownHelper
          Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
       }
       return "";
+   }
+   
+   private boolean getIsShinyServer(String yaml)
+   {
+      // This is in the editor load path, so guard against exceptions and log
+      // any we find without bringing down the editor.
+      try
+      {
+         YamlTree tree = new YamlTree(yaml);
+
+         if (tree.getKeyValue(RmdFrontMatter.KNIT_KEY).length() > 0)
+            return false;
+
+         if (tree.getChildValue(RmdFrontMatter.SERVER_KEY, "type") == "shiny")
+         {
+            return true;
+         }
+         else if (tree.getKeyValue(RmdFrontMatter.SERVER_KEY) == "shiny")
+         {
+            return true;
+         }
+         else
+         {
+            return false;
+         }
+      }
+      catch (Exception e)
+      {
+         Debug.log("Warning: Exception thrown while parsing YAML:\n" + yaml);
+      }
+      return false;
    }
 
    public String getCustomKnit(String yaml)
@@ -626,6 +673,18 @@ public class TextEditingTargetRMarkdownHelper
          }
       });
    }
+   
+   public String setOuartoOutputFormat(String yaml,  String format)
+   {
+      YamlTree tree = new YamlTree(yaml);
+      List<String> formats = getQuartoOutputFormats(tree);
+      if (formats != null && formats.contains(format))
+      {
+         tree.reorder(Arrays.asList(format));
+         return tree.toString();
+      }
+      return null;
+   }
 
    public void createDraftFromTemplate(final RmdChosenTemplate template)
    {
@@ -646,8 +705,8 @@ public class TextEditingTargetRMarkdownHelper
 
             // the file exists--offer to clean it up and continue.
             globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
-                  "Overwrite " + (template.createDir() ? "Directory" : "File"),
-                  targetFile + " exists. Overwrite it?", false,
+                  constants_.createDraftFromTemplateCaption((template.createDir() ? "Directory" : "File")),
+                  constants_.createDraftFromTemplateMessage(targetFile), false,
                   new Operation()
                   {
                      @Override
@@ -655,7 +714,8 @@ public class TextEditingTargetRMarkdownHelper
                      {
                         cleanAndCreateTemplate(template, target, fsi);
                      }
-                  }, null, null, "Overwrite", "Cancel", false);
+                  }, null, null, constants_.overwrite(),
+                    constants_.cancel(), false);
          }
 
          @Override
@@ -809,9 +869,8 @@ public class TextEditingTargetRMarkdownHelper
             @Override
             public void onError(ServerError error)
             {
-               globalDisplay_.showErrorMessage("Template Creation Failed",
-                     "Failed to load content from the template at " +
-                     template.getTemplatePath() + ": " + error.getMessage());
+               globalDisplay_.showErrorMessage(constants_.getTemplateContentErrorCaption(),
+                     constants_.getTemplateContentErrorMessage(template.getTemplatePath(), error.getMessage()));
             }
          });
    }
@@ -844,13 +903,13 @@ public class TextEditingTargetRMarkdownHelper
       {
          globalDisplay_.showMessage(
                MessageDisplay.MSG_WARNING,
-               "R Session Busy",
-               "Unable to edit parameters (the R session is currently busy).");
+               constants_.getRMarkdownParamsFileCaption(),
+               constants_.getRMarkdownParamsFileMessage());
          return;
       }
 
       // meet all dependencies then ask for params
-      final String action = "Specifying Knit parameters";
+      final String action = constants_.specifyingKnit();
       dependencyManager_.withRMarkdown(
          action,
          new Command() {
@@ -947,8 +1006,8 @@ public class TextEditingTargetRMarkdownHelper
             @Override
             public void onError(ServerError error)
             {
-               globalDisplay_.showErrorMessage("File Remove Failed",
-                     "Couldn't remove " + oldFile.getPath());
+               globalDisplay_.showErrorMessage(constants_.cleanAndCreateTemplateCaption(),
+                     constants_.cleanAndCreateTemplateMessage(oldFile.getPath()));
             }
          });
    }
@@ -959,7 +1018,7 @@ public class TextEditingTargetRMarkdownHelper
       final ProgressIndicator progress = new GlobalProgressDelayer(
             globalDisplay_,
             250,
-            "Creating R Markdown Document...").getIndicator();
+            constants_.createDraftFromTemplateProgressMessage()).getIndicator();
 
       server_.createRmdFromTemplate(target,
             template.getTemplatePath(), template.createDir(),
@@ -981,10 +1040,8 @@ public class TextEditingTargetRMarkdownHelper
                @Override
                public void onError(ServerError error)
                {
-                  progress.onError(
-                        "Couldn't create a template from " +
-                        template.getTemplatePath() + " at " + target + ".\n\n" +
-                        error.getMessage());
+                  progress.onError(constants_.createDraftFromTemplateOnError(template.getTemplatePath(),
+                          target, error.getMessage()));
                }
             });
    }
@@ -1051,10 +1108,21 @@ public class TextEditingTargetRMarkdownHelper
 
    public static List<String> getOutputFormats(String yaml)
    {
+      return getOutputFormats(yaml, RmdFrontMatter.OUTPUT_KEY);
+   }
+
+   public static List<String> getQuartoOutputFormats(String yaml)
+   {
+      return getOutputFormats(yaml, RmdFrontMatter.FORMAT_KEY);
+   }
+   
+   
+   public static List<String> getOutputFormats(String yaml, String outputKey)
+   {
       try
       {
          YamlTree tree = new YamlTree(yaml);
-         return getOutputFormats(tree);
+         return getOutputFormats(tree, outputKey);
       }
       catch (Exception e)
       {
@@ -1062,22 +1130,38 @@ public class TextEditingTargetRMarkdownHelper
       }
       return null;
    }
+   
 
-   private static List<String> getOutputFormats(YamlTree tree)
+   private static List<String> getOutputFormats(YamlTree tree, String outputKey)
    {
-      List<String> outputs = tree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);
+      List<String> outputs = tree.getChildKeys(outputKey);
+      
       if (outputs == null)
          return null;
       if (outputs.isEmpty())
-         outputs.add(tree.getKeyValue(RmdFrontMatter.OUTPUT_KEY));
+         outputs.add(tree.getKeyValue(outputKey));
+      
+      // filter commented out outputs
+      outputs.removeIf(output -> output.startsWith("#"));
+      
       return outputs;
+   }
+   
+   private static List<String> getOutputFormats(YamlTree tree)
+   {
+      return getOutputFormats(tree, RmdFrontMatter.OUTPUT_KEY);
+   }
+   
+   private static List<String> getQuartoOutputFormats(YamlTree tree)
+   {
+      return getOutputFormats(tree, RmdFrontMatter.FORMAT_KEY);
    }
 
    public void showNewRMarkdownDialog(
          final OperationWithInput<NewRMarkdownDialog.Result> onComplete)
    {
       withRMarkdownPackage(
-         "Creating R Markdown documents",
+         constants_.creatingRMarkdown(),
          false,
          new CommandWithArg<RMarkdownContext>()
       {
@@ -1088,7 +1172,7 @@ public class TextEditingTargetRMarkdownHelper
                server_,
                context,
                workbenchContext_,
-               prefs_.documentAuthor().getGlobalValue(),
+               prefs_,
                onComplete).showModal();
          }
       });
@@ -1098,9 +1182,7 @@ public class TextEditingTargetRMarkdownHelper
                                         String feature,
                                         String requiredVersion)
    {
-      display.showWarningBar(feature + " requires the " +
-                             "knitr package (version " + requiredVersion +
-                             " or higher)");
+      display.showWarningBar(constants_.showKnitrPreviewWarningBar(feature, requiredVersion));
    }
 
    private void addAdditionalResourceFiles(RmdFrontMatter frontMatter,
@@ -1134,4 +1216,5 @@ public class TextEditingTargetRMarkdownHelper
    private FilesServerOperations fileServer_;
 
    private static HandlerRegistration rmdParamsReadyRegistration_ = null;
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * VisualModeWriterOptions.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -134,7 +134,8 @@ public class VisualModeMarkdownWriter
       // bookdown documents(otherwise there will be duplicate footnotes)
       if (options.references.prefix == null && 
           (format_.isBookdownProjectDocument() || 
-           PanmirrorPandocFormatConfig.isDoctype(formatConfig, PanmirrorExtendedDocType.bookdown)
+           PanmirrorPandocFormatConfig.isDoctype(formatConfig, PanmirrorExtendedDocType.bookdown) ||
+           format_.isQuartoBookDocument()
           )
          )
       {

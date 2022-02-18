@@ -1,7 +1,7 @@
 /*
  * PackagesTab.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,4 +70,5 @@ public class PackagesTab extends DelayLoadWorkbenchTab<Packages>
 
    private final UserPrefs uiPrefs_;
    private final Session session_;
+   private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * Event.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,6 +46,8 @@ enum EventScope
 #define kSessionExitEvent        2005
 #define kSessionAdminSuspend     2006
 #define kSessionAdminTerminate   2007
+#define kSessionUploadEvent      2008
+#define kSessionDownloadEvent    2009
 
 // after username max size
 #define kMaxEventDataSize     32

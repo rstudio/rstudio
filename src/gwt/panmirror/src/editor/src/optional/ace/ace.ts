@@ -1,7 +1,7 @@
 /*
  * ace.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,13 +33,10 @@ import { GapCursor } from 'prosemirror-gapcursor';
 
 import { CodeViewOptions, editingRootNode } from '../../api/node';
 import { insertParagraph } from '../../api/paragraph';
-import { createImageButton } from '../../api/widgets/widgets';
 import { EditorUI, ChunkEditor } from '../../api/ui';
 import { EditorOptions } from '../../api/options';
 import { EditorEvents } from '../../api/events';
-import { kPlatformMac } from '../../api/platform';
-import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
-import { ExtensionContext } from '../../api/extension';
+import { ExtensionContext, ExtensionFn } from '../../api/extension';
 import { DispatchEvent, ResizeEvent, ScrollEvent } from '../../api/event-types';
 import { verticalArrowCanAdvanceWithinTextBlock } from '../../api/basekeys';
 import { handleArrowToAdjacentNode } from '../../api/cursor';
@@ -54,51 +51,79 @@ import { AceNodeViews } from './ace-node-views';
 import zenscroll from 'zenscroll';
 
 import './ace.css';
+import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { setTextSelection } from 'prosemirror-utils';
 
 const plugin = new PluginKey('ace');
 
-export function acePlugins(codeViews: { [key: string]: CodeViewOptions }, context: ExtensionContext): Plugin[] {
-  // shared services
-  const aceRenderQueue = new AceRenderQueue(context.events);
-  const aceNodeViews = new AceNodeViews();
+export function aceExtension(codeViews: { [key: string]: CodeViewOptions }): ExtensionFn {
 
-  // build nodeViews
-  const nodeTypes = Object.keys(codeViews);
-  const nodeViews: {
-    [name: string]: (node: ProsemirrorNode<any>, view: EditorView<any>, getPos: boolean | (() => number)) => NodeView;
-  } = {};
-  nodeTypes.forEach(name => {
-    nodeViews[name] = (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
-      return new AceNodeView(
-        node,
-        view,
-        getPos as () => number,
-        context,
-        codeViews[name],
-        aceRenderQueue,
-        aceNodeViews,
-      );
+  return (context: ExtensionContext) => {
+    // shared services
+    const aceRenderQueue = new AceRenderQueue(context.events);
+    const aceNodeViews = new AceNodeViews();
+
+    // build nodeViews
+    const nodeTypes = Object.keys(codeViews);
+    const nodeViews: {
+      [name: string]: (node: ProsemirrorNode<any>, view: EditorView<any>, getPos: boolean | (() => number)) => NodeView;
+    } = {};
+    nodeTypes.forEach(name => {
+      nodeViews[name] = (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
+        return new AceNodeView(
+          node,
+          view,
+          getPos as () => number,
+          context,
+          codeViews[name],
+          aceRenderQueue,
+          aceNodeViews,
+        );
+      };
+    });
+
+    const activeAceNodeViewCommand = (fn: (view: AceNodeView) => void) => {
+      return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+        const activeView = aceNodeViews.activeNodeView();
+        if (!activeView) {
+          return false;
+        }
+        if (dispatch) {
+          fn(activeView);
+        }
+        return true;
+      };
     };
-  });
 
-  return [
-    new Plugin({
-      key: plugin,
-      props: {
-        nodeViews,
-        handleDOMEvents: {
-          click: aceNodeViews.handleClick.bind(aceNodeViews),
-        },
-      },
-    }),
-    // arrow in and out of editor
-    keymap({
-      ArrowLeft: arrowHandler('left', nodeTypes),
-      ArrowRight: arrowHandler('right', nodeTypes),
-      ArrowUp: arrowHandler('up', nodeTypes),
-      ArrowDown: arrowHandler('down', nodeTypes),
-    }),
-  ];
+    return {
+      plugins: () => [
+        new Plugin({
+          key: plugin,
+          props: {
+            nodeViews,
+            handleDOMEvents: {
+              click: aceNodeViews.handleClick.bind(aceNodeViews),
+            },
+          },
+        }),
+        // arrow in and out of editor
+        keymap({
+          ArrowLeft: arrowHandler('left', nodeTypes),
+          ArrowRight: arrowHandler('right', nodeTypes),
+          ArrowUp: arrowHandler('up', nodeTypes),
+          ArrowDown: arrowHandler('down', nodeTypes),
+        }),
+      ],
+      commands: () => [
+        new ProsemirrorCommand(EditorCommandId.ExpandChunk, [], activeAceNodeViewCommand(nodeView => {
+          nodeView.setExpanded(true); 
+        })),
+        new ProsemirrorCommand(EditorCommandId.CollapseChunk, [], activeAceNodeViewCommand(nodeView => {
+          nodeView.setExpanded(false);
+        })),
+      ]
+    };
+  };
 }
 
 /**
@@ -297,6 +322,11 @@ export class AceNodeView implements NodeView {
       }
     }
 
+    // Ensure that the chunk is expanded if it contains find markers (so user can see search results)
+    if (this.chunk && this.findMarkers.length > 0) {
+      this.chunk.setExpanded(true);
+    }
+
     return true;
   }
 
@@ -322,6 +352,24 @@ export class AceNodeView implements NodeView {
     this.gapCursorPending = pending;
   }
 
+  public isFocused() {
+    return this.aceEditor && this.aceEditor.isFocused();
+  }
+
+  public setExpanded(expanded: boolean) {
+    if (this.chunk) {
+      this.chunk.setExpanded(expanded);
+    }
+  }
+
+  public getExpanded() {
+    if (this.chunk) {
+      return this.chunk.getExpanded();
+    } else {
+      return false;
+    }
+  }
+
   public selectNode() {
     if (this.aceEditor) {
       this.aceEditor.focus();
@@ -338,7 +386,7 @@ export class AceNodeView implements NodeView {
 
   private onEditorDispatch(tr: Transaction) {
     if (!tr.docChanged && tr.selectionSet) {
-      this.highlightSelectionAcross(tr.selection);
+      this.highlightSelectionAcross(tr.selection);      
     }
   }
 
@@ -469,10 +517,11 @@ export class AceNodeView implements NodeView {
     }
 
     // call host factory to instantiate editor
-    this.chunk = this.ui.chunks.createChunkEditor('ace', this.node.attrs.md_index, {
+    this.chunk = this.ui.chunks.createChunkEditor('ace', this.dom, this.node.attrs.md_index, this.node.attrs.classes, {
       getPos: () => this.getPos(),
       scrollIntoView: ele => this.scrollIntoView(ele),
       scrollCursorIntoView: () => this.scrollCursorIntoView(),
+      getTextContent: () => this.node.textContent
     });
 
     // populate initial contents
@@ -543,13 +592,20 @@ export class AceNodeView implements NodeView {
       exec: () => {
         this.arrowMaybeEscape('char', -1, 'gotoleft');
       },
+      readOnly: true
     });
     this.aceEditor.commands.addCommand({
       name: 'rightEscape',
       bindKey: 'Right',
       exec: () => {
+        // if the chunk is currently collapsed, the right arrow should open it up
+        if (this.chunk && !this.chunk.getExpanded()) {
+          this.chunk.setExpanded(true);
+          return;
+        }
         this.arrowMaybeEscape('char', 1, 'gotoright');
       },
+      readOnly: true
     });
     this.aceEditor.commands.addCommand({
       name: 'upEscape',
@@ -557,6 +613,7 @@ export class AceNodeView implements NodeView {
       exec: () => {
         this.arrowMaybeEscape('line', -1, 'golineup');
       },
+      readOnly: true
     });
     this.aceEditor.commands.addCommand({
       name: 'downEscape',
@@ -564,6 +621,7 @@ export class AceNodeView implements NodeView {
       exec: () => {
         this.arrowMaybeEscape('line', 1, 'golinedown');
       },
+      readOnly: true
     });
 
     // Pressing Backspace in the editor when it's empty should delete it.
@@ -806,12 +864,13 @@ export class AceNodeView implements NodeView {
     if (!this.aceEditor || !this.editSession) {
       return;
     }
+
     const pos = this.aceEditor.getCursorPosition();
     const lastrow = this.editSession.getLength() - 1;
-    if (
-      !this.aceEditor.getSelection().isEmpty() ||
+    if (this.getExpanded() && // special handing of keys for collapsed
+      (!this.aceEditor.getSelection().isEmpty() ||
       pos.row !== (dir < 0 ? 0 : lastrow) ||
-      (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length))
+      (unit === 'char' && pos.column !== (dir < 0 ? 0 : this.editSession.getDocument().getLine(pos.row).length)))
     ) {
       // this movement is happening inside the editor itself. don't escape
       // the editor; just execute the underlying command

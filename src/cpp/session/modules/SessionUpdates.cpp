@@ -1,7 +1,7 @@
 /*
  * SessionUpdates.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -96,7 +96,7 @@ void beginUpdateCheck(bool manual,
    cmd.append("source('");
    cmd.append(string_utils::jsLiteralEscape(scriptPath));
    cmd.append("'); downloadUpdateInfo('");
-   cmd.append(RSTUDIO_VERSION);
+   cmd.append(http::util::urlEncode(RSTUDIO_VERSION));
    cmd.append("', '");
 #if defined(_WIN32)
    cmd.append("windows");
@@ -114,6 +114,8 @@ void beginUpdateCheck(bool manual,
    cmd.append("'");
    cmd.append(")");
    args.push_back(cmd);
+
+   LOG_DEBUG_MESSAGE("Checking for updates with command: " + cmd);
    
    // Set options
    core::system::ProcessOptions options;

@@ -1,7 +1,7 @@
 /*
  * PosixSystem.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -26,6 +26,7 @@
 
 #include <functional>
 
+#include <boost/optional.hpp>
 #include <shared_core/Error.hpp>
 
 namespace rstudio {
@@ -181,13 +182,14 @@ Error restoreRoot();
 Error restorePrivileges();
 
 /**
- * @brief Temporarily drops privileges from root to the requested user.
+ * @brief Temporarily drops privileges from root to the requested user and group.
  *
  * @param in_user   The user to which to drop privileges.
+ * @param in_group   The group to which to drop privileges.
  *
- * @return Success if privileges could be dropped to the requested user; Error otherwise.
+ * @return Success if privileges could be dropped to the requested user and group; Error otherwise.
  */
-Error temporarilyDropPrivileges(const User& in_user);
+Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidType>& in_group);
 
 } // namespace posix
 } // namespace system

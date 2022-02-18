@@ -1,7 +1,7 @@
 /*
  * CSRFToken.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,8 +22,13 @@
 
 #include <core/http/Cookie.hpp>
 
-#define kCSRFTokenHeader "X-CSRF-Token"
-#define kCSRFTokenCookie "csrf-token"
+#define kCSRFTokenHeader "X-RS-CSRF-Token"
+#define kCSRFTokenCookie "rs-csrf-token"
+
+// NOTE: Remove block when Ghost Orchid 2021.09 is not supported ======================================
+#define kOldCSRFTokenHeader "X-CSRF-Token"
+#define kOldCSRFTokenCookie "csrf-token"
+// ====================================================================================================
 
 namespace rstudio {
 namespace core {
@@ -42,6 +47,9 @@ std::string setCSRFTokenCookie(const Request& request,
       core::http::Cookie::SameSite sameSite,
       core::http::Response* pResponse);
 
+std::string getCSRFTokenCookie(const Request& request);
+std::string getCSRFTokenHeader(const Request& request);
+
 // Validates an HTTP POST request by ensuring that the submitted fields include
 // a valid CSRF token.
 bool validateCSRFForm(const Request& request,
@@ -50,6 +58,8 @@ bool validateCSRFForm(const Request& request,
 // Validates any other HTTP request by ensuring that the CSRF HTTP header matches the accompanying
 // token cookie.
 bool validateCSRFHeaders(const Request& request);
+
+
 
 } // namespace http
 } // namespace core

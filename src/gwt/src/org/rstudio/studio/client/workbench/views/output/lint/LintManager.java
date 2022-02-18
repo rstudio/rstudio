@@ -1,7 +1,7 @@
 /*
- * LintPresenter.java
+ * LintManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.output.lint;
 
+import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
+import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Invalidation;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.RetinaStyleInjector;
@@ -26,25 +35,20 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
+import org.rstudio.studio.client.workbench.views.output.lint.model.LintSource;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionContext;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.cpp.CppCompletionRequest;
+import org.rstudio.studio.client.workbench.views.source.editors.text.yaml.YamlDocumentLinter;
 import org.rstudio.studio.client.workbench.views.source.model.CppDiagnostic;
 
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Timer;
-import com.google.inject.Inject;
+import java.util.List;
 
 public class LintManager
 {
@@ -88,16 +92,19 @@ public class LintManager
       if (type.isR() || type.isRnw() || type.isRpres() || type.isMarkdown())
          return userPrefs_.showDiagnosticsR().getValue() || userPrefs_.realTimeSpellchecking().getValue();
       
+      if (type.isYaml())
+         return userPrefs_.showDiagnosticsYaml().getValue();
+      
       return false;
    }
 
-   public LintManager(TextEditingTarget target,
-                      CppCompletionContext cppCompletionContext)
+   public LintManager(LintSource source, List<HandlerRegistration> releaseOnDismiss)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
-      target_ = target;
-      cppCompletionContext_ = cppCompletionContext;
-      docDisplay_ = target.getDocDisplay();
+      source_ = source;
+      cppCompletionContext_ = source.getCppCompletionContext();
+      docDisplay_ = source.getDisplay();
+      yamlLinter_ = new YamlDocumentLinter(source.getRCompletionContext(), docDisplay_);
       showMarkers_ = false;
       explicit_ = false;
       invalidation_ = new Invalidation();
@@ -150,13 +157,13 @@ public class LintManager
                   showMarkers_ = false;
                   excludeCurrentStatement_ = true;
                   explicit_ = false;
-                  timer_.schedule(userPrefs_.backgroundDiagnosticsDelayMs().getValue());
+                  timer_.schedule(defaultLintDelayMs());
                }
             });
          }
       });
-      
-      eventBus_.addHandler(
+
+      releaseOnDismiss.add(eventBus_.addHandler(
             SourceFileSaveCompletedEvent.TYPE,
             new SourceFileSaveCompletedEvent.Handler()
       {
@@ -164,18 +171,20 @@ public class LintManager
          public void onSourceFileSaveCompleted(
                SourceFileSaveCompletedEvent event)
          {
-            if (!docDisplay_.isFocused())
+            // Skip if source doesn't want to be linted on save (this can change based on
+            // the source's focus status so we have to check every time)
+            if (!source_.lintOnSave())
                return;
             
             if (userPrefs_.diagnosticsOnSave().getValue())
                lint(false, true, false);
          }
-      });
+      }));
    }
 
    public void relintAfterDelay(int delayMills)
    {
-      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? userPrefs_.backgroundDiagnosticsDelayMs().getValue() : delayMills);
+      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? defaultLintDelayMs() : delayMills);
    }
 
    @Inject
@@ -188,34 +197,21 @@ public class LintManager
       eventBus_ = eventBus;
    }
    
+   private int defaultLintDelayMs()
+   { 
+      return userPrefs_.backgroundDiagnosticsDelayMs().getValue();
+   }
+   
    private void lintActiveDocument(final LintContext context)
    {
       // don't lint if this is an unsaved document
-      if (target_.getPath() == null)
+      if (source_.getPath() == null)
          return;
 
-      if (context.showMarkers)
+      source_.withSavedDocument(context.showMarkers, () ->
       {
-         target_.saveThenExecute(null, false, new Command()
-         {
-            @Override
-            public void execute()
-            {
-               performLintServerRequest(context);
-            }
-         });
-      }
-      else
-      {
-         target_.withSavedDocNoRetry(new Command()
-         {
-            @Override
-            public void execute()
-            {
-               performLintServerRequest(context);
-            }
-         });
-      }
+         performLintServerRequest(context);
+      });
    }
 
    private void performLintServerRequest(final LintContext context)
@@ -223,10 +219,12 @@ public class LintManager
       if (context.token.isInvalid())
          return;
 
-      if (userPrefs_.showDiagnosticsCpp().getValue() && (target_.getTextFileType().isCpp() || target_.getTextFileType().isC()))
+      if (userPrefs_.showDiagnosticsCpp().getValue() && (source_.getTextFileType().isCpp() || source_.getTextFileType().isC()))
          performCppLintServerRequest(context);
-      else if (userPrefs_.showDiagnosticsR().getValue() && (target_.getTextFileType().isR() || target_.getTextFileType().isRmd()))
+      else if (userPrefs_.showDiagnosticsR().getValue() && (source_.getTextFileType().isR() || source_.getTextFileType().isRmd()))
          performRLintServerRequest(context);
+      else if (userPrefs_.showDiagnosticsYaml().getValue() && (source_.getTextFileType().isYaml()))
+         performYamlLintRequest(context);
       else if (userPrefs_.realTimeSpellchecking().getValue())
          showLint(context, JsArray.createArray().cast());
    }
@@ -239,7 +237,7 @@ public class LintManager
          public void execute(String docPath, int line, int column)
          {
             server_.getCppDiagnostics(
-            target_.getPath(),
+            source_.getPath(),
             new ServerRequestCallback<JsArray<CppDiagnostic>>()
             {
                
@@ -253,8 +251,9 @@ public class LintManager
                         CppCompletionRequest.asLintArray(diag);
                   
                   server_.lintRSourceDocument(
-                        target_.getId(),
-                        target_.getPath(),
+                        source_.getId(),
+                        source_.getPath(),
+                        StringUtil.notNull(source_.getCode()),
                         context.showMarkers,
                         context.explicit,
                         new ServerRequestCallback<JsArray<LintItem>>()
@@ -295,8 +294,9 @@ public class LintManager
    {
 
       server_.lintRSourceDocument(
-            target_.getId(),
-            target_.getPath(),
+            source_.getId(),
+            source_.getPath(),
+            StringUtil.notNull(source_.getCode()),
             context.showMarkers,
             context.explicit,
             new ServerRequestCallback<JsArray<LintItem>>()
@@ -306,8 +306,26 @@ public class LintManager
                {
                   if (context.token.isInvalid())
                      return;
-
-                  showLint(context, lint);
+                  
+                  // lint yaml for rmd files and R chunks within rmd files
+                  boolean isRmd = docDisplay_.getFileType().isRmd();
+                  boolean isRmdRChunk = docDisplay_.getEditorBehavior().equals(EditorBehavior.AceBehaviorEmbedded) &&
+                        docDisplay_.getFileType().isR();                  
+                  if ((isRmd || isRmdRChunk) && userPrefs_.showDiagnosticsYaml().getValue())
+                  {
+                     yamlLinter_.getLint(context.explicit, yamlLint -> {
+                        JsArray<LintItem> allLint = JsArray.createArray().cast();
+                        for (int i = 0; i < lint.length(); i++)
+                           allLint.push(lint.get(i));
+                        for (int i = 0; i < yamlLint.length(); i++)
+                           allLint.push(yamlLint.get(i));
+                        showLint(context, allLint);
+                     });               
+                  }
+                  else
+                  {
+                     showLint(context, lint);
+                  }
                }
 
                @Override
@@ -318,7 +336,19 @@ public class LintManager
             });
    }
    
+   private void performYamlLintRequest(final LintContext context)
+   {
+      yamlLinter_.getLint(context.explicit, lint -> {
+         showLint(context, lint, false);
+      });
+   }
+   
    private void showLint(LintContext context, JsArray<LintItem> lint)
+   {
+      showLint(context, lint, true);
+   }
+   
+   private void showLint(LintContext context, JsArray<LintItem> lint, boolean spellcheck)
    {
       if (docDisplay_.isPopupVisible())
          return;
@@ -337,9 +367,9 @@ public class LintManager
       else
          finalLint = lint;
 
-      if (userPrefs_.realTimeSpellchecking().getValue())
+      if (spellcheck && userPrefs_.realTimeSpellchecking().getValue())
       {
-         target_.getSpellingTarget().getLint(new ServerRequestCallback<JsArray<LintItem>>()
+         source_.getSpellingTarget().getLint(new ServerRequestCallback<JsArray<LintItem>>()
          {
             @Override
             public void onResponseReceived(JsArray<LintItem> response)
@@ -347,7 +377,7 @@ public class LintManager
                for (int i = 0; i < response.length(); i++)
                   finalLint.push(response.get(i));
 
-               docDisplay_.showLint(finalLint);
+               source_.showLint(finalLint);
             }
 
             @Override
@@ -358,14 +388,30 @@ public class LintManager
          });
       }
       else
-         docDisplay_.showLint(finalLint);
+         source_.showLint(finalLint);
    }
-   
+
+   /**
+    * Schedule a lint operation.
+    *
+    * @param milliseconds The number of milliseconds to delay before linting.
+    */
    public void schedule(int milliseconds)
    {
       timer_.schedule(milliseconds);
    }
-   
+
+   /**
+    * Cancel a pending lint operation, if any.
+    */
+   public void cancelPending()
+   {
+      if (timer_ != null && timer_.isRunning())
+      {
+         timer_.cancel();
+      }
+   }
+
    public void lint(boolean showMarkers,
                     boolean explicit,
                     boolean excludeCurrentStatement)
@@ -404,7 +450,7 @@ public class LintManager
    public final static int DEFAULT_LINT_DELAY = -1;
 
    private final Timer timer_;
-   private final TextEditingTarget target_;
+   private final LintSource source_;
    private final DocDisplay docDisplay_;
    private final Invalidation invalidation_;
    
@@ -416,6 +462,7 @@ public class LintManager
    private UserPrefs userPrefs_;
    private EventBus eventBus_;
    private final CppCompletionContext cppCompletionContext_;
+   private final YamlDocumentLinter yamlLinter_;
    
    static {
       LintResources.INSTANCE.styles().ensureInjected();

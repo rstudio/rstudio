@@ -1,7 +1,7 @@
 /*
  * CRANMirror.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -111,8 +111,49 @@ public class CRANMirror extends UserPrefs.CranMirror
       return repos;
    }
 
+   /**
+    * Sets Name and Host as a "custom" CRAN repo defined by URL alone
+    */
+   public final void setAsCustom()
+   {
+      setName(getCustomEnumValue());
+      setHost(getCustomEnumValue());
+   }
+
+   /**
+    * Returns whether this is a "custom" CRAN repo (eg: defined by URL alone)
+    */
+   public final boolean isCustom()
+   {
+      return getHost().equals(getCustomEnumValue());
+   }
+
+   /**
+    * Returns a formatted display name for this CRANMirror.
+    *
+    * Returned name includes Name and Host if a standard host, and simply the URL of a custom host from the user
+    */
    public final String getDisplay()
    {
-      return getName() + " - " + getHost();
+      if (isCustom()) 
+      {
+         // Host is Custom with no standard Name/Host info.  Identify by URL
+         return getURL();
+      } else {
+         return getName() + " - " + getHost();
+      }
    }
+
+   // Implement enumerators as functions because this extends a JavaScriptObject
+   // A cleaner way might be to wrap this in a wrapper class, but this gets the job done
+   public final static String getCustomEnumValue()
+   {
+      return "Custom"; //$NON-NLS-1$
+   }
+
+   public final static String getSecondaryEnumValue()
+   {
+      return "Secondary"; //$NON-NLS-1$
+   }
+
 }

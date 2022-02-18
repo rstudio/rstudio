@@ -1,7 +1,7 @@
 /*
  * RSConnectAccountList.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,11 +19,13 @@ import java.util.List;
 
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
@@ -46,7 +48,7 @@ public class RSConnectAccountList extends Composite implements CanSetControlId
       display_ = display;
       showCloudAccounts_ = showCloudAccounts;
       accountList_ = new WidgetListBox<>();
-      accountList_.setEmptyText("No accounts connected.");
+      accountList_.setEmptyText(constants_.noAccountsConnected());
       if (refreshImmediately)
          refreshAccountList();
       initWidget(accountList_);
@@ -72,7 +74,7 @@ public class RSConnectAccountList extends Composite implements CanSetControlId
          @Override
          public void onError(ServerError error)
          {
-            display_.showErrorMessage("Error retrieving accounts", 
+            display_.showErrorMessage(constants_.errorRetrievingAccounts(),
                                      error.getMessage());
          }
       });
@@ -182,4 +184,5 @@ public class RSConnectAccountList extends Composite implements CanSetControlId
    {
       Roles.getListboxRole().setAriaLabelledbyProperty(accountList_.getElement(), Id.of(describedBy));
    }
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

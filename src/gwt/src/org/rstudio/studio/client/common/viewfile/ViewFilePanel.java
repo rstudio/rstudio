@@ -1,7 +1,7 @@
 /*
  * ViewFilePanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.viewfile;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -30,6 +31,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
@@ -215,7 +217,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
    public void showFile(final FileSystemItem file, String encoding)
    {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
-            globalDisplay_, 300, "Loading file contents").getIndicator();
+            globalDisplay_, 300, constants_.loadingFileContentsProgressCaption()).getIndicator();
                                                
       
       server_.getFileContents(file.getPath(), 
@@ -287,7 +289,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
       toolbar_ = new ViewFileToolbar();
       
       toolbar_.addLeftWidget(new ToolbarButton(
-         "Save As",
+         constants_.saveAsText(),
          ToolbarButton.NoTitle,
          commands_.saveSourceDoc().getImageResource(),
          new ClickHandler() {
@@ -356,7 +358,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
    private void saveFileAs()
    {
       fileDialogs_.saveFile(
-            "Save File - " + targetFile_.getName(), 
+            constants_.saveFileCaption(targetFile_.getName()),
             fileContext_, 
             FileSystemItem.createFile(
                 session_.getSessionInfo().getActiveProjectDir()
@@ -375,7 +377,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
                      return;
                   }
                   
-                  indicator.onProgress("Saving file...");
+                  indicator.onProgress(constants_.savingFileProgressCaption());
                   
                   saveFileAsHandler_.onSaveFileAs(targetFile_,
                                                   input,
@@ -389,7 +391,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
    {
       public ViewFileToolbar()
       {
-         super("View File Tab");
+         super(constants_.viewFileTabLabel());
       }
       
       @Override
@@ -419,4 +421,5 @@ public class ViewFilePanel extends Composite implements TextDisplay
    private SaveFileAsHandler saveFileAsHandler_ = null;
    
    private final ArrayList<HandlerRegistration> releaseOnDismiss_ = new ArrayList<>();
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * HelpInfoPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,11 +16,13 @@ package org.rstudio.studio.client.workbench.views.console.shell.assist;
 
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
@@ -38,7 +40,7 @@ public class HelpInfoPopupPanel extends PopupPanel
       vpanel_.setWidth("100%");
       outer.add(scrollPanel_);
       
-      f1prompt_ = new Label("Press F1 for additional help");
+      f1prompt_ = new Label(constants_.f1prompt());
       f1prompt_.setStylePrimaryName(consoleStyles_.promptFullHelp());
       outer.add(f1prompt_);
 
@@ -86,31 +88,43 @@ public class HelpInfoPopupPanel extends PopupPanel
 
    }
    
-   public void displayParameterHelp(Map<String, String> help, String paramName)
+   public void displayParameterHelp(String name, String description)
    {
-      String desc = help.get(paramName);
-      if (desc == null)
-      {
-         clearHelp(false);
-         return;
-      }
-
+      displayParameterHelp(name, description, true);
+   }
+   
+   public void displayParameterHelp(String name, String description, boolean showF1Help)
+   {
       timer_.cancel();
       vpanel_.clear();
 
-      if (paramName != null)
+      
+      if (name != null)
       {
-         Label lblSig = new Label(paramName);
+         Label lblSig = new Label(name);
          lblSig.setStylePrimaryName(consoleStyles_.paramInfoName());
          vpanel_.add(lblSig);
       }
       
-      HTML htmlDesc = new HTML(desc);
+      HTML htmlDesc = new HTML(description);
       htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
       vpanel_.add(htmlDesc);
       
-      doDisplay();
+      doDisplay(showF1Help);
    }
+   
+   public void displayParameterHelp(Map<String, String> help, String name)
+   {
+      String description = help.get(name);
+      if (description == null)
+      {
+         clearHelp(false);
+         return;
+      }
+      
+      displayParameterHelp(name, description);
+   }
+   
    
    public void displayPackageHelp(HelpInfo.ParsedInfo help)
    {
@@ -131,6 +145,7 @@ public class HelpInfoPopupPanel extends PopupPanel
 
       doDisplay();
    }
+   
    
    public void displaySnippetHelp(String contents)
    {
@@ -181,5 +196,5 @@ public class HelpInfoPopupPanel extends PopupPanel
    static {
       RES.styles().ensureInjected();
    }
-   
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

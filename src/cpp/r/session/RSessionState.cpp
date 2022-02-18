@@ -1,7 +1,7 @@
 /*
  * RSessionState.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -124,7 +124,7 @@ Error saveRVersion(const FilePath& filePath)
    return Success();
 }
 
-Error saveEnvironmentVars(const FilePath& envFile, const std::string& envVarBlacklist)
+Error saveEnvironmentVars(const FilePath& envFile, const std::string& ephemeralEnvVars)
 {
    // remove then create settings file
    Error error = envFile.removeIfExists();
@@ -135,9 +135,9 @@ Error saveEnvironmentVars(const FilePath& envFile, const std::string& envVarBlac
    if (error)
       return error;
 
-   // build set of blacklisted environment variables
-   std::vector<std::string> envBlacklist(core::algorithm::split(envVarBlacklist, ":"));
-   std::unordered_set<std::string> blacklist(envBlacklist.begin(), envBlacklist.end());
+   // build set of excluded environment variables
+   std::vector<std::string> envEphemeral(core::algorithm::split(ephemeralEnvVars, ":"));
+   std::unordered_set<std::string> ephemeral(envEphemeral.begin(), envEphemeral.end());
 
    // get environment and write it to the file
    core::system::Options env;
@@ -145,7 +145,7 @@ Error saveEnvironmentVars(const FilePath& envFile, const std::string& envVarBlac
    envSettings.beginUpdate();
    for (const core::system::Option& var : env)
    {
-      if (blacklist.count(var.first) == 0)
+      if (ephemeral.count(var.first) == 0)
          envSettings.set(var.first, var.second);
    }
    envSettings.endUpdate();
@@ -288,7 +288,7 @@ void saveDevMode(Settings* pSettings)
       // turn dev mode off -- this is important so that dev mode undoes
       // its manipulations of the prompt and libpaths before they are saved
       // suppress output to eliminate dev_mode OFF message
-      // ignore error on purpose -- will happen if devtools isn't intalled
+      // ignore error on purpose -- will happen if devtools isn't installed
       r::session::utils::SuppressOutputInScope suppressOutput;
       error = r::exec::RFunction("devtools:::dev_mode", false).call();
    }
@@ -356,7 +356,7 @@ bool save(const FilePath& statePath,
           bool serverMode,
           bool excludePackages,
           bool disableSaveCompression,
-          const std::string& envVarSaveBlacklist)
+          const std::string& ephemeralEnvVars)
 {
    // initialize context
    Settings settings;
@@ -379,7 +379,7 @@ bool save(const FilePath& statePath,
    }
 
    // save environment variables
-   error = saveEnvironmentVars(statePath.completePath(kEnvironmentVars), envVarSaveBlacklist);
+   error = saveEnvironmentVars(statePath.completePath(kEnvironmentVars), ephemeralEnvVars);
    if (error)
    {
       reportError(kSaving, kEnvironmentVars, error, ERROR_LOCATION);

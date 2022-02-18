@@ -1,7 +1,7 @@
 /*
  * RSession.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,6 +68,9 @@
 
 #include <gsl/gsl>
 
+extern "C" {
+int Rf_countContexts(int, int);
+}
 #define CTXT_BROWSER 16
 
 // get rid of windows TRUE and FALSE definitions
@@ -398,6 +401,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
       cb.readConsole = RReadConsole;
       cb.writeConsoleEx = RWriteConsoleEx;
       cb.cleanUp = RCleanUp;
+      cb.resetConsole = RResetConsole;
    }
    else
    {
@@ -460,6 +464,12 @@ void setClientMetrics(const RClientMetrics& metrics)
    }
 }
 
+void reportWarningToConsole(const std::string& warning)
+{
+   std::string msg = "WARNING: " + warning + "\n";
+   RWriteConsoleEx(msg.c_str(), gsl::narrow_cast<int>(msg.length()), 1);
+}
+
 void reportAndLogWarning(const std::string& warning)
 {
    std::string msg = "WARNING: " + warning + "\n";
@@ -493,7 +503,7 @@ bool isSuspendable(const std::string& currentPrompt)
     
    return true;
 }
-   
+
 
 bool browserContextActive()
 {

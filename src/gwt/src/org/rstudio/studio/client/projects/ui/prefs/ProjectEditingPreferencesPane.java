@@ -1,7 +1,7 @@
 /*
  * ProjectEditingPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
@@ -22,6 +23,7 @@ import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectPrefs;
@@ -43,24 +45,24 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    public ProjectEditingPreferencesPane(final SourceServerOperations server)
    {
       // source editing options
-      enableCodeIndexing_ = new CheckBox("Index source files (for code search/navigation)", false);
+      enableCodeIndexing_ = new CheckBox(constants_.enableCodeIndexingLabel(), false);
       enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
       add(enableCodeIndexing_);
 
-      chkSpacesForTab_ = new CheckBox("Insert spaces for tab", false);
+      chkSpacesForTab_ = new CheckBox(constants_.chkSpacesForTabLabel(), false);
       chkSpacesForTab_.addStyleName(RESOURCES.styles().useSpacesForTab());
       add(chkSpacesForTab_);
 
-      numSpacesForTab_ = new NumericValueWidget("Tab width", 1, UserPrefs.MAX_TAB_WIDTH);
+      numSpacesForTab_ = new NumericValueWidget(constants_.tabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH);
       numSpacesForTab_.addStyleName(RESOURCES.styles().numberOfTabs());
       numSpacesForTab_.setWidth("36px");
       add(numSpacesForTab_);
 
-      chkAutoAppendNewline_ = new CheckBox("Ensure that source files end with newline");
+      chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
       chkAutoAppendNewline_.addStyleName(RESOURCES.styles().editingOption());
       add(chkAutoAppendNewline_);
 
-      chkStripTrailingWhitespace_ = new CheckBox("Strip trailing horizontal whitespace when saving");
+      chkStripTrailingWhitespace_ = new CheckBox(constants_.chkStripTrailingWhitespaceLabel());
       chkStripTrailingWhitespace_.addStyleName(RESOURCES.styles().editingOption());
       add(chkStripTrailingWhitespace_);
 
@@ -70,9 +72,9 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       add(lineEndings_);
 
       encoding_ = new TextBoxWithButton(
-            "Text encoding:",
+            constants_.textEncodingLabel(),
             "",
-            "Change...",
+            constants_.changeLabel(),
             null,
             ElementIds.TextBoxButtonId.PROJECT_TEXT_ENCODING,
             true,
@@ -122,7 +124,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Code Editing";
+      return constants_.codingEditingLabel();
    }
 
    @Override
@@ -188,4 +190,5 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private TextBoxWithButton encoding_;
    private String encodingValue_;
    private RProjectConfig initialConfig_;
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

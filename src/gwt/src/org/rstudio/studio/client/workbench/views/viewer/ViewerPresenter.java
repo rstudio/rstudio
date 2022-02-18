@@ -1,7 +1,7 @@
 /*
  * ViewerPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -45,6 +45,7 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -88,12 +89,20 @@ public class ViewerPresenter extends BasePresenter
       void previewRmd(RmdPreviewParams params);
       void previewShiny(ShinyApplicationParams params);
       void previewPlumber(PlumberAPIParams params);
+      void previewQuarto(String url, QuartoNavigate quartoNav);
       HandlerRegistration addLoadHandler(LoadHandler handler);
       String getUrl();
       String getTitle();
       void popout();
       void refresh();
+      void editSource();
       Size getViewerFrameSize();
+      
+      // view can take over navigation
+      boolean hasNavigationHandlers();
+      void navigateForward();
+      void navigateBack();
+      
    }
 
    @Inject
@@ -191,7 +200,12 @@ public class ViewerPresenter extends BasePresenter
          else if (ensureHeight > 0)
             display_.ensureHeight(ensureHeight);
 
-         navigate(event.getURL());
+         
+         QuartoNavigate quartoNav = event.getQuartoNavigate();
+         if (quartoNav != null)
+            navigateQuarto(event.getURL(), quartoNav);
+         else
+            navigate(event.getURL());
 
          if (event.isHTMLWidget())
             updateZoomWindow(display_.getUrl());
@@ -299,13 +313,19 @@ public class ViewerPresenter extends BasePresenter
    @Handler
    public void onViewerBack()
    {
-      server_.viewerBack(new VoidServerRequestCallback());
+      if (display_.hasNavigationHandlers())
+         display_.navigateBack();
+      else
+         server_.viewerBack(new VoidServerRequestCallback());
    }
 
    @Handler
    public void onViewerForward()
    {
-      server_.viewerForward(new VoidServerRequestCallback());
+      if (display_.hasNavigationHandlers())
+         display_.navigateForward();
+      else
+         server_.viewerForward(new VoidServerRequestCallback());
    }
 
    @Handler
@@ -343,8 +363,8 @@ public class ViewerPresenter extends BasePresenter
       display_.bringToFront();
 
       final ProgressIndicator indicator =
-         globalDisplay_.getProgressIndicator("Error");
-      indicator.onProgress("Preparing to export plot...");
+         globalDisplay_.getProgressIndicator(constants_.errorCaption());
+      indicator.onProgress(constants_.preparingToExportPlotMessage());
 
       // get the default directory
       FileSystemItem defaultDir = ExportPlotUtils.getDefaultSaveDirectory(
@@ -387,13 +407,13 @@ public class ViewerPresenter extends BasePresenter
       if (saveAsWebPageDefaultPath_ == null)
          saveAsWebPageDefaultPath_ = workbenchContext_.getCurrentWorkingDir();
 
-      dependencyManager_.withRMarkdown("Saving standalone web pages",
+      dependencyManager_.withRMarkdown(constants_.savingStandaloneWebPagesMessage(),
                                        new Command() {
          @Override
          public void execute()
          {
             fileDialogs_.saveFile(
-                  "Save As Web Page",
+                  constants_.saveAsWebPageCaption(),
                   fileSystemContext_,
                   saveAsWebPageDefaultPath_,
                   ".html",
@@ -410,7 +430,7 @@ public class ViewerPresenter extends BasePresenter
                            return;
                         }
 
-                        indicator.onProgress("Saving as web page...");
+                        indicator.onProgress(constants_.savingAsWebPageMessage());
 
                         server_.viewerSaveAsWebPage(
                               targetFile.getPath(),
@@ -466,14 +486,14 @@ public class ViewerPresenter extends BasePresenter
       // confirm
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
 
-         "Clear Viewer",
+         constants_.clearViewerCaption(),
 
-         "Are you sure you want to clear all of the items in the history?",
+         constants_.clearViewerMessage(),
 
          new ProgressOperation() {
             public void execute(final ProgressIndicator indicator)
             {
-               indicator.onProgress("Clearing viewer...");
+               indicator.onProgress(constants_.clearingViewerMessage());
                stop(false, true, indicator);
             }
          },
@@ -488,12 +508,25 @@ public class ViewerPresenter extends BasePresenter
    {
       stop(true);
    }
+   
+   @Handler
+   public void onViewerEditSource()
+   {
+      display_.editSource();
+   }
 
    private void navigate(String url)
    {
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
       display_.navigate(url);
+   }
+
+   private void navigateQuarto(String url, QuartoNavigate quartoNav)
+   {
+      if (Desktop.hasDesktopFrame())
+         Desktop.getFrame().setViewerUrl(StringUtil.notNull(url));
+      display_.previewQuarto(url, quartoNav);
    }
 
    private void updateZoomWindow(String url)
@@ -558,7 +591,7 @@ public class ViewerPresenter extends BasePresenter
 
    private void manageCommands(boolean enable)
    {
-      manageCommands(enable, false, false, false);
+      manageCommands(enable, false, false, false, null, null);
    }
 
    private void manageCommands(boolean enable, ViewerNavigateEvent event)
@@ -566,23 +599,46 @@ public class ViewerPresenter extends BasePresenter
       manageCommands(enable,
                      event.isHTMLWidget(),
                      event.getHasNext(),
-                     event.getHasPrevious());
+                     event.getHasPrevious(),
+                     event.getURL(),
+                     event.getQuartoNavigate());
    }
 
    private void manageCommands(boolean enable,
                                boolean isHTMLWidget,
                                boolean hasNext,
-                               boolean hasPrevious)
+                               boolean hasPrevious,
+                               String viewerUrl,
+                               QuartoNavigate quartoNav)
    {
       commands_.viewerPopout().setEnabled(enable);
       commands_.viewerRefresh().setEnabled(enable);
       commands_.viewerClear().setEnabled(enable);
-      commands_.viewerClearAll().setEnabled(enable);
+      
 
-      commands_.viewerBack().setEnabled(hasPrevious);
-      commands_.viewerBack().setVisible(isHTMLWidget);
-      commands_.viewerForward().setEnabled(hasNext);
-      commands_.viewerForward().setVisible(isHTMLWidget);
+      if (quartoNav != null)
+      {
+         boolean pdf = (viewerUrl != null) && viewerUrl.endsWith("/web/viewer.html");
+         boolean website = quartoNav.isWebsite();
+         boolean webnav = website && !pdf;
+         commands_.viewerClearAll().setVisible(false);
+         commands_.viewerBack().setEnabled(webnav);
+         commands_.viewerBack().setVisible(webnav);
+         commands_.viewerForward().setEnabled(webnav);
+         commands_.viewerForward().setVisible(webnav);
+         commands_.viewerEditSource().setVisible(!pdf && quartoNav.getSourceFile() != null);
+      }
+      else
+      {
+         commands_.viewerClearAll().setVisible(true);
+         commands_.viewerClearAll().setEnabled(enable); 
+         commands_.viewerBack().setEnabled(hasPrevious);
+         commands_.viewerBack().setVisible(isHTMLWidget);
+         commands_.viewerForward().setEnabled(hasNext);
+         commands_.viewerForward().setVisible(isHTMLWidget);
+         commands_.viewerEditSource().setVisible(false);
+      }
+      
       commands_.viewerZoom().setEnabled(enable);
       commands_.viewerZoom().setVisible(isHTMLWidget);
 
@@ -639,5 +695,5 @@ public class ViewerPresenter extends BasePresenter
    private Size zoomWindowDefaultSize_ = null;
 
    private HtmlMessageListener htmlMessageListener_;
-
+   private static final ViewerConstants constants_ = com.google.gwt.core.client.GWT.create(ViewerConstants.class);
 }

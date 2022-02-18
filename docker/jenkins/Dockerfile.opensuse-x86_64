@@ -1,15 +1,26 @@
-FROM opensuse/leap:42.3
+FROM opensuse/leap:15.3
 
-ENV OPERATING_SYSTEM=opensuse_leap42
+ENV OPERATING_SYSTEM=opensuse_leap153
 
 # needed to build RPMs
-RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Leap_42.3/systemsmanagement:wbem:deps.repo
+RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Tumbleweed/systemsmanagement:wbem:deps.repo
+
 
 # refresh repos and install required packages
-RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
-    zypper --non-interactive install -y \
+
+RUN zypper --non-interactive --gpg-auto-import-keys refresh
+
+# Remove openssl-1_1, it conflicts with openssl-1_0_0 a dependency of libopenssl-1_0_0-devel
+# and we need libopenssl-1_0_0-devel to link against 1.0.2 ssl for sles 12 artifacts.
+# The package name is openssl-1_0_0 however its version is 1.0.2
+RUN zypper --non-interactive remove -y openssl-1_1
+RUN zypper --non-interactive install -y \
     ant \
     boost-devel \
+    # Uninstalling openssl unfortunately blew away the certificates
+    # Reinstall them here
+    ca-certificates \
+    ca-certificates-mozilla \
     curl \
     expect \
     fakeroot \
@@ -20,6 +31,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libacl-devel \
     libattr-devel \
     libcap-devel \
+    # For openssl 1.0.2 
+    libopenssl-1_0_0-devel \
     libuser-devel \
     libuuid-devel \
     libxml2-devel \
@@ -27,7 +40,8 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libXrandr-devel \
     lsof \
     make \
-    openssl-devel \
+    # For openssl 1.0.2
+    openssl-1_0_0 \
     pam-devel \
     pango-devel \
     postgresql-devel \
@@ -60,6 +74,9 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 COPY package/linux/install-dependencies /tmp/
 RUN bash /tmp/install-dependencies
 
+# ensure we use the java 8 compiler
+RUN update-alternatives --set java /usr/lib64/jvm/jre-1.8.0-openjdk/bin/java
+
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
@@ -71,7 +88,22 @@ COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
 ENV RSTUDIO_DISABLE_CRASHPAD=1
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse
+
+# install GnuPG 1.4 from source (needed for release signing)
+RUN cd /tmp && \
+    wget https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.23.tar.bz2 && \
+    bzip2 -d gnupg-1.4.23.tar.bz2 && \
+    tar xvf gnupg-1.4.23.tar && \
+    cd gnupg-1.4.23 && \
+    ./configure && \
+    make && \
+    make install
+
+RUN cd /tmp && \
+    wget https://github.com/ninja-build/ninja/releases/download/v1.10.2/ninja-linux.zip && \
+    unzip ninja-linux.zip && \
+    mv ninja /usr/bin
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN

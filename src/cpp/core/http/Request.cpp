@@ -1,7 +1,7 @@
 /*
  * Request.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,10 +69,8 @@ std::string Request::baseUri(BaseUriUse use /*= BaseUriUse::Internal*/) const
 
 std::string Request::internalUri() const
 {
-   // reports the protocol as defined internally
-   std::string scheme = headerValue("X-RStudio-Proto");
-   if (scheme.empty())
-      scheme = "http";
+   // ignore the proxy for the most part except by the scheme
+   std::string scheme = URL(proxiedUri()).protocol();
    return scheme + "://" + host() + uri();
 }
 
@@ -135,15 +133,11 @@ std::string Request::proxiedUri() const
    }
 
    // get the protocol that was specified in the request
-   // the proxy definition prevails over rstudio's internal one
+   // it might have been specified by rserver-http w/ ssl-enabled=1
    std::string protocol = headerValue("X-Forwarded-Proto");
    if (protocol.empty())
    {
-      std::string rstudioProtocol = headerValue("X-RStudio-Proto");
-      if (rstudioProtocol.empty())
-         protocol = "http";
-      else
-         protocol = rstudioProtocol;
+      protocol = "http";
    }
 
    // might be using the legacy X-Forwarded headers
@@ -168,7 +162,7 @@ std::string Request::proxiedUri() const
       return URL::complete(protocol + "://" + forwardedHost, root + '/' + uri());
    }
 
-   // use the protocol that may have been set above
+   // use the protocol that may have been set by X-Forwarded-Proto
    return URL::complete(protocol + "://" + host(), root + '/' + uri());
 }
 

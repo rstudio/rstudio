@@ -1,7 +1,7 @@
 /*
  * Job.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,6 +48,9 @@ enum JobType {
    JobTypeLauncher = 2 // cluster job via job launcher
 };
 
+typedef std::function<void(const std::string&)> JobAction;
+typedef std::vector<std::pair<std::string,JobAction>> JobActions;
+
 class Job
 {
 public:
@@ -62,11 +65,13 @@ public:
        const std::string& group,
        int progress, 
        int max,
+       bool confirmTermination,
        JobState state,
        JobType type,
        const std::string& cluster,
        bool autoRemove,
        SEXP actions,
+       JobActions cppActions,
        bool show,
        bool saveOutput,
        const std::vector<std::string>& tags);
@@ -88,6 +93,9 @@ public:
 
    // the total number of progress units
    int max() const;
+
+   // is it okay to exit this job w/o confirmation
+   bool confirmTermination() const;
 
    // the current state of the job
    JobState state() const;
@@ -164,6 +172,7 @@ private:
 
    int progress_;
    int max_;
+   bool confirmTermination_;
 
    time_t recorded_;   // when the job was added
    time_t started_;    // when the job began executing
@@ -175,6 +184,7 @@ private:
    bool show_;
 
    r::sexp::PreservedSEXP actions_;
+   JobActions cppActions_;
 
    std::vector<std::string> tags_;
 };

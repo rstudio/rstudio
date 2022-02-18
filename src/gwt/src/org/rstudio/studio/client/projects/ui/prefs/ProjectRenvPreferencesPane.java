@@ -1,7 +1,7 @@
 /*
  * ProjectRenvPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.model.RProjectRenvOptions;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
@@ -55,16 +56,14 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Environments";
+      return constants_.environmentsText();
    }
 
    @Override
    protected void initialize(RProjectOptions options)
    {
       String labelText =
-            "RStudio uses the renv package to give your projects their " +
-            "own privately-managed package library, making your R code " +
-            "more isolated, portable, and reproducible.";
+            constants_.rstudioInitializeLabel();
 
       Label label = new Label(labelText);
       spaced(label);
@@ -72,13 +71,13 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
 
       RenvContext context = options.getRenvContext();
 
-      chkUseRenv_ = new CheckBox("Use renv with this project");
+      chkUseRenv_ = new CheckBox(constants_.chkRenvInitLabel());
       chkUseRenv_.setValue(context.active);
       chkUseRenv_.addValueChangeHandler((ValueChangeEvent<Boolean> event) -> {
 
          if (event.getValue())
          {
-            dependencyManager_.withRenv("Using renv", (Boolean success) -> manageUI(success));
+            dependencyManager_.withRenv(constants_.chkRenvInitUserAction(), (Boolean success) -> manageUI(success));
          }
          else
          {
@@ -94,7 +93,7 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
 
       manageUI(context.active);
 
-      HelpLink helpLink = new HelpLink("Learn more about renv", "renv", false);
+      HelpLink helpLink = new HelpLink(constants_.renvHelpLink(), "renv", false);
       helpLink.getElement().getStyle().setMarginTop(15, Unit.PX);
       nudgeRight(helpLink);
       add(helpLink);
@@ -141,6 +140,7 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
    @SuppressWarnings("unused")
    private final RenvServerOperations server_;
    private final DependencyManager dependencyManager_;
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
 
 
 

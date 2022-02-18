@@ -30,6 +30,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     libXrandr-devel \
     lsof \
     make \
+    ninja \
     openssl-devel \
     p7zip \
     pam-devel \
@@ -81,7 +82,7 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common opensuse15
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/

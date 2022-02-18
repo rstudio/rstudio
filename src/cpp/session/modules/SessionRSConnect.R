@@ -1,7 +1,7 @@
 #
 # SessionRSConnect.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -289,7 +289,7 @@
     error_message = .rs.scalar(err)) 
 })
 
-.rs.addFunction("docDeployList", function(target, asMultipleDoc) {
+.rs.addFunction("docDeployList", function(target, asMultipleDoc, quartoSrcFile) {
   file_list <- c()
 
   # if deploying multiple documents, find all the files in the with a matching
@@ -327,7 +327,13 @@
   
   # check to see if the target has "runtime: shiny/prerendred", if so then
   # return a full directory deploy list
-  if (is.list(yaml) && (identical(yaml$runtime, "shiny_prerendered") || identical(yaml$runtime, "shinyrmd"))) {
+  if (is.list(yaml) && (identical(yaml$runtime, "shiny_prerendered") ||
+                        identical(yaml$runtime, "shinyrmd") ||
+                        identical(yaml$server, "shiny") ||
+                        (is.list(yaml$server) && identical(yaml$server$type, "shiny"))
+                       )
+     )
+  {
     return(rsconnect::listBundleFiles(appDir = dirname(target)))
   }
 
@@ -347,6 +353,11 @@
       file_list <- c(file_list, deploy_frame$path)
     } 
     file_list <- c(file_list, basename(t))
+
+    # if this is a quarto doc then query quarto for resources
+    if (nzchar(quartoSrcFile)) {
+      file_list <- c(file_list, .rs.quartoFileResources(quartoSrcFile))
+    }
   }
 
   # discard any duplicates (the same resource may be depended upon by multiple
@@ -361,12 +372,16 @@
 })
 
 .rs.addFunction("makeDeploymentList", function(target, asMultipleDoc, 
-                                               max_size) {
+                                               quartoSrcFile, max_size) {
    ext <- tolower(tools::file_ext(target))
-   if (ext %in% c("rmd", "html", "htm", "md"))
-     .rs.docDeployList(target, asMultipleDoc)
+   if (ext %in% c("qmd", "rmd", "html", "htm", "md"))
+     .rs.docDeployList(target, asMultipleDoc, quartoSrcFile)
    else
      rsconnect::listBundleFiles(appDir = target)
+})
+
+.rs.addFunction("quartoFileResources", function(target) {
+   .Call("rs_quartoFileResources", target)
 })
 
 
@@ -416,9 +431,9 @@
   c(files[include], toplevel[nzchar(toplevel)])
 })
 
-.rs.addFunction("rsconnectDeployList", function(target, asMultipleDoc) {
+.rs.addFunction("rsconnectDeployList", function(target, asMultipleDoc, quartoSrcFile) {
   max_size <- getOption("rsconnect.max.bundle.size", 1048576000)
-  dirlist <- .rs.makeDeploymentList(target, asMultipleDoc, max_size)
+  dirlist <- .rs.makeDeploymentList(target, asMultipleDoc, quartoSrcFile, max_size)
 
   list (
     # if the directory is too large, no need to bother sending a potentially
@@ -442,13 +457,13 @@
       # check for any non-shinyapps.io accounts
       accounts <- rsconnect::accounts()
       accounts <- subset(accounts, server != "shinyapps.io")
-      nrow(accounts) > 0
+      .rs.scalar(nrow(accounts) > 0)
    }, error = function(e) { FALSE })
 })
 
 
-.rs.addJsonRpcHandler("get_deployment_files", function(target, asMultipleDoc) {
-  .rs.rsconnectDeployList(target, asMultipleDoc)
+.rs.addJsonRpcHandler("get_deployment_files", function(target, asMultipleDoc, quartoSrcFile) {
+  .rs.rsconnectDeployList(target, asMultipleDoc, quartoSrcFile)
 })
 
 # The parameter to this function is a string containing the R command from
@@ -469,7 +484,10 @@
 
   # if this is runtime: shiny_prerendered then is_multi_rmd is FALSE
   if (is.list(frontMatter) &&
-      (identical(frontMatter$runtime, "shiny_prerendered") || identical(frontMatter$runtime, "shinyrmd"))) {
+      (identical(frontMatter$runtime, "shiny_prerendered") ||
+       identical(frontMatter$runtime, "shinyrmd") ||
+       identical(frontMatter$server, "shiny") ||
+       (is.list(frontMatter$server) && identical(frontMatter$server$type, "shiny")))) {
     is_multi_rmd <- FALSE
   } else {
     # check for multiple R Markdown documents in the directory

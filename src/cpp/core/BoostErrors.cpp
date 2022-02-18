@@ -1,7 +1,7 @@
 /*
  * BoostErrors.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@
 #include <core/BoostThread.hpp>
 
 // we define BOOST_USE_WINDOWS_H on mingw64 to work around some
-// incompatabilities. however, this prevents the interprocess headers
+// incompatibilities. however, this prevents the interprocess headers
 // from compiling so we undef it in this localized context
 #if defined(__GNUC__) && defined(_WIN64)
    #undef BOOST_USE_WINDOWS_H

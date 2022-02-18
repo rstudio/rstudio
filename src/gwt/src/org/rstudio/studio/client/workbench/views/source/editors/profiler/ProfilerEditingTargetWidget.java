@@ -1,7 +1,7 @@
 /*
  * ProfilerEditingTargetWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.profiler;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -32,6 +33,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 
 public class ProfilerEditingTargetWidget extends Composite
@@ -47,7 +49,7 @@ public class ProfilerEditingTargetWidget extends Composite
    {
       VerticalPanel panel = new VerticalPanel();
       Roles.getTabpanelRole().set(panel.getElement());
-      Roles.getTabpanelRole().setAriaLabelProperty(panel.getElement(), title + " Profile View");
+      Roles.getTabpanelRole().setAriaLabelProperty(panel.getElement(), constants_.titleProfileView(title));
 
       column_ = column;
       PanelWithToolbars mainPanel = new PanelWithToolbars(
@@ -78,72 +80,72 @@ public class ProfilerEditingTargetWidget extends Composite
    private String getCustomStyle()
    {
       return
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-footer,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-status-bar,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-treetable td,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-treetable th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-splitbar-horizontal,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .info-block {\n" +
+         ".rstudio-themes-default .profvis-footer,\n" +
+         ".rstudio-themes-default .profvis-status-bar,\n" +
+         ".rstudio-themes-default .profvis-treetable td,\n" +
+         ".rstudio-themes-default .profvis-treetable th,\n" +
+         ".rstudio-themes-default .profvis-splitbar-horizontal,\n" +
+         ".rstudio-themes-default .info-block {\n" +
          "   border-color: " + ThemeColors.defaultBorder + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-status-bar,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-treetable td,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-treetable th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-splitbar-horizontal,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .info-block {\n" +
+         ".rstudio-themes-dark-grey .profvis-footer,\n" +
+         ".rstudio-themes-dark-grey .profvis-status-bar,\n" +
+         ".rstudio-themes-dark-grey .profvis-treetable td,\n" +
+         ".rstudio-themes-dark-grey .profvis-treetable th,\n" +
+         ".rstudio-themes-dark-grey .profvis-splitbar-horizontal,\n" +
+         ".rstudio-themes-dark-grey .info-block {\n" +
          "   border-color: " + ThemeColors.darkGreyBorder + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-status-bar,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-treetable td,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-treetable th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-splitbar-horizontal,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .info-block {\n" +
+         ".rstudio-themes-alternate .profvis-footer,\n" +
+         ".rstudio-themes-alternate .profvis-status-bar,\n" +
+         ".rstudio-themes-alternate .profvis-treetable td,\n" +
+         ".rstudio-themes-alternate .profvis-treetable th,\n" +
+         ".rstudio-themes-alternate .profvis-splitbar-horizontal,\n" +
+         ".rstudio-themes-alternate .info-block {\n" +
          "   border-color: " + ThemeColors.alternateBorder + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-footer,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-treetable th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-status-bar {\n" +
+         ".rstudio-themes-default .profvis-footer,\n" +
+         ".rstudio-themes-default .profvis-treetable th,\n" +
+         ".rstudio-themes-default .profvis-status-bar {\n" +
          "   background-color: " + ThemeColors.defaultBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-footer,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-treetable th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-status-bar {\n" +
+         ".rstudio-themes-dark-grey .profvis-footer,\n" +
+         ".rstudio-themes-dark-grey .profvis-treetable th,\n" +
+         ".rstudio-themes-dark-grey .profvis-status-bar {\n" +
          "   background-color: " + ThemeColors.darkGreyBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-footer,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-treetable th,\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-status-bar {\n" +
+         ".rstudio-themes-alternate .profvis-footer,\n" +
+         ".rstudio-themes-alternate .profvis-treetable th,\n" +
+         ".rstudio-themes-alternate .profvis-status-bar {\n" +
          "   background-color: " + ThemeColors.alternateBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .profvis-splitbar-horizontal {\n" +
+         ".rstudio-themes-default .profvis-splitbar-horizontal {\n" +
          "   background-color: " + ThemeColors.defaultBodyBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .profvis-splitbar-horizontal {\n" +
+         ".rstudio-themes-dark-grey .profvis-splitbar-horizontal {\n" +
          "   background-color: " + ThemeColors.darkGreyBodyBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .profvis-splitbar-horizontal {\n" +
+         ".rstudio-themes-alternate .profvis-splitbar-horizontal {\n" +
          "   background-color: " + ThemeColors.alternateBodyBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-default .result-block-active {\n" +
+         ".rstudio-themes-default .result-block-active {\n" +
          "   background-color: " + ThemeColors.defaultMostInactiveBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-dark-grey .result-block-active {\n" +
+         ".rstudio-themes-dark-grey .result-block-active {\n" +
          "   background-color: " + ThemeColors.darkGreyMostInactiveBackground + ";\n" +
          "}\n" +
          "\n" +
-         ".rstudio-themes-flat.rstudio-themes-alternate .result-block-active {\n" +
+         ".rstudio-themes-alternate .result-block-active {\n" +
          "   background-color: " + ThemeColors.alternateMostInactiveBackground + ";\n" +
          "}\n";
    }
@@ -199,4 +201,5 @@ public class ProfilerEditingTargetWidget extends Composite
    
    private RSConnectPublishButton publishButton_;
    private SourceColumn column_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

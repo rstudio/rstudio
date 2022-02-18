@@ -31,6 +31,7 @@ bioc
 bioconductor
 bioinformatics
 bitbucket
+bivariate
 blogdown
 bom
 bookdown
@@ -55,9 +56,11 @@ cliapp
 clipr
 cmd
 cn
+cnj
 codecov
 coercible
 config
+cor
 correlogram
 covariance
 cpp
@@ -71,6 +74,7 @@ da
 datepicker
 datetime
 de
+def
 delim
 depsy
 dev
@@ -93,16 +97,20 @@ emacs
 env
 envvar
 eo
+eq
 et
 etag
 etags
 eu
 eval
+exm
+exr
 extdata
 facebook
 favicon
 fcntl
 fi
+fig
 fieldguide
 filenaming
 filesystem
@@ -193,6 +201,7 @@ kriging
 kurtosis
 lbzip
 learnr
+lem
 lexicographically
 lgl
 libbsd
@@ -208,6 +217,7 @@ lockfile
 logit
 longtable
 lpt
+lst
 lt
 lualatex
 lv
@@ -281,6 +291,7 @@ preconfigured
 preprocess
 processx
 programmatically
+prp
 prs
 psychometrics
 pthread
@@ -343,6 +354,7 @@ sansfont
 scedastic
 scedasticity
 searchability
+sec
 setspace
 sha
 shortener
@@ -383,6 +395,7 @@ sw
 symlink
 symlinks
 sys
+tbl
 temp
 tempfile
 templated
@@ -390,6 +403,7 @@ templating
 testthat
 tex
 th
+thm
 tibble
 tibbles
 tidyverse

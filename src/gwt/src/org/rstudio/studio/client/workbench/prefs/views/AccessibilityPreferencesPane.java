@@ -1,7 +1,7 @@
 /*
  * AccessibilityPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArrayString;
@@ -34,6 +35,7 @@ import org.rstudio.core.client.widget.CheckBoxList;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import java.util.Map;
@@ -51,32 +53,32 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       VerticalTabPanel generalPanel = new VerticalTabPanel(ElementIds.A11Y_GENERAL_PREFS);
       VerticalTabPanel announcementsPanel = new VerticalTabPanel(ElementIds.A11Y_ANNOUNCEMENTS_PREFS);
 
-      generalPanel.add(headerLabel("Assistive Tools"));
-      chkScreenReaderEnabled_ = new CheckBox("Screen reader support (requires restart)");
+      generalPanel.add(headerLabel(constants_.generalHeaderPanel()));
+      chkScreenReaderEnabled_ = new CheckBox(constants_.chkScreenReaderLabel());
       generalPanel.add(chkScreenReaderEnabled_);
 
-      typingStatusDelay_ = numericPref("Milliseconds after typing before speaking results",
+      typingStatusDelay_ = numericPref(constants_.typingStatusDelayLabel(),
             1, 9999, prefs.typingStatusDelayMs());
       generalPanel.add(indent(typingStatusDelay_));
-      generalPanel.add(indent(maxOutput_ = numericPref("Maximum number of console output lines to read",
+      generalPanel.add(indent(maxOutput_ = numericPref(constants_.maxOutputLabel(),
             0, UserPrefs.MAX_SCREEN_READER_CONSOLE_OUTPUT, prefs.screenreaderConsoleAnnounceLimit())));
 
-      Label displayLabel = headerLabel("Other");
+      Label displayLabel = headerLabel(constants_.displayLabel());
       generalPanel.add(displayLabel);
       displayLabel.getElement().getStyle().setMarginTop(8, Style.Unit.PX);
-      generalPanel.add(checkboxPref("Reduce user interface animations", prefs.reducedMotion()));
-      chkTabMovesFocus_ = new CheckBox("Tab key always moves focus");
+      generalPanel.add(checkboxPref(constants_.reducedMotionLabel(), prefs.reducedMotion()));
+      chkTabMovesFocus_ = new CheckBox(constants_.chkTabMovesFocusLabel());
       generalPanel.add(lessSpaced(chkTabMovesFocus_));
-      chkShowFocusRectangles_ = new CheckBox("Always show focus outlines (requires restart)");
+      chkShowFocusRectangles_ = new CheckBox(constants_.chkShowFocusLabel());
       generalPanel.add(lessSpaced(chkShowFocusRectangles_));
-      generalPanel.add(checkboxPref("Highlight focused panel", prefs.showPanelFocusRectangle()));
+      generalPanel.add(checkboxPref(constants_.generalPanelLabel(), prefs.showPanelFocusRectangle()));
 
-      HelpLink helpLink = new HelpLink("RStudio accessibility help", "rstudio_a11y", false);
+      HelpLink helpLink = new HelpLink(constants_.helpLinkLabel(), "rstudio_a11y", false);
       nudgeRight(helpLink);
       helpLink.addStyleName(res_.styles().newSection());
       generalPanel.add(helpLink);
 
-      Label announcementsLabel = headerLabel("Enable / Disable Announcements");
+      Label announcementsLabel = headerLabel(constants_.announcementsLabel());
       announcements_ = new CheckBoxList(announcementsLabel);
       announcementsPanel.add(announcementsLabel);
       announcementsLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
@@ -89,10 +91,10 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       announcements_.getElement().getStyle().setMarginBottom(15, Unit.PX);
       announcements_.getElement().getStyle().setMarginLeft(3, Unit.PX);
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Accessibility");
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.tabHeaderPanel());
       tabPanel.setSize("435px", "533px");
-      tabPanel.add(generalPanel, "General", generalPanel.getBasePanelId());
-      tabPanel.add(announcementsPanel, "Announcements", announcementsPanel.getBasePanelId());
+      tabPanel.add(generalPanel, constants_.generalPanelText(), generalPanel.getBasePanelId());
+      tabPanel.add(announcementsPanel, constants_.announcementsPanelText(), announcementsPanel.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -106,7 +108,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Accessibility";
+      return constants_.tabHeaderPanel();
    }
 
    @Override
@@ -216,4 +218,6 @@ public class AccessibilityPreferencesPane extends PreferencesPane
 
    private final PreferencesDialogResources res_;
    private final AriaLiveService ariaLive_;
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+
 }

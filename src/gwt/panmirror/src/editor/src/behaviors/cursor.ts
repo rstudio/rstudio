@@ -1,7 +1,7 @@
 /*
  * cursor.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 import { PluginKey, Plugin, EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { ResolvedPos, Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { dropCursor } from 'prosemirror-dropcursor';
 import { gapCursor, GapCursor } from 'prosemirror-gapcursor';
@@ -24,10 +25,9 @@ import { findParentNodeOfTypeClosestToPos, findParentNodeOfType, findParentNode 
 
 import { Extension } from '../api/extension';
 import { BaseKey, verticalArrowCanAdvanceWithinTextBlock } from '../api/basekeys';
+import { isList } from '../api/list';
 
 import './cursor.css';
-import { ResolvedPos } from 'prosemirror-model';
-import { isList } from '../api/list';
 
 
 const extension: Extension = {
@@ -80,23 +80,29 @@ function gapArrowHandler(dir: 'up' | 'left') {
         return false;
       }
 
-      // check if we are in a div
-      const div = findParentNodeOfType(state.schema.nodes.div)(state.selection);
+      // check if we are in a div 
+      if (state.schema.nodes.div) {
+        const div = findParentNodeOfType(state.schema.nodes.div)(state.selection);
       
-      // if we are at the very top of a div then create a gap cursor
-      if (div) {
-        
-        const $divPos = state.doc.resolve(div.pos);
-        if ($head.index($head.depth - 1) === 0 && !(state.selection instanceof GapCursor)) {
-
-          // if we are in a list item the calculations about view.endOfTextblock will be off
-          if (findParentNode(isList)(state.selection)) {
-            return false;
-          }
-
-          return createGapCursor(state.doc.resolve($divPos.pos + 1));
-        } 
+        // if we are at the very top of a div then create a gap cursor
+        if (div) {
+          
+          const $divPos = state.doc.resolve(div.pos);
+          if ($head.index($head.depth - 1) === 0 && !(state.selection instanceof GapCursor)) {
+  
+            // if we are in a list item the calculations about view.endOfTextblock will be off
+            if (findParentNode(isList)(state.selection)) {
+              return false;
+            }
+  
+            return createGapCursor(state.doc.resolve($divPos.pos + 1));
+          // if we are between divs then create a gap cursor between them
+          } else if ($divPos.nodeBefore?.type === state.schema.nodes.div) {
+            return createGapCursor(state.doc.resolve($divPos.pos));
+          } 
+        }
       }
+     
 
       // if we are at the top of the document then create a gap cursor
       if (!$head.nodeBefore && ($head.pos <= 2)) {
@@ -154,6 +160,25 @@ function gapClickHandler(view: EditorView, event: Event): boolean {
             return createGapCursor();
           }
         }
+      }
+    }
+
+    // handle clicks between certain block types that don't have a natural text cursor
+    // for inserting additioanl content
+    const blockRequiresGap = (node: ProsemirrorNode | null | undefined) => {
+      if (node) {
+        return node.type === schema.nodes.div ||
+               node.type === schema.nodes.figure ||
+               node.type === schema.nodes.table ||
+               node.type === schema.nodes.horizontal_rule ||
+               node.type === schema.nodes.code_block;
+      } else {
+        return false;
+      }
+    };
+    if (!clickPos.inside) {
+      if (blockRequiresGap($clickPos.nodeBefore) && blockRequiresGap($clickPos.nodeAfter)) {
+        return createGapCursor();
       }
     }
 

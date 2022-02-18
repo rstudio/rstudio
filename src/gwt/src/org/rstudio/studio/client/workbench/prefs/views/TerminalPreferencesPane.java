@@ -1,7 +1,7 @@
 /*
  * TerminalPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -39,6 +40,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalShellInfo;
@@ -70,17 +72,17 @@ public class TerminalPreferencesPane extends PreferencesPane
       VerticalTabPanel general = new VerticalTabPanel(ElementIds.TERMINAL_GENERAL_PREFS);
       VerticalTabPanel closing = new VerticalTabPanel(ElementIds.TERMINAL_CLOSING_PREFS);
 
-      Label shellLabel = headerLabel("Shell");
+      Label shellLabel = headerLabel(constants_.shellHeaderLabel());
       shellLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       general.add(shellLabel);
 
       initialDirectory_ = new SelectWidget(
-            "Initial directory:",
+            constants_.initialDirectoryLabel(),
             new String[]
                   {
-                        "Project directory",
-                        "Current directory",
-                        "Home directory"
+                        constants_.projectDirectoryOption(),
+                        constants_.currentDirectoryOption(),
+                        constants_.homeDirectoryOption()
                   },
             new String[]
                   {
@@ -92,7 +94,7 @@ public class TerminalPreferencesPane extends PreferencesPane
       spaced(initialDirectory_);
       general.add(initialDirectory_);
 
-      terminalShell_ = new SelectWidget("New terminals open with:");
+      terminalShell_ = new SelectWidget(constants_.terminalShellLabel());
       spaced(terminalShell_);
       general.add(terminalShell_);
       terminalShell_.setEnabled(false);
@@ -112,12 +114,11 @@ public class TerminalPreferencesPane extends PreferencesPane
                String shellExePath = customShellChooser_.getText();
                if (!shellExePath.endsWith(".exe"))
                {
-                  String message = "The program '" + shellExePath + "'" +
-                     " is unlikely to be a valid shell executable.";
+                  String message = constants_.shellExePathMessage(shellExePath);
 
                   globalDisplay.showMessage(
                         GlobalDisplay.MSG_WARNING,
-                        "Invalid Shell Executable",
+                        constants_.shellExeCaption(),
                         message);
                }
             }
@@ -125,9 +126,9 @@ public class TerminalPreferencesPane extends PreferencesPane
       };
 
       String textboxWidth = "250px";
-      customShellPathLabel_ = new FormLabel("Custom shell binary:");
+      customShellPathLabel_ = new FormLabel(constants_.customShellPathLabel());
       customShellChooser_ = new FileChooserTextBox(customShellPathLabel_,
-                                                   "(Not Found)",
+                                                   constants_.customShellChooserEmptyLabel(),
                                                    ElementIds.TextBoxButtonId.TERMINAL,
                                                    false,
                                                    null,
@@ -139,72 +140,71 @@ public class TerminalPreferencesPane extends PreferencesPane
       DomUtils.disableSpellcheck(customShellOptions_);
       customShellOptions_.setWidth(textboxWidth);
       customShellOptions_.setEnabled(false);
-      customShellOptionsLabel_ = new FormLabel("Custom shell command-line options:", customShellOptions_);
+      customShellOptionsLabel_ = new FormLabel(constants_.customShellOptionsLabel(), customShellOptions_);
       general.add(spacedBefore(customShellOptionsLabel_));
       general.add(spaced(customShellOptions_));
       
       
       chkPythonIntegration_ = checkboxPref(
-            "Enable Python integration",
+            constants_.chkPythonIntegration(),
             prefs_.terminalPythonIntegration());
       
       chkPythonIntegration_.setTitle(
-            "When enabled, the active version of Python will be placed on the PATH for new terminal sessions. " +
-            "Only bash and zsh are supported.");
-      
+            constants_.chkPythonIntegrationTitle());
+
       general.add(chkPythonIntegration_);
-      
-      Label perfLabel = headerLabel("Connection");
+
+      Label perfLabel = headerLabel(constants_.perfLabel());
       perfLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       general.add(perfLabel);
 
       boolean showPerfLabel = false;
       if (haveLocalEchoPref())
       {
-         CheckBox chkTerminalLocalEcho = checkboxPref("Local terminal echo",
+         CheckBox chkTerminalLocalEcho = checkboxPref(constants_.chkTerminalLocalEchoLabel(),
                prefs_.terminalLocalEcho(),
-               "Local echo is more responsive but may get out of sync with some line-editing modes or custom shells.");
+               constants_.chkTerminalLocalEchoTitle());
          general.add(chkTerminalLocalEcho);
          showPerfLabel = true;
       }
       if (haveWebsocketPref())
       {
-         CheckBox chkTerminalWebsocket = checkboxPref("Connect with WebSockets",
+         CheckBox chkTerminalWebsocket = checkboxPref(constants_.chkTerminalWebsocketLabel(),
                prefs_.terminalWebsockets(),
-               "WebSockets are generally more responsive; try turning off if terminal won't connect.");
+               constants_.chkTerminalWebsocketTitle());
          general.add(chkTerminalWebsocket);
          showPerfLabel = true;
       }
 
       perfLabel.setVisible(showPerfLabel);
 
-      Label displayLabel = headerLabel("Display");
+      Label displayLabel = headerLabel(constants_.displayHeaderLabel());
       displayLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       general.add(displayLabel);
-      chkHardwareAcceleration_ = new CheckBox("Hardware acceleration");
+      chkHardwareAcceleration_ = new CheckBox(constants_.chkHardwareAccelerationLabel());
       general.add(lessSpaced(chkHardwareAcceleration_));
-      chkAudibleBell_ = new CheckBox("Audible bell");
+      chkAudibleBell_ = new CheckBox(constants_.chkAudibleBellLabel());
       general.add(lessSpaced(chkAudibleBell_));
-      chkWebLinks_ = new CheckBox("Clickable web links");
+      chkWebLinks_ = new CheckBox(constants_.chkWebLinksLabel());
       general.add(chkWebLinks_);
 
-      HelpLink helpLink = new HelpLink("Using the RStudio terminal", "rstudio_terminal", false);
+      HelpLink helpLink = new HelpLink(constants_.helpRStudioAccessibilityLinkLabel(), "rstudio_terminal", false);
       nudgeRight(helpLink);
       helpLink.addStyleName(res_.styles().newSection());
       general.add(helpLink);
 
-      Label miscLabel = headerLabel("Miscellaneous");
+      Label miscLabel = headerLabel(constants_.miscLabel());
       miscLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
       closing.add(miscLabel);
       miscLabel.setVisible(true);
 
       autoClosePref_ = new SelectWidget(
-            "When shell exits:",
+            constants_.autoClosePrefLabel(),
             new String[]
                   {
-                        "Close the pane",
-                        "Don't close the pane",
-                        "Close pane if shell exits cleanly"
+                        constants_.closePaneOption(),
+                        constants_.doNotClosePaneOption(),
+                        constants_.shellExitsPaneOption()
                   },
             new String[]
                   {
@@ -218,37 +218,37 @@ public class TerminalPreferencesPane extends PreferencesPane
 
       if (haveCaptureEnvPref())
       {
-         CheckBox chkCaptureEnv = checkboxPref("Save and restore environment variables",
+         CheckBox chkCaptureEnv = checkboxPref(constants_.chkCaptureEnvLabel(),
                prefs_.terminalTrackEnvironment(),
-               "Terminal occasionally runs a hidden command to capture state of environment variables.");
+                 constants_.chkCaptureEnvTitle());
          closing.add(chkCaptureEnv);
       }
 
       if (haveBusyDetectionPref())
       {
-         Label shutdownLabel = headerLabel("Process Termination");
+         Label shutdownLabel = headerLabel(constants_.shutdownLabel());
          shutdownLabel.getElement().getStyle().setMarginTop(8, Unit.PX);
          closing.add(shutdownLabel);
          shutdownLabel.setVisible(true);
 
-         busyMode_ = new SelectWidget("Ask before killing processes:");
+         busyMode_ = new SelectWidget(constants_.busyModeLabel());
          spaced(busyMode_);
          closing.add(busyMode_);
          busyMode_.setEnabled(false);
          busyMode_.addChangeHandler(event -> manageBusyModeControlVisibility());
-         busyWhitelist_ = new TextBox();
-         DomUtils.disableSpellcheck(busyWhitelist_);
-         busyWhitelist_.setWidth(textboxWidth);
-         busyWhitelistLabel_ = new FormLabel("Don't ask before killing:", busyWhitelist_);
-         closing.add(busyWhitelistLabel_);
-         closing.add(busyWhitelist_);
-         busyWhitelist_.setEnabled(false);
+         busyExclusionList_ = new TextBox();
+         DomUtils.disableSpellcheck(busyExclusionList_);
+         busyExclusionList_.setWidth(textboxWidth);
+         busyExclusionListLabel_ = new FormLabel(constants_.busyWhitelistLabel(), busyExclusionList_);
+         closing.add(busyExclusionListLabel_);
+         closing.add(busyExclusionList_);
+         busyExclusionList_.setEnabled(false);
       }
 
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Terminal");
+      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.terminalPaneLabel());
       tabPanel.setSize("435px", "533px");
-      tabPanel.add(general, "General", general.getBasePanelId());
-      tabPanel.add(closing, "Closing", closing.getBasePanelId());
+      tabPanel.add(general, constants_.tabGeneralPanelLabel(), general.getBasePanelId());
+      tabPanel.add(closing, constants_.tabClosingPanelLabel(), closing.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -262,7 +262,7 @@ public class TerminalPreferencesPane extends PreferencesPane
    @Override
    public String getName()
    {
-      return "Terminal";
+      return constants_.terminalPaneLabel();
    }
 
    @Override
@@ -316,9 +316,9 @@ public class TerminalPreferencesPane extends PreferencesPane
       if (busyMode_ != null)
       {
          busyMode_.getListBox().clear();
-         busyMode_.addChoice("Always", UserPrefs.BUSY_DETECTION_ALWAYS);
-         busyMode_.addChoice("Never", UserPrefs.BUSY_DETECTION_NEVER);
-         busyMode_.addChoice("Always except for whitelist", UserPrefs.BUSY_DETECTION_WHITELIST);
+         busyMode_.addChoice(constants_.busyModeAlwaysOption(), UserPrefs.BUSY_DETECTION_ALWAYS);
+         busyMode_.addChoice(constants_.busyModeNeverOption(), UserPrefs.BUSY_DETECTION_NEVER);
+         busyMode_.addChoice(constants_.busyModeListOption(), UserPrefs.BUSY_DETECTION_LIST);
          busyMode_.setEnabled(true);
 
          prefs_.busyDetection().getValue();
@@ -330,25 +330,25 @@ public class TerminalPreferencesPane extends PreferencesPane
             }
          }
 
-         List<String> whitelistArray = JsArrayUtil.fromJsArrayString(
-               prefs_.busyWhitelist().getValue());
+         List<String> exclusionArray = JsArrayUtil.fromJsArrayString(
+               prefs_.busyExclusionList().getValue());
 
-         StringBuilder whitelist = new StringBuilder();
-         for (String entry: whitelistArray)
+         StringBuilder exclusionList = new StringBuilder();
+         for (String entry: exclusionArray)
          {
             if (entry.trim().isEmpty())
             {
                continue;
             }
-            if (whitelist.length() > 0)
+            if (exclusionList.length() > 0)
             {
-               whitelist.append(" ");
+               exclusionList.append(" ");
             }
-            whitelist.append(entry.trim());
+            exclusionList.append(entry.trim());
          }
 
-         busyWhitelist_.setText(whitelist.toString());
-         busyWhitelist_.setEnabled(true);
+         busyExclusionList_.setText(exclusionList.toString());
+         busyExclusionList_.setEnabled(true);
 
          manageBusyModeControlVisibility();
       }
@@ -371,7 +371,7 @@ public class TerminalPreferencesPane extends PreferencesPane
 
       if (haveBusyDetectionPref())
       {
-         prefs_.busyWhitelist().setGlobalValue(StringUtil.split(busyWhitelist_.getText(), " "));
+         prefs_.busyExclusionList().setGlobalValue(StringUtil.split(busyExclusionList_.getText(), " "));
          prefs_.busyDetection().setGlobalValue(selectedBusyMode());
       }
 
@@ -475,9 +475,9 @@ public class TerminalPreferencesPane extends PreferencesPane
 
    private void manageBusyModeControlVisibility()
    {
-      boolean whitelistEnabled = selectedBusyMode() == UserPrefs.BUSY_DETECTION_WHITELIST;
-      busyWhitelistLabel_.setVisible(whitelistEnabled);
-      busyWhitelist_.setVisible(whitelistEnabled);
+      boolean exclusionListEnabled = selectedBusyMode() == UserPrefs.BUSY_DETECTION_LIST;
+      busyExclusionListLabel_.setVisible(exclusionListEnabled);
+      busyExclusionList_.setVisible(exclusionListEnabled);
    }
 
    private void addTextBoxChooser(Panel panel, String textWidth, FormLabel captionLabel, TextBoxWithButton chooser)
@@ -512,12 +512,12 @@ public class TerminalPreferencesPane extends PreferencesPane
 
    private SelectWidget autoClosePref_;
    private SelectWidget busyMode_;
-   private FormLabel busyWhitelistLabel_;
-   private TextBox busyWhitelist_;
+   private FormLabel busyExclusionListLabel_;
+   private TextBox busyExclusionList_;
 
    // Injected ----
    private final UserPrefs prefs_;
    private final PreferencesDialogResources res_;
    private final Session session_;
    private final Server server_;
- }
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);}

@@ -1,7 +1,7 @@
 /*
  * completion.tsx
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,11 +43,12 @@ export const CompletionItemView: React.FC<CompletionItemViewProps> = props => {
           <img
             className={'pm-completion-image-adorn pm-block-border-color pm-background-color'}
             src={props.imageAdornment}
+            draggable="false"
           />
         ) : (
           undefined
         )}
-        <img className={'pm-completion-item-icon pm-block-border-color'} src={props.image} />
+        <img className={'pm-completion-item-icon pm-block-border-color'} src={props.image} draggable="false"/>
       </div>
       <div className={'pm-completion-item-summary'} style={{ width: props.width - 40 - 36 + 'px' }}>
         <div className={'pm-completion-item-id'}>

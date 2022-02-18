@@ -1,7 +1,7 @@
 /*
  * AboutOpenSourceDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@ import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.model.ProductNotice;
 
 public class AboutOpenSourceDialog extends ModalDialogBase
@@ -36,19 +37,19 @@ public class AboutOpenSourceDialog extends ModalDialogBase
    public AboutOpenSourceDialog(ProductNotice notice)
    {
       super(Roles.getDialogRole());
-      setText("Open Source Components");
+      setText(constants_.openSourceComponentsText());
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-      ThemedButton closeButton = new ThemedButton("Close", event -> closeDialog());
+      ThemedButton closeButton = new ThemedButton(constants_.closeButtonText(), event -> closeDialog());
       addOkButton(closeButton);
 
       noticeHTML_.setHTML("<pre>" + notice.notice + "</pre>");
       FontSizer.applyNormalFontSize(noticeHTML_);
       Roles.getDocumentRole().set(noticeHTML_.getElement());
       Roles.getDocumentRole().setAriaLabelProperty(noticeHTML_.getElement(),
-                                                   "Open Source Components");
+                                                   constants_.openSourceComponentText());
       noticeHTML_.getElement().setTabIndex(0);
 
       // compute the widget size and set it
@@ -73,4 +74,5 @@ public class AboutOpenSourceDialog extends ModalDialogBase
    @UiField HTML noticeHTML_;
 
    private final Widget mainWidget_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

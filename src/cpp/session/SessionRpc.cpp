@@ -1,7 +1,7 @@
 /*
  * SessionRpc.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -259,9 +259,11 @@ void endHandleRpcRequestIndirect(
            pJsonRpcResponse ? *pJsonRpcResponse : temp;
 
    if (executeError)
-   {
       jsonRpcResponse.setError(executeError);
-   }
+   
+   if (!jsonRpcResponse.hasField(kEventsPending))
+      jsonRpcResponse.setField(kEventsPending, "false");
+   
    json::Object value;
    value["handle"] = asyncHandle;
    value["response"] = jsonRpcResponse.getRawResponse();

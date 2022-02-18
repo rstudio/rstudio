@@ -1,7 +1,7 @@
 /*
  * ShinyApplicationParams.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.shiny.model;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsObject;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -77,4 +78,14 @@ public class ShinyApplicationParams extends JavaScriptObject
    public final native void setViewerType(String viewerType) /*-{
       this.viewer = viewerType;
    }-*/;
+
+   public final boolean isBackgroundApp()
+   {
+      return !isForegroundApp();
+   }
+
+   public final boolean isForegroundApp()
+   {
+      return StringUtil.equals(getId(), ID_FOREGROUND);
+   }
 }

@@ -1,7 +1,7 @@
 /*
  * PaneManager.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
@@ -31,6 +32,7 @@ import com.google.inject.name.Named;
 
 import elemental2.dom.DomGlobal;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.MathUtil;
@@ -43,6 +45,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.ManageLayoutCommandsEvent;
 import org.rstudio.core.client.events.WindowEnsureVisibleEvent;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.layout.DualWindowLayoutPanel;
 import org.rstudio.core.client.layout.LogicalWindow;
@@ -54,8 +57,8 @@ import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.ClientState;
@@ -74,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager.ColumnName;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
+import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import java.util.ArrayList;
@@ -92,7 +96,7 @@ public class PaneManager
 
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
-      Presentation, Environment, Viewer, Source, Console, SourceColumn
+      Presentation, Presentations, Environment, Viewer, Source, Console, SourceColumn
    }
 
    public static final String LEFT_COLUMN = "left";
@@ -216,6 +220,7 @@ public class PaneManager
                       Commands commands,
                       UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
+                      FileTypeRegistry fileTypeRegistry,
                       Source source,
                       SourceColumnManager sourceColumnManager,
                       @Named("History") final WorkbenchTab historyTab,
@@ -226,6 +231,7 @@ public class PaneManager
                       @Named("VCS") final WorkbenchTab vcsTab,
                       @Named("Build") final WorkbenchTab buildTab,
                       @Named("Presentation") final WorkbenchTab presentationTab,
+                      @Named("Presentations") final WorkbenchTab presentation2Tab,
                       @Named("Connections") final WorkbenchTab connectionsTab,
                       @Named("Environment") final WorkbenchTab environmentTab,
                       @Named("Viewer") final WorkbenchTab viewerTab,
@@ -249,6 +255,7 @@ public class PaneManager
       commands_ = commands;
       userPrefs_ = userPrefs;
       consolePane_ = (ConsolePane)consolePane;
+      fileTypeRegistry_ = fileTypeRegistry;
       source_ = source;
       sourceColumnManager_ = sourceColumnManager;
       historyTab_ = historyTab;
@@ -259,6 +266,7 @@ public class PaneManager
       vcsTab_ = vcsTab;
       buildTab_ = buildTab;
       presentationTab_ = presentationTab;
+      presentation2Tab_ = presentation2Tab;
       connectionsTab_ = connectionsTab;
       environmentTab_ = environmentTab;
       viewerTab_ = viewerTab;
@@ -283,7 +291,7 @@ public class PaneManager
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
 
-      int splitterSize = RStudioThemes.isFlat(userPrefs) ? 7 : 3;
+      int splitterSize = 7;
 
       panes_ = createPanes(config);
       center_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
@@ -732,12 +740,47 @@ public class PaneManager
       }
    }
 
+   public void openFileInNewColumn(FileSystemItem targetFile, Command onOpen)
+   {
+      if (targetFile != null && validateNewColumnRequest())
+      {
+         ColumnName name = createSourceColumn();
+         SourceColumn column = sourceColumnManager_.getByName(name.getName());
+         column.incrementNewTabPending();
+         panel_.addLeftWidget(
+               createSourceColumnWindow(
+                  name.getName(),
+                  name.getAccessibleName()
+                  )
+               );
+         sourceColumnManager_.openFile(
+               targetFile, 
+               fileTypeRegistry_.getTextTypeForFile(targetFile),
+               column,
+               new CommandWithArg<EditingTarget>() 
+                  {
+                     @Override
+                     public void execute(EditingTarget target)
+                     {
+                        column.decrementNewTabPending();
+                        if (onOpen != null) 
+                           onOpen.execute();
+                     }
+                  });
+      }
+   }
+
+   public void openFileInNewColumn(FileSystemItem targetFile) 
+   {
+      openFileInNewColumn(targetFile, null);
+   }
+
    private boolean validateNewColumnRequest()
    {
       if (additionalSourceCount_ >= MAX_COLUMN_COUNT)
       {
-         pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, "Cannot Add Column",
-            "You can't add more than " + MAX_COLUMN_COUNT + " columns.");
+         pGlobalDisplay_.get().showMessage(GlobalDisplay.MSG_INFO, constants_.cannotAddColumnText(),
+            constants_.cannotAddMoreColumnsText(MAX_COLUMN_COUNT));
          return false;
       }
       return true;
@@ -1288,6 +1331,8 @@ public class PaneManager
             return buildTab_;
          case Presentation:
             return presentationTab_;
+         case Presentations:
+            return presentation2Tab_;
          case Environment:
             return environmentTab_;
          case Viewer:
@@ -1306,7 +1351,8 @@ public class PaneManager
    {
       return new WorkbenchTab[] { historyTab_, filesTab_,
                                   plotsTab_, packagesTab_, helpTab_,
-                                  vcsTab_, tutorialTab_, buildTab_, presentationTab_,
+                                  vcsTab_, tutorialTab_, buildTab_, 
+                                  presentationTab_, presentation2Tab_,
                                   environmentTab_, viewerTab_,
                                   connectionsTab_, jobsTab_, launcherJobsTab_ };
    }
@@ -1361,6 +1407,13 @@ public class PaneManager
       Tab tab = tabForName(tabName);
       if (tab != null)
          activateTab(tab);
+   }
+   
+   public void focusTab(Tab tab)
+   {
+      WorkbenchTab wbTab = getTab(tab);
+      if (wbTab != null)
+         wbTab.setFocus();
    }
 
    public void zoomTab(Tab tab)
@@ -1488,8 +1541,8 @@ public class PaneManager
       }
       // Currently we cannot zoom on left widgets
       if (!unZooming)
-      {
-         for (Widget w : leftList_)
+      {  
+         for (int i=0; i<leftList_.size(); i++)
             leftTargetSize.add(0.0);
       }
 
@@ -1612,6 +1665,7 @@ public class PaneManager
       return panesByName_.get(name).getNormal();
    }
 
+   @SuppressWarnings("unlikely-arg-type")
    public void closeSourceWindow(String name)
    {
       // hide the original source window
@@ -1803,6 +1857,11 @@ public class PaneManager
       {
          case VCS:
          case Presentation:
+         // The "Presentations" tab should always be displayed as "Presentation" (since 
+         // the tab only shows a single presentation at a time. We named it "Presentations"
+         // under the hood so it wouldn't conflict in config with the existing 
+         // Presentation tab
+         case Presentations:
          case Connections:
             return getTab(tab).getTitle();
          default:
@@ -1830,6 +1889,8 @@ public class PaneManager
          return Tab.Build;
       if (name.equalsIgnoreCase("presentation"))
          return Tab.Presentation;
+      if (name.equalsIgnoreCase("presentations"))
+         return Tab.Presentations;
       if (name.equalsIgnoreCase("environment"))
          return Tab.Environment;
       if (name.equalsIgnoreCase("viewer"))
@@ -1867,6 +1928,7 @@ public class PaneManager
       case Tutorial:     return commands_.layoutZoomTutorial();
       case Viewer:       return commands_.layoutZoomViewer();
       case Connections:  return commands_.layoutZoomConnections();
+      case Presentations: return commands_.layoutZoomPresentation2();
       default:
          throw new IllegalArgumentException("Unexpected tab '" + tab.toString() + "'");
       }
@@ -1932,6 +1994,7 @@ public class PaneManager
       commands.add(commands_.layoutZoomTutorial());
       commands.add(commands_.layoutZoomViewer());
       commands.add(commands_.layoutZoomConnections());
+      commands.add(commands_.layoutZoomPresentation2());
 
       return commands;
    }
@@ -1969,6 +2032,7 @@ public class PaneManager
    private final WorkbenchTab compilePdfTab_;
    private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
+   private final FileTypeRegistry fileTypeRegistry_;
    private final Source source_;
    private final SourceColumnManager sourceColumnManager_;
    private final WorkbenchTab historyTab_;
@@ -1979,6 +2043,7 @@ public class PaneManager
    private final WorkbenchTab vcsTab_;
    private final WorkbenchTab buildTab_;
    private final WorkbenchTab presentationTab_;
+   private final WorkbenchTab presentation2Tab_;
    private final WorkbenchTab connectionsTab_;
    private final WorkbenchTab environmentTab_;
    private final WorkbenchTab viewerTab_;
@@ -2026,4 +2091,5 @@ public class PaneManager
 
    private int additionalSourceCount_; // this does not include the main source
    public final static int MAX_COLUMN_COUNT = 3;
+   private static final UIConstants constants_ = GWT.create(UIConstants.class);
 }

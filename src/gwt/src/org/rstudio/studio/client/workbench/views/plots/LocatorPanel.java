@@ -1,7 +1,7 @@
 /*
  * LocatorPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -148,9 +148,9 @@ public class LocatorPanel extends LayoutPanel
          public void setToolbarContents(Toolbar toolbar)
          {
             toolbar.addLeftWidget(
-               new Label("Locator active (Esc to finish)"));
+               new Label(constants_.locatorActiveText()));
 
-            SmallButton doneButton = new SmallButton("Finish");
+            SmallButton doneButton = new SmallButton(constants_.finishText());
             doneButton.addClickHandler(new ClickHandler() {
                public void onClick(ClickEvent event)
                {
@@ -236,4 +236,5 @@ public class LocatorPanel extends LayoutPanel
    private static final int FB_OFFSET_X = 0;
    private InputPanel inputPanel_;
    private HandlerRegistration escHandlerReg_ = null;
+   private static final PlotsConstants constants_ = com.google.gwt.core.client.GWT.create(PlotsConstants.class);
 }

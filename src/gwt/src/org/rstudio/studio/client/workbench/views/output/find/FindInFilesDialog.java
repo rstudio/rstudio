@@ -1,7 +1,7 @@
 /*
  * FindInFilesDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,6 +46,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -175,14 +176,14 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    {
       super("Find in Files", Roles.getDialogRole(), operation);
 
-      dirChooser_ = new DirectoryChooserTextBox("Search in:",
+      dirChooser_ = new DirectoryChooserTextBox(constants_.searchInLabel(),
          ElementIds.TextBoxButtonId.FIND_IN,
          null);
       dirChooser_.setText("");
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       labelFilePatterns_.setFor(listPresetFilePatterns_);
       labelExcludeFilePatterns_.setFor(listPresetExcludeFilePatterns_);
-      setOkButtonCaption("Find");
+      setOkButtonCaption(constants_.findButtonCaption());
 
       setExampleIdAndAriaProperties(spanPatternExample_, txtFilePattern_);
       setExampleIdAndAriaProperties(spanExcludePatternExample_, txtExcludeFilePattern_);
@@ -411,7 +412,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       if (StringUtil.isNullOrEmpty(input.getPath().trim()))
       {
          globalDisplay_.showErrorMessage(
-               "Error", "You must specify a directory to search.");
+               constants_.errorCaption(), constants_.errorMessage());
 
          return false;
       }
@@ -483,7 +484,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
       // give custom pattern textbox a label and extended description using the visible
       // example shown below it
       span.setId(ElementIds.getElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
-      Roles.getTextboxRole().setAriaLabelProperty(textbox.getElement(), "Custom Filter Pattern");
+      Roles.getTextboxRole().setAriaLabelProperty(textbox.getElement(), constants_.customFilterPatterValue());
       Roles.getTextboxRole().setAriaDescribedbyProperty(textbox.getElement(),
             ElementIds.getAriaElementId(ElementIds.FIND_FILES_PATTERN_EXAMPLE));
    }
@@ -524,4 +525,5 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    private final Widget mainWidget_;
    private final GlobalDisplay globalDisplay_ = RStudioGinjector.INSTANCE.getGlobalDisplay();
    private final Session session_ = RStudioGinjector.INSTANCE.getSession();
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

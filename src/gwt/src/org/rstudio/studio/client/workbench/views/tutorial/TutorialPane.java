@@ -1,7 +1,7 @@
 /*
  * TutorialPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -81,7 +81,7 @@ public class TutorialPane
       dependencies_  = dependencies;
       server_        = server;
 
-      indicator_ = globalDisplay_.getProgressIndicator("Error Loading Tutorial");
+      indicator_ = globalDisplay_.getProgressIndicator(constants_.errorLoadingTutorialCaption());
 
       events.addHandler(ThemeChangedEvent.TYPE, this);
 
@@ -92,7 +92,7 @@ public class TutorialPane
    @Override
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame("Tutorial Pane");
+      frame_ = new RStudioFrame(constants_.tutorialPaneTitle());
       frame_.setSize("100%", "100%");
       frame_.setStylePrimaryName("rstudio-TutorialFrame");
       frame_.addStyleName("ace_editor_theme");
@@ -108,7 +108,7 @@ public class TutorialPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar("Tutorial Tab");
+      toolbar_ = new Toolbar(constants_.tutorialTabLabel());
 
       // TODO: managing history within an iframe is surprisingly challenging,
       // so we just leave these buttons unavailable for now and just allow
@@ -214,7 +214,7 @@ public class TutorialPane
             Timers.singleShot(500, () ->
             {
                if (!loaded_)
-                  indicator_.onProgress("Loading tutorial...");
+                  indicator_.onProgress(constants_.loadingTutorialProgressMessage());
             });
 
             handler_ = frame_.addLoadHandler((LoadEvent event) ->
@@ -382,6 +382,61 @@ public class TutorialPane
       return frame_.addHandler(handler, TutorialNavigateEvent.TYPE);
    }
 
+   private void updateShiny()
+   {
+      new ImmediatelyInvokedFunctionExpression()
+      {
+         private HandlerRegistration handler_;
+         private ProgressIndicator progress_;
+
+         private final String errorCaption = constants_.errorInstallingShiny();
+         private final String errorMessage =
+               constants_.errorInstallingShinyMessage();
+
+         @Override
+         protected void invoke()
+         {
+            // double-check that we were able to successfully install shiny
+            progress_ = globalDisplay_.getProgressIndicator(errorCaption);
+            handler_ = events_.addHandler(ConsolePromptEvent.TYPE, new ConsolePromptEvent.Handler()
+            {
+               @Override
+               public void onConsolePrompt(ConsolePromptEvent event)
+               {
+                  handler_.removeHandler();
+
+                  server_.isPackageInstalled("shiny", "1.6.0", new ServerRequestCallback<Boolean>()
+                  {
+                     @Override
+                     public void onResponseReceived(Boolean installed)
+                     {
+                        if (!installed)
+                        {
+                           progress_.onError(errorMessage);
+                           return;
+                        }
+
+                        progress_.onCompleted();
+                     }
+
+                     @Override
+                     public void onError(ServerError error)
+                     {
+                        Debug.logError(error);
+                        progress_.onError(errorMessage);
+                     }
+                  });
+               }
+            });
+
+            // fire console event installing learnr
+            progress_.onProgress(constants_.installingShinyCaption());
+            SendToConsoleEvent event = new SendToConsoleEvent("install.packages(\"shiny\")", true);
+            events_.fireEvent(event);
+         }
+      };
+   }
+
    private void installLearnr()
    {
       new ImmediatelyInvokedFunctionExpression()
@@ -389,9 +444,9 @@ public class TutorialPane
          private HandlerRegistration handler_;
          private ProgressIndicator progress_;
 
-         private final String errorCaption = "Error installing learnr";
+         private final String errorCaption = constants_.errorInstallingLearnr();
          private final String errorMessage =
-               "RStudio was unable to install the learnr package.";
+               constants_.errorInstallingLearnrMessage();
 
          @Override
          protected void invoke()
@@ -431,7 +486,7 @@ public class TutorialPane
             });
 
             // fire console event installing learnr
-            progress_.onProgress("Installing learnr...");
+            progress_.onProgress(constants_.installingLearnrCaption());
             SendToConsoleEvent event = new SendToConsoleEvent("install.packages(\"learnr\")", true);
             events_.fireEvent(event);
          }
@@ -450,6 +505,11 @@ public class TutorialPane
       $wnd.tutorialInstallLearnr = $entry(function() {
          self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::installLearnr()();
       });
+
+      $wnd.tutorialUpdateShiny = $entry(function() {
+         self.@org.rstudio.studio.client.workbench.views.tutorial.TutorialPane::updateShiny()();
+      });
+
 
    }-*/;
 
@@ -550,4 +610,5 @@ public class TutorialPane
    private final TutorialServerOperations server_;
 
    private static final Resources RES = GWT.create(Resources.class);
+   private static final TutorialConstants constants_ = com.google.gwt.core.client.GWT.create(TutorialConstants.class);
 }

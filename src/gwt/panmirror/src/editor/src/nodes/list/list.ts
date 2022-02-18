@@ -1,7 +1,7 @@
 /*
  * list.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,9 +26,9 @@ import { EditorUI, kListSpacingTight } from '../../api/ui';
 import { ListCapabilities } from '../../api/list';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocTokenType } from '../../api/pandoc';
-import { kPlatformMac } from '../../api/platform';
 import { OmniInsertGroup } from '../../api/omni_insert';
 import { conditionalWrappingInputRule } from '../../api/input_rule';
+import { kPresentationDocType } from '../../api/format';
 
 import { ListCommand, TightListCommand, EditListPropertiesCommand, editListPropertiesCommandFn } from './list-commands';
 
@@ -67,7 +67,7 @@ export enum ListNumberDelim {
 const plugin = new PluginKey('list');
 
 const extension = (context: ExtensionContext): Extension => {
-  const { pandocExtensions, ui } = context;
+  const { pandocExtensions, ui, format } = context;
 
   // determine list capabilities based on active format options
   const capabilities: ListCapabilities = {
@@ -82,6 +82,7 @@ const extension = (context: ExtensionContext): Extension => {
     // example: pandocExtensions.fancy_lists && pandocExtensions.example_lists,
     example: false,
     order: pandocExtensions.startnum,
+    incremental: format.docTypes.includes(kPresentationDocType)
   };
 
   return {
@@ -267,7 +268,7 @@ const extension = (context: ExtensionContext): Extension => {
       const commands = [
         new ListCommand(
           EditorCommandId.BulletList,
-          kPlatformMac ? ['Shift-Mod-8'] : [],
+          [],
           schema.nodes.bullet_list,
           schema.nodes.list_item,
           bulletListOmniInsert(ui),
@@ -275,7 +276,7 @@ const extension = (context: ExtensionContext): Extension => {
         ),
         new ListCommand(
           EditorCommandId.OrderedList,
-          kPlatformMac ? ['Shift-Mod-7'] : [],
+          [],
           schema.nodes.ordered_list,
           schema.nodes.list_item,
           orderedListOmniInsert(ui),
@@ -345,6 +346,7 @@ function listAttrEdit(type: string, capabilities: ListCapabilities, ui: EditorUI
         top: 5,
         right: 5,
       },
+      preferHidden: true
     };
   };
 }
@@ -389,8 +391,8 @@ function bulletListOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Bullet List'),
     description: ui.context.translateText('List using bullets for items'),
-    group: OmniInsertGroup.Lists,
-    priority: 5,
+    group: OmniInsertGroup.Common,
+    priority: 4,
     image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.bullet_list_dark! : ui.images.omni_insert?.bullet_list!),
   };
 }
@@ -399,8 +401,8 @@ function orderedListOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Numbered List'),
     description: ui.context.translateText('List using numbers for items'),
-    group: OmniInsertGroup.Lists,
-    priority: 4,
+    group: OmniInsertGroup.Common,
+    priority: 3,
     image: () =>
       ui.prefs.darkMode() ? ui.images.omni_insert?.ordered_list_dark! : ui.images.omni_insert?.ordered_list!,
   };

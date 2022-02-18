@@ -1,7 +1,7 @@
 /*
  * FileLock.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -92,6 +92,7 @@ public:
    static boost::posix_time::seconds getRefreshRate() { return s_refreshRate; }
    static bool isLoggingEnabled() { return s_loggingEnabled; }
    static bool isLoadBalanced() { return s_isLoadBalanced; }
+   static bool useSymlinks() { return s_useSymlinks; }
    static bool isNoLockAvailable(const Error& error)
    {
       return error == systemError(boost::system::errc::no_lock_available, ErrorLocation());
@@ -99,6 +100,7 @@ public:
    
 protected:
    static LockType s_defaultType;
+   static bool s_useSymlinks;
    static boost::posix_time::seconds s_timeoutInterval;
    static boost::posix_time::seconds s_refreshRate;
    static bool s_loggingEnabled;

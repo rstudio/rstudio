@@ -1,7 +1,7 @@
 /*
  * FullscreenPopupPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.resources.ImageResource2x;
 
 import com.google.gwt.core.client.GWT;
@@ -84,7 +85,7 @@ public class FullscreenPopupPanel extends ModalPopupPanel
    private void addCloseButton(NineUpBorder border)
    {
       Image closeIcon = new Image(new ImageResource2x(RES.close2x()));
-      closeIcon.setAltText("Close popup");
+      closeIcon.setAltText(constants_.closePopupText());
       closeIcon.getElement().getStyle().setCursor(Style.Cursor.POINTER);
       closeIcon.addClickHandler(event -> close());
 
@@ -149,4 +150,5 @@ public class FullscreenPopupPanel extends ModalPopupPanel
    }
    
    private static final Resources RES = GWT.create(Resources.class);
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

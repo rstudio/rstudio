@@ -67,7 +67,7 @@ FilePath collectionsCacheDir(const std::string& type, const std::string& context
 struct IndexedCollection
 {
    bool empty() const { return file.empty(); }
-   int version;
+   double version;
    std::string file;
    std::string key;
    std::string parentKey;
@@ -92,7 +92,7 @@ std::map<std::string,IndexedCollection> collectionsCacheIndex(const FilePath& ca
 
                json::Object entryJson = member.getValue().getObject();
                IndexedCollection coll;
-               coll.version = entryJson[kVersion].getInt();
+               coll.version = entryJson[kVersion].getDouble();
                coll.file = entryJson[kFile].getString();
                coll.key = entryJson[kKey].getString();
                coll.parentKey = entryJson[kParentKey].getString();
@@ -142,7 +142,7 @@ Error readCollection(const FilePath& filePath, ZoteroCollection* pCollection)
       return error;
 
    pCollection->name = collectionJson[kName].getString();
-   pCollection->version = collectionJson[kVersion].getInt();
+   pCollection->version = collectionJson[kVersion].getDouble();
    pCollection->key = collectionJson[kKey].getString();
    pCollection->parentKey = collectionJson[kParentKey].getString();
    pCollection->items = collectionJson[kItems].getArray();
@@ -206,6 +206,8 @@ void updateCachedCollection(const std::string& type, const std::string& context,
    index[name] = coll;
    updateCollectionsCacheIndex(cacheDir, index);
 
+   TRACE("Writing items", collection.items.getSize());
+
    // write the collection
    json::Object collectionJson;
    collectionJson[kName] = collection.name;
@@ -231,7 +233,8 @@ ZoteroCollection responseFromServerCache(const std::string& type,
    {
       // see if the client specs already indicate an up to date version
       ZoteroCollectionSpecs::const_iterator clientIt = std::find_if(clientCacheSpecs.begin(), clientCacheSpecs.end(), [cached](ZoteroCollectionSpec spec) {
-         return spec.name == cached.name && spec.version == cached.version;
+         // If the version is 0 this is a local instance that isn't incrementing version numbers, do not cache
+         return spec.name == cached.name && spec.version == cached.version && spec.version != 0;
       });
       if (clientIt == clientCacheSpecs.end())
       {
@@ -323,7 +326,7 @@ const char * const kKey = "key";
 const char * const kParentKey = "parentKey";
 const char * const kItems = "items";
 
-const int kNoVersion = -1;
+const double kNoVersion = -1;
 
 ZoteroCollectionSpec findParentSpec(const ZoteroCollectionSpec& spec, const ZoteroCollectionSpecs& specs)
 {
@@ -418,7 +421,8 @@ void getCollections(std::vector<std::string> collections,
             {
                // see if the server side cache needs updating
                ZoteroCollectionSpecs::const_iterator it = std::find_if(serverCacheSpecs.begin(), serverCacheSpecs.end(), [webCollection](ZoteroCollectionSpec cacheSpec) {
-                  return cacheSpec.name == webCollection.name && cacheSpec.version == webCollection.version;
+                  // If the version is 0 this is a local instance that isn't incrementing version numbers, do not cache
+                  return cacheSpec.name == webCollection.name && cacheSpec.version == webCollection.version && cacheSpec.version != 0;
                });
                // need to update the cache -- do so and then return the just cached copy to the client
                if (it == serverCacheSpecs.end())
@@ -426,6 +430,7 @@ void getCollections(std::vector<std::string> collections,
                   TRACE("Updating server cache for " + webCollection.name);
                   updateCachedCollection(conn.type, conn.cacheContext, webCollection.name, webCollection);
                   TRACE("Returning server cache for " + webCollection.name);
+                  TRACE("Cache contents", webCollection.items.getSize());
                   responseCollections.push_back(webCollection);
                }
 

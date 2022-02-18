@@ -1,7 +1,7 @@
 /*
  * ChunkOutputFrame.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,9 @@ public class ChunkOutputFrame extends DynamicIFrame
             loadUrl(url_, onCompleted_);
          }
       };
+
+      getElement().getStyle().setProperty("pointerEvents", "none");
+      getElement().getStyle().setProperty("opacity", "0.7");
    }
 
    void loadUrl(String url, Command onCompleted)
@@ -115,7 +118,7 @@ public class ChunkOutputFrame extends DynamicIFrame
       
       onRenderedTimer.schedule(100);
    }
-   
+
    private final Timer timer_;
    private String url_;
    private Command onCompleted_;

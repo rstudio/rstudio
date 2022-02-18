@@ -1,7 +1,7 @@
 /*
  * DatabaseTests.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,8 @@
 #include <soci/boost-tuple.h>
 #include <soci/session.h>
 #include <soci/sqlite3/soci-sqlite3.h>
+
+#include "config.h"
 
 namespace rstudio {
 namespace unit_tests {
@@ -349,12 +351,13 @@ TEST_CASE("Database", "[.database]")
       REQUIRE_FALSE(sqliteUpdater.update());
       REQUIRE_FALSE(postgresUpdater.update());
 
-      std::string currentSchemaVersion;
+      SchemaVersion currentSchemaVersion;
       REQUIRE_FALSE(sqliteUpdater.databaseSchemaVersion(&currentSchemaVersion));
-      REQUIRE(currentSchemaVersion == "3_AddAccountCreationTime");
-      currentSchemaVersion.clear();
+      REQUIRE(currentSchemaVersion == SchemaVersion("3", RSTUDIO_RELEASE_NAME));
+      
+      currentSchemaVersion = SchemaVersion();
       REQUIRE_FALSE(postgresUpdater.databaseSchemaVersion(&currentSchemaVersion));
-      REQUIRE(currentSchemaVersion == "3_AddAccountCreationTime");
+      REQUIRE(currentSchemaVersion == SchemaVersion("3", RSTUDIO_RELEASE_NAME));
 
       // ensure repeated calls to update work without error
       REQUIRE_FALSE(sqliteUpdater.update());

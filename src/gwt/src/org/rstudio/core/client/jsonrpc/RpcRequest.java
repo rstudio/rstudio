@@ -1,7 +1,7 @@
 /*
  * RpcRequest.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,13 @@
 
 package org.rstudio.core.client.jsonrpc;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.http.client.*;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.user.client.Random;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.jsonrpc.RequestLogEntry.ResponseType;
 import org.rstudio.studio.client.application.ApplicationCsrfToken;
@@ -97,7 +99,7 @@ public class RpcRequest
       // in server mode, append a CSRF token for request validation
       if (!Desktop.isDesktop())
       {
-         builder.setHeader("X-CSRF-Token", ApplicationCsrfToken.getCsrfToken());
+         builder.setHeader("X-RS-CSRF-Token", ApplicationCsrfToken.getCsrfToken());
       }
 
       // inform the server if we should not refresh auth creds
@@ -112,7 +114,7 @@ public class RpcRequest
             Debug.log("Request: " + requestString);
 
          requestLogEntry_ = RequestLog.log(requestId,
-                                           redactLog_ ? "[REDACTED]"
+                                           redactLog_ ? constants_.redactedText()
                                                       : requestString);
 
          request_ = builder.sendRequest(requestString, new RequestCallback() {
@@ -144,7 +146,7 @@ public class RpcRequest
                         Debug.log("Response: " + responseText);
                      requestLogEntry_.logResponse(ResponseType.Normal,
                                                  responseText);
-                     rpcResponse = RpcResponse.parse(responseText);
+                     rpcResponse = RpcResponse.parseUnsafe(responseText);
                      
                      // response received and validated, process it!
                      requestCallback.onResponseReceived(enclosingRequest, 
@@ -164,19 +166,14 @@ public class RpcRequest
                   // ERROR: Non-200 response from server
                   
                   // default error message
-                  String message = "Status code " + 
-                                   Integer.toString(status) + 
-                                   " returned by " +
-                                   (Desktop.isDesktop() ? "R session" : "RStudio Server") +
-                                   " when executing '" +
-                                   getMethod() + "'";
+                  String message = constants_.rpcErrorMessage(Integer.toString(status),
+                          Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage(),
+                          getMethod());
                   
                   // override error message for status code 0
                   if (status == 0)
                   {
-                     message = "Unable to establish connection with " +
-                        (Desktop.isDesktop() ? "R session" : "RStudio Server") +
-                        " when executing '" + getMethod() + "'";
+                     message = constants_.rpcOverrideErrorMessage((Desktop.isDesktop() ? constants_.rSessionMessage() : constants_.rStudioServerMessage()), getMethod());
                   }
 
                   requestLogEntry_.logResponse(ResponseType.Unknown,
@@ -294,5 +291,5 @@ public class RpcRequest
    final private boolean refreshCredentials_;
    private Request request_ = null;
    private RequestLogEntry requestLogEntry_ = null;
-
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

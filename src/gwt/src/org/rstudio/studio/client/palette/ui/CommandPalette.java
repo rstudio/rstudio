@@ -1,7 +1,7 @@
 /*
  * CommandPalette.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.palette.PaletteConstants;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntryProvider;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
@@ -109,13 +110,13 @@ public class CommandPalette extends Composite
       Element commandList = commandList_.getElement();
       ElementIds.assignElementId(commandList, ElementIds.COMMAND_PALETTE_LIST);
       Roles.getListboxRole().set(commandList);
-      Roles.getListboxRole().setAriaLabelProperty(commandList, "Matching commands and settings");
+      Roles.getListboxRole().setAriaLabelProperty(commandList, constants_.matchCmdsAriaLabelProperty());
 
       // Accessibility attributes: search box
       ElementIds.assignElementId(searchBox_, ElementIds.COMMAND_PALETTE_SEARCH);
       Roles.getComboboxRole().setAriaOwnsProperty(searchBox, Id.of(commandList_.getElement()));
       Roles.getComboboxRole().set(searchBox);
-      Roles.getComboboxRole().setAriaLabelProperty(searchBox, "Search for commands and settings");
+      Roles.getComboboxRole().setAriaLabelProperty(searchBox, constants_.searchForCmdsAriaLabelProperty());
       Roles.getComboboxRole().setAriaExpandedState(searchBox, ExpandedValue.TRUE);
       A11y.setARIAAutocomplete(searchBox_, "list");
       
@@ -322,7 +323,7 @@ public class CommandPalette extends Composite
 
       // Report results count to screen reader
       resultsCount_.reportStatus(matches + " " +
-            "commands found, press up and down to navigate",
+            constants_.cmdsFoundReportStatusMsg(),
             RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue(),
             Severity.STATUS);
    }
@@ -625,4 +626,6 @@ public class CommandPalette extends Composite
    @UiField HTMLPanel noResults_;
    @UiField ScrollPanel scroller_;
    @UiField Styles styles_;
+
+   private static final PaletteConstants constants_ = GWT.create(PaletteConstants.class);
 }

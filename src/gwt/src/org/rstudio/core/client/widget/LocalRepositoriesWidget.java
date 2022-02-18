@@ -1,7 +1,7 @@
 /*
  * LocalRepositoriesWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -49,16 +50,16 @@ public class LocalRepositoriesWidget extends Composite
       hp.add(listBox_);
       
       VerticalPanel buttonPanel = new VerticalPanel();
-      SmallButton buttonAdd = createButton("Add...");
+      SmallButton buttonAdd = createButton(constants_.buttonAddCaption());
       buttonAdd.addClickHandler(addButtonClicked_);
       buttonPanel.add(buttonAdd);
-      SmallButton buttonRemove = createButton("Remove");
+      SmallButton buttonRemove = createButton(constants_.buttonRemoveCaption());
       buttonRemove.addClickHandler(removeButtonClicked_);
       buttonPanel.add(buttonRemove);
       hp.add(buttonPanel);
       
-      panel.add(new LabelWithHelp("Local repositories:",
-            "packrat_local_repos", "Help on local Packrat repositories",
+      panel.add(new LabelWithHelp(constants_.localReposText(),
+            "packrat_local_repos", constants_.localReposTitle(),
             listBox_));
       panel.add(hp);
       
@@ -94,7 +95,7 @@ public class LocalRepositoriesWidget extends Composite
       public void onClick(ClickEvent event)
       {
          fileDialogs_.chooseFolder(
-               "Add Local Repository",
+               constants_.addLocalRepoText(),
                fileSystemContext_,
                FileSystemItem.home(),
                new ProgressOperationWithInput<FileSystemItem>() {
@@ -166,5 +167,5 @@ public class LocalRepositoriesWidget extends Composite
    {
       RES.styles().ensureInjected();
    }
-   
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * markdown_highlight_rules.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -32,6 +32,8 @@ var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
 var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
+var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
+var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
 var Utils = require("mode/utils");
 
 function makeDateRegex()
@@ -52,7 +54,7 @@ var RMarkdownHighlightRules = function() {
 
    // use 'firstLine' rule so that YAML rules can apply only there
    this.$rules["firstLine"] = this.$rules["allowBlock"].slice();
-   
+
    // Embed R highlight rules
    Utils.embedRules(
       this,
@@ -128,45 +130,68 @@ var RMarkdownHighlightRules = function() {
 
    // Embed shell scripting highlight rules (sh, bash)
    Utils.embedRules(
-       this,
-       ShHighlightRules,
-       "sh",
-       this.$reShChunkStartString,
-       this.$reChunkEndString,
-       ["start", "listblock", "allowBlock"]
+      this,
+      ShHighlightRules,
+      "sh",
+      this.$reShChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
    );
 
    // Embed stan highlighting rules
    Utils.embedRules(
-       this,
-       StanHighlightRules,
-       "stan",
-       this.$reStanChunkStartString,
-       this.$reChunkEndString,
-       ["start", "listblock", "allowBlock"]
+      this,
+      StanHighlightRules,
+      "stan",
+      this.$reStanChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
    );
 
    // Embed sql highlighting rules
    Utils.embedRules(
-       this,
-       SqlHighlightRules,
-       "sql",
-       this.$reSqlChunkStartString,
-       this.$reChunkEndString,
-       ["start", "listblock", "allowBlock"]
+      this,
+      SqlHighlightRules,
+      "sql",
+      this.$reSqlChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
    );
 
    // Embed JavaScript highlighting rules
    Utils.embedRules(
-       this,
-       JavaScriptHighlightRules,
-       "js",
-       this.$reJavaScriptChunkStartString,
-       this.$reChunkEndString,
-       ["start", "listblock", "allowBlock"]
+      this,
+      JavaScriptHighlightRules,
+      "js",
+      this.$reJavaScriptChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
    );
 
+   // Embed JavaScript highlighting rules
+   Utils.embedRules(
+      this,
+      CssHighlightRules,
+      "css",
+      this.$reCssChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
+   // Embed text highlight rules
+   Utils.embedRules(
+      this,
+      TextHighlightRules,
+      "text",
+      this.$reTextChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+
+
+
    // Embed YAML highlighting rules
+   // (Handled specially: should only ever activate on first line of document)
    Utils.embedRules(
       this,
       YamlHighlightRules,
@@ -210,7 +235,9 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reShChunkStartString         = engineRegex("(?:bash|sh)");
    this.$reStanChunkStartString       = engineRegex("stan");
    this.$reSqlChunkStartString        = engineRegex("sql");
-   this.$reJavaScriptChunkStartString = engineRegex("(?:d3|js)");
+   this.$reJavaScriptChunkStartString = engineRegex("(?:d3|js|ojs|observable)");
+   this.$reCssChunkStartString        = engineRegex("css");
+   this.$reTextChunkStartString       = engineRegex("(?:asis|text)");
    
 }).call(RMarkdownHighlightRules.prototype);
 

@@ -1,7 +1,7 @@
 /*
  * PanmirrorDialogsResources.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String fullWidthSelect();
       String fullWidthTable();
       String infoLabel();
+      String imageDialogTab();
       String imageDialogTabs();
       String linkDialogTabs();
       String hrefSelect();
@@ -50,6 +51,11 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String flexTablePreviewValue();
       String disabled();
       String listBox();
+      String numericSizeInput();
+      String unitsSelectInput();
+      String insertTabsetDialogTabs();
+      String divDialogTabs();
+      String alignmentPanel();
    }
 
    @Source("PanmirrorDialogsStyles.css")

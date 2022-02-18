@@ -1,7 +1,7 @@
 /*
  * DesktopDialogBuilderFactory.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.dialog;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.Command;
@@ -25,6 +26,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 
 public class DesktopDialogBuilderFactory implements DialogBuilderFactory
 {
@@ -126,7 +128,7 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
                         if (dismissProgress_ != null)
                            dismissProgress_.execute();
 
-                        globalDisplay.showErrorMessage("Error", message);
+                        globalDisplay.showErrorMessage(constants_.errorCaption(), message);
                      }
                   });
                }
@@ -142,4 +144,5 @@ public class DesktopDialogBuilderFactory implements DialogBuilderFactory
    {
       return new Builder(type, caption, message);
    }
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

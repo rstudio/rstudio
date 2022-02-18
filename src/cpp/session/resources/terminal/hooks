@@ -1,16 +1,99 @@
 #!/usr/bin/env sh
 
+# if we have a conda prefix, ensure it's still used
+if [ -n "${_RS_CONDA_PREFIX}" ]; then
+
+	# if we're running on WSL, we need to convert the path
+	# here to a Linux-style path
+	if command -v wslpath >/dev/null 2>&1; then
+		_RS_CONDA_PREFIX=$(wslpath "${_RS_CONDA_PREFIX}")
+	fi
+
+	# ideally, we'd call conda activate here,
+	# but users (especially on Windows) might not
+	# have called 'conda init' with their shell,
+	# so we fake the process here
+	CONDA_PREFIX="${_RS_CONDA_PREFIX}"
+	export CONDA_PREFIX
+
+	# on Windows, we need to put a number of locations
+	# on the PATH for conda utilities to function
+	#
+	# in particular, conda's crypto libraries need to
+	# be on the PATH for 'conda install' to function
+	case "$(uname -s)" in
+	MINGW32*)
+		
+		if command -v cygpath >/dev/null 2>&1; then
+			_CONDA_PREFIX=$(cygpath "${CONDA_PREFIX}")
+		fi
+		
+		_CONDA_SUFFIXES=(
+			bin
+			Scripts
+			Library/bin
+			Library/usr/bin
+			Library/mingw-w64/bin
+		)
+		
+		for _CONDA_SUFFIX in ${_CONDA_SUFFIXES[@]}; do
+			PATH="${_CONDA_PREFIX}/${_CONDA_SUFFIX}:${PATH}"
+		done
+
+		unset _CONDA_PREFIX
+		unset _CONDA_SUFFIX
+		unset _CONDA_SUFFIXES
+	;;
+	esac
+
+	# unset CONDA_PROMPT_MODIFIER for project-local envs
+	# (look for slash in environment variable value)
+	case "${PS1}" in
+	"${CONDA_PROMPT_MODIFIER}"*)
+		PS1="${PS1:${#CONDA_PROMPT_MODIFIER}}"
+		unset CONDA_PROMPT_MODIFIER
+	;;
+	esac
+
+	unset _RS_CONDA_PREFIX
+
+fi
+
 if [ -f "${RETICULATE_PYTHON}" ]; then
+
+	_RS_PYTHON_BIN=$(dirname "${RETICULATE_PYTHON}")
+
+	# munge path for MINGW32 if necessary
+	case "$(uname -s)" in
+	MINGW32*)
+		if command -v cygpath >/dev/null 2>&1; then
+			_RS_PYTHON_BIN=$(cygpath "${_RS_PYTHON_BIN}")
+		fi
+	;;
+	esac
+
+	# if a Scripts sub-directory exists, place that on
+	# the PATH as well (primarily for conda on Windows)
+	if [ -d "${_RS_PYTHON_BIN}/Scripts" ]; then
+		PATH="${_RS_PYTHON_BIN}/Scripts:${PATH}"
+	fi
 
 	# check for an activate script in the same directory
 	# as the configured version of Python; if it exists,
-	# use that to activate Python
-	_RS_PYTHON_BIN=$(dirname "${RETICULATE_PYTHON}")
+	# use that to activate Python (mainly for venv)
+	#
+	# note that this might also discover a conda activate
+	# script; unfortunately, running that isn't sufficient
+	# to update the PATH so we make that check below as well
 	if [ -f "${_RS_PYTHON_BIN}/activate" ]; then
 		. "${_RS_PYTHON_BIN}/activate"
-	else
+	fi
+
+	# ensure that our python was placed on the PATH
+	if [ "$(echo "${PATH}" | cut -d":" -f"1")" != "${_RS_PYTHON_BIN}" ]; then
 		PATH="${_RS_PYTHON_BIN}:${PATH}"
 	fi
+
 	unset _RS_PYTHON_BIN
 
 fi

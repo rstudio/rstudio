@@ -1,7 +1,7 @@
 /*
  * CodeSearchOracle.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.DuplicateHelper;
 import org.rstudio.core.client.FilePosition;
@@ -339,7 +340,7 @@ public class CodeSearchOracle extends SuggestOracle
                if (error.getCode() != ServerError.TRANSMISSION)
                {
                   RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-                        "Code Search Error", error.getUserMessage());
+                          constants_.codeSearchError(), error.getUserMessage());
                }
                
             }
@@ -468,5 +469,5 @@ public class CodeSearchOracle extends SuggestOracle
       private final ArrayList<CodeSearchSuggestion> suggestions_;
       private final boolean moveAvailable_;
    }
-   
+   private static final CodeSearchConstants constants_ = GWT.create(CodeSearchConstants.class);
 }

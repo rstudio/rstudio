@@ -1,7 +1,7 @@
 /*
  * SelectWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,12 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CoreClientConstants;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
 
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -39,6 +43,33 @@ public class SelectWidget extends Composite
       this(ExternalLabel);
    }
 
+   /**
+    * Infers SelectWidget title, values, and default text from PrevValue
+    * @param enumValue
+    */
+   public SelectWidget(EnumValue enumValue,
+                       boolean isMultipleSelect,
+                       boolean horizontalLayout,
+                       boolean listOnLeft)
+   {
+      this(enumValue.getTitle(), enumValue.getReadableValues(), enumValue.getAllowedValues(),
+         isMultipleSelect, horizontalLayout, listOnLeft);
+   }
+
+   /**
+    * Infers SelectWidget values, and default text from PrevValue
+    * @param enumValue
+    */
+   public SelectWidget(String title,
+                       EnumValue enumValue,
+                       boolean isMultipleSelect,
+                       boolean horizontalLayout,
+                       boolean listOnLeft)
+   {
+      this(title, enumValue.getReadableValues(), enumValue.getAllowedValues(),
+         isMultipleSelect, horizontalLayout, listOnLeft);
+   }
+
    public SelectWidget(String label)
    {
       this(label, null, false);
@@ -56,6 +87,13 @@ public class SelectWidget extends Composite
 
    public SelectWidget(String label,
                        String[] options,
+                       String[] values)
+   {
+      this(label, options, values, false, false, false);
+   }
+
+   public SelectWidget(String label,
+                       String[] options,
                        String[] values,
                        boolean isMultipleSelect)
    {
@@ -69,13 +107,14 @@ public class SelectWidget extends Composite
                        boolean horizontalLayout,
                        boolean listOnLeft)
    {
-      this(label, options, values, isMultipleSelect,
+      this(label, ElementIds.SelectWidgetId.DEFAULT, options, values, isMultipleSelect,
            horizontalLayout, listOnLeft, false);
    }
 
    /**
     * @param label label text, or empty string (supplied later via setLabel), or ExternalLabel if
     *              a label will be associated outside this control
+    * @param uniqueId
     * @param options
     * @param values
     * @param isMultipleSelect
@@ -84,6 +123,7 @@ public class SelectWidget extends Composite
     * @param fillContainer
     */
    public SelectWidget(String label,
+                       ElementIds.SelectWidgetId uniqueId,
                        String[] options,
                        String[] values,
                        boolean isMultipleSelect,
@@ -95,10 +135,19 @@ public class SelectWidget extends Composite
          values = options;
 
       listBox_ = new ListBox();
+      listBox_.getElement().getStyle().setProperty("minHeight", "20px");
       listBox_.setMultipleSelect(isMultipleSelect);
+
+      // set the element ID if one is provided, otherwise let it get auto generated
+      if (uniqueId != ElementIds.SelectWidgetId.DEFAULT)
+      {
+         uniqueId_ = "_" + uniqueId;
+         ElementIds.assignElementId(listBox_, ElementIds.SELECT_WIDGET_LIST_BOX + uniqueId_);
+      }
+
       if (options == null)
       {
-         listBox_.addItem("(None)", "(None)");
+         listBox_.addItem(constants_.selectWidgetListBoxNone(), constants_.selectWidgetListBoxNone());
       }
       else
       {
@@ -147,6 +196,8 @@ public class SelectWidget extends Composite
          panel = flowPanel_;
          panel.add(listBox_);
       }
+      if (!StringUtil.isNullOrEmpty(uniqueId_))
+         ElementIds.assignElementId(label_, ElementIds.SELECT_WIDGET_LABEL + uniqueId_);
 
       initWidget(panel);
 
@@ -280,8 +331,10 @@ public class SelectWidget extends Composite
       Roles.getListboxRole().setAriaDescribedbyProperty(listBox_.getElement(), Id.of(id));
    }
 
+   private String uniqueId_;
    private HorizontalPanel horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
    private FormLabel label_ = null;
    private final ListBox listBox_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

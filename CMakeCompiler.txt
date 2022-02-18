@@ -1,7 +1,7 @@
 #
 # CMakeCompiler.txt
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -85,6 +85,9 @@ if(MSVC)
 
   # multi-process compilation
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+
+  # incremental linking
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL")
 
   # silence some warnings (mostly out of our control) + set debug level
   add_definitions(

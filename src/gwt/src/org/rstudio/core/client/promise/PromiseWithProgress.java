@@ -1,7 +1,7 @@
 /*
  * PromiseWithProgress.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 
 package org.rstudio.core.client.promise;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -30,7 +32,7 @@ public class PromiseWithProgress<V>
 { 
    public PromiseWithProgress(Promise<V> promise, V errorVal, int delayMs, CommandWithArg<V> completed)
    {
-      this(promise, "Working...", errorVal, delayMs, completed);
+      this(promise, constants_.promiseWithProgress(), errorVal, delayMs, completed);
    }
    
    public PromiseWithProgress(Promise<V> promise, String progress, V errorVal, int delayMs, CommandWithArg<V> completed)
@@ -59,11 +61,11 @@ public class PromiseWithProgress<V>
          {
             if (progressDelayer != null)
                progressDelayer.dismiss();
-            globalDisplay.showErrorMessage("Error", error.toString());
+            globalDisplay.showErrorMessage(constants_.promiseWithProgressError(), error.toString());
             completed.execute(errorVal);
             return null;
          }
       });
    }
-   
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * RStudioThemedFrame.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -149,6 +149,11 @@ public class RStudioThemedFrame extends RStudioFrame
             // Add OS tag to the frame so that it can apply OS-specific CSS if
             // needed.
             body.addClassName(BrowseCap.operatingSystem());
+            
+            // Add flat theme class. None of our own CSS should use this, but many
+            // third party themes developed against earlier versions of RStudio
+            // (2021.09 and older) use it extensively in selectors.
+            body.addClassName("rstudio-themes-flat");
          }
       }
    }

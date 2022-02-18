@@ -1,7 +1,7 @@
 /*
  * SessionPath.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -137,6 +137,14 @@ Error initialize()
    FilePath optLocalBinPath("/opt/local/bin");
    if (optLocalBinPath.exists())
       addToPathIfNecessary(optLocalBinPath.getAbsolutePath(), &parts);
+
+   // check for user installation of quarto
+   FilePath quartoBin = module_context::userHomePath()
+         .completeChildPath("Applications")
+         .completeChildPath("quarto")
+         .completeChildPath("bin");
+   if (quartoBin.exists())
+      addToPathIfNecessary(quartoBin.getAbsolutePath(), &parts);
 
    // set the path
    core::system::setenv("PATH", core::algorithm::join(parts, ":"));

@@ -1,7 +1,7 @@
 /*
  * Win32System.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,7 @@
 #include <boost/bind/bind.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Log.hpp>
 #include <core/FileInfo.hpp>
 #include <core/DateTime.hpp>
@@ -185,6 +186,39 @@ Error initializeSystemLog(const std::string& programIdentity,
 
 void initializeLogConfigReload()
 {
+}
+
+Error findProgramOnPath(const std::string& program,
+                        core::FilePath* pProgramPath)
+{
+   std::string path = core::system::getenv("PATH");
+   auto paths = core::algorithm::split(path, ";");
+
+   // if the program supplied already has an extension,
+   // then we'll skip searching any custom extensions
+   auto programExt = core::string_utils::getExtension(program);
+
+   auto defaultExts = { ".exe", ".com", ".bat", ".cmd" };
+   auto noExts = { "" };
+   auto exts = programExt.empty() ? defaultExts : noExts;
+
+   for (auto&& path : paths)
+   {
+      if (path.empty())
+         continue;
+
+      for (auto&& ext : exts)
+      {
+         FilePath programPath = FilePath(path).completeChildPath(program + ext);
+         if (!programPath.exists())
+            continue;
+
+         *pProgramPath = programPath;
+         return Success();
+      }
+   }
+
+   return fileNotFoundError(program, ERROR_LOCATION);
 }
 
 bool isWin64()
@@ -725,7 +759,7 @@ Error copyMetafileToClipboard(const FilePath& path)
    if (error)
       return error;
 
-   // emtpy the clipboard
+   // empty the clipboard
    if (!::EmptyClipboard())
    {
       return LAST_SYSTEM_ERROR();

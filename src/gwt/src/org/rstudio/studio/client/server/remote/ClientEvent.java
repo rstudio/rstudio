@@ -1,7 +1,7 @@
 /*
  * ClientEvent.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -198,7 +198,12 @@ class ClientEvent extends JavaScriptObject
    public static final String DocumentCloseAllNoSave = "document_close_all_no_save";
    public static final String MemoryUsageChanged = "memory_usage_changed";
    public static final String CommandCallbacksChanged = "command_callbacks_changed";
-
+   public static final String ConsoleActivate = "console_activate";
+   public static final String JobsActivate = "jobs_activate";
+   public static final String PresentationPreview = "presentation_preview";
+   public static final String SuspendBlocked = "session_suspend_blocked";
+   public static final String ClipboardAction = "clipboard_action";
+   
    protected ClientEvent()
    {
    }

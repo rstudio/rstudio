@@ -1,7 +1,7 @@
 /*
  * RmdOutputFormatChangedEvent.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,15 +24,32 @@ public class RmdOutputFormatChangedEvent extends GwtEvent<RmdOutputFormatChanged
    {
       void onRmdOutputFormatChanged(RmdOutputFormatChangedEvent event);
    }
-
+   
    public RmdOutputFormatChangedEvent(String format)
    {
+      this(format, false, false);
+   }
+
+   public RmdOutputFormatChangedEvent(String format, boolean isQuarto, boolean isQuartoBook)
+   {
       format_ = format;
+      isQuarto_ = isQuarto;
+      isQuartoBook_ = isQuartoBook;
    }
 
    public String getFormat()
    {
       return format_;
+   }
+   
+   public boolean isQuarto()
+   {
+      return isQuarto_;
+   }
+   
+   public boolean isQuartoBook()
+   {
+      return isQuartoBook_;
    }
 
    @Override
@@ -48,6 +65,8 @@ public class RmdOutputFormatChangedEvent extends GwtEvent<RmdOutputFormatChanged
    }
 
    private final String format_;
+   private final boolean isQuarto_;
+   private final boolean isQuartoBook_;
 
    public static final Type<Handler> TYPE = new Type<>();
 }

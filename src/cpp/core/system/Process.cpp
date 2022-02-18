@@ -1,7 +1,7 @@
 /*
  * Process.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,8 @@ using namespace boost::placeholders;
 namespace rstudio {
 namespace core {
 namespace system {
+
+bool s_enableCallbacksRequireMainThread = false;
 
 const char* const kSmartTerm = "xterm-256color";
 const char* const kDumbTerm = "dumb";
@@ -308,8 +310,8 @@ namespace {
 bool hasActivity(const boost::shared_ptr<AsyncChildProcess>& childProc)
 {
    return
-         childProc->hasNonWhitelistSubprocess() ||
-         childProc->hasWhitelistSubprocess() ||
+         childProc->hasNonIgnoredSubprocess() ||
+         childProc->hasIgnoredSubprocess() ||
          childProc->hasRecentOutput();
 }
 
@@ -343,7 +345,7 @@ bool ProcessSupervisor::poll()
       // executing R code (e.g. via onContinue) which can in term end up
       // executing background tasks that result in a call to processSupervisor
       // runProgram or runCommand. This would then result in a push_back on
-      // the children vector and if this requried a realloc would invalidate
+      // the children vector and if this required a realloc would invalidate
       // all of the iterators currently pointing into the container
       std::vector<boost::shared_ptr<AsyncChildProcess> > children = pImpl_->children;
       std::for_each(children.begin(),
@@ -400,6 +402,16 @@ bool ProcessSupervisor::wait(
    }
 
    return true;
+}
+
+void setEnableCallbacksRequireMainThread(bool enabled)
+{
+   s_enableCallbacksRequireMainThread = enabled;
+}
+
+bool enableCallbacksRequireMainThread()
+{
+   return s_enableCallbacksRequireMainThread;
 }
 
 } // namespace system

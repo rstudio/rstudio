@@ -1,7 +1,7 @@
 /*
  * NotebookExec.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -147,6 +147,11 @@ void ChunkExecContext::connect()
       return;
    }
 
+   // leave an execution lock in this folder so it won't be moved if the notebook
+   // is saved while executing
+   locks_.push_back(boost::make_shared<ScopedFileLock>(FileLock::createDefault(),
+            outputPath_.completePath(kExecutionLock)));
+
    // if executing the whole chunk, initialize output right away (otherwise we
    // wait until we actually have output)
    if (execScope_ == ExecScopeChunk)
@@ -163,7 +168,9 @@ void ChunkExecContext::connect()
    // extract knitr figure options if present
    double figWidth = options_.getOverlayOption("fig.width", 0.0);
    double figHeight = options_.getOverlayOption("fig.height", 0.0);
-   
+   // the knitr 'dev' option, if set, may override the default graphics device backend
+   std::string chunkGraphicsBackend = options_.getOverlayOption("dev", std::string("png"));
+
    // if 'fig.asp' is set, then use that to override 'fig.height'
    double figAsp = options_.getOverlayOption("fig.asp", 0.0);
    if (figAsp != 0.0)
@@ -188,13 +195,13 @@ void ChunkExecContext::connect()
    {
       // user specified plot size, use it
       error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_, 
-            figHeight, figWidth, PlotSizeManual, outputPath_);
+            figHeight, figWidth, PlotSizeManual, outputPath_, chunkGraphicsBackend);
    }
    else
    {
       // user didn't specify plot size, use the width of the editor surface
       error = pPlotCapture->connectPlots(docId_, chunkId_, nbCtxId_,
-            0, pixelWidth_, PlotSizeAutomatic, outputPath_);
+            0, pixelWidth_, PlotSizeAutomatic, outputPath_, chunkGraphicsBackend);
    }
    if (error)
       LOG_ERROR(error);
@@ -334,7 +341,6 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    // preserve original extension; some output types, such as plots, don't
    // have a canonical extension
    target = target.getParent().completePath(target.getStem() + file.getExtension());
-
    Error error = file.move(target);
    if (error)
    {
@@ -468,6 +474,9 @@ void ChunkExecContext::disconnect()
       pCapture->disconnect();
    }
 
+   // clear all execution locks
+   locks_.clear();
+
    // clean up staging folder
    error = outputPath_.removeIfExists();
    if (error)
@@ -494,6 +503,50 @@ void ChunkExecContext::disconnect()
    }
 
    NotebookCapture::disconnect();
+
+   // check to see whether we need to migrate the output folder to another location;
+   // this addresses the case where the output folder location changed during execution,
+   // i.e. if the notebook was saved while running
+   FilePath migrationFile = chunkOutputPath(docId_, chunkId_, nbCtxId_, ContextExact)
+      .completePath(kMigrationTarget);
+   if (migrationFile.exists())
+   {
+      std::string path;
+      error = readStringFromFile(migrationFile, &path);
+      if (error)
+      {
+         error.addProperty("description", "Unable to read notebook output migration file");
+         LOG_ERROR(error);
+      }
+      else
+      {
+         // clean up migration file so it doesn't get moved
+         error = migrationFile.remove();
+         if (error)
+         {
+            error.addProperty("description", "Unable to clean up output migration file");
+            LOG_ERROR(error);
+         }
+
+         // perform the migration
+         FilePath target(path);
+         error = target.removeIfExists();
+         if (error)
+         {
+            error.addProperty("description", "Unable to remove old notebook output folder");
+            LOG_ERROR(error);
+         }
+         else
+         {
+            error = migrationFile.getParent().move(target);
+            if (error)
+            {
+               error.addProperty("description", "Unable to move notebook output folder");
+               LOG_ERROR(error);
+            }
+         }
+      }
+   }
 
    events().onChunkExecCompleted(docId_, chunkId_, chunkCode_, chunkLabel_, nbCtxId_);
 }
@@ -525,10 +578,15 @@ void ChunkExecContext::initializeOutput()
       LOG_ERROR(error);
 
    // ensure that the output folder exists
-   error = chunkOutputPath(docId_, chunkId_, nbCtxId_, ContextExact)
-      .ensureDirectory();
+   FilePath outputPath = chunkOutputPath(docId_, chunkId_, nbCtxId_, ContextExact);
+   error = outputPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
+
+   // leave an execution lock in this folder so it won't be moved if the notebook
+   // is saved while executing
+   locks_.push_back(boost::make_shared<ScopedFileLock>(FileLock::createDefault(),
+            outputPath.completePath(kExecutionLock)));
 
    hasOutput_ = true;
 }

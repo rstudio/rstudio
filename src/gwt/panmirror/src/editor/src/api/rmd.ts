@@ -1,7 +1,7 @@
 /*
  * rmd.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,7 @@ export interface EditorRmdChunk {
   lang: string;
   meta: string;
   code: string;
+  delimiter: string;
 }
 
 export type ExecuteRmdChunkFn = (chunk: EditorRmdChunk) => void;
@@ -60,7 +61,7 @@ export function canInsertRmdChunk(state: EditorState) {
   return true;
 }
 
-export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffset = 0) {
+export function insertRmdChunk(chunkPlaceholder: string) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     const schema = state.schema;
 
@@ -79,11 +80,6 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
     }
 
     if (dispatch) {
-      // compute offset
-      const lines = chunkPlaceholder.split(/\r?\n/);
-      const lineChars = lines.slice(0, rowOffset).reduce((count, line) => count + line.length + 1, 1);
-      const offsetChars = lineChars + colOffset;
-
       // perform insert
       const tr = state.tr;
       const rmdText = schema.text(chunkPlaceholder);
@@ -93,8 +89,7 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
       } else {
         tr.replaceSelectionWith(rmdNode);
-        const selPos = tr.selection.from - rmdNode.nodeSize - 1 + offsetChars - 1;
-        setTextSelection(selPos)(tr);
+        setTextSelection(tr.selection.from - 2)(tr);
       }
 
       dispatch(tr);
@@ -153,18 +148,34 @@ export function rmdChunk(code: string): EditorRmdChunk | null {
     const matchLang = meta.match(/\w+/);
     const lang = matchLang ? matchLang[0] : '';
 
-    // remove lines, other than the first, which are chunk delimiters (start
-    // with ```). these are generally unintended but can be accidentally
-    // introduced by e.g., pasting a chunk with its delimiters into visual mode,
-    // where delimiters are implicit. if these lines aren't removed, they create
-    // nested chunks that break parsing and can corrupt the document (see case
-    // 8452)
-    lines = lines.filter((line, idx) => {
-      if (idx === 0) {
-        return true;
+    const isContainerChunk = ["verbatim", "asis", "comment"].includes(lang);
+
+    // for container chunks, delimiter is one backtick greater than the most 
+    // ticks we've found starting a line (otherwise is ```)
+    const delimiter = isContainerChunk ? lines.reduce((ticks: string, line: string) => {
+      const match = line.match(/^```+/);
+      if (match && (match[0].length >= ticks.length)) {
+        ticks = match[0] + "`";
       }
-      return !line.startsWith("```");
-    });
+      return ticks;
+    }, "```") : "```";
+
+    // filter out stray ``` if this isn't a container chunk
+    if (!isContainerChunk) {
+       // remove lines, other than the first, which are chunk delimiters (start
+      // with ```). these are generally unintended but can be accidentally
+      // introduced by e.g., pasting a chunk with its delimiters into visual mode,
+      // where delimiters are implicit. if these lines aren't removed, they create
+      // nested chunks that break parsing and can corrupt the document (see case
+      // 8452)
+      lines = lines.filter((line, idx) => {
+        if (idx === 0) {
+          return true;
+        }
+        return !line.startsWith("```");
+      });
+    }
+   
 
     // a completely empty chunk (no second line) should be returned
     // as such. if it's not completely empty then append a newline
@@ -175,6 +186,7 @@ export function rmdChunk(code: string): EditorRmdChunk | null {
       lang,
       meta,
       code: chunkCode,
+      delimiter
     };
   } else {
     return null;

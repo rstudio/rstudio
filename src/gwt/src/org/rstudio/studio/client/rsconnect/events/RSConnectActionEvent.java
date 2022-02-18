@@ -1,7 +1,7 @@
 /*
  * RSConnectActionEvent.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.rsconnect.events;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectDeploymentRecord;
 import org.rstudio.studio.client.rsconnect.model.RenderedDocPreview;
 
@@ -59,7 +61,7 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
          RSConnectDeploymentRecord fromPrevious)
    {
       return new RSConnectActionEvent(ACTION_TYPE_DEPLOY, 
-            RSConnect.CONTENT_TYPE_PLOT, null, htmlFile, "Current Plot",
+            RSConnect.CONTENT_TYPE_PLOT, null, htmlFile, constants_.currentPlot(),
             null, fromPrevious);
    }
 
@@ -157,4 +159,5 @@ public class RSConnectActionEvent extends GwtEvent<RSConnectActionEvent.Handler>
    private final int contentType_;
    private final String htmlFile_;
    private final String description_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

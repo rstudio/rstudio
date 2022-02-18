@@ -1,7 +1,7 @@
 /*
  * PanmirrorRmdExtensions.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,5 +26,14 @@ public class PanmirrorRmdExtensions
    public boolean bookdownXRefUI;
    public boolean bookdownPart;
    public boolean blogdownMathInCode;
+   
+   public static boolean areEqual(PanmirrorRmdExtensions a, PanmirrorRmdExtensions b)
+   {
+      return a.codeChunks == b.codeChunks &&
+             a.bookdownXRef == b.bookdownXRef &&
+             a.bookdownXRefUI == b.bookdownXRefUI &&
+             a.bookdownPart == b.bookdownPart &&
+             a.blogdownMathInCode == b.blogdownMathInCode;
+   }
 }
 

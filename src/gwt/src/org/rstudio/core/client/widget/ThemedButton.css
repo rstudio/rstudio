@@ -3,103 +3,61 @@
 @external gwt-Button-DialogAction, gwt-Button-DialogActionLeft,
           gwt-Button-DefaultDialogAction;
 
-@external rstudio-themes-flat;
-
-@url BUTTONLEFTFOCUSENABLED buttonLeftFocusEnabled;
-@url BUTTONLEFTFOCUSSELECTED buttonLeftFocusSelected;
-@url BUTTONLEFTFOCUSPRESSED buttonLeftFocusPressed;
-@url BUTTONLEFTENABLED buttonLeftEnabled;
-@url BUTTONLEFTDISABLED buttonLeftDisabled;
-@url BUTTONLEFTSELECTED buttonLeftSelected;
-@url BUTTONLEFTPRESSED buttonLeftPressed;
-@url BUTTONRIGHTFOCUSENABLED buttonRightFocusEnabled;
-@url BUTTONRIGHTFOCUSSELECTED buttonRightFocusSelected;
-@url BUTTONRIGHTFOCUSPRESSED buttonRightFocusPressed;
-@url BUTTONRIGHTENABLED buttonRightEnabled;
-@url BUTTONRIGHTDISABLED buttonRightDisabled;
-@url BUTTONRIGHTSELECTED buttonRightSelected;
-@url BUTTONRIGHTPRESSED buttonRightPressed;
-@url BUTTONTILEFOCUSENABLED buttonTileFocusEnabled;
-@url BUTTONTILEFOCUSSELECTED buttonTileFocusSelected;
-@url BUTTONTILEFOCUSPRESSED buttonTileFocusPressed;
-@url BUTTONTILEENABLED buttonTileEnabled;
-@url BUTTONTILEDISABLED buttonTileDisabled;
-@url BUTTONTILESELECTED buttonTileSelected;
-@url BUTTONTILEPRESSED buttonTilePressed;
-
 .gwt-Button-DialogAction, .themedButton {
    padding: 0;
    margin: 0;
    margin-left: 8px;
-   margin-right: -1px;
+   margin-right: 0px;
    border: none;
    background: transparent;
    outline: none;
 }
 
-.rstudio-themes-flat .gwt-Button-DialogAction, .themedButton {
-   margin-right: 0px;
-}
-
-.rstudio-themes-flat button.gwt-Button-DialogAction, .rstudio-themes-flat button.themedButton {
-
-}
-
-.rstudio-themes-flat button.gwt-Button-DialogAction > table:first-child,
-.rstudio-themes-flat button.themedButton > table:first-child {
+button.gwt-Button-DialogAction > table:first-child,
+button.themedButton > table:first-child {
    border: solid 1px #bbbbbb;
    border-radius: 7px;
    background: #f6f5f7;
    box-shadow: 0px 1px #ececec;
 }
 
-.rstudio-themes-flat button.gwt-Button-DefaultDialogAction {
+button.gwt-Button-DefaultDialogAction {
    font-weight: 600;
    opacity: 0.8;
 }
 
-.rstudio-themes-flat button.gwt-Button-DefaultDialogAction > table:first-child {
+button.gwt-Button-DefaultDialogAction > table:first-child {
    background: #f9f9f9;
    border: solid 1px #adabab;
 }
 
-.rstudio-themes-flat button.gwt-Button-DialogAction:active > table:first-child,
-.rstudio-themes-flat button.themedButton:active > table:first-child {
+button.gwt-Button-DialogAction:active > table:first-child,
+button.themedButton:active > table:first-child {
    background: #eaeaea;
 }
 
-.rstudio-themes-flat button.gwt-Button-DialogAction:disabled > table:first-child,
-.rstudio-themes-flat button.themedButton:disabled > table:first-child {
+button.gwt-Button-DialogAction:disabled > table:first-child,
+button.themedButton:disabled > table:first-child {
    border: solid 1px #bfbfbf;
    background: #f9f9f9
 }
 
-.rstudio-themes-flat .gwt-Button-DialogAction .buttonLeft,
-.rstudio-themes-flat button.themedButton .buttonLeft {
-   display: none;
-}
-
-.rstudio-themes-flat .gwt-Button-DialogAction .buttonCenter,
-.rstudio-themes-flat button.themedButton .buttonCenter{
+.gwt-Button-DialogAction .buttonCenter,
+button.themedButton .buttonCenter{
    background: none;
    height: 18px;
    padding: 3px 8px 3px 8px;
 }
 
-.rstudio-themes-flat button.gwt-Button-DialogAction:active .buttonCenter,
-.rstudio-themes-flat button.gwt-Button-DialogAction:hover .buttonCenter,
-.rstudio-themes-flat button.gwt-Button-DialogAction:focus .buttonCenter,
-.rstudio-themes-flat button.gwt-Button-DialogAction:disabled .buttonCenter,
-.rstudio-themes-flat button.themedButton:active .buttonCenter,
-.rstudio-themes-flat button.themedButton:hover .buttonCenter,
-.rstudio-themes-flat button.themedButton:focus .buttonCenter,
-.rstudio-themes-flat button.themedButton:disabled .buttonCenter {
+button.gwt-Button-DialogAction:active .buttonCenter,
+button.gwt-Button-DialogAction:hover .buttonCenter,
+button.gwt-Button-DialogAction:focus .buttonCenter,
+button.gwt-Button-DialogAction:disabled .buttonCenter,
+button.themedButton:active .buttonCenter,
+button.themedButton:hover .buttonCenter,
+button.themedButton:focus .buttonCenter,
+button.themedButton:disabled .buttonCenter {
    background: none !important;
-}
-
-.rstudio-themes-flat button.gwt-Button-DialogAction .buttonRight,
-.rstudio-themes-flat button.themedButton .buttonRight {
-   display: none;
 }
 
 .gwt-Button-DialogActionLeft, .left {
@@ -112,25 +70,10 @@
    margin-right: -3px !important;
 }
 
-.buttonLeft {
-   background: BUTTONLEFTENABLED no-repeat;
-   width: 8px;
-   min-width: 8px;
-   height: 29px;
-}
-
 .buttonCenter {
-   background: BUTTONTILEENABLED repeat-x;
    height: 26px;
    padding-bottom: 3px;
    min-width: 60px;
-}
-
-.buttonRight {
-   background: BUTTONRIGHTENABLED no-repeat;
-   width: 8px;
-   min-width: 8px;
-   height: 29px;
 }
 
 .buttonContent {
@@ -139,65 +82,6 @@
    font-family: proportionalFont;
 }
 
-button.gwt-Button-DefaultDialogAction .buttonLeft {
-   background-image: BUTTONLEFTFOCUSENABLED;
-}
-button.gwt-Button-DefaultDialogAction .buttonCenter {
-   background-image: BUTTONTILEFOCUSENABLED;
-}
-button.gwt-Button-DefaultDialogAction .buttonRight {
-   background-image: BUTTONRIGHTFOCUSENABLED;
-}
-
-button:focus .buttonLeft {
-   background-image: BUTTONLEFTSELECTED;
-}
-button:focus .buttonCenter {
-   background-image: BUTTONTILESELECTED;
-}
-button:focus .buttonRight {
-   background-image: BUTTONRIGHTSELECTED;
-}
-
-button.gwt-Button-DefaultDialogAction:focus .buttonLeft {
-   background-image: BUTTONLEFTFOCUSSELECTED;
-}
-button.gwt-Button-DefaultDialogAction:focus .buttonCenter {
-   background-image: BUTTONTILEFOCUSSELECTED;
-}
-button.gwt-Button-DefaultDialogAction:focus .buttonRight {
-   background-image: BUTTONRIGHTFOCUSSELECTED;
-}
-
-button:active .buttonLeft {
-   background-image: BUTTONLEFTPRESSED;
-}
-button:active .buttonCenter {
-   background-image: BUTTONTILEPRESSED;
-}
-button:active .buttonRight {
-   background-image: BUTTONRIGHTPRESSED;
-}
-
-button.gwt-Button-DefaultDialogAction:active .buttonLeft {
-   background-image: BUTTONLEFTFOCUSPRESSED;
-}
-button.gwt-Button-DefaultDialogAction:active .buttonCenter {
-   background-image: BUTTONTILEFOCUSPRESSED;
-}
-button.gwt-Button-DefaultDialogAction:active .buttonRight {
-   background-image: BUTTONRIGHTFOCUSPRESSED;
-}
-
-button[disabled] .buttonLeft {
-   background-image: BUTTONLEFTDISABLED !important;
-}
-button[disabled] .buttonCenter {
-   background-image: BUTTONTILEDISABLED !important;
-}
-button[disabled] .buttonRight {
-   background-image: BUTTONRIGHTDISABLED !important;
-}
 button[disabled] .buttonContent {
    color: #AAA;
 }

@@ -1,7 +1,7 @@
 /*
  * CodeBrowserEditingTargetWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -61,6 +61,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
@@ -175,7 +176,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
         
             server.getHelpAtCursor(
                linePos.getLine(), linePos.getPosition(),
-               new SimpleRequestCallback<>("Help")); 
+               new SimpleRequestCallback<>(constants_.help()));
          }
          
          @Override
@@ -298,8 +299,8 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    public void setAccessibleName(String name)
    {
       if (StringUtil.isNullOrEmpty(name))
-         name = "Untitled Source Viewer";
-      Roles.getTabpanelRole().setAriaLabelProperty(panel_.getElement(), name + " Source Viewer");
+         name = constants_.untitledSourceViewer();
+      Roles.getTabpanelRole().setAriaLabelProperty(panel_.getElement(), constants_.nameSourceViewer(name));
    }
 
    private void showWarningImpl(final Command command)
@@ -383,7 +384,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          
          // delayed progress indicator
          progress_ = new GlobalProgressDelayer(
-               globalDisplay_, 1000, "Searching for function definition...");
+               globalDisplay_, 1000, constants_.searchingForFunctionDefinition());
 
       }
       
@@ -420,7 +421,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
          progress_.dismiss();
 
          globalDisplay_.showErrorMessage(
-                                 "Error Searching for Function",
+                                 constants_.errorSearchingForFunction(),
                                  error.getUserMessage());
       }
       
@@ -445,7 +446,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(commands_.goToHelp().createMenuItem(false));
       menu.addItem(commands_.goToDefinition().createMenuItem(false));
-      ToolbarMenuButton codeTools = new ToolbarMenuButton(ToolbarButton.NoText, "Code Tools", icon, menu);
+      ToolbarMenuButton codeTools = new ToolbarMenuButton(ToolbarButton.NoText, constants_.codeTools(), icon, menu);
       toolbar.addLeftWidget(codeTools);
       
       toolbar.addRightWidget(
@@ -459,7 +460,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    
    private Toolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar("Code Browser Second");
+      SecondaryToolbar toolbar = new SecondaryToolbar(constants_.codeBrowserSecond());
       
       contextWidget_ = new CodeBrowserContextWidget(RES.styles());
       contextWidget_.addSelectionHandler(new SelectionHandler<String> () {
@@ -474,7 +475,7 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
       });
       toolbar.addLeftWidget(contextWidget_);
       
-      Label readOnlyLabel = new Label("(Read-only)");
+      Label readOnlyLabel = new Label(constants_.readOnlyParentheses());
       readOnlyLabel.addStyleName(RES.styles().readOnly());
       toolbar.addRightWidget(readOnlyLabel);
          
@@ -516,5 +517,5 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private String currentFunctionNamespace_ = null;
    private InfoBar warningBar_;
    private SourceColumn column_;
-  
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

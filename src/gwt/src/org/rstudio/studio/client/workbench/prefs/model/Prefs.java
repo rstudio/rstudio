@@ -1,7 +1,7 @@
 /*
  * Prefs.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -359,10 +359,11 @@ public abstract class Prefs
    public class EnumValue extends JsonValue<String>
    {
       private EnumValue(String name, String title, String description, 
-                        String[] values, String defaultValue)
+                        String[] values, String defaultValue, String[] readableValues)
       {
          super(name, title, description, defaultValue);
          allowedValues_ = values;
+         readableValues_ = readableValues;  // Human readable text describing the readable values
       }
 
       @Override
@@ -376,13 +377,19 @@ public abstract class Prefs
       {
          root.setString(name, value);
       }
-      
+
       public String[] getAllowedValues()
       {
          return allowedValues_;
       }
-      
+
+      public String[] getReadableValues()
+      {
+         return readableValues_;
+      }
+
       private final String[] allowedValues_;
+      private final String[] readableValues_;
    }
 
    public class ObjectValue<T extends JavaScriptObject> extends JsonValue<T>
@@ -484,10 +491,17 @@ public abstract class Prefs
    protected PrefValue<String> enumeration(
       String name, String title, String description, String[] values, String defaultValue)
    {
+      return enumeration(name, title, description, values, defaultValue, values);
+   }
+
+   @SuppressWarnings("unchecked")
+   protected PrefValue<String> enumeration(
+      String name, String title, String description, String[] values, String defaultValue, String[] readableValues)
+   {
       PrefValue<String> val = (PrefValue<String>) values_.get(name);
       if (val == null)
       {
-         val = new EnumValue(name, title, description, values, defaultValue);
+         val = new EnumValue(name, title, description, values, defaultValue, readableValues);
          values_.put(name, val);
       }
       return val;

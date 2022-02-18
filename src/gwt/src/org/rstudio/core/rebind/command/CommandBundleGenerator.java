@@ -1,7 +1,7 @@
 /*
  * CommandBundleGenerator.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -116,6 +116,8 @@ class CommandBundleGeneratorHelper
          factory.addImport("org.rstudio.core.client.command.MenuCallback");
          factory.addImport("org.rstudio.core.client.command.ShortcutManager");
          factory.addImport("org.rstudio.core.client.resources.ImageResource2x");
+         factory.addImport("com.google.gwt.core.client.GWT");
+         factory.addImport("org.rstudio.studio.client.workbench.commands.CmdConstants");
          SourceWriter writer = factory.createSourceWriter(context_, printWriter);
 
          emitConstructor(writer, images);
@@ -123,6 +125,7 @@ class CommandBundleGeneratorHelper
          emitMenus(writer);
          emitShortcuts(writer);
          emitCommandAccessors(writer);
+         emitI18n(writer);
 
          // Close the class and commit it
          writer.outdent();
@@ -154,6 +157,11 @@ class CommandBundleGeneratorHelper
          String name = method.getName();
          writer.println("private AppCommand " + name + "_;");
       }
+   }
+
+   private void emitI18n(SourceWriter writer)
+   {
+      writer.println("private CmdConstants " + i18n_constants_name + " = GWT.create(CmdConstants.class);");
    }
 
    private void emitMenus(SourceWriter writer) throws UnableToCompleteException
@@ -314,10 +322,10 @@ class CommandBundleGeneratorHelper
       writer.println(name + "_ = new AppCommand();");
 
       setProperty(writer, name, commandProps_.get(name), "id");
-      setProperty(writer, name, commandProps_.get(name), "desc");
-      setProperty(writer, name, commandProps_.get(name), "label");
-      setProperty(writer, name, commandProps_.get(name), "buttonLabel");
-      setProperty(writer, name, commandProps_.get(name), "menuLabel");
+      setProperty(writer, name, commandProps_.get(name), "desc", true);
+      setProperty(writer, name, commandProps_.get(name), "label", true);
+      setProperty(writer, name, commandProps_.get(name), "buttonLabel", true);
+      setProperty(writer, name, commandProps_.get(name), "menuLabel", true);
       setProperty(writer, name, commandProps_.get(name), "windowMode");
       setProperty(writer, name, commandProps_.get(name), "context");
       // Any additional textual properties would be added here...
@@ -358,22 +366,56 @@ class CommandBundleGeneratorHelper
    private void setProperty(SourceWriter writer,
                             String name,
                             Element props,
+                            String propertyName,
+                            boolean i18n)
+   {
+      if (!isPropertySet(props, propertyName)) {
+         return;
+      }
+
+      String value;
+      if (i18n)
+      {
+         // Set as an i18n-managed string property
+         String propertyCapitalized = Character.toUpperCase(propertyName.charAt(0)) + propertyName.substring(1);
+         value = i18n_constants_name + "." + name + propertyCapitalized + "()";
+      }
+      else
+      {
+         // Set as a hard-coded string property
+         value = "\"" + Generator.escape(props.getAttribute(propertyName)) + "\"";
+      }
+
+      String setter = "set" + Character.toUpperCase(propertyName.charAt(0))
+            + propertyName.substring(1);
+      writer.println(name + "_." + setter + "(" + value + ");");
+   }
+
+   private void setProperty(SourceWriter writer,
+                            String name,
+                            Element props,
                             String propertyName)
    {
+      setProperty(writer, name, props, propertyName, false);
+   }
+
+    /**
+    * Tests if a property is set, returning true if propertyName exists in props else false
+    *
+    * A property set to an empty string is considered set and returns true.  If the element
+    * is unset (hasAttribute != true) this returns false
+    */
+   private boolean isPropertySet(Element props, String propertyName)
+   {
       if (props == null)
-         return;
+         return false;
       // This check is important because getAttribute() returns empty string
       // even if the attribute isn't present, which is not what we want. In
       // the command system, empty string is distinct from null.
       if (!props.hasAttribute(propertyName))
-         return;
+         return false;
 
-      String value = props.getAttribute(propertyName);
-
-      String setter = "set" + Character.toUpperCase(propertyName.charAt(0))
-            + propertyName.substring(1);
-      writer.println(name + "_." + setter
-                                   + "(\"" + Generator.escape(value) + "\");"); 
+      return true;
    }
 
    private void setPropertyBool(SourceWriter writer,
@@ -498,6 +540,7 @@ class CommandBundleGeneratorHelper
    private final String packageName_;
    private final Map<String, Element> commandProps_;
    private String simpleName_;
+   private final String i18n_constants_name = "_constants";
 }
 
 class ImageResourceInfo

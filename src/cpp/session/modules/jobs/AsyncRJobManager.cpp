@@ -1,7 +1,7 @@
 /*
  * AsyncRJobManager.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,7 +52,7 @@ void AsyncRJob::registerJob()
       LOG_ERROR(error);
 
    // add the job -- currently idle until we get some content from it
-   job_ = addJob(name_, "", "", 0, JobIdle, JobTypeSession, false, actions, true, {});
+   job_ = addJob(name_, "", "", 0, true, JobIdle, JobTypeSession, false, actions, JobActions(), true, {});
 }
 
 void AsyncRJob::onStderr(const std::string& output)

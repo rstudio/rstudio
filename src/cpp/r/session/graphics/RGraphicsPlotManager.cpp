@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlotManager.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -639,7 +639,7 @@ Error PlotManager::savePlotsState()
       plots.push_back(plotInfo);
    }
    
-   // suppres all device events after suspend
+   // suppress all device events after suspend
    suppressDeviceEvents_ = true;
    
    // write plot list
@@ -658,7 +658,7 @@ Error PlotManager::restorePlotsState()
    if (error)
       return error;
 
-   // if it is empty then return succes
+   // if it is empty then return success
    if (plots.empty())
       return Success();
 

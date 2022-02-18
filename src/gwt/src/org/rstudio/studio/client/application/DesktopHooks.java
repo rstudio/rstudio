@@ -1,7 +1,7 @@
 /*
  * DesktopHooks.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -201,8 +201,8 @@ public class DesktopHooks
    void promptToQuitR()
    {
       globalDisplay_.showYesNoMessage(MessageDialog.QUESTION,
-            "Close Remote Session",
-            "Do you want to close the remote session?",
+            constants_.closeRemoteSessionCaption(),
+            constants_.closeRemoteSessionMessage(),
             false,
             (Operation) () -> commands_.quitSession().execute(),
             (Operation) () -> Desktop.getFrame().onSessionQuit(),
@@ -231,10 +231,10 @@ public class DesktopHooks
    
    void licenseLost(String licenseMessage)
    {
-      String message = "Unable to obtain a license. Please restart RStudio to try again.";
+      String message = constants_.licenseLostMessage();
       if (!StringUtil.isNullOrEmpty(licenseMessage))
       {
-         message = message + "\n\nDetails: ";
+         message = message + "\n\n" + constants_.detailsMessage();
          message = message + licenseMessage;
       }
       globalDisplay_.showMessage(MessageDialog.WARNING, editionInfo_.editionName(), message,
@@ -285,4 +285,5 @@ public class DesktopHooks
    private final ProductEditionInfo editionInfo_;
    
    private SaveAction saveAction_ = SaveAction.saveAsk();
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

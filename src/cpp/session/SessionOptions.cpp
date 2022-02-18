@@ -1,7 +1,7 @@
 /*
  * SessionOptions.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -308,6 +308,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    resolvePath(resourcePath_, &mathjaxPath_);
    resolvePath(resourcePath_, &libclangHeadersPath_);
    resolvePandocPath(resourcePath_, &pandocPath_);
+   resolveQuartoPath(resourcePath_, &quartoPath_);
 
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
@@ -322,7 +323,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       rpostback. However, we really ought to communicate
       it in a more secure manner than this, at least on
       Windows where even within the same user session some
-      processes can have different priviliges (integrity
+      processes can have different privileges (integrity
       levels) than others. For example, using a named pipe
       with proper SACL to retrieve the shared secret, where
       the name of the pipe is in an environment variable. */
@@ -517,7 +518,21 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.getParent().completePath("MacOS/pandoc");
+      FilePath path = resourcePath.getParent().completePath("MacOS/quarto/bin");
+      *pPath = path.getAbsolutePath();
+   }
+   else
+   {
+      resolvePath(resourcePath, pPath);
+   }
+}
+
+void Options::resolveQuartoPath(const FilePath& resourcePath,
+                                std::string* pPath)
+{
+   if (*pPath == kDefaultQuartoPath && programMode() == kSessionProgramModeDesktop)
+   {
+      FilePath path = resourcePath.getParent().completePath("MacOS/quarto");
       *pPath = path.getAbsolutePath();
    }
    else
@@ -550,6 +565,12 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
 
 void Options::resolvePandocPath(const FilePath& resourcePath,
                                   std::string* pPath)
+{
+   resolvePath(resourcePath, pPath);
+}
+
+void Options::resolveQuartoPath(const FilePath& resourcePath,
+                                std::string* pPath)
 {
    resolvePath(resourcePath, pPath);
 }

@@ -1,7 +1,7 @@
 /*
  * ProjectPopupMenu.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.StudioClientApplicationConstants;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
@@ -86,7 +87,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       {
          String buttonText = activeProjectFile_ != null ?
                   mruList_.getQualifiedLabel(activeProjectFile_) :
-                  "Project: (None)";
+                  constants_.toolBarButtonText();
           
          toolbarButton_ = new ToolbarMenuButton(
                 buttonText,
@@ -152,7 +153,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       {
          final GlobalProgressDelayer progress = new GlobalProgressDelayer(
                RStudioGinjector.INSTANCE.getGlobalDisplay(),
-               250, "Looking for projects...");
+               250, constants_.popupMenuProgressMessage());
 
          // if shared projects are on, check for them every time the user drops
          // the menu; we request one more than the maximum we can display so 
@@ -218,7 +219,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       addSeparator();
       addItem(commands_.shareProject().createMenuItem(false));
       if (hasSharedProjects)
-         addSeparator("Recent Projects"); 
+         addSeparator(constants_.recentProjectsLabel());
       else
          addSeparator();
 
@@ -250,7 +251,7 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
       // show shared projects if enabled
       if (hasSharedProjects)
       {
-         addSeparator("Shared with Me"); 
+         addSeparator(constants_.sharedWithMeLabel());
          for (int i = 0; i < Math.min(sharedProjects.length(),
                MAX_SHARED_PROJECTS); i ++)
          {
@@ -295,4 +296,5 @@ public class ProjectPopupMenu extends ToolbarPopupMenu
    private ProjectsServerOperations server_;
    private boolean allowSharedProjects_ = false;
    private ProductEditionInfo editionInfo_;
+   private static final StudioClientApplicationConstants constants_ = GWT.create(StudioClientApplicationConstants.class);
 }

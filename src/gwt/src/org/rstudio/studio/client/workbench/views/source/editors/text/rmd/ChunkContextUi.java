@@ -1,7 +1,7 @@
 /*
  * ChunkContextUi.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,25 +14,27 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
-import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.Scope;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.CustomEngineChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.DefaultChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.SetupChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.events.InterruptChunkEvent;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
 import com.google.gwt.core.client.JsArrayString;
 
@@ -121,6 +123,28 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
          toolbar_.setEngine(engine);
       }
       toolbar_.setClassId(getLabel(row));
+      
+      syncOptions();
+   }
+   
+   public void syncOptions()
+   {
+      boolean showOptions = !outerEditor_.getExtendedFileType().equals(SourceDocument.XT_QUARTO_DOCUMENT);
+      toolbar_.setShowOptions(showOptions);
+   }
+
+   /**
+    * Get the HTML element hosting the toolbar.
+    *
+    * @return An HTML element, or null if the toolbar hasn't been created yet
+    */
+   public Element getElement()
+   {
+      if (toolbar_ == null)
+      {
+         return null;
+      }
+      return toolbar_.getElement();
    }
 
    // ChunkContextToolbar.Host implementation ---------------------------------
@@ -162,9 +186,8 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
    {
       RStudioGinjector.INSTANCE.getGlobalDisplay().showYesNoMessage(
             GlobalDisplay.MSG_QUESTION, 
-            "Chunk Pending Execution", 
-            "The code in this chunk is scheduled to run later, when other " +
-            "chunks have finished executing.", 
+            constants_.chunkPendingExecution(),
+            constants_.chunkPendingExecutionMessage(),
             false, // include cancel
             null,  // yes operation,
             new Operation() 
@@ -176,8 +199,8 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
                }
             }, 
             null,  // cancel operation 
-            "OK", 
-            "Don't Run", true);
+            constants_.okFullyCapitalized(),
+            constants_.dontRun(), true);
    }
 
    @Override
@@ -245,10 +268,8 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
 
    private String getEngine(int row)
    {
-      String line = outerEditor_.getDocDisplay().getLine(row);
-      Map<String, String> options = RChunkHeaderParser.parse(line);
-      String engine = StringUtil.stringValue(options.get("engine"));
-      return engine;
+      return outerEditor_.getEngineForRow(row);
+   
    }
    
    private String getLabel(int row)
@@ -280,4 +301,5 @@ public abstract class ChunkContextUi implements ChunkContextToolbar.Host
 
    private boolean isSetup_;
    private String engine_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

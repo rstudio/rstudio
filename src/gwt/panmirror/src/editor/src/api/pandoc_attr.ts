@@ -1,7 +1,7 @@
 /*
  * pandoc_attr.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,9 @@ export const kWidthAttrib = 'width';
 export const kHeightAttrib = 'height';
 export const kStyleAttrib = 'style';
 export const kAlignAttrib = 'align';
+export const kFigAltAttrib = 'fig-alt';
+export const kFigAlignAttrib = 'fig-align';
+export const kFigEnvAttrib = 'fig-env';
 
 export const kCodeBlockAttr = 0;
 export const kCodeBlockText = 1;
@@ -47,8 +50,10 @@ export const pandocAttrSpec = {
   keyvalue: { default: [] },
 };
 
-export function pandocAttrAvailable(attrs: any) {
-  return !!attrs.id || (attrs.classes && attrs.classes.length > 0) || (attrs.keyvalue && attrs.keyvalue.length > 0);
+export function pandocAttrAvailable(attrs: any, keyvalue = true) {
+  return !!attrs.id || 
+         (attrs.classes && attrs.classes.length > 0) || 
+         (keyvalue && attrs.keyvalue && attrs.keyvalue.length > 0);
 }
 
 export function pandocAttrFrom(attrs: any) {
@@ -64,6 +69,73 @@ export function pandocAttrFrom(attrs: any) {
   }
 
   return pandocAttr;
+}
+
+export function pandocAttrEnsureClass(attr: any, name: string) {
+  attr.classes = [name].concat((attr.classes || []).filter((clz: string) => clz !== name));
+}
+
+export function pandocAttrRemoveClass(attr: any, predicate: (str: string) => boolean) : string | undefined {
+  let foundClass: string | undefined;
+  if (Array.isArray(attr.classes)) {
+    const classes: string[] = [];
+    for (const clz of attr.classes) {
+      if (predicate(clz)) {
+        foundClass = clz;
+      } else {
+        classes.push(clz);
+      }
+    }
+    attr.classes = classes;
+    return foundClass;
+   
+  } else {
+    return undefined;
+  }
+}
+
+export function pandocAttrHasClass(attrs: any, predicate: (str: string) => boolean) {
+  if (Array.isArray(attrs.classes)) {
+    const classes = attrs.classes as string[];
+    return classes.some(clz => predicate(clz));
+  } else {
+    return false;
+  }
+}
+
+export function pandocAttrGetKeyvalue(attr: any, key: string) {
+  if (attr.keyvalue) {
+    const entry = attr.keyvalue.find((keyval: string[]) => keyval[0] === key);
+    if (entry) {
+      return entry[1];
+    } else {
+      return undefined;
+    }
+  } else {
+    return undefined;
+  }
+}
+
+export function pandocAttrSetKeyvalue(attr: any, key: string, value: string) {
+  const keyvalue = [...(attr.keyvalue || [])] as string[][];
+  let add = true;
+  for (const entry of keyvalue) {
+    if (entry[0] === key) {
+      entry[1] = value;
+      add = false;
+      break;
+    }
+  }
+  if (add) {
+    keyvalue.push([key, value]);
+  }
+  attr.keyvalue = keyvalue;
+}
+
+export function pandocAttrRemoveKeyvalue(attr: any, key: string) {
+  if (attr.keyvalue) {
+    attr.keyvalue = attr.keyvalue.filter((entry: string[]) => entry[0] !== key);
+  }
 }
 
 export function pandocAttrInSpec(spec: NodeSpec | MarkSpec) {

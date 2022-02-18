@@ -1,7 +1,7 @@
 /*
  * ProjectBuildToolsPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialogResources;
@@ -76,7 +77,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Build Tools";
+      return constants_.buildToolsLabel();
    }
 
    @Override
@@ -139,7 +140,7 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
    {
       public BuildTypeSelectWidget()
       {
-         super("Project build tools:",
+         super(constants_.projectBuildToolsLabel(),
                new String[]{"(" + RProjectConfig.BUILD_TYPE_NONE + ")",
                              RProjectConfig.BUILD_TYPE_PACKAGE,
                              RProjectConfig.BUILD_TYPE_MAKEFILE,
@@ -189,4 +190,6 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
 
    private static final ProjectPreferencesDialogResources RES =
                                     ProjectPreferencesDialogResources.INSTANCE;
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
+
 }

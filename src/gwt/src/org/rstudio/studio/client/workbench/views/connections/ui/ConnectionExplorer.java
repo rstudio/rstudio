@@ -1,7 +1,7 @@
 /*
  * ConnectionExplorer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,13 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.workbench.views.connections.ConnectionsConstants;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 
@@ -52,7 +54,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       codePanel_.setHeight((codePanelHeight-5) + "px");
       codePanel_.setWidth("100%");
       disconnectedUI_.add(codePanel_);
-      Label label = new Label("(Not connected)");
+      Label label = new Label(constants_.notConnectedLabel());
       Style labelStyle = label.getElement().getStyle();
       labelStyle.setColor("#767676");
       labelStyle.setMarginTop(25, Unit.PX);
@@ -169,4 +171,5 @@ public class ConnectionExplorer extends Composite implements RequiresResize
    private Connection connection_ = null;
    
    private EventBus eventBus_;
+   private static final ConnectionsConstants constants_ = GWT.create(ConnectionsConstants.class);
 }

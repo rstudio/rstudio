@@ -1,7 +1,7 @@
 /*
  * SessionOfflineService.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,7 @@
 #include "SessionAsyncRpcConnection.hpp"
 #include "modules/SessionSystemResources.hpp"
 #include "session/prefs/UserPrefs.hpp"
+#include "SessionInit.hpp"
 
 using namespace rstudio::core;
 
@@ -230,7 +231,8 @@ void OfflineService::run()
 
             std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 
-            if (handleOfflineMillis > 0)
+	    // Make sure session is initialized before doing any processing in the offline thread to avoid the call to lazily init it
+            if (handleOfflineMillis > 0 && init::isSessionInitialized())
             {
                boost::shared_ptr<HttpConnection> ptrConnection;
                do

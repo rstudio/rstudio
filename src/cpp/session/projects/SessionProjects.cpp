@@ -1,7 +1,7 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionProjectTemplate.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
 #include <r/RExec.hpp>
@@ -196,6 +197,7 @@ Error getNewProjectContext(const json::JsonRpcRequest& request,
    contextJson["packrat_available"] =
          module_context::packratContext().available &&
          module_context::canBuildCpp();
+   contextJson["quarto_capabilities"] = quarto::quartoCapabilities();
    contextJson["working_directory"] = module_context::createAliasedPath(
          r::session::utils::safeCurrentPath());
 
@@ -247,10 +249,10 @@ Error createProject(const json::JsonRpcRequest& request,
       return error;
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
-   // Shiny application
+   // new shiny or quarto project
    if (!newShinyAppJson.isNull())
    {
-      // error if the shiny app dir already exists
+      // error if the dir already exists
       FilePath appDir = projectFilePath.getParent();
       if (appDir.exists())
          return core::fileExistsError(ERROR_LOCATION);
@@ -260,16 +262,19 @@ Error createProject(const json::JsonRpcRequest& request,
       if (error)
          return error;
 
+      // new shiny project
+
       // copy app.R into the project
       FilePath shinyDir = session::options().rResourcesPath()
                                             .completeChildPath("templates/shiny");
-      
+
       error = shinyDir.completeChildPath("app.R").copy(appDir.completeChildPath("app.R"));
       if (error)
          LOG_ERROR(error);
 
       // add first run actions for the source files
-      addFirstRunDoc(projectFilePath, "app.R");
+      addFirstRunDocs(projectFilePath, { "app.R" });
+
 
       std::string existingProjectFilePath;
       if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
@@ -284,8 +289,10 @@ Error createProject(const json::JsonRpcRequest& request,
          pResponse->setResult(existingProjectFilePath);
          return Success();
       }
-      
+
+
    }
+
    
    // if we have a custom project template, call that first
    if (!projectTemplateOptions.isNull() &&
@@ -383,6 +390,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["root_document"] = config.rootDocument;
    configJson["build_type"] = config.buildType;
    configJson["package_use_devtools"] = config.packageUseDevtools;
+   configJson["package_clean_before_install"] = config.packageCleanBeforeInstall;
    configJson["package_path"] = config.packagePath;
    configJson["package_install_args"] = config.packageInstallArgs;
    configJson["package_build_args"] = config.packageBuildArgs;
@@ -624,6 +632,7 @@ Error writeProjectConfig(const json::Object& configJson)
                     configJson,
                     "build_type", config.buildType,
                     "package_use_devtools", config.packageUseDevtools,
+                    "package_clean_before_install", config.packageCleanBeforeInstall,
                     "package_path", config.packagePath,
                     "package_install_args", config.packageInstallArgs,
                     "package_build_args", config.packageBuildArgs,
@@ -674,6 +683,12 @@ Error writeProjectConfig(const json::Object& configJson)
    
    if (error)
       return error;
+   
+   // ensure Python path is project-relative
+   FilePath projectDir = s_projectContext.directory();
+   FilePath pythonPath = module_context::resolveAliasedPath(config.pythonPath);
+   if (pythonPath.isWithin(projectDir))
+      config.pythonPath = pythonPath.getRelativePath(projectDir);
 
    // read spelling options
    error = json::readObject(configJson,
@@ -1075,6 +1090,20 @@ ProjectContext& projectContext()
 {
    return s_projectContext;
 }
+
+void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::string>& docs)
+{
+   FilePath scratchPath, sharedScratchPath;
+   Error error = computeScratchPaths(
+            projectFilePath,
+            &scratchPath,
+            &sharedScratchPath);
+
+   for(auto doc : docs) {
+      addFirstRunDoc(scratchPath, doc);
+   }
+}
+
 
 json::Array websiteOutputFormatsJson()
 {

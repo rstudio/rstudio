@@ -1,7 +1,7 @@
 #
 # test-jobs.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -153,6 +153,9 @@ test_that("script jobs run and can be replayed", {
    # helper function to wait for a job to finish running
    wait_for_job <- function(id) {
       tries <- 0
+
+      # wait 1/10th of a second before first query (have observed timing failures if we don't)
+      Sys.sleep(0.1)
 
       # wait for the job to finish
       repeat {

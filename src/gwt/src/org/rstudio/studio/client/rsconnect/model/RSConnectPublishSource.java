@@ -1,7 +1,7 @@
 /*
  * RSConnectPublishSource.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,16 +39,16 @@ public class RSConnectPublishSource
    }
 
    public RSConnectPublishSource(String sourceFile, String websiteDir, 
-         boolean isSelfContained, boolean isStatic, boolean isShiny, 
+         boolean isSelfContained, boolean isStatic, boolean isShiny, boolean isQuarto,
          String description, int type)
    {
       this(sourceFile, sourceFile, websiteDir, null, isSelfContained, isStatic, 
-            isShiny, description, type);
+            isShiny, isQuarto, description, type);
    }
    
    public RSConnectPublishSource(String sourceFile, String outputFile, 
          String websiteDir, String websiteOutputDir, boolean isSelfContained, boolean isStatic, 
-         boolean isShiny, String description, int type)
+         boolean isShiny, boolean isQuarto, String description, int type)
    {
       deployFile_ = outputFile;
       sourceFile_ = sourceFile;
@@ -58,9 +58,11 @@ public class RSConnectPublishSource
       isStatic_ = isStatic;
       isSingleFileShiny_ = false;
       websiteDir_ = websiteDir;
+      isQuarto_ = isQuarto;
+      boolean isWebsite = type == RSConnect.CONTENT_TYPE_WEBSITE || type == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE;
 
       String category = null;
-      if (type == RSConnect.CONTENT_TYPE_WEBSITE)
+      if (isWebsite)
       {
          // websites are always deployed as sites
          category = RSConnect.CONTENT_CATEGORY_SITE;
@@ -74,10 +76,23 @@ public class RSConnectPublishSource
       }
       contentCategory_ = category;
 
-      if (type == RSConnect.CONTENT_TYPE_WEBSITE && isStatic && !StringUtil.isNullOrEmpty(websiteOutputDir))
-         deployDir_ = FileSystemItem.createFile(websiteOutputDir).getPath();
+      if (isWebsite)
+      {
+         if (isStatic && !StringUtil.isNullOrEmpty(websiteOutputDir))
+         {
+            // publishing static output from a website: use the output directory if we have it
+            deployDir_ = FileSystemItem.createFile(websiteOutputDir).getPath();
+         }
+         else
+         {
+            // for all other website publishing purposes, publish the website directory
+            deployDir_ = FileSystemItem.createFile(websiteDir).getPath();
+         }
+      }
       else
+      {
          deployDir_ = FileSystemItem.createFile(outputFile).getParentPathString();
+      }
    }
    
    public RSConnectPublishSource(RenderedDocPreview preview, 
@@ -87,6 +102,7 @@ public class RSConnectPublishSource
       deployFile_ = preview.getOutputFile();
       sourceFile_ = preview.getSourceFile();
       description_ = description;
+      isQuarto_ = preview.isQuarto();
       isSelfContained_ = isSelfContained;
       isStatic_ = isStatic;
       isShiny_ = isShiny;
@@ -94,13 +110,15 @@ public class RSConnectPublishSource
       contentCategory_ = !StringUtil.isNullOrEmpty(websiteDir) ? 
             RSConnect.CONTENT_CATEGORY_SITE : null;
       websiteDir_ = websiteDir;
-      deployDir_ = FileSystemItem.createFile(preview.getOutputFile())
-            .getParentPathString();
+      if (StringUtil.isNullOrEmpty(preview.getWebsiteDir()))
+         deployDir_ = FileSystemItem.createFile(preview.getOutputFile()).getParentPathString();
+      else
+         deployDir_ = preview.getOutputFile();
    }
    
    public RSConnectPublishSource(String sourceFile, String deployDir, 
          String deployFile, String websiteDir, boolean isSelfContained, 
-         boolean isStatic, boolean isShiny, String description)
+         boolean isStatic, boolean isShiny, boolean isQuarto, String description)
    {
       sourceFile_ = sourceFile;
       deployDir_ = deployDir;
@@ -109,6 +127,7 @@ public class RSConnectPublishSource
       isSelfContained_ = isSelfContained;
       isStatic_ = isStatic;
       isShiny_ = isShiny;
+      isQuarto_ = isQuarto;
       isSingleFileShiny_ = false;
       description_ = description;
       contentCategory_ = !StringUtil.isNullOrEmpty(websiteDir) ? 
@@ -137,10 +156,15 @@ public class RSConnectPublishSource
    
    public boolean isDocument()
    {
+      if (StringUtil.isNullOrEmpty(deployFile_))
+      {
+         // Happens for websites (where no particular file is being deployed)
+         return false;
+      }
       return isSourceExt("rmd") || isSourceExt("md") || isSourceExt("html") ||
              isSourceExt("htm") || isSourceExt("rpres") || isSourceExt("pdf") ||
              isSourceExt("docx") || isSourceExt("odt") || isSourceExt("rtf") ||
-             isSourceExt("pptx");
+             isSourceExt("pptx") || isSourceExt("qmd");
    }
    
    public String getDeployKey()
@@ -197,6 +221,16 @@ public class RSConnectPublishSource
    {
       return isStatic_;
    }
+
+   public boolean isQuarto()
+   {
+      return isQuarto_;
+   }
+
+   public void setIsQuarto(boolean quarto)
+   {
+      isQuarto_ = quarto;
+   }
    
    public JavaScriptObject toJso()
    {
@@ -213,6 +247,7 @@ public class RSConnectPublishSource
       obj.setString("content_category", StringUtil.notNull(
             getContentCategory()));
       obj.setString("website_dir", StringUtil.notNull(getWebsiteDir()));
+      obj.setBoolean("is_quarto", isQuarto_);
       return obj.cast();
    }
    
@@ -226,4 +261,5 @@ public class RSConnectPublishSource
    private final boolean isShiny_;
    private final boolean isSingleFileShiny_;
    private final boolean isStatic_;
+   private boolean isQuarto_ = false;
 }

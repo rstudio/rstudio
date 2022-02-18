@@ -1,7 +1,7 @@
 /*
  * URL.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@ namespace core {
 namespace http {
 
 // NOTE: The URL class is a part of shared endpoint and association caches
-// in our open-id implemetnation. we therefore need to make sure that
+// in our open-id implementation. we therefore need to make sure that
 // copying a URL or accessing its members never falls prey to ref-counted 
 // strings which are (potentially) not threadsafe. To work around this we do
 // manual assignment of all strings during copy and assignment and have 

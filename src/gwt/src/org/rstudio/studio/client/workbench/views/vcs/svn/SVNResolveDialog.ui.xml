@@ -1,5 +1,8 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+             ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+             ui:generateLocales="default">
 
    <ui:style>
       .resolvePanel {
@@ -25,7 +28,7 @@
 
    <g:HTMLPanel styleName="{style.resolvePanel}">
       <div ui:field="groupLabel_" class="{style.prompt}">
-         Resolve the selected <span ui:field="spanTargetNoun_"></span> using:
+         <ui:msg key="resolveText">Resolve the selected <span ui:field="spanTargetNoun_"></span> using:</ui:msg>
       </div>
       <table ui:field="layoutTable_">
          <tr>
@@ -34,12 +37,12 @@
                        ui:field="radioWorking_"
                        value="working"/>
             </td>
-            <td><label ui:field="labelWorking_">Working</label></td>
+            <td><label ui:field="labelWorking_"><ui:msg key="labelWorking">Working</ui:msg></label></td>
          </tr>
          <tr>
             <td />
             <td ui:field="descriptionWorking_" class="{style.description}">
-               Mark the working copy as resolved
+               <ui:msg key="descriptionWorking">Mark the working copy as resolved</ui:msg>
             </td>
          </tr>
          <tr>
@@ -49,13 +52,13 @@
                        value="mine-conflict"/>
             </td>
             <td>
-               <label ui:field="labelMineConflict_">Mine-Conflict</label>
+               <label ui:field="labelMineConflict_"><ui:msg key="labelMineConflict">Mine-Conflict</ui:msg></label>
             </td>
          </tr>
          <tr>
             <td />
             <td ui:field="descriptionMineConflict_" class="{style.description}">
-               Accept my version for all conflicts
+               <ui:msg key="descriptionMineConflict">Accept my version for all conflicts</ui:msg>
             </td>
          </tr>
          <tr>
@@ -65,13 +68,13 @@
                        value="theirs-conflict"/>
             </td>
             <td>
-               <label ui:field="labelTheirsConflict_">Theirs-Conflict</label>
+               <label ui:field="labelTheirsConflict_"><ui:msg key="labelTheirsConflict">Theirs-Conflict</ui:msg></label>
             </td>
          </tr>
          <tr>
             <td />
             <td ui:field="descriptionTheirsConflict_" class="{style.description}">
-               Accept their version for all conflicts
+               <ui:msg key="descriptionTheirsConflict">Accept their version for all conflicts</ui:msg>
             </td>
          </tr>
          <tr>
@@ -87,7 +90,7 @@
          <tr>
             <td />
             <td ui:field="descriptionMineAll_" class="{style.description}">
-               Accept my version of the entire file, even non-conflicts
+               <ui:msg key="descriptionMineAll">Accept my version of the entire file, even non-conflicts</ui:msg>
             </td>
          </tr>
          <tr>
@@ -103,7 +106,7 @@
          <tr>
             <td />
             <td ui:field="descriptionTheirsAll_" class="{style.description}">
-               Accept their version of the entire file, even non-conflicts
+               <ui:msg key="descriptionTheirsAll">Accept their version of the entire file, even non-conflicts</ui:msg>
             </td>
          </tr>
       </table>

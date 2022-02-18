@@ -1,7 +1,7 @@
 /*
  * SessionInfo.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
@@ -26,6 +27,7 @@ import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
 import org.rstudio.studio.client.common.debugging.model.ErrorManagerState;
 import org.rstudio.studio.client.common.dependencies.model.DependencyList;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -320,6 +322,7 @@ public class SessionInfo extends JavaScriptObject
    public final static String BUILD_TOOLS_MAKEFILE = "Makefile";
    public final static String BUILD_TOOLS_WEBSITE = "Website";
    public final static String BUILD_TOOLS_CUSTOM = "Custom";
+   public final static String BUILD_TOOLS_QUARTO = "Quarto";
 
    public final native String getBuildToolsType() /*-{
       return this.build_tools_type;
@@ -344,6 +347,14 @@ public class SessionInfo extends JavaScriptObject
    public final native boolean getIsDistillProject() /*-{
       return this.is_distill_project;
    }-*/;
+   
+   public final static String QUARTO_PROJECT_TYPE_WEBSITE = "website";
+   public final static String QUARTO_PROJECT_TYPE_BOOK = "book";
+
+   
+   public final native QuartoConfig getQuartoConfig() /*-{
+      return this.quarto_config;
+   }-*/;
 
    public final native boolean getHasPackageSrcDir() /*-{
       return this.has_pkg_src;
@@ -359,7 +370,7 @@ public class SessionInfo extends JavaScriptObject
       if (state != null)
          return state.getPaneCaption();
       else
-         return "Presentation";
+         return constants_.presentationCaption();
    }
 
    public final native PresentationState getPresentationState() /*-{
@@ -671,4 +682,5 @@ public class SessionInfo extends JavaScriptObject
    public final native MemoryUsage getMemoryUsage() /*-{
       return this.memory_usage;
    }-*/;
+   private static final ModelConstants constants_ = GWT.create(ModelConstants.class);
 }

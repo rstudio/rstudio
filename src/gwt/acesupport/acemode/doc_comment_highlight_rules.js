@@ -1,7 +1,7 @@
 /*
  * doc_comment_highlight_rules.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
   * The Original Code is Ajax.org Code Editor (ACE).
  *

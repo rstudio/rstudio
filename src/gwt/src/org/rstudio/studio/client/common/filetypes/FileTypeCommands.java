@@ -1,7 +1,7 @@
 /*
  * FileTypeCommands.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,10 @@
  *
  */
 package org.rstudio.studio.client.common.filetypes;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.AppCommand;
@@ -72,33 +76,39 @@ public class FileTypeCommands
       });
    }
 
-   public TextFileType[] statusBarFileTypes()
+   public List<TextFileType> statusBarFileTypes()
    {
-      return new TextFileType[] {
-            FileTypeRegistry.R,
-            FileTypeRegistry.RMARKDOWN,
-            FileTypeRegistry.SWEAVE,
-            FileTypeRegistry.RHTML,
-            FileTypeRegistry.RPRESENTATION,
-            FileTypeRegistry.RD,
-            FileTypeRegistry.TEXT,
-            FileTypeRegistry.TEX,
-            FileTypeRegistry.MARKDOWN,
-            FileTypeRegistry.XML,
-            FileTypeRegistry.YAML,
-            FileTypeRegistry.DCF,
-            FileTypeRegistry.SH,
-            FileTypeRegistry.HTML,
-            FileTypeRegistry.CSS,
-            FileTypeRegistry.SASS,
-            FileTypeRegistry.SCSS,
-            FileTypeRegistry.JS,
-            FileTypeRegistry.JSON,
-            FileTypeRegistry.CPP,
-            FileTypeRegistry.PYTHON,
-            FileTypeRegistry.SQL,
-            FileTypeRegistry.STAN
-      };
+      ArrayList<TextFileType> fileTypes = new ArrayList<TextFileType>(Arrays.asList(
+         FileTypeRegistry.TEXT,
+         FileTypeRegistry.R,
+         FileTypeRegistry.RMARKDOWN,
+         FileTypeRegistry.SWEAVE,
+         FileTypeRegistry.RHTML,
+         FileTypeRegistry.RPRESENTATION,
+         FileTypeRegistry.RD,
+         FileTypeRegistry.TEX,
+         FileTypeRegistry.MARKDOWN,
+         FileTypeRegistry.XML,
+         FileTypeRegistry.YAML,
+         FileTypeRegistry.DCF,
+         FileTypeRegistry.SH,
+         FileTypeRegistry.HTML,
+         FileTypeRegistry.CSS,
+         FileTypeRegistry.SASS,
+         FileTypeRegistry.SCSS,
+         FileTypeRegistry.JS,
+         FileTypeRegistry.JSON,
+         FileTypeRegistry.CPP,
+         FileTypeRegistry.PYTHON,
+         FileTypeRegistry.SQL,
+         FileTypeRegistry.STAN
+      ));
+      if (session_.getSessionInfo().getQuartoConfig().enabled) 
+      {
+         fileTypes.add(fileTypes.indexOf(FileTypeRegistry.TEX), FileTypeRegistry.QUARTO);
+      }
+      
+      return fileTypes;
    }
 
    public HTMLCapabilities getHTMLCapabiliites()

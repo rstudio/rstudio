@@ -1,7 +1,7 @@
 /*
  * SessionPackages.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -110,7 +110,7 @@ public:
       Error error = r::exec::evaluateString(code, &packages);
       if (error)
       {
-         // log error if it wasn't merly a null return value
+         // log error if it wasn't merely a null return value
          if (error != r::errc::UnexpectedDataTypeError)
             LOG_ERROR(error);
          return;
@@ -309,12 +309,19 @@ void onConsolePrompt(const std::string&)
 
 void onDetectChanges(module_context::ChangeSource source)
 {
+   // silently drop attempts to call this from non-main thread
+   if (!core::thread::isMainThread())
+      return;
+   
    // check for libPaths changes if we're evaluating a change from the REPL at
    // the top-level (i.e. not while debugging, as we don't want to mutate any
    // state that might be under inspection)
-   if (source == module_context::ChangeSourceREPL && r::exec::isMainThread() &&
+   if (source == module_context::ChangeSourceREPL &&
+       core::thread::isMainThread() &&
        r::exec::atTopLevelContext())
+   {
       detectLibPathsChanges();
+   }
 }
 
 void onDeferredInit(bool /* newSession */)

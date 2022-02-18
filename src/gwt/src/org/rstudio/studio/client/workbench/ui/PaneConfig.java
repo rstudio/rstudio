@@ -1,7 +1,7 @@
 /*
  * PaneConfig.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,13 +67,14 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet1.push("VCS");
       tabSet1.push("Tutorial");
       tabSet1.push("Presentation");
-
+      
       JsArrayString tabSet2 = createArray().cast();
       tabSet2.push("Files");
       tabSet2.push("Plots");
       tabSet2.push("Packages");
       tabSet2.push("Help");
       tabSet2.push("Viewer");
+      tabSet2.push("Presentations");
 
       JsArrayString hiddenTabSet = createArray().cast();
       return create(panes, tabSet1, tabSet2, hiddenTabSet, false, true, 0);
@@ -105,7 +106,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // A list of all the tabs. Order matters; the Presentation tab must be the
       // last element in this array that's part of the first tabset (ts1)
       return new String[] {"Environment", "History", "Files", "Plots", "Connections",
-                           "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer", "Presentation"};
+                           "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer",
+                           "Presentations", "Presentation"};
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets
@@ -201,7 +203,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // Replace any obsoleted tabs in the config
       replaceObsoleteTabs(ts1);
       replaceObsoleteTabs(ts2);
-
+      
       // Presentation tab must always be at the end of the ts1 tabset (this
       // is so that activating it works even in the presence of optionally
       // visible tabs). This is normally an invariant but for a time during
@@ -223,6 +225,13 @@ public class PaneConfig extends UserPrefsAccessor.Panes
             return false;
          }
       }
+      
+      // if we don't have Presentation2 then provide it 
+      if (!hasPresentation2(ts1) && !hasPresentation2(ts2))
+      {
+         ts2.set(ts2.length(), "Presentations");
+      }
+
 
       // Check for any unknown tabs
       Set<String> allTabs = makeSet(getAllTabs());
@@ -231,6 +240,16 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          return false;
 
       return true;
+   }
+   
+   private final boolean hasPresentation2(JsArrayString tabs)
+   {
+      for (int idx = 0; idx < tabs.length(); idx++)
+      {
+         if (tabs.get(idx).equals("Presentations"))
+            return true;
+      }
+      return false;
    }
 
    private static boolean isSubset(Set<String> set, Iterable<String> possibleSubset)

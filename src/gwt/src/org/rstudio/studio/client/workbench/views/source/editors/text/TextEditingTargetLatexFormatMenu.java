@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetLatexFormatMenu.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 
@@ -28,24 +29,24 @@ public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
       editor_ = editor;
       prefs_ = prefs;
       
-      addItem(createLatexMenu("Section", "section*", true));
-      addItem(createLatexMenu("Subsection", "subsection*", true));
-      addItem(createLatexMenu("Sub-Subsection", "subsubsection*", true));
+      addItem(createLatexMenu(constants_.section(), "section*", true));
+      addItem(createLatexMenu(constants_.subsection(), "subsection*", true));
+      addItem(createLatexMenu(constants_.subSubsection(), "subsubsection*", true));
       addSeparator();
-      addItem(createLatexMenu("Bold", "textbf"));
-      addItem(createLatexMenu("Italic", "emph"));
-      addItem(createLatexMenu("Typewriter", "texttt"));
-      addItem(createLatexMenu("Quote", "``", "''"));
+      addItem(createLatexMenu(constants_.bold(), "textbf"));
+      addItem(createLatexMenu(constants_.italic(), "emph"));
+      addItem(createLatexMenu(constants_.typewriter(), "texttt"));
+      addItem(createLatexMenu(constants_.quote(), "``", "''"));
       addSeparator();
-      addItem(createLatexListMenu("Bullet List", "itemize", false));
-      addItem(createLatexListMenu("Numbered List","enumerate", false));
-      addItem(createLatexListMenu("Description List", "description", true));
+      addItem(createLatexListMenu(constants_.bulletList(), "itemize", false));
+      addItem(createLatexListMenu(constants_.numberedList(),"enumerate", false));
+      addItem(createLatexListMenu(constants_.descriptionList(), "description", true));
       addSeparator();
-      addItem(createLatexMenu("Verbatim",  
-                            "\\begin{verbatim}\n", 
+      addItem(createLatexMenu(constants_.verbatim(),
+                            "\\begin{verbatim}\n",
                             "\n\\end{verbatim}"));
-      addItem(createLatexMenu("Block Quote", 
-                            "\\begin{quote}\n", 
+      addItem(createLatexMenu(constants_.blockQuote(),
+                            "\\begin{quote}\n",
                             "\n\\end{quote}"));
    }
 
@@ -160,4 +161,5 @@ public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
    
    private final DocDisplay editor_;
    private final UserPrefs prefs_;
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * mark.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 import { Mark, MarkSpec, MarkType, ResolvedPos, Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorState, Selection, Transaction } from 'prosemirror-state';
 
-import { PandocTokenReader, PandocMarkWriterFn, PandocInlineHTMLReaderFn } from './pandoc';
+import { PandocTokenReader, PandocMarkWriterFn, PandocInlineHTMLReaderFn, PandocTokensFilterFn } from './pandoc';
 import { mergedTextNodes } from './text';
 import { findChildrenByMark } from 'prosemirror-utils';
 import { MarkTransaction } from './transaction';
@@ -29,6 +29,7 @@ export interface PandocMark {
   readonly pandoc: {
     readonly readers: readonly PandocTokenReader[];
     readonly inlineHTMLReader?: PandocInlineHTMLReaderFn;
+    readonly tokensFilter?: PandocTokensFilterFn;
     readonly writer: {
       priority: number;
       write: PandocMarkWriterFn;
@@ -140,6 +141,15 @@ export function splitInvalidatedMarks(
 ) {
   const hasMarkType = (nd: ProsemirrorNode) => markType.isInSet(nd.marks);
   const markedNodes = findChildrenByMark(node, markType, true);
+
+  const remove = (from: number, to: number, type: MarkType) => {
+    if (removeMark) {
+      removeMark(from, to);
+    } else {
+      tr.removeMark(from, to, type);
+    }
+  };
+
   markedNodes.forEach(markedNode => {
     const mark = hasMarkType(markedNode.node);
     if (mark) {
@@ -147,13 +157,21 @@ export function splitInvalidatedMarks(
       const markRange = getMarkRange(tr.doc.resolve(from), markType);
       if (markRange) {
         const text = tr.doc.textBetween(markRange.from, markRange.to);
-        const length = validLength(text);
+
+        // Trim any leading space and count how much we trimmed
+        const trimmedText = text.trimStart();
+        const countSpace = text.length - trimmedText.length;
+
+        // Remove the mark from any trimmed space at the start
+        if (countSpace > 0) {
+          remove(markRange.from, markRange.from + countSpace, markType);
+        }
+
+        // find the valid length of the text and remove the mark from 
+        // anything after the end of the valid length
+        const length = validLength(trimmedText);
         if (length > -1 && length !== text.length) {
-          if (removeMark) {
-            removeMark(markRange.from + length, markRange.to);
-          } else {
-            tr.removeMark(markRange.from + length, markRange.to, markType);
-          }
+          remove(markRange.from + length + countSpace, markRange.to, markType);
         }
       }
     }

@@ -1,7 +1,7 @@
 /*
  * DataImportOptionsUiXls.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.environment.dataimport;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.common.HelpLink;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportPreviewResponse;
 
@@ -88,7 +89,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       if (sheetListBox_.getItemCount() <= 1)
       {
          sheetListBox_.clear();
-         sheetListBox_.addItem("Default", "");
+         sheetListBox_.addItem(constants_.defaultCapitalized(), "");
          
          for (String sheet : sheets){
             sheetListBox_.addItem(sheet, sheet);
@@ -101,14 +102,14 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
    {
       nameTextBox_.setText("");
       sheetListBox_.clear();
-      sheetListBox_.addItem("Default", "");
+      sheetListBox_.addItem(constants_.defaultCapitalized(), "");
    }
    
    @Override
    public HelpLink getHelpLink()
    {
       return new HelpLink(
-         "Reading Excel files using readxl",
+         constants_.readingExcelFilesUsingReadxl(),
          "import_readxl",
          false,
          true);
@@ -121,7 +122,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       columnNamesCheckBox_.setValue(true);
       openDataViewerCheckBox_.setValue(true);
       
-      sheetListBox_.addItem("Default", "");
+      sheetListBox_.addItem(constants_.defaultCapitalized(), "");
    }
    
    void initEvents()
@@ -202,4 +203,5 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
    private static native final String[] getSheetsFromResponse(DataImportPreviewResponse response) /*-{
       return response && response.options && response.options.sheets ? response.options.sheets : [];
    }-*/;
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

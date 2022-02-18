@@ -1,7 +1,7 @@
 /*
  * PosixSystem.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant to the terms of a commercial license agreement
  * with RStudio, then this program is licensed to you under the following terms:
@@ -22,7 +22,6 @@
  */
 
 #include <shared_core/system/PosixSystem.hpp>
-
 #include <csignal>
 #include <grp.h>
 #include <ifaddrs.h>
@@ -207,21 +206,28 @@ Error restorePrivileges()
    return Success();
 }
 
-Error temporarilyDropPrivileges(const system::User& in_user)
+Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidType>& in_group)
 {
    // clear error state
    errno = 0;
 
+   GidType targetGID = in_group.or_else(in_user.getGroupId());
+
    // init supplemental group list
    // NOTE: if porting to CYGWIN may need to call getgroups/setgroups
    // after initgroups -- more research required to confirm
+   // NOTE: We are intentionally specifying the user's primary group here
+   // regardless of whether an alternate group is provided. This so all of
+   // the user's groups are maintained for the new process. Initializing
+   // with the alternate group results in the process running with only a single
+   // group.
    if (::initgroups(in_user.getUsername().c_str(), in_user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // set group and verify
-   if (::setresgid(-1, in_user.getGroupId(), ::getegid()) < 0)
+   if (::setresgid(-1, targetGID, ::getegid()) < 0)
       return systemError(errno, ERROR_LOCATION);
-   if (::getegid() != in_user.getGroupId())
+   if (::getegid() != targetGID)
       return systemError(EACCES, ERROR_LOCATION);
 
    // set user and verify
@@ -246,12 +252,19 @@ Error restorePrivileges()
    return restorePrivilegesImpl(s_privUid);
 }
 
-Error temporarilyDropPrivileges(const system::User& in_user)
+Error temporarilyDropPrivileges(const User& in_user, const boost::optional<GidType>& in_group)
 {
    // clear error state
    errno = 0;
 
+   GidType targetGID = in_group.value_or(in_user.getGroupId());
+
    // init supplemental group list
+   // NOTE: We are intentionally specifying the user's primary group here
+   // regardless of whether an alternate group is provided. This so all of
+   // the user's groups are maintained for the new process. Initializing
+   // with the alternate group results in the process running with only a single
+   // group.
    if (::initgroups(in_user.getUsername().c_str(), in_user.getGroupId()) < 0)
       return systemError(errno, ERROR_LOCATION);
 
@@ -265,11 +278,11 @@ Error temporarilyDropPrivileges(const system::User& in_user)
       return systemError(errno, ERROR_LOCATION);
 
    // set new EGID
-   if (::setegid(in_user.getGroupId()) < 0)
+   if (::setegid(targetGID) < 0)
       return systemError(errno, ERROR_LOCATION);
 
    // verify
-   if (::getegid() != in_user.getGroupId())
+   if (::getegid() != targetGID)
       return systemError(EACCES, ERROR_LOCATION);
 
 
@@ -290,7 +303,7 @@ Error temporarilyDropPrivileges(const system::User& in_user)
    if (::geteuid() != in_user.getUserId())
       return systemError(EACCES, ERROR_LOCATION);
 
-   // save privilleged user id
+   // save privileged user id
    s_privUid = oldEUID;
 
    // success

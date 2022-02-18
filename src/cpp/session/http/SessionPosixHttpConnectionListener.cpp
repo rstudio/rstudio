@@ -1,7 +1,7 @@
 /*
  * SessionPosixHttpConnectionListener.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,7 +38,36 @@ namespace {
 // pointer to global connection listener singleton
 HttpConnectionListener* s_pHttpConnectionListener = nullptr;
 
-}  // anonymouys namespace
+void initTcpHttpConnectionListener(const std::string& wwwAddress,
+                                   const std::string& bindPort,
+                                   session::Options& options,
+                                   const std::string& sharedSecret,
+                                   const std::string& debugName)
+{
+   if (!options.getOverlayOption(kSessionSslCertOption).empty())
+   {
+      LOG_DEBUG_MESSAGE("Initializing " + debugName + " tcp ssl listener for : " + options.wwwAddress() + ":" + safe_convert::numberToString(options.wwwPort()));
+
+      s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
+                                         wwwAddress,
+                                         bindPort,
+                                         sharedSecret,
+                                         core::FilePath(options.getOverlayOption(kSessionSslCertOption)),
+                                         core::FilePath(options.getOverlayOption(kSessionSslCertKeyOption)));
+
+   }
+   else
+   {
+      LOG_DEBUG_MESSAGE("Initializing " + debugName + " tcp listener for : " + options.wwwAddress() + ":" + safe_convert::numberToString(options.wwwPort()));
+
+      s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
+                                         wwwAddress,
+                                         bindPort,
+                                         options.sharedSecret());
+   }
+}
+
+}  // anonymous namespace
 
 
 void initializeHttpConnectionListener()
@@ -52,6 +81,9 @@ void initializeHttpConnectionListener()
       if (!localPeer.empty())
       {
          FilePath streamPath(localPeer);
+
+         LOG_DEBUG_MESSAGE("Initializing desktop local stream listener for: " + streamPath.getAbsolutePath());
+
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                            streamPath,
                                            core::FileMode::USER_READ_WRITE,
@@ -60,10 +92,7 @@ void initializeHttpConnectionListener()
       }
       else
       {
-         s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
-                                            options.wwwAddress(),
-                                            options.wwwPort(),
-                                            options.sharedSecret());
+         initTcpHttpConnectionListener(options.wwwAddress(), options.wwwPort(), options, options.sharedSecret(), "desktop");
       }
    }
    else // mode == "server"
@@ -122,7 +151,7 @@ void initializeHttpConnectionListener()
                bindPort = reusedPort;
          }
 
-         s_pHttpConnectionListener = new TcpIpHttpConnectionListener(wwwAddress, bindPort, "");
+         initTcpHttpConnectionListener(wwwAddress, bindPort, options, "", "standalone");
       }
       else
       {
@@ -130,6 +159,9 @@ void initializeHttpConnectionListener()
          r_util::SessionContext context = options.sessionContext();
          std::string streamFile = r_util::sessionContextFile(context);
          FilePath localStreamPath = local_streams::streamPath(streamFile);
+
+         LOG_DEBUG_MESSAGE("Initializing local stream listener for : " + localStreamPath.getAbsolutePath());
+
          s_pHttpConnectionListener = new LocalStreamHttpConnectionListener(
                                           localStreamPath,
                                           core::FileMode::ALL_READ_WRITE,

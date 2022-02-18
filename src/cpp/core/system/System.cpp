@@ -1,7 +1,7 @@
 /*
  * System.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,23 +20,21 @@
 
 #include <boost/variant.hpp>
 
-#include <core/system/System.hpp>
-
-#include <core/Algorithm.hpp>
 #include <shared_core/Hash.hpp>
-#include <core/Log.hpp>
-#include <core/LogOptions.hpp>
-
-#include <core/system/Environment.hpp>
+#include <shared_core/FileLogDestination.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/StderrLogDestination.hpp>
 
 #ifndef _WIN32
 #include <shared_core/system/SyslogDestination.hpp>
 #endif
 
-#include <shared_core/FileLogDestination.hpp>
-#include <shared_core/FilePath.hpp>
-#include <shared_core/SafeConvert.hpp>
-#include <shared_core/StderrLogDestination.hpp>
+#include <core/Algorithm.hpp>
+#include <core/Log.hpp>
+#include <core/LogOptions.hpp>
+#include <core/system/System.hpp>
+#include <core/system/Environment.hpp>
 
 namespace rstudio {
 namespace core {
@@ -80,32 +78,6 @@ void addToSystemPath(const FilePath& path, bool prepend)
    system::setenv("PATH", systemPath);
 }
 
-Error findProgramOnPath(const std::string& program,
-                        core::FilePath* pProgramPath)
-{
-   auto paths = core::algorithm::split(
-            core::system::getenv("PATH"),
-            kPathSeparator);
-
-   for (auto&& path : paths)
-   {
-      if (!path.empty())
-      {
-         FilePath candidatePath = FilePath(path).completeChildPath(program);
-         // TODO: check if program is executable - perhaps use boost::process::search_path() as it does this test for both
-         // unix and windows systems but right now we don't include the process module in our boost library
-         if (candidatePath.exists())
-         {
-            *pProgramPath = candidatePath;
-            return Success();
-         }
-      }
-   }
-
-   return fileNotFoundError(program, ERROR_LOCATION);
-}
-
-
 int exitFailure(const Error& error, const ErrorLocation& loggedFromLocation)
 {
    if (error)
@@ -142,36 +114,13 @@ boost::recursive_mutex s_loggingMutex;
 
 namespace {
 
-int getNextFileLogId()
-{
-   static std::atomic_uint fileLogId(3);
-   return fileLogId.fetch_add(1);
-}
-
-std::shared_ptr<log::ILogDestination> getStdErrLogDest(log::LogLevel logLevel)
-{
-   using namespace log;
-   static std::shared_ptr<ILogDestination> stdErrLogDest(new StderrLogDestination(logLevel));
-   return stdErrLogDest;
-}
-
-#ifndef _WIN32
-
-std::shared_ptr<log::ILogDestination> getSysLogDest(log::LogLevel logLevel)
-{
-   using namespace log;
-   static std::shared_ptr<ILogDestination> syslogDest(new SyslogDestination(logLevel, s_programIdentity));
-   return syslogDest;
-}
-
-#endif
-
 void initializeLogWriter()
 {
    using namespace log;
 
    // requires prior synchronization
    LoggerType loggerType = s_logOptions->loggerType();
+   LogMessageFormatType formatType = s_logOptions->logMessageFormatType();
 
    // options currently only used for file logging
    LoggerOptions options = s_logOptions->loggerOptions();
@@ -182,24 +131,40 @@ void initializeLogWriter()
    {
       case LoggerType::kFile:
       {
-         addLogDestination(
-            std::shared_ptr<ILogDestination>(new FileLogDestination(
-               getNextFileLogId(),
+         FileLogDestination* dst = new FileLogDestination(
+               generateShortenedUuid(),
                logLevel,
+               formatType,
                s_programIdentity,
-               boost::get<FileLogOptions>(options))));
+               boost::get<FileLogOptions>(options),
+               true);
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(dst));
+         ttyCheck(dst->path());
          break;
       }
       case LoggerType::kStdErr:
       {
-         addLogDestination(getStdErrLogDest(logLevel));
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(new StderrLogDestination(
+               generateShortenedUuid(),
+               logLevel,
+               formatType,
+               true)));
          break;
       }
       case LoggerType::kSysLog:
       default:
       {
 #ifndef _WIN32
-         addLogDestination(getSysLogDest(logLevel));
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(new SyslogDestination(
+               generateShortenedUuid(),
+               logLevel,
+               formatType,
+               s_programIdentity,
+               true)));
+         ttyCheck("syslog");
 #endif
       }
    }
@@ -211,6 +176,7 @@ void initializeLogWriter(const std::string& logSection)
 
    // requires prior synchronization
    LoggerType loggerType = s_logOptions->loggerType(logSection);
+   LogMessageFormatType formatType = s_logOptions->logMessageFormatType(logSection);
 
    // options currently only used for file logging
    LoggerOptions options = s_logOptions->loggerOptions(logSection);
@@ -223,23 +189,35 @@ void initializeLogWriter(const std::string& logSection)
       {
          addLogDestination(
             std::shared_ptr<ILogDestination>(new FileLogDestination(
-               getNextFileLogId(),
+               generateShortenedUuid(),
                logLevel,
+               formatType,
                s_programIdentity,
-               boost::get<FileLogOptions>(options))),
-               logSection);
+               boost::get<FileLogOptions>(options),
+               true)), logSection);
          break;
       }
       case LoggerType::kStdErr:
       {
-         addLogDestination(getStdErrLogDest(logLevel), logSection);
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(new StderrLogDestination(
+               generateShortenedUuid(),
+               logLevel,
+               formatType,
+               true)), logSection);
          break;
       }
       case LoggerType::kSysLog:
       default:
       {
 #ifndef _WIN32
-         addLogDestination(getSysLogDest(logLevel), logSection);
+         addLogDestination(
+            std::shared_ptr<ILogDestination>(new SyslogDestination(
+               generateShortenedUuid(),
+               logLevel,
+               formatType,
+               s_programIdentity,
+               true)), logSection);
 #endif
       }
    }
@@ -260,6 +238,17 @@ void initializeLogWriters()
 }
 
 } // anonymous namespace
+
+void ttyCheck(const std::string& destination)
+{
+   // When running in a TTY, log some information about why we're logging to the TTY
+   // in addition to file/syslog.
+   if (stderrIsTerminal())
+      std::cerr << "TTY detected. Printing informational message about logging configuration. "
+                << "Logging configuration loaded from '"
+                << s_logOptions->getLogConfigFile().getAbsolutePath() << "'. "
+                << "Logging to '" << destination << "'.\n";
+}
 
 log::LoggerType loggerType(const std::string& in_sectionName)
 {
@@ -307,6 +296,7 @@ Error reinitLog()
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
+      log::removeReloadableLogDestinations();
       return initLog();
    }
    END_LOCK_MUTEX
@@ -322,7 +312,7 @@ Error initializeStderrLog(const std::string& programIdentity,
    {
       // create default stderr logger options
       log::StdErrLogOptions options;
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kStdErr, options));
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kStdErr, log::LogMessageFormatType::PRETTY, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();
@@ -340,13 +330,18 @@ Error initializeStderrLog(const std::string& programIdentity,
 Error initializeLog(const std::string& programIdentity,
                     log::LogLevel logLevel,
                     const FilePath& logDir,
+                    bool forceLogDir,
                     bool enableConfigReload)
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
    {
       // create default file logger options
       log::FileLogOptions options(logDir);
-      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kFile, options));
+
+      // indicates whether or not the logging directory should be forcefully locked to a certain location
+      // otherwise, it is allowed to be overridden by logging config file
+      options.setForceDirectory(forceLogDir);
+      s_logOptions.reset(new log::LogOptions(programIdentity, logLevel, log::LoggerType::kFile, log::LogMessageFormatType::PRETTY, options));
       s_programIdentity = programIdentity;
 
       Error error = initLog();
@@ -361,15 +356,22 @@ Error initializeLog(const std::string& programIdentity,
    return Success();
 }
 
+Error initializeLog(const std::string& programIdentity,
+                    log::LogLevel logLevel,
+                    bool enableConfigReload)
+{
+   return initializeLog(programIdentity, logLevel, log::LogOptions::defaultLogDirectory(), false, enableConfigReload);
+}
+
 void initFileLogDestination(log::LogLevel level, FilePath defaultLogDir)
 {
-   std::shared_ptr<log::ILogDestination> fileLog = log::getFileLogDestination();
-   if (!fileLog)
+   if (!log::hasFileLogDestination())
    {
       log::FileLogOptions defaultOptions(defaultLogDir);
       log::addLogDestination(std::shared_ptr<core::log::ILogDestination>(
-              new log::FileLogDestination(getNextFileLogId(),
+              new log::FileLogDestination(generateShortenedUuid(),
                                           level,
+                                          log::LogMessageFormatType::PRETTY,
                                           s_programIdentity,
                                           defaultOptions)));
    }

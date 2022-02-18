@@ -1,7 +1,7 @@
 /*
  * system.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,66 +13,48 @@
  *
  */
 
-import { getenv } from './environment';
-import * as log from './log';
-import { Err, Success } from './err';
-import { User } from './user';
+import { v4 as uuidv4 } from 'uuid';
+import crc from 'crc';
+import fs from 'fs';
+
 import { FilePath } from './file-path';
 
-export function initHook() {
-  if (process.platform !== 'win32' ) {
-    return;
+export function generateUuid(includeDashes = true): string {
+  let uuid = uuidv4();
+  if (!includeDashes) {
+    uuid = uuid.replace(/-/g, '');
   }
-
-  // TODO: Windows implementation from Win32System.cpp
+  return uuid;
 }
 
-// logger's program identity (this process's binary name)
-export let s_programIdentity = "";
-
-// logging options representing the latest state of the logging configuration file
-// export let s_logOptions: LogOptions;
-
-function initLog() {
-  // requires prior synchronization
-
-  // Error error = s_logOptions.read();
-  // if (error)
-  //   return error;
-
-  // initializeLogWriters();
-
-  return Success();
+export function generateShortenedUuid(): string {
+  return crc.crc32(generateUuid(false)).toString(16);
 }
 
-export function initializeLog(
-  programIdentity: string,
-  logLevel: log.LogLevel,
-  logDir: FilePath,
-  enableConfigReload = true
-): Err {
-  // // create default file logger options
-  // const options = new log.FileLogOptions(logDir);
+export function generateRandomPort(): number {
+  // Create a random-ish port number to avoid collisions between different
+  // instances of rdesktop-launched rsessions; not a cryptographically
+  // secure technique so don't copy/paste for such purposes.
+  const base = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER);
+  return (base % 40000) + 8080;
+}
 
-  // s_logOptions = new LogOptions(programIdentity, logLevel, log.LoggerType.kFile, options);
-  // s_programIdentity = programIdentity;
+export function localPeer(port: number): string {
+  // local peer used for named-pipe communication on Windows
+  return `\\\\.\\pipe\\${port.toString()}-rsession`;
+}
 
-  let error = initLog();
-  if (error) {
-    return error;
+export function isCentOS(): boolean {
+  if (process.platform === 'linux') {
+    const redhatRelease = new FilePath('/etc/redhat-release');
+    if (redhatRelease.existsSync()) {
+      try {
+        const contents = fs.readFileSync(redhatRelease.getAbsolutePath(), 'utf-8');
+        return contents.includes('CentOS') || contents.includes('Red Hat Enterprise Linux');
+      } catch (error: unknown) {
+        return false;
+      }
+    }
   }
-
-  // if (enableConfigReload)
-  //   initializeLogConfigReload();
-
-  return Success();
-}
-
-export function username() {
-  const userVar = process.platform === 'win32' ? 'USERNAME' : 'USER';
-  return getenv(userVar);
-}
-
-export function userHomePath() {
-   return User.getUserHomePath();
+  return false;
 }

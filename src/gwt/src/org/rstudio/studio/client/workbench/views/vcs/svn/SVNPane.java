@@ -1,7 +1,7 @@
 /*
  * SVNPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.svn.SVNPresenter.Display;
 
@@ -59,7 +61,7 @@ public class SVNPane extends WorkbenchPane implements Display
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("SVN Tab");
+      Toolbar toolbar = new Toolbar(constants_.svnTab());
 
       toolbar.addLeftWidget(commands_.vcsDiff().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -86,7 +88,7 @@ public class SVNPane extends WorkbenchPane implements Display
       moreMenu.addItem(commands_.showShellDialog().createMenuItem(false));
 
       toolbar.addLeftWidget(new ToolbarMenuButton(
-          "More",
+          constants_.moreCapitalized(),
           ToolbarButton.NoTitle,
           new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
           moreMenu));
@@ -153,4 +155,5 @@ public class SVNPane extends WorkbenchPane implements Display
 
    private final SVNChangelistTablePresenter changelistTablePresenter_;
    private final Commands commands_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * FileUploadDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.files.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.FileUpload;
@@ -37,6 +38,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
+import org.rstudio.studio.client.workbench.views.files.FilesConstants;
 import org.rstudio.studio.client.workbench.views.files.model.PendingFileUpload;
 
 public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
@@ -50,9 +52,9 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
          OperationWithInput<PendingFileUpload> completedOperation,
          Operation failedOperation)
    {
-      super("Upload Files",
+      super(constants_.uploadFilesTitle(),
             Roles.getDialogRole(),
-            "Uploading file...",
+            constants_.uploadingFileProgressMessage(),
             actionURL,
             beginOperation,
             completedOperation,
@@ -85,6 +87,8 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
    @Override
    protected void setFormPanelEncodingAndMethod(FormPanel formPanel)
    {
+      // NOTE: FormPanel is technically the wrong GWT abstraction to use here because it presumes a response
+      // type of text/html, whereas our file upload endpoint actually returns JSON (coerced to HTML).
       formPanel.setEncoding(FormPanel.ENCODING_MULTIPART);
       formPanel.setMethod(FormPanel.METHOD_POST);
    }
@@ -92,9 +96,10 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
    @Override
    protected PendingFileUpload parseResults(String results) throws Exception
    {
-      RpcResponse response = RpcResponse.parse(results);
+      // Use strict parsing mode here since the results object contains untrusted file/path names
+      RpcResponse response = RpcResponse.parseStrict(results);
       if (response == null)
-         throw new Exception("Unexpected response from server");
+         throw new Exception(constants_.unexpectedResponseException());
       
       // check for errors
       RpcError error = response.getError();
@@ -105,7 +110,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
          if (error.getCode() == RpcError.PARAM_INVALID &&
              fileUpload_.getFilename().length() == 0)
          {
-            throw new Exception("You must specify a file to upload.");
+            throw new Exception(constants_.specifyFileToUploadException());
          }
          else
          {
@@ -141,7 +146,7 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       directoryPanel.setStyleName(ThemeStyles.INSTANCE.fileUploadField());
       
       // target directory chooser
-      directoryNameWidget_ = new DirectoryChooserTextBox("Target directory:",
+      directoryNameWidget_ = new DirectoryChooserTextBox(constants_.targetDirectoryLabel(),
          ElementIds.TextBoxButtonId.UPLOAD_TARGET);
       directoryNameWidget_.setText(targetDirectory_.getPath());
       directoryNameWidget_.addValueChangeHandler((valueChangeEvent) ->
@@ -156,16 +161,14 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
       // filename field
       fileUpload_ = new FileUpload();
       fileUpload_.setStyleName(ThemeStyles.INSTANCE.fileUploadField());
-      fileUpload_.setName("file");
-      FormLabel uploadLabel = new FormLabel("File to upload:", fileUpload_);
+      fileUpload_.setName(constants_.fileText());
+      FormLabel uploadLabel = new FormLabel(constants_.fileToUploadLabel(), fileUpload_);
       uploadLabel.addStyleName(ThemeStyles.INSTANCE.fileUploadLabel());
       panel.add(uploadLabel);
       panel.add(fileUpload_);
       
       // zip file tip field
-      HTML tip = new HTML("<b>TIP</b>: To upload multiple files or a " +
-                          "directory, create a zip file. The zip file will " +
-                          "be automatically expanded after upload.");
+      HTML tip = new HTML(constants_.tipHTML());
       tip.addStyleName(ThemeStyles.INSTANCE.fileUploadField());
       tip.addStyleName(ThemeStyles.INSTANCE.fileUploadTipLabel());
       panel.add(tip);
@@ -185,4 +188,5 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
    private final FileDialogs fileDialogs_;
    @SuppressWarnings("unused")
    private RemoteFileSystemContext fileSystemContext_;
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

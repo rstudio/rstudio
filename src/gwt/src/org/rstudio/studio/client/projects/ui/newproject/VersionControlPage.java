@@ -1,7 +1,7 @@
 /*
  * VersionControlPage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
 import org.rstudio.studio.client.common.vcs.VcsHelpLink;
 import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -71,43 +73,33 @@ public abstract class VersionControlPage extends NewProjectWizardPage
          if (Desktop.isDesktop())
          {
             HTML msg = new HTML(
-               "<p>" + getTitle() + " was not detected " +
-               "on the system path.</p>" +
-               "<p>To create projects from " + getTitle() + " " + 
-               "repositories you should install " + getTitle() + " " +
-               "and then restart RStudio.</p>" +
-               "<p>Note that if " + getTitle() + " is installed " +
-               "and not on the path, then you can specify its location using " +
-               "the " + (BrowseCap.isMacintosh() ? "Preferences" : "Options") +
-               " dialog.</p>");
+                    constants_.acceptNavigationHTML(getTitle(),(BrowseCap.isMacintosh() ? constants_.preferencesLabel() : constants_.optionsLabel()))
+            );
             msg.setWidth("100%");
             
             verticalPanel.add(msg);
             
             HelpLink vcsHelpLink = new VcsHelpLink();
-            vcsHelpLink.setCaption("Using " + getTitle() + " with RStudio");
+            vcsHelpLink.setCaption(constants_.vcsHelpLink(getTitle()));
             vcsHelpLink.addStyleName(styles.vcsHelpLink());
             verticalPanel.add(vcsHelpLink);
          }
          else
          {
             HTML msg = new HTML(
-                  "<p>An installation of " + getTitle() + " was not detected " +
-                  "on this system.</p>" +
-                  "<p>To create projects from " + getTitle() + " " + 
-                  "repositories you should request that your server " +
-                  "administrator install the " + getTitle() + " package.</p>");
+                    constants_.installtionNotDetectedHTML(getTitle())
+            );
                msg.setWidth("100%");
                
                verticalPanel.add(msg);
          }
          
          MessageDialog dlg = new MessageDialog(MessageDialog.INFO,
-                                               getTitle() + " Not Found",
+                                               constants_.titleNotFound(getTitle()),
                                                verticalPanel);
          
          
-         dlg.addButton("OK", ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, false);
+         dlg.addButton(constants_.okLabel(), ElementIds.DIALOG_OK_BUTTON, (Operation)null, true, false);
          dlg.showModal();
          
          return false;
@@ -136,7 +128,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
 
       txtRepoUrl_.setWidth("100%");
 
-      FormLabel urlLabel = new FormLabel("Repository URL:", txtRepoUrl_);
+      FormLabel urlLabel = new FormLabel(constants_.repoURLLabel(), txtRepoUrl_);
       urlLabel.addStyleName(styles.wizardTextEntryLabel());
       urlPanel.add(urlLabel);
       urlPanel.add(txtRepoUrl_);
@@ -152,7 +144,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       {  
          VerticalPanel usernamePanel = new VerticalPanel();
          usernamePanel.addStyleName(styles.wizardMainColumn());
-         FormLabel usernameLabel = new FormLabel("Username (if required for this repository URL):",
+         FormLabel usernameLabel = new FormLabel(constants_.usernameLabel(),
                                                  txtUsername_);
          usernameLabel.addStyleName(styles.wizardTextEntryLabel());
          usernamePanel.add(usernameLabel);
@@ -176,7 +168,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       });
       txtDirName_.addStyleName(styles.wizardMainColumn());
 
-      FormLabel dirNameLabel = new FormLabel("Project directory name:", txtDirName_);
+      FormLabel dirNameLabel = new FormLabel(constants_.projDirNameLabel(), txtDirName_);
       dirNameLabel.addStyleName(styles.wizardTextEntryLabel());
       addWidget(dirNameLabel);
       addWidget(txtDirName_);
@@ -184,7 +176,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       addSpacer();
     
       existingRepoDestDir_ = new DirectoryChooserTextBox(
-            "Create project as subdirectory of:", 
+            constants_.existingRepoDestDirLabel(),
             ElementIds.TextBoxButtonId.PROJECT_REPO_DIR,
             txtRepoUrl_);
       addWidget(existingRepoDestDir_);
@@ -219,7 +211,7 @@ public abstract class VersionControlPage extends NewProjectWizardPage
                                                           checkoutDir, 
                                                           dir);
          
-         return new NewProjectResult(projFile, false, false, dir, options, null, null, null, null);
+         return new NewProjectResult(projFile, false, false, dir, options, null, null, null, null, null);
       }
       else
       {
@@ -234,9 +226,8 @@ public abstract class VersionControlPage extends NewProjectWizardPage
       {
         globalDisplay_.showMessage(
                MessageDialog.WARNING,
-               "Error",
-               "You must specify a repository URL and " +
-               "directory to create the new project within.",
+               constants_.errorCaption(),
+               constants_.specifyRepoURLErrorMessage(),
                txtRepoUrl_);
          
          
@@ -296,4 +287,5 @@ public abstract class VersionControlPage extends NewProjectWizardPage
    private TextBox txtDirName_;
    private DirectoryChooserTextBox existingRepoDestDir_;
    private boolean suppressDirNameDetection_ = false;
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

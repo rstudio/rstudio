@@ -13,6 +13,7 @@ RUN apt-get update && \
     cmake \
     curl \
     debsigs \
+    docker.io \
     dpkg-sig \
     expect \
     fakeroot \
@@ -47,6 +48,8 @@ RUN apt-get update && \
     patchelf \
     pkg-config \
     python \
+    python3 \
+    python3-venv \
     r-base \
     rrdtool \
     software-properties-common \
@@ -55,6 +58,7 @@ RUN apt-get update && \
     uuid \
     uuid-dev \
     valgrind \
+    vim \
     wget \
     xvfb \
     zlib1g-dev
@@ -69,7 +73,66 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN add-apt-repository -y ppa:openjdk-r/ppa && \
     apt-get update && \
     apt-get install -y openjdk-8-jdk openjdk-11-jdk
-RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
+RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-$(dpkg --print-architecture)/jre/bin/java
+
+# copy common dependency installation scripts
+RUN mkdir -p /opt/rstudio-tools/dependencies/linux
+RUN mkdir -p /opt/rstudio-tools/dependencies/tools
+RUN mkdir -p /opt/rstudio-tools/dependencies/common
+COPY ./dependencies/tools/rstudio-tools.sh /opt/rstudio-tools/dependencies/tools/
+
+# copy panmirror project setup (so install-common can install needed deps)
+RUN mkdir -p /opt/rstudio-tools/panmirror
+COPY ./src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
+COPY ./src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
+
+# install common dependencies
+# here, we deviate from the typical "./install-common" script and instead
+# call the individual dependency scripts for better layer caching.
+
+# crashpad
+COPY ./dependencies/common/install-crashpad /opt/rstudio-tools/dependencies/common
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-crashpad bionic
+
+# dictionaries
+COPY ./dependencies/common/install-dictionaries /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-dictionaries
+
+# mathjax
+COPY ./dependencies/common/install-mathjax /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-mathjax
+
+# boost
+COPY ./dependencies/common/install-boost /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-boost
+
+# pandoc
+COPY ./dependencies/common/install-pandoc /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-pandoc
+
+# R packages
+COPY ./dependencies/common/install-packages /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-packages
+
+# sentry
+COPY ./dependencies/common/install-sentry-cli /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-sentry-cli
+
+# NPM dependencies
+COPY ./dependencies/common/install-npm-dependencies /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-npm-dependencies
+
+# soci
+COPY ./dependencies/common/install-soci /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-soci
+
+# yaml-cpp
+COPY ./dependencies/common/install-yaml-cpp /opt/rstudio-tools/dependencies/common/
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-yaml-cpp
+
+# Qt SDK
+COPY ./dependencies/common/install-qt.sh /opt/rstudio-tools/dependencies/linux
+COPY ./dependencies/linux/install-qt-linux /opt/rstudio-tools/dependencies/linux
 
 # Create the user
 RUN groupadd --gid $USER_GID $USERNAME \
@@ -77,5 +140,22 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME \
     && echo "$USERNAME:$USERNAME" | sudo chpasswd
+
+# Create config folder. The postCreateCommand in devcontainer.json will link the config
+RUN mkdir /etc/rstudio
+
+# Create the secure cookie key
+RUN sh -c "echo `uuid` > /etc/rstudio/secure-cookie-key"
+RUN chmod 0600 /etc/rstudio/secure-cookie-key
+
+# Install AWS CLI v2
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" && \
+    unzip awscliv2.zip && \
+    ./aws/install && \
+    rm -rf awscliv2.zip aws
+
+# Install docker-compose
+RUN curl -L "https://github.com/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+RUN chmod +x /usr/local/bin/docker-compose
 
 USER ${USERNAME}

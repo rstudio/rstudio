@@ -1,7 +1,7 @@
 /*
  * Job.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,6 +46,9 @@ public class Job
    
    // the total number of progress units to be completed
    public int max;
+   
+   // do we need to confirm before terminating this job?
+   public boolean confirm_term;
    
    // the time the job was recorded in the system
    public int recorded;

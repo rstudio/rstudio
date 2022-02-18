@@ -1,7 +1,7 @@
 /*
  * FindOutputPresenter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.output.find;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -52,6 +53,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.output.OutputConstants;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
@@ -220,6 +222,8 @@ public class FindOutputPresenter extends BasePresenter
             for (String pattern : dialogState_.getExcludeFilePatterns())
                excludeFilePatterns.push(pattern);
 
+            // this event is only ever triggered when dialogState_.isRegex() is true
+            // so we don't need to check for and handle dialogState_.isWholeWord() here
             server_.previewReplace(dialogState_.getQuery(),
                                    dialogState_.isRegex(),
                                    !dialogState_.isCaseSensitive(),
@@ -248,8 +252,8 @@ public class FindOutputPresenter extends BasePresenter
          {
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
-                  "Stop Replace",
-                  "Are you sure you want to cancel the replace? Changes already made will not be reverted.",
+                  constants_.stopReplaceTitle(),
+                  constants_.stopReplaceMessage(),
                   new Operation ()
                   {
                      @Override
@@ -270,22 +274,19 @@ public class FindOutputPresenter extends BasePresenter
             if (dialogState_ == null)
                return;
 
-            String message = "Are you sure you wish to permanently replace all? This will ";
+            String message = constants_.replaceAllQuestion();
             if (StringUtil.isNullOrEmpty(view_.getReplaceText()))
-               message += "remove ";
+               message += constants_.removeText();
             else
-               message += "replace ";
-            message += dialogState_.getResultsCount() +
-                       " occurrences of '" +
-                       dialogState_.getQuery() + "'";
+               message += constants_.replaceText();
+            message += constants_.replaceMessage(dialogState_.getResultsCount(), dialogState_.getQuery());
             if (dialogState_.isRegex() || StringUtil.isNullOrEmpty(view_.getReplaceText()))
-               message += " and cannot be undone.";
+               message += " " + constants_.cannotBeUndoneText();
             else
-               message += " with '" + view_.getReplaceText() +
-                          "' and cannot be undone.";
+               message += constants_.replaceCannotBeUndoneText(view_.getReplaceText());
             globalDisplay_.showYesNoMessage(
                   GlobalDisplay.MSG_WARNING,
-                  "Replace All",
+                  constants_.replaceAllText(),
                   message,
                   new Operation ()
                   {
@@ -303,8 +304,12 @@ public class FindOutputPresenter extends BasePresenter
                         for (String pattern : dialogState_.getExcludeFilePatterns())
                            excludeFilePatterns.push(pattern);
 
-                        server_.completeReplace(dialogState_.getQuery(),
-                                                dialogState_.isRegex(),
+                        String serverQuery = dialogState_.getQuery();
+                        if (dialogState_.isWholeWord())
+                           serverQuery = "\\b" + serverQuery + "\\b";
+
+                        server_.completeReplace(serverQuery,
+                                                dialogState_.isRegex() || dialogState_.isWholeWord(),
                                                 !dialogState_.isCaseSensitive(),
                                                 searchPath,
                                                 includeFilePatterns,
@@ -690,4 +695,5 @@ public class FindOutputPresenter extends BasePresenter
    private static final String GROUP_FIND_IN_FILES = "find-replace-in-files";
    private static final String KEY_DIALOG_STATE = "dialog-state";
    private final GlobalDisplay globalDisplay_;
+   private static final OutputConstants constants_ = GWT.create(OutputConstants.class);
 }

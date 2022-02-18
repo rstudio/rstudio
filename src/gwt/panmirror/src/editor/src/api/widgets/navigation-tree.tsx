@@ -1,7 +1,7 @@
 /*
  * navigation-tree.tsx
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -173,7 +173,7 @@ const NavigationTreeItem = (props: NavigationTreeItemProps) => {
       <div className={selectedClassName} style={indentLevel > 0 ? indentStyle : undefined}>
         {node.image ? (
           <div className="pm-navigation-tree-node-image-div">
-            <img src={node.image} alt={node.name} className="pm-navigation-tree-node-image" />
+            <img src={node.image} alt={node.name} className="pm-navigation-tree-node-image" draggable="false"/>
           </div>
         ) : null}
         <div className="pm-navigation-tree-node-label-div pm-text-color">{node.name}</div>

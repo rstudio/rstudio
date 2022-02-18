@@ -1,7 +1,7 @@
 /*
  * RSConnectAuthWait.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 
 public class RSConnectAuthWait extends Composite
 {
@@ -57,7 +58,7 @@ public class RSConnectAuthWait extends Composite
    
    public void setClaimLink(String serverName, String url)
    {
-      claimLink_.setText("Confirm account on " + serverName);
+      claimLink_.setText(constants_.confirmAccountOn(serverName));
       claimLink_.setHref(url);
    }
    
@@ -93,7 +94,8 @@ public class RSConnectAuthWait extends Composite
    }
    
    private Command tryAgainCmd_;
-   
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
+
    @UiField Anchor claimLink_;
    @UiField HTMLPanel waitingPanel_;
    @UiField HTMLPanel successPanel_;

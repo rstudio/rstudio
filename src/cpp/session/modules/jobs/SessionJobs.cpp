@@ -1,7 +1,7 @@
 /*
  * SessionJobs.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,7 +73,7 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
 
    // add the job
    boost::shared_ptr<Job> pJob =  
-      addJob(name, status, group, progress, state, type, autoRemove, actionsSEXP, show, tags);
+      addJob(name, status, group, progress, true, state, type, autoRemove, actionsSEXP, JobActions(), show, tags);
 
    // return job id
    r::sexp::Protect protect;

@@ -1,7 +1,7 @@
 /*
  * oultine.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -116,7 +116,7 @@ export function goToOutlineCommand(dir: 'next' | 'previous', targetType: 'chunk'
       }
       const target = outline.find(nodeWithPos => {
         // if we are only targeting chunks, do not navigate to other types, and vice versa
-        let isChunk = nodeWithPos.node.type === state.schema.nodes.rmd_chunk;
+        const isChunk = nodeWithPos.node.type === state.schema.nodes.rmd_chunk;
         if (isChunk !== (targetType === 'chunk')) {
           return false;
         }

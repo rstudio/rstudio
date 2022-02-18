@@ -1,7 +1,7 @@
 /*
  * navigation.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import zenscroll from 'zenscroll';
 import { editingRootNode } from './node';
 import { kNavigationTransaction } from './transaction';
 import { xrefPosition } from './xref';
+import { EditorFormat, kQuartoDocType } from './format';
 
 export interface EditorNavigation {
   navigate: (type: NavigationType, location: string, animate?: boolean) => void;
@@ -42,6 +43,7 @@ export interface Navigation {
 
 export function navigateTo(
   view: EditorView,
+  format: EditorFormat,
   type: NavigationType,
   location: string,
   animate = true,
@@ -56,7 +58,7 @@ export function navigateTo(
     case NavigationType.Heading:
       return navigateToHeading(view, location, animate);
     case NavigationType.XRef:
-      return navigateToXRef(view, location, animate);
+      return navigateToXRef(view, format, location, animate);
     default:
       return null;
   }
@@ -83,8 +85,9 @@ export function navigateToHeading(view: EditorView, heading: string, animate = t
   );
 }
 
-export function navigateToXRef(view: EditorView, xref: string, animate = true): Navigation | null {
-  const xrefPos = xrefPosition(view.state.doc, xref);
+export function navigateToXRef(view: EditorView, editorFormat: EditorFormat, xref: string, animate = true): Navigation | null {
+  const xrefType = editorFormat.docTypes.includes(kQuartoDocType) ? "quarto" : "bookdown";
+  const xrefPos = xrefPosition(view.state.doc, xref, xrefType);
   if (xrefPos !== -1) {
     return navigateToPos(view, xrefPos, animate);
   } else {
@@ -118,10 +121,10 @@ export function navigateToPos(view: EditorView, pos: number, animate = true): Na
       // some nodes' DOM elements are grandchildren rather than direct children
       // of the scroll container; move up a level if this is the case
       let dest = node;
-      if (node.parentElement && 
-          node.parentElement.parentElement &&
-          node.parentElement.parentElement.parentElement === container) {
-         dest = node.parentElement;
+      if (node.parentElement &&
+        node.parentElement.parentElement &&
+        node.parentElement.parentElement.parentElement === container) {
+        dest = node.parentElement;
       }
       if (animate) {
         scroller.to(dest);

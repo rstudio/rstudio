@@ -1,7 +1,7 @@
 #
 # SessionPackrat.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -88,7 +88,7 @@
       substr(libraryPaths, 1, nchar(projectPath)) == projectPath
 
    # resolve symlinks (use normalizePath rather than Sys.readlink since we want
-   # to resolve symlinks anywhere in the heirarchy)
+   # to resolve symlinks anywhere in the hierarchy)
    resolvedLinks <- normalizePath(by(libraryList, 1:nrow(libraryList),
                                      function(pkg) {
                                         system.file(package = pkg$name, lib.loc = pkg$library)

@@ -1,7 +1,7 @@
 /*
  * SVNState.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn.model;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -27,6 +28,7 @@ import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.views.vcs.ViewVcsConstants;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
 import org.rstudio.studio.client.workbench.views.vcs.common.model.VcsState;
@@ -73,7 +75,7 @@ public class SVNState extends VcsState
          {
             Debug.logError(error);
             if (showError)
-               globalDisplay_.showErrorMessage("Error",
+               globalDisplay_.showErrorMessage(constants_.errorCapitalized(),
                                                error.getUserMessage());
          }
       });
@@ -86,4 +88,5 @@ public class SVNState extends VcsState
    }
 
    private final SVNServerOperations server_;
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
 }

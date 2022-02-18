@@ -2,7 +2,7 @@
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
 
 @external editor_dark;
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 
 @eval THEME_DARK_ROW_SELECTED org.rstudio.core.client.theme.ThemeColors.darkRowSelected;
 @eval THEME_DARK_ROW_FOCUSED org.rstudio.core.client.theme.ThemeColors.darkRowFocused;
@@ -10,9 +10,6 @@
 .findOutput {
    width: 100%;
    height: 100%;
-}
-
-.rstudio-themes-flat .findOutput {
    outline: none;
 }
 
@@ -47,17 +44,12 @@
 *:focus .selectedRow {
    background-color: rgb(146, 193, 240)
 }
-@if user.agent ie8 {
-   .selectedRow {
-      background-color: rgb(146, 193, 240)
-   }
-}
 
-.rstudio-themes-flat .rstudio-themes-dark .selectedRow {
+.rstudio-themes-dark .selectedRow {
    background-color: THEME_DARK_ROW_SELECTED;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark *:focus .selectedRow {
+.rstudio-themes-dark *:focus .selectedRow {
    background-color: THEME_DARK_ROW_FOCUSED;
 }
 

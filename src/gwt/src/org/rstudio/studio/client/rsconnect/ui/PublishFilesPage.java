@@ -1,7 +1,7 @@
 /*
  * PublishCodePage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
@@ -31,7 +33,7 @@ public class PublishFilesPage
    public PublishFilesPage(String title, String subTitle, ImageResource icon,
          RSConnectPublishInput input, boolean asMultiple, boolean asStatic)
    {
-      super(title, subTitle, "Publish", icon, null);
+      super(title, subTitle, constants_.publish(), icon, null);
       
       // createWidget is called by super() above
       if (contents_ != null)
@@ -60,6 +62,7 @@ public class PublishFilesPage
                               input.isSelfContained(),
                               asStatic,
                               input.isShiny(),
+                              input.isQuarto(),
                               input.getDescription(),
                               input.getContentType());
             }
@@ -67,16 +70,22 @@ public class PublishFilesPage
                   asMultiple, true);
          }
          else
+         {
             contents_.setPublishSource(
-                  new RSConnectPublishSource(input.getSourceRmd().getPath(),
-                        input.getWebsiteDir(),
-                        input.isSelfContained(),
-                        asStatic, 
-                        input.isShiny(),
-                        input.getDescription(),
-                        input.getContentType()),
-                  input.getContentType(),
-                  asMultiple, false);
+               new RSConnectPublishSource(
+                  input.getContentType() == RSConnect.CONTENT_TYPE_QUARTO_WEBSITE ?
+                     input.getWebsiteDir() :
+                     input.getSourceRmd().getPath(),
+                  input.getWebsiteDir(),
+                  input.isSelfContained(),
+                  asStatic,
+                  input.isShiny(),
+                  input.isQuarto(),
+                  input.getDescription(),
+                  input.getContentType()),
+               input.getContentType(),
+               asMultiple, false);
+         }
       }
    }
 
@@ -119,4 +128,5 @@ public class PublishFilesPage
    }
    
    private RSConnectDeploy contents_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

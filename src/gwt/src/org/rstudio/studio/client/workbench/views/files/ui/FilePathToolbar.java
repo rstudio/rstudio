@@ -1,7 +1,7 @@
 /*
  * FilePathToolbar.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.files.ui;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -32,6 +33,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.workbench.views.files.Files;
+import org.rstudio.studio.client.workbench.views.files.FilesConstants;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -55,17 +57,17 @@ public class FilePathToolbar extends Composite
 
       public void refresh()
       {
-         throw new UnsupportedOperationException("refresh not supported");
+         throw new UnsupportedOperationException(constants_.refreshNotSupportedException());
       }
 
       public void mkdir(String folderName, ProgressIndicator progress)
       {
-         throw new UnsupportedOperationException("mkdir not supported");
+         throw new UnsupportedOperationException(constants_.mkdirNotSupportedException());
       }
 
       public FileIcon getIcon(FileSystemItem item)
       {
-         throw new UnsupportedOperationException("getIcon not supported");
+         throw new UnsupportedOperationException(constants_.getIconNotSupportedException());
       }
 
       @Override
@@ -116,7 +118,7 @@ public class FilePathToolbar extends Composite
       navigationObserver_ = navigationObserver;
 
       // select all check box
-      CheckBoxHiddenLabel selectAllCheckBox = new CheckBoxHiddenLabel("Select all files",
+      CheckBoxHiddenLabel selectAllCheckBox = new CheckBoxHiddenLabel(constants_.selectAllFilesLabel(),
                                                                       ElementIds.FP_SELECT_ALL);
       selectAllCheckBox.addStyleDependentName("FilesSelectAll");
       selectAllCheckBox.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
@@ -185,4 +187,5 @@ public class FilePathToolbar extends Composite
    private final boolean cloudFolderEnabled_;
    private FileSystemContextImpl fileSystemContext_;
    private PathBreadcrumbWidget pathBreadcrumbWidget_;
+   private static final FilesConstants constants_ = GWT.create(FilesConstants.class);
 }

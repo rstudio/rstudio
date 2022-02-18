@@ -3,7 +3,7 @@
 #
 # install-packages
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -89,8 +89,8 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 #   DependencyManager.java: "Dependency.embeddedPackage" vs. ".cranPackage"
 
 # we often embed these packages but are not currently
-# install rmarkdown master rstudio
-# install rsconnect master rstudio
+# install rmarkdown main rstudio
+# install rsconnect main rstudio
 # install renv master rstudio
 
 # ascertain the site library. this is somewhat tricky since this script must
@@ -106,11 +106,11 @@ if [[ ! -w $RPKGLIB ]]; then
 fi
 
 # install packages needed to run tests
-for RPKG in rmarkdown renv testthat xml2 yaml; do
+for RPKG in purrr rmarkdown renv testthat xml2 yaml; do
     RINSTALLCMD="if("'!'"require($RPKG, quietly = TRUE)) { install.packages('$RPKG', lib='$RPKGLIB', repos='https://cran.rstudio.com/') }"
     echo "> $RINSTALLCMD"
     Rscript -e "$RINSTALLCMD"
 done
 
 # back to install-dir
-cd $INSTALL_DIR
+cd "$INSTALL_DIR"

@@ -4,6 +4,8 @@
    <inherits name="org.rstudio.studio.RStudio" />
    <set-property name="compiler.stackMode" value="native"/>
    <set-property name="rstudio.desktop" value="true"/>
-   <set-property name="locale" value="default"/>
+   <!-- dev language for i18n development -->
+   <extend-property name="locale" values="en,fr,dev"/>
+   <!--<set-property name="locale" value="dev"/>-->
 </module>
 

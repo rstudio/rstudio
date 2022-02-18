@@ -1,7 +1,7 @@
 /*
  * SessionRSConnect.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionAsyncRProcess.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/SessionQuarto.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
@@ -77,6 +78,50 @@ json::Value toJsonString(const core::FilePath& filePath)
    return json::Value(module_context::createAliasedPath(filePath));
 }
 
+std::string quartoMetadata(const std::string& dir,
+                           const std::string& file,
+                           const std::string& contentCategory)
+{
+   std::string quartoMetadata;
+
+   FilePath dirPath = module_context::resolveAliasedPath(dir);
+   FilePath filePath = dirPath.completeChildPath(file);
+   FilePath inspectTarget = contentCategory == "site" ? dirPath : filePath;
+
+   json::Object jsonInspect;
+   Error error = session::quarto::quartoInspect(
+     string_utils::utf8ToSystem(inspectTarget.getAbsolutePath()), &jsonInspect
+   );
+   if (!error)
+   {
+      json::Object quartoJson;
+      json::Array enginesJson;
+      error = json::readObject(jsonInspect, "quarto", quartoJson, "engines", enginesJson);
+      if (!error)
+      {
+         std::string version;
+         error = json::readObject(quartoJson, "version", version);
+         if (!error)
+         {
+            std::vector<std::string> engines;
+            std::transform(enginesJson.begin(), enginesJson.end(), std::back_inserter(engines), [](const json::Value& engine) {
+               return "'" + string_utils::singleQuotedStrEscape(engine.getString()) + "'";
+            });
+            quartoMetadata += "quarto_version = '" + string_utils::singleQuotedStrEscape(version) + "', " +
+                              "quarto_engines = I(c(" + boost::algorithm::join(engines, ", ") + ")), ";
+         }
+      }
+   }
+
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+
+
+   return quartoMetadata;
+}
+
 class RSConnectPublish : public async_r::AsyncRProcess
 {
 public:
@@ -96,6 +141,7 @@ public:
          const json::Array& ignoredFilesList,
          bool asMultiple,
          bool asStatic,
+         bool isQuarto,
          boost::shared_ptr<RSConnectPublish>* pDeployOut)
    {
       boost::shared_ptr<RSConnectPublish> pDeploy(new RSConnectPublish(file));
@@ -184,7 +230,8 @@ public:
          std::string extension = docFile.getExtensionLowerCase();
          if (extension == ".rmd" || extension == ".html" || extension == ".r" ||
              extension == ".pdf" || extension == ".docx" || extension == ".rtf" || 
-             extension == ".odt" || extension == ".pptx") 
+             extension == ".odt" || extension == ".pptx" || extension == ".qmd" ||
+             extension == ".md")
          {
             primaryDoc = string_utils::utf8ToSystem(file);
          }
@@ -203,6 +250,10 @@ public:
       std::string appDir = string_utils::utf8ToSystem(dir);
       if (appDir == "~")
          appDir = "~/";
+
+
+      // determine quarto version and engines
+      std::string quarto = (isQuarto && !asStatic) ? quartoMetadata(dir, file, contentCategory) : "";
 
       // form the deploy command to hand off to the async deploy process
       cmd += "rsconnect::deployApp("
@@ -228,7 +279,8 @@ public:
              "   message('" kFinishedMarker "', url) "
              "}, "
              "lint = FALSE,"
-             "metadata = list(" 
+             "metadata = list(" +
+                 quarto +
              "   asMultiple = " + (asMultiple ? "TRUE" : "FALSE") + ", "
              "   asStatic = " + (asStatic ? "TRUE" : "FALSE") + 
                  (additionalFiles.empty() ? "" : ", additionalFiles = '" + 
@@ -349,11 +401,13 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
 
    // read publish source information
    std::string sourceDir, sourceDoc, sourceFile, contentCategory, websiteDir;
+   bool isQuarto;
    error = json::readObject(source, "deploy_dir",       sourceDir,
                                     "deploy_file",      sourceFile,
                                     "source_file",      sourceDoc,
                                     "content_category", contentCategory,
-                                    "website_dir",      websiteDir);
+                                    "website_dir",      websiteDir,
+                                    "is_quarto",        isQuarto);
    if (error)
       return error;
 
@@ -381,7 +435,7 @@ Error rsconnectPublish(const json::JsonRpcRequest& request,
                                        contentCategory,
                                        websiteDir,
                                        additionalFiles,
-                                       ignoredFiles, asMultiple, asStatic,
+                                       ignoredFiles, asMultiple, asStatic, isQuarto,
                                        &s_pRSConnectPublish_);
       if (error)
          return error;
@@ -508,8 +562,11 @@ Error getRmdPublishDetails(const json::JsonRpcRequest& request,
    // extract publish details we can discover with R
    r::sexp::Protect protect;
    SEXP sexpDetails;
-   error = r::exec::RFunction(".rs.getRmdPublishDetails",
-                              target, encoding).call(&sexpDetails, &protect);
+   error = r::exec::RFunction(".rs.getRmdPublishDetails")
+         .addUtf8Param(target)
+         .addParam(encoding)
+         .call(&sexpDetails, &protect);
+   
    if (error)
       return error;
 

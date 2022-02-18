@@ -1,7 +1,7 @@
 /*
  * DesktopOptions.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -347,15 +347,15 @@ void Options::setClipboardMonitoring(bool monitoring)
    settings_.setValue(QString::fromUtf8("clipboard.monitoring"), monitoring);
 }
 
-bool Options::ignoreGpuBlacklist() const
+bool Options::ignoreGpuExclusionList() const
 {
-   QVariant ignore = settings_.value(QStringLiteral("general.ignoreGpuBlacklist"), false);
+   QVariant ignore = settings_.value(QStringLiteral("general.ignoreGpuExclusionList"), false);
    return ignore.toBool();
 }
 
-void Options::setIgnoreGpuBlacklist(bool ignore)
+void Options::setIgnoreGpuExclusionList(bool ignore)
 {
-   settings_.setValue(QStringLiteral("general.ignoreGpuBlacklist"), ignore);
+   settings_.setValue(QStringLiteral("general.ignoreGpuExclusionList"), ignore);
 }
 
 bool Options::disableGpuDriverBugWorkarounds() const

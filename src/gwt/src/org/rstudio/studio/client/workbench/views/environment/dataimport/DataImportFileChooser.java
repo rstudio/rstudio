@@ -1,7 +1,7 @@
 /*
  * DataImportFileChooser.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,10 +35,12 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.environment.ViewEnvironmentConstants;
 
 public class DataImportFileChooser extends Composite
                                    implements CanSetControlId
 {
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
    public DataImportFileChooser(Operation updateOperation, boolean growTextbox)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -71,7 +73,7 @@ public class DataImportFileChooser extends Composite
             }
 
             RStudioGinjector.INSTANCE.getFileDialogs().openFile(
-                  "Choose File",
+                  constants_.chooseFile(),
                   RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
                   fileSystemItemPath,
                   new ProgressOperationWithInput<FileSystemItem>()
@@ -193,10 +195,9 @@ public class DataImportFileChooser extends Composite
          return;
       }
 
-      final String prefix = updateMode_ ? updateModeCaption_ : browseModeCaption_ + " for";
-      final String finalSuffix = updateMode_ ? "" : "...";
       Roles.getButtonRole().setAriaLabelProperty(actionButton_.getElement(),
-         prefix + " " + ariaLabelSuffix_ + finalSuffix);
+         updateMode_ ? constants_.updateButtonAriaLabel(updateModeCaption_, ariaLabelSuffix_) :
+                 constants_.browseButtonAriaLabel(browseModeCaption_, ariaLabelSuffix_));
    }
 
    @Override
@@ -205,8 +206,8 @@ public class DataImportFileChooser extends Composite
       locationTextBox_.getElement().setId(id);
    }
 
-   private static final String browseModeCaption_ = "Browse";
-   private static final String updateModeCaption_ = "Update";
+   private static final String browseModeCaption_ = constants_.browseCapitalized();
+   private static final String updateModeCaption_ = constants_.updateCapitalized();
    private boolean updateMode_ = false;
    private String lastTextBoxValue_;
    private int checkTextBoxInterval_ = 250;
@@ -217,4 +218,5 @@ public class DataImportFileChooser extends Composite
    interface DataImportFileChooserUiBinder extends UiBinder<Widget, DataImportFileChooser> {}
 
    private WorkbenchContext workbenchContext_;
+
 }

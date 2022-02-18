@@ -3,7 +3,7 @@
 #
 # rserver-dev
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -35,5 +35,5 @@ trap cleanup SIGINT
 RS_CRASH_HANDLER_PATH="$(pwd)/server/crash-handler-proxy/crash-handler-proxy" \
    RS_CRASHPAD_HANDLER_PATH="${RSTUDIO_TOOLS_ROOT}/crashpad/crashpad/out/Default/crashpad_handler" \
    RS_DB_MIGRATIONS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/server/db" \
-   server/rserver --config-file conf/rserver-dev.conf "$@"
+   server/rserver --server-user $(whoami) --config-file conf/rserver-dev.conf "$@"
 

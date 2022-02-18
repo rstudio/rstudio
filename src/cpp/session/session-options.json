@@ -329,15 +329,15 @@
             "description": "Indicates whether or not to restrict the directories that can be viewed within the IDE."
          },
          {
-            "name": "directory-view-whitelist",
+            "name": "directory-view-allow-list",
             "type": "string",
-            "memberName": "directoryViewWhitelist_",
+            "memberName": "directoryViewAllowList_",
             "description": "Specifies a list of directories exempt from directory view restrictions, separated by a colon character (:)."
          },
          {
-            "name": {"constant": "kSessionEnvVarSaveBlacklist", "value": "session-env-var-save-blacklist"},
+            "name": {"constant": "kSessionEphemeralEnvVars", "value": "session-ephemeral-env-vars"},
             "type": "string",
-            "memberName": "envVarSaveBlacklist_",
+            "memberName": "ephemeralEnvVars_",
             "description": "Specifies a list of environment variables that will not be saved when sessions suspend, separated by a colon character (:)."
          },
          {
@@ -351,21 +351,28 @@
             "name": {"constant": "kSessionAsyncRpcEnabled", "value": "session-async-rpc-enabled"},
             "type": "bool",
             "memberName": "asyncRpcEnabled_",
-            "defaultValue": false,
+            "defaultValue": true,
             "description": "Enables async responses to rpc requests to prevent connection logjams in the browser, allowing interrupt of busy sessions"
          },
          {
             "name": {"constant": "kSessionAsyncRpcTimeoutMs", "value": "session-async-rpc-timeout-ms"},
             "type": "int",
             "memberName": "asyncRpcTimeoutMs_",
-            "defaultValue": 1000,
+            "defaultValue": 200,
             "description": "Duration in millis before requests are converted to async - i.e. how fast will the server free up connections when it's busy"
+         },
+         {
+            "name": {"constant": "kSessionHandleOfflineEnabled", "value": "session-handle-offline-enabled"},
+            "type": "bool",
+            "memberName": "handleOfflineEnabled_",
+            "defaultValue": true,
+            "description": "Enables offline request handling. When the R session is busy, some requests are allowed to run"
          },
          {
             "name": {"constant": "kSessionHandleOfflineTimeoutMs", "value": "session-handle-offline-timeout-ms"},
             "type": "int",
             "memberName": "handleOfflineTimeoutMs_",
-            "defaultValue": 2000,
+            "defaultValue": 200,
             "description": "Duration in millis before requests that can be handled offline are processed by the offline handler thread."
          }
       ],
@@ -546,7 +553,7 @@
             "name": "r-compatible-graphics-engine-version",
             "type": "int",
             "memberName": "rCompatibleGraphicsEngineVersion_",
-            "defaultValue": 14,
+            "defaultValue": 15,
             "description": "Specifies the maximum graphics engine version that this version of RStudio is compatible with."
          },
          {
@@ -645,7 +652,7 @@
             "name": "external-gnugrep-path",
             "type": "core::FilePath",
             "memberName": "gnugrepPath_",
-            "defaultValue": "bin/gnugrep",
+            "defaultValue": "bin/gnugrep/3.0",
             "description": "Specifies the path to gnugrep utilities (Windows-only)."
          },
          {
@@ -687,8 +694,15 @@
             "name": "external-pandoc-path",
             "type": "core::FilePath",
             "memberName": "pandocPath_",
-            "defaultValue": {"code": "kDefaultPandocPath", "description": "bin/pandoc"},
+            "defaultValue": {"code": "kDefaultPandocPath", "description": "bin/quarto/bin"},
             "description": "Specifies the path to pandoc binaries."
+         },
+         {
+            "name": "external-quarto-path",
+            "type": "core::FilePath",
+            "memberName": "quartoPath_",
+            "defaultValue": {"code": "kDefaultQuartoPath", "description": "bin/quarto"},
+            "description": "Specifies the path to quarto binaries."
          },
          {
             "name": "external-libclang-path",

@@ -1,7 +1,7 @@
 /*
  * OpenProjectDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,8 @@ package org.rstudio.core.client.files.filedialog;
 
 import com.google.gwt.aria.client.Roles;
 
+import com.google.gwt.core.client.GWT;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemContext;
@@ -44,8 +46,8 @@ public class OpenProjectDialog extends FileDialog
                 boolean newSessionOption,
                 final ProgressOperationWithInput<OpenProjectParams> operation)
    {
-      super("Open Project", null, Roles.getDialogRole(), "Open", false, false, false, context,
-            "R Projects (*.RProj)",
+      super(constants_.openProjectTitle(), null, Roles.getDialogRole(), constants_.openButtonTitle(), false, false, false, context,
+            constants_.rProjectsFilter(),
             new ProgressOperationWithInput<FileSystemItem>()
             {
                @Override
@@ -66,7 +68,7 @@ public class OpenProjectDialog extends FileDialog
 
       // Used to create a project in an existing directory which
       // does not already have a .Rproj file.
-      ThemedButton createButton = new ThemedButton("Create", new ClickHandler()
+      ThemedButton createButton = new ThemedButton(constants_.createButtonTitle(), new ClickHandler()
       {
          @Override
          public void onClick(ClickEvent event)
@@ -92,7 +94,7 @@ public class OpenProjectDialog extends FileDialog
       });
       addButton(createButton, ElementIds.CREATE_BUTTON);
 
-      newSessionCheck_ = new FormCheckBox("Open in new session", ElementIds.OP_NEW_SESSION);
+      newSessionCheck_ = new FormCheckBox(constants_.newSessionCheckLabel(), ElementIds.OP_NEW_SESSION);
       newSessionCheck_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          @Override
@@ -116,4 +118,5 @@ public class OpenProjectDialog extends FileDialog
 
    // Injected ----
    private ProjectsServerOperations server_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

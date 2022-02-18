@@ -1,7 +1,7 @@
 /*
  * ConsoleDispatcher.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,21 +14,23 @@
  */
 package org.rstudio.studio.client.common;
 
-import org.rstudio.core.client.StringUtil;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
+
 import org.rstudio.core.client.RUtil;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
+import org.rstudio.studio.client.workbench.views.source.model.CppServerOperations;
 
 @Singleton
 public class ConsoleDispatcher
@@ -39,7 +41,8 @@ public class ConsoleDispatcher
                             FileDialogs fileDialogs,
                             WorkbenchContext workbenchContext,
                             Session session,
-                            RemoteFileSystemContext fsContext)
+                            RemoteFileSystemContext fsContext, 
+                            CppServerOperations cppServer)
    {
       eventBus_ = eventBus;
       commands_ = commands;
@@ -47,6 +50,7 @@ public class ConsoleDispatcher
       workbenchContext_ = workbenchContext;
       session_ = session;
       fsContext_ = fsContext;
+      cppServer_ = cppServer;
    }
 
    public void executeSetWd(FileSystemItem dir, boolean activateConsole)
@@ -153,25 +157,24 @@ public class ConsoleDispatcher
                                     boolean debug)
    {
 
-      StringBuilder code = new StringBuilder();
-
       if (fileType.isCpp())
       {
          // use a relative path if possible
          String relativePath = FileSystemItem.createFile(path).getPathRelativeTo(
-                                       workbenchContext_.getCurrentWorkingDir());
+            workbenchContext_.getCurrentWorkingDir());
          if (relativePath != null)
             path = relativePath;
 
-         code.append("Rcpp::sourceCpp(" + escapedPath(path) + ")");
-      }
-      else
+         cppServer_.cppSourceFile(path, new VoidServerRequestCallback());
+      } else 
       {
+         StringBuilder code = new StringBuilder();
+
          String escapedPath = escapedPath(path);
          String systemEncoding = session_.getSessionInfo().getSystemEncoding();
          boolean isSystemEncoding =
-          normalizeEncoding(encoding) == normalizeEncoding(systemEncoding);
-
+            normalizeEncoding(encoding) == normalizeEncoding(systemEncoding);
+   
          if (contentKnownToBeAscii || isSystemEncoding)
             code.append((debug ? "debugSource" : "source") +
                      "(" + escapedPath);
@@ -182,17 +185,17 @@ public class ConsoleDispatcher
                   (!StringUtil.isNullOrEmpty(encoding) ? encoding : "UTF-8") +
                   "'");
          }
-
+   
          if (echo)
             code.append(", echo=TRUE");
          code.append(")");
+      
+         eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
+
+         if (focus)
+            commands_.activateConsole().execute();
       }
-
-
-      eventBus_.fireEvent(new SendToConsoleEvent(code.toString(), true));
-
-      if (focus)
-         commands_.activateConsole().execute();
+      
    }
 
    public static String escapedPath(String path)
@@ -211,4 +214,5 @@ public class ConsoleDispatcher
    private final WorkbenchContext workbenchContext_;
    private final Session session_;
    private final RemoteFileSystemContext fsContext_;
+   private final CppServerOperations cppServer_;
 }

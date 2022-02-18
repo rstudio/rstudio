@@ -1,7 +1,7 @@
 /*
  * SatelliteFramePanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,14 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.LoadEvent;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -31,7 +33,7 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
       commands_ = commands;
       rootPanel_ = new LayoutPanel();
       
-      toolbar_ = new Toolbar("Secondary Window");
+      toolbar_ = new Toolbar(constants_.satelliteToolBarText());
       initToolbar(toolbar_, commands_);
       rootPanel_.add(toolbar_);
       rootPanel_.setWidgetLeftRight(toolbar_, 0, Unit.PX, 0, Unit.PX);
@@ -111,4 +113,5 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
    private Toolbar toolbar_;
    private T appFrame_;
    private AutoGlassPanel glassPanel_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

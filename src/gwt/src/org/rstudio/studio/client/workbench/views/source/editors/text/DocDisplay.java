@@ -1,7 +1,7 @@
 /*
  * DocDisplay.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceFold;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
@@ -113,6 +114,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setRnwCompletionContext(RnwCompletionContext rnwContext);
    void setCppCompletionContext(CppCompletionContext cppContext);
    void setRCompletionContext(CompletionContext rContext);
+   void setEditorBehavior(EditorBehavior behavior);
+   EditorBehavior getEditorBehavior();
    String getCode();
    JsArrayString getLines();
    JsArrayString getLines(int startRow, int endRow);
@@ -250,6 +253,8 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
 
    Position getCursorPosition();
    void setCursorPosition(Position position);
+   int getCursorRow();
+   int getCursorColumn();
 
    Position getCursorPositionScreen();
 
@@ -263,7 +268,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void ensureCursorVisible();
    void scrollCursorIntoViewIfNecessary();
    void scrollCursorIntoViewIfNecessary(int rowsAround);
-   boolean isCursorInSingleLineString();
+   boolean isCursorInSingleLineString(boolean allowInComment);
 
    void gotoPageDown();
    void gotoPageUp();

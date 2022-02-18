@@ -15,7 +15,7 @@ read -r -d '' USAGE <<- EOF
 Run RStudio unit tests. Available flags:
 
 --help    Show this help.
---scope   Run only tests wtih the given scope (core, rserver, rsession, r).
+--scope   Run only tests with the given scope (core, rserver, rsession, r).
 --filter  Run a subset of R tests, matching the requested filter.
 EOF
 
@@ -44,7 +44,7 @@ findLibSegFault() {
       return 0
    fi
 
-   # if already set, nothign to do
+   # if already set, nothing to do
    if [ -n "${RSESSION_DIAGNOSTICS_LIBSEGFAULT}" ]; then
       return 0
    fi
@@ -98,7 +98,7 @@ runWatchdogProcess() {
       PRELOAD="LD_PRELOAD=${RSESSION_DIAGNOSTICS_LIBSEGFAULT}"
    fi
 
-   FULL_COMMAND="env SEGFAULT_SIGNALS='abrt segv' ${PRELOAD} ${command} $*; exit"
+   FULL_COMMAND="env SEGFAULT_SIGNALS=\"abrt segv\" ${PRELOAD} ${command} $*; exit"
 
    # centos6 doesn't support the --foreground option for timeout
    if [ "${OPERATING_SYSTEM}" = "centos_6" ] || [ -z "${TIMEOUT_CMD}" ]; then
@@ -191,7 +191,17 @@ UNIT_TEST_FAILURE=false
 if has-scope "core"; then
 
    section "Running 'core' tests"
-   runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN}"
+   # Run only the tests that don't require root
+   runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} '~[requiresRoot]'"
+
+   # Invoke the *DropPrivTests separately because they must run as root
+   # We need separate invocations because we cannot restore privs between test cases of PermanentlyDropPrivs
+   # Skip these tests in CI for MacOS builds
+   if [ -z "${JENKINS_URL}" ] || [ "$(uname)" != "Darwin" ]; then
+      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} TemporarilyDropPrivTests"
+      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} PermanentlyDropPrivPrimaryTests"
+      runWatchdogProcess 5m true "@CMAKE_CURRENT_BINARY_DIR@/core/${RSTUDIO_CORETEST_BIN} PermanentlyDropPrivAlternateTests"
+   fi
 
    if [ -e "@CMAKE_CURRENT_BINARY_DIR@/server_core/rstudio-server-core-tests" ]; then
       section "Running 'server_core' tests"

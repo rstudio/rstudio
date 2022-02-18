@@ -1,7 +1,7 @@
 /*
  * CopyPlotToClipboardWebDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,10 +14,12 @@
  */
 package org.rstudio.studio.client.workbench.exportplot.clipboard;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.workbench.exportplot.ExportPlotConstants;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotDialog;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
@@ -37,11 +39,11 @@ public class CopyPlotToClipboardWebDialog extends ExportPlotDialog
    {
       super(options, previewer);
      
-      setText("Copy Plot to Clipboard");
+      setText(constants_.copyPlotText());
       
       ExportPlotResources resources = ExportPlotResources.INSTANCE;
       
-      ThemedButton closeButton = new ThemedButton("Close",
+      ThemedButton closeButton = new ThemedButton(constants_.closeButtonTitle(),
             new ClickHandler() {
          public void onClick(ClickEvent event)
          {
@@ -60,13 +62,13 @@ public class CopyPlotToClipboardWebDialog extends ExportPlotDialog
       DecorativeImage rightMouseImage = new DecorativeImage(new ImageResource2x(resources.rightMouse2x()));
       infoPanel.add(rightMouseImage);
       
-      Label label = new Label("Right click on the plot image above to " +
-                              "copy to the clipboard.");
+      Label label = new Label(constants_.rightClickPlotImageText());
       label.setStylePrimaryName(resources.styles().rightClickCopyLabel());
       infoPanel.add(label);
       
       addLeftWidget(infoPanel);
 
    }
+   private static final ExportPlotConstants constants_ = GWT.create(ExportPlotConstants.class);
 
 }

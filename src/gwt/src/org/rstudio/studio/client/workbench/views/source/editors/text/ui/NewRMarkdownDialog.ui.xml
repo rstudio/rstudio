@@ -3,166 +3,64 @@
    xmlns:g="urn:import:com.google.gwt.user.client.ui"
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
    xmlns:rc="urn:import:org.rstudio.studio.client.common"
-   xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui">
+   xmlns:rmd="urn:import:org.rstudio.studio.client.rmarkdown.ui"
+   ui:generateFormat='com.google.gwt.i18n.server.PropertyCatalogFactory'
+   ui:generateKeys="com.google.gwt.i18n.server.keygen.MD5KeyGenerator"
+   ui:generateLocales="default">
 
-   <ui:with field="resources" type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.Resources" />
+   <ui:with field="resources" type="org.rstudio.studio.client.common.newdocument.NewDocumentResources" />
    <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
-   <ui:style type="org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog.NewRmdStyle">
-   @external .gwt-Label;
-   
-   .fillHeight
-   {
-     height: 100%;
-   }
-   
-   .templatePanel
-   {
-     margin-bottom: 15px;
-   }
-   
-   .templateList
-   {
-     box-sizing: border-box;
-     -moz-box-sizing: border-box;
-     -webkit-box-sizing: border-box;
-   }
-   
-   .topLabel
-   {
-     font-weight: bold;
-     margin-right: 5px;
-   }
-   
-   .templateDetails
-   {
-     margin-left: 20px;
-     margin-right: 15px;
-   }
-   
-   .textBox
-   {
-     width: 100%;
-     padding: 2px;
-     margin-bottom: 5px;
-   }
-   
-   .optionsIcon
-   {
-     vertical-align: middle;
-     float: left;
-     margin-right: 20px;
-   }
-   
-   .defaultOutputLabel legend
-   {
-     font-weight: bold;
-     padding: 0;
-     margin-bottom: 7px;
-   }
-   
-   fieldset.defaultOutputLabel
-   {
-      border: none;
-      padding: 0;
-      padding-block-end: 0;
-      padding-inline-end: 0;
-      margin-top: 14px;
-      margin-right: 0;
-      margin-left: 0;
-   }
-   
-   .outputFormatChoice
-   {
-     font-size: 110%;
-   }
-   
-   .outputFormatDetails
-   {
-     margin-top: 3px;
-     margin-left: 5px;
-     color: #3c474d;
-   }
-   
-   .outputFormatIcon
-   {
-     vertical-align: middle;
-     margin-right: 15px;
-     float: right;
-   }
-   
-   .outputFormat
-   {
-     margin-bottom: 7px;
-     padding-top: 5px;
-     padding-bottom: 5px;
-   }
-   
-   .outputFormatName
-   {
-     margin-left: 3px;
-   }
-   
-   .textCol
-   {
-     width: 80%;
-   }
-   
-   .shinyInfoHeader
-   {
-     margin-top: 15px;
-     margin-bottom: 7px;
-   }
-   
-   .shinyInfoHeader .gwt-Label
-   {
-     font-weight:bold;
-   }
-   
-   .shinyInfoPanel
-   {
-     margin-bottom: 7px;
-   }
-   
-   </ui:style>
+  
    <g:HTMLPanel>
-   <g:HorizontalPanel height="375px" styleName="{style.templatePanel}">
+   <g:HorizontalPanel height="375px" styleName="{resources.styles.templatePanel}">
      <rw:WidgetListBox ui:field="listTemplates_"
-                styleName="{style.fillHeight} {style.templateList}" 
+                styleName="{resources.styles.fillHeight} {resources.styles.templateList}" 
                 width="150px"></rw:WidgetListBox>
      <g:HTMLPanel height="100%" width="325px" 
-                  styleName="{style.templateDetails}">
+                  styleName="{resources.styles.templateDetails}">
         <g:HTMLPanel ui:field="newTemplatePanel_">
            <rw:LayoutGrid width="100%" cellSpacing="0" cellPadding="0">
              <rw:row>
                <rw:customCell>
-                  <rw:FormLabel for="{ElementIds.getNewRmdTitle}" styleName="{style.topLabel}">Title:</rw:FormLabel>
+                  <rw:FormLabel for="{ElementIds.getNewRmdTitle}" styleName="{resources.styles.topLabel}">Title:</rw:FormLabel>
                </rw:customCell>
-               <rw:customCell styleName="{style.textCol}">
-                 <rw:FormTextBox elementId="{ElementIds.getNewRmdTitle}" styleName="{style.textBox}" 
+               <rw:customCell styleName="{resources.styles.textCol}">
+                 <rw:FormTextBox elementId="{ElementIds.getNewRmdTitle}" styleName="{resources.styles.textBox}" 
                                  ui:field="txtTitle_" />
                </rw:customCell>
               </rw:row>
               <rw:row>
                 <rw:customCell>
-                   <rw:FormLabel for="{ElementIds.getNewRmdAuthor}" styleName="{style.topLabel}">Author:</rw:FormLabel>
+                   <rw:FormLabel for="{ElementIds.getNewRmdAuthor}" styleName="{resources.styles.topLabel}">Author:</rw:FormLabel>
                 </rw:customCell>
                 <rw:customCell>
-                   <rw:FormTextBox elementId="{ElementIds.getNewRmdAuthor}" styleName="{style.textBox}" 
+                   <rw:FormTextBox elementId="{ElementIds.getNewRmdAuthor}" styleName="{resources.styles.textBox}" 
                                    ui:field="txtAuthor_"/>
                 </rw:customCell>
               </rw:row>
+              <rw:row>
+                <rw:customCell>
+                   <rw:FormLabel for="{ElementIds.getNewRmdDate}" styleName="{resources.styles.topLabel}">Date:</rw:FormLabel>
+                </rw:customCell>
+                <rw:customCell>
+                   <rw:FormTextBox elementId="{ElementIds.getNewRmdDate}" styleName="{resources.styles.textBox}" 
+                                   ui:field="txtDate_"/>   
+                </rw:customCell>
+              </rw:row>
            </rw:LayoutGrid>
-           <rw:FieldSetPanel legend="Default Output Format:" styleName="{style.defaultOutputLabel}">
+           <rw:FormCheckBox elementId="{ElementIds.getNewRmdAutoDate}" ui:field="checkboxAutoDate_" />
+           <rw:FieldSetPanel legend="Default Output Format:" styleName="{resources.styles.defaultOutputLabel}">
               <g:HTMLPanel ui:field="templateFormatPanel_"></g:HTMLPanel>
+               <ui:attribute name="legend" key="defaultOutputFormat"/>
            </rw:FieldSetPanel>
         </g:HTMLPanel>
         <g:HTMLPanel ui:field="existingTemplatePanel_">
           <rmd:RmdTemplateChooser ui:field="templateChooser_">
           </rmd:RmdTemplateChooser>
         </g:HTMLPanel>
-        <g:HTMLPanel styleName="{style.shinyInfoPanel}"
+        <g:HTMLPanel styleName="{resources.styles.shinyInfoPanel}"
                         ui:field="shinyInfoPanel_" visible="false">
-           <rc:HelpLink styleName="{style.shinyInfoHeader}">
+           <rc:HelpLink styleName="{resources.styles.shinyInfoHeader}">
            </rc:HelpLink>
         </g:HTMLPanel>
      </g:HTMLPanel>

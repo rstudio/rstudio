@@ -1,7 +1,7 @@
 /*
  * ModuleTabLayoutPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.theme;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -30,6 +31,7 @@ import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TabLayoutPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.WindowStateChangeEvent;
 import org.rstudio.core.client.layout.WindowState;
@@ -71,7 +73,7 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
             closeButton_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x()));
             closeButton_.setStylePrimaryName(styles.closeTabButton());
             closeButton_.addStyleName(ThemeStyles.INSTANCE.handCursor());
-            closeButton_.setAltText("Close " + title + " tab");
+            closeButton_.setAltText(constants_.closeButtonText(title));
             center.add(closeButton_);
          }
          layoutPanel.add(center);
@@ -244,4 +246,5 @@ public class ModuleTabLayoutPanel extends TabLayoutPanel
    private final DoubleClickState doubleClickState_ = new DoubleClickState();
    public static final int BAR_HEIGHT = 23;
    private final WindowFrame owner_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

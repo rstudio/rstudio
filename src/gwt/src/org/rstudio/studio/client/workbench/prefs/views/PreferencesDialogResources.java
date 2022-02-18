@@ -1,7 +1,7 @@
 /*
  * PreferencesDialogResources.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,7 @@ public interface PreferencesDialogResources extends ClientBundle
       String themeInfobarShowing();
       String selectWidgetHelp();
       String smallerText();
+      String checkBoxAligned();
       String visualModeWrapSelectWidget();
       String userDictEditButton();
    }
@@ -54,6 +55,9 @@ public interface PreferencesDialogResources extends ClientBundle
 
    @Source("iconRMarkdown_2x.png")
    ImageResource iconRMarkdown2x();
+   
+   @Source("iconQuarto_2x.png")
+   ImageResource iconQuarto2x();
 
    @Source("iconTerminal_2x.png")
    ImageResource iconTerminal2x();

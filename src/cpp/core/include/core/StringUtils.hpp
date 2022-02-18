@@ -1,7 +1,7 @@
 /*
  * StringUtils.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -94,6 +94,7 @@ std::string htmlEscape(const std::string& str, bool isAttributeValue = false);
 std::string jsLiteralEscape(const std::string& str);
 std::string jsonLiteralEscape(const std::string& str);
 std::string jsonLiteralUnescape(const std::string& str);
+std::string jsonHtmlEscape(const std::string& str);
 std::string singleQuotedStrEscape(const std::string& str);
 
 void convertLineEndings(std::string* str, LineEnding type);

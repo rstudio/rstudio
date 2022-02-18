@@ -1,7 +1,7 @@
 /*
  * KeyCombination.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,9 @@
  */
 package org.rstudio.core.client.command;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Version;
 import org.rstudio.core.client.dom.EventProperty;
 
@@ -110,10 +112,10 @@ public class KeyCombination
       }
       else
       {
-         return ((modifiers_ & KeyboardShortcut.CTRL) == KeyboardShortcut.CTRL ? "Ctrl+" : "")
-               + ((modifiers_ & KeyboardShortcut.ALT) == KeyboardShortcut.ALT ? "Alt+" : "")
-               + ((modifiers_ & KeyboardShortcut.SHIFT) == KeyboardShortcut.SHIFT ? "Shift+" : "")
-               + ((modifiers_ & KeyboardShortcut.META) == KeyboardShortcut.META ? "Cmd+" : "")
+         return ((modifiers_ & KeyboardShortcut.CTRL) == KeyboardShortcut.CTRL ? constants_.keyComboCtrl() : "")
+               + ((modifiers_ & KeyboardShortcut.ALT) == KeyboardShortcut.ALT ? constants_.keyComboAlt() : "")
+               + ((modifiers_ & KeyboardShortcut.SHIFT) == KeyboardShortcut.SHIFT ? constants_.keyComboShift() : "")
+               + ((modifiers_ & KeyboardShortcut.META) == KeyboardShortcut.META ? constants_.keyComboCmd() : "")
                + getKeyName(pretty);
       }
    }
@@ -123,27 +125,27 @@ public class KeyCombination
       boolean macStyle = BrowseCap.hasMetaKey() && pretty;
 
       if (keyCode_ == KeyCodes.KEY_ENTER)
-         return macStyle ? "&#8617;" : "Enter";
+         return macStyle ? "&#8617;" : constants_.keyNameEnter();
       else if (keyCode_ == KeyCodes.KEY_LEFT)
-         return macStyle ? "&#8592;" : "Left";
+         return macStyle ? "&#8592;" : constants_.keyNameLeft();
       else if (keyCode_ == KeyCodes.KEY_RIGHT)
-         return macStyle ? "&#8594;" : "Right";
+         return macStyle ? "&#8594;" : constants_.keyNameRight();
       else if (keyCode_ == KeyCodes.KEY_UP)
-         return macStyle ? "&#8593;" : "Up";
+         return macStyle ? "&#8593;" : constants_.keyNameUp();
       else if (keyCode_ == KeyCodes.KEY_DOWN)
-         return macStyle ? "&#8595;" : "Down";
+         return macStyle ? "&#8595;" : constants_.keyNameDown();
       else if (keyCode_ == KeyCodes.KEY_TAB)
-         return macStyle ? "&#8677;" : "Tab";
+         return macStyle ? "&#8677;" : constants_.keyNameTab();
       else if (keyCode_ == KeyCodes.KEY_PAGEUP)
-         return pretty ? "PgUp" : "PageUp";
+         return pretty ? "PgUp" : constants_.keyNamePageUp();
       else if (keyCode_ == KeyCodes.KEY_PAGEDOWN)
-         return pretty ? "PgDn" : "PageDown";
+         return pretty ? "PgDn" : constants_.keyNamePageDown();
       else if (keyCode_ == 8)
-         return macStyle ? "&#9003;" : "Backspace";
+         return macStyle ? "&#9003;" : constants_.keyNameBackspace();
       else if (keyCode_ == KeyCodes.KEY_SPACE)
          // Mac spacebar shortcut character looks too much like a 'b'
          // return macStyle? "&#9250" : "Space";
-         return "Space";
+         return constants_.keyNameSpace();
 
       if (key_ != null)
          return key_;
@@ -209,4 +211,6 @@ public class KeyCombination
    private final int modifiers_;
 
    private static Boolean REQUIRES_QT_WEBENGINE_WORKAROUND = null;
+
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

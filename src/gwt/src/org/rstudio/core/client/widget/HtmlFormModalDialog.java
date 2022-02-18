@@ -1,7 +1,7 @@
 /*
  * HtmlFormModalDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.core.client.widget;
 
 import com.google.gwt.aria.client.DialogRole;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -25,6 +26,7 @@ import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitCompleteHandler;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
 import com.google.gwt.user.client.ui.FormPanel.SubmitHandler;
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 
@@ -79,7 +81,7 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
          }
       };
       
-      ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
+      ThemedButton okButton = new ThemedButton(constants_.okButtonTitle(), new ClickHandler() {
          public void onClick(ClickEvent event) {
             try
             {
@@ -96,7 +98,7 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
                            StringUtil.notNull(e.getDescription()).trim()))
                      {
                         indicatorWrapper.onError(
-                              "Please use a complete file path.");
+                              constants_.themeButtonOnErrorMessage());
                      }
                      else
                      {
@@ -121,7 +123,7 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
       });
       addOkButton(okButton);
       
-      ThemedButton cancelButton = new ThemedButton("Cancel", new ClickHandler(){
+      ThemedButton cancelButton = new ThemedButton(constants_.cancelLabel(), new ClickHandler(){
          @Override
          public void onClick(ClickEvent event)
          {
@@ -165,7 +167,7 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
             }
             else
             {
-               indicatorWrapper.onError("Unexpected empty response from server");
+               indicatorWrapper.onError(constants_.onSubmitErrorMessage());
             }      
          }
       });
@@ -179,4 +181,5 @@ public abstract class HtmlFormModalDialog<T> extends ModalDialogBase
    
    protected abstract boolean validate();
    protected abstract T parseResults(String results) throws Exception;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

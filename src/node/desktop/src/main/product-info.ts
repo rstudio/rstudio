@@ -1,7 +1,7 @@
 /*
  * product-info.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,15 @@
  *
  */
 
-export function getRStudioVersion() {
-  // TODO: need to figure out how to consume build numbers for package build, etc.
-  return "1.5.0";
+export interface ProductInfo {
+  RSTUDIO_VERSION: string;
+  RSTUDIO_BUILD_DATE: string;
+  RSTUDIO_COPYRIGHT_YEAR: string;
+  RSTUDIO_VERSION_PATCH: number;
+  RSTUDIO_R_MAJOR_VERSION_REQUIRED: number;
+  RSTUDIO_R_MINOR_VERSION_REQUIRED: number;
+  RSTUDIO_R_PATCH_VERSION_REQUIRED: number;
+  RSTUDIO_PACKAGE_OS: string;
+  RSTUDIO_GIT_COMMIT: string;
+  RSTUDIO_RELEASE_NAME: string;
 }

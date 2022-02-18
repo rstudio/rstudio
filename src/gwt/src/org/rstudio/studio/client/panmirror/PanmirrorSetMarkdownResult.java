@@ -1,7 +1,7 @@
 /*
  * PanmirrorSetMarkdownResult.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ public class PanmirrorSetMarkdownResult
    public String canonical;
    public String line_wrapping;
    public String[] unrecognized;
+   public boolean example_lists;
    public JsObject unparsed_meta;
    public PanmirrorEditingOutlineLocation location;
    

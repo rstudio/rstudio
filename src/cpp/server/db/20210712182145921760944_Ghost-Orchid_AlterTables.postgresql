@@ -1,0 +1,5 @@
+/* Adds the release_name column to the schema_version table. */
+ALTER TABLE schema_version ADD COLUMN IF NOT EXISTS release_name text NOT NULL DEFAULT '';
+
+/* Update the version to the latest after all alter statements are applied. */
+UPDATE schema_version SET current_version='20210712182145921760944', release_name = 'Ghost Orchid';

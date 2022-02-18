@@ -1,7 +1,7 @@
 /*
  * JobProgress.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.ProgressBar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
+import org.rstudio.studio.client.workbench.views.jobs.JobsConstants;
 import org.rstudio.studio.client.workbench.views.jobs.events.JobExecuteActionEvent;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobConstants;
@@ -53,10 +54,10 @@ public class JobProgress extends Composite
    {
       // buttons must be defined before calling createAndBindUi
       stop_ = new ToolbarButton(ToolbarButton.NoText,
-         "Stop job",
+         constants_.stopJobTitle(),
          new ImageResource2x(RESOURCES.jobCancel()));
       replay_ = new ToolbarButton(ToolbarButton.NoText,
-         "Replay job",
+         constants_.replayJobText(),
          new ImageResource2x(RESOURCES.jobReplay()));
       initWidget(uiBinder.createAndBindUi(this));
       eventBus_ = eventBus;
@@ -181,4 +182,5 @@ public class JobProgress extends Composite
    private LocalJobProgress jobProgress_;
    private boolean complete_;
    private String id_;
+   private static final JobsConstants constants_ = GWT.create(JobsConstants.class);
 }

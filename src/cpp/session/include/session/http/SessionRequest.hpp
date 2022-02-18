@@ -1,7 +1,7 @@
 /*
  * SessionRequest.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,6 +62,13 @@ inline core::Error sendSessionRequest(const std::string& uri,
    std::string token = core::system::generateUuid();
    request.setHeader(kCSRFTokenHeader, token);
    request.addCookie(kCSRFTokenCookie, token);
+
+   // NOTE: Remove block when Ghost Orchid 2021.09 is not supported ======================================
+   // Set the old cookie and header as well, for backward compatibility
+   request.setHeader(kOldCSRFTokenHeader, token);
+   request.addCookie(kOldCSRFTokenCookie, token);
+   // ====================================================================================================
+   
    request.setBody(body);
 
    // first, attempt to send a plain old http request

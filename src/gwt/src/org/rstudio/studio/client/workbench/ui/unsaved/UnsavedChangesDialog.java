@@ -1,7 +1,7 @@
 /*
  * UnsavedChangesDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,7 @@ import com.google.gwt.view.client.DefaultSelectionEventManager;
 import com.google.gwt.view.client.ListDataProvider;
 import com.google.gwt.view.client.MultiSelectionModel;
 import com.google.gwt.view.client.ProvidesKey;
+import org.rstudio.studio.client.workbench.ui.UIConstants;
 
 public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Result>
 {
@@ -99,9 +100,9 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       alwaysSaveOption_ = StringUtil.notNull(alwaysSaveOption);
       targets_ = dirtyTargets;
 
-      setOkButtonCaption("Save Selected");
+      setOkButtonCaption(constants_.saveSelectedCaption());
 
-      addLeftButton(new ThemedButton("Don't Save", event -> {
+      addLeftButton(new ThemedButton(constants_.dontSaveButtonText(), event -> {
          closeDialog();
          saveOperation.execute(new Result(new ArrayList<>(), false));
       }), ElementIds.DIALOG_NO_BUTTON);
@@ -156,8 +157,8 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
       VerticalPanel panel = new VerticalPanel();
       Label captionLabel = new Label(
          targets_.size() == 1 ?
-            "The following file has unsaved changes:" :
-            "The following " + targets_.size() + " files have unsaved changes:");
+            constants_.fileUnsavedChangesText() :
+            constants_.filesUnsavedChangesText(targets_.size()));
       captionLabel.setStylePrimaryName(RESOURCES.styles().captionLabel());
       panel.add(captionLabel);
 
@@ -292,4 +293,5 @@ public class UnsavedChangesDialog extends ModalDialog<UnsavedChangesDialog.Resul
 
    private final String alwaysSaveOption_;
    private CheckBox chkAlwaysSave_;
+   private static final UIConstants constants_ = GWT.create(UIConstants.class);
 }

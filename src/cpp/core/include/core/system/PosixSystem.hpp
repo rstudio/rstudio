@@ -1,7 +1,7 @@
 /*
  * PosixSystem.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -95,7 +95,7 @@ core::Error pidof(const std::string& process, std::vector<PidType>* pPids);
 typedef boost::function<bool (const ProcessInfo&)> ProcessFilter;
 
 // get process by process name, or all processes if process name is empty
-// optionally allows supressing of errors - recommended in most cases
+// optionally allows suppressing of errors - recommended in most cases
 // as such errors are generally transient and benign
 core::Error processInfo(const std::string& process,
                         std::vector<ProcessInfo>* pInfo,
@@ -217,8 +217,10 @@ bool realUserIsRoot();
 // privilege management - not thread safe
 // call from main thread at app startup or just after fork() prior to exec() for new processes
 // do not call after a fork in a multithreaded process, as this can cause deadlock!
-core::Error temporarilyDropPriv(const std::string& newUsername);
+core::Error temporarilyDropPriv(const std::string& newUsername, bool chownLogDir);
+core::Error temporarilyDropPriv(const std::string& newUsername, const std::string& newGroupname, bool chownLogDir);
 core::Error permanentlyDropPriv(const std::string& newUsername);
+core::Error permanentlyDropPriv(const std::string& newUsername, const std::string& newGroupname);
 core::Error restorePriv();
 
 // restoreRoot should be used to set the effective ID back to root (0) before using
@@ -266,6 +268,10 @@ FilePath currentWorkingDirViaLsof(PidType pid);
 // empty FilePath if unable to determine.
 FilePath currentWorkingDirViaProcFs(PidType pid);
 #endif // !__APPLE__
+
+// used to register a SIGHUP handler - only use if the system previously created a SIGHUP
+// handler on your behalf, such as when initializing logging with config reload enabled
+void registerSighupHandler(const boost::function<void()>& sighupHandler);
 
 } // namespace system
 } // namespace core

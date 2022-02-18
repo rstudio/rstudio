@@ -1,7 +1,7 @@
 /*
  * SessionDiagnostics.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,9 @@
 
 #include "SessionDiagnostics.hpp"
 
-#include "SessionCodeSearch.hpp"
 #include "SessionAsyncPackageInformation.hpp"
+#include "SessionCodeSearch.hpp"
+#include "SessionMarkers.hpp"
 #include "SessionRParser.hpp"
 
 #include <set>
@@ -40,6 +41,7 @@
 
 #include "shiny/SessionShiny.hpp"
 
+#include <boost/scope_exit.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/range/adaptor/map.hpp>
@@ -640,7 +642,8 @@ void setFileLocalParseOptions(const std::wstring& rCode,
 ParseResults parse(const std::wstring& rCode,
                    const FilePath& origin,
                    const std::string& documentId = std::string(),
-                   bool isExplicit = false)
+                   bool isExplicit = false,
+                   bool isFragment = false)
 {
    ParseResults results;
    ParseOptions options;
@@ -651,17 +654,22 @@ ParseResults parse(const std::wstring& rCode,
    options.setCheckArgumentsToRFunctionCalls(
             prefs::userPrefs().checkArgumentsToRFunctionCalls());
    
+   options.setRecordStyleLint(
+            prefs::userPrefs().styleDiagnostics());
+
    options.setCheckUnexpectedAssignmentInFunctionCall(
             prefs::userPrefs().checkUnexpectedAssignmentInFunctionCall());
    
-   options.setWarnIfVariableIsDefinedButNotUsed(
-            isExplicit && prefs::userPrefs().warnVariableDefinedButNotUsed());
-   
-   options.setWarnIfNoSuchVariableInScope(
-            prefs::userPrefs().warnIfNoSuchVariableInScope());
-   
-   options.setRecordStyleLint(
-            prefs::userPrefs().styleDiagnostics());
+   // Disable these options when linting code fragments, since we don't have enough 
+   // context to know whether the variable is defined or used elsewhere
+   if (!isFragment)
+   {
+      options.setWarnIfVariableIsDefinedButNotUsed(
+               isExplicit && prefs::userPrefs().warnVariableDefinedButNotUsed());
+      
+      options.setWarnIfNoSuchVariableInScope(
+               prefs::userPrefs().warnIfNoSuchVariableInScope());
+   }
    
    bool noLint = false;
    setFileLocalParseOptions(rCode, &options, &noLint);
@@ -743,7 +751,7 @@ module_context::SourceMarkerSet asSourceMarkerSet(const LintItems& items,
                            core::html_utils::HTML(item.message),
                            true));
    }
-   return SourceMarkerSet("Diagnostics", markers);
+   return SourceMarkerSet("Diagnostics", markers, true);
 }
 
 module_context::SourceMarkerSet asSourceMarkerSet(
@@ -769,7 +777,7 @@ module_context::SourceMarkerSet asSourceMarkerSet(
       }
    }
    
-   return SourceMarkerSet("Diagnostics", markers);
+   return SourceMarkerSet("Diagnostics", markers, true);
 }
 
 Error lintRSourceDocument(const json::JsonRpcRequest& request,
@@ -782,11 +790,14 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
    
    std::string documentId;
    std::string documentPath;
+   std::string content;
    bool showMarkersTab = false;
    bool isExplicit = false;
+   bool isFragment = false;
    Error error = json::readParams(request.params,
                                   &documentId,
                                   &documentPath,
+                                  &content,
                                   &showMarkersTab,
                                   &isExplicit);
    
@@ -796,41 +807,106 @@ Error lintRSourceDocument(const json::JsonRpcRequest& request,
       return error;
    }
    
-   // Try to get the contents from the database
-   boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
-   error = get(documentId, pDoc);
-   
-   // don't log on error here (it's possible that we might attempt to lint a
-   // document immediately after a suspend-resume, and so we fail to get the
-   // contents of that document)
-   if (error)
-      return error;
-   
    FilePath origin = module_context::resolveAliasedPath(documentPath);
    
    // Don't lint files that belong to unmonitored projects
    if (module_context::isUnmonitoredPackageSourceFile(origin))
       return Success();
    
-   // Extract R code from various R-code-containing filetypes.
-   std::string content;
-   error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &content);
-   if (error)
-      return error;
+   // Extract R code from various R-code-containing filetypes, unless we were
+   // given content in the argument
+   if (content.empty())
+   {
+      // Try to get the contents from the database
+      boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
+      error = get(documentId, pDoc);
+
+      // don't log on error here (it's possible that we might attempt to lint a
+      // document immediately after a suspend-resume, and so we fail to get the
+      // contents of that document)
+      if (error)
+         return error;
+
+      error = r_utils::extractRCode(pDoc->contents(), pDoc->type(), &content);
+      if (error)
+         return error;
+   }
+   else
+   {
+      // If we were given content, lint this as a fragment
+      isFragment = true;
+   }
    
+   // detach .conflicts environment from the search path
+   // https://github.com/rstudio/rstudio/issues/10093
+   r::sexp::Protect protect;
+   SEXP envirsSEXP = R_NilValue;
+   Error detachError = r::exec::RFunction(".rs.detachConflicts")
+         .call(&envirsSEXP, &protect);
+   if (error)
+      LOG_ERROR(detachError);
+
+   // if this succeeded, then re-attach it after
+   BOOST_SCOPE_EXIT(&envirsSEXP)
+   {
+      if (envirsSEXP != R_NilValue)
+      {
+         Error attachError = r::exec::RFunction(".rs.attachConflicts")
+               .addParam(envirsSEXP)
+               .call();
+
+         if (attachError)
+            LOG_ERROR(attachError);
+      }
+   }
+   BOOST_SCOPE_EXIT_END
+
    ParseResults results = diagnostics::parse(
             string_utils::utf8ToWide(content),
             origin,
             documentId,
-            isExplicit);
-   
-   pResponse->setResult(lintAsJson(results.lint()));
-   
+            isExplicit,
+            isFragment);
+
+   std::vector<module_context::SourceMarker> markers =
+       modules::markers::markersForFile(documentPath);
+   LintItems lintItems = results.lint();
+
+   using namespace module_context;
+   for (const SourceMarker& marker : markers)
+   {
+      LintType markerLintType;
+      switch (marker.type)
+      {
+      case SourceMarker::Type::Error:
+         markerLintType = LintTypeError;
+         break;
+      case SourceMarker::Type::Warning:
+         markerLintType = LintTypeWarning;
+         break;
+      case SourceMarker::Type::Style:
+         markerLintType = LintTypeStyle;
+         break;
+      case SourceMarker::Type::Info:
+      default:
+         markerLintType = LintTypeInfo;
+      }
+
+      int line =
+          marker.line <= 0
+              ? 1
+              : marker.line - 1; // markers begin the index at 1 and lint items begin at 0
+      int col = marker.column;
+      lintItems.add(
+          line, col, line, col, markerLintType, marker.message.text());
+   }
+
+   pResponse->setResult(lintAsJson(lintItems));
+
    if (showMarkersTab)
    {
-      using namespace module_context;
       SourceMarkerSet markers = asSourceMarkerSet(results.lint(),
-                                                  core::FilePath(pDoc->path()));
+                                                  core::FilePath(documentPath));
       showSourceMarkers(markers, MarkerAutoSelectNone);
    }
    
@@ -1047,7 +1123,7 @@ core::Error initialize()
    initBlock.addFunctions()
          (bind(sourceModuleRFile, "SessionDiagnostics.R"))
          (bind(registerRpcMethod, "lint_r_source_document", lintRSourceDocument));
-   
+
    return initBlock.execute();
 
 }

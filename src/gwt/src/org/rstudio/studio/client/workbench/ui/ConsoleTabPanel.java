@@ -1,7 +1,7 @@
 /*
  * ConsoleTabPanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -492,6 +492,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
    private ConsoleInterruptButton consoleInterrupt_;
    private ConsoleInterruptProfilerButton consoleInterruptProfiler_;
    private ConsoleClearButton consoleClearButton_;
+   @SuppressWarnings("unused")
    private ConsoleInterpreterVersion consoleInterpreterVersion_;
    private final ToolbarButton goToWorkingDirButton_;
    private boolean findResultsTabVisible_;

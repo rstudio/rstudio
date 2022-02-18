@@ -1,7 +1,7 @@
 /*
  * AppNameTextbox.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.rsconnect.ui;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 
 import com.google.gwt.core.client.GWT;
@@ -114,8 +115,7 @@ public class AppNameTextbox extends Composite
          if (validTitle_)
             name_ = app;
          else
-            error_.setText("The title must contain 4 - 64 alphanumeric " + 
-                           "characters.");
+            error_.setText(constants_.titleContainAlphanumeric());
          return;
       }
 
@@ -128,7 +128,7 @@ public class AppNameTextbox extends Composite
          if (DomUtils.getActiveElement() != appTitle_.getElement())
          {
             setAppNameValid(false);
-            error_.setText("The title must contain at least 3 characters.");
+            error_.setText(constants_.titleMinimumCharacter());
          }
          return;
       }
@@ -182,7 +182,8 @@ public class AppNameTextbox extends Composite
    private Command onNameIsInvalidTitle_;
    private String name_;
    private boolean validTitle_ = true;
-   
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
+
    @UiField TextBox appTitle_;
    @UiField HTMLPanel nameValidatePanel_;
    @UiField Label error_;

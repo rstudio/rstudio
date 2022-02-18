@@ -1,7 +1,7 @@
 /*
  * RStudioGinModule.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,11 @@ import com.google.inject.name.Names;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.VirtualConsole.PreferencesImpl;
 import org.rstudio.core.client.VirtualConsoleFactory;
+import org.rstudio.studio.client.application.ApplicationInterrupt;
+import org.rstudio.studio.client.application.ApplicationQuit;
+import org.rstudio.studio.client.application.ApplicationView;
+import org.rstudio.studio.client.application.ApplicationVisibility;
+import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.events.FireEvents;
 import org.rstudio.core.client.command.ApplicationCommandManager;
 import org.rstudio.core.client.command.EditorCommandManager;
@@ -30,11 +35,6 @@ import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.command.UserCommandManager;
 import org.rstudio.core.client.dom.BrowserEventWorkarounds;
 import org.rstudio.core.client.HtmlMessageListener;
-import org.rstudio.studio.client.application.ApplicationInterrupt;
-import org.rstudio.studio.client.application.ApplicationQuit;
-import org.rstudio.studio.client.application.ApplicationView;
-import org.rstudio.studio.client.application.ApplicationVisibility;
-import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.ui.ApplicationWindow;
@@ -101,6 +101,7 @@ import org.rstudio.studio.client.projects.Projects;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.model.ProjectTemplateServerOperations;
 import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.quarto.model.QuartoServerOperations;
 import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.RmdOutputView;
@@ -155,6 +156,7 @@ import org.rstudio.studio.client.workbench.views.connections.model.ConnectionsSe
 import org.rstudio.studio.client.workbench.views.connections.ui.ConnectionsPane;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
+import org.rstudio.studio.client.workbench.views.console.model.VirtualConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.console.shell.ShellPane;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpStrategy;
@@ -227,6 +229,10 @@ import org.rstudio.studio.client.workbench.views.presentation.Presentation;
 import org.rstudio.studio.client.workbench.views.presentation.PresentationPane;
 import org.rstudio.studio.client.workbench.views.presentation.PresentationTab;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationServerOperations;
+import org.rstudio.studio.client.workbench.views.presentation2.Presentation2;
+import org.rstudio.studio.client.workbench.views.presentation2.Presentation2Pane;
+import org.rstudio.studio.client.workbench.views.presentation2.Presentation2Tab;
+import org.rstudio.studio.client.workbench.views.presentation2.model.Presentation2ServerOperations;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.SourceSatelliteView;
@@ -369,6 +375,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(TutorialPresenter.Display.class).to(TutorialPane.class);
       bind(BuildPresenter.Display.class).to(BuildPane.class);
       bind(Presentation.Display.class).to(PresentationPane.class);
+      bind(Presentation2.Display.class).to(Presentation2Pane.class);
       bind(EnvironmentPresenter.Display.class).to(EnvironmentPane.class);
       bind(ViewerPresenter.Display.class).to(ViewerPane.class);
       bind(ConnectionsPresenter.Display.class).to(ConnectionsPane.class);
@@ -388,6 +395,7 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("VCS", VCSTab.class);
       bindTab("Build", BuildTab.class);
       bindTab("Presentation", PresentationTab.class);
+      bindTab("Presentations", Presentation2Tab.class);
       bindTab("Environment", EnvironmentTab.class);
       bindTab("Viewer", ViewerTab.class);
       bindTab("Connections", ConnectionsTab.class);
@@ -428,6 +436,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ChooseFileServerOperations.class).to(RemoteServer.class);
       bind(CodeToolsServerOperations.class).to(RemoteServer.class);
       bind(ConsoleServerOperations.class).to(RemoteServer.class);
+      bind(VirtualConsoleServerOperations.class).to(RemoteServer.class);
       bind(SourceServerOperations.class).to(RemoteServer.class);
       bind(FilesServerOperations.class).to(RemoteServer.class);
       bind(HistoryServerOperations.class).to(RemoteServer.class);
@@ -457,6 +466,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RPubsServerOperations.class).to(RemoteServer.class);
       bind(BuildServerOperations.class).to(RemoteServer.class);
       bind(PresentationServerOperations.class).to(RemoteServer.class);
+      bind(Presentation2ServerOperations.class).to(RemoteServer.class);
       bind(EnvironmentServerOperations.class).to(RemoteServer.class);
       bind(DebuggingServerOperations.class).to(RemoteServer.class);
       bind(MetaServerOperations.class).to(RemoteServer.class);
@@ -488,6 +498,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ThemeServerOperations.class).to(RemoteServer.class);
       bind(TutorialServerOperations.class).to(RemoteServer.class);
       bind(PythonServerOperations.class).to(RemoteServer.class);
+      bind(QuartoServerOperations.class).to(RemoteServer.class);
 
       bind(WorkbenchMainView.class).to(WorkbenchScreen.class);
 

@@ -89,7 +89,7 @@ printf "%s\n" "${QTCONF}" > libexec/qt.conf
 
 # now, force RPATHS (not RUNPATHS) so that LD_LIBRARY_PATH
 # shenanigans don't cause RStudio to load an incompatible
-# verison of Qt and crash inexplicably
+# version of Qt and crash inexplicably
 rewrite-rpath () {
 	patchelf --remove-rpath "$1"
 	patchelf --set-rpath '$ORIGIN/../lib' --force-rpath "$1"

@@ -1,7 +1,7 @@
 /*
  * cite-completion.tsx
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,20 +20,24 @@ import { DecorationSet, EditorView } from 'prosemirror-view';
 import React from 'react';
 import uniqby from 'lodash.uniqby';
 
-import { BibliographyManager, BibliographySource } from '../../api/bibliography/bibliography';
+import { BibliographyManager } from '../../api/bibliography/bibliography';
 import { CompletionHandler, CompletionResult, CompletionHeaderProps } from '../../api/completion';
 import { hasDOI } from '../../api/doi';
 import { searchPlaceholderDecoration } from '../../api/placeholder';
 import { EditorUI } from '../../api/ui';
 import { CompletionItemView } from '../../api/widgets/completion';
 
-import { PandocServer } from '../../api/pandoc';
+import { EditorServer } from '../../api/server';
 import { EditorEvents } from '../../api/events';
 
-import { BibliographyEntry, entryForSource } from './cite-bibliography_entry';
-import { parseCitation, insertCitation as insertSingleCitation, performCiteCompletionReplacement } from './cite';
+import { parseCitation } from './cite';
 
 import './cite-completion.css';
+import { bibliographyCiteCompletionProvider } from './cite-completion-bibliography';
+import { EditorFormat, kQuartoDocType } from '../../api/format';
+import { quartoXrefCiteCompletionProvider, kCiteCompletionTypeXref } from './cite-completion-quarto-xref';
+import { completionIndex, CiteCompletionSearch } from './cite-completion-search';
+
 
 const kAuthorMaxChars = 28;
 const kMaxCitationCompletions = 100;
@@ -44,50 +48,69 @@ const kCiteCompletionItemPadding = 10;
 
 export const kCitationCompleteScope = 'CitationScope';
 
+// An entry which includes the source as well
+// additional metadata for displaying a bibliograph item
+export interface CiteCompletionEntry {
+  id: string;
+  type: string;
+  primaryText: string;
+  secondaryText: (len: number) => string;
+  detailText: string;
+  image?: string;
+  imageAdornment?: string;
+  replace: (view: EditorView, pos: number, server: EditorServer) => Promise<void>;
+  index?: {
+    secondary?: string;
+    tertiary?: string;
+  };
+}
+
+export interface CiteCompletionProvider {
+  currentEntries: () => CiteCompletionEntry[] | undefined;
+  streamEntries: (doc: ProsemirrorNode, onStreamReady: (entries: CiteCompletionEntry[]) => void) => void;
+  awaitEntries: (doc: ProsemirrorNode) => Promise<CiteCompletionEntry[]>;
+  warningMessage: () => string | undefined;
+}
+
 export function citationCompletionHandler(
   ui: EditorUI,
-  events: EditorEvents,
+  _events: EditorEvents,
   bibManager: BibliographyManager,
-  server: PandocServer,
-): CompletionHandler<BibliographyEntry> {
+  server: EditorServer,
+  format: EditorFormat
+): CompletionHandler<CiteCompletionEntry> {
+
+  // Load the providers
+  const completionProviders = [bibliographyCiteCompletionProvider(ui, bibManager)];
+  if (format.docTypes.includes(kQuartoDocType)) {
+    // If this is a Quarto doc, use the quartoXref provider
+    completionProviders.push(quartoXrefCiteCompletionProvider(ui, server));
+  }
+  // create the search index
+  const searchIndex = completionIndex();
+
   return {
     id: 'AB9D4F8C-DA00-403A-AB4A-05373906FD8C',
 
     scope: kCitationCompleteScope,
 
-    completions: citationCompletions(ui, bibManager),
+    completions: citationCompletions(ui, completionProviders, searchIndex),
 
-    filter: (entries: BibliographyEntry[], _state: EditorState, token: string) => {
-      return filterCitations(token, bibManager, entries, ui);
+    filter: (entries: CiteCompletionEntry[], state: EditorState, token: string) => {
+      return filterCitations(token, completionProviders, searchIndex, entries, ui, state.doc);
     },
 
-    replace(view: EditorView, pos: number, entry: BibliographyEntry | null) {
-      if (entry && bibManager.findIdInLocalBibliography(entry.source.id)) {
-        // It's already in the bibliography, just write the id
-        const tr = view.state.tr;
-        const schema = view.state.schema;
-        const id = schema.text(entry.source.id, [schema.marks.cite_id.create()]);
-        performCiteCompletionReplacement(tr, pos, id);
-        view.dispatch(tr);
-      } else if (entry) {
-        // It isn't in the bibliography, show the insert cite dialog
-        return insertSingleCitation(
-          view,
-          entry.source.DOI || '',
-          bibManager,
-          pos,
-          ui,
-          server,
-          entry.source,
-          bibManager.providerName(entry.source.providerKey),
-        );
+    replace(view: EditorView, pos: number, entry: CiteCompletionEntry | null) {
+      // If there is an entry selected, insert it into the document
+      if (entry) {
+        entry.replace(view, pos, server);
       }
       return Promise.resolve();
     },
 
-    replacement(_schema: Schema, entry: BibliographyEntry | null): string | ProsemirrorNode | null {
+    replacement(_schema: Schema, entry: CiteCompletionEntry | null): string | ProsemirrorNode | null {
       if (entry) {
-        return entry.source.id;
+        return entry.id;
       } else {
         return null;
       }
@@ -95,16 +118,17 @@ export function citationCompletionHandler(
 
     view: {
       header: () => {
-        if (bibManager.warning()) {
+        const warningProvider = completionProviders.find(provider => provider.warningMessage() !== undefined);
+        if (warningProvider) {
           return {
             component: CompletionWarningHeaderView,
             height: kHeaderHeight,
-            message: bibManager.warning(),
+            message: warningProvider.warningMessage(),
           };
         }
       },
-      component: BibliographySourceView,
-      key: entry => entry.source.id,
+      component: CiteCompletionItemView,
+      key: entry => entry.id,
       width: kCiteCompletionWidth,
       height: 54,
       maxVisible: 5,
@@ -113,33 +137,46 @@ export function citationCompletionHandler(
   };
 }
 
-function filterCitations(token: string, manager: BibliographyManager, entries: BibliographyEntry[], ui: EditorUI) {
+function filterCitations(token: string, completionProviders: CiteCompletionProvider[], citeSearch: CiteCompletionSearch, entries: CiteCompletionEntry[], ui: EditorUI, doc: ProsemirrorNode) {
   // Empty query or DOI
   if (token.trim().length === 0 || hasDOI(token)) {
     return entries;
   }
-
   // Filter an exact match - if its exact match to an entry in the bibliography already, skip completion
   // Ignore any punctuation at the end of the token
   const tokenWithoutEndPunctuation = token.match(/.*[^\,\!\?\.\:]/);
   const completionId = tokenWithoutEndPunctuation ? tokenWithoutEndPunctuation[0] : token;
-  if (manager.localSources().find(source => source.id === completionId)) {
+  if (citeSearch.exactMatch(completionId)) {
     return [];
   }
 
-  // Now do the regular search
-  const search = (str: string) => {
-    const results = uniqby(manager.searchAllSources(str, kMaxCitationCompletions), source => source.id).map(entry =>
-      entryForSource(entry, ui),
-    );
-    return uniqby(results, (entry: BibliographyEntry) => entry.source.id);
-  };
-  const searchResults = search(token);
+  // Perform a search
+  const searchResults = citeSearch.search(token, kMaxCitationCompletions);
   return searchResults || [];
 }
 
-function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
-  return (_text: string, context: EditorState | Transaction): CompletionResult<BibliographyEntry> | null => {
+function dedupe(entries: CiteCompletionEntry[]): CiteCompletionEntry[] {
+  // Move the xrefs to the front to ensure that they are kept
+  const orderedByType = entries.sort((a, b) => {
+    if (a.type === b.type) {
+      return 0;
+    } else if (a.type === kCiteCompletionTypeXref) {
+      return -1;
+    } else {
+      return 1;
+    }
+  });
+
+  return uniqby(orderedByType, (entry: CiteCompletionEntry) => entry.id);
+}
+
+function sortEntries(entries: CiteCompletionEntry[]): CiteCompletionEntry[] {
+  const dedupedSources = dedupe(entries);
+  return dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function citationCompletions(ui: EditorUI, completionProviders: CiteCompletionProvider[], citeSearch: CiteCompletionSearch) {
+  return (_text: string, context: EditorState | Transaction): CompletionResult<CiteCompletionEntry> | null => {
 
     const parsed = parseCitation(context);
     if (parsed) {
@@ -148,43 +185,65 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
         pos: parsed.pos,
         offset: parsed.offset,
         completions: async (_state: EditorState) => {
-          // function to retreive entries from the bib manager
-          const managerEntries = () => {
-            // Filter duplicate sources
-            const dedupedSources = uniqby(manager.allSources(), (source: BibliographySource) => source.id);
 
-            // Sort by id by default
-            const sortedSources = dedupedSources.sort((a, b) => a.id.localeCompare(b.id));
-            return sortedSources.map(source => entryForSource(source, ui));
-          };
+          // If all providers have entries already loaded, we can use those and stream any updates
+          const hasCurrentEntries = completionProviders.every(provider => provider.currentEntries());
+          if (hasCurrentEntries) {
 
-          // if we already have some completions from a previous load, then
-          // return them and kick off a refresh (new results will stream in)
-          if (manager.hasSources()) {
+            let currentEntries: CiteCompletionEntry[] = [];
+            completionProviders.forEach(provider => {
+              const entries = provider.currentEntries();
+              if (entries) {
+                currentEntries = currentEntries || [];
+                currentEntries.push(...entries);
+              }
+            });
+
+            // Index the current Entries
+            currentEntries = sortEntries(currentEntries);
+            citeSearch.setEntries(currentEntries);
+
             // kick off another load which we'll stream in by setting entries
-            let loadedEntries: BibliographyEntry[] | null = null;
-            manager.load(ui, context.doc).then(() => {
-              loadedEntries = managerEntries();
+            let loadedEntries: CiteCompletionEntry[] = [];
+            let providerCount = 0;
+            completionProviders.forEach(provider => {
+              provider.streamEntries(context.doc, (entries: CiteCompletionEntry[]) => {
+                providerCount = providerCount + 1;
+
+                const updatedEntries = [...loadedEntries, ...entries];
+                loadedEntries = sortEntries(updatedEntries);
+                if (providerCount >= completionProviders.length) {
+                  citeSearch.setEntries(loadedEntries);
+                }
+              });
             });
 
             // return stream
             return {
-              items: managerEntries(),
+              items: currentEntries,
               stream: () => loadedEntries,
             };
 
-            // no previous load, just perform the load and return the entries
           } else {
-            return manager.load(ui, context.doc).then(() => {
-              return managerEntries();
+            // Otherwise, we need to wait and load the entries
+            const promises = completionProviders.map(provider => provider.awaitEntries(context.doc));
+            return Promise.all(promises).then(values => {
+              const results: CiteCompletionEntry[] = [];
+
+              values.forEach(value => results.push(...value));
+
+              // Index the current Entries
+              const sortedEntries = sortEntries(results);
+              citeSearch.setEntries(sortedEntries);
+              return sortedEntries;
             });
           }
         },
         decorations:
           parsed.token.length === 0
             ? DecorationSet.create(context.doc, [
-                searchPlaceholderDecoration(context.selection.head, ui, ui.context.translateText('or DOI')),
-              ])
+              searchPlaceholderDecoration(context.selection.head, ui, ui.context.translateText('or DOI')),
+            ])
             : undefined,
       };
     }
@@ -194,19 +253,15 @@ function citationCompletions(ui: EditorUI, manager: BibliographyManager) {
 
 // The title may contain spans to control case specifically - consequently, we need
 // to render the title as HTML rather than as a string
-export const BibliographySourceView: React.FC<BibliographyEntry> = entry => {
-  const authorStr = entry.authorsFormatter(entry.source.author, kAuthorMaxChars - entry.source.id.length);
-  const detail = `${authorStr} ${entry.issuedDateFormatter(entry.source.issued)}`;
+export const CiteCompletionItemView: React.FC<CiteCompletionEntry> = entry => {
   return (
     <CompletionItemView
       width={kCiteCompletionWidth - kCiteCompletionItemPadding}
       image={entry.image}
       imageAdornment={entry.imageAdornment}
-      title={`@${entry.source.id}`}
-      subTitle={
-        entry.source.title || entry.source['short-title'] || entry.source['container-title'] || entry.source.type
-      }
-      detail={detail}
+      title={`@${entry.primaryText}`}
+      detail={entry.secondaryText(kAuthorMaxChars - entry.primaryText.length)}
+      subTitle={entry.detailText}
       htmlTitle={true}
     />
   );

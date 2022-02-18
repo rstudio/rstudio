@@ -552,7 +552,7 @@ int Hunspell::spell(const char * word, int * info, char ** root)
           if (spell(cw)) return 1; // check the first part with dash
           s[1] = r;
 	}
-        // end of LANG speficic region
+        // end of LANG specific region
 
       }
     }
@@ -656,7 +656,7 @@ struct hentry * Hunspell::checkword(const char * w, int * info, char ** root)
              he = pAMgr->compound_check(dup, len-1, -5, 0, 100, 0, NULL, 1, 0, info);
              free(dup);
           }
-          // end of LANG speficic region
+          // end of LANG specific region
           if (he) {
                 if (root) {
                     *root = mystrdup(he->word);

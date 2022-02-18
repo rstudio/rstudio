@@ -1,7 +1,7 @@
 /*
  * PublishReportSourcePage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,11 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
@@ -35,7 +37,7 @@ public class PublishReportSourcePage
          RSConnectPublishInput input,
          boolean asMultiple)
    {
-      super(title, subTitle, "Publish to RStudio Connect", icon, null,
+      super(title, subTitle, constants_.publishToRstudioConnect(), icon, null,
             createPages(input, asMultiple));
    }
 
@@ -46,25 +48,24 @@ public class PublishReportSourcePage
       ArrayList<WizardPage<RSConnectPublishInput, 
                            RSConnectPublishResult>> pages = new ArrayList<>();
       
-      String descriptor = "document";
+      String descriptor = constants_.documentLowercase();
       if (asMultiple)
-         descriptor = "documents";
+         descriptor = constants_.documentsLowercasePlural();
       if (input.isWebsiteRmd())
-         descriptor = "website";
+         descriptor = constants_.websiteLowercase();
       
-      pages.add(new PublishFilesPage("Publish " +
-            descriptor + " with source code",
-            "Choose this option if you want to create " + 
-            (asMultiple ? "scheduled reports" : "a scheduled report") + " or " +
-            "rebuild your " + descriptor + " on the server.", 
+      pages.add(new PublishFilesPage(constants_.publishFilesPageTitle(descriptor),
+            constants_.publishReportSourcePageSubTitle(
+                    asMultiple ? constants_.scheduledReportsPlural() : constants_.scheduledReportsSingular()
+                    ,descriptor),
             new ImageResource2x(RSConnectResources.INSTANCE.publishDocWithSource2x()), 
             input, asMultiple, false));
-      String staticTitle = "Publish finished " + descriptor + " only";
-      String staticSubtitle = "Choose this option to publish the content as " +
-             "it appears in RStudio.";
+      String staticTitle = constants_.publishReportSourcePageStaticTitle(descriptor);
+      String staticSubtitle = constants_.publishReportSourcePageStaticSubtitle();
       pages.add(new PublishFilesPage(staticTitle, staticSubtitle, 
             new ImageResource2x(RSConnectResources.INSTANCE.publishDocWithoutSource2x()), 
             input, asMultiple, true));
       return pages;
    }
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

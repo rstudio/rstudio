@@ -1,7 +1,7 @@
 /*
  * JsonRpc.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -402,7 +402,12 @@ public:
    void setField(const std::string& name, const Value& value)
    { 
       response_[name] = value;
-   }             
+   }
+   
+   bool hasField(const std::string& name)
+   {
+      return response_.hasMember(name);
+   }
                 
    template <typename T>
    void setField(const std::string& name, const T& value) 
@@ -411,8 +416,7 @@ public:
    }
 
    template <typename T>
-   Error getField(const std::string& name,
-                 T* pValue)
+   Error getField(const std::string& name, T* pValue)
    {
       return readObject(response_, name, *pValue);
    }

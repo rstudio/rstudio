@@ -1,7 +1,7 @@
 /*
  * RProjectFile.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,6 +52,7 @@ const char * const kBuildTypePackage = "Package";
 const char * const kBuildTypeMakefile = "Makefile";
 const char * const kBuildTypeWebsite = "Website";
 const char * const kBuildTypeCustom = "Custom";
+const char * const kBuildTypeQuarto = "Quarto";
 
 const char * const kMarkdownWrapUseDefault = "Default";
 const char * const kMarkdownWrapNone = "None";
@@ -284,6 +285,7 @@ void setBuildPackageDefaults(const std::string& packagePath,
 {
    pConfig->buildType = kBuildTypePackage;
    pConfig->packageUseDevtools = buildDefaults.useDevtools;
+   pConfig->packageCleanBeforeInstall = buildDefaults.cleanBeforeInstall;
    pConfig->packagePath = packagePath;
    pConfig->packageInstallArgs = kPackageInstallArgsDefault;
 }
@@ -785,6 +787,18 @@ Error readProjectFile(const FilePath& projectFilePath,
       pConfig->packageUseDevtools = false;
    }
 
+   // extract package clean before install
+   it = dcfFields.find("PackageCleanBeforeInstall");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->packageCleanBeforeInstall)))
+         return requiredFieldError("PackageCleanBeforeInstall", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->packageCleanBeforeInstall = true;
+   }
+
    // extract makefile path
    it = dcfFields.find("MakefilePath");
    if (it != dcfFields.end())
@@ -1090,6 +1104,15 @@ Error writeProjectFile(const FilePath& projectFilePath,
                build.append("PackageUseDevtools: Yes\n");
             }
 
+            if (config.packageCleanBeforeInstall)
+            {
+               build.append("PackageCleanBeforeInstall: Yes\n");
+            }
+            else 
+            {
+               build.append("PackageCleanBeforeInstall: No\n");
+            }
+
             if (!config.packagePath.empty())
             {
                boost::format pkgFmt("PackagePath: %1%\n");
@@ -1247,7 +1270,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(boost::str(pythonConfig));
    }
 
-   // add spelling dictioanry if present
+   // add spelling dictionary if present
    if (!config.spellingDictionary.empty())
    {
       boost::format fmt("\nSpellingDictionary: %1%\n");

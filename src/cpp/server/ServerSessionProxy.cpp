@@ -1,7 +1,7 @@
 /*
  * ServerSessionProxy.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -118,9 +118,14 @@ Error launchSessionRecovery(
       const r_util::SessionContext& context)
 {
    // if this request is marked as requiring an existing
-   // session then return session unavilable error
+   // session then return session unavailable error
    if (requiresSession(request))
+   {
+      LOG_DEBUG_MESSAGE("Failed to connect to session for user: " + context.username +
+                        (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()));
+
       return Error(server::errc::SessionUnavailableError, ERROR_LOCATION);
+   }
 
    // if the session scope is marked as invalid then return
    // invalid session scope error
@@ -128,6 +133,9 @@ Error launchSessionRecovery(
          session::collectInvalidScope(context);
    if (state != core::r_util::ScopeValid)
    {
+       LOG_ERROR_MESSAGE("Invalid session scope for user: " + context.username +
+                         (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()));
+
        Error error(server::errc::InvalidSessionScopeError, ERROR_LOCATION);
        error.addProperty("state", state);
        return error;
@@ -136,12 +144,21 @@ Error launchSessionRecovery(
    // recreate streams dir if necessary
    Error error = server_core::sessions::local_streams::ensureStreamsDir();
    if (error)
+   {
+      error.addProperty("description", "Failed to recreate streamsDir for session");
+      error.addProperty("user", context.username);
       LOG_ERROR(error);
+   }
 
    // attempt to launch the session only if this is the first recovery attempt
    if (firstAttempt)
+   {
+      LOG_DEBUG_MESSAGE("Launching session for user: " + context.username + (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()));
+      bool launched;
+
       return sessionManager().launchSession(ptrConnection->ioService(), 
-            context, request);
+            context, request, launched);
+   }
    else
       return Success();
 }
@@ -209,6 +226,11 @@ void handleProxyResponse(
    // ensure authorization cookies that were automatically refreshed as part of this
    // request are stamped on the response
    ptrConnection->writeResponse(response, true, getAuthCookies(ptrConnection->response()));
+
+   LOG_DEBUG_MESSAGE("-- sent server proxy response for: " + ptrConnection->request().uri() +
+                     " user: " + context.username +
+                     (context.scope.isWorkspaces() ? " - workspaces" : " id:" + context.scope.id()) +
+                      ": " + safe_convert::numberToString(ptrConnection->response().statusCode()));
 }
 
 void rewriteLocalhostAddressHeader(const std::string& headerName,
@@ -448,6 +470,8 @@ void handleContentError(
 
       auth::handler::signInThenContinue(ptrConnection->request(), &ptrConnection->response());
       ptrConnection->writeResponse();
+
+      LOG_DEBUG_MESSAGE("-- proxy content authentication error for " + ptrConnection->request().uri());
       return;
    }
 
@@ -457,6 +481,8 @@ void handleContentError(
       http::Response& response = ptrConnection->response();
       if (server::isInvalidSessionScopeError(error))
       {
+         LOG_DEBUG_MESSAGE("-- content error: invalid session scope for " + ptrConnection->request().uri());
+
          unsigned state = safe_convert::stringTo(error.getProperty("state"), 0);
          if (static_cast<r_util::SessionScopeState>(state) ==
              r_util::ScopeMissingProject)
@@ -466,19 +492,22 @@ void handleContentError(
       }
       else
       {
+         LOG_DEBUG_MESSAGE("-- content error: session unavailable for " + ptrConnection->request().uri());
          response.setStatusCode(http::status::ServiceUnavailable);
       }
       ptrConnection->writeResponse();
       return;
    }
 
-   // log if not connection terminated
-   logIfNotConnectionTerminated(error, ptrConnection->request());
-
    // handle connection unavailable with sign out if session launches
    // require authentication, otherwise just return service unavailable
    if (http::isConnectionUnavailableError(error))
    {
+      // It's important to display a message here when this is the first request for a new session.
+      // Ideally we'd print the local stream path or the host:port of the server but it needs to be passed down a long chain
+      // of requests to get here
+      LOG_ERROR_MESSAGE("Error connecting to session for " + ptrConnection->request().uri() + " error: " + error.asString());
+
       // write bad gateway
       http::Response& response = ptrConnection->response();
       response.setStatusCode(http::status::BadGateway);
@@ -487,10 +516,13 @@ void handleContentError(
    }
    else if (handleLicenseError(ptrConnection, error))
    {
+      LOG_WARNING_MESSAGE("Session limit error for " + ptrConnection->request().uri() + " detail: " + error.asString());
       ptrConnection->writeResponse();
    }
    else
    {
+      LOG_INFO_MESSAGE("Proxying error response for " + ptrConnection->request().uri() + " detail: " + error.asString());
+
       // otherwise just forward the error
       ptrConnection->writeError(error);
    }
@@ -507,6 +539,7 @@ void handleRpcError(
    // check for authentication error
    if (server::isAuthenticationError(error))
    {
+      LOG_DEBUG_MESSAGE("-- rpc error: authentication error for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION),
                             &(ptrConnection->response()));
       ptrConnection->writeResponse();
@@ -515,6 +548,7 @@ void handleRpcError(
 
    if (server::isSessionUnavailableError(error))
    {
+      LOG_DEBUG_MESSAGE("-- rpc error: session unavailable for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
       http::Response& response = ptrConnection->response();
       response.setStatusCode(http::status::ServiceUnavailable);
       ptrConnection->writeResponse();
@@ -523,6 +557,7 @@ void handleRpcError(
 
    if (server::isInvalidSessionScopeError(error))
    {
+      LOG_DEBUG_MESSAGE("-- rpc error: session invalid for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
       // prepare client info
       json::Object clJson;
       clJson["scope_path"] = r_util::urlPathForSessionScope(context.scope);
@@ -543,14 +578,18 @@ void handleRpcError(
    // distinguish between connection and other error types
    if (http::isConnectionUnavailableError(error))
    {
+      LOG_DEBUG_MESSAGE("-- rpc error: connection unavailable for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::ConnectionError, ERROR_LOCATION),
                             &(ptrConnection->response()));
    }
    else if (!handleLicenseError(ptrConnection, error))
    {
+      LOG_DEBUG_MESSAGE("-- rpc error: other error for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
                            &(ptrConnection->response()));
    }
+   else
+      LOG_DEBUG_MESSAGE("-- rpc error: license error for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
 
    // write the response
    ptrConnection->writeResponse();
@@ -563,6 +602,8 @@ void handleEventsError(
 {
    // NOTE: events requests don't initiate session launches so
    // we don't call removePendingLaunch here
+
+   LOG_DEBUG_MESSAGE("-- events error for: " + ptrConnection->request().uri() + " error: " + error.getSummary());
 
    // distinguish connection error as (expected) "Unavailable" error state
    if (http::isConnectionUnavailableError(error))
@@ -627,7 +668,7 @@ void proxyRequest(
       const http::ConnectionRetryProfile& connectionRetryProfile,
       const ClientHandler& clientHandler = ClientHandler())
 {
-   // apply optional proxy filter
+   // apply optional proxy filter - this may load balance this request to another server
    if (applyProxyFilter(ptrConnection, context, clientHandler))
       return;
 
@@ -638,7 +679,7 @@ void proxyRequest(
    // add username
    pRequest->setHeader(kRStudioUserIdentityDisplay, context.username);
 
-   // call request filter if we have one
+   // call request filter - e.g. for proxy auth to update user identity headers
    invokeRequestFilter(pRequest.get());
 
    // see if the request should be handled by the overlay
@@ -695,6 +736,8 @@ void proxyRequest(
    // assign request
    pClient->request().assign(*pRequest);
 
+   LOG_DEBUG_MESSAGE("- Start server proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().uri() + " user: " + context.username + (context.scope.isWorkspaces() ? " - workspaces" : "") + " for local stream: " + streamPath.getAbsolutePath());
+
    // proxy the request
    boost::shared_ptr<http::ChunkProxy> chunkProxy(new http::ChunkProxy(ptrConnection));
    chunkProxy->proxy(pClient);
@@ -731,6 +774,8 @@ bool validateUser(boost::shared_ptr<http::AsyncConnection> ptrConnection,
    }
    else
    {
+       LOG_DEBUG_MESSAGE("User validate failed");
+
        json::setJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION),
                              &(ptrConnection->response()));
        ptrConnection->writeResponse();
@@ -757,6 +802,7 @@ http::Headers getAuthCookies(const http::Response& response)
    http::Headers authCookies;
    for (const http::Header& cookie : response.getCookies({ 
       kCSRFTokenCookie,
+      kOldCSRFTokenCookie,
       kUserIdCookie,
       kUserListCookie,
       kPersistAuthCookie }))
@@ -977,6 +1023,8 @@ void proxyLocalhostRequest(
    // apply optional proxy filter
    if (applyProxyFilter(ptrConnection, context))
       return;
+
+   LOG_DEBUG_MESSAGE("Start localhost proxy request " + ptrConnection->request().method() + " " + ptrConnection->request().uri() + " username: " + username);
 
    // make a copy of the request for forwarding
    http::Request request;

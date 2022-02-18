@@ -1,7 +1,7 @@
 /*
  * markdown.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -191,6 +191,17 @@ oop.inherits(Mode, MarkdownMode);
          return this.$python.autoOutdent(state, session, row);
       else
          return this.$outdent.autoOutdent(session, row);
+   };
+
+   this.getIndentForOpenBrace = function(openBracePos)
+   {
+      var state = Utils.getPrimaryState(this.$session, openBracePos.row);
+      var mode = activeMode(state);
+      if (mode === "r")
+         return this.codeModel.getIndentForOpenBrace(openBracePos);
+
+      var line = this.$session.getLine(openBracePos.row1);
+      return this.$getIndent(line);
    };
 
    this.transformAction = function(state, action, editor, session, text)

@@ -1,7 +1,7 @@
 /*
  * PathBreadcrumbWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.core.client.files.filedialog;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
@@ -23,6 +24,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.CoreClientConstants;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -60,7 +62,7 @@ public class PathBreadcrumbWidget
       outer_ = new SimplePanel();
       outer_.setWidget(panel_);
       outer_.setStylePrimaryName(RES.styles().breadcrumb());
-      Roles.getGroupRole().setAriaLabelProperty(outer_.getElement(), "Selected path breadcrumb");
+      Roles.getGroupRole().setAriaLabelProperty(outer_.getElement(), constants_.pathBreadCrumbSelectPath());
 
       Image fade = new Image(RES.fade());
       fade.setStylePrimaryName(STYLES.fade());
@@ -79,7 +81,7 @@ public class PathBreadcrumbWidget
       browse.setStyleName(STYLES.browse());
       browse.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
       browse.addClickHandler(event -> browse());
-      String buttonTitle = "Go to directory";
+      String buttonTitle = constants_.pathBreadCrumbButtonTitle();
       browse.setTitle(buttonTitle);
       Roles.getButtonRole().setAriaLabelProperty(browse.getElement(), buttonTitle);
       eastFrame_.add(browse);
@@ -110,10 +112,11 @@ public class PathBreadcrumbWidget
 
       if (projDir != null)
       {
-         ImageButton projIcon = new ImageButton("Go to project directory", new ImageResource2x(RES.projectImage2x()));
+         ImageButton projIcon = new ImageButton(constants_.projectIconDesc(), new ImageResource2x(RES.projectImage2x()));
 
          projIcon.addClickHandler(event -> SelectionCommitEvent.fire(PathBreadcrumbWidget.this, projDir));
          projIcon.getImage().addStyleName(RES.styles().project());
+         projIcon.setTitle(constants_.projectIconDesc());
 
          eastFrame_.insert(projIcon, 0);
 
@@ -174,9 +177,9 @@ public class PathBreadcrumbWidget
       boolean isCloudRoot = context_.isCloudRoot(item);
       String text;
       if (isHome)
-         text = "Home";
+         text = constants_.anchorHomeText();
       else if (isCloudRoot)
-         text = "Cloud";
+         text = constants_.cloudHomeText();
       else
          text = item.getName();
       Widget link;
@@ -210,7 +213,7 @@ public class PathBreadcrumbWidget
                RStudioGinjector.INSTANCE.getRemoteFileSystemContext();
 
          RStudioGinjector.INSTANCE.getFileDialogs().chooseFolder(
-               "Go To Folder",
+               constants_.browseFolderCaption(),
                tempContext,
                pSession_.get().getSessionInfo().getActiveProjectDir(),
                new ProgressOperationWithInput<FileSystemItem>()
@@ -228,8 +231,8 @@ public class PathBreadcrumbWidget
       else
       {
          context_.messageDisplay().promptForText(
-               "Go To Folder",
-               "Path to folder (use ~ for home directory):",
+               constants_.browseFolderCaption(),
+               constants_.browseFolderLabel(),
                "",
                new OperationWithInput<String>() {
 
@@ -271,4 +274,5 @@ public class PathBreadcrumbWidget
    private HTMLPanel fadeWrapper_;
 
    private Provider<Session> pSession_;
+   private static final CoreClientConstants constants_ = GWT.create(CoreClientConstants.class);
 }

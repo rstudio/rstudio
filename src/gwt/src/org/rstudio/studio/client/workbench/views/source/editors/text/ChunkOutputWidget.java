@@ -1,7 +1,7 @@
 /*
  * ChunkOutputWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -115,6 +115,7 @@ public class ChunkOutputWidget extends Composite
       chunkOutputSize_ = chunkOutputSize;
       initWidget(uiBinder.createAndBindUi(this));
       expansionState_ = new Value<>(expansionState);
+      visible_ = new Value<>(isVisible());
       applyCachedEditorStyle();
       if (expansionState_.getValue() == COLLAPSED)
          setCollapsedStyles();
@@ -261,6 +262,20 @@ public class ChunkOutputWidget extends Composite
          ValueChangeHandler<Integer> handler)
    {
       return expansionState_.addValueChangeHandler(handler);
+   }
+
+   /**
+    * Adds a handler for the widget's visibility state. Note that this handler
+    * will only be invoked when the state is manipulated via setVisible() so
+    * doesn't cover all possible transitions in visibility.
+    *
+    * @param handler The handler to attach
+    * @return A HandlerRegistration that can be used to unregister the handler
+    */
+   public HandlerRegistration addVisibleChangeHandler(
+      ValueChangeHandler<Boolean> handler)
+   {
+      return visible_.addValueChangeHandler(handler);
    }
 
    public void renderHtml(String htmlOutput, Element parentElement)
@@ -603,6 +618,18 @@ public class ChunkOutputWidget extends Composite
          removeStyleName(style.embedded());
          removeStyleName(FontSizer.getNormalFontSizeClass());
       }
+   }
+
+   /**
+    * Sets the visibility state of the output widget.
+    *
+    * @param visible Whether the output widget should be visible.
+    */
+   @Override
+   public void setVisible(boolean visible)
+   {
+      super.setVisible(visible);
+      visible_.setValue(visible, true);
    }
 
    // Private methods ---------------------------------------------------------
@@ -973,6 +1000,7 @@ public class ChunkOutputWidget extends Composite
    private final String documentId_;
    private final String chunkId_;
    private final Value<Integer> expansionState_;
+   private final Value<Boolean> visible_;
 
    private static EditorThemeListener.Colors s_colors;
 

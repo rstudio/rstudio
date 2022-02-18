@@ -3,7 +3,7 @@
 /*
  * dtviewer.js
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,9 +53,76 @@
   // the table header height of the table at the last time we adjusted it to fit
   var lastHeaderHeight = 0;
 
-  // scroll handlers; these are detached when the data viewer is hidden
-  var detachedHandlers = [];
+  // the following is a dirty hack to get tab switching to not destroy the
+  // vertical scroll position in Firefox, and to stop other sources from
+  // scrolling the data when we don't want them to.
   var lastScrollPos = 0;
+  let pauseScrollEvent = true;
+  let addedScrollHandler = false;
+
+  // "poll" until scrollBody has an element associated with it, and it becomes
+  // possible to add listeners. Animation frame is a good choice because it
+  // only runs after the window redraws itself.
+  const addScrollHandler = () => {
+    let scrollBody = $(".dataTables_scrollBody");
+    if (scrollBody && scrollBody.length) {
+      scrollBody.on("scroll", evt => {
+        // this ONLY allows "user-generated" scroll events to actually set
+        // lastScrollPos. Otherwise, any other programmatic attempt to scroll
+        // the body will be ignored, and the last user-set scroll position will
+        // be forcefully restored. If we wanted to actually set the scrollTop,
+        // we would have to remember to first set pauseScrollEvent = false, or
+        // set both lastScrollPos and scrollTop
+        if (!pauseScrollEvent) {
+          lastScrollPos = evt.target.scrollTop; 
+        } else {
+          evt.target.scrollTop = lastScrollPos
+        }
+      });
+
+      const done = debounce(() => {
+        pauseScrollEvent = true;
+      }, 200);
+
+      // the following event handlers are here to enable standard channels of
+      // user input -- it doesn't matter that they are at the window level,
+      // since they can represent ANY valid user-based action.
+
+      // allow the user to scroll with the mouse wheel
+      window.addEventListener("wheel", () => {
+        pauseScrollEvent = false;
+        done();
+      });
+
+      // allow scrolling with the keyboard arrows
+      window.addEventListener("keydown", () => {
+        pauseScrollEvent = false;
+        done();
+      });
+
+      window.addEventListener("touchstart", () => {
+        pauseScrollEvent = false;
+        window.addEventListener("touchend", () => {
+          pauseScrollEvent = true;
+        }, { once: true });
+      });
+
+      // the mousedown and mouseup events detect when the user is dragging the scrollbar
+      window.addEventListener("mousedown", () => {
+        pauseScrollEvent = false;
+        window.addEventListener("mouseup", () => {
+          pauseScrollEvent = true;
+        }, { once: true });
+      });
+      addedScrollHandler = true;
+    }
+    if (!addedScrollHandler) {
+      requestAnimationFrame(addScrollHandler);
+    }
+  };
+
+  addScrollHandler();
+  // End dirty hack
 
   // display nulls as NAs
   var displayNullsAsNAs = false;
@@ -251,7 +318,7 @@
     }
 
     var escaped = escapeHtml(data);
-
+    
     // special additional rendering for cells which themselves contain data frames or lists:
     // these include an icon that can be clicked to view contents
     if (clazz === "dataCell" || clazz === "listCell") {
@@ -315,24 +382,6 @@
     return renderCellClass(data, type, row, meta, "listCell");
   };
 
-  // restores scroll information lost on tab switch
-  var restoreScrollHandlers = function () {
-    var scrollBody = $(".dataTables_scrollBody");
-    if (scrollBody) {
-      // reattach handlers
-      for (var i = 0; i < detachedHandlers.length; i++) {
-        scrollBody.on("scroll", detachedHandlers[i]);
-      }
-
-      // restore position
-      if (lastScrollPos) scrollBody.scrollTop(lastScrollPos);
-    }
-
-    // clean state
-    detachedHandlers = [];
-    lastScrollPos = 0;
-  };
-
   var syncWidth = function () {
     // shrink container to width of first row; reschedule size if first row
     // hasn't been drawn yet
@@ -347,9 +396,6 @@
   // applies a new size to the table--called on init, on tab activate (from
   // RStudio), and when the window size changes
   var sizeDataTable = function (force) {
-    // reattach any detached scroll handlers
-    restoreScrollHandlers();
-
     // don't apply a zero height
     if (window.innerHeight < 1) {
       return;
@@ -1407,7 +1453,6 @@
     lastHeight = 0;
     lastHeaderHeight = 0;
     lastScrollPos = 0;
-    detachedHandlers = [];
 
     // when datatables is initialized on an element, it adds a bunch of goo
     // around the element to handle scrolling, etc.--we need to pull the whole
@@ -1433,7 +1478,7 @@
           document.body.appendChild(newEle);
           runAfterSizing(function () {
             if (result) {
-              initDataTable($.parseJSON(result));
+              initDataTable(result);
             }
           });
         });
@@ -1540,8 +1585,6 @@
 
   // called from RStudio when the underlying object changes
   window.refreshData = function () {
-    // restore any scroll handlers (this can get called on tab activate)
-    restoreScrollHandlers();
     bootstrap();
   };
 
@@ -1553,34 +1596,6 @@
   window.onActivate = function () {
     // resize the table once animation finishes
     debouncedDataTableSize(false);
-  };
-
-  window.onDeactivate = function () {
-    // In Firefox, the browser scrolls the viewport to the top when the tab is
-    // reactivated before any of our own event handlers fire. This triggers the
-    // scroller to redraw the table from the server starting from the first row,
-    // as though the user had scrolled the viewport to the top.
-    //
-    // It isn't possible to suppress this event, so when the tab is deactivated,
-    // we unwire all the event handlers from the scrolling region, and reattach
-    // them on activate.
-
-    // save current scroll position
-    var scrollBody = $(".dataTables_scrollBody");
-    if (scrollBody === null || scrollBody.length === 0) {
-      return;
-    }
-    lastScrollPos = scrollBody.scrollTop();
-
-    // save all the of the scroll event handlers
-    detachedHandlers = [];
-    var scrollEvents = $._data(scrollBody[0], "events");
-    jQuery.each(scrollEvents.scroll, function (k, v) {
-      detachedHandlers.push(v.handler);
-    });
-
-    // detach all scroll event handlers
-    scrollBody.off("scroll");
   };
 
   window.setData = function (data) {

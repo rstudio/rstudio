@@ -1,7 +1,7 @@
 /*
  * ServerSessionManager.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -228,6 +228,7 @@ SessionManager::SessionManager()
 Error SessionManager::launchSession(boost::asio::io_service& ioService,
                                     const r_util::SessionContext& context,
                                     const http::Request& request,
+                                    bool &launched,
                                     const http::ResponseHandler& onLaunch,
                                     const http::ErrorHandler& onError)
 {
@@ -242,22 +243,26 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
          if ( (pos->second + boost::posix_time::minutes(1))
                > microsec_clock::universal_time() )
          {
+            LOG_DEBUG_MESSAGE("Found existing recent launch < 1 min for: " + context.username + " id: " + context.scope.id());
+
+            launched = false;
             return Success();
          }
          // otherwise erase it from pending launches and then
          // re-launch (immediately below)
          else
          {
-            // very unexpected condition
-            LOG_WARNING_MESSAGE("Very long session launch delay for "
-                                "user " + context.username +" (aborting wait)");
+            // This is expected when load balancing since rpc requests that remove pendingLaunches may happen on another server
+            LOG_INFO_MESSAGE("Found pending previous session launch for "
+                             "user " + context.username +" (aborting wait) for: " + context.scope.id());
 
             pendingLaunches_.erase(context);
          }
       }
 
-      // record the launch
       pendingLaunches_[context] =  microsec_clock::universal_time();
+
+      cleanStalePendingLaunches();
    }
    END_LOCK_MUTEX
 
@@ -281,10 +286,13 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    Error error = sessionLaunchFunction_(ioService, profile, request, onLaunch, onError);
    if (error)
    {
+      LOG_ERROR_MESSAGE("Returning error from session manager launch function: " + error.asString());
+
       removePendingLaunch(context);
       return error;
    }
 
+   launched = true;
    return Success();
 }
 
@@ -335,7 +343,7 @@ Error SessionManager::launchAndTrackSession(
             "DYLD_INSERT_LIBRARIES",
             rLibPath.getAbsolutePath());
 #endif
-         
+
    // launch the session
    PidType pid = 0;
    Error error = launchChildProcess(profile.executablePath,
@@ -344,7 +352,15 @@ Error SessionManager::launchAndTrackSession(
                                     configFilter,
                                     &pid);
    if (error)
+   {
+      error.addProperty("description", "Error launching session process");
+      error.addProperty("user", runAsUser);
+      error.addProperty("executablePath", profile.executablePath);
       return error;
+   }
+
+   LOG_DEBUG_MESSAGE("Launched session process for user: " + runAsUser + ": " + profile.executablePath +
+                     " pid: " + safe_convert::numberToString(pid));
 
    // track it for subsequent reaping
    processTracker_.addProcess(pid, boost::bind(onProcessExit,
@@ -371,9 +387,25 @@ void SessionManager::removePendingLaunch(const r_util::SessionContext& context)
 {
    LOCK_MUTEX(launchesMutex_)
    {
-      pendingLaunches_.erase(context);
+      if (pendingLaunches_.erase(context))
+         LOG_DEBUG_MESSAGE("Removed pending launch for: " + context.username + " id: " + context.scope.id());
    }
    END_LOCK_MUTEX
+}
+
+// Caller should have launchesMutex_. Removes any pendingLaunches that were recorded but where the
+// session never started, or rpcs ended up being handled by another rserver node in the cluster
+void SessionManager::cleanStalePendingLaunches()
+{
+   auto it = pendingLaunches_.cbegin();
+   auto now = boost::posix_time::microsec_clock::universal_time();
+   while (it != pendingLaunches_.cend())
+   {
+      if (now > (it->second + boost::posix_time::minutes(3)))
+         pendingLaunches_.erase(it++);
+      else
+         ++it;
+   }
 }
 
 void SessionManager::notifySIGCHLD()

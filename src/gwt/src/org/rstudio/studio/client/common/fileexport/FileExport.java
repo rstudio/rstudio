@@ -1,7 +1,7 @@
 /*
  * FileExport.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,11 +17,13 @@ package org.rstudio.studio.client.common.fileexport;
 
 import java.util.ArrayList;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import com.google.inject.Inject;
@@ -56,8 +58,8 @@ public class FileExport
       // validation: some files provided
       if  (files.size() == 0)
       {
-         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, "No Files Selected",
-               "Please select one or more files to export.");
+         globalDisplay_.showMessage(GlobalDisplay.MSG_INFO, constants_.noFilesSelectedCaption(),
+               constants_.noFilesSelectedMessage());
          return;
       }
          
@@ -133,14 +135,14 @@ public class FileExport
    {
       globalDisplay_.promptForText(
             caption,
-            "The " + description + " will be downloaded to your " +
-            "computer. Please specify a name for the downloaded file:",
+            constants_.showFileExportLabel(description),
             defaultName + defaultExtension,
             -1, -1,
-            "Download",
+            constants_.downloadButtonCaption(),
              operation);
    }
    
    private GlobalDisplay globalDisplay_;
    private FilesServerOperations server_;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

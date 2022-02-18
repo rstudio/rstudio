@@ -1,7 +1,7 @@
 /*
  * SessionConsole.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -189,12 +189,16 @@ void syncConsoleColorEnv()
          core::system::setenv("TERM", rsession::options().defaultConsoleTerm());
       if (rsession::options().defaultCliColorForce())
          core::system::setenv("CLICOLOR_FORCE", "1");
+      
+      // Allow cli::style_hyperlink()
+      core::system::setenv("RSTUDIO_CLI_HYPERLINKS", "true");
    }
    else
    {
       core::system::unsetenv("RSTUDIO_CONSOLE_COLOR");
       core::system::unsetenv("TERM");
       core::system::unsetenv("CLICOLOR_FORCE");
+      core::system::unsetenv("RSTUDIO_CLI_HYPERLINKS");
    }
 }
 

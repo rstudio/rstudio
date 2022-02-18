@@ -1,0 +1,48 @@
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   xmlns:rc="urn:import:org.rstudio.studio.client.common">
+
+   <ui:with field="resources" type="org.rstudio.studio.client.common.newdocument.NewDocumentResources" />
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
+   
+   <g:HTMLPanel>
+   <g:HorizontalPanel height="375px" styleName="{resources.styles.templatePanel}">
+     <rw:WidgetListBox ui:field="listTemplates_"
+                styleName="{resources.styles.fillHeight} {resources.styles.templateList}" 
+                width="150px"></rw:WidgetListBox>
+     <g:HTMLPanel height="100%" width="325px" 
+                  styleName="{resources.styles.templateDetails}">
+        <g:HTMLPanel ui:field="newTemplatePanel_">
+           <rw:LayoutGrid width="100%" cellSpacing="0" cellPadding="0">
+             <rw:row>
+               <rw:customCell>
+                  <rw:FormLabel for="{ElementIds.getNewRmdTitle}" styleName="{resources.styles.topLabel}">Title:</rw:FormLabel>
+               </rw:customCell>
+               <rw:customCell styleName="{resources.styles.textCol}">
+                 <rw:FormTextBox elementId="{ElementIds.getNewRmdTitle}" styleName="{resources.styles.textBox}" 
+                                 ui:field="txtTitle_" />
+               </rw:customCell>
+              </rw:row>
+              <rw:row>
+                <rw:customCell>
+                   <rw:FormLabel for="{ElementIds.getNewRmdAuthor}" styleName="{resources.styles.topLabel}">Author:</rw:FormLabel>
+                </rw:customCell>
+                <rw:customCell>
+                   <rw:FormTextBox elementId="{ElementIds.getNewRmdAuthor}" styleName="{resources.styles.textBox}" 
+                                   ui:field="txtAuthor_"/>
+                </rw:customCell>
+              </rw:row>
+           </rw:LayoutGrid>
+           <g:HTMLPanel ui:field="templateFormatPanel_" styleName="{resources.styles.formatPanel}"></g:HTMLPanel>
+           <g:HTMLPanel>
+             <rw:LayoutGrid ui:field="grid_">
+             </rw:LayoutGrid>
+           </g:HTMLPanel>
+        </g:HTMLPanel>
+        
+       
+     </g:HTMLPanel>
+   </g:HorizontalPanel>
+   </g:HTMLPanel>
+</ui:UiBinder> 

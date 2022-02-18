@@ -2,7 +2,7 @@
 #
 # RStudio Sentry Upload script (sentry-upload.sh)
 # 
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -41,8 +41,8 @@ while true; do
         break
     fi
 
-    # Don't try more than 5 times
-    if [ $RETRIES -gt 5 ]; then
+    # Retry and timeout are now done in Jenkinsfile
+    if [ $RETRIES -gt 0 ]; then
         echo "Giving up upload after $RETRIES attempts"
         exit 1
     fi

@@ -1,7 +1,7 @@
 /*
  * PanmirrorEditor.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import jsinterop.annotations.JsType;
 
 import org.rstudio.core.client.jsinterop.JsConsumerFunction;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenus;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
@@ -91,6 +92,9 @@ public class PanmirrorEditor
    public native String getYamlFrontMatter();
    public native void applyYamlFrontMatter(String yaml);
    
+   public native PresentationEditorLocation getPresentationEditorLocation();
+   public native void navigateToPresentationEditorLocation(PresentationEditorLocation location);
+   
    public native void focus();
    public native void blur();
    
@@ -111,5 +115,4 @@ public class PanmirrorEditor
    public native PanmirrorPandocFormatConfig getPandocFormatConfig(boolean isRmd);
    
    public native void enableDevTools(JsObject initFn);
- 
 }

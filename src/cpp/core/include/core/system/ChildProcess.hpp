@@ -1,7 +1,7 @@
 /*
  * ChildProcess.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,10 +70,10 @@ public:
    // Does this process have any subprocesses? True if there are
    // subprocesses, if it hasn't been checked yet, or if the process
    // isn't configured to check for subprocesses.
-   virtual bool hasNonWhitelistSubprocess() const;
+   virtual bool hasNonIgnoredSubprocess() const;
 
-   // Does this process have any subprocesses that match the whitelist?
-   virtual bool hasWhitelistSubprocess() const;
+   // Does this process have any subprocesses that have been explicitly ignored?
+   virtual bool hasIgnoredSubprocess() const;
 
    // What is current working directory of this process? Empty if unknown
    // or not configured to track cwd.
@@ -221,8 +221,8 @@ public:
    // override of terminate (allow special handling for unix pty termination)
    virtual Error terminate();
 
-   virtual bool hasNonWhitelistSubprocess() const;
-   virtual bool hasWhitelistSubprocess() const;
+   virtual bool hasNonIgnoredSubprocess() const;
+   virtual bool hasIgnoredSubprocess() const;
    virtual core::FilePath getCwd() const;
    virtual bool hasRecentOutput() const;
 

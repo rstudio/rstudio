@@ -1,7 +1,7 @@
 /*
  * RCompilationDatabase.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,6 +37,7 @@
 #include <core/libclang/LibClang.hpp>
 
 #include <r/RExec.hpp>
+#include <r/ROptions.hpp>
 #include <r/RVersionInfo.hpp>
 
 #include <session/projects/SessionProjects.hpp>
@@ -60,6 +61,15 @@ LibClang& clang()
    return libclang::clang();
 }
 
+bool verbose(int level)
+{
+   return rSourceIndex().verbose() >= level;
+}
+
+bool precompiledHeadersEnabled()
+{
+   return r::options::getOption<bool>("rstudio.libclang.usePrecompiledHeaders", true, false);
+}
 
 struct SourceCppFileInfo
 {
@@ -271,9 +281,7 @@ std::vector<std::string> parseCompilationResults(const std::string& results)
 
    // break into lines
    std::vector<std::string> lines;
-   boost::algorithm::split(lines, results,
-                           boost::algorithm::is_any_of("\r\n"));
-
+   boost::algorithm::split(lines, results, boost::algorithm::is_any_of("\r\n"));
 
    // find the line with the compilation and add it's args
    boost::regex re("-c [^\\.]+\\.c\\w* -o");
@@ -281,10 +289,32 @@ std::vector<std::string> parseCompilationResults(const std::string& results)
    {
       if (regex_utils::search(line, re))
       {
-         std::vector<std::string> args = extractCompileArgs(line);
-         std::copy(args.begin(), args.end(), std::back_inserter(compileArgs));
+         // extract compilation args
+         compileArgs = extractCompileArgs(line);
+         
+         // we found the compilation line; we're done parsing
          break;
       }
+   }
+   
+#ifdef _WIN32
+   // remove collision with built-in compilation arguments
+   // (we need to ensure system headers are included in the right order)
+   auto version = r::version_info::currentRVersion();
+   if (version.versionMajor() == 4 && version.versionMinor() >= 2)
+   {
+      core::algorithm::expel_if(compileArgs, [](const std::string& arg)
+      {
+         return arg.find("x86_64-w64-mingw32.static.posix") != std::string::npos;
+      });
+   }
+#endif
+
+   if (verbose(3))
+   {
+      std::cerr << "# PARSE COMPILATION RESULTS ----" << std::endl;
+      core::debug::print(compileArgs);
+      std::cerr << std::endl;
    }
 
    // return the args
@@ -302,7 +332,7 @@ std::string packagePCH(const std::string& linkingTo)
       LOG_ERROR(error);
    }
 
-   if (rSourceIndex().verbose() > 0)
+   if (verbose(1))
    {
       std::cerr << "PACKAGE PCH: " << pch << std::endl;
    }
@@ -347,6 +377,14 @@ std::vector<std::string> includesForLinkingTo(const std::string& linkingTo)
       error.addProperty("linking-to", linkingTo);
       LOG_ERROR(error);
    }
+
+   if (verbose(3))
+   {
+      std::cerr << "# LINKINGTO INCLUDES ----" << std::endl;
+      core::debug::print(includes);
+      std::cerr << std::endl;
+   }
+
    return includes;
 }
 
@@ -375,7 +413,8 @@ void RCompilationDatabase::updateForCurrentPackage()
    
    bool isCurrent =
          packageBuildFileHash == packageBuildFileHash_ &&
-         compilerHash == compilerHash_;
+         compilerHash == compilerHash_ &&
+         module_context::rVersion() == rVersion_;
    
    if (isCurrent)
       return;
@@ -395,6 +434,7 @@ void RCompilationDatabase::updateForCurrentPackage()
       packageCompilationConfig_.isCpp = isCpp;
       packageBuildFileHash_ = packageBuildFileHash;
       compilerHash_ = compilerHash;
+      rVersion_ = module_context::rVersion();
 
       // save them to disk
       savePackageCompilationConfig();
@@ -469,6 +509,14 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
    if (error)
       LOG_ERROR(error);
 
+   // diagnostics
+   if (verbose(3))
+   {
+      std::cerr << "# PACKAGE COMPILATION ARGS ----" << std::endl;
+      core::debug::print(compileArgs);
+      std::cerr << std::endl;
+   }
+
    // return the compileArgs
    return compileArgs;
 }
@@ -492,11 +540,12 @@ void RCompilationDatabase::savePackageCompilationConfig()
    configJson["is_cpp"] = packageCompilationConfig_.isCpp;
    configJson["hash"] = packageBuildFileHash_;
    configJson["compiler"] = compilerHash_;
+   configJson["rversion"] = rVersion_;
 
    FilePath configFilePath = compilationConfigFilePath();
    std::string jsonFormatted = configJson.writeFormatted();
    
-   if (rSourceIndex().verbose() > 0)
+   if (verbose(1))
    {
       std::cerr << "# SAVING PACKAGE COMPILATION CONFIG ----" << std::endl;
       std::cerr << configFilePath.getAbsolutePath() << std::endl;
@@ -547,6 +596,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    // also attempt to read 'compiler' field (added in 1.4 Juliet Rose)
    // errors can be ignored here since this field won't exist in older databases
    json::readObject(configJson.getObject(), "compiler", compilerHash_);
+   json::readObject(configJson.getObject(), "rversion", rVersion_);
 
    packageCompilationConfig_.args.clear();
    for (const json::Value& argJson : argsJson)
@@ -555,11 +605,11 @@ void RCompilationDatabase::restorePackageCompilationConfig()
          packageCompilationConfig_.args.push_back(argJson.getString());
    }
    
-   if (rSourceIndex().verbose() > 0)
+   if (verbose(1))
    {
       std::cerr << "# RESTORING PACKAGE COMPILATION CONFIG ----" << std::endl;
       std::cerr << configFilePath.getAbsolutePath() << std::endl;
-      std::cerr << configJson.writeFormatted() << std::endl;
+      std::cerr << configJson.writeFormatted() << std::endl << std::endl;
    }
 }
 
@@ -581,7 +631,7 @@ void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
    // if we are disabling indexing then bail
    if (info.disableIndexing)
    {
-      if (rSourceIndex().verbose() > 0)
+      if (verbose(1))
          std::cerr << "CLANG SKIP INDEXING: " << srcFile << std::endl;
 
       return;
@@ -785,6 +835,7 @@ void RCompilationDatabase::rebuildPackageCompilationDatabase()
 {
    packageBuildFileHash_.clear();
    compilerHash_.clear();
+   rVersion_.clear();
 }
 
 bool RCompilationDatabase::shouldIndexConfig(const CompilationConfig& config)
@@ -840,17 +891,21 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    // bail if we aren't able to index this config
    if (!shouldIndexConfig(config))
    {
-      if (rSourceIndex().verbose() > 0)
+      if (verbose(1))
          std::cerr << "CLANG SKIP INDEXING: " << filename << std::endl;
 
       return std::vector<std::string>();
    }
 
    // copy the args
-   std::copy(config.args.begin(), config.args.end(), std::back_inserter(args));
+   std::copy(
+            config.args.begin(),
+            config.args.end(),
+            std::back_inserter(args));
 
    // add precompiled headers if necessary
    if (usePrecompiledHeaders && usePrecompiledHeaders_ &&
+       precompiledHeadersEnabled() &&
        !config.PCH.empty() && config.isCpp &&
        (filePath.getExtensionLowerCase() != ".c") &&
        (filePath.getExtensionLowerCase() != ".m"))
@@ -865,7 +920,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    // if this is a .h file and it's a C++ config then force C++ for
    // libclang (this is necessary because many C++ header files in
    // the R ecosystem use .h
-   if ((filePath.getExtensionLowerCase() == ".h") && config.isCpp)
+   if (filePath.getExtensionLowerCase() == ".h" && config.isCpp)
    {
       args.push_back("-x");
       args.push_back("c++");
@@ -920,12 +975,10 @@ RCompilationDatabase::CompilationConfig
    }
 
    // parse the compilation results
-   std::vector<std::string> compileArgs = parseCompilationResults(
-                                                           result.stdOut);
+   std::vector<std::string> compileArgs = parseCompilationResults(result.stdOut);
 
-   std::copy(compileArgs.begin(),
-             compileArgs.end(),
-             std::back_inserter(args));
+   // add them to the compile args
+   args.insert(args.begin(), compileArgs.begin(), compileArgs.end());
 
    CompilationConfig config;
    config.args = args;
@@ -943,7 +996,7 @@ std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
    if (error)
    {
       LOG_ERROR(error);
-      return std::vector<std::string>();
+      return {};
    }
 
    // execute R CMD SHLIB
@@ -959,26 +1012,30 @@ std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
    if (error)
    {
       LOG_ERROR(error);
-      return std::vector<std::string>();
+      return {};
    }
    else if (result.exitStatus != EXIT_SUCCESS)
    {
       LOG_ERROR_MESSAGE("Error performing R CMD SHLIB: " + result.stdErr);
-      return std::vector<std::string>();
+      return {};
    }
    else
    {
       // parse the compilation results
+      if (verbose(3))
+      {
+         std::cerr << "# PARSING COMPILATION OUTPUT ----" << std::endl;
+         std::cerr << result.stdOut << std::endl;
+      }
+
       return parseCompilationResults(result.stdOut);
    }
 }
 
 
-std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp)
-                                                                          const
+std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) const
 {
    std::vector<std::string> args;
-
 
 #ifdef _WIN32
    // add built-in clang compiler headers
@@ -1004,15 +1061,20 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp)
    // add Rtools headers
    auto rtArgs = rToolsArgs();
    args.insert(args.end(), rtArgs.begin(), rtArgs.end());
-#endif
-
-#ifndef _WIN32
+#else
    // add system include headers as reported by compiler
    std::vector<std::string> includes;
    discoverSystemIncludePaths(&includes);
    for (auto include : includes)
       args.push_back("-I" + include);
 #endif
+
+   if (verbose(3))
+   {
+      std::cerr << "# BASE COMPILATION ARGS ----" << std::endl;
+      core::debug::print(args);
+      std::cerr << std::endl;
+   }
 
    return args;
 }
@@ -1044,7 +1106,7 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
                pkgInfo.linkingTo());
 
       // add them to args
-      std::copy(includes.begin(), includes.end(), std::back_inserter(args));
+      args.insert(args.begin(), includes.begin(), includes.end());
    }
 
    // get the build environment (e.g. Rtools config)
@@ -1071,30 +1133,43 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
    FilePath srcDir = pkgPath.completeChildPath("src");
    bool isCpp = packageIsCpp(pkgInfo.linkingTo(), srcDir);
    std::vector<std::string> compileArgs = compileArgsForPackage(env, srcDir, isCpp);
-   if (!compileArgs.empty())
-   {
-      // do path substitutions
-      for (std::string arg : compileArgs)
-      {
-         // do path substitutions
-         boost::algorithm::replace_first(
-                  arg,
-                  "-I..",
-                  "-I" + srcDir.getParent().getAbsolutePath());
-         boost::algorithm::replace_first(
-                  arg,
-                  "-I.",
-                  "-I" + srcDir.getAbsolutePath());
 
-         args.push_back(arg);
-      }
-   }
+   // perform path substitution
+   std::transform(
+            compileArgs.begin(),
+            compileArgs.end(),
+            compileArgs.begin(),
+            [&](std::string arg)
+   {
+      boost::algorithm::replace_first(
+               arg,
+               "-I..",
+               "-I" + srcDir.getParent().getAbsolutePath());
+
+      boost::algorithm::replace_first(
+               arg,
+               "-I.",
+               "-I" + srcDir.getAbsolutePath());
+
+      return arg;
+
+   });
+
+   // add these to our args
+   args.insert(args.begin(), compileArgs.begin(), compileArgs.end());
 
    if (pPkgInfo)
       *pPkgInfo = pkgInfo;
 
    if (pIsCpp)
       *pIsCpp = isCpp;
+
+   if (verbose(3))
+   {
+      std::cerr << "# PACKAGE COMPILATION ARGS ----" << std::endl;
+      core::debug::print(args);
+      std::cerr << std::endl;
+   }
 
    return args;
 
@@ -1106,16 +1181,11 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
 #ifdef _WIN32
    if (rToolsArgs_.empty())
    {
-      // Rtools 4.0 will set RTOOLS40_HOME
-      std::string rtoolsHomeEnvVar;
-      auto rVersion = r::version_info::currentRVersion();
-      if (rVersion.versionMajor() == 4)
-         rtoolsHomeEnvVar = "RTOOLS40_HOME";
-
       // scan for Rtools
+      std::string rVersion = module_context::rVersion();
       bool usingMingwGcc49 = module_context::usingMingwGcc49();
       std::vector<core::r_util::RToolsInfo> rTools;
-      core::r_util::scanForRTools(usingMingwGcc49, rtoolsHomeEnvVar, &rTools);
+      core::r_util::scanForRTools(usingMingwGcc49, rVersion, &rTools);
 
       // enumerate them to see if we have a compatible version
       // (go in reverse order for most recent first)
@@ -1128,11 +1198,19 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
             std::copy(clangArgs.begin(),
                       clangArgs.end(),
                       std::back_inserter(rToolsArgs_));
+
             break;
          }
       }
    }
 #endif
+
+   if (rSourceIndex().verbose() > 2)
+   {
+      std::cerr << "# R TOOLS ARGS ----" << std::endl;
+      core::debug::print(rToolsArgs_);
+      std::cerr << std::endl;
+   }
 
    return rToolsArgs_;
 }
@@ -1248,7 +1326,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       
       // add this package's path to the args
       std::vector<std::string> pkgArgs = includesForLinkingTo(pkgName);
-      std::copy(pkgArgs.begin(), pkgArgs.end(), std::back_inserter(args));
+      args.insert(args.begin(), pkgArgs.begin(), pkgArgs.end());
 
       // enforce compilation with requested standard
       core::algorithm::expel_if(args, [](const std::string& arg) {
@@ -1269,7 +1347,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
 
       core::system::ProcessArgs argsArray(args);
 
-      int verboseCompile = (rSourceIndex().verbose() > 1) ? 1 : 0;
+      int verboseCompile = verbose(2) ? 1 : 0;
       CXIndex index = clang().createIndex(0, verboseCompile);
 
       CXTranslationUnit tu = clang().parseTranslationUnit(

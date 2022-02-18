@@ -1,6 +1,6 @@
 /* UserStateAccessor.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,8 @@ import com.google.gwt.core.client.JsArray;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import com.google.gwt.core.client.GWT;
 
 /**
  * Accessor class for user state.
@@ -55,4 +57,6 @@ public class UserStateAccessor extends Prefs
    public static final int LAYER_DEFAULT  = 0;
    public static final int LAYER_COMPUTED = 1;
    public static final int LAYER_USER     = 2;
+
+   private UserStateAccessorConstants _constants = GWT.create(UserStateAccessorConstants.class);
 }

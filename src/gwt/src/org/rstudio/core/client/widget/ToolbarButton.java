@@ -1,7 +1,7 @@
 /*
  * ToolbarButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.ClassIds;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.ImageResourceProvider;
 import org.rstudio.core.client.command.SimpleImageResourceProvider;
@@ -322,6 +323,15 @@ public class ToolbarButton extends FocusWidget
       super.setTitle(title);
       if (!StringUtil.isNullOrEmpty(title))
          Roles.getButtonRole().setAriaLabelProperty(getElement(), title);
+   }
+
+   /**
+    * Set an ElementId for the label part of the button (for automation).
+    * @param id identifier constant from ElementIds
+    */
+   public void setLabelId(String id)
+   {
+      ElementIds.assignElementId(label_, id);
    }
 
    // Class name displayed by Help / Diagnostics / Show DOM Elements command. A default value is

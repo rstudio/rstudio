@@ -1,7 +1,7 @@
 /*
  * ServerAuthHandler.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -157,7 +157,7 @@ Error writeRevokedCookieToDatabase(const RevokedCookie& cookie,
    if (!connection)
       connection = server_core::database::getConnection();
 
-   Query query = connection->query("INSERT INTO revoked_cookie VALUES (:exp, :dat)")
+   Query query = connection->query("INSERT INTO revoked_cookie (expiration, cookie_data) VALUES (:exp, :dat)")
          .withInput(expiration)
          .withInput(cookie.cookie);
 

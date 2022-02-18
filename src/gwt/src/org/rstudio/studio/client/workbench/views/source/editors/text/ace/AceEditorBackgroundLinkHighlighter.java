@@ -1,7 +1,7 @@
 /*
  * AceEditorBackgroundLinkHighlighter.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.source.ViewsSourceConstants;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
@@ -360,8 +361,8 @@ public class AceEditorBackgroundLinkHighlighter
             // inform user when no file found
             if (file == null || !file.exists())
             {
-               String message = "No file at path '" + finalUrl + "'.";
-               String caption = "Error navigating to file";
+               String message = constants_.noFileAtPath(finalUrl);
+               String caption = constants_.errorNavigatingToFile();
                globalDisplay_.showErrorMessage(caption, message);
                return;
             }
@@ -415,8 +416,8 @@ public class AceEditorBackgroundLinkHighlighter
       AnchoredRange anchoredRange = editor.getSession().createAnchoredRange(start, end, true);
 
       final String title = BrowseCap.isMacintosh()
-            ? "Open Link (Command+Click)"
-            : "Open Link (Shift+Click)";
+            ? constants_.openLinkMacCommand()
+            : constants_.openLinkNotMacCommand();
       MarkerRenderer renderer =
             MarkerRenderer.create(editor.getWidget().getEditor(), styles, title);
 
@@ -817,4 +818,5 @@ public class AceEditorBackgroundLinkHighlighter
    private FilesServerOperations server_;
    private MouseTracker mouseTracker_;
    private Provider<UserPrefs> pUserPrefs_;
+   private static final ViewsSourceConstants constants_ = GWT.create(ViewsSourceConstants.class);
 }

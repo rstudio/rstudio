@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetJSHelper.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 
 public class TextEditingTargetJSHelper
@@ -53,9 +54,8 @@ public class TextEditingTargetJSHelper
       if (!previewSource.getFunction().equals("r2d3"))
       {
          display_.showErrorMessage(
-                        "Error Previewing JavaScript",
-                        "'" + previewSource.getFunction() + "' is not a known previewer for " +
-                        "JavaScript files. Did you mean 'r2d3'?");
+                        constants_.previewJSErrorCaption(),
+                        constants_.previewJSErrorMessage(previewSource.getFunction()));
       }
       else
       {
@@ -80,5 +80,5 @@ public class TextEditingTargetJSHelper
    private GlobalDisplay display_;
    private EventBus eventBus_; 
    private DocDisplay docDisplay_;
-  
+   private static final EditorsTextConstants constants_ = GWT.create(EditorsTextConstants.class);
 }

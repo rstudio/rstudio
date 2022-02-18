@@ -1,7 +1,7 @@
 /*
  * CompletionPopupDisplay.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,6 +69,7 @@ public interface CompletionPopupDisplay
    void displayPackageHelp(HelpInfo.ParsedInfo helpInfo);
    void displayDataHelp(HelpInfo.ParsedInfo helpInfo);
    void displaySnippetHelp(String contents);
+   void displayYAMLHelp(String value, String description);
    /**
     * Clear out the current help info
     * @param downloadOperationPending If true, the current value is being

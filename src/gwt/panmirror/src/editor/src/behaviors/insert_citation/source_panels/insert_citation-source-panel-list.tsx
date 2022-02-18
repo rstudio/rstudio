@@ -1,7 +1,7 @@
 /*
  * insert_citation-source-panel-list.tsx
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -188,7 +188,8 @@ export const CitationSourceList = React.forwardRef<HTMLDivElement, CitationSourc
         return (
           <div className={classes} style={{ height: props.height + 'px' }} ref={ref}>
             <div className="pm-insert-citation-source-panel-list-noresults-text">
-              <img src={props.ui.images.search_progress} className="pm-insert-citation-source-panel-list-progress" />
+              <img src={props.ui.images.search_progress} className="pm-insert-citation-source-panel-list-progress" 
+                   draggable="false"/>
               {props.statusMessage}
             </div>
           </div>

@@ -1,7 +1,7 @@
 /*
  * RSessionContext.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -457,7 +457,7 @@ std::string generateScopeId(const std::vector<std::string>& reserved)
    std::string id = core::string_utils::toLower(
                                  core::system::generateShortenedUuid());
 
-   // ensure 8 chracters
+   // ensure 8 characters
    if (id.length() != kProjectIdLen)
    {
       if (id.length() > kProjectIdLen)

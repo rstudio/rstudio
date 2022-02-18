@@ -1,7 +1,7 @@
 /*
  * PackageLibraryUtils.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.views.packages.PackagesConstants;
 
 public class PackageLibraryUtils
 {
@@ -62,16 +63,17 @@ public class PackageLibraryUtils
    public static String nameOfLibraryType(PackageLibraryType type)
    {
       if (type == PackageLibraryType.Project)
-         return "Project Library";
+         return constants_.projectLibraryText();
       else if (type == PackageLibraryType.User)
-         return "User Library";
+         return constants_.userLibraryText();
       else if (type == PackageLibraryType.System)
-         return "System Library";
-      return "Library";
+         return constants_.systemLibraryText();
+      return constants_.libraryText();
    }
    
    public static String getLibraryDescription (Session session, String library)
    {
       return nameOfLibraryType(typeOfLibrary(session, library));
    }
+   private static final PackagesConstants constants_ = com.google.gwt.core.client.GWT.create(PackagesConstants.class);
 }

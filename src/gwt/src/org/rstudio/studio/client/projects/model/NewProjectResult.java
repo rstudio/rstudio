@@ -1,7 +1,7 @@
 /*
  * NewProjectResult.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@ package org.rstudio.studio.client.projects.model;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
+import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
 
 public class NewProjectResult
 {
@@ -27,6 +28,7 @@ public class NewProjectResult
                            VcsCloneOptions vcsCloneOptions,
                            NewPackageOptions newPackageOptions,
                            NewShinyAppOptions newShinyAppOptions,
+                           QuartoNewProjectOptions newQuartoProjectOptions,
                            ProjectTemplateOptions projectTemplateOptions,
                            TutorialApiCallContext callContext)
    {
@@ -38,6 +40,7 @@ public class NewProjectResult
       vcsCloneOptions_ = vcsCloneOptions;
       newPackageOptions_ = newPackageOptions;
       newShinyAppOptions_ = newShinyAppOptions;
+      newQuartoProjectOptions_ = newQuartoProjectOptions;
       projectTemplateOptions_ = projectTemplateOptions;
       callContext_ = callContext;
    }
@@ -102,6 +105,11 @@ public class NewProjectResult
       return newShinyAppOptions_;
    }
    
+   public QuartoNewProjectOptions getNewQuartoProjectOptions()
+   {
+      return newQuartoProjectOptions_;
+   }
+   
    public ProjectTemplateOptions getProjectTemplateOptions()
    {
       return projectTemplateOptions_;
@@ -124,6 +132,7 @@ public class NewProjectResult
    private final VcsCloneOptions vcsCloneOptions_;
    private final NewPackageOptions newPackageOptions_;
    private final NewShinyAppOptions newShinyAppOptions_;
+   private final QuartoNewProjectOptions newQuartoProjectOptions_;
    private final ProjectTemplateOptions projectTemplateOptions_;
    private final TutorialApiCallContext callContext_;
 }

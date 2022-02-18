@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-   <assemblyIdentity version="1.0.0.0"
-      name="rsession"
-      type="win32"/>
+
+   <assemblyIdentity version="1.0.0.0" name="rsession" type="win32"/>
+
    <description>rsession</description>
+
    <!-- Identify the application security requirements. -->
    <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
       <security>
@@ -12,6 +13,8 @@
          </requestedPrivileges>
       </security>
    </trustInfo>
+
+   <!-- Declare compatibility with different versions of Windows. -->
    <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
       <application>
          <!-- Windows 10 -->
@@ -26,4 +29,5 @@
          <supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}"/>
       </application>
    </compatibility>
+
 </assembly>

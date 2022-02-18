@@ -1,7 +1,7 @@
 /*
  * Synctex.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.common.synctex;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
@@ -25,6 +26,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfCompletedEvent;
 import org.rstudio.studio.client.common.compilepdf.events.CompilePdfStartedEvent;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -346,7 +348,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    {
       return new GlobalProgressDelayer(globalDisplay_,
                                        500,
-                                       "Syncing...").getIndicator();
+                                       constants_.getSyncProgressMessage()).getIndicator();
    }
 
    private void setNoSynctexStatus()
@@ -419,6 +421,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private final Satellite satellite_;
    private String pdfPath_ = null;
    private String targetFile_ = "";
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 
 
 }

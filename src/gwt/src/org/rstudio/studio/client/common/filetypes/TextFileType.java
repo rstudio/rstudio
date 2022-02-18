@@ -1,7 +1,7 @@
 /*
  * TextFileType.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.filetypes;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 
 import org.rstudio.core.client.FilePosition;
@@ -22,6 +23,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
@@ -211,7 +213,8 @@ public class TextFileType extends EditableFileType
    
    public boolean isRmd()
    {
-      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId());
+      return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             isQuartoMarkdown();
    }
    
    public boolean isRhtml()
@@ -244,7 +247,13 @@ public class TextFileType extends EditableFileType
    public boolean isMarkdown()
    {
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
+             isQuartoMarkdown() ||
              FileTypeRegistry.MARKDOWN.getTypeId().equals(getTypeId());
+   }
+   
+   public boolean isQuartoMarkdown()
+   {
+      return FileTypeRegistry.QUARTO.getTypeId().equals(getTypeId());
    }
    
    public boolean isPlainMarkdown()
@@ -279,7 +288,7 @@ public class TextFileType extends EditableFileType
    
    public String getPreviewButtonText()
    {
-      return "Preview";
+      return constants_.previewButtonText();
    }
    
    public String createPreviewCommand(String file)
@@ -387,6 +396,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.notebookExpandAllOutput());
          results.add(commands.executeSetupChunk());
       }
+    
       if (canKnitToHTML() || canCompileNotebook())
       {
          results.add(commands.knitDocument());
@@ -394,6 +404,10 @@ public class TextFileType extends EditableFileType
       if (canPreviewHTML())
       {
          results.add(commands.previewHTML());
+      }
+      if (canKnitToHTML() || canPreviewHTML())
+      {
+         results.add(commands.quartoRenderDocument());
       }
       if (canCompilePDF())
       {
@@ -451,6 +465,7 @@ public class TextFileType extends EditableFileType
          results.add(commands.sourceAsJob());
          results.add(commands.runSelectionAsJob());
          results.add(commands.runSelectionAsLauncherJob());
+         results.add(commands.runDocumentFromServerDotR());
       }
 
       results.add(commands.sendToTerminal());
@@ -552,4 +567,5 @@ public class TextFileType extends EditableFileType
    protected static Pattern reCommentType_ = Pattern.create("\\bcomment\\b");
    protected static Pattern reKeywordType_ = Pattern.create("\\bkeyword\\b");
    protected static Pattern reIdentifierType_ = Pattern.create("\\bidentifier\\b");
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

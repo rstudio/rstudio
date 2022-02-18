@@ -1,7 +1,7 @@
 /*
  * SecondaryReposDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 {
@@ -58,7 +59,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                                String cranRepoUrl,
                                boolean cranIsCustom)
    {
-      super("Retrieving list of secondary repositories...", 
+      super(constants_.secondaryReposDialog(),
             Roles.getDialogRole(), operation);
 
       excluded_ = excluded;
@@ -81,14 +82,14 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
          cranMirror.setName(nameTextBox_.getText());
          cranMirror.setURL(urlTextBox_.getText());
 
-         cranMirror.setHost("Custom");
+         cranMirror.setHost(CRANMirror.getCustomEnumValue());
 
          return cranMirror;
       }
       else if (listBox_ != null && listBox_.getSelectedIndex() >= 0)
       {
          CRANMirror cranMirror = repos_.get(listBox_.getSelectedIndex());
-         cranMirror.setHost("Secondary");
+         cranMirror.setHost(CRANMirror.getSecondaryEnumValue());
          return cranMirror;
       }
       else
@@ -111,15 +112,15 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
    {
       if (input == null)
       {
-         globalDisplay_.showErrorMessage("Error", 
-                                         "Please select or input a CRAN repository");
+         globalDisplay_.showErrorMessage(constants_.showErrorCaption(),
+                                         constants_.validateSyncLabel());
          return false;
       }
 
       if (excluded_.contains(input.getName()))
       {
-         globalDisplay_.showErrorMessage("Error",
-               "The repository " + input.getName() + " is already included");
+         globalDisplay_.showErrorMessage(constants_.showErrorCaption(),
+               constants_.showErrorRepoMessage() + input.getName() + " " + constants_.alreadyIncludedMessage());
          return false;
       }
 
@@ -136,9 +137,9 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
          return;
       }
 
-      if (input.getHost().equals("Custom"))
+      if (input.isCustom())
       {
-         progressIndicator_.onProgress("Validating CRAN repository...");
+         progressIndicator_.onProgress(constants_.validateAsyncProgress());
 
          mirrorOperations_.validateCranRepo(new ServerRequestCallback<Boolean>()
          {
@@ -149,7 +150,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                if (!validated)
                {
                   progressIndicator_.onError(
-                        "The given URL does not appear to be a valid CRAN repository");
+                        constants_.onResponseReceived());
                   onValidated.execute(false);
                }
                else
@@ -189,7 +190,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       namePanel.setStylePrimaryName(RESOURCES.styles().namePanel());
       nameTextBox_ = new TextBox();
       nameTextBox_.setStylePrimaryName(RESOURCES.styles().nameTextBox());
-      FormLabel nameLabel = new FormLabel("Name:", nameTextBox_);
+      FormLabel nameLabel = new FormLabel(constants_.nameLabel(), nameTextBox_);
       namePanel.add(nameLabel);
       namePanel.add(nameTextBox_);
       customPanel.add(namePanel);
@@ -197,12 +198,12 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       VerticalPanel urlPanel = new VerticalPanel();
       urlTextBox_ = new TextBox();
       urlTextBox_.setStylePrimaryName(RESOURCES.styles().urlTextBox());
-      FormLabel urlLabel = new FormLabel("Url:", urlTextBox_);
+      FormLabel urlLabel = new FormLabel(constants_.urlLabel(), urlTextBox_);
       urlPanel.add(urlLabel);
       urlPanel.add(urlTextBox_);
       customPanel.add(urlPanel);
 
-      reposLabel_ = new FormLabel("Available repositories:");
+      reposLabel_ = new FormLabel(constants_.reposLabel());
       reposLabel_.getElement().getStyle().setMarginTop(8, Unit.PX);
       root.add(reposLabel_);
 
@@ -224,9 +225,9 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
          {
             if (!StringUtil.isNullOrEmpty(result.getError()))
             {
-               globalDisplay_.showErrorMessage("Error",
+               globalDisplay_.showErrorMessage(constants_.showErrorCaption(),
                      result.getError());
-               setText("Add Secondary Repository");
+               setText(constants_.secondaryRepoLabel());
                return;
             }
 
@@ -273,7 +274,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
             
             panel_.setWidget(listBox_);
             
-            setText("Add Secondary Repository");
+            setText(constants_.secondaryRepoLabel());
 
             listBox_.addDoubleClickHandler(new DoubleClickHandler() {
                @Override
@@ -344,4 +345,6 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 
    private MirrorsServerOperations mirrorOperations_;
    private ProgressIndicator progressIndicator_;
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+
 }

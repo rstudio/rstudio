@@ -1,7 +1,7 @@
 /*
  * BuildPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,17 +19,20 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.GwtEvent;
+import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
-import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CheckableMenuItem;
@@ -42,12 +45,17 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
 import org.rstudio.studio.client.common.compile.CompilePanel;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
+import org.rstudio.studio.client.quarto.QuartoHelper;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.views.buildtools.events.BuildRenderSubTypeEvent;
+import org.rstudio.studio.client.workbench.views.buildtools.events.BuildServeSubTypeEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BookdownFormats;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildServerOperations;
 
@@ -62,6 +70,7 @@ public class BuildPane extends WorkbenchPane
    public BuildPane(Commands commands,
                     EventBus events,
                     Session session,
+                    FileTypeRegistry fileTypeRegistry,
                     BuildServerOperations server)
    {
       super("Build", events);
@@ -69,6 +78,7 @@ public class BuildPane extends WorkbenchPane
 
       commands_ = commands;
       session_ = session;
+      fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
       compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
       ensureWidget();
@@ -77,44 +87,92 @@ public class BuildPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar("Build Tab");
+      Toolbar toolbar = new Toolbar(constants_.buildTabLabel());
 
       SessionInfo sessionInfo =  session_.getSessionInfo();
       String type = sessionInfo.getBuildToolsType();
       boolean pkg = type == SessionInfo.BUILD_TOOLS_PACKAGE;
       boolean makefile = type == SessionInfo.BUILD_TOOLS_MAKEFILE;
       boolean website = type == SessionInfo.BUILD_TOOLS_WEBSITE;
+      boolean quarto = type == SessionInfo.BUILD_TOOLS_QUARTO;
 
-      // always include build all
-      ToolbarButton buildAllButton = commands_.buildAll().createToolbarButton();
-      if (website)
+      
+      // quarto books get special treatment (build button is a pure menu)
+      QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
+      if (quarto && QuartoHelper.isQuartoBookConfig(quartoConfig))
       {
+         ToolbarPopupMenu bookBuildMenu = new QuartoBookBuildPopupMenu();
+         buildAllButton_ = new ToolbarMenuButton(
+               constants_.buildBookText(),
+               constants_.buildBookText(),
+               commands_.quartoRenderDocument().getImageResource(),
+               bookBuildMenu);
+         toolbar.addLeftWidget(buildAllButton_);
+      }
+      else
+      {
+         // always include build all
+         buildAllButton_ = commands_.buildAll().createToolbarButton();
+         if (website)
+         {
+            if (sessionInfo.getBuildToolsBookdownWebsite())
+            {
+               buildAllButton_.setText(constants_.buildBookText());
+            }
+            else
+            {
+               buildAllButton_.setText(constants_.buildWebsiteText());
+            }
+         }
+         toolbar.addLeftWidget(buildAllButton_);
+         
+         // book build menu
          if (sessionInfo.getBuildToolsBookdownWebsite())
          {
-            buildAllButton.setText("Build Book");
-         }
-         else
-         {
-            buildAllButton.setText("Build Website");
+            ToolbarPopupMenu bookBuildMenu = new BookdownBuildPopupMenu();
+            ToolbarMenuButton buildMenuButton = new ToolbarMenuButton(ToolbarButton.NoText,
+                  constants_.buildBookOptionsText(), bookBuildMenu, true);
+            ElementIds.assignElementId(buildMenuButton, ElementIds.BUILD_BOOKDOWN_MENUBUTTON);
+            toolbar.addLeftWidget(buildMenuButton);  
          }
       }
-      toolbar.addLeftWidget(buildAllButton);
-
-      // book build menu
-      if (sessionInfo.getBuildToolsBookdownWebsite())
-      {
-         BookdownBuildPopupMenu buildPopupMenu = new BookdownBuildPopupMenu();
-         ToolbarMenuButton buildMenuButton = new ToolbarMenuButton(ToolbarButton.NoText,
-               "Build book options", buildPopupMenu, true);
-         ElementIds.assignElementId(buildMenuButton, ElementIds.BUILD_BOOKDOWN_MENUBUTTON);
-         toolbar.addLeftWidget(buildMenuButton);
-      }
-
+      
+      
+      // sync build all button caption
+      syncBuildAllUI();
       toolbar.addLeftSeparator();
+      
+     
+      if (quarto)
+      {
+         // quarto book gets a menu
+         if (QuartoHelper.isQuartoBookConfig(quartoConfig) && quartoConfig.project_formats.length > 1)
+         {
+            ToolbarPopupMenu bookServeMenu = new QuartoBookServePopupMenu();
+            ToolbarMenuButton menuButton =  new ToolbarMenuButton(
+                  constants_.serveBookText(),
+                  constants_.serveBookText(),
+                  commands_.serveQuartoSite().getImageResource(), 
+                  bookServeMenu
+            );
+            toolbar.addLeftWidget(menuButton);
+            toolbar.addLeftSeparator();
+         }
+         // quarto website gets generic serve site
+         else if (QuartoHelper.isQuartoWebsiteConfig(quartoConfig))
+         {
+            toolbar.addLeftWidget(commands_.serveQuartoSite().createToolbarButton());
+            toolbar.addLeftSeparator();
+         }
+      }
+      
 
       // packages get check package
       if (pkg)
       {
+         toolbar.addLeftWidget(commands_.testPackage().createToolbarButton());
+         toolbar.addLeftSeparator();
+
          toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());
          toolbar.addLeftSeparator();
       }
@@ -123,10 +181,12 @@ public class BuildPane extends WorkbenchPane
       if (makefile || website || pkg)
       {
          ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
-         if (makefile || website)
+
+         if (makefile)
+            moreMenu.addItem(commands_.rebuildAll().createMenuItem(false));
+
+         if (website)
          {
-            if (makefile)
-               moreMenu.addItem(commands_.rebuildAll().createMenuItem(false));
             moreMenu.addItem(commands_.cleanAll().createMenuItem(false));
             moreMenu.addSeparator();
          }
@@ -135,7 +195,6 @@ public class BuildPane extends WorkbenchPane
          else if (pkg)
          {
             moreMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
-            moreMenu.addItem(commands_.rebuildAll().createMenuItem(false));
             moreMenu.addSeparator();
             moreMenu.addItem(commands_.testPackage().createMenuItem(false));
             moreMenu.addSeparator();
@@ -151,7 +210,7 @@ public class BuildPane extends WorkbenchPane
 
          // add more menu
          ToolbarMenuButton moreButton = new ToolbarMenuButton(
-               "More",
+               constants_.moreText(),
                ToolbarButton.NoTitle,
                new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
                moreMenu);
@@ -176,14 +235,14 @@ public class BuildPane extends WorkbenchPane
    {
        compilePanel_.clearAll();
    }
-
+   
    class BookdownBuildPopupMenu extends ToolbarPopupMenu
    {
       @Override
       public void getDynamicPopupMenu(final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
       {
          clearItems();
-
+         
          server_.getBookdownFormats(new SimpleRequestCallback<BookdownFormats>()
          {
             @Override
@@ -192,7 +251,7 @@ public class BuildPane extends WorkbenchPane
                String defaultFormat = formats.getOutputFormat();
                JsArrayString allFormats = formats.getAllOututFormats();
                MenuItem allMenu = new FormatMenuItem(
-                  "all", "All Formats", defaultFormat == "all");
+                  "all", constants_.allFormatsLabel(), defaultFormat == "all");
                addItem(allMenu);
                addSeparator();
                for (int i = 0; i < allFormats.length(); i++)
@@ -204,7 +263,7 @@ public class BuildPane extends WorkbenchPane
             }
          });
       }
-
+      
       class FormatMenuItem extends CheckableMenuItem
       {
          public FormatMenuItem(String format, boolean isChecked)
@@ -221,6 +280,11 @@ public class BuildPane extends WorkbenchPane
             onStateChanged();
          }
 
+         public String getFormat()
+         {
+            return format_;
+         }
+         
          @Override
          public String getLabel()
          {
@@ -232,18 +296,87 @@ public class BuildPane extends WorkbenchPane
          {
             return isChecked_;
          }
-
+         
          @Override
          public void onInvoked()
          {
-            SelectionCommitEvent.fire(buildSubType(), format_);
+            BuildPane.this.fireEvent(new BuildRenderSubTypeEvent(format_));
          }
 
-         private final String format_;
-         private final String label_;
-         private final boolean isChecked_;
+         protected final String format_;
+         protected final String label_;
+         protected final boolean isChecked_;
       }
+      
    }
+   
+
+   class QuartoBookBuildPopupMenu extends ToolbarPopupMenu
+   {
+      public QuartoBookBuildPopupMenu()
+      {
+         String allFormats = AppCommand.formatMenuLabel(
+               commands_.quartoRenderDocument().getImageResource(), 
+               constants_.allFormatsLabel(),
+               commands_.buildAll().getShortcut().toString(true)
+            );
+         MenuItem allMenu = new MenuItem(allFormats, true, new Command() {
+            @Override
+            public void execute()
+            {
+               BuildPane.this.fireEvent(new BuildRenderSubTypeEvent("all"));
+            }  
+         });
+         addItem(allMenu);
+         addSeparator();
+         String[] formats = session_.getSessionInfo().getQuartoConfig().project_formats;
+         for (int i=0; i<formats.length; i++) 
+         {
+            String format = formats[i];
+            ImageResource img = fileTypeRegistry_.getIconForFilename("output." + format)
+                  .getImageResource();
+            String menuLabel = AppCommand.formatMenuLabel(
+                  img, constants_.formatMenuLabel(formatName(format)), null);
+            addItem(new MenuItem(menuLabel, true, new Command() {
+               @Override
+               public void execute()
+               {
+                  BuildPane.this.fireEvent(new BuildRenderSubTypeEvent(format));
+               }
+               
+            }));
+         }
+      } 
+   }
+   
+   class QuartoBookServePopupMenu extends ToolbarPopupMenu
+   {
+      public QuartoBookServePopupMenu()
+      {
+         String[] formats = session_.getSessionInfo().getQuartoConfig().project_formats;
+         for (int i=0; i<formats.length; i++) 
+         {
+            String format = formats[i];
+            if (format.startsWith("html") || format.startsWith("pdf"))
+            {
+               ImageResource img = fileTypeRegistry_.getIconForFilename("output." + format)
+                     .getImageResource();
+               String menuLabel = AppCommand.formatMenuLabel(
+                     img, constants_.formatMenuLabel(formatName(format)), null);
+               addItem(new MenuItem(menuLabel, true, new Command() {
+                  @Override
+                  public void execute()
+                  {
+                     BuildPane.this.fireEvent(new BuildServeSubTypeEvent(format));
+                  }
+               }));
+            }
+         }
+      } 
+   }
+   
+
+
 
    @Override
    protected Widget createMainWidget()
@@ -295,28 +428,25 @@ public class BuildPane extends WorkbenchPane
    {
       return compilePanel_.errorList();
    }
+   
+   @Override
+   public HandlerRegistration addBuildRenderSubTypeHandler(BuildRenderSubTypeEvent.Handler handler)
+   {
+      return handlers_.addHandler(BuildRenderSubTypeEvent.TYPE, handler);
+   }
 
    @Override
-   public HasSelectionCommitHandlers<String> buildSubType()
+   public HandlerRegistration addBuildServeSubTypeHandler(BuildServeSubTypeEvent.Handler handler)
    {
-      return new HasSelectionCommitHandlers<String>() {
-
-         @Override
-         public void fireEvent(GwtEvent<?> event)
-         {
-            BuildPane.this.fireEvent(event);
-         }
-
-         @Override
-         public HandlerRegistration addSelectionCommitHandler(
-               SelectionCommitEvent.Handler<String> handler)
-         {
-            return BuildPane.this.addHandler(handler,
-                                             SelectionCommitEvent.getType());
-         }
-
-      };
+      return handlers_.addHandler(BuildServeSubTypeEvent.TYPE, handler);
    }
+   
+   @Override
+   public void fireEvent(GwtEvent<?> event)
+   {
+      handlers_.fireEvent(event);
+   }
+   
 
    @Override
    public String errorsBuildType()
@@ -329,12 +459,69 @@ public class BuildPane extends WorkbenchPane
    {
       compilePanel_.scrollToBottom();
    }
+   
+   private void syncBuildAllUI()
+   {
+      SessionInfo sessionInfo =  session_.getSessionInfo();
+      String type = sessionInfo.getBuildToolsType();
+      if (type == SessionInfo.BUILD_TOOLS_WEBSITE)
+      {
+         if (sessionInfo.getBuildToolsBookdownWebsite())
+         {
+            buildAllButton_.setText(constants_.buildBookText());
+         }
+         else 
+         {
+            buildAllButton_.setText(constants_.buildWebsiteText());
+         }
+      }
+      else if (type == SessionInfo.BUILD_TOOLS_QUARTO)
+      {
+         QuartoConfig config = sessionInfo.getQuartoConfig();
+         if (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_WEBSITE)
+         {
+            buildAllButton_.setText(constants_.renderWebsiteText());
+         }
+         else if (config.project_type == SessionInfo.QUARTO_PROJECT_TYPE_BOOK)
+         {
+            buildAllButton_.setText(constants_.renderBookText());
+         }
+         else
+         {
+            buildAllButton_.setText(constants_.renderProjectText());
+         }
+      }
+   }
+
+   
+   private String formatName(String format)
+   {
+      if (format == "html")
+         return "HTML";
+      else if (format == "pdf")
+         return "PDF";
+      else if (format == "docx")
+         return "MS Word";
+      else if (format == "epub")
+         return "EPUB";
+      else
+         return format;
+   }
+
 
    private ToolbarButton clearBuildButton_;
    private final Commands commands_;
+   private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
    private final BuildServerOperations server_;
    private String errorsBuildType_;
+   private ToolbarButton buildAllButton_;
+
 
    private final CompilePanel compilePanel_;
+
+
+   private final HandlerManager handlers_ = new HandlerManager(this);
+
+   private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * BuildToolsPackagePanel.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,10 +16,11 @@
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.PackagesHelpLink;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectBuildOptions;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -46,7 +47,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       ProjectPreferencesDialogResources RES =
                               ProjectPreferencesDialogResources.INSTANCE;
       
-      pathSelector_ = new DirectorySelector("Package directory:");
+      pathSelector_ = new DirectorySelector(constants_.pathSelectorPackageDir());
       pathSelector_.getElement().getStyle().setMarginBottom(10, Unit.PX);
       add(pathSelector_); 
       pathSelector_.addValueChangeHandler(new ValueChangeHandler<String>() {
@@ -63,17 +64,21 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
          
       });
       
-      chkUseDevtools_ = checkBox(
-            "Use devtools package functions if available");
+      cleanBeforeInstall_ = checkBox(constants_.cleanBeforeInstallLabel());
+      cleanBeforeInstall_.addStyleName(RES.styles().buildToolsCleanBeforeInstall());
+      add(cleanBeforeInstall_);
+
+      chkUseDevtools_ = checkBox(constants_.chkUseDevtoolsCaption());
       chkUseDevtools_.addStyleName(RES.styles().buildToolsDevtools());
       add(chkUseDevtools_);
       
       roxygenizePanel_ = new VerticalPanel();
       roxygenizePanel_.addStyleName(RES.styles().buildToolsRoxygenize());
       HorizontalPanel rocletPanel = new HorizontalPanel();
-      chkUseRoxygen_ = checkBox("Generate documentation with Roxygen");
+      chkUseRoxygen_ = checkBox(constants_.chkUseRoxygenCaption());
       rocletPanel.add(chkUseRoxygen_);
-      btnConfigureRoxygen_ = new ThemedButton("Configure...");
+      btnConfigureRoxygen_ = new SmallButton(constants_.btnConfigureRoxygenLabel());
+      btnConfigureRoxygen_.getElement().getStyle().setMarginLeft(12, Unit.PX);
       btnConfigureRoxygen_.addClickHandler(new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
@@ -102,16 +107,16 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       add(roxygenizePanel_);
       
       add(installAdditionalArguments_ = new AdditionalArguments(
-            "Install and Restart &mdash; R CMD INSTALL additional options:"));
+            constants_.installMdashArgument()));
      
       add(checkAdditionalArguments_ = new AdditionalArguments(
-            "Check Package &mdash; R CMD check additional options:"));
+            constants_.checkPackageMdashArgument()));
       
       add(buildAdditionalArguments_ = new AdditionalArguments(
-            "Build Source Package &mdash; R CMD build additional options:"));
+            constants_.buildSourceMdashArgument()));
            
       add(buildBinaryAdditionalArguments_ = new AdditionalArguments(
-            "Build Binary Package &mdash; R CMD INSTALL additional options:"));
+            constants_.buildBinaryMdashArgument()));
       
       HelpLink packagesHelpLink = new PackagesHelpLink();
       packagesHelpLink.getElement().getStyle().setMarginTop(7, Unit.PX);
@@ -129,6 +134,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    {
       installAdditionalArguments_.setText("--no-multiarch --with-keep.source");
       chkUseDevtools_.setValue(true);
+      cleanBeforeInstall_.setValue(true);
    }
 
    @Override
@@ -151,6 +157,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       boolean showRoxygenize = config.hasPackageRoxygenize() ||
                                options.getBuildContext().isRoxygen2Installed();
       roxygenizePanel_.setVisible(showRoxygenize);
+      cleanBeforeInstall_.setValue(config.getPackageCleanBeforeInstall());
       chkUseDevtools_.setValue(config.getPackageUseDevtools());
       chkUseRoxygen_.setValue(config.hasPackageRoxygenize());
       chkUseRoxygen_.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
@@ -180,6 +187,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    {
       RProjectConfig config = options.getConfig();
       config.setPackageUseDevtools(chkUseDevtools_.getValue());
+      config.setPackageCleanBeforeInstall(cleanBeforeInstall_.getValue());
       config.setPackagePath(pathSelector_.getText());
       config.setPackageInstallArgs(installAdditionalArguments_.getText());
       config.setPackageBuildArgs(buildAdditionalArguments_.getText());
@@ -205,8 +213,10 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
    
    private VerticalPanel roxygenizePanel_;
    private CheckBox chkUseRoxygen_;
+   private CheckBox cleanBeforeInstall_;
    private CheckBox chkUseDevtools_;
-   private ThemedButton btnConfigureRoxygen_;
+   private SmallButton btnConfigureRoxygen_;
    
    private WorkbenchContext workbenchContext_;
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
 }

@@ -1,7 +1,7 @@
 /*
  * DirectoryChooserTextBox.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -21,6 +22,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 
 import com.google.gwt.user.client.ui.Focusable;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 public class DirectoryChooserTextBox extends TextBoxWithButton
 {
@@ -88,7 +90,7 @@ public class DirectoryChooserTextBox extends TextBoxWithButton
                                   final FileDialogs fileDialogs,
                                   final FileSystemContext fsContext)
    {
-      this(label, emptyLabel, "Browse...", uniqueId, buttonDisabled, focusAfter, fileDialogs, fsContext);
+      this(label, emptyLabel, constants_.browseLabel(), uniqueId, buttonDisabled, focusAfter, fileDialogs, fsContext);
    }
 
    public DirectoryChooserTextBox(String label, 
@@ -111,7 +113,7 @@ public class DirectoryChooserTextBox extends TextBoxWithButton
       }
 
       addClickHandler(event -> fileDialogs.chooseFolder(
-            "Choose Directory",
+            constants_.directoryLabel(),
             fsContext,
             FileSystemItem.createDir(getText()),
             (input, indicator) ->
@@ -126,4 +128,6 @@ public class DirectoryChooserTextBox extends TextBoxWithButton
             })
       );
    }
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+
 }

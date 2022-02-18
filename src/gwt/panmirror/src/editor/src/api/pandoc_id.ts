@@ -1,7 +1,7 @@
 /*
  * pandoc_id.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -604,7 +604,7 @@ export function pandocAsciify(text: string) {
     }
     if (newch) {
       chars.push(newch.charCodeAt(0));
-    } else {
+    } else if (ch < 128) {
       chars.push(ch);
     }
   }

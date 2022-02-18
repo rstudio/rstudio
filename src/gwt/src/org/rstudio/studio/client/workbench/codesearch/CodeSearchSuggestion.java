@@ -1,7 +1,7 @@
 /*
  * CodeSearchSuggestion.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -252,6 +252,7 @@ class CodeSearchSuggestion implements Suggestion
       
       // tables
       map.put("tab", CodeIcons.INSTANCE.table2x());
+      map.put("tbl", CodeIcons.INSTANCE.table2x());
       
       // math-related sections (e.g. theorems)
       map.put("thm", CodeIcons.INSTANCE.function2x());

@@ -1,7 +1,7 @@
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
-@external ace_editor_theme;
+@external editor_dark, ace_editor_theme;
 
 @eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
 @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
@@ -34,7 +34,7 @@ span.status img:first-child {
    margin-bottom: 0;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .cellTableSortableHeader {
+.rstudio-themes-dark .cellTableSortableHeader {
    color: white;
 }
 
@@ -47,38 +47,38 @@ span.status img:first-child {
    padding-left: 13px !important;
 }
 
-.rstudio-themes-flat .cellTableSortableHeader {
+.cellTableSortableHeader {
    border-top: none;
    border-left: none;
 }
 
-.rstudio-themes-flat .cellTableSortableHeader:last-child {
+.cellTableSortableHeader:last-child {
    border-right: none;
 }
 
-.rstudio-themes-flat .rstudio-themes-default .cellTableSortableHeader {
+.rstudio-themes-default .cellTableSortableHeader {
    background: THEME_DEFAULT_BACKGROUND;
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .cellTableSortableHeader {
+.rstudio-themes-dark-grey .cellTableSortableHeader {
    background: THEME_DARKGREY_BACKGROUND;
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .cellTableSortableHeader {
+.rstudio-themes-alternate .cellTableSortableHeader {
    background: THEME_ALTERNATE_BACKGROUND;
    border-color: THEME_ALTERNATE_BORDER;
 }
 
-.rstudio-themes-flat.editor_dark .ace_editor_theme .cellTableSelectedRow {
+.editor_dark .ace_editor_theme .cellTableSelectedRow {
    background-color: THEME_DARK_ROW_SELECTED;
 }
 
-.rstudio-themes-flat.editor_dark .ace_editor_theme .cellTableHoveredRow {
+.editor_dark .ace_editor_theme .cellTableHoveredRow {
    background-color: THEME_DARK_ROW_HOVERED;
 }
 
-.rstudio-themes-flat.editor_dark .ace_editor_theme .cellTableSelectedRow.cellTableHoveredRow {
+.editor_dark .ace_editor_theme .cellTableSelectedRow.cellTableHoveredRow {
    background-color: THEME_DARK_ROW_SELECTED;
 }

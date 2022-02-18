@@ -1,7 +1,7 @@
 /*
  * CompletionRequester.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,7 @@ import org.rstudio.studio.client.workbench.views.source.model.RnwCompletionConte
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -209,7 +210,6 @@ public class CompletionRequester
             token,
             newCompletions,
             cachedResult.guessedFunctionName,
-            cachedResult.suggestOnAccept,
             cachedResult.dontInsertParens);
 
       cachedCompletions_.put(diff, result);
@@ -287,21 +287,34 @@ public class CompletionRequester
          ServerRequestCallback<CompletionResult> callback)
    {
       JsArrayString comp = response.getCompletions();
+      JsArrayString display = response.getCompletionsDisplay();
       JsArrayString pkgs = response.getPackages();
       JsArrayBoolean quote = response.getQuote();
       JsArrayInteger type = response.getType();
+      JsArrayBoolean suggestOnAccept = response.getSuggestOnAccept();
+      JsArrayBoolean replaceToEnd = response.getReplaceToEnd();
       JsArrayString meta = response.getMeta();
       ArrayList<QualifiedName> newComp = new ArrayList<>();
       for (int i = 0; i < comp.length(); i++)
       {
-         newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), meta.get(i), response.getHelpHandler(), response.getLanguage()));
+         newComp.add(new QualifiedName(
+            comp.get(i), 
+            display.get(i),
+            pkgs.get(i), 
+            quote.get(i), 
+            type.get(i), 
+            suggestOnAccept.get(i),  
+            replaceToEnd.get(i),
+            meta.get(i), 
+            response.getHelpHandler(), 
+            response.getLanguage())
+         );
       }
 
       CompletionResult result = new CompletionResult(
             response.getToken(),
             newComp,
             response.getGuessedFunctionName(),
-            response.getSuggestOnAccept(),
             response.getOverrideInsertParens());
 
       if (response.isCacheable())
@@ -373,16 +386,34 @@ public class CompletionRequester
             String token = response.getToken();
 
             JsArrayString comp = response.getCompletions();
+            JsArrayString display = response.getCompletionsDisplay();
             JsArrayString pkgs = response.getPackages();
             JsArrayBoolean quote = response.getQuote();
             JsArrayInteger type = response.getType();
+            JsArrayBoolean suggestOnAccept = response.getSuggestOnAccept();
+            JsArrayBoolean replaceToEnd = response.getReplaceToEnd();
             JsArrayString meta = response.getMeta();
             ArrayList<QualifiedName> newComp = new ArrayList<>();
 
             // Get function completions from the server
             for (int i = 0; i < comp.length(); i++)
+            {
                if (comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), meta.get(i), response.getHelpHandler(), response.getLanguage()));
+               {
+                  newComp.add(new QualifiedName(
+                     comp.get(i), 
+                     display.get(i),
+                     pkgs.get(i), 
+                     quote.get(i), 
+                     type.get(i), 
+                     suggestOnAccept.get(i), 
+                     replaceToEnd.get(i),
+                     meta.get(i), 
+                     response.getHelpHandler(), 
+                     response.getLanguage()
+                  ));
+               }
+            }
 
             // Try getting our own function argument completions
             if (!response.getExcludeOtherCompletions())
@@ -400,9 +431,24 @@ public class CompletionRequester
 
             // Get other server completions
             for (int i = 0; i < comp.length(); i++)
+            {
                if (!comp.get(i).endsWith(" = "))
-                  newComp.add(new QualifiedName(comp.get(i), pkgs.get(i), quote.get(i), type.get(i), meta.get(i), response.getHelpHandler(), response.getLanguage()));
-
+               {
+                  newComp.add(new QualifiedName(
+                     comp.get(i), 
+                     display.get(i),
+                     pkgs.get(i), 
+                     quote.get(i), 
+                     type.get(i), 
+                     suggestOnAccept.get(i),
+                     replaceToEnd.get(i),
+                     meta.get(i), 
+                     response.getHelpHandler(), 
+                     response.getLanguage()
+                  ));
+               }
+            }
+            
             // Get snippet completions. Bail if this isn't a top-level
             // completion -- TODO is to add some more context that allows us
             // to properly ascertain this.
@@ -426,7 +472,6 @@ public class CompletionRequester
                   response.getToken(),
                   newComp,
                   response.getGuessedFunctionName(),
-                  response.getSuggestOnAccept(),
                   response.getOverrideInsertParens());
 
             if (response.isCacheable())
@@ -698,9 +743,12 @@ public class CompletionRequester
             Completions response = Completions.createCompletions(
                   result.token,
                   result.completions,
+                  result.completions,
                   JsUtil.toJsArrayString(pkgNames),
                   JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayInteger(new ArrayList<>(result.completions.length())),
+                  JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
+                  JsUtil.toJsArrayBoolean(new ArrayList<>(result.completions.length())),
                   JsUtil.toJsArrayString(new ArrayList<>(result.completions.length())),
                   "",
                   true,
@@ -716,7 +764,10 @@ public class CompletionRequester
             if (result.completions.length() > 0 &&
                 result.completions.get(0).endsWith("="))
             {
-               response.setSuggestOnAccept(true);
+               ArrayList<Boolean> suggestOnAccept = new ArrayList<Boolean>(
+                  Collections.nCopies(result.completions.length(), true)
+               );
+               response.setSuggestOnAccept(JsUtil.toJsArrayBoolean(suggestOnAccept));
             }
 
             requestCallback.onResponseReceived(response);
@@ -741,20 +792,17 @@ public class CompletionRequester
       public CompletionResult(String token,
                               ArrayList<QualifiedName> completions,
                               String guessedFunctionName,
-                              boolean suggestOnAccept,
                               boolean dontInsertParens)
       {
          this.token = token;
          this.completions = completions;
          this.guessedFunctionName = guessedFunctionName;
-         this.suggestOnAccept = suggestOnAccept;
          this.dontInsertParens = dontInsertParens;
       }
 
       public final String token;
       public final ArrayList<QualifiedName> completions;
       public final String guessedFunctionName;
-      public final boolean suggestOnAccept;
       public final boolean dontInsertParens;
    }
 
@@ -765,27 +813,42 @@ public class CompletionRequester
                            boolean shouldQuote,
                            int type)
       {
-         this(name, source, shouldQuote, type, "", null, "R");
+         this(name, source, shouldQuote, type, false);
+      }
+      
+      public QualifiedName(String name,
+                           String source,
+                           boolean shouldQuote,
+                           int type,
+                           boolean suggestOnAccept)
+      {
+         this(name, name, source, shouldQuote, type, suggestOnAccept, false, "", null, "R");
       }
 
       public QualifiedName(String name,
                            String source)
       {
-         this(name, source, false, RCompletionType.UNKNOWN, "", null, "R");
+         this(name, name, source, false, RCompletionType.UNKNOWN, false, false, "", null, "R");
       }
-
+      
       public QualifiedName(String name,
+                           String display,
                            String source,
                            boolean shouldQuote,
                            int type,
+                           boolean suggestOnAccept,
+                           boolean replaceToEnd,
                            String meta,
                            String helpHandler,
                            String language)
       {
          this.name = name;
+         this.display = display;
          this.source = source;
          this.shouldQuote = shouldQuote;
          this.type = type;
+         this.suggestOnAccept = suggestOnAccept;
+         this.replaceToEnd = replaceToEnd;
          this.meta = meta;
          this.helpHandler = helpHandler;
          this.language = language;
@@ -795,14 +858,33 @@ public class CompletionRequester
       {
          return new QualifiedName(
                name,
+               name,
                "snippet",
                false,
                RCompletionType.SNIPPET,
+               false,
+               false,
                "",
                null,
                "R");
       }
-
+      
+      public QualifiedName withSuggestOnAccept()
+      {
+         return new QualifiedName(
+            this.name,
+            this.display,
+            this.source,
+            this.shouldQuote,
+            this.type,
+            true,
+            this.replaceToEnd,
+            this.meta,
+            this.helpHandler,
+            this.language  
+         );
+      }
+      
       @Override
       public String toString()
       {
@@ -811,15 +893,19 @@ public class CompletionRequester
          // Get an icon for the completion
          // We use separate styles for file icons, so we can nudge them
          // a bit differently
-         String style = RES.styles().completionIcon();
-         if (RCompletionType.isFileType(type))
-            style = RES.styles().fileIcon();
+         ImageResource icon = getIcon();
+         if (icon != null)
+         {
+            String style = RES.styles().completionIcon();
+            if (RCompletionType.isFileType(type))
+               style = RES.styles().fileIcon();
 
-         SafeHtmlUtil.appendImage(
-               sb,
-               style,
-               getIcon());
-
+            SafeHtmlUtil.appendImage(
+                  sb,
+                  style,
+                  getIcon());
+         }
+        
          // Get the display name. Note that for file completions this requires
          // some munging of the 'name' and 'package' fields.
          addDisplayName(sb);
@@ -846,7 +932,7 @@ public class CompletionRequester
             SafeHtmlUtil.appendSpan(
                   sb,
                   RES.styles().completion(),
-                  name);
+                  display);
          }
          else
          {
@@ -858,11 +944,11 @@ public class CompletionRequester
                firstSlashIndex = slashIndices.get(
                      slashIndices.size() - 3);
 
-            String endName = name.substring(lastSlashIndex + 1);
+            String endName = display.substring(lastSlashIndex + 1);
             String startName = "";
             if (slashIndices.size() > 2)
                startName += "...";
-            startName += name.substring(firstSlashIndex, lastSlashIndex);
+            startName += display.substring(firstSlashIndex, lastSlashIndex);
 
             SafeHtmlUtil.appendSpan(
                   sb,
@@ -883,7 +969,7 @@ public class CompletionRequester
          SafeHtmlUtil.appendSpan(
                sb,
                RES.styles().completion(),
-               name);
+               display);
 
          // Display the source for functions and snippets (unless there
          // is a custom helpHandler provided, indicating that the "source"
@@ -904,10 +990,11 @@ public class CompletionRequester
       {
          if (RCompletionType.isFunctionType(type))
             return new ImageResource2x(ICONS.function2x());
-
+         
          switch(type)
          {
          case RCompletionType.UNKNOWN:
+         case RCompletionType.YAML_VALUE:
             return new ImageResource2x(ICONS.variable2x());
          case RCompletionType.VECTOR:
             return new ImageResource2x(ICONS.variable2x());
@@ -941,6 +1028,7 @@ public class CompletionRequester
          case RCompletionType.KEYWORD:
             return new ImageResource2x(ICONS.keyword2x());
          case RCompletionType.CONTEXT:
+         case RCompletionType.YAML_KEY:
             return new ImageResource2x(ICONS.context2x());
          case RCompletionType.SNIPPET:
             return new ImageResource2x(ICONS.snippet2x());
@@ -1006,9 +1094,12 @@ public class CompletionRequester
       }
 
       public final String name;
+      public final String display;
       public final String source;
       public final boolean shouldQuote;
       public final int type;
+      public final boolean suggestOnAccept;
+      public final boolean replaceToEnd;
       public final String meta;
       public final String helpHandler;
       public final String language;

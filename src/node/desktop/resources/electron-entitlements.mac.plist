@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  
+  <!-- Required by R packages which want to access the camera. -->
+  <key>com.apple.security.device.camera</key>
+  <true/>
+
+  <!-- Required by R packages which want to access the microphone. -->
+  <key>com.apple.security.device.audio-input</key>
+  <true/>
+
+  <!-- Required by Qt / Chromium. -->
+  <key>com.apple.security.cs.disable-library-validation</key>
+  <true/>
+  <key>com.apple.security.cs.disable-executable-page-protection</key>
+  <true/>
+
+  <!-- We use DYLD_INSERT_LIBRARIES to load the libR.dylib dynamically. -->
+  <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+  <true/>
+
+  <!-- Required to knit to Word -->
+  <key>com.apple.security.automation.apple-events</key>
+  <true/>
+
+</dict>
+</plist>

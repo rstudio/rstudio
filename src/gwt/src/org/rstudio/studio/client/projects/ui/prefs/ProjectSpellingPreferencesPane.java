@@ -1,7 +1,7 @@
 /*
  * ProjectSpellingPreferencesPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 
 import org.rstudio.studio.client.common.spelling.SpellingService;
 import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
@@ -39,9 +40,9 @@ public class ProjectSpellingPreferencesPane extends ProjectPreferencesPane
       uiPrefs_ = uiPrefs;
    
 
-      addHeader("Dictionaries");
+      addHeader(constants_.dictionariesCaption());
       
-      Label infoLabel = new Label("Use (Default) to inherit the global default dictionary");
+      Label infoLabel = new Label(constants_.dictionariesInfoLabel());
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
       spaced(infoLabel);
       add(infoLabel);
@@ -62,7 +63,7 @@ public class ProjectSpellingPreferencesPane extends ProjectPreferencesPane
    @Override
    public String getName()
    {
-      return "Spelling";
+      return constants_.spellingText();
    }
 
    @Override
@@ -88,6 +89,6 @@ public class ProjectSpellingPreferencesPane extends ProjectPreferencesPane
    private SpellingLanguageSelectWidget languageWidget_;
    
    private final UserPrefs uiPrefs_;
- 
-  
+   private static final StudioClientProjectConstants constants_ = com.google.gwt.core.client.GWT.create(StudioClientProjectConstants.class);
+
 }

@@ -1,7 +1,7 @@
 /*
  * SlideRequestHandler.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -448,7 +448,7 @@ std::string fixupLink(const boost::cmatch& match)
          return match[0];
       }
 
-      // bulid the call
+      // build the call
       std::string onClick;
       if (href.size() > colonLoc+2)
       {

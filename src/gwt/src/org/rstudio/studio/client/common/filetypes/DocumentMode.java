@@ -1,7 +1,7 @@
 /*
  * DocumentMode.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@ public class DocumentMode
       MARKDOWN,
       SQL,
       STAN,
+      YAML,
       TEX,
       UNKNOWN
    }
@@ -48,6 +49,8 @@ public class DocumentMode
          return Mode.SQL;
       else if (isPositionInStanMode(docDisplay, position))
          return Mode.STAN;
+      else if (isPositionInYamlMode(docDisplay, position))
+         return Mode.YAML;
       else
          return Mode.UNKNOWN;
    }
@@ -240,5 +243,36 @@ public class DocumentMode
       return isPositionInStanMode(docDisplay, docDisplay.getSelectionStart()) &&
              isPositionInStanMode(docDisplay, docDisplay.getSelectionEnd());
    }
+   
+   
+   // YAML Mode
+   public static boolean isPositionInYamlMode(DocDisplay docDisplay,
+                                              Position position)
+   {
+      if (docDisplay.getFileType().isYaml())
+         return true;
+
+      return isPositionInMode(
+            docDisplay,
+            position,
+            FileType.YAML_LANG_MODE);
+
+   }
+
+   public static boolean isCursorInYamlMode(DocDisplay docDisplay)
+   {
+      return isPositionInYamlMode(
+            docDisplay,
+            docDisplay.getCursorPosition());
+   }
+
+   public static boolean isSelectionInYamlMode(DocDisplay docDisplay)
+   {
+      return isPositionInStanMode(docDisplay, docDisplay.getSelectionStart()) &&
+             isPositionInStanMode(docDisplay, docDisplay.getSelectionEnd());
+   }
+   
+   
+   
 
 }

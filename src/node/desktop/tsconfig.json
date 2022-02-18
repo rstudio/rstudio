@@ -1,27 +1,24 @@
 {
   "compilerOptions": {
     "incremental": true,
-    "target": "es2020",
     "module": "commonjs",
-    "sourceMap": true,                              /* Generates corresponding '.map' file. */
-    "outDir": "dist",                               /* Redirect output structure to the directory. */
-    "removeComments": true,                      /* Do not emit comments to output. */
-
-    "strict": true,                                 /* Enable all strict type-checking options. */
-
-    "baseUrl": ".",                                 /* Base directory to resolve non-absolute module names. */
-    "paths": {                                      /* A series of entries which re-map imports to lookup locations relative to the 'baseUrl'. */
+    "target": "es2020",
+    "sourceMap": true,
+    "removeComments": true,
+    "baseUrl": ".",
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "strict": true,
+    "paths": {
       "*": ["node_modules/*"]
     },
-    "esModuleInterop": true,                        /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
-
-    "skipLibCheck": true,                           /* Skip type checking of declaration files. */
-    "forceConsistentCasingInFileNames": true        /* Disallow inconsistently-cased references to the same file. */
+    "lib": ["es2020", "DOM"],
+    "resolveJsonModule": true
   },
-  "include": [
-    "src/**/*"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["node_modules"],
+  "ts-node": {
+    "transpileOnly": true
+  }
 }

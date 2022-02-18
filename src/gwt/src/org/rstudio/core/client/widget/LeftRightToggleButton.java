@@ -1,7 +1,7 @@
 /*
  * LeftRightToggleButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,6 @@ import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Widget;
@@ -37,23 +36,6 @@ public class LeftRightToggleButton extends Widget
 {
    interface Resources extends ClientBundle
    {
-      @Source("images/LeftToggleLeftOn.png")
-      ImageResource leftToggleLeftOn();
-      @Source("images/LeftToggleRightOn.png")
-      ImageResource leftToggleRightOn();
-      @Source("images/LeftToggleLeftOff.png")
-      ImageResource leftToggleLeftOff();
-      @Source("images/LeftToggleRightOff.png")
-      ImageResource leftToggleRightOff();
-      @Source("images/RightToggleLeftOn.png")
-      ImageResource rightToggleLeftOn();
-      @Source("images/RightToggleRightOn.png")
-      ImageResource rightToggleRightOn();
-      @Source("images/RightToggleLeftOff.png")
-      ImageResource rightToggleLeftOff();
-      @Source("images/RightToggleRightOff.png")
-      ImageResource rightToggleRightOff();
-
       @Source("LeftRightToggleButton.css")
       Styles styles();
    }
@@ -62,8 +44,6 @@ public class LeftRightToggleButton extends Widget
    {
       String container();
       String leftLeft();
-      String leftRight();
-      String rightLeft();
       String rightRight();
       String leftOn();
       String rightOn();

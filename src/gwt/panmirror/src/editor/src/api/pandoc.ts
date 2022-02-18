@@ -1,7 +1,7 @@
 /*
  * pandoc.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -273,6 +273,9 @@ export interface ProsemirrorWriter {
 
   // log an unrecoginzed token type
   logUnrecognized(token: string): void;
+
+  // log the presence of example lists
+  logExampleList(): void;
 
   // query whether a given node type is open
   // (useful for e.g. conditional behavior when in a list or table)

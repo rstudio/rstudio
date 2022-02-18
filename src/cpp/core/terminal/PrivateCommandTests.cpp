@@ -1,7 +1,7 @@
 /*
  * PrivateCommandTests.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -254,7 +254,7 @@ test_context("Private Terminal Command Tests")
       expect_true(ops.writesEof.size() == ops.writes.size());
    }
 
-   test_that("command not issued if user hasn't entered a new command since last private comand")
+   test_that("command not issued if user hasn't entered a new command since last private command")
    {
       PrivateCommand cmd(kCommand, kPrivate, kUser, kTimeout, kPostTimeout, kOncePerUserEnter);
 

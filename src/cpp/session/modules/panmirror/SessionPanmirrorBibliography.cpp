@@ -26,6 +26,7 @@
 
 #include <core/system/Process.hpp>
 
+#include <session/SessionQuarto.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -42,8 +43,25 @@ namespace {
 
 std::vector<FileInfo> projectBibliographies()
 {
+   std::vector<FilePath> projectBibs;
+   auto config = quarto::quartoConfig();
+   if (config.is_project)
+   {
+      FilePath projDir = module_context::resolveAliasedPath(config.project_dir);
+      auto biblios = config.project_bibliographies;
+      std::transform(biblios.begin(), biblios.end(), std::back_inserter(projectBibs),
+                     [&projDir](const std::string& biblio) {
+         return projDir.completeChildPath(biblio);
+      });
+
+   }
+   else
+   {
+      projectBibs = module_context::bookdownBibliographies();
+   }
+
+   // convert to FileInfo
    std::vector<FileInfo> biblioFiles;
-   std::vector<FilePath> projectBibs = module_context::bookdownBibliographies();
    std::transform(projectBibs.begin(),
                   projectBibs.end(),
                   std::back_inserter(biblioFiles),
@@ -292,10 +310,22 @@ json::Object createBiblioJson(const json::Array& jsonCitations, bool project)
    json::Object biblioJson;
    biblioJson["sources"] = jsonCitations;
 
-   // relative path to project biblios
-   biblioJson["project_biblios"] = project
-      ? json::toJsonArray(module_context::bookdownBibliographiesRelative())
-      : json::Array();
+
+   // project biblios
+   json::Array projectBiblios;
+
+   // quarto config
+   auto quartoConfig = quarto::quartoConfig();
+   if (quartoConfig.is_project)
+   {
+      projectBiblios = json::toJsonArray(quartoConfig.project_bibliographies);
+   }
+   else if (project)
+   {
+      projectBiblios = json::toJsonArray(module_context::bookdownBibliographiesRelative());
+   }
+
+   biblioJson["project_biblios"] = projectBiblios;
 
    return biblioJson;
 }
@@ -452,12 +482,16 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
 
    // determine whether the file the bibliography is requested for is part of the current project
    bool isProjectFile = false;
-   if (!file.empty() && module_context::isBookdownProject())
+   if (!file.empty())
    {
       FilePath filePath = module_context::resolveAliasedPath(file);
-      if (filePath.isWithin(projects::projectContext().buildTargetPath()))
+      if (module_context::isBookdownProject())
       {
-         isProjectFile = true;
+         isProjectFile = filePath.isWithin(projects::projectContext().buildTargetPath());
+      }
+      else
+      {
+         isProjectFile = quarto::isFileInSessionQuartoProject(filePath);
       }
    }
 
@@ -478,6 +512,7 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
    {
       biblioFiles = projectBibliographies();
    }
+
 
    // filter biblio files on existence
    algorithm::expel_if(biblioFiles, [](const FileInfo& file) { return !FilePath::exists(file.absolutePath()); });
@@ -731,9 +766,24 @@ Error pandocAddToBibliography(const json::JsonRpcRequest& request, json::JsonRpc
       return error;
 
    // resolve the bibliography path
-   FilePath bibliographyPath = project && projects::projectContext().hasProject()
-      ? projects::projectContext().buildTargetPath().completeChildPath(bibliography)
-      : module_context::resolveAliasedPath(bibliography);
+   FilePath bibliographyPath;
+   if (project && projects::projectContext().hasProject())
+   {
+      auto quartoConfig = quarto::quartoConfig();
+      if (quartoConfig.is_project)
+      {
+         FilePath projDir = module_context::resolveAliasedPath(quartoConfig.project_dir);
+         bibliographyPath = projDir.completeChildPath(bibliography);
+      }
+      else
+      {
+         bibliographyPath = projects::projectContext().buildTargetPath().completeChildPath(bibliography);
+      }
+   }
+   else
+   {
+      bibliographyPath = module_context::resolveAliasedPath(bibliography);
+   }
 
 
    // yaml or json target

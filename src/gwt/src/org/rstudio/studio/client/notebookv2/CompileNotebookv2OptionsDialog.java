@@ -1,7 +1,7 @@
 /*
  * CompileNotebookv2OptionsDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,13 +46,13 @@ public class CompileNotebookv2OptionsDialog extends ModalDialog<CompileNotebookv
          String defaultFormat,
          final OperationWithInput<CompileNotebookv2Options> operation)
    {
-      super("Compile Report from R Script", Roles.getDialogRole(), operation);
+      super(constants_.compileNotebookV2OptionsDialogCaption(), Roles.getDialogRole(), operation);
       widget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       style.ensureInjected();
       
       setFormat(defaultFormat);
       lblFormat_.setFor(listFormat_);
-      setOkButtonCaption("Compile");
+      setOkButtonCaption(constants_.okButtonCaption());
       
       // read the message when dialog is shown
       setARIADescribedBy(dialogLabel_);
@@ -116,10 +116,12 @@ public class CompileNotebookv2OptionsDialog extends ModalDialog<CompileNotebookv
    ListBox listFormat_;
 
    private Widget widget_;
+
+   private static final NotebookV2Constants constants_ = GWT.create(NotebookV2Constants.class);
    
    private CompileNotebookv2OptionsDialog()
    {
-      super("Caption", Roles.getDialogRole(), new OperationWithInput<CompileNotebookv2Options>() {
+      super(constants_.compileCaption(), Roles.getDialogRole(), new OperationWithInput<CompileNotebookv2Options>() {
 
          @Override
          public void execute(CompileNotebookv2Options input)

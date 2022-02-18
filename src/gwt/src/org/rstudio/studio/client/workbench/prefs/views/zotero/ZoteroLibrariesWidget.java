@@ -1,7 +1,7 @@
 /*
  * ZoteroLibrariesWidget.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views.zotero;
 
+import com.google.gwt.core.client.GWT;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -24,6 +25,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroResult;
 import org.rstudio.studio.client.panmirror.server.PanmirrorZoteroServerOperations;
+import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.Roles;
@@ -35,6 +37,8 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 
 public class ZoteroLibrariesWidget extends Composite
 {
+   private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
+
    public ZoteroLibrariesWidget(PanmirrorZoteroServerOperations server)
    {
       this(server, false);
@@ -55,7 +59,7 @@ public class ZoteroLibrariesWidget extends Composite
       options.add(SELECTED_LIBRARIES);
 
       selectedLibs_ = new SelectWidget(
-         "Use libraries:", 
+         constants_.useLibraries(),
          options.toArray(new String[] {}),
          options.toArray(new String[] {}),
          false,
@@ -89,7 +93,7 @@ public class ZoteroLibrariesWidget extends Composite
    {
       if (libraries != null)
       {
-         // set select widget based on whether we have a library whitelist
+         // set select widget based on whether we have a list of included libraries
          if (libraries.length() == 0)
             selectedLibs_.setValue(MY_LIBRARY); // migrate from 'All Libraries'
          else if (libraries.length() == 1 && libraries.get(0).equals(MY_LIBRARY))
@@ -132,7 +136,7 @@ public class ZoteroLibrariesWidget extends Composite
           (getLibraries().length() == 0))
       {
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-            "Error", "You must select at least one Zotero library");
+          constants_.error(), constants_.selectOneZoteroLibrary());
          return false;
       }
       else
@@ -142,17 +146,16 @@ public class ZoteroLibrariesWidget extends Composite
    }
    
    public JsArrayString getLibraries()
-   {   
+   {
       JsArrayString libraries = JsArrayString.createArray().cast();
-      switch(selectedLibs_.getValue())
-      {
-      case USE_DEFAULT:
+      String getVal = selectedLibs_.getValue();
+      if (getVal.equals(USE_DEFAULT)){
          libraries = null;
-         break;
-      case MY_LIBRARY:
-         libraries.push(MY_LIBRARY); 
-         break;
-      case SELECTED_LIBRARIES:
+      }
+      else if (getVal.equals(MY_LIBRARY)){
+         libraries.push(MY_LIBRARY);
+      }
+      else if (getVal.equals(SELECTED_LIBRARIES)){
          for (int i = 0; i<libraries_.getItemCount(); i++)
          {
             CheckBox chkLibrary = libraries_.getItemAtIdx(i);
@@ -195,15 +198,14 @@ public class ZoteroLibrariesWidget extends Composite
    }
    
    private static ZoteroResources RES = ZoteroResources.INSTANCE;
-   
-   
-   private final static String USE_DEFAULT = "(Default)";
-   private final static String MY_LIBRARY = "My Library";
-   private final static String SELECTED_LIBRARIES = "Selected Libraries";
+
+   private final static String USE_DEFAULT = constants_.defaultInParentheses();
+   private final static String MY_LIBRARY = constants_.myLibrary();
+   private final static String SELECTED_LIBRARIES = constants_.selectedLibraries();
    
    private final SelectWidget selectedLibs_;
    private final CheckBoxList libraries_;
    
    private final PanmirrorZoteroServerOperations server_;
-   
+
 }

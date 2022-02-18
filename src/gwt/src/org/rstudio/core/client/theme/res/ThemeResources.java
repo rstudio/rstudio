@@ -1,7 +1,7 @@
 /*
  * ThemeResources.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,39 +27,10 @@ public interface ThemeResources extends ClientBundle
 
    ThemeStyles themeStyles();
 
-   @Source("dialogTopLeft.png")
-   DataResource dialogTopLeft();
    @Source("dialogTop.png")
    DataResource dialogTop();
-   @Source("dialogTopRight.png")
-   DataResource dialogTopRight();
-   @Source("dialogLeft.png")
-   DataResource dialogLeft();
-   @Source("dialogRight.png")
-   DataResource dialogRight();
-   @Source("dialogBottomLeft.png")
-   DataResource dialogBottomLeft();
    @Source("dialogBottom.png")
    DataResource dialogBottom();
-   @Source("dialogBottomRight.png")
-   DataResource dialogBottomRight();
-
-   @Source("podTopLeft.png")
-   DataResource podTopLeft();
-   @Source("podTop.png")
-   DataResource podTop();
-   @Source("podTopRight.png")
-   DataResource podTopRight();
-   @Source("podLeft.png")
-   DataResource podLeft();
-   @Source("podRight.png")
-   DataResource podRight();
-   @Source("podBottomLeft.png")
-   DataResource podBottomLeft();
-   @Source("podBottom.png")
-   DataResource podBottom();
-   @Source("podBottomRight.png")
-   DataResource podBottomRight();
 
    @Source("verticalHandle.png")
    DataResource verticalHandle();
@@ -93,12 +64,6 @@ public interface ThemeResources extends ClientBundle
    @ImageOptions(repeatStyle = RepeatStyle.Both)
    ImageResource clear();
 
-   @Source("toolbarBackground.png")
-   DataResource toolbarBackground();
-   @Source("toolbarBackground2.png")
-   DataResource toolbarBackground2();
-   @Source("desktopGlobalToolbarBackground.png")
-   DataResource desktopGlobalToolbarBackground();
    @Source("webGlobalToolbarLeft.png")
    DataResource webGlobalToolbarLeft();
    @Source("webGlobalToolbarRight.png")
@@ -297,4 +262,10 @@ public interface ThemeResources extends ClientBundle
    
    @Source("browsePackage_2x.png")
    ImageResource browsePackage2x();
+
+   @Source("suspended.png")
+   ImageResource suspended();
+
+   @Source("suspendBlocked.png")
+   ImageResource suspendBlocked();
 }

@@ -1,7 +1,7 @@
 /*
  * code_block.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -255,13 +255,23 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
           if (node.attrs.id) {
             tags.push(`#${node.attrs.id}`);
           }
-          if (node.attrs.classes && node.attrs.classes.length) {
-            const lang = node.attrs.classes[0];
-            if (pandocCapabilities.highlight_languages.includes(lang) || lang === 'tex') {
-              tags.push(lang);
-            } else {
-              tags.push(`.${lang}`);
+          if (node.attrs.classes) {
+            for (let i=1; i<node.attrs.classes.length; i++) {
+              tags.push(`.${node.attrs.classes[i]}`);
+            } 
+            if (node.attrs.classes.length > 0) {
+              const lang = node.attrs.classes[0];
+              if (pandocCapabilities.highlight_languages.includes(lang) || lang === 'tex') {
+                tags.push(lang);
+              } else {
+                tags.push(`.${lang}`);
+              }
             }
+          }
+          if (node.attrs.keyvalue && node.attrs.keyvalue.length) {
+            tags.push(`${node.attrs.keyvalue.map(
+              (kv: [string,string]) => kv[0] + '="' + (kv[1] || '1') + '"').join(' ')}
+            `);
           }
           return tags;
         },

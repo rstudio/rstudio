@@ -174,7 +174,7 @@ cacls %TMPDIR% /T /E /G BUILTIN\Users:R > NUL
 
 REM Make it!
 REM For this part, we ensure only Rtools is on the PATH. This
-REM is important as if the wrong command line utilites are picked
+REM is important as if the wrong command line utilities are picked
 REM up things can fail for strange reason. In particular, we
 REM _must_ use the Rtools 'sort', _not_ the Windows 'sort', or
 REM else we will get strange errors from 'comm' when attempting

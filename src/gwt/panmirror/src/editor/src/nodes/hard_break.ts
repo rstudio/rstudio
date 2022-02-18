@@ -1,7 +1,7 @@
 /*
  * hard_break.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,7 +56,7 @@ const extension: Extension = {
   },
 };
 
-function hardBreakCommandFn() {
+export function hardBreakCommandFn() {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const br = state.schema.nodes.hard_break;
     if (dispatch) {

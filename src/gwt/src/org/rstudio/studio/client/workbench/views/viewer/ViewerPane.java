@@ -1,7 +1,7 @@
 /*
  * ViewerPane.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -12,10 +12,14 @@
  */
 package org.rstudio.studio.client.workbench.views.viewer;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 
 import org.rstudio.core.client.HtmlMessageListener;
 import org.rstudio.core.client.CommandWithArg;
@@ -23,6 +27,7 @@ import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.URIConstants;
 import org.rstudio.core.client.URIUtils;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.core.client.widget.Toolbar;
@@ -33,8 +38,10 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
+import org.rstudio.studio.client.quarto.model.QuartoNavigate;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
@@ -43,9 +50,11 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
+import org.rstudio.studio.client.workbench.views.viewer.quarto.QuartoConnection;
 
 public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 {
@@ -54,20 +63,25 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                      GlobalDisplay globalDisplay,
                      EventBus events,
                      ViewerServerOperations server,
+                     FileTypeRegistry fileTypeRegistry,
+                     Provider<UserState> pUserState,
                      HtmlMessageListener htmlMessageListener)
    {
       super("Viewer", events);
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       server_ = server;
+      fileTypeRegistry_ = fileTypeRegistry;
+      pUserState_ = pUserState;
       htmlMessageListener_ = htmlMessageListener;
+      quartoConnection_ = new QuartoConnection();
       ensureWidget();
    }
 
    @Override
    protected Toolbar createMainToolbar()
    {
-      toolbar_ = new Toolbar("Viewer Tab");
+      toolbar_ = new Toolbar(constants_.viewerTabLabel());
 
       // add html widget buttons
       toolbar_.addLeftWidget(commands_.viewerBack().createToolbarButton());
@@ -84,7 +98,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       exportMenu.addItem(commands_.viewerSaveAsWebPage().createMenuItem(false));
 
       exportButton_ = new ToolbarMenuButton(
-            "Export", ToolbarButton.NoTitle, new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
+            constants_.exportText(), ToolbarButton.NoTitle, new ImageResource2x(StandardIcons.INSTANCE.export_menu2x()),
             exportMenu);
       toolbar_.addLeftWidget(exportButton_);
       exportButton_.setVisible(false);
@@ -99,7 +113,10 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                                                commands_.viewerClear().getImageResource(),
                                                event -> {
                                                   if (commands_.viewerClear().isEnabled())
+                                                  {
+                                                     removeQuartoUI();
                                                      commands_.viewerClear().execute();
+                                                  }
                                                }));
 
       toolbar_.addLeftSeparator();
@@ -110,6 +127,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
       toolbar_.addLeftSeparator();
       toolbar_.addLeftWidget(commands_.viewerStop().createToolbarButton());
+      
+      // quarto specific widgets
+      initQuartoUI();
 
       // add publish button
       publishButton_ = new RSConnectPublishButton(
@@ -139,7 +159,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                @Override
                public void onError(ServerError error)
                {
-                  globalDisplay_.showErrorMessage("Could Not Publish",
+                  globalDisplay_.showErrorMessage(constants_.couldNotPublishCaption(),
                         error.getMessage());
                }
             });
@@ -150,7 +170,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
          {
             String title = frame_.getTitle();
             if (StringUtil.isNullOrEmpty(title))
-               title = "Viewer Content";
+               title = constants_.viewerContentTitle();
             return title;
          }
       });
@@ -161,7 +181,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    protected Widget createMainWidget()
    {
-      frame_ = new RStudioFrame("Viewer Pane");
+      frame_ = new RStudioFrame(constants_.viewerPaneTitle());
       frame_.setSize("100%", "100%");
       frame_.addStyleName("ace_editor_theme");
       navigate(URIConstants.ABOUT_BLANK, false);
@@ -171,6 +191,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    @Override
    public void navigate(String url)
    {
+      removeQuartoUI();
       htmlMessageListener_.setUrl(url);
       navigate(url, false);
 
@@ -214,6 +235,20 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    }
 
    @Override
+   public void previewQuarto(String url, QuartoNavigate quartoNav)
+   {
+      rmdPreviewParams_ = null;
+      navigate(url, false, false);
+      quartoConnection_.setQuartoUrl(url, quartoNav.isWebsite());
+      publishButton_.setManuallyHidden(false);
+      if (quartoNav.isWebsite())
+         publishButton_.setQuartoSitePreview();
+      else
+         publishButton_.setQuartoDocPreview(quartoNav.getSourceFile(), quartoNav.getOutputFile());
+      toolbar_.invalidateSeparators();
+   }
+
+   @Override
    public void setExportEnabled(boolean exportEnabled)
    {
       exportButton_.setVisible(exportEnabled);
@@ -242,9 +277,14 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       {
          globalDisplay_.showHtmlFile(rmdPreviewParams_.getOutputFile());
       }
+      else if (quartoConnection_.getUrl() != null)
+      {
+         globalDisplay_.openWindow(quartoConnection_.getUrl());
+      }
       else if (frame_ != null &&
           frame_.getIFrame().getCurrentUrl() != null &&
-          !StringUtil.equals(frame_.getIFrame().getCurrentUrl(), getUrl()))
+          !StringUtil.equals(urlWithoutHash(frame_.getIFrame().getCurrentUrl()), 
+                             urlWithoutHash(getUrl())))
       {
          // Typically we navigate to the unmodified URL (i.e. without the
          // viewer_pane=1 query params, etc.) However, if the URL currently
@@ -272,6 +312,23 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
             frame_.setUrl(url);
       }
    }
+   
+   @Override
+   public void editSource()
+   {
+      FileSystemItem srcFile = quartoConnection_.getSrcFile();
+      if (srcFile != null)
+      {
+         fileTypeRegistry_.editFile(srcFile);
+         new Timer() {
+            @Override
+            public void run()
+            {
+               commands_.activateSource();
+            }
+         }.schedule(200);
+      }
+   }
 
    @Override
    public HandlerRegistration addLoadHandler(LoadHandler handler)
@@ -295,12 +352,86 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
       publishButton_.setShowCaption(width > 500);
    }
+   
+   @Override
+   public boolean hasNavigationHandlers()
+   {
+      return quartoConnection_.isWebsite();
+   }
+
+   @Override
+   public void navigateForward()
+   {
+      quartoConnection_.navigateForward();
+      
+   }
+
+   @Override
+   public void navigateBack()
+   {
+     quartoConnection_.navigateBack();
+   }
+   
+   
+   private void initQuartoUI()
+   {
+      toolbar_.addLeftSeparator();
+      toolbar_.addLeftWidget(commands_.viewerEditSource().createToolbarButton());
+      toolbar_.addLeftWidget(quartoSyncEditor_ = new CheckBox(constants_.syncEditorLabel()));
+      quartoSyncEditor_.getElement().getStyle().setMarginLeft(3, Unit.PX);
+      quartoSyncEditor_.setVisible(false);
+      quartoSyncEditor_.setValue(pUserState_.get().quartoWebsiteSyncEditor().getValue());
+      quartoSyncEditor_.addValueChangeHandler(event -> {
+         pUserState_.get().quartoWebsiteSyncEditor().setGlobalValue(event.getValue());
+         pUserState_.get().writeState();
+      });
+      quartoConnection_.addQuartoNavigationHandler(event -> {
+         if (quartoConnection_.isWebsite() && quartoConnection_.getSrcFile() != null)
+         {
+            if (quartoSyncEditor_.getValue())
+            {
+               fileTypeRegistry_.editFile(quartoConnection_.getSrcFile());
+            }
+          
+            quartoSyncEditor_.setVisible(true);
+         }
+         else
+         {
+            quartoSyncEditor_.setVisible(false);
+         }
+         toolbar_.invalidateSeparators();
+      });
+   }
+   
+   private void removeQuartoUI()
+   {
+      quartoConnection_.setQuartoUrl(null, false);
+      quartoSyncEditor_.setVisible(false);
+   }   
+
+   
+   private String urlWithoutHash(String url)
+   {
+      if (!StringUtil.isNullOrEmpty(url))
+      {
+         return url.split("#")[0];
+      }
+      else
+      {
+         return url;
+      }
+   }
 
    private native static String getOrigin() /*-{
      return $wnd.location.origin;
    }-*/;
 
    private void navigate(String url, boolean useRawURL)
+   {
+      navigate(url, useRawURL, !useRawURL);
+   }
+   
+   private void navigate(String url, boolean useRawURL, boolean viewerPaneParam)
    {
       // save the unmodified URL for pop-out
       unmodifiedUrl_ = url;
@@ -326,9 +457,11 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
           !unmodifiedUrl_.equals(URIConstants.ABOUT_BLANK) &&
           !useRawURL)
       {
-         String viewerUrl = URIUtils.addQueryParam(unmodifiedUrl_,
-                                                   "viewer_pane",
-                                                   "1");
+         String viewerUrl = unmodifiedUrl_;
+         if (viewerPaneParam)
+         {
+            viewerUrl = URIUtils.addQueryParam(viewerUrl, "viewer_pane", "1");
+         }
 
          viewerUrl = URIUtils.addQueryParam(viewerUrl,
                                             "capabilities",
@@ -336,7 +469,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
 
          viewerUrl = URIUtils.addQueryParam(viewerUrl,
                                             "host",
-                                            htmlMessageListener_.getOriginDomain());
+                                            HtmlMessageListener.getOriginDomain());
 
          frame_.setUrl(viewerUrl);
       }
@@ -365,14 +498,19 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private RmdPreviewParams rmdPreviewParams_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
+   private final FileTypeRegistry fileTypeRegistry_;
+   private final Provider<UserState> pUserState_;
    private final ViewerServerOperations server_;
 
    private Toolbar toolbar_;
 
+   private CheckBox quartoSyncEditor_;
    private RSConnectPublishButton publishButton_;
 
    private ToolbarMenuButton exportButton_;
    private Widget exportButtonSeparator_;
 
    private HtmlMessageListener htmlMessageListener_;
+   private QuartoConnection quartoConnection_;
+   private static final ViewerConstants constants_ = com.google.gwt.core.client.GWT.create(ViewerConstants.class);
 }

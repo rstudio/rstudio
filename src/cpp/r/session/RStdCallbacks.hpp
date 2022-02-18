@@ -1,7 +1,7 @@
 /*
  * RStdCallbacks.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ InternalCallbacks* stdInternalCallbacks();
 int RReadConsole(const char *pmt, CONSOLE_BUFFER_CHAR* buf, int buflen, int hist);
 void RShowMessage(const char* msg);
 void RWriteConsoleEx (const char *buf, int buflen, int otype);
+void RResetConsole();
 int REditFile(const char* file);
 void RBusy(int which);
 int RChooseFile (int newFile, char *buf, int len);

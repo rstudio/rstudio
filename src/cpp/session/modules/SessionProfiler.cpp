@@ -1,7 +1,7 @@
 /*
  * SessionProfiler.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -80,6 +80,19 @@ void handleProfilerResourceResReq(const http::Request& request,
    pResponse->setCacheableFile(profilerResource, request);
 }
 
+void clearRProfile(const std::string& path, const std::string& htmlLocalPath)
+{
+   Error error = r::exec::RFunction(".rs.rpc.clear_profile")
+         .addUtf8Param(path)
+         .addUtf8Param(htmlLocalPath)
+         .call();
+
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+}
+
 void onDocPendingRemove(
         boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
@@ -89,16 +102,7 @@ void onDocPendingRemove(
    if (htmlLocalPath.empty() && path.empty())
       return;
 
-   Error error = r::exec::RFunction(".rs.rpc.clear_profile")
-         .addUtf8Param(path)
-         .addUtf8Param(htmlLocalPath)
-         .call();
-
-   if (error)
-   {
-      LOG_ERROR(error);
-      return;
-   }
+   module_context::executeOnMainThread(boost::bind(clearRProfile, path, htmlLocalPath));
 }
 
 Error initialize()

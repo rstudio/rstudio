@@ -1,7 +1,7 @@
 /*
  * LogOptions.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,8 @@
 #include <core/ConfigProfile.hpp>
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
+
+#include <core/system/Types.hpp>
 
 #include <shared_core/FilePath.hpp>
 #include <shared_core/FileLogDestination.hpp>
@@ -51,12 +53,16 @@ public:
    LogOptions(const std::string& executableName,
               LogLevel defaultLogLevel,
               LoggerType defaultLoggerType,
+              LogMessageFormatType defaultMessageFormatType,
               const LoggerOptions& defaultLoggerOptions);
 
    virtual ~LogOptions()
    { }
 
    core::Error read();
+
+   // gets the current log message format type
+   LogMessageFormatType logMessageFormatType(const std::string& loggerName = std::string()) const;
 
    // gets the current log level
    LogLevel logLevel(const std::string& loggerName = std::string()) const;
@@ -72,6 +78,10 @@ public:
 
    std::vector<std::string> loggerOverrides() const;
 
+   static FilePath defaultLogDirectory();
+
+   FilePath getLogConfigFile();
+   
 private:
    void initProfile();
 
@@ -83,12 +93,15 @@ private:
 
    std::string defaultLogLevel_;
    std::string defaultLoggerType_;
+   std::string defaultMessageFormatType_;
    LoggerOptions defaultLoggerOptions_;
 
    LogLevel lowestLogLevel_;
 
    ConfigProfile profile_;
 };
+
+void forwardLogOptionsEnvVars(core::system::Options* pEnvironment);
 
 } // namespace log
 } // namespace core

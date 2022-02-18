@@ -1,7 +1,7 @@
 /*
  * Shell.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -57,6 +57,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.events.*;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -266,7 +267,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       // clear output
       view_.clearOutput();
 
-      ariaLive_.announce(AriaLiveService.CONSOLE_CLEARED, "Console cleared",
+      ariaLive_.announce(AriaLiveService.CONSOLE_CLEARED, constants_.consoleClearedMessage(),
             Timing.IMMEDIATE, Severity.STATUS);
 
       // notify server
@@ -283,8 +284,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (prefs_.limitVisibleConsole().getValue())
       {
          ariaLive_.announce(AriaLiveService.INACCESSIBLE_FEATURE,
-            "Warning: Focus console output command unavailable when " +
-               prefs_.limitVisibleConsole().getTitle() + " option is enabled.",
+            constants_.focusConsoleWarningMessage(prefs_.limitVisibleConsole().getTitle()),
             Timing.IMMEDIATE, Severity.STATUS);
          return;
       }
@@ -318,7 +318,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          public void onError(ServerError error)
          {
             // show the error in the console then re-prompt
-            view_.consoleWriteError("Error: " + error.getUserMessage() + "\n");
+            view_.consoleWriteError(constants_.errorString(error.getUserMessage()));
             if (lastPromptText_ != null)
                consolePrompt(lastPromptText_, false);
          }
@@ -408,12 +408,16 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    private void processCommandEntry()
    {
-      String commandText = view_.processCommandEntry();
+      processCommandEntry(view_.processCommandEntry(), true);
+   }
+
+   private void processCommandEntry(String commandText, boolean echo)
+   {
       if (addToHistory_ && (commandText.length() > 0))
-         eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
+      eventBus_.fireEvent(new ConsoleHistoryAddedEvent(commandText));
 
       // fire event
-      eventBus_.fireEvent(new ConsoleInputEvent(commandText, ""));
+      eventBus_.fireEvent(new ConsoleInputEvent(commandText, "", echo ? 0 : ConsoleInputEvent.FLAG_NO_ECHO));
    }
 
    public void onSendToConsole(final SendToConsoleEvent event)
@@ -421,8 +425,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (StringUtil.equals(event.getLanguage(), "Python"))
       {
          dependencyManager_.withReticulate(
-               "Executing Python code",
-               "Executing Python code",
+               constants_.executingPythonCodeProgressCaption(),
+               constants_.executingPythonCodeProgressCaption(),
                () -> {
                   onSendToConsoleImpl(event);
                });
@@ -463,9 +467,10 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
          {
             if (event.shouldExecute())
             {
-               processCommandEntry();
-               if (previousInput.length() > 0)
-                  display.setText(previousInput);
+               String commandText = event.shouldEcho() ? view_.processCommandEntry() : event.getCode();
+               processCommandEntry(commandText, event.shouldEcho());
+
+               display.setText(previousInput);
             }
 
             if (!event.shouldExecute() || event.shouldFocus())
@@ -480,7 +485,8 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (!event.shouldAnimate())
       {
          display.clear();
-         display.setText(event.getCode());
+         if (event.shouldEcho()) 
+            display.setText(event.getCode());
          finishSendToConsole.execute();
       }
       else
@@ -869,4 +875,5 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
 
    private boolean restoreFocus_ = true;
    private boolean debugging_ = false;
+   private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }

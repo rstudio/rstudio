@@ -1,7 +1,7 @@
 /*
  * selection.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import { GapCursor } from 'prosemirror-gapcursor';
 import { NodeWithPos, setTextSelection } from 'prosemirror-utils';
 
 import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transaction';
+import { editingRootNode } from './node';
 
 export function selectionIsWithin(selection: Selection, nodeWithPos: NodeWithPos) {
   const from = nodeWithPos.pos + 1;
@@ -51,6 +52,17 @@ export function selectionIsImageNode(schema: Schema, selection: Selection) {
 export function selectionIsEmptyParagraph(schema: Schema, selection: Selection) {
   const { $head } = selection;
   return $head.parent.type === schema.nodes.paragraph && $head.parent.childCount === 0;
+}
+
+export function selectionWithinLastBodyParagraph(selection: Selection) {
+  if (selectionIsBodyTopLevel(selection)) {
+    const editingRoot = editingRootNode(selection);
+    if (editingRoot) {
+      const node = selection.$head.node();
+      return node === editingRoot.node.lastChild && node.type === node.type.schema.nodes.paragraph;
+    }
+  }
+  return false;
 }
 
 export function restoreSelection(view: EditorView, pos: number) {

@@ -1,7 +1,7 @@
 /*
  * PanmirrorEditCodeBlockDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,12 +19,14 @@ package org.rstudio.studio.client.panmirror.dialogs;
 
 import com.google.gwt.aria.client.Roles;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 
@@ -41,7 +43,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
                String[] languages,
                OperationWithInput<PanmirrorCodeBlockProps> operation)
    {
-      super("Code Block", Roles.getDialogRole(), operation, () -> {
+      super(constants_.codeBlockText(), Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
@@ -50,10 +52,10 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
       VerticalTabPanel langTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_LANGUAGE);
       langTab.addStyleName(RES.styles().dialog());
       HorizontalPanel labelPanel = new HorizontalPanel();
-      FormLabel labelLanguage = new FormLabel("Language");
+      FormLabel labelLanguage = new FormLabel(constants_.languageFormLabel());
       labelLanguage.setElementId(ElementIds.getElementId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG_LABEL1));
       labelPanel.add(labelLanguage);
-      FormLabel langInfo = new FormLabel("(optional)");
+      FormLabel langInfo = new FormLabel(constants_.optionalFormLabel());
       langInfo.setElementId(ElementIds.getElementId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG_LABEL2));
       langInfo.addStyleName(RES.styles().inlineInfoLabel());
 
@@ -77,10 +79,10 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
 
       if (attributes)
       {
-         DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Code Block");
+         DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.codeBlockText());
          tabPanel.addStyleName(RES.styles().linkDialogTabs());
-         tabPanel.add(langTab, "Language", langTab.getBasePanelId());
-         tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
+         tabPanel.add(langTab, constants_.languageFormLabel(), langTab.getBasePanelId());
+         tabPanel.add(attributesTab, constants_.attributesText(), attributesTab.getBasePanelId());
          tabPanel.selectTab(0);
 
          mainWidget_ = tabPanel;
@@ -129,5 +131,5 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
 
    private SuggestBox lang_;
    private PanmirrorEditAttrWidget editAttr_;
-
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 }

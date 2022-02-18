@@ -1,7 +1,7 @@
 #
 # SessionEnvironment.R
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -226,10 +226,12 @@
    # do.call(), the 'expression' here might just be an already-evaluated
    # R object. in such a case, we want to avoid deparsing the object as
    # it could be expensive (especially for large objects).
-   if (is.call(expr))
-      return(.rs.deparse(expr))
+   if (!is.call(expr))
+      return(.rs.valueDescription(expr))
    
-   .rs.valueDescription(expr)
+   # we have a call; try to deparse it
+   sanitized <- .rs.sanitizeCall(call)
+   .rs.deparse(sanitized)
 })
 
 # used to create descriptions for language objects and symbols
@@ -295,12 +297,19 @@
     nchars <- nchars + nchar(slines[i]) + 1
     offsets[i] <- nchars
   }
-  singleline <- paste(slines, collapse=" ")
+  
+  singleline <- paste(slines, collapse = " ")
   
   if (is.null(calltext))
   {
      # No call text specified; deparse into a list of lines
-     calltext <- deparse(call)
+     # limit length of deparsed output to avoid issues with very large calls
+     # 
+     # this implies that we might be unable to highlight calls larger than
+     # the below number of lines, but in practice such a large highlight
+     # would be unlikely to be useful
+     # https://github.com/rstudio/rstudio/issues/5158
+     calltext <- .rs.deparse(call, nlines = 200L)
   }
   else
   {
@@ -311,7 +320,7 @@
 
   # Remove leading/trailing whitespace on each line, and collapse the lines
   calltext <- sub("\\s+$", "", sub("^\\s+", "", calltext))
-  calltext <- paste(calltext, collapse=" ")
+  calltext <- paste(calltext, collapse = " ")
 
   # Any call text supplied is presumed UTF-8 unless we know otherwise
   if (Encoding(calltext) == "unknown")
@@ -348,8 +357,8 @@
      return(c(0L, 0L, 0L, 0L, 0L, 0L))
 
   # Compute the starting and ending lines
-  firstline <- which(offsets >= pos, arr.ind = TRUE)[1] 
-  lastline <- which(offsets >= endpos, arr.ind = TRUE)[1]  
+  firstline <- which(offsets >= pos, arr.ind = TRUE)[1]
+  lastline <- which(offsets >= endpos, arr.ind = TRUE)[1]
   if (is.na(lastline))
      lastline <- length(offsets)
 
@@ -374,8 +383,9 @@
      lastchar <- lastchar + indents[lastline]
   }
 
-  result <- as.integer(c(firstline, firstchar, lastline, 
-                         lastchar, firstchar, lastchar))
+  result <- as.integer(c(firstline, firstchar,
+                         lastline,  lastchar,
+                         firstchar, lastchar))
   return(result)
 })
 
@@ -395,7 +405,7 @@
    .rs.deparse(call[[1L]])
 })
 
-.rs.addFunction("sanitizeCallSummary", function(object)
+.rs.addFunction("sanitizeCall", function(object)
 {
    if (missing(object))
    {
@@ -418,7 +428,7 @@
       {
          # assigning NULL to object will remove that entry
          # https://github.com/rstudio/rstudio/issues/9299
-         sanitized <- .rs.sanitizeCallSummary(object[[i]])
+         sanitized <- .rs.sanitizeCall(object[[i]])
          if (!missing(sanitized) && !is.null(sanitized))
             object[[i]] <- sanitized
       }
@@ -463,7 +473,7 @@
    )
    
    # some calls might be very large when deparsed, especially when
-   # they include R objects which have already been evaluted. this
+   # they include R objects which have already been evaluated. this
    # happens most often with calls like:
    #
    #   do.call("fn", list(object))
@@ -471,9 +481,11 @@
    # where 'object' is something very large when deparsed. we avoid
    # issues by replacing such objects with a short identifier of their
    # type / class
-   call <- .rs.sanitizeCallSummary(call)
+   call <- .rs.sanitizeCall(call)
    
+   # deparse call
    .rs.deparse(call)
+   
 })
 
 .rs.addFunction("valueDescription", function(obj)
@@ -603,9 +615,22 @@
    if (inherits(obj, "python.builtin.object"))
       return(.rs.reticulate.describeObject(objName, env))
    
-   # objects containing null external pointers can crash when
-   # evaluated--display generically (see case 4092)
-   hasNullPtr <- .Call("rs_hasExternalPointer", obj, TRUE, PACKAGE = "(embedding)")
+   # NOTE (kevin): we previously screened R objects for null pointers here,
+   # as we had seen in the distant past that attempting to introspect such
+   # objects would cause an R session crash. that no longer appears to be
+   # the case so we now no longer perform this check here.
+   #
+   # https://github.com/rstudio/rstudio/issues/4741
+   # https://github.com/rstudio/rstudio/issues/5546
+   #
+   # however, just in case some users are still effected, we allow users to
+   # opt-in to checking for null pointers if required.
+   checkNullPtr <- .rs.readUiPref("check_null_external_pointers")
+   hasNullPtr <- if (identical(checkNullPtr, TRUE))
+      .Call("rs_hasExternalPointer", obj, TRUE, PACKAGE = "(embedding)")
+   else
+      FALSE
+   
    if (hasNullPtr) 
    {
       val <- "<Object with null pointer>"
@@ -629,9 +654,30 @@
    contents_deferred <- FALSE
    
    # for language objects, don't evaluate, just show the expression
-   if (is.language(obj) || is.symbol(obj))
+   if (is.symbol(obj))
    {
-      val <- deparse(obj)
+      val <- as.character(obj)
+   }
+   else if (is.language(obj))
+   {
+      # defend against very large calls; e.g. those with R objects inlined
+      # as part of the call (can happen in do.call contexts)
+      #
+      # this is primarily used for the Environment pane, where we try to display
+      # a single-line summary of an R object -- so we can enforce that when
+      # deparsing calls here as well
+      #
+      # https://github.com/rstudio/rstudio/issues/5158
+      sanitized <- .rs.sanitizeCall(obj)
+      val1 <- .rs.deparse(sanitized, nlines = 1L)
+      val2 <- .rs.deparse(sanitized, nlines = 2L)
+      
+      # indicate if there is more output
+      val <- if (!identical(val1, val2))
+         paste(val1, "<...>")
+      else
+         val1
+
    }
    else if (!hasNullPtr)
    {

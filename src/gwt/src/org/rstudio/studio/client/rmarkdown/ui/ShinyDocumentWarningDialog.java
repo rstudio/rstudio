@@ -1,7 +1,7 @@
 /*
  * ShinyDocumentWarningDialog.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.widget.ThemedButton;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.rmarkdown.RMarkdownConstants;
 
 public class ShinyDocumentWarningDialog extends ModalDialogBase
 {
@@ -32,13 +34,13 @@ public class ShinyDocumentWarningDialog extends ModalDialogBase
       super(Roles.getAlertdialogRole());
       warning_ = new ShinyDocumentWarning();
       setWidth("400px");
-      setText("Shiny Content");
-      addOkButton(new ThemedButton("Yes, Once", 
+      setText(constants_.warningDialogText());
+      addOkButton(new ThemedButton(constants_.yesOnceButtonText(),
             returnResult(onSelected, RENDER_SHINY_ONCE)));
-      addButton(new ThemedButton("Yes, Always", 
+      addButton(new ThemedButton(constants_.yesAlwaysButtonText(),
             returnResult(onSelected, RENDER_SHINY_ALWAYS)),
             ElementIds.DIALOG_YES_BUTTON);
-      addLeftButton(new ThemedButton("No", 
+      addLeftButton(new ThemedButton(constants_.noButtonText(),
             returnResult(onSelected, RENDER_SHINY_NO)),
             ElementIds.DIALOG_NO_BUTTON);
 
@@ -77,4 +79,6 @@ public class ShinyDocumentWarningDialog extends ModalDialogBase
    public final static int RENDER_SHINY_NO = 2;
 
    private ShinyDocumentWarning warning_;
+
+   private static final RMarkdownConstants constants_ = GWT.create(RMarkdownConstants.class);
 }

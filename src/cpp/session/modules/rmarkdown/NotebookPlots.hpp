@@ -1,7 +1,7 @@
 /*
  * NotebookPlots.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,11 +55,12 @@ public:
    core::Error connectPlots(const std::string& docId, 
       const std::string& chunkId, const std::string& nbCtxId, 
       double height, double width, PlotSizeBehavior sizeBehavior,
-      const core::FilePath& plotFolder);
+      const core::FilePath& plotFolder, const std::string& chunkGraphicsBackend);
    void disconnect();
    void onExprComplete();
 private:
    core::Error setGraphicsOption();
+   core::Error setBackendDeviceOption();
    void processPlots(bool ignoreEmpty);
    void removeGraphicsDevice();
    void onNewPlot();
@@ -76,6 +77,9 @@ private:
    std::string docId_;
    std::string chunkId_;
    std::string nbCtxId_;
+
+   std::string chunkGraphicsBackend_;
+   r::sexp::PreservedSEXP defaultGraphicsBackend_;
 
    r::sexp::PreservedSEXP deviceOption_;
    r::sexp::PreservedSEXP lastPlot_;

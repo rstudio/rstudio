@@ -1,7 +1,7 @@
 /*
  * ElementIds.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -126,6 +126,7 @@ public class ElementIds
    public final static String RSTUDIO_LOGO = "rstudio_logo";
    public final static String CONSOLE_INPUT = "console_input";
    public final static String CONSOLE_OUTPUT = "console_output";
+   public final static String CONSOLE_INTERPRETER_VERSION = "console_interpreter_version";
    public final static String DEPLOY_CONTENT = "deploy_content";
    public final static String FIND_REPLACE_BAR = "find_replace_bar";
    public final static String HELP_FRAME = "help_frame";
@@ -156,6 +157,7 @@ public class ElementIds
    public final static String DIALOG_APPLY_BUTTON = "dlg_apply";
    public final static String DIALOG_RETRY_BUTTON = "dlg_retry";
    public final static String DIALOG_HOME_BUTTON = "dlg_home";
+   public final static String DIALOG_CLEAR_BUTTON = "dlg_clear";
    public final static String SELECT_ALL_BUTTON = "select_all";
    public final static String SELECT_NONE_BUTTON = "select_none";
    public final static String ABOUT_MANAGE_LICENSE_BUTTON = "about_manage_license";
@@ -177,9 +179,11 @@ public class ElementIds
    public final static String RMARKDOWN_ADVANCED_PREFS = "markdown_advanced_prefs";
    public final static String RMARKDOWN_VISUAL_MODE_PREFS = "markdown_visual_mode_prefs";
    public final static String RMARKDOWN_CITATIONS_PREFS = "markdown_citations_prefs";
+   public final static String RMARKDOWN_QUARTO_PREFS = "markdown_quarto_prefs";
 
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
+   public final static String PACKAGE_CPP_PREFS = "package_cpp_prefs";
 
    public final static String TERMINAL_GENERAL_PREFS = "terminal_general_prefs";
    public final static String TERMINAL_CLOSING_PREFS = "terminal_closing_prefs";
@@ -188,6 +192,9 @@ public class ElementIds
    public final static String NEW_PROJECT_TYPE = "project_type";
    public final static String NEW_PROJECT_GIT_REPO = "git_repo";
    public final static String NEW_PROJECT_RENV = "use_renv";
+   public final static String NEW_PROJECT_VENV = "use_venv";
+   public final static String NEW_PROJECT_CONDAENV = "use_condaenv";
+   public final static String NEW_PROJECT_VENV_PACKAGES = "use_venv_packages";
    public final static String NEW_PROJECT_SOURCE_FILES = "source_files";
    public final static String NEW_PROJECT_NEW_SESSION = "new_session";
 
@@ -229,10 +236,14 @@ public class ElementIds
    public static String getNewRmdTitle() { return getElementId(NEW_RMD_TITLE); }
    public final static String NEW_RMD_AUTHOR = "new_rmd_author";
    public static String getNewRmdAuthor() { return getElementId(NEW_RMD_AUTHOR); }
+   public final static String NEW_RMD_DATE = "new_rmd_date";
+   public static String getNewRmdDate() { return getElementId(NEW_RMD_DATE); }
    public final static String NEW_RMD_TEMPLATE_LABEL = "new_rmd_template_label";
    public static String getNewRmdTemplateLabel() { return getElementId(NEW_RMD_TEMPLATE_LABEL); }
    public final static String NEW_RMD_TEMPLATE = "new_rmd_template";
    public static String getNewRmdTemplate() { return getElementId(NEW_RMD_TEMPLATE); }
+   public final static String NEW_RMD_AUTO_DATE = "new_rmd_auto_date";
+   public static String getNewRmdAutoDate() { return getElementId(NEW_RMD_AUTO_DATE); }
 
    // RmdTemplateChooser
    public final static String RMD_TEMPLATE_CHOOSER_NAME = "rmd_template_chooser_name";
@@ -250,9 +261,49 @@ public class ElementIds
    public final static String MEMORY_TABLE_TITLE = "memory_table_title";
    public final static String MEMORY_DROPDOWN = "memory_dropdown";
 
+   // Hyperlink Label
+   public final static String HYPERLINKLABEL_SSH_SHOW_PUBLIC_KEY = "hll_ssh_show_public_key";
+
+   // SelectWidget
+   public final static String SELECT_WIDGET_LIST_BOX = "select_list_box";
+   public final static String SELECT_WIDGET_LABEL = "select_label";
+
+   // SelectWidget and subclasses -- unique suffix added to list box and label;
+   // only has to be unique within this enum
+   public enum SelectWidgetId
+   {
+      // RVersionSelectWidgets
+      R_VER_GEN_PREF_PANE("r_ver_gen_pref_pane"),
+      R_VER_JOB_LAUNCH("r_ver_job_launcher"),
+      R_VER_NEW_PROJ_WIZ("r_ver_new_proj_wiz"),
+      R_VER_WB_NEW_SES_DIA("r_ver_new_ses_dia"),
+
+      DEFAULT("");
+
+      SelectWidgetId(String value)
+      {
+         value_ = value;
+      }
+
+      @Override
+      public String toString()
+      {
+         return value_;
+      }
+
+      private final String value_;
+   }
+
+   // TextBox
+   public final static String TEXTBOX_SSH_KEY_PATH = "textbox_ssh_key_path";
+
+   // Button
+   public final static String BUTTON_SSH_KEY_CREATE = "button_ssh_key_create";
+
    // TextBoxWithButton and subclasses -- prefixes for button/text/help, combined with suffixes
    public final static String TBB_TEXT = "tbb_text";
    public final static String TBB_BUTTON = "tbb_button";
+   public final static String TBB_CLEAR_BUTTON = "tbb_clear_button";
    public final static String TBB_HELP = "tbb_help";
 
    // TextBoxWithButton and subclasses -- unique suffix added to text field, button, and help link;
@@ -275,6 +326,7 @@ public class ElementIds
       PRIMARY_CRAN("primary_cran"),
       PRO_JOB_DIR("pro_job_dir"),
       PRO_JOB_SCRIPT("pro_job_script"),
+      PRO_R_HOME("job_launcher_pro_r_home"),
       PRO_NEW_SESSION_DIR("pro_new_session_dir"),
       PROJECT_PARENT("project_parent"),
       PROJECT_REPO_DIR("project_repo_dir"),
@@ -325,6 +377,10 @@ public class ElementIds
    public final static String BUILD_MORE_MENUBUTTON = "build_more_menubutton";
    public final static String BUILD_BOOKDOWN_MENUBUTTON = "build_bookdown_menubutton";
 
+   // JobLauncherPane
+   public final static String JOB_LAUNCHER_JOB_VIEW = "job_launcher_job_view";
+   public final static String JOB_LAUNCHER_OUTPUT_PANEL = "job_launcher_output_panel";
+
    // JobLauncherDialog
    public final static String JOB_LAUNCHER_ENVIRONMENT = "job_launcher_environment";
    public static String getJobLauncherEnvironment() { return getElementId(JOB_LAUNCHER_ENVIRONMENT); }
@@ -343,6 +399,7 @@ public class ElementIds
 
    // Modal Dialogs
    public final static String DIALOG_GLOBAL_PREFS = "dialog_global_prefs";
+   public final static String DIALOG_CREATE_SSH_KEY = "dialog_create_ssh_key";
 
    // DataImport
    public final static String DATA_IMPORT_UI_OPTIONS = "data_import_ui_options";
@@ -435,6 +492,8 @@ public class ElementIds
    // FileCommandToolbar
    public final static String MB_FILES_MORE = "mb_files_more";
    public static String getMbFilesMore() { return getElementId(MB_FILES_MORE); }
+   public final static String MB_FILES_TOUCH_FILE = "mb_files_touch_file";
+   public static String getMbFilesTouchFile() { return getElementId(MB_FILES_TOUCH_FILE); }
 
    // PlotsToolbar
    public final static String MB_PLOTS_EXPORT = "mb_plots_export";
@@ -548,6 +607,8 @@ public class ElementIds
    public static String getVisualMdCitationLocator() { return getElementId(VISUAL_MD_CITATION_LOCATOR); }
    public final static String VISUAL_MD_LIST_TYPE = "visual_md_list_type";
    public static String getVisualMdListType() { return getElementId(VISUAL_MD_LIST_TYPE); }
+   public final static String VISUAL_MD_LIST_INCREMENTAL = "visual_md_list_incremental";
+   public static String getVisualMdListIncremental() { return getElementId(VISUAL_MD_LIST_INCREMENTAL); }
    public final static String VISUAL_MD_LIST_ORDER = "visual_md_list_order";
    public static String getVisualMdListOrder() { return getElementId(VISUAL_MD_LIST_ORDER); }
    public final static String VISUAL_MD_LIST_NUMBER_STYLE = "visual_md_list_number_style";
@@ -566,17 +627,27 @@ public class ElementIds
    public static String getVisualMdInsertCiteCreateBib() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB); }
    public final static String VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE = "visual_md_insert_cite_create_bib_type";
    public static String getVisualMdInsertCiteCreateBibType() { return getElementId(VISUAL_MD_LIST_INSERT_CITE_CREATE_BIB_TYPE); }
-
+   public final static String VISUAL_MD_MATH_ID_LABEL1 = "visual_md_math_id_label1";
+   public static String getVisualMdMathIdLabel1() { return getElementId(VISUAL_MD_MATH_ID_LABEL1); }
+   public final static String VISUAL_MD_MATH_ID_LABEL2 = "visual_md_math_id_label2";
+   public static String getVisualMdMathIdLabel2() { return getElementId(VISUAL_MD_MATH_ID_LABEL2); }
+   public final static String VISUAL_MD_MATH_ID = "visual_md_math_id";
+   public static String getVisualMdMathId() { return getElementId(VISUAL_MD_MATH_ID); }
+  
    public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
-   public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
    public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";
    public final static String VISUAL_MD_IMAGE_HEIGHT = "visual_md_image_height";
    public final static String VISUAL_MD_IMAGE_UNITS = "visual_md_image_units";
    public final static String VISUAL_MD_IMAGE_LOCK_RATIO = "visual_md_image_lock_ratio";
    public final static String VISUAL_MD_IMAGE_TITLE = "visual_md_image_title";
+   public final static String VISUAL_MD_IMAGE_CAPTION = "visual_md_image_caption";
    public final static String VISUAL_MD_IMAGE_ALT = "visual_md_image_alt";
    public final static String VISUAL_MD_IMAGE_LINK_TO = "visual_md_image_link_to";
+   public final static String VISUAL_MD_IMAGE_ENV = "visual_md_image_env";
+   public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
    public final static String VISUAL_MD_IMAGE_TAB_ATTRIBUTES = "visual_md_image_tab_attributes";
+   public final static String VISUAL_MD_IMAGE_TAB_ADVANCED = "visual_md_image_tab_advanced";
+
    public final static String VISUAL_MD_LINK_REMOVE_LINK_BUTTON = "visual_md_link_remove_link_button";
    public final static String VISUAL_MD_LINK_TAB_LINK = "visual_md_link_tab_link";
    public final static String VISUAL_MD_LINK_TYPE = "visual_md_link_type";
@@ -591,6 +662,14 @@ public class ElementIds
    public final static String VISUAL_MD_CODE_BLOCK_LANG_LABEL1 = "visual_md_code_block_lang_label1";
    public final static String VISUAL_MD_CODE_BLOCK_LANG_LABEL2 = "visual_md_code_block_lang_label2";
    public final static String VISUAL_MD_CODE_BLOCK_LANG = "visual_md_code_block_tab_lang";
+   public final static String VISUAL_MD_INSERT_TABSET_TABS = "visual_md_insert_tabset_tabs";
+   public final static String VISUAL_MD_INSERT_TABSET_ATTRIBUTES = "visual_md_insert_tabset_attributes";
+   public final static String VISUAL_MD_INSERT_TABSET_TAB = "visual_md_insert_tabset_tab";
+   public final static String VISUAL_MD_CALLOUT_TAB_CALLOUT = "visual_md_callout_tab_callout";
+   public final static String VISUAL_MD_CALLOUT_TAB_ATTRIBUTES = "visual_md_callout_tab_attributes";
+   public final static String VISUAL_MD_CALLOUT_CAPTION = "visual_md_callout_caption";
+   public final static String VISUAL_MD_CALLOUT_ICON = "visual_md_callout_icon";
+   public final static String VISUAL_MD_CALLOUT_REMOVE_BUTTON = "visual_md_callout_remove_button";
 
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";
@@ -635,4 +714,17 @@ public class ElementIds
    // ChooseEncodingDialog
    public final static String ENC_SHOW_ALL = "enc_show_all";
    public final static String ENC_SET_DEFAULT = "enc_set_default";
+
+   // Modify Keyboard Shortcuts Dialog
+   public final static String KYBRD_SHRTCTS_FILTER_WIDGET = "kybrd_shrtcts_fltr";
+   public static String getKybrdShrtctsFilterWidget() { return getElementId(KYBRD_SHRTCTS_FILTER_WIDGET); }
+   public final static String KYBRD_SHRTCTS_RESET_BUTTON = "kybrd_shrtcts_rst";
+   public static String getKybrdShrtctsResetButton() { return getElementId(KYBRD_SHRTCTS_RESET_BUTTON); }
+
+   // VersionsPopupMenu
+   public final static String VERSIONS_POPUP_MENU = "versions_popup_menu";
+
+   // R Console Toolbar
+   public final static String CONSOLE_SESSION_SUSPENDED = "r_session_suspended_console";
+   public final static String CONSOLE_SESSION_SUSPEND_BLOCKED = "r_session_suspend_blocked_console";
 }

@@ -1,7 +1,7 @@
 /*
  * DataViewer.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -122,7 +122,7 @@ namespace {
  *    
  *    When a request for data arrives, we check to see if the data requested is
  *    a subset of the data already in our working copy. If it is, we use the
- *    working copy as a starting postion rather than the original or cached
+ *    working copy as a starting position rather than the original or cached
  *    object.
  *
  *    This allows us to efficiently perform operations on very large datasets
@@ -189,7 +189,7 @@ bool isFilterSubset(const std::string& outer, const std::string& inner)
    else if (outerType == "character")
    {
       // characters are a subset if the outer string is within the inner one
-      // (i.e. a seach for "walnuts" (inner) is within "walnut" (outer))
+      // (i.e. a search for "walnuts" (inner) is within "walnut" (outer))
       return inner.find(outer) != std::string::npos;
    }
    
@@ -204,7 +204,7 @@ typedef enum
 } DimType;
 
 // returns dimensions of an object safely--assumes dimension to be 0 unless we
-// can succesfully obtain dimensions
+// can successfully obtain dimensions
 int safeDim(SEXP data, DimType dimType)
 {
    r::sexp::Protect protect;
@@ -863,9 +863,34 @@ Error getGridData(const http::Request& request,
 
    pResponse->setNoCacheHeaders();    // don't cache data/grid shape
    pResponse->setStatusCode(status);
+   pResponse->setContentType("application/json");
    pResponse->setBody(output);
 
    return Success();
+}
+
+Error removeRCachedData(const std::string& cacheKey);
+
+void removeRCachedDataCallback(const std::string& cacheKey)
+{
+   Error error = removeRCachedData(cacheKey);
+   if (error)
+      LOG_ERROR(error);
+}
+
+Error removeRCachedData(const std::string& cacheKey)
+{
+   if (core::thread::isMainThread())
+   {
+      // remove cache env object and backing file
+      return r::exec::RFunction(".rs.removeCachedData", cacheKey,
+            viewerCacheDir()).call();
+   }
+   else
+   {
+      module_context::executeOnMainThread(boost::bind(removeRCachedDataCallback, cacheKey));
+      return Success();
+   }
 }
 
 Error removeCacheKey(const std::string& cacheKey)
@@ -876,9 +901,7 @@ Error removeCacheKey(const std::string& cacheKey)
    if (pos != s_cachedFrames.end())
       s_cachedFrames.erase(pos);
    
-   // remove cache env object and backing file
-   return r::exec::RFunction(".rs.removeCachedData", cacheKey, 
-         viewerCacheDir()).call();
+    return removeRCachedData(cacheKey);
 }
 
 // called by the client to expire data cached by an associated viewer tab
@@ -918,6 +941,9 @@ void onResume(const Settings&)
 void onDetectChanges(module_context::ChangeSource source)
 {
    DROP_RECURSIVE_CALLS;
+
+   if (!core::thread::isMainThread())
+      return;
 
    // unlikely that data will change outside of a REPL
    if (source != module_context::ChangeSourceREPL) 

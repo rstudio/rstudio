@@ -1,7 +1,7 @@
 /*
  * RemoteServer.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,6 +56,7 @@ import org.rstudio.studio.client.common.debugging.model.TopLevelLineData;
 import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.mirrors.model.CRANMirror;
 import org.rstudio.studio.client.common.presentation.model.SlideNavigation;
+import org.rstudio.studio.client.common.presentation2.model.PresentationEditorLocation;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetClassCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetGenericCall;
 import org.rstudio.studio.client.common.r.roxygen.RoxygenHelper.SetMethodCall;
@@ -99,6 +100,8 @@ import org.rstudio.studio.client.projects.model.RProjectVcsOptions;
 import org.rstudio.studio.client.projects.model.SharedProjectDetails;
 import org.rstudio.studio.client.projects.model.SharingConfigResult;
 import org.rstudio.studio.client.projects.model.SharingResult;
+import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
+import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
 import org.rstudio.studio.client.rmarkdown.model.NotebookCreateResult;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDocQueue;
 import org.rstudio.studio.client.rmarkdown.model.NotebookQueueUnit;
@@ -111,6 +114,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdOutputInfo;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateContent;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlResult;
+import org.rstudio.studio.client.rsconnect.model.QmdPublishDetails;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAccount;
 import org.rstudio.studio.client.rsconnect.model.RSConnectAppName;
 import org.rstudio.studio.client.rsconnect.model.RSConnectApplicationInfo;
@@ -686,6 +690,17 @@ public class RemoteServer implements Server
             .get();
 
       sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
+   }
+
+   @Override
+   public void consoleFollowHyperlink(String url, String text, String params, ServerRequestCallback<Void> requestCallback) {
+      JSONArray array = new JSONArrayBuilder()
+            .add(url)
+            .add(text)
+            .add(params)
+            .get();
+
+      sendRequest(RPC_SCOPE, CONSOLE_FOLLOW_HYPERLINK, array, requestCallback);
    }
 
    public void resetConsoleActions(ServerRequestCallback<Void> requestCallback)
@@ -1350,6 +1365,18 @@ public class RemoteServer implements Server
 
       sendRequest(RPC_SCOPE, GET_PACKAGE_NEWS_URL, params, requestCallback);
    }
+   
+   @Override
+   public void getPackageCitations(String packageName,
+                                   ServerRequestCallback<JavaScriptObject> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(packageName)
+            .get();
+
+      sendRequest(RPC_SCOPE, GET_PACKAGE_CITATIONS, params, requestCallback);
+   }
+   
 
    public void setCRANMirror(CRANMirror mirror,
                              ServerRequestCallback<Void> requestCallback)
@@ -1587,6 +1614,15 @@ public class RemoteServer implements Server
       paramArray.set(1, new JSONString(targetFile.getPath()));
 
       sendRequest(RPC_SCOPE, RENAME_FILE, paramArray, requestCallback);
+   }
+   
+   public void touchFile(FileSystemItem newFile, 
+                          ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray paramArray = new JSONArray();
+      paramArray.set(0, new JSONString(newFile.getPath()));
+      
+      sendRequest(RPC_SCOPE, TOUCH_FILE, paramArray, requestCallback);
    }
 
    // This method should be rarely used; we generally don't want to expose
@@ -5128,11 +5164,13 @@ public class RemoteServer implements Server
    @Override
    public void getDeploymentFiles(String dir,
          boolean asMultipleRmd,
+         String quartoSrcFile,
          ServerRequestCallback<RSConnectDeploymentFiles> requestCallback)
    {
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(dir));
       params.set(1, JSONBoolean.getInstance(asMultipleRmd));
+      params.set(2, new JSONString(quartoSrcFile));
       sendRequest(RPC_SCOPE,
             GET_DEPLOYMENT_FILES,
             params,
@@ -5161,6 +5199,18 @@ public class RemoteServer implements Server
             GET_RMD_PUBLISH_DETAILS,
             params,
             requestCallback);
+   }
+
+   @Override
+   public void quartoPublishDetails(String target,
+                                    ServerRequestCallback<QmdPublishDetails> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(target));
+      sendRequest(RPC_SCOPE,
+         GET_QMD_PUBLISH_DETAILS,
+         params,
+         requestCallback);
    }
 
    @Override
@@ -5631,6 +5681,7 @@ public class RemoteServer implements Server
    @Override
    public void lintRSourceDocument(String documentId,
                                    String documentPath,
+                                   String content,
                                    boolean showMarkersPane,
                                    boolean explicit,
                                    ServerRequestCallback<JsArray<LintItem>> requestCallback)
@@ -5638,8 +5689,9 @@ public class RemoteServer implements Server
       JSONArray params = new JSONArray();
       params.set(0, new JSONString(documentId));
       params.set(1, new JSONString(documentPath));
-      params.set(2, JSONBoolean.getInstance(showMarkersPane));
-      params.set(3, JSONBoolean.getInstance(explicit));
+      params.set(2, new JSONString(content));
+      params.set(3, JSONBoolean.getInstance(showMarkersPane));
+      params.set(4, JSONBoolean.getInstance(explicit));
       sendRequest(RPC_SCOPE, LINT_R_SOURCE_DOCUMENT, params, requestCallback);
    }
 
@@ -5878,6 +5930,19 @@ public class RemoteServer implements Server
       params.set(0, new JSONString(path));
       params.set(1, new JSONString(normPath));
       sendRequest(RPC_SCOPE, PROFILE_SOURCES, params, requestCallback);
+   }
+
+   public void cppProjectStyle(ServerRequestCallback<String> requestCallback) 
+   {
+      JSONArray params = new JSONArray();
+      sendRequest(RPC_SCOPE, CPP_PROJECT_STYLE, params, requestCallback);
+   }
+
+   public void cppSourceFile(String path, ServerRequestCallback<Void> requestCallback) 
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(path));
+      sendRequest(RPC_SCOPE, CPP_SOURCE_FILE, params, requestCallback);
    }
 
    public void removeConnection(ConnectionId id,
@@ -6363,6 +6428,68 @@ public class RemoteServer implements Server
       params.set(1, new JSONString(id));
       sendRequest(RPC_SCOPE, XREF_FOR_ID, params, callback);
    }
+   
+   @Override
+   public void quartoXrefIndexForFile(String file, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, QUARTO_XREF_INDEX_FOR_FILE, file, callback);
+   }
+
+   @Override
+   public void quartoXrefForId(String file, String id, ServerRequestCallback<JavaScriptObject> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      params.set(1, new JSONString(id));
+      sendRequest(RPC_SCOPE, QUARTO_XREF_FOR_ID, params, callback);
+   }
+   
+   @Override
+   public void quartoCapabilities(ServerRequestCallback<QuartoCapabilities> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, QUARTO_CAPABILITIES, requestCallback);
+   }
+   
+   @Override
+   public void quartoPreview(String file, String format, PresentationEditorLocation editorState,
+                            ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      params.set(1,  new JSONString(format));
+      params.set(2,  editorState != null ? new JSONObject(editorState) : JSONNull.getInstance());
+      sendRequest(RPC_SCOPE, QUARTO_PREVIEW, params, requestCallback);
+   }
+   
+   @Override
+   public void quartoServe(String format, boolean render, ServerRequestCallback<Void> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(StringUtil.isNullOrEmpty(format) ? "default" : format));
+      params.set(1,  JSONBoolean.getInstance(render));
+      sendRequest(RPC_SCOPE, QUARTO_SERVE, params, callback);
+   }
+   
+   @Override
+   public void quartoServeRender(String file, ServerRequestCallback<Boolean> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(file));
+      sendRequest(RPC_SCOPE, QUARTO_SERVE_RENDER, params, callback);
+   }
+   
+   
+   @Override
+   public void quartoCreateProject(String projectFile, 
+                                   QuartoNewProjectOptions options, 
+                                   ServerRequestCallback<ConsoleProcess> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(projectFile));
+      params.set(1, new JSONObject(options));
+      sendRequest(RPC_SCOPE, QUARTO_CREATE_PROJECT, params, 
+                  new ConsoleProcessCallbackAdapter(callback));
+   }
 
    @Override
    public void getInstalledFonts(ServerRequestCallback<JsArrayString> callback)
@@ -6436,6 +6563,7 @@ public class RemoteServer implements Server
    private static final String FIND_FUNCTION_IN_SEARCH_PATH = "find_function_in_search_path";
 
    private static final String CONSOLE_INPUT = "console_input";
+   private static final String CONSOLE_FOLLOW_HYPERLINK = "console_follow_hyperlink";
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";
@@ -6493,6 +6621,7 @@ public class RemoteServer implements Server
    private static final String GET_CRAN_ACTIVES = "get_cran_actives";
    private static final String PACKAGE_SKELETON = "package_skeleton";
    private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
+   private static final String GET_PACKAGE_CITATIONS = "get_package_citations";
 
    private static final String GET_HELP = "get_help";
    private static final String SHOW_HELP_TOPIC = "show_help_topic";
@@ -6512,6 +6641,7 @@ public class RemoteServer implements Server
    private static final String COPY_FILE = "copy_file";
    private static final String MOVE_FILES = "move_files";
    private static final String RENAME_FILE = "rename_file";
+   private static final String TOUCH_FILE = "touch_file";
    private static final String COMPLETE_UPLOAD = "complete_upload";
 
    private static final String NEXT_PLOT = "next_plot";
@@ -6784,6 +6914,7 @@ public class RemoteServer implements Server
    private static final String REGISTER_USER_TOKEN = "register_user_token";
    private static final String GET_RSCONNECT_LINT_RESULTS = "get_rsconnect_lint_results";
    private static final String GET_RMD_PUBLISH_DETAILS = "get_rmd_publish_details";
+   private static final String GET_QMD_PUBLISH_DETAILS = "get_qmd_publish_details";
    private static final String HAS_ORPHANED_ACCOUNTS = "has_orphaned_accounts";
 
    private static final String RENDER_RMD = "render_rmd";
@@ -6872,6 +7003,9 @@ public class RemoteServer implements Server
    private static final String REPLACE_COMMENT_HEADER = "replace_comment_header";
    private static final String SET_USER_CRASH_HANDLER_PROMPTED = "set_user_crash_handler_prompted";
 
+   private static final String CPP_PROJECT_STYLE = "cpp_project_style";
+   private static final String CPP_SOURCE_FILE = "cpp_source_file";
+
    private static final String PANDOC_GET_CAPABILITIES = "pandoc_get_capabilities";
    private static final String PANDOC_AST_TO_MARKDOWN = "pandoc_ast_to_markdown";
    private static final String PANDOC_MARKDOWN_TO_AST = "pandoc_markdown_to_ast";
@@ -6895,7 +7029,17 @@ public class RemoteServer implements Server
 
    private static final String DOI_FETCH_CSL = "doi_fetch_csl";
 
+   
    private static final String XREF_INDEX_FOR_FILE = "xref_index_for_file";
    private static final String XREF_FOR_ID = "xref_for_id";
+   
+   private static final String QUARTO_XREF_INDEX_FOR_FILE = "quarto_xref_index_for_file";
+   private static final String QUARTO_XREF_FOR_ID = "quarto_xref_for_id";
+   
+   private static final String QUARTO_CAPABILITIES = "quarto_capabilities";
+   private static final String QUARTO_PREVIEW = "quarto_preview";
+   private static final String QUARTO_SERVE = "quarto_serve";
+   private static final String QUARTO_SERVE_RENDER = "quarto_serve_render";
+   private static final String QUARTO_CREATE_PROJECT = "quarto_create_project";
 
 }

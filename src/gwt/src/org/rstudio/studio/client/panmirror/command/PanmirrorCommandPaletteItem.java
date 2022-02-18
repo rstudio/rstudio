@@ -1,7 +1,7 @@
 /*
  * PanmirrorCommandPaletteItem.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,9 @@
 
 package org.rstudio.studio.client.panmirror.command;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.studio.client.palette.BasePaletteItem;
+import org.rstudio.studio.client.panmirror.PanmirrorConstants;
 
 public class PanmirrorCommandPaletteItem extends BasePaletteItem<PanmirrorCommandPaletteEntry>
 {
@@ -39,7 +41,7 @@ public class PanmirrorCommandPaletteItem extends BasePaletteItem<PanmirrorComman
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      return super.labelMatchesSearch("visual editor " + cmd_.getFullMenuText(), keywords);
+      return super.labelMatchesSearch(constants_.visualEditorLabel(cmd_.getFullMenuText()), keywords);
    }
 
    @Override
@@ -67,4 +69,5 @@ public class PanmirrorCommandPaletteItem extends BasePaletteItem<PanmirrorComman
    }
 
    private final PanmirrorCommandUI cmd_;
+   private static final PanmirrorConstants constants_ = GWT.create(PanmirrorConstants.class);
 }

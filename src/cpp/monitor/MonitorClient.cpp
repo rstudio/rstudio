@@ -1,7 +1,7 @@
 /*
  * MonitorClient.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,20 +29,13 @@ namespace {
 class MonitorLogDestination : public core::log::ILogDestination
 {
 public:
-   MonitorLogDestination(core::log::LogLevel logLevel, const std::string& programIdentity) :
-      ILogDestination(logLevel),
+   MonitorLogDestination(const std::string& id, core::log::LogLevel logLevel, const std::string& programIdentity) :
+      ILogDestination(id, logLevel, core::log::LogMessageFormatType::PRETTY, false),
       programIdentity_(programIdentity)
    {
    }
 
-   unsigned int getId() const override
-   {
-      // Return a unique ID that's not likely to be used by other log destination types (stderr and syslog are 0 & 1,
-      // and file log destinations in the server start at 3.
-      return 56;
-   }
-
-   void reload() override
+   void refresh(const core::log::RefreshParams&) override
    {
       // Nothing to do.
    }
@@ -67,10 +60,11 @@ Client* s_pClient = NULL;
 } // anonymous namespace
 
 std::shared_ptr<core::log::ILogDestination> Client::createLogDestination(
+                                    const std::string& id,
                                     core::log::LogLevel logLevel,
                                     const std::string& programIdentity)
 {
-   return std::shared_ptr<core::log::ILogDestination>(new MonitorLogDestination(logLevel, programIdentity));
+   return std::shared_ptr<core::log::ILogDestination>(new MonitorLogDestination(id, logLevel, programIdentity));
 }
 
 void initializeMonitorClient(const std::string& metricsSocket,

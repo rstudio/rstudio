@@ -1,7 +1,7 @@
 /*
  * SimpleRequestCallback.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 
@@ -26,7 +27,7 @@ public class SimpleRequestCallback<T> extends ServerRequestCallback<T>
 {
    public SimpleRequestCallback()
    {
-      this("Error", false);
+      this(constants_.errorCaption(), false);
    }
 
    public SimpleRequestCallback(String caption)
@@ -72,4 +73,5 @@ public class SimpleRequestCallback<T> extends ServerRequestCallback<T>
 
    private String caption_;
    private boolean useClientInfoMsg_;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

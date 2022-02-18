@@ -4,6 +4,9 @@ set "PATH=@LIBR_BIN_DIR@;%PATH%"
 echo Running 'core' tests...
 "@CMAKE_CURRENT_BINARY_DIR@/core/rstudio-core-tests.exe"
 
+echo Running 'shared_core' tests...
+"@CMAKE_CURRENT_BINARY_DIR@/shared_core/rstudio-shared-core-tests.exe"
+
 echo Running 'rsession' tests...
 set "RS_CRASH_HANDLER_PATH=@CMAKE_SOURCE_DIR@/../../dependencies/windows/crashpad-release/bin/crashpad_handler.com"
 "@CMAKE_CURRENT_BINARY_DIR@/session/rsession.exe" ^

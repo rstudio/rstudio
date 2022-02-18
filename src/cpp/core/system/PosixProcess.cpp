@@ -1,7 +1,7 @@
 /*
  * PosixProcess.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,7 +53,7 @@ struct AsioProcessSupervisor::Impl
       Error error = pChild->run(callbacks);
       if (error)
       {
-         // error occured - remove the child
+         // error occurred - remove the child
          LOCK_MUTEX(mutex_)
          {
             children_.erase(pChild);
@@ -151,10 +151,10 @@ struct AsioProcessSupervisor::Impl
       LOCK_MUTEX(mutex_)
       {
          // upgrade this weak pointer to a shared pointer
-         // this should be gauranteed to work but we do a null check just to be safe
+         // this should be guaranteed to work but we do a null check just to be safe
          // this should always work because the actual child cannot die until we've erased it from
          // our collection. the weak pointer is used to ensure that the callbacks stored by the child
-         // do not store a strong reference to itself, thus preventing the child from ever beeing freed
+         // do not store a strong reference to itself, thus preventing the child from ever being freed
          if (boost::shared_ptr<AsioAsyncChildProcess> child = pChild.lock())
             children_.erase(child);
       }

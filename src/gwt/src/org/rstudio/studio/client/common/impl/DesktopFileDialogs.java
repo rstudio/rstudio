@@ -1,7 +1,7 @@
 /*
  * DesktopFileDialogs.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.impl;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.inject.Inject;
@@ -28,6 +29,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
@@ -96,7 +98,7 @@ public class DesktopFileDialogs implements FileDialogs
                @Override
                public void onError(ServerError error)
                {
-                  globalDisplay_.showErrorMessage("Error",
+                  globalDisplay_.showErrorMessage(constants_.errorCaption(),
                         error.getUserMessage());
                   operation.execute(null, new NullProgressIndicator());
                }
@@ -146,7 +148,7 @@ public class DesktopFileDialogs implements FileDialogs
                         final boolean canChooseDirectories,
                         final ProgressOperationWithInput<FileSystemItem> operation)
    {
-      openFile(caption, "Open", fsContext, initialFilePath, filter, canChooseDirectories, operation);
+      openFile(caption, constants_.openLabel(), fsContext, initialFilePath, filter, canChooseDirectories, operation);
    }
    
    public void openFile(final String caption,
@@ -210,7 +212,7 @@ public class DesktopFileDialogs implements FileDialogs
                         final boolean forceDefaultExtension,
                         final ProgressOperationWithInput<FileSystemItem> operation)
    {
-      saveFile(caption, "Save", fsContext, initialFilePath, defaultExtension, forceDefaultExtension, operation);
+      saveFile(caption, constants_.saveLabel(), fsContext, initialFilePath, defaultExtension, forceDefaultExtension, operation);
    }
    
    public void saveFile(final String caption,
@@ -267,7 +269,7 @@ public class DesktopFileDialogs implements FileDialogs
                             final FileSystemItem initialDir,
                             ProgressOperationWithInput<FileSystemItem> operation)
    {
-      chooseFolder(caption, "Open", fsContext, initialDir, operation);
+      chooseFolder(caption, constants_.openLabel(), fsContext, initialDir, operation);
    }
    
    public void chooseFolder(final String caption,
@@ -320,4 +322,5 @@ public class DesktopFileDialogs implements FileDialogs
 
    private FilesServerOperations server_;
    private GlobalDisplay globalDisplay_;
+   private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

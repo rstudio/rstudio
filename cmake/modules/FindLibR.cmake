@@ -1,7 +1,7 @@
 #
 # FindLibR.cmake
 #
-# Copyright (C) 2021 by RStudio, PBC
+# Copyright (C) 2022 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -111,6 +111,11 @@ else()
             message(STATUS "Unable to locate R home (not written to registry)")
          endif()
 
+         # make sure path exists
+         if (NOT EXISTS "${LIBR_HOME}")
+            message(STATUS "Path to R found in registry '${LIBR_HOME}' doesn't exist")
+         endif()
+
       endif()
 
       # set other R paths based on home path
@@ -125,10 +130,11 @@ else()
          set(LIBR_ARCH "x64")
          set(LIBRARY_ARCH_HINT_PATH "${LIBR_HOME}/bin/x64")
       endif()
+      message(STATUS "LIBR_HOME: ${LIBR_HOME}")
 
       # call dll2lib.R to ensure export files are generated
       execute_process(
-          
+
          COMMAND
             "${LIBR_HOME}/bin/${LIBR_ARCH}/Rscript.exe"
             "dll2lib.R"
@@ -147,8 +153,9 @@ else()
             LIBR_DLL2LIB_RESULT)
 
       if(NOT LIBR_DLL2LIB_RESULT EQUAL 0)
-         message(STATUS "${LIBR_DLL2LIB_STDOUT}")
-         message(STATUS "${LIBR_DLL2LIB_STDERR}")
+         message(STATUS "Error converting R DLLs")
+         message(STATUS "Output: ${LIBR_DLL2LIB_STDOUT}")
+         message(STATUS "Error: ${LIBR_DLL2LIB_STDERR}")
          message(FATAL_ERROR "Failed to generate .lib files for R DLLs!")
       endif()
 

@@ -1,7 +1,7 @@
 /*
  * node.ts
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, NodeSpec, NodeType, ResolvedPos, Slice } from 'prosemirror-model';
+import { Node as ProsemirrorNode, NodeSpec, NodeType, ResolvedPos } from 'prosemirror-model';
 import { EditorState, Selection, NodeSelection } from 'prosemirror-state';
 import {
   findParentNode,
@@ -40,7 +40,6 @@ import { PandocBlockCapsuleFilter } from './pandoc_capsule';
 
 import { AttrEditOptions } from './attr_edit';
 import { CommandFn } from './command';
-import { ExecuteRmdChunkFn } from './rmd';
 
 export interface PandocNode {
   readonly name: string;

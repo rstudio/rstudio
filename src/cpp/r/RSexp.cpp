@@ -1,7 +1,7 @@
 /*
  * RSexp.cpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,9 +35,11 @@
 #include <core/Macros.hpp>
 #include <core/Log.hpp>
 #include <core/DateTime.hpp>
+#include <core/Thread.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
+#include <r/RUtil.hpp>
 
 // clean out global definitions of TRUE and FALSE so we can
 // use the Rboolean variations of them
@@ -373,11 +375,14 @@ void listEnvironment(SEXP env,
                      Protect* pProtect,
                      std::vector<Variable>* pVariables)
 {
+   if (!ASSERT_MAIN_THREAD())
+      return;
+
    // reset passed vars
    pVariables->clear();
    
    // get the list of environment vars (protect locally because we 
-   // we don't acutally return this list to the caller
+   // we don't actually return this list to the caller
    SEXP envVarsSEXP;
    Protect rProtect(envVarsSEXP = R_lsInternal(env, includeAll ? TRUE : FALSE));
 
@@ -424,6 +429,9 @@ void listEnvironment(SEXP env,
 
 void listNamedAttributes(SEXP obj, Protect *pProtect, std::vector<Variable>* pVariables)
 {
+   if (!ASSERT_MAIN_THREAD())
+      return;
+
    // reset passed vars
    pVariables->clear();
 
@@ -917,7 +925,7 @@ Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8)
    return Success();
 }
 
-Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap, bool asUtf8)
+Error extract(SEXP valueSEXP, std::map<std::string, std::set<std::string>>* pMap, bool asUtf8)
 {
    if (TYPEOF(valueSEXP) != VECSXP)
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
@@ -940,6 +948,22 @@ Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pM
       pMap->operator [](name) = contents;
    }
    
+   return Success();
+}
+
+Error extract(SEXP valueSEXP, FilePath* pFilePath)
+{
+   // extract result (require UTF-8)
+   std::string path;
+   Error error = extract(valueSEXP, &path, true);
+   if (error)
+      return error;
+   
+   // expand aliased paths
+   path = r::util::expandFileName(path);
+   
+   // return path
+   *pFilePath = FilePath(path);
    return Success();
 }
 
@@ -1493,9 +1517,8 @@ SEXP createUtf8(const std::string& data, Protect* pProtect)
    SEXP strSEXP;
    pProtect->add(strSEXP = Rf_allocVector(STRSXP, 1));
 
-   SEXP charSEXP;
-   pProtect->add(charSEXP = Rf_mkCharLenCE(data.c_str(), data.size(), CE_UTF8));
-
+   // protection not required as long as we immediately assign into protected STRSXP
+   SEXP charSEXP = Rf_mkCharLenCE(data.c_str(), data.size(), CE_UTF8);
    SET_STRING_ELT(strSEXP, 0, charSEXP);
    return strSEXP;
 }
@@ -1503,6 +1526,21 @@ SEXP createUtf8(const std::string& data, Protect* pProtect)
 SEXP createUtf8(const FilePath& filePath, Protect* pProtect)
 {
    return createUtf8(filePath.getAbsolutePath(), pProtect);
+}
+
+SEXP createUtf8(const std::vector<std::string>& data, Protect* pProtect)
+{
+   SEXP strSEXP;
+   pProtect->add(strSEXP = Rf_allocVector(STRSXP, data.size()));
+   
+   for (std::size_t i = 0, n = data.size(); i < n; i++)
+   {
+      // protection not required as long as we immediately assign into protected STRSXP
+      SEXP charSEXP = Rf_mkCharLenCE(data[i].c_str(), data[i].size(), CE_UTF8);
+      SET_STRING_ELT(strSEXP, i, charSEXP);
+   }
+   
+   return strSEXP;
 }
 
 SEXP createRawVector(const std::string& data, Protect* pProtect)

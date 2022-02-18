@@ -1,7 +1,7 @@
 /*
  * NewDirectoryPage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.projects.ui.newproject;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -24,6 +25,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewPackageOptions;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
@@ -47,9 +49,9 @@ public class NewPackagePage extends NewDirectoryPage
 {
    public NewPackagePage()
    {
-      super("R Package",
-            "Create a new R package",
-            "Create R Package",
+      super(constants_.newPackageTitle(),
+            constants_.createNewPackageSubTitle(),
+            constants_.createRPackagePageCaption(),
             new ImageResource2x(NewProjectResources.INSTANCE.packageIcon2x()),
             new ImageResource2x(NewProjectResources.INSTANCE.packageIconLarge2x()));
       
@@ -89,9 +91,9 @@ public class NewPackagePage extends NewDirectoryPage
    @Override 
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
-      String[] labels = {"Package"};
+      String[] labels = {constants_.packageLabel()};
       String[] values = {"package"};
-      listProjectType_ = new SelectWidget("Type:",
+      listProjectType_ = new SelectWidget(constants_.typeLabel(),
                                           labels,
                                           values,
                                           false);
@@ -109,11 +111,11 @@ public class NewPackagePage extends NewDirectoryPage
    @Override
    protected String getDirNameLabel()
    {
-      return "Package name:";
+      return constants_.packageNameLabel();
    }
 
    @Override
-   protected void onAddBodyWidgets()
+   protected void onAddTopWidgets()
    {
       // code files panel
       listCodeFiles_ = new CodeFilesList();
@@ -127,7 +129,7 @@ public class NewPackagePage extends NewDirectoryPage
       super.initialize(input);
       
       if (input.getContext().isRcppAvailable())
-         listProjectType_.addChoice("Package w/ Rcpp", "package-rcpp");
+         listProjectType_.addChoice(constants_.rcppPackageOption(), "package-rcpp");
    }
 
    @Override
@@ -171,9 +173,8 @@ public class NewPackagePage extends NewDirectoryPage
       {
          globalDisplay_.showMessage(
                MessageDialog.WARNING,
-               "Error",
-               "Invalid package name '" + packageName + "'. Package names " +
-               "should start with a letter, and contain only letters and numbers.");
+               constants_.errorCaption(),
+               constants_.validateAsyncMessage(packageName));
          onValidated.execute(false);
          return;
       }
@@ -197,8 +198,8 @@ public class NewPackagePage extends NewDirectoryPage
             {
                globalDisplay_.showMessage(
                      MessageDialog.WARNING,
-                     "Error",
-                     "A file already exists at path '" + item.getPath() + "'");
+                     constants_.errorCaption(),
+                     constants_.onResponseReceivedErrorMessage(item.getPath()));
                onValidated.execute(false);
                return;
             }
@@ -231,8 +232,8 @@ public class NewPackagePage extends NewDirectoryPage
                   {
                      globalDisplay_.showMessage(
                           MessageDialog.WARNING,
-                          "Error",
-                          "Directory '" + item.getPath() + "' already exists and is not empty.");
+                          constants_.errorCaption(),
+                          constants_.directoryAlreadyExistsMessage(item.getPath()));
                   }
                   
                   onValidated.execute(ok);
@@ -262,4 +263,5 @@ public class NewPackagePage extends NewDirectoryPage
    
    // Injected ----
    private FilesServerOperations server_;
+   private static final StudioClientProjectConstants constants_ = GWT.create(StudioClientProjectConstants.class);
 }

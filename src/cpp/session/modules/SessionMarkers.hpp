@@ -1,7 +1,7 @@
 /*
  * SessionMarkers.hpp
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include <session/SessionModuleContext.hpp>
 #include <shared_core/json/Json.hpp>
 
 namespace rstudio {
@@ -32,11 +33,12 @@ namespace modules {
 namespace markers {
 
 core::json::Object markersStateAsJson();
+std::vector<module_context::SourceMarker> markersForFile(const std::string& path);
 
 core::Error initialize();
    
 } // namespace markers
-} // namepace handlers
+} // namespace handlers
 } // namespace session
 } // namespace rstudio
 

@@ -1,7 +1,7 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 
 @external ubuntu_mono;
-@external rstudio-themes-flat, rstudio-themes-dark;
+@external rstudio-themes-dark;
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
 @external editor_dark;
@@ -23,8 +23,8 @@
    font-family: proportionalFont;
    border-bottom: 1px solid #d6dadc;
    border-right: 1px solid #d6dadc;
-   border-top: 1px solid white;
-   border-left: 1px solid white;
+   border-top: none;
+   border-left: none;
    padding: 1px 6px;
    color: #3c474d;
    background-color: #eeeff1;
@@ -33,19 +33,14 @@
    border-collapse: separate;
    font-size: 11px;
    text-shadow: none;
-}
-
-.rstudio-themes-flat .dataGridHeader {
-   border-top: none;
-   border-left: none;
    height: 16px;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .dataGridHeader {
+.rstudio-themes-dark .dataGridHeader {
    color: white;
 }
 
-.rstudio-themes-flat .dataGridHeader:last-child {
+.dataGridHeader:last-child {
    border-right: none;
 }
 
@@ -53,12 +48,6 @@
 {
    padding: 1px 6px;
    vertical-align: top;
-   color: #606060;
-}
-
-.rstudio-themes-flat .dataGridCell
-{
-   color: inherit;
 }
 
 .dataGridCell img
@@ -71,23 +60,9 @@
    margin-top: 0px;
 }
 
-.dataGridOddRow
+.dataGridEvenRow, .dataGridOddRow
 {
-   background-color: white;
-}
 
-.rstudio-themes-flat .dataGridOddRow
-{
-   background-color: inherit;
-}
-
-.dataGridEvenRow
-{
-   background-color: white;
-}
-
-.rstudio-themes-flat .dataGridEvenRow
-{
    background-color: inherit;
 }
 
@@ -108,20 +83,20 @@ body.ubuntu_mono .dataGridCell input[type=checkbox] {
    margin-bottom: 0;
 }
 
-.rstudio-themes-flat .rstudio-themes-default .dataGridHeader,
-.rstudio-themes-flat .rstudio-themes-default .dataGridEvenRowCell,
-.rstudio-themes-flat .rstudio-themes-default .dataGridOddRowCell {
+.rstudio-themes-default .dataGridHeader,
+.rstudio-themes-default .dataGridEvenRowCell,
+.rstudio-themes-default .dataGridOddRowCell {
    border-color: THEME_DEFAULT_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridHeader,
-.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridEvenRowCell,
-.rstudio-themes-flat .rstudio-themes-dark-grey .dataGridOddRowCell {
+.rstudio-themes-dark-grey .dataGridHeader,
+.rstudio-themes-dark-grey .dataGridEvenRowCell,
+.rstudio-themes-dark-grey .dataGridOddRowCell {
    border-color: THEME_DARKGREY_BORDER;
 }
 
-.rstudio-themes-flat .rstudio-themes-alternate .dataGridHeader,
-.rstudio-themes-flat .rstudio-themes-alternate .dataGridEvenRowCell,
-.rstudio-themes-flat .rstudio-themes-alternate .dataGridOddRowCell {
+.rstudio-themes-alternate .dataGridHeader,
+.rstudio-themes-alternate .dataGridEvenRowCell,
+.rstudio-themes-alternate .dataGridOddRowCell {
    border-color: THEME_ALTERNATE_BORDER;
 }

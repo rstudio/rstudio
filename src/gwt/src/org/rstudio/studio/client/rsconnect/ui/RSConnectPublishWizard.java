@@ -1,7 +1,7 @@
 /*
  * RSConnectPublishWizard.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,11 @@
 import java.util.ArrayList;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardPage;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishInput;
 import org.rstudio.studio.client.rsconnect.model.RSConnectPublishResult;
 
@@ -28,7 +30,7 @@ public class RSConnectPublishWizard
    public RSConnectPublishWizard(RSConnectPublishInput input, 
          ProgressOperationWithInput<RSConnectPublishResult> operation)
    {
-      super("Publish", "Publish", Roles.getDialogRole(), input, createFirstPage(input), operation);
+      super(constants_.publish(), constants_.publish(), Roles.getDialogRole(), input, createFirstPage(input), operation);
    }
    
    private static WizardPage<RSConnectPublishInput, RSConnectPublishResult>
@@ -37,21 +39,20 @@ public class RSConnectPublishWizard
       if (!input.hasDocOutput() && input.isMultiRmd() && !input.isWebsiteRmd())
       {
          // multiple docs -- see if we should send them all up
-         return new PublishMultiplePage("Publish", "Publish", null, input);
+         return new PublishMultiplePage(constants_.publish(), constants_.publish(), null, input);
       }
       else if (input.isWebsiteRmd() || !input.isMultiRmd() && 
-               (!input.isExternalUIEnabled() || !input.isSelfContained() ||
-                 input.isWebsiteRmd()))
+               (!input.isExternalUIEnabled() || input.isWebsiteRmd()))
       {
          // a single doc, but it can't go to RPubs because RPubs is disabled,
          // or because the doc is not self-contained, or is a website
-         return new PublishReportSourcePage("Publish", "Publish", null, input, 
+         return new PublishReportSourcePage(constants_.publish(), constants_.publish(), null, input,
                false);
       }
       else
       {
          // non-Shiny doc--see which service user wants to publish to
-         return new PublishDocServicePage("Publish", "Publish", null, input);
+         return new PublishDocServicePage(constants_.publish(), constants_.publish(), null, input);
       }
       // note that single Shiny docs don't require a wizard (the user can choose
       // a destination directly in the dialog)
@@ -64,4 +65,5 @@ public class RSConnectPublishWizard
       styles.add(RSConnectDeploy.RESOURCES.style().wizardDeployPage());
       return styles;
    }
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

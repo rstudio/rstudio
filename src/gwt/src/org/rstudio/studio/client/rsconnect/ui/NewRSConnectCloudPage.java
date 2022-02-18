@@ -1,7 +1,7 @@
 /*
  * NewRSConnectCloudPage.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,11 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.rsconnect.RSConnect;
+import org.rstudio.studio.client.rsconnect.RsconnectConstants;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountInput;
 import org.rstudio.studio.client.rsconnect.model.NewRSConnectAccountResult;
 
@@ -29,9 +31,8 @@ public class NewRSConnectCloudPage
    public NewRSConnectCloudPage()
    {
       super(RSConnect.CLOUD_SERVICE_NAME,
-            "A cloud service run by RStudio. Publish Shiny applications " +
-            "and interactive documents to the Internet.",
-            "Connect ShinyApps.io Account",
+            constants_.newRSConnectCloudPageSubTitle(),
+            constants_.newRSConnectCloudPageCaption(),
             new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIcon2x()), 
             new ImageResource2x(RSConnectResources.INSTANCE.cloudAccountIconLarge2x()));
    }
@@ -71,4 +72,5 @@ public class NewRSConnectCloudPage
    }
    
    private RSConnectCloudAccount accountWidget_;
+   private static final RsconnectConstants constants_ = GWT.create(RsconnectConstants.class);
 }

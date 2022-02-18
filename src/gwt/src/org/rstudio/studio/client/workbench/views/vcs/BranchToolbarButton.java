@@ -1,7 +1,7 @@
 /*
  * BranchToolbarButton.java
  *
- * Copyright (C) 2021 by RStudio, PBC
+ * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,6 +69,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
                                  implements HasValueChangeHandlers<String>,
                                             VcsRefreshEvent.Handler
 {
+   private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
    protected class SwitchBranchCommand implements Command
    {
       public SwitchBranchCommand(String branchLabel, String branchValue)
@@ -92,7 +93,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
    public BranchToolbarButton(final Provider<GitState> pVcsState)
    {
       super(ToolbarButton.NoText,
-            "Switch branch",
+            constants_.switchBranch(),
             StandardIcons.INSTANCE.empty_command(),
             new ScrollableToolbarPopupMenu());
 
@@ -154,7 +155,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
          }
       });
 
-      searchWidget_ = new SearchWidget("Search by branch name");
+      searchWidget_ = new SearchWidget(constants_.searchByBranchName());
 
       searchValueChangeTimer_ = new Timer()
       {
@@ -306,7 +307,7 @@ public class BranchToolbarButton extends ToolbarMenuButton
                {
                   String branchLabel = caption == LOCAL_BRANCHES
                         ? LOCAL_BRANCHES
-                        : "(Remote: " + caption + ")";
+                        : constants_.remoteBranchCaption(caption);
                   Label label = new Label(branchLabel);
                   label.addStyleName(ThemeStyles.INSTANCE.menuSubheader());
                   label.getElement().getStyle().setPaddingLeft(2, Unit.PX);
@@ -498,9 +499,9 @@ public class BranchToolbarButton extends ToolbarMenuButton
 
    private static final int MAX_BRANCHES = 100;
 
-   private static final String NO_BRANCH = "(no branch)";
-   private static final String NO_BRANCHES_AVAILABLE = "(no branches available)";
-   private static final String LOCAL_BRANCHES = "(local branches)";
+   private static final String NO_BRANCH = constants_.noBranchParentheses();
+   private static final String NO_BRANCHES_AVAILABLE = constants_.noBranchesAvailableParentheses();
+   private static final String LOCAL_BRANCHES = constants_.localBranchesParentheses();
 
    private static Resources RES = GWT.create(Resources.class);
    static
