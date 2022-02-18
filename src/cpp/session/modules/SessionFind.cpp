@@ -1370,8 +1370,6 @@ void addDirectoriesToCommand(
       const FilePath& directoryPath,
       shell_utils::ShellCommand* pCmd)
 {
-   // not sure if EscapeFilesOnly can be removed or is necessary for an edge case
-   *pCmd << "--";
    if (packageSourceFlag)
    {
       FilePath rPath(directoryPath.getAbsolutePath() + "/R");
@@ -1476,23 +1474,21 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "-f";
       cmd << tempFile;
       
-      addDirectoriesToCommand(
-         grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
+      // when using git grep, includes and excludes contribute to the <pathspec>
+      if (grepOptions.anyPackageFlag() || !grepOptions.includeArgs().empty() || !grepOptions.excludeArgs().empty())
+         cmd << "--";
 
       if (grepOptions.anyPackageFlag())
       {
-         if (!grepOptions.includeArgs().empty())
-         {
-            LOG_DEBUG_MESSAGE(
-               "Unknown include argument(s): " + boost::join(grepOptions.includeArgs(), ", "));
-         }
+         addDirectoriesToCommand(
+            grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
       }
       else 
       {
          for (std::string arg : grepOptions.includeArgs())
             cmd << arg;
       }
-
+      
       for (std::string arg : grepOptions.excludeArgs())
          cmd << arg;
    }
@@ -1520,8 +1516,15 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
          cmd << arg;
       for (auto&& arg : grepOptions.excludeArgs())
          cmd << arg;
-      addDirectoriesToCommand(
-         grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
+
+      // when using grep, only directories   
+      if (grepOptions.anyPackageFlag())
+      {
+         cmd << "--";
+         addDirectoriesToCommand(
+            grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
+      }
+      
    }
 
    // Clear existing results
