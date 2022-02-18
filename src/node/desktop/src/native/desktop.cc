@@ -30,6 +30,12 @@
 # include <Carbon/Carbon.h>
 #endif
 
+#define RS_EXPORT_FUNCTION(__NAME__, __FUNCTION__) \
+  exports.Set(                                     \
+    Napi::String::New(env, __NAME__),              \
+    Napi::Function::New(env, __FUNCTION__)         \
+  )
+
 namespace rstudio {
 namespace desktop {
 
@@ -133,18 +139,14 @@ void cleanClipboardImpl(bool stripHtml)
       // include extra byte for null terminator, just in case?
       auto length = ::CFDataGetLength(utf16Data);
       std::vector<UInt8> buffer(length);
-      ::CFDataGetBytes(utf16Data, CFRangeMake(0, length), reinterpret_cast<UInt8*>(buffer.data()));
+      ::CFDataGetBytes(utf16Data, CFRangeMake(0, length), (UInt8*) buffer.data());
 
       // convert those bytes from UTF-16 to UTF-8
-      char16_t* pBytes = reinterpret_cast<char16_t*>(&buffer[0]);
+      char16_t* pBytes = (char16_t*) &buffer[0];
       std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> converter;
       std::string utf8Text = converter.to_bytes(pBytes, pBytes + length / 2);
 
-      CFReleaseHandle<CFDataRef> utf8TextRef = CFDataCreate(
-         nullptr,
-         reinterpret_cast<const UInt8*>(utf8Text.data()),
-         utf8Text.size());
-
+      CFReleaseHandle<CFDataRef> utf8TextRef = CFDataCreate(nullptr, (UInt8*) utf8Text.data(), utf8Text.size());
       if (utf8TextRef && utf8TextRef.value())
          ::PasteboardPutItemFlavor(clipboard, (PasteboardItemID) 1, CFSTR("public.utf8-plain-text"), utf8TextRef, 0);
    }
@@ -174,17 +176,10 @@ Napi::Value cleanClipboard(const Napi::CallbackInfo& info)
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
-#define RS_EXPORT_FUNCTION(__NAME__, __FUNCTION__) \
-  exports.Set(                                     \
-    Napi::String::New(env, __NAME__),              \
-    Napi::Function::New(env, __FUNCTION__)         \
-  )
-
-  RS_EXPORT_FUNCTION("cleanClipboard", rstudio::desktop::cleanClipboard);
-
-#undef RS_EXPORT_FUNCTION
+  RS_EXPORT_FUNCTION(exports, "cleanClipboard", rstudio::desktop::cleanClipboard);
 
   return exports;
+
 }
 
 NODE_API_MODULE(hello, Init)
