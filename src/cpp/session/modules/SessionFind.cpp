@@ -1466,14 +1466,16 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       cmd << "--color=always";
       if (grepOptions.ignoreCase())
          cmd << "-i";
-      // Use -f to pass pattern via file, so we don't have to worry about
-      // escaping double quotes, etc.
-      cmd << "-f";
-      cmd << tempFile;
       if (grepOptions.asRegex())
          cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
       else
          cmd << "-F";
+         
+      // Use -f to pass pattern via file, so we don't have to worry about
+      // escaping double quotes, etc.
+      cmd << "-f";
+      cmd << tempFile;
+      
       addDirectoriesToCommand(
          grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
 
@@ -1504,14 +1506,16 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
 #endif
       if (grepOptions.ignoreCase())
          cmd << "-i";
-      // Use -f to pass pattern via file, so we don't have to worry about
-      // escaping double quotes, etc.
-      cmd << "-f";
-      cmd << tempFile;
       if (grepOptions.asRegex())
          cmd << "-E"; // use extended-grep (egrep) for Extended Regular Expressions
       else
          cmd << "-F";
+      
+      // Use -f to pass pattern via file, so we don't have to worry about
+      // escaping double quotes, etc.
+      cmd << "-f";
+      cmd << tempFile;
+      
       for (auto&& arg : grepOptions.includeArgs())
          cmd << arg;
       for (auto&& arg : grepOptions.excludeArgs())
