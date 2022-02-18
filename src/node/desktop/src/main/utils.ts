@@ -31,6 +31,13 @@ import { Err } from '../core/err';
 import { MainWindow } from './main-window';
 import i18next from 'i18next';
 
+// work around Electron resolving the application path to 'app.asar'
+const appPath = path.join(path.dirname(app.getAppPath()), 'app');
+
+export function getAppPath(): string {
+  return appPath;
+}
+
 export function initializeSharedSecret(): void {
   const sharedSecret = randomString() + randomString() + randomString();
   setenv('RS_SHARED_SECRET', sharedSecret);
@@ -192,11 +199,11 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
   let confPath: FilePath = new FilePath();
   let sessionPath: FilePath = new FilePath();
 
-  const binRoot = new FilePath(app.getAppPath());
+  const binRoot = new FilePath(getAppPath());
   if (app.isPackaged) {
     // confPath is intentionally left empty for a package build
     sessionPath = binRoot.completePath(`bin/${rsessionExeName()}`);
-    return [confPath, sessionPath, new FilePath(app.getAppPath())];
+    return [confPath, sessionPath, new FilePath(getAppPath())];
   }
 
   // developer builds -- first, check for environment variable
@@ -225,7 +232,7 @@ export function findComponents(): [FilePath, FilePath, FilePath] {
     const sessionPath = buildRootPath.completePath(`${subdir}/session/${rsessionExeName()}`);
     if (sessionPath.existsSync()) {
       confPath = buildRootPath.completePath(`${subdir}/conf/rdesktop-dev.conf`);
-      return [confPath, sessionPath, new FilePath(app.getAppPath())];
+      return [confPath, sessionPath, new FilePath(getAppPath())];
     }
   }
 

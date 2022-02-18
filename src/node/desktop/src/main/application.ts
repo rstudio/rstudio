@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, WebContents, screen } from 'electron';
+import { app, BrowserWindow, WebContents, screen } from 'electron';
 
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
@@ -21,6 +21,7 @@ import { generateRandomPort } from '../core/system';
 import { logger, enableDiagnosticsOutput } from '../core/logger';
 
 import {
+  getAppPath,
   createStandaloneErrorDialog,
   findComponents,
   initializeLang,
@@ -212,7 +213,7 @@ export class Application implements AppState {
   supportingFilePath(): FilePath {
     if (!this.supportPath) {
       // default to install path
-      this.supportPath = new FilePath(app.getAppPath());
+      this.supportPath = new FilePath(getAppPath());
 
       // adapt for OSX resource bundles
       if (process.platform === 'darwin') {
@@ -226,9 +227,9 @@ export class Application implements AppState {
 
   resourcesPath(): FilePath {
     if (app.isPackaged) {
-      return new FilePath(app.getAppPath());
+      return new FilePath(getAppPath());
     } else {
-      return new FilePath(app.getAppPath()).completePath('../../..');
+      return new FilePath(getAppPath()).completePath('../../..');
     }
   }
 
