@@ -26,11 +26,19 @@ fi
 
 # set up node variables common to scripts
 export NODE_VERSION="${RSTUDIO_NODE_VERSION}"
+export NODE_FOLDER="${NODE_VERSION}"
 export NODE_ROOT="node"
-export NODE_SUBDIR="${NODE_ROOT}/${NODE_VERSION}"
+export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
 export NODE_BASE_URL="https://nodejs.org/dist/v${NODE_VERSION}/"
 
-# install node
+# special case for building on M1 Mac: install x64 node in the 
+# default location (so GWT build can easily find it), but also a
+# separate M1 node install (for the Electron build to use)
+if is-m1-mac; then
+	export NODE_FOLDER="${NODE_VERSION}-arm64"
+	export NODE_SUBDIR="${NODE_ROOT}/${NODE_FOLDER}"
+fi
+
 ./install-node
 
 # install yarn
