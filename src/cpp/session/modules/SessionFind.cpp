@@ -1492,10 +1492,7 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
       addDirectoriesToCommand(
          grepOptions.packageSourceFlag(), grepOptions.packageTestsFlag(), dirPath, &cmd);
 
-      for (std::string arg : grepOptions.excludeArgs())
-         cmd << arg;
-      
-      if (grepOptions.anyPackageFlag()
+      if (grepOptions.anyPackageFlag())
       {
          if (!grepOptions.includeArgs().empty())
          {
@@ -1508,7 +1505,9 @@ core::Error runGrepOperation(const GrepOptions& grepOptions, const ReplaceOption
          for (std::string arg : grepOptions.includeArgs())
             cmd << arg;
       }
-      
+
+      for (std::string arg : grepOptions.excludeArgs())
+         cmd << arg;
    }
    else
    {
