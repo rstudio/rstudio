@@ -270,7 +270,7 @@ public class Application implements ApplicationEventHandlers
                {
                   buttonLabels.add(constants_.goHomeButtonLabel());
                   elementIds.add(ElementIds.DIALOG_HOME_BUTTON);
-                  buttonOperations.add(() ->
+                  buttonOperations.add(() -> 
                   {
                      Window.Location.assign(homepageLink);
                   });
