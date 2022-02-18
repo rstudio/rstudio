@@ -234,10 +234,6 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
    public void setGitStatus(boolean status)
    {
       gitStatus_ = status;
-      if (gitStatus_)
-      {
-         checkboxExcludeGitIgnore_.setValue(true);
-      }
       manageExcludeFilePattern();
    }
 
