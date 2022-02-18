@@ -1312,17 +1312,6 @@ private:
             }
          }
       }
-
-      // always exclude cloud.noindex
-      if (gitFlag_)
-      {
-         excludeArgs_.push_back(":!**/cloud.noindex/");
-      }
-      else
-      {
-         excludeArgs_.push_back("--exclude-dir=cloud.noindex");
-      }
-      
    }
 
    void processIncludeFilePatterns()
