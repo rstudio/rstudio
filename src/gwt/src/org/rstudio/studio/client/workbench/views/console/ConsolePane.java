@@ -40,11 +40,13 @@ import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.Console.Language;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
+import org.rstudio.studio.client.RStudioGinjector;
 
 public class ConsolePane extends WorkbenchPane
    implements Console.Display, CanFocus
@@ -97,6 +99,15 @@ public class ConsolePane extends WorkbenchPane
    public void setWorkingDirectory(String directory)
    {
       workingDir_.setText(directory);
+   }
+
+   public void updateConsoleInterpreterVersion_()
+   {
+      SessionInfo wrongSessionInfo = RStudioGinjector.INSTANCE.getSession().getSessionInfo();
+      ConsoleInterpreterVersion oldConsoleInterpreterVersion = consoleInterpreterVersion_;
+      consoleInterpreterVersion_ = new ConsoleInterpreterVersion(true);
+      mainToolbar_.insertWidget(consoleInterpreterVersion_, oldConsoleInterpreterVersion);
+      //mainToolbar_.removeLeftWidget(oldConsoleInterpreterVersion);
    }
 
    public void focus()
@@ -392,7 +403,7 @@ public class ConsolePane extends WorkbenchPane
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
    private ToolbarButton consoleClearButton_;
-   private ConsoleInterpreterVersion consoleInterpreterVersion_;
+   public ConsoleInterpreterVersion consoleInterpreterVersion_;
    private Image profilerInterruptButton_;
    private Image consoleSuspendBlockedIcon_;
    private Image consoleSuspendedIcon_;

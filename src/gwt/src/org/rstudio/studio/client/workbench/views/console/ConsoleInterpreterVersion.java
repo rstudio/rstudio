@@ -169,7 +169,7 @@ public class ConsoleInterpreterVersion
    }
    
    
-   private String rVersionLabel()
+   public String rVersionLabel()
    {
       String version = constants_.unknownLabel();
       
