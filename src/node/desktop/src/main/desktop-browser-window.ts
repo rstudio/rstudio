@@ -64,12 +64,6 @@ export class DesktopBrowserWindow extends EventEmitter {
   ) {
     super();
 
-    try {
-      console.log(desktop.hello());
-    } catch (error: unknown) {
-      console.log(error);
-    }
-
     const apiKeys = [['--apiKeys=desktopInfo', ...addApiKeys].join('|')];
 
     if (existingWindow) {

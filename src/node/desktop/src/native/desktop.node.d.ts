@@ -1,1 +1,1 @@
-export declare function hello(): void;
+export declare function cleanClipboard(stripHtml: boolean): void;
