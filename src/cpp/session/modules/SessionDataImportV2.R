@@ -54,7 +54,6 @@
             }
          }
       }
-
    dataName
 })
 
@@ -101,7 +100,7 @@
 
             return (paste(
                ns,
-               "locale(",
+               "locale(", 
                paste(c(
                   localeOrNull("date_names", "dateName"),
                   localeOrNull("date_format", "dateFormat"),
@@ -124,7 +123,7 @@
                col_assignedType <- col$assignedType[[1]]
                col_name <- col$name[[1]]
 
-               if ((!identical(dataImportOptions$columnsOnly, TRUE) && !identical(col_assignedType, NULL)) ||
+               if ((!identical(dataImportOptions$columnsOnly, TRUE) && !identical(col_assignedType, NULL)) || 
                   identical(col_only, TRUE))
                {
                   colType <- paste(ns, "col_guess()", sep = "")
@@ -606,7 +605,6 @@
    functionParameters <- .rs.assembleDataImportParameters(paramOptions)
    paramOptions$package <- NULL
    functionParametersNoNs <- .rs.assembleDataImportParameters(paramOptions)
-
    previewCode <- paste(
       functionInfo$package,
       "::",
@@ -641,7 +639,7 @@
    importCodeExpressions <- append(importCodeExpressions, importLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, modelLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, paste(dataName, " <- ", previewCodeNoNs, sep = ""))
-
+  
    if (dataImportOptions$openDataViewer) {
       importCodeExpressions <- append(importCodeExpressions, paste("View(", dataName, ")", sep = ""))
    }
@@ -688,7 +686,7 @@
       result <- .rs.assembleDataImport(dataImportOptions)
       Encoding(result$importCode) <- "UTF-8"
       Encoding(result$previewCode) <- "UTF-8"
-
+	
       return (result)
    }, error = function(e) {
       return(list(error = e))
@@ -696,7 +694,7 @@
 })
 
 .rs.addFunction("prepareViewerData", function(data, maxFactors, maxCols, maxRows) {
-
+  
    columns <- list()
    if (ncol(data)) {
       columns <- .rs.describeCols(data, maxFactors)
@@ -705,7 +703,7 @@
          data <- data[1:maxCols]
       }
    }
-
+  
    cnames <- names(data)
    size <- nrow(data)
 

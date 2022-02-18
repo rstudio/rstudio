@@ -1596,6 +1596,12 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Import data with readr") // $NON-NLS-1$
     String openDataImportCheatSheetDesc();
     
+    // openArrowCheatSheet
+    @DefaultStringValue("_Import Data with Arrow") // $NON-NLS-1$
+    String openArrowCheatSheetMenuLabel();
+    @DefaultStringValue("Import data with Arrow") // $NON-NLS-1$
+    String openArrowCheatSheetDesc();
+    
     // openDataWranglingCheatSheet
     @DefaultStringValue("Data Manipulation with dplyr, tid_yr") // $NON-NLS-1$
     String openDataWranglingCheatSheetMenuLabel();
@@ -2539,6 +2545,12 @@ public interface CmdConstants extends Constants {
     String importDatasetFromXLSLabel();
     @DefaultStringValue("From _Excel...") // $NON-NLS-1$
     String importDatasetFromXLSMenuLabel();
+    
+    // importDatasetFromArrow
+    @DefaultStringValue("From Arrow...") // $NON-NLS-1$
+    String importDatasetFromArrowLabel();
+    @DefaultStringValue("From _Arrow...") // $NON-NLS-1$
+    String importDatasetFromArrowMenuLabel();
     
     // refreshWorkspace
     @DefaultStringValue("") // $NON-NLS-1$

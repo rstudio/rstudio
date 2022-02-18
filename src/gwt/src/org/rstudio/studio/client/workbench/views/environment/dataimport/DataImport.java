@@ -62,38 +62,38 @@ public class DataImport extends Composite
    private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
    private static DataImportUiBinder uiBinder = GWT
          .create(DataImportUiBinder.class);
-
+  
    private DataImportServerOperations server_;
    private GlobalDisplay globalDisplay_;
-
+  
    private final int maxRows_ = 50;
    private final int maxCols_ = 5000;
    private final int maxFactors_ = 64;
-
+  
    private ProgressIndicatorDelay progressIndicator_;
    private DataImportOptionsUi dataImportOptionsUi_;
    private DataImportResources dataImportResources_;
    private String codePreview_;
-
+  
    private final int minWidth = 680;
    private final int minHeight = 400;
    
    private final String codePreviewErrorMessage_ = constants_.codeCreationError();
    
    private DataImportOptions importOptions_;
-
+  
    private Integer zIndex_;
-
+  
    private DataImportColumnTypesMenu columnTypesMenu_;
-
+  
    private DataImportPreviewResponse lastSuccessfulResponse_;
-
+  
    private final DataImportModes dataImportMode_;
 
    private JavaScriptObject localFiles_;
 
    private int assembleCount_ = 0;
-
+  
    interface DataImportUiBinder extends UiBinder<Widget, DataImport>
    {
    }
@@ -110,45 +110,45 @@ public class DataImport extends Composite
 
       progressIndicator_ = new ProgressIndicatorDelay(progressIndicator);
       RStudioGinjector.INSTANCE.injectMembers(this);
-
+	
       initWidget(uiBinder.createAndBindUi(this));
-
+	
       Size size = DomMetrics.adjustedElementSizeToDefaultMax();
       setSize(Math.max(minWidth, size.width) + "px", Math.max(minHeight, size.height) + "px");
-
+	
       setCodeAreaDefaults();
-
+	
       columnTypesMenu_ = new DataImportColumnTypesMenu();
-
+	
       dataImportOptionsUi_ = getOptionsUiForMode(dataImportMode);
       importOptions_ = getOptions();
-
+	
       optionsHost_.add(dataImportOptionsUi_);
-
+	
       dataImportOptionsUi_.addValueChangeHandler(new ValueChangeHandler<DataImportOptions>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<DataImportOptions> dataImportOptions)
          {
             previewDataImport();
-
+	
             if (dataImportMode_ == DataImportModes.XLS)
             {
                resetColumnDefinitions();
             }
          }
       });
-
+	
       if (path.isEmpty()) {
          assembleDataImport(null);
       }
-
+	
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          public void execute()
          {
             dataImportFileChooser_.setFocus();
-
+	
             if (!path.isEmpty()) {
                dataImportFileChooser_.locationTextBox_.setValue(path);
                dataImportFileChooser_.switchToUpdateMode(true);
@@ -157,7 +157,7 @@ public class DataImport extends Composite
          }
       });
    }
-
+  
    public String getCode()
    {
       return codeArea_.getEditor().getSession().getValue();
@@ -167,7 +167,7 @@ public class DataImport extends Composite
    {
       zIndex_ = zIndex;
    }
-
+  
    private DataImportOptionsUi getOptionsUiForMode(DataImportModes mode)
    {
       switch (mode)
@@ -183,14 +183,14 @@ public class DataImport extends Composite
       case Arrow:
          return new DataImportOptionsUiArrow();
       }
-
+	
       return null;
    }
-
+	
    private String enhancePreviewErrorMessage(String error)
    {
       String headerMessage = "";
-
+	
       switch (dataImportMode_)
       {
       case Text:
@@ -210,10 +210,10 @@ public class DataImport extends Composite
       default:
          break;
       }
-
+	
       return headerMessage + error;
    }
-
+  
    @Inject
    private void initialize(WorkbenchServerOperations server,
                            GlobalDisplay globalDisplay)
@@ -221,18 +221,18 @@ public class DataImport extends Composite
       server_ = server;
       globalDisplay_ = globalDisplay;
    }
-
+  
    void onFileUpdated()
    {
       // Invalidate cached files, click update to refresh stale files
       cleanPreviewResources();
-
+	
       if (dataImportFileChooser_.getText() != importOptions_.getImportLocation())
       {
          lastSuccessfulResponse_ = null;
          resetColumnDefinitions();
       }
-
+	
       importOptions_.setImportLocation(
          !dataImportFileChooser_.getText().isEmpty() ?
                dataImportFileChooser_.getText() :
@@ -241,7 +241,7 @@ public class DataImport extends Composite
       dataImportOptionsUi_.setImportLocation(dataImportFileChooser_.getText());
       previewDataImport();
    }
-
+  
    @UiFactory
    DataImportFileChooser makeFileOrUrlChooserTextBox() {
       DataImportFileChooser dataImportFileChooser = new DataImportFileChooser(
@@ -254,10 +254,10 @@ public class DataImport extends Composite
                }
             },
             true);
-
+	
       return dataImportFileChooser;
    }
-
+  
    ImageButton makeCopyButton()
    {
       ImageButton btn = new ImageButton(constants_.copyCodePreview(), new ImageResource2x(
