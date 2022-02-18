@@ -28,6 +28,7 @@
 - `.rs.formatDataColumnDispatch()` iterates through classes of `x` (#10073)
 - `.rs.api.navigateToFile()` is now synchronous and returns document id (#8938)
 - The `Session > Load Workspace` menu option now explicitly namespaces `base::load` if the `load` function has been masked in the global environment (#10089)
+- The data viewer truncates large list cells to 50 characters by default, this can be changed with the command palette or `rstudioapi::writeRStudioPreference("data_viewer_max_cell_size", 10L)` (#5100)
 
 ### RStudio Workbench
 
