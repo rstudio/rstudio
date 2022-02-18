@@ -508,7 +508,7 @@ public class DependencyManager implements InstallShinyEvent.Handler,
         }
      );
    }
-
+   
    public void withDataImportXML(String userAction, final Command command)
    {
      withDependencies(
