@@ -47,6 +47,7 @@ module.exports = {
     '@typescript-eslint/require-array-sort-compare': ['error'],
     '@typescript-eslint/return-await': ['warn'],
     '@typescript-eslint/no-implicit-any-catch': ['error'],
+    '@typescript-eslint/no-unused-vars': ['warn', {"argsIgnorePattern": "^_"}],
 
     '@typescript-eslint/strict-boolean-expressions': [
       'error',

@@ -45,7 +45,7 @@ const loadPageLocalization = () => {
 
       i18nIds.forEach((id) => {
         const reducedId = id.replace('i18n-', '');
-        const elements = document.querySelectorAll(`div[id^="${id}"]`);
+        const elements = document.querySelectorAll(`[id=${id}]`);
 
         elements.forEach((element) => {
           switch (reducedId) {
