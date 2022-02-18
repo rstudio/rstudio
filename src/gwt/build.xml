@@ -85,7 +85,7 @@
 
    <!-- panmirror typescript library -->
    <!-- ensure version matches RSTUDIO_NODE_VERSION -->
-   <property name="node.version" value="14.17.5"/>
+   <property name="node.version" value="16.14.0"/>
    <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
    <condition property="node.bin" value="../../../${node.dir}/bin/node">
      <not>
