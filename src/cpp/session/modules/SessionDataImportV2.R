@@ -54,6 +54,7 @@
             }
          }
       }
+   
    dataName
 })
 
@@ -99,8 +100,8 @@
             }
 
             return (paste(
-               ns,
-               "locale(", 
+               ns, 
+               "locale(",
                paste(c(
                   localeOrNull("date_names", "dateName"),
                   localeOrNull("date_format", "dateFormat"),
@@ -605,6 +606,7 @@
    functionParameters <- .rs.assembleDataImportParameters(paramOptions)
    paramOptions$package <- NULL
    functionParametersNoNs <- .rs.assembleDataImportParameters(paramOptions)
+
    previewCode <- paste(
       functionInfo$package,
       "::",
@@ -639,7 +641,7 @@
    importCodeExpressions <- append(importCodeExpressions, importLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, modelLocationCache$code)
    importCodeExpressions <- append(importCodeExpressions, paste(dataName, " <- ", previewCodeNoNs, sep = ""))
-  
+   
    if (dataImportOptions$openDataViewer) {
       importCodeExpressions <- append(importCodeExpressions, paste("View(", dataName, ")", sep = ""))
    }
@@ -686,7 +688,7 @@
       result <- .rs.assembleDataImport(dataImportOptions)
       Encoding(result$importCode) <- "UTF-8"
       Encoding(result$previewCode) <- "UTF-8"
-	
+      
       return (result)
    }, error = function(e) {
       return(list(error = e))
@@ -694,7 +696,7 @@
 })
 
 .rs.addFunction("prepareViewerData", function(data, maxFactors, maxCols, maxRows) {
-  
+   
    columns <- list()
    if (ncol(data)) {
       columns <- .rs.describeCols(data, maxFactors)
@@ -703,7 +705,7 @@
          data <- data[1:maxCols]
       }
    }
-  
+   
    cnames <- names(data)
    size <- nrow(data)
 
@@ -731,7 +733,7 @@
 
    tryCatch({
       Encoding(dataImportOptions$importLocation) <- "UTF-8"
-
+     
       beforeImportFromOptions <- list(
          "text" = function() {
             # while previewing data, always return a column even if it will be skipped
