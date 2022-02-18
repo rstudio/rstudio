@@ -32,7 +32,7 @@ public class DataImportOptionsArrow extends DataImportOptions
       String range
       ) /*-{
          return {
-            "mode": "xls",
+            "mode": "parquet",
             "dataName": dataName,
             "sheet": sheet,
             "skip": skip,

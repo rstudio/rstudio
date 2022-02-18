@@ -108,8 +108,8 @@ public class DataImportOptionsUiArrow extends DataImportOptionsUi
    public HelpLink getHelpLink()
    {
       return new HelpLink(
-         "Reading Excel files using readxl",
-         "import_readxl",
+         "Reading Arrow files using arrow",
+         "import_arrow",
          false,
          true);
    }
