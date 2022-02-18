@@ -1371,7 +1371,7 @@ void addDirectoriesToCommand(
       shell_utils::ShellCommand* pCmd)
 {
    // not sure if EscapeFilesOnly can be removed or is necessary for an edge case
-   *pCmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
+   *pCmd << "--";
    if (packageSourceFlag)
    {
       FilePath rPath(directoryPath.getAbsolutePath() + "/R");
