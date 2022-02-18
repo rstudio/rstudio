@@ -18,7 +18,9 @@ function(echo MESSAGE)
    execute_process(COMMAND echo "-- ${MESSAGE}")
 endfunction()
 
+
 # run yarn to ensure required packages are installed
+set(ENV{PATH} "@NODEJS_PATH@:$ENV{PATH}")
 execute_process(
 	COMMAND
 		"@YARN@"
