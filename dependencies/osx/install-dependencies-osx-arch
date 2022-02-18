@@ -45,8 +45,6 @@ FORMULAS=(
    openjdk@11
    openssl@1.1
    ninja
-   node
-   npm
    pidof
    postgresql
    r

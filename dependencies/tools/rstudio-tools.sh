@@ -200,7 +200,7 @@ is-verbose () {
 }
 
 is-m1-mac () {
-	[ "$(arch)" = "arm64" ]
+	[ "$(arch)" = "arm64" ] && [ "$(uname)" = "Darwin" ]
 }
 
 # Download a single file

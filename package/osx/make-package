@@ -206,8 +206,7 @@ find-program ANT ant            \
 
 # find node
 find-program NODE node \
-   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
-   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
  
 # find yarn
 find-program YARN yarn \
