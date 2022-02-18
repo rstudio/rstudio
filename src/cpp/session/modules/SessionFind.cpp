@@ -1383,11 +1383,7 @@ void addDirectoriesToCommand(
 {
    // not sure if EscapeFilesOnly can be removed or is necessary for an edge case
    *pCmd << shell_utils::EscapeFilesOnly << "--" << shell_utils::EscapeAll;
-   if (!(packageSourceFlag || packageTestsFlag))
-   {
-      *pCmd << ".";
-   }
-   else if (packageSourceFlag)
+   if (packageSourceFlag)
    {
       FilePath rPath(directoryPath.getAbsolutePath() + "/R");
       FilePath srcPath(directoryPath.getAbsolutePath() + "/src");
@@ -1399,7 +1395,7 @@ void addDirectoriesToCommand(
          LOG_WARNING_MESSAGE(
             "Package source directories not found in " + directoryPath.getAbsolutePath());
    }
-   else
+   else if (packageTestsFlag)
    {
       FilePath testsPath(directoryPath.getAbsolutePath() + "/tests");
       if (testsPath.exists())
