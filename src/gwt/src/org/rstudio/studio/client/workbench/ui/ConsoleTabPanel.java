@@ -273,6 +273,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       events.addHandler(ConsoleRestartRCompletedEvent.TYPE, consoleRestartRCompletedEvent ->
       {
          consolePane_.updateConsoleInterpreterVersion_();
+
          GWT.log("consoleInterpretVersion: " + consoleInterpreterVersion_.rVersionLabel());
       });
 

@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.console;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Image;
@@ -37,7 +38,10 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
 import org.rstudio.studio.client.application.events.SessionSuspendBlockedEvent;
+import org.rstudio.studio.client.application.model.ActiveSession;
+import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -46,11 +50,11 @@ import org.rstudio.studio.client.workbench.views.console.Console.Language;
 import org.rstudio.studio.client.workbench.views.console.shell.Shell;
 import org.rstudio.studio.client.workbench.views.jobs.JobProgressPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
-import org.rstudio.studio.client.RStudioGinjector;
 
 public class ConsolePane extends WorkbenchPane
    implements Console.Display, CanFocus
 {
+
    enum ConsoleMode
    {
       Normal,     // typical R console mode
@@ -65,6 +69,7 @@ public class ConsolePane extends WorkbenchPane
                       EventBus events,
                       Commands commands,
                       Session session,
+                      ApplicationServerOperations server,
                       AriaLiveService ariaLive)
    {
       // We pass null in place of events here to prevent ActivePaneEvent from being called.
@@ -76,6 +81,7 @@ public class ConsolePane extends WorkbenchPane
       commands_ = commands;
       session_ = session;
       ariaLive_ = ariaLive;
+      server_ = server;
 
       // the secondary toolbar can have several possible states that obscure
       // each other; we keep track of the stack here
@@ -103,11 +109,12 @@ public class ConsolePane extends WorkbenchPane
 
    public void updateConsoleInterpreterVersion_()
    {
-      SessionInfo wrongSessionInfo = RStudioGinjector.INSTANCE.getSession().getSessionInfo();
+      // server_.getActiveSessions(GWT.getHostPageBaseURL(), new ServerRequestCallback<JsArray<ActiveSession>>());
+      // do something with response -- redefine session_;
       ConsoleInterpreterVersion oldConsoleInterpreterVersion = consoleInterpreterVersion_;
       consoleInterpreterVersion_ = new ConsoleInterpreterVersion(true);
       mainToolbar_.insertWidget(consoleInterpreterVersion_, oldConsoleInterpreterVersion);
-      //mainToolbar_.removeLeftWidget(oldConsoleInterpreterVersion);
+      // mainToolbar_.removeLeftWidget(oldConsoleInterpreterVersion);
    }
 
    public void focus()
@@ -398,6 +405,7 @@ public class ConsolePane extends WorkbenchPane
    LocalJobProgress lastProgress_;
    private final Commands commands_;
    private Shell shell_;
+   private ApplicationServerOperations server_;
    private Session session_;
    private AriaLiveService ariaLive_;
    private Label workingDir_;
