@@ -52,14 +52,23 @@ if not exist %NODE% (
 )
 echo Using node: %NODE%
 
-REM find yarn
-set YARN=%NODE_DIR%\yarn
-if not exist %YARN% (
-      echo yarn not found at %NODE_DIR%; exiting
+REM find npm
+set NPM=%NODE_DIR%\npm
+if not exist %NPM% (
+      echo npm not found at %NODE_DIR%; exiting
       endlocal
       exit /b 1
 )
-echo Using yarn: %YARN%
+echo Using npm: %NPM%
+
+REM find npx
+set NPX=%NODE_DIR%\npx
+if not exist %NPX% (
+      echo npx not found at %NODE_DIR%; exiting
+      endlocal
+      exit /b 1
+)
+echo Using npx: %NPX%
 
 REM Build for desktop
 set GWT_MAIN_MODULE=RStudioDesktop
@@ -176,12 +185,12 @@ REM put these back to their original state at the end of the package build.
 :set-version
 if "%RSTUDIO_TARGET%" == "Electron" (
       pushd %ELECTRON_SOURCE_DIR%
-      call %YARN%
+      call %NPM% ci
 
       REM Set package.json info
       call :save-original-file package.json
-      call %YARN% json -I -f package.json -e "this.version=\"%~1\""
-      call %YARN% json -I -f package.json -e "this.productName=\"%~2\""
+      call %NPX% json -I -f package.json -e "this.version=\"%~1\""
+      call %NPX% json -I -f package.json -e "this.productName=\"%~2\""
 
       REM Keep a backup of build-info.ts so we can restore it
       call :save-original-file src\main\build-info.ts

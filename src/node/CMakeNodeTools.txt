@@ -34,21 +34,27 @@ if(APPLE AND UNAME_M STREQUAL arm64)
       "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/node")
    set(NPM 
       "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/npm")
+   set(NPX 
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/npx")
 
 else()
 
-   # Detect node.js, npm, and yarn; use versions supplied by the dependency scripts
-
-   # node.js
+   # Detect node.js, npm, and npx; use versions supplied by the dependency scripts
    find_program(NODEJS
       NAMES node
       NO_DEFAULT_PATH PATH_SUFFIXES "bin"
       PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
 
-   # npm
    find_program(NPM
       NAMES npm
+      PATH_SUFFIXES "bin"
+      NO_DEFAULT_PATH 
+      PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
+
+   find_program(NPX
+      NAMES npx
       PATH_SUFFIXES "bin"
       NO_DEFAULT_PATH 
       PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
@@ -66,6 +72,12 @@ if(NPM)
    message(STATUS "Using npm: ${NPM}")
 else()
    message(FATAL_ERROR "npm not found (required for rsw-homepage)")
+endif()
+
+if(NPX)
+   message(STATUS "Using npx: ${NPX}")
+else()
+   message(STATUS "npx not found (required for Electron)")
 endif()
 
 get_filename_component(NODEJS_PATH ${NODEJS} DIRECTORY CACHE)
@@ -102,8 +114,10 @@ endif()
 set(NODEJS "${NODEJS}" CACHE INTERNAL "")
 set(YARN "${YARN}" CACHE INTERNAL "")
 set(NPM "${NPM}" CACHE INTERNAL "")
+set(NPX "${NPX}" CACHE INTERNAL "")
 
 # create paths from programs
 get_filename_component(YARN_PATH ${YARN} DIRECTORY CACHE)
 get_filename_component(NPM_PATH ${NPM} DIRECTORY CACHE)
+get_filename_component(NPX_PATH ${NPX} DIRECTORY CACHE)
 

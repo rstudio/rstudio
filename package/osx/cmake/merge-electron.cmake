@@ -18,12 +18,11 @@ function(echo MESSAGE)
    execute_process(COMMAND echo "-- ${MESSAGE}")
 endfunction()
 
-
-# run yarn to ensure required packages are installed
-set(ENV{PATH} "@NODEJS_PATH@:$ENV{PATH}")
+# run npm to ensure required packages are installed
 execute_process(
 	COMMAND
-		"@YARN@"
+		"@NPM@"
+		"ci"
 	WORKING_DIRECTORY
 		"@CMAKE_CURRENT_SOURCE_DIR@/scripts"
 )
