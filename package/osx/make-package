@@ -112,10 +112,11 @@ restore-java-home () {
    fi
 }
 
+<<<<<<< HEAD
 NPM_INSTALLED=0
 install-npm-packages() {
    if [ "${NPM_INSTALLED}" = "0" ]; then
-      ${NPM} install
+      ${NPM} ci
       NPM_INSTALLED=1
    fi
 }
@@ -206,15 +207,17 @@ find-program ANT ant            \
 
 # find node
 find-program NODE node \
-   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
-   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+
 find-program NPM npm \
-   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
-   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+
 find-program NPX npx \
-   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
-   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
-   
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+
 # determine architectures to build for
 if is-m1-mac; then
    arch=x86_64,arm64

@@ -30,34 +30,22 @@ endif()
 if(APPLE AND UNAME_M STREQUAL arm64)
 
    # make sure we're using arm64 binaries of node / npm for arm64 builds
-   set(NODEJS "${HOMEBREW_PREFIX}/bin/node")
-   set(NPM "${HOMEBREW_PREFIX}/bin/npm")
-   set(NPX "${HOMEBREW_PREFIX}/bin/npx")
+   set(NODEJS 
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/node")
+   set(NPM 
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/npm")
+   set(NPX 
+      "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin/npx")
 
 else()
 
-   # Detect node.js, npm, npx, and yarn; prefer versions supplied by the dependency
-   # scripts but fall back to whatever is found on path.
-
-   # node.js
+   # Detect node.js, npm, and npx; use versions supplied by the dependency scripts
    find_program(NODEJS
       NAMES node
       NO_DEFAULT_PATH PATH_SUFFIXES "bin"
       PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
 
-   if(NOT NODEJS)
-      # fall back on any available node.js
-      find_program(NODEJS NAMES node)
-   endif()
-
-   if(NODEJS)
-      message(STATUS "Using node.js: ${NODEJS}")
-   else()
-      message(FATAL_ERROR "node.js not found (required)")
-   endif()
-
-   # npm
    find_program(NPM
       NAMES npm
       PATH_SUFFIXES "bin"
@@ -65,17 +53,6 @@ else()
       PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
 
-   if (NOT NPM)
-      find_program(NPM NAMES npm)
-   endif()
-
-   if(NPM)
-      message(STATUS "Using npm: ${NPM}")
-   else()
-      message(FATAL_ERROR "npm not found (required for rsw-homepage)")
-   endif()
-
-   # npx
    find_program(NPX
       NAMES npx
       PATH_SUFFIXES "bin"
@@ -83,16 +60,25 @@ else()
       PATHS "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}"
       "${CMAKE_CURRENT_LIST_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}")
 
-   if (NOT NPX)
-      find_program(NPX NAMES npx)
-   endif()
+endif()
+   
+if(NODEJS)
+   message(STATUS "Using node.js: ${NODEJS}")
+else()
+   message(FATAL_ERROR "node.js not found (required)")
+endif()
+   
+if(NPM)
+   message(STATUS "Using npm: ${NPM}")
+else()
+   message(FATAL_ERROR "npm not found (required for rsw-homepage)")
+>>>>>>> origin/main
+endif()
 
-   if(NPX)
-      message(STATUS "Using npx: ${NPX}")
-   else()
-      message(STATUS "npx not found (required for Electron)")
-   endif()
-
+if(NPX)
+   message(STATUS "Using npx: ${NPX}")
+else()
+   message(STATUS "npx not found (required for Electron)")
 endif()
 
 get_filename_component(NODEJS_PATH ${NODEJS} DIRECTORY CACHE)
@@ -134,4 +120,5 @@ set(NPX "${NPX}" CACHE INTERNAL "")
 # create paths from programs
 get_filename_component(YARN_PATH ${YARN} DIRECTORY CACHE)
 get_filename_component(NPM_PATH ${NPM} DIRECTORY CACHE)
+get_filename_component(NPX_PATH ${NPX} DIRECTORY CACHE)
 

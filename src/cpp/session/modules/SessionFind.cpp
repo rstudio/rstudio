@@ -73,6 +73,8 @@ bool debugging()
    return !core::system::getenv("RSTUDIO_GREP_DEBUG").empty();
 }
 
+#ifdef _WIN32
+
 FilePath gnuGrepPath()
 {
    // allow override, for testing
@@ -83,6 +85,8 @@ FilePath gnuGrepPath()
    // otherwise, use option
    return options().gnugrepPath();
 }
+
+#endif
 
 // Reflects the estimated current progress made in performing a replace
 class LocalProgress : public boost::noncopyable
