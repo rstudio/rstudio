@@ -185,7 +185,7 @@ REM put these back to their original state at the end of the package build.
 :set-version
 if "%RSTUDIO_TARGET%" == "Electron" (
       pushd %ELECTRON_SOURCE_DIR%
-      call %NPM% install
+      call %NPM% ci
 
       REM Set package.json info
       call :save-original-file package.json

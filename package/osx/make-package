@@ -112,7 +112,6 @@ restore-java-home () {
    fi
 }
 
-<<<<<<< HEAD
 NPM_INSTALLED=0
 install-npm-packages() {
    if [ "${NPM_INSTALLED}" = "0" ]; then

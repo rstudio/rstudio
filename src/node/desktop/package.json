@@ -10,7 +10,7 @@
   "scripts": {
     "clean": "ts-node scripts/clean.ts",
     "lint": "eslint ./src ./test",
-    "package": "npm install && electron-forge package",
+    "package": "npm ci && electron-forge package",
     "start": "electron-forge start",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",

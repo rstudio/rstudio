@@ -72,7 +72,6 @@ if(NPM)
    message(STATUS "Using npm: ${NPM}")
 else()
    message(FATAL_ERROR "npm not found (required for rsw-homepage)")
->>>>>>> origin/main
 endif()
 
 if(NPX)
