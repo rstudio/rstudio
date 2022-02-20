@@ -70,6 +70,9 @@ if not exist %NPX% (
 )
 echo Using npx: %NPX%
 
+REM Put node on the path
+set PATH=%NODE_DIR%;%PATH%
+
 REM Build for desktop
 set GWT_MAIN_MODULE=RStudioDesktop
 

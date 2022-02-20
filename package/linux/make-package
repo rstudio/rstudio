@@ -166,13 +166,13 @@ ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
 # find node and npm
 RSTUDIO_NODE_VERSION=16.14.0
 find-program NODE node \
-   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
 find-program NPM npm \
-   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
 find-program NPX npx \
-   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
 
 # put node on the path
