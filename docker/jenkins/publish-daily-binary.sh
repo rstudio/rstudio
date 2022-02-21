@@ -34,8 +34,8 @@ PLATFORM=${COMPONENTS[6]}
 
 # sanity check a URL component to fail faster if the URL is not in the format
 # we expect
-if [ "$FLAVOR" != "desktop" ] && [ "$FLAVOR" != "server" ]; then
-    echo "Unsupported flavor '$FLAVOR' (expected 'desktop' or 'server')"
+if [ "$FLAVOR" != "desktop" ] && [ "$FLAVOR" != "server" ] && [ "$FLAVOR" != "electron" ]; then
+    echo "Unsupported flavor '$FLAVOR' (expected 'desktop', 'electron', or 'server')"
     exit 1
 fi
 
