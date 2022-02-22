@@ -1461,6 +1461,15 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     @DefaultMessage("Preparing Import from Excel")
     @Key("withDataImportXLS")
     String withDataImportXLS();
+    
+    /**
+     * Translated "Preparing Import from Arrow".
+     *
+     * @return translated "Preparing Import from Arrow"
+     */
+    @DefaultMessage("Preparing Import from Arrow")
+    @Key("withDataImportArrow")
+    String withDataImportArrow();
 
     /**
      * Translated "Preparing Import from XML".
