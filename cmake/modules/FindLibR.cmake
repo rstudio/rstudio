@@ -98,6 +98,11 @@ else()
    # Find R executable and paths (Win32)
    else()
 
+      # allow environment variable override
+      if(DEFINED ENV{LIBR_HOME})
+         set(LIBR_HOME "$ENV{LIBR_HOME}" CACHE INTERNAL "")
+      endif()
+
       # find the home path
       if(NOT LIBR_HOME)
 
