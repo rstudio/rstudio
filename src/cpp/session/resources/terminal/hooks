@@ -59,9 +59,13 @@ if [ -n "${_RS_CONDA_PREFIX}" ]; then
 
 fi
 
-if [ -f "${RETICULATE_PYTHON_FALLBACK}" ]; then
+if [ -f "${RETICULATE_PYTHON}" ] || [ -f "${RETICULATE_PYTHON_FALLBACK}" ]; then
 
-	_RS_PYTHON_BIN=$(dirname "${RETICULATE_PYTHON_FALLBACK}")
+   if [ -f "${RETICULATE_PYTHON}" ]; then
+      _RS_PYTHON_BIN=$(dirname "${RETICULATE_PYTHON")
+   else
+	   _RS_PYTHON_BIN=$(dirname "${RETICULATE_PYTHON_FALLBACK}")
+   fi
 
 	# munge path for MINGW32 if necessary
 	case "$(uname -s)" in
