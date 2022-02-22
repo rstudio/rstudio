@@ -62,7 +62,7 @@ fi
 if [ -f "${RETICULATE_PYTHON}" ] || [ -f "${RETICULATE_PYTHON_FALLBACK}" ]; then
 
    if [ -f "${RETICULATE_PYTHON}" ]; then
-      _RS_PYTHON_BIN=$(dirname "${RETICULATE_PYTHON")
+      _RS_PYTHON_BIN=$(dirname "${RETICULATE_PYTHON}")
    else
 	   _RS_PYTHON_BIN=$(dirname "${RETICULATE_PYTHON_FALLBACK}")
    fi
