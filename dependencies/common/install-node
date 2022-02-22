@@ -3,7 +3,7 @@
 #
 # install-node
 #
-# Copyright (C) 2009-21 by RStudio, Inc.
+# Copyright (C) 2022 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -54,6 +54,6 @@ download "${NODE_URL}" "${NODE_ARCHIVE}"
 extract "${NODE_ARCHIVE}"
 rm -f "${NODE_ARCHIVE}"
 
-# rename to use just the version
-mv "${NODE_FILE}" "${NODE_VERSION}"
+# rename to expected folder name
+mv "${NODE_FILE}" "${NODE_FOLDER}"
 

@@ -10,14 +10,14 @@
   "scripts": {
     "clean": "ts-node scripts/clean.ts",
     "lint": "eslint ./src ./test",
-    "package": "yarn && electron-forge package",
-    "start": "yarn && electron-forge start",
+    "package": "npm ci && electron-forge package",
+    "start": "electron-forge start",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
     "testint": "mocha -c --config ./test/int/mocharc.json",
     "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json",
     "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
-    "format": "./scripts/create-prettier-ignore-file.sh && yarn prettier --write . --ignore-path .prettier_and_git_ignores"
+    "format": "./scripts/create-prettier-ignore-file.sh && npx prettier --write . --ignore-path .prettier_and_git_ignores"
   },
   "config": {
     "forge": "./forge.config.js"

@@ -51,11 +51,11 @@ EOF
 exit 1
 }
 
-YARN_INSTALLED=0
-install-yarn-packages() {
-   if [ "${YARN_INSTALLED}" = "0" ]; then
-      ${YARN}
-      YARN_INSTALLED=1
+NPM_INSTALLED=0
+install-npm-packages() {
+   if [ "${NPM_INSTALLED}" = "0" ]; then
+      ${NPM} ci
+      NPM_INSTALLED=1
    fi
 }
 
@@ -68,12 +68,12 @@ PACKAGE_VERSION_SET=0
 set-version () {
    if [ "$RSTUDIO_TARGET" = "Electron" ]; then
       pushd ${ELECTRON_SOURCE_DIR}
-      install-yarn-packages
+      install-npm-packages
 
       # Set package.json info
       save-original-file package.json
-      ${YARN} json -I -f package.json -e "this.version=\"$1\""
-      ${YARN} json -I -f package.json -e "this.productName=\"$2\""
+      ${NPX} json -I -f package.json -e "this.version=\"$1\""
+      ${NPX} json -I -f package.json -e "this.productName=\"$2\""
 
       # Keep a backup of build-info.ts so we can restore it
       save-original-file src/main/build-info.ts
@@ -166,19 +166,18 @@ ELECTRON_SOURCE_DIR="${PKG_DIR}/../../src/node/desktop"
 # find node and npm
 RSTUDIO_NODE_VERSION=16.14.0
 find-program NODE node \
-   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
 find-program NPM npm \
-   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
+   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+find-program NPX npx \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
    "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
 
-# yarn needs node on the path
+# put node on the path
 NODE_PATH=$(dirname "${NODE}")
 PATH="${NODE_PATH}:${PATH}"
-
-# find yarn
-#find-program YARN yarn \
-#   "${HOME}/.yarn/bin"
 
 # build RStudio version suffix
 RSTUDIO_VERSION_ARRAY=(

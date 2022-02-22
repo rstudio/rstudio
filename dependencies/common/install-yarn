@@ -3,7 +3,7 @@
 #
 # install-yarn
 #
-# Copyright (C) 2009-20 by RStudio, Inc.
+# Copyright (C) 2022 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -27,9 +27,9 @@ INSTALL_PATH="${NODE_BIN}:${PATH}"
 
 # check for yarn installation
 # TODO: do we want to allow yarn installs from other PATH locations?
-if command -v yarn 2> /dev/null; then
+if has-program yarn; then
   YARN_VERSION=$(PATH="${INSTALL_PATH}" yarn --version)
-  echo "yarn ${YARN_VERSION} already installed at '${NODE_BIN}/yarn'"
+  echo "yarn ${YARN_VERSION} already installed at '$(which yarn)'"
 else
   # download the yarn installer
   YARN_INSTALL_URL="https://yarnpkg.com/install.sh"
@@ -43,6 +43,13 @@ else
 
   # update INSTALL_PATH
   INSTALL_PATH="${HOME}/.yarn/bin:${HOME}/.config/yarn/global/node_modules/.bin:${INSTALL_PATH}"
+fi
+
+if is-m1-mac; then
+  # GWT always builds with x64 node on M1 Mac, so no need to reinstall dependencies in an
+  # M1 context.
+  info "Skipping panmirror dependency install for M1 architecture"
+  exit 0
 fi
 
 # install panmirror dependencies

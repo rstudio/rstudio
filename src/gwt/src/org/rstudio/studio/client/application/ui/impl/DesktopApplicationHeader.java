@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.ui.impl;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppMenuBar;
@@ -67,7 +68,13 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -96,6 +103,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
                           GlobalDisplay globalDisplay,
                           ApplicationQuit appQuit)
    {
+      commands_ = commands;
       session_ = session;
       eventBus_= events;
       pUIPrefs_ = pUIPrefs;
@@ -121,7 +129,15 @@ public class DesktopApplicationHeader implements ApplicationHeader,
       commands.showLogFiles().setVisible(true);
       commands.diagnosticsReport().setVisible(true);
       commands.showFolder().setVisible(true);
-
+      
+      if (BrowseCap.isElectron())
+      {
+         // we use a preview listener because we need to ensure the event
+         // is handled before anything else in the IDE surface might try
+         // to handle the mouse event
+         addBackForwardMouseDownHandlers();
+      }
+      
       events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
       {
          final SessionInfo sessionInfo = session.getSessionInfo();
@@ -587,13 +603,47 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    {
       return null;
    }
-
+   
+   private void onMouseBack()
+   {
+      commands_.sourceNavigateBack().execute();
+   }
+   
+   private void onMouseForward()
+   {
+      commands_.sourceNavigateForward().execute();
+   }
+   
+   private final native void addBackForwardMouseDownHandlers()
+   /*-{
+      
+      var self = this;
+      $doc.body.addEventListener("mousedown", $entry(function(event) {
+         
+         var button = event.button;
+         if (button === 3)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseBack()();
+         }
+         else if (button === 4)
+         {
+            event.stopPropagation();
+            event.preventDefault();
+            self.@org.rstudio.studio.client.application.ui.impl.DesktopApplicationHeader::onMouseForward()();
+         }
+         
+      }), true);
+   }-*/;
+   
    public interface Binder
          extends CommandBinder<Commands, DesktopApplicationHeader>
    {
    }
 
    private static Binder binder_ = GWT.create(Binder.class);
+   private Commands commands_;
    private Session session_;
    private EventBus eventBus_;
    private GlobalToolbar toolbar_;

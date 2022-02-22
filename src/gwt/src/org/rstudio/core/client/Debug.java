@@ -214,5 +214,9 @@ public class Debug
    public static native void breakpoint() /*-{
       debugger;
    }-*/;
+   
+   public static native String stringify(JavaScriptObject object) /*-{
+      return JSON.stringify(object);
+   }-*/;
 
 }

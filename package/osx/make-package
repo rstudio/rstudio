@@ -112,11 +112,11 @@ restore-java-home () {
    fi
 }
 
-YARN_INSTALLED=0
-install-yarn-packages() {
-   if [ "${YARN_INSTALLED}" = "0" ]; then
-      ${YARN}
-      YARN_INSTALLED=1
+NPM_INSTALLED=0
+install-npm-packages() {
+   if [ "${NPM_INSTALLED}" = "0" ]; then
+      ${NPM} ci
+      NPM_INSTALLED=1
    fi
 }
 
@@ -130,9 +130,9 @@ set-version () {
 
       # Set package.json info
       pushd ${ELECTRON_SOURCE_DIR}
-      install-yarn-packages
+      install-npm-packages
       save-original-file package.json
-      ${YARN} json -I -f package.json -e "this.version=\"$1\""
+      ${NPX} json -I -f package.json -e "this.version=\"$1\""
 
       # Keep a backup of build-info.ts so we can restore it
       save-original-file src/main/build-info.ts
@@ -206,12 +206,16 @@ find-program ANT ant            \
 
 # find node
 find-program NODE node \
-   "../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin" \
-   "/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
- 
-# find yarn
-find-program YARN yarn \
-   "${HOME}/.yarn/bin"
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+
+find-program NPM npm \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
+
+find-program NPX npx \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}-arm64/bin" \
+   "${PKG_DIR}/../../dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin"
 
 # determine architectures to build for
 if is-m1-mac; then
