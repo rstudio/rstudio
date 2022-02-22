@@ -15,24 +15,21 @@
 
 // TODO clean this up
 
-import { ipcMain, dialog, BrowserWindow, webFrameMain, shell, screen, app } from 'electron';
+import { app, BrowserWindow, dialog, ipcMain, screen, shell, webContents, webFrameMain } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
-
 import EventEmitter from 'events';
-
-import { logger } from '../core/logger';
+import i18next from 'i18next';
 import { FilePath } from '../core/file-path';
+import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
-
-import { MainWindow } from './main-window';
-import { GwtWindow } from './gwt-window';
-import { openMinimalWindow } from './minimal-window';
-import { appState } from './app-state';
-import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { userHomePath } from '../core/user';
+import { appState } from './app-state';
+import { GwtWindow } from './gwt-window';
+import { MainWindow } from './main-window';
+import { openMinimalWindow } from './minimal-window';
+import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
-import i18next from 'i18next';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -168,11 +165,13 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_undo', () => {
-      GwtCallback.unimpl('desktop_undo');
+      // unless the active element is the ACE editor, the web page will handle it
+      webContents.getFocusedWebContents().undo();
     });
 
     ipcMain.on('desktop_redo', () => {
-      GwtCallback.unimpl('desktop_redo');
+      // unless the active element is the ACE editor, the web page will handle it
+      webContents.getFocusedWebContents().redo();
     });
 
     ipcMain.on('desktop_clipboard_cut', () => {
@@ -703,7 +702,6 @@ export class GwtCallback extends EventEmitter {
   }
 
   static unimpl(ipcName: string): void {
-
     if (app.isPackaged) {
       return;
     }
@@ -720,7 +718,6 @@ export class GwtCallback extends EventEmitter {
     } else {
       void dialog.showMessageBox(dialogOptions);
     }
-
   }
 
   collectPendingQuitRequest(): PendingQuit {
