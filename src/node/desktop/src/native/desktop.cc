@@ -176,7 +176,7 @@ Napi::Value cleanClipboard(const Napi::CallbackInfo& info)
 
 Napi::Object Init(Napi::Env env, Napi::Object exports) {
 
-  RS_EXPORT_FUNCTION(exports, "cleanClipboard", rstudio::desktop::cleanClipboard);
+  RS_EXPORT_FUNCTION("cleanClipboard", rstudio::desktop::cleanClipboard);
 
   return exports;
 
