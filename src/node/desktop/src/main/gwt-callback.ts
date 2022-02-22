@@ -34,6 +34,8 @@ import { userHomePath } from '../core/user';
 import { activateWindow } from './window-utils';
 import i18next from 'i18next';
 
+import desktop from '../native/desktop.node';
+
 export enum PendingQuit {
   PendingQuitNone,
   PendingQuitAndExit,
@@ -408,7 +410,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
-      GwtCallback.unimpl('desktop_clean_clipboard');
+      desktop.cleanClipboard(stripHtml);
     });
 
     ipcMain.on('desktop_set_pending_quit', (event, pendingQuit: number) => {

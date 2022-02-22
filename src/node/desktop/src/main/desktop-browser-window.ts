@@ -63,7 +63,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     super();
 
     const apiKeys = [['--apiKeys=desktopInfo', ...addApiKeys].join('|')];
-    
+
     if (existingWindow) {
       this.window = existingWindow;
     } else {

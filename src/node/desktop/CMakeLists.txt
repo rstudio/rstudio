@@ -44,10 +44,14 @@ if (APPLE)
    # be the "true" CMake directory as some files are resolved relative to
    # the desktop project's relative path in the application structure
    set(ELECTRON_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../desktop-build-${UNAME_M}" CACHE INTERNAL "")
+   file(REMOVE_RECURSE "${ELECTRON_BUILD_DIR}")
    file(MAKE_DIRECTORY "${ELECTRON_BUILD_DIR}")
    file(
       COPY "${CMAKE_CURRENT_SOURCE_DIR}/"
       DESTINATION "${ELECTRON_BUILD_DIR}/"
+      REGEX "/.webpack$" EXCLUDE
+      REGEX "/build$" EXCLUDE
+      REGEX "/bin$" EXCLUDE
       REGEX "/out$" EXCLUDE
       REGEX "/node_modules$" EXCLUDE)
 else()

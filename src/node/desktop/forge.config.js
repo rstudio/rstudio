@@ -1,4 +1,5 @@
 const config = {
+
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
@@ -19,6 +20,7 @@ const config = {
       config: {},
     },
   ],
+
   plugins: [
     [
       '@electron-forge/plugin-webpack',
@@ -62,9 +64,11 @@ const config = {
       },
     ],
   ],
+
   packagerConfig: {
     icon: './resources/icons/RStudio',
   },
+
 };
 
 module.exports = config;

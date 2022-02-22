@@ -11,7 +11,7 @@
     "clean": "ts-node scripts/clean.ts",
     "lint": "eslint ./src ./test",
     "package": "npm ci && electron-forge package",
-    "start": "electron-forge start",
+    "start": "npm install && electron-forge start",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
     "testint": "mocha -c --config ./test/int/mocharc.json",
@@ -71,6 +71,7 @@
     "electron-store": "8.0.1",
     "i18next": "21.6.10",
     "line-reader": "0.4.0",
+    "node-addon-api": "4.3.0",
     "uuid": "8.3.2",
     "winston": "3.5.0",
     "winston-daily-rotate-file": "4.6.0"
