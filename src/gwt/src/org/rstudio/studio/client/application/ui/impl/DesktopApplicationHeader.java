@@ -299,7 +299,7 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    }
 
    private void redoAce() {
-      // Undo on the ACE editor has to be called manually since Electron cannot trigger it
+      // Redo on the ACE editor has to be called manually since Electron cannot trigger it
       AceEditorNative editorNative = AceEditorNative.getEditor(DomUtils.getActiveElement());
       if (editorNative != null) {
          editorNative.execCommand("redo");
