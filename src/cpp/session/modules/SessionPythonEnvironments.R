@@ -84,7 +84,7 @@
 .rs.addFunction("python.findWindowsPython", function()
 {
    # if `py` and `python` are not available, nothing we can do
-   pythonCommands <- c("py", "python", "python3")
+   pythonCommands <- c("py", "python3", "python")
    available <- nzchar(Sys.which(pythonCommands))
 
    if (!any(available))
@@ -216,7 +216,7 @@
    pythonSuffixes <- if (.rs.platform.isWindows)
       c("Scripts/python.exe", "python.exe")
    else
-      c("bin/python", "bin/python3")
+      c("bin/python3", "bin/python")
 
    # look within all top-level directories for an environment
    envPaths <- list.dirs(
@@ -580,7 +580,7 @@
    suffixes <- if (.rs.platform.isWindows) {
       c("Scripts/python.exe", "python.exe")
    } else {
-      c("bin/python", "bin/python3")
+      c("bin/python3", "bin/python")
    }
 
    paths <- vapply(roots, function(root) {
