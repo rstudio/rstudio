@@ -111,7 +111,7 @@ public class ConsolePane extends WorkbenchPane
       ConsoleInterpreterVersion oldConsoleInterpreterVersion = consoleInterpreterVersion_;
       consoleInterpreterVersion_ = new ConsoleInterpreterVersion(true);
       mainToolbar_.insertWidget(consoleInterpreterVersion_, oldConsoleInterpreterVersion);
-      // mainToolbar_.removeLeftWidget(oldConsoleInterpreterVersion);
+      mainToolbar_.removeLeftWidget(oldConsoleInterpreterVersion);
    }
 
    public void focus()

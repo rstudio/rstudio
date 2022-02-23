@@ -21,9 +21,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
-import org.rstudio.studio.client.application.model.ProductNotice;
 import org.rstudio.studio.client.application.model.RVersionSpec;
-import org.rstudio.studio.client.application.ui.AboutOpenSourceDialog;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -71,9 +69,9 @@ public class ConsoleInterpreterVersion
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       events_.addHandler(ReticulateEvent.TYPE, this);
-      
       container_ = new FlowPanel();
-      label_ = new Label(rVersionLabel());
+      label_ = new Label(constants_.unknownLabel());
+      setRVersionLabel();
       
       rLogo_ = createLogo(
            StandardIcons.INSTANCE.rLogoSvg(),
@@ -134,10 +132,10 @@ public class ConsoleInterpreterVersion
    {
       container_.remove(0);
       container_.insert(rLogo_, 0);
-      label_.setText(rVersionLabel());
+      setRVersionLabel();
       
    }
-   
+
    private void adaptToPython(PythonInterpreter info)
    {
       container_.remove(0);
@@ -176,18 +174,16 @@ public class ConsoleInterpreterVersion
          adaptToR();
       }
    }
-   
-   
-   public String rVersionLabel()
-   {
-      String version = constants_.unknownLabel();
 
+
+   public void setRVersionLabel()
+   {
       server_.getRVersion(new ServerRequestCallback<RVersionSpec>()
       {
          @Override
          public void onResponseReceived(RVersionSpec versionSpec)
          {
-            version = new String("R " + versionSpec.getVersion());
+            label_.setText("R " + versionSpec.getVersion());
          }
          @Override
          public void onError(ServerError error)
@@ -195,8 +191,6 @@ public class ConsoleInterpreterVersion
             Debug.logError(error);
          }
       });
-      
-      return version;
    }
    
    private String pythonVersionLabel(PythonInterpreter info)
