@@ -361,9 +361,9 @@ export class MenuCallback extends EventEmitter {
     } else if (cmdId === 'pasteWithIndentDummy') {
       menuItemOpts.role = 'pasteAndMatchStyle';
     } else if (cmdId === 'undoDummy') {
-      menuItemOpts.role = 'undo';
+      menuItemOpts.accelerator = 'CommandOrControl+Z';
     } else if (cmdId === 'redoDummy') {
-      menuItemOpts.role = 'redo';
+      menuItemOpts.accelerator = 'CommandOrControl+Shift+Z';
     }
 
     const menuItem = new MenuItem(menuItemOpts);
