@@ -159,7 +159,12 @@ else()
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Building desktop (Electron ${UNAME_M})"
       WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
-      COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${NPM} run package
+      COMMAND
+         ${CMAKE_COMMAND} -E env
+         "PATH=${MODIFIED_PATH}"
+         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1"
+         "MAKEFLAGS="
+         ${NPM} run package
    )
 
 endif()
