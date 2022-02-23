@@ -20,6 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.ProductNotice;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.ui.AboutOpenSourceDialog;
@@ -49,9 +50,11 @@ public class ConsoleInterpreterVersion
 {
    @Inject
    private void initialize(Session session,
+                           ApplicationServerOperations server,
                            EventBus events)
    {
       session_ = session;
+      server_ = server;
       events_ = events;
    }
    
@@ -179,12 +182,12 @@ public class ConsoleInterpreterVersion
    {
       String version = constants_.unknownLabel();
 
-      RStudioGinjector.INSTANCE.getServer().getRVersion(new ServerRequestCallback<RVersionSpec>()
+      server_.getRVersion(new ServerRequestCallback<RVersionSpec>()
       {
          @Override
          public void onResponseReceived(RVersionSpec versionSpec)
          {
-            version = versionSpec.getVersion();
+            version = new String("R " + versionSpec.getVersion());
          }
          @Override
          public void onError(ServerError error)
@@ -193,7 +196,7 @@ public class ConsoleInterpreterVersion
          }
       });
       
-      return "R " + version;
+      return version;
    }
    
    private String pythonVersionLabel(PythonInterpreter info)
@@ -224,6 +227,7 @@ public class ConsoleInterpreterVersion
    // Injected ----
    private Session session_;
    private EventBus events_;
+   private ApplicationServerOperations server_;
    
    // Resources ----
    
