@@ -39,6 +39,7 @@ import { prepareEnvironment, promptUserForR } from './detect-r';
 import { PendingWindow } from './pending-window';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import i18next from 'i18next';
+import { ArgsManager } from './args-manager';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -71,11 +72,14 @@ export class Application implements AppState {
   private activationInst?: DesktopActivation;
   private scratchPath?: FilePath;
 
+  argsManager = new ArgsManager();
+
   /**
    * Startup code run before app 'ready' event.
    */
   async beforeAppReady(): Promise<ProgramStatus> {
-    const status = this.initCommandLine(process.argv);
+    const status = this.argsManager.initCommandLine();
+
     if (status.exit) {
       return status;
     }
@@ -184,27 +188,6 @@ export class Application implements AppState {
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
     this.sessionLauncher.launchFirstSession();
-
-    return run();
-  }
-
-  initCommandLine(argv: string[]): ProgramStatus {
-    // look for a version check request; if we have one, just do that and exit
-    if (argv.indexOf(kVersion) > -1) {
-      console.log(app.getVersion());
-      return exitSuccess();
-    }
-
-    // report extended version info and exit
-    if (argv.indexOf(kVersionJson) > -1) {
-      console.log(getComponentVersions());
-      return exitSuccess();
-    }
-
-    if (argv.indexOf(kRunDiagnosticsOption) > -1) {
-      this.runDiagnostics = true;
-      enableDiagnosticsOutput();
-    }
 
     return run();
   }
