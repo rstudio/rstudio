@@ -211,6 +211,11 @@ def trigger_external_build(build_name, wait = false) {
                                                   string(name: 'SLACK_CHANNEL', value: params.get('SLACK_CHANNEL', '#ide-builds'))]
 }
 
+def trigger_automation_build(build_name, release_name, wait = false) {
+  build job: build_name, wait: wait, parameters: [string(name: 'RELEASE_NAME',  value: "${release_name}"),
+                                                  string(name: 'BRANCH_NAME', value: "${rstudioReleaseBranch}"),
+                                                  string(name: 'SLACK_CHANNEL', value: params.get('SLACK_CHANNEL', '#ide-builds'))]
+}
 
 // make a nicer slack message
 messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>"
