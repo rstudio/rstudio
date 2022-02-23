@@ -1,5 +1,4 @@
 const config = {
-
   makers: [
     {
       name: '@electron-forge/maker-squirrel',
@@ -68,7 +67,6 @@ const config = {
   packagerConfig: {
     icon: './resources/icons/RStudio',
   },
-
 };
 
 module.exports = config;

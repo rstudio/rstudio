@@ -34,4 +34,27 @@ export class SecondaryWindow extends DesktopBrowserWindow {
   onCloseWindowShortcut(): void {
     this.window.close();
   }
+
+  /**
+   *
+   * @returns Window creation request response
+   */
+  static windowOpening(
+    width: number,
+    height: number,
+  ):
+    | { action: 'deny' }
+    | { action: 'allow'; overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined } {
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        width: width,
+        height: height,
+        webPreferences: {
+          additionalArguments: ['--apiKeys=desktopInfo'],
+          preload: DesktopBrowserWindow.getPreload(),
+        },
+      },
+    };
+  }
 }
