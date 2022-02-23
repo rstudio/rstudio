@@ -26,6 +26,10 @@ fi
 package="$1"
 shift
 
+# recurse into hidden directories (that is, .webpack)
+shopt -s nullglob
+shopt -s dotglob
+
 codesign_args=("$@")
 
 codesign-file () {
