@@ -1,0 +1,89 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+
+  <mime-type type="text/x-r-source">
+    <sub-class-of type="text/plain"/>
+    <comment>R Source File</comment>
+    <glob pattern="*.R"/>
+    <glob pattern="*.r"/>
+  </mime-type>
+
+  <mime-type type="text/x-r-doc">
+    <sub-class-of type="text/plain"/>
+    <comment>R Documentation File</comment>
+    <glob pattern="*.Rd"/>
+    <glob pattern="*.rd"/>
+  </mime-type>
+
+ <mime-type type="text/x-r-sweave">
+    <sub-class-of type="text/plain"/>
+    <comment>R Sweave File</comment>
+    <glob pattern="*.Rnw"/>
+    <glob pattern="*.rnw"/>
+    <glob pattern="*.Rtex"/>
+    <glob pattern="*.rtex"/>
+  </mime-type>
+  
+  <mime-type type="text/x-quarto-markdown">
+    <sub-class-of type="text/plain"/>
+    <comment>Quarto Markdown File</comment>
+    <glob pattern="*.qmd"/>
+  </mime-type>
+
+  <mime-type type="text/x-r-markdown">
+    <sub-class-of type="text/plain"/>
+    <comment>R Markdown File</comment>
+    <glob pattern="*.Rmd"/>
+    <glob pattern="*.rmd"/>
+    <glob pattern="*.Rmarkdown"/>
+    <glob pattern="*.rmarkdown"/>
+  </mime-type>
+
+  <mime-type type="text/x-r-html">
+    <sub-class-of type="text/plain"/>
+    <comment>R HTML File</comment>
+    <glob pattern="*.Rhtml"/>
+    <glob pattern="*.rhtml"/>
+  </mime-type>
+
+  <mime-type type="text/x-r-presentation">
+    <sub-class-of type="text/plain"/>
+    <comment>R Presentation File</comment>
+    <glob pattern="*.Rpres"/>
+    <glob pattern="*.rpres"/>
+  </mime-type>
+
+  <mime-type type="application/x-r-data">
+    <comment>R Data File</comment>
+    <glob pattern="*.RData"/>
+    <glob pattern="*.Rdata"/>
+    <glob pattern="*.rdata"/>
+    <glob pattern="*.rda"/>
+  </mime-type>
+
+  <mime-type type="application/x-r-project">
+    <comment>R Project</comment>
+    <glob pattern="*.Rproj"/>
+    <glob pattern="*.RProj"/>
+    <glob pattern="*.rproj"/>
+  </mime-type>
+
+  <mime-type type="application/x-rdp-rsp">
+    <comment>RDP RSP Session</comment>
+    <glob pattern="*.rdprsp"/>
+  </mime-type>
+
+  <mime-type type="text/x-r-history">
+    <sub-class-of type="text/plain"/>
+    <comment>R History File</comment>
+    <glob pattern="*.Rhistory"/>
+  </mime-type>
+
+  <mime-type type="text/x-r-profile">
+    <sub-class-of type="text/plain"/>
+    <comment>R Profile File</comment>
+    <glob pattern="*.Rprofile"/>
+  </mime-type>
+
+</mime-info>
+
