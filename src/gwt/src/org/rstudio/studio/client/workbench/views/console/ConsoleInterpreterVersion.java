@@ -189,6 +189,7 @@ public class ConsoleInterpreterVersion
          public void onError(ServerError error)
          {
             Debug.logError(error);
+            label_.setText("Error fetching R version");
          }
       });
    }

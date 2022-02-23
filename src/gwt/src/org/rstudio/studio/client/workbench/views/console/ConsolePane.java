@@ -100,7 +100,7 @@ public class ConsolePane extends WorkbenchPane
       workingDir_.setText(directory);
    }
 
-   public void updateConsoleInterpreterVersion_()
+   public void updateConsoleInterpreterVersion()
    {
       consoleInterpreterVersion_.adaptToR();
    }

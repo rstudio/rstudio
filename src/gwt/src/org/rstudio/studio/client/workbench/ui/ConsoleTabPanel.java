@@ -271,7 +271,7 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
       // listen for R session restarts, and update ConsoleInterpreterVersion after event completes
       events.addHandler(ConsoleRestartRCompletedEvent.TYPE, consoleRestartRCompletedEvent ->
       {
-         consolePane_.updateConsoleInterpreterVersion_();
+         consolePane_.updateConsoleInterpreterVersion();
       });
 
       // Determine initial visibility of terminal tab
