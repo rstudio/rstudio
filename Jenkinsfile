@@ -474,11 +474,17 @@ try {
 
         parallel parallel_containers
 
+        def releaseName = sh (
+          script: "cat version/RELEASE",
+          returnStdout: true
+        ).trim().toLowerCase().replace(" ", "-")
+
         // Ensure we don't build automation on the branches that don't exist
-        if (env.JOB_NAME.startsWith('IDE/open-source-pipeline') &&
-            ("${rstudioReleaseBranch}" != "release-ghost-orchid") &&
+        if (("${rstudioReleaseBranch}" != "release-ghost-orchid") &&
             ("${rstudioReleaseBranch}" != "v1.4-juliet-rose")) {
-          trigger_external_build('IDE/qa-opensource-automation')
+          if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
+            trigger_automation_build('IDE/qa-opensource-automation', "${releaseName}")
+          }
         }
 
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
