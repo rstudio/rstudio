@@ -84,4 +84,23 @@ export class SatelliteWindow extends GwtWindow {
       this.closeSatellite(event);
     }
   }
+
+  /**
+   * 
+   * @returns Window creation request response
+   */
+  static windowOpening():
+    | { action: 'deny' }
+    | { action: 'allow'; overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined } {
+      
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        webPreferences: {
+          additionalArguments: ['--apiKeys=desktopInfo|desktop'],
+          preload: DesktopBrowserWindow.getPreload()
+        }
+      }
+    }
+  }
 }

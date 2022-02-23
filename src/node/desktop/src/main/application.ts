@@ -40,6 +40,8 @@ import { prepareEnvironment, promptUserForR } from './detect-r';
 import { PendingWindow } from './pending-window';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import i18next from 'i18next';
+import { SatelliteWindow } from './satellite-window';
+import { SecondaryWindow } from './secondary-window';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -270,7 +272,7 @@ export class Application implements AppState {
     // no additional config if pending window is a satellite
     for (const pendingWindow of this.pendingWindows) {
       if (pendingWindow.type === 'satellite') {
-        return { action: 'allow' };
+        return SatelliteWindow.windowOpening();
       }
       break;
     }
@@ -279,7 +281,7 @@ export class Application implements AppState {
     const primaryDisplay = screen.getPrimaryDisplay();
     const width = Math.max(500, Math.min(850, primaryDisplay.workAreaSize.width));
     const height = Math.max(500, Math.min(1100, primaryDisplay.workAreaSize.height));
-    return { action: 'allow', overrideBrowserWindowOptions: { width: width, height: height } };
+    return SecondaryWindow.windowOpening(width, height);
   }
 
   /**

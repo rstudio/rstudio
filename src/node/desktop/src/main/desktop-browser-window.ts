@@ -30,7 +30,6 @@ import { executeJavaScript, isSafeHost } from './utils';
 // plugin that tells the Electron app where to look for the Webpack-bundled app code (depending on
 // whether you're running in development or production).
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
-// UNUSED declare const MAIN_WINDOW_WEBPACK_ENTRY: string;
 
 /**
  * Base class for browser-based windows. Subclasses include GwtWindow, SecondaryWindow,
@@ -67,13 +66,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     if (existingWindow) {
       this.window = existingWindow;
     } else {
-      let preload: string;
-      try {
-        preload = MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY;
-      } catch (err: unknown) {
-        // manually specify preload (necessary when running unit tests)
-        preload = path.join(__dirname, '../renderer/preload.js');
-      }
+      let preload = DesktopBrowserWindow.getPreload();
 
       this.window = new BrowserWindow({
         // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
@@ -320,6 +313,19 @@ export class DesktopBrowserWindow extends EventEmitter {
         // on macOS, intercept Cmd+W and emit the window close signal
         this.emit(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT);
       }
+    }
+  }
+
+  /**
+   * 
+   * @returns Path to preload script
+   */
+  static getPreload(): string {
+    try {
+      return MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY;
+    } catch (err: unknown) {
+      // manually specify preload (necessary when running unit tests)
+      return path.join(__dirname, '../renderer/preload.js');
     }
   }
 }
