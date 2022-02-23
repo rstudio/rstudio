@@ -107,11 +107,7 @@ public class ConsolePane extends WorkbenchPane
 
    public void updateConsoleInterpreterVersion_()
    {
-
-      ConsoleInterpreterVersion oldConsoleInterpreterVersion = consoleInterpreterVersion_;
-      consoleInterpreterVersion_ = new ConsoleInterpreterVersion(true);
-      mainToolbar_.insertWidget(consoleInterpreterVersion_, oldConsoleInterpreterVersion);
-      mainToolbar_.removeLeftWidget(oldConsoleInterpreterVersion);
+      consoleInterpreterVersion_.adaptToR();
    }
 
    public void focus()
@@ -407,7 +403,7 @@ public class ConsolePane extends WorkbenchPane
    private Label workingDir_;
    private ToolbarButton consoleInterruptButton_;
    private ToolbarButton consoleClearButton_;
-   public ConsoleInterpreterVersion consoleInterpreterVersion_;
+   private ConsoleInterpreterVersion consoleInterpreterVersion_;
    private Image profilerInterruptButton_;
    private Image consoleSuspendBlockedIcon_;
    private Image consoleSuspendedIcon_;

@@ -128,7 +128,7 @@ public class ConsoleInterpreterVersion
       return html;
    }
    
-   private void adaptToR()
+   public void adaptToR()
    {
       container_.remove(0);
       container_.insert(rLogo_, 0);
@@ -176,7 +176,7 @@ public class ConsoleInterpreterVersion
    }
 
 
-   public void setRVersionLabel()
+   private void setRVersionLabel()
    {
       server_.getRVersion(new ServerRequestCallback<RVersionSpec>()
       {

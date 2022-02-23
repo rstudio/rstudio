@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.ui;
 
 import java.util.ArrayList;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import org.rstudio.core.client.layout.LogicalWindow;
 import org.rstudio.core.client.theme.PrimaryWindowFrame;
