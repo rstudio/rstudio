@@ -95,6 +95,7 @@ export class SatelliteWindow extends GwtWindow {
     return {
       action: 'allow',
       overrideBrowserWindowOptions: {
+        autoHideMenuBar: true,
         webPreferences: {
           additionalArguments: ['--apiKeys=desktopInfo|desktop'],
           preload: DesktopBrowserWindow.getPreload(),

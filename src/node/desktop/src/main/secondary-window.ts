@@ -48,6 +48,7 @@ export class SecondaryWindow extends DesktopBrowserWindow {
     return {
       action: 'allow',
       overrideBrowserWindowOptions: {
+        autoHideMenuBar: true,
         width: width,
         height: height,
         webPreferences: {
