@@ -317,7 +317,7 @@ export class DesktopBrowserWindow extends EventEmitter {
   }
 
   /**
-   * 
+   *
    * @returns Path to preload script
    */
   static getPreload(): string {
