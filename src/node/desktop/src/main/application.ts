@@ -71,7 +71,7 @@ export class Application implements AppState {
    * Startup code run before app 'ready' event.
    */
   async beforeAppReady(): Promise<ProgramStatus> {
-    const status = this.argsManager.initCommandLine();
+    const status = this.argsManager.initCommandLine(this);
 
     if (status.exit) {
       return status;

@@ -1,10 +1,8 @@
-import { app } from 'electron';
-
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
 import { enableDiagnosticsOutput } from '../core/logger';
-import { appState } from './app-state';
+import { Application } from './application';
 import { exitSuccess, ProgramStatus, run } from './program-status';
 import { getComponentVersions } from './utils';
 
@@ -56,7 +54,7 @@ export class ArgsManager {
     yargsHelper.help().parseSync();
   }
 
-  initCommandLine(argv: string[] = process.argv): ProgramStatus {
+  initCommandLine(app: Application, argv: string[] = process.argv): ProgramStatus {
     this.handleHelp(argv);
 
     // report extended version info and exit
@@ -66,7 +64,7 @@ export class ArgsManager {
     }
 
     if (argv.indexOf(kRunDiagnosticsOption) > -1) {
-      appState().runDiagnostics = true;
+      app.runDiagnostics = true;
       enableDiagnosticsOutput();
     }
 

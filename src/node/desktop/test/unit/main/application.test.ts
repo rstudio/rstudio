@@ -43,7 +43,7 @@ describe('Application', () => {
       const app = new Application();
       assert.isFalse(app.runDiagnostics);
       const argv = [kRunDiagnosticsOption];
-      const result = app.argsManager.initCommandLine(argv);
+      const result = app.argsManager.initCommandLine(app, argv);
       assert.isFalse(result.exit);
       assert.isTrue(app.runDiagnostics);
     });
