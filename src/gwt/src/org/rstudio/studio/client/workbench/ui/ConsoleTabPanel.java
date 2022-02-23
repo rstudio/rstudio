@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptButton;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterruptProfilerButton;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
+import org.rstudio.studio.client.workbench.views.console.events.ConsoleRestartRCompletedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 
@@ -265,6 +266,12 @@ public class ConsoleTabPanel extends WorkbenchTabPanel
             path += "/";
          consolePane_.setWorkingDirectory(path);
          owner.setSubtitle(path);
+      });
+
+      // listen for R session restarts, and update ConsoleInterpreterVersion after event completes
+      events.addHandler(ConsoleRestartRCompletedEvent.TYPE, consoleRestartRCompletedEvent ->
+      {
+         consolePane_.updateConsoleInterpreterVersion();
       });
 
       // Determine initial visibility of terminal tab

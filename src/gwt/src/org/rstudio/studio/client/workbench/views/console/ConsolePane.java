@@ -49,6 +49,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.LocalJobProgress;
 public class ConsolePane extends WorkbenchPane
    implements Console.Display, CanFocus
 {
+
    enum ConsoleMode
    {
       Normal,     // typical R console mode
@@ -97,6 +98,11 @@ public class ConsolePane extends WorkbenchPane
    public void setWorkingDirectory(String directory)
    {
       workingDir_.setText(directory);
+   }
+
+   public void updateConsoleInterpreterVersion()
+   {
+      consoleInterpreterVersion_.adaptToR();
    }
 
    public void focus()

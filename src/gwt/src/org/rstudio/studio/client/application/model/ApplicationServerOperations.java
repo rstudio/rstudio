@@ -111,4 +111,6 @@ public interface ApplicationServerOperations extends PrefsServerOperations
    
    void findProjectInFolder(String folder,
          ServerRequestCallback<String> requestCallback);
+
+   void getRVersion(ServerRequestCallback<RVersionSpec> requestCallback);
 }

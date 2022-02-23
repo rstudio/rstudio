@@ -14,13 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.events.ReticulateEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
 
@@ -43,9 +48,11 @@ public class ConsoleInterpreterVersion
 {
    @Inject
    private void initialize(Session session,
+                           ApplicationServerOperations server,
                            EventBus events)
    {
       session_ = session;
+      server_ = server;
       events_ = events;
    }
    
@@ -62,9 +69,9 @@ public class ConsoleInterpreterVersion
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       events_.addHandler(ReticulateEvent.TYPE, this);
-      
       container_ = new FlowPanel();
-      label_ = new Label(rVersionLabel());
+      label_ = new Label(constants_.unknownLabel());
+      setRVersionLabel();
       
       rLogo_ = createLogo(
            StandardIcons.INSTANCE.rLogoSvg(),
@@ -121,14 +128,14 @@ public class ConsoleInterpreterVersion
       return html;
    }
    
-   private void adaptToR()
+   public void adaptToR()
    {
       container_.remove(0);
       container_.insert(rLogo_, 0);
-      label_.setText(rVersionLabel());
+      setRVersionLabel();
       
    }
-   
+
    private void adaptToPython(PythonInterpreter info)
    {
       container_.remove(0);
@@ -167,24 +174,24 @@ public class ConsoleInterpreterVersion
          adaptToR();
       }
    }
-   
-   
-   private String rVersionLabel()
+
+
+   private void setRVersionLabel()
    {
-      String version = constants_.unknownLabel();
-      
-      try
+      server_.getRVersion(new ServerRequestCallback<RVersionSpec>()
       {
-         version = session_
-               .getSessionInfo()
-               .getRVersionsInfo()
-               .getRVersion();
-      }
-      catch (Exception e)
-      {
-      }
-      
-      return "R " + version;
+         @Override
+         public void onResponseReceived(RVersionSpec versionSpec)
+         {
+            label_.setText("R " + versionSpec.getVersion());
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            label_.setText("Error fetching R version");
+         }
+      });
    }
    
    private String pythonVersionLabel(PythonInterpreter info)
@@ -215,6 +222,7 @@ public class ConsoleInterpreterVersion
    // Injected ----
    private Session session_;
    private EventBus events_;
+   private ApplicationServerOperations server_;
    
    // Resources ----
    
