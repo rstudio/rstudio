@@ -20,13 +20,14 @@ import { safeError } from '../core/err';
 import { WinstonLogger } from '../core/winston-logger';
 import { FilePath } from '../core/file-path';
 
-import { Application, kLogLevel } from './application';
+import { Application } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
 import { createStandaloneErrorDialog, userLogPath } from './utils';
 
 import { initI18n } from './i18n-manager';
 import i18next from 'i18next';
+import { kLogLevel } from './args-manager';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
