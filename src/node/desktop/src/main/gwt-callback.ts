@@ -58,7 +58,7 @@ export class GwtCallback extends EventEmitter {
     super();
     this.owners.add(mainWindow);
 
-    ipcMain.on('desktop_browse_url', (event, url: string) => {
+    ipcMain.on('desktop_browse_url', (_event, url: string) => {
       // TODO: review if we need additional validation of URL
       void shell.openExternal(url);
     });
@@ -113,7 +113,7 @@ export class GwtCallback extends EventEmitter {
         label: string,
         dir: string,
         defaultExtension: string,
-        forceDefaultExtension: boolean,
+        _forceDefaultExtension: boolean,
         focusOwner: boolean,
       ) => {
         const resolvedDir = FilePath.resolveAliasedPathSync(dir, userHomePath()).toString();
@@ -188,7 +188,7 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_clipboard_paste');
     });
 
-    ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {
+    ipcMain.on('desktop_set_clipboard_text', (_event, _text: string) => {
       GwtCallback.unimpl('desktop_set_clipboard_text');
     });
 
@@ -207,7 +207,7 @@ export class GwtCallback extends EventEmitter {
       return '';
     });
 
-    ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
+    ipcMain.on('desktop_set_global_mouse_selection', (_event, _selection: string) => {
       GwtCallback.unimpl('desktop_set_global_mouse_selection');
     });
 
@@ -240,30 +240,30 @@ export class GwtCallback extends EventEmitter {
       return false;
     });
 
-    ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath: string) => {
+    ipcMain.on('desktop_on_workbench_initialized', (_event, scratchPath: string) => {
       this.emit(GwtCallback.WORKBENCH_INITIALIZED);
       appState().setScratchTempDir(new FilePath(scratchPath));
     });
 
-    ipcMain.on('desktop_show_folder', (event, path: string) => {
+    ipcMain.on('desktop_show_folder', (_event, path: string) => {
       shell.openPath(path).catch((value) => {
         logger().logErrorMessage(value);
       });
     });
 
-    ipcMain.on('desktop_show_file', (event, file: string) => {
+    ipcMain.on('desktop_show_file', (_event, file: string) => {
       shell.showItemInFolder(file);
     });
 
-    ipcMain.on('desktop_show_word_doc', (event, wordDoc: string) => {
+    ipcMain.on('desktop_show_word_doc', (_event, _wordDoc: string) => {
       GwtCallback.unimpl('desktop_show_word_doc');
     });
 
-    ipcMain.on('desktop_show_ppt_presentation', (event, pptDoc: string) => {
+    ipcMain.on('desktop_show_ppt_presentation', (_event, _pptDoc: string) => {
       GwtCallback.unimpl('desktop_show_ppt_presentation');
     });
 
-    ipcMain.on('desktop_show_pdf', (event, path: string, pdfPage: string) => {
+    ipcMain.on('desktop_show_pdf', (_event, _path: string, _pdfPage: string) => {
       GwtCallback.unimpl('desktop_show_pdf');
     });
 
@@ -300,20 +300,20 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_activate_minimal_window', (event, name: string) => {
+    ipcMain.on('desktop_activate_minimal_window', (_event, name: string) => {
       // we can only activate named windows
       if (name && name !== '_blank') {
         activateWindow(name);
       }
     });
 
-    ipcMain.on('desktop_activate_satellite_window', (event, name: string) => {
+    ipcMain.on('desktop_activate_satellite_window', (_event, name: string) => {
       activateWindow(name);
     });
 
     ipcMain.handle(
       'desktop_prepare_for_satellite_window',
-      (event, name: string, x: number, y: number, width: number, height: number) => {
+      (_event, name: string, x: number, y: number, width: number, height: number) => {
         appState().prepareForWindow({
           type: 'satellite',
           name: name,
@@ -329,7 +329,7 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.handle(
       'desktop_prepare_for_named_window',
-      (event, name: string, allowExternalNavigate: boolean, showToolbar: boolean) => {
+      (_event, name: string, allowExternalNavigate: boolean, showToolbar: boolean) => {
         appState().prepareForWindow({
           type: 'secondary',
           name: name,
@@ -339,30 +339,30 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_close_named_window', (event, name: string) => {
+    ipcMain.on('desktop_close_named_window', (_event, _name: string) => {
       GwtCallback.unimpl('desktop_close_named_window');
     });
 
     ipcMain.on(
       'desktop_copy_page_region_to_clipboard',
-      (event, left: number, top: number, width: number, height: number) => {
+      (_event, _left: number, _top: number, _width: number, _height: number) => {
         GwtCallback.unimpl('desktop_copy_page_region_to_clipboard');
       },
     );
 
-    ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
+    ipcMain.on('desktop_export_page_region_to_file', (_event, _targetPath, _format, _left, _top, _width, _height) => {
       GwtCallback.unimpl('desktop_export_page_region_to_file');
     });
 
-    ipcMain.on('desktop_print_text', (event, text) => {
+    ipcMain.on('desktop_print_text', (_event, _text) => {
       GwtCallback.unimpl('desktop_print_text');
     });
 
-    ipcMain.on('desktop_paint_print_text', (event, printer) => {
+    ipcMain.on('desktop_paint_print_text', (_event, _printer) => {
       GwtCallback.unimpl('desktop_paint_print_text');
     });
 
-    ipcMain.on('desktop_print_finished', (event, result) => {
+    ipcMain.on('desktop_print_finished', (_event, _result) => {
       GwtCallback.unimpl('desktop_print_finished');
     });
 
@@ -372,7 +372,7 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.handle(
       'desktop_show_message_box',
-      async (event, type, caption, message, buttons, defaultButton, cancelButton) => {
+      async (_event, type, caption, message, buttons, _defaultButton, _cancelButton) => {
         const openDialogOptions: MessageBoxOptions = {
           type: this.convertMessageBoxType(type),
           title: caption,
@@ -399,24 +399,24 @@ export class GwtCallback extends EventEmitter {
       return '';
     });
 
-    ipcMain.on('desktop_set_desktop_rendering_engine', (event, engine) => {
+    ipcMain.on('desktop_set_desktop_rendering_engine', (_event, _engine) => {
       GwtCallback.unimpl('desktop_set_desktop_rendering_engine');
     });
 
-    ipcMain.handle('desktop_filter_text', (event, text: string) => {
+    ipcMain.handle('desktop_filter_text', (_event, text: string) => {
       GwtCallback.unimpl('desktop_filter_text');
       return text;
     });
 
-    ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
-      desktop.cleanClipboard(stripHtml);
+    ipcMain.on('desktop_clean_clipboard', (_event, _stripHtml) => {
+      // Electron does not need to clean up UTF-16 or HTML
     });
 
-    ipcMain.on('desktop_set_pending_quit', (event, pendingQuit: number) => {
+    ipcMain.on('desktop_set_pending_quit', (_event, pendingQuit: number) => {
       this.pendingQuit = pendingQuit;
     });
 
-    ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
+    ipcMain.on('desktop_open_project_in_new_window', (_event, projectFilePath) => {
       if (!this.isRemoteDesktop) {
         const args = [resolveAliasedPath(projectFilePath)];
         this.mainWindow.launchRStudio(args);
@@ -426,7 +426,7 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.on('desktop_open_session_in_new_window', (event, workingDirectoryPath) => {
+    ipcMain.on('desktop_open_session_in_new_window', (_event, workingDirectoryPath) => {
       if (!this.isRemoteDesktop) {
         workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
         this.mainWindow.launchRStudio([], workingDirectoryPath);
@@ -436,7 +436,7 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.on('desktop_open_terminal', (event, terminalPath, workingDirectory, extraPathEntries, shellType) => {
+    ipcMain.on('desktop_open_terminal', (_event, _terminalPath, _workingDirectory, _extraPathEntries, _shellType) => {
       GwtCallback.unimpl('desktop_open_terminal');
     });
 
@@ -450,7 +450,7 @@ export class GwtCallback extends EventEmitter {
       return '';
     });
 
-    ipcMain.on('desktop_set_fixed_width_font', (event, font) => {
+    ipcMain.on('desktop_set_fixed_width_font', (_event, _font) => {
       GwtCallback.unimpl('desktop_set_fixed_width_font');
     });
 
@@ -464,7 +464,7 @@ export class GwtCallback extends EventEmitter {
       return 1.0;
     });
 
-    ipcMain.on('desktop_set_zoom_level', (event, zoomLevel) => {
+    ipcMain.on('desktop_set_zoom_level', (_event, _zoomLevel) => {
       GwtCallback.unimpl('desktop_set_zoom_level');
     });
 
@@ -480,18 +480,18 @@ export class GwtCallback extends EventEmitter {
       this.getSender('desktop_zoom_actual_size', event.processId, event.frameId).zoomActualSize();
     });
 
-    ipcMain.on('desktop_set_background_color', (event, rgbColor) => {});
+    ipcMain.on('desktop_set_background_color', (_event, _rgbColor) => {});
 
-    ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => {});
+    ipcMain.on('desktop_change_title_bar_color', (_event, _red, _green, _blue) => {});
 
-    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {});
+    ipcMain.on('desktop_sync_to_editor_theme', (_event, _isDark) => {});
 
     ipcMain.handle('desktop_get_enable_accessibility', () => {
       GwtCallback.unimpl('desktop_get_enable_accessibility');
       return true;
     });
 
-    ipcMain.on('desktop_set_enable_accessibility', (event, enable) => {
+    ipcMain.on('desktop_set_enable_accessibility', (_event, _enable) => {
       GwtCallback.unimpl('desktop_set_enable_accessibility');
     });
 
@@ -500,15 +500,15 @@ export class GwtCallback extends EventEmitter {
       return false;
     });
 
-    ipcMain.on('desktop_set_clipboard_monitoring', (event, monitoring) => {
+    ipcMain.on('desktop_set_clipboard_monitoring', (_event, _monitoring) => {
       GwtCallback.unimpl('desktop_set_clipboard_monitoring');
     });
 
-    ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
+    ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (_event, _ignore) => {
       return true;
     });
 
-    ipcMain.on('desktop_set_ignore_gpu_exclusion_list', (event, ignore) => {
+    ipcMain.on('desktop_set_ignore_gpu_exclusion_list', (_event, _ignore) => {
       GwtCallback.unimpl('desktop_set_ignore_gpu_exclusion_list');
     });
 
@@ -516,7 +516,7 @@ export class GwtCallback extends EventEmitter {
       return false;
     });
 
-    ipcMain.on('desktop_set_disable_gpu_driver_bug_workarounds', (event, disable) => {
+    ipcMain.on('desktop_set_disable_gpu_driver_bug_workarounds', (_event, _disable) => {
       GwtCallback.unimpl('desktop_set_disable_gpu_driver_bug_workarounds');
     });
 
@@ -547,11 +547,11 @@ export class GwtCallback extends EventEmitter {
       return '';
     });
 
-    ipcMain.on('desktop_external_synctex_preview', (event, pdfPath, page) => {
+    ipcMain.on('desktop_external_synctex_preview', (_event, _pdfPath, _page) => {
       GwtCallback.unimpl('desktop_external_synctex_preview');
     });
 
-    ipcMain.on('desktop_external_synctex_view', (event, pdfFile, srcFile, line, column) => {
+    ipcMain.on('desktop_external_synctex_view', (_event, _pdfFile, _srcFile, _line, _column) => {
       GwtCallback.unimpl('desktop_external_synctex_view');
     });
 
@@ -569,7 +569,7 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_show_keyboard_shortcut_help');
     });
 
-    ipcMain.on('desktop_launch_session', (event, reload) => {
+    ipcMain.on('desktop_launch_session', (_event, reload) => {
       this.mainWindow.launchSession(reload);
     });
 
@@ -580,7 +580,7 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.on('desktop_set_tutorial_url', (event, url) => {
+    ipcMain.on('desktop_set_tutorial_url', (_event, _url) => {
       GwtCallback.unimpl('desktop_set_tutorial_url');
     });
 
@@ -588,14 +588,14 @@ export class GwtCallback extends EventEmitter {
       this.getSender('desktop_set_viewer_url', event.processId, event.frameId).setViewerUrl(url);
     });
 
-    ipcMain.on('desktop_reload_viewer_zoom_window', (event, url) => {
+    ipcMain.on('desktop_reload_viewer_zoom_window', (_event, url) => {
       const browser = appState().windowTracker.getWindow('_rstudio_viewer_zoom');
       if (browser) {
         void browser.window.webContents.loadURL(url);
       }
     });
 
-    ipcMain.on('desktop_set_shiny_dialog_url', (event, url) => {
+    ipcMain.on('desktop_set_shiny_dialog_url', (_event, _url) => {
       GwtCallback.unimpl('desktop_set_shiny_dialog_url');
     });
 
@@ -612,13 +612,13 @@ export class GwtCallback extends EventEmitter {
       return isCentOS();
     });
 
-    ipcMain.on('desktop_set_busy', (event, busy) => {});
+    ipcMain.on('desktop_set_busy', (_event, _busy) => {});
 
-    ipcMain.on('desktop_set_window_title', (event, title: string) => {
+    ipcMain.on('desktop_set_window_title', (_event, title: string) => {
       this.mainWindow.window.setTitle(`${title} - RStudio`);
     });
 
-    ipcMain.on('desktop_install_rtools', (event, version, installerPath) => {
+    ipcMain.on('desktop_install_rtools', (_event, _version, _installerPath) => {
       GwtCallback.unimpl('desktop_install_rtools');
     });
 
@@ -639,11 +639,11 @@ export class GwtCallback extends EventEmitter {
       return [];
     });
 
-    ipcMain.on('desktop_reconnect_to_session_server', (event, sessionServerJson) => {
+    ipcMain.on('desktop_reconnect_to_session_server', (_event, _sessionServerJson) => {
       GwtCallback.unimpl('desktop_reconnect_to_session_server');
     });
 
-    ipcMain.handle('desktop_set_launcher_server', (event, sessionServerJson) => {
+    ipcMain.handle('desktop_set_launcher_server', (_event, _sessionServerJson) => {
       GwtCallback.unimpl('desktop_set_launcher_server');
       return false;
     });
@@ -657,27 +657,27 @@ export class GwtCallback extends EventEmitter {
       return {};
     });
 
-    ipcMain.on('desktop_start_launcher_job_status_stream', (event, jobId) => {
+    ipcMain.on('desktop_start_launcher_job_status_stream', (_event, _jobId) => {
       GwtCallback.unimpl('desktop_start_launcher_job_status_stream');
     });
 
-    ipcMain.on('desktop_stop_launcher_job_status_stream', (event, jobId) => {
+    ipcMain.on('desktop_stop_launcher_job_status_stream', (_event, _jobId) => {
       GwtCallback.unimpl('desktop_stop_launcher_job_status_stream');
     });
 
-    ipcMain.on('desktop_start_launcher_job_output_stream', (event, jobId) => {
+    ipcMain.on('desktop_start_launcher_job_output_stream', (_event, _jobId) => {
       GwtCallback.unimpl('desktop_start_launcher_job_output_stream');
     });
 
-    ipcMain.on('desktop_stop_launcher_job_output_stream', (event, jobId) => {
+    ipcMain.on('desktop_stop_launcher_job_output_stream', (_event, _jobId) => {
       GwtCallback.unimpl('desktop_stop_launcher_job_output_stream');
     });
 
-    ipcMain.on('desktop_control_launcher_job', (event, jobId, operation) => {
+    ipcMain.on('desktop_control_launcher_job', (_event, _jobId, _operation) => {
       GwtCallback.unimpl('desktop_control_launcher_job');
     });
 
-    ipcMain.on('desktop_submit_launcher_job', (event, job) => {
+    ipcMain.on('desktop_submit_launcher_job', (_event, _job) => {
       GwtCallback.unimpl('desktop_submit_launcher_job');
     });
 
@@ -694,7 +694,7 @@ export class GwtCallback extends EventEmitter {
       return -1;
     });
 
-    ipcMain.handle('desktop_startup_error_info', async (event, varName: string) => {
+    ipcMain.handle('desktop_startup_error_info', async (_event, varName: string) => {
       return resolveTemplateVar(varName, this.errorPageData);
     });
   }
