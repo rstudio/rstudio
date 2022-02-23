@@ -288,16 +288,43 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
    private static final DesktopApplicationHeader.Resources RESOURCES =  (DesktopApplicationHeader.Resources) GWT.create(DesktopApplicationHeader.Resources.class);
 
+   private void undoAce() {
+      // Undo on the ACE editor has to be called manually since Electron cannot trigger it
+      AceEditorNative editorNative = AceEditorNative.getEditor(DomUtils.getActiveElement());
+      if (editorNative != null) {
+         editorNative.execCommand("undo");
+      } else {
+         Desktop.getFrame().undo();
+      }
+   }
+
+   private void redoAce() {
+      // Redo on the ACE editor has to be called manually since Electron cannot trigger it
+      AceEditorNative editorNative = AceEditorNative.getEditor(DomUtils.getActiveElement());
+      if (editorNative != null) {
+         editorNative.execCommand("redo");
+      } else {
+         Desktop.getFrame().redo();
+      }
+   }
+
    @Handler
-   void onUndoDummy()
-   {
-      Desktop.getFrame().undo();
+   void onUndoDummy() {
+      if (BrowseCap.isElectron()) {
+         undoAce();
+      } else {
+         Desktop.getFrame().undo();
+      }
    }
 
    @Handler
    void onRedoDummy()
    {
-      Desktop.getFrame().redo();
+      if (BrowseCap.isElectron()) {
+         redoAce();
+      } else {
+         Desktop.getFrame().redo();
+      }
    }
 
    @Handler
