@@ -69,7 +69,6 @@ public class ConsolePane extends WorkbenchPane
                       EventBus events,
                       Commands commands,
                       Session session,
-                      ApplicationServerOperations server,
                       AriaLiveService ariaLive)
    {
       // We pass null in place of events here to prevent ActivePaneEvent from being called.
@@ -81,7 +80,6 @@ public class ConsolePane extends WorkbenchPane
       commands_ = commands;
       session_ = session;
       ariaLive_ = ariaLive;
-      server_ = server;
 
       // the secondary toolbar can have several possible states that obscure
       // each other; we keep track of the stack here
@@ -109,8 +107,7 @@ public class ConsolePane extends WorkbenchPane
 
    public void updateConsoleInterpreterVersion_()
    {
-      // server_.getActiveSessions(GWT.getHostPageBaseURL(), new ServerRequestCallback<JsArray<ActiveSession>>());
-      // do something with response -- redefine session_;
+
       ConsoleInterpreterVersion oldConsoleInterpreterVersion = consoleInterpreterVersion_;
       consoleInterpreterVersion_ = new ConsoleInterpreterVersion(true);
       mainToolbar_.insertWidget(consoleInterpreterVersion_, oldConsoleInterpreterVersion);
@@ -405,7 +402,6 @@ public class ConsolePane extends WorkbenchPane
    LocalJobProgress lastProgress_;
    private final Commands commands_;
    private Shell shell_;
-   private ApplicationServerOperations server_;
    private Session session_;
    private AriaLiveService ariaLive_;
    private Label workingDir_;

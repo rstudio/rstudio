@@ -14,13 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.model.ProductNotice;
+import org.rstudio.studio.client.application.model.RVersionSpec;
+import org.rstudio.studio.client.application.ui.AboutOpenSourceDialog;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.events.ReticulateEvent;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.views.PythonInterpreter;
 
@@ -172,17 +178,20 @@ public class ConsoleInterpreterVersion
    public String rVersionLabel()
    {
       String version = constants_.unknownLabel();
-      
-      try
+
+      RStudioGinjector.INSTANCE.getServer().getRVersion(new ServerRequestCallback<RVersionSpec>()
       {
-         version = session_
-               .getSessionInfo()
-               .getRVersionsInfo()
-               .getRVersion();
-      }
-      catch (Exception e)
-      {
-      }
+         @Override
+         public void onResponseReceived(RVersionSpec versionSpec)
+         {
+            version = versionSpec.getVersion();
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
       
       return "R " + version;
    }

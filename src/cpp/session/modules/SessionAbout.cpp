@@ -21,8 +21,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#include <string>
-
 #include "session-config.h"
 
 using namespace rstudio::core;
@@ -62,6 +60,19 @@ Error productNotice(const json::JsonRpcRequest& request,
    return Success();
 }
 
+Error rVersion(const json::JsonRpcRequest& request,
+                    json::JsonRpcResponse* pResponse)
+{
+   json::Object result;
+   result["version"] = module_context::rVersion();
+   result["label"] = module_context::rVersionLabel();
+   result["r_home"] = module_context::rHomeDir();
+   result["module"] = module_context::rVersionModule();
+
+   pResponse->setResult(result);
+   return Success();
+
+
 } // anonymous namespace
 
 Error initialize()
@@ -73,6 +84,7 @@ Error initialize()
    initBlock.addFunctions()
       (bind(registerRpcMethod, "get_product_info", productInfo))
       (bind(registerRpcMethod, "get_product_notice", productNotice))
+      (bind(registerRpcMethod, "get_rversion_info", rVersion))
    ;
    return initBlock.execute();
 }
