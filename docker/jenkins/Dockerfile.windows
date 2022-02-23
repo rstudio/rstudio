@@ -22,7 +22,8 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y -i ant; `
   choco install -y windows-sdk-10.1 --version 10.1.17134.12; `
   choco install -y 7zip; `
-  choco install -y ninja --version "1.10.0"
+  choco install -y ninja --version "1.10.0"; `
+  choco install -y python
 
 # install NSIS - we do not do this via Chocolatey because the hosting URL of the NSIS
 # executable has gone defunct
