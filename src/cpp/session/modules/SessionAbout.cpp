@@ -71,6 +71,7 @@ Error rVersion(const json::JsonRpcRequest& request,
 
    pResponse->setResult(result);
    return Success();
+}
 
 
 } // anonymous namespace
