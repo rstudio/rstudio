@@ -54,7 +54,7 @@ exit 1
 NPM_INSTALLED=0
 install-npm-packages() {
    if [ "${NPM_INSTALLED}" = "0" ]; then
-      MAKEFLAGS= ${NPM} ci
+      MAKEFLAGS="" ${NPM} ci
       NPM_INSTALLED=1
    fi
 }
