@@ -159,7 +159,12 @@ else()
       DEPENDS "${DESKTOP_SOURCES}"
       COMMENT "Building desktop (Electron ${UNAME_M})"
       WORKING_DIRECTORY "${ELECTRON_BUILD_DIR}"
-      COMMAND ${CMAKE_COMMAND} -E env "PATH=${MODIFIED_PATH}" "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1" ${NPM} run package
+      COMMAND
+         ${CMAKE_COMMAND} -E env
+         "PATH=${MODIFIED_PATH}"
+         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1"
+         "MAKEFLAGS="
+         ${NPM} run package
    )
 
 endif()
@@ -180,15 +185,25 @@ endif()
 
 # install binary (except on macOS, which uses a different approach for bundling Electron due
 # to additional steps related to creation of a Universal x64/M1 image)
-if (WIN32)
+if(WIN32)
+
    install(
       DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-win32-x64/"
       DESTINATION "${RSTUDIO_INSTALL_ELECTRON}"
    )
-elseif (LINUX)
+
+elseif(LINUX)
+
+   if(UNAME_M STREQUAL aarch64)
+      set(ELECTRON_ARCH arm64)
+   else()
+      set(ELECTRON_ARCH x64)
+   endif()
+
    install(
-      DIRECTORY "${ELECTRON_BUILD_DIR}/out/rstudio-linux-x64/"
+      DIRECTORY "${ELECTRON_BUILD_DIR}/out/rstudio-linux-${ELECTRON_ARCH}/"
       DESTINATION "${RSTUDIO_INSTALL_ELECTRON}"
       USE_SOURCE_PERMISSIONS
    )
+
 endif()
