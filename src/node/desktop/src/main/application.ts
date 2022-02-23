@@ -18,7 +18,7 @@ import { app, BrowserWindow, dialog, WebContents, screen } from 'electron';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { generateRandomPort } from '../core/system';
-import { logger, enableDiagnosticsOutput } from '../core/logger';
+import { logger } from '../core/logger';
 
 import {
   createStandaloneErrorDialog,
@@ -27,8 +27,8 @@ import {
   initializeSharedSecret,
   raiseAndActivateWindow,
 } from './utils';
-import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
-import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
+import { augmentCommandLineArguments, removeStaleOptionsLockfile } from './utils';
+import { exitFailure, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
 import { AppState } from './app-state';
 import { SessionLauncher } from './session-launcher';
@@ -42,13 +42,6 @@ import i18next from 'i18next';
 import { ArgsManager } from './args-manager';
 
 // RStudio command-line switches
-export const kRunDiagnosticsOption = '--run-diagnostics';
-export const kSessionServerOption = '--session-server';
-export const kSessionServerUrlOption = '--session-url';
-export const kTempCookiesOption = '--use-temp-cookies';
-export const kVersion = '--version';
-export const kVersionJson = '--version-json';
-export const kLogLevel = 'log-level';
 export const kDelaySession = 'session-delay';
 export const kSessionExit = 'session-exit';
 
