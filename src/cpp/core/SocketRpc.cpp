@@ -34,6 +34,7 @@
 #include <core/SocketRpc.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {
