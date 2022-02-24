@@ -26,6 +26,8 @@
 
 #include <session/SessionAsyncRProcess.hpp>
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace session {
 namespace async_r {
