@@ -10,7 +10,10 @@ import { getComponentVersions, userLogPath } from './utils';
 
 // How to use:
 // [MAC] RStudio.app/Contents/MacOS/RStudio --session-exit
+// [MAC] RStudio.app/Contents/MacOS/RStudio --help
 // npm run start -- -- --session-exit
+// npm run start -- -- --help
+// npm run start -- -- --version
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
 export const kVersion = '--version';
