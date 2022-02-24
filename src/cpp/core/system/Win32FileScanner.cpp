@@ -107,7 +107,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    std::transform(children.begin(),
                   children.end(),
                   std::back_inserter(childrenFileInfo),
-                  boost::bind(convertToFileInfo, _1, options.yield, &count));
+                  boost::bind(convertToFileInfo, std::placeholders::_1, options.yield, &count));
    std::sort(childrenFileInfo.begin(),
              childrenFileInfo.end(),
              fileInfoPathLessThan);
