@@ -42,6 +42,7 @@
 #define kInvalidSecretEndpoint "/invalid_secret"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace server {
