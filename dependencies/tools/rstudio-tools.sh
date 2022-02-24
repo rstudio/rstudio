@@ -490,5 +490,3 @@ restore-original-file () {
 	mv $SAVED_FILE $ORIGINAL_FILE
 	rm -f $MODIFIED_FILE
 }
-
-echo "Sourced"
