@@ -1,11 +1,12 @@
 import { app } from 'electron';
+import { WinstonLogger } from '../core/winston-logger';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
-import { enableDiagnosticsOutput } from '../core/logger';
+import { enableDiagnosticsOutput, parseCommandLineLogLevel, setLogger } from '../core/logger';
 import { Application } from './application';
 import { exitSuccess, ProgramStatus, run } from './program-status';
-import { getComponentVersions } from './utils';
+import { getComponentVersions, userLogPath } from './utils';
 
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
@@ -37,11 +38,11 @@ export class ArgsManager {
     },
     {
       name: kDelaySession,
-      describe: 'Causes the rsession to pause so the user can see the "Loading R" screen longer. [unimplemented]',
+      describe: 'Causes the rsession to pause so the user can see the "Loading R" screen longer',
     },
     {
       name: kSessionExit,
-      describe: 'Causes the rsession to terminate immediately so the user can see the error page. [unimplemented]',
+      describe: 'Causes the rsession to terminate immediately so the user can see the error page',
     },
   ];
 
@@ -83,5 +84,14 @@ export class ArgsManager {
     if (app.commandLine.hasSwitch(kSessionExit)) {
       application.sessionEarlyExitCode = 1;
     }
+  }
+
+  handleLogLevel() {
+    const logLevelFromArgs = app.commandLine.getSwitchValue(kLogLevel);
+    console.log(`Log level: ${logLevelFromArgs}`);
+
+    const logLevel = parseCommandLineLogLevel(logLevelFromArgs, 'warn');
+
+    setLogger(new WinstonLogger(userLogPath().completeChildPath('rdesktop.log'), logLevel));
   }
 }
