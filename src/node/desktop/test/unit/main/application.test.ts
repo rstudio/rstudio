@@ -19,11 +19,12 @@ import { assert } from 'chai';
 import path from 'path';
 import os from 'os';
 
-import { Application, kRunDiagnosticsOption } from '../../../src/main/application';
+import { Application } from '../../../src/main/application';
 import { NullLogger, setLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
 import { randomString } from '../../../src/main/utils';
 import { FilePath } from '../../../src/core/file-path';
+import { kRunDiagnosticsOption } from '../../../src/main/args-manager';
 
 describe('Application', () => {
   before(() => {
@@ -42,7 +43,7 @@ describe('Application', () => {
       const app = new Application();
       assert.isFalse(app.runDiagnostics);
       const argv = [kRunDiagnosticsOption];
-      const result = app.initCommandLine(argv);
+      const result = app.argsManager.initCommandLine(app, argv);
       assert.isFalse(result.exit);
       assert.isTrue(app.runDiagnostics);
     });

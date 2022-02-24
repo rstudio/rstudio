@@ -15,15 +15,13 @@
 
 import { app } from 'electron';
 
-import { logLevel, parseCommandLineLogLevel, setLogger, setLoggerLevel } from '../core/logger';
+import { logLevel } from '../core/logger';
 import { safeError } from '../core/err';
-import { WinstonLogger } from '../core/winston-logger';
-import { FilePath } from '../core/file-path';
 
-import { Application, kLogLevel } from './application';
+import { Application } from './application';
 import { setApplication } from './app-state';
 import { parseStatus } from './program-status';
-import { createStandaloneErrorDialog, userLogPath } from './utils';
+import { createStandaloneErrorDialog } from './utils';
 
 import { initI18n } from './i18n-manager';
 import i18next from 'i18next';
@@ -65,8 +63,8 @@ class RStudioMain {
 
     const rstudio = new Application();
 
-    const logLevel = parseCommandLineLogLevel(app.commandLine.getSwitchValue(kLogLevel), 'warn');
-    setLogger(new WinstonLogger(userLogPath().completeChildPath('rdesktop.log'), logLevel));
+    rstudio.argsManager.handleLogLevel();
+
     setApplication(rstudio);
 
     if (!parseStatus(await rstudio.beforeAppReady())) {

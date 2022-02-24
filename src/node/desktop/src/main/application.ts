@@ -18,7 +18,7 @@ import { app, BrowserWindow, WebContents, screen } from 'electron';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
 import { generateRandomPort } from '../core/system';
-import { logger, enableDiagnosticsOutput } from '../core/logger';
+import { logger } from '../core/logger';
 
 import {
   getAppPath,
@@ -28,8 +28,8 @@ import {
   initializeSharedSecret,
   raiseAndActivateWindow,
 } from './utils';
-import { augmentCommandLineArguments, getComponentVersions, removeStaleOptionsLockfile } from './utils';
-import { exitFailure, exitSuccess, run, ProgramStatus } from './program-status';
+import { augmentCommandLineArguments, removeStaleOptionsLockfile } from './utils';
+import { exitFailure, run, ProgramStatus } from './program-status';
 import { ApplicationLaunch } from './application-launch';
 import { AppState } from './app-state';
 import { SessionLauncher } from './session-launcher';
@@ -40,19 +40,9 @@ import { prepareEnvironment, promptUserForR } from './detect-r';
 import { PendingWindow } from './pending-window';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import i18next from 'i18next';
+import { ArgsManager } from './args-manager';
 import { SatelliteWindow } from './satellite-window';
 import { SecondaryWindow } from './secondary-window';
-
-// RStudio command-line switches
-export const kRunDiagnosticsOption = '--run-diagnostics';
-export const kSessionServerOption = '--session-server';
-export const kSessionServerUrlOption = '--session-url';
-export const kTempCookiesOption = '--use-temp-cookies';
-export const kVersion = '--version';
-export const kVersionJson = '--version-json';
-export const kLogLevel = 'log-level';
-export const kDelaySession = 'session-delay';
-export const kSessionExit = 'session-exit';
 
 /**
  * The RStudio application
@@ -74,11 +64,14 @@ export class Application implements AppState {
   private activationInst?: DesktopActivation;
   private scratchPath?: FilePath;
 
+  argsManager = new ArgsManager();
+
   /**
    * Startup code run before app 'ready' event.
    */
   async beforeAppReady(): Promise<ProgramStatus> {
-    const status = this.initCommandLine(process.argv);
+    const status = this.argsManager.initCommandLine(this);
+
     if (status.exit) {
       return status;
     }
@@ -140,16 +133,7 @@ export class Application implements AppState {
 
     initializeLang();
 
-    // switch for setting a session start delay in seconds (used for testing, troubleshooting)
-    if (app.commandLine.hasSwitch(kDelaySession)) {
-      this.sessionStartDelaySeconds = 5;
-    }
-
-    // switch for forcing rsession to exit immediately with non-zero exit code
-    // (will happen after session start delay above, if also specified)
-    if (app.commandLine.hasSwitch(kSessionExit)) {
-      this.sessionEarlyExitCode = 1;
-    }
+    this.argsManager.handleAppReadyCommands(this);
 
     // on Windows, ask the user what version of R they'd like to use
     if (process.platform === 'win32') {
@@ -187,27 +171,6 @@ export class Application implements AppState {
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
     this.sessionLauncher.launchFirstSession();
-
-    return run();
-  }
-
-  initCommandLine(argv: string[]): ProgramStatus {
-    // look for a version check request; if we have one, just do that and exit
-    if (argv.indexOf(kVersion) > -1) {
-      console.log(app.getVersion());
-      return exitSuccess();
-    }
-
-    // report extended version info and exit
-    if (argv.indexOf(kVersionJson) > -1) {
-      console.log(getComponentVersions());
-      return exitSuccess();
-    }
-
-    if (argv.indexOf(kRunDiagnosticsOption) > -1) {
-      this.runDiagnostics = true;
-      enableDiagnosticsOutput();
-    }
 
     return run();
   }
