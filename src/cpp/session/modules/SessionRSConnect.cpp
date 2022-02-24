@@ -181,21 +181,21 @@ public:
 
          if (!reticulatePython.empty())
          {
-            // we found a Python version; forward it
-            core::system::setenv(&env, "RETICULATE_PYTHON", reticulatePython);
+            // we found a Python version; forward it to RETICULATE_PYTHON_FALLBACK
+            core::system::setenv(&env, "RETICULATE_PYTHON_FALLBACK", reticulatePython);
 
             // if showing publishing diagnostics, emit the version of Python
             // we're forwarding (for troubleshooting purposes)
             if (prefs::userPrefs().showPublishDiagnostics())
             {
-               cmd += "cat('Set RETICULATE_PYTHON = \"" +
+               cmd += "cat('Set RETICULATE_PYTHON_FALLBACK = \"" +
                   string_utils::singleQuotedStrEscape(reticulatePython) + "\"\n'); ";
             }
          }
          else if (prefs::userPrefs().showPublishDiagnostics())
          {
             // if we didn't find Python, note as such
-            cmd += "cat('RETICULATE_PYTHON unset (no Python installation found)\n'); ";
+            cmd += "cat('RETICULATE_PYTHON_FALLBACK unset (no Python installation found)\n'); ";
          }
       }
    

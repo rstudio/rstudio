@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, dialog, WebContents, screen } from 'electron';
+import { app, BrowserWindow, WebContents, screen } from 'electron';
 
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
@@ -21,6 +21,7 @@ import { generateRandomPort } from '../core/system';
 import { logger } from '../core/logger';
 
 import {
+  getAppPath,
   createStandaloneErrorDialog,
   findComponents,
   initializeLang,
@@ -40,6 +41,8 @@ import { PendingWindow } from './pending-window';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
 import i18next from 'i18next';
 import { ArgsManager } from './args-manager';
+import { SatelliteWindow } from './satellite-window';
+import { SecondaryWindow } from './secondary-window';
 
 /**
  * The RStudio application
@@ -175,7 +178,7 @@ export class Application implements AppState {
   supportingFilePath(): FilePath {
     if (!this.supportPath) {
       // default to install path
-      this.supportPath = new FilePath(app.getAppPath());
+      this.supportPath = new FilePath(getAppPath());
 
       // adapt for OSX resource bundles
       if (process.platform === 'darwin') {
@@ -189,9 +192,9 @@ export class Application implements AppState {
 
   resourcesPath(): FilePath {
     if (app.isPackaged) {
-      return new FilePath(app.getAppPath());
+      return new FilePath(getAppPath());
     } else {
-      return new FilePath(app.getAppPath()).completePath('../../..');
+      return new FilePath(getAppPath()).completePath('../../..');
     }
   }
 
@@ -232,7 +235,7 @@ export class Application implements AppState {
     // no additional config if pending window is a satellite
     for (const pendingWindow of this.pendingWindows) {
       if (pendingWindow.type === 'satellite') {
-        return { action: 'allow' };
+        return SatelliteWindow.windowOpening();
       }
       break;
     }
@@ -241,7 +244,7 @@ export class Application implements AppState {
     const primaryDisplay = screen.getPrimaryDisplay();
     const width = Math.max(500, Math.min(850, primaryDisplay.workAreaSize.width));
     const height = Math.max(500, Math.min(1100, primaryDisplay.workAreaSize.height));
-    return { action: 'allow', overrideBrowserWindowOptions: { width: width, height: height } };
+    return SecondaryWindow.windowOpening(width, height);
   }
 
   /**

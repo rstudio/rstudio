@@ -26,12 +26,36 @@ export class SecondaryWindow extends DesktopBrowserWindow {
     allowExternalNavigate = false,
     existingWindow?: BrowserWindow,
   ) {
-    super(showToolbar, true, name, baseUrl, parent, opener, allowExternalNavigate, undefined, existingWindow);
+    super(showToolbar, true, true, name, baseUrl, parent, opener, allowExternalNavigate, undefined, existingWindow);
 
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
   }
 
   onCloseWindowShortcut(): void {
     this.window.close();
+  }
+
+  /**
+   *
+   * @returns Window creation request response
+   */
+  static windowOpening(
+    width: number,
+    height: number,
+  ):
+    | { action: 'deny' }
+    | { action: 'allow'; overrideBrowserWindowOptions?: Electron.BrowserWindowConstructorOptions | undefined } {
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        autoHideMenuBar: true,
+        width: width,
+        height: height,
+        webPreferences: {
+          additionalArguments: ['--apiKeys=desktopInfo'],
+          preload: DesktopBrowserWindow.getPreload(),
+        },
+      },
+    };
   }
 }

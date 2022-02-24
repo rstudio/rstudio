@@ -28,6 +28,7 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
   constructor(
     showToolbar: boolean,
     adjustTitle: boolean,
+    autohideMenu: boolean,
     name: string,
     baseUrl?: string,
     parent?: DesktopBrowserWindow,
@@ -36,7 +37,8 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
     addedCallbacks: string[] = [],
     existingWindow?: BrowserWindow,
   ) {
-    super(showToolbar, adjustTitle, name, baseUrl, parent, opener, isRemoteDesktop, addedCallbacks, existingWindow);
+    super(showToolbar, adjustTitle, autohideMenu, name, baseUrl, parent, opener,
+      isRemoteDesktop, addedCallbacks, existingWindow);
 
     this.window.on('focus', this.onActivated.bind(this));
   }

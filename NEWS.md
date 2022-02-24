@@ -21,6 +21,9 @@
 - Added support for using the AGG renderer (as provided by the ragg package) as a graphics backend for inline plot execution; also added support for using the backend graphics device requested by the knitr `dev` chunk option (#9931)
 - rstudioapi functions are now always evaluated in a clean environment, and will not be masked by objects in the global environment (#8031)
 
+#### Python
+- RStudio attempts to infer the appropriate version of Python when "Automatically activate project-local Python environments" is checked and the user has not requested a specific version of Python. This Python will be stored in the environment variable "RETICULATE_PYTHON_FALLBACK", available from the R console, the Python REPL, and the RStudio Terminal (#9990)
+
 ### Fixed
 
 - Fixed notebook execution handling of knitr `message=FALSE` chunk option to suppress messages if the option is set to FALSE (#9436)
@@ -29,6 +32,7 @@
 - `.rs.api.navigateToFile()` is now synchronous and returns document id (#8938)
 - The `Session > Load Workspace` menu option now explicitly namespaces `base::load` if the `load` function has been masked in the global environment (#10089)
 - The data viewer truncates large list cells to 50 characters by default, this can be changed with the command palette or `rstudioapi::writeRStudioPreference("data_viewer_max_cell_size", 10L)` (#5100)
+- The R version and logo displayed in the top left of the console will update to the current R version whenever the R session is restarted (#10458)
 
 ### RStudio Workbench
 

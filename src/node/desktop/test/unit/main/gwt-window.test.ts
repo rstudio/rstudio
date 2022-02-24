@@ -26,7 +26,7 @@ class TestGwtWindow extends GwtWindow {
 
 describe('GwtWindow', () => {
   it('construction creates a hidden BrowserWindow', () => {
-    const gwtWin = new TestGwtWindow(false, false, 'some name');
+    const gwtWin = new TestGwtWindow(false, false, false, 'some name');
     assert.isObject(gwtWin);
     assert.isObject(gwtWin.window);
     assert.isFalse(gwtWin.window.isVisible());

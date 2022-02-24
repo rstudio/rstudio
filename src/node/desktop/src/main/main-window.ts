@@ -79,7 +79,7 @@ export class MainWindow extends GwtWindow {
   //#endif
 
   constructor(url: string, public isRemoteDesktop = false) {
-    super(false, false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
+    super(false, false, false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
 
     appState().gwtCallback = new GwtCallback(this, isRemoteDesktop);
     this.menuCallback = new MenuCallback();

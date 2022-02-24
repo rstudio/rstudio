@@ -81,7 +81,6 @@ public class BrowseCap
    public static boolean isMacintoshDesktopMojave()
    {
       return isMacintoshDesktop() && isUserAgent("mac os x 10_14");
-
    }
 
    public static boolean isWindows()
@@ -102,6 +101,11 @@ public class BrowseCap
    public static boolean isLinuxDesktop()
    {
       return (Desktop.hasDesktopFrame()) && isLinux();
+   }
+   
+   public static boolean isElectron()
+   {
+      return Desktop.hasDesktopFrame() && isUserAgent("electron");
    }
 
    public static boolean hasUbuntuFonts()

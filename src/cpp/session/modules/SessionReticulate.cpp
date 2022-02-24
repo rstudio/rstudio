@@ -56,6 +56,8 @@ void updateReticulatePython(bool forInit)
    s_reticulatePython = core::system::getenv("RETICULATE_PYTHON");
    if (s_reticulatePython.empty())
    {
+      // Will check if RETICULATE_PYTHON_FALLBACK is set,
+      // unless higher priority Python config has already been found
       Error error = r::exec::RFunction(".rs.inferReticulatePython")
             .call(&s_reticulatePython);
 

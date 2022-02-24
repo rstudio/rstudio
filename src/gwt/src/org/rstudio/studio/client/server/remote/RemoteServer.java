@@ -4887,6 +4887,14 @@ public class RemoteServer implements Server
    }
 
    @Override
+   public void getRVersion(ServerRequestCallback<RVersionSpec> requestCallback)
+   {
+      sendRequest(RPC_SCOPE,
+         GET_RVERSION_INFO,
+         requestCallback);
+   }
+
+   @Override
    public void getRAddins(boolean reindex,
                           ServerRequestCallback<RAddins> requestCallback)
    {
@@ -6883,6 +6891,7 @@ public class RemoteServer implements Server
    private static final String CHECK_FOR_UPDATES = "check_for_updates";
    private static final String GET_PRODUCT_INFO = "get_product_info";
    private static final String GET_PRODUCT_NOTICE = "get_product_notice";
+   private static final String GET_RVERSION_INFO = "get_rversion_info";
 
    private static final String GET_R_ADDINS = "get_r_addins";
    private static final String PREPARE_FOR_ADDIN = "prepare_for_addin";
