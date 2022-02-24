@@ -8,6 +8,9 @@ import { Application } from './application';
 import { exitSuccess, ProgramStatus, run } from './program-status';
 import { getComponentVersions, userLogPath } from './utils';
 
+// How to use:
+// [MAC] RStudio.app/Contents/MacOS/RStudio --session-exit
+// npm run start -- -- --session-exit
 // RStudio command-line switches
 export const kRunDiagnosticsOption = '--run-diagnostics';
 export const kVersion = '--version';
@@ -21,7 +24,7 @@ export const kSessionExit = 'session-exit';
 // export const kSessionServerUrlOption = '--session-url';
 // export const kTempCookiesOption = '--use-temp-cookies';
 
-// If some args should early exit the application, add them to `webpack.plugins.js`
+// !IMPORTANT: If some args should early exit the application, add them to `webpack.plugins.js`
 export class ArgsManager {
   argsList = [
     {
