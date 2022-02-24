@@ -51,6 +51,7 @@ export class DesktopBrowserWindow extends EventEmitter {
   constructor(
     private showToolbar: boolean,
     private adjustTitle: boolean,
+    private autohideMenu: boolean,
     protected name: string,
     readonly baseUrl?: string,
     private parent?: DesktopBrowserWindow,
@@ -71,6 +72,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       this.window = new BrowserWindow({
         // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
         backgroundColor: '#fff',
+        autoHideMenuBar: autohideMenu,
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
