@@ -24,6 +24,8 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace core {
 namespace system {
@@ -107,7 +109,7 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
    std::transform(children.begin(),
                   children.end(),
                   std::back_inserter(childrenFileInfo),
-                  boost::bind(convertToFileInfo, std::placeholders::_1, options.yield, &count));
+                  boost::bind(convertToFileInfo, _1, options.yield, &count));
    std::sort(childrenFileInfo.begin(),
              childrenFileInfo.end(),
              fileInfoPathLessThan);
