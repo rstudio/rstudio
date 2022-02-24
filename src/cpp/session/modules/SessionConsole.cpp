@@ -38,6 +38,7 @@
 #define kMinConsoleLines 10
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

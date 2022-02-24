@@ -36,6 +36,7 @@
 #include <iostream>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 #define kRStudioNotebookExecuting ("rstudio.notebook.executing")
 

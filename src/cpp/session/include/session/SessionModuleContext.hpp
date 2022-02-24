@@ -39,6 +39,8 @@
 #include <session/SessionClientEvent.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace core {
    class DistributedEvent;

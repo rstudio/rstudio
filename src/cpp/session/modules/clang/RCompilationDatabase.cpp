@@ -48,6 +48,7 @@
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
