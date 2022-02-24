@@ -11,6 +11,8 @@ import { getComponentVersions, userLogPath } from './utils';
 // How to use:
 // [MAC] RStudio.app/Contents/MacOS/RStudio --session-exit
 // [MAC] RStudio.app/Contents/MacOS/RStudio --help
+// [Windows] C:\Program Files\RStudio\rstudio.exe --help
+// [Linux] C:\Program Files\RStudio\rstudio.exe --help
 // npm run start -- -- --session-exit
 // npm run start -- -- --log-level=err
 // npm run start -- -- --help
@@ -33,7 +35,7 @@ export class ArgsManager {
   argsList = [
     {
       name: kVersionJson,
-      describe: 'Report an extended version info',
+      describe: 'Display versions of major components in JSON format',
     },
     {
       name: kRunDiagnosticsOption,
@@ -41,7 +43,7 @@ export class ArgsManager {
     },
     {
       name: kLogLevel,
-      describe: 'Sets the verbosity of the logging',
+      describe: 'Sets the verbosity of the logging --log-level=ERR|WARN|INFO|DEBUG',
     },
     {
       name: kDelaySession,
