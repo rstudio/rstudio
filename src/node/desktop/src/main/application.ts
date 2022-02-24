@@ -41,10 +41,6 @@ import { configureSatelliteWindow, configureSecondaryWindow } from './window-uti
 import i18next from 'i18next';
 import { ArgsManager } from './args-manager';
 
-// RStudio command-line switches
-export const kDelaySession = 'session-delay';
-export const kSessionExit = 'session-exit';
-
 /**
  * The RStudio application
  */
@@ -134,16 +130,7 @@ export class Application implements AppState {
 
     initializeLang();
 
-    // switch for setting a session start delay in seconds (used for testing, troubleshooting)
-    if (app.commandLine.hasSwitch(kDelaySession)) {
-      this.sessionStartDelaySeconds = 5;
-    }
-
-    // switch for forcing rsession to exit immediately with non-zero exit code
-    // (will happen after session start delay above, if also specified)
-    if (app.commandLine.hasSwitch(kSessionExit)) {
-      this.sessionEarlyExitCode = 1;
-    }
+    this.argsManager.handleAppReadyCommands(this);
 
     // on Windows, ask the user what version of R they'd like to use
     if (process.platform === 'win32') {

@@ -1,3 +1,4 @@
+import { app } from 'electron';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 
@@ -54,7 +55,7 @@ export class ArgsManager {
     yargsHelper.help().parseSync();
   }
 
-  initCommandLine(app: Application, argv: string[] = process.argv): ProgramStatus {
+  initCommandLine(application: Application, argv: string[] = process.argv): ProgramStatus {
     this.handleHelp(argv);
 
     // report extended version info and exit
@@ -64,10 +65,23 @@ export class ArgsManager {
     }
 
     if (argv.indexOf(kRunDiagnosticsOption) > -1) {
-      app.runDiagnostics = true;
+      application.runDiagnostics = true;
       enableDiagnosticsOutput();
     }
 
     return run();
+  }
+
+  handleAppReadyCommands(application: Application) {
+    // switch for setting a session start delay in seconds (used for testing, troubleshooting)
+    if (app.commandLine.hasSwitch(kDelaySession)) {
+      application.sessionStartDelaySeconds = 5;
+    }
+
+    // switch for forcing rsession to exit immediately with non-zero exit code
+    // (will happen after session start delay above, if also specified)
+    if (app.commandLine.hasSwitch(kSessionExit)) {
+      application.sessionEarlyExitCode = 1;
+    }
   }
 }
