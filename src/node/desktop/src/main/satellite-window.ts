@@ -29,7 +29,7 @@ export class SatelliteWindow extends GwtWindow {
   closeStage: CloseStage = 'CloseStageOpen';
 
   constructor(mainWindow: MainWindow, name: string, opener: WebContents, existingWindow?: BrowserWindow) {
-    super(false, true, name, undefined, undefined, opener, mainWindow.isRemoteDesktop, ['desktop'], existingWindow);
+    super(false, true, true, name, undefined, undefined, opener, mainWindow.isRemoteDesktop, ['desktop'], existingWindow);
     appState().gwtCallback?.registerOwner(this);
 
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
@@ -95,6 +95,7 @@ export class SatelliteWindow extends GwtWindow {
     return {
       action: 'allow',
       overrideBrowserWindowOptions: {
+        autoHideMenuBar: true,
         webPreferences: {
           additionalArguments: ['--apiKeys=desktopInfo|desktop'],
           preload: DesktopBrowserWindow.getPreload(),
