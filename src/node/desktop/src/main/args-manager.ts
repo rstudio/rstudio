@@ -97,7 +97,6 @@ export class ArgsManager {
 
   handleLogLevel() {
     const logLevelFromArgs = app.commandLine.getSwitchValue(kLogLevel);
-    console.log(`Log level: ${logLevelFromArgs}`);
 
     const logLevel = parseCommandLineLogLevel(logLevelFromArgs, 'warn');
 
