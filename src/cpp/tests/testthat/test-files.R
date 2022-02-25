@@ -91,6 +91,7 @@ test_that("our list.files, list.dirs hooks function as expected", {
    file.create(".hidden")
    
    file.create("file")
+   file.create("test.csv")
    
    dir.create("dir")
    dir.create("dir/subdir")
@@ -115,6 +116,7 @@ test_that("our list.files, list.dirs hooks function as expected", {
       ".\\",
       ".//",
       ".\\/",
+      "*.csv",  # not technically a valid regex but R accepts it
       getwd(),
       chartr("/", "\\", getwd()),
       file.path("..", basename(getwd())),

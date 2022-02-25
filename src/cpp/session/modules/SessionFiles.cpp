@@ -31,9 +31,11 @@
 #include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
+
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileUtils.hpp>
 #include <core/Settings.hpp>
@@ -43,8 +45,6 @@
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
-
-#include <shared_core/json/Json.hpp>
 
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
@@ -1679,6 +1679,28 @@ boost::filesystem::path::string_type extractPattern(SEXP patternSEXP)
       return boost::filesystem::path::string_type();
    
    const char* pattern = Rf_translateCharUTF8(STRING_ELT(patternSEXP, 0));
+
+   // try to handle some of the idiosyncrasies in R's regular expression
+   // engine (TRE), which has a bunch of quirks that users rely on
+
+   // TODO: this doesn't handle things like '(*).csv', which R's regular
+   // expression engine apparently accepts as valid
+
+   // drop leading question marks
+   if (pattern[0] == '?')
+   {
+      while (pattern[0] == '?')
+         pattern += 1;
+   }
+
+   // drop leading repetition operators (they're basically ignored by TRE)
+   else if (pattern[0] == '*' || pattern[0] == '+')
+   {
+      pattern += 1;
+      if (pattern[0] == '?')
+         pattern += 1;
+   }
+
 #ifdef BOOST_WINDOWS_API
    return string_utils::utf8ToWide(pattern);
 #else
@@ -1733,7 +1755,10 @@ SEXP rs_listFiles(SEXP pathSEXP,
       }
       else
       {
-         int flags = boost::regex::perl;
+         // NOTE: R's list.files uses extended regular expressions,
+         // but Boost's egrep mode doesn't seem to support all of
+         // the extensions supported by R, so 'perl' gets us closest
+         int flags = boost::regex::perl | boost::regex::no_bk_refs;
          if (ignoreCase)
             flags |= boost::regex::icase;
 
@@ -1752,7 +1777,9 @@ SEXP rs_listFiles(SEXP pathSEXP,
    // note: will longjmp if an interrupt is pending
    r::exec::checkUserInterrupt();
 
-   return R_NilValue;
+   r::sexp::Protect protect;
+   return r::sexp::create(std::vector<std::string>(), &protect);
+
 }
 
 SEXP rs_listDirs(SEXP pathSEXP,
@@ -1812,8 +1839,10 @@ SEXP rs_listDirs(SEXP pathSEXP,
    
    // note: will longjmp if an interrupt is pending
    r::exec::checkUserInterrupt();
-   
-   return R_NilValue;
+
+   r::sexp::Protect protect;
+   return r::sexp::create(std::vector<std::string>(), &protect);
+
 }
 
 SEXP rs_readLines(SEXP filePathSEXP)
