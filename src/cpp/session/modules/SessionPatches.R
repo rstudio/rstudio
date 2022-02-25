@@ -46,7 +46,7 @@ if (.rs.platform.isWindows)
 {
    setHook("rstudio.sessionInit", function(...)
    {
-      enabled <- getOption("rstudio.enableFileHooks", default = FALSE)
+      enabled <- getOption("rstudio.enableFileHooks", default = TRUE)
       if (identical(enabled, TRUE))
          .rs.files.replaceBindings()
    })
