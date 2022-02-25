@@ -54,10 +54,7 @@ exit 1
 NPM_INSTALLED=0
 install-npm-packages() {
    if [ "${NPM_INSTALLED}" = "0" ]; then
-      # put the electron cache into the source tree to work around permission
-      # issues with local docker builds
-      ELECTRON_CACHE=${ELECTRON_SOURCE_DIR}/.cache/electron
-      MAKEFLAGS="" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 electron_config_cache=${ELECTRON_CACHE} ${NPM} ci
+      MAKEFLAGS="" ${NPM} ci
       NPM_INSTALLED=1
    fi
 }
