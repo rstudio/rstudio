@@ -31,6 +31,7 @@ error () {
 checkRUnitTestFailure() {
    FAILURES=$(cat "@CMAKE_CURRENT_BINARY_DIR@/testthat-failures.log")
    if [ "${FAILURES}" != "0" ]; then
+      echo "DIAGNOSTICS: checkRUnitTestFailure flagging a failure: FAILURES=${FAILURES}"
       UNIT_TEST_FAILURE=true
    fi
 }
