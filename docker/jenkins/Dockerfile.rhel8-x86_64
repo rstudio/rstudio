@@ -46,6 +46,7 @@ RUN yum install -y \
     patchelf \
     postgresql-devel \
     python2 \
+    python3 \
     R \
     rpmdevtools \
     rpm-sign \
