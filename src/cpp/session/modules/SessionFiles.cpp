@@ -1720,7 +1720,7 @@ SEXP rs_listFiles(SEXP pathSEXP,
       options.noDotDot               = noDotDot;
       options.checkTrailingSeparator = true;
 
-      if (LENGTH(patternSEXP) == 0)
+      if (patternSEXP == R_NilValue || LENGTH(patternSEXP) == 0)
       {
          listFilesDispatch(
                   paths,
