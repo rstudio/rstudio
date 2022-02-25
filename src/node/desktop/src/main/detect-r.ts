@@ -27,6 +27,8 @@ import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
 import { createStandaloneErrorDialog } from './utils';
 import i18next from 'i18next';
 
+import desktop from '../native/desktop.node';
+
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
   kLdLibraryPathVariable = 'DYLD_FALLBACK_LIBRARY_PATH';
@@ -66,6 +68,11 @@ export async function promptUserForR(): Promise<Expected<string | null>> {
   const rInstalls = findRInstallationsWin32();
   if (rInstalls.length === 0) {
     return err();
+  }
+
+  // if the user is not holding down ctrl, then just use the latest one
+  if (!desktop.isCtrlKeyDown()) {
+    return ok(rInstalls[0]);
   }
 
   // ask the user what version of R they'd like to use
