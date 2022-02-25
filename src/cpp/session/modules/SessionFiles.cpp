@@ -1391,26 +1391,35 @@ public:
 class ListFilesAcceptMatching
 {
 public:
-#ifdef BOOST_WINDOWS_API
-   typedef boost::wregex regex_type;
-   typedef std::wstring string_type;
-#else
-   typedef boost::regex regex_type;
-   typedef std::string string_type;
-#endif
    
-   ListFilesAcceptMatching(const string_type& pattern, int flags)
-      : pattern_(pattern, flags)
+   ListFilesAcceptMatching(SEXP patternSEXP, SEXP ignoreCaseSEXP)
    {
+      // construct our call up-front, so we can re-use it without
+      // paying the cost to rebuild this call on every invocation
+      callSEXP_ = Rf_lang4(
+               Rf_install("grepl"),    // function
+               patternSEXP,           // pattern
+               R_NilValue,             // x
+               ignoreCaseSEXP);       // ignore.case
+
+      preserver_.add(callSEXP_);
    }
    
    bool operator()(const boost::filesystem::path& path)
    {
-      return boost::regex_search(path.native(), pattern_);
+      // construct call
+      r::sexp::Protect protect;
+      SEXP xSEXP = r::sexp::create(path.string(), &protect);
+      SETCADDR(callSEXP_, xSEXP);
+
+      // evaluate it
+      SEXP resultSEXP = Rf_eval(callSEXP_, R_BaseEnv);
+      return LOGICAL(resultSEXP)[0];
    }
    
 private:
-   regex_type pattern_;
+   SEXP callSEXP_;
+   r::sexp::SEXPPreserver preserver_;
 };
 
 class ListFilesInterruptedException : public std::exception
@@ -1673,41 +1682,6 @@ bool validateLogical(SEXP valueSEXP, const char* name)
    return value != 0;
 }
 
-boost::filesystem::path::string_type extractPattern(SEXP patternSEXP)
-{
-   if (LENGTH(patternSEXP) == 0)
-      return boost::filesystem::path::string_type();
-   
-   const char* pattern = Rf_translateCharUTF8(STRING_ELT(patternSEXP, 0));
-
-   // try to handle some of the idiosyncrasies in R's regular expression
-   // engine (TRE), which has a bunch of quirks that users rely on
-
-   // TODO: this doesn't handle things like '(*).csv', which R's regular
-   // expression engine apparently accepts as valid
-
-   // drop leading question marks
-   if (pattern[0] == '?')
-   {
-      while (pattern[0] == '?')
-         pattern += 1;
-   }
-
-   // drop leading repetition operators (they're basically ignored by TRE)
-   else if (pattern[0] == '*' || pattern[0] == '+')
-   {
-      pattern += 1;
-      if (pattern[0] == '?')
-         pattern += 1;
-   }
-
-#ifdef BOOST_WINDOWS_API
-   return string_utils::utf8ToWide(pattern);
-#else
-   return pattern;
-#endif
-}
-
 SEXP rs_listFiles(SEXP pathSEXP,
                   SEXP patternSEXP,
                   SEXP allFilesSEXP,
@@ -1746,24 +1720,21 @@ SEXP rs_listFiles(SEXP pathSEXP,
       options.noDotDot               = noDotDot;
       options.checkTrailingSeparator = true;
 
-      // read and handle pattern
-      auto pattern = extractPattern(patternSEXP);
-      if (pattern.empty())
+      if (LENGTH(patternSEXP) == 0)
       {
-         auto matcher = ListFilesAcceptAll();
-         listFilesDispatch(paths, options, matcher, &result);
+         listFilesDispatch(
+                  paths,
+                  options,
+                  ListFilesAcceptAll(),
+                  &result);
       }
       else
       {
-         // NOTE: R's list.files uses extended regular expressions,
-         // but Boost's egrep mode doesn't seem to support all of
-         // the extensions supported by R, so 'perl' gets us closest
-         int flags = boost::regex::perl | boost::regex::no_bk_refs;
-         if (ignoreCase)
-            flags |= boost::regex::icase;
-
-         auto matcher = ListFilesAcceptMatching(pattern, flags);
-         listFilesDispatch(paths, options, matcher, &result);
+         listFilesDispatch(
+                  paths,
+                  options,
+                  ListFilesAcceptMatching(patternSEXP, ignoreCaseSEXP),
+                  &result);
       }
 
       return finalizePaths(result);
