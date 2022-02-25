@@ -1398,9 +1398,9 @@ public:
       // paying the cost to rebuild this call on every invocation
       callSEXP_ = Rf_lang4(
                Rf_install("grepl"),    // function
-               patternSEXP,           // pattern
-               R_NilValue,             // x
-               ignoreCaseSEXP);       // ignore.case
+               patternSEXP,            // pattern
+               R_NilValue,             // x (filled in below)
+               ignoreCaseSEXP);        // ignore.case
 
       preserver_.add(callSEXP_);
    }
