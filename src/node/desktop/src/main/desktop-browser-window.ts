@@ -32,16 +32,35 @@ import { executeJavaScript, isSafeHost } from './utils';
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
 export interface WindowConstructorOptions {
-  showToolbar: boolean;
-  adjustTitle: boolean;
-  autohideMenu: boolean;
+  /** Display a navigation toolbar; default is `false` */
+  showToolbar?: boolean;
+
+  /** Sync the window's title with the web content's title; default is `false` */
+  adjustTitle?: boolean;
+
+  /** Hide the menubar unless activated via Alt key; Default is `false` */
+  autohideMenu?: boolean;
+
+  /** Internal identifier for the window */
   name: string;
+
+  /**
+   * REVIEW: compare this against the Qt sources to determine we're using it as intended
+   */
   baseUrl?: string;
+
+  /** Parent of this window, if any */
   parent?: DesktopBrowserWindow;
+
+  /** Web content that opened this window, if any */
   opener?: WebContents;
-  /** Default is `false` */
+
+  /** Allow navigation to external domains; default is `false` */
   allowExternalNavigate?: boolean;
+
+  /** Callbacks to attach to the window; default is `desktopInfo` */
   addApiKeys?: string[];
+
   /** Attach to this `BrowserWindow` instead of creating a new one */
   existingWindow?: BrowserWindow;
 }
@@ -65,6 +84,12 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   constructor(protected options: WindowConstructorOptions) {
     super();
+
+    // set defaults for optional constructor arguments
+    this.options.showToolbar = this.options.showToolbar ?? false;
+    this.options.adjustTitle = this.options.adjustTitle ?? false;
+    this.options.autohideMenu = this.options.autohideMenu ?? false;
+    this.options.allowExternalNavigate = this.options.allowExternalNavigate ?? false;
 
     const apiKeys = [['--apiKeys=desktopInfo', ...(this.options.addApiKeys ?? [])].join('|')];
 
@@ -119,7 +144,10 @@ export class DesktopBrowserWindow extends EventEmitter {
 
     this.window.webContents.setWindowOpenHandler((details) => {
       // check if this is target="_blank" from an IDE window
-      if (this.options.baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
+      if (
+        this.options.baseUrl &&
+        (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')
+      ) {
         // TODO: validation/restrictions on the URLs?
         void shell.openExternal(details.url);
         return { action: 'deny' };
@@ -155,7 +183,7 @@ export class DesktopBrowserWindow extends EventEmitter {
         return;
       }
 
-      if (!(this.options.allowExternalNavigate ?? false)) {
+      if (!this.options.allowExternalNavigate) {
         try {
           const targetUrl: URL = new URL(url);
           if (!isSafeHost(targetUrl.host)) {

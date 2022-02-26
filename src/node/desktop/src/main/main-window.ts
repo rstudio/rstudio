@@ -80,9 +80,6 @@ export class MainWindow extends GwtWindow {
 
   constructor(url: string, public isRemoteDesktop = false) {
     super({
-      showToolbar: false,
-      adjustTitle: false,
-      autohideMenu: false,
       name: '',
       baseUrl: url,
       allowExternalNavigate: isRemoteDesktop,

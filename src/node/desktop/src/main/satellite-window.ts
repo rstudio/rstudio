@@ -30,7 +30,6 @@ export class SatelliteWindow extends GwtWindow {
 
   constructor(mainWindow: MainWindow, name: string, opener: WebContents, existingWindow?: BrowserWindow) {
     super({
-      showToolbar: false,
       adjustTitle: true,
       autohideMenu: true,
       name: name,

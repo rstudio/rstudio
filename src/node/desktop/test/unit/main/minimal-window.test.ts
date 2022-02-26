@@ -36,12 +36,7 @@ describe('minimal-window', () => {
   });
 
   it('can be constructed', () => {
-    const gwtWindow = new TestGwtWindow({
-      showToolbar: false,
-      adjustTitle: false,
-      autohideMenu: false,
-      name: '',
-    });
+    const gwtWindow = new TestGwtWindow({ name: '' });
     const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
     assert.isObject(minWin);
   });

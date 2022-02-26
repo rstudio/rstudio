@@ -29,7 +29,6 @@ class MinimalWindow extends DesktopBrowserWindow {
     allowExternalNavigate?: boolean;
   }) {
     super({
-      showToolbar: false,
       adjustTitle: options.adjustTitle,
       autohideMenu: true,
       name: options.name,
