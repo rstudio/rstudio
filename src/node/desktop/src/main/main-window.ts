@@ -79,7 +79,15 @@ export class MainWindow extends GwtWindow {
   //#endif
 
   constructor(url: string, public isRemoteDesktop = false) {
-    super(false, false, false, '', url, undefined, undefined, isRemoteDesktop, ['desktop', 'desktopMenuCallback']);
+    super({
+      showToolbar: false,
+      adjustTitle: false,
+      autohideMenu: false,
+      name: '',
+      baseUrl: url,
+      allowExternalNavigate: isRemoteDesktop,
+      addApiKeys: ['desktop', 'desktopMenuCallback'],
+    });
 
     appState().gwtCallback = new GwtCallback(this, isRemoteDesktop);
     this.menuCallback = new MenuCallback();
@@ -388,7 +396,7 @@ export class MainWindow extends GwtWindow {
       return;
     }
     reloadCount++;
-    this.loadUrl(this.baseUrl ?? '').catch(logger().logError);
+    this.loadUrl(this.options.baseUrl ?? '').catch(logger().logError);
   }
 
   onLoadFinished(ok: boolean): void {
@@ -403,7 +411,7 @@ export class MainWindow extends GwtWindow {
         // session has failed to load. let the user know that the R
         // session is still initializing, and then reload the page.
         this.loadUrl(LOADING_WINDOW_WEBPACK_ENTRY).catch(logger().logError);
-        waitForUrlWithTimeout(this.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
+        waitForUrlWithTimeout(this.options.baseUrl ?? '', reloadWaitDuration, reloadWaitDuration, 10)
           .then((error: Err) => {
             if (error) {
               logger().logError(error);
@@ -428,7 +436,7 @@ export class MainWindow extends GwtWindow {
     }
 
     const vars = new Map<string, string>();
-    vars.set('retry_url', this.baseUrl ?? '');
+    vars.set('retry_url', this.options.baseUrl ?? '');
     appState().gwtCallback?.setErrorPageInfo(vars);
     this.loadUrl(CONNECT_WINDOW_WEBPACK_ENTRY).catch(logger().logError);
   }

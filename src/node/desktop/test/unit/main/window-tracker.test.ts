@@ -42,7 +42,12 @@ describe('window-tracker', () => {
   });
   it('tracks and returns a window by name', () => {
     const tracker = new WindowTracker();
-    const oneWin = new DesktopBrowserWindow(false, false, false, 'some name');
+    const oneWin = new DesktopBrowserWindow({
+      showToolbar: false,
+      adjustTitle: false,
+      autohideMenu: false,
+      name: 'some name',
+    });
     tracker.addWindow('one', oneWin);
     assert.equal(tracker.length(), 1);
     const result = tracker.getWindow('one');
@@ -51,9 +56,19 @@ describe('window-tracker', () => {
   });
   it('tracks and returns two windows by name', () => {
     const tracker = new WindowTracker();
-    const oneWin = new DesktopBrowserWindow(false, false, false, 'some name');
+    const oneWin = new DesktopBrowserWindow({
+      showToolbar: false,
+      adjustTitle: false,
+      autohideMenu: false,
+      name: 'some name',
+    });
     tracker.addWindow('one', oneWin);
-    const twoWin = new DesktopBrowserWindow(false, false, false, 'another name');
+    const twoWin = new DesktopBrowserWindow({
+      showToolbar: false,
+      adjustTitle: false,
+      autohideMenu: false,
+      name: 'another name',
+    });
     tracker.addWindow('two', twoWin);
     const twoResult = tracker.getWindow('two');
     const oneResult = tracker.getWindow('one');
@@ -64,9 +79,19 @@ describe('window-tracker', () => {
   });
   it('duplicate name replaces the original', () => {
     const tracker = new WindowTracker();
-    const oneWin = new DesktopBrowserWindow(false, false, false, 'some name');
+    const oneWin = new DesktopBrowserWindow({
+      showToolbar: false,
+      adjustTitle: false,
+      autohideMenu: false,
+      name: 'some name',
+    });
     tracker.addWindow('one', oneWin);
-    const twoWin = new TestGwtWindow(false, false, false, 'the gwt window');
+    const twoWin = new TestGwtWindow({
+      showToolbar: false,
+      adjustTitle: false,
+      autohideMenu: false,
+      name: 'the gwt window',
+    });
     tracker.addWindow('one', twoWin);
     assert.equal(tracker.length(), 1);
     const result = tracker.getWindow('one');
@@ -74,7 +99,12 @@ describe('window-tracker', () => {
   });
   it('delete window removes it from map', async function () {
     const tracker = new WindowTracker();
-    const oneWin = new DesktopBrowserWindow(false, false, false, 'some name');
+    const oneWin = new DesktopBrowserWindow({
+      showToolbar: false,
+      adjustTitle: false,
+      autohideMenu: false,
+      name: 'some name',
+    });
     tracker.addWindow('one', oneWin);
     oneWin.window.close();
     await setTimeoutPromise(200); // TODO: yuck, find a better way to do this

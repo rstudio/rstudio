@@ -31,6 +31,21 @@ import { executeJavaScript, isSafeHost } from './utils';
 // whether you're running in development or production).
 declare const MAIN_WINDOW_PRELOAD_WEBPACK_ENTRY: string;
 
+export interface WindowConstructorOptions {
+  showToolbar: boolean;
+  adjustTitle: boolean;
+  autohideMenu: boolean;
+  name: string;
+  baseUrl?: string;
+  parent?: DesktopBrowserWindow;
+  opener?: WebContents;
+  /** Default is `false` */
+  allowExternalNavigate?: boolean;
+  addApiKeys?: string[];
+  /** Attach to this `BrowserWindow` instead of creating a new one */
+  existingWindow?: BrowserWindow;
+}
+
 /**
  * Base class for browser-based windows. Subclasses include GwtWindow, SecondaryWindow,
  * SatelliteWindow, and MainWindow.
@@ -48,31 +63,20 @@ export class DesktopBrowserWindow extends EventEmitter {
   // 'did-finish-load'; use this bool to differentiate
   private failLoad = false;
 
-  constructor(
-    private showToolbar: boolean,
-    private adjustTitle: boolean,
-    private autohideMenu: boolean,
-    protected name: string,
-    readonly baseUrl?: string,
-    private parent?: DesktopBrowserWindow,
-    private opener?: WebContents,
-    private allowExternalNavigate = false,
-    addApiKeys: string[] = [],
-    existingWindow?: BrowserWindow, // attach to this window instead of creating a new one
-  ) {
+  constructor(protected options: WindowConstructorOptions) {
     super();
 
-    const apiKeys = [['--apiKeys=desktopInfo', ...addApiKeys].join('|')];
+    const apiKeys = [['--apiKeys=desktopInfo', ...(this.options.addApiKeys ?? [])].join('|')];
 
-    if (existingWindow) {
-      this.window = existingWindow;
+    if (this.options.existingWindow) {
+      this.window = this.options.existingWindow;
     } else {
       let preload = DesktopBrowserWindow.getPreload();
 
       this.window = new BrowserWindow({
         // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
         backgroundColor: '#fff',
-        autoHideMenuBar: autohideMenu,
+        autoHideMenuBar: this.options.autohideMenu,
         webPreferences: {
           nodeIntegration: false,
           contextIsolation: true,
@@ -115,7 +119,7 @@ export class DesktopBrowserWindow extends EventEmitter {
 
     this.window.webContents.setWindowOpenHandler((details) => {
       // check if this is target="_blank" from an IDE window
-      if (this.baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
+      if (this.options.baseUrl && (details.disposition === 'foreground-tab' || details.disposition === 'background-tab')) {
         // TODO: validation/restrictions on the URLs?
         void shell.openExternal(details.url);
         return { action: 'deny' };
@@ -127,7 +131,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     });
 
     this.window.webContents.on('did-create-window', (newWindow) => {
-      appState().windowCreated(newWindow, this.window.webContents, this.baseUrl);
+      appState().windowCreated(newWindow, this.window.webContents, this.options.baseUrl);
     });
 
     this.window.webContents.on('will-navigate', (event, url) => {
@@ -151,7 +155,7 @@ export class DesktopBrowserWindow extends EventEmitter {
         return;
       }
 
-      if (!this.allowExternalNavigate) {
+      if (!(this.options.allowExternalNavigate ?? false)) {
         try {
           const targetUrl: URL = new URL(url);
           if (!isSafeHost(targetUrl.host)) {
@@ -173,9 +177,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     });
 
     this.window.webContents.on('did-finish-load', () => {
-      if (this.showToolbar) {
-        logger().logDebug('toolbar NYI');
-
+      if (this.options.showToolbar) {
         const toolbarManager = new ToolbarManager();
 
         const toolbarData: ToolbarData = {
@@ -237,11 +239,11 @@ export class DesktopBrowserWindow extends EventEmitter {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   closeEvent(event: Electron.Event): void {
-    if (!this.opener) {
+    if (!this.options.opener) {
       // if we don't know where we were opened from, check window.opener
       // (note that this could also be empty)
       const cmd = `if (window.opener && window.opener.unregisterDesktopChildWindow)
-           window.opener.unregisterDesktopChildWindow('${this.name}');`;
+           window.opener.unregisterDesktopChildWindow('${this.options.name}');`;
       this.executeJavaScript(cmd).catch((error) => {
         logger().logError(error);
       });
@@ -249,7 +251,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       // if we do know where we were opened from and it has the appropriate
       // handlers, let it know we're closing
       const cmd = `if (window.unregisterDesktopChildWindow)
-           window.unregisterDesktopChildWindow('${this.name}');`;
+           window.unregisterDesktopChildWindow('${this.options.name}');`;
       this.executeJavaScript(cmd).catch((error) => {
         logger().logError(error);
       });
@@ -257,13 +259,13 @@ export class DesktopBrowserWindow extends EventEmitter {
   }
 
   adjustWindowTitle(title: string, explicitSet: boolean): void {
-    if (this.adjustTitle && explicitSet) {
+    if (this.options.adjustTitle && explicitSet) {
       this.window.setTitle(title);
     }
   }
 
   syncWindowTitle(): void {
-    if (this.adjustTitle) {
+    if (this.options.adjustTitle) {
       this.window.setTitle(this.window.webContents.getTitle());
     }
   }
@@ -276,7 +278,7 @@ export class DesktopBrowserWindow extends EventEmitter {
       // window being shown on a different screen. Need to test if this is necessary.
 
       const cmd = `if (window.opener && window.opener.registerDesktopChildWindow)
-         window.opener.registerDesktopChildWindow('${this.name}', window);`;
+         window.opener.registerDesktopChildWindow('${this.options.name}', window);`;
       this.executeJavaScript(cmd).catch((error) => {
         logger().logError(error);
       });
