@@ -5008,4 +5008,12 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("diagnosticsBackgroundDiagnosticsDelayMsLabel")
     String diagnosticsBackgroundDiagnosticsDelayMsLabel();
     
+    /**
+     * Translated "Show full path to project in window title"
+     *
+     * @return translated "Show full path to project in window title"
+     */
+    @DefaultMessage("Show full path to project in window title")
+    @Key("fullProjectPathInWindowTitleLabel")
+    String fullProjectPathInWindowTitleLabel();
 }
