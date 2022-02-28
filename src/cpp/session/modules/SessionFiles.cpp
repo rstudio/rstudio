@@ -1394,12 +1394,16 @@ public:
    
    ListFilesAcceptMatching(SEXP patternSEXP, SEXP ignoreCaseSEXP)
    {
+      // placeholder for input paths
+      xSEXP_ = Rf_allocVector(STRSXP, 1);
+      preserver_.add(xSEXP_);
+
       // construct our call up-front, so we can re-use it without
       // paying the cost to rebuild this call on every invocation
       callSEXP_ = Rf_lang4(
                Rf_install("grepl"),    // function
                patternSEXP,            // pattern
-               R_NilValue,             // x (filled in below)
+               xSEXP_,                 // x (filled in below)
                ignoreCaseSEXP);        // ignore.case
 
       preserver_.add(callSEXP_);
@@ -1407,18 +1411,22 @@ public:
    
    bool operator()(const boost::filesystem::path& path)
    {
-      // construct call
-      r::sexp::Protect protect;
-      SEXP xSEXP = r::sexp::create(path.string(), &protect);
-      SETCADDR(callSEXP_, xSEXP);
+      // fill in placeholder
+      auto pathString = path.string();
+      SEXP charSEXP = Rf_mkCharLenCE(
+               pathString.data(),
+               pathString.size(),
+               CE_UTF8);
+      SET_STRING_ELT(xSEXP_, 0, charSEXP);
 
-      // evaluate it
+      // evaluate our call
       SEXP resultSEXP = Rf_eval(callSEXP_, R_BaseEnv);
       return LOGICAL(resultSEXP)[0];
    }
    
 private:
    SEXP callSEXP_;
+   SEXP xSEXP_;
    r::sexp::SEXPPreserver preserver_;
 };
 
