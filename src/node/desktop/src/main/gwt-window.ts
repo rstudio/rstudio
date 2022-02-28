@@ -18,28 +18,15 @@ import { logger } from '../core/logger';
 
 import { nextHighest, nextLowest } from '../core/array-utils';
 
-import { DesktopBrowserWindow } from './desktop-browser-window';
+import { DesktopBrowserWindow, WindowConstructorOptions } from './desktop-browser-window';
 import { DesktopOptions } from './desktop-options';
 
 export abstract class GwtWindow extends DesktopBrowserWindow {
   // initialize zoom levels (synchronize with AppearancePreferencesPane.java)
   zoomLevels = [0.25, 0.5, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0, 5.0];
 
-  constructor(
-    showToolbar: boolean,
-    adjustTitle: boolean,
-    autohideMenu: boolean,
-    name: string,
-    baseUrl?: string,
-    parent?: DesktopBrowserWindow,
-    opener?: WebContents,
-    isRemoteDesktop = false,
-    addedCallbacks: string[] = [],
-    existingWindow?: BrowserWindow,
-  ) {
-    super(showToolbar, adjustTitle, autohideMenu, name, baseUrl, parent, opener,
-      isRemoteDesktop, addedCallbacks, existingWindow);
-
+  constructor(options: WindowConstructorOptions) {
+    super(options);
     this.window.on('focus', this.onActivated.bind(this));
   }
 

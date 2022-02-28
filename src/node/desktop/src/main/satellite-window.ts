@@ -29,13 +29,19 @@ export class SatelliteWindow extends GwtWindow {
   closeStage: CloseStage = 'CloseStageOpen';
 
   constructor(mainWindow: MainWindow, name: string, opener: WebContents, existingWindow?: BrowserWindow) {
-    super(false, true, true, name, undefined, undefined, opener, mainWindow.isRemoteDesktop, ['desktop'], existingWindow);
+    super({
+      adjustTitle: true,
+      autohideMenu: true,
+      name: name,
+      opener: opener,
+      allowExternalNavigate: mainWindow.isRemoteDesktop,
+      addApiKeys: ['desktop'],
+      existingWindow: existingWindow,
+    });
+
     appState().gwtCallback?.registerOwner(this);
 
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
-
-    // TODO
-    // satellites don't have a menu, so connect zoom keyboard shortcuts directly
   }
 
   onActivated(): void {
@@ -60,7 +66,7 @@ export class SatelliteWindow extends GwtWindow {
     // its parent or by the OS, we don't prompt since in those cases unsaved document accumulation
     // and prompting is handled by the parent.
     if (
-      this.name.startsWith(SOURCE_WINDOW_PREFIX) &&
+      this.options.name.startsWith(SOURCE_WINDOW_PREFIX) &&
       this.closeStage === 'CloseStageOpen' /*&& event->spontaneous()*/
     ) {
       // ignore this event; we need to make sure the window can be closed ourselves
