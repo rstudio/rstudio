@@ -38,6 +38,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     postgresql-devel \
     python \
     python-xml \
+    python3 \
     R \
     rpm-build \
     sqlite-devel \

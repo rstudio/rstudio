@@ -41,6 +41,7 @@ RUN yum install -y \
     pango-devel \
     patchelf \
     postgresql-devel \
+    python3 \
     R \
     rpmdevtools \
     rpm-sign \
