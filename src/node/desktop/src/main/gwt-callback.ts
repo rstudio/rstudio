@@ -51,8 +51,6 @@ export class GwtCallback extends EventEmitter {
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
 
-  private monospaceFonts = new Array<IQueryFontDescriptor>();
-
   // Info used by the "session failed to load" error page (error.html)
   errorPageData = new Map<string, string>();
 
@@ -61,10 +59,10 @@ export class GwtCallback extends EventEmitter {
     this.owners.add(mainWindow);
 
     const fontDescriptors = [
-      ...new Map<string, IQueryFontDescriptor>(
-        findFontsSync({ monospace: true }).map((fd) => [fd.family, fd]),
-      ).values(),
+      ...new Map<string, IQueryFontDescriptor>(findFontsSync({}).map((fd) => [fd.family, fd])).values(),
     ].sort((a, b) => a.family?.localeCompare(b.family ?? '') ?? 0);
+    const monospaceFonts = fontDescriptors.filter((fd) => fd.monospace).map((font) => font.family);
+    const proportionalFonts = fontDescriptors.filter((fd) => !fd.monospace).map((font) => font.family);
 
     // this.monospaceFonts = [...new Set(fontDescriptors)].sort((a, b) => a.family.localeCompare(b.family));
 
@@ -450,15 +448,53 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_get_fixed_width_font_list', (event) => {
-      event.returnValue = fontDescriptors.map((fontDescriptor) => `${fontDescriptor.family}`).join('\n');
+      event.returnValue = monospaceFonts.join('\n');
     });
 
     ipcMain.on('desktop_get_fixed_width_font', (event) => {
-      const fixedWidthFont = fontDescriptors.find((fontName) => fontName.family === 'Monaco')?.family ?? '';
+      // TODO: Read user preference for font
+
+      let defaultFonts: string[];
+      if (process.platform === 'darwin') {
+        defaultFonts = ['Monaco'];
+      } else if (process.platform === 'win32') {
+        defaultFonts = ['Lucida Console', 'Consolas'];
+      } else {
+        defaultFonts = ['Ubuntu Mono', 'Droid Sans Mono', 'DejaVu Sans Mono', 'Monospace'];
+      }
+
+      let fixedWidthFont = 'monospace';
+      for (const font of defaultFonts) {
+        if (monospaceFonts.includes(font)) {
+          fixedWidthFont = font;
+          break;
+        }
+      }
       event.returnValue = `"${fixedWidthFont}"`;
     });
 
+    ipcMain.on('desktop_get_proportional_font', (event) => {
+      let defaultFonts: string[];
+      if (process.platform === 'darwin') {
+        defaultFonts = ['Lucida Grande', 'Lucida Sans', 'DejaVu Sans', 'Segoe UI', 'Verdana', 'Helvetica'];
+      } else if (process.platform === 'win32') {
+        defaultFonts = ['Segoe UI', 'Verdana', 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Helvetica'];
+      } else {
+        defaultFonts = ['Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', 'Verdana', 'Helvetica'];
+      }
+
+      let proportionalFont = defaultFonts[0];
+      for (const font of defaultFonts) {
+        if (proportionalFonts.includes(font)) {
+          proportionalFont = font;
+          break;
+        }
+      }
+      event.returnValue = `"${proportionalFont}"`;
+    });
+
     ipcMain.on('desktop_set_fixed_width_font', (event, font) => {
+      // TODO: Write font selection to preferences
       GwtCallback.unimpl('desktop_set_fixed_width_font');
     });
 

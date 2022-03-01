@@ -17,30 +17,15 @@ import { ipcRenderer } from 'electron';
 
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function getDesktopInfoBridge() {
-  console.log('desktopInfoBridge');
-  const desktopInfoBridge = {
+  return {
     platform: '',
     version: '',
     scrollingCompensationType: '',
     fixedWidthFontList: ipcRenderer.sendSync('desktop_get_fixed_width_font_list'),
     fixedWidthFont: ipcRenderer.sendSync('desktop_get_fixed_width_font'),
+    proportionalFont: ipcRenderer.sendSync('desktop_get_proportional_font'),
     desktopSynctexViewer: '',
     zoomLevel: 1.0,
     chromiumDevtoolsPort: 0,
   };
-  if (process.platform === 'win32') {
-    return {
-      ...desktopInfoBridge,
-      ...{
-        proportionalFont: 'Segoe UI',
-      },
-    };
-  } else {
-    return {
-      ...desktopInfoBridge,
-      ...{
-        proportionalFont: 'Lucida Grande',
-      },
-    };
-  }
 }
