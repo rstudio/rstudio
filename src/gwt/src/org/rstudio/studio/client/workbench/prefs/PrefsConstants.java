@@ -4646,7 +4646,16 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Show line numbers")
     @Key("displayShowLineNumbersLabel")
     String displayShowLineNumbersLabel();
-    
+
+    /**
+     * Translated "Relative line numbers"
+     *
+     * @return translated "Relative line numbers"
+     */
+    @DefaultMessage("Relative line numbers")
+    @Key("displayRelativeLineNumbersLabel")
+    String displayRelativeLineNumbersLabel();
+
     /**
      * Translated "Show margin"
      *

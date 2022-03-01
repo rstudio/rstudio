@@ -9,6 +9,7 @@
 - Added support for hyperlinks in the console and build pane (#1941)
 - "Clean and Rebuild" and "Install and Restart" have been merged into "Install Package", the "Project Options > Build" gains a "clean before install" option to toggle the --preclean flag. The Build toolbar changes to "Install | Test | Check | More v" (#4289)
 - The source button uses `cpp11::source_cpp()` on C++ files that have `[[cpp11::register]]` decorations (#10387)
+- New *Relative Line Numbers* preference for showing line numbers relative to the current line, rather than the first line (#1774)
 
 #### Find in Files
 - Fixed Find in Files whole-word replace option, so that when "Whole word" is checked, only file matches containing the whole word are replaced, as displayed in the preview (#9813)

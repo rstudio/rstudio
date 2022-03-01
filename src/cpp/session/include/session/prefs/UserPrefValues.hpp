@@ -70,6 +70,7 @@ namespace prefs {
 #define kCustomShellCommand "custom_shell_command"
 #define kCustomShellOptions "custom_shell_options"
 #define kShowLineNumbers "show_line_numbers"
+#define kRelativeLineNumbers "relative_line_numbers"
 #define kHighlightSelectedWord "highlight_selected_word"
 #define kHighlightSelectedLine "highlight_selected_line"
 #define kPanes "panes"
@@ -508,6 +509,12 @@ public:
     */
    bool showLineNumbers();
    core::Error setShowLineNumbers(bool val);
+
+   /**
+    * Show relative, rather than absolute, line numbers in RStudio's code editor.
+    */
+   bool relativeLineNumbers();
+   core::Error setRelativeLineNumbers(bool val);
 
    /**
     * Highlight the selected word in RStudio's code editor.

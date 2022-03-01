@@ -167,6 +167,7 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref(constants_.displayHighlightSelectedWordLabel(), prefs_.highlightSelectedWord()));
       displayPanel.add(checkboxPref(constants_.displayHighlightSelectedLineLabel(), prefs_.highlightSelectedLine()));
       displayPanel.add(checkboxPref(constants_.displayShowLineNumbersLabel(), prefs_.showLineNumbers()));
+      displayPanel.add(checkboxPref(constants_.displayRelativeLineNumbersLabel(), prefs_.relativeLineNumbers()));
       displayPanel.add(tight(showMargin_ = checkboxPref(constants_.displayShowMarginLabel(), prefs_.showMargin(), false /*defaultSpace*/)));
       displayPanel.add(indent(marginCol_ = numericPref(prefs_.marginColumn())));
       displayPanel.add(checkboxPref(constants_.displayShowInvisiblesLabel(), prefs_.showInvisibles()));
