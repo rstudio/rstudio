@@ -19,19 +19,19 @@ import { app, BrowserWindow, dialog, ipcMain, screen, shell, webContents, webFra
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import i18next from 'i18next';
+import { findFontsSync, IQueryFontDescriptor } from 'node-system-fonts';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
 import { userHomePath } from '../core/user';
+import desktop from '../native/desktop.node';
 import { appState } from './app-state';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
-
-import desktop from '../native/desktop.node';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -51,12 +51,22 @@ export class GwtCallback extends EventEmitter {
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
 
+  private monospaceFonts = new Array<IQueryFontDescriptor>();
+
   // Info used by the "session failed to load" error page (error.html)
   errorPageData = new Map<string, string>();
 
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
     this.owners.add(mainWindow);
+
+    const fontDescriptors = [
+      ...new Map<string, IQueryFontDescriptor>(
+        findFontsSync({ monospace: true }).map((fd) => [fd.family, fd]),
+      ).values(),
+    ].sort((a, b) => a.family?.localeCompare(b.family ?? '') ?? 0);
+
+    // this.monospaceFonts = [...new Set(fontDescriptors)].sort((a, b) => a.family.localeCompare(b.family));
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // TODO: review if we need additional validation of URL
@@ -79,7 +89,6 @@ export class GwtCallback extends EventEmitter {
           defaultPath: dir,
           buttonLabel: label,
         };
-
         openDialogOptions.properties = ['openFile'];
 
         // FileOpen dialog can't be both a file opener and a directory opener on Windows
@@ -440,14 +449,13 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_open_terminal');
     });
 
-    ipcMain.handle('desktop_get_fixed_width_font_list', () => {
-      GwtCallback.unimpl('desktop_get_fixed_width_font_list');
-      return '';
+    ipcMain.on('desktop_get_fixed_width_font_list', (event) => {
+      event.returnValue = fontDescriptors.map((fontDescriptor) => `${fontDescriptor.family}`).join('\n');
     });
 
-    ipcMain.handle('desktop_get_fixed_width_font', () => {
-      GwtCallback.unimpl('desktop_get_fixed_width_font');
-      return '';
+    ipcMain.on('desktop_get_fixed_width_font', (event) => {
+      const fixedWidthFont = fontDescriptors.find((fontName) => fontName.family === 'Monaco')?.family ?? '';
+      event.returnValue = `"${fixedWidthFont}"`;
     });
 
     ipcMain.on('desktop_set_fixed_width_font', (event, font) => {

@@ -13,78 +13,34 @@
  *
  */
 
+import { ipcRenderer } from 'electron';
+
 // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function getDesktopInfoBridge() {
+  console.log('desktopInfoBridge');
+  const desktopInfoBridge = {
+    platform: '',
+    version: '',
+    scrollingCompensationType: '',
+    fixedWidthFontList: ipcRenderer.sendSync('desktop_get_fixed_width_font_list'),
+    fixedWidthFont: ipcRenderer.sendSync('desktop_get_fixed_width_font'),
+    desktopSynctexViewer: '',
+    zoomLevel: 1.0,
+    chromiumDevtoolsPort: 0,
+  };
   if (process.platform === 'win32') {
     return {
-      platform: '',
-      version: '',
-      scrollingCompensationType: '',
-      fixedWidthFontList: `BIZ UDGothic
-BIZ UDMincho Medium
-Cascadia Code
-Cascadia Code ExtraLight
-Cascadia Code Light
-Cascadia Code SemiBold
-Cascadia Code SemiLight
-Cascadia Mono
-Cascadia Mono ExtraLight
-Cascadia Mono Light
-Cascadia Mono SemiBold
-Cascadia Mono SemiLight
-Consolas
-Courier
-Courier New
-Lucida Console
-Lucida Sans Typewriter
-MingLiU-ExtB
-MingLiU_HKSCS-ExtB
-MS Gothic
-MS Mincho
-NSimSun
-OCR A Extended
-SimSun
-SimSun-ExtB
-UD Digi Kyokasho N-B
-UD Digi Kyokasho N-R`,
-      fixedWidthFont: 'Lucida Console',
-      proportionalFont: 'Segoe UI',
-      desktopSynctexViewer: '',
-      zoomLevel: 1.0,
-      chromiumDevtoolsPort: 0,
+      ...desktopInfoBridge,
+      ...{
+        proportionalFont: 'Segoe UI',
+      },
     };
   } else {
     return {
-      platform: '',
-      version: '',
-      scrollingCompensationType: '',
-      fixedWidthFontList: `AndaleMono
-AppleBraille-Outline6Dot
-AppleBraille-Outline8Dot
-AppleBraille-Pinpoint6Dot
-AppleBraille-Pinpoint8Dot
-AppleBraille
-AppleColorEmoji
-Courier
-Courier-Oblique
-Courier-Bold
-Courier-BoldOblique
-CourierNewPSMT
-CourierNewPS-ItalicMT
-CourierNewPS-BoldMT
-CourierNewPS-BoldItalicMT
-Menlo-Regular
-Menlo-Italic
-Menlo-Bold
-Menlo-BoldItalic
-Monaco
-PTMono-Regular
-PTMono-Bold`,
-      fixedWidthFont: 'Monaco',
-      proportionalFont: 'Lucida Grande',
-      desktopSynctexViewer: '',
-      zoomLevel: 1.0,
-      chromiumDevtoolsPort: 0,
+      ...desktopInfoBridge,
+      ...{
+        proportionalFont: 'Lucida Grande',
+      },
     };
   }
 }
