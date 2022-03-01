@@ -238,6 +238,11 @@ public class FindOutputPresenter extends BasePresenter
                                       {
                                          view_.clearMatches();
                                          currentFindHandle_ = handle;
+                                         updateSearchLabel(dialogState_.getQuery(),
+                                            dialogState_.getPath(),
+                                            dialogState_.isWholeWord(),
+                                            dialogState_.isRegex(),
+                                            view_.getReplaceText());
                                          if (dialogState_ != null)
                                             dialogState_.clearResultsCount();
                                       }
