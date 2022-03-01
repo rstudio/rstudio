@@ -103,6 +103,12 @@ test_that("our list.files, list.dirs hooks function as expected", {
    dir.create("hasEmptyDir")
    dir.create("hasEmptyDir/empty")
    
+   dir.create("~/RStudioTestDirectory")
+   file.create("~/RStudioTestDirectory/file")
+   dir.create("~/RStudioTestDirectory/dir")
+   file.create("~/RStudioTestDirectory/dir/file2")
+   on.exit(unlink("~/RStudioTestDirectory", recursive = TRUE), add = TRUE)
+   
    if (identical(R.version$crt, "ucrt")) {
       nihao <- enc2utf8("\u4f60\u597d")  # 你好
       dir.create(nihao)
@@ -117,6 +123,9 @@ test_that("our list.files, list.dirs hooks function as expected", {
       ".//",
       ".\\/",
       "*.csv",  # not technically a valid regex but R accepts it
+      "~/RStudioTestDirectory",
+      "~/RStudioTestDirectory/",
+      "~/RStudioTestDirectory//",
       getwd(),
       chartr("/", "\\", getwd()),
       file.path("..", basename(getwd())),
@@ -171,5 +180,6 @@ test_that("our list.files, list.dirs hooks function as expected", {
    
    setwd(owd)
    unlink(tdir, recursive = TRUE)
+   unlink("~/RStudioTestDirectory", recursive = TRUE)
    
 })

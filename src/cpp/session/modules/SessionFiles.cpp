@@ -1611,6 +1611,16 @@ std::vector<boost::filesystem::path> initializePaths(SEXP pathSEXP)
          continue;
 
       const char* utf8Path = Rf_translateCharUTF8(charSEXP);
+
+      // ensure paths are expanded -- note that R does not
+      // preserve the tilde prefix in e.g.
+      //
+      //    list.files("~/hello", full.names = TRUE)
+      //
+      // rather, the expanded path is used when filling
+      // the names of listed files
+      utf8Path = R_ExpandFileName(utf8Path);
+
 #ifdef BOOST_WINDOWS_API
       paths.push_back(string_utils::utf8ToWide(utf8Path));
 #else
