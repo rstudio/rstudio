@@ -333,6 +333,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Show relative, rather than absolute, line numbers in RStudio's code editor.
+    */
+   public PrefValue<Boolean> relativeLineNumbers()
+   {
+      return bool(
+         "relative_line_numbers",
+         _constants.relativeLineNumbersTitle(), 
+         _constants.relativeLineNumbersDescription(), 
+         false);
+   }
+
+   /**
     * Highlight the selected word in RStudio's code editor.
     */
    public PrefValue<Boolean> highlightSelectedWord()
@@ -3354,6 +3366,8 @@ public class UserPrefsAccessor extends Prefs
          customShellOptions().setValue(layer, source.getString("custom_shell_options"));
       if (source.hasKey("show_line_numbers"))
          showLineNumbers().setValue(layer, source.getBool("show_line_numbers"));
+      if (source.hasKey("relative_line_numbers"))
+         relativeLineNumbers().setValue(layer, source.getBool("relative_line_numbers"));
       if (source.hasKey("highlight_selected_word"))
          highlightSelectedWord().setValue(layer, source.getBool("highlight_selected_word"));
       if (source.hasKey("highlight_selected_line"))
@@ -3805,6 +3819,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(customShellCommand());
       prefs.add(customShellOptions());
       prefs.add(showLineNumbers());
+      prefs.add(relativeLineNumbers());
       prefs.add(highlightSelectedWord());
       prefs.add(highlightSelectedLine());
       prefs.add(panes());
