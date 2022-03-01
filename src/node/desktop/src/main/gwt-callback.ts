@@ -419,8 +419,9 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
       if (!this.isRemoteDesktop) {
-        const args = [resolveAliasedPath(projectFilePath)];
-        this.mainWindow.launchRStudio(args);
+        this.mainWindow.launchRStudio({
+          projectFilePath: resolveAliasedPath(projectFilePath)
+        });
       } else {
         // start new Remote Desktop RStudio process with the session URL
         this.mainWindow.launchRemoteRStudioProject(projectFilePath);
@@ -429,8 +430,9 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_open_session_in_new_window', (event, workingDirectoryPath) => {
       if (!this.isRemoteDesktop) {
-        workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
-        this.mainWindow.launchRStudio([], workingDirectoryPath);
+        this.mainWindow.launchRStudio({
+          workingDirectory: resolveAliasedPath(workingDirectoryPath),
+        });
       } else {
         // start the new session on the currently connected server
         this.mainWindow.launchRemoteRStudio();

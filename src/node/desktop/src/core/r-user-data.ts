@@ -13,8 +13,6 @@
  *
  */
 
-import { Err } from './err';
-
 export const kRStudioInitialWorkingDir = 'RS_INITIAL_WD';
 export const kRStudioInitialEnvironment = 'RS_INITIAL_ENV';
 export const kRStudioInitialProject = 'RS_INITIAL_PROJECT';
