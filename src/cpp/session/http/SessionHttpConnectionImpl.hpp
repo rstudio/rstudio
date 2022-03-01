@@ -43,6 +43,8 @@
 
 #include "SessionHttpConnectionUtils.hpp"
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace session {
 

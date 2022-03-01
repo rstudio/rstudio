@@ -27,8 +27,8 @@ INSTALL_DIR=$(pwd)
 PLATFORM=$(uname)
 
 # constants
-BOOST_VERSION_NUMBER=1.69.0
-BOOST_VERSION=boost_1_69_0
+BOOST_VERSION_NUMBER=1.78.0
+BOOST_VERSION=boost_1_78_0
 BOOST_TAR=$BOOST_VERSION.tar.bz2
 BOOST_BUILD_DIR=boost-build
 BOOST_MODULES=(
@@ -41,6 +41,7 @@ BOOST_MODULES=(
 
 # compute boost dir
 BOOST_DIR="${RSTUDIO_TOOLS_ROOT}/boost/${BOOST_VERSION}"
+
 
 if [ "${PLATFORM}" = "Darwin" ]; then
    TOOLSET="toolset=clang-darwin"
@@ -59,8 +60,8 @@ sudo-if-necessary-for "${RSTUDIO_TOOLS_ROOT}" "$@"
 cd "$(mktemp -d)"
 
 # download boost
-BOOST_URL=https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_69_0.tar.bz2
-download "${BOOST_URL}" "${BOOST_TAR}"
+BOOST_URL="https://s3.amazonaws.com/rstudio-buildtools/Boost/${BOOST_TAR}"
+download "${BOOST_URL}"
 
 # remove existing boost directory
 rm -rf "${BOOST_DIR}"
@@ -94,6 +95,7 @@ cd rstudio
 
 # bootstrap again
 ./bootstrap.sh
+cp b2 bjam
 
 # special variation of build for osx
 if [ "$PLATFORM" = "Darwin" ]; then

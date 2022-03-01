@@ -70,6 +70,7 @@
 #define kShinyContentWarning "Warning: Shiny application in a static R Markdown document"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

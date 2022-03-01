@@ -40,6 +40,7 @@ namespace server {
 namespace pam_auth {
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace {
 

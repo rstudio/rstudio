@@ -32,6 +32,7 @@
 #define kHistoryMaxBytes (750*1024)  // rotate/remove every 750K
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

@@ -47,6 +47,7 @@
 #define OUTPUT_THRESHOLD   25
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
