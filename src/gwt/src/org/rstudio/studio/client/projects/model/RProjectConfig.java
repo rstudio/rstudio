@@ -173,11 +173,18 @@ public class RProjectConfig extends JavaScriptObject
       this.root_document = rootDocument;
    }-*/;
    
-   public static final String BUILD_TYPE_NONE = constants_.noneProjectLabel();
-   public static final String BUILD_TYPE_PACKAGE = constants_.buildTypePackageLabel();
+   // The following cannot be localized, currently, because they are hardcoded in the C++ code.
+   //   const char * const kBuildTypeNone = "None";
+   //   const char * const kBuildTypePackage = "Package";
+   //   const char * const kBuildTypeMakefile = "Makefile";
+   //   const char * const kBuildTypeWebsite = "Website";
+   //   const char * const kBuildTypeCustom = "Custom";
+   //   const char * const kBuildTypeQuarto = "Quarto";
+   public static final String BUILD_TYPE_NONE = "None"; // constants_.noneProjectLabel();
+   public static final String BUILD_TYPE_PACKAGE = "Package"; // constants_.buildTypePackageLabel();
    public static final String BUILD_TYPE_MAKEFILE = "Makefile";
-   public static final String BUILD_TYPE_WEBSITE = constants_.buildTypeWebsiteLabel();
-   public static final String BUILD_TYPE_CUSTOM = constants_.buildTypeCustomLabel();
+   public static final String BUILD_TYPE_WEBSITE = "Website"; // constants_.buildTypeWebsiteLabel();
+   public static final String BUILD_TYPE_CUSTOM = "Custom"; // constants_.buildTypeCustomLabel();
    
    public native final String getBuildType() /*-{
       return this.build_type;

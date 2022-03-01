@@ -23,6 +23,7 @@
 #include <session/SessionSourceDatabase.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 #define kDocQueueId             "doc_id"
 #define kDocQueueJobDesc        "job_desc"

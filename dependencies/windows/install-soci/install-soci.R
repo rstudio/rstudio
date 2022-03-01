@@ -24,7 +24,7 @@ PATH$prepend(msvc)
 
 # initialize variables
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "\\")
-boost_dir <- normalizePath(file.path(output_dir, "boost-1.69.0-win-msvc141-release-static\\boost64"), winslash = "\\")
+boost_dir <- normalizePath(file.path(output_dir, "boost-1.78.0-win-msvc141-release-static\\boost64"), winslash = "\\")
 soci_url <- "https://rstudio-buildtools.s3.amazonaws.com/soci.tar.gz"
 soci_dir <- file.path(owd, "soci")
 soci_build_dir <- file.path(soci_dir, "build")

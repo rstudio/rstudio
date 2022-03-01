@@ -53,6 +53,7 @@
 #include "../SessionRpc.hpp"
 #include "../SessionInit.hpp"
 
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

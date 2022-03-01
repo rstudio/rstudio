@@ -24,7 +24,6 @@ import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
-import { userHomePath } from '../core/user';
 import desktop from '../native/desktop.node';
 import { appState } from './app-state';
 import { GwtWindow } from './gwt-window';
@@ -82,9 +81,10 @@ export class GwtCallback extends EventEmitter {
         canChooseDirectories: boolean,
         focusOwner: boolean,
       ) => {
+
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
-          defaultPath: dir,
+          defaultPath: resolveAliasedPath(dir),
           buttonLabel: label,
         };
         openDialogOptions.properties = ['openFile'];
@@ -123,11 +123,10 @@ export class GwtCallback extends EventEmitter {
         forceDefaultExtension: boolean,
         focusOwner: boolean,
       ) => {
-        const resolvedDir = FilePath.resolveAliasedPathSync(dir, userHomePath()).toString();
 
         const saveDialogOptions: SaveDialogOptions = {
           title: caption,
-          defaultPath: resolvedDir,
+          defaultPath: resolveAliasedPath(dir),
           buttonLabel: label,
         };
 
@@ -150,9 +149,10 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_get_existing_directory',
       async (event, caption: string, label: string, dir: string, focusOwner: boolean) => {
+
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
-          defaultPath: dir,
+          defaultPath: resolveAliasedPath(dir),
           buttonLabel: label,
           properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
         };
@@ -161,6 +161,7 @@ export class GwtCallback extends EventEmitter {
         if (focusOwner) {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
+
         if (focusedWindow) {
           return dialog.showOpenDialog(focusedWindow, openDialogOptions);
         } else {

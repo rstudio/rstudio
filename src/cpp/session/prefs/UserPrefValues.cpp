@@ -245,6 +245,19 @@ core::Error UserPrefValues::setShowLineNumbers(bool val)
 }
 
 /**
+ * Show relative, rather than absolute, line numbers in RStudio's code editor.
+ */
+bool UserPrefValues::relativeLineNumbers()
+{
+   return readPref<bool>("relative_line_numbers");
+}
+
+core::Error UserPrefValues::setRelativeLineNumbers(bool val)
+{
+   return writePref("relative_line_numbers", val);
+}
+
+/**
  * Highlight the selected word in RStudio's code editor.
  */
 bool UserPrefValues::highlightSelectedWord()
@@ -3059,6 +3072,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCustomShellCommand,
       kCustomShellOptions,
       kShowLineNumbers,
+      kRelativeLineNumbers,
       kHighlightSelectedWord,
       kHighlightSelectedLine,
       kPanes,

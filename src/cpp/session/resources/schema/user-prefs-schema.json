@@ -136,6 +136,12 @@
             "title": "Show line numbers in editor",
             "description": "Show line numbers in RStudio's code editor."
         },
+        "relative_line_numbers": {
+            "type": "boolean",
+            "default": false,
+            "title": "Use relative line numbers in editor",
+            "description": "Show relative, rather than absolute, line numbers in RStudio's code editor."
+        },
         "highlight_selected_word": {
             "type": "boolean",
             "default": true,
