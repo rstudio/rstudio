@@ -23,7 +23,7 @@ import { GwtCallback, PendingQuit } from './gwt-callback';
 import { MenuCallback, showPlaceholderMenu } from './menu-callback';
 import { RCommandEvaluator } from './r-command-evaluator';
 import { SessionLauncher } from './session-launcher';
-import { ApplicationLaunch } from './application-launch';
+import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
 import { GwtWindow } from './gwt-window';
 import { appState } from './app-state';
 import { DesktopOptions } from './desktop-options';
@@ -191,8 +191,8 @@ export class MainWindow extends GwtWindow {
     }
   }
 
-  launchRStudio(args: string[] = [], initialDir = ''): void {
-    this.appLauncher?.launchRStudio(args, initialDir);
+  launchRStudio(options: LaunchRStudioOptions): void {
+    this.appLauncher?.launchRStudio(options);
   }
 
   saveRemoteAuthCookies(): void {
