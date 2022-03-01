@@ -1059,6 +1059,7 @@ void initEnvironment()
    std::string rstudioPandoc = core::system::getenv(kRStudioPandoc);
    if (rstudioPandoc.empty())
       rstudioPandoc = session::options().pandocPath().getAbsolutePath();
+   
    r::exec::RFunction sysSetenv("Sys.setenv");
    sysSetenv.addParam(kRStudioPandoc, rstudioPandoc);
 

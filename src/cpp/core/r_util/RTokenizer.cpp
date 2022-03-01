@@ -554,7 +554,7 @@ wchar_t RTokenizer::peek()
    return peek(0);
 }
 
-wchar_t RTokenizer::peek(std::size_t lookahead)
+wchar_t RTokenizer::peek(int lookahead)
 {
    // NOTE: MSVC is extra picky in debug mode, so when we compare
    // iterators here we need to make sure we don't construct an iterator
