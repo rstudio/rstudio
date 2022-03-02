@@ -502,7 +502,7 @@ export class SessionLauncher {
     if (process.platform === 'win32') {
       const runtime = getenv('R_RUNTIME');
       if (runtime === 'ucrt') {
-        const utf8SessionPath = this.sessionPath.getParent().completeChildPath('rsession-arm64');
+        const utf8SessionPath = this.sessionPath.getParent().completeChildPath('rsession-utf8.exe');
         if (utf8SessionPath.existsSync()) {
           logger().logDebug(`R is UCRT; using ${this.sessionPath}`);
           this.sessionPath = utf8SessionPath;
