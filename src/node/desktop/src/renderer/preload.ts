@@ -35,8 +35,7 @@ import { firstStartingWith } from '../core/array-utils';
  * Actual implementation happens in the main process, reached via ipcRenderer.
  */
 
-// --apiKeys= argument contains list of apiKeys to expose, separated by '|'.
-const apiKeys = removeDups(firstStartingWith(process.argv, '--apiKeys=').split('|'));
+const apiKeys = removeDups(firstStartingWith(process.argv, '--api-keys=').split('|'));
 for (const apiKey of apiKeys) {
   switch (apiKey) {
     case 'desktop':
@@ -52,6 +51,6 @@ for (const apiKey of apiKeys) {
     //   // TODO: RDP-only
     //   break;
     default:
-      console.error(`Preload ignoring unsupported apiKey: ${apiKey}`);
+      console.error(`Preload ignoring unsupported apiKey: '${apiKey}'`);
   }
 }

@@ -143,6 +143,7 @@ function detectREnvironment(): Expected<REnvironment> {
   R.home("doc"),
   R.home("include"),
   R.home("share"),
+  paste(R.version$crt, collapse = ""),
   Sys.getenv("${kLdLibraryPathVariable}")
 ))`;
 
@@ -156,7 +157,7 @@ function detectREnvironment(): Expected<REnvironment> {
   }
 
   // unwrap query results
-  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rLdLibraryPath] = result.stdout.split(EOL);
+  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rLdLibraryPath] = result.stdout.split(EOL);
 
   // put it all together
   return ok({
@@ -167,6 +168,7 @@ function detectREnvironment(): Expected<REnvironment> {
       R_DOC_DIR: rDocDir,
       R_INCLUDE_DIR: rIncludeDir,
       R_SHARE_DIR: rShareDir,
+      R_RUNTIME: rRuntime,
     },
     ldLibraryPath: rLdLibraryPath,
   });
