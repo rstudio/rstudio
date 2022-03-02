@@ -466,7 +466,7 @@ export class GwtCallback extends EventEmitter {
 
       let defaultFonts: string[];
       if (process.platform === 'darwin') {
-        defaultFonts = ['Monaco'];
+        defaultFonts = ['Menlo', 'Monaco'];
       } else if (process.platform === 'win32') {
         defaultFonts = ['Lucida Console', 'Consolas'];
       } else {
