@@ -14,7 +14,6 @@
  */
 
 import { ipcRenderer } from 'electron';
-import { FilePath } from '../core/file-path';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -69,20 +68,28 @@ export function getDesktopBridge() {
       ipcRenderer
         .invoke('desktop_get_save_file_name', caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner)
         .then((result) => {
-          if (result.canceled as boolean) {
-            callback('');
-          } else {
-            if (defaultExtension.length !== 0) {
-              // Add default extension, if it's missing
-              const fp = new FilePath(result.filePath);
-              if (fp.getExtension().length == 0 || (forceDefaultExtension && fp.getExtension() !== defaultExtension)) {
-                callback(fp.getStem() + defaultExtension);
-                return;
-              }
-            }
 
-            callback(result.filePath);
+          // if the result was canceled, bail early
+          if (result.canceled as boolean) {
+            return callback('');
           }
+          
+          // if we don't have a default extension, just invoke callback
+          let filePath = result.filePath as string;
+          if (defaultExtension.length === 0) {
+            return callback(filePath);
+          }
+
+          // add default extension if necessary
+          const dotIndex = filePath.lastIndexOf('.');
+          const ext = dotIndex > 0 ? filePath.substring(dotIndex) : '';
+          if (ext.length === 0 || (forceDefaultExtension && ext !== defaultExtension)) {
+            filePath = filePath.substring(0, dotIndex) + defaultExtension;
+          }
+
+          // invoke callback
+          return callback(filePath);
+
         })
         .catch((error) => reportIpcError('getSaveFileName', error));
     },
