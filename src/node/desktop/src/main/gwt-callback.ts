@@ -19,18 +19,18 @@ import { app, BrowserWindow, dialog, ipcMain, screen, shell, webContents, webFra
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import i18next from 'i18next';
+import { findFontsSync, IQueryFontDescriptor } from 'node-system-fonts';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
+import desktop from '../native/desktop.node';
 import { appState } from './app-state';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
-
-import desktop from '../native/desktop.node';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -57,6 +57,12 @@ export class GwtCallback extends EventEmitter {
     super();
     this.owners.add(mainWindow);
 
+    const fontDescriptors = [
+      ...new Map<string, IQueryFontDescriptor>(findFontsSync({}).map((fd) => [fd.family, fd])).values(),
+    ].sort((a, b) => a.family?.localeCompare(b.family ?? '') ?? 0);
+    const monospaceFonts = fontDescriptors.filter((fd) => fd.monospace).map((font) => font.family);
+    const proportionalFonts = fontDescriptors.filter((fd) => !fd.monospace).map((font) => font.family);
+
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // TODO: review if we need additional validation of URL
       void shell.openExternal(url);
@@ -79,7 +85,6 @@ export class GwtCallback extends EventEmitter {
           defaultPath: resolveAliasedPath(dir),
           buttonLabel: label,
         };
-
         openDialogOptions.properties = ['openFile'];
 
         // FileOpen dialog can't be both a file opener and a directory opener on Windows
@@ -452,17 +457,54 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_open_terminal');
     });
 
-    ipcMain.handle('desktop_get_fixed_width_font_list', () => {
-      GwtCallback.unimpl('desktop_get_fixed_width_font_list');
-      return '';
+    ipcMain.on('desktop_get_fixed_width_font_list', (event) => {
+      event.returnValue = monospaceFonts.join('\n');
     });
 
-    ipcMain.handle('desktop_get_fixed_width_font', () => {
-      GwtCallback.unimpl('desktop_get_fixed_width_font');
-      return '';
+    ipcMain.on('desktop_get_fixed_width_font', (event) => {
+      // TODO: Read user preference for font
+
+      let defaultFonts: string[];
+      if (process.platform === 'darwin') {
+        defaultFonts = ['Monaco'];
+      } else if (process.platform === 'win32') {
+        defaultFonts = ['Lucida Console', 'Consolas'];
+      } else {
+        defaultFonts = ['Ubuntu Mono', 'Droid Sans Mono', 'DejaVu Sans Mono', 'Monospace'];
+      }
+
+      let fixedWidthFont = 'monospace';
+      for (const font of defaultFonts) {
+        if (monospaceFonts.includes(font)) {
+          fixedWidthFont = font;
+          break;
+        }
+      }
+      event.returnValue = `"${fixedWidthFont}"`;
+    });
+
+    ipcMain.on('desktop_get_proportional_font', (event) => {
+      let defaultFonts: string[];
+      if (process.platform === 'darwin') {
+        defaultFonts = ['Lucida Grande', 'Lucida Sans', 'DejaVu Sans', 'Segoe UI', 'Verdana', 'Helvetica'];
+      } else if (process.platform === 'win32') {
+        defaultFonts = ['Segoe UI', 'Verdana', 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Helvetica'];
+      } else {
+        defaultFonts = ['Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', 'Verdana', 'Helvetica'];
+      }
+
+      let proportionalFont = defaultFonts[0];
+      for (const font of defaultFonts) {
+        if (proportionalFonts.includes(font)) {
+          proportionalFont = font;
+          break;
+        }
+      }
+      event.returnValue = `"${proportionalFont}"`;
     });
 
     ipcMain.on('desktop_set_fixed_width_font', (event, font) => {
+      // TODO: Write font selection to preferences
       GwtCallback.unimpl('desktop_set_fixed_width_font');
     });
 
