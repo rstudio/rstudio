@@ -293,11 +293,20 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on(
       'desktop_open_minimal_window',
       (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
+
+        // handle chrome://gpu specially
+        if (url === 'chrome://gpu') {
+          const window = new BrowserWindow();
+          return window.loadURL('chrome://gpu');
+        }
+
+        // regular path for other windows
         const sender = this.getSender('desktop_open_minimal_window', event.processId, event.frameId);
         const minimalWindow = openMinimalWindow(sender, name, url, width, height);
         minimalWindow.window.once('ready-to-show', () => {
           minimalWindow.window.show();
         });
+
       },
     );
 
