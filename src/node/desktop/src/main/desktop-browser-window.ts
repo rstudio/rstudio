@@ -91,7 +91,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     this.options.autohideMenu = this.options.autohideMenu ?? false;
     this.options.allowExternalNavigate = this.options.allowExternalNavigate ?? false;
 
-    const apiKeys = [['--apiKeys=desktopInfo', ...(this.options.addApiKeys ?? [])].join('|')];
+    const apiKeys = [['--api-keys=desktopInfo', ...(this.options.addApiKeys ?? [])].join('|')];
 
     if (this.options.existingWindow) {
       this.window = this.options.existingWindow;

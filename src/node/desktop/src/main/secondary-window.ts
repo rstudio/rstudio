@@ -62,7 +62,7 @@ export class SecondaryWindow extends DesktopBrowserWindow {
         width: width,
         height: height,
         webPreferences: {
-          additionalArguments: ['--apiKeys=desktopInfo'],
+          additionalArguments: ['--api-keys=desktopInfo'],
           preload: DesktopBrowserWindow.getPreload(),
         },
       },
