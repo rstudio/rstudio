@@ -63,8 +63,6 @@ export class GwtCallback extends EventEmitter {
     const monospaceFonts = fontDescriptors.filter((fd) => fd.monospace).map((font) => font.family);
     const proportionalFonts = fontDescriptors.filter((fd) => !fd.monospace).map((font) => font.family);
 
-    // this.monospaceFonts = [...new Set(fontDescriptors)].sort((a, b) => a.family.localeCompare(b.family));
-
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // TODO: review if we need additional validation of URL
       void shell.openExternal(url);
