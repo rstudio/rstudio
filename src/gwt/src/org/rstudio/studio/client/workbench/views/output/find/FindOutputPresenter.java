@@ -599,6 +599,8 @@ public class FindOutputPresenter extends BasePresenter
                session_.getSessionInfo().getActiveProjectDir() != null ?
                session_.getSessionInfo().getActiveProjectDir() :
                workbenchContext_.getCurrentWorkingDir());
+
+         dialog.checkboxExcludeGitIgnore_.setValue(true);
       }
       else
       {
