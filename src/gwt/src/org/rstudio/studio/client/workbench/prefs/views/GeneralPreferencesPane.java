@@ -335,7 +335,7 @@ public class GeneralPreferencesPane extends PreferencesPane
             });
          }
 
-         fullPathInTitle_ = new CheckBox(constants_.clipboardMonitoringLabel());
+         fullPathInTitle_ = new CheckBox(constants_.fullProjectPathInWindowTitleLabel());
          advanced.add(lessSpaced(fullPathInTitle_));
       }
 
