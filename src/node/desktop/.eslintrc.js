@@ -40,7 +40,7 @@ module.exports = {
     '@typescript-eslint/no-confusing-non-null-assertion': ['error'],
     '@typescript-eslint/no-floating-promises': ['warn'],
     '@typescript-eslint/no-invalid-void-type': ['error'],
-    '@typescript-eslint/no-misused-promises': ['error'],
+    '@typescript-eslint/no-misused-promises': ['error', { 'checksVoidReturn': false }],
     '@typescript-eslint/no-throw-literal': ['error'],
     '@typescript-eslint/no-unnecessary-condition': ['error'],
     '@typescript-eslint/promise-function-async': ['warn'],
