@@ -15,7 +15,9 @@ used by these components are included below):
 - winston (npm)
 - i18next (npm)
 - copy-webpack-plugin (npm)
+- winston-daily-rotate-file
 - yargs
+- node-system-fonts
 
 Electron License
 ----------------------------------------------------------------------
