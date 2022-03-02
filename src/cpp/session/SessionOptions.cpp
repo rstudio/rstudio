@@ -20,16 +20,16 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
+#include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/ProgramStatus.hpp>
 #include <shared_core/SafeConvert.hpp>
+
+#include <core/Log.hpp>
+#include <core/ProgramStatus.hpp>
 #include <core/system/Crypto.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/Xdg.hpp>
-
-#include <shared_core/Error.hpp>
-#include <core/Log.hpp>
 
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RUserData.hpp>
@@ -496,6 +496,25 @@ void Options::resolvePath(const FilePath& resourcePath,
 
 #ifdef __APPLE__
 
+namespace {
+
+FilePath macBinaryPath(const FilePath& resourcePath,
+                       const std::string& stem)
+{
+   // first check for Electron binary path
+   FilePath electronPath =
+         resourcePath.completePath("bin").completePath(stem);
+   
+   if (electronPath.exists())
+      return electronPath;
+   
+   // otherwise, look in default Qt location
+   FilePath qtPath = resourcePath.getParent().completePath("MacOS").completePath(stem);
+   return qtPath;
+}
+
+} // end anonymous namespace
+
 void Options::resolvePostbackPath(const FilePath& resourcePath,
                                   std::string* pPath)
 {
@@ -504,7 +523,7 @@ void Options::resolvePostbackPath(const FilePath& resourcePath,
    // when the default postback path has been passed
    if (*pPath == kDefaultPostbackPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.getParent().completePath("MacOS/postback/rpostback");
+      FilePath path = macBinaryPath(resourcePath, "rpostback");
       *pPath = path.getAbsolutePath();
    }
    else
@@ -518,7 +537,7 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.getParent().completePath("MacOS/quarto/bin");
+      FilePath path = macBinaryPath(resourcePath, "quarto/bin");
       *pPath = path.getAbsolutePath();
    }
    else
@@ -532,7 +551,7 @@ void Options::resolveQuartoPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultQuartoPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.getParent().completePath("MacOS/quarto");
+      FilePath path = macBinaryPath(resourcePath, "quarto");
       *pPath = path.getAbsolutePath();
    }
    else
@@ -546,7 +565,7 @@ void Options::resolveRsclangPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultRsclangPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = resourcePath.getParent().completePath("MacOS/rsclang");
+      FilePath path = macBinaryPath(resourcePath, "rsclang");
       *pPath = path.getAbsolutePath();
    }
    else
