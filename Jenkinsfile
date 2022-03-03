@@ -475,7 +475,8 @@ try {
             ("${rstudioReleaseBranch}" != "v1.4-juliet-rose")) {
           trigger_external_build('IDE/qa-opensource-automation')
         }
-
+        
+        archiveArtifacts artifacts: 'version/RELEASE', followSymlinks: false
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
     }
 
