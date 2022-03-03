@@ -19,7 +19,7 @@ import { app, BrowserWindow, dialog, ipcMain, screen, shell, webContents, webFra
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import i18next from 'i18next';
-import { findFontsSync, IQueryFontDescriptor } from 'node-system-fonts';
+import { getAvailableFontsSync, IQueryFontDescriptor } from 'node-system-fonts';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
@@ -58,7 +58,7 @@ export class GwtCallback extends EventEmitter {
     this.owners.add(mainWindow);
 
     const fontDescriptors = [
-      ...new Map<string, IQueryFontDescriptor>(findFontsSync({}).map((fd) => [fd.family, fd])).values(),
+      ...new Map<string, IQueryFontDescriptor>(getAvailableFontsSync().map((fd) => [fd.family, fd])).values(),
     ].sort((a, b) => a.family?.localeCompare(b.family ?? '') ?? 0);
     const monospaceFonts = fontDescriptors.filter((fd) => fd.monospace).map((font) => font.family);
     const proportionalFonts = fontDescriptors.filter((fd) => !fd.monospace).map((font) => font.family);
@@ -79,7 +79,6 @@ export class GwtCallback extends EventEmitter {
         canChooseDirectories: boolean,
         focusOwner: boolean,
       ) => {
-
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
           defaultPath: resolveAliasedPath(dir),
@@ -121,7 +120,6 @@ export class GwtCallback extends EventEmitter {
         forceDefaultExtension: boolean,
         focusOwner: boolean,
       ) => {
-
         const saveDialogOptions: SaveDialogOptions = {
           title: caption,
           defaultPath: resolveAliasedPath(dir),
@@ -147,7 +145,6 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_get_existing_directory',
       async (event, caption: string, label: string, dir: string, focusOwner: boolean) => {
-
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
           defaultPath: resolveAliasedPath(dir),
@@ -298,7 +295,6 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on(
       'desktop_open_minimal_window',
       (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
-
         // handle chrome://gpu specially
         if (url === 'chrome://gpu') {
           const window = new BrowserWindow();
@@ -311,7 +307,6 @@ export class GwtCallback extends EventEmitter {
         minimalWindow.window.once('ready-to-show', () => {
           minimalWindow.window.show();
         });
-
       },
     );
 
@@ -434,7 +429,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
       if (!this.isRemoteDesktop) {
         this.mainWindow.launchRStudio({
-          projectFilePath: resolveAliasedPath(projectFilePath)
+          projectFilePath: resolveAliasedPath(projectFilePath),
         });
       } else {
         // start new Remote Desktop RStudio process with the session URL
