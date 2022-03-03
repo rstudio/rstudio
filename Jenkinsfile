@@ -198,7 +198,7 @@ rstudioBuildCommit   = ""
 // compute release branch by parsing the job name (env.GIT_BRANCH should work here but doesn't appear to), e.g.
 // "IDE/pro-pipeline/v4.3" => "v4.3"
 branchComponents = env.JOB_NAME.split("/")
-rstudioReleaseBranch = branchComponents[branchComponents.size() - 1]
+rstudioReleaseBranch = "prairie-trillium"
 
 def trigger_external_build(build_name, wait = false) {
   // triggers downstream job passing along the important params from this build
