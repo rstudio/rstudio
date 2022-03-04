@@ -237,6 +237,7 @@ try {
         node('docker') {
             stage('set up versioning') {
                 prepareWorkspace()
+                archiveArtifacts artifacts: 'version/RELEASE', followSymlinks: false
 
                 container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args(), retry_image_pull: 5)
                 container.inside() {
@@ -476,7 +477,6 @@ try {
           trigger_external_build('IDE/qa-opensource-automation')
         }
         
-        archiveArtifacts artifacts: 'version/RELEASE', followSymlinks: false
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
     }
 
