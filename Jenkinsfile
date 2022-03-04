@@ -340,11 +340,7 @@ pipeline {
                 }
 
                 withAWS(credentials: 'jenkins-aws') {
-                  s3Upload 
-                    acl: 'BucketOwnerFullControl',
-                    bucket: "$AWS_BUCKET",
-                    file: "$PACKAGE_FILE",
-                    path: "$AWS_PATH"
+                  s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$PACKAGE_FILE", path: "$AWS_PATH"
                 }
 
                 
@@ -360,11 +356,7 @@ pipeline {
                     }
 
                     withAWS(credentials: 'jenkins-aws') {
-                      s3Upload 
-                        acl: 'BucketOwnerFullControl',
-                        bucket: "$AWS_BUCKET",
-                        file: "$PACKAGE_TARBALL",
-                        path: "$AWS_PATH"
+                      s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$PACKAGE_TARBALL", path: "$AWS_PATH"
                     }
                   }
                 }
