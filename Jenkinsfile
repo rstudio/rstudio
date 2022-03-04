@@ -110,8 +110,7 @@ pipeline {
           script {
             // Start external build jobs
             if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
-              trigger_external_build('IDE/macos-pipeline')
-              trigger_external_build('IDE/macos-pipeline')
+              trigger_external_build('IDE/macos-pipeline-test')
             }
           }
       }
