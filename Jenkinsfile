@@ -229,7 +229,6 @@ pipeline {
                 values 'windows'
               }
             }
-          }
             exclude {
               axis {
                 name 'os'
@@ -240,215 +239,218 @@ pipeline {
                 notValues 'server'
               }
             }
+          }
+        }
+      }
+
+      stages {
+        // Linux specific steps ===================================================================================================================================================
+        stage('Compile Package') {
+          when {
+            not { environment name: 'os', value: 'windows' }
+          }
+
+          agent {
+            docker {
+              image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
+              reuseNode true
+            }
+          }
+
+          environment {
+            CODESIGN_KEY = credentials('gpg-codesign-private-key')
+            CODESIGN_PASS = credentials('gpg-codesign-passphrase')
+            RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
+            RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
+            RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
+            RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
+          }
+
+          steps {
+            dir('package/linux') {
+              sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
+              sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_TYPE.toLowerCase()} ${CODESIGN_KEY} ${CODESIGN_PASS}"
+            }
+          }
         }
 
-        stages {
-          // Linux specific steps ===================================================================================================================================================
-          stage('Compile Package') {
-            when {
-              not { environment name: 'os', value: 'windows' }
-            }
+        stage('Run Tests') {
+          when {
+            not { environment name: 'os', value: 'windows' }
+          }
 
-            agent {
-              docker {
-                image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
-                reuseNode true
-              }
-            }
-
-            environment {
-              CODESIGN_KEY = credentials('gpg-codesign-private-key')
-              CODESIGN_PASS = credentials('gpg-codesign-passphrase')
-              RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-              RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-              RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-              RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-            }
-
-            steps {
-              dir('package/linux') {
-                sh "./make-${flavor}-package ${PACKAGE_TYPE} clean"
-                sh "../../docker/jenkins/sign-release.sh /build-${flavor.capitalize()}-${PACKAGE_TYPE}/rstudio-*.${PACKAGE_TYPE.toLowerCase()} ${CODESIGN_KEY} ${CODESIGN_PASS}"
-              }
+          agent {
+            docker {
+              image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
+              reuseNode true
             }
           }
 
-          stage('Run Tests') {
-            when {
-              not { environment name: 'os', value: 'windows' }
+          steps {
+            dir("package/linux/${flavor.capitalize()}-${PACKAGE_TYPE}/src/gwt") {
+              sh './gwt-unit-tests.sh'
             }
-
-            agent {
-              docker {
-                image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
-                reuseNode true
-              }
+            dir("package/linux/${flavor.capitalize()}-${PACKAGE_TYPE}/src/cpp") {
+              sh './rstudio-tests.sh'
             }
+          }
+        }
 
-            steps {
-              dir("package/linux/${flavor.capitalize()}-${PACKAGE_TYPE}/src/gwt") {
-                sh './gwt-unit-tests.sh'
-              }
-              dir("package/linux/${flavor.capitalize()}-${PACKAGE_TYPE}/src/cpp") {
-                sh './rstudio-tests.sh'
-              }
+        stage('Upload Artifacts') {
+          when {
+            not { environment name: 'os', value: 'windows' }
+          }
+
+          agent {
+            docker {
+              image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
+              reuseNode true
             }
           }
 
-          stage('Upload Artifacts') {
-            when {
-              not { environment name: 'os', value: 'windows' }
-            }
-
-            agent {
-              docker {
-                image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
-                reuseNode true
-              }
-            }
-
-            environment {
-              SENTRY_API_KEY = credentials('ide-sentry-api-key')
-              GITHUB_LOGIN = credentials('github-rstudio-jenkins')
-              AWS_BUCKET="rstudio-ide-build"
-              AWS_PATH="${flavor}/${os}/${PACKAGE_ARCH}/"
-              PACKAGE_FILE=""
-              PACKAGE_TARBALL=""
-              PRODUCT="${flavor}"
-              RSTUDIO_VERSION=" ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-            }
-
-            steps {
-              if (rstudioVersionSuffix.contains("pro")) {
-                if (env.PRODUCT == "desktop") {
-                  env.PRODUCT = "desktop-pro"
-                } else if (env.PRODUCT == "electron") {
-                  env.PRODUCT = "electron-pro"
-                } else if (env.PRODUCT == "server") {
-                  env.PRODUCT = "workbench"
-                }
-              }
-
-              dir('package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/') {
-                // Upload the pacakge to S3
-                PACKAGE_FILE = findFiles glob: 'rstudio-*.${PACKAGE_TYPE.toLowerCase()}'
-                // Strip relwithdebinfo froem the filename
-                script {
-                  def renamedFile = echo $PACKAGE_FILE | sed 's/-relwithdebinfo//'
-                  mv $PACKAGE_FILE $renamedFile
-                  packageFile=$renamedFile
-                }
-
-                withAWS(credentials: 'jenkins-aws') {
-                  s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$PACKAGE_FILE", path: "$AWS_PATH"
-                }
-
-                
-                // Also upload installer-less version for desktop builds
-                if ((flavor == "desktop") || (flavor == "electron")) {
-                  dir('_CPack_Packages/Linux/${PACKAGE_TYPE}') {
-                    PACKAGE_TARBALL = findFiles glob: '*.tar.gz'
-                    // Strip relwithdebinfo from the filename
-                    script {                  
-                      def renamedTarball = echo $PACKAGE_TARBALL | sed 's/-relwithdebinfo//'
-                      mv $PACKAGE_TARBALL $renamedTarball
-                      PACKAGE_TARBALL=$renamedTarball
-                    }
-
-                    withAWS(credentials: 'jenkins-aws') {
-                      s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$PACKAGE_TARBALL", path: "$AWS_PATH"
-                    }
-                  }
-                }
-
-                // Upload stripped debinfo to sentry
-                dir('src/cpp') {
-                  retry 5 {
-                    timeout activity: true, time: 15 {
-                      sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
-                    }
-                  }
-                }
-              }
-
-              // Publish to the dailies page
-              dir('docker/jenkins') {
-                sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${PACKAGE_FILE} --pat ${GITHUB_LOGIN_PSW} --file ${buildFolder}/${PACKAGE_FILE} --version ${RSTUDIO_VERSION}"
-                if ((flavor == "desktop") || (flavor == "electron")) {
-                  sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${PACKAGE_FILE} --pat ${GITHUB_LOGIN_PSW} --file ${buildFolder}/${PACKAGE_FILE} --version ${RSTUDIO_VERSION}"
-                }
-            }
+          environment {
+            SENTRY_API_KEY = credentials('ide-sentry-api-key')
+            GITHUB_LOGIN = credentials('github-rstudio-jenkins')
+            AWS_BUCKET="rstudio-ide-build"
+            AWS_PATH="${flavor}/${os}/${PACKAGE_ARCH}/"
+            PACKAGE_FILE=""
+            PACKAGE_TARBALL=""
+            PRODUCT="${flavor}"
+            RSTUDIO_VERSION=" ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
           }
-          // ========================================================================================================================================================================
 
-          // Windows specific steps =================================================================================================================================================
-          // stage('Compile Package') {
-          //   when {
-          //     environment name: 'os', value: 'windows'
-          //   }
+          steps {
+            if (rstudioVersionSuffix.contains("pro")) {
+              if (env.PRODUCT == "desktop") {
+                env.PRODUCT = "desktop-pro"
+              } else if (env.PRODUCT == "electron") {
+                env.PRODUCT = "electron-pro"
+              } else if (env.PRODUCT == "server") {
+                env.PRODUCT = "workbench"
+              }
+            }
 
-          //   agent {
-          //     docker {
-          //       image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
-          //       reuseNode true
-          //     }
-          //   }
+            dir('package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/') {
+              // Upload the pacakge to S3
+              PACKAGE_FILE = findFiles glob: 'rstudio-*.${PACKAGE_TYPE.toLowerCase()}'
+              // Strip relwithdebinfo froem the filename
+              script {
+                def renamedFile = echo $PACKAGE_FILE | sed 's/-relwithdebinfo//'
+                mv $PACKAGE_FILE $renamedFile
+                packageFile=$renamedFile
+              }
 
-          //   environment {
-          //     CODESIGN_KEY = credentials('ide-windows-signing-pfx')
-          //     CODESIGN_PASS = credentials('ide-pfx-passphrase')
-          //     RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-          //     RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-          //     RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-          //     RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-          //   }
+              withAWS(credentials: 'jenkins-aws') {
+                s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$PACKAGE_FILE", path: "$AWS_PATH"
+              }
 
-          //   steps {
-          //     script {
-          //       def packageName =  "RStudio-${versionWithoutPlus}-RelWithDebInfo"
-          //     }
               
-          //     dir('package/win32') {
-          //       bat "make-package.bat clean ${current_container.flavor}"
+              // Also upload installer-less version for desktop builds
+              if ((flavor == "desktop") || (flavor == "electron")) {
+                dir('_CPack_Packages/Linux/${PACKAGE_TYPE}') {
+                  PACKAGE_TARBALL = findFiles glob: '*.tar.gz'
+                  // Strip relwithdebinfo from the filename
+                  script {                  
+                    def renamedTarball = echo $PACKAGE_TARBALL | sed 's/-relwithdebinfo//'
+                    mv $PACKAGE_TARBALL $renamedTarball
+                    PACKAGE_TARBALL=$renamedTarball
+                  }
 
-          //       dir('build') {
-          //         bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %CODESIGN_KEY% /p %CODESIGN_PASS% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  ${packageName}.exe"
-          //         bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /pa ${packageName}.exe"
-          //       }
-          //     }
-          //   }
-          // }
+                  withAWS(credentials: 'jenkins-aws') {
+                    s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$PACKAGE_TARBALL", path: "$AWS_PATH"
+                  }
+                }
+              }
 
-          // stage('Run Tests') {
-          //   when {
-          //     environment name: 'os', value: 'windows'
-          //   }
+              // Upload stripped debinfo to sentry
+              dir('src/cpp') {
+                retry 5 {
+                  timeout activity: true, time: 15 {
+                    sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
+                  }
+                }
+              }
+            }
 
-          //   docker {
-          //     image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
-          //     reuseNode true
-          //   }
-
-          //   steps {
-          //     bat 'rstudio-tests.bat --scope core'
-          //   }
-          // }
-
-          // stage('Upload Artifacts') {
-          //   when {
-          //     environment name: 'os', value: 'windows'
-          //   }
-
-          //   docker {
-          //     image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
-          //     reuseNode true
-          //   }
-
-          //   environment {
-          //     CODESIGN_KEY = credentials('ide-windows-signing-pfx')
-          // }
-          // ========================================================================================================================================================================
+            // Publish to the dailies page
+            dir('docker/jenkins') {
+              sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${PACKAGE_FILE} --pat ${GITHUB_LOGIN_PSW} --file ${buildFolder}/${PACKAGE_FILE} --version ${RSTUDIO_VERSION}"
+              if ((flavor == "desktop") || (flavor == "electron")) {
+                sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${PACKAGE_FILE} --pat ${GITHUB_LOGIN_PSW} --file ${buildFolder}/${PACKAGE_FILE} --version ${RSTUDIO_VERSION}"
+              }
+            }
+          }
         }
+        // ========================================================================================================================================================================
+
+        // Windows specific steps =================================================================================================================================================
+        // stage('Compile Package') {
+        //   when {
+        //     environment name: 'os', value: 'windows'
+        //   }
+
+        //   agent {
+        //     docker {
+        //       image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
+        //       reuseNode true
+        //     }
+        //   }
+
+        //   environment {
+        //     CODESIGN_KEY = credentials('ide-windows-signing-pfx')
+        //     CODESIGN_PASS = credentials('ide-pfx-passphrase')
+        //     RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
+        //     RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
+        //     RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
+        //     RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
+        //   }
+
+        //   steps {
+        //     script {
+        //       def packageName =  "RStudio-${versionWithoutPlus}-RelWithDebInfo"
+        //     }
+            
+        //     dir('package/win32') {
+        //       bat "make-package.bat clean ${current_container.flavor}"
+
+        //       dir('build') {
+        //         bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" sign /f %CODESIGN_KEY% /p %CODESIGN_PASS% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  ${packageName}.exe"
+        //         bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.17134.0\\x86\\signtool\" verify /v /pa ${packageName}.exe"
+        //       }
+        //     }
+        //   }
+        // }
+
+        // stage('Run Tests') {
+        //   when {
+        //     environment name: 'os', value: 'windows'
+        //   }
+
+        //   docker {
+        //     image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
+        //     reuseNode true
+        //   }
+
+        //   steps {
+        //     bat 'rstudio-tests.bat --scope core'
+        //   }
+        // }
+
+        // stage('Upload Artifacts') {
+        //   when {
+        //     environment name: 'os', value: 'windows'
+        //   }
+
+        //   docker {
+        //     image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
+        //     reuseNode true
+        //   }
+
+        //   environment {
+        //     CODESIGN_KEY = credentials('ide-windows-signing-pfx')
+        //   }
+        // }
+        // ========================================================================================================================================================================
       }
     }
   }
