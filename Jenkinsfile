@@ -128,27 +128,27 @@ pipeline {
             name 'arch'
             values 'amd64'
           }
+        }
 
-          excludes {
-            exclude {
-              axis {
-                name 'agent-label'
-                values 'windows'
-              }
-              axis {
-                name 'os'
-                notValues 'windows'
-              }
+        excludes {
+          exclude {
+            axis {
+              name 'agent-label'
+              values 'windows'
             }
-            exclude {
-              axis {
-                name 'agent-label'
-                values 'linux'
-              }
-              axis {
-                name 'os'
-                values 'windows'
-              }
+            axis {
+              name 'os'
+              notValues 'windows'
+            }
+          }
+          exclude {
+            axis {
+              name 'agent-label'
+              values 'linux'
+            }
+            axis {
+              name 'os'
+              values 'windows'
             }
           }
         }
