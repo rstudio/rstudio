@@ -76,20 +76,26 @@ pipeline {
           // Split on [-+] first to avoid having to worry about splitting out .pro<n>
           def version = rstudioVersion.split('[-+]')
 
-          // Keep this for package names
-          versionWithoutPlus = version.replace('\\+', '-')
-
           // extract major / minor /patch version
           def majorComponents = version[0].split('\\.')
           rstudioVersionMajor = majorComponents[0]
           rstudioVersionMinor = majorComponents[1]
           rstudioVersionPatch = majorComponents[2]
+          versionWithoutPlus = majorComponents
 
           // Extract suffix
-          if (version.length > 2)
+          if (version.length > 2) {
             rstudioVersionSuffix = '-' + version[1] + '+' + version[2]
-          else
+            versionWithoutPlus = '-' + version[1] + '-' + version[2]
+          }
+          else {
             rstudioVersionSuffix = '+' + version[1]
+            versionWithoutPlus = '-' + version[1]
+          }
+
+
+          // Keep this for package names
+          versionWithoutPlus = version.replace('\\+', '-')
 
           // update slack message to include build version
           messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"                    
