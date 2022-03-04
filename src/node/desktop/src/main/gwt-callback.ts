@@ -19,7 +19,7 @@ import { app, BrowserWindow, dialog, ipcMain, screen, shell, webContents, webFra
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import i18next from 'i18next';
-import { getAvailableFontsSync, IQueryFontDescriptor } from 'node-system-fonts';
+import { findFontsSync, getAvailableFontsSync, IQueryFontDescriptor } from 'node-system-fonts';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
@@ -58,11 +58,15 @@ export class GwtCallback extends EventEmitter {
     super();
     this.owners.add(mainWindow);
 
-    const fontDescriptors = [
-      ...new Map<string, IQueryFontDescriptor>(getAvailableFontsSync().map((fd) => [fd.family, fd])).values(),
-    ].sort((a, b) => a.family?.localeCompare(b.family ?? '') ?? 0);
-    const monospaceFonts = fontDescriptors.filter((fd) => fd.monospace).map((font) => font.family);
-    const proportionalFonts = fontDescriptors.filter((fd) => !fd.monospace).map((font) => font.family);
+    // https://github.com/foliojs/font-manager/issues/15
+    // the fork did not correct usage of Fontconfig
+    // getAvailableFontsSync() incorrectly sets the monospace property
+    const monospaceFonts = [...new Set<string>(findFontsSync({ monospace: true }).map((fd) => fd.family))].sort(
+      (a, b) => a.localeCompare(b),
+    );
+    const proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort(
+      (a, b) => a.localeCompare(b),
+    );
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // TODO: review if we need additional validation of URL
@@ -400,7 +404,7 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_bring_main_frame_to_front', () => { });
+    ipcMain.on('desktop_bring_main_frame_to_front', () => {});
 
     ipcMain.on('desktop_bring_main_frame_behind_active', () => {
       GwtCallback.unimpl('desktop_bring_main_frame_behind_active');
@@ -536,11 +540,11 @@ export class GwtCallback extends EventEmitter {
       this.getSender('desktop_zoom_actual_size', event.processId, event.frameId).zoomActualSize();
     });
 
-    ipcMain.on('desktop_set_background_color', (event, rgbColor) => { });
+    ipcMain.on('desktop_set_background_color', (event, rgbColor) => {});
 
-    ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => { });
+    ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => {});
 
-    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => { });
+    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {});
 
     ipcMain.handle('desktop_get_enable_accessibility', () => {
       GwtCallback.unimpl('desktop_get_enable_accessibility');
@@ -668,7 +672,7 @@ export class GwtCallback extends EventEmitter {
       return isCentOS();
     });
 
-    ipcMain.on('desktop_set_busy', (event, busy) => { });
+    ipcMain.on('desktop_set_busy', (event, busy) => {});
 
     ipcMain.on('desktop_set_window_title', (event, title: string) => {
       this.mainWindow.window.setTitle(`${title} - RStudio`);
