@@ -104,58 +104,58 @@ pipeline {
     }
 
     stage('Container Matrix') {
-      stages {
-        matrix {
-          agent {
-            label "${agent-label} && ${arch}"
-          }
+      matrix {
+        agent {
+          label "${agent-label} && ${arch}"
+        }
 
-          when {
-            anyOf {
-              equals expected: params.OS_FILTER, actual: env.os;
-              equals expected: params.OS_FILTER, actual: 'all'
-            }
-          }
-
-          axes {
-            axis {
-              name 'agent-label'
-              values 'linux', 'windows'
-            }
-            axis {
-              name 'os'
-              values 'bionic', 'centos7', 'debian9', 'rhel8', 'opensuse15', 'windows'
-            }
-            axis {
-              name 'arch'
-              values 'amd64'
-            }
-          }
-
-          excludes {
-            exclude {
-              axis {
-                name 'agent-label'
-                values 'windows'
-              }
-              axis {
-                name 'os'
-                notValues 'windows'
-              }
-            }
-            exclude {
-              axis {
-                name 'agent-label'
-                values 'linux'
-              }
-              axis {
-                name 'os'
-                values 'windows'
-              }
-            }
+        when {
+          anyOf {
+            equals expected: params.OS_FILTER, actual: env.os;
+            equals expected: params.OS_FILTER, actual: 'all'
           }
         }
 
+        axes {
+          axis {
+            name 'agent-label'
+            values 'linux', 'windows'
+          }
+          axis {
+            name 'os'
+            values 'bionic', 'centos7', 'debian9', 'rhel8', 'opensuse15', 'windows'
+          }
+          axis {
+            name 'arch'
+            values 'amd64'
+          }
+        }
+
+        excludes {
+          exclude {
+            axis {
+              name 'agent-label'
+              values 'windows'
+            }
+            axis {
+              name 'os'
+              notValues 'windows'
+            }
+          }
+          exclude {
+            axis {
+              name 'agent-label'
+              values 'linux'
+            }
+            axis {
+              name 'os'
+              values 'windows'
+            }
+          }
+        }
+      }
+
+      stages {
         stage('Prepare Container') {
           environment {
             GITHUB_LOGIN = credentials('github-rstudio-jenkins')
@@ -178,83 +178,83 @@ pipeline {
     }
 
     stage('Build Matrix') {
-      stages {
-        matrix {
-          agent {
-            label "${agent-label} && ${arch}"
-          }
+      matrix {
+        agent {
+          label "${agent-label} && ${arch}"
+        }
 
-          when {
-            anyOf {
-              equals expected: params.OS_FILTER, actual: env.os;
-              equals expected: params.OS_FILTER, actual: 'all'
-            }
-          }
-
-          axes {
-            axis {
-              name 'agent-label'
-              values 'linux', 'windows'
-            }
-            axis {
-                name 'os'
-                values 'bionic', 'centos7', 'debian9', 'rhel8', 'opensuse15', 'opensuse', 'windows'
-            }
-            axis {
-                name 'arch'
-                values 'amd64'
-            }
-            axis {
-                name 'flavor'
-                values 'desktop', 'server', 'electron'
-            }
-          }
-
-          excludes {
-            exclude {
-              axis {
-                name 'flavor'
-                values 'electron'
-              }
-              axis {
-                name 'os'
-                notValues 'bionic', 'windows'
-              }
-            }
-            exclude {
-              axis {
-                name 'agent-label'
-                values 'windows'
-              }
-              axis {
-                name 'os'
-                notValues 'windows'
-              }
-            }
-            exclude {
-              axis {
-                name 'agent-label'
-                values 'linux'
-              }
-              axis {
-                name 'os'
-                values 'windows'
-              }
-            }
-            exclude {
-              axis {
-                name 'os'
-                values 'windows'
-              }
-              axis {
-                name 'flavor'
-                notValues 'server'
-              }
-            }
+        when {
+          anyOf {
+            equals expected: params.OS_FILTER, actual: env.os;
+            equals expected: params.OS_FILTER, actual: 'all'
           }
         }
 
-        // Linux specific steps ===================================================================================================================================================
+        axes {
+          axis {
+            name 'agent-label'
+            values 'linux', 'windows'
+          }
+          axis {
+              name 'os'
+              values 'bionic', 'centos7', 'debian9', 'rhel8', 'opensuse15', 'opensuse', 'windows'
+          }
+          axis {
+              name 'arch'
+              values 'amd64'
+          }
+          axis {
+              name 'flavor'
+              values 'desktop', 'server', 'electron'
+          }
+        }
+
+        excludes {
+          exclude {
+            axis {
+              name 'flavor'
+              values 'electron'
+            }
+            axis {
+              name 'os'
+              notValues 'bionic', 'windows'
+            }
+          }
+          exclude {
+            axis {
+              name 'agent-label'
+              values 'windows'
+            }
+            axis {
+              name 'os'
+              notValues 'windows'
+            }
+          }
+          exclude {
+            axis {
+              name 'agent-label'
+              values 'linux'
+            }
+            axis {
+              name 'os'
+              values 'windows'
+            }
+          }
+          exclude {
+            axis {
+              name 'os'
+              values 'windows'
+            }
+            axis {
+              name 'flavor'
+              notValues 'server'
+            }
+          }
+        }
+      }
+
+      // Linux specific steps ===================================================================================================================================================
+      stages {
         stage('Compile Package') {
           when {
             not { environment name: 'os', value: 'windows' }
