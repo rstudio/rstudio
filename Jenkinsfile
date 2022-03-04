@@ -100,7 +100,6 @@ pipeline {
     stage('Start External Jobs') {
       agent {
         label 'linux'
-        reuseNode true
       }
       steps {
           // Upload the version file for tests
