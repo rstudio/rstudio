@@ -106,7 +106,7 @@ pipeline {
     stage('Container Matrix') {
       matrix {
         agent {
-          label "${agent-label} && ${arch}"
+          label "${agent_label} && ${arch}"
         }
 
         when {
@@ -118,7 +118,7 @@ pipeline {
 
         axes {
           axis {
-            name 'agent-label'
+            name 'agent_label'
             values 'linux', 'windows'
           }
           axis {
@@ -134,7 +134,7 @@ pipeline {
         excludes {
           exclude {
             axis {
-              name 'agent-label'
+              name 'agent_label'
               values 'windows'
             }
             axis {
@@ -144,7 +144,7 @@ pipeline {
           }
           exclude {
             axis {
-              name 'agent-label'
+              name 'agent_label'
               values 'linux'
             }
             axis {
@@ -180,7 +180,7 @@ pipeline {
     stage('Build Matrix') {
       matrix {
         agent {
-          label "${agent-label} && ${arch}"
+          label "${agent_label} && ${arch}"
         }
 
         when {
@@ -192,7 +192,7 @@ pipeline {
 
         axes {
           axis {
-            name 'agent-label'
+            name 'agent_label'
             values 'linux', 'windows'
           }
           axis {
@@ -222,7 +222,7 @@ pipeline {
           }
           exclude {
             axis {
-              name 'agent-label'
+              name 'agent_label'
               values 'windows'
             }
             axis {
@@ -232,7 +232,7 @@ pipeline {
           }
           exclude {
             axis {
-              name 'agent-label'
+              name 'agent_label'
               values 'linux'
             }
             axis {
