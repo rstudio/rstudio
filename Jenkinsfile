@@ -181,6 +181,14 @@ pipeline {
         agent {
           label "${agent-label} && ${arch}"
         }
+
+        when {
+          anyOf {
+            equals expected: params.OS_FILTER, actual: env.os;
+            equals expected: params.OS_FILTER, actual: 'all'
+          }
+        }
+
         axes {
           axis {
             name 'agent-label'
@@ -198,46 +206,47 @@ pipeline {
               name 'flavor'
               values 'desktop', 'server', 'electron'
           }
-          excludes {
-            exclude {
-              axis {
-                name 'flavor'
-                values 'electron'
-              }
-              axis {
-                name 'os'
-                notValues 'bionic', 'windows'
-              }
+        }
+
+        excludes {
+          exclude {
+            axis {
+              name 'flavor'
+              values 'electron'
             }
-            exclude {
-              axis {
-                name 'agent-label'
-                values 'windows'
-              }
-              axis {
-                name 'os'
-                notValues 'windows'
-              }
+            axis {
+              name 'os'
+              notValues 'bionic', 'windows'
             }
-            exclude {
-              axis {
-                name 'agent-label'
-                values 'linux'
-              }
-              axis {
-                name 'os'
-                values 'windows'
-              }
+          }
+          exclude {
+            axis {
+              name 'agent-label'
+              values 'windows'
             }
-            exclude {
-              axis {
-                name 'os'
-                values 'windows'
-              }
-              axis {
-                name 'flavor'
-                notValues 'server'
-              }
+            axis {
+              name 'os'
+              notValues 'windows'
+            }
+          }
+          exclude {
+            axis {
+              name 'agent-label'
+              values 'linux'
+            }
+            axis {
+              name 'os'
+              values 'windows'
+            }
+          }
+          exclude {
+            axis {
+              name 'os'
+              values 'windows'
+            }
+            axis {
+              name 'flavor'
+              notValues 'server'
             }
           }
         }
