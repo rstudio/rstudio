@@ -1,10 +1,10 @@
 @Library('pipeline-shared-libraries@feature/windows-pbp') _
 
-def rstudioVersionMajor
-def rstudioVersionMinor
-def rstudioVersionPatch
-def rstudioVersionSuffix
-def versionWithoutPlus
+rstudioVersionMajor = 0
+rstudioVersionMinor = 0
+rstudioVersionPatch = 0
+rstudioVersionSuffix = ''
+versionWithoutPlus = ''
 
 def trigger_external_build(build_name) {
   build job: "${build_name}/${env.BRANCH_NAME}", wait: false, parameters: [
