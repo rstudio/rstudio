@@ -91,15 +91,26 @@ pipeline {
           else
             rstudioVersionSuffix = '+' + version[1]
 
+          // update slack message to include build version
+          messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"                    
+        }                
+      }
+    }
+
+    stage('Start External Jobs') {
+      agent {
+        label 'linux'
+        reuseNode true
+      }
+      steps {
+          // Upload the version file for tests
+          archiveArtifacts artifacts: 'version/RELEASE', followSymlinks: false
+
           // Start external build jobs
           if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
             trigger_external_build('IDE/macos-pipeline')
             trigger_external_build('IDE/macos-pipeline')
           }
-
-          // update slack message to include build version
-          messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"                    
-        }                
       }
     }
 
