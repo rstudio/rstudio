@@ -77,7 +77,7 @@ pipeline {
           def version = rstudioVersion.split('[-+]')
 
           // Keep this for package names
-          versionWithoutPlus = version.replace('+', '-')
+          versionWithoutPlus = version.replace('\\+', '-')
 
           // extract major / minor /patch version
           def majorComponents = version[0].split('\\.')
