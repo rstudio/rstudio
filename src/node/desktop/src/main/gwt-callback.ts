@@ -15,7 +15,7 @@
 
 // TODO clean this up
 
-import { app, BrowserWindow, dialog, ipcMain, screen, shell, webContents, webFrameMain } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, screen, shell, webContents, webFrameMain } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import i18next from 'i18next';
@@ -211,12 +211,12 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
-      GwtCallback.unimpl('desktop_set_global_mouse_selection');
+      clipboard.writeText(selection, 'clipboard');
     });
 
     ipcMain.handle('desktop_get_global_mouse_selection', () => {
-      GwtCallback.unimpl('desktop_get_global_mouse_selection');
-      return '';
+      const selection = clipboard.readText('selection');
+      return selection;
     });
 
     ipcMain.handle('desktop_get_cursor_position', () => {

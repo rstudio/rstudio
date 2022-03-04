@@ -24,7 +24,7 @@ import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.AceSelectionChangedEvent;
 
-import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 
 public class AceEditorMixins
@@ -34,6 +34,14 @@ public class AceEditorMixins
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       editor_ = editor.getWidget().getEditor();
+      timer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            Desktop.getFrame().setGlobalMouseSelection(lastSelection_);
+         }
+      };
       
       initializeMixins(editor_);
       
@@ -46,13 +54,14 @@ public class AceEditorMixins
             public void onSelectionChanged(AceSelectionChangedEvent event)
             {
                String selection = editor_.getSelectedText();
-               if (!StringUtil.isNullOrEmpty(selection))
+               if (StringUtil.isNullOrEmpty(selection))
                {
-                  Scheduler.get().scheduleDeferred(() ->
-                  {
-                     Desktop.getFrame().setGlobalMouseSelection(selection);
-                  });
+                  timer_.cancel();
+                  return;
                }
+               
+               lastSelection_ = selection;
+               timer_.schedule(TIMER_DELAY_MS);
             }
          });
       }
@@ -160,7 +169,12 @@ public class AceEditorMixins
       editor.$onPaste(text);
    }-*/;
    
+   private static final int TIMER_DELAY_MS = 100;
+   
    private final AceEditorNative editor_;
+   private final Timer timer_;
+   
+   private String lastSelection_;
    
    // Injected ----
    private static JavaScriptEventHistory history_;
