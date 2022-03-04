@@ -270,9 +270,9 @@ pipeline {
             CODESIGN_KEY = credentials('gpg-codesign-private-key')
             CODESIGN_PASS = credentials('gpg-codesign-passphrase')
             RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-            RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-            RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
-            RSTUDIO_VERSION_MAJOR = '${rstudioVersionMajor}'
+            RSTUDIO_VERSION_MINOR = '${rstudioVersionMinor}'
+            RSTUDIO_VERSION_PATCH = '${rstudioVersionPatch}'
+            RSTUDIO_VERSION_SUFFIX = '${rstudioVersionSuffix}'
           }
 
           steps {
@@ -322,70 +322,69 @@ pipeline {
             GITHUB_LOGIN = credentials('github-rstudio-jenkins')
             AWS_BUCKET="rstudio-ide-build"
             AWS_PATH="${flavor}/${os}/${PACKAGE_ARCH}/"
-            PACKAGE_FILE=""
-            PACKAGE_TARBALL=""
             PRODUCT="${flavor}"
             RSTUDIO_VERSION=" ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
           }
 
           steps {
-            if (rstudioVersionSuffix.contains("pro")) {
-              if (env.PRODUCT == "desktop") {
-                env.PRODUCT = "desktop-pro"
-              } else if (env.PRODUCT == "electron") {
-                env.PRODUCT = "electron-pro"
-              } else if (env.PRODUCT == "server") {
-                env.PRODUCT = "workbench"
+            script {
+              if (rstudioVersionSuffix.contains("pro")) {
+                if (env.PRODUCT == "desktop") {
+                  env.PRODUCT = "desktop-pro"
+                } else if (env.PRODUCT == "electron") {
+                  env.PRODUCT = "electron-pro"
+                } else if (env.PRODUCT == "server") {
+                  env.PRODUCT = "workbench"
+                }
               }
-            }
 
-            dir('package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/') {
-              // Upload the pacakge to S3
-              PACKAGE_FILE = findFiles glob: 'rstudio-*.${PACKAGE_TYPE.toLowerCase()}'
-              // Strip relwithdebinfo froem the filename
-              script {
-                def renamedFile = echo $PACKAGE_FILE | sed 's/-relwithdebinfo//'
-                mv $PACKAGE_FILE $renamedFile
+              def packageDir = "package/linux/build-${flavor.capitalize()}-${PACKAGE_TYPE}/"
+              def tarballDir = "_CPack_Packages/Linux/${PACKAGE_TYPE}"
+              def packageFile = ''
+              def tarballFile = ''
+              dir(packageDir) {
+                // Upload the pacakge to S3
+                env.packageFile = findFiles glob: 'rstudio-*.${PACKAGE_TYPE.toLowerCase()}'
+                // Strip relwithdebinfo froem the filename
+                def renamedFile = echo $packageFile | sed 's/-relwithdebinfo//'
+                mv $packageFile $renamedFile
                 packageFile=$renamedFile
-              }
 
-              withAWS(credentials: 'jenkins-aws') {
-                s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$PACKAGE_FILE", path: "$AWS_PATH"
-              }
+                withAWS(credentials: 'jenkins-aws') {
+                  s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$packageFile", path: "$AWS_PATH"
+                }
 
-              
-              // Also upload installer-less version for desktop builds
-              if ((flavor == "desktop") || (flavor == "electron")) {
-                dir('_CPack_Packages/Linux/${PACKAGE_TYPE}') {
-                  PACKAGE_TARBALL = findFiles glob: '*.tar.gz'
-                  // Strip relwithdebinfo from the filename
-                  script {                  
-                    def renamedTarball = echo $PACKAGE_TARBALL | sed 's/-relwithdebinfo//'
-                    mv $PACKAGE_TARBALL $renamedTarball
-                    PACKAGE_TARBALL=$renamedTarball
+                // Also upload installer-less version for desktop builds
+                if ((flavor == "desktop") || (flavor == "electron")) {
+                  dir(tarballDir) {
+                    tarballFile = findFiles glob: '*.tar.gz'
+                    // Strip relwithdebinfo from the filename
+                    def renamedTarball = echo $tarballFile | sed 's/-relwithdebinfo//'
+                    mv $tarballFile $renamedTarball
+                    tarballFile=$renamedTarball
+
+                    withAWS(credentials: 'jenkins-aws') {
+                      s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$tarballFile", path: "$AWS_PATH"
+                    }
                   }
+                }
 
-                  withAWS(credentials: 'jenkins-aws') {
-                    s3Upload acl: 'BucketOwnerFullControl', bucket: "$AWS_BUCKET", file: "$PACKAGE_TARBALL", path: "$AWS_PATH"
+                // Upload stripped debinfo to sentry
+                dir('src/cpp') {
+                  retry 5 {
+                    timeout activity: true, time: 15 {
+                      sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
+                    }
                   }
                 }
               }
 
-              // Upload stripped debinfo to sentry
-              dir('src/cpp') {
-                retry 5 {
-                  timeout activity: true, time: 15 {
-                    sh "../../../../../docker/jenkins/sentry-upload.sh ${SENTRY_API_KEY}"
-                  }
+              // Publish to the dailies page
+              dir('docker/jenkins') {
+                sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${packageFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${packageFile} --version ${RSTUDIO_VERSION}"
+                if ((flavor == "desktop") || (flavor == "electron")) {
+                  sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${tarballFile} --pat ${GITHUB_LOGIN_PSW} --file ${packageDir}/${tarballDir}/${tarballFile} --version ${RSTUDIO_VERSION}"
                 }
-              }
-            }
-
-            // Publish to the dailies page
-            dir('docker/jenkins') {
-              sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${PACKAGE_FILE} --pat ${GITHUB_LOGIN_PSW} --file ${buildFolder}/${PACKAGE_FILE} --version ${RSTUDIO_VERSION}"
-              if ((flavor == "desktop") || (flavor == "electron")) {
-                sh "./publish-build.sh --build ${PRODUCT}/${os} --url https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${PACKAGE_ARCH}/${PACKAGE_FILE} --pat ${GITHUB_LOGIN_PSW} --file ${buildFolder}/${PACKAGE_FILE} --version ${RSTUDIO_VERSION}"
               }
             }
           }
