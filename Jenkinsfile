@@ -7,7 +7,9 @@ rstudioVersionSuffix = ''
 versionWithoutPlus = ''
 
 def trigger_external_build(build_name) {
-  build job: "${build_name}/${env.BRANCH_NAME}", wait: false, parameters: [
+  def branchName = env.BRANCH_NAME.replaceAll('/', '%252F')
+
+  build job: "${build_name}/${branchName}", wait: false, parameters: [
     string(name: 'RSTUDIO_VERSION_MAJOR',  value: "${rstudioVersionMajor}"),
     string(name: 'RSTUDIO_VERSION_MINOR',  value: "${rstudioVersionMinor}"),
     string(name: 'RSTUDIO_VERSION_PATCH',  value: "${rstudioVersionPatch}"),
