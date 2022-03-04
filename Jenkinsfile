@@ -93,10 +93,6 @@ pipeline {
             versionWithoutPlus = '-' + version[1]
           }
 
-
-          // Keep this for package names
-          versionWithoutPlus = version.replace('\\+', '-')
-
           // update slack message to include build version
           messagePrefix = "Jenkins ${env.JOB_NAME} build: <${env.BUILD_URL}display/redirect|${env.BUILD_DISPLAY_NAME}>, version: ${rstudioVersion}"                    
         }                
