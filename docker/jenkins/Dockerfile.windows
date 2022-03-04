@@ -4,6 +4,7 @@
 FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
 ENV OPERATING_SYSTEM=windows_10
+ENV PACKAGE_OS='Windows'
 
 # set RUN commands to use powershell
 SHELL ["powershell"]

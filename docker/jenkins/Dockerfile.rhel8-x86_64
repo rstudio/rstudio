@@ -1,6 +1,9 @@
 FROM rockylinux/rockylinux:8
 
 ENV OPERATING_SYSTEM=rockylinux_8
+ENV PACKAGE_TYPE='RPM'
+ENV PACKAGE_ARCH='x86_64'
+ENV PACKAGE_OS='rhel8'
 
 RUN set -x \
       && yum install epel-release -y \

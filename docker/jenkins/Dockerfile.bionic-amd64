@@ -1,6 +1,9 @@
 FROM ubuntu:bionic
 
 ENV OPERATING_SYSTEM=ubuntu_bionic
+ENV PACKAGE_TYPE='DEB'
+ENV PACKAGE_ARCH='amd64'
+ENV PACKAGE_OS='Ubuntu Bionic'
 
 ARG AWS_REGION=us-east-1
 

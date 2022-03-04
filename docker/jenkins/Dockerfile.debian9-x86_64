@@ -1,6 +1,9 @@
 FROM debian:stretch
 
 ENV OPERATING_SYSTEM=debian_9
+ENV PACKAGE_TYPE='DEB'
+ENV PACKAGE_ARCH='amd64'
+ENV PACKAGE_OS='Debian 9'
 
 # update apt repository to cloudfront's mirror and add cran35 to apt sources
 RUN set -x \
