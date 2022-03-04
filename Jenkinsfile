@@ -59,9 +59,9 @@ pipeline {
       agent {
         docker {
           image 'jenkins/ide:rstudio-versioning'
+          registryCredentialsId 'ecr:us-east-1:aws-build-role'
+          registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
           reuseNode true
-          // If reuseNode does not actually work, then just
-          // label 'linux && amd64'
         }
       }
 
@@ -273,6 +273,8 @@ pipeline {
             agent {
               docker {
                 image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
+                registryCredentialsId 'ecr:us-east-1:aws-build-role'
+                registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
                 reuseNode true
               }
             }
@@ -411,6 +413,8 @@ pipeline {
           //   agent {
           //     docker {
           //       image "jenkins/ide:${os}-${arch}-${env.BRANCH_NAME}"
+          //       registryCredentialsId 'ecr:us-east-1:aws-build-role'
+          //       registryUrl 'https://263245908434.dkr.ecr.us-east-1.amazonaws.com'
           //       reuseNode true
           //     }
           //   }
