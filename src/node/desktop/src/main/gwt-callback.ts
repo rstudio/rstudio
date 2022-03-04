@@ -29,6 +29,7 @@ import { appState } from './app-state';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
+import PreferenceManager from './preferences/preferences';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
 
@@ -457,9 +458,17 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_get_fixed_width_font', (event) => {
-      // TODO: Read user preference for font
+      const preferenceManager = new PreferenceManager();
+      let fixedWidthFont = preferenceManager.getValue('font·fixedWidth', 'string');
+
+      if (typeof fixedWidthFont === 'string') {
+        event.returnValue = `"${fixedWidthFont}"`;
+      } else {
+        fixedWidthFont = 'monospace';
+      }
 
       let defaultFonts: string[];
+
       if (process.platform === 'darwin') {
         defaultFonts = ['Menlo', 'Monaco'];
       } else if (process.platform === 'win32') {
@@ -468,7 +477,6 @@ export class GwtCallback extends EventEmitter {
         defaultFonts = ['Ubuntu Mono', 'Droid Sans Mono', 'DejaVu Sans Mono', 'Monospace'];
       }
 
-      let fixedWidthFont = 'monospace';
       for (const font of defaultFonts) {
         if (monospaceFonts.includes(font)) {
           fixedWidthFont = font;
