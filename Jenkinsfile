@@ -177,7 +177,7 @@ pipeline {
             steps {
               pullBuildPush(
                 image_name: 'jenkins/ide',
-                image_tag: "${os}-${arch}-${env.BRANCH_NAME}",
+                image_tag: "${os}-${arch}-${env.BRANCH_NAME.replaceAll('/', '-')}",
                 latest_tag: false,
                 dockerfile: "docker/jenkins/Dockerfile.${os}-${arch}",
                 build_arg_jenkins_uid: 'JENKINS_UID',
