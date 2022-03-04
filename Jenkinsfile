@@ -122,7 +122,7 @@ pipeline {
           }
           axis {
             name 'os'
-            values 'bionic', 'centos7', 'debian9', 'rhel8', 'opensuse15', 'opensuse', 'windows'
+            values 'bionic', 'centos7', 'debian9', 'rhel8', 'opensuse15', 'windows'
           }
           axis {
             name 'arch'
