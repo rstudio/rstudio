@@ -53,6 +53,13 @@ public class AceEditorMixins
             @Override
             public void onSelectionChanged(AceSelectionChangedEvent event)
             {
+               // only relevant if this editor is focused
+               if (!editor_.isFocused())
+                  return;
+               
+               // TODO: this preserves the old behavior, but is it correct?
+               // if the Ace selection has changed and is now empty, it seems like
+               // we should also clear our clipboard selection
                String selection = editor_.getSelectedText();
                if (StringUtil.isNullOrEmpty(selection))
                {
