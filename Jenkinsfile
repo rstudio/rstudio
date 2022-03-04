@@ -110,8 +110,8 @@ pipeline {
 
         when {
           anyOf {
-            expresion { params.OS_FILTER == env.os}
-            expresion { params.OS_FILTER == 'all'}
+            equals expected: params.OS_FILTER, actual: env.os;
+            equals expected: params.OS_FILTER, actual: 'all'
           }
         }
 
