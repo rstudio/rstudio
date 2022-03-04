@@ -1,5 +1,6 @@
 import { UserDefaultTypes } from 'electron';
 import MacPreferences from './mac-preferences';
+import WindowsPreferences from './windows-preferences';
 
 export interface PlatformPreferences {
   getValue(
@@ -9,29 +10,25 @@ export interface PlatformPreferences {
   setValue(key: string, type: keyof UserDefaultTypes, value: string): void;
 }
 
-class PreferenceManager implements PlatformPreferences {
-  private platformPreferences: PlatformPreferences;
+const isMacOS = process.platform === 'darwin';
 
-  constructor() {
-    switch (process.platform) {
-      case 'darwin':
-        this.platformPreferences = new MacPreferences();
-        break;
-      default:
-        throw Error('unsupported platform');
-    }
-  }
+/**
+ * MacOS stores periods as · in defaults. When adding a new key, ensure that the key is valid
+ * on all platforms.
+ */
+export const preferenceKeys = {
+  fontFixedWidth: isMacOS ? 'font·fixedWidth' : 'General.font.fixedWidth'
+}
 
-  getValue(
-    key: string,
-    type?: keyof UserDefaultTypes,
-  ): string | number | boolean | unknown[] | Record<string, unknown> | undefined {
-    return this.platformPreferences.getValue(key, type);
-  }
-
-  setValue(key: string, type: keyof UserDefaultTypes, value: string): void {
-    this.platformPreferences.setValue(key, type, value);
+const getPreferenceManager = () => {
+  switch (process.platform) {
+    case 'darwin':
+      return new MacPreferences();
+    case 'win32':
+      return new WindowsPreferences();
+    default:
+      throw Error('unsupported platform');
   }
 }
 
-export default PreferenceManager;
+export default getPreferenceManager;

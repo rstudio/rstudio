@@ -29,7 +29,7 @@ import { appState } from './app-state';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
-import PreferenceManager from './preferences/preferences';
+import getPreferenceManager, { preferenceKeys } from './preferences/preferences';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
 
@@ -400,7 +400,7 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_bring_main_frame_to_front', () => {});
+    ipcMain.on('desktop_bring_main_frame_to_front', () => { });
 
     ipcMain.on('desktop_bring_main_frame_behind_active', () => {
       GwtCallback.unimpl('desktop_bring_main_frame_behind_active');
@@ -458,16 +458,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_get_fixed_width_font', (event) => {
-      const preferenceManager = new PreferenceManager();
-      let fixedWidthFont = preferenceManager.getValue('font·fixedWidth', 'string');
-
-      if (typeof fixedWidthFont === 'string') {
-        event.returnValue = `"${fixedWidthFont}"`;
-      } else {
-        fixedWidthFont = 'monospace';
-      }
-
+      const preferenceManager = getPreferenceManager();
+      let fixedWidthFont = preferenceManager.getValue(preferenceKeys.fontFixedWidth, 'string');
       let defaultFonts: string[];
+
+      if (typeof fixedWidthFont === 'string' && fixedWidthFont) {
+        event.returnValue = `"${fixedWidthFont}"`;
+        return;
+      }
 
       if (process.platform === 'darwin') {
         defaultFonts = ['Menlo', 'Monaco'];
@@ -483,6 +481,7 @@ export class GwtCallback extends EventEmitter {
           break;
         }
       }
+
       event.returnValue = `"${fixedWidthFont}"`;
     });
 
@@ -537,11 +536,11 @@ export class GwtCallback extends EventEmitter {
       this.getSender('desktop_zoom_actual_size', event.processId, event.frameId).zoomActualSize();
     });
 
-    ipcMain.on('desktop_set_background_color', (event, rgbColor) => {});
+    ipcMain.on('desktop_set_background_color', (event, rgbColor) => { });
 
-    ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => {});
+    ipcMain.on('desktop_change_title_bar_color', (event, red, green, blue) => { });
 
-    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {});
+    ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => { });
 
     ipcMain.handle('desktop_get_enable_accessibility', () => {
       GwtCallback.unimpl('desktop_get_enable_accessibility');
@@ -669,7 +668,7 @@ export class GwtCallback extends EventEmitter {
       return isCentOS();
     });
 
-    ipcMain.on('desktop_set_busy', (event, busy) => {});
+    ipcMain.on('desktop_set_busy', (event, busy) => { });
 
     ipcMain.on('desktop_set_window_title', (event, title: string) => {
       this.mainWindow.window.setTitle(`${title} - RStudio`);
