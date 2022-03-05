@@ -74,7 +74,6 @@ choco install -y windows-sdk-10.1 --version 10.1.18362.1
 choco install -y visualstudio2017buildtools --version 15.9.41.0
 choco install -y visualstudio2017-workload-vctools --version 1.3.3
 choco install -y nsis
-choco install -y activeperl
 choco install -y python
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
