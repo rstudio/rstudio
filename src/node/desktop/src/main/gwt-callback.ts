@@ -15,10 +15,12 @@
 
 // TODO clean this up
 
-import { app, BrowserWindow, dialog, ipcMain, screen, shell, webContents, webFrameMain } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, screen, shell, webContents, webFrameMain } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
+import { mkdtempSync, writeFileSync } from 'fs';
 import i18next from 'i18next';
+import path from 'path';
 import { findFontsSync } from 'node-system-fonts';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
@@ -38,6 +40,20 @@ export enum PendingQuit {
   PendingQuitAndExit,
   PendingQuitAndRestart,
   PendingQuitRestartAndReload,
+}
+
+// The documentation for getFocusedWebContents() has:
+//
+// /**
+//  * The web contents that is focused in this application, otherwise returns `null`.
+//  */
+//
+//  static getFocusedWebContents(): WebContents;
+//
+// and so the documentation appears to state that the return value may be 'null',
+// but the type definition doesn't propagate that reality. Hence, this wrapper function.
+function focusedWebContents(): Electron.WebContents | null {
+  return webContents.getFocusedWebContents();
 }
 
 /**
@@ -171,57 +187,98 @@ export class GwtCallback extends EventEmitter {
     );
 
     ipcMain.on('desktop_on_clipboard_selection_changed', () => {
-      GwtCallback.unimpl('desktop_on_clipboard_selection_changed');
+      // This was previously used for Ace-specific workarounds on Qt
+      // Desktop. Those workarounds no longer appear necessary.
     });
 
     ipcMain.on('desktop_undo', () => {
       // unless the active element is the ACE editor, the web page will handle it
-      webContents.getFocusedWebContents().undo();
+      focusedWebContents()?.undo();
     });
 
     ipcMain.on('desktop_redo', () => {
       // unless the active element is the ACE editor, the web page will handle it
-      webContents.getFocusedWebContents().redo();
+      focusedWebContents()?.redo();
     });
 
     ipcMain.on('desktop_clipboard_cut', () => {
-      GwtCallback.unimpl('desktop_clipboard_cut');
+      focusedWebContents()?.cut();
     });
 
     ipcMain.on('desktop_clipboard_copy', () => {
-      GwtCallback.unimpl('desktop_clipboard_copy');
+      focusedWebContents()?.copy();
     });
 
     ipcMain.on('desktop_clipboard_paste', () => {
-      GwtCallback.unimpl('desktop_clipboard_paste');
+      focusedWebContents()?.paste();
     });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {
-      GwtCallback.unimpl('desktop_set_clipboard_text');
+      clipboard.writeText(text, 'clipboard');
     });
 
     ipcMain.handle('desktop_get_clipboard_text', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_text');
-      return '';
+      const text = clipboard.readText('clipboard');
+      return text;
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_uris');
-      return '';
+
+      // if we don't have a URI list, nothing to do
+      if (!clipboard.has('text/uri-list')) {
+        return [];
+      }
+
+      // return uri list as array
+      const data = clipboard.read('text/uri-list');
+      const parts = data.split('\n');
+
+      // strip off file prefix, if any
+      const filePrefix = process.platform === 'win32' ? 'file:///' : 'file://';
+      const trimmed = parts.map((x) => {
+        if (x.startsWith(filePrefix)) {
+          x = x.substring(filePrefix.length);
+        }
+        return x;
+      });
+
+      return trimmed;
+
     });
 
+    // Check for an image on the clipboard; if one exists,
+    // write it to file in the temporary directory and
+    // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_image');
-      return '';
+      
+      // if we don't have any image, bail
+      if (!clipboard.has('image/png')) {
+        return '';
+      }
+
+      // read image from clipboard
+      const image = clipboard.readImage('clipboard');
+      const pngData = image.toPNG();
+
+      // write to file
+      const scratchDir = appState().scratchTempDir(new FilePath('/tmp'));
+      const prefix = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard', 'image-');
+      const tempdir = mkdtempSync(prefix);
+      const pngPath = path.join(tempdir, 'image.png');
+      writeFileSync(pngPath, pngData);
+
+      // return file path
+      return pngPath;
+
     });
 
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
-      GwtCallback.unimpl('desktop_set_global_mouse_selection');
+      clipboard.writeText(selection, 'clipboard');
     });
 
     ipcMain.handle('desktop_get_global_mouse_selection', () => {
-      GwtCallback.unimpl('desktop_get_global_mouse_selection');
-      return '';
+      const selection = clipboard.readText('selection');
+      return selection;
     });
 
     ipcMain.handle('desktop_get_cursor_position', () => {
