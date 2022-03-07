@@ -66,6 +66,7 @@ const config = {
 
   packagerConfig: {
     icon: './resources/icons/RStudio',
+    appBundleId: 'com.rstudio.desktop',
   },
 };
 
