@@ -34,6 +34,7 @@ import { openMinimalWindow } from './minimal-window';
 import { preferenceKeys, preferenceManager } from './preferences/preferences';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
+import { DesktopOptions } from './desktop-options';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -472,12 +473,11 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_desktop_rendering_engine', (event, engine) => {
-      GwtCallback.unimpl('desktop_set_desktop_rendering_engine');
+      DesktopOptions().setRenderingEngine(engine);
     });
 
     ipcMain.handle('desktop_filter_text', (event, text: string) => {
-      GwtCallback.unimpl('desktop_filter_text');
-      return text;
+      return DesktopOptions().renderingEngine();
     });
 
     ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {

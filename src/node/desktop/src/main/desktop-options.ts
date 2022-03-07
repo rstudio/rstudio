@@ -16,7 +16,7 @@
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
-import { logger, logLevel } from '../core/logger';
+import { logger } from '../core/logger';
 
 const kProportionalFont = 'Font.ProportionalFont';
 const kFixWidthFont = 'Font.FixWidthFont';
@@ -30,6 +30,7 @@ const kLastRemoteSessionUrl = 'Session.LastRemoteSessionUrl';
 const kAuthCookies = 'Session.AuthCookies';
 const kTempAuthCookies = 'Session.TempAuthCookies';
 
+const kRenderingEngine = 'General.RenderingEngine';
 const kIgnoredUpdateVersions = 'General.IgnoredUpdateVersions';
 const kClipboardMonitoring = 'General.ClipboardMonitoring';
 
@@ -56,6 +57,7 @@ export const kDesktopOptionDefaults = {
   General: {
     IgnoredUpdateVersions: [],
     ClipboardMonitoring: true,
+    RenderingEngine: 'desktop',
   },
   Platform: {
     Windows: {
@@ -251,6 +253,14 @@ export class DesktopOptionsImpl {
 
   public clipboardMonitoring(): boolean {
     return this.config.get(kClipboardMonitoring);
+  }
+
+  public setRenderingEngine(renderingEngine: string): void {
+    this.config.set(kRenderingEngine, renderingEngine);
+  }
+
+  public renderingEngine(): string {
+    return this.config.get(kRenderingEngine, 'desktop');
   }
 
   // Windows-only option

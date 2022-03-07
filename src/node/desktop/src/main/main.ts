@@ -15,16 +15,18 @@
 
 import { app } from 'electron';
 
-import { logLevel } from '../core/logger';
+import { logger, logLevel } from '../core/logger';
 import { safeError } from '../core/err';
 
 import { Application } from './application';
-import { setApplication } from './app-state';
+import { appState, setApplication } from './app-state';
 import { parseStatus } from './program-status';
 import { createStandaloneErrorDialog } from './utils';
 
 import { initI18n } from './i18n-manager';
 import i18next from 'i18next';
+import { DesktopOptions } from './desktop-options';
+import { platform } from 'os';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -50,11 +52,42 @@ class RStudioMain {
     }
   }
 
+  private async initializeRenderingEngine() {
+
+    // read rendering engine, if any
+    const engine = DesktopOptions().renderingEngine().toLowerCase();
+
+    // for whatever reason, setting '--use-gl=desktop' doesn't seem to enable
+    // the GPU on macOS; testing on other platforms would be worthwhile but
+    // Chromium will enable GPU acceleration by default where possible so it
+    // seems okay to ignore here
+    if (engine.length === 0 || engine === 'desktop' || engine == 'auto') {
+      return;
+    }
+
+    // handle gles (primarily for linux)
+    if (engine === 'gles') {
+      app.commandLine.appendSwitch('use-gl', 'gles');
+      return;
+    }
+
+    // handle software rendering
+    if (engine === 'software') {
+      app.commandLine.appendSwitch('disable-gpu');
+      return;
+    }
+
+  }
+
   private async startup(): Promise<void> {
-    // NOTE: On Linux it looks like Electron prefers using ANGLE for GPU rendering;
-    // however, we've seen in at least one case (Ubuntu 20.04 in Parallels VM) fails
-    // to render in that case (we just get a white screen). Prefer 'desktop' by default,
-    // but we'll need to respect the user-defined property as well.
+
+    await this.initializeRenderingEngine();
+
+    // NOTE: On Linux it looks like Electron prefers using ANGLE for GPU
+    // rendering; however, we've seen in at least one case (Ubuntu 20.04 in
+    // Parallels VM) fails to render in that case (we just get a white screen).
+    // Prefer 'desktop' by default, but we'll need to respect the user-defined
+    // property as well.
     if (process.platform === 'linux') {
       if (!app.commandLine.hasSwitch('use-gl')) {
         app.commandLine.appendSwitch('use-gl', 'desktop');
