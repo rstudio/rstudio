@@ -20,8 +20,8 @@ import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions }
 import EventEmitter from 'events';
 import { mkdtempSync, writeFileSync } from 'fs';
 import i18next from 'i18next';
-import { getAvailableFontsSync, IQueryFontDescriptor } from 'node-system-fonts';
 import path from 'path';
+import { findFontsSync } from 'node-system-fonts';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
@@ -31,6 +31,7 @@ import { appState } from './app-state';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
+import { preferenceKeys, preferenceManager } from './preferences/preferences';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
 
@@ -73,11 +74,15 @@ export class GwtCallback extends EventEmitter {
     super();
     this.owners.add(mainWindow);
 
-    const fontDescriptors = [
-      ...new Map<string, IQueryFontDescriptor>(getAvailableFontsSync().map((fd) => [fd.family, fd])).values(),
-    ].sort((a, b) => a.family?.localeCompare(b.family ?? '') ?? 0);
-    const monospaceFonts = fontDescriptors.filter((fd) => fd.monospace).map((font) => font.family);
-    const proportionalFonts = fontDescriptors.filter((fd) => !fd.monospace).map((font) => font.family);
+    // https://github.com/foliojs/font-manager/issues/15
+    // the fork did not correct usage of Fontconfig
+    // getAvailableFontsSync() incorrectly sets the monospace property
+    const monospaceFonts = [...new Set<string>(findFontsSync({ monospace: true }).map((fd) => fd.family))].sort(
+      (a, b) => a.localeCompare(b),
+    );
+    const proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort(
+      (a, b) => a.localeCompare(b),
+    );
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // TODO: review if we need additional validation of URL
@@ -514,9 +519,14 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_get_fixed_width_font', (event) => {
-      // TODO: Read user preference for font
-
+      let fixedWidthFont = preferenceManager.getValue(preferenceKeys.fontFixedWidth, 'string');
       let defaultFonts: string[];
+
+      if (typeof fixedWidthFont === 'string' && fixedWidthFont) {
+        event.returnValue = `"${fixedWidthFont}"`;
+        return;
+      }
+
       if (process.platform === 'darwin') {
         defaultFonts = ['Menlo', 'Monaco'];
       } else if (process.platform === 'win32') {
@@ -525,13 +535,13 @@ export class GwtCallback extends EventEmitter {
         defaultFonts = ['Ubuntu Mono', 'Droid Sans Mono', 'DejaVu Sans Mono', 'Monospace'];
       }
 
-      let fixedWidthFont = 'monospace';
       for (const font of defaultFonts) {
         if (monospaceFonts.includes(font)) {
           fixedWidthFont = font;
           break;
         }
       }
+
       event.returnValue = `"${fixedWidthFont}"`;
     });
 
