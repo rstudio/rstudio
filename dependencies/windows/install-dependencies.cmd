@@ -218,7 +218,7 @@ call install-packages.cmd
 
 popd
 
-regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\DIA SDK\bin\msdia140.dll"
+regsvr32 /s "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\DIA SDK\bin\msdia140.dll"
 
 call install-crashpad.cmd
 call install-soci.cmd

@@ -31,7 +31,7 @@ dir.create(YAML_CPP_BUILD_32, recursive = TRUE, showWarnings = FALSE)
 setwd(YAML_CPP_BUILD_32)
 
 args <- c(
-   "-G", shQuote("Visual Studio 15 2017"),
+   "-G", shQuote("Visual Studio 16 2019"),
    "-A", "Win32",
    "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDebugDLL",
    "-DYAML_CPP_BUILD_TESTS=Off",
@@ -51,7 +51,7 @@ dir.create(YAML_CPP_BUILD_64, recursive = TRUE, showWarnings = FALSE)
 setwd(YAML_CPP_BUILD_64)
 
 args <- c(
-   "-G", shQuote("Visual Studio 15 2017"),
+   "-G", shQuote("Visual Studio 16 2019"),
    "-A", "x64",
    "-DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL",
    "-DYAML_CPP_BUILD_TESTS=Off",

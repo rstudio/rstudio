@@ -20,7 +20,7 @@ RUN $env:chocolateyUseWindowsCompression = 'true'; `
 RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
   choco install -y jdk8; `
   choco install -y -i ant; `
-  choco install -y windows-sdk-10.1 --version 10.1.17134.12; `
+  choco install -y windows-sdk-10.1 --version 10.1.18362.1; `
   choco install -y 7zip; `
   choco install -y ninja --version "1.10.0"; `
   choco install -y python
@@ -32,8 +32,8 @@ RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tl
   Start-Process c:\nsis-3.06.1-setup.exe -Wait -ArgumentList '/S' ;`
   Remove-Item c:\nsis-3.06.1-setup.exe -Force
   
-RUN choco install -y visualstudio2017buildtools --version 15.8.2.0; `
-  choco install -y visualstudio2017-workload-vctools --version 1.3.0
+RUN choco install -y visualstudio2019buildtools --version 16.11.10.0; `
+  choco install -y visualstudio2019-workload-vctools --version 1.0.1
 
 # install aws cli
 RUN choco install -y awscli

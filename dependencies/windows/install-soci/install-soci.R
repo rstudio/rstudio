@@ -15,11 +15,11 @@ options(log.dir = normalizePath("logs"))
 # put RStudio tools on PATH
 PATH$prepend("../tools")
 
-# try to find MSVC 2017
-msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build",
-                                   "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build")), n = 1)
+# try to find MSVC 2019
+msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2019/Community/VC/Auxiliary/Build",
+                                   "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Auxiliary/Build")), n = 1)
 if (length(msvc) == 0)
-   fatal("No MSVC 2017 installation detected (please install Visual Studio 2017 using 'Install-RStudio-Prereqs.ps1')")
+   fatal("No MSVC 2019 installation detected (please install Visual Studio 2019 using 'Install-RStudio-Prereqs.ps1')")
 PATH$prepend(msvc)
 
 # initialize variables
@@ -79,7 +79,7 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
 
    # run CMAKE for each platform (x86, x64) and each configuration (Debug, Release)
    setwd("x86")
-   cmake_args <- paste0("-G \"Visual Studio 15 2017\" ",
+   cmake_args <- paste0("-G \"Visual Studio 16 2019\" ",
                         "-A Win32 ",
                         "-DCMAKE_VERBOSE_MAKEFILE=ON ",
                         "-DCMAKE_INCLUDE_PATH=\"", file.path(boost_dir, "include"), "\" ",

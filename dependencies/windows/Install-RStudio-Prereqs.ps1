@@ -71,8 +71,8 @@ choco install -y 7zip
 choco install -y git
 choco install -y ninja
 choco install -y windows-sdk-10.1 --version 10.1.18362.1
-choco install -y visualstudio2017buildtools --version 15.9.41.0
-choco install -y visualstudio2017-workload-vctools --version 1.3.3
+choco install -y visualstudio2019buildtools --version 16.11.10.0
+choco install -y visualstudio2019-workload-vctools --version 1.0.1
 choco install -y nsis
 choco install -y python
 
