@@ -30,9 +30,12 @@ const kLastRemoteSessionUrl = 'Session.LastRemoteSessionUrl';
 const kAuthCookies = 'Session.AuthCookies';
 const kTempAuthCookies = 'Session.TempAuthCookies';
 
-const kRenderingEngine = 'General.RenderingEngine';
 const kIgnoredUpdateVersions = 'General.IgnoredUpdateVersions';
 const kClipboardMonitoring = 'General.ClipboardMonitoring';
+
+const kRendererEngine = 'Renderer.Engine';
+const kRendererUseGpuExclusionList = 'Renderer.UseGpuExclusionList';
+const kRendererUseGpuDriverBugWorkarounds = 'Renderer.UseGpuDriverBugWorkarounds';
 
 const kRBinDir = 'Platform.Windows.RBinDir';
 const kPreferR64 = 'Platform.Windows.PreferR64';
@@ -57,7 +60,11 @@ export const kDesktopOptionDefaults = {
   General: {
     IgnoredUpdateVersions: [],
     ClipboardMonitoring: true,
-    RenderingEngine: 'desktop',
+  },
+  Renderer: {
+    Engine: 'auto',
+    UseGpuExclusionList: true,
+    UseGpuDriverBugWorkarounds: true,
   },
   Platform: {
     Windows: {
@@ -256,11 +263,27 @@ export class DesktopOptionsImpl {
   }
 
   public setRenderingEngine(renderingEngine: string): void {
-    this.config.set(kRenderingEngine, renderingEngine);
+    this.config.set(kRendererEngine, renderingEngine);
   }
 
   public renderingEngine(): string {
-    return this.config.get(kRenderingEngine, 'desktop');
+    return this.config.get(kRendererEngine, 'desktop');
+  }
+
+  public setUseGpuExclusionList(value: boolean) {
+    this.config.set(kRendererUseGpuExclusionList, value);
+  }
+
+  public useGpuExclusionList(): boolean {
+    return this.config.get(kRendererUseGpuExclusionList, true);
+  }
+
+  public setUseGpuDriverBugWorkarounds(value: boolean) {
+    this.config.set(kRendererUseGpuDriverBugWorkarounds, value);
+  }
+
+  public useGpuDriverBugWorkarounds(): boolean {
+    return this.config.get(kRendererUseGpuDriverBugWorkarounds, true);
   }
 
   // Windows-only option

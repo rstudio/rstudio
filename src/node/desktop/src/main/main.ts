@@ -54,8 +54,19 @@ class RStudioMain {
 
   private async initializeRenderingEngine() {
 
+    const options = DesktopOptions();
+
+    if (!options.useGpuDriverBugWorkarounds()) {
+      app.commandLine.appendSwitch('disable-gpu-driver-bug-workarounds');
+    }
+
+    if (!options.useGpuExclusionList()) {
+      app.commandLine.appendSwitch('ignore-gpu-blacklist');
+    }
+
     // read rendering engine, if any
     const engine = DesktopOptions().renderingEngine().toLowerCase();
+
 
     // for whatever reason, setting '--use-gl=desktop' doesn't seem to enable
     // the GPU on macOS; testing on other platforms would be worthwhile but
