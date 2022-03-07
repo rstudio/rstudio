@@ -19,7 +19,7 @@ import { app, BrowserWindow, dialog, ipcMain, screen, shell, webContents, webFra
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import i18next from 'i18next';
-import { findFontsSync, getAvailableFontsSync, IQueryFontDescriptor } from 'node-system-fonts';
+import { findFontsSync } from 'node-system-fonts';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
@@ -29,7 +29,7 @@ import { appState } from './app-state';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
-import getPreferenceManager, { preferenceKeys } from './preferences/preferences';
+import { preferenceKeys, preferenceManager } from './preferences/preferences';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
 
@@ -462,7 +462,6 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_get_fixed_width_font', (event) => {
-      const preferenceManager = getPreferenceManager();
       let fixedWidthFont = preferenceManager.getValue(preferenceKeys.fontFixedWidth, 'string');
       let defaultFonts: string[];
 

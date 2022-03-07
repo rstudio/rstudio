@@ -1,7 +1,7 @@
 import { UserDefaultTypes } from 'electron';
 import { homedir } from 'os';
-import MacPreferences from './mac-preferences';
 import FilePreferences from './file-preferences';
+import MacPreferences from './mac-preferences';
 
 export interface PlatformPreferences {
   getValue(
@@ -21,17 +21,18 @@ export const preferenceKeys = {
   fontFixedWidth: isMacOS ? 'font·fixedWidth' : 'General.font.fixedWidth',
 };
 
-const getPreferenceManager = () => {
-  switch (process.platform) {
-    case 'darwin':
-      return new MacPreferences();
-    case 'win32':
-      return new FilePreferences(`${homedir()}\\AppData\\Roaming\\RStudio\\desktop.ini`);
-    case 'linux':
-      return new FilePreferences(`${homedir()}/.config/RStudio/desktop.ini`);
-    default:
-      throw Error('unsupported platform');
-  }
-};
+export let preferenceManager: PlatformPreferences;
 
-export default getPreferenceManager;
+switch (process.platform) {
+  case 'darwin':
+    preferenceManager = new MacPreferences();
+    break;
+  case 'win32':
+    preferenceManager = new FilePreferences(`${homedir()}\\AppData\\Roaming\\RStudio\\desktop.ini`);
+    break;
+  case 'linux':
+    preferenceManager = new FilePreferences(`${homedir()}/.config/RStudio/desktop.ini`);
+    break;
+  default:
+    throw new Error('unsupported platform');
+}
