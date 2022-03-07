@@ -57,16 +57,8 @@ public class AceEditorMixins
                if (!editor_.isFocused())
                   return;
                
-               // TODO: this preserves the old behavior, but is it correct?
-               // if the Ace selection has changed and is now empty, it seems like
-               // we should also clear our clipboard selection
+               // save the current selection, and prepare to update pasteboard
                String selection = editor_.getSelectedText();
-               if (StringUtil.isNullOrEmpty(selection))
-               {
-                  timer_.cancel();
-                  return;
-               }
-               
                lastSelection_ = selection;
                timer_.schedule(TIMER_DELAY_MS);
             }
@@ -91,7 +83,8 @@ public class AceEditorMixins
       editor.onPaste = $entry(function(text) {
          
          // call mixins method
-         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins::onPaste(Lorg/rstudio/studio/client/workbench/views/source/editors/text/ace/AceEditorNative;Ljava/lang/String;)(this, text);
+         self.@org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorMixins::onPaste(*)(this, text);
+         
       });
       
    }-*/;
