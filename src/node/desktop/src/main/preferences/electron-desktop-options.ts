@@ -18,6 +18,7 @@ import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
 import { logger } from '../../core/logger';
 import { legacyPreferenceManager } from './../preferences/preferences';
+import DesktopOptions from './desktop-options';
 
 const kProportionalFont = 'Font.ProportionalFont';
 const kFixedWidthFont = 'Font.FixedWidthFont';
@@ -78,9 +79,9 @@ let options: DesktopOptionsImpl | null = null;
  *
  * @returns The DesktopOptions singleton
  */
-export function ElectronDesktopOptions(directory = ''): DesktopOptionsImpl {
+export function ElectronDesktopOptions(directory = '', legacyOptions?: DesktopOptions): DesktopOptionsImpl {
   if (!options) {
-    options = new DesktopOptionsImpl(directory);
+    options = new DesktopOptionsImpl(directory, legacyOptions);
   }
   return options;
 }
@@ -120,11 +121,15 @@ export function firstIsInsideSecond(inner: Rectangle, outer: Rectangle): boolean
  */
 export class DesktopOptionsImpl {
   private config = new Store({ defaults: kDesktopOptionDefaults });
+  private legacyOptions = legacyPreferenceManager;
 
-  // Directory exposed for unit testing
-  constructor(directory = '') {
+  // unit testing constructor to expose directory and DesktopOptions mock
+  constructor(directory = '', legacyOptions?: DesktopOptions) {
     if (directory.length != 0) {
       this.config = new Store({ defaults: kDesktopOptionDefaults, cwd: directory });
+    }
+    if (legacyOptions) {
+      this.legacyOptions = legacyOptions;
     }
   }
 
@@ -140,11 +145,11 @@ export class DesktopOptionsImpl {
     this.config.set(kFixedWidthFont, fixedWidthFont);
   }
 
-  public fixedWidthFont(): string | undefined{
+  public fixedWidthFont(): string | undefined {
     let fontName = this.config.get<'Font.FixedWidthFont', string>(kFixedWidthFont);
 
     if (!fontName) {
-      fontName = legacyPreferenceManager.fixedWidthFont() ?? '';
+      fontName = this.legacyOptions.fixedWidthFont() ?? '';
     }
 
     return fontName;

@@ -12,28 +12,32 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  */
 
-import { BrowserWindow, Rectangle, screen } from 'electron';
-import { describe } from 'mocha';
 import { assert } from 'chai';
-import sinon from 'sinon';
-import { createSinonStubInstanceForSandbox } from '../unit-utils';
-
-import {
-  ElectronDesktopOptions,
-  DesktopOptionsImpl,
-  kDesktopOptionDefaults,
-  clearOptionsSingleton,
-  firstIsInsideSecond,
-} from '../../../src/main/preferences/electron-desktop-options';
-import { FilePath } from '../../../src/core/file-path';
-import { Err, isSuccessful } from '../../../src/core/err';
-import { tempDirectory } from '../unit-utils';
+import { BrowserWindow, Rectangle, screen } from 'electron';
 import { Display } from 'electron/main';
+import { describe } from 'mocha';
+import sinon from 'sinon';
+import { Err, isSuccessful } from '../../../src/core/err';
+import { FilePath } from '../../../src/core/file-path';
+import DesktopOptions from '../../../src/main/preferences/desktop-options';
+import {
+  clearOptionsSingleton,
+  DesktopOptionsImpl,
+  ElectronDesktopOptions,
+  firstIsInsideSecond,
+  kDesktopOptionDefaults,
+} from '../../../src/main/preferences/electron-desktop-options';
+import { createSinonStubInstanceForSandbox, tempDirectory } from '../unit-utils';
 
 const kTestingConfigDirectory = tempDirectory('DesktopOptionsTesting').toString();
 
 function testingDesktopOptions(): DesktopOptionsImpl {
-  return ElectronDesktopOptions(kTestingConfigDirectory);
+  const legacyOptions = new (class extends DesktopOptions {
+    fixedWidthFont(): string | undefined {
+      return kDesktopOptionDefaults.Font.FixedWidthFont;
+    }
+  })();
+  return ElectronDesktopOptions(kTestingConfigDirectory, legacyOptions);
 }
 
 function deleteTestingDesktopOptions(): Err {
