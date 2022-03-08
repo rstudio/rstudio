@@ -21,6 +21,7 @@ import { initI18n } from '../../../main/i18n-manager';
 import i18next from 'i18next';
 
 import './styles.css';
+import { logger } from '../../../core/logger';
 
 declare global {
   interface Window {
@@ -76,7 +77,16 @@ buttonCancel.addEventListener('click', () => {
 });
 
 buttonBrowse.addEventListener('click', () => {
-  window.callbacks.browse();
+  window.callbacks
+    .browse()
+    .then((shouldCloseDialog) => {
+      if (shouldCloseDialog) {
+        window.close();
+      }
+    })
+    .catch((err) => {
+      logger().logDebug(`Error occurred when trying to browse for R: ${err}`);
+    });
 });
 
 const loadPageLocalization = () => {

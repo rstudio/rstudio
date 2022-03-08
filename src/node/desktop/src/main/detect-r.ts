@@ -27,7 +27,8 @@ import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
 import { createStandaloneErrorDialog } from './utils';
 import i18next from 'i18next';
 
-import desktop from '../native/desktop.node';
+import Store from 'electron-store';
+import { kDesktopOptionDefaults } from './desktop-options';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -58,38 +59,54 @@ function executeCommand(command: string): Expected<string> {
 }
 
 export async function promptUserForR(): Promise<Expected<string | null>> {
-  // nothing to do if RSTUDIO_WHICH_R is set
-  const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
-  if (rstudioWhichR) {
-    return ok(rstudioWhichR);
-  }
+  if (process.platform === 'win32') {
+    const desktop = await import('../native/desktop.node');
 
-  // discover available R installations
-  const rInstalls = findRInstallationsWin32();
-  if (rInstalls.length === 0) {
-    return err();
-  }
+    const storeConfig = new Store({ defaults: kDesktopOptionDefaults });
+    const rstudioPathKey = 'rstudioPath';
 
-  // if the user is not holding down ctrl, then just use the latest one
-  if (!desktop.isCtrlKeyDown()) {
-    return ok(rInstalls[0]);
-  }
+    const isCtrlKeyBeingPressed = desktop.isCtrlKeyDown() as boolean;
 
-  // ask the user what version of R they'd like to use
-  const dialog = new ChooseRModalWindow(rInstalls);
-  const [path, error] = await dialog.showModal();
-  if (error) {
-    return err(error);
-  }
+    if (!isCtrlKeyBeingPressed) {
+      // nothing to do if RSTUDIO_WHICH_R is set
+      const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
+      if (rstudioWhichR) {
+        return ok(rstudioWhichR);
+      }
 
-  // if path is null, the operation was cancelled
-  if (path == null) {
-    return ok(null);
-  }
+      const rstudioSavedPath = storeConfig.get(rstudioPathKey);
 
-  // set RSTUDIO_WHICH_R to signal which version of R to be used
-  setenv('RSTUDIO_WHICH_R', path);
-  return ok(path);
+      if (rstudioSavedPath != undefined) {
+        const path = '' + rstudioSavedPath;
+
+        return ok(path);
+      }
+    }
+
+    // discover available R installations
+    const rInstalls = findRInstallationsWin32();
+    if (rInstalls.length === 0) {
+      return err();
+    }
+
+    // ask the user what version of R they'd like to use
+    const dialog = new ChooseRModalWindow(rInstalls);
+    const [path, error] = await dialog.showModal();
+    if (error) {
+      return err(error);
+    }
+
+    // if path is null, the operation was cancelled
+    if (path == null) {
+      return ok(null);
+    }
+
+    storeConfig.set(rstudioPathKey, path);
+    // set RSTUDIO_WHICH_R to signal which version of R to be used
+    setenv('RSTUDIO_WHICH_R', path);
+    return ok(path);
+  }
+  return err(new Error('This window can only be opened on Windows'));
 }
 
 /**
