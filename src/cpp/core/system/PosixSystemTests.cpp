@@ -20,13 +20,19 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
+#include <grp.h>
 #include <tests/TestThat.hpp>
 
 namespace rstudio {
 namespace core {
 namespace system {
 namespace tests {
+
+static std::string getNoGroupName()
+{
+   // Debian has nobody:nogroup, but RHEL has nobody:nobody
+   return getgrnam("nogroup") ? "nogroup" : "nobody";
+}
 
 test_context("PosixSystemTests")
 {
@@ -357,49 +363,50 @@ User s_testUser;
 group::Group s_testGroup;
 group::Group s_testNonMemberGroup;
 
-void initUserAndGroup(std::string username, std::string groupname, std::string nonmember_groupname)
+bool initUserAndGroup(std::string username, std::string groupname, std::string nonmember_groupname)
 {
    bool isRoot = core::system::effectiveUserIsRoot();
-   CHECK(isRoot);
+   expect_true(isRoot);
    if (!isRoot)
-      ::_exit(1);
+      return false;
 
    // get user info
    Error error = User::getUserFromIdentifier(username, s_testUser);
+   expect_false(error);
    if (error)
    {
       LOG_ERROR(error);
-      ::_exit(1);
+      return false;
    }
 
    // get group info. user should be a member of this group.
    error = group::groupFromName(groupname, &s_testGroup);
+   expect_false(error);
    if (error)
    {
       LOG_ERROR(error);
-      ::_exit(1);
+      return false;
    }
 
    // get secondary group info. user should not be a member of this group.
    error = group::groupFromName(nonmember_groupname, &s_testNonMemberGroup);
+   expect_false(error);
    if (error)
    {
       LOG_ERROR(error);
-      ::_exit(1);
+      return false;
    }
+   return true;
 }
 
 TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
 {
-   test_that("init")
-   {
 #ifdef __linux__
-      initUserAndGroup("nobody", "nogroup", "users");
+      expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
 #ifdef __APPLE__
-      initUserAndGroup("nobody", "nobody", "daemon");
+      expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__
-   }
 
    test_that("temporarilyDropPriv uses primary group")
    {
@@ -461,15 +468,12 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
 
 TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
 {
-   test_that("init")
-   {
 #ifdef __linux__
-      initUserAndGroup("nobody", "nogroup", "users");
+   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
 #ifdef __APPLE__
-      initUserAndGroup("nobody", "nobody", "daemon");
+   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__
-   }
 
    test_that("permanentlyDropPriv uses primary group")
    {
@@ -494,15 +498,12 @@ TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
 
 TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
 {
-   test_that("init")
-   {
 #ifdef __linux__
-      initUserAndGroup("nobody", "nogroup", "users");
+   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
 #ifdef __APPLE__
-      initUserAndGroup("nobody", "nobody", "daemon");
+   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__
-   }
 
    test_that("permanentlyDropPriv checks group membership with alternate group")
    {
