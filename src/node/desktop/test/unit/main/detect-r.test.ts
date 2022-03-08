@@ -18,7 +18,6 @@ import { assert } from 'chai';
 
 import { saveAndClear, restore } from '../unit-utils';
 import { promptUserForR } from '../../../src/main/detect-r';
-import { Application } from '../../../src/main/application';
 
 describe('detect-r', () => {
   const vars: Record<string, string> = {
