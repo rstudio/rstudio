@@ -349,9 +349,9 @@ export class MenuCallback extends EventEmitter {
     if (cmdId === 'zoomActualSize') {
       menuItemOpts.role = 'resetZoom';
     } else if (cmdId === 'zoomIn') {
-      menuItemOpts.role = 'zoomIn';
+      menuItemOpts.accelerator = 'CommandOrControl+=';
     } else if (cmdId === 'zoomOut') {
-      menuItemOpts.role = 'zoomOut';
+      menuItemOpts.accelerator = 'CommandOrControl+-';
     } else if (cmdId === 'cutDummy') {
       menuItemOpts.role = 'cut';
     } else if (cmdId === 'copyDummy') {
