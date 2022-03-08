@@ -1,5 +1,8 @@
 {
   "typescript.preferences.importModuleSpecifier": "relative",
+  "files.associations": {
+    "CMake*.txt": "cmake"
+  },
 
   // Help Windows find node, npm
   "terminal.integrated.env.windows": {

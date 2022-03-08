@@ -78,6 +78,7 @@ using namespace rstudio::session::modules::vcs_utils;
 using rstudio::session::modules::source_control::FileWithStatus;
 using rstudio::session::modules::source_control::VCSStatus;
 using rstudio::session::modules::source_control::StatusResult;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

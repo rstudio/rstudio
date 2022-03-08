@@ -49,6 +49,7 @@
 #define kThreadQuitCommand "thread_quit"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

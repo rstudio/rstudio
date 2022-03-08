@@ -214,7 +214,7 @@ private:
    RToken matchOperator();
    bool eol();
    wchar_t peek();
-   wchar_t peek(std::size_t lookahead);
+   wchar_t peek(int lookahead);
    wchar_t eat();
    std::size_t tokenLength(const boost::wregex& regex);
    void eatUntil(const boost::wregex& regex);

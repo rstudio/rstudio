@@ -159,6 +159,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String showLineNumbersDescription();
 
    /**
+    * Show relative, rather than absolute, line numbers in RStudio's code editor.
+    */
+   @DefaultStringValue("Use relative line numbers in editor")
+   String relativeLineNumbersTitle();
+   @DefaultStringValue("Show relative, rather than absolute, line numbers in RStudio's code editor.")
+   String relativeLineNumbersDescription();
+
+   /**
     * Highlight the selected word in RStudio's code editor.
     */
    @DefaultStringValue("Highlight selected word in editor")

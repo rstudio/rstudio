@@ -52,6 +52,7 @@ To create a new postback handler for an action 'foo' do the following:
 #include <session/SessionOptions.hpp>
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {  

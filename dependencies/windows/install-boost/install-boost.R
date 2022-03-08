@@ -28,8 +28,8 @@ options(log.dir = normalizePath("logs"))
 PATH$prepend("../tools")
 
 # initialize variables
-boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_69_0.7z"
-output_name <- sprintf("boost-1.69.0-win-msvc141-%s-%s.zip", variant, link)
+boost_url <- "https://s3.amazonaws.com/rstudio-buildtools/Boost/boost_1_78_0.7z"
+output_name <- sprintf("boost-1.78.0-win-msvc141-%s-%s.zip", variant, link)
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "/")
 output_file <- file.path(output_dir, output_name)
 install_dir <- file.path(owd, "..", tools::file_path_sans_ext(output_name))

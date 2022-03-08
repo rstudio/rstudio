@@ -37,6 +37,7 @@
 
 using namespace rstudio::core;
 using namespace rstudio::session::module_context;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

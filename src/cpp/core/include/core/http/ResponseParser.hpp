@@ -28,6 +28,8 @@
 #include <shared_core/Error.hpp>
 #include <core/http/Response.hpp>
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace core {
 namespace http {

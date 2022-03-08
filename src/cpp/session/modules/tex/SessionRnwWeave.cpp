@@ -40,6 +40,7 @@
 
 using namespace rstudio::core;
 using namespace rstudio::session::modules::tex::rnw_concordance;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {

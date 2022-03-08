@@ -48,6 +48,7 @@
 
 using namespace rstudio::core;
 using namespace rstudio::core::libclang;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -342,12 +343,15 @@ std::string packagePCH(const std::string& linkingTo)
 
 bool packageIsCpp(const std::string& linkingTo, const FilePath& srcDir)
 {
-   if (boost::algorithm::contains(linkingTo, "Rcpp"))
+   if (boost::algorithm::contains(linkingTo, "Rcpp") || boost::algorithm::contains(linkingTo, "cpp11"))
    {
       return true;
    }
    else
    {
+      if (!srcDir.exists())
+         return false;
+      
       std::vector<FilePath> allSrcFiles;
       Error error = srcDir.getChildren(allSrcFiles);
       if (error)

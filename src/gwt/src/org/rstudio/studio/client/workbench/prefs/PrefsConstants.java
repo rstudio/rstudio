@@ -4646,7 +4646,16 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Show line numbers")
     @Key("displayShowLineNumbersLabel")
     String displayShowLineNumbersLabel();
-    
+
+    /**
+     * Translated "Relative line numbers"
+     *
+     * @return translated "Relative line numbers"
+     */
+    @DefaultMessage("Relative line numbers")
+    @Key("displayRelativeLineNumbersLabel")
+    String displayRelativeLineNumbersLabel();
+
     /**
      * Translated "Show margin"
      *
@@ -5008,4 +5017,12 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("diagnosticsBackgroundDiagnosticsDelayMsLabel")
     String diagnosticsBackgroundDiagnosticsDelayMsLabel();
     
+    /**
+     * Translated "Show full path to project in window title"
+     *
+     * @return translated "Show full path to project in window title"
+     */
+    @DefaultMessage("Show full path to project in window title")
+    @Key("fullProjectPathInWindowTitleLabel")
+    String fullProjectPathInWindowTitleLabel();
 }

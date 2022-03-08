@@ -2425,6 +2425,11 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().getRenderer().setShowGutter(on);
    }
 
+   public void setRelativeLineNumbers(boolean relative)
+   {
+      widget_.getEditor().setRelativeLineNumbers(relative);
+   }
+
    public boolean getUseSoftTabs()
    {
       return getSession().getUseSoftTabs();

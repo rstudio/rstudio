@@ -2276,7 +2276,7 @@
          front <- NULL
 
          tryCatch({
-            front <- yaml::read_yaml(text = front_matter)
+            front <- yaml::read_yaml(text = front_matter, eval.expr = TRUE)
          }, error = function(e) {
             # ignore errors when reading YAML; it's very possible that the document's YAML will not
             # be correct at all times (e.g. during editing) 

@@ -70,6 +70,7 @@
 #define kShinyContentWarning "Warning: Shiny application in a static R Markdown document"
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace rstudio {
 namespace session {
@@ -1058,6 +1059,7 @@ void initEnvironment()
    std::string rstudioPandoc = core::system::getenv(kRStudioPandoc);
    if (rstudioPandoc.empty())
       rstudioPandoc = session::options().pandocPath().getAbsolutePath();
+   
    r::exec::RFunction sysSetenv("Sys.setenv");
    sysSetenv.addParam(kRStudioPandoc, rstudioPandoc);
 

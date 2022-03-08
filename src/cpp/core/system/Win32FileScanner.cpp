@@ -24,6 +24,8 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
 
+using namespace boost::placeholders;
+
 namespace rstudio {
 namespace core {
 namespace system {

@@ -30,6 +30,7 @@ namespace session {
 namespace console_process {
 
 using namespace rstudio::core;
+using namespace boost::placeholders;
 
 namespace {
 

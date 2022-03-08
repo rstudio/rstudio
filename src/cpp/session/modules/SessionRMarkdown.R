@@ -250,7 +250,7 @@
 })
 
 .rs.addFunction("getTemplateDetails", function(templateYaml) {
-   yaml::yaml.load_file(templateYaml)
+   yaml::yaml.load_file(templateYaml, eval.expr = TRUE)
 })
 
 # given a path to a folder on disk, return information about the R Markdown

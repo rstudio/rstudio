@@ -180,6 +180,11 @@ public class TextEditingTargetPrefsHelper
             {
                docDisplay.setDragEnabled(arg);
             }));
+      releaseOnDismiss.add(prefs.relativeLineNumbers().bind(
+            (arg) ->
+            {
+               docDisplay.setRelativeLineNumbers(arg);
+            }));
 
       // Full editors get additional prefs (we don't use these in embedded editors)
       if (prefsSet == PrefsSet.Full)

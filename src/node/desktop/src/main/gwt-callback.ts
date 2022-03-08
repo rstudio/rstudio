@@ -15,29 +15,45 @@
 
 // TODO clean this up
 
-import { app, BrowserWindow, dialog, ipcMain, screen, shell, webContents, webFrameMain } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, screen, shell, webContents, webFrameMain } from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
+import { mkdtempSync, writeFileSync } from 'fs';
 import i18next from 'i18next';
+import path from 'path';
+import { findFontsSync } from 'node-system-fonts';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
-import { userHomePath } from '../core/user';
+import desktop from '../native/desktop.node';
 import { appState } from './app-state';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
+import { preferenceKeys, preferenceManager } from './preferences/preferences';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
-
-import desktop from '../native/desktop.node';
 
 export enum PendingQuit {
   PendingQuitNone,
   PendingQuitAndExit,
   PendingQuitAndRestart,
   PendingQuitRestartAndReload,
+}
+
+// The documentation for getFocusedWebContents() has:
+//
+// /**
+//  * The web contents that is focused in this application, otherwise returns `null`.
+//  */
+//
+//  static getFocusedWebContents(): WebContents;
+//
+// and so the documentation appears to state that the return value may be 'null',
+// but the type definition doesn't propagate that reality. Hence, this wrapper function.
+function focusedWebContents(): Electron.WebContents | null {
+  return webContents.getFocusedWebContents();
 }
 
 /**
@@ -58,6 +74,16 @@ export class GwtCallback extends EventEmitter {
     super();
     this.owners.add(mainWindow);
 
+    // https://github.com/foliojs/font-manager/issues/15
+    // the fork did not correct usage of Fontconfig
+    // getAvailableFontsSync() incorrectly sets the monospace property
+    const monospaceFonts = [...new Set<string>(findFontsSync({ monospace: true }).map((fd) => fd.family))].sort(
+      (a, b) => a.localeCompare(b),
+    );
+    const proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort(
+      (a, b) => a.localeCompare(b),
+    );
+
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // TODO: review if we need additional validation of URL
       void shell.openExternal(url);
@@ -76,10 +102,9 @@ export class GwtCallback extends EventEmitter {
       ) => {
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
-          defaultPath: dir,
+          defaultPath: resolveAliasedPath(dir),
           buttonLabel: label,
         };
-
         openDialogOptions.properties = ['openFile'];
 
         // FileOpen dialog can't be both a file opener and a directory opener on Windows
@@ -116,11 +141,9 @@ export class GwtCallback extends EventEmitter {
         forceDefaultExtension: boolean,
         focusOwner: boolean,
       ) => {
-        const resolvedDir = FilePath.resolveAliasedPathSync(dir, userHomePath()).toString();
-
         const saveDialogOptions: SaveDialogOptions = {
           title: caption,
-          defaultPath: resolvedDir,
+          defaultPath: resolveAliasedPath(dir),
           buttonLabel: label,
         };
 
@@ -145,7 +168,7 @@ export class GwtCallback extends EventEmitter {
       async (event, caption: string, label: string, dir: string, focusOwner: boolean) => {
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
-          defaultPath: dir,
+          defaultPath: resolveAliasedPath(dir),
           buttonLabel: label,
           properties: ['openDirectory', 'createDirectory', 'promptToCreate'],
         };
@@ -154,6 +177,7 @@ export class GwtCallback extends EventEmitter {
         if (focusOwner) {
           focusedWindow = this.getSender('desktop_open_minimal_window', event.processId, event.frameId).window;
         }
+
         if (focusedWindow) {
           return dialog.showOpenDialog(focusedWindow, openDialogOptions);
         } else {
@@ -163,57 +187,98 @@ export class GwtCallback extends EventEmitter {
     );
 
     ipcMain.on('desktop_on_clipboard_selection_changed', () => {
-      GwtCallback.unimpl('desktop_on_clipboard_selection_changed');
+      // This was previously used for Ace-specific workarounds on Qt
+      // Desktop. Those workarounds no longer appear necessary.
     });
 
     ipcMain.on('desktop_undo', () => {
       // unless the active element is the ACE editor, the web page will handle it
-      webContents.getFocusedWebContents().undo();
+      focusedWebContents()?.undo();
     });
 
     ipcMain.on('desktop_redo', () => {
       // unless the active element is the ACE editor, the web page will handle it
-      webContents.getFocusedWebContents().redo();
+      focusedWebContents()?.redo();
     });
 
     ipcMain.on('desktop_clipboard_cut', () => {
-      GwtCallback.unimpl('desktop_clipboard_cut');
+      focusedWebContents()?.cut();
     });
 
     ipcMain.on('desktop_clipboard_copy', () => {
-      GwtCallback.unimpl('desktop_clipboard_copy');
+      focusedWebContents()?.copy();
     });
 
     ipcMain.on('desktop_clipboard_paste', () => {
-      GwtCallback.unimpl('desktop_clipboard_paste');
+      focusedWebContents()?.paste();
     });
 
     ipcMain.on('desktop_set_clipboard_text', (event, text: string) => {
-      GwtCallback.unimpl('desktop_set_clipboard_text');
+      clipboard.writeText(text, 'clipboard');
     });
 
     ipcMain.handle('desktop_get_clipboard_text', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_text');
-      return '';
+      const text = clipboard.readText('clipboard');
+      return text;
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_uris');
-      return '';
+
+      // if we don't have a URI list, nothing to do
+      if (!clipboard.has('text/uri-list')) {
+        return [];
+      }
+
+      // return uri list as array
+      const data = clipboard.read('text/uri-list');
+      const parts = data.split('\n');
+
+      // strip off file prefix, if any
+      const filePrefix = process.platform === 'win32' ? 'file:///' : 'file://';
+      const trimmed = parts.map((x) => {
+        if (x.startsWith(filePrefix)) {
+          x = x.substring(filePrefix.length);
+        }
+        return x;
+      });
+
+      return trimmed;
+
     });
 
+    // Check for an image on the clipboard; if one exists,
+    // write it to file in the temporary directory and
+    // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_image');
-      return '';
+      
+      // if we don't have any image, bail
+      if (!clipboard.has('image/png')) {
+        return '';
+      }
+
+      // read image from clipboard
+      const image = clipboard.readImage('clipboard');
+      const pngData = image.toPNG();
+
+      // write to file
+      const scratchDir = appState().scratchTempDir(new FilePath('/tmp'));
+      const prefix = path.join(scratchDir.getAbsolutePath(), 'rstudio-clipboard', 'image-');
+      const tempdir = mkdtempSync(prefix);
+      const pngPath = path.join(tempdir, 'image.png');
+      writeFileSync(pngPath, pngData);
+
+      // return file path
+      return pngPath;
+
     });
 
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
-      GwtCallback.unimpl('desktop_set_global_mouse_selection');
+      clipboard.writeText(selection, 'clipboard');
     });
 
     ipcMain.handle('desktop_get_global_mouse_selection', () => {
-      GwtCallback.unimpl('desktop_get_global_mouse_selection');
-      return '';
+      const selection = clipboard.readText('selection');
+      return selection;
     });
 
     ipcMain.handle('desktop_get_cursor_position', () => {
@@ -292,6 +357,13 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on(
       'desktop_open_minimal_window',
       (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
+        // handle chrome://gpu specially
+        if (url === 'chrome://gpu') {
+          const window = new BrowserWindow();
+          return window.loadURL('chrome://gpu');
+        }
+
+        // regular path for other windows
         const sender = this.getSender('desktop_open_minimal_window', event.processId, event.frameId);
         const minimalWindow = openMinimalWindow(sender, name, url, width, height);
         minimalWindow.window.once('ready-to-show', () => {
@@ -418,8 +490,9 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_open_project_in_new_window', (event, projectFilePath) => {
       if (!this.isRemoteDesktop) {
-        const args = [resolveAliasedPath(projectFilePath)];
-        this.mainWindow.launchRStudio(args);
+        this.mainWindow.launchRStudio({
+          projectFilePath: resolveAliasedPath(projectFilePath),
+        });
       } else {
         // start new Remote Desktop RStudio process with the session URL
         this.mainWindow.launchRemoteRStudioProject(projectFilePath);
@@ -428,8 +501,9 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_open_session_in_new_window', (event, workingDirectoryPath) => {
       if (!this.isRemoteDesktop) {
-        workingDirectoryPath = resolveAliasedPath(workingDirectoryPath);
-        this.mainWindow.launchRStudio([], workingDirectoryPath);
+        this.mainWindow.launchRStudio({
+          workingDirectory: resolveAliasedPath(workingDirectoryPath),
+        });
       } else {
         // start the new session on the currently connected server
         this.mainWindow.launchRemoteRStudio();
@@ -440,17 +514,59 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_open_terminal');
     });
 
-    ipcMain.handle('desktop_get_fixed_width_font_list', () => {
-      GwtCallback.unimpl('desktop_get_fixed_width_font_list');
-      return '';
+    ipcMain.on('desktop_get_fixed_width_font_list', (event) => {
+      event.returnValue = monospaceFonts.join('\n');
     });
 
-    ipcMain.handle('desktop_get_fixed_width_font', () => {
-      GwtCallback.unimpl('desktop_get_fixed_width_font');
-      return '';
+    ipcMain.on('desktop_get_fixed_width_font', (event) => {
+      let fixedWidthFont = preferenceManager.getValue(preferenceKeys.fontFixedWidth, 'string');
+      let defaultFonts: string[];
+
+      if (typeof fixedWidthFont === 'string' && fixedWidthFont) {
+        event.returnValue = `"${fixedWidthFont}"`;
+        return;
+      }
+
+      if (process.platform === 'darwin') {
+        defaultFonts = ['Menlo', 'Monaco'];
+      } else if (process.platform === 'win32') {
+        defaultFonts = ['Lucida Console', 'Consolas'];
+      } else {
+        defaultFonts = ['Ubuntu Mono', 'Droid Sans Mono', 'DejaVu Sans Mono', 'Monospace'];
+      }
+
+      for (const font of defaultFonts) {
+        if (monospaceFonts.includes(font)) {
+          fixedWidthFont = font;
+          break;
+        }
+      }
+
+      event.returnValue = `"${fixedWidthFont}"`;
+    });
+
+    ipcMain.on('desktop_get_proportional_font', (event) => {
+      let defaultFonts: string[];
+      if (process.platform === 'darwin') {
+        defaultFonts = ['Lucida Grande', 'Lucida Sans', 'DejaVu Sans', 'Segoe UI', 'Verdana', 'Helvetica'];
+      } else if (process.platform === 'win32') {
+        defaultFonts = ['Segoe UI', 'Verdana', 'Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Helvetica'];
+      } else {
+        defaultFonts = ['Lucida Sans', 'DejaVu Sans', 'Lucida Grande', 'Segoe UI', 'Verdana', 'Helvetica'];
+      }
+
+      let proportionalFont = defaultFonts[0];
+      for (const font of defaultFonts) {
+        if (proportionalFonts.includes(font)) {
+          proportionalFont = font;
+          break;
+        }
+      }
+      event.returnValue = `"${proportionalFont}"`;
     });
 
     ipcMain.on('desktop_set_fixed_width_font', (event, font) => {
+      // TODO: Write font selection to preferences
       GwtCallback.unimpl('desktop_set_fixed_width_font');
     });
 

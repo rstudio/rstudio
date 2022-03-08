@@ -74,6 +74,7 @@
 using namespace rstudio;
 using namespace rstudio::core;
 using namespace rstudio::server;
+using namespace boost::placeholders;
 
 // forward-declare overlay methods
 namespace rstudio {

@@ -13,7 +13,38 @@
  *
  */
 
+import path from 'path';
+import { spawn } from 'child_process';
+import { existsSync, readdirSync } from 'fs';
+import { setenv, unsetenv } from '../core/environment';
 import { MainWindow } from './main-window';
+import { app } from 'electron';
+
+export interface LaunchRStudioOptions {
+  projectFilePath?: string;
+  workingDirectory?: string;
+}
+
+function resolveProjectFile(projectDir: string): string {
+
+  // check that the project directory exists
+  if (!existsSync(projectDir)) {
+    return '';
+  }
+
+  // list files in the directory, looking for a .Rproj file
+  const files = readdirSync(projectDir, { encoding: 'utf-8' });
+  for (const file of files) {
+    const ext = path.extname(file).toLowerCase();
+    if (ext === '.rproj') {
+      return path.join(projectDir, file);
+    }
+  }
+
+  // nothing found
+  return '';
+
+}
 
 /**
  * Not clear yet if we'll need this class from the Qt implementation, but keeping
@@ -34,8 +65,28 @@ export class ApplicationLaunch {
     // TODO - reimplement (if needed at all)
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  launchRStudio(args: string[], initialDir: string): void {
-    // TODO - reimplement
+  launchRStudio(options: LaunchRStudioOptions): void {
+
+    // in devmode, we need to pass the directory path when launching the application;
+    // for package builds, we have no such requirement
+    const argv = app.isPackaged ? [] : [process.argv[1]];
+
+    // resolve working directory
+    const workingDir = options.workingDirectory ?? path.dirname(options.projectFilePath || '');
+    setenv('RS_INITIAL_WD', workingDir);
+
+    // resolve project file, if any
+    const projectFile = options.projectFilePath ?? resolveProjectFile(workingDir);
+    if (existsSync(projectFile)) {
+      setenv('RS_INITIAL_PROJECT', projectFile);
+    }
+
+    // run it
+    spawn(process.execPath, argv, { detached: true });
+
+    // restore environment variables
+    unsetenv('RS_INSTALL_WD');
+    unsetenv('RS_INITIAL_PROJECT');
+
   }
 }

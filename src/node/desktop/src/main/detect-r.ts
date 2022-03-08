@@ -13,10 +13,10 @@
  *
  */
 
-import path from 'path';
+import path, { join } from 'path';
 
 import { execSync, spawnSync } from 'child_process';
-import { existsSync } from 'fs';
+import { existsSync, readdirSync } from 'fs';
 import { EOL } from 'os';
 
 import { Environment, getenv, setenv, setVars } from '../core/environment';
@@ -167,6 +167,7 @@ function detectREnvironment(): Expected<REnvironment> {
   R.home("doc"),
   R.home("include"),
   R.home("share"),
+  paste(R.version$crt, collapse = ""),
   Sys.getenv("${kLdLibraryPathVariable}")
 ))`;
 
@@ -180,7 +181,7 @@ function detectREnvironment(): Expected<REnvironment> {
   }
 
   // unwrap query results
-  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rLdLibraryPath] = result.stdout.split(EOL);
+  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rLdLibraryPath] = result.stdout.split(EOL);
 
   // put it all together
   return ok({
@@ -191,6 +192,7 @@ function detectREnvironment(): Expected<REnvironment> {
       R_DOC_DIR: rDocDir,
       R_INCLUDE_DIR: rIncludeDir,
       R_SHARE_DIR: rShareDir,
+      R_RUNTIME: rRuntime,
     },
     ldLibraryPath: rLdLibraryPath,
   });
@@ -240,8 +242,8 @@ function scanForRPosix(): Expected<string> {
   return err();
 }
 
-function findRInstallationsWin32() {
-  const rInstallations: string[] = [];
+function findRInstallationsWin32(): string[] {
+  const rInstallations = new Set<string>();
 
   // list all installed versions from registry
   const keyName = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core';
@@ -249,7 +251,7 @@ function findRInstallationsWin32() {
   const [output, error] = executeCommand(regQueryCommand);
   if (error) {
     logger().logError(error);
-    return rInstallations;
+    return Array.from(rInstallations.values());
   }
 
   // parse the actual path from the output
@@ -259,12 +261,30 @@ function findRInstallationsWin32() {
     if (match != null) {
       const rInstallation = match[1];
       if (isValidInstallationWin32(rInstallation)) {
-        rInstallations.push(rInstallation);
+        rInstallations.add(rInstallation);
       }
     }
   }
 
-  return rInstallations;
+  // look for R installations in some common locations
+  const commonLocations = ['C:/R', `${getenv('ProgramFiles')}/R`, `${getenv('ProgramFiles(x86)')}/R`];
+  for (const location of commonLocations) {
+    // nothing to do if it doesn't exist
+    if (!existsSync(location)) {
+      continue;
+    }
+
+    // read directories and check if they're valid R installations
+    const rDirs = readdirSync(location, { encoding: 'utf-8' });
+    for (const rDir of rDirs) {
+      const path = join(location, rDir);
+      if (isValidInstallationWin32(path)) {
+        rInstallations.add(path);
+      }
+    }
+  }
+
+  return Array.from(rInstallations.values());
 }
 
 function isValidInstallationWin32(installPath: string): boolean {

@@ -90,7 +90,8 @@ public class YamlEditorContext extends JavaScriptObject
         line: line, 
         code: code,
         position: position,
-        explicit: explicit
+        explicit: explicit,
+        client: "rstudio"
      };
   }-*/;
    
