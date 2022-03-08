@@ -65,9 +65,9 @@ export async function promptUserForR(): Promise<Expected<string | null>> {
     const storeConfig = new Store({ defaults: kDesktopOptionDefaults });
     const rstudioPathKey = 'rstudioPath';
 
-    const isCtrlKeyBeingPressed = desktop.isCtrlKeyDown() as boolean;
+    const isCtrlKeyDown = desktop.isCtrlKeyDown() as boolean;
 
-    if (!isCtrlKeyBeingPressed) {
+    if (!isCtrlKeyDown) {
       // nothing to do if RSTUDIO_WHICH_R is set
       const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
       if (rstudioWhichR) {
