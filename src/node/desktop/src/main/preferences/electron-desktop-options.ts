@@ -1,6 +1,6 @@
 /**
  *
- * desktop-options.ts
+ * electron-desktop-options.ts
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
