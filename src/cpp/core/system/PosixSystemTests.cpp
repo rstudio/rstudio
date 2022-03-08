@@ -468,15 +468,12 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
 
 TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
 {
-   test_that("init")
-   {
 #ifdef __linux__
-      expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
+   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
 #ifdef __APPLE__
-      expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
+   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__
-   }
 
    test_that("permanentlyDropPriv uses primary group")
    {
@@ -501,15 +498,12 @@ TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
 
 TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
 {
-   test_that("init")
-   {
 #ifdef __linux__
-      expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
+   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
 #ifdef __APPLE__
-      expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
+   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__
-   }
 
    test_that("permanentlyDropPriv checks group membership with alternate group")
    {
