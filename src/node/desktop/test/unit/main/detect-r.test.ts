@@ -22,7 +22,7 @@ import { Application } from '../../../src/main/application';
 
 describe('detect-r', () => {
   const vars: Record<string, string> = {
-    RSTUDIO_WHICH_R: 'testt',
+    RSTUDIO_WHICH_R: '',
   };
 
   beforeEach(() => {
