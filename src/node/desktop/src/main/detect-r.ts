@@ -58,8 +58,8 @@ function executeCommand(command: string): Expected<string> {
   }
 }
 
-export async function promptUserForR(): Promise<Expected<string | null>> {
-  if (process.platform === 'win32') {
+export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
+  if (platform === 'win32') {
     const desktop = await import('../native/desktop.node');
 
     const storeConfig = new Store({ defaults: kDesktopOptionDefaults });
@@ -106,6 +106,7 @@ export async function promptUserForR(): Promise<Expected<string | null>> {
     setenv('RSTUDIO_WHICH_R', path);
     return ok(path);
   }
+
   return err(new Error('This window can only be opened on Windows'));
 }
 
