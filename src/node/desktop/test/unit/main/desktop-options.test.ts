@@ -292,3 +292,32 @@ describe('FirstIsInsideSecond', () => {
     );
   });
 });
+
+describe('Font tests', () => {
+  afterEach(() => {
+    assert(isSuccessful(deleteTestingDesktopOptions()));
+  });
+
+  it('can get the legacy font', () => {
+    const mockLegacyOptions = new (class extends DesktopOptions {
+      fixedWidthFont(): string | undefined {
+        return 'legacy font';
+      }
+    })();
+    const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
+
+    assert.strictEqual(testDesktopOptions.fixedWidthFont(), 'legacy font');
+  });
+
+  it('set font overrides legacy font option', () => {
+    const mockLegacyOptions = new (class extends DesktopOptions {
+      fixedWidthFont(): string | undefined {
+        return 'legacy font';
+      }
+    })();
+    const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
+
+    testDesktopOptions.setFixedWidthFont('new font');
+    assert.strictEqual(testDesktopOptions.fixedWidthFont(), 'new font');
+  });
+});
