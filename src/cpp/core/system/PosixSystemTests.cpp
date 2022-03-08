@@ -401,12 +401,12 @@ bool initUserAndGroup(std::string username, std::string groupname, std::string n
 
 TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
 {
-   #ifdef __linux__
+#ifdef __linux__
       expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
-   #endif // __linux__
-   #ifdef __APPLE__
+#endif // __linux__
+#ifdef __APPLE__
       expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
-   #endif // __APPLE__
+#endif // __APPLE__
 
    test_that("temporarilyDropPriv uses primary group")
    {
