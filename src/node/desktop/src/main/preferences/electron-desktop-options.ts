@@ -119,7 +119,7 @@ export function firstIsInsideSecond(inner: Rectangle, outer: Rectangle): boolean
  * Exported for unit testing only, use the DesktopOptions() function
  * for creating/getting a DesktopOptionsImpl instance
  */
-export class DesktopOptionsImpl {
+export class DesktopOptionsImpl implements DesktopOptions {
   private config = new Store({ defaults: kDesktopOptionDefaults });
   private legacyOptions = legacyPreferenceManager;
 
