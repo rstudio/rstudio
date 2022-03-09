@@ -13,13 +13,10 @@
  *
  */
 
-import { BrowserWindow, WebContents } from 'electron';
-import { logger } from '../core/logger';
-
 import { nextHighest, nextLowest } from '../core/array-utils';
-
+import { logger } from '../core/logger';
 import { DesktopBrowserWindow, WindowConstructorOptions } from './desktop-browser-window';
-import { DesktopOptions } from './desktop-options';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 
 export abstract class GwtWindow extends DesktopBrowserWindow {
   // initialize zoom levels (synchronize with AppearancePreferencesPane.java)
@@ -39,7 +36,7 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
   }
 
   zoomIn(): void {
-    const zoomLevel = DesktopOptions().zoomLevel();
+    const zoomLevel = ElectronDesktopOptions().zoomLevel();
 
     // get next greatest value
     const newZoomLevel = nextHighest(zoomLevel, this.zoomLevels);
@@ -50,7 +47,7 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
 
   zoomOut(): void {
     // get next smallest value
-    const zoomLevel = DesktopOptions().zoomLevel();
+    const zoomLevel = ElectronDesktopOptions().zoomLevel();
     const newZoomLevel = nextLowest(zoomLevel, this.zoomLevels);
     if (newZoomLevel != zoomLevel) {
       this.setWindowZoomLevel(newZoomLevel);
@@ -76,7 +73,7 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
   }
 
   private setWindowZoomLevel(zoomLevel: number): void {
-    DesktopOptions().setZoomLevel(zoomLevel);
+    ElectronDesktopOptions().setZoomLevel(zoomLevel);
     this.window.webContents.setZoomFactor(zoomLevel);
   }
 }

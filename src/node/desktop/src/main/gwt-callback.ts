@@ -20,18 +20,18 @@ import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions }
 import EventEmitter from 'events';
 import { mkdtempSync, writeFileSync } from 'fs';
 import i18next from 'i18next';
-import path from 'path';
 import { findFontsSync } from 'node-system-fonts';
+import path from 'path';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { appState } from './app-state';
+import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
-import { preferenceKeys, preferenceManager } from './preferences/preferences';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
 
@@ -70,19 +70,19 @@ export class GwtCallback extends EventEmitter {
   // Info used by the "session failed to load" error page (error.html)
   errorPageData = new Map<string, string>();
 
+  // https://github.com/foliojs/font-manager/issues/15
+  // the fork did not correct usage of Fontconfig
+  // getAvailableFontsSync() incorrectly sets the monospace property
+  monospaceFonts = [...new Set<string>(findFontsSync({ monospace: true }).map((fd) => fd.family))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+  proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort((a, b) =>
+    a.localeCompare(b),
+  );
+
   constructor(public mainWindow: MainWindow, public isRemoteDesktop: boolean) {
     super();
     this.owners.add(mainWindow);
-
-    // https://github.com/foliojs/font-manager/issues/15
-    // the fork did not correct usage of Fontconfig
-    // getAvailableFontsSync() incorrectly sets the monospace property
-    const monospaceFonts = [...new Set<string>(findFontsSync({ monospace: true }).map((fd) => fd.family))].sort(
-      (a, b) => a.localeCompare(b),
-    );
-    const proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort(
-      (a, b) => a.localeCompare(b),
-    );
 
     ipcMain.on('desktop_browse_url', (event, url: string) => {
       // TODO: review if we need additional validation of URL
@@ -223,7 +223,6 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_clipboard_uris', () => {
-
       // if we don't have a URI list, nothing to do
       if (!clipboard.has('text/uri-list')) {
         return [];
@@ -243,14 +242,12 @@ export class GwtCallback extends EventEmitter {
       });
 
       return trimmed;
-
     });
 
     // Check for an image on the clipboard; if one exists,
     // write it to file in the temporary directory and
     // return the path to that file.
     ipcMain.handle('desktop_get_clipboard_image', () => {
-      
       // if we don't have any image, bail
       if (!clipboard.has('image/png')) {
         return '';
@@ -269,7 +266,6 @@ export class GwtCallback extends EventEmitter {
 
       // return file path
       return pngPath;
-
     });
 
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
@@ -515,30 +511,20 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_get_fixed_width_font_list', (event) => {
-      event.returnValue = monospaceFonts.join('\n');
+      event.returnValue = this.monospaceFonts.join('\n');
     });
 
     ipcMain.on('desktop_get_fixed_width_font', (event) => {
-      let fixedWidthFont = preferenceManager.getValue(preferenceKeys.fontFixedWidth, 'string');
-      let defaultFonts: string[];
+      let fixedWidthFont = ElectronDesktopOptions().fixedWidthFont();
 
-      if (typeof fixedWidthFont === 'string' && fixedWidthFont) {
-        event.returnValue = `"${fixedWidthFont}"`;
-        return;
-      }
+      if (!fixedWidthFont) {
+        fixedWidthFont = defaultFonts[0];
 
-      if (process.platform === 'darwin') {
-        defaultFonts = ['Menlo', 'Monaco'];
-      } else if (process.platform === 'win32') {
-        defaultFonts = ['Lucida Console', 'Consolas'];
-      } else {
-        defaultFonts = ['Ubuntu Mono', 'Droid Sans Mono', 'DejaVu Sans Mono', 'Monospace'];
-      }
-
-      for (const font of defaultFonts) {
-        if (monospaceFonts.includes(font)) {
-          fixedWidthFont = font;
-          break;
+        for (const font of defaultFonts) {
+          if (this.monospaceFonts.includes(font)) {
+            fixedWidthFont = font;
+            break;
+          }
         }
       }
 
@@ -557,7 +543,7 @@ export class GwtCallback extends EventEmitter {
 
       let proportionalFont = defaultFonts[0];
       for (const font of defaultFonts) {
-        if (proportionalFonts.includes(font)) {
+        if (this.proportionalFonts.includes(font)) {
           proportionalFont = font;
           break;
         }
@@ -565,9 +551,10 @@ export class GwtCallback extends EventEmitter {
       event.returnValue = `"${proportionalFont}"`;
     });
 
-    ipcMain.on('desktop_set_fixed_width_font', (event, font) => {
-      // TODO: Write font selection to preferences
-      GwtCallback.unimpl('desktop_set_fixed_width_font');
+    ipcMain.on('desktop_set_fixed_width_font', (_event, font) => {
+      if (font !== undefined) {
+        ElectronDesktopOptions().setFixedWidthFont(font);
+      }
     });
 
     ipcMain.handle('desktop_get_zoom_levels', () => {

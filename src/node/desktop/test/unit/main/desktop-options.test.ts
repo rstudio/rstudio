@@ -12,28 +12,32 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  */
 
-import { BrowserWindow, Rectangle, screen } from 'electron';
-import { describe } from 'mocha';
 import { assert } from 'chai';
-import sinon from 'sinon';
-import { createSinonStubInstanceForSandbox } from '../unit-utils';
-
-import {
-  DesktopOptions,
-  DesktopOptionsImpl,
-  kDesktopOptionDefaults,
-  clearOptionsSingleton,
-  firstIsInsideSecond,
-} from '../../../src/main/desktop-options';
-import { FilePath } from '../../../src/core/file-path';
-import { Err, isSuccessful } from '../../../src/core/err';
-import { tempDirectory } from '../unit-utils';
+import { BrowserWindow, Rectangle, screen } from 'electron';
 import { Display } from 'electron/main';
+import { describe } from 'mocha';
+import sinon from 'sinon';
+import { Err, isSuccessful } from '../../../src/core/err';
+import { FilePath } from '../../../src/core/file-path';
+import DesktopOptions from '../../../src/main/preferences/desktop-options';
+import {
+  clearOptionsSingleton,
+  DesktopOptionsImpl,
+  ElectronDesktopOptions,
+  firstIsInsideSecond,
+  kDesktopOptionDefaults,
+} from '../../../src/main/preferences/electron-desktop-options';
+import { createSinonStubInstanceForSandbox, tempDirectory } from '../unit-utils';
 
 const kTestingConfigDirectory = tempDirectory('DesktopOptionsTesting').toString();
 
 function testingDesktopOptions(): DesktopOptionsImpl {
-  return DesktopOptions(kTestingConfigDirectory);
+  const legacyOptions = new (class extends DesktopOptions {
+    fixedWidthFont(): string | undefined {
+      return kDesktopOptionDefaults.Font.FixedWidthFont;
+    }
+  })();
+  return ElectronDesktopOptions(kTestingConfigDirectory, legacyOptions);
 }
 
 function deleteTestingDesktopOptions(): Err {
@@ -58,7 +62,7 @@ describe('DesktopOptions', () => {
     const nonWindowsPreferR64 = false;
 
     assert.equal(options.proportionalFont(), kDesktopOptionDefaults.Font.ProportionalFont);
-    assert.equal(options.fixWidthFont(), kDesktopOptionDefaults.Font.FixWidthFont);
+    assert.equal(options.fixedWidthFont(), kDesktopOptionDefaults.Font.FixedWidthFont);
     assert.equal(options.useFontConfigDb(), kDesktopOptionDefaults.Font.UseFontConfigDb);
     assert.equal(options.zoomLevel(), kDesktopOptionDefaults.View.ZoomLevel);
     assert.deepEqual(options.windowBounds(), kDesktopOptionDefaults.View.WindowBounds);
@@ -97,7 +101,7 @@ describe('DesktopOptions', () => {
     const nonWindowsPreferR64 = false;
 
     options.setProportionalFont(newProportionalFont);
-    options.setFixWidthFont(newFixWidthFont);
+    options.setFixedWidthFont(newFixWidthFont);
     options.setUseFontConfigDb(newUseFontConfigDb);
     options.setZoomLevel(newZoom);
     options.saveWindowBounds(newWindowBounds);
@@ -111,7 +115,7 @@ describe('DesktopOptions', () => {
     options.setPeferR64(newPeferR64);
 
     assert.equal(options.proportionalFont(), newProportionalFont);
-    assert.equal(options.fixWidthFont(), newFixWidthFont);
+    assert.equal(options.fixedWidthFont(), newFixWidthFont);
     assert.equal(options.useFontConfigDb(), newUseFontConfigDb);
     assert.equal(options.zoomLevel(), newZoom);
     assert.deepEqual(options.windowBounds(), newWindowBounds);
@@ -149,7 +153,7 @@ describe('DesktopOptions', () => {
     const savedWinBounds = { width: 500, height: 500, x: 2100, y: 100 };
 
     // Save bounds onto a secondary display on the right
-    DesktopOptions().saveWindowBounds(savedWinBounds);
+    ElectronDesktopOptions().saveWindowBounds(savedWinBounds);
 
     const sandbox = sinon.createSandbox();
     sandbox.stub(screen, 'getAllDisplays').returns(displays as Display[]);
@@ -157,7 +161,7 @@ describe('DesktopOptions', () => {
     testMainWindow.setBounds.withArgs(savedWinBounds);
     testMainWindow.getSize.returns([savedWinBounds.width, savedWinBounds.height]);
 
-    DesktopOptions().restoreMainWindowBounds(testMainWindow);
+    ElectronDesktopOptions().restoreMainWindowBounds(testMainWindow);
 
     sandbox.assert.calledOnceWithExactly(testMainWindow.setBounds, savedWinBounds);
     sandbox.assert.calledOnce(testMainWindow.setSize);
@@ -179,9 +183,9 @@ describe('DesktopOptions', () => {
     testMainWindow.getSize.returns([defaultWinWidth, defaultWinHeight]);
 
     // Make sure some bounds are already saved
-    DesktopOptions().saveWindowBounds(savedWinBounds);
+    ElectronDesktopOptions().saveWindowBounds(savedWinBounds);
 
-    DesktopOptions().restoreMainWindowBounds(testMainWindow);
+    ElectronDesktopOptions().restoreMainWindowBounds(testMainWindow);
 
     sandbox.assert.calledTwice(testMainWindow.setSize);
     sandbox.assert.alwaysCalledWith(testMainWindow.setSize, defaultWinWidth, defaultWinHeight);
@@ -225,8 +229,12 @@ describe('FirstIsInsideSecond', () => {
         rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
       ),
     ); // entirely inside
-    assert.isTrue(firstIsInsideSecond(rec(), rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y))); // top and left boarders shared
-    assert.isTrue(firstIsInsideSecond(rec(), rec())); // same size rectangles is valid
+
+    // top and left boarders shared
+    assert.isTrue(firstIsInsideSecond(rec(), rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y)));
+
+    // same size rectangles is valid
+    assert.isTrue(firstIsInsideSecond(rec(), rec()));
   });
   it('backwards case', () => {
     assert.isFalse(firstIsInsideSecond(rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y), rec()));
@@ -282,5 +290,34 @@ describe('FirstIsInsideSecond', () => {
         rec(OUTER_WIDTH, OUTER_HEIGHT, OUTER_X, OUTER_Y),
       ),
     );
+  });
+});
+
+describe('Font tests', () => {
+  afterEach(() => {
+    assert(isSuccessful(deleteTestingDesktopOptions()));
+  });
+
+  it('can get the legacy font', () => {
+    const mockLegacyOptions = new (class extends DesktopOptions {
+      fixedWidthFont(): string | undefined {
+        return 'legacy font';
+      }
+    })();
+    const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
+
+    assert.strictEqual(testDesktopOptions.fixedWidthFont(), 'legacy font');
+  });
+
+  it('set font overrides legacy font option', () => {
+    const mockLegacyOptions = new (class extends DesktopOptions {
+      fixedWidthFont(): string | undefined {
+        return 'legacy font';
+      }
+    })();
+    const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
+
+    testDesktopOptions.setFixedWidthFont('new font');
+    assert.strictEqual(testDesktopOptions.fixedWidthFont(), 'new font');
   });
 });
