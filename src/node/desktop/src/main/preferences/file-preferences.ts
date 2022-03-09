@@ -14,32 +14,32 @@
  *
  */
 
-import { homedir } from 'os';
 import PropertiesReader from 'properties-reader';
+import { FilePath } from '../../core/file-path';
+import { Xdg } from '../../core/xdg';
 import DesktopOptions from './desktop-options';
 import { preferenceKeys } from './preferences';
 
 const INI_FILE = 'desktop.ini';
 
 class FilePreferences extends DesktopOptions {
-  private iniFile: string; // existing location for some preferences
-  private properties: PropertiesReader.Reader;
+  private properties?: PropertiesReader.Reader;
 
   constructor() {
     super();
-    if (process.platform === 'win32') {
-      this.iniFile = `${homedir()}\\AppData\\Roaming\\RStudio\\${INI_FILE}`;
-    } else if (process.platform === 'linux') {
-      this.iniFile = `${homedir()}/.config/RStudio/${INI_FILE}`;
-    } else {
-      throw new Error('unsupported platform');
-    }
+    const userConfigDir = Xdg.userConfigDir();
 
-    this.properties = PropertiesReader(this.iniFile);
+    // Linux has Qt legacy code that writes desktop.ini to ~/.config/RStudio but Xdg returns ~/.config/rstudio
+    // https://github.com/rstudio/rstudio/issues/6979
+    const desktopIni = userConfigDir.completePath(INI_FILE).getAbsolutePath().replace('rstudio', 'RStudio');
+
+    if (FilePath.existsSync(desktopIni)) {
+      this.properties = PropertiesReader(desktopIni);
+    }
   }
 
   fixedWidthFont(): string | undefined {
-    return this.properties.get(preferenceKeys.fontFixedWidth)?.toString();
+    return this.properties?.get(preferenceKeys.fontFixedWidth)?.toString();
   }
 }
 
