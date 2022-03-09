@@ -96,6 +96,18 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace session {   
 namespace module_context {
+
+bool isSessionSslEnabled()
+{
+   return !options().getOverlayOption(kSessionSslCertKeyOption).empty();
+}
+
+core::Error sendSessionRequest(const std::string& uri,
+                               const std::string& body,
+                               core::http::Response* pResponse)
+{
+   return session::http::sendSessionRequest(uri, body, isSessionSslEnabled(), pResponse);
+}
       
 namespace {
 
@@ -134,7 +146,7 @@ private:
                return;
             
             core::http::Response response;
-            Error error = session::http::sendSessionRequest(
+            Error error = session::module_context::sendSessionRequest(
                      "/rpc/console_input",
                      input,
                      &response);

@@ -983,6 +983,10 @@ core::Error runPandocCiteproc(const std::vector<std::string>& args, core::system
 core::Error runPandocCiteprocAsync(const std::vector<std::string>& args,
                                    const boost::function<void(const core::system::ProcessResult&)>& onCompleted);
 
+core::Error sendSessionRequest(const std::string& uri,
+                               const std::string& body,
+                               core::http::Response* pResponse);
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio
