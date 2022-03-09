@@ -177,7 +177,13 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public zoomLevel(): number {
-    return this.config.get(kZoomLevel);
+    let zoomLevel = this.config.get<'View.ZoomLevel', number>(kZoomLevel);
+
+    if (!zoomLevel) {
+      zoomLevel = this.legacyOptions.zoomLevel() ?? kDesktopOptionDefaults.View.ZoomLevel;
+    }
+
+    return zoomLevel;
   }
 
   public saveWindowBounds(bounds: Rectangle): void {

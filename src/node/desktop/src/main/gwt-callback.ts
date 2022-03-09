@@ -563,12 +563,11 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_zoom_level', () => {
-      GwtCallback.unimpl('desktop_get_zoom_level');
-      return 1.0;
+      return ElectronDesktopOptions().zoomLevel();
     });
 
     ipcMain.on('desktop_set_zoom_level', (event, zoomLevel) => {
-      GwtCallback.unimpl('desktop_set_zoom_level');
+      this.getSender('desktop_zoom_actual_size', event.processId, event.frameId).setZoomLevel(zoomLevel);
     });
 
     ipcMain.on('desktop_zoom_in', (event) => {

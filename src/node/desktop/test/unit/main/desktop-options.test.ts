@@ -36,6 +36,9 @@ function testingDesktopOptions(): DesktopOptionsImpl {
     fixedWidthFont(): string | undefined {
       return kDesktopOptionDefaults.Font.FixedWidthFont;
     }
+    zoomLevel(): number | undefined {
+      return kDesktopOptionDefaults.View.ZoomLevel;
+    }
   })();
   return ElectronDesktopOptions(kTestingConfigDirectory, legacyOptions);
 }
@@ -303,6 +306,9 @@ describe('Font tests', () => {
       fixedWidthFont(): string | undefined {
         return 'legacy font';
       }
+      zoomLevel(): number | undefined {
+        return 1.0;
+      }
     })();
     const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
 
@@ -313,6 +319,9 @@ describe('Font tests', () => {
     const mockLegacyOptions = new (class extends DesktopOptions {
       fixedWidthFont(): string | undefined {
         return 'legacy font';
+      }
+      zoomLevel(): number | undefined {
+        return 1.0;
       }
     })();
     const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);

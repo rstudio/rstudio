@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
@@ -61,6 +62,12 @@ import java.util.TreeSet;
 
 public class AppearancePreferencesPane extends PreferencesPane
 {
+   static final String ZOOM_DEFAULT = "1.00";
+   static final String[] ZOOM_VALUES = new String[] {
+           "0.25", "0.50", "0.75", "0.80", "0.90",
+           ZOOM_DEFAULT, "1.10", "1.25", "1.50", "1.75",
+           "2.00", "2.50", "3.00", "4.00", "5.00"
+   };
 
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
@@ -109,18 +116,22 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       if (Desktop.hasDesktopFrame())
       {
+         String[] zoomLabels = new String[ZOOM_VALUES.length];
+         double currentZoomLevel = DesktopInfo.getZoomLevel();
+
+         if (BrowseCap.isElectron()) {
+            Desktop.getFrame().getZoomLevel(zoomLevel ->
+            {
+               int initialIndex = getInitialZoomIndex(zoomLevel);
+               zoomLevel_.getListBox().setSelectedIndex(initialIndex);
+            });
+         }
+
          int initialIndex = -1;
          int normalIndex = -1;
-         String[] zoomValues = new String[] {
-               "0.25", "0.50", "0.75", "0.80", "0.90",
-               "1.00", "1.10", "1.25", "1.50", "1.75",
-               "2.00", "2.50", "3.00", "4.00", "5.00"
-         };
-         String[] zoomLabels = new String[zoomValues.length];
-         double currentZoomLevel = DesktopInfo.getZoomLevel();
-         for (int i = 0; i < zoomValues.length; i++)
+         for (int i = 0; i < ZOOM_VALUES.length; i++)
          {
-            double zoomValue = Double.parseDouble(zoomValues[i]);
+            double zoomValue = Double.parseDouble(ZOOM_VALUES[i]);
 
             if (zoomValue == 1.0)
                normalIndex = i;
@@ -135,11 +146,11 @@ public class AppearancePreferencesPane extends PreferencesPane
             initialIndex = normalIndex;
 
          zoomLevel_ = new SelectWidget(constants_.appearanceZoomLabelZoom(),
-                                       zoomLabels,
-                                       zoomValues,
-                                       false);
+                 zoomLabels,
+                 ZOOM_VALUES,
+                 false);
          zoomLevel_.getListBox().setSelectedIndex(initialIndex);
-         initialZoomLevel_ = zoomValues[initialIndex];
+         initialZoomLevel_ = ZOOM_VALUES[initialIndex];
 
          leftPanel.add(zoomLevel_);
 
@@ -320,6 +331,24 @@ public class AppearancePreferencesPane extends PreferencesPane
       // asynchronously too. We also need to wait until the next event cycle so that the progress
       // indicator will be ready.
       Scheduler.get().scheduleDeferred(() -> setThemes(themes));
+   }
+
+   private int getInitialZoomIndex(double currentZoomLevel) {
+      int initialIndex = -1;
+      int normalIndex = -1;
+
+      for (int i = 0; i < ZOOM_VALUES.length; i++)
+      {
+         double zoomValue = Double.parseDouble(ZOOM_VALUES[i]);
+
+         if (zoomValue == 1.0)
+            normalIndex = i;
+
+         if (zoomValue == currentZoomLevel)
+            initialIndex = i;
+      }
+      ;
+      return initialIndex == -1 ? normalIndex : initialIndex;
    }
 
    @Override

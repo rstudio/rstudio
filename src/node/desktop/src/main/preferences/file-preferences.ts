@@ -41,6 +41,11 @@ class FilePreferences extends DesktopOptions {
   fixedWidthFont(): string | undefined {
     return this.properties?.get(preferenceKeys.fontFixedWidth)?.toString();
   }
+
+  zoomLevel(): number | undefined {
+    const zoomValue = this.properties?.get(preferenceKeys.zoomLevel)?.toString();
+    return zoomValue ? parseFloat(zoomValue) : undefined;
+  }
 }
 
 export default FilePreferences;

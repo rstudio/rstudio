@@ -16,4 +16,5 @@
 
 export default abstract class DesktopOptions {
   abstract fixedWidthFont(): string | undefined;
+  abstract zoomLevel(): number | undefined;
 }
