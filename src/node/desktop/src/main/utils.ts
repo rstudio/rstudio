@@ -85,12 +85,31 @@ export function augmentCommandLineArguments(): void {
 
   const pieces = user.split(' ');
   pieces.forEach((piece) => {
-    if (piece.startsWith('-')) {
-      app.commandLine.appendSwitch(piece);
-    } else {
+
+    // if this piece doesn't start with '-', treat it as a plain argument
+    if (!piece.startsWith('-')) {
       app.commandLine.appendArgument(piece);
+      return;
     }
+
+    // otherwise, parse it as a switch and add it
+    // switches will have the form '--key=value', so split on the first '='
+    const idx = piece.indexOf('=');
+    if (idx == -1) {
+      return;
+    }
+
+    const lhs = piece.substring(0, idx);
+    const rhs = piece.substring(idx + 1);
+
+    // replace the old switch if needed
+    if (app.commandLine.hasSwitch(lhs)) {
+      app.commandLine.removeSwitch(lhs);
+    }
+
+    app.commandLine.appendSwitch(lhs, rhs);
   });
+
 }
 
 /**

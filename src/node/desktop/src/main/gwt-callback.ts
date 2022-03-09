@@ -34,6 +34,7 @@ import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
+import { DesktopOptions } from './desktop-options';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -464,11 +465,11 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_rendering_engine', () => {
-      return '';
+      return DesktopOptions().renderingEngine();
     });
 
     ipcMain.on('desktop_set_desktop_rendering_engine', (event, engine) => {
-      GwtCallback.unimpl('desktop_set_desktop_rendering_engine');
+      DesktopOptions().setRenderingEngine(engine);
     });
 
     ipcMain.handle('desktop_filter_text', (event, text: string) => {
@@ -608,19 +609,19 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
-      return true;
+      return !DesktopOptions().useGpuExclusionList();
     });
 
-    ipcMain.on('desktop_set_ignore_gpu_exclusion_list', (event, ignore) => {
-      GwtCallback.unimpl('desktop_set_ignore_gpu_exclusion_list');
+    ipcMain.on('desktop_set_ignore_gpu_exclusion_list', (event, ignore: boolean) => {
+      DesktopOptions().setUseGpuExclusionList(!ignore);
     });
 
     ipcMain.handle('desktop_get_disable_gpu_driver_bug_workarounds', () => {
-      return false;
+      return !DesktopOptions().useGpuDriverBugWorkarounds();
     });
 
-    ipcMain.on('desktop_set_disable_gpu_driver_bug_workarounds', (event, disable) => {
-      GwtCallback.unimpl('desktop_set_disable_gpu_driver_bug_workarounds');
+    ipcMain.on('desktop_set_disable_gpu_driver_bug_workarounds', (event, disable: boolean) => {
+      DesktopOptions().setUseGpuDriverBugWorkarounds(!disable);
     });
 
     ipcMain.on('desktop_show_license_dialog', () => {

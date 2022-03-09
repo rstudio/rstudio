@@ -35,6 +35,10 @@ const kTempAuthCookies = 'Session.TempAuthCookies';
 const kIgnoredUpdateVersions = 'General.IgnoredUpdateVersions';
 const kClipboardMonitoring = 'General.ClipboardMonitoring';
 
+const kRendererEngine = 'Renderer.Engine';
+const kRendererUseGpuExclusionList = 'Renderer.UseGpuExclusionList';
+const kRendererUseGpuDriverBugWorkarounds = 'Renderer.UseGpuDriverBugWorkarounds';
+
 const kRBinDir = 'Platform.Windows.RBinDir';
 const kPreferR64 = 'Platform.Windows.PreferR64';
 
@@ -60,6 +64,11 @@ export const kDesktopOptionDefaults = {
   General: {
     IgnoredUpdateVersions: [],
     ClipboardMonitoring: true,
+  },
+  Renderer: {
+    Engine: 'auto',
+    UseGpuExclusionList: true,
+    UseGpuDriverBugWorkarounds: true,
   },
   Platform: {
     Windows: {
@@ -267,6 +276,30 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
   public clipboardMonitoring(): boolean {
     return this.config.get(kClipboardMonitoring);
+  }
+
+  public setRenderingEngine(renderingEngine: string): void {
+    this.config.set(kRendererEngine, renderingEngine);
+  }
+
+  public renderingEngine(): string {
+    return this.config.get(kRendererEngine, 'desktop');
+  }
+
+  public setUseGpuExclusionList(value: boolean) {
+    this.config.set(kRendererUseGpuExclusionList, value);
+  }
+
+  public useGpuExclusionList(): boolean {
+    return this.config.get(kRendererUseGpuExclusionList, true);
+  }
+
+  public setUseGpuDriverBugWorkarounds(value: boolean) {
+    this.config.set(kRendererUseGpuDriverBugWorkarounds, value);
+  }
+
+  public useGpuDriverBugWorkarounds(): boolean {
+    return this.config.get(kRendererUseGpuDriverBugWorkarounds, true);
   }
 
   // Windows-only option
