@@ -30,8 +30,21 @@ namespace tests {
 
 static std::string getNoGroupName()
 {
-   // Debian has nobody:nogroup, but RHEL has nobody:nobody
-   return getgrnam("nogroup") ? "nogroup" : "nobody";
+   std::string group;
+
+   // Fun with groups:
+   //
+   // - Debian/Ubuntu have nobody user in the group "nogroup" and the "nobody" group doesn't exist
+   // - RHEL/CentOS have nobody in the "nobody" group, and "nogroup" doesn't exist
+   // - OpenSUSE has both groups, but nobody belongs to "nobody"
+   //
+   if (getgrnam("nobody"))
+      group = "nobody"; // RHEL/CentOS/OpenSUSE
+   else if (getgrnam("nogroup"))
+      group = "nogroup"; // Debian/Ubuntu
+
+   expect_false(group.empty());
+   return group;
 }
 
 test_context("PosixSystemTests")
@@ -40,7 +53,7 @@ test_context("PosixSystemTests")
    {
       FilePath whichPath;
       Error error = findProgramOnPath("which", &whichPath);
-      expect_true(error == Success());
+      expect_false(error);
       
       std::string resolvedPath = whichPath.getAbsolutePath();
       expect_true(resolvedPath == "/usr/bin/which" || resolvedPath == "/bin/which");
@@ -412,7 +425,7 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
    {
       // drop privs to the unprivileged user
       Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), false);
-      expect_true(error == Success());
+      expect_false(error);
 
       // check real and effective user
       uid_t ruid = getuid();
@@ -428,14 +441,14 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
       expect_true(egid == s_testUser.getGroupId());
 
       error = restorePriv();
-      expect_true(error == Success());
+      expect_false(error);
    }
 
    test_that("temporarilyDropPriv uses alternate group")
    {
       // drop privs to the unprivileged user and target group
       Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), s_testGroup.name, false);
-      expect_true(error == Success());
+      expect_false(error);
 
       // check real and effective user
       uid_t ruid = getuid();
@@ -451,7 +464,7 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
       expect_true(egid == s_testGroup.groupId);
 
       error = restorePriv();
-      expect_true(error == Success());
+      expect_false(error);
    }
 
    test_that("temporarilyDropPriv checks group membership with alternate group")
@@ -461,7 +474,7 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
       expect_true(error.getCode() == boost::system::errc::permission_denied);
 
       error = restorePriv();
-      expect_true(error == Success());
+      expect_false(error);
    }
 }
 
@@ -479,7 +492,7 @@ TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
    {
       // drop privs to the unprivileged user
       Error error = permanentlyDropPriv(s_testUser.getUsername().c_str());
-      expect_true(error == Success());
+      expect_false(error);
 
       // check real and effective user
       uid_t ruid = getuid();
@@ -516,7 +529,7 @@ TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
    {
       // drop privs to the unprivileged user and target group
       Error error = permanentlyDropPriv(s_testUser.getUsername().c_str(), s_testGroup.name);
-      expect_true(error == Success());
+      expect_false(error);
 
       // check real and effective user
       uid_t ruid = getuid();
