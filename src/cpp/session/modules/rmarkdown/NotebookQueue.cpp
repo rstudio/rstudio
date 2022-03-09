@@ -518,7 +518,7 @@ private:
          // loop back console input request to session -- this allows us to treat 
          // notebook console input exactly as user console input
          core::http::Response response;
-         Error error = session::http::sendSessionRequest(
+         Error error = session::module_context::sendSessionRequest(
                "/rpc/console_input", input, &response);
 
          if (error)
