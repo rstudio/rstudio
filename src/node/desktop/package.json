@@ -12,13 +12,15 @@
     "lint": "eslint ./src ./test",
     "package": "npm ci && electron-forge package",
     "start": "electron-forge start",
+    "debug": "electron-forge start --inspect-electron",
     "fullstart": "npm install && electron-forge start",
     "test": "electron-mocha -c --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
     "testint": "mocha -c --config ./test/int/mocharc.json",
     "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json",
     "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
-    "format": "./scripts/create-prettier-ignore-file.sh && npx prettier --write . --ignore-path .prettier_and_git_ignores"
+    "format": "./scripts/create-prettier-ignore-file.sh && npx prettier --write . --ignore-path .prettier_and_git_ignores",
+    "postinstall": "npx electron-rebuild"
   },
   "config": {
     "forge": "./forge.config.js"

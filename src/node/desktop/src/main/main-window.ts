@@ -26,7 +26,7 @@ import { SessionLauncher } from './session-launcher';
 import { ApplicationLaunch, LaunchRStudioOptions } from './application-launch';
 import { GwtWindow } from './gwt-window';
 import { appState } from './app-state';
-import { DesktopOptions } from './desktop-options';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { RemoteDesktopSessionLauncher } from './remote-desktop-session-launcher-overlay';
 import { CloseServerSessions } from './session-servers-overlay';
 import { waitForUrlWithTimeout } from './utils';
@@ -334,7 +334,7 @@ export class MainWindow extends GwtWindow {
 
     if (!this.geometrySaved) {
       const bounds = this.window.getBounds();
-      DesktopOptions().saveWindowBounds(bounds);
+      ElectronDesktopOptions().saveWindowBounds(bounds);
       this.geometrySaved = true;
     }
 

@@ -1,6 +1,6 @@
 /**
  *
- * desktop-options.ts
+ * electron-desktop-options.ts
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -16,10 +16,12 @@
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
-import { logger } from '../core/logger';
+import { logger } from '../../core/logger';
+import { legacyPreferenceManager } from './../preferences/preferences';
+import DesktopOptions from './desktop-options';
 
 const kProportionalFont = 'Font.ProportionalFont';
-const kFixWidthFont = 'Font.FixWidthFont';
+const kFixedWidthFont = 'Font.FixedWidthFont';
 const kUseFontConfigDb = 'Font.UseFontConfigDb';
 
 const kZoomLevel = 'View.ZoomLevel';
@@ -40,11 +42,13 @@ const kRendererUseGpuDriverBugWorkarounds = 'Renderer.UseGpuDriverBugWorkarounds
 const kRBinDir = 'Platform.Windows.RBinDir';
 const kPreferR64 = 'Platform.Windows.PreferR64';
 
+export let defaultFonts = ['monospace'];
+
 // exported for unit testing
 export const kDesktopOptionDefaults = {
   Font: {
     ProportionalFont: '',
-    FixWidthFont: '',
+    FixedWidthFont: '',
     UseFontConfigDb: true,
   },
   View: {
@@ -84,9 +88,9 @@ let options: DesktopOptionsImpl | null = null;
  *
  * @returns The DesktopOptions singleton
  */
-export function DesktopOptions(directory = ''): DesktopOptionsImpl {
+export function ElectronDesktopOptions(directory = '', legacyOptions?: DesktopOptions): DesktopOptionsImpl {
   if (!options) {
-    options = new DesktopOptionsImpl(directory);
+    options = new DesktopOptionsImpl(directory, legacyOptions);
   }
   return options;
 }
@@ -118,34 +122,46 @@ export function firstIsInsideSecond(inner: Rectangle, outer: Rectangle): boolean
 
 /**
  * Desktop Options class for storing/restoring user desktop options.
+ * It will read from the new option location first. If the option is
+ * not set then it will read from the legacy location.
  *
  * Exported for unit testing only, use the DesktopOptions() function
  * for creating/getting a DesktopOptionsImpl instance
  */
-export class DesktopOptionsImpl {
+export class DesktopOptionsImpl implements DesktopOptions {
   private config = new Store({ defaults: kDesktopOptionDefaults });
+  private legacyOptions = legacyPreferenceManager;
 
-  // Directory exposed for unit testing
-  constructor(directory = '') {
+  // unit testing constructor to expose directory and DesktopOptions mock
+  constructor(directory = '', legacyOptions?: DesktopOptions) {
     if (directory.length != 0) {
       this.config = new Store({ defaults: kDesktopOptionDefaults, cwd: directory });
     }
+    if (legacyOptions) {
+      this.legacyOptions = legacyOptions;
+    }
   }
 
-  public setProportionalFont(font: string): void {
-    this.config.set(kProportionalFont, font);
+  public setProportionalFont(font?: string): void {
+    this.config.set(kProportionalFont, font ?? '');
   }
 
   public proportionalFont(): string {
     return this.config.get(kProportionalFont);
   }
 
-  public setFixWidthFont(fixWidthFont: string): void {
-    this.config.set(kFixWidthFont, fixWidthFont);
+  public setFixedWidthFont(fixedWidthFont: string): void {
+    this.config.set(kFixedWidthFont, fixedWidthFont);
   }
 
-  public fixWidthFont(): string {
-    return this.config.get(kFixWidthFont);
+  public fixedWidthFont(): string | undefined {
+    let fontName = this.config.get<'Font.FixedWidthFont', string>(kFixedWidthFont);
+
+    if (!fontName) {
+      fontName = this.legacyOptions.fixedWidthFont() ?? '';
+    }
+
+    return fontName;
   }
 
   public setUseFontConfigDb(useFontConfigDb: boolean): void {
@@ -318,4 +334,12 @@ export class DesktopOptionsImpl {
     }
     return this.config.get(kPreferR64);
   }
+}
+
+if (process.platform === 'darwin') {
+  defaultFonts = ['Menlo', 'Monaco'];
+} else if (process.platform === 'win32') {
+  defaultFonts = ['Lucida Console', 'Consolas'];
+} else {
+  defaultFonts = ['Ubuntu Mono', 'Droid Sans Mono', 'DejaVu Sans Mono', 'Monospace'];
 }

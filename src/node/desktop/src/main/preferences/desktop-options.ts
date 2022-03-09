@@ -1,6 +1,6 @@
 /**
  *
- * mac-preferences.ts
+ * desktop-options.ts
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -14,23 +14,6 @@
  *
  */
 
-import { systemPreferences } from 'electron';
-import { preferenceKeys } from './preferences';
-import DesktopOptions from './desktop-options';
-
-/**
- * MacOS specific implementation
- *
- * The preferences are stored in defauls, which is MacOS specific.
- */
-class MacPreferences extends DesktopOptions {
-  constructor() {
-    super();
-  }
-
-  fixedWidthFont(): string | undefined {
-    return systemPreferences.getUserDefault(preferenceKeys.fontFixedWidth, 'string');
-  }
+export default abstract class DesktopOptions {
+  abstract fixedWidthFont(): string | undefined;
 }
-
-export default MacPreferences;

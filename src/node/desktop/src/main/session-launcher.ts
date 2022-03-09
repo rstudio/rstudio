@@ -39,7 +39,7 @@ import {
   waitForUrlWithTimeout,
 } from './utils';
 import { buildInfo } from './build-info';
-import { DesktopOptions } from './desktop-options';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import i18next from 'i18next';
 import path from 'path';
 
@@ -187,7 +187,7 @@ export class SessionLauncher {
     this.mainWindow.appLauncher = this.appLaunch;
     this.appLaunch.setActivationWindow(this.mainWindow);
 
-    DesktopOptions().restoreMainWindowBounds(this.mainWindow.window);
+    ElectronDesktopOptions().restoreMainWindowBounds(this.mainWindow.window);
 
     logger().logDiagnostic('\nConnected to R session, attempting to initialize...\n');
 

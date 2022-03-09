@@ -22,6 +22,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
+import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -61,13 +62,32 @@ public class YamlEditorToolsProviderQuarto implements YamlEditorToolsProvider
       {
          String filename = FileSystemItem.getNameFromPath(StringUtil.notNull(path));
          return SourceDocument.XT_QUARTO_DOCUMENT.equals(extendedType) ||
-                filename.equals("_quarto.yml") ||
-                filename.equals("_quarto.yaml");
+                isQuartoProjectYaml(filename) || isQuartoMetadataYaml(path);
       }
       else
       {
          return false;
       }  
+   }
+   
+   private boolean isQuartoProjectYaml(String filename)
+   {
+      return filename.equals("_quarto.yml") ||
+             filename.equals("_quarto.yaml");
+   }
+   
+   private boolean isQuartoMetadataYaml(String path)
+   {
+      if (QuartoHelper.isWithinQuartoProjectDir(path, config_))
+      {
+         String filename = FileSystemItem.getNameFromPath(StringUtil.notNull(path));
+         return filename.equals("_metadata.yml") ||
+                filename.equals("_metadata.yaml");
+      }
+      else
+      {
+         return false;
+      }
    }
 
    @Override

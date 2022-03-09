@@ -68,6 +68,12 @@ export class ArgsManager {
   initCommandLine(application: Application, argv: string[] = process.argv): ProgramStatus {
     this.handleHelp(argv);
 
+    // look for a version check request; if we have one, just do that and exit
+    if (argv.indexOf(kVersion) > -1) {
+      console.log(app.getVersion());
+      return exitSuccess();
+    }
+
     // report extended version info and exit
     if (argv.indexOf(kVersionJson) > -1) {
       console.log(getComponentVersions());
