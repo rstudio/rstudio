@@ -22,6 +22,7 @@
 #include <session/http/SessionRequest.hpp>
 
 #include <core/http/TcpIpBlockingClient.hpp>
+#include <core/http/TcpIpBlockingClientSsl.hpp>
 #include <core/http/ConnectionRetryProfile.hpp>
 #include <core/http/CSRFToken.hpp>
 
@@ -47,6 +48,7 @@ namespace http {
 // rsession) and the session itself
 inline core::Error sendSessionRequest(const std::string& uri, 
                                       const std::string& body,
+                                      const bool ssl,
                                       core::http::Response* pResponse)
 {
    // build request
@@ -86,7 +88,6 @@ inline core::Error sendSessionRequest(const std::string& uri,
       {
          // if we have a shared secret to use (like in desktop mode), simply stamp it on the request
          request.setHeader("X-Shared-Secret", sharedSecret);
-         return core::http::sendRequest("127.0.0.1", tcpipPort, request,  pResponse);
       }
 #ifdef RSTUDIO_SERVER
       else
@@ -98,9 +99,15 @@ inline core::Error sendSessionRequest(const std::string& uri,
          if (error)
             return error;
 
-         return core::http::sendRequest("127.0.0.1", tcpipPort, request, pResponse);
       }
 #endif
+      // Need to turn verify off here because we don't know the address used in the cert. Because we are listening on 127.0.0.1, 
+      // and the tcp stack forces that to be a local connection, there's no ambiguity about who we are connecting to so I don't
+      // think verification adds anything here.
+      if (ssl)
+         return core::http::sendSslRequest("127.0.0.1", tcpipPort, false /* verify cert */, request,  pResponse);
+      else
+         return core::http::sendRequest("127.0.0.1", tcpipPort, request,  pResponse);
    }
 
 #ifndef _WIN32
