@@ -14,19 +14,15 @@
  */
 
 import { app } from 'electron';
-
-import { logger, logLevel } from '../core/logger';
+import i18next from 'i18next';
 import { safeError } from '../core/err';
-
+import { logLevel } from '../core/logger';
+import { setApplication } from './app-state';
 import { Application } from './application';
-import { appState, setApplication } from './app-state';
+import { initI18n } from './i18n-manager';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { parseStatus } from './program-status';
 import { createStandaloneErrorDialog } from './utils';
-
-import { initI18n } from './i18n-manager';
-import i18next from 'i18next';
-import { DesktopOptions } from './desktop-options';
-import { platform } from 'os';
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -53,8 +49,7 @@ class RStudioMain {
   }
 
   private async initializeRenderingEngine() {
-
-    const options = DesktopOptions();
+    const options = ElectronDesktopOptions();
 
     if (!options.useGpuDriverBugWorkarounds()) {
       app.commandLine.appendSwitch('disable-gpu-driver-bug-workarounds');
@@ -65,8 +60,7 @@ class RStudioMain {
     }
 
     // read rendering engine, if any
-    const engine = DesktopOptions().renderingEngine().toLowerCase();
-
+    const engine = ElectronDesktopOptions().renderingEngine().toLowerCase();
 
     // for whatever reason, setting '--use-gl=desktop' doesn't seem to enable
     // the GPU on macOS; testing on other platforms would be worthwhile but
@@ -87,11 +81,9 @@ class RStudioMain {
       app.commandLine.appendSwitch('disable-gpu');
       return;
     }
-
   }
 
   private async startup(): Promise<void> {
-
     await this.initializeRenderingEngine();
 
     // NOTE: On Linux it looks like Electron prefers using ANGLE for GPU

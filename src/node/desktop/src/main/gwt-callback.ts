@@ -28,13 +28,12 @@ import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
 import { appState } from './app-state';
-import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
+import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
-import { DesktopOptions } from './desktop-options';
 
 export enum PendingQuit {
   PendingQuitNone,
@@ -465,11 +464,11 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_rendering_engine', () => {
-      return DesktopOptions().renderingEngine();
+      return ElectronDesktopOptions().renderingEngine();
     });
 
     ipcMain.on('desktop_set_desktop_rendering_engine', (event, engine) => {
-      DesktopOptions().setRenderingEngine(engine);
+      ElectronDesktopOptions().setRenderingEngine(engine);
     });
 
     ipcMain.handle('desktop_filter_text', (event, text: string) => {
@@ -609,19 +608,19 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
-      return !DesktopOptions().useGpuExclusionList();
+      return !ElectronDesktopOptions().useGpuExclusionList();
     });
 
     ipcMain.on('desktop_set_ignore_gpu_exclusion_list', (event, ignore: boolean) => {
-      DesktopOptions().setUseGpuExclusionList(!ignore);
+      ElectronDesktopOptions().setUseGpuExclusionList(!ignore);
     });
 
     ipcMain.handle('desktop_get_disable_gpu_driver_bug_workarounds', () => {
-      return !DesktopOptions().useGpuDriverBugWorkarounds();
+      return !ElectronDesktopOptions().useGpuDriverBugWorkarounds();
     });
 
     ipcMain.on('desktop_set_disable_gpu_driver_bug_workarounds', (event, disable: boolean) => {
-      DesktopOptions().setUseGpuDriverBugWorkarounds(!disable);
+      ElectronDesktopOptions().setUseGpuDriverBugWorkarounds(!disable);
     });
 
     ipcMain.on('desktop_show_license_dialog', () => {
