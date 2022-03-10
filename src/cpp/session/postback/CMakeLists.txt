@@ -40,15 +40,9 @@ target_link_libraries(rpostback
 )
 
 if (RSTUDIO_SERVER)
-
     target_link_libraries(rpostback
        rstudio-server-core
     )
-
-if(APPLE)
-   target_link_libraries(rpostback "-framework Security")
-endif()
-
 endif()
 
 # configure postback scripts for development mode
