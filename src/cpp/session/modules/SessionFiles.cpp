@@ -1723,7 +1723,8 @@ SEXP rs_listFiles(SEXP pathSEXP,
       bool includeDirs  = validateLogical(includeDirsSEXP, "include.dirs");
       bool noDotDot     = validateLogical(noDotDotSEXP,    "no..");
 
-      // suppress warning
+      // suppress warning -- we use 'ignoreCaseSEXP' as-is after validation,
+      // but keeping the parallel code structure above is nice
       (void) ignoreCase;
       
       std::vector<boost::filesystem::path> result;
