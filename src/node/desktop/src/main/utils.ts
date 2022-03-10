@@ -30,6 +30,7 @@ import { Err } from '../core/err';
 
 import { MainWindow } from './main-window';
 import i18next from 'i18next';
+import { execSync, spawnSync } from 'child_process';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -390,19 +391,45 @@ export function isSafeHost(host: string): boolean {
   return false;
 }
 
+// this code follows in the footsteps of R.app
+function initializeLangDarwin(): string {
+
+  {
+    // if 'force.LANG' is set, that takes precedencec
+    const args = ['read', 'org.R-project.R', 'force.LANG'];
+    const result = spawnSync('/usr/bin/defaults', args, { encoding: 'utf-8' });
+    if (result.status === 0) {
+      return result.stdout.trim();
+    }
+  }
+
+  {
+    // if 'ignore.system.locale' is set, we'll use a UTF-8 locale
+    const args = ['read', 'org.R-project.R', 'ignore.system.locale'];
+    const result = spawnSync('/usr/bin/defaults', args, { encoding: 'utf-8' });
+    if (result.status === 0 && result.stdout.trim() === 'YES') {
+      return 'en_US.UTF-8';
+    }
+  }
+
+  // next, check the LANG environment variable
+  const lang = getenv('LANG');
+  if (lang.length !== 0) {
+    return lang;
+  }
+
+  // otherwise, just use UTF-8 locale
+  return 'en_US.UTF-8';
+
+}
+
 export function initializeLang(): void {
   if (process.platform === 'darwin') {
-    // TODO: port full language detection, see initializeLang() in DesktopUtilsMac.mm
-
-    let lang = getenv('LANG');
-
-    // None of the above worked. Just hard code it.
-    if (!lang) {
-      lang = 'en_US.UTF-8';
+    const lang = initializeLangDarwin();
+    if (lang.length !== 0) {
+      setenv('LANG', lang);
+      setenv('LC_CTYPE', lang);
     }
-
-    setenv('LANG', lang);
-    setenv('LC_CTYPE', lang);
   }
 }
 
