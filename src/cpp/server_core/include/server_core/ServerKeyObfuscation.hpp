@@ -16,6 +16,7 @@
 #ifndef SERVER_CORE_SERVER_KEY_OBFUSCATION_HPP
 #define SERVER_CORE_SERVER_KEY_OBFUSCATION_HPP
 
-#define OBFUSCATE_KEY(key) (key)
+// stub for open source
+#define OBFUSCATE_KEY(key) (key[0] = key[0])
 
 #endif /* SERVER_CORE_SERVER_KEY_OBFUSCATION_HPP */

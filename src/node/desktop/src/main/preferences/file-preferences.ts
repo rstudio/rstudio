@@ -1,20 +1,45 @@
-import { UserDefaultTypes } from 'electron';
+/**
+ *
+ * file-preferences.ts
+ *
+ * Copyright (C) 2022 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
 import PropertiesReader from 'properties-reader';
-import { PlatformPreferences } from './preferences';
+import { FilePath } from '../../core/file-path';
+import { Xdg } from '../../core/xdg';
+import DesktopOptions from './desktop-options';
+import { preferenceKeys } from './preferences';
 
-class FilePreferences implements PlatformPreferences {
-  private properties: PropertiesReader.Reader;
+const INI_FILE = 'desktop.ini';
 
-  constructor(file: string) {
-    this.properties = PropertiesReader(file);
+class FilePreferences extends DesktopOptions {
+  private properties?: PropertiesReader.Reader;
+
+  constructor() {
+    super();
+    const userConfigDir = Xdg.userConfigDir();
+
+    // Linux has Qt legacy code that writes desktop.ini to ~/.config/RStudio but Xdg returns ~/.config/rstudio
+    // https://github.com/rstudio/rstudio/issues/6979
+    const desktopIni = userConfigDir.completePath(INI_FILE).getAbsolutePath().replace('rstudio', 'RStudio');
+
+    if (FilePath.existsSync(desktopIni)) {
+      this.properties = PropertiesReader(desktopIni);
+    }
   }
 
-  getValue(key: string, _type: keyof UserDefaultTypes) {
-    return this.properties.get(key) ?? '';
-  }
-
-  setValue(_key: string, _type: keyof UserDefaultTypes, _value: keyof UserDefaultTypes): never {
-    throw new Error('unimplemented');
+  fixedWidthFont(): string | undefined {
+    return this.properties?.get(preferenceKeys.fontFixedWidth)?.toString();
   }
 }
 

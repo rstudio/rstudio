@@ -56,7 +56,7 @@ export class ChooseRModalWindow extends ModalDialog<string | null> {
         return resolve(data);
       });
 
-      ipcMain.on('browse', () => {
+      ipcMain.handle('browse-r-exe', async () => {
         const response = dialog.showOpenDialogSync(this, {
           title: i18next.t('uiFolder.chooseRExecutable'),
           properties: ['openFile'],
@@ -65,8 +65,10 @@ export class ChooseRModalWindow extends ModalDialog<string | null> {
 
         if (response) {
           logger().logDebug(`Using user-selected version of R (${response[0]})`);
-          return resolve(response[0]);
+          resolve('' + response[0]);
         }
+
+        return !!response;
       });
 
       ipcMain.on('cancel', () => {

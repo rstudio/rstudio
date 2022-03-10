@@ -33,7 +33,12 @@ module.exports = {
         ignoreUrls: true,
       },
     ],
-    'prettier/prettier': 'warn',
+    'prettier/prettier': [
+      'warn',
+      {
+        'endOfLine': 'auto'
+      }
+    ],
 
     '@typescript-eslint/await-thenable': ['error'],
     '@typescript-eslint/no-base-to-string': ['error'],

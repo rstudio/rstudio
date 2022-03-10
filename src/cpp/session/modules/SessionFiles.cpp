@@ -31,9 +31,11 @@
 #include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
+
 #include <core/Log.hpp>
 #include <core/FileSerializer.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/FileInfo.hpp>
 #include <core/FileUtils.hpp>
 #include <core/Settings.hpp>
@@ -43,8 +45,6 @@
 #include <core/http/Util.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
-
-#include <shared_core/json/Json.hpp>
 
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Process.hpp>
@@ -1391,26 +1391,43 @@ public:
 class ListFilesAcceptMatching
 {
 public:
-#ifdef BOOST_WINDOWS_API
-   typedef boost::wregex regex_type;
-   typedef std::wstring string_type;
-#else
-   typedef boost::regex regex_type;
-   typedef std::string string_type;
-#endif
    
-   ListFilesAcceptMatching(const string_type& pattern, int flags)
-      : pattern_(pattern, flags)
+   ListFilesAcceptMatching(SEXP patternSEXP, SEXP ignoreCaseSEXP)
    {
+      // placeholder for input paths
+      xSEXP_ = Rf_allocVector(STRSXP, 1);
+      preserver_.add(xSEXP_);
+
+      // construct our call up-front, so we can re-use it without
+      // paying the cost to rebuild this call on every invocation
+      callSEXP_ = Rf_lang4(
+               Rf_install("grepl"),    // function
+               patternSEXP,            // pattern
+               xSEXP_,                 // x (filled in below)
+               ignoreCaseSEXP);        // ignore.case
+
+      preserver_.add(callSEXP_);
    }
    
    bool operator()(const boost::filesystem::path& path)
    {
-      return boost::regex_search(path.native(), pattern_);
+      // fill in placeholder
+      auto pathString = path.string();
+      SEXP charSEXP = Rf_mkCharLenCE(
+               pathString.data(),
+               pathString.size(),
+               CE_UTF8);
+      SET_STRING_ELT(xSEXP_, 0, charSEXP);
+
+      // evaluate our call
+      SEXP resultSEXP = Rf_eval(callSEXP_, R_BaseEnv);
+      return LOGICAL(resultSEXP)[0];
    }
    
 private:
-   regex_type pattern_;
+   SEXP callSEXP_;
+   SEXP xSEXP_;
+   r::sexp::SEXPPreserver preserver_;
 };
 
 class ListFilesInterruptedException : public std::exception
@@ -1594,6 +1611,16 @@ std::vector<boost::filesystem::path> initializePaths(SEXP pathSEXP)
          continue;
 
       const char* utf8Path = Rf_translateCharUTF8(charSEXP);
+
+      // ensure paths are expanded -- note that R does not
+      // preserve the tilde prefix in e.g.
+      //
+      //    list.files("~/hello", full.names = TRUE)
+      //
+      // rather, the expanded path is used when filling
+      // the names of listed files
+      utf8Path = R_ExpandFileName(utf8Path);
+
 #ifdef BOOST_WINDOWS_API
       paths.push_back(string_utils::utf8ToWide(utf8Path));
 #else
@@ -1673,19 +1700,6 @@ bool validateLogical(SEXP valueSEXP, const char* name)
    return value != 0;
 }
 
-boost::filesystem::path::string_type extractPattern(SEXP patternSEXP)
-{
-   if (LENGTH(patternSEXP) == 0)
-      return boost::filesystem::path::string_type();
-   
-   const char* pattern = Rf_translateCharUTF8(STRING_ELT(patternSEXP, 0));
-#ifdef BOOST_WINDOWS_API
-   return string_utils::utf8ToWide(pattern);
-#else
-   return pattern;
-#endif
-}
-
 SEXP rs_listFiles(SEXP pathSEXP,
                   SEXP patternSEXP,
                   SEXP allFilesSEXP,
@@ -1709,6 +1723,10 @@ SEXP rs_listFiles(SEXP pathSEXP,
       bool includeDirs  = validateLogical(includeDirsSEXP, "include.dirs");
       bool noDotDot     = validateLogical(noDotDotSEXP,    "no..");
 
+      // suppress warning -- we use 'ignoreCaseSEXP' as-is after validation,
+      // but keeping the parallel code structure above is nice
+      (void) ignoreCase;
+      
       std::vector<boost::filesystem::path> result;
       std::vector<boost::filesystem::path> paths = initializePaths(pathSEXP);
 
@@ -1724,21 +1742,21 @@ SEXP rs_listFiles(SEXP pathSEXP,
       options.noDotDot               = noDotDot;
       options.checkTrailingSeparator = true;
 
-      // read and handle pattern
-      auto pattern = extractPattern(patternSEXP);
-      if (pattern.empty())
+      if (patternSEXP == R_NilValue || LENGTH(patternSEXP) == 0)
       {
-         auto matcher = ListFilesAcceptAll();
-         listFilesDispatch(paths, options, matcher, &result);
+         listFilesDispatch(
+                  paths,
+                  options,
+                  ListFilesAcceptAll(),
+                  &result);
       }
       else
       {
-         int flags = boost::regex::perl;
-         if (ignoreCase)
-            flags |= boost::regex::icase;
-
-         auto matcher = ListFilesAcceptMatching(pattern, flags);
-         listFilesDispatch(paths, options, matcher, &result);
+         listFilesDispatch(
+                  paths,
+                  options,
+                  ListFilesAcceptMatching(patternSEXP, ignoreCaseSEXP),
+                  &result);
       }
 
       return finalizePaths(result);
@@ -1752,7 +1770,9 @@ SEXP rs_listFiles(SEXP pathSEXP,
    // note: will longjmp if an interrupt is pending
    r::exec::checkUserInterrupt();
 
-   return R_NilValue;
+   r::sexp::Protect protect;
+   return r::sexp::create(std::vector<std::string>(), &protect);
+
 }
 
 SEXP rs_listDirs(SEXP pathSEXP,
@@ -1812,8 +1832,10 @@ SEXP rs_listDirs(SEXP pathSEXP,
    
    // note: will longjmp if an interrupt is pending
    r::exec::checkUserInterrupt();
-   
-   return R_NilValue;
+
+   r::sexp::Protect protect;
+   return r::sexp::create(std::vector<std::string>(), &protect);
+
 }
 
 SEXP rs_readLines(SEXP filePathSEXP)

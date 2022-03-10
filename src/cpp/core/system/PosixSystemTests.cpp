@@ -20,7 +20,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
+#include <grp.h>
 #include <tests/TestThat.hpp>
 
 namespace rstudio {
@@ -28,13 +28,36 @@ namespace core {
 namespace system {
 namespace tests {
 
+#ifdef __linux__
+
+static std::string getNoGroupName()
+{
+   std::string group;
+
+   // Fun with groups:
+   //
+   // - Debian/Ubuntu have nobody user in the group "nogroup" and the "nobody" group doesn't exist
+   // - RHEL/CentOS have nobody in the "nobody" group, and "nogroup" doesn't exist
+   // - OpenSUSE has both groups, but nobody belongs to "nobody"
+   //
+   if (getgrnam("nobody"))
+      group = "nobody"; // RHEL/CentOS/OpenSUSE
+   else if (getgrnam("nogroup"))
+      group = "nogroup"; // Debian/Ubuntu
+
+   expect_false(group.empty());
+   return group;
+}
+
+#endif
+
 test_context("PosixSystemTests")
 {
    test_that("findProgramOnPath can find core utils")
    {
       FilePath whichPath;
       Error error = findProgramOnPath("which", &whichPath);
-      expect_true(error == Success());
+      expect_false(error);
       
       std::string resolvedPath = whichPath.getAbsolutePath();
       expect_true(resolvedPath == "/usr/bin/which" || resolvedPath == "/bin/which");
@@ -357,55 +380,56 @@ User s_testUser;
 group::Group s_testGroup;
 group::Group s_testNonMemberGroup;
 
-void initUserAndGroup(std::string username, std::string groupname, std::string nonmember_groupname)
+bool initUserAndGroup(std::string username, std::string groupname, std::string nonmember_groupname)
 {
    bool isRoot = core::system::effectiveUserIsRoot();
-   CHECK(isRoot);
+   expect_true(isRoot);
    if (!isRoot)
-      ::_exit(1);
+      return false;
 
    // get user info
    Error error = User::getUserFromIdentifier(username, s_testUser);
+   expect_false(error);
    if (error)
    {
       LOG_ERROR(error);
-      ::_exit(1);
+      return false;
    }
 
    // get group info. user should be a member of this group.
    error = group::groupFromName(groupname, &s_testGroup);
+   expect_false(error);
    if (error)
    {
       LOG_ERROR(error);
-      ::_exit(1);
+      return false;
    }
 
    // get secondary group info. user should not be a member of this group.
    error = group::groupFromName(nonmember_groupname, &s_testNonMemberGroup);
+   expect_false(error);
    if (error)
    {
       LOG_ERROR(error);
-      ::_exit(1);
+      return false;
    }
+   return true;
 }
 
 TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
 {
-   test_that("init")
-   {
 #ifdef __linux__
-      initUserAndGroup("nobody", "nogroup", "users");
+      expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
 #ifdef __APPLE__
-      initUserAndGroup("nobody", "nobody", "daemon");
+      expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__
-   }
 
    test_that("temporarilyDropPriv uses primary group")
    {
       // drop privs to the unprivileged user
       Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), false);
-      expect_true(error == Success());
+      expect_false(error);
 
       // check real and effective user
       uid_t ruid = getuid();
@@ -421,14 +445,14 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
       expect_true(egid == s_testUser.getGroupId());
 
       error = restorePriv();
-      expect_true(error == Success());
+      expect_false(error);
    }
 
    test_that("temporarilyDropPriv uses alternate group")
    {
       // drop privs to the unprivileged user and target group
       Error error = temporarilyDropPriv(s_testUser.getUsername().c_str(), s_testGroup.name, false);
-      expect_true(error == Success());
+      expect_false(error);
 
       // check real and effective user
       uid_t ruid = getuid();
@@ -444,7 +468,7 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
       expect_true(egid == s_testGroup.groupId);
 
       error = restorePriv();
-      expect_true(error == Success());
+      expect_false(error);
    }
 
    test_that("temporarilyDropPriv checks group membership with alternate group")
@@ -454,28 +478,25 @@ TEST_CASE("TemporarilyDropPrivTests", "[requiresRoot]")
       expect_true(error.getCode() == boost::system::errc::permission_denied);
 
       error = restorePriv();
-      expect_true(error == Success());
+      expect_false(error);
    }
 }
 
 
 TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
 {
-   test_that("init")
-   {
 #ifdef __linux__
-      initUserAndGroup("nobody", "nogroup", "users");
+   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
 #ifdef __APPLE__
-      initUserAndGroup("nobody", "nobody", "daemon");
+   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__
-   }
 
    test_that("permanentlyDropPriv uses primary group")
    {
       // drop privs to the unprivileged user
       Error error = permanentlyDropPriv(s_testUser.getUsername().c_str());
-      expect_true(error == Success());
+      expect_false(error);
 
       // check real and effective user
       uid_t ruid = getuid();
@@ -494,15 +515,12 @@ TEST_CASE("PermanentlyDropPrivPrimaryTests", "[requiresRoot]")
 
 TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
 {
-   test_that("init")
-   {
 #ifdef __linux__
-      initUserAndGroup("nobody", "nogroup", "users");
+   expect_true(initUserAndGroup("nobody", getNoGroupName(), "users"));
 #endif // __linux__
 #ifdef __APPLE__
-      initUserAndGroup("nobody", "nobody", "daemon");
+   expect_true(initUserAndGroup("nobody", "nobody", "daemon"));
 #endif // __APPLE__
-   }
 
    test_that("permanentlyDropPriv checks group membership with alternate group")
    {
@@ -515,7 +533,7 @@ TEST_CASE("PermanentlyDropPrivAlternateTests", "[requiresRoot]")
    {
       // drop privs to the unprivileged user and target group
       Error error = permanentlyDropPriv(s_testUser.getUsername().c_str(), s_testGroup.name);
-      expect_true(error == Success());
+      expect_false(error);
 
       // check real and effective user
       uid_t ruid = getuid();
