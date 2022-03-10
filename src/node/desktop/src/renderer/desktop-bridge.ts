@@ -68,12 +68,11 @@ export function getDesktopBridge() {
       ipcRenderer
         .invoke('desktop_get_save_file_name', caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner)
         .then((result) => {
-
           // if the result was canceled, bail early
           if (result.canceled as boolean) {
             return callback('');
           }
-          
+
           // if we don't have a default extension, just invoke callback
           let filePath = result.filePath as string;
           if (defaultExtension.length === 0) {
@@ -89,7 +88,6 @@ export function getDesktopBridge() {
 
           // invoke callback
           return callback(filePath);
-
         })
         .catch((error) => reportIpcError('getSaveFileName', error));
     },
@@ -404,10 +402,8 @@ export function getDesktopBridge() {
     },
 
     getZoomLevel: (callback: VoidCallback<number>) => {
-      ipcRenderer
-        .invoke('desktop_get_zoom_level')
-        .then((zoomLevel) => callback(zoomLevel))
-        .catch((error) => reportIpcError('getZoomLevel', error));
+      const zoomLevel = ipcRenderer.sendSync('desktop_get_zoom_level');
+      callback(zoomLevel);
     },
 
     setZoomLevel: (zoomLevel: number) => {

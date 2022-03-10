@@ -56,16 +56,16 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class AppearancePreferencesPane extends PreferencesPane
 {
-   static final String ZOOM_DEFAULT = "1.00";
    static final String[] ZOOM_VALUES = new String[] {
            "0.25", "0.50", "0.75", "0.80", "0.90",
-           ZOOM_DEFAULT, "1.10", "1.25", "1.50", "1.75",
+           "1.00", "1.10", "1.25", "1.50", "1.75",
            "2.00", "2.50", "3.00", "4.00", "5.00"
    };
 
@@ -116,8 +116,16 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       if (Desktop.hasDesktopFrame())
       {
-         String[] zoomLabels = new String[ZOOM_VALUES.length];
+         String[] zoomLabels = Arrays.stream(ZOOM_VALUES)
+                 .map(zoomValue -> StringUtil.formatPercent(Double.parseDouble(zoomValue)))
+                 .toArray(String[]::new);
          double currentZoomLevel = DesktopInfo.getZoomLevel();
+
+         zoomLevel_ = new SelectWidget(constants_.appearanceZoomLabelZoom(),
+                 zoomLabels,
+                 ZOOM_VALUES,
+                 false);
+         zoomLevel_.getListBox().addChangeHandler(event -> updatePreviewZoomLevel());
 
          if (BrowseCap.isElectron()) {
             Desktop.getFrame().getZoomLevel(zoomLevel ->
@@ -125,36 +133,13 @@ public class AppearancePreferencesPane extends PreferencesPane
                int initialIndex = getInitialZoomIndex(zoomLevel);
                zoomLevel_.getListBox().setSelectedIndex(initialIndex);
             });
+         } else {
+            int initialIndex = getInitialZoomIndex(currentZoomLevel);
+            zoomLevel_.getListBox().setSelectedIndex(initialIndex);
+            initialZoomLevel_ = ZOOM_VALUES[initialIndex];
          }
-
-         int initialIndex = -1;
-         int normalIndex = -1;
-         for (int i = 0; i < ZOOM_VALUES.length; i++)
-         {
-            double zoomValue = Double.parseDouble(ZOOM_VALUES[i]);
-
-            if (zoomValue == 1.0)
-               normalIndex = i;
-
-            if (zoomValue == currentZoomLevel)
-               initialIndex = i;
-
-            zoomLabels[i] = StringUtil.formatPercent(zoomValue);
-         }
-
-         if (initialIndex == -1)
-            initialIndex = normalIndex;
-
-         zoomLevel_ = new SelectWidget(constants_.appearanceZoomLabelZoom(),
-                 zoomLabels,
-                 ZOOM_VALUES,
-                 false);
-         zoomLevel_.getListBox().setSelectedIndex(initialIndex);
-         initialZoomLevel_ = ZOOM_VALUES[initialIndex];
 
          leftPanel.add(zoomLevel_);
-
-         zoomLevel_.getListBox().addChangeHandler(event -> updatePreviewZoomLevel());
       }
 
       String[] fonts = new String[] {};
@@ -347,7 +332,7 @@ public class AppearancePreferencesPane extends PreferencesPane
          if (zoomValue == currentZoomLevel)
             initialIndex = i;
       }
-      ;
+
       return initialIndex == -1 ? normalIndex : initialIndex;
    }
 
@@ -516,8 +501,16 @@ public class AppearancePreferencesPane extends PreferencesPane
       // no zoom preview on desktop
       if (Desktop.hasDesktopFrame())
       {
-         preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) /
-                               DesktopInfo.getZoomLevel());
+         if (BrowseCap.isElectron())
+         {
+            Desktop.getFrame().getZoomLevel(currentZoomLevel ->
+                    preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) / currentZoomLevel)
+            );
+         }
+         else
+         {
+            preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) / DesktopInfo.getZoomLevel());
+         }
       }
    }
 

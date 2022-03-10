@@ -15,7 +15,7 @@
 
 import { ipcRenderer } from 'electron';
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+// preload never calls this again so these values are immutable
 export function getDesktopInfoBridge() {
   return {
     platform: '',
