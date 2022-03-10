@@ -105,6 +105,10 @@ RUN cd /tmp && \
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 
+# create nobody user and group, used by unit tests
+RUN groupadd -g 65534 nobody && \
+    useradd -m -d /var/lib/nobody -u 65534 -g nobody nobody
+
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999
 ARG JENKINS_UID=999
