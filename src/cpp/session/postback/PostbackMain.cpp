@@ -80,11 +80,14 @@ int main(int argc, char * const argv[])
       ProgramStatus status = options.read(argc, argv);
       if ( status.exit() )
          return status.exitCode();
+
+      bool sessionSslEnabled = !core::system::getenv(kSessionSslCertEnvVar).empty();
       
       http::Response response;
       error = session::http::sendSessionRequest(
             kLocalUriLocationPrefix kPostbackUriScope + options.command(), 
             options.argument(), 
+            sessionSslEnabled,
             &response);
       if (error)
          return exitFailure(error);

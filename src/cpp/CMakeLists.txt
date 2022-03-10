@@ -414,6 +414,15 @@ if (NOT DEFINED RSTUDIO_CRASHPAD_ENABLED OR RSTUDIO_CRASHPAD_ENABLED)
    endif()
 else()
    message(STATUS "Crashpad integration disabled via build parameters")
+   if(APPLE)
+      # add necessary macos frameworks so crashpad applications can link correctly
+      list(APPEND CRASHPAD_LIBRARIES ${APPLICATION_SERVICES_LIBRARY})
+      list(APPEND CRASHPAD_LIBRARIES ${CORE_FOUNDATION_LIBRARY})
+      list(APPEND CRASHPAD_LIBRARIES ${FOUNDATION_LIBRARY})
+      list(APPEND CRASHPAD_LIBRARIES ${IOKIT_LIBRARY})
+      list(APPEND CRASHPAD_LIBRARIES ${SECURITY_LIBRARY})
+      list(APPEND CRASHPAD_LIBRARIES ${BSM_LIBRARY})
+   endif()
 endif()
 
 # SOCI

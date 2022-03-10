@@ -1,15 +1,22 @@
-import { UserDefaultTypes } from 'electron';
-import { homedir } from 'os';
+/**
+ *
+ * preferences.ts
+ *
+ * Copyright (C) 2022 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
 import FilePreferences from './file-preferences';
 import MacPreferences from './mac-preferences';
-
-export interface PlatformPreferences {
-  getValue(
-    key: string,
-    type?: keyof UserDefaultTypes,
-  ): string | number | boolean | unknown[] | Record<string, unknown> | undefined;
-  setValue(key: string, type: keyof UserDefaultTypes, value: string): void;
-}
+import DesktopOptions from './desktop-options';
 
 const isMacOS = process.platform === 'darwin';
 
@@ -21,17 +28,20 @@ export const preferenceKeys = {
   fontFixedWidth: isMacOS ? 'font·fixedWidth' : 'General.font.fixedWidth',
 };
 
-export let preferenceManager: PlatformPreferences;
+/**
+ * This is the legacy preference manager. It will read the preferences from platform-specific
+ * location. Settings should only be used from here if the new location does not contain a
+ * value for the preference.
+ */
+export let legacyPreferenceManager: DesktopOptions;
 
 switch (process.platform) {
   case 'darwin':
-    preferenceManager = new MacPreferences();
+    legacyPreferenceManager = new MacPreferences();
     break;
   case 'win32':
-    preferenceManager = new FilePreferences(`${homedir()}\\AppData\\Roaming\\RStudio\\desktop.ini`);
-    break;
   case 'linux':
-    preferenceManager = new FilePreferences(`${homedir()}/.config/RStudio/desktop.ini`);
+    legacyPreferenceManager = new FilePreferences();
     break;
   default:
     throw new Error('unsupported platform');
