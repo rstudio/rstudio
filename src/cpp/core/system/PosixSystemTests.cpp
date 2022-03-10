@@ -28,6 +28,8 @@ namespace core {
 namespace system {
 namespace tests {
 
+#ifdef __linux__
+
 static std::string getNoGroupName()
 {
    std::string group;
@@ -46,6 +48,8 @@ static std::string getNoGroupName()
    expect_false(group.empty());
    return group;
 }
+
+#endif
 
 test_context("PosixSystemTests")
 {

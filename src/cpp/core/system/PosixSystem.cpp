@@ -2572,10 +2572,6 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
 // privilege manipulation for systems that don't support setresuid/getresuid
 #else
 
-namespace {
-   uid_t s_privUid;
-}
-
 Error permanentlyDropPriv(const std::string& newUsername)
 {
    return permanentlyDropPriv(newUsername, std::string());
