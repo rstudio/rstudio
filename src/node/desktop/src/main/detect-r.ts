@@ -28,7 +28,7 @@ import { createStandaloneErrorDialog } from './utils';
 import i18next from 'i18next';
 
 import Store from 'electron-store';
-import { kDesktopOptionDefaults } from './desktop-options';
+import { kDesktopOptionDefaults } from './preferences/electron-desktop-options';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -65,7 +65,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     const storeConfig = new Store({ defaults: kDesktopOptionDefaults });
     const rstudioPathKey = 'rstudioPath';
 
-    const isCtrlKeyDown = desktop.isCtrlKeyDown() as boolean;
+    const isCtrlKeyDown = desktop.isCtrlKeyDown();
 
     if (!isCtrlKeyDown) {
       // nothing to do if RSTUDIO_WHICH_R is set
