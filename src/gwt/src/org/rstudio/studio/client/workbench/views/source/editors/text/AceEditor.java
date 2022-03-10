@@ -53,6 +53,7 @@ import com.google.gwt.user.client.ui.RootPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.AceSupport;
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -1486,7 +1487,7 @@ public class AceEditor implements DocDisplay,
 
    public void print()
    {
-      if (Desktop.hasDesktopFrame())
+      if (Desktop.hasDesktopFrame() && !BrowseCap.isElectron())
       {
          // the desktop frame prints the code directly
          Desktop.getFrame().printText(StringUtil.notNull(getCode()));
