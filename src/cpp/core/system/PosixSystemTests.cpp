@@ -28,6 +28,8 @@ namespace core {
 namespace system {
 namespace tests {
 
+#ifdef __linux__
+
 static std::string getNoGroupName()
 {
    std::string group;
@@ -43,9 +45,10 @@ static std::string getNoGroupName()
    else if (getgrnam("nogroup"))
       group = "nogroup"; // Debian/Ubuntu
 
-   expect_false(group.empty());
    return group;
 }
+
+#endif
 
 test_context("PosixSystemTests")
 {
