@@ -34,6 +34,7 @@
     "@electron-forge/plugin-webpack": "6.0.0-beta.63",
     "@types/chai": "4.2.22",
     "@types/crc": "3.4.0",
+    "@types/i18next": "^13.0.0",
     "@types/line-reader": "0.0.34",
     "@types/mocha": "8.2.3",
     "@types/node": "14.17.5",

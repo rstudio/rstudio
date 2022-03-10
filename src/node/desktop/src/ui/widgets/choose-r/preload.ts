@@ -21,7 +21,7 @@ export interface Callbacks {
   useDefault64bit(): void;
   use(version: string): void;
   cancel(): void;
-  browse(): void;
+  browse(): Promise<boolean>;
 }
 
 ipcRenderer.on('css', (event, data) => {
@@ -97,8 +97,9 @@ const callbacks: Callbacks = {
     ipcRenderer.send('cancel');
   },
 
-  browse: () => {
-    ipcRenderer.send('browse');
+  browse: async () => {
+    const shouldCloseDialog = await ipcRenderer.invoke('browse-r-exe');
+    return shouldCloseDialog;
   },
 };
 
