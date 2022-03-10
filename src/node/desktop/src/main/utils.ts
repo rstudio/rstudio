@@ -96,6 +96,9 @@ export function augmentCommandLineArguments(): void {
     // switches will have the form '--key=value', so split on the first '='
     const idx = piece.indexOf('=');
     if (idx == -1) {
+      if (!app.commandLine.hasSwitch(piece)) {
+        app.commandLine.appendSwitch(piece);
+      }
       return;
     }
 

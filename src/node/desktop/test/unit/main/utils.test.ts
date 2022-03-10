@@ -71,9 +71,12 @@ describe('Utils', () => {
   it('augmentCommandLineArguments adds contents of env var', () => {
     assert.isFalse(app.commandLine.hasSwitch('disable-gpu'));
     assert.isEmpty(getenv('RSTUDIO_CHROMIUM_ARGUMENTS'));
-    setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--disable-gpu');
+    setenv('RSTUDIO_CHROMIUM_ARGUMENTS', '--disable-gpu --use-gl=desktop');
     Utils.augmentCommandLineArguments();
     assert.isTrue(app.commandLine.hasSwitch('disable-gpu'));
+    assert.isTrue(app.commandLine.getSwitchValue('use-gl') == 'desktop');
+    app.commandLine.removeSwitch('disable-gpu');
+    app.commandLine.removeSwitch('use-gl');
     unsetenv('RSTUDIO_CHROMIUM_ARGUMENTS');
   });
   it('initializeSharedSecret generates a random string in RS_SHARED_SECRET envvar_', () => {
