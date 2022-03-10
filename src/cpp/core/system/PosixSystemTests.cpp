@@ -45,6 +45,7 @@ static std::string getNoGroupName()
    else if (getgrnam("nogroup"))
       group = "nogroup"; // Debian/Ubuntu
 
+   expect_false(group.empty());
    return group;
 }
 
