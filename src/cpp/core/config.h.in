@@ -27,3 +27,4 @@
 #cmakedefine HAVE_SETRESUID
 #cmakedefine HAVE_SCANDIR_POSIX
 #cmakedefine RSTUDIO_SERVER
+#cmakedefine RSTUDIO_PRO_BUILD
