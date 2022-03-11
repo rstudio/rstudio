@@ -328,23 +328,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       }
     ];
 
-    rules["#identifier"] = [
-      {
-        token : function(value)
-        {
-          if (builtinConstants.hasOwnProperty(value))
-            return "constant.language";
-          else if (value.match(/^\.\.\d+$/))
-            return "variable.language";
-          else
-            return "identifier";
-        },
-        regex   : reIdentifier,
-        unicode : true,
-        next    : "start"
-      }
-    ];
-
     rules["#keyword-or-identifier"] = [
       {
         token : function(value)
@@ -360,6 +343,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         },
         regex   : reIdentifier,
         unicode : true,
+        merge   : false,
         next    : "start"
       }
     ];
@@ -374,6 +358,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         },
         regex   : reIdentifier + "(?=\\s*::)",
         unicode : true,
+        merge   : false,
         next    : "start"
       }
     ];
@@ -388,6 +373,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         },
         regex   : reIdentifier + "(?=\\s*\\()",
         unicode : true,
+        merge   : false,
         next    : "start"
       }
     ];
@@ -404,6 +390,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         },
         regex   : reIdentifier + "(?=\\s*\\()",
         unicode : true,
+        merge   : false,
         next    : "start"
       }
     ];
