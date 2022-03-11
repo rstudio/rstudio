@@ -209,7 +209,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
     // NOTE: We accept '\' as a standalone identifier here
     // so that it can be parsed as the 'function' alias symbol
-    var reIdentifier = "(?:\\\\|[a-zA-Z.][a-zA-Z0-9._]*)";
+    var reIdentifier = "(?:\\\\|_|[a-zA-Z.][a-zA-Z0-9._]*)";
 
     var $complements = {
       "{" : "}",
@@ -328,22 +328,6 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       }
     ];
 
-    rules["#identifier"] = [
-      {
-        token : function(value)
-        {
-          if (builtinConstants.hasOwnProperty(value))
-            return "constant.language";
-          else if (value.match(/^\.\.\d+$/))
-            return "variable.language";
-          else
-            return "identifier";
-        },
-        regex : reIdentifier,
-        next  : "start"
-      }
-    ];
-
     rules["#keyword-or-identifier"] = [
       {
         token : function(value)
@@ -358,6 +342,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             return "identifier";
         },
         regex : reIdentifier,
+        merge : false,
         next  : "start"
       }
     ];
@@ -371,6 +356,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             return "identifier";
         },
         regex : reIdentifier + "(?=\\s*::)",
+        merge : false,
         next  : "start"
       }
     ];
@@ -384,6 +370,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             return "identifier";
         },
         regex : reIdentifier + "(?=\\s*\\()",
+        merge : false,
         next  : "start"
       }
     ];
@@ -399,6 +386,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
             return "identifier";
         },
         regex : reIdentifier + "(?=\\s*\\()",
+        merge : false,
         next  : "start"
       }
     ];
