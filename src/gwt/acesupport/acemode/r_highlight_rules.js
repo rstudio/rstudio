@@ -183,12 +183,12 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
   var RHighlightRules = function()
   {
-    // NOTE: The backslash character is an experimental alias
-    // for the 'function' symbol, and can be used for defining
-    // short-hand functions, e.g.
+    // NOTE: The backslash character is an alias for the 'function' symbol,
+    // and can be used for defining short-hand functions, e.g.
     //
     //     \(x) x + 1
     //
+    // It was introduced with R 4.2.0.
     var keywords = lang.arrayToMap([
       "\\", "function", "if", "else", "in",
       "break", "next", "repeat", "for", "while"
@@ -208,8 +208,8 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     ]);
 
     // NOTE: We accept '\' as a standalone identifier here
-    // so that it can be parsed as the 'function' alias symbol
-    var reIdentifier = "(?:\\\\|[a-zA-Z.][a-zA-Z0-9._]*)";
+    // so that it can be parsed as the 'function' alias symbol.
+    var reIdentifier = String.raw`(?:\\|_|[\p{L}\p{Nl}.][\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}.]*)`;
 
     var $complements = {
       "{" : "}",
@@ -313,7 +313,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       },
       {
         token : "constant.numeric", // number + integer
-        regex : "(?:(?:\\d+(?:\\.\\d*)?)|(?:\\.\\d+))(?:[eE][+\\-]?\\d*)?[iL]?",
+        regex : "(?:(?:\\d+(?:\\.\\d*)?)|(?:\\.\\d+))(?:[eE][+-]?\\d*)?[iL]?",
         merge : false,
         next  : "start"
       }
@@ -339,8 +339,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           else
             return "identifier";
         },
-        regex : reIdentifier,
-        next  : "start"
+        regex   : reIdentifier,
+        unicode : true,
+        next    : "start"
       }
     ];
 
@@ -357,8 +358,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           else
             return "identifier";
         },
-        regex : reIdentifier,
-        next  : "start"
+        regex   : reIdentifier,
+        unicode : true,
+        next    : "start"
       }
     ];
 
@@ -370,8 +372,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           else
             return "identifier";
         },
-        regex : reIdentifier + "(?=\\s*::)",
-        next  : "start"
+        regex   : reIdentifier + "(?=\\s*::)",
+        unicode : true,
+        next    : "start"
       }
     ];
 
@@ -383,8 +386,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           else
             return "identifier";
         },
-        regex : reIdentifier + "(?=\\s*\\()",
-        next  : "start"
+        regex   : reIdentifier + "(?=\\s*\\()",
+        unicode : true,
+        next    : "start"
       }
     ];
 
@@ -398,8 +402,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           else
             return "identifier";
         },
-        regex : reIdentifier + "(?=\\s*\\()",
-        next  : "start"
+        regex   : reIdentifier + "(?=\\s*\\()",
+        unicode : true,
+        next    : "start"
       }
     ];
 
@@ -412,7 +417,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       },
       {
         token : "keyword.operator",
-        regex : ":::|::|:=|\\|>|=>|%%|>=|<=|==|!=|<<\\-|\\->>|\\->|<\\-|\\|\\||&&|=|\\+|\\-|\\*\\*?|/|\\^|>|<|!|&|\\||~|\\$|:|@|\\?",
+        regex : ":::|::|:=|\\|>|=>|%%|>=|<=|==|!=|<<-|->>|->|<-|\\|\\||&&|=|\\+|-|\\*\\*?|/|\\^|>|<|!|&|\\||~|\\$|:|@|\\?",
         merge : false,
         next  : "start"
       },
