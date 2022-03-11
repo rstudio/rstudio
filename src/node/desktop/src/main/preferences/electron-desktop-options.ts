@@ -155,10 +155,11 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public fixedWidthFont(): string | undefined {
-    let fontName = this.config.get<'Font.FixedWidthFont', string>(kFixedWidthFont);
+    let fontName: string | undefined = this.config.get(kFixedWidthFont);
 
     if (!fontName) {
       fontName = this.legacyOptions.fixedWidthFont() ?? '';
+      this.config.set(kFixedWidthFont, fontName);
     }
 
     return fontName;
@@ -177,10 +178,11 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public zoomLevel(): number {
-    let zoomLevel = this.config.get<'View.ZoomLevel', number>(kZoomLevel);
+    let zoomLevel: number | undefined = this.config.get(kZoomLevel);
 
     if (!zoomLevel) {
       zoomLevel = this.legacyOptions.zoomLevel() ?? kDesktopOptionDefaults.View.ZoomLevel;
+      this.config.set(kZoomLevel, zoomLevel);
     }
 
     return zoomLevel;
