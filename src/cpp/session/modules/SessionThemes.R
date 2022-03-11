@@ -166,7 +166,7 @@
          for (scope in scopes)
          {
             style <- .rs.parseStyles(element$settings)
-            haveStyle <- !is.null(style) && !is.na(style) && (length(style) > 0)
+            haveStyle <- !is.null(style) && any(!is.na(style)) && (length(style) > 0)
             if ((scope %in% supportedScopeNames) && haveStyle)
             {
                styles[[ supportedScopes[[scope]] ]] <- style
@@ -980,8 +980,9 @@
       warning("Removing the active theme - setting the current theme to ", nextTheme)
       .rs.applyTheme(nextTheme, themeList)
    }
-
+   
    filePath <- .rs.getThemeDirFromUrl(themeList[[lowerCaseName]]$url)
+   
    if (is.null(filePath))
    {
       stop("Please verify that the theme is installed as a custom theme.")
