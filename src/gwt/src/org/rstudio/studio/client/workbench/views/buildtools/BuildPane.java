@@ -182,9 +182,6 @@ public class BuildPane extends WorkbenchPane
       {
          ToolbarPopupMenu moreMenu = new ToolbarPopupMenu();
 
-         if (makefile)
-            moreMenu.addItem(commands_.rebuildAll().createMenuItem(false));
-
          if (website)
          {
             moreMenu.addItem(commands_.cleanAll().createMenuItem(false));
@@ -204,6 +201,12 @@ public class BuildPane extends WorkbenchPane
             moreMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));
             moreMenu.addSeparator();
             moreMenu.addItem(commands_.roxygenizePackage().createMenuItem(false));
+            moreMenu.addSeparator();
+         }
+
+         else if(makefile)
+         {
+            moreMenu.addItem(commands_.cleanAll().createMenuItem(false));
             moreMenu.addSeparator();
          }
          moreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));

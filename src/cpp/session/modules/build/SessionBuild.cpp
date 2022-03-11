@@ -238,7 +238,6 @@ const char * const kBuildBinaryPackage = "build-binary-package";
 const char * const kTestPackage = "test-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
-const char * const kRebuildAll = "rebuild-all";
 const char * const kTestFile = "test-file";
 const char * const kTestShiny = "test-shiny";
 const char * const kTestShinyFile = "test-shiny-file";
@@ -467,7 +466,7 @@ private:
    {
       if (!projectConfig().packageRoxygenize.empty())
       {
-         if ((type == kBuildAndReload || type == kRebuildAll) &&
+         if ((type == kBuildAndReload) &&
              options_.autoRoxygenizeForBuildAndReload)
          {
             return true;
@@ -662,8 +661,7 @@ private:
       // windows we need to unload the library first
 #ifdef _WIN32
       if (packagePath.completeChildPath("src").exists() &&
-         (type == kBuildAndReload || type == kRebuildAll ||
-          type == kBuildBinaryPackage))
+         (type == kBuildAndReload || type == kBuildBinaryPackage))
       {
          std::string pkg = pkgInfo_.name();
          Error error = r::exec::RFunction(".rs.forceUnloadPackage", pkg).call();
@@ -746,7 +744,7 @@ private:
       errorOutputFilterFunction_ = isPackageBuildError;
 
       // build command
-      if (type == kBuildAndReload || type == kRebuildAll)
+      if (type == kBuildAndReload)
       {
          // restart R after build is completed
          restartR_ = true;
@@ -759,7 +757,7 @@ private:
          std::string extraArgs = projectConfig().packageInstallArgs;
 
          // add --preclean if this is a rebuild all
-         if (collectForcePackageRebuild() || (type == kRebuildAll) || cleanBeforeInstall() )
+         if (collectForcePackageRebuild() || cleanBeforeInstall() )
          {
             if (!boost::algorithm::contains(extraArgs, "--preclean"))
                rCmd << "--preclean";
@@ -1452,17 +1450,14 @@ private:
       std::string cmd;
       if (type == "build-all")
       {
+         // cmd = shell_utils::join_and(makeClean, make);
          cmd = make;
       }
       else if (type == "clean-all")
       {
          cmd = makeClean;
       }
-      else if (type == "rebuild-all")
-      {
-         cmd = shell_utils::join_and(makeClean, make);
-      }
-
+      
       module_context::processSupervisor().runCommand(cmd,
                                                      options,
                                                      cb);

@@ -1,1 +1,5 @@
+<<<<<<< HEAD
 78c78c6daf14c08327484c3c14995adc
+=======
+d4df8fba925ea763910ab01abd1c1835
+>>>>>>> 95c62510cc (Remove the "rebuildAll" command from Makefile build pane, add clean all)
