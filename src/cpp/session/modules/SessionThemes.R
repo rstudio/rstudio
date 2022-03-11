@@ -166,7 +166,7 @@
          for (scope in scopes)
          {
             style <- .rs.parseStyles(element$settings)
-            haveStyle <- !is.null(style) && !is.na(style) && (length(style) > 0)
+            haveStyle <- !is.null(style) && any(!is.na(style)) && (length(style) > 0)
             if ((scope %in% supportedScopeNames) && haveStyle)
             {
                styles[[ supportedScopes[[scope]] ]] <- style
