@@ -18,7 +18,7 @@ context("themes")
 # We need this file for .rs.parseCss
 source(file.path("..", "..", "session", "resources", "themes", "compile-themes.R"))
 
-inputFileLocation <- file.path(path.expand("."), "themes")
+inputFileLocation <- file.path(normalizePath("."), "themes")
 tempOutputDir <- file.path(inputFileLocation, "temp")
 localInstallDir <- file.path(inputFileLocation, "localInstall")
 globalInstallDir <- file.path(inputFileLocation, "globalInstall")
@@ -1675,9 +1675,9 @@ test_that_wrapped("addTheme gives error when the theme already exists", {
    themePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[40]]$fileName, ".rstheme"))
    # suppress warning for theme overwrite
    suppressWarnings(
-      .rs.addTheme(themePath, FALSE, FALSE, FALSE))
+      .rs.addTheme(themePath, FALSE, force=TRUE, globally=FALSE))
    expect_error(
-      .rs.addTheme(themePath, FALSE, FALSE, FALSE),
+      .rs.addTheme(themePath, FALSE, force=FALSE, globally=FALSE),
       paste0(
          "The specified theme, \"",
          names(themes)[40],
@@ -1929,3 +1929,4 @@ AFTER_FUN = function() {
    Sys.chmod(dir(noPermissionDir, full.names = TRUE, all.files = TRUE), mode = "0777")
    file.remove(file.path(noPermissionDir, paste0(themes[[32]]$fileName, ".rstheme")))
 })
+
