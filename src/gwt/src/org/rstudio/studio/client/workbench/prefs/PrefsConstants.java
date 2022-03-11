@@ -3459,33 +3459,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String gitSVNPaneHeader();
 
     /**
-     * Translated "auto".
-     *
-     * @return translated "auto"
-     */
-    @DefaultMessage("auto")
-    @Key("engineAutoValue")
-    String engineAutoValue();
-
-    /**
-     * Translated "desktop".
-     *
-     * @return translated "desktop"
-     */
-    @DefaultMessage("desktop")
-    @Key("engineDesktopValue")
-    String engineDesktopValue();
-
-    /**
-     * Translated "software".
-     *
-     * @return translated "software"
-     */
-    @DefaultMessage("software")
-    @Key("engineSoftwareValue")
-    String engineSoftwareValue();
-
-    /**
      * Translated "Dictionaries".
      *
      * @return translated "Dictionaries"
