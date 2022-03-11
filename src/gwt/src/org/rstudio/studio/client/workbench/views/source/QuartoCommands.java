@@ -115,24 +115,24 @@ public class QuartoCommands
 
                   // generate preamble
                   lines.add("---");
-                  lines.add(constants_.titleParameterColon(result.getTitle()));
+                  lines.add("title: \"" + result.getTitle() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                   if (!StringUtil.isNullOrEmpty(result.getAuthor()))
-                     lines.add(constants_.authorParameterColon(result.getAuthor()));
+                     lines.add("author: \"" + result.getAuthor() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
 
                   if (!isBook &&
                       (config.project_formats.length == 0 ||
                       !config.project_formats[0].equals(format)))
                   {
-                     lines.add(constants_.formatParameterColon(format));
+                     lines.add("format: " + format); //$NON-NLS-1$
                   }
                   
                   if (visualEditor && !QuartoCommandConstants.EDITOR_VISUAL.equals(config.project_editor))
-                     lines.add(constants_.editorParameterColon(QuartoCommandConstants.EDITOR_VISUAL));
+                     lines.add("editor: " + QuartoCommandConstants.EDITOR_VISUAL); //$NON-NLS-1$
                   
                   if (result.getFormat().equals(QuartoCommandConstants.INTERACTIVE_SHINY))
-                     lines.add(constants_.serverShiny());
+                     lines.add("server: shiny"); //$NON-NLS-1$
                   else if (!interactive && result.getEngine().equals(QuartoCommandConstants.ENGINE_JUPYTER))
-                     lines.add(constants_.jupyterParameterColon(result.getKernel()));
+                     lines.add("jupyter: " + result.getKernel()); //$NON-NLS-1$
                   
                   lines.add("---");
                   lines.add("");
