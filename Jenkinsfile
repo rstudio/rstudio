@@ -472,8 +472,8 @@ try {
                     println stdout
                   }
                 }
-                stage('upload debug symbols') {
-                  if (current_container.flavor == "desktop") {
+                if (current_container.flavor == "desktop") {
+                  stage('upload debug symbols') {
                     // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
                     bat '''
                     cd package\\win32\\build
