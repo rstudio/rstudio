@@ -209,6 +209,9 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
 
     // NOTE: We accept '\' as a standalone identifier here
     // so that it can be parsed as the 'function' alias symbol.
+    // 
+    // Unicode escapes are picked to conform with TR31:
+    // https://unicode.org/reports/tr31/#Default_Identifier_Syntax
     var reIdentifier = String.raw`(?:\\|_|[\p{L}\p{Nl}.][\p{L}\p{Nl}\p{Mn}\p{Mc}\p{Nd}\p{Pc}.]*)`;
 
     var $complements = {
