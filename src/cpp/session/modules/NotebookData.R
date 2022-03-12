@@ -230,6 +230,10 @@
     paste0(" [", dim_desc(x), "]" )
   }
 
+  needs_obj_sum <- function(x) {
+	  is.list(x) && !is(x, "vctrs_vctr")
+  }
+
   obj_sum.default <- function(x) {
     paste0(type_sum(x), size_sum(x))
   }
@@ -293,8 +297,8 @@
 
   columns <- unname(columns)
 
-  is_list <- vapply(data, is.list, logical(1))
-  data[is_list] <- lapply(data[is_list], function(x) {
+  needs_obj_sums <- vapply(data, needs_obj_sum, logical(1))
+  data[needs_obj_sums] <- lapply(data[needs_obj_sums], function(x) {
         summary <- obj_sum(x)
         paste0("<", summary, ">")
       })
