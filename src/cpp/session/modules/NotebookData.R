@@ -231,7 +231,13 @@
   }
 
   needs_obj_sum <- function(x) {
-	  is.list(x) && !is(x, "vctrs_vctr")
+    if (!is.list(x)) return(FALSE)
+    if (!is(x, "vctrs_vctr")) return(TRUE)
+    for (cl in class(x)) {
+      if (cl == "vctrs_vctr") return(TRUE)
+      if (!is.null(getS3Method("format", cl, optional = T))) return(FALSE)
+    }
+    TRUE
   }
 
   obj_sum.default <- function(x) {
