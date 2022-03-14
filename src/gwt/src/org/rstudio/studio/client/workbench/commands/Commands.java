@@ -586,7 +586,6 @@ public abstract class
    public abstract AppCommand clearBuild();
    public abstract AppCommand buildAll();
    public abstract AppCommand devtoolsLoadAll();
-   public abstract AppCommand rebuildAll();
    public abstract AppCommand serveQuartoSite();
    public abstract AppCommand cleanAll();
    public abstract AppCommand buildSourcePackage();
