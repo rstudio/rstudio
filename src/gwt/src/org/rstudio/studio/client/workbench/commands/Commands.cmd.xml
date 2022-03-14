@@ -1755,6 +1755,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         windowMode="main"/>
 
    <cmd id="refreshFindInFiles"
+        windowMode="main"
         buttonLabel=""
         menuLabel="_Refresh Find in Files"
         desc="Refresh Find in Files results"/>

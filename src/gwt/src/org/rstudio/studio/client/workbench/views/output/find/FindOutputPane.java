@@ -76,6 +76,7 @@ public class FindOutputPane extends WorkbenchPane
 
       refreshButton_ = commands_.refreshFindInFiles().createToolbarButton();
       refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      refreshButton_.setVisible(true);
       toolbar.addRightWidget(refreshButton_);
 
       showFindButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), true);
