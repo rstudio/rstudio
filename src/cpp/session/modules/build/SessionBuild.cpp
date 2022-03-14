@@ -466,8 +466,7 @@ private:
    {
       if (!projectConfig().packageRoxygenize.empty())
       {
-         if ((type == kBuildAndReload) &&
-             options_.autoRoxygenizeForBuildAndReload)
+         if (type == kBuildAndReload && options_.autoRoxygenizeForBuildAndReload)
          {
             return true;
          }
