@@ -26,6 +26,7 @@ const isMacOS = process.platform === 'darwin';
  */
 export const preferenceKeys = {
   fontFixedWidth: isMacOS ? 'font·fixedWidth' : 'General.font.fixedWidth',
+  zoomLevel: isMacOS ? 'view·zoomLevel' : 'General.view.zoomLevel',
 };
 
 /**

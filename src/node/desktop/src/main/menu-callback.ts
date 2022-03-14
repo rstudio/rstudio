@@ -347,11 +347,11 @@ export class MenuCallback extends EventEmitter {
     // code where we assign shortcuts to these commands and let them flow through
     // our regular command handling
     if (cmdId === 'zoomActualSize') {
-      menuItemOpts.role = 'resetZoom';
+      menuItemOpts.accelerator = 'CommandOrControl+0';
     } else if (cmdId === 'zoomIn') {
-      menuItemOpts.role = 'zoomIn';
+      menuItemOpts.accelerator = 'CommandOrControl+=';
     } else if (cmdId === 'zoomOut') {
-      menuItemOpts.role = 'zoomOut';
+      menuItemOpts.accelerator = 'CommandOrControl+-';
     } else if (cmdId === 'cutDummy') {
       menuItemOpts.role = 'cut';
     } else if (cmdId === 'copyDummy') {

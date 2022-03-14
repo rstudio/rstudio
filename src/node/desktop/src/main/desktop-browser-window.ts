@@ -23,6 +23,7 @@ import { URL } from 'url';
 import { logger } from '../core/logger';
 import { appState } from './app-state';
 import { showContextMenu } from './context-menu';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { ToolbarData, ToolbarManager } from './toolbar-manager';
 import { executeJavaScript, isSafeHost } from './utils';
 
@@ -96,7 +97,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     if (this.options.existingWindow) {
       this.window = this.options.existingWindow;
     } else {
-      let preload = DesktopBrowserWindow.getPreload();
+      const preload = DesktopBrowserWindow.getPreload();
 
       this.window = new BrowserWindow({
         // https://github.com/electron/electron/blob/master/docs/faq.md#the-font-looks-blurry-what-is-this-and-what-can-i-do
@@ -259,10 +260,12 @@ export class DesktopBrowserWindow extends EventEmitter {
       this.emit(DesktopBrowserWindow.WINDOW_DESTROYED);
     });
 
-    // set zoom factor
-    // TODO: double zoomLevel = options().zoomLevel();
-    const zoomLevel = 1.0;
-    this.window.webContents.setZoomFactor(zoomLevel);
+    this.window.on('ready-to-show', () => {
+      // set zoom factor when window is ready
+      // https://github.com/electron/electron/issues/10572
+      const zoomLevel = ElectronDesktopOptions().zoomLevel();
+      this.window.webContents.setZoomFactor(zoomLevel);
+    });
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
@@ -55,12 +56,18 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
 
 public class AppearancePreferencesPane extends PreferencesPane
 {
+   static final String[] ZOOM_VALUES = new String[] {
+           "0.25", "0.50", "0.75", "0.80", "0.90",
+           "1.00", "1.10", "1.25", "1.50", "1.75",
+           "2.00", "2.50", "3.00", "4.00", "5.00"
+   };
 
    @Inject
    public AppearancePreferencesPane(PreferencesDialogResources res,
@@ -109,41 +116,30 @@ public class AppearancePreferencesPane extends PreferencesPane
 
       if (Desktop.hasDesktopFrame())
       {
-         int initialIndex = -1;
-         int normalIndex = -1;
-         String[] zoomValues = new String[] {
-               "0.25", "0.50", "0.75", "0.80", "0.90",
-               "1.00", "1.10", "1.25", "1.50", "1.75",
-               "2.00", "2.50", "3.00", "4.00", "5.00"
-         };
-         String[] zoomLabels = new String[zoomValues.length];
+         String[] zoomLabels = Arrays.stream(ZOOM_VALUES)
+                 .map(zoomValue -> StringUtil.formatPercent(Double.parseDouble(zoomValue)))
+                 .toArray(String[]::new);
          double currentZoomLevel = DesktopInfo.getZoomLevel();
-         for (int i = 0; i < zoomValues.length; i++)
-         {
-            double zoomValue = Double.parseDouble(zoomValues[i]);
-
-            if (zoomValue == 1.0)
-               normalIndex = i;
-
-            if (zoomValue == currentZoomLevel)
-               initialIndex = i;
-
-            zoomLabels[i] = StringUtil.formatPercent(zoomValue);
-         }
-
-         if (initialIndex == -1)
-            initialIndex = normalIndex;
 
          zoomLevel_ = new SelectWidget(constants_.appearanceZoomLabelZoom(),
-                                       zoomLabels,
-                                       zoomValues,
-                                       false);
-         zoomLevel_.getListBox().setSelectedIndex(initialIndex);
-         initialZoomLevel_ = zoomValues[initialIndex];
+                 zoomLabels,
+                 ZOOM_VALUES,
+                 false);
+         zoomLevel_.getListBox().addChangeHandler(event -> updatePreviewZoomLevel());
+
+         if (BrowseCap.isElectron()) {
+            Desktop.getFrame().getZoomLevel(zoomLevel ->
+            {
+               int initialIndex = getInitialZoomIndex(zoomLevel);
+               zoomLevel_.getListBox().setSelectedIndex(initialIndex);
+            });
+         } else {
+            int initialIndex = getInitialZoomIndex(currentZoomLevel);
+            zoomLevel_.getListBox().setSelectedIndex(initialIndex);
+            initialZoomLevel_ = ZOOM_VALUES[initialIndex];
+         }
 
          leftPanel.add(zoomLevel_);
-
-         zoomLevel_.getListBox().addChangeHandler(event -> updatePreviewZoomLevel());
       }
 
       String[] fonts = new String[] {};
@@ -322,6 +318,24 @@ public class AppearancePreferencesPane extends PreferencesPane
       Scheduler.get().scheduleDeferred(() -> setThemes(themes));
    }
 
+   private int getInitialZoomIndex(double currentZoomLevel) {
+      int initialIndex = -1;
+      int normalIndex = -1;
+
+      for (int i = 0; i < ZOOM_VALUES.length; i++)
+      {
+         double zoomValue = Double.parseDouble(ZOOM_VALUES[i]);
+
+         if (zoomValue == 1.0)
+            normalIndex = i;
+
+         if (zoomValue == currentZoomLevel)
+            initialIndex = i;
+      }
+
+      return initialIndex == -1 ? normalIndex : initialIndex;
+   }
+
    @Override
    protected void setPaneVisible(boolean visible)
    {
@@ -487,8 +501,16 @@ public class AppearancePreferencesPane extends PreferencesPane
       // no zoom preview on desktop
       if (Desktop.hasDesktopFrame())
       {
-         preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) /
-                               DesktopInfo.getZoomLevel());
+         if (BrowseCap.isElectron())
+         {
+            Desktop.getFrame().getZoomLevel(currentZoomLevel ->
+                    preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) / currentZoomLevel)
+            );
+         }
+         else
+         {
+            preview_.setZoomLevel(Double.parseDouble(zoomLevel_.getValue()) / DesktopInfo.getZoomLevel());
+         }
       }
    }
 
