@@ -1754,6 +1754,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Find _in Files..."
         windowMode="main"/>
 
+   <cmd id="refreshFindInFiles"
+        buttonLabel=""
+        menuLabel="_Refresh Find in Files"
+        desc="Refresh Find in Files results"/>
+
    <cmd id="fold"
         label="Collapse Fold"
         context="editor"

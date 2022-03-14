@@ -32,6 +32,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
+import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 import org.rstudio.core.client.widget.events.SelectionChangedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -72,6 +73,10 @@ public class FindOutputPane extends WorkbenchPane
             commands_.interruptR().getImageResource());
       stopSearch_.setVisible(false);
       toolbar.addRightWidget(stopSearch_);
+
+      refreshButton_ = commands_.refreshFindInFiles().createToolbarButton();
+      refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
+      toolbar.addRightWidget(refreshButton_);
 
       showFindButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), true);
       showFindButton_.addClickHandler(new ClickHandler() {
@@ -538,6 +543,8 @@ public class FindOutputPane extends WorkbenchPane
 
    private TextBox replaceTextBox_;
    private ToolbarButton replaceAllButton_;
+
+   private ToolbarButton refreshButton_;
 
    private ToolbarButton stopReplace_;
    private ProgressBar replaceProgress_;
