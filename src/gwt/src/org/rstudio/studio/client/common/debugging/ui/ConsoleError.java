@@ -16,8 +16,6 @@
 package org.rstudio.studio.client.common.debugging.ui;
 
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.NodeList;
 import com.google.gwt.dom.client.Style;
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -105,28 +103,16 @@ public class ConsoleError extends Composite
    public void setTracebackVisible(boolean visible)
    {
       showingTraceback_ = visible;
-
-      NodeList<Node> children = this.getElement().getChildNodes();
-      for (int i = 0; i < children.getLength(); i++)
+      
+      if (showingTraceback_)
       {
-         Node n = children.getItem(i);
-         if (n.getNodeType() != Node.ELEMENT_NODE)
-            continue;
-
-         Element child = Element.as(children.getItem(i));
-         if (child.hasClassName("show_traceback_text")) {
-            if (showingTraceback_)
-               child.setInnerText(constants_.hideTracebackText());
-            else
-               child.setInnerText(constants_.showTracebackText());
-         }
-         else if (child.hasClassName("stack_trace"))
-         {
-            if (showingTraceback_)
-               child.getStyle().setDisplay(Style.Display.BLOCK);
-            else
-               child.getStyle().setDisplay(Style.Display.NONE);
-         }
+         showTracebackText.setText(constants_.hideTracebackText());
+         framePanel.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+      }
+      else 
+      {
+         showTracebackText.setText(constants_.showTracebackText());
+         framePanel.getElement().getStyle().setDisplay(Style.Display.NONE);
       }
    }
 
