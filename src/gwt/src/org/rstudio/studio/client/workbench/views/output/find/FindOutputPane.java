@@ -315,7 +315,10 @@ public class FindOutputPane extends WorkbenchPane
    @Override
    public void setStopSearchButtonVisible(boolean visible)
    {
+      // only one of the stop search and refresh search buttons should show in the toolbar at a time
+      // when search is in progress, stopSearch_ will be visible and refreshButton_ will be hidden
       stopSearch_.setVisible(visible);
+      refreshButton_.setVisible(!visible);
    }
 
    @Override
