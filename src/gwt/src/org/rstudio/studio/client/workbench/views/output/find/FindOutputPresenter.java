@@ -106,6 +106,8 @@ public class FindOutputPresenter extends BasePresenter
       void setStopReplaceButtonVisible(boolean visible);
       void enableReplace();
       void disableReplace();
+      void turnOnReplaceMode();
+      void turnOffReplaceMode();
 
       void showProgress();
       void hideProgress();
@@ -497,6 +499,7 @@ public class FindOutputPresenter extends BasePresenter
 
       // find result always starts with !replaceMode
       view_.setReplaceMode(false);
+      view_.turnOffReplaceMode();
       view_.disableReplace();
 
       String serverQuery = dialogState_.getQuery();

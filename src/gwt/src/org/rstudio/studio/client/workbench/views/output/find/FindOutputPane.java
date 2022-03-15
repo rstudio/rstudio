@@ -85,16 +85,7 @@ public class FindOutputPane extends WorkbenchPane
          public void onClick(ClickEvent event)
          {
             if (!replaceMode_)
-            {
-               showFindButton_.setVisible(false);
-               showReplaceButton_.setVisible(true);
-               setReplaceMode(true);
-               setSecondaryToolbarVisible(true);
-               if (displayPreview_ == null)
-                  createDisplayPreview();
-               if (!replaceTextBox_.getValue().isEmpty())
-                  displayPreview_.nudge();
-            }
+               turnOnReplaceMode();
          }
       });
       toolbar.addRightWidget(showFindButton_);
@@ -106,17 +97,7 @@ public class FindOutputPane extends WorkbenchPane
          public void onClick(ClickEvent event)
          {
             if (replaceMode_)
-            {
-               showFindButton_.setVisible(true);
-               showReplaceButton_.setVisible(false);
-               setSecondaryToolbarVisible(false);
-               if (!replaceTextBox_.getValue().isEmpty())
-               {
-                  //setRegexPreviewMode(false);
-                  addReplaceMatches("");
-               }
-               setReplaceMode(false);
-            }
+               turnOffReplaceMode();
          }
       });
       toolbar.addRightWidget(showReplaceButton_);
@@ -472,6 +453,30 @@ public class FindOutputPane extends WorkbenchPane
    {
       replaceTextBox_.setReadOnly(true);
       replaceAllButton_.setEnabled(false);
+   }
+
+   @Override
+   public void turnOnReplaceMode()
+   {
+      showFindButton_.setVisible(false);
+      showReplaceButton_.setVisible(true);
+      setReplaceMode(true);
+      setSecondaryToolbarVisible(true);
+      if (displayPreview_ == null)
+         createDisplayPreview();
+      if (!replaceTextBox_.getValue().isEmpty())
+         displayPreview_.nudge();
+   }
+
+   @Override
+   public void turnOffReplaceMode()
+   {
+      showFindButton_.setVisible(true);
+      showReplaceButton_.setVisible(false);
+      setSecondaryToolbarVisible(false);
+      if (!replaceTextBox_.getValue().isEmpty())
+         addReplaceMatches("");
+      setReplaceMode(false);
    }
 
    @Override
