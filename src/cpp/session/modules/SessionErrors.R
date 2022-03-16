@@ -31,6 +31,7 @@
 .rs.addFunction("recordTraceback", function(userOnly, minDepth, errorReporter)
 {
    calls <- sys.calls()
+   frames <- sys.frames()
    foundUserCode <- FALSE
    inSource <- FALSE
 
@@ -84,7 +85,6 @@
 
    # remove hidden entries from the stack
    stack <- stack[!sapply(stack, is.null)]
-
    
    # look for python entry point and fill in the stack from reticulate if we can
    ammended_stack <- list()
@@ -103,9 +103,16 @@
    # if we found user code (or weren't looking for it), tell the client
    if (foundUserCode || !userOnly)
    {
+      trace <- character()
+      if (.rs.isPackageInstalled("rlang")) {
+         trace <- rlang::trace_back(bottom = frames[[ length(frames) - 2]])
+         trace <- rlang:::format.rlang_trace(trace)
+      }
       err <- list(
          frames = ammended_stack,
-         message = .rs.scalar(geterrmessage()))
+         message = .rs.scalar(geterrmessage()), 
+         trace = trace
+         )
       errorReporter(err)
    }
 })

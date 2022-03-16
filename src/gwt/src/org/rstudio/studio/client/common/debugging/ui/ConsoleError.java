@@ -15,14 +15,10 @@
 
 package org.rstudio.studio.client.common.debugging.ui;
 
+import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
-import org.rstudio.core.client.VirtualConsole;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.StudioClientCommonConstants;
-import org.rstudio.studio.client.common.debugging.model.UnhandledError;
-
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
@@ -34,6 +30,11 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Widget;
+
+import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.StudioClientCommonConstants;
+import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 public class ConsoleError extends Composite
 {
@@ -92,11 +93,23 @@ public class ConsoleError extends Composite
       DOM.sinkEvents(this.getElement(), Event.ONCLICK);
       DOM.setEventListener(this.getElement(), onConsoleErrorClick);
 
-      for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
+      // use rlang back traces if possible
+      JsArrayString stackTreeLines = err.getTrace();
+      if (stackTreeLines.length() > 0) {
+         VirtualConsole vcTree = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(framePanel.getElement());
+         
+         for (int i = 0; i < stackTreeLines.length(); i++)
+         {
+            vcTree.submit(stackTreeLines.get(i) + "\n");
+         }
+      } else 
       {
-         ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1,
-               err.getErrorFrames().get(i));
-         framePanel.add(frame);
+         for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
+         {
+            ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1,
+                  err.getErrorFrames().get(i));
+            framePanel.add(frame);
+         }
       }
    }
    

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.common.debugging.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 public class UnhandledError extends JavaScriptObject
 {
@@ -28,5 +29,9 @@ public class UnhandledError extends JavaScriptObject
    
    public final native JsArray<ErrorFrame> getErrorFrames() /*-{
       return this.frames;
+   }-*/;
+
+   public final native JsArrayString getTrace() /*-{
+      return this.trace;
    }-*/;
 }
