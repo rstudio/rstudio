@@ -11,6 +11,7 @@
       margin: 5px 5px 5px 0px;
       padding: 5px 0px 5px 10px;
       white-space: pre-line;
+      border-left: 5px solid red;
    }
 
    .consoleErrorCommands {
@@ -58,6 +59,8 @@
    .framePanel {
       margin-top: 0.5em;
       margin-left: 0.3em;
+      white-space: pre;
+      font-size: smaller;
    }
    </ui:style>
    <ui:image src="traceback_2x.png"
