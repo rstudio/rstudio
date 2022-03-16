@@ -497,7 +497,6 @@ public class FindOutputPresenter extends BasePresenter
          excludeFilePatterns.push(pattern);
 
       // find result always starts with !replaceMode
-      view_.setReplaceMode(false);
       view_.turnOffReplaceMode();
       view_.disableReplace();
 
