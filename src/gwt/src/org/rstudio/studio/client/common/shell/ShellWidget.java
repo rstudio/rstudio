@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Past
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
@@ -455,11 +456,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    private String getErrorClass()
    {
-      return styles_.error() +
+      return styles_.error(); /* +
          (prefs_.highlightConsoleErrors().getValue() ?
             " " + AceTheme.getThemeErrorClass(
                 RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast()) :
             "");
+      */
    }
 
    /**
