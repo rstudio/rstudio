@@ -71,13 +71,12 @@ public class FindOutputPane extends WorkbenchPane
             ToolbarButton.NoText,
             constants_.stopFindInFilesTitle(),
             commands_.interruptR().getImageResource());
-      stopSearch_.setVisible(false);
       toolbar.addRightWidget(stopSearch_);
 
       refreshButton_ = commands_.refreshFindInFiles().createToolbarButton();
       refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
-      refreshButton_.setVisible(true);
       toolbar.addRightWidget(refreshButton_);
+      setStopSearchButtonVisible(false);
 
       showFindButton_ = new LeftRightToggleButton(constants_.findLabel(), constants_.replaceLabel(), true);
       showFindButton_.addClickHandler(new ClickHandler() {
@@ -127,8 +126,8 @@ public class FindOutputPane extends WorkbenchPane
             ToolbarButton.NoText,
             constants_.stopReplaceTitle(),
             commands_.interruptR().getImageResource());
-      stopReplace_.setVisible(false);
       replaceToolbar.addRightWidget(stopReplace_);
+      setStopReplaceButtonVisible(false);
 
       replaceAllButton_ = new ToolbarButton(constants_.replaceAllText(), constants_.replaceAllText(), null);
       replaceToolbar.addRightWidget(replaceAllButton_);
@@ -433,6 +432,7 @@ public class FindOutputPane extends WorkbenchPane
    public void setStopReplaceButtonVisible(boolean visible)
    {
       stopReplace_.setVisible(visible);
+      refreshButton_.setVisible(!visible);
    }
 
    @Override
@@ -538,6 +538,7 @@ public class FindOutputPane extends WorkbenchPane
    private final EventBus eventBus_;
    private Label searchLabel_;
    private ToolbarButton stopSearch_;
+   private ToolbarButton refreshButton_;
    private SimplePanel container_;
    private ScrollPanel scrollPanel_;
    private StatusPanel statusPanel_;
@@ -552,8 +553,6 @@ public class FindOutputPane extends WorkbenchPane
 
    private TextBox replaceTextBox_;
    private ToolbarButton replaceAllButton_;
-
-   private ToolbarButton refreshButton_;
 
    private ToolbarButton stopReplace_;
    private ProgressBar replaceProgress_;

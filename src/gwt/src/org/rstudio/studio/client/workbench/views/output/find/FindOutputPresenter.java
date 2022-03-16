@@ -520,11 +520,10 @@ public class FindOutputPresenter extends BasePresenter
                   dialogState_.getPath(),
                   dialogState_.isWholeWord(),
                   dialogState_.isRegex());
-               view_.setStopSearchButtonVisible(true);
 
                super.onResponseReceived(handle);
-
                view_.ensureVisible(true);
+               view_.setStopSearchButtonVisible(true);
             }
          });
    }
