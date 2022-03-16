@@ -194,7 +194,7 @@ void setEnvVar(const std::string& name, const std::string& value)
    if (name == "RSTUDIO_SESSION_RSA_PRIVATE_KEY" && !core::system::getenv(name).empty())
       return;
 
-   if (name == "RSTUDIO_PANDOC" && !core::system::getenv(name).empty() && !FilePath(value).exists())
+   if (name == "RSTUDIO_PANDOC" && !FilePath(value).exists())
       return;
 
    core::system::setenv(name, value);
