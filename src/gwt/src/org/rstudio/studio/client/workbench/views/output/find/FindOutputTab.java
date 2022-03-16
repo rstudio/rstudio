@@ -38,6 +38,9 @@ public class FindOutputTab extends DelayLoadWorkbenchTab<FindOutputPresenter>
 
       @Handler
       public abstract void onActivateFindInFiles();
+
+      @Handler
+      public abstract void onRefreshFindInFiles();
    }
 
    static interface Binder extends CommandBinder<Commands, Shim>

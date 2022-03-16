@@ -16,6 +16,7 @@
 - Adds support for POSIX extended regular expressions with backreferences in Find in Files find and replace modes, so that special regex characters such as `+` and `?`, `|`, `(`, etc do not need to be escaped, and other ERE escape sequences such as `\b`, `\w`, and `\d` are now supported. This matches the behavior of R's own `grep()` function, but note that backslashes do not need to be escaped (as they typically are in R strings) (#9344)
 - The "Common R source files" option in Find in Files has been updated to "Common source files", with support for searching Markdown (of any type, including .Rmd), JS, and YAML files (#10526)
 - Updated support for searching paths and filenames with Unicode characters on Windows, including Chinese and non-Latin characters (#9881)
+- Add a refresh button to the Find in Files pane to enable manual refresh of Find in Files search results (#3240)
 
 #### R
 
