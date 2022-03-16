@@ -64,7 +64,6 @@ import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceOpera
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesServerOperations;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindInFilesState;
 import org.rstudio.studio.client.workbench.views.output.find.model.FindResult;
-import org.rstudio.studio.client.workbench.views.plots.Plots;
 
 import java.util.ArrayList;
 
