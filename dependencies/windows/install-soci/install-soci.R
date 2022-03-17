@@ -1,4 +1,4 @@
-# some laziness to ensure we move to the 'install-crashpad' folder
+# some laziness to ensure we move to the 'install-soci' folder
 if (file.exists("rstudio.Rproj"))
    setwd("dependencies/windows/install-soci")
 
@@ -23,10 +23,13 @@ if (length(msvc) == 0)
 PATH$prepend(msvc)
 
 # initialize variables
+soci_version="4.0.3"
+soci_tar <- paste0("soci-", soci_version, ".tar")
+soci_archive <- paste0(soci_tar, ".gz")
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "\\")
 boost_dir <- normalizePath(file.path(output_dir, "boost-1.78.0-win-msvc141-release-static\\boost64"), winslash = "\\")
-soci_url <- "https://rstudio-buildtools.s3.amazonaws.com/soci.tar.gz"
-soci_dir <- file.path(owd, "soci")
+soci_url <- paste0("https://rstudio-buildtools.s3.amazonaws.com/soci-", soci_version, ".tar.gz")
+soci_dir <- file.path(owd, paste0("soci-", soci_version))
 soci_build_dir <- file.path(soci_dir, "build")
 sqlite_dir <- file.path(owd, "sqlite")
 postgresql_dir <- file.path(owd, "postgresql")
@@ -64,10 +67,10 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    # clone repository if we dont already have it
    if (!file.exists("soci")) {
       section("Downloading SOCI sources")
-      download(soci_url, destfile = "soci.tar.gz")
+      download(soci_url, destfile = soci_archive)
 	  section("Unzipping SOCI sources")
-	  exec("7z.exe", "-aoa", "e", "soci.tar.gz")
-	  exec("7z.exe", "-aoa", "x", "soci.tar")
+	  exec("7z.exe", "-aoa", "e", soci_archive)
+	  exec("7z.exe", "-aoa", "x", soci_tar)
    }
 
    # create build directories
