@@ -29,6 +29,7 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.VirtualConsole;
@@ -95,6 +96,7 @@ public class ConsoleError extends Composite
       DOM.setEventListener(this.getElement(), onConsoleErrorClick);
 
       // use rlang back traces if possible
+      framePanel.add(new Label("Traceback"));
       JsArrayString stackTreeLines = err.getTrace();
       if (stackTreeLines.length() > 0) {
          VirtualConsole vcTree = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(framePanel.getElement());
