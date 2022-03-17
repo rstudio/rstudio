@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.shell;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -336,37 +337,46 @@ public class ShellWidget extends Composite implements ShellDisplay,
          final String error, UnhandledError traceInfo,
          boolean expand, String command)
    {
-      if (errorNodes_.containsKey(error))
+      List<Element> errorNodes = new ArrayList<Element>();
+
+      // workaround rlang workaround
+      if (traceInfo.getIsRlangError())
       {
-         List<Element> errorNodes = errorNodes_.get(error);
-         if (errorNodes.isEmpty())
-            return;
-
-         clearPendingInput();
-         ConsoleError errorWidget = new ConsoleError(
-               traceInfo, getErrorClass(), this, command);
-
-         if (expand)
-            errorWidget.setTracebackVisible(true);
-
-         boolean replacedFirst = false;
-         for (Element element: errorNodes)
-         {
-            if (!replacedFirst)
-            {
-               // swap widget for first element
-               element.getParentNode().replaceChild(errorWidget.getElement(), element);
-               replacedFirst = true;
-            }
-            else
-            {
-               // and delete the rest of the elements
-               element.removeFromParent();
-            }
-         }
-         scrollPanel_.onContentSizeChanged();
-         errorNodes_.remove(error);
+         errorNodes = previousOutputNodes_;
       }
+      else if (errorNodes_.containsKey(error))
+      {
+         errorNodes = errorNodes_.get(error);
+      }
+
+      if (errorNodes.isEmpty())
+         return;
+
+      clearPendingInput();
+      ConsoleError errorWidget = new ConsoleError(
+            traceInfo, getErrorClass(), this, command);
+
+      if (expand)
+         errorWidget.setTracebackVisible(true);
+
+      boolean replacedFirst = false;
+      for (Element element: errorNodes)
+      {
+         if (!replacedFirst)
+         {
+            // swap widget for first element
+            element.getParentNode().replaceChild(errorWidget.getElement(), element);
+            replacedFirst = true;
+         }
+         else
+         {
+            // and delete the rest of the elements
+            element.removeFromParent();
+         }
+      }
+      
+      scrollPanel_.onContentSizeChanged();
+      errorNodes_.remove(error);
    }
 
    @Override
@@ -381,6 +391,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
       clearPendingInput();
       output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/,
             isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
+
+      previousOutputNodes_ = output_.getNewElements();
    }
 
    @Override
@@ -1034,6 +1046,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
    // A list of errors that have occurred between console prompts.
    private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();
    private boolean clearErrors_ = false;
+
+   // The list of Element that have occured from the last consoleWriteOutput()
+   // needed to work around rlang's workaround of printing errors in standard output
+   private List<Element> previousOutputNodes_ = new ArrayList<Element>();
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
 }

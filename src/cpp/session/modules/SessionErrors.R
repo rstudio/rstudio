@@ -104,14 +104,32 @@
    if (foundUserCode || !userOnly)
    {
       trace <- character()
+      message <- geterrmessage()
+      is_abort <- FALSE
       if (.rs.isPackageInstalled("rlang")) {
-         trace <- rlang::trace_back(bottom = frames[[ length(frames) - 2]])
+         
+         abort_frame <- frames[[length(frames) - 3L]]
+         if (isTRUE(abort_frame$.__signal_frame__.)) {
+            is_abort <- TRUE
+            
+            # fallback error from rlang::signal_abort() ?
+            trace <- abort_frame$cnd$trace
+
+            message <- rlang:::cnd_format(abort_frame$cnd, backtrace = FALSE)
+            
+            # trim the class line
+            message <- sub("^.*?\n", "", message)
+         } else {
+            # a regular stop() error, retrieve the trace with rlang anyway
+            trace <- rlang::trace_back(bottom = frames[[ length(frames) - 2L]])
+         }
          trace <- rlang:::format.rlang_trace(trace)
       }
       err <- list(
          frames = ammended_stack,
-         message = .rs.scalar(geterrmessage()), 
-         trace = trace
+         message = .rs.scalar(message), 
+         trace = trace, 
+         rlang = .rs.scalar(is_abort)
          )
       errorReporter(err)
    }

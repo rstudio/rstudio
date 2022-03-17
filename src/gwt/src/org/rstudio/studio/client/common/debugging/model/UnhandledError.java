@@ -34,4 +34,8 @@ public class UnhandledError extends JavaScriptObject
    public final native JsArrayString getTrace() /*-{
       return this.trace;
    }-*/;
+
+   public final native boolean getIsRlangError() /*-{
+      return this.rlang;
+   }-*/;
 }

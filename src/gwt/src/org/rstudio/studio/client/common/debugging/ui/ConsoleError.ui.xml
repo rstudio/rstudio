@@ -9,7 +9,7 @@
       position: relative;
       overflow: hidden;
       margin: 5px 5px 5px 0px;
-      padding: 5px 0px 5px 10px;
+      padding: 5px 0px 5px 15px;
       white-space: pre-line;
       border-left: 5px solid red;
    }
@@ -46,7 +46,7 @@
    }
    
    .errorMessage {
-      display: inline;
+      display: inline;      
       word-wrap: break-word;
       word-break: break-word;
    }
