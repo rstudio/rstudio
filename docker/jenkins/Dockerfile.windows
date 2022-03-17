@@ -43,7 +43,7 @@ RUN "echo 'Remove-Item alias:r' | Out-File $PsHome\Profile.ps1"
 # install R to c:\R, a common c:\Program issue appears to only happen when installing in docker
 RUN $ErrorActionPreference = 'Stop' ;`
   [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; `
-  (New-Object System.Net.WebClient).DownloadFile('https://cran-archive.r-project.org/bin/windows/base/old/3.0.3/R-3.0.3-win.exe', 'c:\R-3.0.3-win.exe') ;`
+  (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/R/R-3.0.3-win.exe', 'c:\R-3.0.3-win.exe') ;`
   Start-Process c:\R-3.0.3-win.exe -Wait -ArgumentList '/VERYSILENT /DIR="C:\R\R-3.0.3\"' ;`
   Remove-Item c:\R-3.0.3-win.exe -Force
 
