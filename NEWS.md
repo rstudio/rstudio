@@ -1,7 +1,6 @@
 
 ## RStudio 2022-06.0 "Spotted Wakerobin" Release Notes
 
-
 ### New
 
 - Source marker `message` can contain ANSI SGR codes for setting style and color (#9010)
@@ -10,12 +9,15 @@
 - "Clean and Rebuild" and "Install and Restart" have been merged into "Install Package", the "Project Options > Build" gains a "clean before install" option to toggle the --preclean flag. The Build toolbar changes to "Install | Test | Check | More v" (#4289)
 - The source button uses `cpp11::source_cpp()` on C++ files that have `[[cpp11::register]]` decorations (#10387)
 - New *Relative Line Numbers* preference for showing line numbers relative to the current line, rather than the first line (#1774)
+- Upgraded SOCI library dependency from version 4.0.0 to 4.0.3 (#10792)
 
 #### Find in Files
+
 - Fixed Find in Files whole-word replace option, so that when "Whole word" is checked, only file matches containing the whole word are replaced, as displayed in the preview (#9813)
 - Adds support for POSIX extended regular expressions with backreferences in Find in Files find and replace modes, so that special regex characters such as `+` and `?`, `|`, `(`, etc do not need to be escaped, and other ERE escape sequences such as `\b`, `\w`, and `\d` are now supported. This matches the behavior of R's own `grep()` function, but note that backslashes do not need to be escaped (as they typically are in R strings) (#9344)
 - The "Common R source files" option in Find in Files has been updated to "Common source files", with support for searching Markdown (of any type, including .Rmd), JS, and YAML files (#10526)
 - Updated support for searching paths and filenames with Unicode characters on Windows, including Chinese and non-Latin characters (#9881)
+- Add a refresh button to the Find in Files pane to enable manual refresh of Find in Files search results (#3240)
 
 #### R
 
@@ -24,6 +26,7 @@
 - Removed support for versions of R earlier than R 3.3.0. (rstudio-pro#2887)
 
 #### Python
+
 - RStudio attempts to infer the appropriate version of Python when "Automatically activate project-local Python environments" is checked and the user has not requested a specific version of Python. This Python will be stored in the environment variable "RETICULATE_PYTHON_FALLBACK", available from the R console, the Python REPL, and the RStudio Terminal (#9990)
 
 ### Fixed
@@ -43,5 +46,3 @@
 ### Deprecated / Removed
 
 - The minimum supported R version for the IDE has been increased from R 3.0.1 to R 3.3.0 (rstudio-pro#2887)
-
-

@@ -84,7 +84,7 @@ std::string RErrorCategory::message( int ev ) const
 core::Error rCodeExecutionError(const std::string& errMsg, 
                                 const core::ErrorLocation& location)
 {
-   core::Error error(errc::CodeExecutionError, location);
+   core::Error error(errc::CodeExecutionError, errMsg, location);
    error.addProperty("errormsg", errMsg);
    return error;
 }

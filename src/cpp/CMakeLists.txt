@@ -427,10 +427,10 @@ endif()
 
 # SOCI
 if(UNIX)
-   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_TOOLS_ROOT}/soci")
+   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_TOOLS_ROOT}/soci-4.0.3")
    set(SOCI_INCLUDE_BUILD_DIR "${RSTUDIO_TOOLS_SOCI}/build/include")
 else()
-   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci")
+   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci-4.0.3")
    if(RSTUDIO_SESSION_WIN32)
       set(SOCI_ARCH "x86")
    else()

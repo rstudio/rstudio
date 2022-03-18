@@ -105,6 +105,8 @@ public class FindOutputPresenter extends BasePresenter
       void setStopReplaceButtonVisible(boolean visible);
       void enableReplace();
       void disableReplace();
+      void turnOnReplaceMode();
+      void turnOffReplaceMode();
 
       void showProgress();
       void hideProgress();
@@ -479,6 +481,53 @@ public class FindOutputPresenter extends BasePresenter
          events_.fireEvent(new FindOperationEndedEvent(state.getHandle()));
    }
 
+   public void findInFilesBeginFind()
+   {
+      stopAndClear();
+      dialogState_.clearResultsCount();
+
+      FileSystemItem searchPath =
+         FileSystemItem.createDir(dialogState_.getPath());
+
+      JsArrayString includeFilePatterns = JsArrayString.createArray().cast();
+      for (String pattern : dialogState_.getFilePatterns())
+         includeFilePatterns.push(pattern);
+      JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
+      for (String pattern : dialogState_.getExcludeFilePatterns())
+         excludeFilePatterns.push(pattern);
+
+      // find result always starts with !replaceMode
+      view_.turnOffReplaceMode();
+      view_.disableReplace();
+
+      String serverQuery = dialogState_.getQuery();
+      if (dialogState_.isWholeWord())
+         serverQuery = "\\b" + serverQuery + "\\b";
+
+      server_.beginFind(serverQuery,
+         dialogState_.isRegex() || dialogState_.isWholeWord(),
+         !dialogState_.isCaseSensitive(),
+         searchPath,
+         includeFilePatterns,
+         excludeFilePatterns,
+         new SimpleRequestCallback<String>()
+         {
+            @Override
+            public void onResponseReceived(String handle)
+            {
+               currentFindHandle_ = handle;
+               updateSearchLabel(dialogState_.getQuery(),
+                  dialogState_.getPath(),
+                  dialogState_.isWholeWord(),
+                  dialogState_.isRegex());
+
+               super.onResponseReceived(handle);
+               view_.ensureVisible(true);
+               view_.setStopSearchButtonVisible(true);
+            }
+         });
+   }
+
    public void onFindInFiles(FindInFilesEvent event)
    {
       FindInFilesDialog dialog = new FindInFilesDialog(new OperationWithInput<FindInFilesDialog.State>()
@@ -487,51 +536,7 @@ public class FindOutputPresenter extends BasePresenter
          public void execute(final FindInFilesDialog.State input)
          {
             dialogState_ = input;
-
-            stopAndClear();
-            dialogState_.clearResultsCount();
-
-            FileSystemItem searchPath =
-                                      FileSystemItem.createDir(input.getPath());
-
-            JsArrayString includeFilePatterns = JsArrayString.createArray().cast();
-            for (String pattern : input.getFilePatterns())
-               includeFilePatterns.push(pattern);
-            JsArrayString excludeFilePatterns = JsArrayString.createArray().cast();
-            for (String pattern : input.getExcludeFilePatterns())
-               excludeFilePatterns.push(pattern);
-
-            // find result always starts with !replaceMode
-            view_.setReplaceMode(false);
-            view_.disableReplace();
-            
-            String serverQuery = input.getQuery();
-            if (input.isWholeWord())
-               serverQuery = "\\b" + serverQuery + "\\b";
-            
-            server_.beginFind(serverQuery,
-                              input.isRegex() || input.isWholeWord(),
-                              !input.isCaseSensitive(),
-                              searchPath,
-                              includeFilePatterns,
-                              excludeFilePatterns,
-                              new SimpleRequestCallback<String>()
-                              {
-                                 @Override
-                                 public void onResponseReceived(String handle)
-                                 {
-                                    currentFindHandle_ = handle;
-                                    updateSearchLabel(input.getQuery(),
-                                                      input.getPath(),
-                                                      input.isWholeWord(),
-                                                      input.isRegex());
-                                    view_.setStopSearchButtonVisible(true);
-
-                                    super.onResponseReceived(handle);
-
-                                    view_.ensureVisible(true);
-                                 }
-                              });
+            findInFilesBeginFind();
          }
       });
 
@@ -610,6 +615,13 @@ public class FindOutputPresenter extends BasePresenter
       // Ensure that console pane is not minimized
       commands_.activateConsolePane().execute();
       view_.bringToFront();
+   }
+
+   @Handler
+   public void onRefreshFindInFiles()
+   {
+      view_.bringToFront();
+      findInFilesBeginFind();
    }
 
    private void updateSearchLabel(String query, String path, boolean wholeWord, boolean regex)
