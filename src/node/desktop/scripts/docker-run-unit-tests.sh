@@ -16,7 +16,7 @@
 #
 
 set -e
-source "$(dirname "${BASH_SOURCE[0]}")/../../../../tools/rstudio-tools.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../../../dependencies/tools/rstudio-tools.sh"
 
 export PATH=/opt/rstudio-tools/dependencies/common/node/${RSTUDIO_NODE_VERSION}/bin/:$PATH
 xvfb-run npm test
