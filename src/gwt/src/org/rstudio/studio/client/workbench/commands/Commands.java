@@ -147,6 +147,7 @@ public abstract class
    public abstract AppCommand findAll();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
+   public abstract AppCommand refreshFindInFiles();
    public abstract AppCommand newSourceColumn();
    public abstract AppCommand fold();
    public abstract AppCommand unfold();
