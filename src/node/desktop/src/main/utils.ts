@@ -175,7 +175,14 @@ function findBuildRootImpl(rootDir: string): string {
   const buildDirs = [];
 
   // root directories to search
-  const buildDirParents = [`${rootDir}`, `${rootDir}/src`, `${rootDir}/src/cpp`];
+  const buildDirParents = [
+    `${rootDir}`,
+    `${rootDir}/src`,
+    `${rootDir}/src/cpp`,
+    `${rootDir}/package/linux`,
+    `${rootDir}/package/osx`,
+    `${rootDir}/package/win32`
+  ];
 
   // list all files + directories in root folder
   for (const buildDirParent of buildDirParents) {
