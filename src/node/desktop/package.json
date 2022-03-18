@@ -14,7 +14,7 @@
     "start": "electron-forge start",
     "debug": "electron-forge start --inspect-electron",
     "fullstart": "npm install && electron-forge start",
-    "test": "electron-mocha -c --config ./test/unit/mocharc.json",
+    "test": "electron-mocha --no-sandbox --config ./test/unit/mocharc.json",
     "testcover": "nyc electron-mocha -c --config ./test/unit/mocharc.json",
     "testint": "mocha -c --config ./test/int/mocharc.json",
     "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json",

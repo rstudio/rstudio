@@ -60,6 +60,7 @@ RUN apt-get update && \
     uuid-dev \
     valgrind \
     wget \
+    xvfb \
     zlib1g-dev
 
 # ensure we use the java 8 compiler

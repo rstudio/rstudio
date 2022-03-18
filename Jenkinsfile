@@ -51,6 +51,15 @@ def run_tests(os, type, flavor) {
   } catch(err) {
     unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
   }
+
+  if (flavor == "electron" && os == "bionic") {
+    try {
+      // run the Electron unit tests
+      sh "cd src/node/desktop && ./scripts/docker-run-unit-tests.sh"
+    } catch(err) {
+      unstable("Electron tests failed (${flavor.capitalize()} ${type} on ${os})")
+    }
+  }
 }
 
 def s3_upload(type, flavor, os, arch) {
