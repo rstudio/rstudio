@@ -659,6 +659,9 @@
    if (hasFile && !is.character(path)) {
       stop("path must be a character")
    }
+   if (length(path) > 1L) {
+      stop("path must be a single file")
+   }
    if (hasFile && !file.exists(path)) {
       stop(path, " does not exist.")
    }
