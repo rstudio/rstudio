@@ -54,6 +54,7 @@ RUN yum install -y \
     sudo \
     valgrind \
     wget \
+    xorg-x11-server-Xvfb \
     zlib-devel
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
