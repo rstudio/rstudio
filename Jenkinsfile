@@ -52,8 +52,7 @@ def run_tests(os, type, flavor) {
     unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
   }
 
-  if (flavor == "electron" && 
-      (os == "bionic" || os == "centos7" || os == "rhel8")) {
+  if (flavor == "electron") {
     try {
       // run the Electron unit tests
       sh "cd src/node/desktop && ./scripts/docker-run-unit-tests.sh"
