@@ -381,6 +381,7 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["enable_code_indexing"] = config.enableCodeIndexing;
    configJson["use_spaces_for_tab"] = config.useSpacesForTab;
    configJson["num_spaces_for_tab"] = config.numSpacesForTab;
+   configJson["insert_native_pipe_operator"] = config.insertNativePipeOperator;
    configJson["auto_append_newline"] = config.autoAppendNewline;
    configJson["strip_trailing_whitespace"] = config.stripTrailingWhitespace;
    configJson["line_endings"] = config.lineEndings;
@@ -583,6 +584,7 @@ Error writeProjectConfig(const json::Object& configJson)
                     "enable_code_indexing", config.enableCodeIndexing,
                     "use_spaces_for_tab", config.useSpacesForTab,
                     "num_spaces_for_tab", config.numSpacesForTab,
+                    "insert_native_pipe_operator", config.insertNativePipeOperator,
                     "default_encoding", config.encoding,
                     "default_sweave_engine", config.defaultSweaveEngine,
                     "default_latex_program", config.defaultLatexProgram,

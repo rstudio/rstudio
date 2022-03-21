@@ -613,6 +613,19 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
+   // extract insert native pipe operator
+   it = dcfFields.find("InsertNativePipeOperator");
+   if (it != dcfFields.end())
+   {
+      if (!interpretBoolValue(it->second, &(pConfig->insertNativePipeOperator)))
+         return requiredFieldError("InsertNativePipeOperator", pUserErrMsg);
+   }
+   else
+   {
+      pConfig->insertNativePipeOperator = defaultConfig.insertNativePipeOperator;
+      *pProvidedDefaults = true;
+   }
+
    // extract auto append newline
    it = dcfFields.find("AutoAppendNewline");
    if (it != dcfFields.end())
@@ -1017,10 +1030,11 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "EnableCodeIndexing: %6%\n"
       "UseSpacesForTab: %7%\n"
       "NumSpacesForTab: %8%\n"
-      "Encoding: %9%\n"
+      "InsertNativePipeOperator: %9%\n"
+      "Encoding: %10%\n"
       "\n"
-      "RnwWeave: %10%\n"
-      "LaTeX: %11%\n");
+      "RnwWeave: %11%\n"
+      "LaTeX: %12%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
@@ -1031,6 +1045,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
         boolValueToString(config.enableCodeIndexing) %
         boolValueToString(config.useSpacesForTab) %
         config.numSpacesForTab %
+        boolValueToString(config.insertNativePipeOperator) %
         config.encoding %
         config.defaultSweaveEngine %
         config.defaultLatexProgram);

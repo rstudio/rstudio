@@ -843,6 +843,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.rVersion = r_util::RVersionInfo(kRVersionDefault);
    defaultConfig.useSpacesForTab = prefs::userPrefs().useSpacesForTab();
    defaultConfig.numSpacesForTab = prefs::userPrefs().numSpacesForTab();
+   defaultConfig.insertNativePipeOperator = prefs::userPrefs().insertNativePipeOperator();
    defaultConfig.autoAppendNewline = prefs::userPrefs().autoAppendNewline();
    defaultConfig.stripTrailingWhitespace =
                               prefs::userPrefs().stripTrailingWhitespace();

@@ -1351,6 +1351,15 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String tabWidthLabel();
 
     /**
+     * Translated "Use native pipe operator, |> (requires R 4.1+)"
+     *
+     * @return translated "Use native pipe operator, |> (requires R 4.1+)"
+     */
+    @DefaultMessage("Use native pipe operator, |> (requires R 4.1+)")
+    @Key("insertNativePipeOperatorLabel")
+    String insertNativePipeOperatorLabel();
+
+    /**
      * Translated "Ensure that source files end with newline".
      *
      * @return translated "Ensure that source files end with newline"

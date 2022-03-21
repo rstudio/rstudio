@@ -115,8 +115,16 @@ public class RProjectConfig extends JavaScriptObject
    
    public native final void setNumSpacesForTab(int numSpacesForTab) /*-{
       this.num_spaces_for_tab = numSpacesForTab;
-   }-*/;  
-   
+   }-*/;
+
+   public native final boolean getInsertNativePipeOperator() /*-{
+       return this.insert_native_pipe_operator;
+   }-*/;
+
+   public native final void setInsertNativePipeOperator(boolean insertNativePipeOperator) /*-{
+       this.insert_native_pipe_operator = insertNativePipeOperator;
+   }-*/;
+
    public native final boolean getAutoAppendNewline() /*-{
       return this.auto_append_newline;
    }-*/;  
