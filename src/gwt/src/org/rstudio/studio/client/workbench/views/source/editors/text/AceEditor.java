@@ -737,7 +737,6 @@ public class AceEditor implements DocDisplay,
    {
       server_ = server;
       userPrefs_ = uiPrefs;
-
       collab_ = collab;
       keyboard_ = keyboard;
       commands_ = commands;
