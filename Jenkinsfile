@@ -198,7 +198,7 @@ rstudioBuildCommit   = ""
 // compute release branch by parsing the job name (env.GIT_BRANCH should work here but doesn't appear to), e.g.
 // "IDE/pro-pipeline/v4.3" => "v4.3"
 branchComponents = env.JOB_NAME.split("/")
-rstudioReleaseBranch = "prairie-trillium"
+rstudioReleaseBranch = branchComponents[branchComponents.size() - 1]
 
 def trigger_external_build(build_name, wait = false) {
   // triggers downstream job passing along the important params from this build
@@ -476,7 +476,7 @@ try {
             ("${rstudioReleaseBranch}" != "v1.4-juliet-rose")) {
           trigger_external_build('IDE/qa-opensource-automation')
         }
-        
+
         slackSend channel: params.get('SLACK_CHANNEL', '#ide-builds'), color: 'good', message: "${messagePrefix} passed (${currentBuild.result})"
     }
 
