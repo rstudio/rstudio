@@ -426,6 +426,16 @@ try {
                     currentBuild.result = "UNSTABLE"
                   }
                 }
+                if (current_container.flavor == "electron") {
+                  stage('electron tests'){
+                    try {
+                      bat 'cd src/node/desktop && scripts/run-unit-tests.cmd'
+                    }
+                    catch(err){
+                      currentBuild.result = "UNSTABLE"
+                    }
+                  }
+                }
                 stage('sign') {
                   def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
                   packageVersion = packageVersion.replace('+', '-')
