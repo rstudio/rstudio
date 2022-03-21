@@ -25,6 +25,7 @@ RUN yum install -y \
     libacl-devel \
     libcap-devel \ 
     libffi \
+    libuser-devel \
     libuuid-devel \
     libxml2-devel \
     libXcursor-devel \
@@ -49,8 +50,8 @@ RUN yum install -y \
     sudo \
     wget \
     xml-commons-apis \
-    zlib-devel \
-    libuser-devel
+    xorg-x11-server-Xvfb \
+    zlib-devel
 
 # add scl repo and install additional dependencies
 RUN yum install -y \

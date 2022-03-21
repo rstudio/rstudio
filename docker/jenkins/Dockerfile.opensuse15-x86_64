@@ -20,9 +20,13 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     git \
     java-1_8_0-openjdk-devel  \
     libacl-devel \
+    libatk-1_0-0 \
+    libatk-bridge-2_0-0 \
     libattr-devel \
     libcap-devel \
+    libcups2 \
     libcurl-devel \
+    libgtk-3-0 \
     libuser-devel \
     libuuid-devel \
     libxml2-devel \
@@ -48,6 +52,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     valgrind \
     wget \
     xml-commons-apis \
+    xvfb-run \
     zlib-devel
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)

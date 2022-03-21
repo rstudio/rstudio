@@ -160,6 +160,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void zoomIn();
    void zoomOut();
    void zoomActualSize();
+   void getZoomLevel(CommandWithArg<Double> callback);
    
    void setBackgroundColor(JsArrayInteger rgbColor);
    void changeTitleBarColor(int r, int g, int b);

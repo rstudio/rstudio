@@ -206,60 +206,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String errorCapitalized();
 
     /**
-     * Translated "title: "{0}"".
-     *
-     * @return translated "title: "{0}""
-     */
-    @DefaultMessage("title: \"{0}\"")
-    @Key("titleParameterColon")
-    String titleParameterColon(String title);
-
-    /**
-     * Translated "author: "{0}"".
-     *
-     * @return translated "author: "{0}""
-     */
-    @DefaultMessage("author: \"{0}\"")
-    @Key("authorParameterColon")
-    String authorParameterColon(String author);
-
-    /**
-     * Translated "format: {0}".
-     *
-     * @return translated "format: {0}"
-     */
-    @DefaultMessage("format: {0}")
-    @Key("formatParameterColon")
-    String formatParameterColon(String format);
-
-    /**
-     * Translated "editor: {0}".
-     *
-     * @return translated "editor: {0}"
-     */
-    @DefaultMessage("editor: {0}")
-    @Key("editorParameterColon")
-    String editorParameterColon(String editorVisual);
-
-    /**
-     * Translated "server: shiny".
-     *
-     * @return translated "server: shiny"
-     */
-    @DefaultMessage("server: shiny")
-    @Key("serverShiny")
-    String serverShiny();
-
-    /**
-     * Translated "jupyter: {0}".
-     *
-     * @return translated "jupyter: {0}"
-     */
-    @DefaultMessage("jupyter: {0}")
-    @Key("jupyterParameterColon")
-    String jupyterParameterColon(String kernel);
-
-    /**
      * Translated "Always save files before build".
      *
      * @return translated "Always save files before build"

@@ -31,6 +31,10 @@ class MacPreferences extends DesktopOptions {
   fixedWidthFont(): string | undefined {
     return systemPreferences.getUserDefault(preferenceKeys.fontFixedWidth, 'string');
   }
+
+  zoomLevel(): number | undefined {
+    return systemPreferences.getUserDefault(preferenceKeys.zoomLevel, 'double');
+  }
 }
 
 export default MacPreferences;

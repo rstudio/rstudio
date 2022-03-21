@@ -15,7 +15,7 @@
 
 import { ipcRenderer } from 'electron';
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+// preload never calls this again so these values are immutable
 export function getDesktopInfoBridge() {
   return {
     platform: '',
@@ -25,7 +25,7 @@ export function getDesktopInfoBridge() {
     fixedWidthFont: ipcRenderer.sendSync('desktop_get_fixed_width_font'),
     proportionalFont: ipcRenderer.sendSync('desktop_get_proportional_font'),
     desktopSynctexViewer: '',
-    zoomLevel: 1.0,
+    zoomLevel: ipcRenderer.sendSync('desktop_get_zoom_level'),
     chromiumDevtoolsPort: 0,
   };
 }

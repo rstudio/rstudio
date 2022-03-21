@@ -996,6 +996,14 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Find _in Files...") // $NON-NLS-1$
     String findInFilesMenuLabel();
     
+    // refreshFindInFiles
+    @DefaultStringValue("") // $NON-NLS-1$
+    String refreshFindInFilesButtonLabel();
+    @DefaultStringValue("_Refresh Find in Files") // $NON-NLS-1$
+    String refreshFindInFilesMenuLabel();
+    @DefaultStringValue("Refresh Find in Files results") // $NON-NLS-1$
+    String refreshFindInFilesDesc();
+    
     // fold
     @DefaultStringValue("Collapse Fold") // $NON-NLS-1$
     String foldLabel();

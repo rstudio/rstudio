@@ -13,10 +13,12 @@
 
 package org.rstudio.studio.client.workbench.views.viewer.export;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 
@@ -38,9 +40,20 @@ public class DesktopExport
             // hide gripper
             sizeEditor.setGripperVisible(false);
 
-            // get zoom level
-            double zoomLevel = DesktopInfo.getZoomLevel();
+            if (BrowseCap.isElectron())
+            {
+               Desktop.getFrame().getZoomLevel(zoomLevel -> performExport(zoomLevel));
+            }
+            else
+            {
+               // get zoom level
+               double zoomLevel = DesktopInfo.getZoomLevel();
 
+               performExport(zoomLevel);
+            }
+         }
+
+         private void performExport(double zoomLevel) {
             // get the preview iframe rect
             ElementEx iframe = sizeEditor.getPreviewIFrame().<ElementEx>cast();
             final Rectangle viewerRect = new Rectangle(

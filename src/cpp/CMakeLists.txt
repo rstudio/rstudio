@@ -427,10 +427,10 @@ endif()
 
 # SOCI
 if(UNIX)
-   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_TOOLS_ROOT}/soci")
+   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_TOOLS_ROOT}/soci-4.0.3")
    set(SOCI_INCLUDE_BUILD_DIR "${RSTUDIO_TOOLS_SOCI}/build/include")
 else()
-   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci")
+   set(RSTUDIO_TOOLS_SOCI "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/soci-4.0.3")
    if(RSTUDIO_SESSION_WIN32)
       set(SOCI_ARCH "x86")
    else()
@@ -628,7 +628,7 @@ else()
          execute_process(
              COMMAND "${LIBR_EXECUTABLE}" "--vanilla" "-s" "-e" "cat(as.character(getRversion()))"
              OUTPUT_VARIABLE LIBR_VERSION)
-         if (LIBR_VERSION VERSION_LESS "3.0.1")
+         if (LIBR_VERSION VERSION_LESS "3.3.0")
             message(FATAL_ERROR "Minimum R version (${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED}) not found; detected version is ${LIBR_VERSION}")
          endif()
       endif()

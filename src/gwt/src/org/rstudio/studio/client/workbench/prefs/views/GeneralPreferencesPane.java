@@ -620,10 +620,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       });
    }
 
-   private static final String ENGINE_AUTO        = "auto";
-   private static final String ENGINE_DESKTOP     = "desktop";
-   private static final String ENGINE_GLES        = "gles";
-   private static final String ENGINE_SOFTWARE    = "software";
+   private static final String ENGINE_AUTO        = "auto"; //$NON-NLS-1$
+   private static final String ENGINE_DESKTOP     = "desktop"; //$NON-NLS-1$
+   private static final String ENGINE_GLES        = "gles"; //$NON-NLS-1$
+   private static final String ENGINE_SOFTWARE    = "software"; //$NON-NLS-1$
 
    private boolean desktopMonitoring_ = false;
    private boolean desktopIgnoreGpuExclusions_ = false;

@@ -51,6 +51,15 @@ def run_tests(os, type, flavor) {
   } catch(err) {
     unstable("C++ unit tests failed (${flavor.capitalize()} ${type} on ${os})")
   }
+
+  if (flavor == "electron") {
+    try {
+      // run the Electron unit tests
+      sh "cd src/node/desktop && ./scripts/docker-run-unit-tests.sh"
+    } catch(err) {
+      unstable("Electron tests failed (${flavor.capitalize()} ${type} on ${os})")
+    }
+  }
 }
 
 def s3_upload(type, flavor, os, arch) {
@@ -472,8 +481,8 @@ try {
                     println stdout
                   }
                 }
-                stage('upload debug symbols') {
-                  if (current_container.flavor == "desktop") {
+                if (current_container.flavor == "desktop") {
+                  stage('upload debug symbols') {
                     // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
                     bat '''
                     cd package\\win32\\build
