@@ -16,6 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
+import { isWindowsDocker } from '../unit-utils';
 import { GwtWindow } from '../../../src/main/gwt-window';
 
 class TestGwtWindow extends GwtWindow {
@@ -24,11 +25,13 @@ class TestGwtWindow extends GwtWindow {
   }
 }
 
-describe('GwtWindow', () => {
-  it('construction creates a hidden BrowserWindow', () => {
-    const gwtWin = new TestGwtWindow({ name: 'some name' });
-    assert.isObject(gwtWin);
-    assert.isObject(gwtWin.window);
-    assert.isFalse(gwtWin.window.isVisible());
+if (!isWindowsDocker()) {
+  describe('GwtWindow', () => {
+    it('construction creates a hidden BrowserWindow', () => {
+      const gwtWin = new TestGwtWindow({ name: 'some name' });
+      assert.isObject(gwtWin);
+      assert.isObject(gwtWin.window);
+      assert.isFalse(gwtWin.window.isVisible());
+    });
   });
-});
+}

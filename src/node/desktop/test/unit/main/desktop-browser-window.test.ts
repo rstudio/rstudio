@@ -16,13 +16,16 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
+import { isWindowsDocker } from '../unit-utils';
 import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 
-describe('DesktopBrowserWindow', () => {
-  it('construction creates a hidden BrowserWindow', () => {
-    const win = new DesktopBrowserWindow({ name: '_blank' });
-    assert.isObject(win);
-    assert.isObject(win.window);
-    assert.isFalse(win.window.isVisible());
+if (!isWindowsDocker()) {
+  describe('DesktopBrowserWindow', () => {
+    it('construction creates a hidden BrowserWindow', () => {
+      const win = new DesktopBrowserWindow({ name: '_blank' });
+      assert.isObject(win);
+      assert.isObject(win.window);
+      assert.isFalse(win.window.isVisible());
+    });
   });
-});
+}
