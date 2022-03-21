@@ -2234,7 +2234,10 @@
       .rs.extractRCode(contents,
                        "^\\s*<<(.*)>>=.*$",
                        "^\\s*@\\s*(%+.*|)$")
-   
+   else if (identical(extension, ".qmd"))
+     .rs.extractRCode(contents,
+                      "^[\t >]*```+\\s*\\{([a-zA-Z0-9_]+.*)\\}\\s*$",
+                      "^[\t >]*```+\\s*$")
    if (is.null(code))
       return(character())
    
