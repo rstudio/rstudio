@@ -58,6 +58,10 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.setWidth("36px");
       add(numSpacesForTab_);
 
+      insertNativePipeOperator_ = new CheckBox(constants_.insertNativePipeOperatorLabel(), false);
+      insertNativePipeOperator_.addStyleName(RESOURCES.styles().insertNativePipeOperator());
+      add(insertNativePipeOperator_);
+
       chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
       chkAutoAppendNewline_.addStyleName(RESOURCES.styles().editingOption());
       add(chkAutoAppendNewline_);
@@ -135,6 +139,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       enableCodeIndexing_.setValue(initialConfig_.getEnableCodeIndexing());
       chkSpacesForTab_.setValue(initialConfig_.getUseSpacesForTab());
       numSpacesForTab_.setValue(initialConfig_.getNumSpacesForTab() + "");
+      insertNativePipeOperator_.setValue(initialConfig_.getInsertNativePipeOperator());
       chkAutoAppendNewline_.setValue(initialConfig_.getAutoAppendNewline());
       chkStripTrailingWhitespace_.setValue(initialConfig_.getStripTrailingWhitespace());
       lineEndings_.setValue(ProjectPrefs.prefFromLineEndings(initialConfig_.getLineEndings()));
@@ -154,6 +159,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       config.setEnableCodeIndexing(enableCodeIndexing_.getValue());
       config.setUseSpacesForTab(chkSpacesForTab_.getValue());
       config.setNumSpacesForTab(getTabWidth());
+      config.setInsertNativePipeOperator(insertNativePipeOperator_.getValue());
       config.setAutoAppendNewline(chkAutoAppendNewline_.getValue());
       config.setStripTrailingWhitespace(chkStripTrailingWhitespace_.getValue());
       config.setLineEndings(ProjectPrefs.lineEndingsFromPref(lineEndings_.getValue()));
@@ -184,6 +190,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private CheckBox enableCodeIndexing_;
    private CheckBox chkSpacesForTab_;
    private NumericValueWidget numSpacesForTab_;
+   private CheckBox insertNativePipeOperator_;
    private CheckBox chkAutoAppendNewline_;
    private CheckBox chkStripTrailingWhitespace_;
    private LineEndingsSelectWidget lineEndings_;
