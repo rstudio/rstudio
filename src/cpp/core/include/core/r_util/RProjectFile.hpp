@@ -46,6 +46,11 @@ extern const char * const kBuildTypeWebsite;
 extern const char * const kBuildTypeCustom;
 extern const char * const kBuildTypeQuarto;
 
+
+extern const char * const kUseNativePipeNever;
+extern const char * const kUseNativePipeR41;
+extern const char * const kUseNativePipeAlways;
+
 extern const char * const kMarkdownWrapUseDefault;
 extern const char * const kMarkdownWrapNone;
 extern const char * const kMarkdownWrapColumn;
@@ -64,7 +69,7 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 struct RProjectBuildDefaults
 {
    RProjectBuildDefaults()
-      : useDevtools(true), 
+      : useDevtools(true),
         cleanBeforeInstall(true)
    {
    }
@@ -83,7 +88,7 @@ struct RProjectConfig
         enableCodeIndexing(true),
         useSpacesForTab(true),
         numSpacesForTab(2),
-        insertNativePipeOperator(false),
+        useNativePipeOperator(kUseNativePipeNever),
         autoAppendNewline(false),
         stripTrailingWhitespace(false),
         lineEndings(kLineEndingsUseDefault),
@@ -128,7 +133,7 @@ struct RProjectConfig
    bool enableCodeIndexing;
    bool useSpacesForTab;
    int numSpacesForTab;
-   bool insertNativePipeOperator;
+   std::string useNativePipeOperator;
    bool autoAppendNewline;
    bool stripTrailingWhitespace;
    int lineEndings;
@@ -200,9 +205,8 @@ bool isWebsiteDirectory(const FilePath& projectDir);
 FilePath websiteRootDirectory(const FilePath& filePath);
 
 } // namespace r_util
-} // namespace core 
+} // namespace core
 } // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_PROJECT_FILE_HPP
-

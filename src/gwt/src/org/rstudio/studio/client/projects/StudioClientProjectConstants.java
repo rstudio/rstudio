@@ -1043,7 +1043,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Create Quarto Blog")
     @Key("quartoBlogPageCaption")
     String quartoBlogPageCaption();
-    
+
     /**
      * Translated "Quarto Website".
      *
@@ -1356,8 +1356,35 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      * @return translated "Use native pipe operator, |> (requires R 4.1+)"
      */
     @DefaultMessage("Use native pipe operator, |> (requires R 4.1+)")
-    @Key("insertNativePipeOperatorLabel")
-    String insertNativePipeOperatorLabel();
+    @Key("useNativePipeOperatorLabel")
+    String useNativePipeOperatorLabel();
+
+    /**
+     * Translated "Never (use magrittr pipe)"
+     *
+     * @return translated "Never (use magrittr pipe)"
+     */
+    @DefaultMessage("Never (use magrittr pipe)")
+    @Key("useNativePipeOperatorNeverText")
+    String useNativePipeOperatorNeverText();
+
+    /**
+     * Translated "Only when using R 4.1+"
+     *
+     * @return translated "Only when using R 4.1+"
+     */
+    @DefaultMessage("Only when using R 4.1+")
+    @Key("useNativePipeOperatorR41Text")
+    String useNativePipeOperatorR41Text();
+
+    /**
+     * Translated "Always"
+     *
+     * @return translated "Always"
+     */
+    @DefaultMessage("Always")
+    @Key("useNativePipeOperatorAlwaysText")
+    String useNativePipeOperatorAlwaysText();
 
     /**
      * Translated "Ensure that source files end with newline".

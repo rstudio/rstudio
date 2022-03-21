@@ -145,8 +145,8 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getUseSpacesForTab());
                 uiPrefs.numSpacesForTab().setProjectValue(
                                            config.getNumSpacesForTab());
-                uiPrefs.insertNativePipeOperator().setProjectValue(
-                                           config.getInsertNativePipeOperator());
+                uiPrefs.useNativePipeOperator().setProjectValue(
+                                           config.getUseNativePipeOperator());
                 uiPrefs.autoAppendNewline().setProjectValue(
                                            config.getAutoAppendNewline());
                 uiPrefs.stripTrailingWhitespace().setProjectValue(

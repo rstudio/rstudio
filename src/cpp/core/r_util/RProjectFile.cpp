@@ -54,6 +54,10 @@ const char * const kBuildTypeWebsite = "Website";
 const char * const kBuildTypeCustom = "Custom";
 const char * const kBuildTypeQuarto = "Quarto";
 
+const char * const kUseNativePipeNever = "Never";
+const char * const kUseNativePipeR41 = "R 4.1+";
+const char * const kUseNativePipeAlways = "Always";
+
 const char * const kMarkdownWrapUseDefault = "Default";
 const char * const kMarkdownWrapNone = "None";
 const char * const kMarkdownWrapColumn = "Column";
@@ -168,9 +172,30 @@ bool interpretBuildTypeValue(const std::string& value, std::string* pValue)
    }
 }
 
-bool interpretLineEndingsValue(std::string value, int* pValue)
+bool interpretUseNativePipeOperatorValue(std::string value, std::string* pValue)
 {
    value = boost::algorithm::trim_copy(value);
+   if (value == "")
+   {
+      *pValue = kUseNativePipeNever;
+      return true;
+   }
+   else if (
+       value == kUseNativePipeNever ||
+       value == kUseNativePipeAlways ||
+       value == kUseNativePipeR41)
+   {
+      *pValue = value;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+bool interpretLineEndingsValue(const std::string& value, int* pValue)
+{
    if (value == "")
    {
       *pValue = kLineEndingsUseDefault;
@@ -405,13 +430,13 @@ Error findProjectFile(FilePath filePath,
 
    if (!filePath.isDirectory())
       filePath = filePath.getParent();
-   
+
    // list all paths up to root for our anchor -- we want to stop looking
    // if we hit the anchor path, or any parent directory of that path
    std::vector<FilePath> anchorPaths;
    for (; anchorPath.exists(); anchorPath = anchorPath.getParent())
       anchorPaths.push_back(anchorPath);
-   
+
    // no .Rproj file found; scan parent directories
    for (; filePath.exists(); filePath = filePath.getParent())
    {
@@ -421,12 +446,12 @@ Error findProjectFile(FilePath filePath,
          if (filePath == anchorPath)
             return fileNotFoundError(ERROR_LOCATION);
       }
-      
+
       // skip directory if there's no .Rproj.user directory (avoid potentially
       // expensive query of all files in directory)
       if (!filePath.completePath(".Rproj.user").exists())
          continue;
-         
+
       // scan this directory for .Rproj files
       FilePath projPath = projectFromDirectory(filePath);
       if (!projPath.isEmpty())
@@ -444,17 +469,17 @@ Error findProjectConfig(FilePath filePath,
                         RProjectConfig* pConfig)
 {
    Error error;
-   
+
    FilePath projPath;
    error = findProjectFile(filePath, anchorPath, &projPath);
    if (error)
       return error;
-   
+
    std::string errorMessage;
    error = readProjectFile(projPath, pConfig, &errorMessage);
    if (error)
       return error;
-   
+
    return Success();
 }
 
@@ -613,16 +638,16 @@ Error readProjectFile(const FilePath& projectFilePath,
       *pProvidedDefaults = true;
    }
 
-   // extract insert native pipe operator
-   it = dcfFields.find("InsertNativePipeOperator");
+   // extract use native pipe operator
+   it = dcfFields.find("UseNativePipeOperator");
    if (it != dcfFields.end())
    {
-      if (!interpretBoolValue(it->second, &(pConfig->insertNativePipeOperator)))
-         return requiredFieldError("InsertNativePipeOperator", pUserErrMsg);
+      if (!interpretUseNativePipeOperatorValue(it->second, &(pConfig->useNativePipeOperator)))
+         return requiredFieldError("UseNativePipeOperator", pUserErrMsg);
    }
    else
    {
-      pConfig->insertNativePipeOperator = defaultConfig.insertNativePipeOperator;
+      pConfig->useNativePipeOperator = defaultConfig.useNativePipeOperator;
       *pProvidedDefaults = true;
    }
 
@@ -908,7 +933,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->defaultOpenDocs = "";
    }
-   
+
    // extract default tutorial
    it = dcfFields.find("DefaultTutorial");
    if (it != dcfFields.end())
@@ -978,20 +1003,20 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->zoteroLibraries = defaultConfig.zoteroLibraries;
    }
-   
+
    // extract python fields
    it = dcfFields.find("PythonType");
    if (it != dcfFields.end())
    {
       pConfig->pythonType = it->second;
    }
-   
+
    it = dcfFields.find("PythonVersion");
    if (it != dcfFields.end())
    {
       pConfig->pythonVersion = it->second;
    }
-   
+
    it = dcfFields.find("PythonPath");
    if (it != dcfFields.end())
    {
@@ -1030,7 +1055,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "EnableCodeIndexing: %6%\n"
       "UseSpacesForTab: %7%\n"
       "NumSpacesForTab: %8%\n"
-      "InsertNativePipeOperator: %9%\n"
+      "UseNativePipeOperator: %9%\n"
       "Encoding: %10%\n"
       "\n"
       "RnwWeave: %11%\n"
@@ -1045,7 +1070,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
         boolValueToString(config.enableCodeIndexing) %
         boolValueToString(config.useSpacesForTab) %
         config.numSpacesForTab %
-        boolValueToString(config.insertNativePipeOperator) %
+        config.useNativePipeOperator %
         config.encoding %
         config.defaultSweaveEngine %
         config.defaultLatexProgram);
@@ -1123,7 +1148,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
             {
                build.append("PackageCleanBeforeInstall: Yes\n");
             }
-            else 
+            else
             {
                build.append("PackageCleanBeforeInstall: No\n");
             }
@@ -1218,7 +1243,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       boost::format docsFmt("\nDefaultOpenDocs: %1%\n");
       contents.append(boost::str(docsFmt % config.defaultOpenDocs));
    }
-   
+
    // add default tutorial if present
    if (!config.defaultTutorial.empty())
    {
@@ -1265,7 +1290,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       boost::format fmt("\nZoteroLibraries: %1%\n");
       contents.append(boost::str(fmt % librariesConfig));
    }
-   
+
    // if any Python configs deviate from default, then create Python section
    if (!config.pythonType.empty() ||
        !config.pythonVersion.empty() ||
@@ -1276,12 +1301,12 @@ Error writeProjectFile(const FilePath& projectFilePath,
                "PythonType: %1%\n"
                "PythonVersion: %2%\n"
                "PythonPath: %3%\n");
-      
+
       auto pythonConfig = fmt
             % config.pythonType
             % config.pythonVersion
             % config.pythonPath;
-      
+
       contents.append(boost::str(pythonConfig));
    }
 
@@ -1291,7 +1316,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
       boost::format fmt("\nSpellingDictionary: %1%\n");
       contents.append(boost::str(fmt % config.spellingDictionary));
    }
-   
+
 
    // write it
    return writeStringToFile(projectFilePath,
@@ -1424,8 +1449,5 @@ FilePath websiteRootDirectory(const FilePath& filePath)
 }
 
 } // namespace r_util
-} // namespace core 
+} // namespace core
 } // namespace rstudio
-
-
-

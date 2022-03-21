@@ -72,6 +72,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SuperDevMode;
@@ -86,6 +87,7 @@ import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -347,6 +349,10 @@ public class AceEditor implements DocDisplay,
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
+
+      // we'd probably want to do some event handling with this because the R version can change after startup
+      // see server_.getRVersion(new ServerRequestCallback<RVersionSpec>()
+      rVersion_ = RStudioGinjector.INSTANCE.getSession().getSessionInfo().getRVersionsInfo().getRVersion();
 
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -661,8 +667,10 @@ public class AceEditor implements DocDisplay,
             Character.isSpace(getCharacterBeforeCursor()) ||
             (!hasSelection() && getCursorPosition().getColumn() == 0);
 
-      // Use magrittr style pipes unless user has opted into new native pipe syntax in R 4.1+
-      String pipe = userPrefs_.insertNativePipeOperator().getValue() ? "|>" : "%>%";
+      // Use magrittr style pipes if the user has not opted into new native pipe syntax in R 4.1+
+
+
+      String pipe = userPrefs_.useNativePipeComputed().getValue() ? NATIVE_R_PIPE : MAGRITTR_PIPE;
 
       if (hasWhitespaceBefore)
          insertCode(pipe + " ", false);
@@ -737,7 +745,6 @@ public class AceEditor implements DocDisplay,
    {
       server_ = server;
       userPrefs_ = uiPrefs;
-
       collab_ = collab;
       keyboard_ = keyboard;
       commands_ = commands;
@@ -771,7 +778,7 @@ public class AceEditor implements DocDisplay,
    {
       behavior_ = behavior;
    }
-   
+
    public EditorBehavior getEditorBehavior()
    {
       return behavior_;
@@ -897,15 +904,15 @@ public class AceEditor implements DocDisplay,
                         server_,
                         context_));
                }
-               
+
                // Yaml completion manager
-               if (fileType_.isYaml() || fileType_.isRmd() || 
+               if (fileType_.isYaml() || fileType_.isRmd() ||
                    (behavior_ == EditorBehavior.AceBehaviorEmbedded && (fileType_.isR() || fileType_.isPython())))
                {
                   managers.put(DocumentMode.Mode.YAML, YamlCompletionManager.create(
-                       editor, 
-                       new CompletionPopupPanel(), 
-                       server_, 
+                       editor,
+                       new CompletionPopupPanel(),
+                       server_,
                        context_
                   ));
                }
@@ -2805,7 +2812,7 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.getEditor().getCursorPositionScreen();
    }
-   
+
    public int getCursorRow()
    {
       return getSession().getSelection().getCursor().getRow();
@@ -2815,7 +2822,7 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getSelection().getCursor().getColumn();
    }
-   
+
    public void setCursorPosition(Position position)
    {
       getSession().getSelection().setSelectionRange(
@@ -4642,6 +4649,8 @@ public class AceEditor implements DocDisplay,
    }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
+   private static final String MAGRITTR_PIPE = "%>%";
+   private static final String NATIVE_R_PIPE = "|>";
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private final SnippetHelper snippets_;
@@ -4656,6 +4665,7 @@ public class AceEditor implements DocDisplay,
    private Commands commands_;
    private EventBus events_;
    private TextFileType fileType_;
+   private String rVersion_;
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
    private boolean useVimMode_ = false;

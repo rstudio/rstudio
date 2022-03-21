@@ -2936,16 +2936,16 @@ core::Error UserPrefValues::setSaveRetryTimeout(int val)
 }
 
 /**
- * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+ * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
  */
-bool UserPrefValues::insertNativePipeOperator()
+std::string UserPrefValues::useNativePipeOperator()
 {
-   return readPref<bool>("insert_native_pipe_operator");
+   return readPref<std::string>("use_native_pipe_operator");
 }
 
-core::Error UserPrefValues::setInsertNativePipeOperator(bool val)
+core::Error UserPrefValues::setUseNativePipeOperator(std::string val)
 {
-   return writePref("insert_native_pipe_operator", val);
+   return writePref("use_native_pipe_operator", val);
 }
 
 /**
@@ -3292,7 +3292,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonVersion,
       kPythonPath,
       kSaveRetryTimeout,
-      kInsertNativePipeOperator,
+      kUseNativePipeOperator,
       kCommandPaletteMru,
       kShowMemoryUsage,
       kMemoryQueryIntervalSeconds,

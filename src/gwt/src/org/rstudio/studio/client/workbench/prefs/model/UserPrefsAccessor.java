@@ -3212,14 +3212,40 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
-   public PrefValue<Boolean> insertNativePipeOperator()
+   public PrefValue<String> useNativePipeOperator()
+   {
+      return enumeration(
+         "use_native_pipe_operator",
+         _constants.useNativePipeOperatorTitle(), 
+         _constants.useNativePipeOperatorDescription(), 
+         new String[] {
+            USE_NATIVE_PIPE_OPERATOR_NEVER,
+            USE_NATIVE_PIPE_OPERATOR_ONLY_R41,
+            USE_NATIVE_PIPE_OPERATOR_ALWAYS
+         },
+         "never",
+         new String[] {
+            _constants.useNativePipeOperatorEnum_never(),
+            _constants.useNativePipeOperatorEnum_only_R41(),
+            _constants.useNativePipeOperatorEnum_always()
+         });
+   }
+
+   public final static String USE_NATIVE_PIPE_OPERATOR_NEVER = "never";
+   public final static String USE_NATIVE_PIPE_OPERATOR_ONLY_R41 = "only_R41";
+   public final static String USE_NATIVE_PIPE_OPERATOR_ALWAYS = "always";
+
+   /**
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
+    */
+   public PrefValue<Boolean> useNativePipeComputed()
    {
       return bool(
-         "insert_native_pipe_operator",
-         _constants.insertNativePipeOperatorTitle(), 
-         _constants.insertNativePipeOperatorDescription(), 
+         "use_native_pipe_computed",
+         _constants.useNativePipeOperatorTitle(),
+         _constants.useNativePipeOperatorDescription(),
          false);
    }
 
@@ -3799,8 +3825,10 @@ public class UserPrefsAccessor extends Prefs
          pythonPath().setValue(layer, source.getString("python_path"));
       if (source.hasKey("save_retry_timeout"))
          saveRetryTimeout().setValue(layer, source.getInteger("save_retry_timeout"));
-      if (source.hasKey("insert_native_pipe_operator"))
-         insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
+      if (source.hasKey("use_native_pipe_operator"))
+         useNativePipeOperator().setValue(layer, source.getString("use_native_pipe_operator"));
+      if (source.hasKey("use_native_pipe_computed"))
+         useNativePipeComputed().setValue(layer, source.getBool("use_native_pipe_computed"));
       if (source.hasKey("command_palette_mru"))
          commandPaletteMru().setValue(layer, source.getBool("command_palette_mru"));
       if (source.hasKey("show_memory_usage"))
@@ -4047,7 +4075,8 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonVersion());
       prefs.add(pythonPath());
       prefs.add(saveRetryTimeout());
-      prefs.add(insertNativePipeOperator());
+      prefs.add(useNativePipeOperator());
+      prefs.add(useNativePipeComputed());
       prefs.add(commandPaletteMru());
       prefs.add(showMemoryUsage());
       prefs.add(memoryQueryIntervalSeconds());
