@@ -20,7 +20,7 @@ RUN $env:chocolateyUseWindowsCompression = 'true'; `
 RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
   choco install -y jdk8; `
   choco install -y -i ant; `
-  choco install -y windows-sdk-10.1 --version 10.1.18362.1; `
+  choco install -y windows-sdk-10.1 --version 10.1.19041.0; `
   choco install -y 7zip; `
   choco install -y ninja --version "1.10.0"; `
   choco install -y python
