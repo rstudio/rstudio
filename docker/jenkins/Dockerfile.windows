@@ -60,7 +60,7 @@ RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 # Newer choco doesn't have this so don't fail if not found
-RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe' -ea ig
+RUN if (Test-Path 'C:\ProgramData\chocolatey\bin\cpack.exe') { Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe' }
 
 #### this docker container will currently be used as a jenkins swarm slave, rather than instantiated on a swarm ####
 ##### the items below this are dependencies relevant to jenkins-swarm. #####

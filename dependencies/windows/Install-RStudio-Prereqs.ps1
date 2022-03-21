@@ -78,7 +78,8 @@ choco install -y python
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 # Newer choco doesn't have this so don't fail if not found
-Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe' -ea ig
+$ChocoCPack = 'C:\ProgramData\chocolatey\bin\cpack.exe'
+if (Test-Path $ChocoCPack) { Remove-Item -Force $ChocoCPack }
 
 [System.Net.ServicePointManager]::SecurityProtocol = $securityProtocolSettingsOriginal
 
