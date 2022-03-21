@@ -17,6 +17,7 @@ import path from 'path';
 import os from 'os';
 
 import { createStubInstance, StubbableType, SinonStubbedInstance, SinonStubbedMember, SinonSandbox } from 'sinon';
+import { getenv } from '../../src/core/environment';
 import { FilePath } from '../../src/core/file-path';
 
 export function randomString(): string {
@@ -99,4 +100,11 @@ export function tempFilename(extension = '', label = ''): FilePath {
     ? path.join(os.tmpdir(), label + '-' + randomString())
     : path.join(os.tmpdir(), randomString());
   return new FilePath(extension ? tempName + '.' + extension : tempName);
+}
+
+/**
+ * @returns true if tests are running in Docker on Windows
+ */
+export function isWindowsDocker(): boolean {
+  return !!getenv('RSTUDIO_DOCKER_WINDOWS');
 }

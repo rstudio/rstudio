@@ -16,6 +16,7 @@
 import { describe } from 'mocha';
 import { assert } from 'chai';
 
+import { isWindowsDocker } from '../unit-utils';
 import { openMinimalWindow } from '../../../src/main/minimal-window';
 import { clearApplicationSingleton, setApplication } from '../../../src/main/app-state';
 import { Application } from '../../../src/main/application';
@@ -27,17 +28,19 @@ class TestGwtWindow extends GwtWindow {
   }
 }
 
-describe('minimal-window', () => {
-  beforeEach(() => {
-    setApplication(new Application());
-  });
-  afterEach(() => {
-    clearApplicationSingleton();
-  });
+if (!isWindowsDocker()) {
+  describe('minimal-window', () => {
+    beforeEach(() => {
+      setApplication(new Application());
+    });
+    afterEach(() => {
+      clearApplicationSingleton();
+    });
 
-  it('can be constructed', () => {
-    const gwtWindow = new TestGwtWindow({ name: '' });
-    const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
-    assert.isObject(minWin);
+    it('can be constructed', () => {
+      const gwtWindow = new TestGwtWindow({ name: '' });
+      const minWin = openMinimalWindow(gwtWindow, 'test-win', 'about:blank', 640, 480);
+      assert.isObject(minWin);
+    });
   });
-});
+}
