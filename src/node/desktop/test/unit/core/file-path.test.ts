@@ -44,7 +44,7 @@ function getTestDir(): FilePath {
 const bogusPath = '/super/bogus/path/42';
 
 // A path that a non-elevated user cannot create
-const cannotCreatePath = process.platform === 'win32' ? 'C:\\Program Files\\a_test_folder' : '/foo/bar/crazy';
+const cannotCreatePath = process.platform === 'win32' ? '\\\\rstudio-foo-bar-23456\\a_test_folder' : '/foo/bar/crazy';
 
 // An absolute path in generic format (see boost filesystem for description of "generic" format)
 const absolutePath = process.platform === 'win32' ? 'C:/Users/human/documents' : '/users/human/documents';
