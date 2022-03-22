@@ -429,7 +429,7 @@ try {
                 if (current_container.flavor == "electron") {
                   stage('electron tests'){
                     try {
-                      bat 'cd src/node/desktop && scripts/run-unit-tests.cmd'
+                      bat 'cd src/node/desktop && scripts\\run-unit-tests.cmd'
                     }
                     catch(err){
                       currentBuild.result = "UNSTABLE"
