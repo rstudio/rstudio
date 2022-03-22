@@ -235,7 +235,7 @@
     if (!is(x, "vctrs_vctr")) return(TRUE)
     for (cl in class(x)) {
       if (cl == "vctrs_vctr") return(TRUE)
-      if (!is.null(getS3method("format", cl, optional = T))) return(FALSE)
+      if (!is.null(utils::getS3method("format", class = cl, optional = TRUE))) return(FALSE)
     }
     TRUE
   }
