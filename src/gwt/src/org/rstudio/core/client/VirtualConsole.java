@@ -614,7 +614,8 @@ public class VirtualConsole
                if (ansi_ == null)
                   ansi_ = new AnsiCode();
                      
-               Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(data.substring(pos), 0);
+               String remaining = data.substring(pos);
+               Match hyperlinkMatch = AnsiCode.HYPERLINK_PATTERN.match(remaining, 0);
                
                if (hyperlinkMatch != null)
                {
@@ -634,7 +635,15 @@ public class VirtualConsole
                   tail = pos + hyperlinkMatch.getValue().length();
                   break;
                }
-               
+
+               // ignore apc escape codes
+               Match apcMatch = AnsiCode.APC_ESCAPE_PATTERN.match(remaining, 0);
+               if (apcMatch != null) 
+               {
+                  tail = pos + apcMatch.getValue().length();
+                  break;
+               }
+
                // match complete SGR codes
                Match sgrMatch = AnsiCode.SGR_ESCAPE_PATTERN.match(data, pos);
                if (sgrMatch == null)
