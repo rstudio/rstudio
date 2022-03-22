@@ -21,6 +21,7 @@
 
 #### R
 
+- Added support for the `_` placeholder as used by the R pipe-bind operator, to be introduced with R 4.2.0. (#10757)
 - Added support for using the AGG renderer (as provided by the ragg package) as a graphics backend for inline plot execution; also added support for using the backend graphics device requested by the knitr `dev` chunk option (#9931)
 - rstudioapi functions are now always evaluated in a clean environment, and will not be masked by objects in the global environment (#8031)
 - Removed support for versions of R earlier than R 3.3.0. (rstudio-pro#2887)
