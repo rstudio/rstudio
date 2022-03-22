@@ -115,10 +115,7 @@
             # fallback error from rlang::signal_abort() ?
             trace <- abort_frame$cnd$trace
 
-            message <- rlang:::cnd_format(abort_frame$cnd, backtrace = FALSE)
-            
-            # trim the class line
-            message <- sub("^.*?\n", "", message)
+            message <- paste0(paste(rlang:::cnd_message(abort_frame$cnd, inherit = TRUE, prefix = TRUE), collapse = "\n"), "\n")
          } else {
             # a regular stop() error, retrieve the trace with rlang anyway
             trace <- rlang::trace_back(bottom = frames[[ length(frames) - 2L]])

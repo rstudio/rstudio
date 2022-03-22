@@ -737,7 +737,7 @@ public class AnsiCode
    public static final Pattern SGR_ESCAPE_PATTERN = Pattern.create(SGR_REGEX);
 
    // Match ANSI APC escape sequences
-   public static final String APC_REGEX = "^\u001b([^\7]*)\7";
+   public static final String APC_REGEX = "^\u001b_([^\7]*)\7";
    public static final Pattern APC_ESCAPE_PATTERN = Pattern.create(APC_REGEX);
 
    // RegEx to match partial SGR codes (don't have final "m" yet)

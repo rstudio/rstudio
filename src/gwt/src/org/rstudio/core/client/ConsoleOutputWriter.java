@@ -125,8 +125,7 @@ public class ConsoleOutputWriter
       }
 
       int oldLineCount = DomUtils.countLines(appendTarget, true);
-      // virtualConsole_.submit(text, className, isError, ariaLiveAnnounce);
-      virtualConsole_.submit(text, className, true, ariaLiveAnnounce);
+      virtualConsole_.submit(text, className, isError, ariaLiveAnnounce);
       int newLineCount = DomUtils.countLines(appendTarget, true);
 
       if (!virtualConsole_.isLimitConsoleVisible())

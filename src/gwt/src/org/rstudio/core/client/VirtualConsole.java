@@ -636,7 +636,7 @@ public class VirtualConsole
                   break;
                }
 
-               // ignore apc escape codes
+               // ignore apc escape codes: ESC _ * ST
                Match apcMatch = AnsiCode.APC_ESCAPE_PATTERN.match(remaining, 0);
                if (apcMatch != null) 
                {

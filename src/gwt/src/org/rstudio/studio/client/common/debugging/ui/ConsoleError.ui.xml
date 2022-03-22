@@ -57,10 +57,10 @@
    }
    
    .framePanel {
-      margin-top: 0.5em;
+      margin-top: 1.5em;
       margin-left: 0.3em;
       white-space: pre;
-      font-size: smaller;
+      font-size: 70%;
    }
    </ui:style>
    <ui:image src="traceback_2x.png"

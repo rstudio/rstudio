@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -27,6 +28,7 @@ import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
@@ -69,6 +71,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -321,6 +324,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       // Pick up the elements emitted to the console by this call. If we get
       // extended information for this error, we'll need to swap out the simple
       // error elements for the extended error element.
+      recordErrorElements(error);
+   }
+
+   public void recordErrorElements(final String error)
+   {
       List<Element> newElements = output_.getNewElements();
       if (!newElements.isEmpty())
       {
@@ -337,21 +345,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
          final String error, UnhandledError traceInfo,
          boolean expand, String command)
    {
-      List<Element> errorNodes = new ArrayList<Element>();
-
-      // workaround rlang workaround
-      if (traceInfo.getIsRlangError())
-      {
-         errorNodes = previousOutputNodes_;
-      }
-      else if (errorNodes_.containsKey(error))
-      {
-         errorNodes = errorNodes_.get(error);
-      }
-
-      if (errorNodes.isEmpty())
+      List<Element> errorNodes = errorNodes_.get(error);
+      if (errorNodes == null || errorNodes.isEmpty())
          return;
-
+      
       clearPendingInput();
       ConsoleError errorWidget = new ConsoleError(
             traceInfo, getErrorClass(), this, command);
@@ -386,13 +383,26 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    @Override
-   public void consoleWriteOutput(final String output)
+   public void consoleWriteOutput(String output)
    {
       clearPendingInput();
-      output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/,
+
+      // identify if the output is indeed an error. This is the case when 
+      // an error is printed on standard output by rlang
+      Match apcMatch = AnsiCode.APC_ESCAPE_PATTERN.match(output, 0);
+      boolean isError = apcMatch != null && StringUtil.equals(apcMatch.getGroup(1), "rlang_error");
+      if (isError)
+      {
+         // remove the escape code
+         output = output.substring(apcMatch.getValue().length());
+      }
+      output(output, styles_.output(), isError, false /*ignoreLineCount*/,
             isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
 
-      previousOutputNodes_ = output_.getNewElements();
+      if (isError)
+      {
+         recordErrorElements(output);
+      }
    }
 
    @Override
@@ -1046,10 +1056,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
    // A list of errors that have occurred between console prompts.
    private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();
    private boolean clearErrors_ = false;
-
-   // The list of Element that have occured from the last consoleWriteOutput()
-   // needed to work around rlang's workaround of printing errors in standard output
-   private List<Element> previousOutputNodes_ = new ArrayList<Element>();
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
 }
