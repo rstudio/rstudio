@@ -32,7 +32,7 @@ set SUMATRA_PDF_FILE=SumatraPDF-3.1.2-64.zip
 set WINUTILS_FILE=winutils-1.0.zip
 set WINPTY_FILES=winpty-0.4.3-msys2-2.7.0.zip
 set OPENSSL_FILES=openssl-1.1.1i.zip
-set BOOST_FILES=boost-1.78.0-win-msvc141.zip
+set BOOST_FILES=boost-1.78.0-win-msvc142.zip
 set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
 
 set PANDOC_VERSION=2.16.2
