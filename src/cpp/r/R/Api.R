@@ -674,10 +674,10 @@
    }
 
    # transform numeric line, column values to integer
-   if (is.numeric(line))
+   if (is.double(line))
       line <- as.integer(line)
    
-   if (is.numeric(col))
+   if (is.double(col))
       col <- as.integer(col)
 
    # validate line/col arguments
