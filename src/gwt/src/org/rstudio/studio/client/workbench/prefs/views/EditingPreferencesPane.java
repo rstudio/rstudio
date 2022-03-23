@@ -76,8 +76,14 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
             constants_.editingAutoDetectIndentationDesc()));
       editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
-      editingPanel.add(checkboxPref(constants_.editingUseNativePipeOperatorLabel(),
-            prefs_.useNativePipeOperator()));
+
+      useNativePipeOperatorWidget_ = new SelectWidget(constants_.editingUseNativePipeOperatorLabel(),
+         (Prefs.EnumValue) prefs_.useNativePipeOperator(),
+         false,
+         true,
+         false);
+      editingPanel.add(useNativePipeOperatorWidget_);
+
       editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref(prefs_.softWrapRFiles()));
@@ -477,6 +483,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
       showCompletions_.setValue(prefs_.codeCompletion().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
+      useNativePipeOperatorWidget_.setValue(prefs_.useNativePipeOperator().getValue());
       editorMode_.setValue(prefs_.editorKeybindings().getValue());
       foldMode_.setValue(prefs_.foldStyle().getValue());
       delimiterSurroundWidget_.setValue(prefs_.surroundSelection().getValue());
@@ -504,6 +511,8 @@ public class EditingPreferencesPane extends PreferencesPane
 
       prefs_.codeCompletion().setGlobalValue(showCompletions_.getValue());
       prefs_.codeCompletionOther().setGlobalValue(showCompletionsOther_.getValue());
+
+      prefs_.useNativePipeOperator().setGlobalValue(useNativePipeOperatorWidget_.getValue());
 
       String editorMode = editorMode_.getValue();
 
@@ -576,6 +585,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget editorMode_;
    private final SelectWidget foldMode_;
    private final SelectWidget delimiterSurroundWidget_;
+   private final SelectWidget useNativePipeOperatorWidget_;
    private final SelectWidget executionBehavior_;
    private final SelectWidget autoSaveOnIdle_;
    private final SelectWidget autoSaveIdleMs_;
