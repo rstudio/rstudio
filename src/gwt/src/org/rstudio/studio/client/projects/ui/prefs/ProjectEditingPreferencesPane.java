@@ -21,11 +21,13 @@ import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.LineEndingsSelectWidget;
@@ -58,8 +60,11 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.setWidth("36px");
       add(numSpacesForTab_);
 
-      useNativePipeOperator_ = new CheckBox(constants_.useNativePipeOperatorLabel(), false);
-      useNativePipeOperator_.addStyleName(RESOURCES.styles().useNativePipeOperator());
+      useNativePipeOperator_ = new SelectWidget(constants_.useNativePipeOperatorLabel(),
+         new String[] {constants_.useNativePipeOperatorNeverText(), constants_.useNativePipeOperatorR41Text(), constants_.useNativePipeOperatorAlwaysText() },
+         false,
+         true,
+         false);
       add(useNativePipeOperator_);
 
       chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
@@ -190,7 +195,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private CheckBox enableCodeIndexing_;
    private CheckBox chkSpacesForTab_;
    private NumericValueWidget numSpacesForTab_;
-   private CheckBox useNativePipeOperator_;
+   private SelectWidget useNativePipeOperator_;
    private CheckBox chkAutoAppendNewline_;
    private CheckBox chkStripTrailingWhitespace_;
    private LineEndingsSelectWidget lineEndings_;
