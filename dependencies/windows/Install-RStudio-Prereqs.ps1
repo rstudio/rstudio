@@ -78,7 +78,9 @@ choco install -y activeperl
 choco install -y python
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
-Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
+# Newer choco doesn't have this so don't fail if not found
+$ChocoCPack = 'C:\ProgramData\chocolatey\bin\cpack.exe'
+if (Test-Path $ChocoCPack) { Remove-Item -Force $ChocoCPack }
 
 [System.Net.ServicePointManager]::SecurityProtocol = $securityProtocolSettingsOriginal
 
