@@ -1,7 +1,8 @@
 # escape=`
 
-# LTSC (Long Term Service Channel) release of Server Core 2019
-FROM mcr.microsoft.com/windows/servercore:ltsc2019
+# Use the latest Windows Server Core (LTSC - Long Term Service Channel) image with .NET Framework 4.8.
+# https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container?view=vs-2019 
+FROM mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
 
 ENV OPERATING_SYSTEM=windows_10
 
@@ -23,15 +24,9 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y windows-sdk-10.1 --version 10.1.19041.0; `
   choco install -y 7zip; `
   choco install -y ninja --version "1.10.0"; `
-  choco install -y python
-
-# install NSIS - we do not do this via Chocolatey because the hosting URL of the NSIS
-# executable has gone defunct
-RUN [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 ; `
-  Invoke-WebRequest $('https://rstudio-buildtools.s3.amazonaws.com/nsis-3.06.1-setup.exe') -OutFile 'C:\nsis-3.06.1-setup.exe' -UseBasicParsing ;`
-  Start-Process c:\nsis-3.06.1-setup.exe -Wait -ArgumentList '/S' ;`
-  Remove-Item c:\nsis-3.06.1-setup.exe -Force
-  
+  choco install -y python; `
+  choco install -y nsis --version "3.08"
+ 
 RUN choco install -y visualstudio2019buildtools --version 16.11.10.0; `
   choco install -y visualstudio2019-workload-vctools --version 1.0.1
 
