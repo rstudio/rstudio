@@ -1869,7 +1869,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("Never (use magrittr pipe)")
    String useNativePipeOperatorEnum_never();
    @DefaultStringValue("Only when using R 4.1+")
-   String useNativePipeOperatorEnum_R41();
+   String useNativePipeOperatorEnum_only_R41();
    @DefaultStringValue("Always")
    String useNativePipeOperatorEnum_always();
 
