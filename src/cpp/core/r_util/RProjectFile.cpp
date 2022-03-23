@@ -54,6 +54,10 @@ const char * const kBuildTypeWebsite = "Website";
 const char * const kBuildTypeCustom = "Custom";
 const char * const kBuildTypeQuarto = "Quarto";
 
+const char * const kUseNativePipeNever = "Never";
+const char * const kUseNativePipeR41 = "R 4.1+";
+const char * const kUseNativePipeAlways = "Always";
+
 const char * const kMarkdownWrapUseDefault = "Default";
 const char * const kMarkdownWrapNone = "None";
 const char * const kMarkdownWrapColumn = "Column";
@@ -168,9 +172,30 @@ bool interpretBuildTypeValue(const std::string& value, std::string* pValue)
    }
 }
 
-bool interpretLineEndingsValue(std::string value, int* pValue)
+bool interpretUseNativePipeOperatorValue(std::string value, std::string* pValue)
 {
    value = boost::algorithm::trim_copy(value);
+   if (value == "")
+   {
+      *pValue = kUseNativePipeNever;
+      return true;
+   }
+   else if (
+       value == kUseNativePipeNever ||
+       value == kUseNativePipeAlways ||
+       value == kUseNativePipeR41)
+   {
+      *pValue = value;
+      return true;
+   }
+   else
+   {
+      return false;
+   }
+}
+
+bool interpretLineEndingsValue(const std::string& value, int* pValue)
+{
    if (value == "")
    {
       *pValue = kLineEndingsUseDefault;
@@ -617,7 +642,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    it = dcfFields.find("UseNativePipeOperator");
    if (it != dcfFields.end())
    {
-      if (!interpretBoolValue(it->second, &(pConfig->useNativePipeOperator)))
+      if (!interpretUseNativePipeOperatorValue(it->second, &(pConfig->useNativePipeOperator)))
          return requiredFieldError("UseNativePipeOperator", pUserErrMsg);
    }
    else
@@ -1045,7 +1070,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
         boolValueToString(config.enableCodeIndexing) %
         boolValueToString(config.useSpacesForTab) %
         config.numSpacesForTab %
-        boolValueToString(config.useNativePipeOperator) %
+        config.useNativePipeOperator %
         config.encoding %
         config.defaultSweaveEngine %
         config.defaultLatexProgram);
