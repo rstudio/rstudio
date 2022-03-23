@@ -13,6 +13,7 @@
 @external gwt-MenuBar-vertical;
 
 @external rstudio-themes-flat;
+@external safari;
 @external rstudio-themes-dark-menus;
 
 @external menuPopupTop, menuPopupBottom, menuPopupMiddle;
@@ -24,6 +25,11 @@
 
 @eval THEME_DARKGREY_MENU_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBackground;
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
+
+/* https://github.com/rstudio/rstudio/issues/10821 */
+.safari .themedPopupPanel, .safari .gwt-MenuBarPopup {
+   transform: translateZ(0);
+}
 
 .themedPopupPanel {
    margin: -6px;
