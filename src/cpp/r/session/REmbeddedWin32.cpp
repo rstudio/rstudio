@@ -72,6 +72,9 @@ extern "C" {
 __declspec(dllimport) UImode CharacterMode;
 }
 
+// Added in R 4.2.0; loaded dynamically
+int (*R_DefParamsEx)(Rstart, int);
+
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -105,7 +108,16 @@ typedef struct
     void (*Busy)(int);
     UImode CharacterMode;
     void (*WriteConsoleEx)(const char *, int, int);
+
+    // Added in R 4.0.0
     Rboolean EmitEmbeddedUTF8;
+
+    // Added in R 4.2.0
+    void (*CleanUp)(SA_TYPE, int, int);
+    void (*ClearerrConsole)(void);
+    void (*FlushConsole)(void);
+    void (*ResetConsole)(void);
+    void (*Suicide)(const char*);
 
 } RStartup;
 } // extern "C"
@@ -248,6 +260,33 @@ Error setHook(const core::system::Library& library,
    return Success();
 }
 
+void initializeParams(RStartup* pRP)
+{
+   // use R_DefParams for older versions of R
+   Version dllVersion(getDLLVersion());
+   if (dllVersion < Version("4.2.0"))
+      return R_DefParams((Rstart) pRP);
+
+   // otherwise, try and get the R_DefParamsEx routine and use that
+   core::system::Library rLibrary("R.dll");
+   if (rLibrary == nullptr)
+   {
+      LOG_WARNING_MESSAGE("Couldn't load R.dll");
+      return R_DefParams((Rstart) pRP);
+   }
+
+   // try to load R_DefParamsEx routine
+   Error error = core::system::loadSymbol(rLibrary, "R_DefParamsEx", (void**) &R_DefParamsEx);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return R_DefParams((Rstart) pRP);
+   }
+
+   // invoke it
+   R_DefParamsEx((Rstart) pRP, 1);
+}
+
 } // end anonymous namespace
 
 void runEmbeddedR(const core::FilePath& rHome,
@@ -267,7 +306,9 @@ void runEmbeddedR(const core::FilePath& rHome,
    // setup params structure
    RStartup rp;
    RStartup* pRP = &rp;
-   ::R_DefParams((Rstart) pRP);
+
+   // initialize params
+   initializeParams(pRP);
 
    // set paths (copy to new string so we can provide char*)
    std::string* pRHome = new std::string(
@@ -294,6 +335,10 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->ShowMessage = showMessage;
    pRP->YesNoCancel = askYesNoCancel;
    pRP->Busy = callbacks.busy;
+
+   pRP->EmitEmbeddedUTF8 = TRUE;
+
+   pRP->ResetConsole = callbacks.resetConsole;
 
    {
       // extra hooks
