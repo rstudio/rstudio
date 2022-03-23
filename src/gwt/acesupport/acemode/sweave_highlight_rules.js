@@ -28,7 +28,7 @@ var SweaveHighlightRules = function() {
 
     this.$rules["start"].unshift({
         token: "comment.codebegin",
-        regex: "^\\s*\\<\\<.*\\>\\>=.*$",
+        regex: "^\\s*<<.*>>=.*$",
         next: "r-start"
     });
 
@@ -93,7 +93,7 @@ var SweaveHighlightRules = function() {
 
     this.$rules["r-start"].unshift({
         token: "comment.codebegin",
-        regex: "^\\<\\<.*\\>\\>=.*$",
+        regex: "^<<.*>>=.*$",
         next: "r-start"
     });
 };
