@@ -1860,12 +1860,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String saveRetryTimeoutDescription();
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    @DefaultStringValue("Use R's native pipe operator, |>")
-   String insertNativePipeOperatorTitle();
-   @DefaultStringValue("Whether the Insert Pipe Operator command should insert the native R pipe operator, |>")
-   String insertNativePipeOperatorDescription();
+   String useNativePipeOperatorTitle();
+   @DefaultStringValue("Whether the Insert Pipe Operator command should use the native R pipe operator, |>")
+   String useNativePipeOperatorDescription();
 
    /**
     * Whether to keep track of recently used commands in the Command Palette

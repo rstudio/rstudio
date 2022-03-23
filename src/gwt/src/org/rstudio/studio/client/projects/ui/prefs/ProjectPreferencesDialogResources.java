@@ -30,7 +30,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String enableCodeIndexing();
       String useSpacesForTab();
       String numberOfTabs();
-      String insertNativePipeOperator();
+      String useNativePipeOperator();
       String editingOption();
       String encodingChooser();
       String lineEndings();
@@ -63,7 +63,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
 
    @Source("iconShare_2x.png")
    ImageResource iconShare2x();
-   
+
    @Source("iconRMarkdown_2x.png")
    ImageResource iconRMarkdown2x();
 

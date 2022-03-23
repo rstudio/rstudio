@@ -76,8 +76,8 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
             constants_.editingAutoDetectIndentationDesc()));
       editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
-      editingPanel.add(checkboxPref(constants_.editingInsertNativePipeOperatorLabel(),
-            prefs_.insertNativePipeOperator()));
+      editingPanel.add(checkboxPref(constants_.editingUseNativePipeOperatorLabel(),
+            prefs_.useNativePipeOperator()));
       editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref(prefs_.softWrapRFiles()));
@@ -416,7 +416,7 @@ public class EditingPreferencesPane extends PreferencesPane
       diagnosticsPanel.add(tight(checkboxPref(constants_.diagnosticsBackgroundDiagnosticsLabel(),
             prefs_.backgroundDiagnostics(), false /*defaultSpace*/)));
       diagnosticsPanel.add(indent(backgroundDiagnosticsDelayMs_ =
-            numericPref(constants_.diagnosticsBackgroundDiagnosticsDelayMsLabel(), 0, 9999, 
+            numericPref(constants_.diagnosticsBackgroundDiagnosticsDelayMsLabel(), 0, 9999,
                   prefs_.backgroundDiagnosticsDelayMs())));
 
       HelpLink diagnosticsHelpLink = new DiagnosticsHelpLink();

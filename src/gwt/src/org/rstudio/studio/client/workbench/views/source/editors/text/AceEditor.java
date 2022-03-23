@@ -661,8 +661,8 @@ public class AceEditor implements DocDisplay,
             Character.isSpace(getCharacterBeforeCursor()) ||
             (!hasSelection() && getCursorPosition().getColumn() == 0);
 
-      // Use magrittr style pipes unless user has opted into new native pipe syntax in R 4.1+
-      String pipe = userPrefs_.insertNativePipeOperator().getValue() ? "|>" : "%>%";
+      // Use magrittr style pipes if the user has not opted into new native pipe syntax in R 4.1+
+      String pipe = userPrefs_.useNativePipeOperator().getValue() ? "|>" : "%>%";
 
       if (hasWhitespaceBefore)
          insertCode(pipe + " ", false);
@@ -770,7 +770,7 @@ public class AceEditor implements DocDisplay,
    {
       behavior_ = behavior;
    }
-   
+
    public EditorBehavior getEditorBehavior()
    {
       return behavior_;
@@ -896,15 +896,15 @@ public class AceEditor implements DocDisplay,
                         server_,
                         context_));
                }
-               
+
                // Yaml completion manager
-               if (fileType_.isYaml() || fileType_.isRmd() || 
+               if (fileType_.isYaml() || fileType_.isRmd() ||
                    (behavior_ == EditorBehavior.AceBehaviorEmbedded && (fileType_.isR() || fileType_.isPython())))
                {
                   managers.put(DocumentMode.Mode.YAML, YamlCompletionManager.create(
-                       editor, 
-                       new CompletionPopupPanel(), 
-                       server_, 
+                       editor,
+                       new CompletionPopupPanel(),
+                       server_,
                        context_
                   ));
                }
@@ -2804,7 +2804,7 @@ public class AceEditor implements DocDisplay,
    {
       return widget_.getEditor().getCursorPositionScreen();
    }
-   
+
    public int getCursorRow()
    {
       return getSession().getSelection().getCursor().getRow();
@@ -2814,7 +2814,7 @@ public class AceEditor implements DocDisplay,
    {
       return getSession().getSelection().getCursor().getColumn();
    }
-   
+
    public void setCursorPosition(Position position)
    {
       getSession().getSelection().setSelectionRange(

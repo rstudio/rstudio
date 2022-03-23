@@ -35,7 +35,7 @@
    margin-left: 25px;
 }
 
-.insertNativePipeOperator {
+.useNativePipeOperator {
    margin-left: 5px;
    margin-top: 13px;
 }
@@ -124,5 +124,3 @@
 .websiteOutputFormat {
    margin-top: 16px;
 }
-
-
