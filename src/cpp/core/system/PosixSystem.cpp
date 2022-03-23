@@ -2403,8 +2403,28 @@ Error userBelongsToGroup(const User& user,
                          bool* pBelongs)
 {
    *pBelongs = false; // default to not found
+
+   // first we try to use getgrouplist(3) to determine if the user is a
+   // member of the target groupName
+   std::vector<group::Group> groups;
+   Error error = group::userGroups(user.getUsername(), &groups);
+   if (error)
+      return error;
+
+   // scan the user's groups to see if they are a member of the target group
+   *pBelongs = std::find_if(groups.begin(),
+                            groups.end(),
+                            [&](const group::Group& group)
+                            { return group.name == groupName; }) != groups.end();
+
+   // if the user belongs, then we can return early
+   // otherwise, we fallback to the legacy implementation
+   if (pBelongs)
+      return Success();
+
+   // next we try to lookup the target group using getgrnam_r(3)
    group::Group group;
-   Error error = group::groupFromName(groupName, &group);
+   error = group::groupFromName(groupName, &group);
    if (error)
       return error;
 
@@ -2413,7 +2433,7 @@ Error userBelongsToGroup(const User& user,
    {
       *pBelongs = true;
    }
-   // else scan the list of member names for this user
+   // else scan the list of group members looking for this user
    else
    {
       *pBelongs = std::find(group.members.begin(),
@@ -2463,7 +2483,9 @@ Error temporarilyDropPriv(const std::string& newUsername,
    {
       // verify that the user is a member of the provided group
       bool belongs = false;
-      userBelongsToGroup(user, newGroupname, &belongs);
+      error = userBelongsToGroup(user, newGroupname, &belongs);
+      if (error)
+         return error;
 
       if (!belongs)
          return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
@@ -2513,7 +2535,9 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    {
       // verify that the user is a member of the provided group
       bool belongs = false;
-      userBelongsToGroup(user, newGroupname, &belongs);
+      error = userBelongsToGroup(user, newGroupname, &belongs);
+      if (error)
+         return error;
 
       if (!belongs)
          return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
@@ -2594,7 +2618,9 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
    {
       // verify that the user is a member of the provided group
       bool belongs = false;
-      userBelongsToGroup(user, newGroupname, &belongs);
+      error = userBelongsToGroup(user, newGroupname, &belongs);
+      if (error)
+         return error;
 
       if (!belongs)
          return systemError(boost::system::errc::permission_denied, ERROR_LOCATION);
