@@ -249,6 +249,15 @@ public class BrowseCap
    static
    {
       Document.get().getBody().addClassName(OPERATING_SYSTEM);
+      
+      if (isSafari())
+      {
+         Document.get().getBody().addClassName("safari");
+      }
+      else if (isChrome())
+      {
+         Document.get().getBody().addClassName("chrome");
+      }
 
       if (isWindowsDesktop())
       {
