@@ -88,7 +88,7 @@ struct RProjectConfig
         enableCodeIndexing(true),
         useSpacesForTab(true),
         numSpacesForTab(2),
-        useNativePipeOperator(kUseNativePipeNever),
+        useNativePipeOperator(false),
         autoAppendNewline(false),
         stripTrailingWhitespace(false),
         lineEndings(kLineEndingsUseDefault),
@@ -133,7 +133,7 @@ struct RProjectConfig
    bool enableCodeIndexing;
    bool useSpacesForTab;
    int numSpacesForTab;
-   std::string useNativePipeOperator;
+   bool useNativePipeOperator;
    bool autoAppendNewline;
    bool stripTrailingWhitespace;
    int lineEndings;

@@ -76,14 +76,8 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
             constants_.editingAutoDetectIndentationDesc()));
       editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
-
-      useNativePipeOperatorWidget_ = new SelectWidget(constants_.editingUseNativePipeOperatorLabel(),
-         (Prefs.EnumValue) prefs_.useNativePipeOperator(),
-         false,
-         true,
-         false);
-      editingPanel.add(useNativePipeOperatorWidget_);
-
+      editingPanel.add(checkboxPref(constants_.editingUseNativePipeOperatorLabel(),
+            prefs_.useNativePipeOperator()));
       editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref(prefs_.softWrapRFiles()));

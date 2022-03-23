@@ -1360,33 +1360,6 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String useNativePipeOperatorLabel();
 
     /**
-     * Translated "Never (use magrittr pipe)"
-     *
-     * @return translated "Never (use magrittr pipe)"
-     */
-    @DefaultMessage("Never (use magrittr pipe)")
-    @Key("useNativePipeOperatorNeverText")
-    String useNativePipeOperatorNeverText();
-
-    /**
-     * Translated "Only when using R 4.1+"
-     *
-     * @return translated "Only when using R 4.1+"
-     */
-    @DefaultMessage("Only when using R 4.1+")
-    @Key("useNativePipeOperatorR41Text")
-    String useNativePipeOperatorR41Text();
-
-    /**
-     * Translated "Always"
-     *
-     * @return translated "Always"
-     */
-    @DefaultMessage("Always")
-    @Key("useNativePipeOperatorAlwaysText")
-    String useNativePipeOperatorAlwaysText();
-
-    /**
      * Translated "Ensure that source files end with newline".
      *
      * @return translated "Ensure that source files end with newline"

@@ -61,7 +61,8 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.setWidth("36px");
       add(numSpacesForTab_);
 
-      useNativePipeOperator_ = new UseNativePipeOperatorSelectWidget();
+      useNativePipeOperator_ = new CheckBox(constants_.useNativePipeOperatorLabel(), false);
+      useNativePipeOperator_.addStyleName(RESOURCES.styles().useNativePipeOperator());
       add(useNativePipeOperator_);
 
       chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
@@ -192,7 +193,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private CheckBox enableCodeIndexing_;
    private CheckBox chkSpacesForTab_;
    private NumericValueWidget numSpacesForTab_;
-   private UseNativePipeOperatorSelectWidget useNativePipeOperator_;
+   private CheckBox useNativePipeOperator_;
    private CheckBox chkAutoAppendNewline_;
    private CheckBox chkStripTrailingWhitespace_;
    private LineEndingsSelectWidget lineEndings_;

@@ -642,7 +642,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    it = dcfFields.find("UseNativePipeOperator");
    if (it != dcfFields.end())
    {
-      if (!interpretUseNativePipeOperatorValue(it->second, &(pConfig->useNativePipeOperator)))
+      if (!interpretBoolValue(it->second, &(pConfig->usetNativePipeOperator)))
          return requiredFieldError("UseNativePipeOperator", pUserErrMsg);
    }
    else
@@ -1070,7 +1070,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
         boolValueToString(config.enableCodeIndexing) %
         boolValueToString(config.useSpacesForTab) %
         config.numSpacesForTab %
-        config.useNativePipeOperator %
+        boolValueToString(config.useNativePipeOperator) %
         config.encoding %
         config.defaultSweaveEngine %
         config.defaultLatexProgram);
