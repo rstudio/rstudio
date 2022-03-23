@@ -3214,14 +3214,28 @@ public class UserPrefsAccessor extends Prefs
    /**
     * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
-   public PrefValue<Boolean> useNativePipeOperator()
+   public PrefValue<String> useNativePipeOperator()
    {
-      return bool(
+      return enumeration(
          "use_native_pipe_operator",
          _constants.useNativePipeOperatorTitle(),
          _constants.useNativePipeOperatorDescription(),
-         false);
+         new String[] {
+            USE_NATIVE_PIPE_NEVER,
+            USE_NATIVE_PIPE_R41,
+            USE_NATIVE_PIPE_ALWAYS,
+         },
+         USE_NATIVE_PIPE_NEVER,
+         new String[] {
+            _constants.useNativePipeOperatorEnum_never(),
+            _constants.useNativePipeOperatorEnum_R41(),
+            _constants.useNativePipeOperatorEnum_always()
+         });
    }
+
+   public final static String USE_NATIVE_PIPE_NEVER = "never";
+   public final static String USE_NATIVE_PIPE_R41 = "only_R41";
+   public final static String USE_NATIVE_PIPE_ALWAYS = "always";
 
    /**
     * Whether to keep track of recently used commands in the Command Palette

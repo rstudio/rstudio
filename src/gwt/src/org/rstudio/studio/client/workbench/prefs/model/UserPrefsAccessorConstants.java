@@ -1866,6 +1866,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String useNativePipeOperatorTitle();
    @DefaultStringValue("Whether the Insert Pipe Operator command should use the native R pipe operator, |>")
    String useNativePipeOperatorDescription();
+   @DefaultStringValue("Never (use magrittr pipe)")
+   String useNativePipeOperatorEnum_never();
+   @DefaultStringValue("Only when using R 4.1+")
+   String useNativePipeOperatorEnum_R41();
+   @DefaultStringValue("Always")
+   String useNativePipeOperatorEnum_always();
 
    /**
     * Whether to keep track of recently used commands in the Command Palette

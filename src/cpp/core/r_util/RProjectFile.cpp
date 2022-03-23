@@ -617,7 +617,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    it = dcfFields.find("UseNativePipeOperator");
    if (it != dcfFields.end())
    {
-      if (!interpretBoolValue(it->second, &(pConfig->usetNativePipeOperator)))
+      if (!interpretBoolValue(it->second, &(pConfig->useNativePipeOperator)))
          return requiredFieldError("UseNativePipeOperator", pUserErrMsg);
    }
    else
