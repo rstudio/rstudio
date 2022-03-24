@@ -350,6 +350,8 @@ public class AceEditor implements DocDisplay,
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
 
+      // we'd probably want to do some event handling with this because the R version can change after startup
+      // see server_.getRVersion(new ServerRequestCallback<RVersionSpec>()
       rVersion_ = RStudioGinjector.INSTANCE.getSession().getSessionInfo().getRVersionsInfo().getRVersion();
 
       RStudioGinjector.INSTANCE.injectMembers(this);
