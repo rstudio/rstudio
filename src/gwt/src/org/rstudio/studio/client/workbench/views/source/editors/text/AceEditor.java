@@ -72,6 +72,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SuperDevMode;
@@ -86,6 +87,7 @@ import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -347,6 +349,8 @@ public class AceEditor implements DocDisplay,
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
+
+      rVersion_ = RStudioGinjector.INSTANCE.getSession().getSessionInfo().getRVersionsInfo().getRVersion();
 
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -662,7 +666,24 @@ public class AceEditor implements DocDisplay,
             (!hasSelection() && getCursorPosition().getColumn() == 0);
 
       // Use magrittr style pipes if the user has not opted into new native pipe syntax in R 4.1+
-      String pipe = userPrefs_.useNativePipeOperator().getValue() ? "|>" : "%>%";
+
+      String pipe;
+
+      switch (userPrefs_.useNativePipeOperator().getValue())
+      {
+         case UserPrefs.USE_NATIVE_PIPE_OPERATOR_NEVER:
+            pipe = MAGRITTR_PIPE;
+            break;
+         case UserPrefs.USE_NATIVE_PIPE_OPERATOR_ALWAYS:
+            pipe = NATIVE_R_PIPE;
+            break;
+         case UserPrefs.USE_NATIVE_PIPE_OPERATOR_ONLY_R41:
+            pipe = ApplicationUtils.compareVersions(rVersion_, "4.1.0") >= 0 ? NATIVE_R_PIPE : MAGRITTR_PIPE;
+            break;
+         default:
+            pipe = MAGRITTR_PIPE;
+            break;
+      }
 
       if (hasWhitespaceBefore)
          insertCode(pipe + " ", false);
@@ -4641,6 +4662,8 @@ public class AceEditor implements DocDisplay,
    }
 
    private static final int DEBUG_CONTEXT_LINES = 2;
+   private static final String MAGRITTR_PIPE = "%>%";
+   private static final String NATIVE_R_PIPE = "|>";
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
    private final SnippetHelper snippets_;
@@ -4655,6 +4678,7 @@ public class AceEditor implements DocDisplay,
    private Commands commands_;
    private EventBus events_;
    private TextFileType fileType_;
+   private String rVersion_;
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
    private boolean useVimMode_ = false;
