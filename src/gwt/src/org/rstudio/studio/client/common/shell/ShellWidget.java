@@ -14,12 +14,33 @@
  */
 package org.rstudio.studio.client.common.shell;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.rstudio.core.client.AnsiCode;
+import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.RepeatingCommand;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
+import com.google.gwt.event.dom.client.KeyDownEvent;
+import com.google.gwt.event.dom.client.KeyDownHandler;
+import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Timer;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.DockPanel;
+import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
+
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -28,7 +49,6 @@ import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
-import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
@@ -49,32 +69,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
-
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.dom.client.Document;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.SpanElement;
-import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.KeyDownEvent;
-import com.google.gwt.event.dom.client.KeyDownHandler;
-import com.google.gwt.event.dom.client.KeyPressHandler;
-import com.google.gwt.event.dom.client.KeyUpHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.DockPanel;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.RequiresResize;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
 public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
@@ -320,11 +314,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       clearPendingInput();
       output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/,
             isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
-
-      // Pick up the elements emitted to the console by this call. If we get
-      // extended information for this error, we'll need to swap out the simple
-      // error elements for the extended error element.
-      recordErrorElements(error);
    }
 
    public void recordErrorElements(final String error)
@@ -387,22 +376,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       clearPendingInput();
 
-      // identify if the output is indeed an error. This is the case when 
-      // an error is printed on standard output by rlang
-      Match apcMatch = AnsiCode.APC_ESCAPE_PATTERN.match(output, 0);
-      boolean isError = apcMatch != null && StringUtil.equals(apcMatch.getGroup(1), "rlang_error");
-      if (isError)
-      {
-         // remove the escape code
-         output = output.substring(apcMatch.getValue().length());
-      }
+      // identify if the output is an rlang error.
+      boolean isError = output.startsWith("\033[1m\033[33mError\033[39m");
+      
       output(output, styles_.output(), isError, false /*ignoreLineCount*/,
             isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
-
-      if (isError)
-      {
-         recordErrorElements(output);
-      }
    }
 
    @Override
@@ -512,6 +490,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       if (liveRegion_ != null)
          liveRegion_.announce(output_.getNewText());
+
+      // Pick up the elements emitted to the console by this call. If we get
+      // extended information for this error, we'll need to swap out the simple
+      // error elements for the extended error element.
+      if (isError)
+         recordErrorElements(text);
 
       return canContinue;
    }
