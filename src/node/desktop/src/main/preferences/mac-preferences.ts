@@ -35,6 +35,10 @@ class MacPreferences extends DesktopOptions {
   zoomLevel(): number | undefined {
     return systemPreferences.getUserDefault(preferenceKeys.zoomLevel, 'double');
   }
+
+  rBinDir(): string | undefined {
+    throw new Error('Unsupported platform');
+  }
 }
 
 export default MacPreferences;

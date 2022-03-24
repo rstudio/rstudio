@@ -4,6 +4,139 @@
     "title": "RStudio User State",
     "type": "object",
     "properties": {
+        "general": {
+            "type": "object",
+            "properties": {
+                "ignoredUpdateVersions": {
+                    "type": "array",
+                    "description": "A list of ignored updates. Ignored updates will not trigger an available update.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "clipboardMonitoring": {
+                    "type": "boolean",
+                    "description": "Linux clipboard monitoring for middle-click paste"
+                }
+            },
+            "default": {
+                "ignoredUpdateVersions": [],
+                "clipboardMonitoring": true
+            }
+        },
+        "font": {
+            "type": "object",
+            "properties": {
+                "proportionalFont": {
+                    "type": "string"
+                },
+                "fixedWidthFont": {
+                    "type": "string"
+                },
+                "useFontConfigDb": {
+                    "type": "boolean"
+                }
+            },
+            "description": "Font options from the Appearance category",
+            "default": {
+                "proportionalFont": "",
+                "fixedWidthFont": "",
+                "useFontConfigDb": true
+            }
+        },
+        "view": {
+            "type": "object",
+            "properties": {
+                "zoomLevel": {
+                    "type": "number",
+                    "description": "UI zoom level, 1.0 == 100%",
+                    "enum": [0.25, 0.5, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0, 5.0]
+                },
+                "windowBounds": {
+                    "type": "object",
+                    "description": "Window location and size",
+                    "properties": {
+                        "width": { "type": "number" },
+                        "height": { "type": "number" },
+                        "x": { "type": "number" },
+                        "y": { "type": "number" }
+                    }
+                },
+                "accessibility": {
+                    "type": "boolean",
+                    "description": "Screen reader support" 
+                }
+            },
+            "default": {
+                "zoomLevel": 1.5,
+                "windowBounds": { "width": 1200, "height": 900, "x": 0, "y": 0 },
+                "accessibility": false
+            }
+        },
+        "session": {
+            "type": "object",
+            "properties": {
+                "lastRemoteSessionUrl": {
+                    "type": "string"
+                },
+                "authCookies": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "tempAuthCookies": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            },
+            "default": {
+                "lastRemoteSessionUrl": "",
+                "authCookies": [],
+                "tempAuthCookies": []
+            }
+        },
+        "renderer": {
+            "type": "object",
+            "properties": {
+                "engine": {
+                    "type": "string",
+                    "enum": ["auto", "desktop", "gles"]
+                },
+                "useGpuExclusionList": {
+                    "type": "boolean"
+                },
+                "useGpuDriverBugWorkarounds": {
+                    "type": "boolean"
+                }
+            },
+            "default": {
+                "engine": "auto",
+                "useGpuExclusionList": true,
+                "useGpuDriverBugWorkarounds": true
+            }
+        },
+        "platform": {
+            "type": "object",
+            "properties": {
+                "windows": {
+                    "type": "object",
+                    "properties": {
+                        "rBinDir": { "type": "string" },
+                        "preferR64": { "type": "boolean" }
+                    }
+                }
+            },
+            "default": {
+                "windows": {
+                    "rBinDir": "",
+                    "preferR64": true,
+                    "rstudioPath": ""
+                }
+            }
+        },
         "context_id": {
             "type": "string",
             "default": "",

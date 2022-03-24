@@ -17,6 +17,7 @@
 import FilePreferences from './file-preferences';
 import MacPreferences from './mac-preferences';
 import DesktopOptions from './desktop-options';
+import { Schema } from 'electron-store';
 
 const isMacOS = process.platform === 'darwin';
 
@@ -27,7 +28,21 @@ const isMacOS = process.platform === 'darwin';
 export const preferenceKeys = {
   fontFixedWidth: isMacOS ? 'font·fixedWidth' : 'General.font.fixedWidth',
   zoomLevel: isMacOS ? 'view·zoomLevel' : 'General.view.zoomLevel',
+  rBinDir: 'RBinDir',
 };
+
+/**
+ * Create the Schema from a JSON schema file. The `Schema` is templated with the
+ * definition created with `scripts/generate.ts`, which is generated from the
+ * JSON schema file. `electron-store` requires a schema passed in when creating
+ * the store. Otherwise, type validation will not work.
+ * @param schemaJson the JSON schema object created from the schema file
+ * @returns a Schema
+ */
+export function generateSchema<T>(schemaJson: object): Schema<T> {
+  // workaround for defining the schema since electron-store cannot be given the file
+  return JSON.parse(JSON.stringify(schemaJson));
+}
 
 /**
  * This is the legacy preference manager. It will read the preferences from platform-specific

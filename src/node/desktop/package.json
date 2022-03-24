@@ -20,7 +20,8 @@
     "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json",
     "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
     "format": "./scripts/create-prettier-ignore-file.sh && npx prettier --write . --ignore-path .prettier_and_git_ignores",
-    "postinstall": "npx electron-rebuild"
+    "postinstall": "npx electron-rebuild && ts-node scripts/generate.ts",
+    "generate": "ts-node scripts/generate.ts"
   },
   "config": {
     "forge": "./forge.config.js"
@@ -59,6 +60,7 @@
     "eslint-plugin-promise": "5.1.1",
     "fork-ts-checker-webpack-plugin": "6.4.0",
     "json": "11.0.0",
+    "json-schema-to-typescript": "10.1.5",
     "mocha": "9.2.2",
     "node-loader": "2.0.0",
     "nyc": "15.1.0",
