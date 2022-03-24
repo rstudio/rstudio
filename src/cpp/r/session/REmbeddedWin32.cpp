@@ -246,20 +246,6 @@ void initializeMaxMemory(const core::FilePath& rHome)
          initializeMaxMemoryViaCmdLineOptions();
 }
 
-template <typename T>
-Error setHook(const core::system::Library& library,
-             const char* name,
-             T hook)
-{
-   void* pSymbol = nullptr;
-   Error error = core::system::loadSymbol(library, name, &pSymbol);
-   if (error)
-      return error;
-
-   *(T*) pSymbol = hook;
-   return Success();
-}
-
 void initializeParams(RStartup* pRP)
 {
    // use R_DefParams for older versions of R

@@ -46,6 +46,8 @@ postgresql_zip_url <- "https://rstudio-buildtools.s3.amazonaws.com/win-postgresq
 
 # help soci find boost
 boost_root <- normalizePath("../boost-1.78.0-win-msvc142-release-static/boost32")
+if (!file.exists(boost_root))
+   stop(paste(boost_root, "does not exist; cannot proceed."))
 
 downloadAndUnzip <- function(outputFile, extractDir, url) {
 
