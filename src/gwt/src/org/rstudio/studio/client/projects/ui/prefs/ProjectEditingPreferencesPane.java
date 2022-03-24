@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.LineEndingsSelectWidget;
+import org.rstudio.studio.client.workbench.prefs.views.UseNativePipeOperatorSelectWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -60,11 +61,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.setWidth("36px");
       add(numSpacesForTab_);
 
-      useNativePipeOperator_ = new SelectWidget(constants_.useNativePipeOperatorLabel(),
-         new String[] {constants_.useNativePipeOperatorNeverText(), constants_.useNativePipeOperatorR41Text(), constants_.useNativePipeOperatorAlwaysText() },
-         false,
-         true,
-         false);
+      useNativePipeOperator_ = new UseNativePipeOperatorSelectWidget();
       add(useNativePipeOperator_);
 
       chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
@@ -195,7 +192,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private CheckBox enableCodeIndexing_;
    private CheckBox chkSpacesForTab_;
    private NumericValueWidget numSpacesForTab_;
-   private SelectWidget useNativePipeOperator_;
+   private UseNativePipeOperatorSelectWidget useNativePipeOperator_;
    private CheckBox chkAutoAppendNewline_;
    private CheckBox chkStripTrailingWhitespace_;
    private LineEndingsSelectWidget lineEndings_;
