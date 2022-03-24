@@ -119,6 +119,11 @@ typedef struct
     void (*ResetConsole)(void);
     void (*Suicide)(const char*);
 
+    // Padding, to allow for extensions in newer versions of R,
+    // in case newer versions of R expect a struct with extra
+    // memory available.
+    char padding[128];
+
 } RStartup;
 } // extern "C"
 
