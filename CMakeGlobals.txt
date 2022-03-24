@@ -212,9 +212,9 @@ else()
 endif()
 
 # required R version
-set(RSTUDIO_R_VERSION_REQUIRED "3.3.0")
+set(RSTUDIO_R_VERSION_REQUIRED "3.2.0")
 set(RSTUDIO_R_MAJOR_VERSION_REQUIRED 3)
-set(RSTUDIO_R_MINOR_VERSION_REQUIRED 3)
+set(RSTUDIO_R_MINOR_VERSION_REQUIRED 2)
 set(RSTUDIO_R_PATCH_VERSION_REQUIRED 0)
 
 # allow opting out of version checking (for building on older distros)

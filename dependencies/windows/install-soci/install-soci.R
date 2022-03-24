@@ -43,7 +43,9 @@ soci_build_dir <- file.path(soci_dir, "build")
 postgresql_dir <- file.path(owd, "postgresql")
 postgresql_zip <- file.path(owd, "win-postgresql.zip")
 postgresql_zip_url <- "https://rstudio-buildtools.s3.amazonaws.com/win-postgresql.zip"
-boost_dir <- normalizePath(file.path(output_dir, "boost-1.78.0-win-msvc142-release-static\\boost64"), winslash = "\\")
+
+# help soci find boost
+boost_root <- normalizePath("../boost-1.78.0-win-msvc142-release-static/boost32")
 
 downloadAndUnzip <- function(outputFile, extractDir, url) {
 
@@ -100,9 +102,8 @@ setwd("x86")
 cmake_args <- paste0("-G \"Visual Studio 16 2019\" ",
                      "-A Win32 ",
                      "-DCMAKE_VERBOSE_MAKEFILE=ON ",
-                     "-DCMAKE_INCLUDE_PATH=\"", file.path(boost_dir, "include"), "\" ",
+                     "-DBOOST_ROOT=\"", boost_root, "\" ",
                      "-DBoost_USE_STATIC_LIBS=ON ",
-                     "-DCMAKE_LIBRARY_PATH=\"", file.path(boost_dir, "lib"), "\" ",
                      "-DSOCI_TESTS=OFF ",
                      "-DSOCI_SHARED=OFF ",
                      "-DWITH_POSTGRESQL=ON ",
@@ -120,7 +121,8 @@ cmake_args <- gsub("lib/x86/Debug/libpq.lib", "lib/x86/Release/libpq.lib", cmake
 exec("cmake", cmake_args)
 exec("cmake", "--build . --config Release")
 
-setwd(normalizePath("..\\x64", winslash = "\\"))
+setwd("../x64")
+cmake_args <- gsub("boost32", "boost64", cmake_args)
 cmake_args <- gsub("-A Win32", "-A x64", cmake_args)
 cmake_args <- gsub("sqlite3-release-x86.lib", "sqlite3-debug-x64.lib", cmake_args)
 cmake_args <- gsub("lib/x86/Release/libpq.lib", "lib/x64/Debug/libpq.lib", cmake_args)

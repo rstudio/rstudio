@@ -336,19 +336,11 @@ void runEmbeddedR(const core::FilePath& rHome,
    pRP->YesNoCancel = askYesNoCancel;
    pRP->Busy = callbacks.busy;
 
+   // R 4.0.0 hooks
    pRP->EmitEmbeddedUTF8 = TRUE;
 
+   // R 4.2.0 hooks
    pRP->ResetConsole = callbacks.resetConsole;
-
-   {
-      // extra hooks
-      core::system::Library rLibrary("R.dll");
-      if (rLibrary != nullptr)
-      {
-         // added with R 4.2.0
-         setHook(rLibrary, "ptr_R_ResetConsole", callbacks.resetConsole);
-      }
-   }
 
    // set internal callbacks
    pInternal->cleanUp = R_CleanUp;
