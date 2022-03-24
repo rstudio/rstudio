@@ -738,7 +738,7 @@ public class AnsiCode
 
    // Match ANSI APC escape sequences
    public static final String APC_REGEX = "^\u001b_([^\7]*)\7";
-   public static final Pattern APC_ESCAPE_PATTERN = Pattern.create(APC_REGEX);
+   public static final Pattern APC_ESCAPE_PATTERN = Pattern.create(APC_REGEX, "g");
 
    // RegEx to match partial SGR codes (don't have final "m" yet)
    public static final String SGR_PARTIAL_REGEX =
@@ -753,7 +753,7 @@ public class AnsiCode
       "^\u001b\\]8;([^;]*);([^\7]*)\7";
 
    // Match hyperlink
-   public static final Pattern HYPERLINK_PATTERN = Pattern.create(HYPERLINK_REGEX);
+   public static final Pattern HYPERLINK_PATTERN = Pattern.create(HYPERLINK_REGEX, "g");
 
    private Color currentColor_ = new Color();
    private Color currentBgColor_ = new Color();
