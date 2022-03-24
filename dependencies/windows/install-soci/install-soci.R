@@ -24,12 +24,13 @@ PATH$prepend(msvc)
 
 # initialize variables
 soci_version="4.0.3"
-soci_tar <- paste0("soci-", soci_version, ".tar")
+soci_base_name <- paste0("soci-", soci_version)
+soci_tar <- paste0(soci_base_name, ".tar")
 soci_archive <- paste0(soci_tar, ".gz")
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "\\")
 boost_dir <- normalizePath(file.path(output_dir, "boost-1.78.0-win-msvc142-release-static\\boost64"), winslash = "\\")
 soci_url <- paste0("https://rstudio-buildtools.s3.amazonaws.com/soci-", soci_version, ".tar.gz")
-soci_dir <- file.path(owd, paste0("soci-", soci_version))
+soci_dir <- file.path(owd, soci_base_name)
 soci_build_dir <- file.path(soci_dir, "build")
 sqlite_dir <- file.path(owd, "sqlite")
 postgresql_dir <- file.path(owd, "postgresql")
@@ -65,7 +66,7 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    downloadAndUnzip(postgresql_zip, owd, postgresql_zip_url)
 
    # clone repository if we dont already have it
-   if (!file.exists("soci")) {
+   if (!file.exists(soci_base_name)) {
       section("Downloading SOCI sources")
       download(soci_url, destfile = soci_archive)
 	  section("Unzipping SOCI sources")
