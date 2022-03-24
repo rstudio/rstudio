@@ -113,9 +113,10 @@
             is_abort <- TRUE
             
             # fallback error from rlang::signal_abort() ?
-            trace <- abort_frame$cnd$trace
+            cnd <- abort_frame$cnd
+            trace <- cnd$trace
 
-            message <- paste0(paste(rlang:::cnd_message(abort_frame$cnd, inherit = TRUE, prefix = TRUE), collapse = "\n"), "\n")
+            message <- paste0(paste(rlang:::cnd_message(cnd, inherit = TRUE, prefix = TRUE), collapse = "\n"), "\n")
          } else {
             # a regular stop() error, retrieve the trace with rlang anyway
             trace <- rlang::trace_back(bottom = frames[[ length(frames) - 2L]])
