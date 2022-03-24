@@ -297,6 +297,7 @@ void runEmbeddedR(const core::FilePath& rHome,
    // setup params structure
    RStartup rp;
    RStartup* pRP = &rp;
+   memset(&rp, 0, sizeof(rp));
 
    // initialize params
    initializeParams(pRP);
