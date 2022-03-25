@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.*;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.DomUtils.NodePredicate;
 
@@ -150,30 +151,27 @@ public class HelpInfo extends JavaScriptObject
          }
       }
    }
+   
+   private Element findArgumentTable(Element heading)
+   {
+      for (Node node = (Node) heading; node != null; node = node.getNextSibling())
+      {
+         if (node.getNodeType() != node.ELEMENT_NODE)
+            continue;
+         
+         if (StringUtil.equals(node.getNodeName(), "TABLE"))
+            return (Element) node;
+      }
+      
+      return null;
+   }
 
    private void parseArguments(HashMap<String, String> args,
                                Element heading)
    {
-      Element table = (Element) DomUtils.findNode(heading, true, true, 
-                                                  new NodePredicate() {
-         public boolean test(Node n)
-         {
-            if (n.getNodeType() != Node.ELEMENT_NODE)
-               return false;
-            
-            Element el = (Element) n;
-            
-            return el.getTagName().toUpperCase().equals("TABLE")
-               && "R argblock".equals(el.getAttribute("summary"));
-         }
-      });
+      Element table = findArgumentTable(heading);
+      assert table != null : "Unexpected help format, no argblock table found";
       
-      if (table == null)
-      {
-         assert false : "Unexpected help format, no argblock table found"; 
-         return;
-      }
-
       TableElement t = (TableElement) table;
       NodeList<TableRowElement> rows = t.getRows();
       for (int i = 0; i < rows.getLength(); i++)
