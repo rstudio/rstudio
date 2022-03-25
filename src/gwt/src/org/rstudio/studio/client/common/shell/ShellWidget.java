@@ -41,6 +41,7 @@ import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -49,6 +50,7 @@ import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
+import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
@@ -377,7 +379,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
       clearPendingInput();
 
       // identify if the output is an rlang error.
-      boolean isError = output.startsWith("\033[1m\033[33mError\033[39m");
+      Match apcMatch = AnsiCode.APC_ESCAPE_PATTERN.match(output, 0);
+      boolean isError = false;
+      if (apcMatch != null && StringUtil.equals("rlang_error", apcMatch.getGroup(1)))
+      {
+         isError = true;
+
+         // remove the APC signal
+         output = output.substring(apcMatch.getValue().length());
+      }
       
       output(output, styles_.output(), isError, false /*ignoreLineCount*/,
             isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
