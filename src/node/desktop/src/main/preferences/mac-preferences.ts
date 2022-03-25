@@ -37,7 +37,7 @@ class MacPreferences extends DesktopOptions {
   }
 
   rBinDir(): string | undefined {
-    throw new Error('Unsupported platform');
+    return '';
   }
 }
 
