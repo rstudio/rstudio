@@ -1,6 +1,6 @@
 @charset "UTF-8";
 
-@def CODE_BACKGROUND_COLOR #1a1a1a;
+@def CODE_BACKGROUND_COLOR #1f1f1f;
 @def CODE_COLOR #f0f0f0;
 
 @external rstudio-themes-dark;
@@ -17,7 +17,7 @@
 
 /* Help R equations to be a bit easier to read. */
 /* Ugly hack, but we don't have a better way of targeting this element. */
-div[style="text-align: center;"]
+p + div[style="text-align: center;"]
 {
    font-size: 16px;
 }
@@ -138,7 +138,7 @@ div[style="text-align: center;"]
 }
 
 /* Ugly hack, but we don't have a better way of targeting this element. */
-.rstudio-themes-dark.editor_dark.ace_editor_theme div[style="text-align: center;"]
+.rstudio-themes-dark.editor_dark.ace_editor_theme p + div[style="text-align: center;"]
 {
    background-color: CODE_BACKGROUND_COLOR;
    padding: 8px 0;
