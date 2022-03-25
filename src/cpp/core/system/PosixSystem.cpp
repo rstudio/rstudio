@@ -2398,14 +2398,13 @@ bool isUserNotFoundError(const Error& error)
    return error == systemError(boost::system::errc::permission_denied, ErrorLocation());
 }
 
-Error userBelongsToGroup(const User& user,
-                         const std::string& groupName,
-                         bool* pBelongs)
+Error userBelongsToGroupViaGroupList(const User& user,
+                                     const std::string& groupName,
+                                     bool* pBelongs)
 {
    *pBelongs = false; // default to not found
 
-   // first we try to use getgrouplist(3) to determine if the user is a
-   // member of the target groupName
+   // get a list of the user's groups
    std::vector<group::Group> groups;
    Error error = group::userGroups(user.getUsername(), &groups);
    if (error)
@@ -2417,14 +2416,18 @@ Error userBelongsToGroup(const User& user,
                             [&](const group::Group& group)
                             { return group.name == groupName; }) != groups.end();
 
-   // if the user belongs, then we can return early
-   // otherwise, we fallback to the legacy implementation
-   if (pBelongs)
-      return Success();
+   return Success();
+}
 
-   // next we try to lookup the target group using getgrnam_r(3)
+Error userBelongsToGroupViaGroupName(const User& user,
+                                     const std::string& groupName,
+                                     bool* pBelongs)
+{
+   *pBelongs = false; // default to not found
+
+   // fetch the group by its name
    group::Group group;
-   error = group::groupFromName(groupName, &group);
+   Error error = group::groupFromName(groupName, &group);
    if (error)
       return error;
 
@@ -2445,6 +2448,42 @@ Error userBelongsToGroup(const User& user,
 }
 
 
+// first try to get the user's groups via getgrouplist. we prefer this to
+// fetching information about the group to test membership because
+// this can fail in the case where SSSD group member data is disabled
+// via ignore_group_members (see https://jhrozek.fedorapeople.org/sssd/1.9.91/man/sssd.conf.5.html)
+//
+// we fallback to the old implementation if this method did not yield a positive result
+// to ensure backwards compatibility in existing customer environments. however,
+// group member enumeration of large groups is expensive and this has been known
+// to be slow in some environments.
+//
+// if the first try fails via getgrouplist, we hold the error and attempt
+// the old implementation before returning. if both calls fail, we return the first error
+Error userBelongsToGroup(const User& user,
+                         const std::string& groupName,
+                         bool* pBelongs)
+{
+   *pBelongs = false; // default to not found
+
+   // first we try to use the getgrouplist(3) implementation to determine
+   // if the user is a member of the target groupName.
+   Error groupListError = userBelongsToGroupViaGroupList(user, groupName, pBelongs);
+
+   // if the user belongs, then we can return early.
+   // otherwise, we fallback to the legacy implementation
+   if (!groupListError)
+      return Success();
+
+   // next we try to lookup the target group using the getgrnam_r(3) implementation
+   Error groupNameError = userBelongsToGroupViaGroupName(user, groupName, pBelongs);
+
+   // if both attempts fail, return the first error we encountered
+   if (groupNameError)
+      return groupListError;
+
+   return Success();
+}
 
 /////////////////////////////////////////////////////////////////////
 //
