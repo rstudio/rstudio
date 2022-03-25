@@ -39,6 +39,7 @@
 - The `Session > Load Workspace` menu option now explicitly namespaces `base::load` if the `load` function has been masked in the global environment (#10089)
 - The data viewer truncates large list cells to 50 characters by default, this can be changed with the command palette or `rstudioapi::writeRStudioPreference("data_viewer_max_cell_size", 10L)` (#5100)
 - The R version and logo displayed in the top left of the console will update to the current R version whenever the R session is restarted (#10458)
+- Fixed issue where `core::system::userBelongsToGroup` errors under specific sssd configurations (`ignore_group_members = true`) (#10829)
 
 ### RStudio Workbench
 
