@@ -335,7 +335,7 @@ FilePath userSettingsPath(const FilePath& userHomeDirectory,
    if (hr != S_OK)
    {
       LOG_ERROR_MESSAGE("Unable to retrieve user home path. HRESULT:  " +
-                        safe_convert::numberToString(hr));
+                        safe_convert::numberToHexString(hr));
       return FilePath();
    }
 
@@ -353,7 +353,7 @@ FilePath systemSettingsPath(const std::string& appName, bool create)
    if (hr != S_OK)
    {
       LOG_ERROR_MESSAGE("Unable to retrieve per machine configuration path. HRESULT:  " +
-                        safe_convert::numberToString(hr));
+                        safe_convert::numberToHexString(hr));
       return FilePath();
    }
 
@@ -368,7 +368,7 @@ FilePath systemSettingsPath(const std::string& appName, bool create)
       if (hr != S_OK)
       {
          LOG_ERROR_MESSAGE("Cannot create folder under per machine configuration path. HRESULT:  " +
-                           safe_convert::numberToString(hr));
+                           safe_convert::numberToHexString(hr));
          return FilePath();
       }
    }

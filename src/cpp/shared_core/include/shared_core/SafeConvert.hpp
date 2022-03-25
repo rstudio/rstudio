@@ -25,6 +25,7 @@
 #define SHARED_CORE_SAFE_CONVERT_HPP
 
 #include <string>
+#include <iomanip>
 #include <ios>
 #include <iostream>
 #include <locale>
@@ -107,6 +108,34 @@ T stringTo(const std::string& in_strValue,
    if ((iss >> in_f >> result).fail())
       return in_defaultValue;
    return result;
+}
+
+/**
+ * @brief Converts a number to string value in hexadecimal representation.
+ *
+ * @param in_input                  The number to convert.
+ * @param in_localeIndependent      Whether to perform the conversion independent of locale. Default: true.
+ *
+ * @return The converted string on successful conversion; empty string otherwise.
+ */
+inline std::string numberToHexString(long in_input, bool in_localeIndependent = true)
+{
+   try
+   {
+      std::ostringstream stream;
+      if (in_localeIndependent)
+         stream.imbue(std::locale::classic()); // force locale-independence
+      stream << "0x";
+      // ensure remainder of string after "0x" is 8 characters by adding 0's if needed (e.g. 0x00030201)
+      stream << std::setfill('0') << std::setw(8) << std::right;
+      stream << std::hex;
+      stream << in_input;
+      return stream.str();
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
+   // return empty string for unexpected error
+   return std::string();
 }
 
 /**
