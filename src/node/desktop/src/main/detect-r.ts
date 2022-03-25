@@ -27,8 +27,8 @@ import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
 import { createStandaloneErrorDialog } from './utils';
 import i18next from 'i18next';
 
-import Store from 'electron-store';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import { FilePath } from '../core/file-path';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -61,8 +61,6 @@ function executeCommand(command: string): Expected<string> {
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
   if (platform === 'win32') {
     const desktop = await import('../native/desktop.node');
-
-    const rstudioPathKey = 'rstudioPath';
 
     const isCtrlKeyDown = desktop.isCtrlKeyDown();
 
@@ -114,18 +112,18 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
  * // (for example, R_HOME) and other platform-specific work required
  * for R to launch.
  */
-export function prepareEnvironment(): Err {
+export function prepareEnvironment(rPath?: string): Err {
   try {
-    return prepareEnvironmentImpl();
+    return prepareEnvironmentImpl(rPath);
   } catch (error: unknown) {
     logger().logError(error);
     return safeError(error);
   }
 }
 
-function prepareEnvironmentImpl(): Err {
+function prepareEnvironmentImpl(rPath?: string): Err {
   // attempt to detect R environment
-  const [rEnvironment, error] = detectREnvironment();
+  const [rEnvironment, error] = detectREnvironment(rPath);
   if (error) {
     showRNotFoundError(error);
     return error;
@@ -150,12 +148,17 @@ function prepareEnvironmentImpl(): Err {
   return success();
 }
 
-function detectREnvironment(): Expected<REnvironment> {
+function detectREnvironment(rPath?: string): Expected<REnvironment> {
   // scan for R
-  const [R, scanError] = scanForR();
+  const [R, scanError] = rPath ? ok(rPath) : scanForR();
   if (scanError) {
     showRNotFoundError();
     return err(scanError);
+  }
+
+  let rExecutable = new FilePath(R);
+  if (rExecutable.isDirectory()) {
+    rExecutable = rExecutable.completeChildPath(process.platform === 'win32' ? 'R.exe' : 'R');
   }
 
   // generate small script for querying information about R
@@ -169,7 +172,7 @@ function detectREnvironment(): Expected<REnvironment> {
   Sys.getenv("${kLdLibraryPathVariable}")
 ))`;
 
-  const result = spawnSync(R, ['--vanilla', '-s'], {
+  const result = spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
     encoding: 'utf-8',
     input: rQueryScript,
   });
@@ -292,7 +295,7 @@ function isValidInstallationWin32(installPath: string): boolean {
 
 function findDefaultInstallPathWin32(version: string): string {
   // query registry for R install path
-  const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core\\${version}`;
+  const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core\\R\\${version}`;
   const regQueryCommand = `reg query ${keyName} /v InstallPath`;
   const [output, error] = executeCommand(regQueryCommand);
   if (error) {

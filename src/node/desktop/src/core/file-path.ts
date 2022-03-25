@@ -671,7 +671,8 @@ export class FilePath {
    * Checks whether this file path is a directory.
    */
   isDirectory(): boolean {
-    throw Error('isDirectory is NYI');
+    const stat = fs.lstatSync(this.path);
+    return stat.isDirectory();
   }
 
   /**
