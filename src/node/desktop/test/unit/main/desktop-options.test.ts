@@ -12,7 +12,7 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  */
 
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import { Display } from 'electron/main';
 import { describe } from 'mocha';
@@ -351,6 +351,18 @@ describe('Font tests', () => {
 
     testDesktopOptions.setZoomLevel(0.5);
     assert.strictEqual(testDesktopOptions.zoomLevel(), 0.5);
+  });
+
+  it('has an error when setting an invalid zoom level', () => {
+    const mockLegacyOptions = new (class extends DesktopOptionsStub {
+      zoomLevel(): number | undefined {
+        return 1.5;
+      }
+    })();
+    const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
+    expect(testDesktopOptions.setZoomLevel.bind(testDesktopOptions, 0.3333)).to.throw(
+      'Config schema violation: `view/zoomLevel` must be equal to one of the allowed values',
+    );
   });
 
   it('can get the rBinDir (Windows)', () => {
