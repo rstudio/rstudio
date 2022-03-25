@@ -7,7 +7,7 @@ AlwaysSaveHistory: No
 EnableCodeIndexing: Yes
 UseSpacesForTab: Yes
 NumSpacesForTab: 3
-UseNativePipeOperator: No
+UseNativePipeOperator: Never
 Encoding: UTF-8
 
 RnwWeave: Sweave
