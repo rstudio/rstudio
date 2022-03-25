@@ -107,19 +107,22 @@
       message <- geterrmessage()
       is_abort <- FALSE
       if (.rs.isPackageInstalled("rlang")) {
+         # identify if stop() was called from rlang::signal_abort()
+         # in which case this is a fallback error
+         if (length(calls) > 2) {
+            call <- calls[[length(calls) - 3L]]
+            is_abort <- is.language(call) && identical(as.character(call[[1]]), "signal_abort")
+         }
          
-         abort_frame <- frames[[length(frames) - 3L]]
-         if (isTRUE(abort_frame$.__signal_frame__.)) {
-            is_abort <- TRUE
-            
-            # fallback error from rlang::signal_abort() ?
-            cnd <- abort_frame$cnd
+         if (is_abort) {
+            # retrieve information from the real condition, instead of the fallback error
+            cnd <- frames[[length(frames) - 3L]]$cnd # using rlang::last_error() does not give the footer
             trace <- cnd$trace
-
             message <- paste0(paste(rlang:::cnd_message(cnd, inherit = TRUE, prefix = TRUE), collapse = "\n"), "\n")
          } else {
-            # a regular stop() error, retrieve the trace with rlang anyway
-            trace <- rlang::trace_back(bottom = frames[[ length(frames) - 2L]])
+            # a regular stop() error, we can keep the message, but still
+            # retrieve the traceback with rlang
+            trace <- rlang::trace_back(bottom = frames[[length(frames) - 2L]])
          }
          trace <- rlang:::format.rlang_trace(trace)
       }
