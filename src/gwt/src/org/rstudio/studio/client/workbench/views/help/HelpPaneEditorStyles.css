@@ -15,6 +15,14 @@
 @external chunk, source, output, warning, error, message;
 @external std, opt, hl;
 
+/* Help R equations to be a bit easier to read. */
+/* Ugly hack, but we don't have a better way of targeting this element. */
+div[style="text-align: center;"]
+{
+   font-size: 16px;
+}
+
+
 /* Default to white text on black in editor_dark themes */
 .editor_dark {
    color: white;
@@ -47,6 +55,7 @@
 .editor_dark ::selection {
    background-color: #CCC;
 }
+
 
 .rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
 .rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {
@@ -127,6 +136,14 @@
 {
    filter: brightness(1.25);
 }
+
+/* Ugly hack, but we don't have a better way of targeting this element. */
+.rstudio-themes-dark.editor_dark.ace_editor_theme div[style="text-align: center;"]
+{
+   background-color: CODE_BACKGROUND_COLOR;
+   padding: 8px 0;
+}
+
 
 /* These styles help Examples render correctly in the Help pane. */
 .rstudio-themes-dark.editor_dark.ace_editor_theme .chunk pre
