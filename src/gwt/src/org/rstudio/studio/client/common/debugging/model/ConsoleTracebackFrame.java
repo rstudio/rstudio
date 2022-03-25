@@ -1,5 +1,5 @@
 /*
- * UnhandledError.java
+ * ConsoleTracebackFrame.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -16,30 +16,29 @@
 package org.rstudio.studio.client.common.debugging.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
-import com.google.gwt.core.client.JsArrayString;
 
-public class UnhandledError extends JavaScriptObject
+public class ConsoleTracebackFrame extends JavaScriptObject
 {
-   protected UnhandledError() {}
+   protected ConsoleTracebackFrame() {}
    
-   public final native String getErrorMessage() /*-{
-      return this.message;
-   }-*/;
-   
-   public final native JsArray<ErrorFrame> getErrorFrames() /*-{
-      return this.frames;
+   public final native String getCall() /*-{
+      return this.call;
    }-*/;
 
-   public final native JsArrayString getTrace() /*-{
-      return this.trace;
+   public final native int getParent() /*-{
+      return this.parent;
    }-*/;
 
-   public final native JsArray<ConsoleTracebackFrame> getTraceFrames() /*-{
-      return this.trace_frames;
+   public final native boolean getVisible() /*-{
+      return this.visible;
    }-*/;
 
-   public final native boolean getIsRlangError() /*-{
-      return this.rlang;
+   public final native String getNamespace() /*-{
+      return this.namespace;
    }-*/;
+
+   public final native String getScope() /*-{
+      return this.scope;
+   }-*/;
+
 }

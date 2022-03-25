@@ -103,6 +103,7 @@
    # if we found user code (or weren't looking for it), tell the client
    if (foundUserCode || !userOnly)
    {
+      trace_frames <- list()
       trace <- character()
       message <- geterrmessage()
       is_abort <- FALSE
@@ -124,12 +125,24 @@
             # retrieve the traceback with rlang
             trace <- rlang::trace_back(bottom = frames[[length(frames) - 2L]])
          }
+
+         for (i in 1:nrow(trace)) {
+            trace_frames[[i]] <- list(
+               call = .rs.scalar(deparse(trace$call[[i]])), 
+               parent = .rs.scalar(trace$parent[[i]]), 
+               visible = .rs.scalar(trace$visible[[i]]), 
+               namespace = .rs.scalar(trace$namespace[[i]]), 
+               scope = .rs.scalar(trace$scope[[i]])
+            )
+         }
+
          trace <- rlang:::format.rlang_trace(trace)
       }
       err <- list(
          frames = ammended_stack,
          message = .rs.scalar(message), 
          trace = trace, 
+         trace_frames = trace_frames,
          rlang = .rs.scalar(is_abort)
          )
       errorReporter(err)
