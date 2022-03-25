@@ -62,6 +62,12 @@
       white-space: pre;
       font-size: 70%;
    }
+
+   .tracePanel {
+      margin-top: 1.5em;
+      margin-left: 0.3em;
+      font-size: 70%;
+   }
    </ui:style>
    <ui:image src="traceback_2x.png"
              width="9"
@@ -97,5 +103,9 @@
      <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>
      <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel} stack_trace">
      </g:HTMLPanel>
+
+     <g:HTMLPanel ui:field="tracePanel" visible="true" styleName="{style.tracePanel}">
+     </g:HTMLPanel>
+
    </g:HTMLPanel>
 </ui:UiBinder> 

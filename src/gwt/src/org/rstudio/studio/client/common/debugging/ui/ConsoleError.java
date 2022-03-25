@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.common.debugging.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
@@ -30,11 +31,14 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Tree;
+import com.google.gwt.user.client.ui.TreeItem;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.VirtualConsole;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
+import org.rstudio.studio.client.common.debugging.model.ConsoleTracebackFrame;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 
 public class ConsoleError extends Composite
@@ -114,6 +118,29 @@ public class ConsoleError extends Composite
             framePanel.add(frame);
          }
       }
+
+      JsArray<ConsoleTracebackFrame> frames = err.getTraceFrames();
+      
+      Tree tree = new Tree();
+      tree.setAnimationEnabled(true);
+      TreeItem root = new TreeItem(new Label("Traceback"));
+
+      addChildFrames(root, frames, 0);
+      
+      tree.addItem(root);
+      tracePanel.add(tree);
+   }
+
+   void addChildFrames(TreeItem item, JsArray<ConsoleTracebackFrame> frames, int parent) {
+      for (int i = parent; i < frames.length(); i++) {
+         ConsoleTracebackFrame frame = frames.get(i);
+         if (frame.getParent() == parent) {
+            TreeItem child = new TreeItem(new Label(frame.getCall()));
+            item.addItem(child);
+
+            addChildFrames(child, frames, i + 1);
+         }
+      }
    }
    
    public void setTracebackVisible(boolean visible)
@@ -137,6 +164,7 @@ public class ConsoleError extends Composite
    @UiField Anchor rerunText;
    @UiField Image rerunImage;
    @UiField HTMLPanel framePanel;
+   @UiField HTMLPanel tracePanel;
    @UiField HTML errorMessage;
    
    private Observer observer_;
