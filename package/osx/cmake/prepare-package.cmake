@@ -32,7 +32,9 @@ endif()
 
 set(FIX_LIBRARY_PATHS_SCRIPT_PATH "@CMAKE_CURRENT_SOURCE_DIR@/scripts/fix-library-paths.sh")
 
-if(EXISTS "@RSESSION_ARM64_PATH@" AND UNAME_M STREQUAL "arm64")
+# NOTE: This part of CMake will be run by the x86 branch of the build,
+# so we don't want to filter based on the architecture here.
+if(EXISTS "@RSESSION_ARM64_PATH@")
 
    echo("Found arm64 rsession binary: '@RSESSION_ARM64_PATH@'")
 
