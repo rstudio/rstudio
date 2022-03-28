@@ -124,7 +124,7 @@ FilePath resolveXdgDir(
       else
       {
          LOG_ERROR_MESSAGE("Unable to retrieve app settings path. HRESULT:  " +
-                           safe_convert::numberToString(hr));
+                           safe_convert::numberToHexString(hr));
       }
 
       // Free memory if allocated
