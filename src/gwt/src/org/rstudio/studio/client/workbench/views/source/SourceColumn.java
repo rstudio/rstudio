@@ -647,7 +647,7 @@ public class SourceColumn implements BeforeShowEvent.Handler,
    private String getNextDefaultName(String defaultNamePrefix)
    {
       if (StringUtil.isNullOrEmpty(defaultNamePrefix))
-         defaultNamePrefix = constants_.untitled();
+         defaultNamePrefix = "Untitled"; //$NON-NLS-1$
 
       int max = manager_.getUntitledNum(defaultNamePrefix);
       return defaultNamePrefix + (max + 1);
