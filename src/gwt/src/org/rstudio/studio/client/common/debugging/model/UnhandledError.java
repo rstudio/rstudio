@@ -35,10 +35,6 @@ public class UnhandledError extends JavaScriptObject
       return this.trace;
    }-*/;
 
-   public final native JsArray<ConsoleTracebackFrame> getTraceFrames() /*-{
-      return this.trace_frames;
-   }-*/;
-
    public final native boolean getIsRlangError() /*-{
       return this.rlang;
    }-*/;
