@@ -1,5 +1,8 @@
 @charset "UTF-8";
 
+@def CODE_BACKGROUND_COLOR #1f1f1f;
+@def CODE_COLOR #f0f0f0;
+
 @external rstudio-themes-dark;
 @external rstudio-themes-scrollbars;
 @external editor_dark;
@@ -7,6 +10,18 @@
 @external sourceLine;
 @external odd;
 @external even;
+@external code-toolbar;
+@external token, operator, property, tag, boolean, number, constant, symbol, deleted;
+@external chunk, source, output, warning, error, message;
+@external std, opt, hl;
+
+/* Help R equations to be a bit easier to read. */
+/* Ugly hack, but we don't have a better way of targeting this element. */
+p + div[style="text-align: center;"]
+{
+   font-size: 16px;
+}
+
 
 /* Default to white text on black in editor_dark themes */
 .editor_dark {
@@ -41,6 +56,7 @@
    background-color: #CCC;
 }
 
+
 .rstudio-themes-dark.rstudio-themes-scrollbars::-webkit-scrollbar,
 .rstudio-themes-dark.rstudio-themes-scrollbars ::-webkit-scrollbar {
    background: #FFF;
@@ -61,8 +77,9 @@
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme pre,
 .rstudio-themes-dark.editor_dark.ace_editor_theme pre code {
-   background-color: #333;
-   color: #F7F7F7;
+   background-color: CODE_BACKGROUND_COLOR;
+   color: CODE_COLOR;
+   filter: none !important;
 }
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme p code {
@@ -72,7 +89,7 @@
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme table thead,
 .rstudio-themes-dark.editor_dark.ace_editor_theme table tr.even {
-   background-color: #333 !important;
+   background-color: CODE_BACKGROUND_COLOR !important;
    border-color: #999 !important;
 }
 
@@ -86,6 +103,76 @@
 }
 
 .rstudio-themes-dark.editor_dark.ace_editor_theme blockquote {
-   background-color: #333 !important;
+   background-color: CODE_BACKGROUND_COLOR !important;
    border-radius: 3px;
+}
+
+/**
+ * The themes below were added to help support R 4.2.0's enhanced
+ * help system, when used with dark RStudio themes.
+ */
+.rstudio-themes-dark.editor_dark.ace_editor_theme .code-toolbar
+{
+   background-color: CODE_BACKGROUND_COLOR;
+   border: 2px solid CODE_BACKGROUND_COLOR;
+   border-radius: 4px;
+   padding: 2px 6px;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme code,
+.rstudio-themes-dark.editor_dark.ace_editor_theme pre
+{
+   margin: 0;
+   padding: 0;
+   text-shadow: none;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .token.operator
+{
+   background: none;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .token
+{
+   filter: brightness(1.25);
+}
+
+/* Ugly hack, but we don't have a better way of targeting this element. */
+.rstudio-themes-dark.editor_dark.ace_editor_theme p + div[style="text-align: center;"]
+{
+   background-color: CODE_BACKGROUND_COLOR;
+   padding: 8px 0;
+}
+
+
+/* These styles help Examples render correctly in the Help pane. */
+.rstudio-themes-dark.editor_dark.ace_editor_theme .chunk pre
+{
+   background: none;
+   margin: 1em 0px;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .source
+{
+   background-color: CODE_BACKGROUND_COLOR;
+   border: 1px solid CODE_BACKGROUND_COLOR;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .output,
+.rstudio-themes-dark.editor_dark.ace_editor_theme .warning,
+.rstudio-themes-dark.editor_dark.ace_editor_theme .error,
+.rstudio-themes-dark.editor_dark.ace_editor_theme .message
+{
+   background-color: black;
+   border: 1px solid black;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .hl.std
+{
+   color: CODE_COLOR;
+}
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme .hl.opt
+{
+   color: #9a6e3a;
 }
