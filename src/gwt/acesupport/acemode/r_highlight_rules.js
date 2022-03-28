@@ -208,8 +208,11 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
     ]);
 
     // NOTE: We accept '\' as a standalone identifier here
-    // so that it can be parsed as the 'function' alias symbol
-    var reIdentifier = "(?:\\\\|[a-zA-Z.][a-zA-Z0-9._]*)";
+    // so that it can be parsed as the 'function' alias symbol.
+    //
+    // We also parse '_' as an identifier, for the R pipe-bind
+    // placeholder.
+    var reIdentifier = "(?:\\\\|_|[a-zA-Z.][a-zA-Z0-9._]*)";
 
     var $complements = {
       "{" : "}",

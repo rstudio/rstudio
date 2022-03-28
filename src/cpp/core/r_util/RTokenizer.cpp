@@ -196,6 +196,12 @@ RToken RTokenizer::nextToken()
      return matchWhitespace();
   case L'\\':
      return matchIdentifier();
+     
+  case L'_':
+     // R 4.2.0 introduced the pipe-bind operator;
+     // parse that as a special identifier.
+     return consumeToken(RToken::ID, 1);
+     
   }
 
   wchar_t cNext = peek(1);
