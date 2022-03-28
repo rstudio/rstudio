@@ -82,8 +82,6 @@ public class ChunkOutputStream extends FlowPanel
 
          getElement().getStyle().setOverflow(Overflow.AUTO);
       }
-
-      setUpEvents(getElement());
    }
 
    @Override
@@ -677,85 +675,6 @@ public class ChunkOutputStream extends FlowPanel
    }
    
    // Private methods ---------------------------------------------------------
-   
-   /** 
-    * A native hack function to workaround {@code <iframes>} stealing all pointer events.
-    *  
-    * @param el the Element to target for event setup, which should always be {@code this}
-    */
-   private native void setUpEvents(Element el) /*-{
-                                             
-      // debounce user inputs to make scrolling behavior more forgiving: the user does not have to keep their
-      // mouse exactly in place to continue scrolling. The user most pause over the sub-content after
-      // scrolling before we allow them to enable it with a mousemove.
-      var debounceId = -1
-      var debounceHandler = function(dispatch) {
-         return function() {
-            el.removeEventListener("mouseover", overEventHandler);
-            el.removeEventListener("mousemove", moveEventHandler);
-            el.addEventListener("mouseout", outEventHandler, { once: true });
-            clearTimeout(debounceId);
-            debounceId = setTimeout(function() {
-
-               if (dispatch)
-                  moveEventHandler();
-               else
-                  el.addEventListener("mousemove", moveEventHandler, { once: true });
-            }, 333);
-         };
-      };
-
-      var overEventHandler = debounceHandler(true);
-
-      // create two event handlers: 
-      // - one to handle when the mouse leaves the iframe,
-      // - another to handle when the mouse moves inside the current widget
-      //
-      // mousemove events signal user intent to do something with the current iframe, which will
-      // "unlock" the frame for interaction. When the mouse leaves, the frame is disabled, which prevents the
-      // frame from eating mouse events (like scroll). This makes it possible to scroll across iframes
-      // without interruptions, assuming the user keeps their mouse perfectly still.
-      //
-      // Each event sets up the other in such a way that they can only ever trigger once at a time.
-      var moveEventHandler = function() {
-         // need to remove the mouseout event on the parent el, stop it from firing when the
-         // iframe starts intercepting events -- it actually counts as a mouseout on the parent.
-         el.removeEventListener("mouseout", outEventHandler);
-         var frames = el.querySelectorAll("iframe");
-         if (!frames.length)
-            return;
-
-         frames.forEach(function(frame) {
-            frame.style.pointerEvents = "all";
-            frame.style.opacity = 1;
-            frame.addEventListener("mouseout", outEventHandler, { once: true });
-         });
-      };
-
-      var outEventHandler = function() {
-         clearTimeout(debounceId);
-         var frames = el.querySelectorAll("iframe");
-
-         if (!frames.length)
-            return;
-
-         frames.forEach(function(frame) {
-            frame.style.pointerEvents = "none"; 
-            frame.style.opacity = 0.7;
-         });
-
-         el.addEventListener("mouseover", overEventHandler, { once: true });
-      }
-
-      el.addEventListener("click", function() { 
-         clearTimeout(debounceId);
-         el.removeEventListener("mouseover", overEventHandler);
-         el.removeEventListener("mousemove", moveEventHandler);
-         moveEventHandler(); 
-      });
-      el.addEventListener("wheel", debounceHandler());
-      el.addEventListener("mouseover", overEventHandler, { once: true });
-   }-*/;
    
    private String classOfOutput(int type)
    {

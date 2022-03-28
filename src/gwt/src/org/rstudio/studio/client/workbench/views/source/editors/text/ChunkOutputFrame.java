@@ -39,6 +39,8 @@ public class ChunkOutputFrame extends DynamicIFrame
 
       getElement().getStyle().setProperty("pointerEvents", "none");
       getElement().getStyle().setProperty("opacity", "0.7");
+      getElement().getStyle().setProperty("border", "1px dashed rgb(128,128,128,25%)");
+      getElement().getStyle().setProperty("borderRadius", "4px");
    }
 
    void loadUrl(String url, Command onCompleted)
