@@ -80,9 +80,9 @@
          <ui:msg key="templateOptionsPanel">This template contains multiple files. Create a new directory for
              these files:</ui:msg>
      </g:HTML>
-     <rs:LabeledTextBox textBoxId="{ElementIds.getRmdTemplateChooserName}" labelText="Name:" 
-                        styleName="{style.controlLabel} {style.interiorControlLabel}" 
-                        ui:field="txtName_" text="Untitled"><ui:attribute name="text" key="untitledText"/><ui:attribute name="labelText" key="labelText"/></rs:LabeledTextBox>
+       <rs:LabeledTextBox textBoxId="{ElementIds.getRmdTemplateChooserName}" labelText="Name:"
+                          styleName="{style.controlLabel} {style.interiorControlLabel}"
+                          ui:field="txtName_" text="Untitled"/>
 
      <rs:DirectoryChooserTextBox width="100%" addStyleNames="{style.directoryChooser} {style.directoryChooserInner}" ui:field="dirLocation_">
      </rs:DirectoryChooserTextBox>

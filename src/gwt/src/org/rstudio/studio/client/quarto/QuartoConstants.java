@@ -65,15 +65,6 @@ public interface QuartoConstants extends Messages {
     String createDocButtonCaption();
 
     /**
-     * Translate "Untitled".
-     *
-     * @return the translated value
-     */
-    @DefaultMessage("Untitled")
-    @Key("newDocTitleText")
-    String newDocTitleText();
-
-    /**
      * Translate "(optional)".
      *
      * @return the translated value

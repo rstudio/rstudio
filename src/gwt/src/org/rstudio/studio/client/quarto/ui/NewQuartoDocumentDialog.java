@@ -149,7 +149,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       formatNames_ = new ArrayList<>();
       resources.styles().ensureInjected();
       
-      txtTitle_.setText(constants_.newDocTitleText());
+      txtTitle_.setText("Untitled"); //$NON-NLS-1$
       DomUtils.setPlaceholder(txtAuthor_, constants_.newDocAuthorPlaceholderText());
       Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), constants_.templateAriaLabelValue());
       listTemplates_.addChangeHandler(new ChangeHandler()
