@@ -176,3 +176,12 @@ p + div[style="text-align: center;"]
 {
    color: #9a6e3a;
 }
+
+.rstudio-themes-dark.editor_dark.ace_editor_theme *::selection
+{
+   background: rgba(255, 255, 255, 0.15) !important;
+   color: inherit !important;
+}
+
+
+
