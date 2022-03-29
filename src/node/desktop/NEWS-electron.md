@@ -49,3 +49,4 @@
 - Sometimes the arrows don't appear when clicking on a pane border in RStudio Desktop (#9723)
 - HTML input with type='checkbox'/'radio' doesn't render correctly in viewer (#9730)
 - Password UI removes single space after commas and periods (#10164)
+- Special characters from Windows pop-up tool are not inserted (#7954)
