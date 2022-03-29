@@ -295,7 +295,7 @@ function isValidInstallationWin32(installPath: string): boolean {
 
 function findDefaultInstallPathWin32(version: string): string {
   // query registry for R install path
-  const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core\\R\\${version}`;
+  const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core\\${version}`;
   const regQueryCommand = `reg query ${keyName} /v InstallPath`;
   const [output, error] = executeCommand(regQueryCommand);
   if (error) {

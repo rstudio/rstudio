@@ -445,17 +445,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_enable_accessibility', enable);
     },
 
-    getClipboardMonitoring: (callback: VoidCallback<boolean>) => {
-      ipcRenderer
-        .invoke('desktop_get_clipboard_monitoring')
-        .then((monitoring) => callback(monitoring))
-        .catch((error) => reportIpcError('getClipboardMonitoring', error));
-    },
-
-    setClipboardMonitoring: (monitoring: boolean) => {
-      ipcRenderer.send('desktop_set_clipboard_monitoring', monitoring);
-    },
-
     getIgnoreGpuExclusionList: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_get_ignore_gpu_exclusion_list')

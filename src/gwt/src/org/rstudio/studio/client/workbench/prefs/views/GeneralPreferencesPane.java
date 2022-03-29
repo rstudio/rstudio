@@ -324,7 +324,7 @@ public class GeneralPreferencesPane extends PreferencesPane
             useGpuDriverBugWorkarounds_.setValue(!disable);
          });
 
-         if (BrowseCap.isLinuxDesktop())
+         if (BrowseCap.isLinuxDesktop() && !BrowseCap.isElectron())
          {
             clipboardMonitoring_ = new CheckBox(constants_.clipboardMonitoringLabel());
             advanced.add(lessSpaced(clipboardMonitoring_));

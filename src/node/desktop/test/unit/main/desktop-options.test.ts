@@ -16,7 +16,6 @@ import { assert, expect } from 'chai';
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import { Display } from 'electron/main';
 import { describe } from 'mocha';
-import { platform } from 'os';
 import sinon from 'sinon';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { Err, isSuccessful } from '../../../src/core/err';
@@ -72,7 +71,6 @@ describe('DesktopOptions', () => {
 
     assert.equal(options.proportionalFont(), properties.font.default.proportionalFont);
     assert.equal(options.fixedWidthFont(), properties.font.default.fixedWidthFont);
-    assert.equal(options.useFontConfigDb(), properties.font.default.useFontConfigDb);
     assert.equal(options.zoomLevel(), properties.view.default.zoomLevel);
     assert.deepEqual(options.windowBounds(), properties.view.default.windowBounds);
     assert.equal(options.accessibility(), properties.view.default.accessibility);
@@ -80,7 +78,6 @@ describe('DesktopOptions', () => {
     assert.deepEqual(options.authCookies(), properties.session.default.authCookies);
     assert.deepEqual(options.tempAuthCookies(), properties.session.default.tempAuthCookies);
     assert.deepEqual(options.ignoredUpdateVersions(), properties.general.default.ignoredUpdateVersions);
-    assert.equal(options.clipboardMonitoring(), properties.general.default.clipboardMonitoring);
     if (process.platform === 'win32') {
       assert.equal(options.rBinDir(), properties.platform.default.windows.rBinDir);
       assert.equal(options.peferR64(), properties.platform.default.windows.preferR64);
@@ -94,7 +91,6 @@ describe('DesktopOptions', () => {
 
     const newProportionalFont = 'testProportionalFont';
     const newFixWidthFont = 'testFixWidthFont';
-    const newUseFontConfigDb = !(properties.font.default.useFontConfigDb as boolean);
     const newZoom = 1.5;
     const newWindowBounds = { width: 123, height: 321, x: 0, y: 0 };
     const newAccessibility = !(properties.view.default.accessibility as boolean);
@@ -102,7 +98,6 @@ describe('DesktopOptions', () => {
     const newAuthCookies = ['test', 'Autht', 'Cookies'];
     const newTempAuthCookies = ['test', 'Temp', 'Auth', 'Cookies'];
     const newIgnoredUpdateVersions = ['test', 'Ignored', 'Update', 'Versions'];
-    const newClipboardMonitoring = !(properties.general.default.clipboardMonitoring as boolean);
     const newRBinDir = 'testRBinDir';
     const newPeferR64 = !(properties.platform.default.windows.preferR64 as boolean);
 
@@ -111,7 +106,6 @@ describe('DesktopOptions', () => {
 
     options.setProportionalFont(newProportionalFont);
     options.setFixedWidthFont(newFixWidthFont);
-    options.setUseFontConfigDb(newUseFontConfigDb);
     options.setZoomLevel(newZoom);
     options.saveWindowBounds(newWindowBounds);
     options.setAccessibility(newAccessibility);
@@ -119,13 +113,11 @@ describe('DesktopOptions', () => {
     options.setAuthCookies(newAuthCookies);
     options.setTempAuthCookies(newTempAuthCookies);
     options.setIgnoredUpdateVersions(newIgnoredUpdateVersions);
-    options.setClipboardMonitoring(newClipboardMonitoring);
     options.setRBinDir(newRBinDir);
     options.setPeferR64(newPeferR64);
 
     assert.equal(options.proportionalFont(), newProportionalFont);
     assert.equal(options.fixedWidthFont(), newFixWidthFont);
-    assert.equal(options.useFontConfigDb(), newUseFontConfigDb);
     assert.equal(options.zoomLevel(), newZoom);
     assert.deepEqual(options.windowBounds(), newWindowBounds);
     assert.equal(options.accessibility(), newAccessibility);
@@ -133,7 +125,6 @@ describe('DesktopOptions', () => {
     assert.deepEqual(options.authCookies(), newAuthCookies);
     assert.deepEqual(options.tempAuthCookies(), newTempAuthCookies);
     assert.deepEqual(options.ignoredUpdateVersions(), newIgnoredUpdateVersions);
-    assert.equal(options.clipboardMonitoring(), newClipboardMonitoring);
     if (process.platform === 'win32') {
       assert.equal(options.rBinDir(), newRBinDir);
       assert.equal(options.peferR64(), newPeferR64);

@@ -24,7 +24,6 @@ import DesktopOptions from './desktop-options';
 
 const kProportionalFont = 'font.proportionalFont';
 const kFixedWidthFont = 'font.fixedWidthFont';
-const kUseFontConfigDb = 'font.useFontConfigDb';
 
 const kZoomLevel = 'view.zoomLevel';
 const kWindowBounds = 'view.windowBounds';
@@ -35,7 +34,6 @@ const kAuthCookies = 'session.authCookies';
 const kTempAuthCookies = 'session.tempAuthCookies';
 
 const kIgnoredUpdateVersions = 'general.ignoredUpdateVersions';
-const kClipboardMonitoring = 'general.clipboardMonitoring';
 
 const kRendererEngine = 'renderer.engine';
 const kRendererUseGpuExclusionList = 'renderer.useGpuExclusionList';
@@ -133,14 +131,6 @@ export class DesktopOptionsImpl implements DesktopOptions {
     }
 
     return fontName;
-  }
-
-  public setUseFontConfigDb(useFontConfigDb: boolean): void {
-    this.config.set(kUseFontConfigDb, useFontConfigDb);
-  }
-
-  public useFontConfigDb(): boolean {
-    return this.config.get(kUseFontConfigDb, properties.font.default.useFontConfigDb);
   }
 
   public setZoomLevel(zoom: number): void {
@@ -246,15 +236,6 @@ export class DesktopOptionsImpl implements DesktopOptions {
 
   public ignoredUpdateVersions(): string[] {
     return this.config.get(kIgnoredUpdateVersions, properties.general.default.ignoredUpdateVersions);
-  }
-
-  public setClipboardMonitoring(clipboardMonitoring: boolean): void {
-    this.config.set(kClipboardMonitoring, clipboardMonitoring);
-  }
-
-  // TODO: check environment variable RSTUDIO_NO_CLIPBOARD_MONITORING, see DesktopGwtCallback.cpp
-  public clipboardMonitoring(): boolean {
-    return this.config.get(kClipboardMonitoring, properties.general.default.clipboardMonitoring);
   }
 
   public setRenderingEngine(renderingEngine: string): void {

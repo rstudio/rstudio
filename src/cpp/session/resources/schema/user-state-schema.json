@@ -13,10 +13,6 @@
                     "items": {
                         "type": "string"
                     }
-                },
-                "clipboardMonitoring": {
-                    "type": "boolean",
-                    "description": "Linux clipboard monitoring for middle-click paste"
                 }
             },
             "default": {
@@ -32,16 +28,12 @@
                 },
                 "fixedWidthFont": {
                     "type": "string"
-                },
-                "useFontConfigDb": {
-                    "type": "boolean"
                 }
             },
             "description": "Font options from the Appearance category",
             "default": {
                 "proportionalFont": "",
-                "fixedWidthFont": "",
-                "useFontConfigDb": true
+                "fixedWidthFont": ""
             }
         },
         "view": {

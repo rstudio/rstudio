@@ -597,15 +597,6 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_set_enable_accessibility');
     });
 
-    ipcMain.handle('desktop_get_clipboard_monitoring', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_monitoring');
-      return false;
-    });
-
-    ipcMain.on('desktop_set_clipboard_monitoring', (event, monitoring) => {
-      GwtCallback.unimpl('desktop_set_clipboard_monitoring');
-    });
-
     ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
       return !ElectronDesktopOptions().useGpuExclusionList();
     });
