@@ -66,6 +66,13 @@ if(NOT RSTUDIO_ELECTRON)
                break()
             endif()
 
+            set(QMAKE_QT50_SDK "$ENV{HOME}/opt/local/qt/${QT_VERSION_SUBDIR}")
+            if(EXISTS ${QMAKE_QT50_SDK})
+               set(QT_QMAKE_EXECUTABLE "${QMAKE_QT50_SDK}/bin/qmake")
+               set(QT_VERSION "${QT_CANDIDATE}")
+               break()
+            endif()
+
          endforeach()
       endif()
    else()
