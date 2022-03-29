@@ -344,16 +344,20 @@ describe('Font tests', () => {
     assert.strictEqual(testDesktopOptions.zoomLevel(), 0.5);
   });
 
-  it('has an error when setting an invalid zoom level', () => {
+  it('WIPhas an error when setting an invalid zoom level', () => {
     const mockLegacyOptions = new (class extends DesktopOptionsStub {
       zoomLevel(): number | undefined {
         return 1.5;
       }
     })();
     const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
-    expect(testDesktopOptions.setZoomLevel.bind(testDesktopOptions, 0.3333)).to.throw(
-      'Config schema violation: `view/zoomLevel` must be equal to one of the allowed values',
-    );
+    const min = properties.view.properties.zoomLevel.minimum;
+    const max = properties.view.properties.zoomLevel.maximum;
+
+    expect(testDesktopOptions.setZoomLevel.bind(testDesktopOptions, min - 0.1)).to.throw();
+    expect(testDesktopOptions.setZoomLevel.bind(testDesktopOptions, max + 0.1)).to.throw();
+    expect(testDesktopOptions.setZoomLevel.bind(testDesktopOptions, min)).to.not.throw();
+    expect(testDesktopOptions.setZoomLevel.bind(testDesktopOptions, max)).to.not.throw();
   });
 
   it('can get the rBinDir (Windows)', () => {

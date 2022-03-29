@@ -42,7 +42,8 @@
                 "zoomLevel": {
                     "type": "number",
                     "description": "UI zoom level, 1.0 == 100%",
-                    "enum": [0.25, 0.5, 0.75, 0.8, 0.9, 1.0, 1.1, 1.25, 1.5, 1.75, 2.0, 2.5, 3.0, 4.0, 5.0]
+                    "minimum": 0.25,
+                    "maximum": 5.0
                 },
                 "windowBounds": {
                     "type": "object",

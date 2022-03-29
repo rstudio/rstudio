@@ -134,6 +134,11 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public setZoomLevel(zoom: number): void {
+    const min = properties.view.properties.zoomLevel.minimum;
+    const max = properties.view.properties.zoomLevel.maximum;
+    if (zoom < min || zoom > max) {
+      throw new Error(`Invalid zoom level: Must be between ${min} and ${max}`);
+    }
     this.config.set(kZoomLevel, zoom);
   }
 
