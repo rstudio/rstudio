@@ -669,23 +669,8 @@ public class AceEditor implements DocDisplay,
 
       // Use magrittr style pipes if the user has not opted into new native pipe syntax in R 4.1+
 
-      String pipe;
 
-      switch (userPrefs_.useNativePipeOperator().getValue())
-      {
-         case UserPrefs.USE_NATIVE_PIPE_OPERATOR_NEVER:
-            pipe = MAGRITTR_PIPE;
-            break;
-         case UserPrefs.USE_NATIVE_PIPE_OPERATOR_ALWAYS:
-            pipe = NATIVE_R_PIPE;
-            break;
-         case UserPrefs.USE_NATIVE_PIPE_OPERATOR_ONLY_R41:
-            pipe = ApplicationUtils.compareVersions(rVersion_, "4.1.0") >= 0 ? NATIVE_R_PIPE : MAGRITTR_PIPE;
-            break;
-         default:
-            pipe = MAGRITTR_PIPE;
-            break;
-      }
+      String pipe = userPrefs_.useNativePipeComputed().getValue() ? NATIVE_R_PIPE : MAGRITTR_PIPE;
 
       if (hasWhitespaceBefore)
          insertCode(pipe + " ", false);

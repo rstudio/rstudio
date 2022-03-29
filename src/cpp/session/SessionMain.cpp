@@ -1538,6 +1538,34 @@ void loadCranRepos(const std::string& repos,
    pROptions->rCRANSecondary = algorithm::join(secondary, "|");
 }
 
+bool useNativePipeOperatorComputed()
+{
+   // allow project override
+   const projects::ProjectContext& projContext = projects::projectContext();
+   if (projContext.hasProject())
+   {
+      std::string projectPipePref = projContext.config().useNativePipeOperator;
+      if (projectPipePref == r_util::kUseNativePipeAlways)
+         return true;
+      else if (projectPipePref == r_util::kUseNativePipeNever)
+         return false;
+      else if (projectPipePref == r_util::kUseNativePipeR41)
+         return module_context::hasMinimumRVersion("4.1");
+      // otherwise, check global option
+   }
+
+   // no project override, read from global options
+   std::string globalPipePref = prefs::userPrefs().useNativePipeOperator();
+   if (globalPipePref == kUseNativePipeOperatorAlways)
+      return true;
+   else if (globalPipePref == kUseNativePipeOperatorNever)
+      return false;
+   else if (globalPipePref == kUseNativePipeOperatorOnlyR41)
+      return module_context::hasMinimumRVersion("4.1");
+   else
+      return false;
+}
+
 } // anonymous namespace
 
 
@@ -2298,6 +2326,7 @@ int main(int argc, char * const argv[])
       rOptions.sessionScope = options.sessionScope();
       rOptions.runScript = options.runScript();
       rOptions.suspendOnIncompleteStatement = options.suspendOnIncompleteStatement();
+      rOptions.useNativePipeOperator = useNativePipeOperatorComputed();
 
       // r callbacks
       rstudio::r::session::RCallbacks rCallbacks;
