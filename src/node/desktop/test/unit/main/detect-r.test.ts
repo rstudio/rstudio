@@ -19,7 +19,7 @@ import { assert } from 'chai';
 import { saveAndClear, restore } from '../unit-utils';
 import { promptUserForR } from '../../../src/main/detect-r';
 
-describe('detect-r', () => {
+describe('DetectR', () => {
   const vars: Record<string, string> = {
     RSTUDIO_WHICH_R: '',
   };
