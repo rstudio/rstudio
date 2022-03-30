@@ -15,15 +15,35 @@
 
 import { BrowserWindow, clipboard, dialog, Menu } from 'electron';
 import path from 'path';
-import { createStandaloneErrorDialog } from './utils';
 import i18next from 'i18next';
 
 type ContextMenuItem = Electron.MenuItem | Electron.MenuItemConstructorOptions;
 
-function showContextMenuImageTemplate(
+export const showContextMenu = (event: Electron.IpcMainEvent, params: Electron.ContextMenuParams): void => {
+  const template = _createContextMenuTemplate(event, params);
+
+  const menu = Menu.buildFromTemplate(template);
+  menu.popup();
+};
+
+export const _createContextMenuTemplate = (
   event: Electron.IpcMainEvent,
   params: Electron.ContextMenuParams,
-): ContextMenuItem[] {
+): ContextMenuItem[] => {
+  let template: ContextMenuItem[] = [];
+  if (params.hasImageContents) {
+    template = createContextMenuImageTemplate(event, params);
+  } else {
+    template = createContextMenuTextTemplate(event, params);
+  }
+
+  return template;
+};
+
+const createContextMenuImageTemplate = (
+  event: Electron.IpcMainEvent,
+  params: Electron.ContextMenuParams,
+): ContextMenuItem[] => {
   return [
     // Save Image As...
     {
@@ -109,12 +129,12 @@ function showContextMenuImageTemplate(
       },
     },
   ];
-}
+};
 
-function showContextMenuTextTemplate(
+const createContextMenuTextTemplate = (
   event: Electron.IpcMainEvent,
   params: Electron.ContextMenuParams,
-): ContextMenuItem[] {
+): ContextMenuItem[] => {
   // We would like to just always use the already-existing roles for clipboard
   // actions, but https://www.electronjs.org/docs/api/menu-item has:
   //
@@ -161,16 +181,4 @@ function showContextMenuTextTemplate(
   });
 
   return template;
-}
-
-export function showContextMenu(event: Electron.IpcMainEvent, params: Electron.ContextMenuParams): void {
-  let template: ContextMenuItem[] = [];
-  if (params.hasImageContents) {
-    template = showContextMenuImageTemplate(event, params);
-  } else {
-    template = showContextMenuTextTemplate(event, params);
-  }
-
-  const menu = Menu.buildFromTemplate(template);
-  menu.popup();
-}
+};

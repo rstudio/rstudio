@@ -235,7 +235,7 @@ export class DesktopBrowserWindow extends EventEmitter {
           ],
         };
 
-        toolbarManager.createToolbar(this.window, toolbarData).catch((err) => {
+        toolbarManager.createAndShowToolbar(this.window, toolbarData).catch((err) => {
           console.error('Error when trying to add Secondary Window toolbar', err);
         });
       }

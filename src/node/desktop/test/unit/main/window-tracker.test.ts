@@ -82,5 +82,21 @@ describe('window-tracker', () => {
       await setTimeoutPromise(200); // TODO: yuck, find a better way to do this
       assert.equal(tracker.length(), 0);
     });
+
+    it('delete window removes it from map', async function () {
+      const tracker = new WindowTracker();
+      const oneWin = new DesktopBrowserWindow({ name: 'some name' });
+      tracker.addWindow('one', oneWin);
+      assert.equal(tracker.length(), 1);
+      const result = tracker.getWindow('one');
+
+      assert.isObject(result);
+      assert.deepEqual(result, oneWin);
+
+      tracker.onWindowDestroyed('one');
+
+      assert.equal(tracker.length(), 0);
+      assert.isUndefined(tracker.getWindow('one'));
+    });
   }
 });

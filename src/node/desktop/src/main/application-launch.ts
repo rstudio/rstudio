@@ -25,8 +25,7 @@ export interface LaunchRStudioOptions {
   workingDirectory?: string;
 }
 
-function resolveProjectFile(projectDir: string): string {
-
+export function resolveProjectFile(projectDir: string): string {
   // check that the project directory exists
   if (!existsSync(projectDir)) {
     return '';
@@ -43,7 +42,6 @@ function resolveProjectFile(projectDir: string): string {
 
   // nothing found
   return '';
-
 }
 
 /**
@@ -66,7 +64,6 @@ export class ApplicationLaunch {
   }
 
   launchRStudio(options: LaunchRStudioOptions): void {
-
     // in devmode, we need to pass the directory path when launching the application;
     // for package builds, we have no such requirement
     const argv = app.isPackaged ? [] : [process.argv[1]];
@@ -87,6 +84,5 @@ export class ApplicationLaunch {
     // restore environment variables
     unsetenv('RS_INSTALL_WD');
     unsetenv('RS_INITIAL_PROJECT');
-
   }
 }

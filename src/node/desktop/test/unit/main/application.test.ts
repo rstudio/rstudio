@@ -61,7 +61,7 @@ describe('Application', () => {
       app.generateNewPort();
       assert.notStrictEqual(origPort, app.port);
     });
-    it("returns default if scratch path not set or doesn't exist", () => {
+    it('returns default if scratch path not set or does not exist', () => {
       const app = new Application();
       const tmpDir = testDir();
       const result = app.scratchTempDir(tmpDir);
