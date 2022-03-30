@@ -856,6 +856,26 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       editingTarget.getEditorContext();
       return true;
    }
+   
+   public boolean requestEditorContext(String id)
+   {
+      for (SourceColumn column : columnList_)
+      {
+         for (EditingTarget target : column.getEditors())
+         {
+            if (target instanceof TextEditingTarget)
+            {
+               if (StringUtil.equals(target.getId(), id))
+               {
+                  ((TextEditingTarget) target).getEditorContext();
+                  return true;
+               }
+            }
+         }
+      }
+      
+      return false;
+   }
 
    public void activateCodeBrowser(
       final String codeBrowserPath,
