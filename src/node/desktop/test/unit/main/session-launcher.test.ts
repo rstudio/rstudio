@@ -29,7 +29,7 @@ function getNewLauncher(): SessionLauncher {
   return new SessionLauncher(new FilePath(), new FilePath(), new FilePath(), new ApplicationLaunch());
 }
 
-describe('session-launcher', () => {
+describe('SessionLauncher', () => {
   const saveVars: Record<string, string> = {
     RS_LOCAL_PEER: '',
   };

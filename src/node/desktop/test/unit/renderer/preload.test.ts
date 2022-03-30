@@ -15,7 +15,7 @@
 
 import { describe } from 'mocha';
 
-describe('preload', () => {
+describe('Preload', () => {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   describe('Currently no tests', () => {});
 });

@@ -29,7 +29,7 @@ class TestGwtWindow extends GwtWindow {
 }
 
 if (!isWindowsDocker()) {
-  describe('minimal-window', () => {
+  describe('MinimalWindow', () => {
     beforeEach(() => {
       setApplication(new Application());
     });

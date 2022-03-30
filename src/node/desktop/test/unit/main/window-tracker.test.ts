@@ -31,7 +31,7 @@ class TestGwtWindow extends GwtWindow {
   }
 }
 
-describe('window-tracker', () => {
+describe('WindowTracker', () => {
   beforeEach(() => {
     clearCoreSingleton();
     const f = new NullLogger();
