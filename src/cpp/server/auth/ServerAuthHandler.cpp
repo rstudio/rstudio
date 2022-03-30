@@ -380,8 +380,21 @@ std::string getUserIdentifier(const core::http::Request& request,
 
    if (requireUserListCookie)
    {
-      if (!overlay::isUserListCookieValid(request.cookieValue(kUserListCookie)))
+      std::string userListCookie = request.cookieValue(kUserListCookie);
+      if (!overlay::isUserListCookieValid(userListCookie))
+      {
+         if (userListCookie.empty())
+         {
+            LOG_WARNING_MESSAGE("Request contains a user-identifier but is missing the "
+                                "user-list-id cookie required for named user licensing.");
+         }
+         else
+         {
+            LOG_WARNING_MESSAGE("Request contains a user-indentifier with an invalid user-list-id "
+                                "cookie");
+         }
          return std::string();
+      }
    }
 
    return userIdentifier;
