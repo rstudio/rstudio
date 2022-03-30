@@ -31,6 +31,7 @@
 - NVDA / Narrator misreading menu accelerator keys (#6406)
 - No scrollbar in source editor on Mac desktop (#6432)
 - Shiny numeric inputs increment twice on arrow click (#6953)
+- JAWS doesn't read "Alt" when it is the first thing in a menu shortcut (#6456)
 - RStudio Desktop on Linux stores state in folders differing only in case (#6979)
 - Long lines are printed as a "K" (#6995)
 - RStudio crashes when laptop computer is suspended (#7034)
@@ -48,4 +49,3 @@
 - Sometimes the arrows don't appear when clicking on a pane border in RStudio Desktop (#9723)
 - HTML input with type='checkbox'/'radio' doesn't render correctly in viewer (#9730)
 - Password UI removes single space after commas and periods (#10164)
-- Special characters from Windows pop-up tool are not inserted (#7954)
