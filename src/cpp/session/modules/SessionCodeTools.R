@@ -2237,7 +2237,7 @@
                        "^\\s*@\\s*(%+.*|)$")
    else if (identical(extension, ".qmd"))
      .rs.extractRCode(contents,
-                      "^[\t >]*```+\\s*\\{([Rr]+.*)\\}\\s*$",
+                      "^[\t >]*```+\\s*\\{[Rr]\\b.*\\}\\s*$",
                       "^[\t >]*```+\\s*$")
    if (is.null(code) || identical(code, .rs.scalar("")))
       return(character())
