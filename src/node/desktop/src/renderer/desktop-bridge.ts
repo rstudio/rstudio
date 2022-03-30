@@ -281,8 +281,11 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_close_named_window', name);
     },
 
-    copyPageRegionToClipboard: (left: number, top: number, width: number, height: number) => {
-      ipcRenderer.send('desktop_copy_page_region_to_clipboard', left, top, width, height);
+    copyPageRegionToClipboard: (x: number, y: number, width: number, height: number, callback: () => void) => {
+      ipcRenderer
+        .invoke('desktop_copy_page_region_to_clipboard', x, y, width, height)
+        .then(() => callback())
+        .catch((error) => reportIpcError('desktop_copy_page_region_to_clipboard', error));
     },
 
     exportPageRegionToFile: (

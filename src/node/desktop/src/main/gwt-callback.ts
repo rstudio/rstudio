@@ -15,7 +15,18 @@
 
 // TODO clean this up
 
-import { app, BrowserWindow, clipboard, dialog, ipcMain, screen, shell, webContents, webFrameMain } from 'electron';
+import {
+  app,
+  BrowserWindow,
+  clipboard,
+  dialog,
+  ipcMain,
+  Rectangle,
+  screen,
+  shell,
+  webContents,
+  webFrameMain,
+} from 'electron';
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { mkdtempSync, writeFileSync } from 'fs';
@@ -411,10 +422,18 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_close_named_window');
     });
 
-    ipcMain.on(
+    ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
-      (event, left: number, top: number, width: number, height: number) => {
-        GwtCallback.unimpl('desktop_copy_page_region_to_clipboard');
+      (_event, x: number, y: number, width: number, height: number) => {
+        const rect: Rectangle = { x, y, width, height };
+        this.mainWindow.window
+          .capturePage(rect)
+          .then((image) => {
+            clipboard.writeImage(image);
+          })
+          .catch((error) => {
+            logger().logError(error);
+          });
       },
     );
 
