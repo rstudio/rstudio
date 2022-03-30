@@ -112,7 +112,8 @@ public class TextEditingTargetPackageDependencyHelper
       boolean canDiscoverDependencies =
             docDisplay_.getFileType().isR() ||
             docDisplay_.getFileType().isRmd() ||
-            docDisplay_.getFileType().isRnw();
+            docDisplay_.getFileType().isRnw() ||
+            docDisplay_.getFileType().isQuartoMarkdown();
       
       if (!canDiscoverDependencies)
          return;

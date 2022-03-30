@@ -1,0 +1,90 @@
+#!/usr/bin/env bash
+
+#
+# install-qt-src
+#
+# Copyright (C) 2022 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+if [ "$#" != "0" ]; then
+	echo "Usage: install-qt-src version"
+	exit 0
+fi
+
+source "$(dirname "${BASH_SOURCE[0]}")/../tools/rstudio-tools.sh"
+section "Installing Qt"
+
+# Set up variables.
+: "${ROOT="${HOME}/opt/local/qt"}"
+: "${VERSION="$1"}"
+
+PREFIX="${ROOT}/${VERSION}"
+
+# TODO: other platforms
+info
+info "Installing Qt build dependencies"
+info "If this fails, ensure you've enabled Source Code repositories."
+info "This implies adding 'deb-src' repositories to /etc/apt/sources.list on Debian."
+info "On Ubuntu, you can use the 'Software & Updates' application to enable these as well."
+info
+
+sudo apt-get build-dep qt5-default
+sudo apt-get install libxcb-xinerama0-dev
+
+VERSION="$1"
+VERSION_MAJMIN=$(echo "${VERSION}" | cut -d"." -f"1,2")
+
+cd "${TMPDIR:-/tmp}"
+
+mkdir "qt-${VERSION}-src"
+cd "qt-${VERSION}-src"
+
+PARTS=(
+	"https://download.qt.io"
+	"official_releases"
+	"qt"
+	"${VERSION_MAJMIN}"
+	"${VERSION}"
+	"single"
+	"qt-everywhere-${VERSION}.tar.xz"
+)
+URL=$(IFS=/; printf "%s" "${PARTS[*]}")
+
+info "Downloading Qt"
+download "${URL}"
+
+info "Extracting Qt"
+TARBALL="$(basename "${URL}")"
+tar xaf "${TARBALL}"
+
+NAME="qt-everywhere-src-${VERSION}"
+cd "${NAME}"
+
+info "Configuring Qt"
+./configure             \
+	-prefix "${PREFIX}" \
+	-opensource         \
+	-confirm-license    \
+	-release
+
+info "Building Qt"
+info "Grab a cup of coffee, this will take a while."
+make -j4
+
+info "Installing Qt"
+make install
+
+info "Qt ${VERSION} was successfully installed."
+info "Install path: ${PREFIX}"
+

@@ -21,6 +21,7 @@
 
 #### R
 
+- Added support for the `_` placeholder as used by the R pipe-bind operator, to be introduced with R 4.2.0. (#10757)
 - Added support for using the AGG renderer (as provided by the ragg package) as a graphics backend for inline plot execution; also added support for using the backend graphics device requested by the knitr `dev` chunk option (#9931)
 - rstudioapi functions are now always evaluated in a clean environment, and will not be masked by objects in the global environment (#8031)
 - Removed support for versions of R earlier than R 3.3.0. (rstudio-pro#2887)
@@ -31,6 +32,7 @@
 
 ### Fixed
 
+- Fixed logging of `HRESULT` error values by logging them as hexadecimal instead of decimal (#10310)
 - Fixed notebook execution handling of knitr `message=FALSE` chunk option to suppress messages if the option is set to FALSE (#9436)
 - Fixed plot export to PDF options (#9185)
 - `.rs.formatDataColumnDispatch()` iterates through classes of `x` (#10073)

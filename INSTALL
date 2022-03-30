@@ -60,7 +60,7 @@ c) There are additional considerations on Windows. First, RStudio Server
    Desktop. Second, you need to add an extra -G parameter to specify the
    correct build toolchain, for example:
 
-   cmake .. -G "Visual Studio 15 2017 Win64" -DCMAKE_BUILD_TYPE=Release
+   cmake .. -G "Visual Studio 16 2019" -A Win64 -DCMAKE_BUILD_TYPE=Release
 
    To build on Windows:
 

@@ -486,15 +486,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String diffName(String name);
 
     /**
-     * Translated "Untitled".
-     *
-     * @return translated "Untitled"
-     */
-    @DefaultMessage("Untitled")
-    @Key("untitled")
-    String untitled();
-
-    /**
      * Translated "No document tabs open".
      *
      * @return translated "No document tabs open"
@@ -2158,15 +2149,6 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     @DefaultMessage("New R Markdown")
     @Key("newRMarkdown")
     String newRMarkdown();
-
-    /**
-     * Translated "Untitled".
-     *
-     * @return translated "Untitled"
-     */
-    @DefaultMessage("Untitled")
-    @Key("untitledCapitalized")
-    String untitledCapitalized();
 
     /**
      * Translated "Templates".
