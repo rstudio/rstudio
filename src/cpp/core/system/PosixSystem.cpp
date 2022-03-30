@@ -2470,7 +2470,7 @@ Error userBelongsToGroup(const User& user,
    // if the user is a member of the target groupName.
    Error groupListError = userBelongsToGroupViaGroupList(user, groupName, pBelongs);
 
-   // if the user belongs, then we can return early.
+   // if there was no error, then we can return early.
    // otherwise, we fallback to the legacy implementation
    if (!groupListError)
       return Success();
