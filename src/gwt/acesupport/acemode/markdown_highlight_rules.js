@@ -348,7 +348,7 @@ var MarkdownHighlightRules = function() {
             regex : "^\\s*```\\s*[a-zA-Z]*(?:{.*?\\})?\\s*$",
             next  : "githubblock"
         }, {
-            defaultToken : "text" //do not use markup.list to allow stling leading `*` differntly
+            defaultToken : "text" //do not use markup.list to allow stling leading `*` differently
         }],
 
         "blockquote" : [{ // Blockquotes only escape on blank lines.

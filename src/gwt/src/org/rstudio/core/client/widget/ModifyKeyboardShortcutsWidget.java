@@ -1034,7 +1034,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       {
          @Override
          public void execute() {
-            // run the final comands in order after loading has been completed
+            // run the final commands in order after loading has been completed
             queue.run();
          }
       });

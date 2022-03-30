@@ -15203,7 +15203,7 @@ var MarkdownHighlightRules = function() {
         },
         codeBlockStartRule,
         {
-            defaultToken : "list" //do not use markup.list to allow stling leading `*` differntly
+            defaultToken : "list" //do not use markup.list to allow stling leading `*` differently
         } ],
 
         "blockquote" : [ { // Blockquotes only escape on blank lines.

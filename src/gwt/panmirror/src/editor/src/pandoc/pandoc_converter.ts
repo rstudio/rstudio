@@ -260,7 +260,7 @@ function gridTablesRequired(doc: ProsemirrorNode) {
   const schema = doc.type.schema;
   const isTableCell = (node: ProsemirrorNode) => node.type === schema.nodes.table_cell || node.type === schema.nodes.table_header;
   return findChildren(doc, isTableCell).some(cell => {
-    // various things require grid tables (basically anyting that requires embedded newlines)
+    // various things require grid tables (basically anything that requires embedded newlines)
 
     // multiple blocks
     if (cell.node.childCount > 1) {

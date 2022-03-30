@@ -939,7 +939,7 @@ public interface CmdConstants extends Constants {
     String quickAddNextButtonLabel();
     @DefaultStringValue("Find and Add Next") // $NON-NLS-1$
     String quickAddNextMenuLabel();
-    @DefaultStringValue("Find and add next occurence") // $NON-NLS-1$
+    @DefaultStringValue("Find and add next occurrence") // $NON-NLS-1$
     String quickAddNextDesc();
     
     // findAll
@@ -953,7 +953,7 @@ public interface CmdConstants extends Constants {
     String findReplaceMenuLabel();
     
     // findNext
-    @DefaultStringValue("Find Next Occurence") // $NON-NLS-1$
+    @DefaultStringValue("Find Next Occurrence") // $NON-NLS-1$
     String findNextLabel();
     @DefaultStringValue("Next") // $NON-NLS-1$
     String findNextButtonLabel();
@@ -963,7 +963,7 @@ public interface CmdConstants extends Constants {
     String findNextDesc();
     
     // findPrevious
-    @DefaultStringValue("Find Previous Occurence") // $NON-NLS-1$
+    @DefaultStringValue("Find Previous Occurrence") // $NON-NLS-1$
     String findPreviousLabel();
     @DefaultStringValue("Prev") // $NON-NLS-1$
     String findPreviousButtonLabel();
