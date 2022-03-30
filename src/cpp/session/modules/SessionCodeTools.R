@@ -2229,7 +2229,7 @@
       contents
    else if (identical(extension, ".Rmd"))
       .rs.extractRCode(contents,
-                       "^[\t >]*```+\\s*\\{([Rr]+.*)\\}\\s*$",
+                       "^[\t >]*```+\\s*\\{[Rr]\\b.*\\}\\s*$",
                        "^[\t >]*```+\\s*$")
    else if (identical(extension, ".Rnw"))
       .rs.extractRCode(contents,
