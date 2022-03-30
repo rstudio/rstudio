@@ -41,7 +41,7 @@ export function getSpellingDoc(
   // alias schema
   const schema = view.state.schema;
 
-  // intialize marks we don't want to check
+  // initialize marks we don't want to check
   const excluded = excludedMarks(schema, marks);
 
   // check begin

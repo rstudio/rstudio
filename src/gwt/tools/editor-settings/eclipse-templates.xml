@@ -63,7 +63,7 @@ public class ${event}Event extends GwtEvent&lt;${event}Event.Handler&gt;
 
    public static final Type&lt;Handler&gt; TYPE = new Type&lt;Handler&gt;();
 }
-</template><template autoinsert="true" context="java" deleted="false" description="Boilerplate for GWT resouces + styles" enabled="true" name="GWTResources">${:import(com.google.gwt.resources.client.CssResource,
+</template><template autoinsert="true" context="java" deleted="false" description="Boilerplate for GWT resources + styles" enabled="true" name="GWTResources">${:import(com.google.gwt.resources.client.CssResource,
           com.google.gwt.resources.client.ClientBundle,
           com.google.gwt.core.client.GWT)}
 

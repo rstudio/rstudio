@@ -112,7 +112,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
             return {};
           }
 
-          // calcluate text before cursor
+          // calculate text before cursor
           const textBefore = completionTextBeforeCursor(tr.selection);
 
           // if there is no text then don't handle it
@@ -240,7 +240,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
               }
             }
 
-            // supress event if we handled it
+            // suppress event if we handled it
             if (handled) {
               event.preventDefault();
               event.stopPropagation();
@@ -482,7 +482,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
 }
 
 // extract the text before the cursor, dealing with block separators and
-// non-text leaf chracters (this is based on code in prosemirror-inputrules)
+// non-text leaf characters (this is based on code in prosemirror-inputrules)
 function completionTextBeforeCursor(selection: Selection, maxLength = 500) {
   const { $head } = selection;
   return $head.parent.textBetween(

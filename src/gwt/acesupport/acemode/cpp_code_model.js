@@ -1122,7 +1122,7 @@ var CppCodeModel = function(session, tokenizer,
                indent + tab;
          }
 
-         // If we're looking at a class with the first inheritted member
+         // If we're looking at a class with the first inherited member
          // on the same line, e.g.
          //
          //   class Foo : public A,

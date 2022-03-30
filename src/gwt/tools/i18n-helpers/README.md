@@ -58,7 +58,7 @@ Run this script from `/src/gwt/src` with syntax `./create_dev_locale.sh`
 
 Auto-generates java interfaces and properties files for all commands and menus defined with `Commands.cmd.xml` using 
 the English text in that file.  This script must be run whenever `Commands.cmd.xml` is edited, and is automatically
-executed whenever chages to this file are detected and the `build`, `desktop`, or `devmode` ant targets are triggered.
+executed whenever changes to this file are detected and the `build`, `desktop`, or `devmode` ant targets are triggered.
 
 Usage below shows how to trigger the scripts manually (instead of via ant buildfile targets) for the creation of English
 and "dev" locales, as discussed above for `create_dev_locale.sh`

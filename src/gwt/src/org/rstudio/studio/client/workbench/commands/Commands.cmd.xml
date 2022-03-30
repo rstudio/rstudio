@@ -1707,7 +1707,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         buttonLabel="Add"
         menuLabel="Find and Add Next"
         context="editor"
-        desc="Find and add next occurence"/>
+        desc="Find and add next occurrence"/>
 
    <cmd id="findAll"
         label="Find All"
@@ -1719,7 +1719,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="_Find..."/>
 
    <cmd id="findNext"
-        label="Find Next Occurence"
+        label="Find Next Occurrence"
         buttonLabel="Next"
         menuLabel="Find _Next"
         desc="Find next occurrence"
@@ -1727,7 +1727,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         rebindable="false"/>
 
    <cmd id="findPrevious"
-        label="Find Previous Occurence"
+        label="Find Previous Occurrence"
         buttonLabel="Prev"
         menuLabel="Find Pre_vious"
         desc="Find previous occurrence"
