@@ -344,7 +344,7 @@ describe('Font tests', () => {
     assert.strictEqual(testDesktopOptions.zoomLevel(), 0.5);
   });
 
-  it('WIPhas an error when setting an invalid zoom level', () => {
+  it('has an error when setting an invalid zoom level', () => {
     const mockLegacyOptions = new (class extends DesktopOptionsStub {
       zoomLevel(): number | undefined {
         return 1.5;
