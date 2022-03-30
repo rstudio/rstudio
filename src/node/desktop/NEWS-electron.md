@@ -24,7 +24,6 @@
 - Support RStudio on Wayland (#5333)
 - Zeroes display differently before & after decimal point (#5664)
 - RStudio crashes on Mac after disconnecting external monitors/dock (#5749)
-- Menus with submenus not read correctly on Windows (NVDA/Narrator) (#5831)
 - Checked menu items not read correctly by Narrator/NVDA on Windows (#5833)
 - Live regions not being announced on Windows Desktop IDE (#5895)
 - Cannot switch NVDA into navigator mode in Windows IDE (#5912)
