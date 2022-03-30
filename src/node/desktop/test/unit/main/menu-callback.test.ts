@@ -28,7 +28,7 @@ describe('MenuCallback', () => {
     callback.menuBegin('&File');
 
     callback.updateMenus();
-    assert.strictEqual(callback.mainMenu?.items.length, menuCount, 'expected correct top level menu count');
+    assert.strictEqual(callback.mainMenu.items.length, menuCount, 'expected correct top level menu count');
   });
 
   it('can add a command', () => {
@@ -73,7 +73,7 @@ describe('MenuCallback', () => {
     callback.setCommandLabel('a_command', 'New Label');
     callback.updateMenus();
 
-    const updatedCommand = callback.mainMenu?.getMenuItemById('a_command');
+    const updatedCommand = callback.mainMenu.getMenuItemById('a_command');
     assert.strictEqual(updatedCommand?.label, 'New Label');
     assert.isTrue(updatedCommand?.visible);
     assert.isFalse(updatedCommand?.checked);
@@ -92,16 +92,16 @@ describe('MenuCallback', () => {
 
     callback.updateMenus();
 
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 2);
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items.length, 2);
 
     callback.setCommandVisibility('a_hidden_command', true);
     callback.updateMenus();
 
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 3);
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items.length, 3);
 
-    const updatedCommand = callback.mainMenu?.getMenuItemById('a_hidden_command');
+    const updatedCommand = callback.mainMenu.getMenuItemById('a_hidden_command');
     assert.isTrue(updatedCommand?.visible);
-    assert.strictEqual(callback.mainMenu?.items.length, menuCount, 'expected correct top level menu count');
+    assert.strictEqual(callback.mainMenu.items.length, menuCount, 'expected correct top level menu count');
   });
 
   it('can remove unnecessary separators', () => {
@@ -120,7 +120,7 @@ describe('MenuCallback', () => {
 
     callback.updateMenus();
 
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 3);
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items.length, 3);
   });
 
   it('can remove a separator that is before a hidden item', () => {
@@ -137,7 +137,7 @@ describe('MenuCallback', () => {
 
     callback.updateMenus();
 
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 1);
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items.length, 1);
   });
 
   it('can contain a submenu', () => {
@@ -156,13 +156,13 @@ describe('MenuCallback', () => {
     callback.addCommand('clear_recent', 'Clear recent', '', '', false, true);
 
     callback.updateMenus();
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 1, 'expected "Recent files" menu');
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items.length, 1, 'expected "Recent files" menu');
     assert.strictEqual(
-      callback.mainMenu?.items[menuIdx].submenu?.items[0].submenu?.items.length,
+      callback.mainMenu.items[menuIdx].submenu?.items[0].submenu?.items.length,
       1,
       'expected "Clear recent" menu item',
     );
-    assert.strictEqual(callback.mainMenu?.items.length, menuCount, 'expected correct top level menu count');
+    assert.strictEqual(callback.mainMenu.items.length, menuCount, 'expected correct top level menu count');
   });
 
   it('can rebuild the main menu', () => {
@@ -175,7 +175,7 @@ describe('MenuCallback', () => {
 
     callback.updateMenus();
 
-    assert.strictEqual(callback.mainMenu?.items.length, menuCount, 'expected correct top level menu count');
+    assert.strictEqual(callback.mainMenu.items.length, menuCount, 'expected correct top level menu count');
 
     callback.beginMain();
     callback.menuBegin('&File');
@@ -188,7 +188,7 @@ describe('MenuCallback', () => {
 
     callback.updateMenus();
 
-    assert.strictEqual(callback.mainMenu?.items.length, menuCount, 'expected correct top level menu count');
+    assert.strictEqual(callback.mainMenu.items.length, menuCount, 'expected correct top level menu count');
   });
 
   it('can change a command visibility that causes unnecessary separators', () => {
@@ -207,7 +207,7 @@ describe('MenuCallback', () => {
     callback.addCommand('configure_build', 'Configure Build Tools', '', '', false, true);
 
     callback.updateMenus();
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 3, 'expected 3 menu items to start');
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items.length, 3, 'expected 3 menu items to start');
 
     callback.setCommandVisibility('buildAll', false);
     callback.setCommandVisibility('buildSourcePackage', true);
@@ -217,15 +217,15 @@ describe('MenuCallback', () => {
     callback.updateMenus();
 
     assert.strictEqual(
-      callback.mainMenu?.items[menuIdx].submenu?.items.length,
+      callback.mainMenu.items[menuIdx].submenu?.items.length,
       5,
       'expected 5 menu items after changing text',
     );
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[0].id, 'buildSourcePackage');
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[1].id, 'buildBinaryPackage');
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[2].id, 'testPackage');
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[3].type, 'separator');
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[4].id, 'configure_build');
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items[0].id, 'buildSourcePackage');
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items[1].id, 'buildBinaryPackage');
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items[2].id, 'testPackage');
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items[3].type, 'separator');
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items[4].id, 'configure_build');
   });
 
   it('can update a command shortcut', () => {
@@ -237,14 +237,14 @@ describe('MenuCallback', () => {
 
     callback.addCommand('a_shortcut_cmd', 'Shortcut Command', '', 'Cmd+K', false, true);
     callback.updateMenus();
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items.length, 1, 'expected 1 menu item to start');
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[0].accelerator, 'CommandOrControl+K');
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items.length, 1, 'expected 1 menu item to start');
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items[0].accelerator, 'CommandOrControl+K');
 
     callback.setCommandShortcut('a_shortcut_cmd', 'Cmd+Shift+G');
 
     // setCommandShortcut calls this already but on a debounce timer so it's called immediately here for the test
     callback.updateMenus();
 
-    assert.strictEqual(callback.mainMenu?.items[menuIdx].submenu?.items[0].accelerator, 'CommandOrControl+Shift+G');
+    assert.strictEqual(callback.mainMenu.items[menuIdx].submenu?.items[0].accelerator, 'CommandOrControl+Shift+G');
   });
 });
