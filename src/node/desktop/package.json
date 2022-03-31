@@ -38,7 +38,6 @@
     "@types/properties-reader": "^2.1.1",
     "@types/sinon": "10.0.11",
     "@types/uuid": "8.3.1",
-    "@types/yargs": "^17.0.8",
     "@typescript-eslint/eslint-plugin": "5.4.0",
     "@typescript-eslint/parser": "5.4.0",
     "@vercel/webpack-asset-relocator-loader": "1.7.0",
@@ -80,7 +79,6 @@
     "properties-reader": "^2.2.0",
     "uuid": "8.3.2",
     "winston": "3.5.0",
-    "winston-daily-rotate-file": "4.6.0",
-    "yargs": "^17.3.1"
+    "winston-daily-rotate-file": "4.6.0"
   }
 }
