@@ -333,8 +333,10 @@ export class MenuCallback extends EventEmitter {
     };
 
     if (checkable) {
+      menuItemOpts.type = 'checkbox';
       menuItemOpts.checked = false;
     }
+
     if (shortcut.length > 0) {
       menuItemOpts.accelerator = this.convertShortcut(shortcut);
     }
