@@ -330,6 +330,7 @@ export class MenuCallback extends EventEmitter {
       click: (menuItem, _browserWindow, _event) => {
         this.emit(MenuCallback.COMMAND_INVOKED, menuItem.id);
       },
+      type: 'checkbox',
     };
 
     if (checkable) {
