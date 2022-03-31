@@ -330,12 +330,13 @@ export class MenuCallback extends EventEmitter {
       click: (menuItem, _browserWindow, _event) => {
         this.emit(MenuCallback.COMMAND_INVOKED, menuItem.id);
       },
-      type: 'checkbox',
     };
 
     if (checkable) {
+      menuItemOpts.type = 'checkbox';
       menuItemOpts.checked = false;
     }
+
     if (shortcut.length > 0) {
       menuItemOpts.accelerator = this.convertShortcut(shortcut);
     }
