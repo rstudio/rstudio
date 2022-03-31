@@ -2239,7 +2239,11 @@
      .rs.extractRCode(contents,
                       "^[\t >]*```+\\s*\\{[Rr]\\b.*\\}\\s*$",
                       "^[\t >]*```+\\s*$")
-   if (is.null(code) || identical(code, .rs.scalar("")))
+   if (is.null(code))
+      return(character())
+   # If Quarto and no R code chunks, don't parse further
+   # Rmd may have yaml front matter to parse even if no R chunks
+   if (identical(code, .rs.scalar("")) && identical(extension, ".qmd"))
       return(character())
 
    # attempt to parse extracted R code
