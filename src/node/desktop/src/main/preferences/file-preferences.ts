@@ -46,6 +46,14 @@ class FilePreferences extends DesktopOptions {
     const zoomValue = this.properties?.get(preferenceKeys.zoomLevel)?.toString();
     return zoomValue ? parseFloat(zoomValue) : undefined;
   }
+
+  rBinDir(): string | undefined {
+    if (process.platform !== 'win32') {
+      return '';
+    }
+
+    return this.properties?.get(preferenceKeys.rBinDir)?.toString();
+  }
 }
 
 export default FilePreferences;

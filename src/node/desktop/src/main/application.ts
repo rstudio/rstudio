@@ -136,6 +136,7 @@ export class Application implements AppState {
     this.argsManager.handleAppReadyCommands(this);
 
     // on Windows, ask the user what version of R they'd like to use
+    let rPath = '';
     if (process.platform === 'win32') {
       const [path, preflightError] = await promptUserForR();
       if (preflightError) {
@@ -151,10 +152,11 @@ export class Application implements AppState {
       if (path == null) {
         return exitFailure();
       }
+      rPath = path;
     }
 
     // prepare the R environment
-    const prepareError = prepareEnvironment();
+    const prepareError = prepareEnvironment(rPath);
     if (prepareError) {
       await createStandaloneErrorDialog(
         i18next.t('applicationTs.errorFindingR'),

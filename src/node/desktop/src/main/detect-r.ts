@@ -27,8 +27,8 @@ import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
 import { createStandaloneErrorDialog } from './utils';
 import i18next from 'i18next';
 
-import Store from 'electron-store';
-import { kDesktopOptionDefaults } from './preferences/electron-desktop-options';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
+import { FilePath } from '../core/file-path';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -62,9 +62,6 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
   if (platform === 'win32') {
     const desktop = await import('../native/desktop.node');
 
-    const storeConfig = new Store({ defaults: kDesktopOptionDefaults });
-    const rstudioPathKey = 'rstudioPath';
-
     const isCtrlKeyDown = desktop.isCtrlKeyDown();
 
     if (!isCtrlKeyDown) {
@@ -74,12 +71,10 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
         return ok(rstudioWhichR);
       }
 
-      const rstudioSavedPath = storeConfig.get(rstudioPathKey);
+      const rstudioSavedPath = ElectronDesktopOptions().rBinDir();
 
-      if (rstudioSavedPath != undefined) {
-        const path = '' + rstudioSavedPath;
-
-        return ok(path);
+      if (rstudioSavedPath) {
+        return ok(rstudioSavedPath);
       }
     }
 
@@ -101,7 +96,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
       return ok(null);
     }
 
-    storeConfig.set(rstudioPathKey, path);
+    ElectronDesktopOptions().setRBinDir(path);
     // set RSTUDIO_WHICH_R to signal which version of R to be used
     setenv('RSTUDIO_WHICH_R', path);
     return ok(path);
@@ -117,18 +112,18 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
  * // (for example, R_HOME) and other platform-specific work required
  * for R to launch.
  */
-export function prepareEnvironment(): Err {
+export function prepareEnvironment(rPath?: string): Err {
   try {
-    return prepareEnvironmentImpl();
+    return prepareEnvironmentImpl(rPath);
   } catch (error: unknown) {
     logger().logError(error);
     return safeError(error);
   }
 }
 
-function prepareEnvironmentImpl(): Err {
+function prepareEnvironmentImpl(rPath?: string): Err {
   // attempt to detect R environment
-  const [rEnvironment, error] = detectREnvironment();
+  const [rEnvironment, error] = detectREnvironment(rPath);
   if (error) {
     showRNotFoundError(error);
     return error;
@@ -153,12 +148,17 @@ function prepareEnvironmentImpl(): Err {
   return success();
 }
 
-function detectREnvironment(): Expected<REnvironment> {
+function detectREnvironment(rPath?: string): Expected<REnvironment> {
   // scan for R
-  const [R, scanError] = scanForR();
+  const [R, scanError] = rPath ? ok(rPath) : scanForR();
   if (scanError) {
     showRNotFoundError();
     return err(scanError);
+  }
+
+  let rExecutable = new FilePath(R);
+  if (rExecutable.isDirectory()) {
+    rExecutable = rExecutable.completeChildPath(process.platform === 'win32' ? 'R.exe' : 'R');
   }
 
   // generate small script for querying information about R
@@ -172,7 +172,7 @@ function detectREnvironment(): Expected<REnvironment> {
   Sys.getenv("${kLdLibraryPathVariable}")
 ))`;
 
-  const result = spawnSync(R, ['--vanilla', '-s'], {
+  const result = spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
     encoding: 'utf-8',
     input: rQueryScript,
   });

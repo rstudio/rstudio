@@ -2239,8 +2239,12 @@
      .rs.extractRCode(contents,
                       "^[\t >]*```+\\s*\\{[Rr]\\b.*\\}\\s*$",
                       "^[\t >]*```+\\s*$")
-   if (is.null(code) || identical(code, .rs.scalar("")))
-      return(character())
+   if (is.null(code))
+      return(NULL)
+   # If Quarto and no R code chunks, don't parse further
+   # Rmd may have yaml front matter to parse even if no R chunks
+   if (identical(code, .rs.scalar("")) && identical(extension, ".qmd"))
+      return(NULL)
 
    # attempt to parse extracted R code
    parsed <- .rs.tryCatch(parse(text = code, encoding = "UTF-8"))
@@ -2451,7 +2455,7 @@
    # parse to find packages
    packages <- .rs.parsePackageDependencies(contents, extension)
    # return early if no R code is parsed
-   if (length(packages) == 0)
+   if (is.null(packages))
       return(character())
 
    # If file is qmd or rmd, and there is R code, rmarkdown is REQUIRED

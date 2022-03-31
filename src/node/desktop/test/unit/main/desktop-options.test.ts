@@ -12,11 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  */
 
-import { assert } from 'chai';
+import { assert, expect } from 'chai';
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import { Display } from 'electron/main';
 import { describe } from 'mocha';
 import sinon from 'sinon';
+import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { Err, isSuccessful } from '../../../src/core/err';
 import { FilePath } from '../../../src/core/file-path';
 import DesktopOptions from '../../../src/main/preferences/desktop-options';
@@ -25,21 +26,25 @@ import {
   DesktopOptionsImpl,
   ElectronDesktopOptions,
   firstIsInsideSecond,
-  kDesktopOptionDefaults,
 } from '../../../src/main/preferences/electron-desktop-options';
 import { createSinonStubInstanceForSandbox, tempDirectory } from '../unit-utils';
 
 const kTestingConfigDirectory = tempDirectory('DesktopOptionsTesting').toString();
 
+class DesktopOptionsStub extends DesktopOptions {
+  fixedWidthFont(): string | undefined {
+    return properties.font.default.fixedWidthFont;
+  }
+  zoomLevel(): number | undefined {
+    return properties.view.default.zoomLevel;
+  }
+  rBinDir(): string | undefined {
+    return properties.platform.default.windows.rBinDir;
+  }
+}
+
 function testingDesktopOptions(): DesktopOptionsImpl {
-  const legacyOptions = new (class extends DesktopOptions {
-    fixedWidthFont(): string | undefined {
-      return kDesktopOptionDefaults.Font.FixedWidthFont;
-    }
-    zoomLevel(): number | undefined {
-      return kDesktopOptionDefaults.View.ZoomLevel;
-    }
-  })();
+  const legacyOptions = new DesktopOptionsStub();
   return ElectronDesktopOptions(kTestingConfigDirectory, legacyOptions);
 }
 
@@ -64,20 +69,18 @@ describe('DesktopOptions', () => {
     const nonWindowsRBinDir = '';
     const nonWindowsPreferR64 = false;
 
-    assert.equal(options.proportionalFont(), kDesktopOptionDefaults.Font.ProportionalFont);
-    assert.equal(options.fixedWidthFont(), kDesktopOptionDefaults.Font.FixedWidthFont);
-    assert.equal(options.useFontConfigDb(), kDesktopOptionDefaults.Font.UseFontConfigDb);
-    assert.equal(options.zoomLevel(), kDesktopOptionDefaults.View.ZoomLevel);
-    assert.deepEqual(options.windowBounds(), kDesktopOptionDefaults.View.WindowBounds);
-    assert.equal(options.accessibility(), kDesktopOptionDefaults.View.Accessibility);
-    assert.equal(options.lastRemoteSessionUrl(), kDesktopOptionDefaults.Session.LastRemoteSessionUrl);
-    assert.deepEqual(options.authCookies(), kDesktopOptionDefaults.Session.AuthCookies);
-    assert.deepEqual(options.tempAuthCookies(), kDesktopOptionDefaults.Session.TempAuthCookies);
-    assert.deepEqual(options.ignoredUpdateVersions(), kDesktopOptionDefaults.General.IgnoredUpdateVersions);
-    assert.equal(options.clipboardMonitoring(), kDesktopOptionDefaults.General.ClipboardMonitoring);
+    assert.equal(options.proportionalFont(), properties.font.default.proportionalFont);
+    assert.equal(options.fixedWidthFont(), properties.font.default.fixedWidthFont);
+    assert.equal(options.zoomLevel(), properties.view.default.zoomLevel);
+    assert.deepEqual(options.windowBounds(), properties.view.default.windowBounds);
+    assert.equal(options.accessibility(), properties.view.default.accessibility);
+    assert.equal(options.lastRemoteSessionUrl(), properties.session.default.lastRemoteSessionUrl);
+    assert.deepEqual(options.authCookies(), properties.session.default.authCookies);
+    assert.deepEqual(options.tempAuthCookies(), properties.session.default.tempAuthCookies);
+    assert.deepEqual(options.ignoredUpdateVersions(), properties.general.default.ignoredUpdateVersions);
     if (process.platform === 'win32') {
-      assert.equal(options.rBinDir(), kDesktopOptionDefaults.Platform.Windows.RBinDir);
-      assert.equal(options.peferR64(), kDesktopOptionDefaults.Platform.Windows.PreferR64);
+      assert.equal(options.rBinDir(), properties.platform.default.windows.rBinDir);
+      assert.equal(options.peferR64(), properties.platform.default.windows.preferR64);
     } else {
       assert.equal(options.rBinDir(), nonWindowsRBinDir);
       assert.equal(options.peferR64(), nonWindowsPreferR64);
@@ -88,24 +91,21 @@ describe('DesktopOptions', () => {
 
     const newProportionalFont = 'testProportionalFont';
     const newFixWidthFont = 'testFixWidthFont';
-    const newUseFontConfigDb = !kDesktopOptionDefaults.Font.UseFontConfigDb;
-    const newZoom = 123;
+    const newZoom = 1.5;
     const newWindowBounds = { width: 123, height: 321, x: 0, y: 0 };
-    const newAccessibility = !kDesktopOptionDefaults.View.Accessibility;
+    const newAccessibility = !(properties.view.default.accessibility as boolean);
     const newLastRemoteSessionUrl = 'testLastRemoteSessionUrl';
     const newAuthCookies = ['test', 'Autht', 'Cookies'];
     const newTempAuthCookies = ['test', 'Temp', 'Auth', 'Cookies'];
     const newIgnoredUpdateVersions = ['test', 'Ignored', 'Update', 'Versions'];
-    const newClipboardMonitoring = !kDesktopOptionDefaults.General.ClipboardMonitoring;
     const newRBinDir = 'testRBinDir';
-    const newPeferR64 = !kDesktopOptionDefaults.Platform.Windows.PreferR64;
+    const newPeferR64 = !(properties.platform.default.windows.preferR64 as boolean);
 
     const nonWindowsRBinDir = '';
     const nonWindowsPreferR64 = false;
 
     options.setProportionalFont(newProportionalFont);
     options.setFixedWidthFont(newFixWidthFont);
-    options.setUseFontConfigDb(newUseFontConfigDb);
     options.setZoomLevel(newZoom);
     options.saveWindowBounds(newWindowBounds);
     options.setAccessibility(newAccessibility);
@@ -113,13 +113,11 @@ describe('DesktopOptions', () => {
     options.setAuthCookies(newAuthCookies);
     options.setTempAuthCookies(newTempAuthCookies);
     options.setIgnoredUpdateVersions(newIgnoredUpdateVersions);
-    options.setClipboardMonitoring(newClipboardMonitoring);
     options.setRBinDir(newRBinDir);
     options.setPeferR64(newPeferR64);
 
     assert.equal(options.proportionalFont(), newProportionalFont);
     assert.equal(options.fixedWidthFont(), newFixWidthFont);
-    assert.equal(options.useFontConfigDb(), newUseFontConfigDb);
     assert.equal(options.zoomLevel(), newZoom);
     assert.deepEqual(options.windowBounds(), newWindowBounds);
     assert.equal(options.accessibility(), newAccessibility);
@@ -127,7 +125,6 @@ describe('DesktopOptions', () => {
     assert.deepEqual(options.authCookies(), newAuthCookies);
     assert.deepEqual(options.tempAuthCookies(), newTempAuthCookies);
     assert.deepEqual(options.ignoredUpdateVersions(), newIgnoredUpdateVersions);
-    assert.equal(options.clipboardMonitoring(), newClipboardMonitoring);
     if (process.platform === 'win32') {
       assert.equal(options.rBinDir(), newRBinDir);
       assert.equal(options.peferR64(), newPeferR64);
@@ -138,9 +135,9 @@ describe('DesktopOptions', () => {
   });
   it('values persist between instances', () => {
     const options1 = testingDesktopOptions();
-    const newZoom = 1234;
+    const newZoom = 2.5;
 
-    assert.equal(options1.zoomLevel(), kDesktopOptionDefaults.View.ZoomLevel);
+    assert.equal(options1.zoomLevel(), properties.view.default.zoomLevel);
     options1.setZoomLevel(newZoom);
     assert.equal(options1.zoomLevel(), newZoom);
 
@@ -175,8 +172,8 @@ describe('DesktopOptions', () => {
   it('restores window bounds to default when saved display no longer present', () => {
     const defaultDisplay = { bounds: { width: 2000, height: 2000, x: 0, y: 0 } };
     const savedWinBounds = { width: 500, height: 500, x: 0, y: 0 };
-    const defaultWinWidth = kDesktopOptionDefaults.View.WindowBounds.width;
-    const defaultWinHeight = kDesktopOptionDefaults.View.WindowBounds.height;
+    const defaultWinWidth = properties.view.default.windowBounds.width;
+    const defaultWinHeight = properties.view.default.windowBounds.height;
 
     const sandbox = sinon.createSandbox();
     sandbox.stub(screen, 'getAllDisplays').returns([]);
@@ -302,12 +299,9 @@ describe('Font tests', () => {
   });
 
   it('can get the legacy font', () => {
-    const mockLegacyOptions = new (class extends DesktopOptions {
+    const mockLegacyOptions = new (class extends DesktopOptionsStub {
       fixedWidthFont(): string | undefined {
         return 'legacy font';
-      }
-      zoomLevel(): number | undefined {
-        return 1.0;
       }
     })();
     const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
@@ -316,17 +310,78 @@ describe('Font tests', () => {
   });
 
   it('set font overrides legacy font option', () => {
-    const mockLegacyOptions = new (class extends DesktopOptions {
+    const mockLegacyOptions = new (class extends DesktopOptionsStub {
       fixedWidthFont(): string | undefined {
         return 'legacy font';
-      }
-      zoomLevel(): number | undefined {
-        return 1.0;
       }
     })();
     const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
 
     testDesktopOptions.setFixedWidthFont('new font');
     assert.strictEqual(testDesktopOptions.fixedWidthFont(), 'new font');
+  });
+
+  it('can get the zoom level', () => {
+    const mockLegacyOptions = new (class extends DesktopOptionsStub {
+      zoomLevel(): number | undefined {
+        return 1.5;
+      }
+    })();
+    const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
+
+    assert.strictEqual(testDesktopOptions.zoomLevel(), 1.5);
+  });
+
+  it('set zoom level overrides legacy zoom level', () => {
+    const mockLegacyOptions = new (class extends DesktopOptionsStub {
+      zoomLevel(): number | undefined {
+        return 1.5;
+      }
+    })();
+    const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
+
+    testDesktopOptions.setZoomLevel(0.5);
+    assert.strictEqual(testDesktopOptions.zoomLevel(), 0.5);
+  });
+
+  it('has an error when setting an invalid zoom level', () => {
+    const mockLegacyOptions = new (class extends DesktopOptionsStub {
+      zoomLevel(): number | undefined {
+        return 1.5;
+      }
+    })();
+    const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
+    const min = properties.view.properties.zoomLevel.minimum;
+    const max = properties.view.properties.zoomLevel.maximum;
+
+    expect(testDesktopOptions.setZoomLevel.bind(testDesktopOptions, min - 0.1)).to.throw();
+    expect(testDesktopOptions.setZoomLevel.bind(testDesktopOptions, max + 0.1)).to.throw();
+    expect(testDesktopOptions.setZoomLevel.bind(testDesktopOptions, min)).to.not.throw();
+    expect(testDesktopOptions.setZoomLevel.bind(testDesktopOptions, max)).to.not.throw();
+  });
+
+  it('can get the rBinDir (Windows)', () => {
+    const testRBinDir = 'C:/R/bin/x64';
+    const mockLegacyOptions = new (class extends DesktopOptionsStub {
+      rBinDir(): string | undefined {
+        return testRBinDir;
+      }
+    })();
+    const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
+
+    assert.strictEqual(testDesktopOptions.rBinDir(), process.platform === 'win32' ? testRBinDir : '');
+  });
+
+  it('set rBinDir overrides the legacy rBinDir (Windows)', () => {
+    const testRBinDir = 'C:/R/bin/x64';
+    const mockLegacyOptions = new (class extends DesktopOptionsStub {
+      rBinDir(): string | undefined {
+        return 'C:/foo/R/bin/x64';
+      }
+    })();
+    const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
+
+    testDesktopOptions.setRBinDir(testRBinDir);
+    assert.strictEqual(testDesktopOptions.rBinDir(), process.platform === 'win32' ? testRBinDir : '');
   });
 });

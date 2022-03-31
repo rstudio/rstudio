@@ -123,3 +123,19 @@ test_that("HTML comments are not treated like YAML delimiters", {
    expect_equal(sort(packages), sort(c("callr", "crayon")))
 })
 
+
+test_that("Quarto files with no R chunks have no dependencies", {
+   contents <- paste(
+      "",
+      "---",
+      "title: Test Doc 5",
+      "format: html",
+      "editor: visual",
+      "---",
+      "```{python}",
+      "import shiny",
+      "```",
+      "", sep = "\n")
+   packages <- .rs.parsePackageDependencies(contents, ".qmd")
+   expect_null(packages)
+})
