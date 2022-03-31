@@ -1,25 +1,4 @@
 const config = {
-  makers: [
-    {
-      name: '@electron-forge/maker-squirrel',
-      config: {
-        name: 'rstudio',
-      },
-    },
-    {
-      name: '@electron-forge/maker-zip',
-      platforms: ['linux', 'win32'],
-    },
-    {
-      name: '@electron-forge/maker-deb',
-      config: {},
-    },
-    {
-      name: '@electron-forge/maker-rpm',
-      config: {},
-    },
-  ],
-
   plugins: [
     [
       '@electron-forge/plugin-webpack',

@@ -28,10 +28,6 @@
   },
   "devDependencies": {
     "@electron-forge/cli": "6.0.0-beta.63",
-    "@electron-forge/maker-deb": "6.0.0-beta.63",
-    "@electron-forge/maker-rpm": "6.0.0-beta.63",
-    "@electron-forge/maker-squirrel": "6.0.0-beta.63",
-    "@electron-forge/maker-zip": "6.0.0-beta.63",
     "@electron-forge/plugin-webpack": "6.0.0-beta.63",
     "@types/chai": "4.3.0",
     "@types/crc": "3.4.0",
