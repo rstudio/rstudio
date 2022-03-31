@@ -137,5 +137,5 @@ test_that("Quarto files with no R chunks have no dependencies", {
       "```",
       "", sep = "\n")
    packages <- .rs.parsePackageDependencies(contents, ".qmd")
-   expect_equal(packages, character())
+   expect_null(packages)
 })
