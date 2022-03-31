@@ -70,6 +70,9 @@ std::map<std::string, boost::posix_time::ptime> s_loginTimes;
 // allows for quickly removing the first element
 std::deque<RevokedCookie> s_revokedCookies;
 
+boost::posix_time::ptime s_lastCookieCheckTime = boost::posix_time::second_clock::universal_time();
+boost::posix_time::time_duration s_cookieCheckDuration = boost::posix_time::seconds(5);
+
 // mutex for providing concurrent access to internal structures
 // necessary because auth happens on the thread pool
 boost::mutex s_mutex;
@@ -215,6 +218,8 @@ Error readRevocationListFromFile(const FilePath& revocationList,
    return Success();
 }
 
+} // anonymous namespace
+
 bool isCookieRevoked(const std::string& cookie)
 {
    bool attemptedConnection = false;
@@ -223,6 +228,13 @@ bool isCookieRevoked(const std::string& cookie)
 
    LOCK_MUTEX(s_mutex)
    {
+      bool removeStaleCookies = now > s_lastCookieCheckTime + s_cookieCheckDuration;
+
+      if (removeStaleCookies)
+      {
+         s_lastCookieCheckTime = now;
+      }
+
       // check for cookie in revocation list, deleting expired elements as we go
       for (auto it = s_revokedCookies.begin(); it != s_revokedCookies.end();)
       {
@@ -230,7 +242,7 @@ bool isCookieRevoked(const std::string& cookie)
          if (other.cookie == cookie)
             return true;
 
-         if (other.expiration <= now)
+         if (removeStaleCookies && other.expiration <= now)
          {
             if (!attemptedConnection)
             {
@@ -266,8 +278,6 @@ bool isCookieRevoked(const std::string& cookie)
 
    return false;
 }
-
-} // anonymous namespace
 
 namespace overlay {
 

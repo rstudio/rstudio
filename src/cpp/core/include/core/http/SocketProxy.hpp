@@ -34,18 +34,21 @@ class SocketProxy : public boost::enable_shared_from_this<SocketProxy>
 {
 public:
    static void create(boost::shared_ptr<core::http::Socket> ptrClient,
-                      boost::shared_ptr<core::http::Socket> ptrServer)
+                      boost::shared_ptr<core::http::Socket> ptrServer,
+                      boost::function<bool()> checkFunction = 0)
    {
       boost::shared_ptr<SocketProxy> pProxy(new SocketProxy(ptrClient,
-                                                            ptrServer));
+                                                            ptrServer,
+                                                            checkFunction));
       pProxy->readClient();
       pProxy->readServer();
    }
 
 private:
    SocketProxy(boost::shared_ptr<core::http::Socket> ptrClient,
-               boost::shared_ptr<core::http::Socket> ptrServer)
-      : ptrClient_(ptrClient), ptrServer_(ptrServer)
+               boost::shared_ptr<core::http::Socket> ptrServer,
+               boost::function<bool()> checkFunction)
+      : ptrClient_(ptrClient), ptrServer_(ptrServer), checkFunction_(checkFunction)
    {
    }
 
@@ -71,6 +74,7 @@ private:
    boost::array<char, 8192> clientBuffer_;
    boost::array<char, 8192> serverBuffer_;
    boost::mutex socketMutex_;
+   boost::function<bool()> checkFunction_;
 };
 
 } // namespace http

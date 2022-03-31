@@ -75,6 +75,12 @@ void SocketProxy::handleClientRead(const boost::system::error_code& e,
    {
       if (!e)
       {
+         if (checkFunction_ && !checkFunction_())
+         {
+            close();
+            return;
+         }
+
          std::vector<boost::asio::const_buffer> buffers;
          buffers.push_back(boost::asio::buffer(clientBuffer_.data(),
                                                bytesTransferred));
