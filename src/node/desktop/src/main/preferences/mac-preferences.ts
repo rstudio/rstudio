@@ -35,6 +35,10 @@ class MacPreferences extends DesktopOptions {
   zoomLevel(): number | undefined {
     return systemPreferences.getUserDefault(preferenceKeys.zoomLevel, 'double');
   }
+
+  rBinDir(): string | undefined {
+    return '';
+  }
 }
 
 export default MacPreferences;
