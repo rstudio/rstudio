@@ -125,6 +125,8 @@ void invalidateAuthCookie(const std::string& cookie,
 
 core::Error initialize();
 
+bool isCookieRevoked(const std::string& cookie);
+
 namespace overlay {
 
 core::Error initialize();
