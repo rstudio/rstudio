@@ -84,9 +84,13 @@ export class GwtCallback extends EventEmitter {
   // https://github.com/foliojs/font-manager/issues/15
   // the fork did not correct usage of Fontconfig
   // getAvailableFontsSync() incorrectly sets the monospace property
-  monospaceFonts = [...new Set<string>(findFontsSync({ monospace: true }).map((fd) => fd.family))].sort((a, b) =>
-    a.localeCompare(b),
-  );
+  monospaceFonts = [
+    ...new Set<string>(
+      findFontsSync({ monospace: true }).map((fd) => {
+        return process.platform === 'darwin' ? fd.postscriptName : fd.family;
+      }),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
   proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort((a, b) =>
     a.localeCompare(b),
   );
