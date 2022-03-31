@@ -108,6 +108,14 @@ Error runVerifyInstallationSession(core::system::User& user,
                                    bool* pHandled);
 
 } // namespace overlay
+
+bool sessionCookieValid(const std::string& cookieValue)
+{
+   bool res = !auth::handler::isCookieRevoked(cookieValue);
+   if (!res)
+      LOG_DEBUG_MESSAGE("Closing socket connection - cookie has been revoked due to user signout");
+   return res;
+}
    
 namespace {
 
@@ -332,6 +340,8 @@ void handleLocalhostResponse(
    // check for upgrade to websockets
    if (response.statusCode() == http::status::SwitchingProtocols)
    {
+      LOG_DEBUG_MESSAGE("Upgrading localhost connection for socket proxy");
+
       // write the response but don't close the connection
       ptrConnection->writeResponse(response, false);
 
@@ -342,7 +352,7 @@ void handleLocalhostResponse(
          boost::static_pointer_cast<http::Socket>(ptrLocalhost);
 
       // connect the sockets
-      http::SocketProxy::create(ptrClient, ptrServer);
+      http::SocketProxy::create(ptrClient, ptrServer, boost::bind(sessionCookieValid, ptrConnection->request().cookieValue(kUserIdCookie)));
    }
    // normal response, write and close (handle redirects if necessary)
    else

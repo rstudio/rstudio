@@ -111,6 +111,8 @@ void setSessionContextSource(SessionContextSource source);
 
 core::http::Headers getAuthCookies(const core::http::Response& response);
 
+bool sessionCookieValid(const std::string& cookieValue);
+
 } // namespace session_proxy
 } // namespace server
 } // namespace rstudio
