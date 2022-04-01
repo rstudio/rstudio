@@ -89,7 +89,10 @@ inline Error initTcpIpAcceptor(
    acceptor.open(endpoint.protocol(), ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);
-   
+
+   // TODO: is this the desired behavior on Windows and desktop?
+   // this could allow multiple clients to try connecting to the
+   // same session
    acceptor.set_option(tcp::acceptor::reuse_address(true), ec);
    if (ec)
       return Error(ec, ERROR_LOCATION);

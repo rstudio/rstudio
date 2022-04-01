@@ -117,9 +117,7 @@ Error removeStaleOptionsLockfile()
 
 void initializeSharedSecret()
 {
-   sharedSecret = QString::number(rand())
-                  + QString::number(rand())
-                  + QString::number(rand());
+   sharedSecret = QString::fromStdString(core::system::generateUuid());
    std::string value = sharedSecret.toUtf8().constData();
    core::system::setenv("RS_SHARED_SECRET", value);
 }

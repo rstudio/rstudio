@@ -40,6 +40,21 @@ HttpConnectionListener* s_pHttpConnectionListener = nullptr;
 void initializeHttpConnectionListener()
 {
    session::Options& options = session::options();
+
+   if (log::isLogLevel(log::LogLevel::DEBUG))
+   {
+      const char* fmt =
+            "Initializing HTTP connection listener [address=%s; port=%s; secret=%s]";
+
+      std::string msg = core::string_utils::sprintf(
+               fmt,
+               options.wwwAddress().c_str(),
+               options.wwwPort().c_str(),
+               options.sharedSecret().c_str());
+
+      LOG_DEBUG_MESSAGE(msg);
+   }
+
    s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
                                       options.wwwAddress(),
                                       options.wwwPort(),
