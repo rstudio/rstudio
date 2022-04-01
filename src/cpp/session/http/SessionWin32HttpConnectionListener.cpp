@@ -24,6 +24,10 @@
 
 #include "SessionTcpIpHttpConnectionListener.hpp"
 
+#ifdef DEBUG
+# undef DEBUG
+#endif
+
 using namespace rstudio::core;
 
 namespace rstudio {
