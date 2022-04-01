@@ -40,8 +40,6 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       @Handler
       public abstract void onDevtoolsLoadAll();
       @Handler
-      public abstract void onRebuildAll();
-      @Handler
       public abstract void onCleanAll();
       @Handler
       public abstract void onBuildSourcePackage();
