@@ -23,6 +23,7 @@
 #endif
 
 #include <limits>
+#include <ctime>
 
 #include <boost/random.hpp>
 
@@ -33,12 +34,12 @@ namespace core {
 namespace random {
 
 template <typename T>
-T uniformRandomInteger()
+T uniformRandomInteger(
+      T minValue = std::numeric_limits<T>::min(),
+      T maxValue = std::numeric_limits<T>::max())
 {
    boost::random::mt19937 rng(getpid() + std::time(NULL));
-   boost::random::uniform_int_distribution<> generator(
-            std::numeric_limits<T>::min(),
-            std::numeric_limits<T>::max());
+   boost::random::uniform_int_distribution<> generator(minValue, maxValue);
    return generator(rng);
 }
 } // namespace random
