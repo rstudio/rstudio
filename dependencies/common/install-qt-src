@@ -31,16 +31,19 @@ section "Installing Qt"
 
 PREFIX="${ROOT}/${VERSION}"
 
-# TODO: other platforms
-info
-info "Installing Qt build dependencies"
-info "If this fails, ensure you've enabled Source Code repositories."
-info "This implies adding 'deb-src' repositories to /etc/apt/sources.list on Debian."
-info "On Ubuntu, you can use the 'Software & Updates' application to enable these as well."
-info
+if [ "$(uname)" = "Linux" ]; then
 
-sudo apt-get build-dep qt5-default
-sudo apt-get install libxcb-xinerama0-dev
+	info
+	info "Installing Qt build dependencies"
+	info "If this fails, ensure you've enabled Source Code repositories."
+	info "This implies adding 'deb-src' repositories to /etc/apt/sources.list on Debian."
+	info "On Ubuntu, you can use the 'Software & Updates' application to enable these as well."
+	info
+
+	sudo apt-get build-dep qt5-default
+	sudo apt-get install libxcb-xinerama0-dev
+
+fi
 
 VERSION="$1"
 VERSION_MAJMIN=$(echo "${VERSION}" | cut -d"." -f"1,2")
@@ -57,7 +60,7 @@ PARTS=(
 	"${VERSION_MAJMIN}"
 	"${VERSION}"
 	"single"
-	"qt-everywhere-${VERSION}.tar.xz"
+	"qt-everywhere-src-${VERSION}.tar.xz"
 )
 URL=$(IFS=/; printf "%s" "${PARTS[*]}")
 
