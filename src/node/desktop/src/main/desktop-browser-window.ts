@@ -106,7 +106,6 @@ export class DesktopBrowserWindow extends EventEmitter {
         webPreferences: {
           additionalArguments: apiKeys,
           contextIsolation: true,
-          nativeWindowOpen: true,
           nodeIntegration: false,
           preload: preload,
           sandbox: true,
