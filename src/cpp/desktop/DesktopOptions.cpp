@@ -151,6 +151,16 @@ void Options::saveMainWindowBounds(QMainWindow* win)
 
 QString Options::portNumber() const
 {
+#ifndef RSTUDIO_PACKAGE_BUILD
+   // allow for hard-coded port, for debugging
+   std::string port = core::system::getenv("RSTUDIO_RSESSION_PORT");
+   if (!port.empty())
+   {
+      portNumber_ = QString::fromStdString(port);
+      return portNumber_;
+   }
+#endif
+
    // if we already have a port number, use it
    if (!portNumber_.isEmpty())
    {
