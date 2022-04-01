@@ -190,9 +190,14 @@ QString Options::portNumber() const
       localPeer_ = localPeer.toUtf8().constData();
       core::system::setenv("RS_LOCAL_PEER", localPeer_);
 #endif
+    
+      // return discovered port
+      return portNumber_;
    }
 
-   return portNumber_;
+   // if we get here, we failed to find an open port
+   LOG_WARNING_MESSAGE("failed to find open port; defaulting to port 8789");
+   return QStringLiteral("8789");
 }
 
 QString Options::newPortNumber()
