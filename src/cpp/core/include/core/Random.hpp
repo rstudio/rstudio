@@ -38,9 +38,9 @@ T uniformRandomInteger(
       T minValue = std::numeric_limits<T>::min(),
       T maxValue = std::numeric_limits<T>::max())
 {
-   boost::random::mt19937 rng(getpid() + std::time(NULL));
-   boost::random::uniform_int_distribution<> generator(minValue, maxValue);
-   return generator(rng);
+   boost::random::mt19937 gen(getpid() + std::time(NULL));
+   boost::random::uniform_int_distribution<> dist(minValue, maxValue);
+   return dist(gen);
 }
 } // namespace random
 } // namespace core
