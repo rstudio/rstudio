@@ -151,19 +151,42 @@ void Options::saveMainWindowBounds(QMainWindow* win)
 
 QString Options::portNumber() const
 {
-   // lookup / generate on demand
-   if (portNumber_.length() == 0)
+   // if we already have a port number, use it
+   if (!portNumber_.isEmpty())
    {
-      // Use a random-ish port number to avoid collisions between different
-      // instances of rdesktop-launched rsessions
-      int base = std::abs(core::random::uniformRandomInteger<int>());
-      portNumber_ = QString::number((base % 40000) + 8080);
+      LOG_DEBUG_MESSAGE("Using port: " + portNumber_.toStdString());
+      return portNumber_;
+   }
+   
+   // otherwise, try to find an open port
+   for (int i = 0; i < 100; i++)
+   {
+      // generate a port number
+      int port = core::random::uniformRandomInteger<int>(8080, 40000);
+      LOG_DEBUG_MESSAGE("Trying port " + std::to_string(port));
+
+      // try to bind to it -- if this fails, try a new port number
+      QTcpSocket socket;
+      if (!socket.bind(port))
+      {
+         LOG_DEBUG_MESSAGE("Couldn't bind to port " + std::to_string(port) + "; trying again");
+         continue;
+      }
+
+      // we found a good port; close our socket and save it
+      //
+      // TODO: it'd be nice to keep the port locked until we are
+      // officially ready to launch the rsession, or let rsession
+      // communicate to us which port it wants to use via some
+      // separate channel
+      LOG_DEBUG_MESSAGE("Successfully bound to port " + std::to_string(port) + "; saving");
+      socket.close();
+      portNumber_ = QString::number(port);
 
       // recalculate the local peer and set RS_LOCAL_PEER so that
       // rsession and it's children can use it
 #ifdef _WIN32
-      QString localPeer = QString::fromUtf8("\\\\.\\pipe\\") +
-                          portNumber_ + QString::fromUtf8("-rsession");
+      QString localPeer =  QStringLiteral("\\\\.\\pipe\\%1-rsession").arg(portNumber_);
       localPeer_ = localPeer.toUtf8().constData();
       core::system::setenv("RS_LOCAL_PEER", localPeer_);
 #endif
