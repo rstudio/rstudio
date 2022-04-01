@@ -16,10 +16,17 @@
 #ifndef CORE_RANDOM_HPP
 #define CORE_RANDOM_HPP
 
+#ifndef _WIN32
+# include <unistd.h>
+#else
+# include <process.h>
+#endif
+
 #include <limits>
-#include <ctime>
 
 #include <boost/random.hpp>
+
+#include <core/system/System.hpp>
 
 namespace rstudio {
 namespace core {
@@ -28,21 +35,12 @@ namespace random {
 template <typename T>
 T uniformRandomInteger()
 {
-  // setup generator and distribution
-  typedef boost::mt19937 GeneratorType;
-  typedef boost::uniform_int<T> DistributionType;
-  GeneratorType generator(std::time(nullptr));
-  DistributionType distribution(std::numeric_limits<T>::min(),
-                                std::numeric_limits<T>::max());
-
-  // create variate generator
-  boost::variate_generator<GeneratorType, DistributionType> vg(generator,
-                                                               distribution);
-
-  // return random number
-  return vg();
+   boost::random::mt19937 rng(getpid() + std::time(NULL));
+   boost::random::uniform_int_distribution<> generator(
+            std::numeric_limits<T>::min(),
+            std::numeric_limits<T>::max());
+   return generator(rng);
 }
-
 } // namespace random
 } // namespace core
 } // namespace rstudio
