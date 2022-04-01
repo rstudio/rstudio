@@ -50,11 +50,18 @@ void initializeHttpConnectionListener()
       const char* fmt =
             "Initializing HTTP connection listener [address=%s; port=%s; secret=%s]";
 
+      std::string sharedSecret;
+#ifdef RSTUDIO_PACKAGE_BUILD
+      sharedSecret = "<redacted>";
+#else
+      sharedSecret = options.sharedSecret();
+#endif
+
       std::string msg = core::string_utils::sprintf(
                fmt,
                options.wwwAddress().c_str(),
                options.wwwPort().c_str(),
-               options.sharedSecret().c_str());
+               sharedSecret.c_str());
 
       LOG_DEBUG_MESSAGE(msg);
    }
