@@ -57,7 +57,7 @@ const kCiteCitationsIndex = 0;
 // This is only because when writing in text citations, it will be common to follow a citation with 
 // punctuation, and we should be smart enough to filter that punctuation out of the citation itself.
 const kCiteIdPrefixPattern = '-?@';
-const kCiteIdCharsPattern = '[^@;\\[\\]\\s\\!\\,\\.\\?\\:]*';
+const kCiteIdCharsPattern = '[^@;\\[\\]\\s\\!\\,]*';
 const kCiteIdBasePattern = `${kCiteIdPrefixPattern}${kCiteIdCharsPattern}`;
 
 // Completions examine all the text inside the citation mark, so they need to only be interested
