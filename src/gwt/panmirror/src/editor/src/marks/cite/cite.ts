@@ -33,6 +33,7 @@ import { InsertCiteProps, kAlertTypeError, kAlertTypeWarning } from '../../api/u
 import { CSL, sanitizeForCiteproc } from '../../api/csl';
 import { suggestCiteId, formatForPreview } from '../../api/cite';
 import { performCompletionReplacement } from '../../api/completion';
+import { FixupContext } from '../../api/fixup';
 import { ensureBibliographyFileForDoc } from '../../api/bibliography/bibliography-provider_local';
 
 import { citationCompletionHandler } from './cite-completion';
@@ -41,7 +42,7 @@ import { citationDoiCompletionHandler } from './cite-completion_doi';
 import { doiFromSlice } from './cite-doi';
 import { citePopupPlugin } from './cite-popup';
 import { InsertCitationCommand } from './cite-commands';
-import { setTextSelection } from 'prosemirror-utils';
+import { setTextSelection, findChildren } from 'prosemirror-utils';
 import { AddMarkStep } from 'prosemirror-transform';
 import { citeXrefPopupPlugin } from './cite-popup-xref';
 
@@ -279,11 +280,29 @@ const extension = (context: ExtensionContext): Extension | null => {
       }];
     },
 
-    appendMarkTransaction: (schema: Schema) => {
+    fixups: (schema: Schema) => {
+      return [
+        (tr: Transaction, fixupContext: FixupContext) => {
+          if (fixupContext === FixupContext.Load) {
+            // apply marks
+            const markType = schema.marks.cite;
+            const predicate = (node: ProsemirrorNode) => {
+              return node.isTextblock && 
+                     node.type.allowsMarkType(markType)  &&
+                     node.textContent.indexOf('@') !== -1;
+            };
+            const markTr = new MarkTransaction(tr);
+            findChildren(tr.doc, predicate).forEach(nodeWithPos => {
+              const { pos } = nodeWithPos;
+              applyCiteMarks(markTr, nodeWithPos.node, pos);
+            });
+          }
+          return tr;
+        },
+      ];
+    },
 
-      const kFindInTextCiteRegex = new RegExp(kCiteIdBasePattern, 'g');
-      const kFindInTextCiteWithSuffixRegex = new RegExp(kInTextCiteWithSuffixPattern, 'g');
-      const kFindFullCiteRegex = new RegExp(kNoteCiteRegex.source, 'g');
+    appendMarkTransaction: (schema: Schema) => {
 
       return [
         {
@@ -313,22 +332,8 @@ const extension = (context: ExtensionContext): Extension | null => {
             });
             // match all valid forms of mark
             if (node.textContent.indexOf('@') !== -1) {
-              [kFindInTextCiteRegex, kFindFullCiteRegex, kFindInTextCiteWithSuffixRegex].forEach(re => {
-                detectAndApplyMarks(
-                  tr,
-                  tr.doc.nodeAt(pos)!,
-                  pos,
-                  re,
-                  schema.marks.cite,
-                  () => ({}),
-                  (from: number, to: number) => {
-                    return tr.doc.rangeHasMark(from, to, schema.marks.cite_id);
-                  }
-                );
-              });
+              applyCiteMarks(tr, node, pos);
             }
-
-
           },
         },
         {
@@ -577,6 +582,29 @@ function citeIdLength(text: string) {
   }
 }
 
+
+const kFindInTextCiteRegex = new RegExp(kCiteIdBasePattern, 'g');
+const kFindInTextCiteWithSuffixRegex = new RegExp(kInTextCiteWithSuffixPattern, 'g');
+const kFindFullCiteRegex = new RegExp(kNoteCiteRegex.source, 'g');
+
+function applyCiteMarks(tr: MarkTransaction, node: ProsemirrorNode, pos: number) {
+  const schema = node.type.schema;
+  [kFindInTextCiteRegex, kFindFullCiteRegex, kFindInTextCiteWithSuffixRegex].forEach(re => {
+    detectAndApplyMarks(
+      tr,
+      tr.doc.nodeAt(pos)!,
+      pos,
+      re,
+      schema.marks.cite,
+      () => ({}),
+      (from: number, to: number) => {
+        return tr.doc.rangeHasMark(from, to, schema.marks.cite_id);
+      }
+    );
+  });
+}
+
+
 export interface ParsedCitation {
   token: string;
   pos: number;
@@ -805,7 +833,6 @@ export async function ensureSourcesInBibliography(
   }
   return proceedWithInsert;
 }
-
 export function performCiteCompletionReplacement(tr: Transaction, pos: number, replacement: ProsemirrorNode | string) {
   // perform replacement
   performCompletionReplacement(tr, pos, replacement);
