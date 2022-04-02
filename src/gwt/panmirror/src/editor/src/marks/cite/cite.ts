@@ -162,8 +162,7 @@ const extension = (context: ExtensionContext): Extension | null => {
                 // check for fully enclosed in brackets
                 if (
                   fragmentText(openCite) === '[' &&
-                  fragmentText(closeCite) === ']' &&
-                  fragmentText(cite).match(kInTextCiteRegex)
+                  fragmentText(closeCite) === ']'
                 ) {
                   output.writeRawMarkdown('[');
                   output.writeInlines(cite);
