@@ -103,7 +103,7 @@
    # if we found user code (or weren't looking for it), tell the client
    if (foundUserCode || !userOnly)
    {
-      trace <- character()
+      trace <- list()
       message <- geterrmessage()
       is_abort <- FALSE
       if (.rs.isPackageInstalled("rlang")) {
@@ -124,7 +124,11 @@
             # retrieve the traceback with rlang
             trace <- rlang::trace_back(bottom = frames[[length(frames) - 2L]])
          }
-         trace <- rlang:::format.rlang_trace(trace)
+         
+         trace <- c(
+            paste(rlang:::format.rlang_trace(trace, simplify = "none"), collapse = "\n"), 
+            paste(rlang:::format.rlang_trace(trace, simplify = "branch"), collapse = "\n")
+         )
       }
       err <- list(
          frames = ammended_stack,

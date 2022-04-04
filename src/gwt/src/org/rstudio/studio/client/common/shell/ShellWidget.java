@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.Document;
@@ -337,6 +338,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          boolean expand, String command)
    {
       List<Element> errorNodes = errorNodes_.get(error);
+
       if (errorNodes == null || errorNodes.isEmpty())
          return;
       
@@ -387,6 +389,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
          // remove the APC signal
          output = output.substring(apcMatch.getValue().length());
+
+         GWT.log(output);
       }
       
       output(output, styles_.output(), isError, false /*ignoreLineCount*/,

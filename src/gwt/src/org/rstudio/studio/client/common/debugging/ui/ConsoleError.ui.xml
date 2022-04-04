@@ -7,7 +7,7 @@
    
    .consoleErrorBox {
       position: relative;
-      overflow: hidden;
+      overflow: visible;
       margin: 5px 5px 5px 0px;
       padding: 5px 0px 5px 15px;
       white-space: pre-line;
@@ -15,7 +15,7 @@
    }
 
    .consoleErrorCommands {
-      top: 5px;
+      top: -2em;
       float: right;
       margin-right: 10px;
       margin-left: 5px;
@@ -26,11 +26,11 @@
       -ms-user-select: none;
       -moz-user-select: none;
       -webkit-user-select: none;
+      font-size: 80%;
    }
    
    .errorCommandText {
       font-family: proportionalFont;
-      font-size: 80%;
       opacity: 0.50;
       cursor: pointer;
    }
@@ -57,11 +57,26 @@
    }
    
    .framePanel {
-      margin-top: 1.5em;
-      margin-left: 0.3em;
+      margin-top: 1em;
+      margin-left: 2em;
       white-space: pre;
-      font-size: 70%;
+      font-size: smaller;
    }
+
+   .tracebackLink {
+      font-family: proportionalFont;
+      opacity: 0.50;
+      cursor: pointer;
+   }
+
+   .tracebackLink:hover {
+      opacity: 1;
+   }
+
+   .tracebackLinkVisible {
+      opacity: 1;
+   }
+
    </ui:style>
    <ui:image src="traceback_2x.png"
              width="9"
@@ -72,19 +87,20 @@
              height="9"
              field="rerun"></ui:image>
    <g:HTMLPanel styleName="{style.consoleErrorBox} ace_console_error">
-     <g:HTMLPanel styleName="{style.consoleErrorCommands}">
-        <g:HTMLPanel>
-           <rw:DecorativeImage resource="{traceback}"
+
+      <g:HTMLPanel styleName="{style.consoleErrorCommands}">
+        <g:HTMLPanel ui:field="tracebackLinks" >
+            <rw:DecorativeImage resource="{traceback}"
                   ui:field="showTracebackImage"
                   width="9"
                   height="9"
                   styleName="{style.errorCommandImage} show_traceback_image"/>
-           <g:Anchor styleName="{style.errorCommandText} show_traceback_text" ui:field="showTracebackText">
-              Show Traceback
-           </g:Anchor>
-        </g:HTMLPanel>
-        <g:HTMLPanel>
-           <rw:DecorativeImage resource="{rerun}"
+            Traceback:
+            <g:Anchor ui:field="tracebackLinkFull" styleName="{style.tracebackLink} traceback_full">tree</g:Anchor>
+            <g:Anchor ui:field="tracebackLinkBranch" styleName="{style.tracebackLink} traceback_branch">list</g:Anchor>
+            <g:Anchor ui:field="tracebackLinkHide" styleName="{style.tracebackLink} traceback_hide">hide</g:Anchor>
+
+            <rw:DecorativeImage resource="{rerun}"
                     ui:field="rerunImage"
                     width="9"
                     height="9"
@@ -92,10 +108,18 @@
            <g:Anchor styleName="{style.errorCommandText} rerun_text" ui:field="rerunText">
               Rerun with Debug
            </g:Anchor>
+
+         </g:HTMLPanel>
+        <g:HTMLPanel>
+           
         </g:HTMLPanel>
      </g:HTMLPanel>
+
      <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>
+
      <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel} stack_trace">
+      <g:HTMLPanel ui:field="tracebackFull" visible="false"></g:HTMLPanel>
+      <g:HTMLPanel ui:field="tracebackBranch" visible="false"></g:HTMLPanel>
      </g:HTMLPanel>
    </g:HTMLPanel>
 </ui:UiBinder> 

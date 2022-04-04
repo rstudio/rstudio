@@ -95,16 +95,42 @@ public class ConsoleError extends Composite
       DOM.sinkEvents(this.getElement(), Event.ONCLICK);
       DOM.setEventListener(this.getElement(), onConsoleErrorClick);
 
-      // use rlang back traces if possible
-      framePanel.add(new Label("Traceback"));
-      JsArrayString stackTreeLines = err.getTrace();
-      if (stackTreeLines.length() > 0) {
-         VirtualConsole vcTree = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(framePanel.getElement());
-         
-         for (int i = 0; i < stackTreeLines.length(); i++)
+      EventListener onTracebackLinkClick = event ->
+      {
+         if (DOM.eventGetType(event) == Event.ONCLICK)
          {
-            vcTree.submit(stackTreeLines.get(i) + "\n");
+            Element target = Element.as(event.getEventTarget());
+            if (target.hasClassName("traceback_full"))
+            {
+               framePanel.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+               tracebackFull.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+               tracebackBranch.getElement().getStyle().setDisplay(Style.Display.NONE);
+            }
+            else if (target.hasClassName("traceback_branch"))
+            {
+               framePanel.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+               tracebackFull.getElement().getStyle().setDisplay(Style.Display.NONE);
+               tracebackBranch.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+            }
+            else 
+            {
+               tracebackFull.getElement().getStyle().setDisplay(Style.Display.NONE);
+               tracebackBranch.getElement().getStyle().setDisplay(Style.Display.NONE);
+               framePanel.getElement().getStyle().setDisplay(Style.Display.NONE);
+            }
          }
+      };
+      DOM.sinkEvents(tracebackLinks.getElement(), Event.ONCLICK);
+      DOM.setEventListener(tracebackLinks.getElement(), onTracebackLinkClick);
+
+      // use rlang back traces if possible
+      JsArrayString trace = err.getTrace();
+      if (trace.length() > 0) {
+         VirtualConsole vcTracebackFull = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(tracebackFull.getElement());
+         vcTracebackFull.submit(trace.get(0));
+
+         VirtualConsole vcTracebackBranch = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(tracebackBranch.getElement());
+         vcTracebackBranch.submit(trace.get(1));
       } else 
       {
          for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
@@ -114,6 +140,7 @@ public class ConsoleError extends Composite
             framePanel.add(frame);
          }
       }
+
    }
    
    public void setTracebackVisible(boolean visible)
@@ -122,22 +149,33 @@ public class ConsoleError extends Composite
       
       if (showingTraceback_)
       {
-         showTracebackText.setText(constants_.hideTracebackText());
          framePanel.getElement().getStyle().setDisplay(Style.Display.BLOCK);
       }
       else 
       {
-         showTracebackText.setText(constants_.showTracebackText());
          framePanel.getElement().getStyle().setDisplay(Style.Display.NONE);
       }
    }
 
-   @UiField Anchor showTracebackText;
-   @UiField Image showTracebackImage;
+   public void showTracebackFull() 
+   {
+      showingTraceback_ = true;
+      framePanel.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+      
+   }
+
    @UiField Anchor rerunText;
    @UiField Image rerunImage;
    @UiField HTMLPanel framePanel;
    @UiField HTML errorMessage;
+
+   @UiField HTMLPanel tracebackLinks;
+   @UiField HTMLPanel tracebackFull;
+   @UiField HTMLPanel tracebackBranch;
+
+   @UiField Anchor tracebackLinkFull;
+   @UiField Anchor tracebackLinkBranch;
+   @UiField Anchor tracebackLinkHide;
    
    private Observer observer_;
    private boolean showingTraceback_ = false;
