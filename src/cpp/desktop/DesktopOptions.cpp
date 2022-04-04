@@ -172,7 +172,8 @@ QString Options::portNumber() const
    for (int i = 0; i < 100; i++)
    {
       // generate a port number
-      int port = core::random::uniformRandomInteger<int>(8080, 40000);
+      // RFC 6335 suggests the range 49152-65535 for dynamic ports
+      int port = core::random::uniformRandomInteger<int>(49152, 65535);
       LOG_DEBUG_MESSAGE("Trying port " + std::to_string(port));
 
       // try to bind to it -- if this fails, try a new port number
