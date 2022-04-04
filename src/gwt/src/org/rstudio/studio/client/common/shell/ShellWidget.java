@@ -389,8 +389,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
          // remove the APC signal
          output = output.substring(apcMatch.getValue().length());
-
-         GWT.log(output);
       }
       
       output(output, styles_.output(), isError, false /*ignoreLineCount*/,
