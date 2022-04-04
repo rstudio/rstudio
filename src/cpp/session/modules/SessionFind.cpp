@@ -982,11 +982,11 @@ private:
             // extract filename from match
             std::string file = module_context::createAliasedPath(FilePath(match[1]));
 
-            // replace the leading '.' with the directory name
+            // replace the leading './' with the directory name
             // (git grep doesn't prepend a '.' so we need to be careful here)
-            if (boost::algorithm::starts_with(file, "."))
+            if (boost::algorithm::starts_with(file, "./"))
             {
-               file = workingDir_ + file.substr(1);
+               file = workingDir_ + file.substr(2);
             }
             else if (findResults().gitFlag())
             {
