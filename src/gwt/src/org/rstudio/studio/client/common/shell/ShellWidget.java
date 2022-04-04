@@ -346,8 +346,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       ConsoleError errorWidget = new ConsoleError(
             traceInfo, getErrorClass(), this, command);
 
-      if (expand)
-         errorWidget.setTracebackVisible(true);
+      errorWidget.setTracebackVisible(expand);
 
       boolean replacedFirst = false;
       for (Element element: errorNodes)

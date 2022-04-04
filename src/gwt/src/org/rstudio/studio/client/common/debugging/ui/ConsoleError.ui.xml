@@ -2,11 +2,10 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:rw='urn:import:org.rstudio.core.client.widget'
    xmlns:g="urn:import:com.google.gwt.user.client.ui">
-   <ui:style>
+   <ui:style type="org.rstudio.studio.client.common.debugging.ui.ConsoleError.ConsoleErrorStyle">
    @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
    
    .consoleErrorBox {
-      position: relative;
       overflow: visible;
       margin: 5px 5px 5px 0px;
       padding: 5px 0px 5px 15px;
@@ -16,12 +15,12 @@
 
    .consoleErrorCommands {
       top: -2em;
+      position: relative;
       float: right;
       margin-right: 10px;
       margin-left: 5px;
       margin-bottom: 15px;
       line-height: 80%;
-      position: relative;
       user-select: none;
       -ms-user-select: none;
       -moz-user-select: none;
@@ -73,7 +72,7 @@
       opacity: 1;
    }
 
-   .tracebackLinkVisible {
+   .tracebackLinkSelected {
       opacity: 1;
    }
 
@@ -110,9 +109,6 @@
            </g:Anchor>
 
          </g:HTMLPanel>
-        <g:HTMLPanel>
-           
-        </g:HTMLPanel>
      </g:HTMLPanel>
 
      <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>

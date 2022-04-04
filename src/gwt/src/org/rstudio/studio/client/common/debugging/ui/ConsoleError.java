@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.DOM;
@@ -51,6 +52,10 @@ public class ConsoleError extends Composite
       void runCommandWithDebug(String command);
    }
 
+   interface ConsoleErrorStyle extends CssResource {
+      String tracebackLinkSelected();
+   }
+
    // Because we are adding interactive elements to the VirtualScroller the GWT bindings are lost.
    // We need to programmatically find the elements and manipulate them through regular JS functions.
    public ConsoleError(UnhandledError err, 
@@ -68,55 +73,33 @@ public class ConsoleError extends Composite
       
       errorMessage.addStyleName(errorClass);
 
-      EventListener onConsoleErrorClick = event ->
-      {
-         if (DOM.eventGetType(event) == Event.ONCLICK)
-         {
-            Element target = Element.as(event.getEventTarget());
-            if (target == null)
-               return;
-
-            if (target.hasClassName("show_traceback_text") || target.hasClassName("show_traceback_image"))
-            {
-               setTracebackVisible(!showingTraceback_);
-               observer_.onErrorBoxResize();
-            }
-            else if (target.hasClassName("rerun_text") || target.hasClassName("rerun_image"))
-            {
-               observer_.onErrorBoxResize();
-               observer_.runCommandWithDebug(command_);
-            }
-         }
-      };
-
       rerunText.setVisible(command_ != null);
       rerunImage.setVisible(command_ != null);
-
-      DOM.sinkEvents(this.getElement(), Event.ONCLICK);
-      DOM.setEventListener(this.getElement(), onConsoleErrorClick);
 
       EventListener onTracebackLinkClick = event ->
       {
          if (DOM.eventGetType(event) == Event.ONCLICK)
          {
             Element target = Element.as(event.getEventTarget());
-            if (target.hasClassName("traceback_full"))
+            if (target == null)
+               return;
+            
+            if (target.hasClassName("rerun_text") || target.hasClassName("rerun_image"))
             {
-               framePanel.getElement().getStyle().setDisplay(Style.Display.BLOCK);
-               tracebackFull.getElement().getStyle().setDisplay(Style.Display.BLOCK);
-               tracebackBranch.getElement().getStyle().setDisplay(Style.Display.NONE);
+               observer_.onErrorBoxResize();
+               observer_.runCommandWithDebug(command_);
+            }
+            else if (target.hasClassName("traceback_full"))
+            {
+               showTracebackFull();
             }
             else if (target.hasClassName("traceback_branch"))
             {
-               framePanel.getElement().getStyle().setDisplay(Style.Display.BLOCK);
-               tracebackFull.getElement().getStyle().setDisplay(Style.Display.NONE);
-               tracebackBranch.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+               showTracebackBranch();
             }
-            else 
+            else if (target.hasClassName("traceback_hide"))
             {
-               tracebackFull.getElement().getStyle().setDisplay(Style.Display.NONE);
-               tracebackBranch.getElement().getStyle().setDisplay(Style.Display.NONE);
-               framePanel.getElement().getStyle().setDisplay(Style.Display.NONE);
+               hideTraceback();
             }
          }
       };
@@ -145,15 +128,13 @@ public class ConsoleError extends Composite
    
    public void setTracebackVisible(boolean visible)
    {
-      showingTraceback_ = visible;
-      
-      if (showingTraceback_)
+      if (visible)
       {
-         framePanel.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+         showTracebackFull();
       }
       else 
       {
-         framePanel.getElement().getStyle().setDisplay(Style.Display.NONE);
+         hideTraceback();
       }
    }
 
@@ -161,7 +142,36 @@ public class ConsoleError extends Composite
    {
       showingTraceback_ = true;
       framePanel.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+      tracebackFull.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+      tracebackBranch.getElement().getStyle().setDisplay(Style.Display.NONE);
       
+      tracebackLinkFull.getElement().addClassName(style.tracebackLinkSelected());
+      tracebackLinkBranch.getElement().removeClassName(style.tracebackLinkSelected());
+      tracebackLinkHide.getElement().removeClassName(style.tracebackLinkSelected());
+   }
+
+   public void showTracebackBranch() 
+   {
+      showingTraceback_ = true;
+      framePanel.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+      tracebackFull.getElement().getStyle().setDisplay(Style.Display.NONE);
+      tracebackBranch.getElement().getStyle().setDisplay(Style.Display.BLOCK);
+
+      tracebackLinkFull.getElement().removeClassName(style.tracebackLinkSelected());
+      tracebackLinkBranch.getElement().addClassName(style.tracebackLinkSelected());
+      tracebackLinkHide.getElement().removeClassName(style.tracebackLinkSelected());
+   }
+
+   public void hideTraceback() 
+   {
+      showingTraceback_ = false;
+      framePanel.getElement().getStyle().setDisplay(Style.Display.NONE);
+      tracebackFull.getElement().getStyle().setDisplay(Style.Display.NONE);
+      tracebackBranch.getElement().getStyle().setDisplay(Style.Display.NONE);
+
+      tracebackLinkFull.getElement().removeClassName(style.tracebackLinkSelected());
+      tracebackLinkBranch.getElement().removeClassName(style.tracebackLinkSelected());
+      tracebackLinkHide.getElement().addClassName(style.tracebackLinkSelected());
    }
 
    @UiField Anchor rerunText;
@@ -177,6 +187,8 @@ public class ConsoleError extends Composite
    @UiField Anchor tracebackLinkBranch;
    @UiField Anchor tracebackLinkHide;
    
+   @UiField ConsoleErrorStyle style;
+
    private Observer observer_;
    private boolean showingTraceback_ = false;
    private String command_;
