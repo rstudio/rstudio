@@ -297,6 +297,8 @@ if (APPLE)
    if (RSTUDIO_ELECTRON)
       set(RSTUDIO_INSTALL_BIN        RStudio.app/Contents/Resources/app/bin)
       set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources/app)
+      # handles Quarto share when not stored alongside bin
+      set(RSTUDIO_INSTALL_RESOURCES RStudio.app/Contents/Resources)
    else()
       set(RSTUDIO_INSTALL_BIN        RStudio.app/Contents/MacOS)
       set(RSTUDIO_INSTALL_SUPPORTING RStudio.app/Contents/Resources)
