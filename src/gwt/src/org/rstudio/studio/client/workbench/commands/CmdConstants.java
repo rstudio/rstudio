@@ -3656,6 +3656,10 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show _GPU Diagnostics") // $NON-NLS-1$
     String showGpuDiagnosticsMenuLabel();
     
+    // showA11yDiagnostics
+    @DefaultStringValue("Show _Accessibility Diagnostics") // $NON-NLS-1$
+    String showA11yDiagnosticsMenuLabel();
+    
     // toggleEditorTokenInfo
     @DefaultStringValue("_Toggle Editor Token Information") // $NON-NLS-1$
     String toggleEditorTokenInfoMenuLabel();

@@ -68,13 +68,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.EventListener;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Widget;
@@ -136,6 +130,10 @@ public class DesktopApplicationHeader implements ApplicationHeader,
          // is handled before anything else in the IDE surface might try
          // to handle the mouse event
          addBackForwardMouseDownHandlers();
+      }
+      else
+      {
+         commands.showA11yDiagnostics().remove();
       }
       
       events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->
@@ -402,6 +400,12 @@ public class DesktopApplicationHeader implements ApplicationHeader,
    void onShowGpuDiagnostics()
    {
       globalDisplay_.openMinimalWindow("chrome://gpu", 500, 400);
+   }
+
+   @Handler
+   void onShowA11yDiagnostics()
+   {
+      globalDisplay_.openMinimalWindow("chrome://accessibility", 500, 400);
    }
 
    @Handler
