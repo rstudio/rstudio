@@ -16,22 +16,11 @@
 #ifndef CORE_RANDOM_HPP
 #define CORE_RANDOM_HPP
 
-#ifndef _WIN32
-# include <unistd.h>
-#else
-# include <process.h>
-#endif
-
-#include <ctime>
-#include <functional>
 #include <limits>
-#include <random>
 
 #include <boost/chrono.hpp>
 #include <boost/random.hpp>
 #include <boost/thread.hpp>
-
-#include <core/system/System.hpp>
 
 namespace rstudio {
 namespace core {
