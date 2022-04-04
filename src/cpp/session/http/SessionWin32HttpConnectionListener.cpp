@@ -24,6 +24,10 @@
 
 #include "SessionTcpIpHttpConnectionListener.hpp"
 
+#ifdef DEBUG
+# undef DEBUG
+#endif
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -40,6 +44,28 @@ HttpConnectionListener* s_pHttpConnectionListener = nullptr;
 void initializeHttpConnectionListener()
 {
    session::Options& options = session::options();
+
+   if (log::isLogLevel(log::LogLevel::DEBUG))
+   {
+      const char* fmt =
+            "Initializing HTTP connection listener [address=%s; port=%s; secret=%s]";
+
+      std::string sharedSecret;
+#ifdef RSTUDIO_PACKAGE_BUILD
+      sharedSecret = "<redacted>";
+#else
+      sharedSecret = options.sharedSecret();
+#endif
+
+      std::string msg = core::string_utils::sprintf(
+               fmt,
+               options.wwwAddress().c_str(),
+               options.wwwPort().c_str(),
+               sharedSecret.c_str());
+
+      LOG_DEBUG_MESSAGE(msg);
+   }
+
    s_pHttpConnectionListener = new TcpIpHttpConnectionListener(
                                       options.wwwAddress(),
                                       options.wwwPort(),
