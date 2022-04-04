@@ -179,7 +179,7 @@ QString Options::portNumber() const
       QTcpSocket socket;
       if (!socket.bind(port))
       {
-         LOG_DEBUG_MESSAGE("Couldn't bind to port " + std::to_string(port) + "; trying again");
+         LOG_DEBUG_MESSAGE("Couldn't bind to port " + std::to_string(port) + "; trying new port");
          continue;
       }
 

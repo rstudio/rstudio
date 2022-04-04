@@ -22,10 +22,14 @@
 # include <process.h>
 #endif
 
-#include <limits>
 #include <ctime>
+#include <functional>
+#include <limits>
+#include <random>
 
+#include <boost/chrono.hpp>
 #include <boost/random.hpp>
+#include <boost/thread.hpp>
 
 #include <core/system/System.hpp>
 
@@ -38,10 +42,17 @@ T uniformRandomInteger(
       T minValue = std::numeric_limits<T>::min(),
       T maxValue = std::numeric_limits<T>::max())
 {
-   boost::random::mt19937 gen(getpid() + std::time(NULL));
+   // choose random seed
+   long long seed = boost::chrono::high_resolution_clock::now().time_since_epoch().count();
+
+   // construct our generator
+   boost::random::mt19937 gen(seed);
    boost::random::uniform_int_distribution<> dist(minValue, maxValue);
+
+   // generate a value
    return dist(gen);
 }
+
 } // namespace random
 } // namespace core
 } // namespace rstudio
