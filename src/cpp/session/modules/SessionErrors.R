@@ -226,7 +226,12 @@
          frame <- frame - 1
       if (identical(deparse(sys.call(frame)[[1]]), "stopifnot"))
          frame <- frame - 1
-
+      
+      # if stop() was called from signal_abort(), move again
+      # backwards twice, to be positioned at the function calling abort()
+      if (identical(deparse(sys.call(frame)[[1]]), "signal_abort"))
+         frame <- frame - 2
+      
       eval(substitute(browser(skipCalls = pos), 
                       list(pos = (length(sys.frames()) - frame) + 2)),
            envir = sys.frame(frame))
