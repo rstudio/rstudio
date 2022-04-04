@@ -17,30 +17,29 @@
 #define CORE_RANDOM_HPP
 
 #include <limits>
-#include <ctime>
 
+#include <boost/chrono.hpp>
 #include <boost/random.hpp>
+#include <boost/thread.hpp>
 
 namespace rstudio {
 namespace core {
 namespace random {
 
 template <typename T>
-T uniformRandomInteger()
+T uniformRandomInteger(
+      T minValue = std::numeric_limits<T>::min(),
+      T maxValue = std::numeric_limits<T>::max())
 {
-  // setup generator and distribution
-  typedef boost::mt19937 GeneratorType;
-  typedef boost::uniform_int<T> DistributionType;
-  GeneratorType generator(std::time(nullptr));
-  DistributionType distribution(std::numeric_limits<T>::min(),
-                                std::numeric_limits<T>::max());
+   // choose random seed
+   long long seed = boost::chrono::high_resolution_clock::now().time_since_epoch().count();
 
-  // create variate generator
-  boost::variate_generator<GeneratorType, DistributionType> vg(generator,
-                                                               distribution);
+   // construct our generator
+   boost::random::mt19937 gen(seed);
+   boost::random::uniform_int_distribution<> dist(minValue, maxValue);
 
-  // return random number
-  return vg();
+   // generate a value
+   return dist(gen);
 }
 
 } // namespace random
