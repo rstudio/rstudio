@@ -559,6 +559,7 @@ endif()
 
 # external libraries
 add_subdirectory(ext)
+include_directories(SYSTEM "${FMT_SOURCE_DIR}/include")
 
 # shared library
 add_subdirectory(shared_core)
