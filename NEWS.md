@@ -10,6 +10,7 @@
 - The source button uses `cpp11::source_cpp()` on C++ files that have `[[cpp11::register]]` decorations (#10387)
 - New *Relative Line Numbers* preference for showing line numbers relative to the current line, rather than the first line (#1774)
 - Upgraded SOCI library dependency from version 4.0.0 to 4.0.3 (#10792)
+- (macOS only) Fixed an issue where `/usr/local/bin` is placed on the wrong location on the PATH (#10551)
 
 #### Find in Files
 
