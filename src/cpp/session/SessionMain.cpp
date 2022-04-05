@@ -145,7 +145,6 @@
 #include "modules/SessionWorkbench.hpp"
 #include "modules/SessionHelp.hpp"
 #include "modules/SessionPlots.hpp"
-#include "modules/SessionPath.hpp"
 #include "modules/SessionPackages.hpp"
 #include "modules/SessionPackrat.hpp"
 #include "modules/SessionPlumberViewer.hpp"
@@ -544,7 +543,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
-      (modules::path::initialize)
       (modules::limits::initialize)
       (modules::ppe::initialize)
       (modules::ask_pass::initialize)

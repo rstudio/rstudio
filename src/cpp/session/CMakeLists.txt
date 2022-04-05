@@ -194,7 +194,6 @@ set(SESSION_SOURCE_FILES
    modules/SessionPackageProvidedExtension.cpp
    modules/SessionPackages.cpp
    modules/SessionPackrat.cpp
-   modules/SessionPath.cpp
    modules/SessionPlots.cpp
    modules/SessionPlumberViewer.cpp
    modules/SessionProfiler.cpp

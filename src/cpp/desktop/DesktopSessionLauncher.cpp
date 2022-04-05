@@ -612,6 +612,116 @@ FilePath resolveSessionPathWin32(const FilePath& defaultPath)
 
 #endif
 
+#ifdef __APPLE__
+
+class ApplePathScope : boost::noncopyable
+{
+public:
+   ApplePathScope()
+      : path_(core::system::getenv("PATH"))
+   {
+      if (::isatty(STDIN_FILENO) || ::isatty(STDOUT_FILENO))
+      {
+         LOG_DEBUG_MESSAGE("RStudio was launched from terminal; not modifying PATH");
+      }
+      else
+      {
+         initializePath();
+      }
+   }
+   
+   static void insertPathComponentIfNecessary(
+         const std::string& entry,
+         std::vector<std::string>::iterator it,
+         std::vector<std::string>* pParts)
+   {
+      for (auto&& item : { entry, entry + "/" })
+      {
+         auto it = std::find(pParts->begin(), pParts->end(), item);
+         if (it != pParts->end())
+            return;
+      }
+      
+      pParts->insert(it, entry);
+   }
+   
+   void initializePath()
+   {
+      std::vector<std::string> parts;
+      
+      // read from '/etc/paths'
+      {
+         FilePath etcPaths("/etc/paths");
+         if (etcPaths.exists())
+         {
+            Error error = readLinesFromFile(etcPaths, &parts);
+            if (error)
+               LOG_ERROR(error);
+         }
+      }
+      
+      // read from files within '/etc/paths.d'
+      FilePath etcPathsD("/etc/paths.d");
+      if (etcPathsD.isDirectory())
+      {
+         std::vector<FilePath> children;
+         Error error = etcPathsD.getChildren(children);
+         
+         for (auto&& child : children)
+         {
+            if (!child.isDirectory())
+            {
+               Error error = core::readLinesFromFile(child, &parts);
+               if (error)
+                  LOG_ERROR(error);
+            }
+         }
+      }
+      
+      // prepend some path components
+      std::vector<std::string> prependPaths = {
+         "/opt/local/bin",
+      };
+      
+      for (auto&& path : prependPaths)
+      {
+         insertPathComponentIfNecessary(path, parts.begin(), &parts);
+      }
+      
+      // append some path components
+      std::vector<std::string> appendPaths = {
+         "/Library/TeX/texbin",
+         "/usr/texbin",
+         core::system::getenv("HOME") + "/Applications/quarto/bin"
+      };
+      
+      for (auto&& path : appendPaths)
+      {
+         insertPathComponentIfNecessary(path, parts.end(), &parts);
+      }
+      
+      // drop empty entries / commented entries
+      core::algorithm::expel_if(parts, [](const std::string& item)
+      {
+         return item.length() == 0 || item[0] == '#';
+      });
+      
+      // update the path
+      std::string path = core::algorithm::join(parts, ":");
+      core::system::setenv("PATH", path);
+   }
+   
+   ~ApplePathScope()
+   {
+      core::system::setenv("PATH", path_);
+   }
+   
+private:
+   std::string path_;
+};
+
+#endif
+
 } // end anonymous namespace
 
 Error SessionLauncher::launchSession(const QStringList& argList,
@@ -624,6 +734,10 @@ Error SessionLauncher::launchSession(const QStringList& argList,
 
    
 #if defined(__APPLE__)
+   
+   // augment the PATH so that rsession sees the same PATH that
+   // a typical console application might get
+   ApplePathScope scope;
    
    // we need indirection through arch to handle arm64
    if (sessionPath_.getFilename() == "rsession-arm64")
