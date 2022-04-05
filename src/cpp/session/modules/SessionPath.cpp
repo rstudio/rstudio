@@ -95,7 +95,8 @@ Error initializePathViaShell(const std::string& shellPath,
    {
       // only include last line of output, in case the shell printed
       // something extra during login / processing of scripts
-      std::vector<std::string> lines = core::algorithm::split(result.stdOut, "\n");
+      std::string output = core::string_utils::trimWhitespace(result.stdOut);
+      std::vector<std::string> lines = core::algorithm::split(output, "\n");
       auto n = lines.size();
       if (n == 0)
       {
