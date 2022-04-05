@@ -93,9 +93,23 @@ Error initializePathViaShell(const std::string& shellPath,
    }
    else
    {
-      pPath->assign(result.stdOut);
+      // only include last line of output, in case the shell printed
+      // something extra during login / processing of scripts
+      std::vector<std::string> lines = core::algorithm::split(result.stdOut, "\n");
+      auto n = lines.size();
+      if (n == 0)
+      {
+         return systemError(
+                  boost::system::errc::state_not_recoverable,
+                  result.stdErr,
+                  ERROR_LOCATION);
+      }
+      
+      // extract last line of output
+      std::string path = lines[n - 1];
+      pPath->assign(path);
       return Success();
-   }   
+   }
 }   
 
 // this routine is a little awkward -- if RStudio was launched from a terminal,
