@@ -122,6 +122,7 @@ std::string initializePath()
    
    if (!shell.empty())
    {
+      std::string path;
       Error error = initializePathViaShell(shell, &path);
       if (!error)
          return path;
@@ -130,6 +131,7 @@ std::string initializePath()
    // next, try to initialize with default shell
    if (shell != "/bin/sh")
    {
+      std::string path;
       Error error = initializePathViaShell("/bin/sh", &path);
       if (!error)
          return path;
