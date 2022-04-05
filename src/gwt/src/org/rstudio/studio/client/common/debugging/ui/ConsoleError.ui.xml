@@ -14,17 +14,16 @@
    }
 
    .consoleErrorCommands {
-      top: -2em;
-      position: relative;
-      float: right;
       margin-right: 10px;
-      margin-left: 5px;
+      margin-top: 2em;
       line-height: 80%;
       user-select: none;
       -ms-user-select: none;
       -moz-user-select: none;
       -webkit-user-select: none;
       font-size: 80%;
+      padding-left: 30px;
+      padding-top: 5px;
    }
    
    .errorCommandText {
@@ -55,9 +54,11 @@
    }
    
    .framePanel {
+      margin-top: 1em;
       margin-left: 2em;
       white-space: pre;
       font-size: smaller;
+      opacity: 0.7;
    }
 
    .tracebackLink {
@@ -85,13 +86,10 @@
              field="rerun"></ui:image>
    <g:HTMLPanel styleName="{style.consoleErrorBox} ace_console_error">
 
+      <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>
+
       <g:HTMLPanel styleName="{style.consoleErrorCommands}">
         <g:HTMLPanel ui:field="tracebackLinks" >
-            <rw:DecorativeImage resource="{traceback}"
-                  ui:field="showTracebackImage"
-                  width="9"
-                  height="9"
-                  styleName="{style.errorCommandImage} show_traceback_image"/>
             Traceback:
             <g:Anchor ui:field="tracebackLinkFull" styleName="{style.tracebackLink} traceback_full">tree</g:Anchor>
             <g:Anchor ui:field="tracebackLinkBranch" styleName="{style.tracebackLink} traceback_branch">list</g:Anchor>
@@ -108,8 +106,6 @@
 
          </g:HTMLPanel>
      </g:HTMLPanel>
-
-     <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>
 
      <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel}">
       <g:HTMLPanel ui:field="tracebackFull" visible="false"></g:HTMLPanel>
