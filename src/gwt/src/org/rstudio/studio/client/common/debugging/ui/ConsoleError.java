@@ -109,6 +109,7 @@ public class ConsoleError extends Composite
       // use rlang back traces if possible
       JsArrayString trace = err.getTrace();
       if (trace.length() > 0) {
+         hasFullTraceback_ = true;
          VirtualConsole vcTracebackFull = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(tracebackFull.getElement());
          vcTracebackFull.submit(trace.get(0));
 
@@ -116,6 +117,7 @@ public class ConsoleError extends Composite
          vcTracebackBranch.submit(trace.get(1));
       } else 
       {
+         tracebackLinkFull.getElement().getStyle().setDisplay(Style.Display.NONE);
          for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)
          {
             ConsoleErrorFrame frame = new ConsoleErrorFrame(i + 1,
@@ -130,7 +132,10 @@ public class ConsoleError extends Composite
    {
       if (visible)
       {
-         showTracebackFull();
+         if (hasFullTraceback_)
+            showTracebackFull();
+         else 
+            showTracebackBranch();
       }
       else 
       {
@@ -191,6 +196,7 @@ public class ConsoleError extends Composite
 
    private Observer observer_;
    private boolean showingTraceback_ = false;
+   private boolean hasFullTraceback_ = false;
    private String command_;
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 }

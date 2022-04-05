@@ -19,7 +19,6 @@
       float: right;
       margin-right: 10px;
       margin-left: 5px;
-      margin-bottom: 15px;
       line-height: 80%;
       user-select: none;
       -ms-user-select: none;
@@ -56,7 +55,6 @@
    }
    
    .framePanel {
-      margin-top: 1em;
       margin-left: 2em;
       white-space: pre;
       font-size: smaller;
@@ -113,7 +111,7 @@
 
      <g:HTML ui:field="errorMessage" styleName="{style.errorMessage}"></g:HTML>
 
-     <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel} stack_trace">
+     <g:HTMLPanel ui:field="framePanel" visible="false" styleName="{style.framePanel}">
       <g:HTMLPanel ui:field="tracebackFull" visible="false"></g:HTMLPanel>
       <g:HTMLPanel ui:field="tracebackBranch" visible="false"></g:HTMLPanel>
      </g:HTMLPanel>

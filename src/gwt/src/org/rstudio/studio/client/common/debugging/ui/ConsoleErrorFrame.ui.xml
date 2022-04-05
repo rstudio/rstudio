@@ -2,16 +2,19 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
    xmlns:g="urn:import:com.google.gwt.user.client.ui">
    <ui:style>
-     .function {
+   .function {
      display: inline;
+     font-size: smaller;
    }
    
    .sourceLink {
      cursor: pointer;
+     font-size: smaller;
    }
    
    .functionBlock {
      display: inline-block;
+     font-size: smaller;
    }
    
    .frameNumber {
@@ -20,6 +23,7 @@
      text-align: right;
      margin-top: 0.3em;
      white-space: nowrap;
+     font-size: smaller;
    }
    
    .frame {
@@ -28,9 +32,10 @@
    </ui:style>
    <g:Grid styleName="{style.frame}">
       <g:row>
-         <g:customCell styleName="{style.frameNumber}">
-            <g:Label styleName="ace_constant ace_numeric"
-                     ui:field="frameNumber"></g:Label>
+         <g:customCell>
+            <g:Label styleName="{style.frameNumber} ace_constant ace_numeric"
+                     ui:field="frameNumber">
+            </g:Label>
          </g:customCell>
          <g:customCell>
             <g:HTMLPanel>
