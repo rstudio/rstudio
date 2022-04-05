@@ -34,10 +34,6 @@
 
 #include <session/SessionModuleContext.hpp>
 
-#if !defined(_WIN32) && !defined(RSTUDIO_PRO_BUILD)
-# define RSTUDIO_INITIALIZE_PATH_VIA_SHELL
-#endif
-
 using namespace rstudio::core;
 using namespace boost::placeholders;
 
@@ -136,13 +132,20 @@ std::string initializePath()
    return core::system::getenv("PATH");
 }
 
+std::string homePath(const std::string& suffix)
+{
+   return module_context::userHomePath()
+         .completeChildPath(suffix)
+         .getAbsolutePath();
+}
+
 } // anonymous namespace
 
 
 Error initialize()
 {
    
-#ifdef RSTUDIO_INITIALIZE_PATH_VIA_SHELL
+#ifdef __APPLE__
    std::string path = initializePath();
    
    // split into parts
@@ -150,16 +153,9 @@ Error initialize()
    
    // check for some components that we might need to append to the path
    std::vector<std::string> extraEntries = {
-      
-   #ifdef __APPLE__
-      module_context::userHomePath()
-         .completeChildPath("Applications/quarto/bin")
-         .getAbsolutePath(),
-      
+      homePath("Applications/quarto/bin"),
       "/Library/TeX/texbin",
       "/usr/texbin",
-   #endif
-      
    };
    
    for (const std::string& entry : extraEntries)
