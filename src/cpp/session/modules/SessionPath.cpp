@@ -89,11 +89,16 @@ void addToPathIfNecessary(
    pPathComponents->push_back(entry);
 }
 
-} // anonymous namespace
-
-
-Error initialize()
+std::vector<std::string> initializePath()
 {
+   // if '/usr/local/bin' is already on the PATH, then assume
+   // we're running RStudio through a terminal and so the PATH
+   // has already been initialized
+   std::string path = core::system::getenv("PATH");
+   boost::regex reUsrLocalBin("(^|:)/usr/local/bin(:|$)");
+   if (boost::regex_search(path, reUsrLocalBin))
+      return core::algorithm::split(path, ":");
+   
    // read /etc/paths
    std::vector<std::string> paths;
    safeReadPathsFromFile(FilePath("/etc/paths"), &paths);
@@ -116,28 +121,35 @@ Error initialize()
 
    }
 
-   // build the PATH
-   std::vector<std::string> parts =
-         core::algorithm::split(core::system::getenv("PATH"), ":");
-
    // add in components from paths.d etc.
    std::for_each(paths.begin(),
                  paths.end(),
-                 boost::bind(addToPathIfNecessary, _1, &parts));
+                 boost::bind(addToPathIfNecessary, _1, &paths));
+   
+   return paths;
+}
 
+} // anonymous namespace
+
+
+Error initialize()
+{
+   // get initial set of path components
+   std::vector<std::string> paths = initializePath();
+   
    // do we need to add /Library/TeX/texbin or /usr/texbin or (sometimes texlive
    // doesn't get this written into /etc/paths.d)
    FilePath libraryTexbinPath("/Library/TeX/texbin");
    if (libraryTexbinPath.exists())
-      addToPathIfNecessary(libraryTexbinPath.getAbsolutePath(), &parts);
+      addToPathIfNecessary(libraryTexbinPath.getAbsolutePath(), &paths);
    FilePath texbinPath("/usr/texbin");
    if (texbinPath.exists())
-      addToPathIfNecessary(texbinPath.getAbsolutePath(), &parts);
+      addToPathIfNecessary(texbinPath.getAbsolutePath(), &paths);
 
    // add /opt/local/bin if necessary
    FilePath optLocalBinPath("/opt/local/bin");
    if (optLocalBinPath.exists())
-      addToPathIfNecessary(optLocalBinPath.getAbsolutePath(), &parts);
+      addToPathIfNecessary(optLocalBinPath.getAbsolutePath(), &paths);
 
    // check for user installation of quarto
    FilePath quartoBin = module_context::userHomePath()
@@ -145,10 +157,10 @@ Error initialize()
          .completeChildPath("quarto")
          .completeChildPath("bin");
    if (quartoBin.exists())
-      addToPathIfNecessary(quartoBin.getAbsolutePath(), &parts);
+      addToPathIfNecessary(quartoBin.getAbsolutePath(), &paths);
 
    // set the path
-   core::system::setenv("PATH", core::algorithm::join(parts, ":"));
+   core::system::setenv("PATH", core::algorithm::join(paths, ":"));
 
    return Success();
 
