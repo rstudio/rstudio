@@ -612,12 +612,11 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {});
 
     ipcMain.handle('desktop_get_enable_accessibility', () => {
-      GwtCallback.unimpl('desktop_get_enable_accessibility');
-      return true;
+      return ElectronDesktopOptions().accessibility();
     });
 
     ipcMain.on('desktop_set_enable_accessibility', (event, enable) => {
-      GwtCallback.unimpl('desktop_set_enable_accessibility');
+      ElectronDesktopOptions().setAccessibility(enable);
     });
 
     ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {

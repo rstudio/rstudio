@@ -83,8 +83,18 @@ class RStudioMain {
     }
   }
 
+  private async initializeAccessibility() {
+    // disable chromium renderer accessibility by default (it can cause 
+    // slowdown when used in conjunction with some applications; see e.g. 
+    // https://github.com/rstudio/rstudio/issues/1990) 
+    if (!ElectronDesktopOptions().accessibility()) {
+      app.commandLine.appendSwitch('disable-renderer-accessibility');
+    }
+  }
+
   private async startup(): Promise<void> {
     await this.initializeRenderingEngine();
+    await this.initializeAccessibility();
 
     // NOTE: On Linux it looks like Electron prefers using ANGLE for GPU
     // rendering; however, we've seen in at least one case (Ubuntu 20.04 in
