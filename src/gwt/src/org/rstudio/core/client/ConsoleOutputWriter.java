@@ -82,14 +82,14 @@ public class ConsoleOutputWriter
     * Send text to the console
     * @param text Text to output
     * @param className Text style
-    * @param isError Is this an error message?
+    * @param forceNewRange Is this an error message?
     * @param ignoreLineCount Output without checking buffer length?
     * @param ariaLiveAnnounce Include in arialive output announcement
     * @return was this output below the maximum buffer line count?
     */
    public boolean outputToConsole(String text,
                                   String className,
-                                  boolean isError,
+                                  boolean forceNewRange,
                                   boolean ignoreLineCount,
                                   boolean ariaLiveAnnounce)
    {
@@ -125,7 +125,7 @@ public class ConsoleOutputWriter
       }
 
       int oldLineCount = DomUtils.countLines(appendTarget, true);
-      virtualConsole_.submit(text, className, isError, ariaLiveAnnounce);
+      virtualConsole_.submit(text, className, forceNewRange, ariaLiveAnnounce);
       int newLineCount = DomUtils.countLines(appendTarget, true);
 
       if (!virtualConsole_.isLimitConsoleVisible())

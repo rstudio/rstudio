@@ -253,14 +253,14 @@ attrs = list(hideFromDebugger = TRUE))
    # 4. The function from which the error was raised
    # So we want there to be at least 5 calls on the stack--otherwise the error
    # is likely to be top-level.
-   .rs.recordTraceback(FALSE, 5, .rs.enqueueError)
+   .rs.recordTraceback(FALSE, 4, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
              errorHandlerType = "traceback"))
 
 .rs.addFunction("recordUserTraceback", function()
 {
-   .rs.recordTraceback(TRUE, 5, .rs.enqueueError)
+   .rs.recordTraceback(TRUE, 4, .rs.enqueueError)
 },
 attrs = list(hideFromDebugger = TRUE,
              errorHandlerType = "traceback"))

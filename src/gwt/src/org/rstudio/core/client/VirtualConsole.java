@@ -522,11 +522,6 @@ public class VirtualConsole
       if (isVirtualized())
          wasAtBottom = VirtualScrollerManager.scrolledToBottom(parent_.getParentElement());
 
-      // Only capture new elements when dealing with error output, which
-      // is the only place that sets forceNewRange to true. This is just an
-      // optimization to avoid unnecessary overhead for large (non-error)
-      // output.
-      captureNewElements_ = forceNewRange;
       newElements_.clear();
 
       newText_ = ariaLiveAnnounce && prefs_.screenReaderEnabled() ? new StringBuilder() : null;
@@ -832,8 +827,7 @@ public class VirtualConsole
 
          setText(text);
         
-         if (captureNewElements_)
-            newElements_.add(element);
+         newElements_.add(element);
       }
 
       private void setText(String text)
@@ -927,8 +921,6 @@ public class VirtualConsole
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
    private Hyperlink hyperlink_;
 
-   // Elements added by last submit call (only if forceNewRange was true)
-   private boolean captureNewElements_ = false;
    private final List<Element> newElements_ = new ArrayList<>();
 
    private StringBuilder newText_;

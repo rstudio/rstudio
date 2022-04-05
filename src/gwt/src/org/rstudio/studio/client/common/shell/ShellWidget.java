@@ -72,6 +72,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Rendere
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
@@ -312,24 +313,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
       suppressPendingInput_ = suppressPendingInput;
    }
 
-   public void consoleWriteError(final String error)
-   {
-      clearPendingInput();
-      output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/,
-            isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
-   }
-
-   public void recordErrorElements(final String error)
+   public void recordElements(final String text)
    {
       List<Element> newElements = output_.getNewElements();
       if (!newElements.isEmpty())
       {
-         if (clearErrors_)
-         {
-            errorNodes_.clear();
-            clearErrors_ = false;
-         }
-         errorNodes_.put(error, newElements);
+         outputNodes_.put(text, newElements);
       }
    }
 
@@ -337,14 +326,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
          final String error, UnhandledError traceInfo,
          boolean expand, String command)
    {
-      List<Element> errorNodes = errorNodes_.get(error);
+      List<Element> errorNodes = outputNodes_.get(error);
 
       if (errorNodes == null || errorNodes.isEmpty())
          return;
       
       clearPendingInput();
       ConsoleError errorWidget = new ConsoleError(
-            traceInfo, getErrorClass(), this, command);
+            traceInfo, styles_.error(), this, command);
 
       errorWidget.setTracebackVisible(expand);
 
@@ -365,7 +354,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
       
       scrollPanel_.onContentSizeChanged();
-      errorNodes_.remove(error);
+      outputNodes_.remove(error);
    }
 
    @Override
@@ -379,18 +368,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       clearPendingInput();
 
-      // identify if the output is an rlang error.
-      Match apcMatch = AnsiCode.APC_ESCAPE_PATTERN.match(output, 0);
-      boolean isError = false;
-      if (apcMatch != null && StringUtil.equals("rlang_error", apcMatch.getGroup(1)))
-      {
-         isError = true;
+      output(output, styles_.output(), ConsoleAction.OUTPUT, false /*ignoreLineCount*/,
+            isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
+   }
 
-         // remove the APC signal
-         output = output.substring(apcMatch.getValue().length());
-      }
+   public void consoleWriteError(final String error)
+   {
+      clearPendingInput();
       
-      output(output, styles_.output(), isError, false /*ignoreLineCount*/,
+      output(error, getErrorClass(), ConsoleAction.ERROR, false /*ignoreLineCount*/,
             isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
    }
 
@@ -404,7 +390,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          prompt_.setHTML("");
 
       clearPendingInput();
-      output(input, styles_.command() + KEYWORD_CLASS_NAME, false /*isError*/,
+      output(input, styles_.command() + KEYWORD_CLASS_NAME, ConsoleAction.INPUT,
             false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
    }
 
@@ -417,9 +403,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Override
    public void consoleWritePrompt(final String prompt)
    {
-      output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false /*isError*/,
+      output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, ConsoleAction.PROMPT,
             false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
-      clearErrors_ = true;
+      outputNodes_.clear();
    }
 
    public static String consolify(String text)
@@ -444,7 +430,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                    Unit.PX);
 
       input_.setPasswordMode(!showInput);
-      clearErrors_ = true;
+      outputNodes_.clear();
       output_.ensureStartingOnNewLine();
    }
 
@@ -467,31 +453,30 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
    private String getErrorClass()
    {
-      return styles_.error(); /* +
+      return styles_.error() +
          (prefs_.highlightConsoleErrors().getValue() ?
             " " + AceTheme.getThemeErrorClass(
                 RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast()) :
             "");
-      */
    }
 
    /**
     * Send text to the console
     * @param text Text to output
     * @param className Text style
-    * @param isError Is this an error message?
+    * @param actionType action type (OUTPUT, INPUT, PROMPT, ERROR)
     * @param ignoreLineCount Output without checking buffer length?
     * @param ariaLiveAnnounce Include in arialive output announcement
     * @return was this output below the maximum buffer line count?
     */
    private boolean output(String text,
                           String className,
-                          boolean isError,
+                          int actionType,
                           boolean ignoreLineCount,
                           boolean ariaLiveAnnounce)
    {
-      boolean canContinue = output_.outputToConsole(text, className,
-                                                    isError, ignoreLineCount,
+      boolean canContinue = output_.outputToConsole(text, className, 
+                                                    true, ignoreLineCount,
                                                     ariaLiveAnnounce);
 
       // if we're currently scrolled to the bottom, nudge the timer so that we
@@ -505,8 +490,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
       // Pick up the elements emitted to the console by this call. If we get
       // extended information for this error, we'll need to swap out the simple
       // error elements for the extended error element.
-      if (isError)
-         recordErrorElements(text);
+      switch(actionType)
+      {
+         case ConsoleAction.OUTPUT:
+         case ConsoleAction.ERROR:
+            recordElements(text); 
+      }
 
       return canContinue;
    }
@@ -577,28 +566,28 @@ public class ShellWidget extends Composite implements ShellDisplay,
                   case ConsoleAction.INPUT:
                      canContinue = output(action.getData() + "\n",
                                           styles_.command() + " " + KEYWORD_CLASS_NAME,
-                                          false /*isError*/,
+                                          ConsoleAction.INPUT,
                                           true /*ignoreLineCount*/,
                                           false /*announce*/);
                      break;
                   case ConsoleAction.OUTPUT:
                      canContinue = output(action.getData(),
                                           styles_.output(),
-                                          false /*isError*/,
+                                          ConsoleAction.OUTPUT,
                                           true /*ignoreLineCount*/,
                                           false /*announce*/);
                      break;
                   case ConsoleAction.ERROR:
                      canContinue = output(action.getData(),
                                           getErrorClass(),
-                                          true /*isError*/,
+                                          ConsoleAction.ERROR,
                                           true /*ignoreLineCount*/,
                                           false /*announce*/);
                      break;
                   case ConsoleAction.PROMPT:
                      canContinue = output(action.getData(),
                                           styles_.prompt() + " " + KEYWORD_CLASS_NAME,
-                                          false /*isError*/,
+                                          ConsoleAction.PROMPT,
                                           true /*ignoreLineCount*/,
                                           false /*announce*/);
                      break;
@@ -1048,9 +1037,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private int editorWidth_ = -1;
    private boolean scrollIntoViewPending_ = false;
 
-   // A list of errors that have occurred between console prompts.
-   private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();
-   private boolean clearErrors_ = false;
-
+   // A list of (error and output) nodes that have occurred between console prompts.
+   private final Map<String, List<Element>> outputNodes_ = new TreeMap<>();
+   
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;
 }
