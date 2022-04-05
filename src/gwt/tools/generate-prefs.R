@@ -316,7 +316,9 @@ generate <- function (schemaPath, className) {
             if (!is.null(default))
                default <- paste(" ||", jsonlite::toJSON(default, auto_unbox = TRUE))
             
-            if (identical(proptype, "array")) {
+            if (identical(proptype, "object")) {
+               proptype <- "JavaScriptObject"
+            } else if (identical(proptype, "array")) {
                proptype <- "JsArrayString"
                default <- default %||% " || []"
                if (!is.null(propdef[["items"]])) {
@@ -329,6 +331,9 @@ generate <- function (schemaPath, className) {
                default <- default %||% " || \"\""
             } else if (identical(proptype, "integer")) {
                proptype <- "int"
+               default <- default %||% " || 0"
+            } else if (identical(proptype, "number")) {
+               proptype <- "double"
                default <- default %||% " || 0"
             } else if (identical(proptype, "boolean")) {
                default <- default %||% " || false"

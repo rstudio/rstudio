@@ -23,6 +23,54 @@ import com.google.gwt.i18n.client.Constants;
 public interface UserStateAccessorConstants extends Constants {
 
    /**
+    * 
+    */
+   @DefaultStringValue("")
+   String generalTitle();
+   @DefaultStringValue("")
+   String generalDescription();
+
+   /**
+    * Font options from the Appearance category
+    */
+   @DefaultStringValue("")
+   String fontTitle();
+   @DefaultStringValue("Font options from the Appearance category")
+   String fontDescription();
+
+   /**
+    * 
+    */
+   @DefaultStringValue("")
+   String viewTitle();
+   @DefaultStringValue("")
+   String viewDescription();
+
+   /**
+    * 
+    */
+   @DefaultStringValue("")
+   String remoteSessionTitle();
+   @DefaultStringValue("")
+   String remoteSessionDescription();
+
+   /**
+    * 
+    */
+   @DefaultStringValue("")
+   String rendererTitle();
+   @DefaultStringValue("")
+   String rendererDescription();
+
+   /**
+    * 
+    */
+   @DefaultStringValue("")
+   String platformTitle();
+   @DefaultStringValue("")
+   String platformDescription();
+
+   /**
     * A unique identifier representing the user and machine.
     */
    @DefaultStringValue("")
