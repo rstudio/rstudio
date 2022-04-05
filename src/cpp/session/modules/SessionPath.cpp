@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <boost/bind/bind.hpp>
+#include <boost/regex.hpp>
 #include <boost/system/errc.hpp>
 
 #include <shared_core/Error.hpp>
@@ -105,7 +106,13 @@ Error initializePathViaShell(const std::string& shellPath,
 // might.
 std::string initializePath()
 {
-   std::string path;
+   // if the user's path already contains '/usr/local/bin', assume that
+   // they're running RStudio through a shell / terminal and so we don't
+   // need to re-read the shell PATH
+   std::string defaultPath = core::system::getenv("PATH");
+   boost::regex reUsrLocalbin("(^|:)/usr/local/bin(:|$)");
+   if (boost::regex_search(defaultPath, reUsrLocalbin))
+      return defaultPath;
    
    // first, try to initialize with user's default shell
    // (RSTUDIO_SESSION_SHELL is primarily for internal use)
