@@ -368,10 +368,21 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on(
       'desktop_open_minimal_window',
       (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
-        // handle chrome://gpu specially
-        if (url === 'chrome://gpu') {
+        // handle some internal chrome urls specially
+        if (url === 'chrome://gpu' || url === 'chrome://accessibility') {
           const window = new BrowserWindow();
-          return window.loadURL('chrome://gpu');
+
+          // ensure window can be closed with Ctrl+W (Cmd+W on macOS)
+          window.webContents.on('before-input-event', (event, input) => {
+            const ctrlOrMeta = process.platform === 'darwin' ? input.meta : input.control;
+            if (ctrlOrMeta && input.key.toLowerCase() === 'w') {
+              event.preventDefault();
+              window.close();
+
+            }
+          });
+
+          return window.loadURL(url);
         }
 
         // regular path for other windows

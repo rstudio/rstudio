@@ -592,6 +592,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="showRequestLog"/>
             <cmd refid="showLogFiles"/>
             <cmd refid="showGpuDiagnostics"/>
+            <cmd refid="showA11yDiagnostics"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="diagnosticsReport"/>
             <cmd refid="openDeveloperConsole"/>
@@ -3944,6 +3945,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="showGpuDiagnostics"
         menuLabel="Show _GPU Diagnostics"
+        rebindable="false"
+        context="diagnostics"/>
+
+   <cmd id="showA11yDiagnostics"
+        menuLabel="Show _Accessibility Diagnostics"
         rebindable="false"
         context="diagnostics"/>
 
