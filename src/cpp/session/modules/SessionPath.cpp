@@ -95,7 +95,7 @@ std::vector<std::string> initializePath()
    // we're running RStudio through a terminal and so the PATH
    // has already been initialized
    std::string path = core::system::getenv("PATH");
-   boost::regex reUsrLocalBin("(^|:)/usr/local/bin(:|$)");
+   boost::regex reUsrLocalBin("(^|:)/usr/local/bin/?(:|$)");
    if (boost::regex_search(path, reUsrLocalBin))
       return core::algorithm::split(path, ":");
    
