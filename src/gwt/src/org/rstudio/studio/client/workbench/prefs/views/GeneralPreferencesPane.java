@@ -46,6 +46,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+import org.rstudio.studio.client.workbench.prefs.model.LocalStoragePrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
@@ -565,10 +566,20 @@ public class GeneralPreferencesPane extends PreferencesPane
       prefs.graphicsBackend().setGlobalValue(graphicsBackend_.getValue());
       prefs.graphicsAntialiasing().setGlobalValue(graphicsAntialias_.getValue());
 
-      String uiLanguage = uiLanguage_.getValue();
-      if (!StringUtil.equals(uiLanguage, initialUiLanguage_))
+      String uiLanguagePrefValue = uiLanguage_.getValue();
+      if (!StringUtil.equals(uiLanguagePrefValue, initialUiLanguage_))
       {
-         prefs.uiLanguage().setGlobalValue(uiLanguage);
+         prefs.uiLanguage().setGlobalValue(uiLanguagePrefValue);
+         restartRequirement.setUiReloadRequired(true);
+      }
+
+      // The uiLanguage preference is mirrored in HTML5 local storage, so the page (index.htm)
+      // can use it at load time to set the meta-tag telling GWT which language to display.
+      // Ensure consistency here and force a page reload if necessary.
+      String localStorageUiLang = localStoragePrefs_.getUiLanguage();
+      if (!StringUtil.equals(localStorageUiLang, uiLanguagePrefValue))
+      {
+         localStoragePrefs_.setUiLanguage(uiLanguagePrefValue);
          restartRequirement.setUiReloadRequired(true);
       }
 
@@ -692,4 +703,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final UserPrefs prefs_;
    private final Session session_;
    private String initialUiLanguage_;
+   private final LocalStoragePrefs localStoragePrefs_ = new LocalStoragePrefs();
 }
