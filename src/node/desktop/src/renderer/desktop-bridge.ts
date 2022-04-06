@@ -68,6 +68,7 @@ export function getDesktopBridge() {
       ipcRenderer
         .invoke('desktop_get_save_file_name', caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner)
         .then((result) => {
+
           // if the result was canceled, bail early
           if (result.canceled as boolean) {
             return callback('');
@@ -83,7 +84,8 @@ export function getDesktopBridge() {
           const dotIndex = filePath.lastIndexOf('.');
           const ext = dotIndex > 0 ? filePath.substring(dotIndex) : '';
           if (ext.length === 0 || (forceDefaultExtension && ext !== defaultExtension)) {
-            filePath = filePath.substring(0, dotIndex) + defaultExtension;
+            const name = dotIndex > 0 ? filePath.substring(0, dotIndex) : filePath;
+            filePath = name + defaultExtension;
           }
 
           // invoke callback
