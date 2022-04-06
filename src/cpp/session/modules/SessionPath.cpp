@@ -121,11 +121,6 @@ std::vector<std::string> initializePath()
 
    }
 
-   // add in components from paths.d etc.
-   std::for_each(paths.begin(),
-                 paths.end(),
-                 boost::bind(addToPathIfNecessary, _1, &paths));
-   
    return paths;
 }
 
