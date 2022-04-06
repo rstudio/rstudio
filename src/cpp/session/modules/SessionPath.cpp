@@ -125,7 +125,7 @@ std::string initializePath()
    // they're running RStudio through a shell / terminal and so we don't
    // need to re-read the shell PATH
    std::string defaultPath = core::system::getenv("PATH");
-   boost::regex reUsrLocalbin("(^|:)/usr/local/bin(:|$)");
+   boost::regex reUsrLocalbin("(^|:)/usr/local/bin/?(:|$)");
    if (boost::regex_search(defaultPath, reUsrLocalbin))
       return defaultPath;
    
