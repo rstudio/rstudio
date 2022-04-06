@@ -11,6 +11,7 @@
 - New *Relative Line Numbers* preference for showing line numbers relative to the current line, rather than the first line (#1774)
 - Upgraded SOCI library dependency from version 4.0.0 to 4.0.3 (#10792)
 - (macOS only) RStudio now reads the PATH from the user's default shell on startup (#10551)
+- (experimental) Option to display the user interface in French (#10455)
 
 #### Find in Files
 
