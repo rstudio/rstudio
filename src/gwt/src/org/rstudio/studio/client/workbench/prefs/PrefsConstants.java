@@ -1670,7 +1670,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("clipboardMonitoringLabel")
     String clipboardMonitoringLabel();
 
-
     /**
      * Translated "Other".
      *
@@ -1679,6 +1678,33 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Other")
     @Key("otherLabel")
     String otherLabel();
+
+    /**
+     * Translated "Experimental Features".
+     *
+     * @return translated "Experimental Features"
+     */
+    @DefaultMessage("Experimental Features")
+    @Key("experimentalLabel")
+    String experimentalLabel();
+
+    /**
+     * Translated "English".
+     *
+     * @return translated "English"
+     */
+    @DefaultMessage("English")
+    @Key("englishLabel")
+    String englishLabel();
+
+    /**
+     * Translated "French".
+     *
+     * @return translated "French"
+     */
+    @DefaultMessage("French")
+    @Key("frenchLabel")
+    String frenchLabel();
 
     /**
      * Translated "Show .Last.value in environment listing".
