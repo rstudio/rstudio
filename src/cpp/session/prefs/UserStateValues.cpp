@@ -24,6 +24,84 @@ namespace session {
 namespace prefs {
 
 /**
+ * 
+ */
+core::json::Object UserStateValues::general()
+{
+   return readPref<core::json::Object>("general");
+}
+
+core::Error UserStateValues::setGeneral(core::json::Object val)
+{
+   return writePref("general", val);
+}
+
+/**
+ * Font options from the Appearance category
+ */
+core::json::Object UserStateValues::font()
+{
+   return readPref<core::json::Object>("font");
+}
+
+core::Error UserStateValues::setFont(core::json::Object val)
+{
+   return writePref("font", val);
+}
+
+/**
+ * 
+ */
+core::json::Object UserStateValues::view()
+{
+   return readPref<core::json::Object>("view");
+}
+
+core::Error UserStateValues::setView(core::json::Object val)
+{
+   return writePref("view", val);
+}
+
+/**
+ * 
+ */
+core::json::Object UserStateValues::remoteSession()
+{
+   return readPref<core::json::Object>("remote_session");
+}
+
+core::Error UserStateValues::setRemoteSession(core::json::Object val)
+{
+   return writePref("remote_session", val);
+}
+
+/**
+ * 
+ */
+core::json::Object UserStateValues::renderer()
+{
+   return readPref<core::json::Object>("renderer");
+}
+
+core::Error UserStateValues::setRenderer(core::json::Object val)
+{
+   return writePref("renderer", val);
+}
+
+/**
+ * 
+ */
+core::json::Object UserStateValues::platform()
+{
+   return readPref<core::json::Object>("platform");
+}
+
+core::Error UserStateValues::setPlatform(core::json::Object val)
+{
+   return writePref("platform", val);
+}
+
+/**
  * A unique identifier representing the user and machine.
  */
 std::string UserStateValues::contextId()
@@ -351,6 +429,12 @@ core::Error UserStateValues::setQuartoWebsiteSyncEditor(bool val)
 std::vector<std::string> UserStateValues::allKeys()
 {
    return std::vector<std::string>({
+      kGeneral,
+      kFont,
+      kView,
+      kRemoteSession,
+      kRenderer,
+      kPlatform,
       kContextId,
       kAutoCreatedProfile,
       kTheme,

@@ -1,4 +1,5 @@
-/* UserStateAccessor.java
+/*
+ * UserStateAccessor.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -24,6 +25,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 import java.util.ArrayList;
 import java.util.List;
