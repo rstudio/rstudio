@@ -583,7 +583,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          restartRequirement.setUiReloadRequired(true);
       }
 
-         // Pro specific
+      // Pro specific
       if (showServerHomePage_ != null && showServerHomePage_.isEnabled())
          prefs.showUserHomePage().setGlobalValue(showServerHomePage_.getValue());
       if (reuseSessionsForProjectLinks_ != null && reuseSessionsForProjectLinks_.isEnabled())
