@@ -517,7 +517,7 @@ int main(int argc, char* argv[])
                                   desktop::userLogPath(),
                                   true);
 
-      LOG_DEBUG_MESSAGE("Initialized logs (pid=" + std::to_string(getpid()) + ")");
+      LOG_DEBUG_MESSAGE("Initialized logs (pid=" + std::to_string(::getpid()) + ")");
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);
