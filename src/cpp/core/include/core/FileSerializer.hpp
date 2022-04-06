@@ -365,7 +365,7 @@ inline core::Error readLinesFromFile(const core::FilePath& filePath, std::vector
       return error;
 
    string_utils::convertLineEndings(&contents, string_utils::LineEndingPosix);
-   *pLines = algorithm::split(contents, "\n");
+   core::algorithm::append(pLines, core::algorithm::split(contents, "\n"));
    return Success();
 }
 
