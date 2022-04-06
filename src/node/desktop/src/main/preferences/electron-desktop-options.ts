@@ -216,7 +216,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public lastRemoteSessionUrl(): string {
-    return this.config.get(kLastRemoteSessionUrl, properties.session.default.lastRemoteSessionUrl);
+    return this.config.get(kLastRemoteSessionUrl, properties.remote_session.default.lastRemoteSessionUrl);
   }
 
   public setAuthCookies(authCookies: string[]): void {
@@ -224,7 +224,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public authCookies(): string[] {
-    return this.config.get(kAuthCookies, properties.session.default.authCookies);
+    return this.config.get(kAuthCookies, properties.remote_session.default.authCookies);
   }
 
   public setTempAuthCookies(tempAuthCookies: string[]): void {
@@ -232,7 +232,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public tempAuthCookies(): string[] {
-    return this.config.get(kTempAuthCookies, properties.session.default.tempAuthCookies);
+    return this.config.get(kTempAuthCookies, properties.remote_session.default.tempAuthCookies);
   }
 
   public setIgnoredUpdateVersions(ignoredUpdateVersions: string[]): void {
