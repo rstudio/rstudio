@@ -2902,6 +2902,7 @@ public class Source implements InsertSourceEvent.Handler,
    {
       GetEditorContextEvent.Data data = event.getData();
       int type = data.getType();
+      String id = data.getDocId();
 
       if (type == GetEditorContextEvent.TYPE_ACTIVE_EDITOR)
       {
@@ -2922,8 +2923,16 @@ public class Source implements InsertSourceEvent.Handler,
       }
       else if (type == GetEditorContextEvent.TYPE_SOURCE_EDITOR)
       {
-         if (columnManager_.requestActiveEditorContext())
-            return;
+         if (StringUtil.isNullOrEmpty(id))
+         {
+            if (columnManager_.requestActiveEditorContext())
+               return;
+         }
+         else
+         {
+            if (columnManager_.requestEditorContext(id))
+               return;
+         }
       }
 
       // We need to ensure a 'getEditorContext' event is always

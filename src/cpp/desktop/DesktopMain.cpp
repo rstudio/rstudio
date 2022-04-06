@@ -52,6 +52,7 @@
 #ifdef _WIN32
 #include <core/system/RegistryKey.hpp>
 #include <Windows.h>
+#include <process.h>
 #endif
 
 #ifdef Q_OS_LINUX

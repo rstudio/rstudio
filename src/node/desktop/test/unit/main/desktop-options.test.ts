@@ -74,9 +74,9 @@ describe('DesktopOptions', () => {
     assert.equal(options.zoomLevel(), properties.view.default.zoomLevel);
     assert.deepEqual(options.windowBounds(), properties.view.default.windowBounds);
     assert.equal(options.accessibility(), properties.view.default.accessibility);
-    assert.equal(options.lastRemoteSessionUrl(), properties.session.default.lastRemoteSessionUrl);
-    assert.deepEqual(options.authCookies(), properties.session.default.authCookies);
-    assert.deepEqual(options.tempAuthCookies(), properties.session.default.tempAuthCookies);
+    assert.equal(options.lastRemoteSessionUrl(), properties.remote_session.default.lastRemoteSessionUrl);
+    assert.deepEqual(options.authCookies(), properties.remote_session.default.authCookies);
+    assert.deepEqual(options.tempAuthCookies(), properties.remote_session.default.tempAuthCookies);
     assert.deepEqual(options.ignoredUpdateVersions(), properties.general.default.ignoredUpdateVersions);
     if (process.platform === 'win32') {
       assert.equal(options.rBinDir(), properties.platform.default.windows.rBinDir);
