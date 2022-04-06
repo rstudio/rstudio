@@ -58,6 +58,39 @@ bool containsPathEntry(
    
 }
 
+std::string initializePathViaEtcPaths()
+{
+   std::vector<std::string> pathEntries;
+   
+   // read /etc/paths
+   FilePath etcPaths("/etc/paths");
+   if (etcPaths.exists())
+   {
+      Error error = core::readLinesFromFile(etcPaths, &pathEntries);
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   // read /etc/paths.d/* entries
+   FilePath etcPathsD("/etc/paths.d");
+   if (etcPathsD.isDirectory())
+   {
+      std::vector<FilePath> children;
+      Error error = etcPathsD.getChildren(children);
+      if (error)
+         LOG_ERROR(error);
+      
+      for (const FilePath& child : children)
+      {
+         Error error = core::readLinesFromFile(child, &pathEntries);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+   
+   return core::algorithm::join(pathEntries, ":");
+}
+
 Error initializePathViaShell(const std::string& shellPath,
                              std::string* pPath)
 {
@@ -144,6 +177,8 @@ std::string initializePath()
    }
    
    // next, try to initialize with default shell
+   // this fallback may be necessary if the above attempt to
+   // initialize failed; e.g. because an invalid shell was selected
    if (shell != "/bin/sh")
    {
       std::string path;
@@ -153,7 +188,7 @@ std::string initializePath()
    }
    
    // all else fails, use the current application path
-   return core::system::getenv("PATH");
+   return initializePathViaEtcPaths();
 }
 
 std::string homePath(const std::string& suffix)
@@ -183,12 +218,8 @@ Error initialize()
    };
    
    for (const std::string& entry : extraEntries)
-   {
       if (!containsPathEntry(pathEntries, entry))
-      {
          pathEntries.push_back(entry);
-      }
-   }
    
    // remove empty entries
    core::algorithm::expel_if(pathEntries, [](const std::string& entry)
