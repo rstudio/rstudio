@@ -16,7 +16,7 @@
 import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-model';
 
 import { ExtensionContext } from '../api/extension';
-import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
+import { PandocOutput, PandocTokenType, PandocToken, kWriteSpaces } from '../api/pandoc';
 
 import { EditorCommandId, WrapCommand } from '../api/command';
 import { OmniInsertGroup } from '../api/omni_insert';
@@ -58,7 +58,7 @@ const extension = (context: ExtensionContext) => {
             },
           ],
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
-            output.withOption('writeSpaces', false, () => {
+            output.withOption(kWriteSpaces, false, () => {
               output.writeToken(PandocTokenType.LineBlock, () => {
                 node.forEach(line => {
                   output.writeArray(() => {

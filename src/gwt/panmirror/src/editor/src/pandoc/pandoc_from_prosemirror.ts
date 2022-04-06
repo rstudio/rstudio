@@ -27,6 +27,7 @@ import {
   PandocOutputOption,
   PandocExtensions,
   marksByPriority,
+  kPreventBracketEscape,
 } from '../api/pandoc';
 
 import { PandocFormat, kGfmFormat } from '../api/pandoc_format';
@@ -210,7 +211,10 @@ class PandocWriter implements PandocOutput {
 
   public writeText(text: string | null) {
     // determine which characters we shouldn't escape
-    const preventEscapeCharacters = this.preventEscapeCharacters;
+    const preventEscapeCharacters = [ ...this.preventEscapeCharacters ];
+    if (this.options[kPreventBracketEscape]) {
+      preventEscapeCharacters.push('[', ']');
+    }
 
     if (text) {
       let textRun = '';
