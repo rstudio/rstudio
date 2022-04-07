@@ -13,13 +13,14 @@
  *
  */
 
+import { app } from 'electron';
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 
 import { getenv } from './environment';
 import { safeError } from './err';
 import { FilePath } from './file-path';
-import { Logger, logLevel, showDiagnosticsOutput } from './logger';
+import { Logger, showDiagnosticsOutput } from './logger';
 
 /**
  * A Logger using winston package: https://www.npmjs.com/package/winston
@@ -28,6 +29,8 @@ export class WinstonLogger implements Logger {
   logger: winston.Logger;
 
   constructor(logFile: FilePath, level: winston.level) {
+
+    level = this.readLogLevelOverride(level);
     this.logger = winston.createLogger({ level: level });
 
     if (!logFile.isEmpty()) {
@@ -42,10 +45,20 @@ export class WinstonLogger implements Logger {
       );
     }
 
-    // also log to console if stdout attached to a tty
-    if (process.stdout.isTTY) {
-      this.logger.add(new winston.transports.Console({ format: winston.format.simple() }));
+  }
+
+  readLogLevelOverride(defaultLevel: winston.level): winston.level {
+
+    const envvars = ['RSTUDIO_DESKTOP_LOG_LEVEL', 'RS_LOG_LEVEL'];
+    for (const envvar of envvars) {
+      const envval = getenv(envvar);
+      if (envval.length !== 0) {
+        return envval as winston.level;
+      }
     }
+
+    return defaultLevel;
+
   }
 
   logLevel(): winston.level {
@@ -56,29 +69,44 @@ export class WinstonLogger implements Logger {
     this.logger.level = level;
   }
 
+  log(level: winston.level, message: string): void {
+
+    // log to default log locations
+    this.logger.log(level, message);
+
+    // log to console in debug configurations
+    // NOTE: process.stderr.isTTY seems to be unreliable?
+    if (!app.isPackaged && this.logger.isLevelEnabled(level)) {
+      const ts = new Date().toISOString();
+      const tlevel = level.toUpperCase();
+      const tmessage = message.replace(/\n/g, '|||') + '\n';
+      process.stderr.write(`${ts} ${tlevel} ${tmessage}`);
+    }
+
+  }
+
   logError(err: unknown): void {
     this.logErrorAtLevel('error', err);
   }
 
   logErrorAtLevel(level: winston.level, err: unknown): void {
-    const safeErr = safeError(err);
-    this.logger.log(level, err);
+    this.log(level, safeError(err).message);
   }
 
   logErrorMessage(message: string): void {
-    this.logger.log('error', message);
+    this.log('error', message);
   }
 
   logWarning(warning: string): void {
-    this.logger.log('warn', warning);
+    this.log('warn', warning);
   }
 
   logInfo(message: string): void {
-    this.logger.log('info', message);
+    this.log('info', message);
   }
 
   logDebug(message: string): void {
-    this.logger.log('debug', message);
+    this.log('debug', message);
   }
 
   logDiagnostic(message: string): void {

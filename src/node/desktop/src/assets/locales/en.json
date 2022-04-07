@@ -17,6 +17,8 @@
   },
   "uiFolder": {
     "chooseRExecutable": "Choose R Executable",
+    "customizeRenderingEngine": "You can also customize the rendering engine used by RStudio.",
+    "renderingEngineLabel": "Rendering Engine:",
     "rExecutable": "R Executable",
     "chooseRInstallation": "Choose R Installation",
     "rstudioRequiresAnExistingRInstallationTitle": "RStudio requires an existing installation of R.",

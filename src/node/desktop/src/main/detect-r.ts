@@ -29,6 +29,7 @@ import i18next from 'i18next';
 
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { FilePath } from '../core/file-path';
+import { app, dialog } from 'electron';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -59,23 +60,29 @@ function executeCommand(command: string): Expected<string> {
 }
 
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
+  
   if (platform === 'win32') {
+
     const desktop = await import('../native/desktop.node');
 
-    const isCtrlKeyDown = desktop.isCtrlKeyDown();
+    const showUi =
+      getenv('RSTUDIO_DESKTOP_PROMPT_FOR_R').length !== 0 ||
+      desktop.isCtrlKeyDown();
 
-    if (!isCtrlKeyDown) {
+    if (!showUi) {
+
       // nothing to do if RSTUDIO_WHICH_R is set
       const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
       if (rstudioWhichR) {
         return ok(rstudioWhichR);
       }
 
+      // if the user selected a version of R previously, then use it
       const rstudioSavedPath = ElectronDesktopOptions().rBinDir();
-
       if (rstudioSavedPath) {
         return ok(rstudioSavedPath);
       }
+
     }
 
     // discover available R installations
@@ -85,18 +92,41 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     }
 
     // ask the user what version of R they'd like to use
-    const dialog = new ChooseRModalWindow(rInstalls);
-    const [path, error] = await dialog.showModal();
+    const chooseRDialog = new ChooseRModalWindow(rInstalls);
+    const [data, error] = await chooseRDialog.showModal();
     if (error) {
       return err(error);
     }
 
     // if path is null, the operation was cancelled
-    if (path == null) {
+    if (data == null) {
       return ok(null);
     }
 
+    // save the stored version of R
+    const path = data.binaryPath as string;
     ElectronDesktopOptions().setRBinDir(path);
+
+    // if the user has changed the default rendering engine,
+    // then we'll need to ask them to restart RStudio now
+    const enginePref = ElectronDesktopOptions().renderingEngine() || 'auto';
+    const engineValue = data.renderingEngine || 'auto';
+    if (enginePref !== engineValue) {
+      ElectronDesktopOptions().setRenderingEngine(engineValue);
+      dialog.showMessageBoxSync({
+        title: 'Rendering Engine Changed',
+        message: [
+          'The RStudio rendering engine has been changed.',
+          'Please restart RStudio for these changes to take effect.',
+        ].join('\n'),
+        type: 'info',
+      });
+
+      // TODO: It'd be nice if we could use app.relaunch(), but that doesn't
+      // seem to do what we want it to?
+      return ok(null);
+    }
+
     // set RSTUDIO_WHICH_R to signal which version of R to be used
     setenv('RSTUDIO_WHICH_R', path);
     return ok(path);
