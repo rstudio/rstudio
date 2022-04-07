@@ -1,4 +1,9 @@
 {
+  "common": {
+    "buttonOk": "OK",
+    "buttonCancel": "Cancel",
+    "buttonBrowse": "Browse..."
+  },
   "contextMenu": {
     "saveImageAsDots": "Save image as...",
     "saveImageAs": "Save image as",
@@ -28,10 +33,7 @@
     "renderingEngineOptionDesktop": "Desktop",
     "renderingEngineOptionSoftware": "Software",
     "renderingEngineChangedTitle": "Rendering Engine Changed",
-    "renderingEngineChangedMessage": "The rendering engine has been changed.\nPlease restart RStudio for these changes to take effect.",
-    "buttonBrowse": "Browse...",
-    "buttonOk": "OK",
-    "buttonCancel": "Cancel"
+    "renderingEngineChangedMessage": "The rendering engine has been changed.\nPlease restart RStudio for these changes to take effect."
   },
   "uiFolder": {
     "chooseRExecutable": "Choose R Executable",

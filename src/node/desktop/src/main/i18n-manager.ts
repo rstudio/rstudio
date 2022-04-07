@@ -63,10 +63,10 @@ function localizeImpl(document: Document, scope: string): void {
   }
 
   // find translatable elements, and translate them
-  const elements = document.querySelectorAll('[data-i18n-id]');
+  const elements = document.querySelectorAll('[data-i18n]');
   elements.forEach((el) => {
-    const id = el.getAttribute('data-i18n-id') as string;
-    const fullId = `${scope}.${id}`;
+    const id = el.getAttribute('data-i18n') as string;
+    const fullId = id.indexOf('.') === -1 ? `${scope}.${id}` : id;
     if (i18next.exists(fullId)) {
       el.innerHTML = i18next.t(fullId);
     }
