@@ -59,7 +59,7 @@
                <td><g:Label ui:field="labelAuthor_" /></td>
             </tr>
             <tr>
-               <td>Date</td>
+               <td>Date (UTC)</td>
                <td><g:Label ui:field="labelDate_" /></td>
             </tr>
             <tr>
