@@ -143,11 +143,11 @@ export function pandocAttrInSpec(spec: NodeSpec | MarkSpec) {
   return keys.includes('id') && keys.includes('classes') && keys.includes('keyvalue');
 }
 
-export function pandocAttrReadAST(tok: PandocToken, index: number) {
+export function pandocAttrReadAST(tok: PandocToken, index: number) : PandocAttr {
   const pandocAttr = tok.c[index];
   return {
     id: pandocAttr[kPandocAttrId] || undefined,
-    classes: pandocAttr[kPandocAttrClasses],
+    classes: (pandocAttr[kPandocAttrClasses] || []).map((clz: string) => clz.replace(/^\.+/, "")),
     keyvalue: pandocAttr[kPandocAttrKeyvalue],
   };
 }
