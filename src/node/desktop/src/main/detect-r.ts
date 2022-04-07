@@ -25,11 +25,11 @@ import { logger } from '../core/logger';
 import { Err, success, safeError } from '../core/err';
 import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
 import { createStandaloneErrorDialog } from './utils';
-import i18next from 'i18next';
+import { t } from 'i18next';
 
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { FilePath } from '../core/file-path';
-import { app, dialog } from 'electron';
+import { dialog } from 'electron';
 
 let kLdLibraryPathVariable: string;
 if (process.platform === 'darwin') {
@@ -46,8 +46,8 @@ interface REnvironment {
 }
 
 function showRNotFoundError(error?: Error): void {
-  const message = error?.message ?? i18next.t('detectRTs.couldNotLocateAnRInstallationOnTheSystem') ?? '';
-  void createStandaloneErrorDialog(i18next.t('detectRTs.rNotFound'), message);
+  const message = error?.message ?? t('detectRTs.couldNotLocateAnRInstallationOnTheSystem') ?? '';
+  void createStandaloneErrorDialog(t('detectRTs.rNotFound'), message);
 }
 
 function executeCommand(command: string): Expected<string> {
@@ -114,11 +114,8 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     if (enginePref !== engineValue) {
       ElectronDesktopOptions().setRenderingEngine(engineValue);
       dialog.showMessageBoxSync({
-        title: 'Rendering Engine Changed',
-        message: [
-          'The RStudio rendering engine has been changed.',
-          'Please restart RStudio for these changes to take effect.',
-        ].join('\n'),
+        title: t('chooseRDialog.renderingEngineChangedTitle'),
+        message: t('chooseRDialog.renderingEngineChangedMessage'),
         type: 'info',
       });
 

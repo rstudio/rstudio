@@ -27,6 +27,8 @@
     "renderingEngineOptionAuto": "Auto-detect (recommended)",
     "renderingEngineOptionDesktop": "Desktop",
     "renderingEngineOptionSoftware": "Software",
+    "renderingEngineChangedTitle": "Rendering Engine Changed",
+    "renderingEngineChangedMessage": "The rendering engine has been changed.\nPlease restart RStudio for these changes to take effect.",
     "buttonBrowse": "Browse...",
     "buttonOk": "OK",
     "buttonCancel": "Cancel"
