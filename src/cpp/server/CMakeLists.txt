@@ -23,6 +23,7 @@ file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 
 # source files
 set(SERVER_SOURCE_FILES
+   DBActiveSessionStorage.cpp
    ServerBrowser.cpp
    ServerErrorCategory.cpp
    ServerEval.cpp
@@ -284,6 +285,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
   endforeach()
 
   set(SERVER_TEST_FILES
+     DBActiveSessionStorageTests.cpp
      ServerEnvVarsTests.cpp
      ServerDatabaseMigrationTests.cpp
      ServerDatabaseMigrationOverlayTests.cpp)
