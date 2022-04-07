@@ -1,48 +1,49 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title id="i18n-chooseRInstallation"></title>
+    <title></title>
   </head>
 
   <body>
-    <p id="i18n-rstudioRequiresAnExistingRInstallationTitle"></p>
-    <p id="i18n-rstudioRequiresAnExistingRInstallationSubtitle"></p>
+    <p data-i18n-id="rstudioRequiresAnExistingRInstallationTitle"></p>
+    <p data-i18n-id="rstudioRequiresAnExistingRInstallationSubtitle"></p>
 
     <div>
       <input type="radio" id="use-default-64" name="r" value="use-default-64" checked />
-      <label for="use-default-64" id="i18n-useYourMachineDefault64BitR"></label>
+      <label for="use-default-64" data-i18n-id="useYourMachineDefault64BitR"></label>
     </div>
 
     <div>
       <input type="radio" id="use-default-32" name="r" value="use-default-32" />
-      <label for="use-default-32" id="i18n-useYourMachineDefault32BitR"></label>
+      <label for="use-default-32" data-i18n-id="useYourMachineDefault32BitR"></label>
     </div>
 
     <div>
       <input type="radio" id="use-custom" name="r" value="use-custom" />
-      <label for="use-custom" id="i18n-chooseASpecificVersionOfR"></label>
+      <label for="use-custom" data-i18n-id="chooseASpecificVersionOfR"></label>
     </div>
 
     <select id="select" class="select" name="select" size="7"></select>
 
-    <p id="i18n-customizeRenderingEngine"></p>
+    <p data-i18n-id="customizeRenderingEngine"></p>
 
     <div>
-      <label id="i18n-renderingEngineLabel" for="rendering-engine"></label>
+      <label data-i18n-id="renderingEngineLabel" for="rendering-engine"></label>
       <select name="rendering-engine" id="rendering-engine">
-        <option label="Auto-detect (recommended)" value="auto"></option>
-        <option label="Desktop" value="desktop"></option>
-        <option label="Software" value="software"></option>
+        <option data-i18n-id="renderingEngineOptionAuto" value="auto"></option>
+        <option data-i18n-id="renderingEngineOptionDesktop" value="desktop"></option>
+        <option data-i18n-id="renderingEngineOptionSoftware" value="software"></option>
       </select>
     </div>
 
     <div class="footer-left">
-      <button id="button-browse" class="button" type="button"></button>
+      <button data-i18n-id="buttonBrowse" id="button-browse" class="button" type="button"></button>
     </div>
 
     <div class="footer-right">
-      <button id="button-ok" class="button" type="button"></button>
-      <button id="button-cancel" class="button" type="button"></button>
+      <button data-i18n-id="buttonOk" id="button-ok" class="button" type="button"></button>
+      <button data-i18n-id="buttonCancel" id="button-cancel" class="button" type="button"></button>
     </div>
+
   </body>
 </html>

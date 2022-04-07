@@ -14,9 +14,10 @@
  *
  */
 
-import i18next from 'i18next';
+import i18next, { t } from 'i18next';
 import * as en from '../assets/locales/en.json';
 
+// Initialize the translation resources, as required for a document.
 const initI18n = () => {
   i18next
     .init({
@@ -31,4 +32,45 @@ const initI18n = () => {
     });
 };
 
-export { initI18n };
+/**
+ * Internationalize a document
+ * 
+ * Find document elements containing translatable text,
+ * that is, elements with the 'data-18n-id' attribute set,
+ * and replace the contents of those elements with the appropriate
+ * translated equivalent (if any).
+ * 
+ * @param document The document, whose elements will be translated.
+ * @param scope The scope in which translations are defiend.
+ */
+function internationalize(document: Document, scope: string): void {
+
+  try {
+    internationalizeImpl(document, scope);
+  } catch (err) {
+    console.log(`Error internationalizing document: ${err}`);
+  }
+
+}
+
+function internationalizeImpl(document: Document, scope: string): void {
+
+  // set document title
+  const titleId = `${scope}.documentTitle`;
+  if (i18next.exists(titleId)) {
+    document.title = i18next.t(titleId);
+  }
+
+  // find translatable elements, and translate them
+  const elements = document.querySelectorAll('[data-i18n-id]');
+  elements.forEach((el) => {
+    const id = el.getAttribute('data-i18n-id') as string;
+    const fullId = `${scope}.${id}`;
+    if (i18next.exists(fullId)) {
+      el.innerHTML = i18next.t(fullId);
+    }
+  });
+
+}
+
+export { initI18n, internationalize };

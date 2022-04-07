@@ -15,17 +15,25 @@
     "downloadInterruptedMessage": "The download was interrupted.",
     "save": "Save"
   },
-  "uiFolder": {
-    "chooseRExecutable": "Choose R Executable",
-    "customizeRenderingEngine": "You can also customize the rendering engine used by RStudio.",
-    "renderingEngineLabel": "Rendering Engine:",
-    "rExecutable": "R Executable",
-    "chooseRInstallation": "Choose R Installation",
+  "chooseRDialog": {
+    "documentTitle": "Choose R Installation",
     "rstudioRequiresAnExistingRInstallationTitle": "RStudio requires an existing installation of R.",
     "rstudioRequiresAnExistingRInstallationSubtitle": "Please select the version of R to use.",
     "useYourMachineDefault64BitR": "Use your machine's default 64-bit version of R",
     "useYourMachineDefault32BitR": "Use your machine's default 32-bit version of R",
     "chooseASpecificVersionOfR": "Choose a specific version of R:",
+    "customizeRenderingEngine": "You can also customize the rendering engine used by RStudio.",
+    "renderingEngineLabel": "Rendering Engine:",
+    "renderingEngineOptionAuto": "Auto-detect (recommended)",
+    "renderingEngineOptionDesktop": "Desktop",
+    "renderingEngineOptionSoftware": "Software",
+    "buttonBrowse": "Browse...",
+    "buttonOk": "OK",
+    "buttonCancel": "Cancel"
+  },
+  "uiFolder": {
+    "chooseRExecutable": "Choose R Executable",
+    "rExecutable": "R Executable",
     "browseDots": "Browse...",
     "okCaps": "OK",
     "cancel": "Cancel",

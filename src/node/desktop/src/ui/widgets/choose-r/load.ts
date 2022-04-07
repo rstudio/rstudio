@@ -17,8 +17,7 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 import { Callbacks, CallbackData } from './preload';
-import { initI18n } from '../../../main/i18n-manager';
-import i18next from 'i18next';
+import { initI18n, internationalize } from '../../../main/i18n-manager';
 
 import './styles.css';
 import { logger } from '../../../core/logger';
@@ -28,6 +27,9 @@ declare global {
     callbacks: Callbacks;
   }
 }
+
+// load internationalization infrastructure
+initI18n();
 
 // ensure that the custom select box is only enabled when the associated
 // radio button is checked
@@ -98,54 +100,6 @@ buttonBrowse.addEventListener('click', async () => {
   }
 });
 
-const loadPageLocalization = () => {
-  initI18n();
-
-  window.addEventListener('load', () => {
-    const i18nIds = [
-      'chooseRInstallation',
-      'rstudioRequiresAnExistingRInstallationTitle',
-      'rstudioRequiresAnExistingRInstallationSubtitle',
-      'useYourMachineDefault64BitR',
-      'useYourMachineDefault32BitR',
-      'chooseASpecificVersionOfR',
-      'browseDots',
-      'okCaps',
-      'cancel',
-      'customizeRenderingEngine',
-      'renderingEngineLabel',
-    ].map((id) => 'i18n-' + id);
-
-    try {
-      document.title = i18next.t('uiFolder.chooseRInstallation');
-
-      i18nIds.forEach((id) => {
-        const reducedId = id.replace('i18n-', '');
-
-        switch (reducedId) {
-          case 'browseDots':
-            id = 'button-browse';
-            break;
-          case 'okCaps':
-            id = 'button-ok';
-            break;
-          case 'cancel':
-            id = 'button-cancel';
-            break;
-          default:
-            break;
-        }
-
-        const elements = document.querySelectorAll(`[id=${id}]`);
-
-        elements.forEach((element) => {
-          element.innerHTML = i18next.t('uiFolder.' + reducedId);
-        });
-      });
-    } catch (err) {
-      console.log('Error occurred when loading i18n: ', err);
-    }
-  });
-};
-
-loadPageLocalization();
+window.addEventListener('load', () => {
+  internationalize(document, 'chooseRDialog');
+});
