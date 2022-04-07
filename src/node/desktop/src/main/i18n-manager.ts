@@ -56,12 +56,6 @@ function localize(document: Document, scope: string): void {
 
 function localizeImpl(document: Document, scope: string): void {
 
-  // set document title
-  const titleId = `${scope}.documentTitle`;
-  if (i18next.exists(titleId)) {
-    document.title = i18next.t(titleId);
-  }
-
   // find translatable elements, and translate them
   const elements = document.querySelectorAll('[data-i18n]');
   elements.forEach((el) => {
