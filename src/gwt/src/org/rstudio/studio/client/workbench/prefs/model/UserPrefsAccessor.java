@@ -3330,6 +3330,25 @@ public class UserPrefsAccessor extends Prefs
    public final static String QUARTO_ENABLED_DISABLED = "disabled";
    public final static String QUARTO_ENABLED_HIDDEN = "hidden";
 
+   /**
+    * The IDE's user-interface language.
+    */
+   public PrefValue<String> uiLanguage()
+   {
+      return enumeration(
+         "ui_language",
+         _constants.uiLanguageTitle(), 
+         _constants.uiLanguageDescription(), 
+         new String[] {
+            UI_LANGUAGE_EN,
+            UI_LANGUAGE_FR
+         },
+         "en");
+   }
+
+   public final static String UI_LANGUAGE_EN = "en";
+   public final static String UI_LANGUAGE_FR = "fr";
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3798,6 +3817,8 @@ public class UserPrefsAccessor extends Prefs
          checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
       if (source.hasKey("quarto_enabled"))
          quartoEnabled().setValue(layer, source.getString("quarto_enabled"));
+      if (source.hasKey("ui_language"))
+         uiLanguage().setValue(layer, source.getString("ui_language"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4035,6 +4056,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonProjectEnvironmentAutomaticActivate());
       prefs.add(checkNullExternalPointers());
       prefs.add(quartoEnabled());
+      prefs.add(uiLanguage());
       return prefs;
    }
    

@@ -83,6 +83,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
+import org.rstudio.studio.client.workbench.prefs.model.LocalStoragePrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
@@ -927,6 +928,22 @@ public class Application implements ApplicationEventHandlers
    }
    private void initializeWorkbench()
    {
+      // Check if user interface language set in the User Preferences was also set in local storage.
+      // If not, we need to set it and reload the page to ensure the correct language is shown.
+      // This would happen the first time in a new browser where the UI language was previously set to
+      // non-English.
+      LocalStoragePrefs localStoragePrefs = new LocalStoragePrefs();
+      if (localStoragePrefs.haveLocalStorage())
+      {
+         String uiLanguagePrefValue = userPrefs_.get().uiLanguage().getValue();
+         if (!StringUtil.equals(uiLanguagePrefValue, localStoragePrefs.getUiLanguage()))
+         {
+            localStoragePrefs.setUiLanguage(uiLanguagePrefValue);
+            RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
+            return;
+         }
+      }
+
       // Initialize application theme system
       pAppThemes_.get().initializeThemes(rootPanel_.getElement());
 
