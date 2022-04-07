@@ -101,5 +101,8 @@
   },
   "mainWindowTs": {
     "rSessionFailedToStart": "The R session failed to start."
+  },
+  "i18nManager": {
+    "errorLocalizingDocument": "Error localizing document:"
   }
 }

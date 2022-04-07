@@ -14,7 +14,7 @@
  *
  */
 
-import i18next, { t } from 'i18next';
+import i18next from 'i18next';
 import * as en from '../assets/locales/en.json';
 
 // Initialize the translation resources, as required for a document.
@@ -33,7 +33,7 @@ const initI18n = () => {
 };
 
 /**
- * Internationalize a document
+ * Localize a document
  * 
  * Find document elements containing translatable text,
  * that is, elements with the 'data-18n-id' attribute set,
@@ -43,17 +43,18 @@ const initI18n = () => {
  * @param document The document, whose elements will be translated.
  * @param scope The scope in which translations are defiend.
  */
-function internationalize(document: Document, scope: string): void {
+function localize(document: Document, scope: string): void {
 
   try {
-    internationalizeImpl(document, scope);
+    localizeImpl(document, scope);
   } catch (err) {
-    console.log(`Error internationalizing document: ${err}`);
+    const prefix = i18next.t('i18nManager.errorLocalizingDocument');
+    console.log(`${prefix}: ${err}`);
   }
 
 }
 
-function internationalizeImpl(document: Document, scope: string): void {
+function localizeImpl(document: Document, scope: string): void {
 
   // set document title
   const titleId = `${scope}.documentTitle`;
@@ -73,4 +74,4 @@ function internationalizeImpl(document: Document, scope: string): void {
 
 }
 
-export { initI18n, internationalize };
+export { initI18n, localize };

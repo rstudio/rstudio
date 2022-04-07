@@ -17,7 +17,7 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 import { Callbacks, CallbackData } from './preload';
-import { initI18n, internationalize } from '../../../main/i18n-manager';
+import { initI18n, localize } from '../../../main/i18n-manager';
 
 import './styles.css';
 import { logger } from '../../../core/logger';
@@ -101,5 +101,5 @@ buttonBrowse.addEventListener('click', async () => {
 });
 
 window.addEventListener('load', () => {
-  internationalize(document, 'chooseRDialog');
+  localize(document, 'chooseRDialog');
 });
