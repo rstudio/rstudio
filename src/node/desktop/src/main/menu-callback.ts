@@ -17,7 +17,6 @@ import { MenuItemConstructorOptions } from 'electron/main';
 import EventEmitter from 'events';
 
 import debounce from 'lodash/debounce';
-import throttle from 'lodash/throttle';
 
 /**
  * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
@@ -254,7 +253,16 @@ export class MenuCallback extends EventEmitter {
 
   setCommandChecked(id: string, newChecked: boolean) {
     const template = this.menuItemTemplates.get(id);
-    if (template) template.checked = newChecked;
+    if (template) {
+      // Menu only need to be updated in this case if it has been built already
+      // For increased speed, only if the current template
+      //  differs from the current state
+      if (this.isMenuSet && template.checked != newChecked) {
+        template.checked = newChecked;
+        this.updateMenus();
+      }
+      template.checked = newChecked;
+    }
   }
 
   setCommandLabel(id: string, newLabel: string) {
