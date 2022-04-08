@@ -612,14 +612,6 @@ Error ChildProcess::run()
             }
          }
 
-#ifndef __APPLE__
-         // set a bit indicating we want to die when our parent dies
-         // this is extra protection since we already send a SIGTERM
-         // in terminateProcesses below
-         if (::prctl(PR_SET_PDEATHSIG, SIGTERM) == -1)
-            LOG_ERROR(systemError(errno, ERROR_LOCATION));
-#endif
-
          // check for an onAfterFork function
           if (options_.onAfterFork)
              options_.onAfterFork();
@@ -811,6 +803,15 @@ Error ChildProcess::run()
          // clobbering of FDs affecting epoll calls
          signal_safe::closeFileDescriptorsFromParent(fdCloseFd[READ], STDERR_FILENO+1, hard);
          ::close(fdCloseFd[READ]);
+      }
+
+      if (options_.exitWithParent)
+      {
+#ifndef __APPLE__
+         // set a bit indicating we want to die when our parent dies
+         if (::prctl(PR_SET_PDEATHSIG, SIGTERM) == -1)
+            LOG_ERROR(systemError(errno, ERROR_LOCATION));
+#endif
       }
 
       if (options_.environment)
