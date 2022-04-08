@@ -78,6 +78,8 @@ export class MenuCallback extends EventEmitter {
 
   private setShortcutDebounceId?: NodeJS.Timeout;
 
+  isMenuSet = false;
+
   debounceUpdateMenuMedium: () => void = debounce(() => this.updateMenus(), 250);
 
   constructor() {
@@ -147,7 +149,11 @@ export class MenuCallback extends EventEmitter {
     ipcMain.on('menu_commit_command_shortcuts', () => {
       if (this.setShortcutDebounceId) clearTimeout(this.setShortcutDebounceId);
 
-      this.debounceUpdateMenuMedium();
+      if (this.isMenuSet) {
+        this.debounceUpdateMenuMedium();
+      } else {
+        this.updateMenus();
+      }
     });
   }
 
@@ -319,6 +325,8 @@ export class MenuCallback extends EventEmitter {
     this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
 
     Menu.setApplicationMenu(this.mainMenu);
+
+    this.isMenuSet = true;
   }
 
   addCommand(
