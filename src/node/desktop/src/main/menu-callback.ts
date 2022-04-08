@@ -79,7 +79,7 @@ export class MenuCallback extends EventEmitter {
 
   debounceUpdateMenuLong: any = debounce(() => this.updateMenus(), 5000);
   debounceUpdateMenuMedium: any = debounce(() => this.updateMenus(), 250);
-  debounceUpdateMenuShort: any = debounce(() => this.updateMenus(), 50);
+  debounceUpdateMenuShort: any = debounce(() => this.updateMenus(), 10);
 
   constructor() {
     super();
