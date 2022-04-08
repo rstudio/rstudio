@@ -79,6 +79,7 @@ export class MenuCallback extends EventEmitter {
 
   debounceUpdateMenuLong: any = debounce(() => this.updateMenus(), 5000);
   debounceUpdateMenuMedium: any = debounce(() => this.updateMenus(), 250);
+  debounceUpdateMenuShort: any = debounce(() => this.updateMenus(), 50);
 
   constructor() {
     super();
@@ -245,7 +246,7 @@ export class MenuCallback extends EventEmitter {
       // differs from the new state
       if (this.isMenuSet && template.visible != newVisibility) {
         template.visible = newVisibility;
-        this.updateMenus();
+        this.debounceUpdateMenuShort();
       }
       template.visible = newVisibility;
     }
@@ -260,7 +261,7 @@ export class MenuCallback extends EventEmitter {
       // differs from the new state
       if (this.isMenuSet && template.enabled != newEnablement) {
         template.enabled = newEnablement;
-        this.updateMenus();
+        this.debounceUpdateMenuShort();
       }
       template.enabled = newEnablement;
     }
@@ -275,7 +276,7 @@ export class MenuCallback extends EventEmitter {
       // differs from the new state
       if (this.isMenuSet && template.checked != newChecked) {
         template.checked = newChecked;
-        this.updateMenus();
+        this.debounceUpdateMenuShort();
       }
       template.checked = newChecked;
     }
@@ -290,7 +291,7 @@ export class MenuCallback extends EventEmitter {
       // differs from the new state
       if (this.isMenuSet && template.label != newLabel) {
         template.label = newLabel;
-        this.updateMenus();
+        this.debounceUpdateMenuShort();
       }
       template.label = newLabel;
     }
