@@ -507,7 +507,12 @@ FilePath macBinaryPath(const FilePath& resourcePath,
    
    if (electronPath.exists())
       return electronPath;
-   
+
+   // alternate Electron binary path
+   electronPath = resourcePath.completePath(stem);
+   if (electronPath.exists())
+      return electronPath;
+
    // otherwise, look in default Qt location
    FilePath qtPath = resourcePath.getParent().completePath("MacOS").completePath(stem);
    return qtPath;
