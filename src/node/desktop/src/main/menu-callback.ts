@@ -381,7 +381,7 @@ export class MenuCallback extends EventEmitter {
     };
 
     if (checkable) {
-      menuItemOpts.type = 'checkbox';
+      menuItemOpts.type = 'radio';
       menuItemOpts.checked = false;
     }
 
