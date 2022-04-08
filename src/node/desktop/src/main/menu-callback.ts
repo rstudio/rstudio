@@ -238,20 +238,41 @@ export class MenuCallback extends EventEmitter {
 
   setCommandVisibility(id: string, newVisibility: boolean) {
     const template = this.menuItemTemplates.get(id);
-    if (template) template.visible = newVisibility;
+
+    if (template) {
+      // Menu only need to be updated in this case if it has been built already
+      // For increased speed, only if the current template
+      // differs from the new state
+      if (this.isMenuSet && template.visible != newVisibility) {
+        template.visible = newVisibility;
+        this.updateMenus();
+      }
+      template.visible = newVisibility;
+    }
   }
 
   setCommandEnabled(id: string, newEnablement: boolean) {
     const template = this.menuItemTemplates.get(id);
-    if (template) template.enabled = newEnablement;
+
+    if (template) {
+      // Menu only need to be updated in this case if it has been built already
+      // For increased speed, only if the current template
+      // differs from the new state
+      if (this.isMenuSet && template.enabled != newEnablement) {
+        template.enabled = newEnablement;
+        this.updateMenus();
+      }
+      template.enabled = newEnablement;
+    }
   }
 
   setCommandChecked(id: string, newChecked: boolean) {
     const template = this.menuItemTemplates.get(id);
+
     if (template) {
       // Menu only need to be updated in this case if it has been built already
       // For increased speed, only if the current template
-      //  differs from the current state
+      // differs from the new state
       if (this.isMenuSet && template.checked != newChecked) {
         template.checked = newChecked;
         this.updateMenus();
@@ -262,7 +283,17 @@ export class MenuCallback extends EventEmitter {
 
   setCommandLabel(id: string, newLabel: string) {
     const template = this.menuItemTemplates.get(id);
-    if (template) template.label = newLabel;
+
+    if (template) {
+      // Menu only need to be updated in this case if it has been built already
+      // For increased speed, only if the current template
+      // differs from the new state
+      if (this.isMenuSet && template.label != newLabel) {
+        template.label = newLabel;
+        this.updateMenus();
+      }
+      template.label = newLabel;
+    }
   }
 
   /**
