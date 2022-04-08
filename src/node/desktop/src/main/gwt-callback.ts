@@ -30,15 +30,18 @@ import {
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { mkdtempSync, writeFileSync } from 'fs';
-import i18next from 'i18next';
+import i18next, { t } from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
-import path from 'path';
+import path, { dirname } from 'path';
+import { err } from '../core/expected';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
 import desktop from '../native/desktop.node';
+import { ChooseRModalWindow } from '../ui/widgets/choose-r';
 import { appState } from './app-state';
+import { findRInstallationsWin32 } from './detect-r';
 import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
@@ -51,6 +54,22 @@ export enum PendingQuit {
   PendingQuitAndExit,
   PendingQuitAndRestart,
   PendingQuitRestartAndReload,
+}
+
+function formatSelectedVersionForUi(rBinDir: string) {
+
+  // binDir will have format <R_HOME>/bin/<arch>,
+  // so we need two dirname()s to get the home path
+  const rHome = dirname(dirname(rBinDir));
+
+  // return formatted string as appropriate
+  if (rBinDir.endsWith('x64')) {
+    return `[64-bit] ${rHome}`;
+  } else if (rBinDir.endsWith('i386')) {
+    return `[32-bit] ${rHome}`;
+  } else {
+    return rHome;
+  }
 }
 
 // The documentation for getFocusedWebContents() has:
@@ -352,12 +371,35 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_get_r_version', () => {
-      return '';
+      const rBinDir = ElectronDesktopOptions().rBinDir();
+      return formatSelectedVersionForUi(rBinDir);
     });
 
-    ipcMain.handle('desktop_choose_r_version', () => {
-      GwtCallback.unimpl('desktop_choose_r_version');
-      return '';
+    ipcMain.handle('desktop_choose_r_version', async () => {
+
+      // discover available R installations
+      const rInstalls = findRInstallationsWin32();
+      if (rInstalls.length === 0) {
+        return '';
+      }
+
+      // ask the user what version of R they'd like to use
+      const chooseRDialog = new ChooseRModalWindow(rInstalls);
+      const [data, error] = await chooseRDialog.showModal();
+      if (error) {
+        logger().logError(error);
+        return '';
+      }
+
+      const path = data?.binaryPath as string;
+
+      // we need to save the binary directory in the options, but
+      // return a formatted string for the client, so do that here
+      const rBinDir = dirname(path).replace(/\//g, '/');
+      ElectronDesktopOptions().setRBinDir(rBinDir);
+      logger().logDebug(`Using R: ${rBinDir}`);
+      return formatSelectedVersionForUi(rBinDir);
+
     });
 
     ipcMain.handle('desktop_device_pixel_ratio', () => {

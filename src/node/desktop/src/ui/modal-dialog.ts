@@ -18,6 +18,7 @@ import { err, Expected, ok } from '../core/expected';
 import { safeError } from '../core/err';
 
 export abstract class ModalDialog<T> extends BrowserWindow {
+
   abstract onShowModal(): Promise<T>;
 
   private readonly widgetUrl: string;
@@ -53,6 +54,7 @@ export abstract class ModalDialog<T> extends BrowserWindow {
   }
 
   async showModalImpl(): Promise<T> {
+
     // load the associated HTML
     await this.loadURL(this.widgetUrl);
 
@@ -61,5 +63,6 @@ export abstract class ModalDialog<T> extends BrowserWindow {
 
     const result = await this.onShowModal();
     return result;
+
   }
 }

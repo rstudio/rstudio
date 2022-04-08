@@ -13,7 +13,7 @@
  *
  */
 
-import path, { join } from 'path';
+import path, { dirname, join } from 'path';
 
 import { execSync, spawnSync } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
@@ -74,13 +74,16 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
       // nothing to do if RSTUDIO_WHICH_R is set
       const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
       if (rstudioWhichR) {
+        logger().logDebug(`Using R from RSTUDIO_WHICH_R: ${rstudioWhichR}`);
         return ok(rstudioWhichR);
       }
 
       // if the user selected a version of R previously, then use it
-      const rstudioSavedPath = ElectronDesktopOptions().rBinDir();
-      if (rstudioSavedPath) {
-        return ok(rstudioSavedPath);
+      const rBinDir = ElectronDesktopOptions().rBinDir();
+      if (rBinDir) {
+        const rPath = `${rBinDir}/R.exe`;
+        logger().logDebug(`Using R from preferences: ${rPath}`);
+        return ok(rPath);
       }
 
     }
@@ -105,7 +108,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
 
     // save the stored version of R
     const path = data.binaryPath as string;
-    ElectronDesktopOptions().setRBinDir(path);
+    ElectronDesktopOptions().setRBinDir(dirname(path));
 
     // if the user has changed the default rendering engine,
     // then we'll need to ask them to restart RStudio now
@@ -149,6 +152,7 @@ export function prepareEnvironment(rPath?: string): Err {
 }
 
 function prepareEnvironmentImpl(rPath?: string): Err {
+
   // attempt to detect R environment
   const [rEnvironment, error] = detectREnvironment(rPath);
   if (error) {
@@ -173,9 +177,11 @@ function prepareEnvironmentImpl(rPath?: string): Err {
   }
 
   return success();
+
 }
 
-function detectREnvironment(rPath?: string): Expected<REnvironment> {
+export function detectREnvironment(rPath?: string): Expected<REnvironment> {
+
   // scan for R
   const [R, scanError] = rPath ? ok(rPath) : scanForR();
   if (scanError) {
@@ -224,6 +230,7 @@ function detectREnvironment(rPath?: string): Expected<REnvironment> {
     },
     ldLibraryPath: rLdLibraryPath,
   });
+
 }
 
 function scanForR(): Expected<string> {
@@ -270,7 +277,7 @@ function scanForRPosix(): Expected<string> {
   return err();
 }
 
-function findRInstallationsWin32(): string[] {
+export function findRInstallationsWin32(): string[] {
   const rInstallations = new Set<string>();
 
   // list all installed versions from registry

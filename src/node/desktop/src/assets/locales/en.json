@@ -33,7 +33,9 @@
     "renderingEngineOptionDesktop": "Desktop",
     "renderingEngineOptionSoftware": "Software",
     "renderingEngineChangedTitle": "Rendering Engine Changed",
-    "renderingEngineChangedMessage": "The rendering engine has been changed.\nPlease restart RStudio for these changes to take effect."
+    "renderingEngineChangedMessage": "The rendering engine has been changed.\nPlease restart RStudio for these changes to take effect.",
+    "rLaunchFailedTitle": "R Failed to Launch",
+    "rLaunchFailedMessage": "RStudio was unable to run this version of R.\n\nYou may need to select a different version of R."
   },
   "uiFolder": {
     "chooseRExecutable": "Choose R Executable",
