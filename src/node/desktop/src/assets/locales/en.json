@@ -2,7 +2,8 @@
   "common": {
     "buttonOk": "OK",
     "buttonCancel": "Cancel",
-    "buttonBrowse": "Browse..."
+    "buttonBrowse": "Browse...",
+    "unknownErrorOccurred": "An unknown error occurred."
   },
   "contextMenu": {
     "saveImageAsDots": "Save image as...",
@@ -34,8 +35,8 @@
     "renderingEngineOptionSoftware": "Software",
     "renderingEngineChangedTitle": "Rendering Engine Changed",
     "renderingEngineChangedMessage": "The rendering engine has been changed.\nPlease restart RStudio for these changes to take effect.",
-    "rLaunchFailedTitle": "R Failed to Launch",
-    "rLaunchFailedMessage": "RStudio was unable to run this version of R.\n\nYou may need to select a different version of R."
+    "rLaunchFailedTitle": "Error Loading R",
+    "rLaunchFailedMessage": "An error occurred while attempting to load the selected version of R. Please select a different R installation."
   },
   "uiFolder": {
     "chooseRExecutable": "Choose R Executable",

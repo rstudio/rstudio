@@ -209,10 +209,15 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   const result = spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
     encoding: 'utf-8',
     input: rQueryScript,
+    env: {}
   });
 
-  if (result.error) {
-    return err(result.error);
+  // NOTE: It's possible for spawnSync to fail to launch a process,
+  // and so exit with a non-zero status code, but without an error.
+  // For that reason, we need to check for a non-zero exit code
+  // rather than just a non-null error.
+  if (result.status !== 0) {
+    return err(result.error ?? new Error(t('common.unknownErrorOccurred')));
   }
 
   // unwrap query results

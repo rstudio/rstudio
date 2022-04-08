@@ -35,16 +35,16 @@ function checkValid(data: CallbackData) {
   const [rEnvironment, err] = detectREnvironment(rBinaryPath);
   if (err) {
     
-    const response = dialog.showMessageBoxSync({
+    // something went wrong; let the user know they can't use
+    // this version of R with RStudio
+    dialog.showMessageBoxSync({
+      type: 'error',
       title: t('chooseRDialog.rLaunchFailedTitle'),
       message: t('chooseRDialog.rLaunchFailedMessage'),
-      buttons: [
-        t('common.buttonOk'),
-        t('common.buttonCancel')
-      ],
+      buttons: [ t('common.buttonOk'), ],
     });
 
-    return response === 0;
+    return false;
 
   }
 
