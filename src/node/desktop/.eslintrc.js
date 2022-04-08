@@ -14,7 +14,7 @@ module.exports = {
     sourceType: 'module',
   },
 
-  plugins: ['@typescript-eslint', 'prettier'],
+  plugins: ['@typescript-eslint'],
 
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
 
@@ -32,12 +32,6 @@ module.exports = {
         tabWidth: 2,
         ignoreUrls: true,
       },
-    ],
-    'prettier/prettier': [
-      'warn',
-      {
-        'endOfLine': 'auto'
-      }
     ],
 
     '@typescript-eslint/await-thenable': ['error'],

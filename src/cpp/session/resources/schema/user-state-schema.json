@@ -96,7 +96,7 @@
             "properties": {
                 "engine": {
                     "type": "string",
-                    "enum": ["auto", "desktop", "gles"]
+                    "enum": ["auto", "desktop", "gles", "software"]
                 },
                 "useGpuExclusionList": {
                     "type": "boolean"

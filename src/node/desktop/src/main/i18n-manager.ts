@@ -17,6 +17,7 @@
 import i18next from 'i18next';
 import * as en from '../assets/locales/en.json';
 
+// Initialize the translation resources, as required for a document.
 const initI18n = () => {
   i18next
     .init({
@@ -31,4 +32,40 @@ const initI18n = () => {
     });
 };
 
-export { initI18n };
+/**
+ * Localize a document
+ * 
+ * Find document elements containing translatable text,
+ * that is, elements with the 'data-18n-id' attribute set,
+ * and replace the contents of those elements with the appropriate
+ * translated equivalent (if any).
+ * 
+ * @param document The document, whose elements will be translated.
+ * @param scope The scope in which translations are defiend.
+ */
+function localize(document: Document, scope: string): void {
+
+  try {
+    localizeImpl(document, scope);
+  } catch (err) {
+    const prefix = i18next.t('i18nManager.errorLocalizingDocument');
+    console.log(`${prefix}: ${err}`);
+  }
+
+}
+
+function localizeImpl(document: Document, scope: string): void {
+
+  // find translatable elements, and translate them
+  const elements = document.querySelectorAll('[data-i18n]');
+  elements.forEach((el) => {
+    const id = el.getAttribute('data-i18n') as string;
+    const fullId = id.indexOf('.') === -1 ? `${scope}.${id}` : id;
+    if (i18next.exists(fullId)) {
+      el.innerHTML = i18next.t(fullId);
+    }
+  });
+
+}
+
+export { initI18n, localize };
