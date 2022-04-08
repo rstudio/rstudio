@@ -16,12 +16,17 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { existsSync } from 'fs';
 import path from 'path';
 
+export interface CallbackData {
+  binaryPath?: string | unknown;
+  renderingEngine?: string;
+}
+
 export interface Callbacks {
-  useDefault32bit(): void;
-  useDefault64bit(): void;
-  use(version: string): void;
+  useDefault32bit(data: CallbackData): void;
+  useDefault64bit(data: CallbackData): void;
+  use(data: CallbackData): void;
+  browse(data: CallbackData): Promise<boolean>;
   cancel(): void;
-  browse(): Promise<boolean>;
 }
 
 ipcRenderer.on('css', (event, data) => {
@@ -33,9 +38,14 @@ ipcRenderer.on('css', (event, data) => {
 
 // initialize select input
 ipcRenderer.on('initialize', (event, data) => {
+
   // cast received data
-  const rInstalls = data as string[];
-  console.log(rInstalls);
+  const rInstalls = data.rInstalls as string[];
+  const renderingEngine = data.renderingEngine as string;
+
+  // set the current rendering engine
+  const renderingEngineEl = document.getElementById('rendering-engine') as HTMLSelectElement;
+  renderingEngineEl.value = renderingEngine;
 
   // get access to the select element
   const selectEl = document.getElementById('select') as HTMLSelectElement;
@@ -77,29 +87,30 @@ ipcRenderer.on('initialize', (event, data) => {
       selectEl.appendChild(optionEl);
     }
   });
+
 });
 
 // export callbacks
 const callbacks: Callbacks = {
-  useDefault32bit: () => {
-    ipcRenderer.send('use-default-32bit');
+  useDefault32bit: (data: CallbackData) => {
+    ipcRenderer.send('use-default-32bit', data);
   },
 
-  useDefault64bit: () => {
-    ipcRenderer.send('use-default-64bit');
+  useDefault64bit: (data: CallbackData) => {
+    ipcRenderer.send('use-default-64bit', data);
   },
 
-  use: (version: string) => {
-    ipcRenderer.send('use-custom', version);
+  use: (data: CallbackData) => {
+    ipcRenderer.send('use-custom', data);
+  },
+
+  browse: async (data: CallbackData) => {
+    const shouldCloseDialog = await ipcRenderer.invoke('browse-r-exe', data);
+    return shouldCloseDialog;
   },
 
   cancel: () => {
     ipcRenderer.send('cancel');
-  },
-
-  browse: async () => {
-    const shouldCloseDialog = await ipcRenderer.invoke('browse-r-exe');
-    return shouldCloseDialog;
   },
 };
 

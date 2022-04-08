@@ -20,11 +20,13 @@ import { ModalDialog } from '../modal-dialog';
 
 import { initI18n } from '../../main/i18n-manager';
 import i18next from 'i18next';
+import { CallbackData } from './choose-r/preload';
+import { ElectronDesktopOptions } from '../../main/preferences/electron-desktop-options';
 
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
-export class ChooseRModalWindow extends ModalDialog<string | null> {
+export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
   private rInstalls: string[];
 
   constructor(rInstalls: string[]) {
@@ -33,30 +35,36 @@ export class ChooseRModalWindow extends ModalDialog<string | null> {
     initI18n();
   }
 
-  async onShowModal(): Promise<string | null> {
-    // initialize the select widget
-    this.webContents.send('initialize', this.rInstalls);
+  async onShowModal(): Promise<CallbackData | null> {
+    
+    // initialize the window
+    this.webContents.send('initialize', {
+      rInstalls: this.rInstalls,
+      renderingEngine: ElectronDesktopOptions().renderingEngine()
+    });
 
     // listen for messages from the window
     return new Promise((resolve) => {
-      ipcMain.on('use-default-32bit', () => {
-        const path = findDefault32Bit();
-        logger().logDebug(`Using default 32-bit R (${path})`);
-        return resolve(`${path}/bin/i386/R.exe`);
-      });
-
-      ipcMain.on('use-default-64bit', () => {
-        const path = findDefault64Bit();
-        logger().logDebug(`Using default 64-bit R (${path})`);
-        return resolve(`${path}/bin/x64/R.exe`);
-      });
-
-      ipcMain.on('use-custom', (event, data) => {
-        logger().logDebug(`Using user-selected version of R (${data})`);
+      ipcMain.on('use-default-32bit', (event, data: CallbackData) => {
+        const installPath = findDefault32Bit();
+        data.binaryPath = `${installPath}/bin/i386/R.exe`;
+        logger().logDebug(`Using default 32-bit R (${data.binaryPath})`);
         return resolve(data);
       });
 
-      ipcMain.handle('browse-r-exe', async () => {
+      ipcMain.on('use-default-64bit', (event, data: CallbackData) => {
+        const installPath = findDefault64Bit();
+        data.binaryPath = `${installPath}/bin/x64/R.exe`;
+        logger().logDebug(`Using default 64-bit R (${data.binaryPath})`);
+        return resolve(data);
+      });
+
+      ipcMain.on('use-custom', (event, data: CallbackData) => {
+        logger().logDebug(`Using user-selected version of R (${data.binaryPath})`);
+        return resolve(data);
+      });
+
+      ipcMain.handle('browse-r-exe', async (event, data: CallbackData) => {
         const response = dialog.showOpenDialogSync(this, {
           title: i18next.t('uiFolder.chooseRExecutable'),
           properties: ['openFile'],
@@ -64,8 +72,9 @@ export class ChooseRModalWindow extends ModalDialog<string | null> {
         });
 
         if (response) {
-          logger().logDebug(`Using user-selected version of R (${response[0]})`);
-          resolve('' + response[0]);
+          data.binaryPath = response[0];
+          logger().logDebug(`Using user-selected version of R (${data.binaryPath})`);
+          resolve(data);
         }
 
         return !!response;
