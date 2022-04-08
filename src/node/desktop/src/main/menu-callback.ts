@@ -16,6 +16,9 @@ import { ipcMain, Menu, MenuItem } from 'electron';
 import { MenuItemConstructorOptions } from 'electron/main';
 import EventEmitter from 'events';
 
+import debounce from 'lodash/debounce';
+import throttle from 'lodash/throttle';
+
 /**
  * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
  * after startup.
@@ -74,6 +77,8 @@ export class MenuCallback extends EventEmitter {
   lastWasDiagnostics = false;
 
   private setShortcutDebounceId?: NodeJS.Timeout;
+
+  debounceUpdateMenuMedium: () => void = debounce(() => this.updateMenus(), 250);
 
   constructor() {
     super();
@@ -142,7 +147,7 @@ export class MenuCallback extends EventEmitter {
     ipcMain.on('menu_commit_command_shortcuts', () => {
       if (this.setShortcutDebounceId) clearTimeout(this.setShortcutDebounceId);
 
-      this.updateMenus();
+      this.debounceUpdateMenuMedium();
     });
   }
 
