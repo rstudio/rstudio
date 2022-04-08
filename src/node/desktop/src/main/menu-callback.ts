@@ -75,11 +75,10 @@ export class MenuCallback extends EventEmitter {
   lastWasTools = false;
   lastWasDiagnostics = false;
 
-  private setShortcutDebounceId?: NodeJS.Timeout;
-
   isMenuSet = false;
 
-  debounceUpdateMenuMedium: () => void = debounce(() => this.updateMenus(), 250);
+  debounceUpdateMenuLong: any = debounce(() => this.updateMenus(), 5000);
+  debounceUpdateMenuMedium: any = debounce(() => this.updateMenus(), 250);
 
   constructor() {
     super();
@@ -146,7 +145,7 @@ export class MenuCallback extends EventEmitter {
     });
 
     ipcMain.on('menu_commit_command_shortcuts', () => {
-      if (this.setShortcutDebounceId) clearTimeout(this.setShortcutDebounceId);
+      this.debounceUpdateMenuLong.cancel();
 
       if (this.isMenuSet) {
         this.debounceUpdateMenuMedium();
@@ -234,11 +233,7 @@ export class MenuCallback extends EventEmitter {
     const accelerator = this.convertShortcut(shortcut);
     template.accelerator = accelerator;
 
-    if (this.setShortcutDebounceId) clearTimeout(this.setShortcutDebounceId);
-
-    this.setShortcutDebounceId = setTimeout(() => {
-      this.updateMenus();
-    }, 5000);
+    this.debounceUpdateMenuLong();
   }
 
   setCommandVisibility(id: string, newVisibility: boolean) {
