@@ -31,10 +31,11 @@ export function getMenuBridge() {
       label: string,
       tooltip: string,
       shortcut: string,
-      isChecked: boolean,
+      isCheckable: boolean,
+      isRadio: boolean,
       isVisible: boolean,
     ) => {
-      ipcRenderer.send('menu_add_command', cmdId, label, tooltip, shortcut, isChecked, isVisible);
+      ipcRenderer.send('menu_add_command', cmdId, label, tooltip, shortcut, isCheckable, isRadio, isVisible);
     },
 
     addSeparator: () => {

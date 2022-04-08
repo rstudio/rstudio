@@ -46,6 +46,7 @@ public Q_SLOTS:
                     QString tooltip,
                     QString shortcut,
                     bool isCheckable,
+                    bool isRadio,
                     bool isVisible);
     void addSeparator();
     void endMenu();
@@ -78,14 +79,16 @@ private:
                              QString label,
                              QString tooltip,
                              QKeySequence keySequence,
-                             bool checkable);
+                             bool checkable,
+                             bool isRadio);
 
     QAction* duplicateAppMenuAction(QString commandToDuplicate,
                                     QString commandId,
                                     QString label,
                                     QString tooltip,
                                     QKeySequence keySequence,
-                                    bool checkable);
+                                    bool checkable,
+                                    bool isRadio);
 private:
     QMenuBar* pMainMenu_ = nullptr;
     QStack<SubMenu*> menuStack_;
