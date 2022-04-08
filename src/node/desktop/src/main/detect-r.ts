@@ -189,6 +189,7 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
     return err(scanError);
   }
 
+  // resolve path to binary if we were given a directory
   let rExecutable = new FilePath(R);
   if (rExecutable.isDirectory()) {
     rExecutable = rExecutable.completeChildPath(process.platform === 'win32' ? 'R.exe' : 'R');

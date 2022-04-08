@@ -13,7 +13,7 @@
  *
  */
 
-import { dialog, ipcMain } from 'electron';
+import { dialog } from 'electron';
 import { detectREnvironment, findDefault32Bit, findDefault64Bit } from '../../main/detect-r';
 import { logger } from '../../core/logger';
 import { ModalDialog } from '../modal-dialog';
@@ -49,34 +49,20 @@ function checkValid(data: CallbackData) {
   }
 
   logger().logDebug(`Validated R: ${rEnvironment.rScriptPath}`);
+  logger().logDebug(JSON.stringify(rEnvironment));
   return true;
 
 }
 
 export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
+  
   private rInstalls: string[];
-
-  private channels: string[] = [
-    'use-default-32bit',
-    'use-default-64bit',
-    'use-custom',
-    'browse-r-exe',
-    'cancel',
-    'closed',
-  ];
 
   constructor(rInstalls: string[]) {
 
     super(CHOOSE_R_WEBPACK_ENTRY, CHOOSE_R_PRELOAD_WEBPACK_ENTRY);
 
     this.rInstalls = rInstalls;
-
-    // ensure handlers are emoved after close
-    this.on('closed', () => {
-      for (const channel of this.channels) {
-        ipcMain.removeHandler(channel);
-      }
-    });
 
     initI18n();
 
@@ -86,9 +72,6 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
     if (checkValid(data)) {
       resolve(data);
-      for (const channel of this.channels) {
-        ipcMain.removeHandler(channel);
-      }
       return true;
     } else {
       return false;
@@ -106,26 +89,27 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
     // listen for messages from the window
     return new Promise((resolve) => {
-      ipcMain.handle('use-default-32bit', (event, data: CallbackData) => {
+
+      this.addIpcHandler('use-default-32bit', async (event, data: CallbackData) => {
         const installPath = findDefault32Bit();
         data.binaryPath = `${installPath}/bin/i386/R.exe`;
         logger().logDebug(`Using default 32-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
       });
 
-      ipcMain.handle('use-default-64bit', (event, data: CallbackData) => {
+      this.addIpcHandler('use-default-64bit', async (event, data: CallbackData) => {
         const installPath = findDefault64Bit();
         data.binaryPath = `${installPath}/bin/x64/R.exe`;
         logger().logDebug(`Using default 64-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
       });
 
-      ipcMain.handle('use-custom', (event, data: CallbackData) => {
+      this.addIpcHandler('use-custom', async (event, data: CallbackData) => {
         logger().logDebug(`Using user-selected version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
       });
 
-      ipcMain.handle('browse-r-exe', async (event, data: CallbackData) => {
+      this.addIpcHandler('browse-r-exe', async (event, data: CallbackData) => {
 
         const response = dialog.showOpenDialogSync(this, {
           title: i18next.t('uiFolder.chooseRExecutable'),
@@ -144,13 +128,14 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
       });
 
-      ipcMain.on('cancel', () => {
+      this.addIpcHandler('cancel', () => {
         return resolve(null);
       });
 
       this.on('closed', () => {
         return resolve(null);
       });
+
     });
   }
 }

@@ -391,10 +391,14 @@ export class GwtCallback extends EventEmitter {
         return '';
       }
 
-      const path = data?.binaryPath as string;
+      // if the dialog was cancelled, the path may be null
+      if (data == null || data.binaryPath == null) {
+        return '';
+      }
 
       // we need to save the binary directory in the options, but
       // return a formatted string for the client, so do that here
+      const path = data.binaryPath as string;
       const rBinDir = dirname(path).replace(/\//g, '/');
       ElectronDesktopOptions().setRBinDir(rBinDir);
       logger().logDebug(`Using R: ${rBinDir}`);
