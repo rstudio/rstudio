@@ -3052,6 +3052,19 @@ core::Error UserPrefValues::setQuartoEnabled(std::string val)
    return writePref("quarto_enabled", val);
 }
 
+/**
+ * The IDE's user-interface language.
+ */
+std::string UserPrefValues::uiLanguage()
+{
+   return readPref<std::string>("ui_language");
+}
+
+core::Error UserPrefValues::setUiLanguage(std::string val)
+{
+   return writePref("ui_language", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3288,6 +3301,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonProjectEnvironmentAutomaticActivate,
       kCheckNullExternalPointers,
       kQuartoEnabled,
+      kUiLanguage,
    });
 }
    

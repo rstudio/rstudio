@@ -52,6 +52,7 @@
 #ifdef _WIN32
 #include <core/system/RegistryKey.hpp>
 #include <Windows.h>
+#include <process.h>
 #endif
 
 #ifdef Q_OS_LINUX
@@ -117,9 +118,7 @@ Error removeStaleOptionsLockfile()
 
 void initializeSharedSecret()
 {
-   sharedSecret = QString::number(rand())
-                  + QString::number(rand())
-                  + QString::number(rand());
+   sharedSecret = QString::fromStdString(core::system::generateUuid());
    std::string value = sharedSecret.toUtf8().constData();
    core::system::setenv("RS_SHARED_SECRET", value);
 }
@@ -518,6 +517,8 @@ int main(int argc, char* argv[])
                                   core::log::LogLevel::WARN,
                                   desktop::userLogPath(),
                                   true);
+
+      LOG_DEBUG_MESSAGE("Initialized logs (pid=" + std::to_string(getpid()) + ")");
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

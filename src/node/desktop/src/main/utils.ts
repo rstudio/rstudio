@@ -188,7 +188,7 @@ function findBuildRootImpl(rootDir: string): string {
   for (const buildDirParent of buildDirParents) {
     const buildDirFiles = fs.readdirSync(buildDirParent);
     for (const file of buildDirFiles) {
-      if (file.startsWith('build')) {
+      if (file.startsWith('build') || file.startsWith('cmake-build-')) {
         const path = `${buildDirParent}/${file}`;
         const stat = fs.statSync(path);
         if (stat.isDirectory()) {

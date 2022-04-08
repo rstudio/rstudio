@@ -20,7 +20,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.i18n.client.DateTimeFormat;
-import com.google.gwt.i18n.client.DateTimeFormat.PredefinedFormat;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.text.shared.SafeHtmlRenderer;
@@ -217,8 +216,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
          @Override
          public String getValue(CommitInfo object)
          {
-            return DateTimeFormat.getFormat(
-                  PredefinedFormat.DATE_SHORT).format(object.getDate());
+            return yearMonthDayFormat.format(object.getDate());
          }
       };
       addColumn(dateCol, constants_.dateCapitalized());
@@ -326,4 +324,5 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
    private GraphTheme graphTheme_;
    private boolean autoSelectFirstRow_ = true;
    private static final ViewVcsConstants constants_ = GWT.create(ViewVcsConstants.class);
+   private static final DateTimeFormat yearMonthDayFormat = DateTimeFormat.getFormat("yyyy-MM-dd");
 }

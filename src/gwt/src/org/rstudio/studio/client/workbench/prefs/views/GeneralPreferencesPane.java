@@ -46,7 +46,9 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
+import org.rstudio.studio.client.workbench.prefs.model.LocalStoragePrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style;
@@ -183,7 +185,7 @@ public class GeneralPreferencesPane extends PreferencesPane
                                 constants_.removeDuplicatesLabel());
       basic.add(removeHistoryDuplicates_);
 
-        basic.add(spacedBefore(headerLabel(constants_.otherCaption())));
+      basic.add(spacedBefore(headerLabel(constants_.otherCaption())));
 
       basic.add(checkboxPref(
             constants_.otherWrapAroundLabel(),
@@ -324,7 +326,7 @@ public class GeneralPreferencesPane extends PreferencesPane
             useGpuDriverBugWorkarounds_.setValue(!disable);
          });
 
-         if (BrowseCap.isLinuxDesktop())
+         if (BrowseCap.isLinuxDesktop() && !BrowseCap.isElectron())
          {
             clipboardMonitoring_ = new CheckBox(constants_.clipboardMonitoringLabel());
             advanced.add(lessSpaced(clipboardMonitoring_));
@@ -361,6 +363,28 @@ public class GeneralPreferencesPane extends PreferencesPane
       if (!helpFontSize_.setValue(prefs_.helpFontSizePoints().getValue() + ""))
          helpFontSize_.getListBox().setSelectedIndex(3);
       advanced.add(helpFontSize_);
+
+      Label experimentalLabel = headerLabel(constants_.experimentalLabel());
+      spacedBefore(experimentalLabel);
+      advanced.add(experimentalLabel);
+
+      String[] langLabels = {
+         constants_.englishLabel(),
+         constants_.frenchLabel()
+      };
+      String[] langValues = {
+         UserPrefsAccessor.UI_LANGUAGE_EN,
+         UserPrefsAccessor.UI_LANGUAGE_FR
+      };
+      uiLanguage_ = new SelectWidget(prefs_.uiLanguage().getTitle(),
+         langLabels,
+         langValues,
+         false, /* Multi select */
+         true, /* Horizontal label */
+         false /* List on left */);
+      if (!uiLanguage_.setValue(prefs_.uiLanguage().getValue()))
+         uiLanguage_.getListBox().setSelectedIndex(0);
+      advanced.add(uiLanguage_);
 
       showServerHomePage_.setEnabled(false);
       reuseSessionsForProjectLinks_.setEnabled(false);
@@ -461,6 +485,8 @@ public class GeneralPreferencesPane extends PreferencesPane
       // graphics prefs
       graphicsBackend_.setValue(prefs.graphicsBackend().getValue());
       graphicsAntialias_.setValue(prefs.graphicsAntialiasing().getValue());
+
+      initialUiLanguage_ = prefs_.uiLanguage().getValue();
    }
 
 
@@ -539,6 +565,23 @@ public class GeneralPreferencesPane extends PreferencesPane
       prefs.restoreLastProject().setGlobalValue(restoreLastProject_.getValue());
       prefs.graphicsBackend().setGlobalValue(graphicsBackend_.getValue());
       prefs.graphicsAntialiasing().setGlobalValue(graphicsAntialias_.getValue());
+
+      String uiLanguagePrefValue = uiLanguage_.getValue();
+      if (!StringUtil.equals(uiLanguagePrefValue, initialUiLanguage_))
+      {
+         prefs.uiLanguage().setGlobalValue(uiLanguagePrefValue);
+         restartRequirement.setUiReloadRequired(true);
+      }
+
+      // The uiLanguage preference is mirrored in HTML5 local storage, so the page (index.htm)
+      // can use it at load time to set the meta-tag telling GWT which language to display.
+      // Ensure consistency here and force a page reload if necessary.
+      String localStorageUiLang = localStoragePrefs_.getUiLanguage();
+      if (!StringUtil.equals(localStorageUiLang, uiLanguagePrefValue))
+      {
+         localStoragePrefs_.setUiLanguage(uiLanguagePrefValue);
+         restartRequirement.setUiReloadRequired(true);
+      }
 
       // Pro specific
       if (showServerHomePage_ != null && showServerHomePage_.isEnabled())
@@ -635,6 +678,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox rememberRVersionForProjects_ = null;
    private CheckBox reuseSessionsForProjectLinks_ = null;
    private SelectWidget helpFontSize_;
+   private SelectWidget uiLanguage_;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox fullPathInTitle_ = null;
    private CheckBox useGpuExclusions_ = null;
@@ -658,4 +702,6 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox enableCrashReporting_;
    private final UserPrefs prefs_;
    private final Session session_;
+   private String initialUiLanguage_;
+   private final LocalStoragePrefs localStoragePrefs_ = new LocalStoragePrefs();
 }

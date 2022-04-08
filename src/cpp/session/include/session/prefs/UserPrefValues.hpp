@@ -403,6 +403,9 @@ namespace prefs {
 #define kQuartoEnabledEnabled "enabled"
 #define kQuartoEnabledDisabled "disabled"
 #define kQuartoEnabledHidden "hidden"
+#define kUiLanguage "ui_language"
+#define kUiLanguageEn "en"
+#define kUiLanguageFr "fr"
 
 class UserPrefValues: public Preferences
 {
@@ -1805,6 +1808,12 @@ public:
     */
    std::string quartoEnabled();
    core::Error setQuartoEnabled(std::string val);
+
+   /**
+    * The IDE's user-interface language.
+    */
+   std::string uiLanguage();
+   core::Error setUiLanguage(std::string val);
 
 };
 

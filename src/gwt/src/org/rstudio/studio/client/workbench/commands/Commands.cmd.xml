@@ -412,7 +412,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
       <menu label="_Build">
          <cmd refid="devtoolsLoadAll"/>
          <cmd refid="buildAll"/>
-         <cmd refid="rebuildAll"/>
          <cmd refid="cleanAll"/>
          <separator/>
          <cmd refid="serveQuartoSite"/>
@@ -593,6 +592,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="showRequestLog"/>
             <cmd refid="showLogFiles"/>
             <cmd refid="showGpuDiagnostics"/>
+            <cmd refid="showA11yDiagnostics"/>
             <cmd refid="updateCredentials"/>
             <cmd refid="diagnosticsReport"/>
             <cmd refid="openDeveloperConsole"/>
@@ -3594,13 +3594,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         windowMode="main"
         context="packageDevelopment"/>
 
-   <cmd id="rebuildAll"
-        label="Clean and Rebuild"
-        menuLabel="Clean and _Rebuild"
-        desc="Clean previous output and rebuild all"
-        windowMode="main"
-        context="packageDevelopment"/>
-
    <cmd id="cleanAll"
         label="Clean All"
         menuLabel="_Clean All"
@@ -3952,6 +3945,11 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
 
    <cmd id="showGpuDiagnostics"
         menuLabel="Show _GPU Diagnostics"
+        rebindable="false"
+        context="diagnostics"/>
+
+   <cmd id="showA11yDiagnostics"
+        menuLabel="Show _Accessibility Diagnostics"
         rebindable="false"
         context="diagnostics"/>
 

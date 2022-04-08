@@ -20,17 +20,14 @@
     "testintwip": "mocha -c -g WIP  --config ./test/int/mocharc.json",
     "testwip": "electron-mocha -c -g WIP --config ./test/unit/mocharc.json",
     "format": "./scripts/create-prettier-ignore-file.sh && npx prettier --write . --ignore-path .prettier_and_git_ignores",
-    "postinstall": "npx electron-rebuild"
+    "postinstall": "npx electron-rebuild && ts-node scripts/generate.ts",
+    "generate": "ts-node scripts/generate.ts"
   },
   "config": {
     "forge": "./forge.config.js"
   },
   "devDependencies": {
     "@electron-forge/cli": "6.0.0-beta.63",
-    "@electron-forge/maker-deb": "6.0.0-beta.63",
-    "@electron-forge/maker-rpm": "6.0.0-beta.63",
-    "@electron-forge/maker-squirrel": "6.0.0-beta.63",
-    "@electron-forge/maker-zip": "6.0.0-beta.63",
     "@electron-forge/plugin-webpack": "6.0.0-beta.63",
     "@types/chai": "4.3.0",
     "@types/crc": "3.4.0",
@@ -42,14 +39,13 @@
     "@types/properties-reader": "^2.1.1",
     "@types/sinon": "10.0.11",
     "@types/uuid": "8.3.1",
-    "@types/yargs": "^17.0.8",
     "@typescript-eslint/eslint-plugin": "5.4.0",
     "@typescript-eslint/parser": "5.4.0",
     "@vercel/webpack-asset-relocator-loader": "1.7.0",
     "chai": "4.3.6",
     "copy-webpack-plugin": "^10.2.4",
     "css-loader": "6.5.1",
-    "electron": "17.1.2",
+    "electron": "18.0.1",
     "electron-mocha": "11.0.2",
     "eslint": "^7.12.1",
     "eslint-config-prettier": "8.3.0",
@@ -60,6 +56,7 @@
     "eslint-plugin-promise": "5.1.1",
     "fork-ts-checker-webpack-plugin": "6.4.0",
     "json": "11.0.0",
+    "json-schema-to-typescript": "10.1.5",
     "mocha": "9.2.2",
     "node-loader": "2.0.0",
     "nyc": "15.1.0",
@@ -84,7 +81,6 @@
     "properties-reader": "^2.2.0",
     "uuid": "8.3.2",
     "winston": "3.5.0",
-    "winston-daily-rotate-file": "4.6.0",
-    "yargs": "^17.3.1"
+    "winston-daily-rotate-file": "4.6.0"
   }
 }

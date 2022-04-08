@@ -15,3 +15,5 @@
 
 project (EXT)
 
+add_subdirectory(fmt)
+

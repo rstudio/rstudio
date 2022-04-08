@@ -3210,14 +3210,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Install the package and restart R") // $NON-NLS-1$
     String buildAllDesc();
     
-    // rebuildAll
-    @DefaultStringValue("Clean and Rebuild") // $NON-NLS-1$
-    String rebuildAllLabel();
-    @DefaultStringValue("Clean and _Rebuild") // $NON-NLS-1$
-    String rebuildAllMenuLabel();
-    @DefaultStringValue("Clean previous output and rebuild all") // $NON-NLS-1$
-    String rebuildAllDesc();
-    
     // cleanAll
     @DefaultStringValue("Clean All") // $NON-NLS-1$
     String cleanAllLabel();
@@ -3663,6 +3655,10 @@ public interface CmdConstants extends Constants {
     // showGpuDiagnostics
     @DefaultStringValue("Show _GPU Diagnostics") // $NON-NLS-1$
     String showGpuDiagnosticsMenuLabel();
+    
+    // showA11yDiagnostics
+    @DefaultStringValue("Show _Accessibility Diagnostics") // $NON-NLS-1$
+    String showA11yDiagnosticsMenuLabel();
     
     // toggleEditorTokenInfo
     @DefaultStringValue("_Toggle Editor Token Information") // $NON-NLS-1$

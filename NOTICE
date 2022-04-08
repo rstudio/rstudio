@@ -55,6 +55,7 @@ used by these components are included below):
 - Deno
 - Dart Sass
 - esbuild
+- fmt
 
 RStudio also includes a binary copy of libclang. This component is
 licensed to you under the University of Illinois/NCSA Open Source

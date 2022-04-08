@@ -1587,8 +1587,15 @@
             "type": "string",
             "enum": ["auto", "enabled", "disabled", "hidden"],
             "default": "auto",
-            "title": "Enble Quarto features",
+            "title": "Enable Quarto features",
             "description": "Enable IDE features for the Quarto publishing system."
+        },
+         "ui_language": {
+            "type": "string",
+            "enum": ["en", "fr"],
+            "default": "en",
+            "title": "User Interface Language",
+            "description": "The IDE's user-interface language."
         }
     }
 }

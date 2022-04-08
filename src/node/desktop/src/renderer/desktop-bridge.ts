@@ -68,6 +68,7 @@ export function getDesktopBridge() {
       ipcRenderer
         .invoke('desktop_get_save_file_name', caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner)
         .then((result) => {
+
           // if the result was canceled, bail early
           if (result.canceled as boolean) {
             return callback('');
@@ -83,7 +84,8 @@ export function getDesktopBridge() {
           const dotIndex = filePath.lastIndexOf('.');
           const ext = dotIndex > 0 ? filePath.substring(dotIndex) : '';
           if (ext.length === 0 || (forceDefaultExtension && ext !== defaultExtension)) {
-            filePath = filePath.substring(0, dotIndex) + defaultExtension;
+            const name = dotIndex > 0 ? filePath.substring(0, dotIndex) : filePath;
+            filePath = name + defaultExtension;
           }
 
           // invoke callback
@@ -446,17 +448,6 @@ export function getDesktopBridge() {
 
     setEnableAccessibility: (enable: boolean) => {
       ipcRenderer.send('desktop_set_enable_accessibility', enable);
-    },
-
-    getClipboardMonitoring: (callback: VoidCallback<boolean>) => {
-      ipcRenderer
-        .invoke('desktop_get_clipboard_monitoring')
-        .then((monitoring) => callback(monitoring))
-        .catch((error) => reportIpcError('getClipboardMonitoring', error));
-    },
-
-    setClipboardMonitoring: (monitoring: boolean) => {
-      ipcRenderer.send('desktop_set_clipboard_monitoring', monitoring);
     },
 
     getIgnoreGpuExclusionList: (callback: VoidCallback<boolean>) => {

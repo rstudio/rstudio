@@ -16,67 +16,35 @@
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
+import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { logger } from '../../core/logger';
-import { legacyPreferenceManager } from './../preferences/preferences';
+import { RStudioUserState } from '../../types/user-state-schema';
+import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
 
-const kProportionalFont = 'Font.ProportionalFont';
-const kFixedWidthFont = 'Font.FixedWidthFont';
-const kUseFontConfigDb = 'Font.UseFontConfigDb';
+const kProportionalFont = 'font.proportionalFont';
+const kFixedWidthFont = 'font.fixedWidthFont';
 
-const kZoomLevel = 'View.ZoomLevel';
-const kWindowBounds = 'View.WindowBounds';
-const kAccessibility = 'View.Accessibility';
+const kZoomLevel = 'view.zoomLevel';
+const kWindowBounds = 'view.windowBounds';
+const kAccessibility = 'view.accessibility';
 
-const kLastRemoteSessionUrl = 'Session.LastRemoteSessionUrl';
-const kAuthCookies = 'Session.AuthCookies';
-const kTempAuthCookies = 'Session.TempAuthCookies';
+const kLastRemoteSessionUrl = 'session.lastRemoteSessionUrl';
+const kAuthCookies = 'session.authCookies';
+const kTempAuthCookies = 'session.tempAuthCookies';
 
-const kIgnoredUpdateVersions = 'General.IgnoredUpdateVersions';
-const kClipboardMonitoring = 'General.ClipboardMonitoring';
+const kIgnoredUpdateVersions = 'general.ignoredUpdateVersions';
 
-const kRendererEngine = 'Renderer.Engine';
-const kRendererUseGpuExclusionList = 'Renderer.UseGpuExclusionList';
-const kRendererUseGpuDriverBugWorkarounds = 'Renderer.UseGpuDriverBugWorkarounds';
+const kRendererEngine = 'renderer.engine';
+const kRendererUseGpuExclusionList = 'renderer.useGpuExclusionList';
+const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds';
 
-const kRBinDir = 'Platform.Windows.RBinDir';
-const kPreferR64 = 'Platform.Windows.PreferR64';
+const kRBinDir = 'platform.windows.rBinDir';
+const kPreferR64 = 'platform.windows.preferR64';
+
+const userStateSchema = generateSchema<RStudioUserState>(properties);
 
 export let defaultFonts = ['monospace'];
-
-// exported for unit testing
-export const kDesktopOptionDefaults = {
-  Font: {
-    ProportionalFont: '',
-    FixedWidthFont: '',
-    UseFontConfigDb: true,
-  },
-  View: {
-    ZoomLevel: 1.0,
-    WindowBounds: { width: 1200, height: 900 },
-    Accessibility: false,
-  },
-  Session: {
-    LastRemoteSessionUrl: '',
-    AuthCookies: [],
-    TempAuthCookies: [],
-  },
-  General: {
-    IgnoredUpdateVersions: [],
-    ClipboardMonitoring: true,
-  },
-  Renderer: {
-    Engine: 'auto',
-    UseGpuExclusionList: true,
-    UseGpuDriverBugWorkarounds: true,
-  },
-  Platform: {
-    Windows: {
-      RBinDir: '',
-      PreferR64: true,
-    },
-  },
-};
 
 let options: DesktopOptionsImpl | null = null;
 
@@ -129,13 +97,13 @@ export function firstIsInsideSecond(inner: Rectangle, outer: Rectangle): boolean
  * for creating/getting a DesktopOptionsImpl instance
  */
 export class DesktopOptionsImpl implements DesktopOptions {
-  private config = new Store({ defaults: kDesktopOptionDefaults });
+  private config = new Store<RStudioUserState>({ schema: userStateSchema });
   private legacyOptions = legacyPreferenceManager;
 
   // unit testing constructor to expose directory and DesktopOptions mock
   constructor(directory = '', legacyOptions?: DesktopOptions) {
     if (directory.length != 0) {
-      this.config = new Store({ defaults: kDesktopOptionDefaults, cwd: directory });
+      this.config = new Store<RStudioUserState>({ cwd: directory, schema: userStateSchema });
     }
     if (legacyOptions) {
       this.legacyOptions = legacyOptions;
@@ -147,7 +115,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public proportionalFont(): string {
-    return this.config.get(kProportionalFont);
+    return this.config.get(kProportionalFont, '');
   }
 
   public setFixedWidthFont(fixedWidthFont: string): void {
@@ -165,15 +133,12 @@ export class DesktopOptionsImpl implements DesktopOptions {
     return fontName;
   }
 
-  public setUseFontConfigDb(useFontConfigDb: boolean): void {
-    this.config.set(kUseFontConfigDb, useFontConfigDb);
-  }
-
-  public useFontConfigDb(): boolean {
-    return this.config.get(kUseFontConfigDb);
-  }
-
   public setZoomLevel(zoom: number): void {
+    const min = properties.view.properties.zoomLevel.minimum;
+    const max = properties.view.properties.zoomLevel.maximum;
+    if (zoom < min || zoom > max) {
+      throw new Error(`Invalid zoom level: Must be between ${min} and ${max}`);
+    }
     this.config.set(kZoomLevel, zoom);
   }
 
@@ -181,7 +146,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     let zoomLevel: number | undefined = this.config.get(kZoomLevel);
 
     if (!zoomLevel) {
-      zoomLevel = this.legacyOptions.zoomLevel() ?? kDesktopOptionDefaults.View.ZoomLevel;
+      zoomLevel = this.legacyOptions.zoomLevel() ?? properties.view.default.zoomLevel;
       this.config.set(kZoomLevel, zoomLevel);
     }
 
@@ -193,7 +158,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public windowBounds(): Rectangle {
-    return this.config.get(kWindowBounds);
+    return this.config.get(kWindowBounds, properties.view.default.windowBounds);
   }
 
   // Note: screen can only be used after the 'ready' event has been emitted
@@ -219,8 +184,8 @@ export class DesktopOptionsImpl implements DesktopOptions {
     } else {
       const primaryBounds = screen.getPrimaryDisplay().bounds;
       const newSize = {
-        width: Math.min(kDesktopOptionDefaults.View.WindowBounds.width, primaryBounds.width),
-        height: Math.min(kDesktopOptionDefaults.View.WindowBounds.height, primaryBounds.height),
+        width: Math.min(properties.view.default.windowBounds.width, primaryBounds.width),
+        height: Math.min(properties.view.default.windowBounds.height, primaryBounds.height),
       };
 
       mainWindow.setSize(newSize.width, newSize.height);
@@ -243,7 +208,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public accessibility(): boolean {
-    return this.config.get(kAccessibility);
+    return this.config.get(kAccessibility, properties.view.default.accessibility);
   }
 
   public setLastRemoteSessionUrl(lastRemoteSessionUrl: string): void {
@@ -251,7 +216,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public lastRemoteSessionUrl(): string {
-    return this.config.get(kLastRemoteSessionUrl);
+    return this.config.get(kLastRemoteSessionUrl, properties.remote_session.default.lastRemoteSessionUrl);
   }
 
   public setAuthCookies(authCookies: string[]): void {
@@ -259,7 +224,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public authCookies(): string[] {
-    return this.config.get(kAuthCookies);
+    return this.config.get(kAuthCookies, properties.remote_session.default.authCookies);
   }
 
   public setTempAuthCookies(tempAuthCookies: string[]): void {
@@ -267,7 +232,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public tempAuthCookies(): string[] {
-    return this.config.get(kTempAuthCookies);
+    return this.config.get(kTempAuthCookies, properties.remote_session.default.tempAuthCookies);
   }
 
   public setIgnoredUpdateVersions(ignoredUpdateVersions: string[]): void {
@@ -275,15 +240,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public ignoredUpdateVersions(): string[] {
-    return this.config.get(kIgnoredUpdateVersions);
-  }
-
-  public setClipboardMonitoring(clipboardMonitoring: boolean): void {
-    this.config.set(kClipboardMonitoring, clipboardMonitoring);
-  }
-
-  public clipboardMonitoring(): boolean {
-    return this.config.get(kClipboardMonitoring);
+    return this.config.get(kIgnoredUpdateVersions, properties.general.default.ignoredUpdateVersions);
   }
 
   public setRenderingEngine(renderingEngine: string): void {
@@ -299,7 +256,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public useGpuExclusionList(): boolean {
-    return this.config.get(kRendererUseGpuExclusionList, true);
+    return this.config.get(kRendererUseGpuExclusionList, properties.renderer.default.useGpuExclusionList);
   }
 
   public setUseGpuDriverBugWorkarounds(value: boolean) {
@@ -307,7 +264,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   public useGpuDriverBugWorkarounds(): boolean {
-    return this.config.get(kRendererUseGpuDriverBugWorkarounds, true);
+    return this.config.get(kRendererUseGpuDriverBugWorkarounds, properties.renderer.default.useGpuDriverBugWorkarounds);
   }
 
   // Windows-only option
@@ -323,7 +280,15 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (process.platform !== 'win32') {
       return '';
     }
-    return this.config.get(kRBinDir);
+
+    let rBinDir: string = this.config.get(kRBinDir, properties.platform.default.windows.rBinDir);
+
+    if (!rBinDir) {
+      rBinDir = this.legacyOptions.rBinDir() ?? properties.platform.default.windows.rBinDir;
+      this.config.set(kRBinDir, rBinDir);
+    }
+
+    return rBinDir;
   }
 
   // Windows-only option
@@ -340,7 +305,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (process.platform !== 'win32' || !process.arch.includes('64')) {
       return false;
     }
-    return this.config.get(kPreferR64);
+    return this.config.get(kPreferR64, properties.platform.default.windows.preferR64);
   }
 }
 

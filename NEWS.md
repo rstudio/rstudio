@@ -10,6 +10,9 @@
 - The source button uses `cpp11::source_cpp()` on C++ files that have `[[cpp11::register]]` decorations (#10387)
 - New *Relative Line Numbers* preference for showing line numbers relative to the current line, rather than the first line (#1774)
 - Upgraded SOCI library dependency from version 4.0.0 to 4.0.3 (#10792)
+- (macOS only) RStudio now reads the PATH from the user's default shell on startup (#10551)
+- (experimental) Option to display the user interface in French (#10455)
+- Label commit timestamps as being in UTC (#2544)
 
 #### Find in Files
 
@@ -41,6 +44,9 @@
 - The data viewer truncates large list cells to 50 characters by default, this can be changed with the command palette or `rstudioapi::writeRStudioPreference("data_viewer_max_cell_size", 10L)` (#5100)
 - The R version and logo displayed in the top left of the console will update to the current R version whenever the R session is restarted (#10458)
 - Fixed issue where `core::system::userBelongsToGroup` errors under specific sssd configurations (`ignore_group_members = true`) (#10829)
+- Fixed a security issue where shiny apps and vscode sessions remained active after signout (rstudio-pro#3287)
+- (Windows only) Fixed an issue where multiple instances of RStudio launched at the same time could bind to the same session. (#10488)
+- Fixed unintended change of date/time formatting in the VCS commit history (#10810)
 
 ### RStudio Workbench
 

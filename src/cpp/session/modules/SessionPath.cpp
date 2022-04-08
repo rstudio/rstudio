@@ -19,13 +19,17 @@
 #include <vector>
 
 #include <boost/bind/bind.hpp>
+#include <boost/regex.hpp>
+#include <boost/system/errc.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/Algorithm.hpp>
-#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
+#include <core/system/Process.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
@@ -39,53 +43,159 @@ namespace session {
 namespace modules { 
 namespace path {
 
-#ifdef __APPLE__
-
 namespace {
 
-Error readPathsFromFile(const FilePath& filePath,
-                        std::vector<std::string>* pPaths)
-{
-   std::vector<std::string> paths;
-   Error error = core::readStringVectorFromFile(filePath, &paths);
-   if (error)
-   {
-      error.addProperty("path-source", filePath.getAbsolutePath());
-      return error;
-   }
-
-   std::copy(paths.begin(), paths.end(), std::back_inserter(*pPaths));
-
-   return Success();
-}
-
-void safeReadPathsFromFile(const FilePath& filePath,
-                           std::vector<std::string>* pPaths)
-{
-   Error error = readPathsFromFile(filePath, pPaths);
-   if (error)
-      LOG_ERROR(error);
-}
-
-void addToPathIfNecessary(
-      const std::string& entry,
-      std::vector<std::string>* pPathComponents)
+bool containsPathEntry(
+      const std::vector<std::string>& pathEntries,
+      const std::string& entry)
 {
    // tolerate paths with trailing slashes
-   for (std::string item : {entry, entry + "/"})
+   for (const std::string& item : { entry, entry + "/" })
+      if (core::algorithm::contains(pathEntries, item))
+         return true;
+   
+   return false;
+   
+}
+
+std::string initializePathViaEtcPaths()
+{
+   std::vector<std::string> pathEntries;
+   
+   // read /etc/paths
+   FilePath etcPaths("/etc/paths");
+   if (etcPaths.exists())
    {
-      auto it = std::find(
-               pPathComponents->begin(),
-               pPathComponents->end(),
-               item);
-
-      // if we find the path component, bail (no need to add to PATH)
-      if (it != pPathComponents->end())
-         return;
+      Error error = core::readLinesFromFile(etcPaths, &pathEntries);
+      if (error)
+         LOG_ERROR(error);
    }
+   
+   // read /etc/paths.d/* entries
+   FilePath etcPathsD("/etc/paths.d");
+   if (etcPathsD.isDirectory())
+   {
+      std::vector<FilePath> children;
+      Error error = etcPathsD.getChildren(children);
+      if (error)
+         LOG_ERROR(error);
+      
+      for (const FilePath& child : children)
+      {
+         Error error = core::readLinesFromFile(child, &pathEntries);
+         if (error)
+            LOG_ERROR(error);
+      }
+   }
+   
+   return core::algorithm::join(pathEntries, ":");
+}
 
-   // failed to find PATH component; add it to the PATH
-   pPathComponents->push_back(entry);
+Error initializePathViaShell(const std::string& shellPath,
+                             std::string* pPath)
+{
+   // double-check that the requested shell exists
+   if (!FilePath(shellPath).exists())
+      return fileNotFoundError(shellPath, ERROR_LOCATION);
+   
+   std::vector<std::string> args = { "-l", "-c", "printf \"%s\" \"$PATH\"" };
+   
+   // try running it to see what the default PATH looks like
+   core::system::ProcessOptions options;
+   
+   // don't inherit the PATH from this process
+   core::system::Options environment;
+   core::system::environment(&environment);
+   core::system::unsetenv(&environment, "PATH");
+   options.environment = environment;
+   
+   // run the program
+   core::system::ProcessResult result;
+   Error error = core::system::runProgram(shellPath, args, options, &result);
+   
+   if (error)
+   {
+      return error;
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      return systemError(
+               boost::system::errc::state_not_recoverable,
+               result.stdErr,
+               ERROR_LOCATION);
+   }
+   else
+   {
+      // only include last line of output, in case the shell printed
+      // something extra during login / processing of scripts
+      std::string output = core::string_utils::trimWhitespace(result.stdOut);
+      std::vector<std::string> lines = core::algorithm::split(output, "\n");
+      auto n = lines.size();
+      if (n == 0)
+      {
+         return systemError(
+                  boost::system::errc::state_not_recoverable,
+                  result.stdErr,
+                  ERROR_LOCATION);
+      }
+      
+      // extract last line of output
+      std::string path = lines[n - 1];
+      pPath->assign(path);
+      return Success();
+   }
+}   
+
+// this routine is a little awkward -- if RStudio was launched from a terminal,
+// it's possible that the PATH is already set as appropriate for any program
+// launched through a shell. as a heuristic, we try to see if 'usr/local/bin'
+// is already on the PATH; if it is, we assume the path is appropriately
+// initialized; otherwise, we try to initialize it in the same way a shell
+// might.
+std::string initializePath()
+{
+   // if the user's path already contains '/usr/local/bin', assume that
+   // they're running RStudio through a shell / terminal and so we don't
+   // need to re-read the shell PATH
+   std::string defaultPath = core::system::getenv("PATH");
+   boost::regex reUsrLocalbin("(^|:)/usr/local/bin/?(:|$)");
+   if (boost::regex_search(defaultPath, reUsrLocalbin))
+      return defaultPath;
+   
+   // first, try to initialize with user's default shell
+   // (RSTUDIO_SESSION_SHELL is primarily for internal use)
+   std::string shell = core::system::getenv("RSTUDIO_SESSION_SHELL");
+   if (shell.empty())
+      shell = core::system::getenv("SHELL");
+   
+   if (!shell.empty())
+   {
+      std::string path;
+      Error error = initializePathViaShell(shell, &path);
+      if (!error)
+         return path;
+   }
+   
+   // next, try to initialize with default shell
+   // this fallback may be necessary if the above attempt to
+   // initialize failed; e.g. because an invalid shell was selected
+   if (shell != "/bin/sh")
+   {
+      std::string path;
+      Error error = initializePathViaShell("/bin/sh", &path);
+      if (!error)
+         return path;
+   }
+   
+   // all else fails, use the current application path
+   return initializePathViaEtcPaths();
+}
+
+std::string homePath(const std::string& suffix)
+{
+   return module_context::userHomePath()
+         .completeChildPath(suffix)
+         .getAbsolutePath();
 }
 
 } // anonymous namespace
@@ -93,75 +203,36 @@ void addToPathIfNecessary(
 
 Error initialize()
 {
-   // read /etc/paths
-   std::vector<std::string> paths;
-   safeReadPathsFromFile(FilePath("/etc/paths"), &paths);
-
-   // read /etc/paths.d/* (once again failure is not fatal as we
-   // can fall back to the previous setting)
-   FilePath pathsD("/etc/paths.d");
-   if (pathsD.exists())
+   
+#ifdef __APPLE__
+   std::string path = initializePath();
+   
+   // split into parts
+   std::vector<std::string> pathEntries = core::algorithm::split(path, ":");
+   
+   // check for some components that we might need to append to the path
+   std::vector<std::string> extraEntries = {
+      homePath("Applications/quarto/bin"),
+      "/Library/TeX/texbin",
+      "/usr/texbin",
+   };
+   
+   for (const std::string& entry : extraEntries)
+      if (!containsPathEntry(pathEntries, entry))
+         pathEntries.push_back(entry);
+   
+   // remove empty entries
+   core::algorithm::expel_if(pathEntries, [](const std::string& entry)
    {
-      // enumerate the children
-      std::vector<FilePath> pathsDChildren;
-      Error error = pathsD.getChildren(pathsDChildren);
-      if (error)
-         LOG_ERROR(error);
-
-      // collect their paths
-      std::for_each(pathsDChildren.begin(),
-                    pathsDChildren.end(),
-                    boost::bind(safeReadPathsFromFile, _1, &paths));
-
-   }
-
-   // build the PATH
-   std::vector<std::string> parts =
-         core::algorithm::split(core::system::getenv("PATH"), ":");
-
-   // add in components from paths.d etc.
-   std::for_each(paths.begin(),
-                 paths.end(),
-                 boost::bind(addToPathIfNecessary, _1, &parts));
-
-   // do we need to add /Library/TeX/texbin or /usr/texbin or (sometimes texlive
-   // doesn't get this written into /etc/paths.d)
-   FilePath libraryTexbinPath("/Library/TeX/texbin");
-   if (libraryTexbinPath.exists())
-      addToPathIfNecessary(libraryTexbinPath.getAbsolutePath(), &parts);
-   FilePath texbinPath("/usr/texbin");
-   if (texbinPath.exists())
-      addToPathIfNecessary(texbinPath.getAbsolutePath(), &parts);
-
-   // add /opt/local/bin if necessary
-   FilePath optLocalBinPath("/opt/local/bin");
-   if (optLocalBinPath.exists())
-      addToPathIfNecessary(optLocalBinPath.getAbsolutePath(), &parts);
-
-   // check for user installation of quarto
-   FilePath quartoBin = module_context::userHomePath()
-         .completeChildPath("Applications")
-         .completeChildPath("quarto")
-         .completeChildPath("bin");
-   if (quartoBin.exists())
-      addToPathIfNecessary(quartoBin.getAbsolutePath(), &parts);
-
+      return entry.empty();
+   });
+   
    // set the path
-   core::system::setenv("PATH", core::algorithm::join(parts, ":"));
-
-   return Success();
-
-}
-
-#else
-Error initialize()
-{
-   return Success();
-}
+   core::system::setenv("PATH", core::algorithm::join(pathEntries, ":"));
 #endif
 
-
-
+   return Success();
+}
    
 } // namespace path
 } // namespace modules

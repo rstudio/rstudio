@@ -573,6 +573,7 @@ public abstract class
    public abstract AppCommand openDeveloperConsole();
    public abstract AppCommand reloadUi();
    public abstract AppCommand showGpuDiagnostics();
+   public abstract AppCommand showA11yDiagnostics();
    public abstract AppCommand showLogFiles();
    public abstract AppCommand rstudioSupport();
    public abstract AppCommand rstudioCommunityForum();
@@ -586,7 +587,6 @@ public abstract class
    public abstract AppCommand clearBuild();
    public abstract AppCommand buildAll();
    public abstract AppCommand devtoolsLoadAll();
-   public abstract AppCommand rebuildAll();
    public abstract AppCommand serveQuartoSite();
    public abstract AppCommand cleanAll();
    public abstract AppCommand buildSourcePackage();

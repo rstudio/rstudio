@@ -84,9 +84,13 @@ export class GwtCallback extends EventEmitter {
   // https://github.com/foliojs/font-manager/issues/15
   // the fork did not correct usage of Fontconfig
   // getAvailableFontsSync() incorrectly sets the monospace property
-  monospaceFonts = [...new Set<string>(findFontsSync({ monospace: true }).map((fd) => fd.family))].sort((a, b) =>
-    a.localeCompare(b),
-  );
+  monospaceFonts = [
+    ...new Set<string>(
+      findFontsSync({ monospace: true }).map((fd) => {
+        return process.platform === 'darwin' ? fd.postscriptName : fd.family;
+      }),
+    ),
+  ].sort((a, b) => a.localeCompare(b));
   proportionalFonts = [...new Set<string>(findFontsSync({ monospace: false }).map((fd) => fd.family))].sort((a, b) =>
     a.localeCompare(b),
   );
@@ -364,10 +368,21 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on(
       'desktop_open_minimal_window',
       (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
-        // handle chrome://gpu specially
-        if (url === 'chrome://gpu') {
+        // handle some internal chrome urls specially
+        if (url === 'chrome://gpu' || url === 'chrome://accessibility') {
           const window = new BrowserWindow();
-          return window.loadURL('chrome://gpu');
+
+          // ensure window can be closed with Ctrl+W (Cmd+W on macOS)
+          window.webContents.on('before-input-event', (event, input) => {
+            const ctrlOrMeta = process.platform === 'darwin' ? input.meta : input.control;
+            if (ctrlOrMeta && input.key.toLowerCase() === 'w') {
+              event.preventDefault();
+              window.close();
+
+            }
+          });
+
+          return window.loadURL(url);
         }
 
         // regular path for other windows
@@ -608,21 +623,11 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_sync_to_editor_theme', (event, isDark) => {});
 
     ipcMain.handle('desktop_get_enable_accessibility', () => {
-      GwtCallback.unimpl('desktop_get_enable_accessibility');
-      return true;
+      return ElectronDesktopOptions().accessibility();
     });
 
     ipcMain.on('desktop_set_enable_accessibility', (event, enable) => {
-      GwtCallback.unimpl('desktop_set_enable_accessibility');
-    });
-
-    ipcMain.handle('desktop_get_clipboard_monitoring', () => {
-      GwtCallback.unimpl('desktop_get_clipboard_monitoring');
-      return false;
-    });
-
-    ipcMain.on('desktop_set_clipboard_monitoring', (event, monitoring) => {
-      GwtCallback.unimpl('desktop_set_clipboard_monitoring');
+      ElectronDesktopOptions().setAccessibility(enable);
     });
 
     ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
