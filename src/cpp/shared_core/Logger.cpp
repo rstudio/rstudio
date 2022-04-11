@@ -231,7 +231,12 @@ std::string logMessagePropertiesToString(const LogMessageProperties& in_properti
       }
    }
 
-   return "[" + boost::join(properties, ", ") + "]";
+   std::string propStr = "[" + boost::join(properties, ", ") + "]";
+
+   // replace newlines - there should be no newlines within a log line
+   boost::algorithm::replace_all(propStr, "\n", "|||");
+
+   return propStr;
 }
 
 std::string formatLogMessage(
