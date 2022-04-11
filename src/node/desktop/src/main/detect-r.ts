@@ -51,12 +51,9 @@ function showRNotFoundError(error?: Error): void {
 }
 
 function executeCommand(command: string): Expected<string> {
-  try {
-    const output = execSync(command, { encoding: 'utf-8' });
-    return ok(output.trim());
-  } catch (error: unknown) {
-    return err(safeError(error));
-  }
+  return expect(() => {
+    return execSync(command, { encoding: 'utf-8' });
+  });
 }
 
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
@@ -294,6 +291,7 @@ function scanForRPosix(): Expected<string> {
 }
 
 export function findRInstallationsWin32(): string[] {
+
   const rInstallations = new Set<string>();
 
   // list all installed versions from registry
@@ -311,14 +309,19 @@ export function findRInstallationsWin32(): string[] {
     const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
     if (match != null) {
       const rInstallation = match[1];
-      if (isValidInstallation(rInstallation)) {
+      if (existsSync(rInstallation)) {
         rInstallations.add(rInstallation);
       }
     }
   }
 
   // look for R installations in some common locations
-  const commonLocations = ['C:/R', `${getenv('ProgramFiles')}/R`, `${getenv('ProgramFiles(x86)')}/R`];
+  const commonLocations = [
+    'C:/R',
+    `${getenv('ProgramFiles')}/R`,
+    `${getenv('ProgramFiles(x86)')}/R`
+  ];
+
   for (const location of commonLocations) {
     // nothing to do if it doesn't exist
     if (!existsSync(location)) {
@@ -329,13 +332,14 @@ export function findRInstallationsWin32(): string[] {
     const rDirs = readdirSync(location, { encoding: 'utf-8' });
     for (const rDir of rDirs) {
       const path = join(location, rDir);
-      if (isValidInstallation(path)) {
+      if (existsSync(path)) {
         rInstallations.add(path);
       }
     }
   }
 
   return Array.from(rInstallations.values());
+
 }
 
 export function isValidInstallation(rInstallPath: string): boolean {
