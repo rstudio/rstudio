@@ -52,7 +52,7 @@ function showRNotFoundError(error?: Error): void {
 
 function executeCommand(command: string): Expected<string> {
   return expect(() => {
-    return execSync(command, { encoding: 'utf-8' });
+    return execSync(command, { encoding: 'utf-8' }).trim();
   });
 }
 
