@@ -91,9 +91,6 @@ Error UserPrefsComputedLayer::readPrefs()
    defaultRVersionJson["label"] = versionSettings.defaultRVersionLabel();
    layer[kDefaultRVersion] = defaultRVersionJson;
 
-   // use native pipe operator (from R or magrittr, depends on R version and preference)
-   layer["use_native_pipe_computed"] = r::session::utils::useNativePipeOperator();
-
    // Synctex viewer ----------------------------------------------------------
 #ifdef __APPLE__
 # define kDefaultDesktopPdfPreviewer kPdfPreviewerRstudio

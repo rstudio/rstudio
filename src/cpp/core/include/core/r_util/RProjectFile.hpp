@@ -46,11 +46,6 @@ extern const char * const kBuildTypeWebsite;
 extern const char * const kBuildTypeCustom;
 extern const char * const kBuildTypeQuarto;
 
-
-extern const char * const kUseNativePipeNever;
-extern const char * const kUseNativePipeR41;
-extern const char * const kUseNativePipeAlways;
-
 extern const char * const kMarkdownWrapUseDefault;
 extern const char * const kMarkdownWrapNone;
 extern const char * const kMarkdownWrapColumn;
