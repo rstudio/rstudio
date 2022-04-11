@@ -162,7 +162,6 @@ else()
       COMMAND
          ${CMAKE_COMMAND} -E env
          "PATH=${MODIFIED_PATH}"
-         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1"
          "MAKEFLAGS="
          ${NPM} run package
    )
