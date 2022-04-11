@@ -82,8 +82,12 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
       const rBinDir = ElectronDesktopOptions().rBinDir();
       if (rBinDir) {
         const rPath = `${rBinDir}/R.exe`;
-        logger().logDebug(`Using R from preferences: ${rPath}`);
-        return ok(rPath);
+        if (existsSync(rPath)) {
+          logger().logDebug(`Using R from preferences: ${rPath}`);
+          return ok(rPath);
+        } else {
+          logger().logDebug(`rBinDir (${rPath}) does not exist; ignoring`);
+        }
       }
 
     }
