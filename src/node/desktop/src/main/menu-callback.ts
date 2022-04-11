@@ -17,6 +17,7 @@ import { MenuItemConstructorOptions } from 'electron/main';
 import EventEmitter from 'events';
 
 import debounce from 'lodash/debounce';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 
 /**
  * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
@@ -383,7 +384,9 @@ export class MenuCallback extends EventEmitter {
     };
 
     if (isRadio) {
-      menuItemOpts.type = 'radio';
+      // Having true radio menus really only benefits screen-reader users, so avoid the visual
+      // difference unless screen-reader mode is on.
+      menuItemOpts.type = ElectronDesktopOptions().accessibility() ? 'radio' : 'checkbox';
       menuItemOpts.checked = false;
     }
     else if (checkable) {
