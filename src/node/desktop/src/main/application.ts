@@ -178,29 +178,6 @@ export class Application implements AppState {
     return run();
   }
 
-  supportingFilePath(): FilePath {
-    if (!this.supportPath) {
-      // default to install path
-      this.supportPath = new FilePath(getAppPath());
-
-      // adapt for OSX resource bundles
-      if (process.platform === 'darwin') {
-        if (this.supportPath.completePath('Info.plist').existsSync()) {
-          this.supportPath = this.supportPath.completePath('Resources');
-        }
-      }
-    }
-    return this.supportPath;
-  }
-
-  resourcesPath(): FilePath {
-    if (app.isPackaged) {
-      return new FilePath(getAppPath());
-    } else {
-      return new FilePath(getAppPath()).completePath('../../..');
-    }
-  }
-
   activation(): DesktopActivation {
     if (!this.activationInst) {
       this.activationInst = new DesktopActivation();
