@@ -13,26 +13,70 @@
  *
  */
 
-import { dialog, ipcMain } from 'electron';
-import { findDefault32Bit, findDefault64Bit } from '../../main/detect-r';
+import { dialog } from 'electron';
+import { detectREnvironment, findDefault32Bit, findDefault64Bit } from '../../main/detect-r';
 import { logger } from '../../core/logger';
 import { ModalDialog } from '../modal-dialog';
 
 import { initI18n } from '../../main/i18n-manager';
-import i18next from 'i18next';
+import i18next, { t } from 'i18next';
 import { CallbackData } from './choose-r/preload';
 import { ElectronDesktopOptions } from '../../main/preferences/electron-desktop-options';
 
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
+function checkValid(data: CallbackData) {
+
+  // get path to R
+  const rBinaryPath = data.binaryPath as string;
+
+  // try to run it
+  const [rEnvironment, err] = detectREnvironment(rBinaryPath);
+  if (err) {
+    
+    // something went wrong; let the user know they can't use
+    // this version of R with RStudio
+    dialog.showMessageBoxSync({
+      type: 'error',
+      title: t('chooseRDialog.rLaunchFailedTitle'),
+      message: t('chooseRDialog.rLaunchFailedMessage'),
+      buttons: [ t('common.buttonOk'), ],
+    });
+
+    return false;
+
+  }
+
+  logger().logDebug(`Validated R: ${rEnvironment.rScriptPath}`);
+  logger().logDebug(JSON.stringify(rEnvironment));
+  return true;
+
+}
+
 export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
+  
   private rInstalls: string[];
 
   constructor(rInstalls: string[]) {
+
     super(CHOOSE_R_WEBPACK_ENTRY, CHOOSE_R_PRELOAD_WEBPACK_ENTRY);
+
     this.rInstalls = rInstalls;
+
     initI18n();
+
+  }
+
+  async maybeResolve(resolve: (data: CallbackData) => void, data: CallbackData) {
+
+    if (checkValid(data)) {
+      resolve(data);
+      return true;
+    } else {
+      return false;
+    }
+
   }
 
   async onShowModal(): Promise<CallbackData | null> {
@@ -45,48 +89,53 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
     // listen for messages from the window
     return new Promise((resolve) => {
-      ipcMain.on('use-default-32bit', (event, data: CallbackData) => {
+
+      this.addIpcHandler('use-default-32bit', async (event, data: CallbackData) => {
         const installPath = findDefault32Bit();
         data.binaryPath = `${installPath}/bin/i386/R.exe`;
-        logger().logDebug(`Using default 32-bit R (${data.binaryPath})`);
-        return resolve(data);
+        logger().logDebug(`Using default 32-bit version of R (${data.binaryPath})`);
+        return this.maybeResolve(resolve, data);
       });
 
-      ipcMain.on('use-default-64bit', (event, data: CallbackData) => {
+      this.addIpcHandler('use-default-64bit', async (event, data: CallbackData) => {
         const installPath = findDefault64Bit();
         data.binaryPath = `${installPath}/bin/x64/R.exe`;
-        logger().logDebug(`Using default 64-bit R (${data.binaryPath})`);
-        return resolve(data);
+        logger().logDebug(`Using default 64-bit version of R (${data.binaryPath})`);
+        return this.maybeResolve(resolve, data);
       });
 
-      ipcMain.on('use-custom', (event, data: CallbackData) => {
+      this.addIpcHandler('use-custom', async (event, data: CallbackData) => {
         logger().logDebug(`Using user-selected version of R (${data.binaryPath})`);
-        return resolve(data);
+        return this.maybeResolve(resolve, data);
       });
 
-      ipcMain.handle('browse-r-exe', async (event, data: CallbackData) => {
+      this.addIpcHandler('browse-r-exe', async (event, data: CallbackData) => {
+
         const response = dialog.showOpenDialogSync(this, {
           title: i18next.t('uiFolder.chooseRExecutable'),
           properties: ['openFile'],
           filters: [{ name: i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
         });
 
+        
         if (response) {
           data.binaryPath = response[0];
           logger().logDebug(`Using user-selected version of R (${data.binaryPath})`);
-          resolve(data);
+          return this.maybeResolve(resolve, data);
         }
 
-        return !!response;
+        return false;
+
       });
 
-      ipcMain.on('cancel', () => {
+      this.addIpcHandler('cancel', () => {
         return resolve(null);
       });
 
       this.on('closed', () => {
         return resolve(null);
       });
+
     });
   }
 }

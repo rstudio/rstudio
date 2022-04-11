@@ -60,18 +60,23 @@ function callbackData(binaryPath?: string): CallbackData {
   };
 }
 
-buttonOk.addEventListener('click', () => {
+buttonOk.addEventListener('click', async () => {
+
   const useDefault32Radio = document.getElementById('use-default-32') as HTMLInputElement;
   if (useDefault32Radio.checked) {
-    window.callbacks.useDefault32bit(callbackData());
-    window.close();
+    const shouldCloseWindow = await window.callbacks.useDefault32bit(callbackData());
+    if (shouldCloseWindow) {
+      window.close();
+    }
     return;
   }
 
   const useDefault64Radio = document.getElementById('use-default-64') as HTMLInputElement;
   if (useDefault64Radio.checked) {
-    window.callbacks.useDefault64bit(callbackData());
-    window.close();
+    const shouldCloseWindow = await window.callbacks.useDefault64bit(callbackData());
+    if (shouldCloseWindow) {
+      window.close();
+    }
     return;
   }
 
@@ -79,9 +84,13 @@ buttonOk.addEventListener('click', () => {
   if (useCustomRadio.checked) {
     const selectWidget = document.getElementById('select') as HTMLSelectElement;
     const selection = selectWidget.value;
-    window.callbacks.use(callbackData(selection));
-    window.close();
+    const shouldCloseWindow = await window.callbacks.use(callbackData(selection));
+    if (shouldCloseWindow) {
+      window.close();
+    }
+    return;
   }
+
 });
 
 buttonCancel.addEventListener('click', () => {

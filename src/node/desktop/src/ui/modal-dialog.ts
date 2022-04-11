@@ -13,14 +13,17 @@
  *
  */
 
-import { BrowserWindow } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 import { err, Expected, ok } from '../core/expected';
 import { safeError } from '../core/err';
 
 export abstract class ModalDialog<T> extends BrowserWindow {
+
   abstract onShowModal(): Promise<T>;
 
-  private readonly widgetUrl: string;
+  private readonly _widgetUrl : string;
+  private _ipcMainChannels : string[];
+
   constructor(url: string, preload: string) {
     super({
       minWidth: 400,
@@ -34,13 +37,29 @@ export abstract class ModalDialog<T> extends BrowserWindow {
     });
 
     // initialize instance variables
-    this.widgetUrl = url;
+    this._widgetUrl = url;
+    this._ipcMainChannels = [];
+
+    // remove any registered ipc handlers on close
+    this.on('closed', () => {
+      for (const channel of this._ipcMainChannels) {
+        ipcMain.removeHandler(channel);
+      }
+    });
 
     // make this look and behave like a modal
     this.setMenu(null);
     this.setMinimizable(false);
     this.setMaximizable(false);
     this.setFullScreenable(false);
+  }
+
+  // a helper function for registering handles on ipcMain,
+  // with the registered handlers being cleaned up on close
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  addIpcHandler(channel: string, callback: (event: Electron.IpcMainInvokeEvent, ...args: any[]) => any) {
+    ipcMain.handle(channel, callback);
+    this._ipcMainChannels.push(channel);
   }
 
   async showModal(): Promise<Expected<T>> {
@@ -53,13 +72,15 @@ export abstract class ModalDialog<T> extends BrowserWindow {
   }
 
   async showModalImpl(): Promise<T> {
+
     // load the associated HTML
-    await this.loadURL(this.widgetUrl);
+    await this.loadURL(this._widgetUrl);
 
     // show the window after loading everything
     this.show();
 
-    const result = await this.onShowModal();
-    return result;
+    // invoke derived class's callback and return the response
+    return this.onShowModal();
+
   }
 }
