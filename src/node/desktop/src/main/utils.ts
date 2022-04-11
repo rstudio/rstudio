@@ -30,7 +30,8 @@ import { Err } from '../core/err';
 
 import { MainWindow } from './main-window';
 import i18next from 'i18next';
-import { execSync, spawnSync } from 'child_process';
+import { spawnSync } from 'child_process';
+import { randomUUID } from 'crypto';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -40,7 +41,7 @@ export function getAppPath(): string {
 }
 
 export function initializeSharedSecret(): void {
-  const sharedSecret = randomString() + randomString() + randomString();
+  const sharedSecret = randomUUID();
   setenv('RS_SHARED_SECRET', sharedSecret);
 }
 
