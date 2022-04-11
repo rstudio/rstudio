@@ -15,6 +15,15 @@
 
 export type Expected<T> = [T, Error | null];
 
+export function expect<T>(callback: () => T): Expected<T> {
+  try {
+    const result : T = callback();
+    return ok(result);
+  } catch (error: unknown) {
+    return err(error as any);
+  }
+}
+
 export function ok<T>(value: T): Expected<T> {
   return [value, null];
 }

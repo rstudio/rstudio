@@ -14,7 +14,7 @@
  */
 
 import { dialog } from 'electron';
-import { detectREnvironment, findDefault32Bit, findDefault64Bit } from '../../main/detect-r';
+import { detectREnvironment, findDefault32Bit, findDefault64Bit, isValidInstallation } from '../../main/detect-r';
 import { logger } from '../../core/logger';
 import { ModalDialog } from '../modal-dialog';
 
@@ -81,24 +81,29 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
 
   async onShowModal(): Promise<CallbackData | null> {
     
-    // initialize the window
-    this.webContents.send('initialize', {
+    const r32 = findDefault32Bit();
+    const r64 = findDefault64Bit();
+    const initData = {
+      default32bitPath: isValidInstallation(r32) ? r32 : '',
+      default64bitPath: isValidInstallation(r64) ? r64 : '',
       rInstalls: this.rInstalls,
       renderingEngine: ElectronDesktopOptions().renderingEngine()
-    });
+    };
+
+    this.webContents.send('initialize', initData);
 
     // listen for messages from the window
     return new Promise((resolve) => {
 
       this.addIpcHandler('use-default-32bit', async (event, data: CallbackData) => {
-        const installPath = findDefault32Bit();
+        const installPath = initData.default32bitPath;
         data.binaryPath = `${installPath}/bin/i386/R.exe`;
         logger().logDebug(`Using default 32-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
       });
 
       this.addIpcHandler('use-default-64bit', async (event, data: CallbackData) => {
-        const installPath = findDefault64Bit();
+        const installPath = initData.default64bitPath;
         data.binaryPath = `${installPath}/bin/x64/R.exe`;
         logger().logDebug(`Using default 64-bit version of R (${data.binaryPath})`);
         return this.maybeResolve(resolve, data);
