@@ -786,7 +786,6 @@ describe('FilePath', () => {
       assert.throws(() => fp1.hasExtension('.txt'));
       assert.throws(() => fp1.hasExtensionLowerCase('.txt'));
       assert.throws(() => fp1.hasTextMimeType());
-      assert.throws(() => fp1.isDirectory());
       assert.throws(() => fp1.isEquivalentTo(fp2));
       assert.throws(() => fp1.isHidden());
       assert.throws(() => fp1.isJunction());
