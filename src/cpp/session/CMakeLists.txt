@@ -677,15 +677,15 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    if(QUARTO_ENABLED)
       # install some quarto folders into Resources, as needed
       if(APPLE)
-         install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
-               DESTINATION "${RSTUDIO_INSTALL_BIN}"
-               USE_SOURCE_PERMISSIONS
-               PATTERN "*/share" EXCLUDE)
          if (RSTUDIO_ELECTRON)
-            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/share" 
-                  DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/quarto"
+            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}" 
+                  DESTINATION "${RSTUDIO_INSTALL_RESOURCES}/app"
                   USE_SOURCE_PERMISSIONS)
          else()
+            install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}"
+                  DESTINATION "${RSTUDIO_INSTALL_BIN}"
+                  USE_SOURCE_PERMISSIONS
+                  PATTERN "*/share" EXCLUDE)
             install(DIRECTORY "${RSTUDIO_DEPENDENCIES_QUARTO_DIR}/share" 
                   DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/quarto"
                   USE_SOURCE_PERMISSIONS)
