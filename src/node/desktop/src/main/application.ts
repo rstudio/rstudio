@@ -156,6 +156,7 @@ export class Application implements AppState {
     }
 
     // prepare the R environment
+    logger().logDebug(`Preparing environment using R: ${rPath}`);
     const prepareError = prepareEnvironment(rPath);
     if (prepareError) {
       await createStandaloneErrorDialog(

@@ -22,9 +22,9 @@ export interface CallbackData {
 }
 
 export interface Callbacks {
-  useDefault32bit(data: CallbackData): void;
-  useDefault64bit(data: CallbackData): void;
-  use(data: CallbackData): void;
+  useDefault32bit(data: CallbackData): Promise<boolean>;
+  useDefault64bit(data: CallbackData): Promise<boolean>;
+  use(data: CallbackData): Promise<boolean>;
   browse(data: CallbackData): Promise<boolean>;
   cancel(): void;
 }
@@ -92,16 +92,19 @@ ipcRenderer.on('initialize', (event, data) => {
 
 // export callbacks
 const callbacks: Callbacks = {
-  useDefault32bit: (data: CallbackData) => {
-    ipcRenderer.send('use-default-32bit', data);
+  useDefault32bit: async (data: CallbackData) => {
+    const shouldCloseDialog = await ipcRenderer.invoke('use-default-32bit', data);
+    return shouldCloseDialog;
   },
 
-  useDefault64bit: (data: CallbackData) => {
-    ipcRenderer.send('use-default-64bit', data);
+  useDefault64bit: async (data: CallbackData) => {
+    const shouldCloseDialog = await ipcRenderer.invoke('use-default-64bit', data);
+    return shouldCloseDialog;
   },
 
-  use: (data: CallbackData) => {
-    ipcRenderer.send('use-custom', data);
+  use: async (data: CallbackData) => {
+    const shouldCloseDialog = await ipcRenderer.invoke('use-custom', data);
+    return shouldCloseDialog;
   },
 
   browse: async (data: CallbackData) => {

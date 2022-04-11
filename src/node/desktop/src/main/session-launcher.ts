@@ -108,7 +108,8 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     }
   }
 
-  logger().logDebug(`Launching: ${absPath.getAbsolutePath()} ${argList.join(' ')}`);
+  logger().logDebug(`Launching rsession: ${absPath.getAbsolutePath()} ${argList.join(' ')}`);
+  logger().logDebug(`R_HOME: ${getenv('R_HOME')}`);
 
   if (!appState().runDiagnostics) {
     return spawn(absPath.getAbsolutePath(), argList, { env: env });

@@ -24,5 +24,6 @@ export function ok<T>(value: T): Expected<T> {
 // unset. Effectively, this implies that "correct" usages of Expected will never
 // give the user a non-T value.
 export function err<T>(error?: Error): Expected<T> {
-  return [null as unknown as T, error ?? new Error()];
+  return [null as unknown as T, error ?? new Error(error)];
 }
+
