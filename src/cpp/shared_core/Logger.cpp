@@ -301,6 +301,9 @@ std::string formatLogMessage(
          logObject["properties"] = properties;
       }
 
+      if (in_loggedFrom.hasLocation())
+         logObject["location"] = errorLocationToJson(in_loggedFrom);
+
       return logObject.write() + "\n";
    }
 }
