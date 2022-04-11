@@ -20,7 +20,7 @@ import { logger } from './logger';
 import path from 'path';
 import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
-import { err, Expected, ok } from './expected';
+import { err, expect, Expected, ok } from './expected';
 
 /** An Error containing 'path' that triggered the error */
 export class FilePathError extends Error {
@@ -671,8 +671,13 @@ export class FilePath {
    * Checks whether this file path is a directory.
    */
   isDirectory(): boolean {
-    const stat = fs.lstatSync(this.path);
-    return stat.isDirectory();
+    
+    const stat = fs.lstatSync(this.path, {
+      throwIfNoEntry: false,
+    });
+
+    return stat != null && stat.isDirectory();
+
   }
 
   /**

@@ -39,6 +39,20 @@ ipcRenderer.on('css', (event, data) => {
 // initialize select input
 ipcRenderer.on('initialize', (event, data) => {
 
+  // if we have a default 32-bit R installation, enable it
+  const default32Bit = data.default32bitPath as string;
+  if (default32Bit) {
+    const el = document.getElementById('use-default-32');
+    el?.removeAttribute('disabled');
+  }
+
+  // if we have a default 64-bit R installation, enable it
+  const default64Bit = data.default64bitPath as string;
+  if (default64Bit) {
+    const el = document.getElementById('use-default-64');
+    el?.removeAttribute('disabled');
+  }
+
   // cast received data
   const rInstalls = data.rInstalls as string[];
   const renderingEngine = data.renderingEngine as string;

@@ -20,7 +20,7 @@ import { existsSync, readdirSync } from 'fs';
 import { EOL } from 'os';
 
 import { Environment, getenv, setenv, setVars } from '../core/environment';
-import { Expected, ok, err } from '../core/expected';
+import { Expected, ok, err, expect } from '../core/expected';
 import { logger } from '../core/logger';
 import { Err, success, safeError } from '../core/err';
 import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
@@ -51,12 +51,9 @@ function showRNotFoundError(error?: Error): void {
 }
 
 function executeCommand(command: string): Expected<string> {
-  try {
-    const output = execSync(command, { encoding: 'utf-8' });
-    return ok(output.trim());
-  } catch (error: unknown) {
-    return err(safeError(error));
-  }
+  return expect(() => {
+    return execSync(command, { encoding: 'utf-8' }).trim();
+  });
 }
 
 export async function promptUserForR(platform = process.platform): Promise<Expected<string | null>> {
@@ -82,7 +79,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
       const rBinDir = ElectronDesktopOptions().rBinDir();
       if (rBinDir) {
         const rPath = `${rBinDir}/R.exe`;
-        if (existsSync(rPath)) {
+        if (isValidBinary(rPath)) {
           logger().logDebug(`Using R from preferences: ${rPath}`);
           return ok(rPath);
         } else {
@@ -210,11 +207,17 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   Sys.getenv("${kLdLibraryPathVariable}")
 ))`;
 
-  const result = spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
-    encoding: 'utf-8',
-    input: rQueryScript,
-    env: {}
+  const [result, error] = expect(() => {
+    return spawnSync(rExecutable.getAbsolutePath(), ['--vanilla', '-s'], {
+      encoding: 'utf-8',
+      input: rQueryScript,
+      env: {}
+    });
   });
+
+  if (error) {
+    return err(error);
+  }
 
   // NOTE: It's possible for spawnSync to fail to launch a process,
   // and so exit with a non-zero status code, but without an error.
@@ -277,7 +280,7 @@ function scanForRPosix(): Expected<string> {
   }
 
   for (const location of defaultLocations) {
-    if (existsSync(location)) {
+    if (isValidBinary(location)) {
       logger().logDebug(`Using ${rLocation} (found by searching known locations)`);
       return ok(location);
     }
@@ -288,6 +291,7 @@ function scanForRPosix(): Expected<string> {
 }
 
 export function findRInstallationsWin32(): string[] {
+
   const rInstallations = new Set<string>();
 
   // list all installed versions from registry
@@ -305,14 +309,19 @@ export function findRInstallationsWin32(): string[] {
     const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
     if (match != null) {
       const rInstallation = match[1];
-      if (isValidInstallationWin32(rInstallation)) {
+      if (existsSync(rInstallation)) {
         rInstallations.add(rInstallation);
       }
     }
   }
 
   // look for R installations in some common locations
-  const commonLocations = ['C:/R', `${getenv('ProgramFiles')}/R`, `${getenv('ProgramFiles(x86)')}/R`];
+  const commonLocations = [
+    'C:/R',
+    `${getenv('ProgramFiles')}/R`,
+    `${getenv('ProgramFiles(x86)')}/R`
+  ];
+
   for (const location of commonLocations) {
     // nothing to do if it doesn't exist
     if (!existsSync(location)) {
@@ -323,23 +332,31 @@ export function findRInstallationsWin32(): string[] {
     const rDirs = readdirSync(location, { encoding: 'utf-8' });
     for (const rDir of rDirs) {
       const path = join(location, rDir);
-      if (isValidInstallationWin32(path)) {
+      if (existsSync(path)) {
         rInstallations.add(path);
       }
     }
   }
 
   return Array.from(rInstallations.values());
+
 }
 
-function isValidInstallationWin32(installPath: string): boolean {
-  const rBinPath = path.normalize(`${installPath}/bin/R.exe`);
-  return existsSync(rBinPath);
+export function isValidInstallation(rInstallPath: string): boolean {
+  const rExeName = process.platform === 'win32' ? 'R.exe' : 'R';
+  const rExePath = path.normalize(`${rInstallPath}/bin/${rExeName}`);
+  return isValidBinary(rExePath);
+}
+
+export function isValidBinary(rExePath: string): boolean {
+  const [_, error] = detectREnvironment(rExePath);
+  return error == null;
 }
 
 function findDefaultInstallPathWin32(version: string): string {
+
   // query registry for R install path
-  const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core\\${version}`;
+  const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\${version}`;
   const regQueryCommand = `reg query ${keyName} /v InstallPath`;
   const [output, error] = executeCommand(regQueryCommand);
   if (error) {
@@ -358,9 +375,11 @@ function findDefaultInstallPathWin32(version: string): string {
   }
 
   return '';
+
 }
 
 function scanForRWin32(): Expected<string> {
+
   // if the RSTUDIO_WHICH_R environment variable is set, use that
   const rstudioWhichR = getenv('RSTUDIO_WHICH_R');
   if (rstudioWhichR) {
@@ -371,24 +390,29 @@ function scanForRWin32(): Expected<string> {
   // look for a 64-bit version of R
   if (process.arch !== 'x32') {
     const x64InstallPath = findDefaultInstallPathWin32('R64');
-    if (x64InstallPath && existsSync(x64InstallPath)) {
-      const rPath = `${x64InstallPath}/bin/x64/R.exe`;
-      logger().logDebug(`Using R ${rPath} (found via registry)`);
-      return ok(rPath);
+    if (x64InstallPath) {
+      const x64BinaryPath = `${x64InstallPath}/bin/x64/R.exe`;
+      if (isValidBinary(x64BinaryPath)) {
+        logger().logDebug(`Using R ${x64BinaryPath} (found via registry)`);
+        return ok(x64BinaryPath);
+      }
     }
   }
 
   // look for a 32-bit version of R
   const i386InstallPath = findDefaultInstallPathWin32('R');
-  if (i386InstallPath && existsSync(i386InstallPath)) {
-    const rPath = `${i386InstallPath}/bin/i386/R.exe`;
-    logger().logDebug(`Using R ${rPath} (found via registry)`);
-    return ok(rPath);
+  if (i386InstallPath) {
+    const i386BinaryPath = `${i386InstallPath}/bin/i386/R.exe`;
+    if (isValidBinary(i386BinaryPath)) {
+      logger().logDebug(`Using R ${i386BinaryPath} (found via registry)`);
+      return ok(i386BinaryPath);
+    }
   }
 
   // nothing found; return empty filepath
   logger().logDebug('Failed to discover R');
   return err();
+
 }
 
 export function findDefault32Bit(): string {
