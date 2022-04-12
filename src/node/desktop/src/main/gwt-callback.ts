@@ -30,10 +30,10 @@ import {
 import { IpcMainEvent, MessageBoxOptions, OpenDialogOptions, SaveDialogOptions } from 'electron/main';
 import EventEmitter from 'events';
 import { mkdtempSync, writeFileSync } from 'fs';
-import i18next, { t } from 'i18next';
+import { pathToFileURL } from 'url';
+import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
-import { err } from '../core/expected';
 import { FilePath } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
@@ -46,7 +46,7 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
+import { findRepoRoot, getAppPath, filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
 import { activateWindow } from './window-utils';
 
 export enum PendingQuit {
@@ -738,7 +738,15 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_keyboard_shortcut_help', () => {
-      GwtCallback.unimpl('desktop_show_keyboard_shortcut_help');
+      let docUrl: URL;
+      if (app.isPackaged) {
+        docUrl = pathToFileURL(path.join(getAppPath(), 'www', 'docs', 'keyboard.htm'));
+        console.log(`appPath=${getAppPath()}`);
+      } else {
+        // dev build scenario
+        docUrl = pathToFileURL(new FilePath(findRepoRoot()).completeChildPath('src/gwt/www/docs/keyboard.htm').getAbsolutePath());
+      }
+      shell.openExternal(docUrl.toString());
     });
 
     ipcMain.on('desktop_launch_session', (event, reload) => {

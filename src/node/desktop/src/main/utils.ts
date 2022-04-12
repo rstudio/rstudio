@@ -154,17 +154,32 @@ export function rsessionExeName(): string {
   }
 }
 
+/**
+ * 
+ * @returns Root of the RStudio repo for a dev build, nothing for packaged build
+ */
+export function findRepoRoot(): string {
+  if (app.isPackaged) {
+    return "";
+  }
+  for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir)) {
+    // check for release file
+    const releaseFile = path.join(dir, 'version', 'RELEASE');
+    if (existsSync(releaseFile)) {
+      return dir;
+    }
+  }
+  return "";
+}
+
 // used to help find built C++ sources in developer configurations
 function findBuildRoot(): string {
   // look for the project root directory. note that the current
   // working directory may differ depending on how we are launched
   // (e.g. unit tests will have their parent folder as the working directory)
-  for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir)) {
-    // check for release file
-    const releaseFile = path.join(dir, 'version', 'RELEASE');
-    if (existsSync(releaseFile)) {
-      return findBuildRootImpl(dir);
-    }
+  let dir = findRepoRoot();
+  if (dir.length > 0) {
+    return findBuildRootImpl(dir);
   }
 
   throw rsessionNotFoundError();
