@@ -312,6 +312,26 @@ export class MenuCallback extends EventEmitter {
    *
    */
   updateMenus(): void {
+    /*
+     * This function will remove items that has a submenu array with no items
+     */
+    const removeItemsWithEmptySubmenuList = (item: MenuItemConstructorOptions) => {
+      if (Object.prototype.hasOwnProperty.call(item, 'submenu')) {
+        if (Array.isArray(item.submenu)) {
+          if (item.submenu.length > 0) {
+            item.submenu = item.submenu.filter((submenu) => {
+              return removeItemsWithEmptySubmenuList(submenu);
+            });
+            return true;
+          } else {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    };
+
     /**
      * Builds the final list of menu items using the given menu template
      *
@@ -351,8 +371,9 @@ export class MenuCallback extends EventEmitter {
 
       return newMenuTemplate.filter((item, idx, arr) => {
         if (item.type !== 'separator') {
-          return true;
+          return removeItemsWithEmptySubmenuList(item);
         }
+
         const prevItem = arr[idx - 1];
         return idx !== 0 && prevItem.type !== 'separator' && idx != arr.length - 1;
       });
@@ -388,8 +409,7 @@ export class MenuCallback extends EventEmitter {
       // difference unless screen-reader mode is on.
       menuItemOpts.type = ElectronDesktopOptions().accessibility() ? 'radio' : 'checkbox';
       menuItemOpts.checked = false;
-    }
-    else if (checkable) {
+    } else if (checkable) {
       menuItemOpts.type = 'checkbox';
       menuItemOpts.checked = false;
     }
