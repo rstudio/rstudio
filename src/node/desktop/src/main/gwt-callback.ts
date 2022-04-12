@@ -741,7 +741,6 @@ export class GwtCallback extends EventEmitter {
       let docUrl: URL;
       if (app.isPackaged) {
         docUrl = pathToFileURL(path.join(getAppPath(), 'www', 'docs', 'keyboard.htm'));
-        console.log(`appPath=${getAppPath()}`);
       } else {
         // dev build scenario
         docUrl = pathToFileURL(new FilePath(findRepoRoot()).completeChildPath('src/gwt/www/docs/keyboard.htm').getAbsolutePath());
