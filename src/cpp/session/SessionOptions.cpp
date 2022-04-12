@@ -542,7 +542,7 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = macBinaryPath(resourcePath, "quarto/bin");
+      FilePath path = macBinaryPath(resourcePath, "quarto/bin/tools");
       *pPath = path.getAbsolutePath();
    }
    else
