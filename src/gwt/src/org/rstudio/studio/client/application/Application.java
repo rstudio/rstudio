@@ -936,7 +936,10 @@ public class Application implements ApplicationEventHandlers
       if (localStoragePrefs.haveLocalStorage())
       {
          String uiLanguagePrefValue = userPrefs_.get().uiLanguage().getValue();
-         if (!StringUtil.equals(uiLanguagePrefValue, localStoragePrefs.getUiLanguage()))
+         String localStorageValue = localStoragePrefs.getUiLanguage();
+         if (localStorageValue.isEmpty())
+            localStorageValue = "en";
+         if (!StringUtil.equals(uiLanguagePrefValue, localStorageValue))
          {
             localStoragePrefs.setUiLanguage(uiLanguagePrefValue);
             RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
