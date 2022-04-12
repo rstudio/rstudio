@@ -617,7 +617,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    it = dcfFields.find("UseNativePipeOperator");
    if (it != dcfFields.end())
    {
-      if (!interpretBoolValue(it->second, &(pConfig->usetNativePipeOperator)))
+      if (!interpretYesNoAskValue(it->second, false, &(pConfig->useNativePipeOperator)))
          return requiredFieldError("UseNativePipeOperator", pUserErrMsg);
    }
    else
@@ -1057,19 +1057,16 @@ Error writeProjectFile(const FilePath& projectFilePath,
    }
 
    // additional editor settings
-   if (config.autoAppendNewline || config.stripTrailingWhitespace || config.useNativePipeOperator ||
+   if (config.autoAppendNewline || config.stripTrailingWhitespace ||
        (config.lineEndings != kLineEndingsUseDefault) )
    {
       contents.append("\n");
 
       if (config.autoAppendNewline)
       {
-         contents.append("AutoAppendNewline: Yes\n");
-      }
 
-      if (config.useNativePipeOperator)
-      {
-         contents.append("UseNativePipeOperator: Yes\n");
+
+         contents.append("AutoAppendNewline: Yes\n");
       }
 
       if (config.stripTrailingWhitespace)
@@ -1200,6 +1197,13 @@ Error writeProjectFile(const FilePath& projectFilePath,
    {
       boost::format tutorialFmt("\nTutorial: %1%\n");
       contents.append(boost::str(tutorialFmt % config.tutorialPath));
+   }
+
+   // add UseNativePipeOperator if it's not the default
+   if (config.useNativePipeOperator != DefaultValue)
+   {
+      boost::format useNativePipeOperator("\nUse Native Pipe Operator: %1%\n");
+      contents.append(boost::str(useNativePipeOperator % yesNoAskValueToString(config.useNativePipeOperator)));
    }
 
    // add QuitChildProcessesOnExit if it's not the default

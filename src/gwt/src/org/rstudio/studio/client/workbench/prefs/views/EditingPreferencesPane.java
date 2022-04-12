@@ -48,6 +48,7 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -61,14 +62,37 @@ public class EditingPreferencesPane extends PreferencesPane
    @Inject
    public EditingPreferencesPane(UserPrefs prefs,
                                  SourceServerOperations server,
-                                 PreferencesDialogResources res)
+                                 PreferencesDialogResources res,
+                                 Commands commands)
    {
       prefs_ = prefs;
       server_ = server;
+      commands_ = commands;
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
       editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
+
+      HorizontalPanel projectPrefsPanel = new HorizontalPanel();
+      Label projectOverride = new Label(constants_.editingProjectOverrideInfoText());
+      projectOverride.addStyleName(baseRes.styles().infoLabel());
+      projectPrefsPanel.add(projectOverride);
+
+
+      SmallButton editProjectSettings = new SmallButton(constants_.editProjectPreferencesButtonLabel());
+      editProjectSettings.getElement().getStyle().setMarginTop(1, Unit.PX);
+      editProjectSettings.getElement().getStyle().setMarginLeft(5, Unit.PX);
+      editProjectSettings.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // open the project options pane for editing
+            commands_.projectOptions().execute();
+         }
+      });
+      projectPrefsPanel.add(editProjectSettings);
+      editingPanel.add(projectPrefsPanel);
+
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
             prefs_.numSpacesForTab())));
@@ -563,6 +587,7 @@ public class EditingPreferencesPane extends PreferencesPane
 
    private final UserPrefs prefs_;
    private final SourceServerOperations server_;
+   private final Commands commands_;
    private final NumericValueWidget tabWidth_;
    private final NumericValueWidget marginCol_;
    private final LineEndingsSelectWidget lineEndings_;

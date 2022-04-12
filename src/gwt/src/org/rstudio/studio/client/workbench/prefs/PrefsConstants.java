@@ -4532,6 +4532,24 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingUseNativePipeOperatorLabel();
 
     /**
+     * Translated "NOTE: Some of these settings may be overridden by project-specific preferences."
+     *
+     * @return translated "NOTE: Some of these settings may be overridden by project-specific preferences."
+     */
+    @DefaultMessage("NOTE: Some of these settings may be overridden by project-specific preferences.")
+    @Key("editingProjectOverrideInfoText")
+    String editingProjectOverrideInfoText();
+
+    /**
+     * Translated "Edit Project Preferences..."
+     *
+     * @return translated "Edit Project Preferences..."
+     */
+    @DefaultMessage("Edit Project Preferences...")
+    @Key("editProjectPreferencesButtonLabel")
+    String editProjectPreferencesButtonLabel();
+
+    /**
      * Translated "Auto-indent code after paste"
      *
      * @return translated "Auto-indent code after paste"

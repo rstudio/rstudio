@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
@@ -26,7 +27,6 @@ import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
-import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.ProjectPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.LineEndingsSelectWidget;
@@ -45,6 +45,9 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    @Inject
    public ProjectEditingPreferencesPane(final SourceServerOperations server)
    {
+      Label infoLabel_ = new Label(constants_.projectGeneralInfoLabel());
+      add(infoLabel_);
+
       // source editing options
       enableCodeIndexing_ = new CheckBox(constants_.enableCodeIndexingLabel(), false);
       enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
@@ -59,7 +62,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.setWidth("36px");
       add(numSpacesForTab_);
 
-      useNativePipeOperator_ = new CheckBox(constants_.useNativePipeOperatorLabel(), false);
+      useNativePipeOperator_ = new YesNoAskDefault(false);
       useNativePipeOperator_.addStyleName(RESOURCES.styles().useNativePipeOperator());
       add(useNativePipeOperator_);
 
@@ -188,10 +191,11 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       }
    }
 
+   private Label infoLabel_;
    private CheckBox enableCodeIndexing_;
    private CheckBox chkSpacesForTab_;
    private NumericValueWidget numSpacesForTab_;
-   private CheckBox useNativePipeOperator_;
+   private YesNoAskDefault useNativePipeOperator_;
    private CheckBox chkAutoAppendNewline_;
    private CheckBox chkStripTrailingWhitespace_;
    private LineEndingsSelectWidget lineEndings_;
