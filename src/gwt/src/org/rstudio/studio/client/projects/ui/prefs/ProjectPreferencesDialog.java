@@ -145,8 +145,6 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getUseSpacesForTab());
                 uiPrefs.numSpacesForTab().setProjectValue(
                                            config.getNumSpacesForTab());
-                uiPrefs.useNativePipeOperator().setProjectValue(
-                                           config.getUseNativePipeOperator());
                 uiPrefs.autoAppendNewline().setProjectValue(
                                            config.getAutoAppendNewline());
                 uiPrefs.stripTrailingWhitespace().setProjectValue(
@@ -161,6 +159,20 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getRootDocument());
                 uiPrefs.useRoxygen().setProjectValue(
                                            config.hasPackageRoxygenize());
+
+                // native pipe prefs (remove if set to defaults)
+                switch (config.getUseNativePipeOperator())
+                {
+                   case RProjectConfig.DEFAULT_VALUE:
+                      uiPrefs.useNativePipeOperator().removeProjectValue(true);
+                      break;
+                   case RProjectConfig.YES_VALUE:
+                      uiPrefs.useNativePipeOperator().setProjectValue(true);
+                      break;
+                   case RProjectConfig.NO_VALUE:
+                      uiPrefs.useNativePipeOperator().setProjectValue(false);
+                      break;
+                }
 
                 // markdown prefs (if they are set to defaults then remove the project prefs, otherwise forward them on)
                 if (!config.getMarkdownWrap().equals(RProjectConfig.MARKDOWN_WRAP_DEFAULT))

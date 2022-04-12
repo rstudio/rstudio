@@ -143,7 +143,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       enableCodeIndexing_.setValue(initialConfig_.getEnableCodeIndexing());
       chkSpacesForTab_.setValue(initialConfig_.getUseSpacesForTab());
       numSpacesForTab_.setValue(initialConfig_.getNumSpacesForTab() + "");
-      useNativePipeOperator_.setValue(initialConfig_.getUseNativePipeOperator());
+      useNativePipeOperator_.setSelectedIndex(initialConfig_.getUseNativePipeOperator());
       chkAutoAppendNewline_.setValue(initialConfig_.getAutoAppendNewline());
       chkStripTrailingWhitespace_.setValue(initialConfig_.getStripTrailingWhitespace());
       lineEndings_.setValue(ProjectPrefs.prefFromLineEndings(initialConfig_.getLineEndings()));
@@ -163,7 +163,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       config.setEnableCodeIndexing(enableCodeIndexing_.getValue());
       config.setUseSpacesForTab(chkSpacesForTab_.getValue());
       config.setNumSpacesForTab(getTabWidth());
-      config.setUseNativePipeOperator(useNativePipeOperator_.getValue());
+      config.setUseNativePipeOperator(useNativePipeOperator_.getSelectedIndex());
       config.setAutoAppendNewline(chkAutoAppendNewline_.getValue());
       config.setStripTrailingWhitespace(chkStripTrailingWhitespace_.getValue());
       config.setLineEndings(ProjectPrefs.lineEndingsFromPref(lineEndings_.getValue()));

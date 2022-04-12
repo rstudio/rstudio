@@ -117,11 +117,11 @@ public class RProjectConfig extends JavaScriptObject
       this.num_spaces_for_tab = numSpacesForTab;
    }-*/;
 
-   public native final boolean getUseNativePipeOperator() /*-{
+   public native final int getUseNativePipeOperator() /*-{
        return this.use_native_pipe_operator;
    }-*/;
 
-   public native final void setUseNativePipeOperator(boolean useNativePipeOperator) /*-{
+   public native final void setUseNativePipeOperator(int useNativePipeOperator) /*-{
        this.use_native_pipe_operator = useNativePipeOperator;
    }-*/;
 
