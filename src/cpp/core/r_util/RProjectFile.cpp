@@ -622,8 +622,7 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
    else
    {
-      pConfig->useNativePipeOperator = defaultConfig.useNativePipeOperator;
-      *pProvidedDefaults = true;
+      pConfig->useNativePipeOperator = false;
    }
 
    // extract auto append newline
@@ -1030,11 +1029,10 @@ Error writeProjectFile(const FilePath& projectFilePath,
       "EnableCodeIndexing: %6%\n"
       "UseSpacesForTab: %7%\n"
       "NumSpacesForTab: %8%\n"
-      "UseNativePipeOperator: %9%\n"
-      "Encoding: %10%\n"
+      "Encoding: %9%\n"
       "\n"
-      "RnwWeave: %11%\n"
-      "LaTeX: %12%\n");
+      "RnwWeave: %10%\n"
+      "LaTeX: %11%\n");
 
    std::string contents = boost::str(fmt %
         boost::io::group(std::fixed, std::setprecision(1), config.version) %
@@ -1045,7 +1043,6 @@ Error writeProjectFile(const FilePath& projectFilePath,
         boolValueToString(config.enableCodeIndexing) %
         boolValueToString(config.useSpacesForTab) %
         config.numSpacesForTab %
-        boolValueToString(config.useNativePipeOperator) %
         config.encoding %
         config.defaultSweaveEngine %
         config.defaultLatexProgram);
@@ -1059,7 +1056,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
    }
 
    // additional editor settings
-   if (config.autoAppendNewline || config.stripTrailingWhitespace ||
+   if (config.autoAppendNewline || config.stripTrailingWhitespace || config.useNativePipeOperator ||
        (config.lineEndings != kLineEndingsUseDefault) )
    {
       contents.append("\n");
@@ -1067,6 +1064,11 @@ Error writeProjectFile(const FilePath& projectFilePath,
       if (config.autoAppendNewline)
       {
          contents.append("AutoAppendNewline: Yes\n");
+      }
+
+      if (config.useNativePipeOperator)
+      {
+         contents.append("UseNativePipeOperator: Yes\n");
       }
 
       if (config.stripTrailingWhitespace)
