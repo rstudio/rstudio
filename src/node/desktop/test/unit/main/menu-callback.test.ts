@@ -23,11 +23,11 @@ const separatorTemplate: MenuItemConstructorOptions = { type: 'separator' };
 describe('MenuCallback', () => {
   it('can be constructed', () => {
     const callback = new MenuCallback();
-    const menuCount = process.platform === 'darwin' ? 2 : 1; // adjust for MacOS app menu
+    const menuCount = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
     callback.beginMain();
     callback.menuBegin('&File');
 
-    callback.updateMenus();
+    callback.updateMenus(); // empty menu will be removed
     assert.strictEqual(callback.mainMenu.items.length, menuCount, 'expected correct top level menu count');
   });
 
@@ -167,7 +167,7 @@ describe('MenuCallback', () => {
 
   it('can rebuild the main menu', () => {
     const callback = new MenuCallback();
-    const menuCount = process.platform === 'darwin' ? 2 : 1; // adjust for MacOS app menu
+    const menuCount = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
 
     callback.beginMain();
     callback.menuBegin('&File');
