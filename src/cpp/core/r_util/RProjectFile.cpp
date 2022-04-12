@@ -622,7 +622,8 @@ Error readProjectFile(const FilePath& projectFilePath,
    }
    else
    {
-      pConfig->useNativePipeOperator = false;
+      pConfig->useNativePipeOperator = defaultConfig.useNativePipeOperator;
+      *pProvidedDefaults = true;
    }
 
    // extract auto append newline
