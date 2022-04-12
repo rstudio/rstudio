@@ -72,7 +72,6 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.resources.StaticDataResource;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SuperDevMode;
@@ -87,7 +86,6 @@ import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ChangeTracker;
 import org.rstudio.studio.client.workbench.model.EventBasedChangeTracker;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionManager;
@@ -349,10 +347,6 @@ public class AceEditor implements DocDisplay,
 
       completionManager_ = new NullCompletionManager();
       diagnosticsBgPopup_ = new DiagnosticsBackgroundPopup(this);
-
-      // we'd probably want to do some event handling with this because the R version can change after startup
-      // see server_.getRVersion(new ServerRequestCallback<RVersionSpec>()
-      rVersion_ = RStudioGinjector.INSTANCE.getSession().getSessionInfo().getRVersionsInfo().getRVersion();
 
       RStudioGinjector.INSTANCE.injectMembers(this);
 
@@ -4665,7 +4659,6 @@ public class AceEditor implements DocDisplay,
    private Commands commands_;
    private EventBus events_;
    private TextFileType fileType_;
-   private String rVersion_;
    private boolean passwordMode_;
    private boolean useEmacsKeybindings_ = false;
    private boolean useVimMode_ = false;
