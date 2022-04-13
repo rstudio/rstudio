@@ -42,6 +42,7 @@ import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.TimedProgressIndicator;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -428,15 +429,12 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             // the process exits). since this codepath is only for the quit
             // case (and not the restart or restart and reload cases)
             // we can set the pending quit bit here
-            if (Desktop.hasDesktopFrame())
+            DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_AND_EXIT, () ->
             {
-               Desktop.getFrame().setPendingQuit(
-                        DesktopFrame.PENDING_QUIT_AND_EXIT);
-            }
-            
-            server_.handleUnsavedChangesCompleted(
-                                          handled_, 
-                                          new VoidServerRequestCallback());  
+               server_.handleUnsavedChangesCompleted(
+                     handled_, 
+                     new VoidServerRequestCallback());  
+            });
          }
          
          private final boolean handled_;
@@ -509,11 +507,18 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    public void onSuspendAndRestart(final SuspendAndRestartEvent event)
    {
       // Ignore nested restarts once restart starts
-      if (suspendingAndRestarting_) return;
+      if (suspendingAndRestarting_)
+         return;
       
       // set restart pending for desktop
-      setPendingQuit(DesktopFrame.PENDING_QUIT_AND_RESTART);
-      
+      DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_AND_RESTART, () ->
+      {
+         onSuspendAndRestartImpl(event);
+      });
+   }
+   
+   private void onSuspendAndRestartImpl(final SuspendAndRestartEvent event)
+   {
       final TimedProgressIndicator progress = new TimedProgressIndicator(
             globalDisplay_.getProgressIndicator(constants_.progressErrorCaption()));
       progress.onTimedProgress(constants_.restartingRMessage(), 1000);
@@ -534,14 +539,8 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
             onRestartComplete.execute();
          }, () -> { // failure
             onRestartComplete.execute();
-            setPendingQuit(DesktopFrame.PENDING_QUIT_NONE);
+            DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
          });
-   }
-   
-   private void setPendingQuit(int pendingQuit)
-   {
-      if (Desktop.hasDesktopFrame())
-         Desktop.getFrame().setPendingQuit(pendingQuit);
    }
    
    @Handler
@@ -553,22 +552,30 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    @Handler
    public void onForceQuitSession()
    {
-      prepareForQuit(constants_.quitRSessionCaption(), false /*allowCancel*/, false /*forceSaveChanges*/,
+      prepareForQuit(
+            constants_.quitRSessionCaption(),
+            false /*allowCancel*/,
+            false /*forceSaveChanges*/,
             (boolean saveChanges) -> performQuit(null, saveChanges));
    }
-   
-
 
    public void doRestart(Session session)
    {
-      prepareForQuit(
-            constants_.restartRStudio(),
-            saveChanges -> {
-               String project = session.getSessionInfo().getActiveProjectFile();
-               if (project == null)
-                  project = Projects.NONE;
-               performQuit(null, saveChanges, project);
-            });
+      prepareForQuit(constants_.restartRStudio(), (saveChanges) ->
+      {
+         final String project = StringUtil.nullCoalesce(
+               session.getSessionInfo().getActiveProjectFile(),
+               Projects.NONE);
+         
+         // NOTE: we don't use the 'switchToProject' variant here as we
+         // want to open a brand new RStudio window for this project, rather
+         // than just reload the current window with the requested project
+         // now active
+         performQuit(null, saveChanges, () ->
+         {
+            eventBus_.fireEvent(new OpenProjectNewWindowEvent(project, null));
+         });
+      });
    }
 
    private UnsavedChangesTarget globalEnvTarget_ = new UnsavedChangesTarget()
@@ -635,86 +642,90 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                                     buildSwitchMessage(switchToProject_) :
                                     constants_.quitRSessionMessage();
          }
+         
          final GlobalProgressDelayer progress = new GlobalProgressDelayer(
                                                                globalDisplay_,
                                                                250,
                                                                msg);
-
+         
          // Use a barrier and LastChanceSaveEvent to allow source documents
          // and client state to be synchronized before quitting.
          Barrier barrier = new Barrier();
-         barrier.addBarrierReleasedHandler(releasedEvent ->
+         barrier.addBarrierReleasedHandler((releasedEvent) ->
          {
             // All last chance save operations have completed (or possibly
             // failed). Now do the real quit.
 
             // notify the desktop frame that we are about to quit
-            String switchToProject = StringUtil.create(switchToProject_);
-            if (Desktop.hasDesktopFrame())
-            {
-               Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
-                     DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
-                     DesktopFrame.PENDING_QUIT_AND_EXIT);
-            }
+            final int quitType = switchToProject_ == null
+                  ? DesktopFrame.PENDING_QUIT_AND_EXIT
+                  : DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD;
             
-            server_.quitSession(
-               saveChanges_,
-               switchToProject,
-               switchToRVersion_,
-               GWT.getHostPageBaseURL(),
-               new ServerRequestCallback<Boolean>()
-               {
-                  @Override
-                  public void onResponseReceived(Boolean response)
-                  {
-                     if (response)
+            DesktopFrameHelper.setPendingQuit(quitType, () ->
+            {
+               server_.quitSession(
+                     saveChanges_,
+                     switchToProject_,
+                     switchToRVersion_,
+                     GWT.getHostPageBaseURL(),
+                     new ServerRequestCallback<Boolean>()
                      {
-                        // clear progress only if we aren't switching projects
-                        // (otherwise we want to leave progress up until
-                        // the app reloads)
-                        if (switchToProject_ == null)
-                           progress.dismiss();
-                        
-                        if (callContext_ != null)
+                        @Override
+                        public void onResponseReceived(Boolean response)
                         {
-                           eventBus_.fireEvent(new ApplicationTutorialEvent(
-                                 ApplicationTutorialEvent.API_SUCCESS, callContext_));
-                        }
-                        
-                        // fire onQuitAcknowledged
-                        if (onQuitAcknowledged_ != null)
-                           onQuitAcknowledged_.execute();
-                     }
-                     else
-                     {
-                        onFailedToQuit(constants_.serverQuitSession());
-                     }
-                  }
+                           if (response)
+                           {
+                              // clear progress only if we aren't switching projects
+                              // (otherwise we want to leave progress up until
+                              // the app reloads)
+                              if (switchToProject_ == null)
+                                 progress.dismiss();
 
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     onFailedToQuit(error.getMessage());
-                  }
-                  
-                  private void onFailedToQuit(String message)
-                  {
-                     progress.dismiss();
-                     
-                     if (callContext_ != null)
-                     {
-                        eventBus_.fireEvent(new ApplicationTutorialEvent(
-                              ApplicationTutorialEvent.API_ERROR,
-                              message,
-                              callContext_));
-                     }
-                     if (Desktop.hasDesktopFrame())
-                     {
-                        Desktop.getFrame().setPendingQuit(
-                                      DesktopFrame.PENDING_QUIT_NONE);
-                     }
-                  }
-               });
+                              if (callContext_ != null)
+                              {
+                                 eventBus_.fireEvent(new ApplicationTutorialEvent(
+                                       ApplicationTutorialEvent.API_SUCCESS, callContext_));
+                              }
+
+                              // fire onQuitAcknowledged
+                              if (onQuitAcknowledged_ != null)
+                                 onQuitAcknowledged_.execute();
+                              
+                              // if we're restarting and reloading fire event
+                              if (quitType == DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD)
+                              {
+                                 eventBus_.fireEvent(new OpenProjectNewWindowEvent(switchToProject_, switchToRVersion_));
+                              }
+                           }
+                           else
+                           {
+                              onFailedToQuit(constants_.serverQuitSession());
+                           }
+                        }
+
+                        @Override
+                        public void onError(ServerError error)
+                        {
+                           onFailedToQuit(error.getMessage());
+                        }
+
+                        private void onFailedToQuit(String message)
+                        {
+                           progress.dismiss();
+
+                           if (callContext_ != null)
+                           {
+                              eventBus_.fireEvent(new ApplicationTutorialEvent(
+                                    ApplicationTutorialEvent.API_ERROR,
+                                    message,
+                                    callContext_));
+                           }
+                           
+                           DesktopFrameHelper.setPendingQuit(DesktopFrame.PENDING_QUIT_NONE, () -> {});
+                        }
+                     });
+            });
+            
          });
 
          // We acquire a token to make sure that the barrier doesn't fire before
