@@ -560,7 +560,7 @@ export class GwtCallback extends EventEmitter {
       desktop.cleanClipboard(stripHtml);
     });
 
-    ipcMain.on('desktop_set_pending_quit', (event, pendingQuit: number) => {
+    ipcMain.handle('desktop_set_pending_quit', (event, pendingQuit: number) => {
       this.pendingQuit = pendingQuit;
     });
 

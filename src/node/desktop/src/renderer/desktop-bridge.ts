@@ -365,8 +365,11 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_clean_clipboard', stripHtml);
     },
 
-    setPendingQuit: (pendingQuit: number) => {
-      ipcRenderer.send('desktop_set_pending_quit', pendingQuit);
+    setPendingQuit: (pendingQuit: number, callback: VoidCallback<unknown>) => {
+      ipcRenderer
+        .invoke('desktop_set_pending_quit', pendingQuit)
+        .then((response) => callback(response))
+        .catch((error) => reportIpcError('setPendingQuit', error));
     },
 
     openProjectInNewWindow: (projectFilePath: string) => {
