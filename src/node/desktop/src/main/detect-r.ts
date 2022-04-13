@@ -204,6 +204,7 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   R.home("include"),
   R.home("share"),
   paste(R.version$crt, collapse = ""),
+  .Platform$r_arch,
   Sys.getenv("${kLdLibraryPathVariable}")
 ))`;
 
@@ -228,7 +229,16 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
   }
 
   // unwrap query results
-  const [rVersion, rHome, rDocDir, rIncludeDir, rShareDir, rRuntime, rLdLibraryPath] = result.stdout.split(EOL);
+  const [
+    rVersion,
+    rHome,
+    rDocDir,
+    rIncludeDir,
+    rShareDir,
+    rRuntime,
+    rArch,
+    rLdLibraryPath
+  ] = result.stdout.split(EOL);
 
   // put it all together
   return ok({
@@ -240,6 +250,7 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
       R_INCLUDE_DIR: rIncludeDir,
       R_SHARE_DIR: rShareDir,
       R_RUNTIME: rRuntime,
+      R_ARCH: rArch,
     },
     ldLibraryPath: rLdLibraryPath,
   });
