@@ -767,6 +767,24 @@ void ProjectContext::updatePackageInfo()
    }
 }
 
+bool useNativePipeOption(int useNativePipeOperator)
+{
+   // allow project override
+   switch(useNativePipeOperator)
+   {
+      case r_util::YesValue:
+         return true;
+      case r_util::NoValue:
+         return false;
+      default:
+         // fall through
+         break;
+   }
+
+   // no project override
+   return prefs::userPrefs().useNativePipeOperator();
+}
+
 json::Object ProjectContext::uiPrefs() const
 {
    using namespace r_util;
@@ -774,7 +792,7 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
-   uiPrefs[kUseNativePipeOperator] = config_.useNativePipeOperator;
+   uiPrefs[kUseNativePipeOperator] = useNativePipeOption(config_.useNativePipeOperator);
    uiPrefs[kAutoAppendNewline] = config_.autoAppendNewline;
    uiPrefs[kStripTrailingWhitespace] = config_.stripTrailingWhitespace;
    uiPrefs[kDefaultEncoding] = defaultEncoding();
@@ -844,7 +862,7 @@ r_util::RProjectConfig ProjectContext::defaultConfig()
    defaultConfig.rVersion = r_util::RVersionInfo(kRVersionDefault);
    defaultConfig.useSpacesForTab = prefs::userPrefs().useSpacesForTab();
    defaultConfig.numSpacesForTab = prefs::userPrefs().numSpacesForTab();
-   defaultConfig.useNativePipeOperator = prefs::userPrefs().useNativePipeOperator();
+   defaultConfig.useNativePipeOperator = r_util::DefaultValue;
    defaultConfig.autoAppendNewline = prefs::userPrefs().autoAppendNewline();
    defaultConfig.stripTrailingWhitespace =
                               prefs::userPrefs().stripTrailingWhitespace();

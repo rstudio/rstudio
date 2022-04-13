@@ -1199,10 +1199,10 @@ Error writeProjectFile(const FilePath& projectFilePath,
       contents.append(boost::str(tutorialFmt % config.tutorialPath));
    }
 
-   // add UseNativePipeOperator if it's not the default
+   // add UseNativePipeOperator to project file if it's not set to default
    if (config.useNativePipeOperator != DefaultValue)
    {
-      boost::format useNativePipeOperator("\nUse Native Pipe Operator: %1%\n");
+      boost::format useNativePipeOperator("\nUseNativePipeOperator: %1%\n");
       contents.append(boost::str(useNativePipeOperator % yesNoAskValueToString(config.useNativePipeOperator)));
    }
 

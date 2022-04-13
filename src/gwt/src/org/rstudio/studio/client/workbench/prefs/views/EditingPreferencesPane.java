@@ -73,26 +73,6 @@ public class EditingPreferencesPane extends PreferencesPane
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
       editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
 
-      HorizontalPanel projectPrefsPanel = new HorizontalPanel();
-      Label projectOverride = new Label(constants_.editingProjectOverrideInfoText());
-      projectOverride.addStyleName(baseRes.styles().infoLabel());
-      projectPrefsPanel.add(projectOverride);
-
-
-      SmallButton editProjectSettings = new SmallButton(constants_.editProjectPreferencesButtonLabel());
-      editProjectSettings.getElement().getStyle().setMarginTop(1, Unit.PX);
-      editProjectSettings.getElement().getStyle().setMarginLeft(5, Unit.PX);
-      editProjectSettings.addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            // open the project options pane for editing
-            commands_.projectOptions().execute();
-         }
-      });
-      projectPrefsPanel.add(editProjectSettings);
-      editingPanel.add(projectPrefsPanel);
-
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
             prefs_.numSpacesForTab())));
@@ -100,8 +80,8 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
             constants_.editingAutoDetectIndentationDesc()));
       editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
-      editingPanel.add(checkboxPref(constants_.editingUseNativePipeOperatorLabel(),
-            prefs_.useNativePipeOperator()));
+      useNativePipe_ = checkboxPref(constants_.editingUseNativePipeOperatorLabel(), prefs_.useNativePipeOperator());
+      editingPanel.add(useNativePipe_);
       editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
       editingPanel.add(checkboxPref(prefs_.softWrapRFiles()));
@@ -144,6 +124,26 @@ public class EditingPreferencesPane extends PreferencesPane
 
       lessSpaced(keyboardPanel);
       editingPanel.add(keyboardPanel);
+
+      HorizontalPanel projectPrefsPanel = new HorizontalPanel();
+      Label projectOverride = new Label(constants_.editingProjectOverrideInfoText());
+      projectOverride.addStyleName(baseRes.styles().infoLabel());
+      projectPrefsPanel.add(projectOverride);
+
+      SmallButton editProjectSettings = new SmallButton(constants_.editProjectPreferencesButtonLabel());
+      editProjectSettings.getElement().getStyle().setMarginTop(1, Unit.PX);
+      editProjectSettings.getElement().getStyle().setMarginLeft(5, Unit.PX);
+      editProjectSettings.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // open the project options pane for editing
+            // this will open to the General tab, but it would be ideal if we could open directly to Editing tab
+            commands_.projectOptions().execute();
+         }
+      });
+      projectPrefsPanel.add(editProjectSettings);
+      editingPanel.add(projectPrefsPanel);
 
       Label executionLabel = headerLabel(constants_.editingExecutionLabel());
       editingPanel.add(executionLabel);
@@ -498,7 +498,7 @@ public class EditingPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       lineEndings_.setValue(prefs.lineEndingConversion().getValue());
-
+      useNativePipe_.setValue(prefs.useNativePipeOperator().getValue());
       showCompletions_.setValue(prefs_.codeCompletion().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
       editorMode_.setValue(prefs_.editorKeybindings().getValue());
@@ -523,7 +523,8 @@ public class EditingPreferencesPane extends PreferencesPane
 
       // editing prefs
       prefs_.lineEndingConversion().setGlobalValue(lineEndings_.getValue());
-
+      prefs_.useNativePipeOperator().setGlobalValue(useNativePipe_.getValue());
+      prefs_.useNativePipeOperator().setProjectValue(useNativePipe_.getValue());
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
 
       prefs_.codeCompletion().setGlobalValue(showCompletions_.getValue());
@@ -596,6 +597,7 @@ public class EditingPreferencesPane extends PreferencesPane
    private final NumericValueWidget backgroundDiagnosticsDelayMs_;
    private final CheckBox spacesForTab_;
    private final CheckBox showMargin_;
+   private final CheckBox useNativePipe_;
    private final SelectWidget showCompletions_;
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;

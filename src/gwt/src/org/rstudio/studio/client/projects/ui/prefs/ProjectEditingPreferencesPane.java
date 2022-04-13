@@ -20,9 +20,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.widget.NumericValueWidget;
-import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
@@ -62,9 +60,12 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.setWidth("36px");
       add(numSpacesForTab_);
 
+      LayoutGrid useNativePipeLabeled = new LayoutGrid(1, 2);
       useNativePipeOperator_ = new YesNoAskDefault(false);
-      useNativePipeOperator_.addStyleName(RESOURCES.styles().useNativePipeOperator());
-      add(useNativePipeOperator_);
+      useNativePipeLabeled.setWidget(0, 0, new FormLabel(constants_.useNativePipeOperatorLabel(), useNativePipeOperator_));
+      useNativePipeLabeled.setWidget(0, 1, useNativePipeOperator_);
+      useNativePipeLabeled.addStyleName(RESOURCES.styles().useNativePipeOperator());
+      add(useNativePipeLabeled);
 
       chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
       chkAutoAppendNewline_.addStyleName(RESOURCES.styles().editingOption());
