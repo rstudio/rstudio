@@ -53,6 +53,7 @@ RUN apt-get update -y && apt-get install -y \
     uuid-dev \
     valgrind \
     wget \
+    xvfb \
     zlib1g
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
