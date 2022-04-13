@@ -1698,11 +1698,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String englishLabel();
 
     /**
-     * Translated "French".
+     * Translated "French (Français)".
      *
-     * @return translated "French"
+     * @return translated "French (Français)"
      */
-    @DefaultMessage("French")
+    @DefaultMessage("French (Français)")
     @Key("frenchLabel")
     String frenchLabel();
 
