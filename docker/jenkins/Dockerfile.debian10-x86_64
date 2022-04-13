@@ -72,7 +72,7 @@ ENV PATH=/usr/lib/llvm-7/bin:$PATH
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad debian9
+RUN bash /tmp/install-crashpad debian10
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
