@@ -25,6 +25,7 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
