@@ -29,6 +29,7 @@ RUN apt-get update -y && apt-get install -y \
     libcurl4-openssl-dev \
     libffi-dev \
     libfontconfig-dev \
+    libgbm-dev \
     libglib2.0-dev \
     libpam0g-dev \
     libpango-1.0-0 \
