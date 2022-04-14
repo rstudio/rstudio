@@ -46,7 +46,7 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
-import org.rstudio.studio.client.workbench.prefs.model.LocalStoragePrefs;
+import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
@@ -573,13 +573,12 @@ public class GeneralPreferencesPane extends PreferencesPane
          restartRequirement.setUiReloadRequired(true);
       }
 
-      // The uiLanguage preference is mirrored in HTML5 local storage, so the page (index.htm)
-      // can use it at load time to set the meta-tag telling GWT which language to display.
+      // The uiLanguage preference is mirrored in a cookie telling GWT which language to display.
       // Ensure consistency here and force a page reload if necessary.
-      String localStorageUiLang = localStoragePrefs_.getUiLanguage();
-      if (!StringUtil.equals(localStorageUiLang, uiLanguagePrefValue))
+      String cookieValue = LocaleCookie.getUiLanguage();
+      if (!StringUtil.equals(cookieValue, uiLanguagePrefValue))
       {
-         localStoragePrefs_.setUiLanguage(uiLanguagePrefValue);
+         LocaleCookie.setUiLanguage(uiLanguagePrefValue);
          restartRequirement.setUiReloadRequired(true);
       }
 
@@ -703,5 +702,4 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final UserPrefs prefs_;
    private final Session session_;
    private String initialUiLanguage_;
-   private final LocalStoragePrefs localStoragePrefs_ = new LocalStoragePrefs();
 }

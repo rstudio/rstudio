@@ -83,7 +83,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.LocalStoragePrefs;
+import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
@@ -928,23 +928,17 @@ public class Application implements ApplicationEventHandlers
    }
    private void initializeWorkbench()
    {
-      // Check if user interface language set in the User Preferences was also set in local storage.
+      // Check if user interface language set in the User Preferences is also set as a cookie.
       // If not, we need to set it and reload the page to ensure the correct language is shown.
       // This would happen the first time in a new browser where the UI language was previously set to
       // non-English.
-      LocalStoragePrefs localStoragePrefs = new LocalStoragePrefs();
-      if (localStoragePrefs.haveLocalStorage())
+      String uiLanguagePrefValue = userPrefs_.get().uiLanguage().getValue();
+      String cookieValue = LocaleCookie.getUiLanguage();
+      if (!StringUtil.equals(uiLanguagePrefValue, cookieValue))
       {
-         String uiLanguagePrefValue = userPrefs_.get().uiLanguage().getValue();
-         String localStorageValue = localStoragePrefs.getUiLanguage();
-         if (localStorageValue.isEmpty())
-            localStorageValue = "en";
-         if (!StringUtil.equals(uiLanguagePrefValue, localStorageValue))
-         {
-            localStoragePrefs.setUiLanguage(uiLanguagePrefValue);
-            RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
-            return;
-         }
+         LocaleCookie.setUiLanguage(uiLanguagePrefValue);
+         RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
+         return;
       }
 
       // Initialize application theme system
