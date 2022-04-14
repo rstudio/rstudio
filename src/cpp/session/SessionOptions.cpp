@@ -501,7 +501,10 @@ namespace {
 FilePath macBinaryPath(const FilePath& resourcePath,
                        const std::string& stem)
 {
-   // first check for Electron binary path
+   // otherwise, look in default Qt location
+   FilePath qtPath = resourcePath.getParent().completePath("MacOS").completePath(stem);
+   return qtPath;
+
    FilePath electronPath =
          resourcePath.completePath("bin").completePath(stem);
    
@@ -512,10 +515,6 @@ FilePath macBinaryPath(const FilePath& resourcePath,
    electronPath = resourcePath.completePath(stem);
    if (electronPath.exists())
       return electronPath;
-
-   // otherwise, look in default Qt location
-   FilePath qtPath = resourcePath.getParent().completePath("MacOS").completePath(stem);
-   return qtPath;
 }
 
 } // end anonymous namespace
