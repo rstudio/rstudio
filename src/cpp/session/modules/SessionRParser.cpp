@@ -864,6 +864,10 @@ void handleIdentifier(RTokenCursor& cursor,
    // it's for NSE (e.g. magrittr pipes)
    if (status.isInArgumentList() && cursor.contentEquals(L"."))
       return;
+
+   // Ignore pipe-bind placeholder.
+   if (cursor.contentEquals(L"_"))
+      return;
    
    if (cursor.isType(RToken::ID) ||
        cursor.isType(RToken::STRING))
