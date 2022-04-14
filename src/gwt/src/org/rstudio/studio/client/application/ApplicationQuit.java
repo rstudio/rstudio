@@ -690,12 +690,6 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                               // fire onQuitAcknowledged
                               if (onQuitAcknowledged_ != null)
                                  onQuitAcknowledged_.execute();
-                              
-                              // if we're restarting and reloading fire event
-                              if (quitType == DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD)
-                              {
-                                 eventBus_.fireEvent(new OpenProjectNewWindowEvent(switchToProject_, switchToRVersion_));
-                              }
                            }
                            else
                            {
