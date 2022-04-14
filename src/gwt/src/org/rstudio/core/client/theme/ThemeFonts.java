@@ -34,7 +34,7 @@ public class ThemeFonts
 
    public static String getFixedWidthFont()
    {
-      return fontLoader.getFixedWidthFont();
+      return fontLoader.getFixedWidthFont() + ", monospace";
    }
 
    static interface ThemeFontLoader
