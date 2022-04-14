@@ -222,7 +222,9 @@ if has-scope "rserver"; then
 
    if [ -e "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests" ]; then
       section "Running 'rserver' tests..."
+      cd server
       runWatchdogProcess 5m false "@CMAKE_CURRENT_BINARY_DIR@/server/rserver-tests"
+      cd ..
    fi
 
 fi
