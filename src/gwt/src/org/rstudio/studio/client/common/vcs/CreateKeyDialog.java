@@ -17,16 +17,7 @@ package org.rstudio.studio.client.common.vcs;
 import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.widget.CaptionWithHelp;
-import org.rstudio.core.client.widget.FocusHelper;
-import org.rstudio.core.client.widget.FormLabel;
-import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.ModalDialog;
-import org.rstudio.core.client.widget.Operation;
-import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
-import org.rstudio.core.client.widget.ShowContentDialog;
+import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.StudioClientCommonConstants;
@@ -42,6 +33,7 @@ import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 
 public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 {
@@ -191,6 +183,12 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 
       VerticalPanel namePanel = new VerticalPanel();
       namePanel.setWidth("100%");
+
+      SelectWidget sshKeyType_ = new SelectWidget(constants_.sshKeyTypeLabel(),
+         (Prefs.EnumValue) ,
+         false,
+         true,
+         false););
 
       // path
       TextBox txtKeyPath = new TextBox();
