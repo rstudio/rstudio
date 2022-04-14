@@ -320,6 +320,11 @@
          }
          else if (is.character(val) && length(val) == 1) 
          {
+            # set 'quoted' attribute, so that the yaml package will prefer
+            # using double quotes when quoting values if necessary
+            if (grepl("-", val, fixed = TRUE))
+               attr(val, "quoted") <- TRUE
+            
             needsPlaceholder <- (function() {
                
                # if it's a character value, check to see if it's a backtick
@@ -340,7 +345,7 @@
             if (needsPlaceholder)
             {
                # replace the backtick expression with an identifier
-               key <- .Call("rs_generateShortUuid")
+               key <- .Call("rs_generateShortUuid", PACKAGE = "(embedding)")
                exprs[[key]] <<- val
                key
             }
