@@ -41,9 +41,10 @@ public class LocaleCookie
     * Set the cookie for UI language.
     * @param uiLanguage
     */
+   @SuppressWarnings("deprecation") // Date is deprecated but the replacement isn't available in GWT
    public static void setUiLanguage(String uiLanguage)
    {
-      Cookies.setCookie(UI_LANG_COOKIE, uiLanguage, new Date(9999, Calendar.DECEMBER, 31, 18, 0));
+      Cookies.setCookie(UI_LANG_COOKIE, uiLanguage, new Date(5000, Calendar.DECEMBER, 31, 18, 0));
    }
 
    private static final String UI_LANG_COOKIE = "LOCALE";
