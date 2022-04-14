@@ -1144,10 +1144,10 @@
             "default": "",
             "description": "The path to the terminal executable to use."
         },
-        "rsa_key_path": {
+        "ssh_key_path": {
             "type": "string",
             "default": "",
-            "description": "The path to the RSA key file to use."
+            "description": "The path to the SSH key file to use."
         },
         "use_devtools": {
             "type": "boolean",

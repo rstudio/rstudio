@@ -1406,12 +1406,12 @@ public interface UserPrefsAccessorConstants extends Constants {
    String terminalPathDescription();
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
    @DefaultStringValue("")
-   String rsaKeyPathTitle();
-   @DefaultStringValue("The path to the RSA key file to use.")
-   String rsaKeyPathDescription();
+   String sshKeyPathTitle();
+   @DefaultStringValue("The path to the SSH key file to use.")
+   String sshKeyPathDescription();
 
    /**
     * Whether to use the devtools R package.

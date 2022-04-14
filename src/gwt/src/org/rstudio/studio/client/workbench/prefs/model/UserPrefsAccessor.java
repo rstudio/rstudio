@@ -2420,14 +2420,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
-   public PrefValue<String> rsaKeyPath()
+   public PrefValue<String> sshKeyPath()
    {
       return string(
-         "rsa_key_path",
-         _constants.rsaKeyPathTitle(), 
-         _constants.rsaKeyPathDescription(), 
+         "ssh_key_path",
+         _constants.sshKeyPathTitle(), 
+         _constants.sshKeyPathDescription(), 
          "");
    }
 
@@ -3687,8 +3687,8 @@ public class UserPrefsAccessor extends Prefs
          svnExePath().setValue(layer, source.getString("svn_exe_path"));
       if (source.hasKey("terminal_path"))
          terminalPath().setValue(layer, source.getString("terminal_path"));
-      if (source.hasKey("rsa_key_path"))
-         rsaKeyPath().setValue(layer, source.getString("rsa_key_path"));
+      if (source.hasKey("ssh_key_path"))
+         sshKeyPath().setValue(layer, source.getString("ssh_key_path"));
       if (source.hasKey("use_devtools"))
          useDevtools().setValue(layer, source.getBool("use_devtools"));
       if (source.hasKey("clean_before_install"))
@@ -3991,7 +3991,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(gitExePath());
       prefs.add(svnExePath());
       prefs.add(terminalPath());
-      prefs.add(rsaKeyPath());
+      prefs.add(sshKeyPath());
       prefs.add(useDevtools());
       prefs.add(cleanBeforeInstall());
       prefs.add(useInternet2());

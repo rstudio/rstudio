@@ -2208,16 +2208,16 @@ core::Error UserPrefValues::setTerminalPath(std::string val)
 }
 
 /**
- * The path to the RSA key file to use.
+ * The path to the SSH key file to use.
  */
-std::string UserPrefValues::rsaKeyPath()
+std::string UserPrefValues::sshKeyPath()
 {
-   return readPref<std::string>("rsa_key_path");
+   return readPref<std::string>("ssh_key_path");
 }
 
-core::Error UserPrefValues::setRsaKeyPath(std::string val)
+core::Error UserPrefValues::setSshKeyPath(std::string val)
 {
-   return writePref("rsa_key_path", val);
+   return writePref("ssh_key_path", val);
 }
 
 /**
@@ -3236,7 +3236,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kGitExePath,
       kSvnExePath,
       kTerminalPath,
-      kRsaKeyPath,
+      kSshKeyPath,
       kUseDevtools,
       kCleanBeforeInstall,
       kUseInternet2,

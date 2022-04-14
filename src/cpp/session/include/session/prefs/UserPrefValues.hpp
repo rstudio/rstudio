@@ -297,7 +297,7 @@ namespace prefs {
 #define kGitExePath "git_exe_path"
 #define kSvnExePath "svn_exe_path"
 #define kTerminalPath "terminal_path"
-#define kRsaKeyPath "rsa_key_path"
+#define kSshKeyPath "ssh_key_path"
 #define kUseDevtools "use_devtools"
 #define kCleanBeforeInstall "clean_before_install"
 #define kUseInternet2 "use_internet2"
@@ -1420,10 +1420,10 @@ public:
    core::Error setTerminalPath(std::string val);
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
-   std::string rsaKeyPath();
-   core::Error setRsaKeyPath(std::string val);
+   std::string sshKeyPath();
+   core::Error setSshKeyPath(std::string val);
 
    /**
     * Whether to use the devtools R package.
