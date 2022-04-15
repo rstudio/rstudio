@@ -146,7 +146,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
          return null;
       else
          return CreateKeyOptions.create(rsaSshKeyPath_.getPath(),
-                                        "rsa",
+                                        sshKeyType_.getValue(),
                                         getPassphrase(),
                                         false);
    }
