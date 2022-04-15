@@ -77,7 +77,6 @@ void refreshCredentialsThenContinue(
 }
 
 // implemented below
-boost::optional<boost::posix_time::time_duration> getCookieExpiry(bool staySignedIn);
 bool isSecureCookie(const core::http::Request& request);
 
 void signIn(const core::http::Request& request,
@@ -100,6 +99,9 @@ void signIn(const core::http::Request& request,
       {
          appUri = "./" + appUri;
       }
+
+      LOG_DEBUG_MESSAGE("Signed in user: " + username + " redirecting to: " + appUri);
+
       pResponse->setMovedTemporarily(request, appUri);
       return;
    }
@@ -132,6 +134,18 @@ bool validateSignIn(const core::http::Request& request,
 
 ErrorType checkUser(const std::string& username, bool authenticated)
 {
+   if (!authenticated) {
+      LOG_DEBUG_MESSAGE("Failed to authenticate username: " + username);
+      // register failed login with monitor
+      using namespace monitor;
+      client().logEvent(Event(kAuthScope,
+                              kAuthLoginFailedEvent,
+                              "",
+                              username));
+
+      return kErrorInvalidLogin;
+   }
+
    // ensure user is valid
    if (!server::auth::validateUser(username))
    {
@@ -181,17 +195,6 @@ ErrorType checkUser(const std::string& username, bool authenticated)
                               username));
 
       return kErrorUserLicenseLimitReached;
-   }
-
-   if (!authenticated) {
-      // register failed login with monitor
-      using namespace monitor;
-      client().logEvent(Event(kAuthScope,
-                              kAuthLoginFailedEvent,
-                              "",
-                              username));
-
-      return kErrorInvalidLogin;
    }
 
    using namespace monitor;
@@ -254,8 +257,11 @@ std::string signOut(const core::http::Request& request,
    }
 
    // invalidate the auth cookie so that it can no longer be used
-   clearSignInCookies(request, pResponse);
    auth::handler::invalidateAuthCookie(request.cookieValue(kUserIdCookie));
+
+   clearSignInCookies(request, pResponse);
+
+   auth::handler::UserSession::invalidateUserSession(username);
 
    // adjust sign out url point internally
    if (!signOutUrl.empty() && signOutUrl[0] == '/')
