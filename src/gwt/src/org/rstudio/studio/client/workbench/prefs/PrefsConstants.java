@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.prefs;
 
-import com.google.gwt.i18n.client.Constants;
-
 public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
 
     /**

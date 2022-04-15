@@ -390,7 +390,7 @@ namespace prefs {
 #define kPythonVersion "python_version"
 #define kPythonPath "python_path"
 #define kSaveRetryTimeout "save_retry_timeout"
-#define kUseNativePipeOperator "use_native_pipe_operator"
+#define kInsertNativePipeOperator "insert_native_pipe_operator"
 #define kCommandPaletteMru "command_palette_mru"
 #define kShowMemoryUsage "show_memory_usage"
 #define kMemoryQueryIntervalSeconds "memory_query_interval_seconds"
@@ -1758,8 +1758,8 @@ public:
    /**
     * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
-   bool useNativePipeOperator();
-   core::Error setUseNativePipeOperator(bool val);
+   bool insertNativePipeOperator();
+   core::Error setInsertNativePipeOperator(bool val);
 
    /**
     * Whether to keep track of recently used commands in the Command Palette

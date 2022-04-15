@@ -3214,12 +3214,12 @@ public class UserPrefsAccessor extends Prefs
    /**
     * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
-   public PrefValue<Boolean> useNativePipeOperator()
+   public PrefValue<Boolean> insertNativePipeOperator()
    {
       return bool(
-         "use_native_pipe_operator",
-         _constants.useNativePipeOperatorTitle(), 
-         _constants.useNativePipeOperatorDescription(), 
+         "insert_native_pipe_operator",
+         _constants.insertNativePipeOperatorTitle(), 
+         _constants.insertNativePipeOperatorDescription(), 
          false);
    }
 
@@ -3799,8 +3799,8 @@ public class UserPrefsAccessor extends Prefs
          pythonPath().setValue(layer, source.getString("python_path"));
       if (source.hasKey("save_retry_timeout"))
          saveRetryTimeout().setValue(layer, source.getInteger("save_retry_timeout"));
-      if (source.hasKey("use_native_pipe_operator"))
-         useNativePipeOperator().setValue(layer, source.getBool("use_native_pipe_operator"));
+      if (source.hasKey("insert_native_pipe_operator"))
+         insertNativePipeOperator().setValue(layer, source.getBool("insert_native_pipe_operator"));
       if (source.hasKey("command_palette_mru"))
          commandPaletteMru().setValue(layer, source.getBool("command_palette_mru"));
       if (source.hasKey("show_memory_usage"))
@@ -4047,7 +4047,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonVersion());
       prefs.add(pythonPath());
       prefs.add(saveRetryTimeout());
-      prefs.add(useNativePipeOperator());
+      prefs.add(insertNativePipeOperator());
       prefs.add(commandPaletteMru());
       prefs.add(showMemoryUsage());
       prefs.add(memoryQueryIntervalSeconds());

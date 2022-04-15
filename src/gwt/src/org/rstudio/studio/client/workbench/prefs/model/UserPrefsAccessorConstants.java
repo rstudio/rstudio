@@ -1863,9 +1863,9 @@ public interface UserPrefsAccessorConstants extends Constants {
     * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    @DefaultStringValue("Use R's native pipe operator, |>")
-   String useNativePipeOperatorTitle();
+   String insertNativePipeOperatorTitle();
    @DefaultStringValue("Whether the Insert Pipe Operator command should use the native R pipe operator, |>")
-   String useNativePipeOperatorDescription();
+   String insertNativePipeOperatorDescription();
 
    /**
     * Whether to keep track of recently used commands in the Command Palette
