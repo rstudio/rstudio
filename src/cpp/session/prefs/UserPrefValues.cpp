@@ -2221,6 +2221,19 @@ core::Error UserPrefValues::setSshKeyPath(std::string val)
 }
 
 /**
+ * The encryption type to use for the SSH key file.
+ */
+std::string UserPrefValues::sshKeyType()
+{
+   return readPref<std::string>("ssh_key_type");
+}
+
+core::Error UserPrefValues::setSshKeyType(std::string val)
+{
+   return writePref("ssh_key_type", val);
+}
+
+/**
  * Whether to use the devtools R package.
  */
 bool UserPrefValues::useDevtools()
@@ -3237,6 +3250,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSvnExePath,
       kTerminalPath,
       kSshKeyPath,
+      kSshKeyType,
       kUseDevtools,
       kCleanBeforeInstall,
       kUseInternet2,

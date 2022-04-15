@@ -298,6 +298,9 @@ namespace prefs {
 #define kSvnExePath "svn_exe_path"
 #define kTerminalPath "terminal_path"
 #define kSshKeyPath "ssh_key_path"
+#define kSshKeyType "ssh_key_type"
+#define kSshKeyTypeEd25519 "ed25519"
+#define kSshKeyTypeRsa "rsa"
 #define kUseDevtools "use_devtools"
 #define kCleanBeforeInstall "clean_before_install"
 #define kUseInternet2 "use_internet2"
@@ -1424,6 +1427,12 @@ public:
     */
    std::string sshKeyPath();
    core::Error setSshKeyPath(std::string val);
+
+   /**
+    * The encryption type to use for the SSH key file.
+    */
+   std::string sshKeyType();
+   core::Error setSshKeyType(std::string val);
 
    /**
     * Whether to use the devtools R package.

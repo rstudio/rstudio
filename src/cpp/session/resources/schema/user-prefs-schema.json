@@ -1149,6 +1149,13 @@
             "default": "",
             "description": "The path to the SSH key file to use."
         },
+        "ssh_key_type": {
+            "type": "string",
+            "enum": ["ed25519", "rsa"],
+            "enumReadable": ["ED25519-encrypted key", "RSA-encrypted key"],
+            "default": "ed25519",
+            "description": "The encryption type to use for the SSH key file."
+        },
         "use_devtools": {
             "type": "boolean",
             "default": true,
