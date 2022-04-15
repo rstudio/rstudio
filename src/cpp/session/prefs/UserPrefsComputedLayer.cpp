@@ -64,11 +64,15 @@ Error UserPrefsComputedLayer::readPrefs()
    // SSH key ----------------------------------------------------------------
    FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
 
-   // look for key file that corresponds in name to the preferred ssh key type
-   std::string sshKeyType = userPrefs().sshKeyType();
-   std::string keyFile("id_" + sshKeyType);
-   FilePath rsaSshKeyPath = sshKeyDir.completeChildPath(keyFile);
+   // Github recommends using ed25519, so look for that first
 
+   std::string keyFile("id_ed25519");
+   FilePath rsaSshKeyPath = sshKeyDir.completeChildPath(keyFile);
+   if (!rsaSshKeyPath.exists())
+   {
+      keyFile = "id_rsa";
+      rsaSshKeyPath = sshKeyDir.completeChildPath(keyFile);
+   }
    layer[kSshKeyPath] = rsaSshKeyPath.getAbsolutePath();
    layer["have_rsa_key"] = rsaSshKeyPath.exists();
 

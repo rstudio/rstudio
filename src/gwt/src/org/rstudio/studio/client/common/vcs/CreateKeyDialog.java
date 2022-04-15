@@ -206,7 +206,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       txtKeyPath_ = new TextBox();
       txtKeyPath_.addStyleName(styles.keyPathTextBox());
       txtKeyPath_.setReadOnly(true);
-      txtKeyPath_.setText(rsaSshKeyPath_.getPath());
+      updateSshKeyPath();
       txtKeyPath_.setWidth("100%");
       CaptionWithHelp pathCaption = new CaptionWithHelp(
                                  constants_.pathCaption(),
