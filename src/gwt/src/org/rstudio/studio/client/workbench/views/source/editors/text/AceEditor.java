@@ -661,10 +661,8 @@ public class AceEditor implements DocDisplay,
             Character.isSpace(getCharacterBeforeCursor()) ||
             (!hasSelection() && getCursorPosition().getColumn() == 0);
 
-      // Use magrittr style pipes if the user has not opted into new native pipe syntax in R 4.1+
-
-
-      String pipe = userPrefs_.useNativePipeComputed().getValue() ? NATIVE_R_PIPE : MAGRITTR_PIPE;
+      // Use magrittr style pipes if the user has not opted into new native pipe syntax
+      String pipe = userPrefs_.insertNativePipeOperator().getValue() ? NATIVE_R_PIPE : MAGRITTR_PIPE;
 
       if (hasWhitespaceBefore)
          insertCode(pipe + " ", false);

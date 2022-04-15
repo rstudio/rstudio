@@ -782,7 +782,7 @@ bool useNativePipeOption(int useNativePipeOperator)
    }
 
    // no project override
-   return prefs::userPrefs().useNativePipeOperator();
+   return prefs::userPrefs().insertNativePipeOperator();
 }
 
 json::Object ProjectContext::uiPrefs() const
@@ -792,7 +792,7 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
-   uiPrefs[kUseNativePipeOperator] = useNativePipeOption(config_.useNativePipeOperator);
+   uiPrefs[kInsertNativePipeOperator] = useNativePipeOption(config_.useNativePipeOperator);
    uiPrefs[kAutoAppendNewline] = config_.autoAppendNewline;
    uiPrefs[kStripTrailingWhitespace] = config_.stripTrailingWhitespace;
    uiPrefs[kDefaultEncoding] = defaultEncoding();

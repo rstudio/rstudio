@@ -164,13 +164,13 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 switch (config.getUseNativePipeOperator())
                 {
                    case RProjectConfig.DEFAULT_VALUE:
-                      uiPrefs.useNativePipeOperator().removeProjectValue(true);
+                      uiPrefs.insertNativePipeOperator().removeProjectValue(true);
                       break;
                    case RProjectConfig.YES_VALUE:
-                      uiPrefs.useNativePipeOperator().setProjectValue(true);
+                      uiPrefs.insertNativePipeOperator().setProjectValue(true);
                       break;
                    case RProjectConfig.NO_VALUE:
-                      uiPrefs.useNativePipeOperator().setProjectValue(false);
+                      uiPrefs.insertNativePipeOperator().setProjectValue(false);
                       break;
                 }
 

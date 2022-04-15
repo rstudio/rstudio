@@ -498,7 +498,7 @@ public class EditingPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       lineEndings_.setValue(prefs.lineEndingConversion().getValue());
-      useNativePipe_.setValue(prefs.useNativePipeOperator().getValue());
+      useNativePipe_.setValue(prefs.insertNativePipeOperator().getValue());
       showCompletions_.setValue(prefs_.codeCompletion().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
       editorMode_.setValue(prefs_.editorKeybindings().getValue());
@@ -523,8 +523,8 @@ public class EditingPreferencesPane extends PreferencesPane
 
       // editing prefs
       prefs_.lineEndingConversion().setGlobalValue(lineEndings_.getValue());
-      prefs_.useNativePipeOperator().setGlobalValue(useNativePipe_.getValue());
-      prefs_.useNativePipeOperator().setProjectValue(useNativePipe_.getValue());
+      prefs_.insertNativePipeOperator().setGlobalValue(useNativePipe_.getValue());
+      prefs_.insertNativePipeOperator().setProjectValue(useNativePipe_.getValue());
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
 
       prefs_.codeCompletion().setGlobalValue(showCompletions_.getValue());
