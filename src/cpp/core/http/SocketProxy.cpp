@@ -71,7 +71,7 @@ void SocketProxy::handleClientRead(const boost::system::error_code& e,
    // condition during close can lead to the socket not getting properly
    // shut down. use a simple mutex to prevent the threads from simultaneously
    // writing to the socket state.
-   LOCK_MUTEX(socketMutex_)
+   RECURSIVE_LOCK_MUTEX(socketMutex_)
    {
       if (!e)
       {
@@ -102,7 +102,7 @@ void SocketProxy::handleClientRead(const boost::system::error_code& e,
 void SocketProxy::handleServerRead(const boost::system::error_code& e,
                                    std::size_t bytesTransferred)
 {
-   LOCK_MUTEX(socketMutex_)
+   RECURSIVE_LOCK_MUTEX(socketMutex_)
    {
       if (!e)
       {
@@ -167,8 +167,20 @@ void SocketProxy::handleError(const boost::system::error_code& e,
 
 void SocketProxy::close()
 {
-   ptrClient_->close();
-   ptrServer_->close();
+   RECURSIVE_LOCK_MUTEX(socketMutex_)
+   {
+      if (closed_)
+         return;
+      ptrClient_->close();
+      ptrServer_->close();
+      closed_ = true;
+   }
+   END_LOCK_MUTEX
+
+   if (closeFunction_)
+   {
+      closeFunction_();
+   }
 }
 
 } // namespace http
