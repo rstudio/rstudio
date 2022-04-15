@@ -15,6 +15,7 @@
 - (experimental) Option to display the user interface in French (#10455)
 - Label commit timestamps as being in UTC (#2544)
 - The choice of pipe operator (`magrittr` or native R 4.1+) inserted with the "Insert Pipe Operator" keyboard shortcut can now be configured at the project level as well as the global level (#9409)
+- The Git/SVN pane now supports creating ED25519-encrypted SSH keys by default. Newly created RSA SSH keys will now be 4096 bits instead of 2048 to increase security (#8255)
 
 #### Find in Files
 
