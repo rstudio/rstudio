@@ -2432,6 +2432,25 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The encryption type to use for the SSH key file.
+    */
+   public PrefValue<String> sshKeyType()
+   {
+      return enumeration(
+         "ssh_key_type",
+         _constants.sshKeyTypeTitle(),
+         _constants.sshKeyTypeDescription(),
+         new String[] {
+            SSH_KEY_TYPE_ED25519,
+            SSH_KEY_TYPE_RSA
+         },
+         "SSH_KEY_TYPE_ED25519");
+   }
+
+   public final static String SSH_KEY_TYPE_RSA = "rsa";
+   public final static String SSH_KEY_TYPE_ED25519 = "ed25519";
+
+   /**
     * Whether to use the devtools R package.
     */
    public PrefValue<Boolean> useDevtools()

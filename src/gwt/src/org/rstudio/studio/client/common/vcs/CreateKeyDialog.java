@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 {
@@ -181,15 +182,20 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(styles.mainWidget());
 
-      VerticalPanel namePanel = new VerticalPanel();
-      namePanel.setWidth("100%");
-
       SelectWidget sshKeyType_ = new SelectWidget(constants_.sshKeyTypeLabel(),
-         (Prefs.EnumValue) ,
+         new String[]{constants_.sshKeyEd25519Option(), constants_.sshKeyRSAOption()},
+         new String[]{
+            UserPrefs.SSH_KEY_TYPE_ED25519,
+            UserPrefs.SSH_KEY_TYPE_RSA
+         },
          false,
          true,
-         false););
+         false);
 
+      panel.add(sshKeyType_);
+
+      VerticalPanel namePanel = new VerticalPanel();
+      namePanel.setWidth("100%");
       // path
       TextBox txtKeyPath = new TextBox();
       txtKeyPath.addStyleName(styles.keyPathTextBox());
@@ -287,6 +293,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 
    private TextBox txtPassphrase_;
    private TextBox txtConfirmPassphrase_;
+   private SelectWidget sshKeyType_;
 
    private final FileSystemItem rsaSshKeyPath_;
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);

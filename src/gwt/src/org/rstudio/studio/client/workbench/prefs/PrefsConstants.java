@@ -269,24 +269,6 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String haveRSAKeyDescription();
 
     /**
-     * Translated "RSA-encrypted key"
-     *
-     * @return translated "RSA-encrypted key"
-     */
-    @DefaultMessage("RSA-encrypted key")
-    @Key("sshKeyRSAOption")
-    String sshKeyRSAOption();
-
-    /**
-     * Translated "ED25519-encrypted key"
-     *
-     * @return translated "ED25519-encrypted key"
-     */
-    @DefaultMessage("ED25519-encrypted key")
-    @Key("sshKeyEd25519Option")
-    String sshKeyEd25519Option();
-
-    /**
      * Translated "Error Changing Setting".
      *
      * @return translated "Error Changing Setting"

@@ -1414,6 +1414,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String sshKeyPathDescription();
 
    /**
+    * The encryption type to use for the SSH key file.
+    */
+   @DefaultStringValue("")
+   String sshKeyTypeTitle();
+   @DefaultStringValue("The encryption type to use for the SSH key file.")
+   String sshKeyTypeDescription();
+
+   /**
     * Whether to use the devtools R package.
     */
    @DefaultStringValue("Use the devtools R package if available")

@@ -1817,6 +1817,24 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String sshKeyTypeLabel();
 
     /**
+     * Translated "RSA-encrypted key"
+     *
+     * @return translated "RSA-encrypted key"
+     */
+    @DefaultMessage("RSA-encrypted key")
+    @Key("sshKeyRSAOption")
+    String sshKeyRSAOption();
+
+    /**
+     * Translated "ED25519-encrypted key"
+     *
+     * @return translated "ED25519-encrypted key"
+     */
+    @DefaultMessage("ED25519-encrypted key")
+    @Key("sshKeyEd25519Option")
+    String sshKeyEd25519Option();
+
+    /**
      * Translated "Passphrase (optional):".
      *
      * @return translated "Passphrase (optional):"
