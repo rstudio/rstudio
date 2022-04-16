@@ -14,13 +14,22 @@
  */
 
 import { assert } from 'chai';
-import { MenuItemConstructorOptions } from 'electron';
+import { ipcMain, MenuItemConstructorOptions } from 'electron';
 import { describe } from 'mocha';
 import { MenuCallback } from '../../../src/main/menu-callback';
 
 const separatorTemplate: MenuItemConstructorOptions = { type: 'separator' };
 
 describe('MenuCallback', () => {
+
+  afterEach(() => {
+    // MenuCallback is really intended to be a singleton, but we create a new one for 
+    // each unit test. This causes listeners to accumulate on the underlying ipcMain
+    // which eventually triggers a warning about potential leaks. We could up the limit,
+    // but opting to cleanup after each test, instead.
+    ipcMain.removeAllListeners();
+  });
+
   it('can be constructed', () => {
     const callback = new MenuCallback();
     const menuCount = process.platform === 'darwin' ? 1 : 0; // adjust for MacOS app menu
