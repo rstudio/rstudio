@@ -104,10 +104,6 @@ void signIn(const core::http::Request& request,
       }
       LOG_DEBUG_MESSAGE("Signed in user: " + username + " redirecting to: " + appUri);
 
-      // Create this on signin to set the initial lastActiveTime and lastCookieRefreshTime. It's also created if it does not exist
-      // the first time we try to update the session's last activity in a user-initiated RPC request.
-      boost::shared_ptr<auth::handler::UserSession> pUserSession = auth::handler::UserSession::createUserSession(username);
-
       pResponse->setMovedTemporarily(request, appUri);
       return;
    }
@@ -373,7 +369,7 @@ void setSignInCookies(const core::http::Request& request,
    core::http::Cookie::SameSite sameSite = server::options().wwwSameSite();
 
    // set the secure user id cookie
-   core::http::secure_cookie::set(kUserIdCookie,
+   http::Cookie cookie = core::http::secure_cookie::set(kUserIdCookie,
                                   userIdentifier,
                                   request,
                                   validity,
@@ -382,6 +378,8 @@ void setSignInCookies(const core::http::Request& request,
                                   pResponse,
                                   secureCookie,
                                   sameSite);
+
+   auth::handler::UserSession::insertSessionCookie(userIdentifier, cookie.value());
 
    // set a cookie that is tied to the specific user list we have written
    // if the user list ever has conflicting changes (e.g. a user is locked),
