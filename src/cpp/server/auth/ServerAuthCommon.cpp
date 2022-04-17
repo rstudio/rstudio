@@ -355,7 +355,7 @@ void setSignInCookies(const core::http::Request& request,
    core::http::Cookie::SameSite sameSite = server::options().wwwSameSite();
 
    // set the secure user id cookie
-   core::http::secure_cookie::set(kUserIdCookie,
+   http::Cookie cookie = core::http::secure_cookie::set(kUserIdCookie,
                                   userIdentifier,
                                   request,
                                   validity,
@@ -364,6 +364,8 @@ void setSignInCookies(const core::http::Request& request,
                                   pResponse,
                                   secureCookie,
                                   sameSite);
+
+   auth::handler::UserSession::insertSessionCookie(userIdentifier, cookie.value());
 
    // set a cookie that is tied to the specific user list we have written
    // if the user list ever has conflicting changes (e.g. a user is locked),

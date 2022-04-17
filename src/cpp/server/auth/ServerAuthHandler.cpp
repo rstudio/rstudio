@@ -730,11 +730,11 @@ void UserSession::insertSessionCookie(const std::string& userIdentifier, const s
 {
    RECURSIVE_LOCK_MUTEX(s_mutex)
    {
-      boost::shared_ptr<UserSession> session = UserSession::lookupUserSession(userIdentifier);
+      boost::shared_ptr<UserSession> session = UserSession::getOrCreateUserSession(userIdentifier);
 
       if (session)
       {
-         LOG_DEBUG_MESSAGE("Adding previous cookie: " + cookie + " for user: " + userIdentifier);
+         LOG_DEBUG_MESSAGE("Adding session cookie: " + cookie + " for user: " + userIdentifier);
          session->addSessionCookie(cookie);
          session->updateLastCookieRefreshTime();
       }
@@ -772,8 +772,6 @@ void refreshAuthCookies(const std::string& userIdentifier,
       if (!currentCookie.empty())
       {
          LOG_DEBUG_MESSAGE("Refreshing auth: replacing old cookie: " + currentCookie);
-
-         UserSession::insertSessionCookie(userIdentifier, currentCookie);
       }
 
       s_handler.refreshAuthCookies(request, userIdentifier, persist, pResponse);
@@ -820,7 +818,7 @@ void insertRevokedCookie(const RevokedCookie& cookie)
 void invalidateAuthCookie(const std::string& cookie,
                           ExponentialBackoffPtr backoffPtr)
 {
-   LOG_DEBUG_MESSAGE("invalidateAuthCookie called with: " + cookie);
+   LOG_DEBUG_MESSAGE("Invalidated auth cookie: " + cookie);
 
    if (cookie.empty())
       return;
