@@ -93,7 +93,7 @@ public class HelpPane extends WorkbenchPane
                    EventBus events,
                    UserPrefs prefs)
    {
-      super("Help", events);
+      super(constants_.helpText(), events);
 
       searchProvider_ = searchProvider;
       globalDisplay_ = globalDisplay;

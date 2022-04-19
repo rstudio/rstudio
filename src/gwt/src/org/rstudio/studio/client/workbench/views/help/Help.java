@@ -195,7 +195,7 @@ public class Help extends BasePresenter implements ShowHelpEvent.Handler
 
    public void bringToFront()
    {
-      events_.fireEvent(new ActivatePaneEvent("Help"));
+      events_.fireEvent(new ActivatePaneEvent("Help")); //$NON-NLS-1$
    }
 
    private void home()
