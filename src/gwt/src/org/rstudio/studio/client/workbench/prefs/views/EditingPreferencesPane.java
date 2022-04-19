@@ -498,7 +498,7 @@ public class EditingPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       lineEndings_.setValue(prefs.lineEndingConversion().getValue());
-      useNativePipe_.setValue(prefs.insertNativePipeOperator().getValue());
+      useNativePipe_.setValue(prefs.insertNativePipeOperator().getGlobalValue());
       showCompletions_.setValue(prefs_.codeCompletion().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
       editorMode_.setValue(prefs_.editorKeybindings().getValue());
