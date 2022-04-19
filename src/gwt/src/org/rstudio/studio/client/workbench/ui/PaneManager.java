@@ -68,6 +68,7 @@ import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
+import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleInterpreterVersion;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
@@ -385,11 +386,11 @@ public class PaneManager
          tabs1_ = tabNamesToTabs(evt.getValue().getTabSet1());
          tabs2_ = tabNamesToTabs(evt.getValue().getTabSet2());
 
-         WindowState oldTabSet1State = panesByName_.get("TabSet1").getState();
-         WindowState oldTabSet2State = panesByName_.get("TabSet2").getState();
-         WindowState tabSet1State = setWindowStateOnTabChange(panesByName_.get("TabSet1"),
+         WindowState oldTabSet1State = panesByName_.get("TabSet1").getState(); //$NON-NLS-1$
+         WindowState oldTabSet2State = panesByName_.get("TabSet2").getState(); //$NON-NLS-1$
+         WindowState tabSet1State = setWindowStateOnTabChange(panesByName_.get("TabSet1"), //$NON-NLS-1$
          tabSet1TabPanel_, tabs1_);
-         WindowState tabSet2State = setWindowStateOnTabChange(panesByName_.get("TabSet2"),
+         WindowState tabSet2State = setWindowStateOnTabChange(panesByName_.get("TabSet2"), //$NON-NLS-1$
             tabSet2TabPanel_, tabs2_);
 
          // Additional checks when tab set panes are in the same column and either has had a
@@ -617,7 +618,7 @@ public class PaneManager
       else
          consoleTabPanel_.selectTab(consoleTabPanel_.getSelectedIndex());
 
-      eventBus_.fireEvent(new ZoomPaneEvent("Console"));
+      eventBus_.fireEvent(new ZoomPaneEvent("Console")); //$NON-NLS-1$
    }
 
    @Handler
@@ -870,7 +871,7 @@ public class PaneManager
       else
       {
          WorkbenchTab selected;
-         if (StringUtil.equals("Console", name))
+         if (StringUtil.equals("Console", name)) //$NON-NLS-1$
          {
             selected = consoleTabPanel_.getSelectedIndex() >= 0 ?
                consoleTabPanel_.getSelectedTab() :
@@ -878,7 +879,7 @@ public class PaneManager
 
             // Special handling for Console; Console does not have a WorkbenchTab when there are
             // no other Console tabs open on start up and none have been added.
-            if (selected == null || StringUtil.equals(selected.getTitle(), "Console"))
+            if (selected == null || StringUtil.equals(selected.getTitle(), consoleConstants_.consoleLabel()));
             {
                commands_.activateConsole().execute();
                return;
@@ -886,7 +887,7 @@ public class PaneManager
          }
          else
          {
-            if (StringUtil.equals("TabSet1", name))
+            if (StringUtil.equals("TabSet1", name)) //$NON-NLS-1$
                selected = tabSet1TabPanel_.getSelectedTab();
             else
                selected = tabSet2TabPanel_.getSelectedTab();
@@ -903,8 +904,8 @@ public class PaneManager
       String adjacent = getAdjacentWindow(window, before);
 
       // TabSet1 and TabSet2 could be empty, if so skip to the next pane
-      while ((StringUtil.equals("TabSet1", adjacent) && tabSet1TabPanel_.isEmpty()) ||
-             (StringUtil.equals("TabSet2", adjacent) && tabSet2TabPanel_.isEmpty()))
+      while ((StringUtil.equals("TabSet1", adjacent) && tabSet1TabPanel_.isEmpty()) || //$NON-NLS-1$
+             (StringUtil.equals("TabSet2", adjacent) && tabSet2TabPanel_.isEmpty())) //$NON-NLS-1$
          adjacent = getAdjacentWindow(panesByName_.get(adjacent), before);
 
       focusWindow(adjacent);
@@ -917,7 +918,7 @@ public class PaneManager
       {
          JsArrayString panes = JsArrayUtil.copy(paneConfig.getQuadrants());
          panes.set(consoleCurrentIndex, panes.get(consoleTargetIndex));
-         panes.set(consoleTargetIndex, "Console");
+         panes.set(consoleTargetIndex, "Console"); //$NON-NLS-1$
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
             panes,
             paneConfig.getTabSet1(),
@@ -1207,8 +1208,8 @@ public class PaneManager
       // TabSet Panes without any tabs should remain minimized.
       for (LogicalWindow window : panes_)
       {
-         if ((window == panesByName_.get("TabSet1") && tabSet1TabPanel_.isEmpty()) ||
-             (window == panesByName_.get("TabSet2") && tabSet2TabPanel_.isEmpty()))
+         if ((window == panesByName_.get("TabSet1") && tabSet1TabPanel_.isEmpty()) || //$NON-NLS-1$
+             (window == panesByName_.get("TabSet2") && tabSet2TabPanel_.isEmpty())) //$NON-NLS-1$
          {
             if (window.getState() != WindowState.MINIMIZE)
                window.onWindowStateChange(new WindowStateChangeEvent(WindowState.MINIMIZE));
@@ -1222,7 +1223,7 @@ public class PaneManager
    @Handler
    public void onMaximizeConsole()
    {
-      LogicalWindow consoleWindow = panesByName_.get("Console");
+      LogicalWindow consoleWindow = panesByName_.get("Console"); //$NON-NLS-1$
       if (consoleWindow.getState() != WindowState.MAXIMIZE)
       {
          consoleWindow.onWindowStateChange(
@@ -1248,7 +1249,7 @@ public class PaneManager
    private void initPanes(PaneConfig config)
    {
       panesByName_ = new HashMap<>();
-      panesByName_.put("Console", createConsole());
+      panesByName_.put("Console", createConsole()); //$NON-NLS-1$
 
       ArrayList<SourceColumn> columns = sourceColumnManager_.getColumnList();
       for (SourceColumn column : columns)
@@ -1258,9 +1259,9 @@ public class PaneManager
       }
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
-            "TabSet1",
+            "TabSet1", //$NON-NLS-1$
             tabNamesToTabs(config.getTabSet1()));
-      panesByName_.put("TabSet1", ts1.first);
+      panesByName_.put("TabSet1", ts1.first); //$NON-NLS-1$
       tabSet1TabPanel_ = ts1.second;
       tabSet1MinPanel_ = ts1.third;
 
@@ -1595,7 +1596,7 @@ public class PaneManager
 
    public LogicalWindow getConsoleLogicalWindow()
    {
-      return panesByName_.get("Console");
+      return panesByName_.get("Console"); //$NON-NLS-1$
    }
 
    public int syncAdditionalColumnCount(int count, boolean refreshDisplay)
@@ -1723,7 +1724,7 @@ public class PaneManager
 
    private LogicalWindow createConsole()
    {
-      String frameName = "Console";
+      String frameName = "Console"; //$NON-NLS-1$
       
       PrimaryWindowFrame frame = new PrimaryWindowFrame(frameName, null);
       frame.setTitleWidget(new ConsoleInterpreterVersion());
@@ -2092,4 +2093,5 @@ public class PaneManager
    private int additionalSourceCount_; // this does not include the main source
    public final static int MAX_COLUMN_COUNT = 3;
    private static final UIConstants constants_ = GWT.create(UIConstants.class);
+   private static final ConsoleConstants consoleConstants_ = GWT.create(ConsoleConstants.class);
 }

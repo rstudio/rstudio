@@ -60,21 +60,21 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET);
 
       JsArrayString tabSet1 = createArray().cast();
-      tabSet1.push("Environment");
-      tabSet1.push("History");
-      tabSet1.push("Connections");
-      tabSet1.push("Build");
-      tabSet1.push("VCS");
-      tabSet1.push("Tutorial");
-      tabSet1.push("Presentation");
+      tabSet1.push("Environment"); //$NON-NLS-1$
+      tabSet1.push("History"); //$NON-NLS-1$
+      tabSet1.push("Connections"); //$NON-NLS-1$
+      tabSet1.push("Build"); //$NON-NLS-1$
+      tabSet1.push("VCS"); //$NON-NLS-1$
+      tabSet1.push("Tutorial"); //$NON-NLS-1$
+      tabSet1.push("Presentation"); //$NON-NLS-1$
       
       JsArrayString tabSet2 = createArray().cast();
-      tabSet2.push("Files");
-      tabSet2.push("Plots");
-      tabSet2.push("Packages");
-      tabSet2.push("Help");
-      tabSet2.push("Viewer");
-      tabSet2.push("Presentations");
+      tabSet2.push("Files"); //$NON-NLS-1$
+      tabSet2.push("Plots"); //$NON-NLS-1$
+      tabSet2.push("Packages"); //$NON-NLS-1$
+      tabSet2.push("Help"); //$NON-NLS-1$
+      tabSet2.push("Viewer"); //$NON-NLS-1$
+      tabSet2.push("Presentations"); //$NON-NLS-1$
 
       JsArrayString hiddenTabSet = createArray().cast();
       return create(panes, tabSet1, tabSet2, hiddenTabSet, false, true, 0);
@@ -105,6 +105,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       // A list of all the tabs. Order matters; the Presentation tab must be the
       // last element in this array that's part of the first tabset (ts1)
+      // Internal names, DO NOT LOCALIZE
       return new String[] {"Environment", "History", "Files", "Plots", "Connections",
                            "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer",
                            "Presentations", "Presentation"};
@@ -113,13 +114,13 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    // Tabs that have been replaced by newer versions/replaceable supersets
    public static String[] getReplacedTabs()
    {
-      return new String[] {"Workspace"};
+      return new String[] {"Workspace"}; //$NON-NLS-1$
    }
 
    // The tabs that replace those in getReplacedTabs(), order-matched
    public static String[] getReplacementTabs()
    {
-      return new String[] {"Environment"};
+      return new String[] {"Environment"}; //$NON-NLS-1$
    }
 
    // Given the name of a tab, return the index of the tab that it should
@@ -159,7 +160,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       JsArrayString panes = getQuadrants();
       for (int i = 0; i<panes.length(); i++)
-         if (StringUtil.equals(panes.get(i), "Console"))
+         if (StringUtil.equals(panes.get(i), "Console")) //$NON-NLS-1$
             return i;
 
       throw new IllegalStateException();
@@ -168,8 +169,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    public final boolean getConsoleLeft()
    {
       JsArrayString panes = getQuadrants();
-      return StringUtil.equals(panes.get(0), "Console") ||
-         StringUtil.equals(panes.get(1), "Console");
+      return StringUtil.equals(panes.get(0), "Console") || //$NON-NLS-1$
+         StringUtil.equals(panes.get(1), "Console"); //$NON-NLS-1$
    }
 
    public final boolean getConsoleRight()
@@ -180,15 +181,15 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    public final boolean getTabSet1Left()
    {
       JsArrayString panes = getQuadrants();
-      return StringUtil.equals(panes.get(0), "TabSet1") ||
-         StringUtil.equals(panes.get(1), "TabSet1");
+      return StringUtil.equals(panes.get(0), "TabSet1") || //$NON-NLS-1$
+         StringUtil.equals(panes.get(1), "TabSet1"); //$NON-NLS-1$
    }
    
    public final boolean getTabSet2Left()
    {
       JsArrayString panes = getQuadrants();
-      return StringUtil.equals(panes.get(0), "TabSet2") ||
-         StringUtil.equals(panes.get(1), "TabSet2");
+      return StringUtil.equals(panes.get(0), "TabSet2") || //$NON-NLS-1$
+         StringUtil.equals(panes.get(1), "TabSet2"); //$NON-NLS-1$
    }
    
    public final boolean validateAndAutoCorrect()
@@ -209,19 +210,19 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // visible tabs). This is normally an invariant but for a time during
       // the v0.99-1000 preview we allowed the Connections tab to be the
       // last one in the tabset.
-      if (!StringUtil.equals(ts1.get(ts1.length() - 1), "Presentation"))
+      if (!StringUtil.equals(ts1.get(ts1.length() - 1), "Presentation")) //$NON-NLS-1$
       {
          // 1.3 released with a bug where Tutorial would be added at the end; autocorrect
          // https://github.com/rstudio/rstudio/issues/7246
-         if (StringUtil.equals(ts1.get(ts1.length() - 1), "Tutorial") &&
-             StringUtil.equals(ts1.get(ts1.length() - 2), "Presentation"))
+         if (StringUtil.equals(ts1.get(ts1.length() - 1), "Tutorial") && //$NON-NLS-1$
+             StringUtil.equals(ts1.get(ts1.length() - 2), "Presentation")) //$NON-NLS-1$
          {
-            ts1.set(ts1.length() - 1, "Presentation");
-            ts1.set(ts1.length() - 2, "Tutorial");
+            ts1.set(ts1.length() - 1, "Presentation"); //$NON-NLS-1$
+            ts1.set(ts1.length() - 2, "Tutorial"); //$NON-NLS-1$
          }
          else
          {
-            Debug.logToConsole("Invaliding tabset config (Presentation index)");
+            Debug.logToConsole("Invaliding tabset config (Presentation index)"); //$NON-NLS-1$
             return false;
          }
       }
@@ -229,7 +230,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // if we don't have Presentation2 then provide it 
       if (!hasPresentation2(ts1) && !hasPresentation2(ts2))
       {
-         ts2.set(ts2.length(), "Presentations");
+         ts2.set(ts2.length(), "Presentations"); //$NON-NLS-1$
       }
 
 
@@ -246,7 +247,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       for (int idx = 0; idx < tabs.length(); idx++)
       {
-         if (tabs.get(idx).equals("Presentations"))
+         if (tabs.get(idx).equals("Presentations")) //$NON-NLS-1$
             return true;
       }
       return false;
