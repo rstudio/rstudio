@@ -266,11 +266,9 @@ std::string signOut(const core::http::Request& request,
                               username));
    }
 
-   // invalidate the auth cookie so that it can no longer be used
-   auth::handler::invalidateAuthCookie(request.cookieValue(kUserIdCookie));
-
    clearSignInCookies(request, pResponse);
 
+   // Invalidating the session will revoke all auth cookies allocated
    auth::handler::UserSession::invalidateUserSession(username);
 
    // adjust sign out url point internally
