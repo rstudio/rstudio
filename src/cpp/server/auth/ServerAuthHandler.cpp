@@ -172,7 +172,9 @@ Error writeRevokedCookieToDatabase(const RevokedCookie& cookie,
          .withInput(cookie.cookie);
 
    Error error = connection->execute(query);
-   if (error)
+   // Ignore duplicate key errors for postgres and sqlite in case another cluster member has already processed this revoke cookie request
+   if (error && !boost::algorithm::contains(error.getMessage(), "duplicate key") &&
+                !boost::algorithm::contains(error.getMessage(), "UNIQUE constraint"))
    {
       error.addProperty("description", "Could not insert revoked cookie into the database");
       return error;
