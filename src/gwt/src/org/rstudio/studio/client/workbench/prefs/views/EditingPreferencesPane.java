@@ -80,7 +80,7 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(checkboxPref(constants_.editingAutoDetectIndentationLabel(), prefs_.autoDetectIndentation(),
             constants_.editingAutoDetectIndentationDesc()));
       editingPanel.add(checkboxPref(constants_.editingInsertMatchingLabel(), prefs_.insertMatching()));
-      useNativePipe_ = checkboxPref(constants_.editingUseNativePipeOperatorLabel(), prefs_.useNativePipeOperator());
+      useNativePipe_ = checkboxPref(constants_.editingUseNativePipeOperatorLabel(), prefs_.insertNativePipeOperator());
       editingPanel.add(useNativePipe_);
       editingPanel.add(checkboxPref(constants_.editingReindentOnPasteLabel(), prefs_.reindentOnPaste()));
       editingPanel.add(checkboxPref(constants_.editingVerticallyAlignArgumentsIndentLabel(), prefs_.verticallyAlignArgumentsIndent()));
@@ -524,7 +524,6 @@ public class EditingPreferencesPane extends PreferencesPane
       // editing prefs
       prefs_.lineEndingConversion().setGlobalValue(lineEndings_.getValue());
       prefs_.insertNativePipeOperator().setGlobalValue(useNativePipe_.getValue());
-      prefs_.insertNativePipeOperator().setProjectValue(useNativePipe_.getValue());
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
 
       prefs_.codeCompletion().setGlobalValue(showCompletions_.getValue());
