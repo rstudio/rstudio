@@ -14,7 +14,7 @@
  */
 
 #define RSTUDIO_DEBUG_LABEL "rparser"
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
