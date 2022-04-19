@@ -16,6 +16,14 @@ package org.rstudio.studio.client.workbench.views.viewer;
 
 public interface ViewerConstants extends com.google.gwt.i18n.client.Messages {
 
+    /**
+     * Translated "Viewer".
+     *
+     * @return translated "Viewer"
+     */
+    @DefaultMessage("Viewer")
+    @Key("viewerTitle")
+    String viewerTitle();
 
     /**
      * Translated "Viewer Tab".
