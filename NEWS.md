@@ -47,6 +47,7 @@
 - Fixed a security issue where shiny apps and vscode sessions remained active after signout (rstudio-pro#3287)
 - (Windows only) Fixed an issue where multiple instances of RStudio launched at the same time could bind to the same session. (#10488)
 - Fixed unintended change of date/time formatting in the VCS commit history (#10810)
+- Fixed an issue where code of the form '1:2:3' was diagnosed incorrectly. (#10979)
 - (Linux Only) License-manager now works in a installer-less context (rstudio-pro#3150)
 
 ### RStudio Workbench
