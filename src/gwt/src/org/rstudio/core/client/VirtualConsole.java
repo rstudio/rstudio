@@ -611,24 +611,16 @@ public class VirtualConsole
                   // toggle hyperlink_
                   if (!StringUtil.equals(url, ""))
                   {
-                     hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1), !currentClazz.contains("xtermColor"), !currentClazz.contains("xtermUnderline"));
+                     hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1), !currentClazz.contains("xtermColor"));
 
                      // add magenta if the text is not already coloured
                      if (hyperlink_.setColor)
                         ansiCodeStyles_ = ansi_.processCode("\033[35m"); // magenta
 
-                     // add underline style if not already set
-                     if (hyperlink_.setUnderline)
-                        ansiCodeStyles_ = ansi_.processCode("\033[4m"); // underline
-                     
                      currentClazz = setCurrentClazz(ansiColorMode, clazz);
                   }
                   else
                   {
-                     // close underline only if it has been added by the hyperlink
-                     if (hyperlink_.setUnderline)
-                        ansiCodeStyles_ = ansi_.processCode("\033[24m"); // underline
-                     
                      // reset colour only if it has been added by the hyperlink
                      if (hyperlink_.setColor)
                         ansiCodeStyles_ = ansi_.processCode("\033[39m"); // magenta
@@ -767,12 +759,11 @@ public class VirtualConsole
 
    private class Hyperlink
    {
-      public Hyperlink(String url, String params, boolean setColor, boolean setUnderline)
+      public Hyperlink(String url, String params, boolean setColor)
       {
          this.url = url;
          this.params = params;
          this.setColor = setColor;
-         this.setUnderline = setUnderline;
       }
 
       public String getTitle()
@@ -798,7 +789,6 @@ public class VirtualConsole
       public String url;
       public String params;
       public boolean setColor;
-      public boolean setUnderline;
    }
    private class ClassRange
    {
