@@ -50,6 +50,8 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    {
       Label infoLabel = new Label(constants_.projectGeneralInfoLabel());
       infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
+      infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().nudgeRightPlus());
+      infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().spaced());
       add(infoLabel);
 
       // source editing options
