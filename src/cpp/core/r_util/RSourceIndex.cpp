@@ -558,10 +558,6 @@ RSourceIndex::RSourceIndex(const std::string& context, const std::string& code)
    // clear any (source-local) inferred packages
    inferredPkgNames_.clear();
 
-   // tokenize and create token cursor
-   if (boost::algorithm::contains(code, "do not edit by hand"))
-      return;
-      
    std::wstring wCode = string_utils::utf8ToWide(code, context);
    RTokens rTokens(wCode, RTokens::StripWhitespace | RTokens::StripComments);
    if (rTokens.empty())

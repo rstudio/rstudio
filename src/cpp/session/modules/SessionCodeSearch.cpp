@@ -1800,7 +1800,12 @@ Error searchCode(const json::JsonRpcRequest& request,
       // don't index auto-generated files
       const std::string& context = item.context();
       if (boost::algorithm::ends_with(context, "RcppExports.R") ||
-          boost::algorithm::ends_with(context, "RcppExports.cpp"))
+          boost::algorithm::ends_with(context, "RcppExports.cpp") ||
+          boost::algorithm::ends_with(context, "cpp11.R") ||
+          boost::algorithm::ends_with(context, "cpp11.cpp") ||
+          boost::algorithm::ends_with(context, "arrowExports.R") ||
+          boost::algorithm::ends_with(context, "arrowExports.cpp")
+          )
          continue;
          
       int score = scoreMatch(item.name(), term, false);
