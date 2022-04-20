@@ -104,11 +104,11 @@ public class CodeSearchOracle extends SuggestOracle
 
          // More penalty for 'uninteresting' files
          if (suggestion == "RcppExports.R" ||
-         suggestion == "RcppExports.cpp" ||
-         suggestion == "cpp11.R" ||
-         suggestion == "cpp11.cpp" ||
-         suggestion == "arrowExports.R" ||
-         suggestion == "arrowExports.cpp")
+             suggestion == "RcppExports.cpp" ||
+             suggestion == "cpp11.R" ||
+             suggestion == "cpp11.cpp" ||
+             suggestion == "arrowExports.R" ||
+             suggestion == "arrowExports.cpp")
          totalPenalty += 6;
 
          // More penalty for 'uninteresting' extensions (e.g. .Rd)
