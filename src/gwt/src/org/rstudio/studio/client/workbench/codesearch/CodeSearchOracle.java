@@ -102,24 +102,31 @@ public class CodeSearchOracle extends SuggestOracle
          totalPenalty++;
 
          // More penalty for 'uninteresting' files
-         if (suggestion == "RcppExports.R" ||
-             suggestion == "RcppExports.cpp" ||
-             suggestion == "cpp11.R" ||
-             suggestion == "cpp11.cpp" ||
-             suggestion == "arrowExports.R" ||
-             suggestion == "arrowExports.cpp")
-         totalPenalty += 6;
-
-         // More penalty for 'uninteresting' extensions (e.g. .Rd)
-         String extension = StringUtil.getExtension(suggestionLower);
-         if (extension.toLowerCase() == "rd")
-         totalPenalty += 6;
+         if (isUninterestingFile(suggestion))
+            totalPenalty += 6;
       }
       
       // Penalize unmatched characters
       totalPenalty += (query.length() - matches.size()) * query.length();
       
       return totalPenalty;
+   }
+
+   public static boolean isUninterestingFile(String filename)
+   {
+      if (filename == "RcppExports.R" ||
+          filename == "RcppExports.cpp" ||
+          filename == "cpp11.R" ||
+          filename == "cpp11.cpp" ||
+          filename == "arrowExports.R" ||
+          filename == "arrowExports.cpp")
+         return true;
+
+      String extension = StringUtil.getExtension(filename);
+      if (extension.toLowerCase() == "rd")
+         return true;
+      
+      return false;
    }
    
    @Override

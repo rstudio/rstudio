@@ -1299,6 +1299,23 @@ void searchFiles(const std::string& term,
    }
 }
 
+bool isUninterestingFile(const std::string& filename) 
+{
+   if (filename == "RcppExports.R" ||
+       filename == "RcppExports.cpp" ||
+       filename == "cpp11.R" ||
+       filename == "cpp11.cpp" ||
+       filename == "arrowExports.R" ||
+       filename == "arrowExports.cpp")
+      return true;
+
+   std::string extension = string_utils::getExtension(filename);
+   if (boost::algorithm::to_lower_copy(extension) == ".rd")
+      return true;
+   
+   return false;
+}
+
 // NOTE: When modifying this code, you should ensure that corresponding
 // changes are made to the client side scoreMatch function as well
 // (See: CodeSearchOracle.java)
@@ -1343,20 +1360,9 @@ int scoreMatch(std::string const& suggestion,
       ++totalPenalty;
 
       // More penalty for 'uninteresting' files
-      if (suggestion == "RcppExports.R" ||
-          suggestion == "RcppExports.cpp" ||
-          suggestion == "cpp11.R" ||
-          suggestion == "cpp11.cpp" ||
-          suggestion == "arrowExports.R" ||
-          suggestion == "arrowExports.cpp")
-         totalPenalty += 6;
-      
-      // More penalty for 'uninteresting' extensions (e.g. .Rd)
-      std::string extension = string_utils::getExtension(suggestion);
-      if (boost::algorithm::to_lower_copy(extension) == ".rd")
+      if (isUninterestingFile(suggestion))
          totalPenalty += 6;
    }
-      
    
    // Penalize unmatched characters
    totalPenalty += gsl::narrow_cast<int>((query.size() - matches.size()) * query.size());
