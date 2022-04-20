@@ -608,25 +608,14 @@ public class VirtualConsole
                if (hyperlinkMatch != null)
                {
                   String url = hyperlinkMatch.getGroup(2);
+
                   // toggle hyperlink_
                   if (!StringUtil.equals(url, ""))
                   {
-                     hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1), !currentClazz.contains("xtermColor"));
-
-                     // add magenta if the text is not already coloured
-                     if (hyperlink_.setColor)
-                        ansiCodeStyles_ = ansi_.processCode("\033[35m"); // magenta
-
-                     currentClazz = setCurrentClazz(ansiColorMode, clazz);
+                     hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1));
                   }
                   else
                   {
-                     // reset colour only if it has been added by the hyperlink
-                     if (hyperlink_.setColor)
-                        ansiCodeStyles_ = ansi_.processCode("\033[39m"); // magenta
-
-                     currentClazz = setCurrentClazz(ansiColorMode, clazz);
-                     
                      hyperlink_ = null;   
                   }
 
@@ -759,11 +748,10 @@ public class VirtualConsole
 
    private class Hyperlink
    {
-      public Hyperlink(String url, String params, boolean setColor)
+      public Hyperlink(String url, String params)
       {
          this.url = url;
          this.params = params;
-         this.setColor = setColor;
       }
 
       public String getTitle()
@@ -788,7 +776,6 @@ public class VirtualConsole
 
       public String url;
       public String params;
-      public boolean setColor;
    }
    private class ClassRange
    {
