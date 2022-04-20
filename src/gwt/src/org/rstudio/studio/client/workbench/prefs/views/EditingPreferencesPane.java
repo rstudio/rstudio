@@ -49,6 +49,8 @@ import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -63,7 +65,8 @@ public class EditingPreferencesPane extends PreferencesPane
    public EditingPreferencesPane(UserPrefs prefs,
                                  SourceServerOperations server,
                                  PreferencesDialogResources res,
-                                 Commands commands)
+                                 Commands commands,
+                                 Session session)
    {
       prefs_ = prefs;
       server_ = server;
@@ -144,6 +147,10 @@ public class EditingPreferencesPane extends PreferencesPane
       });
       projectPrefsPanel.add(editProjectSettings);
       editingPanel.add(projectPrefsPanel);
+
+      String activeProjectFile = session.getSessionInfo().getActiveProjectFile();
+      boolean hasProject = activeProjectFile != null;
+      projectPrefsPanel.setVisible(hasProject);
 
       Label executionLabel = headerLabel(constants_.editingExecutionLabel());
       editingPanel.add(executionLabel);
