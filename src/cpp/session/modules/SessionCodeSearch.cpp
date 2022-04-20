@@ -1334,22 +1334,29 @@ int scoreMatch(std::string const& suggestion,
       // Less penalty for perfect match (ie, reward case-sensitive match)
       penalty -= suggestion[matchPos] == query[j];
       
-      // More penalty for 'uninteresting' files
-      if (suggestion == "RcppExports.R" ||
-          suggestion == "RcppExports.cpp")
-         penalty += 6;
-      
-      // More penalty for 'uninteresting' extensions (e.g. .Rd)
-      std::string extension = string_utils::getExtension(suggestion);
-      if (boost::algorithm::to_lower_copy(extension) == ".rd")
-         penalty += 6;
-
       totalPenalty += penalty;
    }
    
    // Penalize files
    if (isFile)
+   {
       ++totalPenalty;
+
+      // More penalty for 'uninteresting' files
+      if (suggestion == "RcppExports.R" ||
+          suggestion == "RcppExports.cpp" ||
+          suggestion == "cpp11.R" ||
+          suggestion == "cpp11.cpp" ||
+          suggestion == "arrowExports.R" ||
+          suggestion == "arrowExports.cpp")
+         totalPenalty += 6;
+      
+      // More penalty for 'uninteresting' extensions (e.g. .Rd)
+      std::string extension = string_utils::getExtension(suggestion);
+      if (boost::algorithm::to_lower_copy(extension) == ".rd")
+         totalPenalty += 6;
+   }
+      
    
    // Penalize unmatched characters
    totalPenalty += gsl::narrow_cast<int>((query.size() - matches.size()) * query.size());

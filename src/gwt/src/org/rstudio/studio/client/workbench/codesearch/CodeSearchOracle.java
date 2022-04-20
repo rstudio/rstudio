@@ -71,6 +71,7 @@ public class CodeSearchOracle extends SuggestOracle
       
       // Get query matches in string (ordered)
       List<Integer> matches = StringUtil.subsequenceIndices(suggestionLower, queryLower);
+      GWT.log("" + matches.size() + " matches");
       
       // Loop over the matches and assign a score
       for (int j = 0, n = matches.size(); j < n; j++)
@@ -86,35 +87,41 @@ public class CodeSearchOracle extends SuggestOracle
             char prevChar = StringUtil.charAt(suggestionLower, matchPos - 1);
             if (prevChar == '_' || prevChar == '-' ||
                   (!isFile && prevChar == '.'))
-            {
                penalty = j + 1;
-            }
          }
          
          // Less penalty for case-sensitive matches
          if (StringUtil.charAt(suggestion, matchPos) == query.charAt(j))
             penalty--;
-         
-         // More penalty for 'uninteresting' files
-         if (suggestion == "RcppExports.R" ||
-             suggestion == "RcppExports.cpp")
-            penalty += 6;
-         
-         // More penalty for 'uninteresting' extensions (e.g. .Rd)
-         String extension = StringUtil.getExtension(suggestionLower);
-         if (extension.toLowerCase() == "rd")
-            penalty += 6;
-         
+            
          totalPenalty += penalty;
       }
       
       // Penalize file targets
       if (isFile)
+      {
          totalPenalty++;
+
+         // More penalty for 'uninteresting' files
+         if (suggestion == "RcppExports.R" ||
+         suggestion == "RcppExports.cpp" ||
+         suggestion == "cpp11.R" ||
+         suggestion == "cpp11.cpp" ||
+         suggestion == "arrowExports.R" ||
+         suggestion == "arrowExports.cpp")
+         totalPenalty += 6;
+
+         // More penalty for 'uninteresting' extensions (e.g. .Rd)
+         String extension = StringUtil.getExtension(suggestionLower);
+         if (extension.toLowerCase() == "rd")
+         totalPenalty += 6;
+      }
       
       // Penalize unmatched characters
       totalPenalty += (query.length() - matches.size()) * query.length();
       
+      GWT.log("suggestion = "+ suggestion + ", query = " + query + ", penalty = " + totalPenalty);
+
       return totalPenalty;
    }
    
