@@ -500,6 +500,7 @@ if (SOCI_LIB_COUNT EQUAL 0)
 endif()
 
 message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}")
+set(RSTUDIO_HAS_SOCI 1)
 
 if(UNIX)
 

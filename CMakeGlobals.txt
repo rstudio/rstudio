@@ -64,6 +64,8 @@ else()
    set(RSTUDIO_PRO_BUILD 0)
 endif()
 
+set(RSTUDIO_DEFAULT_LOG_PATH "/var/log/rstudio/rstudio-server")
+
 # detect architecture
 if(UNIX)
 
