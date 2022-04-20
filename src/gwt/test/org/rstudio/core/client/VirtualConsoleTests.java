@@ -1233,6 +1233,26 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
 
+   public void testHyperlinkNoParamsColorOutside()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String testInput = "\033[31m\u001b]8;;http://www.example.com\7text\u001b]8;;\7\033[39m";
+      vc.submit(testInput);
+      String expected = "<a class=\"xtermColor1 xtermHyperlink\" title=\"http://www.example.com\">text</a>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
+   public void testHyperlinkNoParamsColorInside()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String testInput = "\u001b]8;;http://www.example.com\7\033[31mtext\033[39m\u001b]8;;\7";
+      vc.submit(testInput);
+      String expected = "<a class=\"xtermColor1 xtermHyperlink\" title=\"http://www.example.com\">text</a>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
    public void testHyperlinkWithParams()
    {
       PreElement ele = Document.get().createPreElement();
