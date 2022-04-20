@@ -71,7 +71,6 @@ public class CodeSearchOracle extends SuggestOracle
       
       // Get query matches in string (ordered)
       List<Integer> matches = StringUtil.subsequenceIndices(suggestionLower, queryLower);
-      GWT.log("" + matches.size() + " matches");
       
       // Loop over the matches and assign a score
       for (int j = 0, n = matches.size(); j < n; j++)
@@ -120,8 +119,6 @@ public class CodeSearchOracle extends SuggestOracle
       // Penalize unmatched characters
       totalPenalty += (query.length() - matches.size()) * query.length();
       
-      GWT.log("suggestion = "+ suggestion + ", query = " + query + ", penalty = " + totalPenalty);
-
       return totalPenalty;
    }
    
