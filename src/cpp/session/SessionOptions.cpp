@@ -503,7 +503,8 @@ FilePath macBinaryPath(const FilePath& resourcePath,
 {
    // otherwise, look in default Qt location
    FilePath qtPath = resourcePath.getParent().completePath("MacOS").completePath(stem);
-   return qtPath;
+   if (qtPath.exists())
+      return qtPath;
 
    FilePath electronPath =
          resourcePath.completePath("bin").completePath(stem);
@@ -513,8 +514,7 @@ FilePath macBinaryPath(const FilePath& resourcePath,
 
    // alternate Electron binary path
    electronPath = resourcePath.completePath(stem);
-   if (electronPath.exists())
-      return electronPath;
+   return electronPath;
 }
 
 } // end anonymous namespace
