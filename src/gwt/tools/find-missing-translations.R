@@ -7,6 +7,12 @@ readTranslationFile <- function(path) {
    
    # read the file
    contents <- readLines(path, warn = FALSE)
+   
+   # drop commented lines and empty lines
+   contents <- grep("^\\s*#", contents, perl = TRUE, invert = TRUE, value = TRUE)
+   contents <- contents[nzchar(contents)]
+   
+   # look for lines that look like properties
    eqIndex <- regexpr("=", contents, fixed = TRUE)
    
    # drop lines without an '='
