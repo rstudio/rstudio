@@ -1407,9 +1407,9 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     /**
      * Translated "Use (Default) to inherit the global default setting".
      *
-     * @return translated "Use (Default) to inherit the global default setting"
+     * @return translated "Use (Default) to inherit the global default setting."
      */
-    @DefaultMessage("Use (Default) to inherit the global default setting")
+    @DefaultMessage("Use (Default) to inherit the global default setting.")
     @Key("projectGeneralInfoLabel")
     String projectGeneralInfoLabel();
 
@@ -1632,9 +1632,9 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     /**
      * Translated "Use (Default) to inherit the global default setting".
      *
-     * @return translated "Use (Default) to inherit the global default setting"
+     * @return translated "Use (Default) to inherit the global default setting."
      */
-    @DefaultMessage("Use (Default) to inherit the global default setting")
+    @DefaultMessage("Use (Default) to inherit the global default setting.")
     @Key("rMarkdownInfoLabel")
     String rMarkdownInfoLabel();
 
@@ -1830,9 +1830,9 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     /**
      * Translated "Use (Default) to inherit the global default dictionary".
      *
-     * @return translated "Use (Default) to inherit the global default dictionary"
+     * @return translated "Use (Default) to inherit the global default dictionary."
      */
-    @DefaultMessage("Use (Default) to inherit the global default dictionary")
+    @DefaultMessage("Use (Default) to inherit the global default dictionary.")
     @Key("dictionariesInfoLabel")
     String dictionariesInfoLabel();
 

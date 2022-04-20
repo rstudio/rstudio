@@ -48,8 +48,9 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    @Inject
    public ProjectEditingPreferencesPane(final SourceServerOperations server)
    {
-      Label infoLabel_ = new Label(constants_.projectGeneralInfoLabel());
-      add(infoLabel_);
+      Label infoLabel = new Label(constants_.projectGeneralInfoLabel());
+      infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
+      add(infoLabel);
 
       // source editing options
       enableCodeIndexing_ = new CheckBox(constants_.enableCodeIndexingLabel(), false);
@@ -197,7 +198,6 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       }
    }
 
-   private Label infoLabel_;
    private CheckBox enableCodeIndexing_;
    private CheckBox chkSpacesForTab_;
    private NumericValueWidget numSpacesForTab_;
