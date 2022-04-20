@@ -43,7 +43,7 @@ public class AnsiCode
    public static final int BLURRED = 2;
    public static final int BOLD_BLURRED_OFF = 22;
    public static final String BOLD_STYLE = "xtermBold";
-   public static final String BLURRED_STYLE = "NYI";
+   public static final String BLURRED_STYLE = "xtermBlur";
 
    public static final int ITALIC = 3;
    public static final int ITALIC_OFF = 23;
@@ -390,12 +390,12 @@ public class AnsiCode
          }
          else if (codeVal == BLURRED)
          {
-            // NYI clazzes_.add(BLURRED_STYLE);
+            clazzes_.add(BLURRED_STYLE);
          }
          else if (codeVal == BOLD_BLURRED_OFF)
          {
             clazzes_.remove(BOLD_STYLE);
-            // NYI clazzes_.remove(BLURRED_STYLE);
+            clazzes_.remove(BLURRED_STYLE);
          }
          else if (codeVal == ITALIC)
          {
