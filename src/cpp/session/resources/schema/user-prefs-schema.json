@@ -1144,7 +1144,7 @@
             "default": "",
             "description": "The path to the terminal executable to use."
         },
-        "ssh_key_path": {
+        "rsa_key_path": {
             "type": "string",
             "default": "",
             "description": "The path to the SSH key file to use."

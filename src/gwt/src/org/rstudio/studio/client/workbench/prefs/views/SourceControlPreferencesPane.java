@@ -165,7 +165,7 @@ public class SourceControlPreferencesPane extends PreferencesPane
       svnExePathChooser_.setText(prefs.svnExePath().getValue());
       terminalPathChooser_.setText(prefs.terminalPath().getValue());
 
-      sshKeyWidget_.setRsaSshKeyPath(prefs.sshKeyPath().getValue(),
+      sshKeyWidget_.setRsaSshKeyPath(prefs.rsaKeyPath().getValue(),
                                      prefs.haveRsaKey().getValue());
       sshKeyWidget_.setProgressIndicator(getProgressIndicator());
 

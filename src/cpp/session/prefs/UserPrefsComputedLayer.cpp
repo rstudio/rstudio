@@ -73,7 +73,7 @@ Error UserPrefsComputedLayer::readPrefs()
       keyFile = "id_rsa";
       rsaSshKeyPath = sshKeyDir.completeChildPath(keyFile);
    }
-   layer[kSshKeyPath] = rsaSshKeyPath.getAbsolutePath();
+   layer[kRsaKeyPath] = rsaSshKeyPath.getAbsolutePath();
    layer["have_rsa_key"] = rsaSshKeyPath.exists();
 
    // provide name of public key file

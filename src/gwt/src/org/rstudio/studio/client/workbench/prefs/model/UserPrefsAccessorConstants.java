@@ -1409,9 +1409,9 @@ public interface UserPrefsAccessorConstants extends Constants {
     * The path to the SSH key file to use.
     */
    @DefaultStringValue("")
-   String sshKeyPathTitle();
+   String rsaKeyPathTitle();
    @DefaultStringValue("The path to the SSH key file to use.")
-   String sshKeyPathDescription();
+   String rsaKeyPathDescription();
 
    /**
     * The encryption type to use for the SSH key file.

@@ -297,7 +297,7 @@ namespace prefs {
 #define kGitExePath "git_exe_path"
 #define kSvnExePath "svn_exe_path"
 #define kTerminalPath "terminal_path"
-#define kSshKeyPath "ssh_key_path"
+#define kRsaKeyPath "rsa_key_path"
 #define kSshKeyType "ssh_key_type"
 #define kSshKeyTypeEd25519 "ed25519"
 #define kSshKeyTypeRsa "rsa"
@@ -1425,8 +1425,8 @@ public:
    /**
     * The path to the SSH key file to use.
     */
-   std::string sshKeyPath();
-   core::Error setSshKeyPath(std::string val);
+   std::string rsaKeyPath();
+   core::Error setRsaKeyPath(std::string val);
 
    /**
     * The encryption type to use for the SSH key file.

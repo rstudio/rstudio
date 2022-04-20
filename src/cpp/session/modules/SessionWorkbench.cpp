@@ -298,7 +298,7 @@ Error createSshKey(const json::JsonRpcRequest& request,
    // type
    cmd << "-t" << type;
 
-   if (type == "rsa")
+   if (type == kSshKeyTypeRsa)
       cmd << "-b 4096";
 
    // passphrase (optional)
