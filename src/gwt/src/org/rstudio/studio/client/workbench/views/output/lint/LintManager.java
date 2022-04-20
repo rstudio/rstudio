@@ -365,7 +365,9 @@ public class LintManager
                finalLint.push(lint.get(i));
       }
       else
+      {
          finalLint = lint;
+      }
 
       if (spellcheck && userPrefs_.realTimeSpellchecking().getValue())
       {
@@ -388,7 +390,9 @@ public class LintManager
          });
       }
       else
+      {
          source_.showLint(finalLint);
+      }
    }
 
    /**

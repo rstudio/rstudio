@@ -1275,7 +1275,8 @@ public class AceEditor implements DocDisplay,
       // iterate through rows until we've consumed all the chars
       int row = startPos.getRow();
       int col = startPos.getColumn();
-      while (row < session.getLength()) {
+      while (row < session.getLength())
+      {
 
          // how many chars left in the current column?
          String line = session.getLine(row);
@@ -1303,23 +1304,13 @@ public class AceEditor implements DocDisplay,
    @Override
    public Position positionFromIndex(int index)
    {
-      EditSession session = widget_.getEditor().getSession();
-      return advancePosition(session, Position.create(0,0), index);
+      return widget_.getEditor().getSession().getDocument().indexToPosition(index, 0);
    }
 
    @Override
    public int indexFromPosition(Position position)
    {
-      EditSession session = widget_.getEditor().getSession();
-      int index = 0;
-      int row = 0;
-      while (row < position.getRow())
-      {
-         index += (session.getLine(row).length() + 1); // +1 for newline
-         row++;
-      }
-      index += position.getColumn();
-      return index;
+      return widget_.getEditor().getSession().getDocument().positionToIndex(position, 0);
    }
 
 
