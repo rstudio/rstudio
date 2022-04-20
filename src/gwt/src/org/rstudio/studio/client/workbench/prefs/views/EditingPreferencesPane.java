@@ -50,7 +50,6 @@ import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
