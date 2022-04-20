@@ -805,7 +805,7 @@ public class VirtualConsole
                consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
             });
             anchor.setTitle(hyperlink_.getTitle());
-            anchor.addClassName("xtermHyperlink");
+            anchor.addClassName(AnsiCode.HYPERLINK_STYLE);
 
             element = anchor;
          }
