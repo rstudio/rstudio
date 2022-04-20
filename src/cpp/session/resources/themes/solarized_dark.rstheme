@@ -151,7 +151,7 @@
 .xtermInvertColor { color: #002b36; }
 .xtermInvertBgColor { background-color: #93a1a1; }
 .xtermBold { font-weight: bold; }
-.xtermBlur { text-shadow: 0 0 3px; opacity: 0.2; font-weight: lighter; }
+.xtermBlur { filter: blur(1px); }
 .xtermUnderline { text-decoration: underline; }
 .xtermHyperlink { cursor: pointer; }
 .xtermHyperlink:hover { text-decoration: underline; }
