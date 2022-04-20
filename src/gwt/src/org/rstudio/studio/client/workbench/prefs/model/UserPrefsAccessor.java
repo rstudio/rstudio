@@ -3212,7 +3212,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    public PrefValue<Boolean> insertNativePipeOperator()
    {

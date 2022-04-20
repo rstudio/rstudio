@@ -37,9 +37,9 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
    }
 
    /**
-    * Create a checkbox that infers label/title from the PerfValue and uses the `lessSpaced` margin style
+    * Create a checkbox that infers label/title from the PrefValue and uses the `lessSpaced` margin style
     *
-    * Provides a convenience to reduce boilerplate when parsing PerfValues
+    * Provides a convenience to reduce boilerplate when parsing PrefValues
     *
     * @param prefValue boolean preference to bind to
     * @return CheckBox
@@ -50,9 +50,9 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
    }
 
    /**
-    * Create a checkbox that infers label/title from the PerfValue
+    * Create a checkbox that infers label/title from the PrefValue
     *
-    * Provides a convenience to reduce boilerplate when parsing PerfValues
+    * Provides a convenience to reduce boilerplate when parsing PrefValues
     *
     * @param prefValue boolean preference to bind to
     * @return CheckBox
@@ -63,7 +63,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
       // Note that properties map such that:
       //    prefValue.title --> checkboxPref.label
       //    prefValue.description --> checkboxPref.title
-      return checkboxPref(prefValue.getTitle(), prefValue, prefValue.getDescription() /*title*/, defaultSpaced /*defaultSpaced*/);
+      return checkboxPref(prefValue.getTitle(), prefValue, prefValue.getDescription() /*title*/, defaultSpaced /*defaultSpaced*/, false /*asHtml*/);
    }
 
    /**
@@ -75,7 +75,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
    protected CheckBox checkboxPref(String label,
                                    final PrefValue<Boolean> prefValue)
    {
-      return checkboxPref(label, prefValue, null /*title*/, true /*defaultSpaced*/);
+      return checkboxPref(label, prefValue, null /*title*/, true /*defaultSpaced*/, false /*asHtml*/);
    }
 
    /**
@@ -90,7 +90,23 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
                                    final PrefValue<Boolean> prefValue,
                                    boolean defaultSpaced)
    {
-      return checkboxPref(label, prefValue, null /*title*/, defaultSpaced);
+      return checkboxPref(label, prefValue, null /*title*/, defaultSpaced, false /*asHtml*/);
+   }
+
+   /**
+    * Create a checkbox bound to a user preference.
+    * @param label checkbox label
+    * @param prefValue bound boolean preference
+    * @param defaultSpaced if true apply `lessSpaced style`, otherwise no spacing
+    * style will be applied
+    * @return CheckBox
+    */
+   protected CheckBox checkboxPref(String label,
+                                   final PrefValue<Boolean> prefValue,
+                                   boolean defaultSpaced,
+                                   boolean asHtml)
+   {
+      return checkboxPref(label, prefValue, null /*title*/, defaultSpaced, asHtml);
    }
 
    /**
@@ -104,7 +120,7 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
                                    final PrefValue<Boolean> prefValue,
                                    String title)
    {
-      return checkboxPref(label, prefValue, title, true /*defaultSpaced*/);
+      return checkboxPref(label, prefValue, title, true /*defaultSpaced*/, false /*asHtml*/);
    }
 
    /**
@@ -113,15 +129,17 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
     * @param prefValue bound boolean preference
     * @param title checkbox title; typically shown via tooltip
     * @param defaultSpaced if true apply `lessSpaced` style, otherwise no spacing
+    * @param asHtml if true, interpret String label as HTML
     * style will be applied
     * @return CheckBox
     */
    protected CheckBox checkboxPref(String label,
                                    final PrefValue<Boolean> prefValue,
                                    String title,
-                                   boolean defaultSpaced)
+                                   boolean defaultSpaced,
+                                   boolean asHtml)
    {
-      final CheckBox checkBox = new CheckBox(label, false);
+      final CheckBox checkBox = new CheckBox(label, asHtml);
       if (defaultSpaced)
          lessSpaced(checkBox);
       checkBox.setValue(prefValue.getGlobalValue());

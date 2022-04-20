@@ -2936,7 +2936,7 @@ core::Error UserPrefValues::setSaveRetryTimeout(int val)
 }
 
 /**
- * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+ * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
  */
 bool UserPrefValues::insertNativePipeOperator()
 {

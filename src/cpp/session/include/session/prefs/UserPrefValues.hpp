@@ -1756,7 +1756,7 @@ public:
    core::Error setSaveRetryTimeout(int val);
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    bool insertNativePipeOperator();
    core::Error setInsertNativePipeOperator(bool val);
