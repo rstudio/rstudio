@@ -55,6 +55,7 @@
 ### RStudio Workbench
 
 - Add a -G option to `rsandbox` to allow configuring the effective group of the process (#3214)
+- Upgrade the default version of `code-server` to 4.2.0 to resolve issue with the latest Python VS Code extension (Pro #3320)
 
 ### Deprecated / Removed
 
