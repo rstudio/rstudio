@@ -233,38 +233,38 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String spellingPrefsDescription();
 
     /**
-     * Translated "RSA Public Key Filename".
+     * Translated "SSH Public Key Filename".
      *
-     * @return translated "RSA Public Key Filename"
+     * @return translated "SSH Public Key Filename"
      */
-    @DefaultMessage("RSA Public Key Filename")
+    @DefaultMessage("SSH Public Key Filename")
     @Key("rsaKeyFileTitle")
     String rsaKeyFileTitle();
 
     /**
-     * Translated "Filename of RSA public key".
+     * Translated "Filename of SSH public key".
      *
-     * @return translated "Filename of RSA public key"
+     * @return translated "Filename of SSH public key"
      */
-    @DefaultMessage("Filename of RSA public key")
+    @DefaultMessage("Filename of SSH public key")
     @Key("rsaKeyFileDescription")
     String rsaKeyFileDescription();
 
     /**
-     * Translated "Has RSA Key".
+     * Translated "Has SSH Key".
      *
-     * @return translated "Has RSA Key"
+     * @return translated "Has SSH Key"
      */
-    @DefaultMessage("Has RSA Key")
+    @DefaultMessage("Has SSH Key")
     @Key("haveRSAKeyTitle")
     String haveRSAKeyTitle();
 
     /**
-     * Translated "Whether the user has an RSA key".
+     * Translated "Whether the user has an SSH key".
      *
-     * @return translated "Whether the user has an RSA key"
+     * @return translated "Whether the user has an SSH key"
      */
-    @DefaultMessage("Whether the user has an RSA key")
+    @DefaultMessage("Whether the user has an SSH key")
     @Key("haveRSAKeyDescription")
     String haveRSAKeyDescription();
 
