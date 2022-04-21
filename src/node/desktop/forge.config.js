@@ -46,7 +46,7 @@ const config = {
   packagerConfig: {
     icon: './resources/icons/RStudio',
     appBundleId: 'com.rstudio.desktop',
-    extendInfo: '../../cpp/desktop/Info.plist.in',
+    extendInfo: './Info.plist',
   },
 };
 
