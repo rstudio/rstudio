@@ -191,6 +191,14 @@ if(WIN32)
       DESTINATION "${RSTUDIO_INSTALL_ELECTRON}"
    )
 
+   set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+
+   include(InstallRequiredSystemLibraries)
+   install(
+      PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+      DESTINATION "${RSTUDIO_INSTALL_BIN}/x86"
+   )
+
 elseif(LINUX)
 
    if(UNAME_M STREQUAL aarch64)
