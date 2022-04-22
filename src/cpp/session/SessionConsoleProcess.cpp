@@ -267,6 +267,8 @@ void ConsoleProcess::commonInit()
 #endif
    }
    
+   core::system::setenv(&(options_.environment.get()), "RSTUDIO_PANE", "terminal");
+
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
    if (!options_.smartTerminal)
