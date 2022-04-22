@@ -49,8 +49,8 @@ if(RSTUDIO_ELECTRON)
       WriteRegStr HKCR 'Applications\\\\rstudio.exe' 'FriendlyAppName' 'RStudio'
       WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\rstudio.exe \\\"%1\\\"'
 
-      WriteRegStr HKCR 'Local Settings\\\\Software\\\\Microsoft\\\\Windows\\\\Shell\\\\MuiCache' '$INSTDIR\\\\RStudio.exe.ApplicationCompnay' 'RStudio, PBC'
-      WriteRegStr HKCR 'Local Settings\\\\Software\\\\Microsoft\\\\Windows\\\\Shell\\\\MuiCache' '$INSTDIR\\\\RStudio.exe.FriendlyAppName' 'RStudio'
+      WriteRegStr HKCR 'Local Settings\\\\Software\\\\Microsoft\\\\Windows\\\\Shell\\\\MuiCache' '$INSTDIR\\\\rstudio.exe.ApplicationCompany' 'RStudio, PBC'
+      WriteRegStr HKCR 'Local Settings\\\\Software\\\\Microsoft\\\\Windows\\\\Shell\\\\MuiCache' '$INSTDIR\\\\rstudio.exe.FriendlyAppName' 'RStudio'
 
       WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.R' ''
       WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.RData' ''

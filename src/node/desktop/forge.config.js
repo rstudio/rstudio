@@ -49,6 +49,7 @@ const config = {
     appBundleId: 'com.rstudio.desktop',
     appCopyright: 'Copyright (C) 2022 by RStudio, PBC',
     name: 'RStudio',
+    executableName: 'rstudio',
     win32metadata: {
       CompanyName: "RStudio, PBC",
       FileDescription: "RStudio",
