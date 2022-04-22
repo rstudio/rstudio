@@ -173,6 +173,7 @@ void AsyncRProcess::start(const char* rCommand,
    core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_REQUESTS_FILE", ipcRequests_.getAbsolutePath());
    core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_RESPONSE_FILE", ipcResponse_.getAbsolutePath());
    core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_SHARED_SECRET", sharedSecret_);
+   core::system::setenv(&childEnv, "RSTUDIO_PANE", "job");
    
    // update environment used for child process
    options.environment = childEnv;
