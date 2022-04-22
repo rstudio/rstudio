@@ -46,11 +46,7 @@ if(RSTUDIO_ELECTRON)
    set(CPACK_NSIS_EXTRA_INSTALL_COMMANDS "
       WriteRegStr HKLM 'Software\\\\Microsoft\\\\Windows\\\\CurrentVersion\\\\App Paths\\\\rstudio.exe' '' '$INSTDIR\\\\rstudio.exe'
 
-      WriteRegStr HKCR 'Applications\\\\rstudio.exe' 'FriendlyAppName' 'RStudio'
       WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\shell\\\\open\\\\command' '' '$INSTDIR\\\\rstudio.exe \\\"%1\\\"'
-
-      WriteRegStr HKCR 'Local Settings\\\\Software\\\\Microsoft\\\\Windows\\\\Shell\\\\MuiCache' '$INSTDIR\\\\rstudio.exe.ApplicationCompany' 'RStudio, PBC'
-      WriteRegStr HKCR 'Local Settings\\\\Software\\\\Microsoft\\\\Windows\\\\Shell\\\\MuiCache' '$INSTDIR\\\\rstudio.exe.FriendlyAppName' 'RStudio'
 
       WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.R' ''
       WriteRegStr HKCR 'Applications\\\\rstudio.exe\\\\SupportedTypes' '.RData' ''
