@@ -3210,6 +3210,22 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Install the package and restart R") // $NON-NLS-1$
     String buildAllDesc();
     
+    // buildIncremental
+    @DefaultStringValue("Install Package incrementally") // $NON-NLS-1$
+    String buildIncrementalLabel();
+    @DefaultStringValue("Install Package (incrementally)") // $NON-NLS-1$
+    String buildIncrementalMenuLabel();
+    @DefaultStringValue("Install the package incrementally (not cleaning first) and restart R") // $NON-NLS-1$
+    String buildIncrementalDesc();
+    
+    // buildFull
+    @DefaultStringValue("Install Package after cleaning") // $NON-NLS-1$
+    String buildFullLabel();
+    @DefaultStringValue("Install Package (clean first)") // $NON-NLS-1$
+    String buildFullMenuLabel();
+    @DefaultStringValue("Install the package (cleaning first) and restart R") // $NON-NLS-1$
+    String buildFullDesc();
+    
     // cleanAll
     @DefaultStringValue("Clean All") // $NON-NLS-1$
     String cleanAllLabel();

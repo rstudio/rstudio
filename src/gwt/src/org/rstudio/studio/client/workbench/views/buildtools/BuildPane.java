@@ -191,6 +191,8 @@ public class BuildPane extends WorkbenchPane
          else if (pkg)
          {
             moreMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
+            moreMenu.addItem(commands_.buildIncremental().createMenuItem(false));
+            moreMenu.addItem(commands_.buildFull().createMenuItem(false));
             moreMenu.addSeparator();
             moreMenu.addItem(commands_.buildSourcePackage().createMenuItem(false));
             moreMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));
