@@ -166,17 +166,6 @@ public class BuildPane extends WorkbenchPane
          }
       }
       
-
-      // packages get check package
-      if (pkg)
-      {
-         toolbar.addLeftWidget(commands_.testPackage().createToolbarButton());
-         toolbar.addLeftSeparator();
-
-         toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());
-         toolbar.addLeftSeparator();
-      }
-
       // create more menu
       if (makefile || website || pkg)
       {
