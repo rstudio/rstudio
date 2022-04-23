@@ -1444,7 +1444,7 @@ public:
    };
 
    SourceItem()
-      : type_(None), line_(-1), column_(-1)
+      : type_(None), line_(-1), column_(-1), hidden_(false)
    {
    }
 
@@ -1455,6 +1455,7 @@ public:
               const std::string& context,
               int line,
               int column,
+              bool hidden,
               const json::Object& metadata = json::Object())
       : type_(type),
         name_(name),
@@ -1463,6 +1464,7 @@ public:
         context_(context),
         line_(line),
         column_(column),
+        hidden_(hidden),
         metadata_(metadata)
    {
    }
@@ -1476,6 +1478,7 @@ public:
    const std::string& context() const { return context_; }
    int line() const { return line_; }
    int column() const { return column_; }
+   bool hidden() const { return hidden_; }
    const json::Object& metadata() const { return metadata_; }
 
 private:
@@ -1486,6 +1489,7 @@ private:
    std::string context_;
    int line_;
    int column_;
+   bool hidden_;
    json::Object metadata_;
 };
 
@@ -1533,7 +1537,8 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
                      extraInfo,
                      rSourceItem.context(),
                      rSourceItem.line(),
-                     rSourceItem.column());
+                     rSourceItem.column(), 
+                     rSourceItem.hidden());
 }
 
 SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
@@ -1579,7 +1584,8 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       "",
       module_context::createAliasedPath(cppDefinition.location.filePath),
       safe_convert::numberTo<int>(cppDefinition.location.line, 1),
-      safe_convert::numberTo<int>(cppDefinition.location.column, 1));
+      safe_convert::numberTo<int>(cppDefinition.location.column, 1), 
+      false /* hidden */);
 }
 
 void fillFromCrossrefs(const std::string& term,
@@ -1708,7 +1714,8 @@ void fillFromCrossrefs(const std::string& term,
                sourceType, displayText, "", "",
                module_context::createAliasedPath(
                   basePath.completeChildPath(file)),
-               -1, -1,
+               -1, -1, 
+               false, /* hidden */
                meta);
       
       pSourceItems->push_back(item);
@@ -1796,18 +1803,19 @@ Error searchCode(const json::JsonRpcRequest& request,
    for (std::size_t i = 0; i < srcItems.size(); ++i)
    {
       const SourceItem& item = srcItems[i];
+      // items are hidden() when coming from read-only R files
+      // i.e. files that contain the text "do not edit by hand" 
+      if (item.hidden())
+         continue;
       
-      // don't index auto-generated files
+      // don't index auto-generated cpp files
       const std::string& context = item.context();
-      if (boost::algorithm::ends_with(context, "RcppExports.R") ||
-          boost::algorithm::ends_with(context, "RcppExports.cpp") ||
-          boost::algorithm::ends_with(context, "cpp11.R") ||
+      if (boost::algorithm::ends_with(context, "RcppExports.cpp") ||
           boost::algorithm::ends_with(context, "cpp11.cpp") ||
-          boost::algorithm::ends_with(context, "arrowExports.R") ||
           boost::algorithm::ends_with(context, "arrowExports.cpp")
           )
          continue;
-         
+      
       int score = scoreMatch(item.name(), term, false);
       srcItemScores.push_back(std::make_pair(gsl::narrow_cast<int>(i), score));
    }

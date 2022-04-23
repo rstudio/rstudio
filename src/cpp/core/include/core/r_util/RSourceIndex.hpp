@@ -77,7 +77,7 @@ public:
    };
 
 public:
-   RSourceItem() : type_(None), braceLevel_(0), line_(0), column_(0)
+   RSourceItem() : type_(None), braceLevel_(0), line_(0), column_(0), hidden_(false)
    {
    }
 
@@ -86,13 +86,15 @@ public:
                const std::vector<RS4MethodParam>& signature,
                int braceLevel,
                std::size_t line,
-               std::size_t column)
+               std::size_t column, 
+               bool hidden)
       : type_(type),
         name_(name),
         signature_(signature),
         braceLevel_(braceLevel),
         line_(line),
-        column_(column)
+        column_(column), 
+        hidden_(hidden)
    {
    }
 
@@ -107,14 +109,16 @@ private:
                const std::vector<RS4MethodParam>& signature,
                int braceLevel,
                std::size_t line,
-               std::size_t column)
+               std::size_t column, 
+               bool hidden)
       : context_(context),
         type_(type),
         name_(name),
         signature_(signature),
         braceLevel_(braceLevel),
         line_(line),
-        column_(column)
+        column_(column), 
+        hidden_(hidden)
    {
    }
 
@@ -131,6 +135,7 @@ public:
    const int braceLevel() const { return braceLevel_; }
    int line() const { return core::safe_convert::numberTo<std::size_t, int>(line_,0); }
    int column() const { return core::safe_convert::numberTo<std::size_t, int>(column_,0); }
+   bool hidden() const { return hidden_; }
 
    // support for RSourceIndex::search
 
@@ -170,7 +175,8 @@ public:
                          signature_,
                          braceLevel_,
                          line_,
-                         column_);
+                         column_, 
+                         hidden_);
    }
 
 private:
@@ -181,6 +187,7 @@ private:
    int braceLevel_;
    std::size_t line_;
    std::size_t column_;
+   bool hidden_;
 };
 
 
