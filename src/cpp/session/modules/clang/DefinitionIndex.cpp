@@ -50,6 +50,7 @@ struct CppDefinitions
 {
    std::string file;
    std::time_t fileLastWrite;
+   bool hidden;
    std::deque<CppDefinition> definitions;
 };
 
@@ -173,6 +174,12 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    }
 }
 
+bool isGeneratedFile(const FilePath& inputFile) {
+   std::string contents;
+   Error error = core::readStringFromFile(inputFile, &contents);
+   return boost::algorithm::contains(contents, "do not edit by hand");
+}
+
 void fileChangeHandler(const core::system::FileChangeEvent& event)
 {
    // alias the filename
@@ -231,6 +238,7 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
          CppDefinitions definitions;
          definitions.file = file;
          definitions.fileLastWrite = event.fileInfo().lastWriteTime();
+         definitions.hidden = isGeneratedFile(core::FilePath(event.fileInfo().absolutePath()));
          s_definitionsByFile[file] = definitions;
          DefinitionVisitor visitor =
             boost::bind(insertDefinition, _1, &s_definitionsByFile[file]);
