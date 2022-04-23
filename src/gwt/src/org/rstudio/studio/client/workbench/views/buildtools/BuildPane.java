@@ -166,6 +166,16 @@ public class BuildPane extends WorkbenchPane
          }
       }
       
+      // packages get check package
+      if (pkg)
+      {
+         toolbar.addLeftWidget(commands_.testPackage().createToolbarButton());
+         toolbar.addLeftSeparator();
+
+         toolbar.addLeftWidget(commands_.checkPackage().createToolbarButton());
+         toolbar.addLeftSeparator();
+      }
+
       // create more menu
       if (makefile || website || pkg)
       {
@@ -181,10 +191,6 @@ public class BuildPane extends WorkbenchPane
          else if (pkg)
          {
             moreMenu.addItem(commands_.devtoolsLoadAll().createMenuItem(false));
-            moreMenu.addSeparator();
-            moreMenu.addItem(commands_.testPackage().createMenuItem(false));
-            moreMenu.addSeparator();
-            moreMenu.addItem(commands_.checkPackage().createMenuItem(false));
             moreMenu.addSeparator();
             moreMenu.addItem(commands_.buildSourcePackage().createMenuItem(false));
             moreMenu.addItem(commands_.buildBinaryPackage().createMenuItem(false));
