@@ -1406,12 +1406,24 @@ public interface UserPrefsAccessorConstants extends Constants {
    String terminalPathDescription();
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
    @DefaultStringValue("")
    String rsaKeyPathTitle();
-   @DefaultStringValue("The path to the RSA key file to use.")
+   @DefaultStringValue("The path to the SSH key file to use.")
    String rsaKeyPathDescription();
+
+   /**
+    * The encryption type to use for the SSH key file.
+    */
+   @DefaultStringValue("")
+   String sshKeyTypeTitle();
+   @DefaultStringValue("The encryption type to use for the SSH key file.")
+   String sshKeyTypeDescription();
+   @DefaultStringValue("ED25519-encrypted key")
+   String sshKeyTypeEnum_ed25519();
+   @DefaultStringValue("RSA-encrypted key")
+   String sshKeyTypeEnum_rsa();
 
    /**
     * Whether to use the devtools R package.
@@ -1860,11 +1872,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String saveRetryTimeoutDescription();
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    @DefaultStringValue("Use R's native pipe operator, |>")
    String insertNativePipeOperatorTitle();
-   @DefaultStringValue("Whether the Insert Pipe Operator command should insert the native R pipe operator, |>")
+   @DefaultStringValue("Whether the Insert Pipe Operator command should use the native R pipe operator, |>")
    String insertNativePipeOperatorDescription();
 
    /**

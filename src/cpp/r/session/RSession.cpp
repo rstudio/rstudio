@@ -616,6 +616,11 @@ bool restoreEnvironmentOnResume()
    return s_options.restoreEnvironmentOnResume;
 }
 
+bool useNativePipeOperator()
+{
+   return s_options.useNativePipeOperator;
+}
+
 FilePath tempFile(const std::string& prefix, const std::string& extension)
 {
    std::string filename;

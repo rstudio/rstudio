@@ -254,6 +254,7 @@
 .xtermInvertColor { color: #1d1f21; }
 .xtermInvertBgColor { background-color: #c5c8c6; }
 .xtermBold { font-weight: bold; }
+.xtermBlur { filter: blur(1px); }
 .xtermUnderline { text-decoration: underline; }
 .xtermHyperlink { cursor: pointer; }
 .xtermHyperlink:hover { text-decoration: underline; }

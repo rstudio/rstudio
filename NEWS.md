@@ -6,6 +6,7 @@
 - Source marker `message` can contain ANSI SGR codes for setting style and color (#9010)
 - Linux/MacOS: Executing a code selection that encounters an error will stop execution of remaining code (#3014)
 - Added support for hyperlinks in the console and build pane (#1941)
+- Added support for blurred text (#11019)
 - "Clean and Rebuild" and "Install and Restart" have been merged into "Install Package", the "Project Options > Build" gains a "clean before install" option to toggle the --preclean flag. The Build toolbar changes to "Install | Test | Check | More v" (#4289)
 - The source button uses `cpp11::source_cpp()` on C++ files that have `[[cpp11::register]]` decorations (#10387)
 - New *Relative Line Numbers* preference for showing line numbers relative to the current line, rather than the first line (#1774)
@@ -13,6 +14,8 @@
 - (macOS only) RStudio now reads the PATH from the user's default shell on startup (#10551)
 - (experimental) Option to display the user interface in French (#10455)
 - Label commit timestamps as being in UTC (#2544)
+- The choice of pipe operator (`magrittr` or native R 4.1+) inserted with the "Insert Pipe Operator" keyboard shortcut can now be configured at the project level as well as the global level (#9409)
+- The Git/SVN pane now supports creating ED25519-encrypted SSH keys by default. Newly created RSA SSH keys will now be 4096 bits instead of 2048 to increase security (#8255)
 
 #### Find in Files
 
@@ -52,6 +55,7 @@
 ### RStudio Workbench
 
 - Add a -G option to `rsandbox` to allow configuring the effective group of the process (#3214)
+- Upgrade the default version of `code-server` to 4.2.0 to resolve issue with the latest Python VS Code extension (Pro #3320)
 
 ### Deprecated / Removed
 

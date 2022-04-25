@@ -34,6 +34,7 @@
 #include <session/projects/SessionProjects.hpp>
 
 #define kAnsiEscapeRegex "(?:\033\\[\\d+m)*"
+#define kAnsiUrlRegex "(?:\u001B]8;[^\u0007]*\u0007)*"
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -291,11 +292,13 @@ std::vector<module_context::SourceMarker> parseTestThatErrors(
                   kAnsiEscapeRegex // color
                   "\\s+"           // separating space
                   "\\("            // opening paren
+                  kAnsiUrlRegex    // opening hyperlink
                   "([^:\\n]+)"     // file name           (2)
                   ":"              // colon separator
                   "([0-9]+)"       // file line           (3)
                   ":"              // colon separator
                   "([0-9]+)"       // file column         (4)
+                  kAnsiUrlRegex    // closing hyperlink
                   "\\)"            // closing paren
                   ":"              // colon separator
                   "\\s+"           // separating space
