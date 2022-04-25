@@ -28,16 +28,13 @@
 
 #include <server/ServerConstants.hpp>
 #include <server/ServerObject.hpp>
-#include <server/ServerOptionsOverlay.hpp>
+#include <server/ServerOptions.hpp>
 #include <server/ServerPaths.hpp>
 #include <server/ServerSessionManager.hpp>
 
 #include <session/projects/SessionProjectSharing.hpp>
 
-#include "load_balancer/LoadBalancer.hpp"
-#include "ServerActivation.hpp"
 #include "ServerSessionRpc.hpp"
-#include "ServerJobLauncher.hpp"
 
 #define kInvalidSecretEndpoint "/invalid_secret"
 
@@ -207,7 +204,7 @@ void addHandler(const std::string& prefix,
       // check if we allow user access - meaning users do not need special user-hidden RPC
       // secret in order to call the RPC. some administrator protected RPCs should not be
       // invokable by regular users
-      if (allowUserAccess && job_launcher::launcherSessionsEnabled(false /*checkLicense*/))
+      if (allowUserAccess)
       {
          // if we're using job launcher sessions, we need to handle RPCs
          // from within the regular http server since sessions will be

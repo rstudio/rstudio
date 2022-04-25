@@ -51,6 +51,7 @@ set(CORE_SOURCE_FILES
    RegexUtils.cpp
    RecursionGuard.cpp
    Settings.cpp
+   SocketRpc.cpp
    StringUtils.cpp
    ColorUtils.cpp
    Thread.cpp
