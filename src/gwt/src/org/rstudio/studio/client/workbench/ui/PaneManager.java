@@ -225,28 +225,28 @@ public class PaneManager
                       FileTypeRegistry fileTypeRegistry,
                       Source source,
                       SourceColumnManager sourceColumnManager,
-                      @Named("History") final WorkbenchTab historyTab,
-                      @Named("Files") final WorkbenchTab filesTab,
-                      @Named("Plots") final WorkbenchTab plotsTab,
-                      @Named("Packages") final WorkbenchTab packagesTab,
-                      @Named("Help") final WorkbenchTab helpTab,
-                      @Named("VCS") final WorkbenchTab vcsTab,
-                      @Named("Build") final WorkbenchTab buildTab,
-                      @Named("Presentation") final WorkbenchTab presentationTab,
-                      @Named("Presentations") final WorkbenchTab presentation2Tab,
-                      @Named("Connections") final WorkbenchTab connectionsTab,
-                      @Named("Environment") final WorkbenchTab environmentTab,
-                      @Named("Viewer") final WorkbenchTab viewerTab,
-                      @Named("Compile PDF") final WorkbenchTab compilePdfTab,
-                      @Named("Source Cpp") final WorkbenchTab sourceCppTab,
-                      @Named("R Markdown") final WorkbenchTab renderRmdTab,
-                      @Named("Deploy") final WorkbenchTab deployContentTab,
-                      @Named("Terminal") final WorkbenchTab terminalTab,
-                      @Named("Tests") final WorkbenchTab testsTab,
-                      @Named("Jobs") final WorkbenchTab jobsTab,
-                      @Named("Launcher") final WorkbenchTab launcherJobsTab,
-                      @Named("Data Output") final WorkbenchTab dataTab,
-                      @Named("Tutorial") final WorkbenchTab tutorialTab,
+                      @Named(HISTORY_PANE) final WorkbenchTab historyTab,
+                      @Named(FILES_PANE) final WorkbenchTab filesTab,
+                      @Named(PLOTS_PANE) final WorkbenchTab plotsTab,
+                      @Named(PACKAGES_PANE) final WorkbenchTab packagesTab,
+                      @Named(HELP_PANE) final WorkbenchTab helpTab,
+                      @Named(VCS_PANE) final WorkbenchTab vcsTab,
+                      @Named(BUILD_PANE) final WorkbenchTab buildTab,
+                      @Named(PRESENTATION_PANE) final WorkbenchTab presentationTab,
+                      @Named(PRESENTATIONS_PANE) final WorkbenchTab presentation2Tab,
+                      @Named(CONNECTIONS_PANE) final WorkbenchTab connectionsTab,
+                      @Named(ENVIRONMENT_PANE) final WorkbenchTab environmentTab,
+                      @Named(VIEWER_PANE) final WorkbenchTab viewerTab,
+                      @Named(COMPILE_PDF_PANE) final WorkbenchTab compilePdfTab,
+                      @Named(SOURCE_CPP_PANE) final WorkbenchTab sourceCppTab,
+                      @Named(RMARKDOWN_PANE) final WorkbenchTab renderRmdTab,
+                      @Named(DEPLOY_PANE) final WorkbenchTab deployContentTab,
+                      @Named(TERMINAL_PANE) final WorkbenchTab terminalTab,
+                      @Named(TESTS_PANE) final WorkbenchTab testsTab,
+                      @Named(JOBS_PANE) final WorkbenchTab jobsTab,
+                      @Named(LAUNCHER_PANE) final WorkbenchTab launcherJobsTab,
+                      @Named(DATA_OUTPUT_PANE) final WorkbenchTab dataTab,
+                      @Named(TUTORIAL_PANE) final WorkbenchTab tutorialTab,
                       final MarkersOutputTab markersTab,
                       final FindOutputTab findOutputTab,
                       OptionsLoader.Shim optionsLoader,
@@ -1873,37 +1873,37 @@ public class PaneManager
 
    private Tab tabForName(String name)
    {
-      if (name.equalsIgnoreCase("history"))
+      if (name.equalsIgnoreCase(HISTORY_PANE))
          return Tab.History;
-      if (name.equalsIgnoreCase("files"))
+      if (name.equalsIgnoreCase(FILES_PANE))
          return Tab.Files;
-      if (name.equalsIgnoreCase("plots"))
+      if (name.equalsIgnoreCase(PLOTS_PANE))
          return Tab.Plots;
-      if (name.equalsIgnoreCase("packages"))
+      if (name.equalsIgnoreCase(PACKAGES_PANE))
          return Tab.Packages;
-      if (name.equalsIgnoreCase("help"))
+      if (name.equalsIgnoreCase(HELP_PANE))
          return Tab.Help;
-      if (name.equalsIgnoreCase("vcs"))
+      if (name.equalsIgnoreCase(VCS_PANE))
          return Tab.VCS;
-      if (name.equalsIgnoreCase("tutorial"))
+      if (name.equalsIgnoreCase(TUTORIAL_PANE))
          return Tab.Tutorial;
-      if (name.equalsIgnoreCase("build"))
+      if (name.equalsIgnoreCase(BUILD_PANE))
          return Tab.Build;
-      if (name.equalsIgnoreCase("presentation"))
+      if (name.equalsIgnoreCase(PRESENTATION_PANE))
          return Tab.Presentation;
-      if (name.equalsIgnoreCase("presentations"))
+      if (name.equalsIgnoreCase(PRESENTATIONS_PANE))
          return Tab.Presentations;
-      if (name.equalsIgnoreCase("environment"))
+      if (name.equalsIgnoreCase(ENVIRONMENT_PANE))
          return Tab.Environment;
-      if (name.equalsIgnoreCase("viewer"))
+      if (name.equalsIgnoreCase(VIEWER_PANE))
          return Tab.Viewer;
-      if (name.equalsIgnoreCase("connections"))
+      if (name.equalsIgnoreCase(CONNECTIONS_PANE))
          return Tab.Connections;
-      if (name.equalsIgnoreCase("source"))
+      if (name.equalsIgnoreCase(UserPrefsAccessor.Panes.QUADRANTS_SOURCE))
          return Tab.Source;
-      if (name.equalsIgnoreCase("console"))
+      if (name.equalsIgnoreCase(CONSOLE_PANE))
          return Tab.Console;
-      if (name.equalsIgnoreCase("sourcecolumn"))
+      if (name.equalsIgnoreCase(SOURCE_COLUMN))
          return Tab.SourceColumn;
 
       return null;
@@ -2095,7 +2095,30 @@ public class PaneManager
    public final static int MAX_COLUMN_COUNT = 3;
    private static final UIConstants constants_ = GWT.create(UIConstants.class);
    private static final ConsoleConstants consoleConstants_ = GWT.create(ConsoleConstants.class);
-   
+
    // Internal identifiers for the workbench tabs
    public static final String CONSOLE_PANE = "Console"; //$NON-NLS-1$
+   public static final String HISTORY_PANE = "History"; //$NON-NLS-1$
+   public static final String FILES_PANE = "Files"; //$NON-NLS-1$
+   public static final String PLOTS_PANE = "Plots"; //$NON-NLS-1$
+   public static final String PACKAGES_PANE = "Packages"; //$NON-NLS-1$
+   public static final String HELP_PANE = "Help"; //$NON-NLS-1$
+   public static final String VCS_PANE = "VCS"; //$NON-NLS-1$
+   public static final String BUILD_PANE = "Build"; //$NON-NLS-1$
+   public static final String PRESENTATION_PANE = "Presentation"; //$NON-NLS-1$
+   public static final String PRESENTATIONS_PANE = "Presentations"; //$NON-NLS-1$
+   public static final String CONNECTIONS_PANE = "Connections"; //$NON-NLS-1$
+   public static final String ENVIRONMENT_PANE = "Environment"; //$NON-NLS-1$
+   public static final String VIEWER_PANE = "Viewer"; //$NON-NLS-1$
+   public static final String COMPILE_PDF_PANE = "Compile PDF"; //$NON-NLS-1$
+   public static final String SOURCE_CPP_PANE = "Source Cpp"; //$NON-NLS-1$
+   public static final String RMARKDOWN_PANE = "R Markdown"; //$NON-NLS-1$
+   public static final String DEPLOY_PANE = "Deploy"; //$NON-NLS-1$
+   public static final String TERMINAL_PANE = "Terminal"; //$NON-NLS-1$
+   public static final String TESTS_PANE = "Tests"; //$NON-NLS-1$
+   public static final String JOBS_PANE = "Jobs"; //$NON-NLS-1$
+   public static final String LAUNCHER_PANE = "Launcher"; //$NON-NLS-1$
+   public static final String DATA_OUTPUT_PANE = "Data Output"; //$NON-NLS-1$
+   public static final String TUTORIAL_PANE = "Tutorial"; //$NON-NLS-1$
+   public static final String SOURCE_COLUMN = "SourceColumn"; //$NON-NLS-1$
 }
