@@ -48,6 +48,7 @@
 - The R version and logo displayed in the top left of the console will update to the current R version whenever the R session is restarted (#10458)
 - Fixed issue where `core::system::userBelongsToGroup` errors under specific sssd configurations (`ignore_group_members = true`) (#10829)
 - Fixed a security issue where shiny apps and vscode sessions remained active after signout (rstudio-pro#3287)
+- Fixed an intermittent hang when invoking `rstudio-server verify-installation` which caused stale `rserver` processes to exist (rstudio-pro#3041) 
 - (Windows only) Fixed an issue where multiple instances of RStudio launched at the same time could bind to the same session. (#10488)
 - Fixed unintended change of date/time formatting in the VCS commit history (#10810)
 - (Linux Only) License-manager now works in a installer-less context (rstudio-pro#3150)

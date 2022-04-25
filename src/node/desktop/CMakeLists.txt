@@ -192,8 +192,15 @@ if(WIN32)
 
    install(
       DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-win32-x64/"
-      DESTINATION "${RSTUDIO_INSTALL_ELECTRON}"
-   )
+      DESTINATION "${RSTUDIO_INSTALL_ELECTRON}")
+
+   # install system components as well
+   set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS_SKIP TRUE)
+   set(CMAKE_INSTALL_UCRT_LIBRARIES TRUE)
+   include(InstallRequiredSystemLibraries)
+   install(
+         PROGRAMS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}
+         DESTINATION "${RSTUDIO_INSTALL_BIN}")
 
 elseif(LINUX)
 
