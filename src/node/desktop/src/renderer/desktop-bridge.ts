@@ -13,7 +13,8 @@
  *
  */
 
-import { ipcRenderer } from 'electron';
+import { ipcRenderer, webContents } from 'electron';
+import { logger } from '../core/logger';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -68,6 +69,7 @@ export function getDesktopBridge() {
       ipcRenderer
         .invoke('desktop_get_save_file_name', caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner)
         .then((result) => {
+
           // if the result was canceled, bail early
           if (result.canceled as boolean) {
             return callback('');
@@ -83,7 +85,8 @@ export function getDesktopBridge() {
           const dotIndex = filePath.lastIndexOf('.');
           const ext = dotIndex > 0 ? filePath.substring(dotIndex) : '';
           if (ext.length === 0 || (forceDefaultExtension && ext !== defaultExtension)) {
-            filePath = filePath.substring(0, dotIndex) + defaultExtension;
+            const name = dotIndex > 0 ? filePath.substring(0, dotIndex) : filePath;
+            filePath = name + defaultExtension;
           }
 
           // invoke callback
@@ -363,8 +366,25 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_clean_clipboard', stripHtml);
     },
 
-    setPendingQuit: (pendingQuit: number) => {
-      ipcRenderer.send('desktop_set_pending_quit', pendingQuit);
+    setPendingQuit: (pendingQuit: number, callback: VoidCallback<unknown>) => {
+      ipcRenderer
+        .invoke('desktop_set_pending_quit', pendingQuit)
+        .then((response) => callback(response))
+        .catch((error) => reportIpcError('setPendingQuit', error));
+    },
+
+    openFile: (path: string) => {
+      if (!path) {
+        return;
+      }
+      const webcontents = webContents
+        .getAllWebContents();
+
+      if (webcontents.length) {
+        webcontents[0]
+          .executeJavaScript(`window.desktopHooks.openFile("${path}")`)
+          .catch((error: unknown) => logger().logError(error));
+      }
     },
 
     openProjectInNewWindow: (projectFilePath: string) => {

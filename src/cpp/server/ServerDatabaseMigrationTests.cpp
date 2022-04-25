@@ -59,7 +59,7 @@ PostgresqlConnectionOptions postgresConnectionOptions()
    return options;
 }
 
-TEST_CASE("Upgrading Sqlite Database","[.database][.integration][.upgrade][.sqlite]")
+TEST_CASE("Upgrading Sqlite Database","[database][integration][upgrade][sqlite]")
 {
     overlay::overlayDatasetPath(datasetPath);
     GIVEN("An Empty Sqlite Database")
@@ -187,7 +187,7 @@ TEST_CASE("Upgrading Sqlite Database","[.database][.integration][.upgrade][.sqli
     }
 }
 
-TEST_CASE("Upgrading Postgres Database", "[.database][.integration][.upgrade][.postgres]")
+TEST_CASE("Upgrading Postgres Database", "[database][integration][upgrade][.postgres]")
 {
     overlay::overlayDatasetPath(datasetPath);
     GIVEN("An empty Postgres Database")

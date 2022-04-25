@@ -1213,6 +1213,16 @@ public class VirtualConsoleTests extends GWTTestCase
       Assert.assertEquals("✓ |   4       | reporter-zzz [", vc.toString());
    }
 
+   public void testBlurred()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      String testInput = "\033[2mtext\033[22m";
+      vc.submit(testInput);
+      String expected = "<span class=\"xtermBlur\">text</span>";
+      Assert.assertEquals(expected, ele.getInnerHTML());
+   }
+
    public void testHyperlinkNoParams()
    {
       PreElement ele = Document.get().createPreElement();

@@ -501,16 +501,20 @@ namespace {
 FilePath macBinaryPath(const FilePath& resourcePath,
                        const std::string& stem)
 {
-   // first check for Electron binary path
+   // otherwise, look in default Qt location
+   FilePath qtPath = resourcePath.getParent().completePath("MacOS").completePath(stem);
+   if (qtPath.exists())
+      return qtPath;
+
    FilePath electronPath =
          resourcePath.completePath("bin").completePath(stem);
    
    if (electronPath.exists())
       return electronPath;
-   
-   // otherwise, look in default Qt location
-   FilePath qtPath = resourcePath.getParent().completePath("MacOS").completePath(stem);
-   return qtPath;
+
+   // alternate Electron binary path
+   electronPath = resourcePath.completePath(stem);
+   return electronPath;
 }
 
 } // end anonymous namespace
@@ -537,7 +541,7 @@ void Options::resolvePandocPath(const FilePath& resourcePath,
 {
    if (*pPath == kDefaultPandocPath && programMode() == kSessionProgramModeDesktop)
    {
-      FilePath path = macBinaryPath(resourcePath, "quarto/bin");
+      FilePath path = macBinaryPath(resourcePath, "quarto/bin/tools");
       *pPath = path.getAbsolutePath();
    }
    else

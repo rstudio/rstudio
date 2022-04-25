@@ -2420,7 +2420,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
    public PrefValue<String> rsaKeyPath()
    {
@@ -2430,6 +2430,29 @@ public class UserPrefsAccessor extends Prefs
          _constants.rsaKeyPathDescription(), 
          "");
    }
+
+   /**
+    * The encryption type to use for the SSH key file.
+    */
+   public PrefValue<String> sshKeyType()
+   {
+      return enumeration(
+         "ssh_key_type",
+         _constants.sshKeyTypeTitle(), 
+         _constants.sshKeyTypeDescription(), 
+         new String[] {
+            SSH_KEY_TYPE_ED25519,
+            SSH_KEY_TYPE_RSA
+         },
+         "ed25519",
+         new String[] {
+            _constants.sshKeyTypeEnum_ed25519(),
+            _constants.sshKeyTypeEnum_rsa()
+         });
+   }
+
+   public final static String SSH_KEY_TYPE_ED25519 = "ed25519";
+   public final static String SSH_KEY_TYPE_RSA = "rsa";
 
    /**
     * Whether to use the devtools R package.
@@ -3212,7 +3235,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    public PrefValue<Boolean> insertNativePipeOperator()
    {
@@ -3329,6 +3352,25 @@ public class UserPrefsAccessor extends Prefs
    public final static String QUARTO_ENABLED_ENABLED = "enabled";
    public final static String QUARTO_ENABLED_DISABLED = "disabled";
    public final static String QUARTO_ENABLED_HIDDEN = "hidden";
+
+   /**
+    * The IDE's user-interface language.
+    */
+   public PrefValue<String> uiLanguage()
+   {
+      return enumeration(
+         "ui_language",
+         _constants.uiLanguageTitle(), 
+         _constants.uiLanguageDescription(), 
+         new String[] {
+            UI_LANGUAGE_EN,
+            UI_LANGUAGE_FR
+         },
+         "en");
+   }
+
+   public final static String UI_LANGUAGE_EN = "en";
+   public final static String UI_LANGUAGE_FR = "fr";
 
    public void syncPrefs(String layer, JsObject source)
    {
@@ -3670,6 +3712,8 @@ public class UserPrefsAccessor extends Prefs
          terminalPath().setValue(layer, source.getString("terminal_path"));
       if (source.hasKey("rsa_key_path"))
          rsaKeyPath().setValue(layer, source.getString("rsa_key_path"));
+      if (source.hasKey("ssh_key_type"))
+         sshKeyType().setValue(layer, source.getString("ssh_key_type"));
       if (source.hasKey("use_devtools"))
          useDevtools().setValue(layer, source.getBool("use_devtools"));
       if (source.hasKey("clean_before_install"))
@@ -3798,6 +3842,8 @@ public class UserPrefsAccessor extends Prefs
          checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
       if (source.hasKey("quarto_enabled"))
          quartoEnabled().setValue(layer, source.getString("quarto_enabled"));
+      if (source.hasKey("ui_language"))
+         uiLanguage().setValue(layer, source.getString("ui_language"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -3971,6 +4017,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(svnExePath());
       prefs.add(terminalPath());
       prefs.add(rsaKeyPath());
+      prefs.add(sshKeyType());
       prefs.add(useDevtools());
       prefs.add(cleanBeforeInstall());
       prefs.add(useInternet2());
@@ -4035,6 +4082,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(pythonProjectEnvironmentAutomaticActivate());
       prefs.add(checkNullExternalPointers());
       prefs.add(quartoEnabled());
+      prefs.add(uiLanguage());
       return prefs;
    }
    

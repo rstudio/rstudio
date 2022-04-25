@@ -1,4 +1,5 @@
-/* UserPrefsAccessorConstants.java
+/*
+ * UserPrefsAccessorConstants.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -1405,12 +1406,24 @@ public interface UserPrefsAccessorConstants extends Constants {
    String terminalPathDescription();
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
    @DefaultStringValue("")
    String rsaKeyPathTitle();
-   @DefaultStringValue("The path to the RSA key file to use.")
+   @DefaultStringValue("The path to the SSH key file to use.")
    String rsaKeyPathDescription();
+
+   /**
+    * The encryption type to use for the SSH key file.
+    */
+   @DefaultStringValue("")
+   String sshKeyTypeTitle();
+   @DefaultStringValue("The encryption type to use for the SSH key file.")
+   String sshKeyTypeDescription();
+   @DefaultStringValue("ED25519-encrypted key")
+   String sshKeyTypeEnum_ed25519();
+   @DefaultStringValue("RSA-encrypted key")
+   String sshKeyTypeEnum_rsa();
 
    /**
     * Whether to use the devtools R package.
@@ -1859,11 +1872,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String saveRetryTimeoutDescription();
 
    /**
-    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
     */
    @DefaultStringValue("Use R's native pipe operator, |>")
    String insertNativePipeOperatorTitle();
-   @DefaultStringValue("Whether the Insert Pipe Operator command should insert the native R pipe operator, |>")
+   @DefaultStringValue("Whether the Insert Pipe Operator command should use the native R pipe operator, |>")
    String insertNativePipeOperatorDescription();
 
    /**
@@ -1925,10 +1938,18 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * Enable IDE features for the Quarto publishing system.
     */
-   @DefaultStringValue("Enble Quarto features")
+   @DefaultStringValue("Enable Quarto features")
    String quartoEnabledTitle();
    @DefaultStringValue("Enable IDE features for the Quarto publishing system.")
    String quartoEnabledDescription();
+
+   /**
+    * The IDE's user-interface language.
+    */
+   @DefaultStringValue("User Interface Language")
+   String uiLanguageTitle();
+   @DefaultStringValue("The IDE's user-interface language.")
+   String uiLanguageDescription();
 
 
 

@@ -16,12 +16,17 @@ import { contextBridge, ipcRenderer } from 'electron';
 import { existsSync } from 'fs';
 import path from 'path';
 
+export interface CallbackData {
+  binaryPath?: string | unknown;
+  renderingEngine?: string;
+}
+
 export interface Callbacks {
-  useDefault32bit(): void;
-  useDefault64bit(): void;
-  use(version: string): void;
+  useDefault32bit(data: CallbackData): Promise<boolean>;
+  useDefault64bit(data: CallbackData): Promise<boolean>;
+  use(data: CallbackData): Promise<boolean>;
+  browse(data: CallbackData): Promise<boolean>;
   cancel(): void;
-  browse(): Promise<boolean>;
 }
 
 ipcRenderer.on('css', (event, data) => {
@@ -33,9 +38,28 @@ ipcRenderer.on('css', (event, data) => {
 
 // initialize select input
 ipcRenderer.on('initialize', (event, data) => {
+
+  // if we have a default 32-bit R installation, enable it
+  const default32Bit = data.default32bitPath as string;
+  if (default32Bit) {
+    const el = document.getElementById('use-default-32');
+    el?.removeAttribute('disabled');
+  }
+
+  // if we have a default 64-bit R installation, enable it
+  const default64Bit = data.default64bitPath as string;
+  if (default64Bit) {
+    const el = document.getElementById('use-default-64');
+    el?.removeAttribute('disabled');
+  }
+
   // cast received data
-  const rInstalls = data as string[];
-  console.log(rInstalls);
+  const rInstalls = data.rInstalls as string[];
+  const renderingEngine = data.renderingEngine as string;
+
+  // set the current rendering engine
+  const renderingEngineEl = document.getElementById('rendering-engine') as HTMLSelectElement;
+  renderingEngineEl.value = renderingEngine;
 
   // get access to the select element
   const selectEl = document.getElementById('select') as HTMLSelectElement;
@@ -77,29 +101,33 @@ ipcRenderer.on('initialize', (event, data) => {
       selectEl.appendChild(optionEl);
     }
   });
+
 });
 
 // export callbacks
 const callbacks: Callbacks = {
-  useDefault32bit: () => {
-    ipcRenderer.send('use-default-32bit');
+  useDefault32bit: async (data: CallbackData) => {
+    const shouldCloseDialog = await ipcRenderer.invoke('use-default-32bit', data);
+    return shouldCloseDialog;
   },
 
-  useDefault64bit: () => {
-    ipcRenderer.send('use-default-64bit');
+  useDefault64bit: async (data: CallbackData) => {
+    const shouldCloseDialog = await ipcRenderer.invoke('use-default-64bit', data);
+    return shouldCloseDialog;
   },
 
-  use: (version: string) => {
-    ipcRenderer.send('use-custom', version);
+  use: async (data: CallbackData) => {
+    const shouldCloseDialog = await ipcRenderer.invoke('use-custom', data);
+    return shouldCloseDialog;
+  },
+
+  browse: async (data: CallbackData) => {
+    const shouldCloseDialog = await ipcRenderer.invoke('browse-r-exe', data);
+    return shouldCloseDialog;
   },
 
   cancel: () => {
     ipcRenderer.send('cancel');
-  },
-
-  browse: async () => {
-    const shouldCloseDialog = await ipcRenderer.invoke('browse-r-exe');
-    return shouldCloseDialog;
   },
 };
 

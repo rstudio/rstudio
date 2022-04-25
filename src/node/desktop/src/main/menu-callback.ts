@@ -16,6 +16,9 @@ import { ipcMain, Menu, MenuItem } from 'electron';
 import { MenuItemConstructorOptions } from 'electron/main';
 import EventEmitter from 'events';
 
+import debounce from 'lodash/debounce';
+import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
+
 /**
  * Show dummy menu bar to deal with the fact that the real menu bar isn't ready until well
  * after startup.
@@ -73,7 +76,11 @@ export class MenuCallback extends EventEmitter {
   lastWasTools = false;
   lastWasDiagnostics = false;
 
-  private setShortcutDebounceId?: NodeJS.Timeout;
+  isMenuSet = false;
+
+  debounceUpdateMenuLong: any = debounce(() => this.updateMenus(), 5000);
+  debounceUpdateMenuMedium: any = debounce(() => this.updateMenus(), 250);
+  debounceUpdateMenuShort: any = debounce(() => this.updateMenus(), 10);
 
   constructor() {
     super();
@@ -94,9 +101,10 @@ export class MenuCallback extends EventEmitter {
         tooltip: string,
         shortcut: string,
         checkable: boolean,
+        radio: boolean,
         visible: boolean,
       ) => {
-        this.addCommand(cmdId, label, tooltip, shortcut, checkable, visible);
+        this.addCommand(cmdId, label, tooltip, shortcut, checkable, radio, visible);
       },
     );
 
@@ -140,9 +148,13 @@ export class MenuCallback extends EventEmitter {
     });
 
     ipcMain.on('menu_commit_command_shortcuts', () => {
-      if (this.setShortcutDebounceId) clearTimeout(this.setShortcutDebounceId);
+      this.debounceUpdateMenuLong.cancel();
 
-      this.updateMenus();
+      if (this.isMenuSet) {
+        this.debounceUpdateMenuMedium();
+      } else {
+        this.updateMenus();
+      }
     });
   }
 
@@ -224,31 +236,67 @@ export class MenuCallback extends EventEmitter {
     const accelerator = this.convertShortcut(shortcut);
     template.accelerator = accelerator;
 
-    if (this.setShortcutDebounceId) clearTimeout(this.setShortcutDebounceId);
-
-    this.setShortcutDebounceId = setTimeout(() => {
-      this.updateMenus();
-    }, 5000);
+    this.debounceUpdateMenuLong();
   }
 
   setCommandVisibility(id: string, newVisibility: boolean) {
     const template = this.menuItemTemplates.get(id);
-    if (template) template.visible = newVisibility;
+
+    if (template) {
+      // Menu only need to be updated in this case if it has been built already
+      // For increased speed, only if the current template
+      // differs from the new state
+      if (this.isMenuSet && template.visible != newVisibility) {
+        template.visible = newVisibility;
+        this.debounceUpdateMenuShort();
+      }
+      template.visible = newVisibility;
+    }
   }
 
   setCommandEnabled(id: string, newEnablement: boolean) {
     const template = this.menuItemTemplates.get(id);
-    if (template) template.enabled = newEnablement;
+
+    if (template) {
+      // Menu only need to be updated in this case if it has been built already
+      // For increased speed, only if the current template
+      // differs from the new state
+      if (this.isMenuSet && template.enabled != newEnablement) {
+        template.enabled = newEnablement;
+        this.debounceUpdateMenuShort();
+      }
+      template.enabled = newEnablement;
+    }
   }
 
   setCommandChecked(id: string, newChecked: boolean) {
     const template = this.menuItemTemplates.get(id);
-    if (template) template.checked = newChecked;
+
+    if (template) {
+      // Menu only need to be updated in this case if it has been built already
+      // For increased speed, only if the current template
+      // differs from the new state
+      if (this.isMenuSet && template.checked != newChecked) {
+        template.checked = newChecked;
+        this.debounceUpdateMenuShort();
+      }
+      template.checked = newChecked;
+    }
   }
 
   setCommandLabel(id: string, newLabel: string) {
     const template = this.menuItemTemplates.get(id);
-    if (template) template.label = newLabel;
+
+    if (template) {
+      // Menu only need to be updated in this case if it has been built already
+      // For increased speed, only if the current template
+      // differs from the new state
+      if (this.isMenuSet && template.label != newLabel) {
+        template.label = newLabel;
+        this.debounceUpdateMenuShort();
+      }
+      template.label = newLabel;
+    }
   }
 
   /**
@@ -264,6 +312,26 @@ export class MenuCallback extends EventEmitter {
    *
    */
   updateMenus(): void {
+    /*
+     * This function will remove items that has a submenu array with no items
+     */
+    const removeItemsWithEmptySubmenuList = (item: MenuItemConstructorOptions) => {
+      if (Object.prototype.hasOwnProperty.call(item, 'submenu')) {
+        if (Array.isArray(item.submenu)) {
+          if (item.submenu.length > 0) {
+            item.submenu = item.submenu.filter((submenu) => {
+              return removeItemsWithEmptySubmenuList(submenu);
+            });
+            return true;
+          } else {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    };
+
     /**
      * Builds the final list of menu items using the given menu template
      *
@@ -303,8 +371,9 @@ export class MenuCallback extends EventEmitter {
 
       return newMenuTemplate.filter((item, idx, arr) => {
         if (item.type !== 'separator') {
-          return true;
+          return removeItemsWithEmptySubmenuList(item);
         }
+
         const prevItem = arr[idx - 1];
         return idx !== 0 && prevItem.type !== 'separator' && idx != arr.length - 1;
       });
@@ -314,6 +383,8 @@ export class MenuCallback extends EventEmitter {
     this.mainMenu = Menu.buildFromTemplate(newMainMenuTemplate);
 
     Menu.setApplicationMenu(this.mainMenu);
+
+    this.isMenuSet = true;
   }
 
   addCommand(
@@ -322,6 +393,7 @@ export class MenuCallback extends EventEmitter {
     _tooltip: string,
     shortcut: string,
     checkable: boolean,
+    isRadio: boolean,
     visible: boolean,
   ): void {
     const menuItemOpts: MenuItemConstructorOptions = {
@@ -332,7 +404,12 @@ export class MenuCallback extends EventEmitter {
       },
     };
 
-    if (checkable) {
+    if (isRadio) {
+      // Having true radio menus really only benefits screen-reader users, so avoid the visual
+      // difference unless screen-reader mode is on.
+      menuItemOpts.type = ElectronDesktopOptions().accessibility() ? 'radio' : 'checkbox';
+      menuItemOpts.checked = false;
+    } else if (checkable) {
       menuItemOpts.type = 'checkbox';
       menuItemOpts.checked = false;
     }

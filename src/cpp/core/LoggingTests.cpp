@@ -970,6 +970,72 @@ test_context("Logging")
       REQUIRE_FALSE(logFile.remove());
       REQUIRE_FALSE(defaultLogFile.remove());
    }
+
+   test_that("No newlines in pretty log line")
+   {
+      FilePath tmpConfPath;
+      REQUIRE_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
+
+      std::string confFileContents =
+            "[*]\n"
+            "log-message-format=pretty\n"
+            "logger-type=file\n"
+            "log-level=debug\n"
+            "log-dir=" + tmpConfPath.getParent().getAbsolutePath();
+
+      REQUIRE_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
+
+      clearLogEnvVars();
+      core::system::setenv("RS_LOG_CONF_FILE", tmpConfPath.getAbsolutePath());
+
+      std::string id = core::system::generateShortenedUuid();
+      REQUIRE_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
+
+      core::log::LogMessageProperties props = {{"prop1", "No newline"}, {"prop2", "Newlines here\nGet your newlines\n"}};
+      LOG_DEBUG_MESSAGE_WITH_PROPS("Line 1\nLine 2\nLine 3\n", props);
+
+      FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
+      REQUIRE(logFile.exists());
+
+      std::string logFileContents;
+      REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
+
+      // only newline should be at the end of the log file, signifying the end of the log line
+      REQUIRE(logFileContents.find("\n") == logFileContents.size() - 1);
+   }
+
+   test_that("No newlines in json log line")
+   {
+      FilePath tmpConfPath;
+      REQUIRE_FALSE(FilePath::tempFilePath(".conf", tmpConfPath));
+
+      std::string confFileContents =
+            "[*]\n"
+            "log-message-format=json\n"
+            "logger-type=file\n"
+            "log-level=debug\n"
+            "log-dir=" + tmpConfPath.getParent().getAbsolutePath();
+
+      REQUIRE_FALSE(core::writeStringToFile(tmpConfPath, confFileContents));
+
+      clearLogEnvVars();
+      core::system::setenv("RS_LOG_CONF_FILE", tmpConfPath.getAbsolutePath());
+
+      std::string id = core::system::generateShortenedUuid();
+      REQUIRE_FALSE(core::system::initializeStderrLog("logging-tests-" + id, log::LogLevel::WARN, true));
+
+      core::log::LogMessageProperties props = {{"prop1", "No newline"}, {"prop2", "Newlines here\nGet your newlines\n"}};
+      LOG_DEBUG_MESSAGE_WITH_PROPS("Line 1\nLine 2\nLine 3\n", props);
+
+      FilePath logFile = tmpConfPath.getParent().completeChildPath("logging-tests-" + id + ".log");
+      REQUIRE(logFile.exists());
+
+      std::string logFileContents;
+      REQUIRE_FALSE(core::readStringFromFile(logFile, &logFileContents));
+
+      // only newline should be at the end of the log file, signifying the end of the log line
+      REQUIRE(logFileContents.find("\n") == logFileContents.size() - 1);
+   }
 }
 
 } // namespace unit_tests

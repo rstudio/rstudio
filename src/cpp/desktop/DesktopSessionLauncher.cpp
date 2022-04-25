@@ -445,7 +445,7 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
       }
 
       // close all satellite windows if we are reloading
-      bool reload = (pendingQuit == PendingQuitRestartAndReload);
+      bool reload = pendingQuit == PendingQuitRestartAndReload;
       if (reload)
          closeAllSatellites();
 

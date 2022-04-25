@@ -108,7 +108,9 @@ function launchProcess(absPath: FilePath, argList: string[]): ChildProcess {
     }
   }
 
-  logger().logDebug(`Launching: ${absPath.getAbsolutePath()} ${argList.join(' ')}`);
+  logger().logDebug(`Launching rsession: ${absPath.getAbsolutePath()} ${argList.join(' ')}`);
+  logger().logDebug(`R_HOME: ${getenv('R_HOME')}`);
+  logger().logDebug(`RS_INITIAL_PROJECT: ${getenv('RS_INITIAL_PROJECT')}`);
 
   if (!appState().runDiagnostics) {
     return spawn(absPath.getAbsolutePath(), argList, { env: env });
@@ -497,17 +499,32 @@ export class SessionLauncher {
       setenv('RSTUDIO_SESSION_EXIT_ON_STARTUP', appState().sessionEarlyExitCode.toString());
     }
 
-    // on Windows, if we're using a UCRT build of R, we'll need to use
-    // our rsession-utf8.exe executable (if available)
     if (process.platform === 'win32') {
+
+      // on Windows, if we're using a UCRT build of R, we'll need to use
+      // our rsession-utf8.exe executable (if available)
       const runtime = getenv('R_RUNTIME');
       if (runtime === 'ucrt') {
         const utf8SessionPath = this.sessionPath.getParent().completeChildPath('rsession-utf8.exe');
         if (utf8SessionPath.existsSync()) {
-          logger().logDebug(`R is UCRT; using ${this.sessionPath}`);
           this.sessionPath = utf8SessionPath;
+          logger().logDebug(`R is UCRT; using ${this.sessionPath}`);
         }
       }
+
+      // similarly, if we're using a 32-bit version of R,
+      // we'll need to use the 32-bit copy of our session executable
+      const arch = getenv('R_ARCH');
+      if (arch === 'i386') {
+        const x86SessionPath = this.sessionPath.getParent().completeChildPath('x86/rsession.exe');
+        if (x86SessionPath.existsSync()) {
+          this.sessionPath = x86SessionPath;
+          logger().logDebug(`R is 32-bit; using ${this.sessionPath}`);
+        } else {
+          logger().logWarning('R is 32-bit, but no 32-bit rsession.exe was found');
+        }
+      }
+
     }
 
     // on macOS, we need to look at R and figure out if we should be trying to run

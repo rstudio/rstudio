@@ -14,7 +14,7 @@ module.exports = {
     sourceType: 'module',
   },
 
-  plugins: ['@typescript-eslint', 'prettier'],
+  plugins: ['@typescript-eslint'],
 
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
 
@@ -33,12 +33,6 @@ module.exports = {
         ignoreUrls: true,
       },
     ],
-    'prettier/prettier': [
-      'warn',
-      {
-        'endOfLine': 'auto'
-      }
-    ],
 
     '@typescript-eslint/await-thenable': ['error'],
     '@typescript-eslint/no-base-to-string': ['error'],
@@ -52,7 +46,13 @@ module.exports = {
     '@typescript-eslint/require-array-sort-compare': ['error'],
     '@typescript-eslint/return-await': ['warn'],
     '@typescript-eslint/no-implicit-any-catch': ['error'],
-    '@typescript-eslint/no-unused-vars': ['warn', {"argsIgnorePattern": "^_"}],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        "varsIgnorePattern": "^_",
+        "argsIgnorePattern": "^_"
+      }
+    ],
 
     '@typescript-eslint/strict-boolean-expressions': [
       'error',

@@ -16,7 +16,6 @@
 import winston from 'winston';
 
 import { coreState } from './core-state';
-import { FilePath } from './file-path';
 
 export interface Logger {
   logLevel(): winston.level;

@@ -142,7 +142,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    public static final int PENDING_QUIT_AND_RESTART = 2;
    public static final int PENDING_QUIT_RESTART_AND_RELOAD = 3;
    
-   void setPendingQuit(int pendingQuit);
+   void setPendingQuit(int pendingQuit, CommandWithArg<Void> callback);
    void setPendingProject(String projectFilePath);
    void launchSession(boolean reload);
    

@@ -13,71 +13,134 @@
  *
  */
 
-import { dialog, ipcMain } from 'electron';
-import { findDefault32Bit, findDefault64Bit } from '../../main/detect-r';
+import { dialog } from 'electron';
+import { detectREnvironment, findDefault32Bit, findDefault64Bit, isValidInstallation } from '../../main/detect-r';
 import { logger } from '../../core/logger';
 import { ModalDialog } from '../modal-dialog';
 
 import { initI18n } from '../../main/i18n-manager';
-import i18next from 'i18next';
+import i18next, { t } from 'i18next';
+import { CallbackData } from './choose-r/preload';
+import { ElectronDesktopOptions } from '../../main/preferences/electron-desktop-options';
 
 declare const CHOOSE_R_WEBPACK_ENTRY: string;
 declare const CHOOSE_R_PRELOAD_WEBPACK_ENTRY: string;
 
-export class ChooseRModalWindow extends ModalDialog<string | null> {
+function checkValid(data: CallbackData) {
+
+  // get path to R
+  const rBinaryPath = data.binaryPath as string;
+
+  // try to run it
+  const [rEnvironment, err] = detectREnvironment(rBinaryPath);
+  if (err) {
+    
+    // something went wrong; let the user know they can't use
+    // this version of R with RStudio
+    dialog.showMessageBoxSync({
+      type: 'error',
+      title: t('chooseRDialog.rLaunchFailedTitle'),
+      message: t('chooseRDialog.rLaunchFailedMessage'),
+      buttons: [ t('common.buttonOk'), ],
+    });
+
+    return false;
+
+  }
+
+  logger().logDebug(`Validated R: ${rEnvironment.rScriptPath}`);
+  logger().logDebug(JSON.stringify(rEnvironment));
+  return true;
+
+}
+
+export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
+  
   private rInstalls: string[];
 
   constructor(rInstalls: string[]) {
+
     super(CHOOSE_R_WEBPACK_ENTRY, CHOOSE_R_PRELOAD_WEBPACK_ENTRY);
+
     this.rInstalls = rInstalls;
+
     initI18n();
+
   }
 
-  async onShowModal(): Promise<string | null> {
-    // initialize the select widget
-    this.webContents.send('initialize', this.rInstalls);
+  async maybeResolve(resolve: (data: CallbackData) => void, data: CallbackData) {
+
+    if (checkValid(data)) {
+      resolve(data);
+      return true;
+    } else {
+      return false;
+    }
+
+  }
+
+  async onShowModal(): Promise<CallbackData | null> {
+    
+    const r32 = findDefault32Bit();
+    const r64 = findDefault64Bit();
+    const initData = {
+      default32bitPath: isValidInstallation(r32) ? r32 : '',
+      default64bitPath: isValidInstallation(r64) ? r64 : '',
+      rInstalls: this.rInstalls,
+      renderingEngine: ElectronDesktopOptions().renderingEngine()
+    };
+
+    this.webContents.send('initialize', initData);
 
     // listen for messages from the window
     return new Promise((resolve) => {
-      ipcMain.on('use-default-32bit', () => {
-        const path = findDefault32Bit();
-        logger().logDebug(`Using default 32-bit R (${path})`);
-        return resolve(`${path}/bin/i386/R.exe`);
+
+      this.addIpcHandler('use-default-32bit', async (event, data: CallbackData) => {
+        const installPath = initData.default32bitPath;
+        data.binaryPath = `${installPath}/bin/i386/R.exe`;
+        logger().logDebug(`Using default 32-bit version of R (${data.binaryPath})`);
+        return this.maybeResolve(resolve, data);
       });
 
-      ipcMain.on('use-default-64bit', () => {
-        const path = findDefault64Bit();
-        logger().logDebug(`Using default 64-bit R (${path})`);
-        return resolve(`${path}/bin/x64/R.exe`);
+      this.addIpcHandler('use-default-64bit', async (event, data: CallbackData) => {
+        const installPath = initData.default64bitPath;
+        data.binaryPath = `${installPath}/bin/x64/R.exe`;
+        logger().logDebug(`Using default 64-bit version of R (${data.binaryPath})`);
+        return this.maybeResolve(resolve, data);
       });
 
-      ipcMain.on('use-custom', (event, data) => {
-        logger().logDebug(`Using user-selected version of R (${data})`);
-        return resolve(data);
+      this.addIpcHandler('use-custom', async (event, data: CallbackData) => {
+        logger().logDebug(`Using user-selected version of R (${data.binaryPath})`);
+        return this.maybeResolve(resolve, data);
       });
 
-      ipcMain.handle('browse-r-exe', async () => {
+      this.addIpcHandler('browse-r-exe', async (event, data: CallbackData) => {
+
         const response = dialog.showOpenDialogSync(this, {
           title: i18next.t('uiFolder.chooseRExecutable'),
           properties: ['openFile'],
           filters: [{ name: i18next.t('uiFolder.rExecutable'), extensions: ['exe'] }],
         });
 
+        
         if (response) {
-          logger().logDebug(`Using user-selected version of R (${response[0]})`);
-          resolve('' + response[0]);
+          data.binaryPath = response[0];
+          logger().logDebug(`Using user-selected version of R (${data.binaryPath})`);
+          return this.maybeResolve(resolve, data);
         }
 
-        return !!response;
+        return false;
+
       });
 
-      ipcMain.on('cancel', () => {
+      this.addIpcHandler('cancel', () => {
         return resolve(null);
       });
 
       this.on('closed', () => {
         return resolve(null);
       });
+
     });
   }
 }

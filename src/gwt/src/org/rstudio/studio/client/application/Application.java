@@ -83,6 +83,7 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
+import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
@@ -927,6 +928,19 @@ public class Application implements ApplicationEventHandlers
    }
    private void initializeWorkbench()
    {
+      // Check if user interface language set in the User Preferences is also set as a cookie.
+      // If not, we need to set it and reload the page to ensure the correct language is shown.
+      // This would happen the first time in a new browser where the UI language was previously set to
+      // non-English.
+      String uiLanguagePrefValue = userPrefs_.get().uiLanguage().getValue();
+      String cookieValue = LocaleCookie.getUiLanguage();
+      if (!StringUtil.equals(uiLanguagePrefValue, cookieValue))
+      {
+         LocaleCookie.setUiLanguage(uiLanguagePrefValue);
+         RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
+         return;
+      }
+
       // Initialize application theme system
       pAppThemes_.get().initializeThemes(rootPanel_.getElement());
 

@@ -21,7 +21,7 @@ import { EditorView } from 'prosemirror-view';
 import uniqby from 'lodash.uniqby';
 
 import { FocusEvent } from '../../api/event-types';
-import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer } from '../../api/pandoc';
+import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocServer, kPreventBracketEscape } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 import { markIsActive, splitInvalidatedMarks, getMarkRange, detectAndApplyMarks } from '../../api/mark';
 import { MarkTransaction, kPasteTransaction } from '../../api/transaction';
@@ -166,7 +166,9 @@ const extension = (context: ExtensionContext): Extension | null => {
                   fragmentText(closeCite) === ']'
                 ) {
                   output.writeRawMarkdown('[');
-                  output.writeInlines(cite);
+                  output.withOption(kPreventBracketEscape, true, () => {
+                    output.writeInlines(cite);
+                  });
                   output.writeRawMarkdown(']');
 
 

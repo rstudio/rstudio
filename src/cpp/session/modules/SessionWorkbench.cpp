@@ -72,13 +72,17 @@ namespace {
 
 module_context::WaitForMethodFunction s_waitForEditorContext;
 
-SEXP rs_getEditorContext(SEXP typeSEXP)
+SEXP rs_getEditorContext(SEXP typeSEXP, SEXP idSEXP)
 {
    int type = r::sexp::asInteger(typeSEXP);
    
+   json::Object payload;
+   payload["type"] = type;
+   payload["id"] = r::sexp::safeAsString(idSEXP, "");
+   
    json::Object eventData;
    eventData["type"] = "editor_context";
-   eventData["data"] = type;
+   eventData["data"] = payload;
    
    // send the event
    ClientEvent editorContextEvent(client_events::kEditorCommand, eventData);
@@ -293,6 +297,9 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // type
    cmd << "-t" << type;
+
+   if (type == kSshKeyTypeRsa)
+      cmd << "-b 4096";
 
    // passphrase (optional)
    cmd << "-N";

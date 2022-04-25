@@ -78,7 +78,8 @@ QAction* MenuCallback::addCustomAction(QString commandId,
                                        QString label,
                                        QString tooltip,
                                        QKeySequence keySequence,
-                                       bool checkable)
+                                       bool checkable,
+                                       bool isRadio)
 {
 
    QAction* pAction = nullptr;
@@ -87,12 +88,12 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    // On Mac, certain commands will be automatically moved to Application Menu by Qt. If we want them to also
    // appear in RStudio menus, check for them here and return nullptr.
    if (duplicateAppMenuAction(QString::fromUtf8("showAboutDialog"),
-                              commandId, label, tooltip, keySequence, checkable))
+                              commandId, label, tooltip, keySequence, checkable, isRadio))
    {
       return nullptr;
    }
    else if (duplicateAppMenuAction(QString::fromUtf8("quitSession"),
-                              commandId, label, tooltip, keySequence, checkable))
+                              commandId, label, tooltip, keySequence, checkable, isRadio))
    {
       return nullptr;
    }
@@ -100,7 +101,7 @@ QAction* MenuCallback::addCustomAction(QString commandId,
    // If we want a command to not be automatically moved to Application Menu, include it here and return the
    // created action.
    pAction = duplicateAppMenuAction(QString::fromUtf8("buildToolsProjectSetup"),
-                                    commandId, label, tooltip, keySequence, checkable);
+                                    commandId, label, tooltip, keySequence, checkable, isRadio);
    if (pAction)
       return pAction;
 
@@ -206,7 +207,8 @@ QAction* MenuCallback::duplicateAppMenuAction(QString commandToDuplicate,
                                               QString label,
                                               QString tooltip,
                                               QKeySequence keySequence,
-                                              bool checkable)
+                                              bool checkable,
+                                              bool isRadio)
 {
    QAction* pAction = nullptr;
    if (commandId == commandToDuplicate)
@@ -235,6 +237,7 @@ void MenuCallback::addCommand(QString commandId,
                               QString tooltip,
                               QString shortcut,
                               bool checkable,
+                              bool isRadio,
                               bool isVisible)
 {
 
@@ -279,7 +282,7 @@ void MenuCallback::addCommand(QString commandId,
 
    // allow custom action handlers first shot
    QPointer<QAction> pAction =
-         addCustomAction(commandId, label, tooltip, keySequence, checkable);
+         addCustomAction(commandId, label, tooltip, keySequence, checkable, isRadio);
 
    // if there was no custom handler then do stock command-id processing
    if (pAction == nullptr)

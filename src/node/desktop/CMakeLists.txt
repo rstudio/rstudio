@@ -117,6 +117,10 @@ endif()
 
 set(ELECTRON_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE INTERNAL "")
 if (APPLE)
+   # configure Info.plist
+   configure_file (${CMAKE_CURRENT_SOURCE_DIR}/Info.plist.in
+      ${CMAKE_CURRENT_SOURCE_DIR}/Info.plist)
+
    # copy sources to build directory. note that the build directory cannot
    # be the "true" CMake directory as some files are resolved relative to
    # the desktop project's relative path in the application structure
@@ -162,7 +166,6 @@ else()
       COMMAND
          ${CMAKE_COMMAND} -E env
          "PATH=${MODIFIED_PATH}"
-         "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1"
          "MAKEFLAGS="
          ${NPM} run package
    )

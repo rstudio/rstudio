@@ -13,36 +13,38 @@
  *
  */
 
-import { app, BrowserWindow, WebContents, screen } from 'electron';
-
+import { app, BrowserWindow, screen, WebContents } from 'electron';
+import i18next from 'i18next';
+import path from 'path';
 import { getenv, setenv } from '../core/environment';
 import { FilePath } from '../core/file-path';
-import { generateRandomPort } from '../core/system';
 import { logger } from '../core/logger';
-
+import { kRStudioInitialProject } from '../core/r-user-data';
+import { generateRandomPort } from '../core/system';
+import { getDesktopBridge } from '../renderer/desktop-bridge';
+import { DesktopActivation } from './activation-overlay';
+import { AppState } from './app-state';
+import { ApplicationLaunch } from './application-launch';
+import { ArgsManager } from './args-manager';
+import { prepareEnvironment, promptUserForR } from './detect-r';
+import { GwtCallback } from './gwt-callback';
+import { PendingWindow } from './pending-window';
+import { exitFailure, ProgramStatus, run } from './program-status';
+import { SatelliteWindow } from './satellite-window';
+import { SecondaryWindow } from './secondary-window';
+import { SessionLauncher } from './session-launcher';
 import {
-  getAppPath,
+  augmentCommandLineArguments,
   createStandaloneErrorDialog,
   findComponents,
   initializeLang,
   initializeSharedSecret,
   raiseAndActivateWindow,
+  removeStaleOptionsLockfile,
+  resolveAliasedPath
 } from './utils';
-import { augmentCommandLineArguments, removeStaleOptionsLockfile } from './utils';
-import { exitFailure, run, ProgramStatus } from './program-status';
-import { ApplicationLaunch } from './application-launch';
-import { AppState } from './app-state';
-import { SessionLauncher } from './session-launcher';
-import { DesktopActivation } from './activation-overlay';
 import { WindowTracker } from './window-tracker';
-import { GwtCallback } from './gwt-callback';
-import { prepareEnvironment, promptUserForR } from './detect-r';
-import { PendingWindow } from './pending-window';
 import { configureSatelliteWindow, configureSecondaryWindow } from './window-utils';
-import i18next from 'i18next';
-import { ArgsManager } from './args-manager';
-import { SatelliteWindow } from './satellite-window';
-import { SecondaryWindow } from './secondary-window';
 
 /**
  * The RStudio application
@@ -92,11 +94,45 @@ export class Application implements AppState {
     }
 
     initializeSharedSecret();
+    this.registerAppEvents();
 
     // allow users to supply extra command-line arguments for Chromium
     augmentCommandLineArguments();
 
     return run();
+  }
+
+  private registerAppEvents() {
+    app.on('open-file', (event: Event, filepath: string) => {
+      const resolvedPath = resolveAliasedPath(filepath);
+      event.preventDefault();
+
+      const ext = path.extname(filepath).toLowerCase();
+
+      // first startup - open the project by setting the initial project env var
+      // otherwise it would open in the last state then open the project
+      if (ext === '.rproj') {
+        if (app.isReady()) {
+          this.appLaunch?.launchRStudio({projectFilePath: filepath});
+        } else {
+          setenv(kRStudioInitialProject, filepath);
+        }
+        return;
+      }
+
+      app.whenReady()
+        .then(() => {
+          // app may be ready but GWT may not be ready
+          if (this.gwtCallback?.initialized) {
+            getDesktopBridge().openFile(resolvedPath);
+          } else {
+            this.gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
+              getDesktopBridge().openFile(resolvedPath);
+            });
+          }
+        })
+        .catch((error: unknown) => logger().logError(error));
+    });
   }
 
   /**
@@ -156,6 +192,7 @@ export class Application implements AppState {
     }
 
     // prepare the R environment
+    logger().logDebug(`Preparing environment using R: ${rPath}`);
     const prepareError = prepareEnvironment(rPath);
     if (prepareError) {
       await createStandaloneErrorDialog(
@@ -174,30 +211,11 @@ export class Application implements AppState {
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
     this.sessionLauncher.launchFirstSession();
 
+    this.gwtCallback?.once(GwtCallback.WORKBENCH_INITIALIZED, () => {
+      this.argsManager.handleAfterSessionLaunchCommands();
+    });
+
     return run();
-  }
-
-  supportingFilePath(): FilePath {
-    if (!this.supportPath) {
-      // default to install path
-      this.supportPath = new FilePath(getAppPath());
-
-      // adapt for OSX resource bundles
-      if (process.platform === 'darwin') {
-        if (this.supportPath.completePath('Info.plist').existsSync()) {
-          this.supportPath = this.supportPath.completePath('Resources');
-        }
-      }
-    }
-    return this.supportPath;
-  }
-
-  resourcesPath(): FilePath {
-    if (app.isPackaged) {
-      return new FilePath(getAppPath());
-    } else {
-      return new FilePath(getAppPath()).completePath('../../..');
-    }
   }
 
   activation(): DesktopActivation {
