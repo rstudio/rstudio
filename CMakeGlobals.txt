@@ -64,7 +64,9 @@ else()
    set(RSTUDIO_PRO_BUILD 0)
 endif()
 
-set(RSTUDIO_DEFAULT_LOG_PATH "/var/log/rstudio/rstudio-server")
+if (NOT DEFINED RSTUDIO_DEFAULT_LOG_PATH)
+   set(RSTUDIO_DEFAULT_LOG_PATH "/var/log/rstudio/rstudio-server")
+endif()
 
 # detect architecture
 if(UNIX)
