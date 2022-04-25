@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment;
 
+import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -68,7 +69,7 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
                          Commands commands,
                          Session session)
    {
-      super("Environment", shim);
+      super(constants_.environmentCapitalized(), shim);
       binder.bind(commands, shim);
       events.addHandler(OpenDataFileEvent.TYPE, shim);
 
@@ -83,4 +84,5 @@ public class EnvironmentTab extends DelayLoadWorkbenchTab<EnvironmentPresenter>
    }
 
    private final Session session_;
+   private static final ViewEnvironmentConstants constants_ = GWT.create(ViewEnvironmentConstants.class);
 }

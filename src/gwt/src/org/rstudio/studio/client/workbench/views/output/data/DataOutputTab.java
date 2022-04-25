@@ -50,7 +50,7 @@ public class DataOutputTab
                         Commands commands,
                         final Session session)
    {
-      super("SQL Results", shim);
+      super(constants_.sqlResultsTitle(), shim);
       shim_ = shim;
 
       GWT.<Binder>create(Binder.class).bind(commands, shim);

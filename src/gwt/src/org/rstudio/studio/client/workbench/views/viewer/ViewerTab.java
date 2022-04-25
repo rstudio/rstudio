@@ -37,7 +37,7 @@ public class ViewerTab extends DelayLoadWorkbenchTab<ViewerPresenter>
    @Inject
    public ViewerTab(Shim shim, Session session, EventBus eventBus)
    {
-      super("Viewer", shim);
+      super(constants_.viewerTitle(), shim);
       session_ = session;
 
       eventBus.addHandler(ViewerNavigateEvent.TYPE, shim);

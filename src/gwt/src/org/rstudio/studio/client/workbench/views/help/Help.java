@@ -32,6 +32,7 @@ import org.rstudio.studio.client.workbench.WorkbenchView;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.help.events.ActivateHelpEvent;
 import org.rstudio.studio.client.workbench.views.help.events.HasHelpNavigateHandlers;
@@ -195,7 +196,7 @@ public class Help extends BasePresenter implements ShowHelpEvent.Handler
 
    public void bringToFront()
    {
-      events_.fireEvent(new ActivatePaneEvent("Help"));
+      events_.fireEvent(new ActivatePaneEvent(PaneManager.HELP_PANE));
    }
 
    private void home()
