@@ -552,9 +552,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       for (int i = 0; i < visiblePanes_.length; i++)
       {
          String value = visiblePanes_[i].getValue(visiblePanes_[i].getSelectedIndex());
-         if (value == "TabSet1")
+         if (StringUtil.equals(value, UserPrefsAccessor.Panes.QUADRANTS_TABSET1))
             visiblePanePanels_[i].add(tabSet1ModuleList_);
-         else if (value == "TabSet2")
+         else if (StringUtil.equals(value, UserPrefsAccessor.Panes.QUADRANTS_TABSET2))
             visiblePanePanels_[i].add(tabSet2ModuleList_);
       }
    }

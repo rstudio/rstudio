@@ -160,7 +160,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       JsArrayString panes = getQuadrants();
       for (int i = 0; i<panes.length(); i++)
-         if (StringUtil.equals(panes.get(i), "Console")) //$NON-NLS-1$
+         if (StringUtil.equals(panes.get(i), PaneManager.CONSOLE_PANE))
             return i;
 
       throw new IllegalStateException();
@@ -169,8 +169,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    public final boolean getConsoleLeft()
    {
       JsArrayString panes = getQuadrants();
-      return StringUtil.equals(panes.get(0), "Console") || //$NON-NLS-1$
-         StringUtil.equals(panes.get(1), "Console"); //$NON-NLS-1$
+      return StringUtil.equals(panes.get(0), PaneManager.CONSOLE_PANE) ||
+         StringUtil.equals(panes.get(1), PaneManager.CONSOLE_PANE);
    }
 
    public final boolean getConsoleRight()
@@ -181,15 +181,15 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    public final boolean getTabSet1Left()
    {
       JsArrayString panes = getQuadrants();
-      return StringUtil.equals(panes.get(0), "TabSet1") || //$NON-NLS-1$
-         StringUtil.equals(panes.get(1), "TabSet1"); //$NON-NLS-1$
+      return StringUtil.equals(panes.get(0), UserPrefsAccessor.Panes.QUADRANTS_TABSET1) ||
+         StringUtil.equals(panes.get(1), UserPrefsAccessor.Panes.QUADRANTS_TABSET1);
    }
    
    public final boolean getTabSet2Left()
    {
       JsArrayString panes = getQuadrants();
-      return StringUtil.equals(panes.get(0), "TabSet2") || //$NON-NLS-1$
-         StringUtil.equals(panes.get(1), "TabSet2"); //$NON-NLS-1$
+      return StringUtil.equals(panes.get(0), UserPrefsAccessor.Panes.QUADRANTS_TABSET2) ||
+         StringUtil.equals(panes.get(1), UserPrefsAccessor.Panes.QUADRANTS_TABSET2);
    }
    
    public final boolean validateAndAutoCorrect()

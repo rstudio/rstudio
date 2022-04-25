@@ -361,7 +361,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(EditingTargetSource.class).to(EditingTargetSource.Impl.class);
 
       // Bind workbench views
-      bindPane("Console", ConsolePane.class); // eager loaded
+      bindPane(PaneManager.CONSOLE_PANE, ConsolePane.class); // eager loaded
       bind(Source.Display.class).to(SourcePane.class);
       bind(TerminalTabPresenter.Display.class).to(TerminalPane.class);
       bind(History.Display.class).to(HistoryPane.class);
