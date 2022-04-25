@@ -42,6 +42,7 @@ set(SERVER_SOURCE_FILES
    ServerSessionProxy.cpp
    ServerSessionProxyOverlay.cpp
    ServerSessionRpc.cpp
+   ServerSessionRpcOverlay.cpp
    ServerSessionManager.cpp
    ServerXdgVars.cpp
    auth/ServerAuthHandler.cpp

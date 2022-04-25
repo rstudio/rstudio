@@ -45,6 +45,11 @@ namespace rstudio {
 namespace server {
 namespace session_rpc {
 
+namespace overlay {
+   Error initialize();
+   void addHttpProxyHandler();
+}
+
 namespace {
 
 std::string s_sessionSharedSecret;
@@ -54,12 +59,6 @@ void sessionProfileFilter(core::r_util::SessionLaunchProfile* pProfile)
 {
    pProfile->config.environment.push_back(
             std::make_pair(kServerRpcSecretEnvVar, s_sessionSharedSecret));
-}
-
-void disableSharingFilter(core::r_util::SessionLaunchProfile* pProfile)
-{
-   pProfile->config.environment.push_back(
-      std::make_pair<std::string>(kRStudioDisableProjectSharing, "1"));
 }
 
 void writeInvalidRequest(boost::shared_ptr<core::http::AsyncConnection> pConnection)
@@ -156,36 +155,6 @@ void validationHandler(
    handler(username, pConnection);
 }
 
-// given a request which has been confirmed to have valid login cookie,
-// perform additional validation before invoking the handler
-void validationLoginHandler(
-      const std::string& username,
-      boost::shared_ptr<core::http::AsyncConnection> pConnection,
-      auth::SecureAsyncUriHandlerFunction handler)
-{
-   // validate CSRF token by comparing the header token with the cookie. since these RPCs are not
-   // serviced by the session itself (which provides CSRF validation via the session's client ID),
-   // we take this additional precaution
-   const core::http::Request& request = pConnection->request();
-   std::string headerToken = core::http::getCSRFTokenHeader(request);
-   std::string cookieToken = core::http::getCSRFTokenCookie(request);
-   if (headerToken.empty())
-   {
-      LOG_WARNING_MESSAGE("Attempt to request URL " + request.uri() + " without CSRF token");
-      writeInvalidRequest(pConnection);
-   }
-   else if (headerToken != cookieToken)
-   {
-      LOG_WARNING_MESSAGE("Mismatched CSRF tokens in request for " + request.uri() + 
-            " (" + headerToken + ", " + cookieToken + ")");
-      writeInvalidRequest(pConnection);
-   }
-   else
-   {
-      handler(username, pConnection);
-   }
-}
-
 } // anonymous namespace
 
 void addHandler(const std::string& prefix,
@@ -234,26 +203,7 @@ void addHttpProxyHandler(const std::string &prefix,
                                    false /*fallbackAllowed*/,
                                    _1));
 
-      if (job_launcher::launcherSessionsEnabled(false /*checkLicense*/) ||
-          job_launcher::launcherJobsEnabled(job_launcher::JobsEnabledCheck::CHECK_MINIMAL))
-      {
-         // handle RPCs from the rstudio http server either with RPC secret
-         // or login cookie. First invoke the RPC validationHandler, but have
-         // it invoke the secureAsyncHttpHandler on failure, which will then do
-         // the login-cookie check and if successful, invoke validationLoginHandler to perform
-         // additional checks before finally invoking the intended handler!
-         auto cookieCheckHandler = [handler](boost::shared_ptr<core::http::AsyncConnection> pConnection)
-         {
-            auth::secureAsyncHttpHandler(boost::bind(validationLoginHandler, _1, _2, handler))(pConnection);
-         };
-
-         server::server()->addHandler(
-               prefix, boost::bind(validationHandler,
-                                   handler,
-                                   cookieCheckHandler,
-                                   true /*fallbackAllowed*/,
-                                   _1));
-      }
+      overlay::addHttpProxyHandler();
    }
 }
 
@@ -300,16 +250,7 @@ Error initialize()
    // inject the shared secret into the session
    sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
 
-   bool hasSharedStorage = !getServerPathOption(kSharedStoragePath).isEmpty();
-   bool projectSharingEnabled = getServerBoolOption(kServerProjectSharing);
-
-   if (!hasSharedStorage || !projectSharingEnabled)
-   {
-      // disable project sharing
-      sessionManager().addSessionLaunchProfileFilter(disableSharingFilter);
-   }
-
-   return Success();
+   return overlay::initialize();
 }
 
 } // namespace session_rpc
