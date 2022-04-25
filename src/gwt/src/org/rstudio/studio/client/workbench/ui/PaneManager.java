@@ -1443,7 +1443,7 @@ public class PaneManager
       hiddenTabs_.remove(tab);
 
       // Add tab to the back of the new set
-      if (StringUtil.equals(tabs.get(tabs.size() - 1).name(), "Presentation"))
+      if (StringUtil.equals(tabs.get(tabs.size() - 1).name(), PaneManager.PRESENTATION_PANE))
          tabs.add(tabs.size() - 1, tab);
       else
          tabs.add(tab);
@@ -2121,4 +2121,6 @@ public class PaneManager
    public static final String DATA_OUTPUT_PANE = "Data Output"; //$NON-NLS-1$
    public static final String TUTORIAL_PANE = "Tutorial"; //$NON-NLS-1$
    public static final String SOURCE_COLUMN = "SourceColumn"; //$NON-NLS-1$
+   public static final String FIND_PANE = "Find"; //$NON-NLS-1$
+   public static final String MARKERS_PANE = "Markers"; //$NON-NLS-1$
 }

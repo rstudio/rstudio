@@ -60,21 +60,21 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET);
 
       JsArrayString tabSet1 = createArray().cast();
-      tabSet1.push("Environment"); //$NON-NLS-1$
-      tabSet1.push("History"); //$NON-NLS-1$
-      tabSet1.push("Connections"); //$NON-NLS-1$
-      tabSet1.push("Build"); //$NON-NLS-1$
-      tabSet1.push("VCS"); //$NON-NLS-1$
-      tabSet1.push("Tutorial"); //$NON-NLS-1$
-      tabSet1.push("Presentation"); //$NON-NLS-1$
+      tabSet1.push(PaneManager.ENVIRONMENT_PANE);
+      tabSet1.push(PaneManager.HISTORY_PANE);
+      tabSet1.push(PaneManager.CONNECTIONS_PANE);
+      tabSet1.push(PaneManager.BUILD_PANE);
+      tabSet1.push(PaneManager.VCS_PANE);
+      tabSet1.push(PaneManager.TUTORIAL_PANE);
+      tabSet1.push(PaneManager.PRESENTATION_PANE);
       
       JsArrayString tabSet2 = createArray().cast();
-      tabSet2.push("Files"); //$NON-NLS-1$
-      tabSet2.push("Plots"); //$NON-NLS-1$
-      tabSet2.push("Packages"); //$NON-NLS-1$
-      tabSet2.push("Help"); //$NON-NLS-1$
-      tabSet2.push("Viewer"); //$NON-NLS-1$
-      tabSet2.push("Presentations"); //$NON-NLS-1$
+      tabSet2.push(PaneManager.FILES_PANE);
+      tabSet2.push(PaneManager.PLOTS_PANE);
+      tabSet2.push(PaneManager.PACKAGES_PANE);
+      tabSet2.push(PaneManager.HELP_PANE);
+      tabSet2.push(PaneManager.VIEWER_PANE);
+      tabSet2.push(PaneManager.PRESENTATIONS_PANE);
 
       JsArrayString hiddenTabSet = createArray().cast();
       return create(panes, tabSet1, tabSet2, hiddenTabSet, false, true, 0);
@@ -105,10 +105,11 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       // A list of all the tabs. Order matters; the Presentation tab must be the
       // last element in this array that's part of the first tabset (ts1)
-      // Internal names, DO NOT LOCALIZE
-      return new String[] {"Environment", "History", "Files", "Plots", "Connections",
-                           "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer",
-                           "Presentations", "Presentation"};
+      return new String[] {PaneManager.ENVIRONMENT_PANE, PaneManager.HISTORY_PANE, PaneManager.FILES_PANE,
+                           PaneManager.PLOTS_PANE, PaneManager.CONNECTIONS_PANE,
+                           PaneManager.PACKAGES_PANE, PaneManager.HELP_PANE, PaneManager.BUILD_PANE,
+                           PaneManager.VCS_PANE, PaneManager.TUTORIAL_PANE, PaneManager.VIEWER_PANE,
+                           PaneManager.PRESENTATIONS_PANE, PaneManager.PRESENTATION_PANE};
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets
@@ -120,7 +121,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    // The tabs that replace those in getReplacedTabs(), order-matched
    public static String[] getReplacementTabs()
    {
-      return new String[] {"Environment"}; //$NON-NLS-1$
+      return new String[] {PaneManager.ENVIRONMENT_PANE};
    }
 
    // Given the name of a tab, return the index of the tab that it should
@@ -210,15 +211,15 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // visible tabs). This is normally an invariant but for a time during
       // the v0.99-1000 preview we allowed the Connections tab to be the
       // last one in the tabset.
-      if (!StringUtil.equals(ts1.get(ts1.length() - 1), "Presentation")) //$NON-NLS-1$
+      if (!StringUtil.equals(ts1.get(ts1.length() - 1), PaneManager.PRESENTATION_PANE))
       {
          // 1.3 released with a bug where Tutorial would be added at the end; autocorrect
          // https://github.com/rstudio/rstudio/issues/7246
-         if (StringUtil.equals(ts1.get(ts1.length() - 1), "Tutorial") && //$NON-NLS-1$
-             StringUtil.equals(ts1.get(ts1.length() - 2), "Presentation")) //$NON-NLS-1$
+         if (StringUtil.equals(ts1.get(ts1.length() - 1), PaneManager.TUTORIAL_PANE) &&
+             StringUtil.equals(ts1.get(ts1.length() - 2), PaneManager.PRESENTATION_PANE))
          {
-            ts1.set(ts1.length() - 1, "Presentation"); //$NON-NLS-1$
-            ts1.set(ts1.length() - 2, "Tutorial"); //$NON-NLS-1$
+            ts1.set(ts1.length() - 1, PaneManager.PRESENTATION_PANE);
+            ts1.set(ts1.length() - 2, PaneManager.TUTORIAL_PANE);
          }
          else
          {
@@ -230,7 +231,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // if we don't have Presentation2 then provide it 
       if (!hasPresentation2(ts1) && !hasPresentation2(ts2))
       {
-         ts2.set(ts2.length(), "Presentations"); //$NON-NLS-1$
+         ts2.set(ts2.length(), PaneManager.PRESENTATIONS_PANE);
       }
 
 
@@ -247,7 +248,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    {
       for (int idx = 0; idx < tabs.length(); idx++)
       {
-         if (tabs.get(idx).equals("Presentations")) //$NON-NLS-1$
+         if (tabs.get(idx).equals(PaneManager.PRESENTATIONS_PANE))
             return true;
       }
       return false;
