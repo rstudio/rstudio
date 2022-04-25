@@ -50,7 +50,6 @@ struct CppDefinitions
 {
    std::string file;
    std::time_t fileLastWrite;
-   bool hidden;
    std::deque<CppDefinition> definitions;
 };
 
@@ -238,7 +237,6 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
          CppDefinitions definitions;
          definitions.file = file;
          definitions.fileLastWrite = event.fileInfo().lastWriteTime();
-         definitions.hidden = isGeneratedFile(core::FilePath(event.fileInfo().absolutePath()));
          s_definitionsByFile[file] = definitions;
          DefinitionVisitor visitor =
             boost::bind(insertDefinition, _1, &s_definitionsByFile[file]);
