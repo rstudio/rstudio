@@ -34,7 +34,6 @@ public interface OutputConstants extends com.google.gwt.i18n.client.Messages {
     @Key("viewLogText")
     String viewLogText();
 
-
     /**
      * Translated "View the LaTeX compilation log".
      *
@@ -496,6 +495,15 @@ public interface OutputConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("View test results")
     @Key("viewTestResultsTitle")
     String viewTestResultsTitle();
+
+    /**
+     * Translated "Tests".
+     *
+     * @return translated "Tests"
+     */
+    @DefaultMessage("Tests")
+    @Key("testsTaskName")
+    String testsTaskName();
 
     /**
      * Translated "Terminating Tests...".
