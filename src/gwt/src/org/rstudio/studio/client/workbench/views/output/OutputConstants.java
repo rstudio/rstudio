@@ -35,6 +35,15 @@ public interface OutputConstants extends com.google.gwt.i18n.client.Messages {
     String viewLogText();
 
     /**
+     * Translated "Compile PDF".
+     *
+     * @return translated "Compile PDF"
+     */
+    @DefaultMessage("Compile PDF")
+    @Key("compilePDFTaskName")
+    String compilePDFTaskName();
+
+    /**
      * Translated "View the LaTeX compilation log".
      *
      * @return translated "View the LaTeX compilation log"
@@ -97,6 +106,14 @@ public interface OutputConstants extends com.google.gwt.i18n.client.Messages {
     @Key("terminatingPDFCompilationCaption")
     String terminatingPDFCompilationCaption();
 
+    /**
+     * Translated "Compile PDF".
+     *
+     * @return translated "Compile PDF"
+     */
+    @DefaultMessage("Compile PDF")
+    @Key("compilePDFCaption")
+    String compilePDFCaption();
 
     /**
      * Translated "Unable to terminate PDF compilation. Please try again.".
@@ -106,6 +123,15 @@ public interface OutputConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Unable to terminate PDF compilation. Please try again.")
     @Key("unableToTerminatePDFCompilationMessage")
     String unableToTerminatePDFCompilationMessage();
+
+    /**
+     * Translated "Data Output".
+     *
+     * @return translated "Data Output"
+     */
+    @DefaultMessage("Data Output")
+    @Key("dataOutputTitle")
+    String dataOutputTitle();
 
     /**
      * Translated "Data Output Pane".
@@ -124,6 +150,24 @@ public interface OutputConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Data Output Tab")
     @Key("dataOutputTabLabel")
     String dataOutputTabLabel();
+
+    /**
+     * Translated "SQL Results".
+     *
+     * @return translated "SQL Results"
+     */
+    @DefaultMessage("SQL Results")
+    @Key("sqlResultsTitle")
+    String sqlResultsTitle();
+
+    /**
+     * Translated "Find in Files".
+     *
+     * @return translated "Find in Files"
+     */
+    @DefaultMessage("Find in Files")
+    @Key("findInFilesCaption")
+    String findInFilesCaption();
 
     /**
      * Translated "Search in:".
@@ -178,6 +222,15 @@ public interface OutputConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("More than 1000 matching lines were found. Only the first 1000 lines are shown.")
     @Key("overFlowMessage")
     String overFlowMessage();
+
+    /**
+     * Translated "Find Results".
+     *
+     * @return translated "Find Results"
+     */
+    @DefaultMessage("Find Results")
+    @Key("findResultsTitle")
+    String findResultsTitle();
 
     /**
      * Translated "Find Output Tab".
@@ -395,6 +448,14 @@ public interface OutputConstants extends com.google.gwt.i18n.client.Messages {
     @Key("noMarkersText")
     String noMarkersText();
 
+    /**
+     * Translated "Markers".
+     *
+     * @return translated "Markers"
+     */
+    @DefaultMessage("Markers")
+    @Key("markersTitle")
+    String markersTitle();
 
     /**
      * Translated "Clear markers".

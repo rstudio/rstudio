@@ -67,7 +67,7 @@ public class CompilePdfOutputPresenter extends BusyPresenter
                                     Commands commands,
                                     EventBus events)
    {
-      super(outputFactory.create("Compile PDF",
+      super(outputFactory.create(constants_.compilePDFTaskName(),
                                  constants_.viewLogTitle()));
       binder.bind(commands, this);
       view_ = (CompileOutputPaneDisplay) getView();

@@ -38,8 +38,8 @@ public class JobsPane extends WorkbenchPane
    public JobsPane(UserPrefs uiPrefs,
                    JobsPaneWidgets widgets)
    {
-      super("Jobs");
-      
+      super(constants_.jobsTitle());
+
       userPrefs_ = uiPrefs;
       widgets_ = widgets;
 
