@@ -14,9 +14,18 @@
  */
 
 import { app } from 'electron';
+import path from 'path';
+import { setenv } from '../core/environment';
+import { FilePath } from '../core/file-path';
+import {
+  enableDiagnosticsOutput,
+  logger,
+  parseCommandLineLogLevel,
+  setLogger
+} from '../core/logger';
+import { kRStudioInitialProject } from '../core/r-user-data';
 import { WinstonLogger } from '../core/winston-logger';
-
-import { enableDiagnosticsOutput, parseCommandLineLogLevel, setLogger } from '../core/logger';
+import { getDesktopBridge } from '../renderer/desktop-bridge';
 import { Application } from './application';
 import { exitSuccess, ProgramStatus, run } from './program-status';
 import { getComponentVersions, userLogPath } from './utils';
@@ -37,6 +46,7 @@ export const kHelp = '--help';
 
 // !IMPORTANT: If some args should early exit the application, add them to `webpack.plugins.js`
 export class ArgsManager {
+  unswitchedArgs: string[] = [];
 
   initCommandLine(application: Application, argv: string[] = process.argv): ProgramStatus {
 
@@ -71,7 +81,28 @@ export class ArgsManager {
       enableDiagnosticsOutput();
     }
 
+    // filter out the process path and . (occurs in dev mode)
+    this.unswitchedArgs = process.argv.filter(
+      (value) => !value.startsWith('--') && value !== process.execPath && value !== '.'
+    );
+
     return run();
+  }
+
+  handleAfterSessionLaunchCommands() {
+    if (this.unswitchedArgs.length) {
+      this.unswitchedArgs.forEach((arg) => {
+        if (FilePath.existsSync(arg)) {
+          app.whenReady()
+            .then(() => {
+              getDesktopBridge().openFile(arg);
+            })
+            .catch((error: unknown) => {
+              logger().logError(error);
+            });
+        }
+      });
+    }
   }
 
   handleAppReadyCommands(application: Application) {
@@ -84,6 +115,21 @@ export class ArgsManager {
     // (will happen after session start delay above, if also specified)
     if (app.commandLine.hasSwitch(kSessionExit)) {
       application.sessionEarlyExitCode = 1;
+    }
+
+    if (this.unswitchedArgs.length) {
+      this.unswitchedArgs = this.unswitchedArgs.filter((arg) => {
+        if (FilePath.existsSync(arg)) {
+          const ext = path.extname(arg).toLowerCase();
+
+          if (ext === '.rproj') {
+            setenv(kRStudioInitialProject, arg);
+            return false;
+          }
+        }
+
+        return true;
+      });
     }
   }
 

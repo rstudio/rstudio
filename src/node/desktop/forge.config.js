@@ -55,7 +55,8 @@ const config = {
       FileDescription: "RStudio",
       InternalName: "RStudio",
       ProductName: "RStudio",
-    }
+    },
+    extendInfo: './Info.plist',
   },
 };
 
