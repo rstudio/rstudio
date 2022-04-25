@@ -517,14 +517,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          PaneConfig prevConfig = userPrefs_.panes().getGlobalValue().cast();
          boolean consoleLeftOnTop = prevConfig.getConsoleLeftOnTop();
          boolean consoleRightOnTop = prevConfig.getConsoleRightOnTop();
-         final String kConsole = "Console"; //$NON-NLS-1$
-         if (panes.get(0).equals(kConsole))
+         if (panes.get(0).equals(PaneManager.CONSOLE_PANE))
             consoleLeftOnTop = true;
-         else if (panes.get(1).equals(kConsole))
+         else if (panes.get(1).equals(PaneManager.CONSOLE_PANE))
             consoleLeftOnTop = false;
-         else if (panes.get(2).equals(kConsole))
+         else if (panes.get(2).equals(PaneManager.CONSOLE_PANE))
             consoleRightOnTop = true;
-         else if (panes.get(3).equals(kConsole))
+         else if (panes.get(3).equals(PaneManager.CONSOLE_PANE))
             consoleRightOnTop = false;
 
          if (displayColumnCount_ != additionalColumnCount_)
