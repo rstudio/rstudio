@@ -94,6 +94,7 @@ export class GwtCallback extends EventEmitter {
   static WORKBENCH_INITIALIZED = 'gwt-callback-workbench_initialized';
   static SESSION_QUIT = 'gwt-callback-session_quit';
 
+  initialized = false;
   pendingQuit: number = PendingQuit.PendingQuitNone;
   private owners = new Set<GwtWindow>();
 
@@ -336,6 +337,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_on_workbench_initialized', (event, scratchPath: string) => {
+      this.initialized = true;
       this.emit(GwtCallback.WORKBENCH_INITIALIZED);
       appState().setScratchTempDir(new FilePath(scratchPath));
     });
