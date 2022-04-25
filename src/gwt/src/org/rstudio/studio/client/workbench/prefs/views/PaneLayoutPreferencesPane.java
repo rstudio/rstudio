@@ -114,7 +114,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             checkBox.addValueChangeHandler(this);
             checkBoxes_.add(checkBox);
             flowPanel.add(checkBox);
-            if (module == "Presentation")
+            if (StringUtil.equals(module, PaneManager.PRESENTATION_PANE))
               checkBox.setVisible(false);
          }
 
