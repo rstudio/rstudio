@@ -22,7 +22,7 @@
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 
-#include <session/SessionOptionsOverlay.hpp>
+#include <session/SessionOptions.hpp>
 #include <session/SessionServerRpc.hpp>
 
 #include "SessionRpc.hpp"
@@ -32,6 +32,12 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace session {
 namespace server_rpc {
+
+namespace overlay {
+   bool useHttp();
+   Error invokeServerRpc();
+   void invokeServerRpcAsync(const boost::asio::io_service&);
+}
 
 namespace {
 
@@ -98,9 +104,11 @@ Error invokeServerRpc(const std::string& endpoint,
                       const json::Object& request,
                       json::Value* pResult)
 {
-   std::string serverAddress = options().getOverlayOption(kRServerAddress);
-
-   if (serverAddress.empty())
+   if (overlay::useHttp())
+   {
+      return overlay::invokeServerRpc();
+   }
+   else
    {
 #ifdef _WIN32
        return systemError(boost::system::errc::not_supported, ERROR_LOCATION);
@@ -110,46 +118,6 @@ Error invokeServerRpc(const std::string& endpoint,
             rpcSocket.getAbsolutePath());
       return socket_rpc::invokeRpc(rpcSocket, endpoint, request, pResult);
 #endif
-   }
-   else
-   {
-      http::URL url(serverAddress);
-      int timeout = safe_convert::stringTo<int>(
-            options().getOverlayOption(kRServerConnectionTimeout), 10);
-      
-      if (!url.isValid())
-      {
-         // not a valid url - we assume this is just a hostname or IP address
-         std::string tcpPort = options().getOverlayOption(kRServerTcpPort);
-         LOG_DEBUG_MESSAGE("Invoking rserver RPC '" + endpoint + "' on host " + 
-               serverAddress + ":" + tcpPort);
-         return socket_rpc::invokeRpc(
-               serverAddress, 
-               tcpPort, 
-               false, // no SSL 
-               false, // no cert verification
-               boost::posix_time::seconds(timeout), 
-               endpoint, 
-               request, 
-               pResult);
-      }
-      else
-      {
-         // valid url - combine url path with requested endpoint
-         bool verifySslCerts = options().getOverlayOption(kRServerVerifySslCerts) == "1";
-         LOG_DEBUG_MESSAGE("Invoking rserver RPC '" + endpoint + "' on URL " + 
-               serverAddress +
-               (verifySslCerts ? "" : " without SSL validation"));
-         return socket_rpc::invokeRpc(
-               url.hostname(), 
-               url.portStr(), 
-               url.protocol() == "https", // SSL flag
-               verifySslCerts, // skip SSL verification if requested
-               boost::posix_time::seconds(timeout), 
-               url.path() + endpoint, 
-               request, 
-               pResult);
-      }
    }
 }
 
@@ -165,10 +133,11 @@ void invokeServerRpcAsync(const std::string& endpoint,
                     boost::bind(core::thread::safeLaunchThread,
                                 rpcWorkerThreadFunc,
                                 nullptr));
-
-   std::string serverAddress = options().getOverlayOption(kRServerAddress);
-
-   if (serverAddress.empty())
+   if (overlay::useHttp())
+   {
+      overlay::invokeServerRpcAsync(s_ioService);
+   }
+   else
    {
 #ifdef _WIN32
        onError(systemError(boost::system::errc::not_supported, ERROR_LOCATION));
@@ -177,55 +146,13 @@ void invokeServerRpcAsync(const std::string& endpoint,
       FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
       LOG_DEBUG_MESSAGE("Invoking rserver async RPC '" + endpoint + "' on socket " + 
             rpcSocket.getAbsolutePath());
-      return socket_rpc::invokeRpcAsync(s_ioService,
-                                        rpcSocket,
-                                        endpoint,
-                                        request,
-                                        onResult,
-                                        onError);
+      socket_rpc::invokeRpcAsync(s_ioService,
+                                 rpcSocket,
+                                 endpoint,
+                                 request,
+                                 onResult,
+                                 onError);
 #endif
-   }
-   else
-   {
-      http::URL url(serverAddress);
-      int timeout = safe_convert::stringTo<int>(
-            options().getOverlayOption(kRServerConnectionTimeout), 10);
-
-      if (!url.isValid())
-      {
-         // not a valid url - we assume this is just a hostname or IP address
-         std::string tcpPort = options().getOverlayOption(kRServerTcpPort);
-         LOG_DEBUG_MESSAGE("Invoking async rserver RPC '" + endpoint + "' on host " + 
-               serverAddress + ":" + tcpPort);
-         return socket_rpc::invokeRpcAsync(s_ioService,
-                                           serverAddress,
-                                           tcpPort,
-                                           false, // no SSL
-                                           false, // no cert verification
-                                           boost::posix_time::seconds(timeout),
-                                           endpoint,
-                                           request,
-                                           onResult,
-                                           onError);
-      }
-      else
-      {
-         // valid url - combine url path with requested endpoint
-         bool verifySslCerts = options().getOverlayOption(kRServerVerifySslCerts) == "1";
-         LOG_DEBUG_MESSAGE("Invoking async rserver RPC '" + endpoint + "' on URL " + 
-               serverAddress +
-               (verifySslCerts ? "" : " without SSL validation"));
-         return socket_rpc::invokeRpcAsync(s_ioService,
-                                           url.hostname(),
-                                           url.portStr(),
-                                           url.protocol() == "https",
-                                           verifySslCerts,
-                                           boost::posix_time::seconds(timeout),
-                                           url.path() + endpoint,
-                                           request,
-                                           onResult,
-                                           onError);
-      }
    }
 }
 

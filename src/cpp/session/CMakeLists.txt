@@ -145,6 +145,7 @@ set(SESSION_SOURCE_FILES
    SessionPersistentState.cpp
    SessionPostback.cpp
    SessionServerRpc.cpp
+   SessionServerRpcOverlay.cpp
    SessionSSH.cpp
    SessionSourceDatabase.cpp
    SessionSourceDatabaseSupervisor.cpp
