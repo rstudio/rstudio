@@ -43,9 +43,19 @@ const config = {
     ],
   ],
 
+  // https://electron.github.io/electron-packager/main/interfaces/electronpackager.options.html 
   packagerConfig: {
     icon: './resources/icons/RStudio',
     appBundleId: 'com.rstudio.desktop',
+    appCopyright: 'Copyright (C) 2022 by RStudio, PBC',
+    name: 'RStudio',
+    executableName: 'rstudio',
+    win32metadata: {
+      CompanyName: "RStudio, PBC",
+      FileDescription: "RStudio",
+      InternalName: "RStudio",
+      ProductName: "RStudio",
+    },
     extendInfo: './Info.plist',
   },
 };
