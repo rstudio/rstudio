@@ -14,13 +14,14 @@
  */
 
 /* eslint-disable @typescript-eslint/no-implicit-any-catch */
-import { initI18n } from '../../main/i18n-manager';
+import { changeLanguage, initI18n } from '../../main/i18n-manager';
 import i18next from 'i18next';
+import { checkForNewLanguage } from '../utils';
 
 const loadPageLocalization = () => {
   initI18n();
 
-  window.addEventListener('load', () => {
+  const updateLabels = () => {
     const i18nIds = [
       'errorStartingR',
       'rLogo',
@@ -71,6 +72,18 @@ const loadPageLocalization = () => {
     } catch (err) {
       console.log('Error occurred when loading i18n: ', err);
     }
+  };
+
+  window.addEventListener('load', () => {
+    checkForNewLanguage()
+      .then(async (newLanguage: any) =>
+        changeLanguage('' + newLanguage).then(() => {
+          updateLabels();
+        }),
+      )
+      .catch((err: any) => {
+        console.error('An error happened when trying to fetch a new locale: ', err);
+      });
   });
 };
 
