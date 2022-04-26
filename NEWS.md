@@ -52,13 +52,17 @@
 - Fixed an intermittent hang when invoking `rstudio-server verify-installation` which caused stale `rserver` processes to exist (rstudio-pro#3041) 
 - (Windows only) Fixed an issue where multiple instances of RStudio launched at the same time could bind to the same session. (#10488)
 - Fixed unintended change of date/time formatting in the VCS commit history (#10810)
+- Add back link to the title of sessions so that users can easily open sessions in new tabs and copy session links (rstudio-pro#3290)
 - (Linux Only) License-manager now works in a installer-less context (rstudio-pro#3150)
 
 ### RStudio Workbench
 
 - Add a -G option to `rsandbox` to allow configuring the effective group of the process (#3214)
+- When resuming a suspended session with the Kubernetes Launcher Plugin, the container image that was previously being used will now be selected by default (#1520)
 - Upgrade the default version of `code-server` to 4.2.0 to resolve issue with the latest Python VS Code extension (Pro #3320)
 
 ### Deprecated / Removed
 
 - The minimum supported R version for the IDE has been increased from R 3.0.1 to R 3.3.0 (rstudio-pro#2887)
+- **BREAKING:** Block port proxy requests at `/proxy/<port>` for Jupyter sessions - previously only available if [Jupyter Server Proxy](https://github.com/jupyterhub/jupyter-server-proxy) was installed (Pro #3339)
+- No longer support Debian 9 ("stretch") for Desktop, Server, and Workbench (#10981)
