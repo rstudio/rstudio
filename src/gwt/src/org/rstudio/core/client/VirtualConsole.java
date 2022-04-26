@@ -804,9 +804,9 @@ public class VirtualConsole
             {
                consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
             });
-            anchor.setTitle(hyperlink_.getTitle());
             anchor.addClassName(AnsiCode.HYPERLINK_STYLE);
-
+            anchor.setTitle(hyperlink_.getTitle());
+            
             element = anchor;
          }
 
