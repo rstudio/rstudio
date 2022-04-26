@@ -176,7 +176,7 @@ void AsyncRProcess::start(const char* rCommand,
    
    // this runs in the job pane as a child process of this process
    core::system::setenv(&childEnv, "RSTUDIO_CHILD_PROCESS_PANE", "job");
-   core::system::setenv(&childEnv, "RSTUDIO_CHILD_PROCESS_PARENT_PID", core::safe_convert::numberToString(::getpid()));
+   core::system::setenv(&childEnv, "RSTUDIO_SESSION_PID", core::safe_convert::numberToString(::getpid()));
    
    // update environment used for child process
    options.environment = childEnv;

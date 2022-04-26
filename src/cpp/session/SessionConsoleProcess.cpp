@@ -269,7 +269,7 @@ void ConsoleProcess::commonInit()
    
    // this runs in the terminal pane as a child process of this process
    core::system::setenv(&(options_.environment.get()), "RSTUDIO_CHILD_PROCESS_PANE", "terminal");
-   core::system::setenv(&(options_.environment.get()), "RSTUDIO_CHILD_PROCESS_PARENT_PID", safe_convert::numberToString(::getpid()));
+   core::system::setenv(&(options_.environment.get()), "RSTUDIO_SESSION_PID", safe_convert::numberToString(::getpid()));
    
    // When we retrieve from outputBuffer, we only want complete lines. Add a
    // dummy \n so we can tell the first line is a complete line.
