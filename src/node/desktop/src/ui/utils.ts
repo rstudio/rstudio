@@ -1,6 +1,6 @@
 const isLocalStorageItemSet = (key: string) => {
   const value = window.localStorage.getItem(key);
-  console.log('getting key: ', key, { isSet: value !== '' && !!value, value });
+
   return { isSet: value !== '' && !!value, value };
 };
 
@@ -19,7 +19,7 @@ export const checkForNewLanguage = () => {
         if (localeData.isSet && now > parseInt('' + localeLastTimeData.value, 10)) {
           clearInterval(isThereNewLanguageInterval);
           const newLanguage = localeData.value;
-          console.log('new language: ', newLanguage);
+
           resolve('' + newLanguage);
         }
       }
