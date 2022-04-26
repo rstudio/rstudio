@@ -779,6 +779,11 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
+      // initialize the session rpc handler
+      error = session_rpc::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
       // detect R environment variables (calls R (and this forks) so must
       // happen after daemonize so that upstart script can correctly track us
       std::string errMsg;
@@ -853,6 +858,11 @@ int main(int argc, char * const argv[])
       error = overlay::startup();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // Start the session RPC
+      error = server::session_rpc::startup();
+      if (error)
+         LOG_ERROR(error);
 
       // add http server not found handler
       s_pHttpServer->setNotFoundHandler(pageNotFoundHandler);
