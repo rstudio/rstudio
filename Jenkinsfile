@@ -242,6 +242,8 @@ try {
           [os: 'bionic',     arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Bionic'],
           [os: 'debian9',    arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'Debian 9'],
           [os: 'debian9',    arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'Debian 9'],
+          [os: 'debian10',   arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'Debian 10'],
+          [os: 'debian10',   arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'Debian 10'],
           [os: 'debian10',   arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'Debian 10'],
           [os: 'rhel8',      arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
           [os: 'rhel8',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 8'],
