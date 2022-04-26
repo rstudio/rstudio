@@ -89,7 +89,7 @@ public class ConnectionsPane extends WorkbenchPane
    public ConnectionsPane(Commands commands, EventBus eventBus, UserPrefs userPrefs)
    {
       // initialize
-      super("Connections", eventBus);
+      super(constants_.connectionsTitle(), eventBus);
       commands_ = commands;
       userPrefs_ = userPrefs;
 

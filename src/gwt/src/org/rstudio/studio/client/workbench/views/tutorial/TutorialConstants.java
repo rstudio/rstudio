@@ -16,6 +16,14 @@ package org.rstudio.studio.client.workbench.views.tutorial;
 
 public interface TutorialConstants extends com.google.gwt.i18n.client.Messages {
 
+    /**
+     * Translated "Tutorial".
+     *
+     * @return translated "Tutorial"
+     */
+    @DefaultMessage("Tutorial")
+    @Key("tutorialTitle")
+    String tutorialTitle();
 
     /**
      * Translated "Error Loading Tutorial".

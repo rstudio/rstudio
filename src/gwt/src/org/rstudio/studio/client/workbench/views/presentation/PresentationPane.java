@@ -64,7 +64,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    public PresentationPane(Commands commands, Session session,
          PresentationServerOperations server, GlobalDisplay display)
    {
-      super("Presentation");
+      super(constants_.presentationTitle());
       commands_ = commands;
       session_ = session;
       server_ = server;

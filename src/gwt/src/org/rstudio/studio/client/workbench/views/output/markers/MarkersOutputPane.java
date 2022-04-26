@@ -38,7 +38,7 @@ public class MarkersOutputPane extends WorkbenchPane
    @Inject
    public MarkersOutputPane(Commands commands)
    {
-      super("Markers");
+      super(constants_.markersTitle());
       markerSetsToolbarButton_ = new MarkerSetsToolbarButton();
       markerList_ = new SourceMarkerList();
       clearButton_ = new ToolbarButton(

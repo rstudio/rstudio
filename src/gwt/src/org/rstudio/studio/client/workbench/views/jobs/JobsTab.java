@@ -53,7 +53,7 @@ public class JobsTab extends DelayLoadWorkbenchTab<JobsPresenter>
                         Commands commands,
                         EventBus events)
    {
-      super("Jobs", shim);
+      super(constants_.jobsTitle(), shim);
       shim_ = shim;
       
       binder.bind(commands, shim);

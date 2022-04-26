@@ -33,7 +33,7 @@ public class DataOutputPane extends WorkbenchPane
    @Inject
    public DataOutputPane()
    {
-      super("Data Output");
+      super(constants_.dataOutputTitle());
       ensureWidget();
    }
 

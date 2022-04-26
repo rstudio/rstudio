@@ -87,7 +87,7 @@ public class HistoryPane extends WorkbenchPane
    @Inject
    public HistoryPane(Commands commands, EventBus events)
    {
-      super("History", events);
+      super(constants_.historyTitle(), events);
       commands_ = commands;
       ensureWidget();
    }

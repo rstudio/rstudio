@@ -224,6 +224,15 @@ public interface PackagesConstants extends com.google.gwt.i18n.client.Messages {
     String errorListingPackagesCaption();
 
     /**
+     * Translated "Packages".
+     *
+     * @return translated "Packages"
+     */
+    @DefaultMessage("Packages")
+    @Key("packagesTitle")
+    String packagesTitle();
+
+    /**
      * Translated "Packages Tab".
      *
      * @return translated "Packages Tab"

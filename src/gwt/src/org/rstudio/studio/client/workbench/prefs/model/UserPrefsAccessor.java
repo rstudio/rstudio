@@ -2420,7 +2420,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The path to the RSA key file to use.
+    * The path to the SSH key file to use.
     */
    public PrefValue<String> rsaKeyPath()
    {
@@ -2430,6 +2430,29 @@ public class UserPrefsAccessor extends Prefs
          _constants.rsaKeyPathDescription(), 
          "");
    }
+
+   /**
+    * The encryption type to use for the SSH key file.
+    */
+   public PrefValue<String> sshKeyType()
+   {
+      return enumeration(
+         "ssh_key_type",
+         _constants.sshKeyTypeTitle(), 
+         _constants.sshKeyTypeDescription(), 
+         new String[] {
+            SSH_KEY_TYPE_ED25519,
+            SSH_KEY_TYPE_RSA
+         },
+         "ed25519",
+         new String[] {
+            _constants.sshKeyTypeEnum_ed25519(),
+            _constants.sshKeyTypeEnum_rsa()
+         });
+   }
+
+   public final static String SSH_KEY_TYPE_ED25519 = "ed25519";
+   public final static String SSH_KEY_TYPE_RSA = "rsa";
 
    /**
     * Whether to use the devtools R package.
@@ -3689,6 +3712,8 @@ public class UserPrefsAccessor extends Prefs
          terminalPath().setValue(layer, source.getString("terminal_path"));
       if (source.hasKey("rsa_key_path"))
          rsaKeyPath().setValue(layer, source.getString("rsa_key_path"));
+      if (source.hasKey("ssh_key_type"))
+         sshKeyType().setValue(layer, source.getString("ssh_key_type"));
       if (source.hasKey("use_devtools"))
          useDevtools().setValue(layer, source.getBool("use_devtools"));
       if (source.hasKey("clean_before_install"))
@@ -3992,6 +4017,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(svnExePath());
       prefs.add(terminalPath());
       prefs.add(rsaKeyPath());
+      prefs.add(sshKeyType());
       prefs.add(useDevtools());
       prefs.add(cleanBeforeInstall());
       prefs.add(useInternet2());
