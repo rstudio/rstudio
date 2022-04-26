@@ -15,6 +15,10 @@
 
 #include <shared_core/Error.hpp>
 
+#include <core/http/AsyncServer.hpp>
+
+#include <server/auth/ServerAuthHandler.hpp>
+
 using namespace rstudio::core;
 
 namespace rstudio {
@@ -22,14 +26,19 @@ namespace server {
 namespace session_rpc {
 namespace overlay {
 
-void addHttpProxyHandler()
+Error initialize(const boost::shared_ptr<http::AsyncServer>&, const std::string&)
+{
+    return Success();
+}
+
+void addHandler(const std::string&, const auth::SecureAsyncUriHandlerFunction&, bool)
 {
     // Do nothing.
 }
 
-Error initialize()
+void addHttpProxyHandler(const std::string&, const auth::SecureAsyncUriHandlerFunction &)
 {
-    return Success();
+    // Do nothing.
 }
 
 } // namespace overlay

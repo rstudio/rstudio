@@ -46,8 +46,9 @@ namespace server {
 namespace session_rpc {
 
 namespace overlay {
-   Error initialize();
-   void addHttpProxyHandler();
+   Error initialize(const boost::shared_ptr<http::AsyncServer>& pSessionRpcServer, const std::string& sessionSharedSecret);
+   void addHandler(const std::string& prefix, const auth::SecureAsyncUriHandlerFunction& handler, bool allowUserAccess);
+   void addHttpProxyHandler(const std::string &prefix, const auth::SecureAsyncUriHandlerFunction &handler);
 }
 
 namespace {
@@ -170,24 +171,7 @@ void addHandler(const std::string& prefix,
                                    false /*fallbackAllowed*/,
                                    _1));
 
-      // check if we allow user access - meaning users do not need special user-hidden RPC
-      // secret in order to call the RPC. some administrator protected RPCs should not be
-      // invokable by regular users
-      if (allowUserAccess)
-      {
-         // if we're using job launcher sessions, we need to handle RPCs
-         // from within the regular http server since sessions will be
-         // on different machines - we add the handler to both because
-         // at any time, the launcher licensing field could change, and
-         // so sessions need to be able to communicate effectively in both
-         // launcher and non-launcher modes
-         server::server()->addHandler(
-                  prefix, boost::bind(validationHandler,
-                                      handler,
-                                      writeInvalidRequest,
-                                      false /*fallbackAllowed*/,
-                                      _1));
-      }
+      overlay::addHandler(prefix, handler, allowUserAccess);
    }
 }
 
@@ -203,7 +187,7 @@ void addHttpProxyHandler(const std::string &prefix,
                                    false /*fallbackAllowed*/,
                                    _1));
 
-      overlay::addHttpProxyHandler();
+      overlay::addHttpProxyHandler(prefix, handler);
    }
 }
 
@@ -250,7 +234,7 @@ Error initialize()
    // inject the shared secret into the session
    sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
 
-   return overlay::initialize();
+   return overlay::initialize(s_pSessionRpcServer, s_sessionSharedSecret);
 }
 
 } // namespace session_rpc
