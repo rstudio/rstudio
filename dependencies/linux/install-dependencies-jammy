@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+#
+# install-dependencies-jammy
+#
+# Copyright (C) 2022 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+platform_codename=$(lsb_release -sc)
+if [ $platform_codename != "jammy" ] ; then
+    echo Error: This script is only for use on Ubuntu jammy
+    exit 1
+fi
+
+echo Installing RStudio dependencies for Ubuntu Jammy
+
+sudo apt-get update
+
+sudo apt-get -y install \
+  ant \
+  build-essential \
+  clang \
+  cmake \
+  curl \
+  debsigs \
+  dpkg-sig \
+  expect \
+  fakeroot \
+  git \
+  gnupg1 \
+  libacl1-dev \
+  libattr1-dev \
+  libbz2-dev \
+  libcap-dev \
+  libclang-dev \
+  libcurl4-openssl-dev \
+  libegl1-mesa \
+  libfuse2 \
+  libgl1-mesa-dev \
+  libgtk-3-0 \
+  libpam-dev \
+  libpango1.0-dev \
+  libpq-dev \
+  libsqlite3-dev \
+  libssl-dev \
+  libuser1-dev \
+  libxslt1-dev \
+  lsof \
+  openjdk-8-dev \
+  ninja-build \
+  p7zip-full \
+  patchelf \
+  pkg-config \
+  python3 \
+  python3-venv \
+  r-base-dev \
+  rrdtool \
+  software-properties-common \
+  unzip \
+  uuid-dev \
+  wget \
+  zlib1g-dev
+
+# overlay
+if [ -e install-overlay-common ]
+then
+  ./install-overlay-common
+fi
+
+# crashpad
+cd ../common
+sudo ./install-crashpad bionic
+
+# common
+./install-common jammy
+cd ../linux
+
+# Python packages for i18n
+if [ -x "$(command -v python3)" ]; then
+  pushd ../../src/gwt/tools/i18n-helpers
+  python3 -m venv VENV
+  ./VENV/bin/pip install --disable-pip-version-check -r commands.cmd.xml/requirements.txt
+  popd
+fi 
