@@ -57,7 +57,8 @@ sudo apt-get -y install \
   libuser1-dev \
   libxslt1-dev \
   lsof \
-  openjdk-8-dev \
+  openjdk-8-jdk \
+  openjdk-11-jdk \
   ninja-build \
   p7zip-full \
   patchelf \

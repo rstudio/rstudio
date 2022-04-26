@@ -44,6 +44,7 @@ if [ "$(uname)" = "Linux" ]; then
 	sudo apt-get build-dep -y qtbase5-dev
 	sudo apt-get install -y libxcb-xinerama0-dev
 	sudo apt-get install -y bison flex gperf python2-dev
+	sudo apt-get install -y python-is-python3
  
 fi
 
@@ -93,14 +94,15 @@ info "Configuring Qt"
 	-prefix "${PREFIX}" \
 	-opensource         \
 	-confirm-license    \
-	-release
+	-release            \
+	-recheck-all
 
 info "Building Qt"
 info "Grab a cup of coffee, this will take a while."
-make -j4
+make ${MAKEFLAGS:-j4}
 
 info "Installing Qt"
-make install
+sudo make install
 
 info "Qt ${VERSION} was successfully installed."
 info "Install path: ${PREFIX}"
