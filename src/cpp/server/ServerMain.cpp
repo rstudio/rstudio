@@ -22,6 +22,7 @@
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
+#include <core/SocketRpc.hpp>
 
 #include <core/text/TemplateFilter.hpp>
 
@@ -691,6 +692,7 @@ int main(int argc, char * const argv[])
       // export important environment variables
       core::system::setenv(kServerDataDirEnvVar, serverDataDir.getAbsolutePath());
       core::system::setenv(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath());
+      core::system::setenv(kServerRpcSocketPathEnvVar, serverRpcSocketPath().getAbsolutePath());
 
       // initialize File Lock
       FileLock::initialize();
