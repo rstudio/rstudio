@@ -18,6 +18,7 @@ export const checkForNewLanguage = () => {
 
         if (localeData.isSet && now > parseInt('' + localeLastTimeData.value, 10)) {
           clearInterval(isThereNewLanguageInterval);
+
           const newLanguage = localeData.value;
 
           resolve('' + newLanguage);
