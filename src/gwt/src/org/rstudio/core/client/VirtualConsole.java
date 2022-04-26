@@ -29,7 +29,6 @@ import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -609,21 +608,14 @@ public class VirtualConsole
                if (hyperlinkMatch != null)
                {
                   String url = hyperlinkMatch.getGroup(2);
-                  // toggle hyperlink_, and artifically add or remove styles: underline and magenta
+
+                  // toggle hyperlink_
                   if (!StringUtil.equals(url, ""))
                   {
-                     ansiCodeStyles_ = ansi_.processCode("\033[4m"); // underline
-                     ansiCodeStyles_ = ansi_.processCode("\033[35m"); // magenta
-                     currentClazz = setCurrentClazz(ansiColorMode, clazz);
-
                      hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1));
                   }
                   else
                   {
-                     ansiCodeStyles_ = ansi_.processCode("\033[39m"); // </magenta>
-                     ansiCodeStyles_ = ansi_.processCode("\033[24m"); // </underline>
-                     currentClazz = setCurrentClazz(ansiColorMode, clazz);
-                     
                      hyperlink_ = null;   
                   }
 
@@ -812,9 +804,9 @@ public class VirtualConsole
             {
                consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
             });
+            anchor.addClassName(AnsiCode.HYPERLINK_STYLE);
             anchor.setTitle(hyperlink_.getTitle());
-            anchor.addClassName("xtermHyperlink");
-
+            
             element = anchor;
          }
 
