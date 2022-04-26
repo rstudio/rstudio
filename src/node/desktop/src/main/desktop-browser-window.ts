@@ -128,12 +128,12 @@ export class DesktopBrowserWindow extends EventEmitter {
         .then((result) => {
           logger().logDebug('Custom Styles Added Successfully');
         })
-        .catch((error: any) => {
+        .catch((error) => {
           logger().logError(error);
         });
 
       // Uncomment to have all windows show dev tools by default
-      this.window.webContents.openDevTools();
+      // this.window.webContents.openDevTools();
     }
 
     // register context menu (right click) handler
