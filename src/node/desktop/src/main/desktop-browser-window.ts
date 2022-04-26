@@ -23,6 +23,7 @@ import { URL } from 'url';
 import { logger } from '../core/logger';
 import { appState } from './app-state';
 import { showContextMenu } from './context-menu';
+import { changeLanguage } from './i18n-manager';
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
 import { ToolbarData, ToolbarManager } from './toolbar-manager';
 import { executeJavaScript, isSafeHost } from './utils';
@@ -114,6 +115,8 @@ export class DesktopBrowserWindow extends EventEmitter {
         acceptFirstMouse: true,
       });
 
+      this.handleLocaleCookies(this.window);
+
       const customStyles =
         // eslint-disable-next-line max-len
         '.gwt-SplitLayoutPanel-HDragger{cursor:ew-resize !important;} .gwt-SplitLayoutPanel-VDragger{cursor:ns-resize !important;}';
@@ -125,12 +128,12 @@ export class DesktopBrowserWindow extends EventEmitter {
         .then((result) => {
           logger().logDebug('Custom Styles Added Successfully');
         })
-        .catch((error) => {
+        .catch((error: any) => {
           logger().logError(error);
         });
 
       // Uncomment to have all windows show dev tools by default
-      // this.window.webContents.openDevTools();
+      this.window.webContents.openDevTools();
     }
 
     // register context menu (right click) handler
@@ -362,4 +365,39 @@ export class DesktopBrowserWindow extends EventEmitter {
       return path.join(__dirname, '../renderer/preload.js');
     }
   }
+
+  updateLocaleFromCookie = (cookie: Electron.Cookie, window: BrowserWindow) => {
+    const localeCookieName = 'LOCALE';
+
+    if (cookie.name == localeCookieName) {
+      const localeLastTimeSetStorageItemKey = 'LAST_TIME';
+
+      const newLanguage = cookie.value;
+
+      const jsSetLocaleScript = `
+        window.localStorage.setItem('${localeCookieName}', '${newLanguage}');
+        window.localStorage.setItem('${localeLastTimeSetStorageItemKey}', '${new Date().getTime()}');
+      `;
+
+      void window.webContents.executeJavaScript(jsSetLocaleScript);
+
+      void changeLanguage(newLanguage);
+    }
+  };
+
+  handleLocaleCookies = (window: BrowserWindow) => {
+    void window.webContents.session.cookies.get({}).then((cookies) => {
+      if (cookies.length === 0) {
+        this.updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
+      } else {
+        cookies.forEach((cookie) => {
+          this.updateLocaleFromCookie(cookie, window);
+        });
+      }
+    });
+
+    window.webContents.session.cookies.on('changed', (_, cookie) => {
+      this.updateLocaleFromCookie(cookie, window);
+    });
+  };
 }
