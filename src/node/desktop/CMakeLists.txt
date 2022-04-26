@@ -211,7 +211,7 @@ elseif(LINUX)
    endif()
 
    install(
-      DIRECTORY "${ELECTRON_BUILD_DIR}/out/rstudio-linux-${ELECTRON_ARCH}/"
+      DIRECTORY "${ELECTRON_BUILD_DIR}/out/RStudio-linux-${ELECTRON_ARCH}/"
       DESTINATION "${RSTUDIO_INSTALL_ELECTRON}"
       USE_SOURCE_PERMISSIONS
    )
