@@ -498,6 +498,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (startClientEventService)
 
       // rpc methods
+      (socket_rpc::initialize)
       (rpc::initialize)
 #ifdef RSTUDIO_SERVER
       (server_rpc::initialize)

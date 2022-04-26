@@ -23,6 +23,7 @@
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 #include <core/SocketRpc.hpp>
+#include <core/json/JsonRpc.hpp>
 
 #include <core/text/TemplateFilter.hpp>
 
@@ -32,13 +33,14 @@
 
 #include <core/http/URL.hpp>
 #include <core/http/AsyncUriHandler.hpp>
-#include <server_core/http/SecureCookie.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
 
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
+#include <server_core/SecureKeyFile.hpp>
 #include <server_core/ServerDatabase.hpp>
+#include <server_core/http/SecureCookie.hpp>
 
 #include <monitor/MonitorClient.hpp>
 
@@ -94,6 +96,8 @@ bool requireLocalR();
 
 namespace {
 
+std::string s_rpcSecret;
+
 const char * const kProgramIdentity = "rserver";
    
 bool mainPageFilter(const core::http::Request& request,
@@ -103,7 +107,6 @@ bool mainPageFilter(const core::http::Request& request,
           server::browser::supportedBrowserFilter(request, pResponse) &&
           auth::handler::mainPageFilter(request, pResponse);
 }
-
 
 http::UriHandlerFunction blockingFileHandler()
 {
@@ -773,9 +776,12 @@ int main(int argc, char * const argv[])
          // inject the path prefix as the root path for all requests
          uri_handlers::setRequestFilter(rootPathRequestFilter);
       }
+      // initialize socket rpc so we can send distributed events
+      error = key_file::readSecureKeyFile("session-rpc-key", &s_rpcSecret);
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // call overlay initialize
-      error = overlay::initialize();
+      error = core::socket_rpc::initializeSecret(s_rpcSecret);
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
@@ -783,6 +789,12 @@ int main(int argc, char * const argv[])
       error = session_rpc::initialize();
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // call overlay initialize
+      error = overlay::initialize();
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
 
       // detect R environment variables (calls R (and this forks) so must
       // happen after daemonize so that upstart script can correctly track us
@@ -853,6 +865,20 @@ int main(int argc, char * const argv[])
       error = core::crash_handler::initialize();
       if (error)
          LOG_ERROR(error);
+
+      server::session_rpc::addHandler(
+         "/whoami", 
+         [](const std::string& user, boost::shared_ptr<core::http::AsyncConnection> pConnection)
+         {
+            json::Object obj;
+            obj["user"] = user;
+
+            json::JsonRpcResponse response;
+            response.setResult(obj);
+
+            json::setJsonRpcResponse(response, &(pConnection->response()));
+            pConnection->writeResponse();
+         });
 
       // call overlay startup
       error = overlay::startup();
