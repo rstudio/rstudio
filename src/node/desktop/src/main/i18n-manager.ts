@@ -34,6 +34,12 @@ const initI18n = () => {
     });
 };
 
+const changeLanguage = async (language = 'en') => {
+  return i18next.changeLanguage(language).catch((err) => {
+    console.log('Something went wrong changing language to ' + language, err);
+  });
+};
+
 /**
  * Localize a document
  *
@@ -66,4 +72,4 @@ function localizeImpl(document: Document, scope: string): void {
   });
 }
 
-export { initI18n, localize };
+export { initI18n, localize, changeLanguage };
