@@ -312,6 +312,7 @@ void addSourceItem(RSourceItem::Type type,
                    const std::vector<RS4MethodParam>& signature,
                    const RToken& token,
                    const IndexStatus& status,
+                   bool hidden, 
                    RSourceIndex* pIndex)
 {
    pIndex->addSourceItem(RSourceItem(
@@ -320,13 +321,15 @@ void addSourceItem(RSourceItem::Type type,
                             signature,
                             status.count(RToken::LBRACE),
                             token.row() + 1,
-                            token.column() + 1));
+                            token.column() + 1, 
+                            hidden));
 }
 
-typedef boost::function<void(const RTokenCursor&, const IndexStatus&, RSourceIndex*)> Indexer;
+typedef boost::function<void(const RTokenCursor&, const IndexStatus&, bool isReadOnlyFile, RSourceIndex*)> Indexer;
 
 void libraryCallIndexer(const RTokenCursor& cursor,
                         const IndexStatus& status,
+                        bool isReadOnlyFile, 
                         RSourceIndex* pIndex)
 {
    if (!cursor.isType(RToken::ID))
@@ -365,6 +368,7 @@ void libraryCallIndexer(const RTokenCursor& cursor,
 
 void s4MethodIndexer(const RTokenCursor& cursor,
                      const IndexStatus& status,
+                     bool isReadOnlyFile, 
                      RSourceIndex* pIndex)
 {
    if (isMethodOrClassDefinition(cursor))
@@ -418,6 +422,7 @@ void s4MethodIndexer(const RTokenCursor& cursor,
                     signature,
                     rTokens.at(i + 2),
                     status,
+                    isReadOnlyFile,
                     pIndex);
    }
 }
@@ -462,6 +467,7 @@ bool isVariableIndexable(const RTokenCursor& cursor,
 
 void variableAssignmentIndexer(const RTokenCursor& cursor,
                                const IndexStatus& status,
+                               bool isReadOnlyFile, 
                                RSourceIndex* pIndex)
 {
    // check for indexable location
@@ -531,7 +537,8 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
             std::vector<RS4MethodParam>(),
             status.count(RToken::LBRACE),
             prevToken.row() + 1,
-            prevToken.column() + 1);
+            prevToken.column() + 1, 
+            isReadOnlyFile);
    
    pIndex->addSourceItem(item);
    
@@ -558,6 +565,8 @@ RSourceIndex::RSourceIndex(const std::string& context, const std::string& code)
    // clear any (source-local) inferred packages
    inferredPkgNames_.clear();
 
+   bool isReadOnlyFile = boost::algorithm::contains(code, "do not edit by hand");
+
    // tokenize and create token cursor
    std::wstring wCode = string_utils::utf8ToWide(code, context);
    RTokens rTokens(wCode, RTokens::StripWhitespace | RTokens::StripComments);
@@ -575,7 +584,7 @@ RSourceIndex::RSourceIndex(const std::string& context, const std::string& code)
       
       for (const Indexer& indexer : indexers)
       {
-         indexer(cursor, status, this);
+         indexer(cursor, status, isReadOnlyFile, this);
       }
    }
    while (cursor.moveToNextToken());
