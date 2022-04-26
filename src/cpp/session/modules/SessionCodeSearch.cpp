@@ -1585,7 +1585,7 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       module_context::createAliasedPath(cppDefinition.location.filePath),
       safe_convert::numberTo<int>(cppDefinition.location.line, 1),
       safe_convert::numberTo<int>(cppDefinition.location.column, 1), 
-      false /* hidden */);
+      cppDefinition.hidden);
 }
 
 void fillFromCrossrefs(const std::string& term,
@@ -1803,17 +1803,9 @@ Error searchCode(const json::JsonRpcRequest& request,
    for (std::size_t i = 0; i < srcItems.size(); ++i)
    {
       const SourceItem& item = srcItems[i];
-      // items are hidden() when coming from read-only R files
-      // i.e. files that contain the text "do not edit by hand" 
+      // items are hidden() when coming from R and C++ files
+      // that contain the text "do not edit by hand" 
       if (item.hidden())
-         continue;
-      
-      // don't index auto-generated cpp files
-      const std::string& context = item.context();
-      if (boost::algorithm::ends_with(context, "RcppExports.cpp") ||
-          boost::algorithm::ends_with(context, "cpp11.cpp") ||
-          boost::algorithm::ends_with(context, "arrowExports.cpp")
-          )
          continue;
       
       int score = scoreMatch(item.name(), term, false);
