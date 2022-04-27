@@ -115,6 +115,14 @@ public interface PlotsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("serverErrorCaption")
     String serverErrorCaption();
 
+    /**
+     * Translated "Plots".
+     *
+     * @return translated "Plots"
+     */
+    @DefaultMessage("Plots")
+    @Key("plotsTitle")
+    String plotsTitle();
 
     /**
      * Translated "Current Plot".

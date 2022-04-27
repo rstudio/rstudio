@@ -15,10 +15,14 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.ui.Label;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
@@ -44,6 +48,12 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    @Inject
    public ProjectEditingPreferencesPane(final SourceServerOperations server)
    {
+      Label infoLabel = new Label(constants_.projectGeneralInfoLabel());
+      infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().infoLabel());
+      infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().nudgeRightPlus());
+      infoLabel.addStyleName(PreferencesDialogBaseResources.INSTANCE.styles().spaced());
+      add(infoLabel);
+
       // source editing options
       enableCodeIndexing_ = new CheckBox(constants_.enableCodeIndexingLabel(), false);
       enableCodeIndexing_.addStyleName(RESOURCES.styles().enableCodeIndexing());
@@ -57,6 +67,13 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       numSpacesForTab_.addStyleName(RESOURCES.styles().numberOfTabs());
       numSpacesForTab_.setWidth("36px");
       add(numSpacesForTab_);
+
+      LayoutGrid useNativePipeLabeled = new LayoutGrid(1, 2);
+      useNativePipeOperator_ = new YesNoAskDefault(false);
+      useNativePipeLabeled.setWidget(0, 0, new FormLabel(constants_.useNativePipeOperatorLabel(), useNativePipeOperator_));
+      useNativePipeLabeled.setWidget(0, 1, useNativePipeOperator_);
+      useNativePipeLabeled.addStyleName(RESOURCES.styles().useNativePipeOperator());
+      add(useNativePipeLabeled);
 
       chkAutoAppendNewline_ = new CheckBox(constants_.chkAutoAppendNewlineLabel());
       chkAutoAppendNewline_.addStyleName(RESOURCES.styles().editingOption());
@@ -135,6 +152,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       enableCodeIndexing_.setValue(initialConfig_.getEnableCodeIndexing());
       chkSpacesForTab_.setValue(initialConfig_.getUseSpacesForTab());
       numSpacesForTab_.setValue(initialConfig_.getNumSpacesForTab() + "");
+      useNativePipeOperator_.setSelectedIndex(initialConfig_.getUseNativePipeOperator());
       chkAutoAppendNewline_.setValue(initialConfig_.getAutoAppendNewline());
       chkStripTrailingWhitespace_.setValue(initialConfig_.getStripTrailingWhitespace());
       lineEndings_.setValue(ProjectPrefs.prefFromLineEndings(initialConfig_.getLineEndings()));
@@ -154,6 +172,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       config.setEnableCodeIndexing(enableCodeIndexing_.getValue());
       config.setUseSpacesForTab(chkSpacesForTab_.getValue());
       config.setNumSpacesForTab(getTabWidth());
+      config.setUseNativePipeOperator(useNativePipeOperator_.getSelectedIndex());
       config.setAutoAppendNewline(chkAutoAppendNewline_.getValue());
       config.setStripTrailingWhitespace(chkStripTrailingWhitespace_.getValue());
       config.setLineEndings(ProjectPrefs.lineEndingsFromPref(lineEndings_.getValue()));
@@ -184,6 +203,7 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private CheckBox enableCodeIndexing_;
    private CheckBox chkSpacesForTab_;
    private NumericValueWidget numSpacesForTab_;
+   private YesNoAskDefault useNativePipeOperator_;
    private CheckBox chkAutoAppendNewline_;
    private CheckBox chkStripTrailingWhitespace_;
    private LineEndingsSelectWidget lineEndings_;

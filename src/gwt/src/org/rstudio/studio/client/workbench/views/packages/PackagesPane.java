@@ -88,13 +88,12 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                        GlobalDisplay display,
                        EventBus events)
    {
-      super("Packages", events);
+      super(constants_.packagesTitle(), events);
       commands_ = commands;
       session_ = session;
       display_ = display;
       
-      dataGridRes_ = (PackagesDataGridResources) 
-            GWT.create(PackagesDataGridResources.class);
+      dataGridRes_ = GWT.create(PackagesDataGridResources.class);
       ensureWidget();
    }
    

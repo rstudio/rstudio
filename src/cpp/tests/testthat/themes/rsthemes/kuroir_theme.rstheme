@@ -224,9 +224,10 @@
 .xtermInvertColor { color: #e8e9e8; }
 .xtermInvertBgColor { background-color: #363636; }
 .xtermBold { font-weight: bold; }
+.xtermBlur { filter: blur(1px); }
 .xtermUnderline { text-decoration: underline; }
-.xtermHyperlink { cursor: pointer; }
-.xtermHyperlink:hover { text-decoration: underline; }
+.xtermHyperlink { text-decoration: underline; cursor: pointer; text-decoration-style: dotted; color: #75507b; }
+.xtermHyperlink:hover { text-decoration: underline; text-decoration-style: solid; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }

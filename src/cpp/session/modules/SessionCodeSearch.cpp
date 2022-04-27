@@ -1299,6 +1299,23 @@ void searchFiles(const std::string& term,
    }
 }
 
+bool isUninterestingFile(const std::string& filename) 
+{
+   if (filename == "RcppExports.R" ||
+       filename == "RcppExports.cpp" ||
+       filename == "cpp11.R" ||
+       filename == "cpp11.cpp" ||
+       filename == "arrowExports.R" ||
+       filename == "arrowExports.cpp")
+      return true;
+
+   std::string extension = string_utils::getExtension(filename);
+   if (boost::algorithm::to_lower_copy(extension) == ".rd")
+      return true;
+   
+   return false;
+}
+
 // NOTE: When modifying this code, you should ensure that corresponding
 // changes are made to the client side scoreMatch function as well
 // (See: CodeSearchOracle.java)
@@ -1334,22 +1351,18 @@ int scoreMatch(std::string const& suggestion,
       // Less penalty for perfect match (ie, reward case-sensitive match)
       penalty -= suggestion[matchPos] == query[j];
       
-      // More penalty for 'uninteresting' files
-      if (suggestion == "RcppExports.R" ||
-          suggestion == "RcppExports.cpp")
-         penalty += 6;
-      
-      // More penalty for 'uninteresting' extensions (e.g. .Rd)
-      std::string extension = string_utils::getExtension(suggestion);
-      if (boost::algorithm::to_lower_copy(extension) == ".rd")
-         penalty += 6;
-
       totalPenalty += penalty;
    }
    
    // Penalize files
    if (isFile)
+   {
       ++totalPenalty;
+
+      // More penalty for 'uninteresting' files
+      if (isUninterestingFile(suggestion))
+         totalPenalty += 6;
+   }
    
    // Penalize unmatched characters
    totalPenalty += gsl::narrow_cast<int>((query.size() - matches.size()) * query.size());
@@ -1431,7 +1444,7 @@ public:
    };
 
    SourceItem()
-      : type_(None), line_(-1), column_(-1)
+      : type_(None), line_(-1), column_(-1), hidden_(false)
    {
    }
 
@@ -1442,6 +1455,7 @@ public:
               const std::string& context,
               int line,
               int column,
+              bool hidden,
               const json::Object& metadata = json::Object())
       : type_(type),
         name_(name),
@@ -1450,6 +1464,7 @@ public:
         context_(context),
         line_(line),
         column_(column),
+        hidden_(hidden),
         metadata_(metadata)
    {
    }
@@ -1463,6 +1478,7 @@ public:
    const std::string& context() const { return context_; }
    int line() const { return line_; }
    int column() const { return column_; }
+   bool hidden() const { return hidden_; }
    const json::Object& metadata() const { return metadata_; }
 
 private:
@@ -1473,6 +1489,7 @@ private:
    std::string context_;
    int line_;
    int column_;
+   bool hidden_;
    json::Object metadata_;
 };
 
@@ -1520,7 +1537,8 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
                      extraInfo,
                      rSourceItem.context(),
                      rSourceItem.line(),
-                     rSourceItem.column());
+                     rSourceItem.column(), 
+                     rSourceItem.hidden());
 }
 
 SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
@@ -1566,7 +1584,8 @@ SourceItem fromCppDefinition(const clang::CppDefinition& cppDefinition)
       "",
       module_context::createAliasedPath(cppDefinition.location.filePath),
       safe_convert::numberTo<int>(cppDefinition.location.line, 1),
-      safe_convert::numberTo<int>(cppDefinition.location.column, 1));
+      safe_convert::numberTo<int>(cppDefinition.location.column, 1), 
+      cppDefinition.hidden);
 }
 
 void fillFromCrossrefs(const std::string& term,
@@ -1695,7 +1714,8 @@ void fillFromCrossrefs(const std::string& term,
                sourceType, displayText, "", "",
                module_context::createAliasedPath(
                   basePath.completeChildPath(file)),
-               -1, -1,
+               -1, -1, 
+               false, /* hidden */
                meta);
       
       pSourceItems->push_back(item);
@@ -1783,13 +1803,11 @@ Error searchCode(const json::JsonRpcRequest& request,
    for (std::size_t i = 0; i < srcItems.size(); ++i)
    {
       const SourceItem& item = srcItems[i];
-      
-      // don't index auto-generated files
-      const std::string& context = item.context();
-      if (boost::algorithm::ends_with(context, "RcppExports.R") ||
-          boost::algorithm::ends_with(context, "RcppExports.cpp"))
+      // items are hidden() when coming from R and C++ files
+      // that contain the text "do not edit by hand" 
+      if (item.hidden())
          continue;
-         
+      
       int score = scoreMatch(item.name(), term, false);
       srcItemScores.push_back(std::make_pair(gsl::narrow_cast<int>(i), score));
    }

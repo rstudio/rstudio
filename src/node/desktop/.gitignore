@@ -139,6 +139,9 @@ package/
 # Electron-Forge
 out/
 
+# Generated plist during CMake
+Info.plist
+
 .prettier_and_git_ignores
 
 # End of https://www.toptal.com/developers/gitignore/api/node

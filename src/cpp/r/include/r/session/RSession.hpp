@@ -74,7 +74,8 @@ struct ROptions
          rProfileOnResume(false),
          restoreEnvironmentOnResume(true),
          packratEnabled(false),
-         suspendOnIncompleteStatement(false)
+         suspendOnIncompleteStatement(false),
+         useNativePipeOperator(false)
    {
    }
    core::FilePath userHomePath;
@@ -104,6 +105,7 @@ struct ROptions
    core::r_util::SessionScope sessionScope;
    bool packratEnabled;
    bool suspendOnIncompleteStatement;
+   bool useNativePipeOperator;
 };
       
 struct RInitInfo

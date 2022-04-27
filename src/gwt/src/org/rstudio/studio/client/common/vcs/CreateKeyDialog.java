@@ -26,6 +26,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
+import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.ShowContentDialog;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -42,6 +43,7 @@ import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 {
@@ -140,10 +142,16 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       });
 
       rsaSshKeyPath_ = FileSystemItem.createDir(rsaSshKeyPath);
-
       setOkButtonCaption(constants_.setOkButtonCaption());
 
       ElementIds.assignElementId(this, ElementIds.DIALOG_CREATE_SSH_KEY);
+   }
+
+   private void updateSshKeyPath()
+   {
+      String sshKeyPath = rsaSshKeyPath_.getParentPathString() + "/id_" + sshKeyType_.getValue();
+      rsaSshKeyPath_ = FileSystemItem.createDir(sshKeyPath);
+      txtKeyPath_.setText(rsaSshKeyPath_.getPath());
    }
 
    @Override
@@ -153,7 +161,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
          return null;
       else
          return CreateKeyOptions.create(rsaSshKeyPath_.getPath(),
-                                        "rsa",
+                                        sshKeyType_.getValue(),
                                         getPassphrase(),
                                         false);
    }
@@ -189,24 +197,36 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
       VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(styles.mainWidget());
 
+      sshKeyType_ = new SelectWidget(constants_.sshKeyTypeLabel(),
+         new String[]{constants_.sshKeyEd25519Option(), constants_.sshKeyRSAOption()},
+         new String[]{
+            UserPrefs.SSH_KEY_TYPE_ED25519,
+            UserPrefs.SSH_KEY_TYPE_RSA
+         },
+         false,
+         true,
+         false);
+
+      panel.add(sshKeyType_);
+      sshKeyType_.addChangeHandler(event -> updateSshKeyPath());
+
       VerticalPanel namePanel = new VerticalPanel();
       namePanel.setWidth("100%");
-
       // path
-      TextBox txtKeyPath = new TextBox();
-      txtKeyPath.addStyleName(styles.keyPathTextBox());
-      txtKeyPath.setReadOnly(true);
-      txtKeyPath.setText(rsaSshKeyPath_.getPath());
-      txtKeyPath.setWidth("100%");
+      txtKeyPath_ = new TextBox();
+      txtKeyPath_.addStyleName(styles.keyPathTextBox());
+      txtKeyPath_.setReadOnly(true);
+      updateSshKeyPath();
+      txtKeyPath_.setWidth("100%");
       CaptionWithHelp pathCaption = new CaptionWithHelp(
                                  constants_.pathCaption(),
                                  constants_.pathHelpCaption(),
                                  "rsa_key_help",
-                                 txtKeyPath);
+                                 txtKeyPath_);
       pathCaption.setIncludeVersionInfo(false);
       pathCaption.setWidth("100%");
       namePanel.add(pathCaption);
-      namePanel.add(txtKeyPath);
+      namePanel.add(txtKeyPath_);
 
       panel.add(namePanel);
 
@@ -289,8 +309,10 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
 
    private TextBox txtPassphrase_;
    private TextBox txtConfirmPassphrase_;
+   private TextBox txtKeyPath_;
+   private SelectWidget sshKeyType_;
 
-   private final FileSystemItem rsaSshKeyPath_;
+   private FileSystemItem rsaSshKeyPath_;
    private static final StudioClientCommonConstants constants_ = GWT.create(StudioClientCommonConstants.class);
 
 }

@@ -95,6 +95,7 @@ struct ProcessOptions
    ProcessOptions()
 #ifdef _WIN32
       : terminateChildren(false),
+        exitWithParent(false),
         smartTerminal(false),
         detachProcess(false),
         createNewConsole(false),
@@ -107,6 +108,7 @@ struct ProcessOptions
         callbacksRequireMainThread(true)
 #else
       : terminateChildren(false),
+        exitWithParent(false),
         smartTerminal(false),
         detachSession(false),
         cols(kDefaultCols),
@@ -137,6 +139,10 @@ struct ProcessOptions
    // currently this implies CREATE_NEW_PROCESS_GROUP on Windows to get
    // the same semantics around interruptions
    bool terminateChildren;
+
+   // This process should also exit with a SIGTERM when the parent exits.
+   // NOTE: Currently only supported on posix. 
+   bool exitWithParent;
 
    // Use kSmartTerm as terminal type and disable canonical line-by-line
    // I/O processing

@@ -2,6 +2,11 @@ FROM debian:buster
 
 ENV OPERATING_SYSTEM=debian_10
 
+# update apt repository to cloudfront's mirror
+RUN set -x \
+    && sed -i "s/deb.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
+    && sed -i "s/security.debian.org/cloudfront.debian.net/" /etc/apt/sources.list
+
 # update system
 RUN set -x \
     && apt-get update -y
@@ -11,7 +16,6 @@ RUN apt-get update -y && apt-get install -y \
     ant \
     bzip2 \
     clang \
-    cmake \
     curl \
     debsigs \
     dpkg-sig \
@@ -21,10 +25,8 @@ RUN apt-get update -y && apt-get install -y \
     git \
     gnupg1 \
     libacl1-dev \
-    libacl1-dev \
     libattr1-dev \
     libboost-all-dev \
-    libcap-dev \
     libcap-dev \
     libcurl4-openssl-dev \
     libffi-dev \
@@ -69,6 +71,10 @@ COPY dependencies/tools/rstudio-tools.sh /opt/rstudio-tools/dependencies/tools/r
 COPY dependencies/common/install-boost /tmp/
 RUN bash /tmp/install-boost || bash /tmp/install-boost
 
+# install cmake
+COPY package/linux/install-dependencies /tmp/
+RUN bash /tmp/install-dependencies
+
 # add clang to system path
 ENV PATH=/usr/lib/llvm-7/bin:$PATH
 
@@ -87,6 +93,12 @@ COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common debian10
+
+# install Qt SDK
+COPY dependencies/common/install-qt.sh /tmp/
+COPY dependencies/linux/install-qt-linux /tmp/
+RUN export QT_VERSION=5.12.8 && \
+    cd /tmp && /bin/bash ./install-qt-linux
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN

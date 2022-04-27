@@ -59,11 +59,13 @@ struct CppDefinition
                  CppDefinitionKind kind,
                  const std::string& parentName,
                  const std::string& name,
+                 bool hidden,
                  const core::libclang::FileLocation& location)
       : USR(USR),
         kind(kind),
         parentName(parentName),
         name(name),
+        hidden(hidden),
         location(location)
    {
    }
@@ -74,6 +76,7 @@ struct CppDefinition
    CppDefinitionKind kind;
    std::string parentName; // e.g. containing C++ class
    std::string name;
+   bool hidden;
    core::libclang::FileLocation location;
 };
 

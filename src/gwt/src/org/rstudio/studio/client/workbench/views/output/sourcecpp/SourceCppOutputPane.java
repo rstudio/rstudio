@@ -36,7 +36,7 @@ public class SourceCppOutputPane extends WorkbenchPane
    @Inject
    public SourceCppOutputPane()
    {
-      super("Source Cpp");
+      super(constants_.sourceCppTitle());
       compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
       ensureWidget();
    }
@@ -90,7 +90,7 @@ public class SourceCppOutputPane extends WorkbenchPane
    @Override
    public void scrollToBottom()
    {
-      compilePanel_.scrollToBottom();   
+      compilePanel_.scrollToBottom();
    }
 
 

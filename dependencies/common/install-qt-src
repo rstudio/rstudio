@@ -17,7 +17,7 @@
 
 set -e
 
-if [ "$#" != "0" ]; then
+if [ "$#" == "0" ]; then
 	echo "Usage: install-qt-src version"
 	exit 0
 fi
@@ -35,14 +35,17 @@ if [ "$(uname)" = "Linux" ]; then
 
 	info
 	info "Installing Qt build dependencies"
+	info
 	info "If this fails, ensure you've enabled Source Code repositories."
 	info "This implies adding 'deb-src' repositories to /etc/apt/sources.list on Debian."
 	info "On Ubuntu, you can use the 'Software & Updates' application to enable these as well."
 	info
 
-	sudo apt-get build-dep qt5-default
-	sudo apt-get install libxcb-xinerama0-dev
-
+	sudo apt-get build-dep -y qtbase5-dev
+	sudo apt-get install -y libxcb-xinerama0-dev
+	sudo apt-get install -y bison flex gperf python2-dev
+	sudo apt-get install -y python-is-python3
+ 
 fi
 
 VERSION="$1"
@@ -74,19 +77,32 @@ tar xaf "${TARBALL}"
 NAME="qt-everywhere-src-${VERSION}"
 cd "${NAME}"
 
+# on Jammy Jellyfish, we need to use an older version of gcc
+CODENAME=$(source /etc/os-release; echo "${UBUNTU_CODENAME}")
+if [ "${CODENAME}" = "jammy" ]; then
+	sudo apt install gcc-9 g++-9
+	cat <<- EOF >> qtbase/mkspecs/linux-g++/qmake.conf
+	QMAKE_CC     = /usr/bin/gcc-9
+	QMAKE_CXX    = /usr/bin/g++-9
+	QMAKE_LINK_C = /usr/bin/gcc-9
+	QMAKE_LINK   = /usr/bin/g++-9
+	EOF
+fi
+
 info "Configuring Qt"
 ./configure             \
 	-prefix "${PREFIX}" \
 	-opensource         \
 	-confirm-license    \
-	-release
+	-release            \
+	-recheck-all
 
 info "Building Qt"
 info "Grab a cup of coffee, this will take a while."
-make -j4
+make ${MAKEFLAGS:-j4}
 
 info "Installing Qt"
-make install
+sudo make install
 
 info "Qt ${VERSION} was successfully installed."
 info "Install path: ${PREFIX}"
