@@ -30,7 +30,7 @@ Error initialize(
    const boost::shared_ptr<http::AsyncServer>& pSessionRpcServer,
    const std::string& sessionSharedSecret)
 {
- return Success();
+   return Success();
 }
 
 void addHandler(
