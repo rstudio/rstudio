@@ -26,10 +26,25 @@ namespace server {
 namespace session_rpc {
 namespace overlay {
 
+typedef boost::function<void(
+   const auth::SecureAsyncUriHandlerFunction&,
+   http::AsyncUriHandlerFunction,
+   bool,
+   boost::shared_ptr<core::http::AsyncConnection>)> ValidationHandler;
+
+
+ValidationHandler s_validationHandler;
+http::AsyncUriHandlerFunction s_invalidRequestHandler;
+
 Error initialize(
    const boost::shared_ptr<http::AsyncServer>& pSessionRpcServer,
-   const std::string& sessionSharedSecret)
+   const std::string& sessionSharedSecret,
+   ValidationHandler validationHandler,
+   http::AsyncUriHandlerFunction invalidRequestHandler)
 {
+   s_validationHandler = validationHandler;
+   s_invalidRequestHandler = invalidRequestHandler;
+
    return Success();
 }
 

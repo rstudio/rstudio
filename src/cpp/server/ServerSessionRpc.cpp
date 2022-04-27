@@ -36,18 +36,28 @@ namespace server {
 namespace session_rpc {
 
 namespace overlay {
-   Error initialize(
-      const boost::shared_ptr<http::AsyncServer>& pSessionRpcServer,
-      const std::string& sessionSharedSecret);
 
-   void addHandler(
-      const std::string& prefix,
-      const auth::SecureAsyncUriHandlerFunction& handler,
-      bool allowUserAccess);
+typedef boost::function<void(
+   const auth::SecureAsyncUriHandlerFunction&,
+   http::AsyncUriHandlerFunction,
+   bool,
+   boost::shared_ptr<core::http::AsyncConnection>)> ValidationHandler;
 
-   void addHttpProxyHandler(
-      const std::string& prefix,
-      const auth::SecureAsyncUriHandlerFunction& handler);
+Error initialize(
+   const boost::shared_ptr<http::AsyncServer>& pSessionRpcServer,
+   const std::string& sessionSharedSecret,
+   ValidationHandler validationHandler,
+   http::AsyncUriHandlerFunction invalidRequestHandler);
+
+void addHandler(
+   const std::string& prefix,
+   const auth::SecureAsyncUriHandlerFunction& handler,
+   bool allowUserAccess);
+
+void addHttpProxyHandler(
+   const std::string& prefix,
+   const auth::SecureAsyncUriHandlerFunction& handler);
+
 }
 
 namespace {
@@ -233,7 +243,11 @@ Error initialize()
    // inject the shared secret into the session
    sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
 
-   return overlay::initialize(s_pSessionRpcServer, s_sessionSharedSecret);
+   return overlay::initialize(
+      s_pSessionRpcServer,
+      s_sessionSharedSecret,
+      validationHandler,
+      writeInvalidRequest);
 }
 
 } // namespace session_rpc
