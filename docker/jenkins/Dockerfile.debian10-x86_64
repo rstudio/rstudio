@@ -16,7 +16,6 @@ RUN apt-get update -y && apt-get install -y \
     ant \
     bzip2 \
     clang \
-    cmake \
     curl \
     debsigs \
     dpkg-sig \
@@ -71,6 +70,10 @@ COPY dependencies/tools/rstudio-tools.sh /opt/rstudio-tools/dependencies/tools/r
 # https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
 COPY dependencies/common/install-boost /tmp/
 RUN bash /tmp/install-boost || bash /tmp/install-boost
+
+# install cmake
+COPY package/linux/install-dependencies /tmp/
+RUN bash /tmp/install-dependencies
 
 # add clang to system path
 ENV PATH=/usr/lib/llvm-7/bin:$PATH
