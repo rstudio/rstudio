@@ -235,9 +235,7 @@ DOWNLOAD_DIR=`mktemp -d 2>/dev/null || mktemp -d -t 'install-qt'`
 function compute_url(){
     local COMPONENT=$1
     local CURL="curl -s -L"
-    # RSTUDIO: temporary mirror usage until official servers come back up
-    local BASE_URL="http://qt-mirror.dannhauer.de/online/qtsdkrepository/${HOST_OS}/${TARGET_PLATFORM}"
-    # local BASE_URL="http://download.qt.io/online/qtsdkrepository/${HOST_OS}/${TARGET_PLATFORM}"
+    local BASE_URL="http://download.qt.io/online/qtsdkrepository/${HOST_OS}/${TARGET_PLATFORM}"
     local ANDROID_ARCH=$(echo ${TOOLCHAIN##android_})
 
     if [[ "${COMPONENT}" =~ "qtcreator" ]]; then

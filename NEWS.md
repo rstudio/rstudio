@@ -3,6 +3,8 @@
 
 ### New
 
+
+- Linux: Support for Ubuntu 22.04, Fedora 35. (#10902, #9854)
 - Source marker `message` can contain ANSI SGR codes for setting style and color (#9010)
 - Linux/MacOS: Executing a code selection that encounters an error will stop execution of remaining code (#3014)
 - Added support for hyperlinks in the console and build pane (#1941)
@@ -17,6 +19,7 @@
 - The choice of pipe operator (`magrittr` or native R 4.1+) inserted with the "Insert Pipe Operator" keyboard shortcut can now be configured at the project level as well as the global level (#9409)
 - The Git/SVN pane now supports creating ED25519-encrypted SSH keys by default. Newly created RSA SSH keys will now be 4096 bits instead of 2048 to increase security (#8255)
 - Read only R and C++ files (marked by "do not edit by hand") are ignored by the fuzzy file finder (#10912)
+- Linux: For compatibility with newer versions of glibc (>= 2.35), the seccomp filter sandbox is disabled. See https://chromium.googlesource.com/chromium/src/+/0e94f26e8/docs/linux_sandboxing.md#the-sandbox-1 for more details.
 
 #### Find in Files
 
