@@ -32,7 +32,6 @@ typedef boost::function<void(
    bool,
    boost::shared_ptr<core::http::AsyncConnection>)> ValidationHandler;
 
-
 ValidationHandler s_validationHandler;
 http::AsyncUriHandlerFunction s_invalidRequestHandler;
 
