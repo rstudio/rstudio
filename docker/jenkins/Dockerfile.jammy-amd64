@@ -44,6 +44,7 @@ RUN apt-get update && \
     ninja-build \
     openjdk-11-jdk \
     p7zip-full \
+    patchelf \
     pkg-config \
     python3-dev \
     python-is-python3 \
@@ -56,17 +57,8 @@ RUN apt-get update && \
     xvfb \
     zlib1g-dev
 
-# ensure we use the java 8 compiler
-RUN update-alternatives --set java /usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java
-
-## build patchelf
-RUN cd /tmp \
-    && wget https://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.gz \
-    && tar xzvf patchelf-0.9.tar.gz \
-    && cd patchelf-0.9 \
-    && ./configure \
-    && make \
-    && make install
+# ensure we use the java 11 compiler
+RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools
