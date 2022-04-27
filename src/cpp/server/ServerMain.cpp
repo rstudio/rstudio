@@ -795,7 +795,6 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
-
       // detect R environment variables (calls R (and this forks) so must
       // happen after daemonize so that upstart script can correctly track us
       std::string errMsg;
