@@ -1,3 +1,6 @@
+
+const process = require("process");
+
 const config = {
   plugins: [
     [
@@ -49,7 +52,7 @@ const config = {
     appBundleId: 'com.rstudio.desktop',
     appCopyright: 'Copyright (C) 2022 by RStudio, PBC',
     name: 'RStudio',
-    executableName: 'rstudio',
+    executableName: process.platform === 'darwin' ? 'RStudio' : 'rstudio',
     win32metadata: {
       CompanyName: "RStudio, PBC",
       FileDescription: "RStudio",
