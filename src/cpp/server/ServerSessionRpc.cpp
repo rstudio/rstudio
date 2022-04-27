@@ -13,28 +13,18 @@
  *
  */
 
-#include <core/http/LocalStreamAsyncServer.hpp>
-#include <core/http/Cookie.hpp>
-#include <core/http/CSRFToken.hpp>
-#include <server_core/http/SecureCookie.hpp>
-#include <core/http/TcpIpAsyncServer.hpp>
-#include <core/PeriodicCommand.hpp>
+#include "ServerSessionRpc.hpp"
+
 #include <shared_core/json/Json.hpp>
-#include <server_core/SecureKeyFile.hpp>
+
 #include <core/SocketRpc.hpp>
-#include <core/system/Crypto.hpp>
+#include <core/http/LocalStreamAsyncServer.hpp>
 
-#include <core/system/PosixUser.hpp>
+#include <server_core/http/SecureCookie.hpp>
+#include <server_core/SecureKeyFile.hpp>
 
-#include <server/ServerConstants.hpp>
-#include <server/ServerObject.hpp>
-#include <server/ServerOptions.hpp>
 #include <server/ServerPaths.hpp>
 #include <server/ServerSessionManager.hpp>
-
-#include <session/projects/SessionProjectSharing.hpp>
-
-#include "ServerSessionRpc.hpp"
 
 #define kInvalidSecretEndpoint "/invalid_secret"
 

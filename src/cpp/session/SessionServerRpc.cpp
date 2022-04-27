@@ -13,17 +13,14 @@
  *
  */
 
+#include "session/SessionServerRpc.hpp"
+
 #include <string>
 
-#include <core/json/JsonRpc.hpp>
-#include <core/http/URL.hpp>
 #include <core/Thread.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
-
-#include <session/SessionOptions.hpp>
-#include <session/SessionServerRpc.hpp>
 
 #include "SessionRpc.hpp"
 
@@ -131,15 +128,14 @@ Error invokeServerRpc(const std::string& endpoint,
    }
 }
 
-
-
 void invokeServerRpcAsync(const std::string& endpoint,
                           const json::Object& request,
                           const socket_rpc::RpcResultHandler& onResult,
                           const socket_rpc::RpcErrorHandler& onError)
 {
-   // start RPC worker thread if it hasn't already been started
    boost::call_once(s_threadOnce,
+
+   // start RPC worker thread if it hasn't already been started
                     boost::bind(core::thread::safeLaunchThread,
                                 rpcWorkerThreadFunc,
                                 nullptr));

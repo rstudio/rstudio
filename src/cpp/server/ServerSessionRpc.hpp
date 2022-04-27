@@ -16,8 +16,8 @@
 #ifndef SERVER_SESSION_RPC_HPP
 #define SERVER_SESSION_RPC_HPP
 
-#include <core/http/AsyncUriHandler.hpp>
 #include <core/PeriodicCommand.hpp>
+#include <core/http/AsyncUriHandler.hpp>
 
 #include <server/auth/ServerSecureUriHandler.hpp>
 
