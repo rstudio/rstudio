@@ -1951,6 +1951,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    @DefaultStringValue("The IDE's user-interface language.")
    String uiLanguageDescription();
 
+   /**
+    * Hide desktop menu bar until Alt key is pressed.
+    */
+   @DefaultStringValue("Auto hide menu bar")
+   String autohideMenubarTitle();
+   @DefaultStringValue("Hide desktop menu bar until Alt key is pressed.")
+   String autohideMenubarDescription();
+
 
 
 }

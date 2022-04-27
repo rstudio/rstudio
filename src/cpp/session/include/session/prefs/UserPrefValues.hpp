@@ -409,6 +409,7 @@ namespace prefs {
 #define kUiLanguage "ui_language"
 #define kUiLanguageEn "en"
 #define kUiLanguageFr "fr"
+#define kAutohideMenubar "autohide_menubar"
 
 class UserPrefValues: public Preferences
 {
@@ -1823,6 +1824,12 @@ public:
     */
    std::string uiLanguage();
    core::Error setUiLanguage(std::string val);
+
+   /**
+    * Hide desktop menu bar until Alt key is pressed.
+    */
+   bool autohideMenubar();
+   core::Error setAutohideMenubar(bool val);
 
 };
 

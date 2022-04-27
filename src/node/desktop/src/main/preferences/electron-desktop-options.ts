@@ -211,6 +211,16 @@ export class DesktopOptionsImpl implements DesktopOptions {
     return this.config.get(kAccessibility, properties.view.default.accessibility);
   }
 
+  public setAutohideMenubar(autohide: boolean): void {
+    console.log(`setAutohideMenubar(${autohide})`);
+    // TODO -- save it
+  }
+
+  public autohideMenubar(): boolean {
+    // TODO
+    return false;
+  }
+
   public setLastRemoteSessionUrl(lastRemoteSessionUrl: string): void {
     this.config.set(kLastRemoteSessionUrl, lastRemoteSessionUrl);
   }

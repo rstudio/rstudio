@@ -169,6 +169,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void getEnableAccessibility(CommandWithArg<Boolean> callback);
    void setEnableAccessibility(boolean enable);
    
+   void setAutohideMenubar(boolean enable);
+
    void getClipboardMonitoring(CommandWithArg<Boolean> callback);
    void setClipboardMonitoring(boolean monitoring);
    

@@ -3372,6 +3372,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String UI_LANGUAGE_EN = "en";
    public final static String UI_LANGUAGE_FR = "fr";
 
+   /**
+    * Hide desktop menu bar until Alt key is pressed.
+    */
+   public PrefValue<Boolean> autohideMenubar()
+   {
+      return bool(
+         "autohide_menubar",
+         _constants.autohideMenubarTitle(), 
+         _constants.autohideMenubarDescription(), 
+         false);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3844,6 +3856,8 @@ public class UserPrefsAccessor extends Prefs
          quartoEnabled().setValue(layer, source.getString("quarto_enabled"));
       if (source.hasKey("ui_language"))
          uiLanguage().setValue(layer, source.getString("ui_language"));
+      if (source.hasKey("autohide_menubar"))
+         autohideMenubar().setValue(layer, source.getBool("autohide_menubar"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4083,6 +4097,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(checkNullExternalPointers());
       prefs.add(quartoEnabled());
       prefs.add(uiLanguage());
+      prefs.add(autohideMenubar());
       return prefs;
    }
    

@@ -468,6 +468,10 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_enable_accessibility', enable);
     },
 
+    setAutohideMenubar: (enable: boolean) => {
+      ipcRenderer.send('desktop_set_autohide_menubar', enable);
+    },
+
     getIgnoreGpuExclusionList: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_get_ignore_gpu_exclusion_list')

@@ -5042,4 +5042,13 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Show full path to project in window title")
     @Key("fullProjectPathInWindowTitleLabel")
     String fullProjectPathInWindowTitleLabel();
+
+    /**
+     * Translated "Hide menu bar until Alt-key pressed"
+     *
+     * @return translated "Hide menu bar until Alt-key pressed"
+     */
+    @DefaultMessage("Hide menu bar until Alt-key pressed")
+    @Key("autohideMenubarLabel")
+    String autohideMenubarLabel();
 }

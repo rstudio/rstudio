@@ -1603,6 +1603,12 @@
             "default": "en",
             "title": "User Interface Language",
             "description": "The IDE's user-interface language."
+        },
+        "autohide_menubar": {
+            "type": "boolean",
+            "default": "false",
+            "title": "Auto hide menu bar",
+            "description": "Hide desktop menu bar until Alt key is pressed."
         }
     }
 }

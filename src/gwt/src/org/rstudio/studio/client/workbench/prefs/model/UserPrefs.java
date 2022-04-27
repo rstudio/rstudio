@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.gwt.core.client.GWT;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
@@ -91,6 +92,12 @@ public class UserPrefs extends UserPrefsComputed
          announceScreenReaderState();
          syncToggleTabKeyMovesFocusState();
       });
+      
+      // Let desktop-side know when this changes
+      if (BrowseCap.isElectron())
+      {
+         autohideMenubar().addValueChangeHandler(enabled -> Desktop.getFrame().setAutohideMenubar(enabled.getValue()));
+      }
    }
 
    public void writeUserPrefs()

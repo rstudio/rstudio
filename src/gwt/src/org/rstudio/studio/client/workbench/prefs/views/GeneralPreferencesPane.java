@@ -211,6 +211,13 @@ public class GeneralPreferencesPane extends PreferencesPane
          basic.add(enableCrashReporting_);
       }
 
+      CheckBox autohideMenubar = checkboxPref(constants_.autohideMenubarLabel(), prefs_.autohideMenubar());
+      if (BrowseCap.isElectron() && !BrowseCap.isMacintosh())
+      {
+         lessSpaced(autohideMenubar);
+         basic.add(autohideMenubar);
+      }
+
       VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);
 
       initializeGraphicsBackendWidget();

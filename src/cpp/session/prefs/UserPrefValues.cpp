@@ -3078,6 +3078,19 @@ core::Error UserPrefValues::setUiLanguage(std::string val)
    return writePref("ui_language", val);
 }
 
+/**
+ * Hide desktop menu bar until Alt key is pressed.
+ */
+bool UserPrefValues::autohideMenubar()
+{
+   return readPref<bool>("autohide_menubar");
+}
+
+core::Error UserPrefValues::setAutohideMenubar(bool val)
+{
+   return writePref("autohide_menubar", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3316,6 +3329,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kCheckNullExternalPointers,
       kQuartoEnabled,
       kUiLanguage,
+      kAutohideMenubar,
    });
 }
    

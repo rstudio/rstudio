@@ -678,6 +678,10 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setAccessibility(enable);
     });
 
+    ipcMain.on('desktop_set_autohide_menubar', (event, enable) => {
+      ElectronDesktopOptions().setAutohideMenubar(enable);
+    });
+
     ipcMain.handle('desktop_get_ignore_gpu_exclusion_list', (event, ignore) => {
       return !ElectronDesktopOptions().useGpuExclusionList();
     });
