@@ -27,25 +27,25 @@ namespace session_rpc {
 namespace overlay {
 
 Error initialize(
-    const boost::shared_ptr<http::AsyncServer>& pSessionRpcServer,
-    const std::string& sessionSharedSecret)
+   const boost::shared_ptr<http::AsyncServer>& pSessionRpcServer,
+   const std::string& sessionSharedSecret)
 {
-    return Success();
+ return Success();
 }
 
 void addHandler(
-    const std::string& prefix,
-    const auth::SecureAsyncUriHandlerFunction& handler,
-    bool allowUserAccess)
+   const std::string& prefix,
+   const auth::SecureAsyncUriHandlerFunction& handler,
+   bool allowUserAccess)
 {
-    // Do nothing.
+   // Do nothing.
 }
 
 void addHttpProxyHandler(
-    const std::string& prefix,
-    const auth::SecureAsyncUriHandlerFunction& handler)
+   const std::string& prefix,
+   const auth::SecureAsyncUriHandlerFunction& handler)
 {
-    // Do nothing.
+   // Do nothing.
 }
 
 } // namespace overlay

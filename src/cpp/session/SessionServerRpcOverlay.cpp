@@ -33,23 +33,23 @@ bool useHttp()
 }
 
 Error invokeServerRpc(
-    const std::string& endpoint,
-    const json::Object& request,
-    json::Value* pResult)
+   const std::string& endpoint,
+   const json::Object& request,
+   json::Value* pResult)
 {
-    // Never called because useHttp() is always false.
-    return Success();
+   // Never called because useHttp() is always false.
+   return Success();
 }
 
 void invokeServerRpcAsync(
-    const boost::asio::io_service& ioService,
-    const std::string& endpoint,
-    const json::Object& request,
-    const socket_rpc::RpcResultHandler& onResult,
-    const socket_rpc::RpcErrorHandler& onError)
+   const boost::asio::io_service& ioService,
+   const std::string& endpoint,
+   const json::Object& request,
+   const socket_rpc::RpcResultHandler& onResult,
+   const socket_rpc::RpcErrorHandler& onError)
 {
-    // Never called because useHttp() is always false.
-    // Do nothing.
+   // Never called because useHttp() is always false.
+   // Do nothing.
 }
 
 } // namespace overlay
