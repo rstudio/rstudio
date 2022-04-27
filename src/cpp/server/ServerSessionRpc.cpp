@@ -46,9 +46,18 @@ namespace server {
 namespace session_rpc {
 
 namespace overlay {
-   Error initialize(const boost::shared_ptr<http::AsyncServer>& pSessionRpcServer, const std::string& sessionSharedSecret);
-   void addHandler(const std::string& prefix, const auth::SecureAsyncUriHandlerFunction& handler, bool allowUserAccess);
-   void addHttpProxyHandler(const std::string &prefix, const auth::SecureAsyncUriHandlerFunction &handler);
+   Error initialize(
+      const boost::shared_ptr<http::AsyncServer>& pSessionRpcServer,
+      const std::string& sessionSharedSecret);
+
+   void addHandler(
+      const std::string& prefix,
+      const auth::SecureAsyncUriHandlerFunction& handler,
+      bool allowUserAccess);
+
+   void addHttpProxyHandler(
+      const std::string& prefix,
+      const auth::SecureAsyncUriHandlerFunction& handler);
 }
 
 namespace {
