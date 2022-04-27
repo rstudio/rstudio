@@ -481,7 +481,6 @@ RToken RTokenizer::matchKnitrEmbeddedChunk()
 RToken RTokenizer::matchOperator()
 {
    wchar_t cNext = peek(1);
-   wchar_t cNextNext = peek(2);
 
    switch (peek())
    {
@@ -489,9 +488,14 @@ RToken RTokenizer::matchOperator()
    case L':': // :::, ::, :=
    {
       if (cNext == L'=')
+      {
          return consumeToken(RToken::OPER, 2);
-      else
-         return consumeToken(RToken::OPER, 1 + (cNext == L':') + (cNextNext == L':'));
+      }
+      else if (cNext == L':')
+      {
+         wchar_t cNextNext = peek(2);
+         return consumeToken(RToken::OPER, cNextNext == L':' ? 3 : 2);
+      }
    }
       
    case L'|': // ||, |>, |
@@ -510,6 +514,7 @@ RToken RTokenizer::matchOperator()
       }
       else if (cNext == L'<')
       {
+         wchar_t cNextNext = peek(2);
          if (cNextNext == L'-') // <<-
             return consumeToken(RToken::OPER, 3);
       }
@@ -520,9 +525,14 @@ RToken RTokenizer::matchOperator()
       
    case L'-': // also -> and ->>
       if (cNext == L'>')
+      {
+         wchar_t cNextNext = peek(2);
          return consumeToken(RToken::OPER, cNextNext == L'>' ? 3 : 2);
+      }
       else
+      {
          return consumeToken(RToken::OPER, 1);
+      }
       
    case L'*': // '*' and '**' (which R's parser converts to '^')
       return consumeToken(RToken::OPER, cNext == L'*' ? 2 : 1);

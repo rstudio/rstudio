@@ -3,7 +3,6 @@
 
 ### New
 
-
 - Linux: Support for Ubuntu 22.04, Fedora 35. (#10902, #9854)
 - Source marker `message` can contain ANSI SGR codes for setting style and color (#9010)
 - Linux/MacOS: Executing a code selection that encounters an error will stop execution of remaining code (#3014)
@@ -55,6 +54,7 @@
 - Fixed an intermittent hang when invoking `rstudio-server verify-installation` which caused stale `rserver` processes to exist (rstudio-pro#3041) 
 - (Windows only) Fixed an issue where multiple instances of RStudio launched at the same time could bind to the same session. (#10488)
 - Fixed unintended change of date/time formatting in the VCS commit history (#10810)
+- Fixed an issue where code of the form '1:2:3' was diagnosed incorrectly. (#10979)
 - Add back link to the title of sessions so that users can easily open sessions in new tabs and copy session links (rstudio-pro#3290)
 - (Linux Only) License-manager now works in a installer-less context (rstudio-pro#3150)
 
