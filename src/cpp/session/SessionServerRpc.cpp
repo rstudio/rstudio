@@ -35,8 +35,18 @@ namespace server_rpc {
 
 namespace overlay {
    bool useHttp();
-   Error invokeServerRpc();
-   void invokeServerRpcAsync(const boost::asio::io_service&);
+
+   Error invokeServerRpc(
+      const std::string& endpoint,
+      const json::Object& request,
+      json::Value* pResult);
+
+   void invokeServerRpcAsync(
+      const boost::asio::io_service& ioService,
+      const std::string& endpoint,
+      const json::Object& request,
+      const socket_rpc::RpcResultHandler& onResult,
+      const socket_rpc::RpcErrorHandler& onError);
 }
 
 namespace {
@@ -106,7 +116,7 @@ Error invokeServerRpc(const std::string& endpoint,
 {
    if (overlay::useHttp())
    {
-      return overlay::invokeServerRpc();
+      return overlay::invokeServerRpc(endpoint, request, pResult);
    }
    else
    {
@@ -134,9 +144,7 @@ void invokeServerRpcAsync(const std::string& endpoint,
                                 rpcWorkerThreadFunc,
                                 nullptr));
    if (overlay::useHttp())
-   {
-      overlay::invokeServerRpcAsync(s_ioService);
-   }
+      overlay::invokeServerRpcAsync(s_ioService, endpoint, request, onResult, onError);
    else
    {
 #ifdef _WIN32

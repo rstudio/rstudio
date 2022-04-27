@@ -13,7 +13,11 @@
  *
  */
 
+#include <core/SocketRpc.hpp>
+
 #include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
+
 #include <boost/asio/io_service.hpp>
 
 using namespace rstudio::core;
@@ -28,13 +32,21 @@ bool useHttp()
     return false;
 }
 
-Error invokeServerRpc()
+Error invokeServerRpc(
+    const std::string& endpoint,
+    const json::Object& request,
+    json::Value* pResult)
 {
     // Never called because useHttp() is always false.
     return Success();
 }
 
-void invokeServerRpcAsync(const boost::asio::io_service&)
+void invokeServerRpcAsync(
+    const boost::asio::io_service& ioService,
+    const std::string& endpoint,
+    const json::Object& request,
+    const socket_rpc::RpcResultHandler& onResult,
+    const socket_rpc::RpcErrorHandler& onError)
 {
     // Never called because useHttp() is always false.
     // Do nothing.
