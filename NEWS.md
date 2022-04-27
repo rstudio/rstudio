@@ -3,6 +3,7 @@
 
 ### New
 
+- Linux: Support for Ubuntu 22.04, Fedora 35 (#10902, #9854)
 - Source marker `message` can contain ANSI SGR codes for setting style and color (#9010)
 - Linux/MacOS: Executing a code selection that encounters an error will stop execution of remaining code (#3014)
 - Added support for hyperlinks in the console and build pane (#1941)
