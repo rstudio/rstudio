@@ -1,37 +1,39 @@
-/* eslint-disable max-len */
 const isLocalStorageItemSet = (key: string) => {
-  if (typeof window !== 'undefined') {
+  if (typeof window !== "undefined") {
     const value = window.localStorage.getItem(key);
 
-    return { isSet: value !== '' && !!value, value };
+    return { isSet: value !== "" && !!value, value };
   }
 
-  return { isSet: false, value: '' };
+  return { isSet: false, value: "" };
 };
 
 export const checkForNewLanguage = () => {
   return new Promise((resolve) => {
-    const fisrtRunTime = new Date().getTime();
-    const localeStorageItemKey = 'LOCALE';
-    const localeLastTimeSetStorageItemKey = 'LAST_TIME';
+    const firstRunTime = new Date().getTime();
+    const localeStorageItemKey = "LOCALE";
+    const localeLastTimeSetStorageItemKey = "LAST_TIME";
 
     // This will check every 0.1 seconds if a new language has been set to the local storage
     const isThereNewLanguageInterval = setInterval(() => {
       // After 5 seconds, the default language will be set
-      if (new Date().getTime() > fisrtRunTime + 5000) {
+      if (new Date().getTime() > firstRunTime + 5000) {
         clearInterval(isThereNewLanguageInterval);
-        resolve('en');
+        resolve("en");
       } else {
         const localeLastTimeData = isLocalStorageItemSet(localeLastTimeSetStorageItemKey);
 
-        // If a new Language is set, the last time it was set will be checked against the time this function has first ran 
+        // If a new Language is set, the last time it was set will be checked against the time this function has first ran
         if (localeLastTimeData.isSet) {
           const localeData = isLocalStorageItemSet(localeStorageItemKey);
 
-          if (localeData.isSet && fisrtRunTime <= parseInt('' + localeLastTimeData.value, 10) + 3000) {
+          if (
+            localeData.isSet &&
+            firstRunTime <= parseInt("" + localeLastTimeData.value, 10) + 3000
+          ) {
             clearInterval(isThereNewLanguageInterval);
 
-            resolve('' + localeData.value);
+            resolve("" + localeData.value);
           }
         }
       }

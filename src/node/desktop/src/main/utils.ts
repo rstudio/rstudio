@@ -32,6 +32,7 @@ import { MainWindow } from './main-window';
 import i18next from 'i18next';
 import { spawnSync } from 'child_process';
 import { changeLanguage } from './i18n-manager';
+import { randomUUID } from 'crypto';
 
 // work around Electron resolving the application path to 'app.asar'
 const appPath = path.join(path.dirname(app.getAppPath()), 'app');
@@ -41,7 +42,7 @@ export function getAppPath(): string {
 }
 
 export function initializeSharedSecret(): void {
-  const sharedSecret = randomString() + randomString() + randomString();
+  const sharedSecret = randomUUID();
   setenv('RS_SHARED_SECRET', sharedSecret);
 }
 
@@ -529,7 +530,6 @@ export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = 
   }
 
   await window.webContents.session.cookies.get({}).then(async (cookies) => {
-    console.log('cookies: ', cookies);
     if (cookies.length === 0) {
       await updateLocaleFromCookie({ name: 'LOCALE', value: 'en' } as any, window);
     } else {
