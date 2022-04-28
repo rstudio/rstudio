@@ -114,7 +114,7 @@ export class DesktopBrowserWindow extends EventEmitter {
         acceptFirstMouse: true,
       });
 
-      void handleLocaleCookies(this.window);
+      void handleLocaleCookies(this.window, true);
 
       const customStyles =
         // eslint-disable-next-line max-len
