@@ -1,35 +1,40 @@
+/* eslint-disable max-len */
 const isLocalStorageItemSet = (key: string) => {
-  const value = window.localStorage.getItem(key);
+  if (typeof window !== 'undefined') {
+    const value = window.localStorage.getItem(key);
 
-  return { isSet: value !== '' && !!value, value };
+    return { isSet: value !== '' && !!value, value };
+  }
+
+  return { isSet: false, value: '' };
 };
 
 export const checkForNewLanguage = () => {
-  return new Promise((resolve, reject) => {
-    const now = new Date().getTime();
+  return new Promise((resolve) => {
+    const fisrtRunTime = new Date().getTime();
     const localeStorageItemKey = 'LOCALE';
     const localeLastTimeSetStorageItemKey = 'LAST_TIME';
 
+    // This will check every 0.1 seconds if a new language has been set to the local storage
     const isThereNewLanguageInterval = setInterval(() => {
-      const localeLastTimeData = isLocalStorageItemSet(localeLastTimeSetStorageItemKey);
+      // After 5 seconds, the default language will be set
+      if (new Date().getTime() > fisrtRunTime + 5000) {
+        clearInterval(isThereNewLanguageInterval);
+        resolve('en');
+      } else {
+        const localeLastTimeData = isLocalStorageItemSet(localeLastTimeSetStorageItemKey);
 
-      if (localeLastTimeData.isSet) {
-        const localeData = isLocalStorageItemSet(localeStorageItemKey);
+        // If a new Language is set, the last time it was set will be checked against the time this function has first ran 
+        if (localeLastTimeData.isSet) {
+          const localeData = isLocalStorageItemSet(localeStorageItemKey);
 
-        if (localeData.isSet && now > parseInt('' + localeLastTimeData.value, 10)) {
-          clearInterval(isThereNewLanguageInterval);
+          if (localeData.isSet && fisrtRunTime <= parseInt('' + localeLastTimeData.value, 10) + 3000) {
+            clearInterval(isThereNewLanguageInterval);
 
-          const newLanguage = localeData.value;
-
-          resolve('' + newLanguage);
+            resolve('' + localeData.value);
+          }
         }
       }
     }, 100);
-
-    if (new Date().getTime() > now + 30000) {
-      clearInterval(isThereNewLanguageInterval);
-
-      resolve('en');
-    }
   });
 };
