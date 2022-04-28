@@ -62,6 +62,7 @@
 #include <shared_core/Error.hpp>
 #include <shared_core/system/User.hpp>
 
+#include "server-config.h"
 #include "ServerAddins.hpp"
 #include "ServerBrowser.hpp"
 #include "ServerEval.hpp"
@@ -866,11 +867,11 @@ int main(int argc, char * const argv[])
          LOG_ERROR(error);
 
       server::session_rpc::addHandler(
-         "/whoami", 
-         [](const std::string& user, boost::shared_ptr<core::http::AsyncConnection> pConnection)
+         "/server_version", 
+         [](const std::string&, boost::shared_ptr<core::http::AsyncConnection> pConnection)
          {
             json::Object obj;
-            obj["user"] = user;
+            obj["version"] = RSTUDIO_VERSION;
 
             json::JsonRpcResponse response;
             response.setResult(obj);
