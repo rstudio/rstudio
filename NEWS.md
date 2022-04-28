@@ -57,6 +57,7 @@
 - Fixed an issue where code of the form '1:2:3' was diagnosed incorrectly. (#10979)
 - Add back link to the title of sessions so that users can easily open sessions in new tabs and copy session links (rstudio-pro#3290)
 - (Linux Only) License-manager now works in a installer-less context (rstudio-pro#3150)
+- Fixed an issue where R raw strings were not highlighted correctly in R Markdown documents. (#11087)
 
 ### RStudio Workbench
 
