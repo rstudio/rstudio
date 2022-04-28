@@ -280,23 +280,22 @@ public class VirtualConsole
    {      
       int start = range.start;
       int end = start + range.length;
-
+      
       Entry<Integer, ClassRange> left = class_.floorEntry(start);
-      Entry<Integer, ClassRange> right = class_.lowerEntry(end);
-
+      Entry<Integer, ClassRange> right = class_.floorEntry(end);
+      
       // create a view into the map representing the ranges that this class
       // overlaps
       SortedMap<Integer, ClassRange> view = null;
       
       if (left != null && right != null) {
-         view = class_.subMap(left.getKey(), true, right.getKey(), left.equals(right));
+         view = class_.subMap(left.getKey(), true, right.getKey(), true);
       } else if (left == null && right != null) {
          view = class_.tailMap(right.getKey(), true);
       } else if (left != null) {
          view = class_.headMap(left.getKey(), true);
       }
-         
-
+      
       // if no overlapping ranges exist, we can just create a new one
       if (view == null)
       {
@@ -378,12 +377,15 @@ public class VirtualConsole
                // reduce the original range and add ours
                overlap.trimLeft(delta);
 
+               // move the shortened range to its new start position
+               // unless it's empty
+               if (overlap.length > 0) {
+                  moves.put(l, overlap.start);
+               }
+
                if (!range.text().isEmpty())
                   insertions.add(range);
-
-               // move the shortened range to its new start position
-               moves.put(l, overlap.start);
-
+               
                if (parent_ != null && !range.text().isEmpty())
                   overlap.element.getParentElement().insertBefore(range.element, overlap.element);
 
@@ -439,7 +441,7 @@ public class VirtualConsole
 
       for (Integer key: moves.keySet())
       {
-         ClassRange moved = class_.get(key);
+         ClassRange moved = class_.get(key);     
          class_.remove(key);
          class_.put(moves.get(key), moved);
       }
