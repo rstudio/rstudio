@@ -29,7 +29,7 @@ namespace overlay {
 
 bool useHttp()
 {
-    return false;
+   return false;
 }
 
 Error invokeServerRpc(
