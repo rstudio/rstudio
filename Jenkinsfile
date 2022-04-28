@@ -243,8 +243,6 @@ try {
           [os: 'jammy',      arch: 'amd64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Jammy'],
           [os: 'jammy',      arch: 'amd64',  flavor: 'desktop',  variant: '',  package_os: 'Ubuntu Jammy'],
           [os: 'jammy',      arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Jammy'],
-          [os: 'debian9',    arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'Debian 9'],
-          [os: 'debian9',    arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'Debian 9'],
           [os: 'debian10',   arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'Debian 10'],
           [os: 'debian10',   arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'Debian 10'],
           [os: 'debian10',   arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'Debian 10'],
