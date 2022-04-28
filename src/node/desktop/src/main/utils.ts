@@ -30,7 +30,7 @@ import { Err } from '../core/err';
 
 import { MainWindow } from './main-window';
 import i18next from 'i18next';
-import { execSync, spawnSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import { changeLanguage } from './i18n-manager';
 
 // work around Electron resolving the application path to 'app.asar'
@@ -512,10 +512,8 @@ export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = 
       const newLanguage = cookie.value;
 
       const jsSetLocaleScript = `
-        
           window.localStorage.setItem('${localeCookieName}', '${newLanguage}');
           window.localStorage.setItem('${localeLastTimeSetStorageItemKey}', '${new Date().getTime()}');
-        
       `;
 
       await window.webContents.executeJavaScript(jsSetLocaleScript);
