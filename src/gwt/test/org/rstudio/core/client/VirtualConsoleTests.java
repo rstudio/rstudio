@@ -1262,4 +1262,12 @@ public class VirtualConsoleTests extends GWTTestCase
       String expected = "<a class=\"xtermHyperlink\" title=\"http://www.example.com\">text</a>";
       Assert.assertEquals(expected, ele.getInnerHTML());
    }
+
+   public void testIssue9846()
+   {
+      PreElement ele = Document.get().createPreElement();
+      VirtualConsole vc = getVC(ele);
+      vc.submit("i Some intermediate step with a \033[32mfield\033[39m-----------------------\r+++++++++++++++++++++++++++++++++++++\r\033[33m!\033[39m An alert message which is long enough\ni Some intermediate step with a \033[32mfield\033[39m\n");
+      Assert.assertEquals("<span class=\"xtermColor3\">!</span><span> An alert message which is long enough</span><span>---------------------\ni Some intermediate step with a </span><span class=\"xtermColor2\">field</span><span>\n</span>", ele.getInnerHTML());
+   }
 }
