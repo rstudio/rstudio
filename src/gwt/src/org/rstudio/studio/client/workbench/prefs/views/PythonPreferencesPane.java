@@ -15,8 +15,14 @@
 package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
+import org.rstudio.core.client.widget.SmallButton;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.PrefsConstants;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -27,14 +33,30 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
 {
    @Inject
    public PythonPreferencesPane(PythonDialogResources res,
-                                PythonServerOperations server)
+                                PythonServerOperations server,
+                                Commands commands)
    {
 
       super("420px", constants_.pythonPreferencesText(), false);
 
-      
+      projectPrefsPanel_ = new HorizontalPanel();
       overrideLabel_ = new Label();
-      add(overrideLabel_);
+      projectPrefsPanel_.add(overrideLabel_);
+
+      SmallButton editProjectSettings = new SmallButton(constants_.editProjectPreferencesButtonLabel());
+      editProjectSettings.getElement().getStyle().setMarginTop(1, Style.Unit.PX);
+      editProjectSettings.getElement().getStyle().setMarginLeft(5, Style.Unit.PX);
+      editProjectSettings.addClickHandler(new ClickHandler() {
+         @Override
+         public void onClick(ClickEvent event)
+         {
+            // open the project options pane for editing
+            // this will open to the General tab, but it would be ideal if we could open directly to Editing tab
+            commands.projectOptions().execute();
+         }
+      });
+      projectPrefsPanel_.add(editProjectSettings);
+      add(projectPrefsPanel_);
    }
 
    @Override
@@ -52,13 +74,13 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
                  constants_.overrideText();
          
          overrideLabel_.setText(text);
-         overrideLabel_.setVisible(true);
          overrideLabel_.addStyleName(RES.styles().overrideLabel());
+         projectPrefsPanel_.setVisible(true);
       }
       else
       {
-         overrideLabel_.setVisible(false);
          overrideLabel_.removeStyleName(RES.styles().overrideLabel());
+         projectPrefsPanel_.setVisible(false);
       }
    }
    
@@ -83,6 +105,7 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
    }
    
    private final Label overrideLabel_;
+   private final HorizontalPanel projectPrefsPanel_;
    private static final PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 
 }
