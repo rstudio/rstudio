@@ -17,5 +17,5 @@
 {
    # callback to session to invoke server RPC
    args <- list(...)
-   .Call("rs_invokeServerRpc", method, .rs.scalarListFromList(args))
+   .Call("rs_invokeServerRpc", method, .rs.scalarListFromList(args), PACKAGE="(embedding)")
 })
