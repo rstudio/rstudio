@@ -1808,11 +1808,11 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String pathHelpCaption();
 
     /**
-     * Translated "SSH key type".
+     * Translated "SSH key type: ".
      *
-     * @return translated "SSH key type"
+     * @return translated "SSH key type: "
      */
-    @DefaultMessage("SSH key type")
+    @DefaultMessage("SSH key type: ")
     @Key("sshKeyTypeLabel")
     String sshKeyTypeLabel();
 

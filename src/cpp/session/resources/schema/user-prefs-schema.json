@@ -1152,7 +1152,7 @@
         "ssh_key_type": {
             "type": "string",
             "enum": ["ed25519", "rsa"],
-            "enumReadable": ["ED25519-encrypted key", "RSA-encrypted key"],
+            "enumReadable": ["ED25519", "RSA"],
             "default": "ed25519",
             "description": "The encryption type to use for the SSH key file."
         },

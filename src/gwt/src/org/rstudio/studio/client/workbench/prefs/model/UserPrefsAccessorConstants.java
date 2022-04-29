@@ -1420,9 +1420,9 @@ public interface UserPrefsAccessorConstants extends Constants {
    String sshKeyTypeTitle();
    @DefaultStringValue("The encryption type to use for the SSH key file.")
    String sshKeyTypeDescription();
-   @DefaultStringValue("ED25519-encrypted key")
+   @DefaultStringValue("ED25519")
    String sshKeyTypeEnum_ed25519();
-   @DefaultStringValue("RSA-encrypted key")
+   @DefaultStringValue("RSA")
    String sshKeyTypeEnum_rsa();
 
    /**
