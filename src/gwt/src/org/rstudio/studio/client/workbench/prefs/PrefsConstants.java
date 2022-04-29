@@ -2633,11 +2633,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String pythonPreferencesText();
 
     /**
-     * Translated "(NOTE: This project has already been configured with its own Python interpreter. Use the Project Options dialog to change the version of Python used in this project.".
+     * Translated "(NOTE: This project has already been configured with its own Python interpreter. Use the Edit Project Preferences button to change the version of Python used in this project.".
      *
-     * @return translated "(NOTE: This project has already been configured with its own Python interpreter. Use the Project Options dialog to change the version of Python used in this project."
+     * @return translated "(NOTE: This project has already been configured with its own Python interpreter. Use the Edit Project Preferences button to change the version of Python used in this project."
      */
-    @DefaultMessage("(NOTE: This project has already been configured with its own Python interpreter. Use the Project Options dialog to change the version of Python used in this project.")
+    @DefaultMessage("(NOTE: This project has already been configured with its own Python interpreter. Use the Edit Project Preferences button to change the version of Python used in this project.")
     @Key("overrideText")
     String overrideText();
 
