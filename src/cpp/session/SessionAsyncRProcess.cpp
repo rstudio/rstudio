@@ -175,7 +175,6 @@ void AsyncRProcess::start(const char* rCommand,
    core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_SHARED_SECRET", sharedSecret_);
    
    // this runs in the job pane as a child process of this process
-   core::system::setenv(&childEnv, "RSTUDIO_CHILD_PROCESS_PANE", "job");
    core::system::setenv(&childEnv, "RSTUDIO_SESSION_PID", core::safe_convert::numberToString(::getpid()));
    
    // update environment used for child process
