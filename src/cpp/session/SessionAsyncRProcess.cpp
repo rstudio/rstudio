@@ -174,7 +174,7 @@ void AsyncRProcess::start(const char* rCommand,
    core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_RESPONSE_FILE", ipcResponse_.getAbsolutePath());
    core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_SHARED_SECRET", sharedSecret_);
    
-   // this runs in the job pane as a child process of this process
+   // PID of this R session, to match against parent pid of child process
    core::system::setenv(&childEnv, "RSTUDIO_SESSION_PID", core::safe_convert::numberToString(::getpid()));
    
    // update environment used for child process
