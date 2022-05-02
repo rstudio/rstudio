@@ -220,7 +220,10 @@ protected:
       "Enables offline request handling. When the R session is busy, some requests are allowed to run")
       (kSessionHandleOfflineTimeoutMs,
       value<int>(&handleOfflineTimeoutMs_)->default_value(200),
-      "Duration in millis before requests that can be handled offline are processed by the offline handler thread.");
+      "Duration in millis before requests that can be handled offline are processed by the offline handler thread.")
+      (kSessionUseFileStorage,
+      value<bool>(&sessionUseFileStorage_)->default_value(true),
+      "Controls whether the session should store its metadata on the file system or send it to the server to be stored in the internal database.");
 
    pAllow->add_options()
       ("allow-vcs-executable-edit",
@@ -452,6 +455,7 @@ public:
    int asyncRpcTimeoutMs() const { return asyncRpcTimeoutMs_; }
    bool handleOfflineEnabled() const { return handleOfflineEnabled_; }
    int handleOfflineTimeoutMs() const { return handleOfflineTimeoutMs_; }
+   bool sessionUseFileStorage() const { return sessionUseFileStorage_; }
    bool allowVcsExecutableEdit() const { return allowVcsExecutableEdit_; }
    bool allowCRANReposEdit() const { return allowCRANReposEdit_; }
    bool allowVcs() const { return allowVcs_; }
@@ -554,6 +558,7 @@ protected:
    int asyncRpcTimeoutMs_;
    bool handleOfflineEnabled_;
    int handleOfflineTimeoutMs_;
+   bool sessionUseFileStorage_;
    bool allowVcsExecutableEdit_;
    bool allowCRANReposEdit_;
    bool allowVcs_;
