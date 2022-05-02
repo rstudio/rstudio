@@ -277,7 +277,7 @@ public class VirtualConsole
     * @param range
     */
    private void insertText(ClassRange range)
-   {      
+   {
       int start = range.start;
       int end = start + range.length;
       
@@ -288,11 +288,16 @@ public class VirtualConsole
       // overlaps
       SortedMap<Integer, ClassRange> view = null;
       
-      if (left != null && right != null) {
+      if (left != null && right != null) 
+      {
          view = class_.subMap(left.getKey(), true, right.getKey(), true);
-      } else if (left == null && right != null) {
+      } 
+      else if (left == null && right != null) 
+      {
          view = class_.tailMap(right.getKey(), true);
-      } else if (left != null) {
+      } 
+      else if (left != null) 
+      {
          view = class_.headMap(left.getKey(), true);
       }
       
@@ -441,7 +446,7 @@ public class VirtualConsole
 
       for (Integer key: moves.keySet())
       {
-         ClassRange moved = class_.get(key);     
+         ClassRange moved = class_.get(key);
          class_.remove(key);
          class_.put(moves.get(key), moved);
       }
