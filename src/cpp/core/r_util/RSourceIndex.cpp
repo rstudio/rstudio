@@ -366,6 +366,42 @@ void libraryCallIndexer(const RTokenCursor& cursor,
    }
 }
 
+void testThatCallIndexer(const RTokenCursor& cursor,
+                         const IndexStatus& status,
+                         bool isReadOnlyFile, 
+                         RSourceIndex* pIndex)
+{
+   if (!cursor.isType(RToken::ID))
+      return;
+   
+   if (!(cursor.contentEquals(L"test_that")))
+      return;
+   
+   RTokenCursor clone = cursor.clone();
+   if (!clone.moveToNextToken())
+      return;
+   
+   if (!clone.isType(RToken::LPAREN))
+      return;
+   
+   if (!clone.moveToNextToken())
+      return;
+   
+   if (clone.isType(RToken::STRING))
+   {
+      RSourceItem item(
+         RSourceItem::Test,
+         boost::join(std::vector<std::string> {"test_that(", clone.contentAsUtf8(), ")"}, ""),
+         std::vector<RS4MethodParam>(), 
+         status.count(RToken::LBRACE),
+         cursor.row() + 1, 
+         cursor.column() + 1, 
+         isReadOnlyFile
+      );
+      pIndex->addSourceItem(item);
+   }
+}
+
 void s4MethodIndexer(const RTokenCursor& cursor,
                      const IndexStatus& status,
                      bool isReadOnlyFile, 
@@ -551,7 +587,8 @@ std::vector<Indexer> makeIndexers()
    indexers.push_back(libraryCallIndexer);
    indexers.push_back(s4MethodIndexer);
    indexers.push_back(variableAssignmentIndexer);
-   
+   indexers.push_back(testThatCallIndexer);
+
    return indexers;
 }
 

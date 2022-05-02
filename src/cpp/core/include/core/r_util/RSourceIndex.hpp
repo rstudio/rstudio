@@ -73,7 +73,8 @@ public:
       Function = 1,
       Method = 2,
       Class = 3,
-      Variable = 4
+      Variable = 4, 
+      Test = 11
    };
 
 public:

@@ -31,6 +31,7 @@ import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.SourceItem;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
@@ -98,6 +99,9 @@ class CodeSearchSuggestion implements Suggestion
          break;
       case SourceItem.SECTION:
          image = new ImageResource2x(CodeIcons.INSTANCE.section2x());
+         break;
+      case SourceItem.TEST:
+         image = new ImageResource2x(CodeIcons.INSTANCE.test2x());
          break;
       case SourceItem.NONE:
       default:

@@ -1441,6 +1441,7 @@ public:
       Figure    = 8,
       Table     = 9,
       Math      = 10,
+      Test      = 11
    };
 
    SourceItem()
@@ -1508,6 +1509,9 @@ SourceItem fromRSourceItem(const r_util::RSourceItem& rSourceItem)
       break;
    case RSourceItem::Class:
       type = SourceItem::Class;
+      break;
+   case RSourceItem::Test:
+      type = SourceItem::Test;
       break;
    case RSourceItem::None:
    default:
