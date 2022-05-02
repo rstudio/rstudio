@@ -40,11 +40,11 @@ public class PythonPreferencesPane extends PythonPreferencesPaneBase<UserPrefs>
       super("420px", constants_.pythonPreferencesText(), false);
 
       projectPrefsPanel_ = new HorizontalPanel();
+      projectPrefsPanel_.getElement().getStyle().setMarginTop(5, Style.Unit.PX);
       overrideLabel_ = new Label();
       projectPrefsPanel_.add(overrideLabel_);
 
       SmallButton editProjectSettings = new SmallButton(constants_.editProjectPreferencesButtonLabel());
-      editProjectSettings.getElement().getStyle().setMarginTop(1, Style.Unit.PX);
       editProjectSettings.getElement().getStyle().setMarginLeft(5, Style.Unit.PX);
       editProjectSettings.addClickHandler(new ClickHandler() {
          @Override
