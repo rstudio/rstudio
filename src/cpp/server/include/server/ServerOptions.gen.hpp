@@ -155,6 +155,9 @@ protected:
       ("rsession-proxy-max-wait-secs",
       value<int>(&rsessionProxyMaxWaitSeconds_)->default_value(10),
       "The maximum time to wait in seconds for a successful response when proxying requests to rsession.")
+      ("rsession-use-file-storage",
+      value<bool>(&rsessionUseFileStorage_)->default_value(true),
+      "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See <link?> for more information.")
       ("rsession-memory-limit-mb",
       value<int>(&deprecatedMemoryLimitMb_)->default_value(0),
       "The limit in MB that an rsession process may consume.")
@@ -259,6 +262,7 @@ public:
    std::string rsessionLdLibraryPath() const { return rsessionLdLibraryPath_; }
    std::string rsessionConfigFile() const { return rsessionConfigFile_; }
    int rsessionProxyMaxWaitSeconds() const { return rsessionProxyMaxWaitSeconds_; }
+   bool rsessionUseFileStorage() const { return rsessionUseFileStorage_; }
    std::string databaseConfigFile() const { return databaseConfigFile_; }
    std::string dbCommand() const { return dbCommand_; }
    bool authNone() const { return authNone_; }
@@ -308,6 +312,7 @@ protected:
    std::string rsessionLdLibraryPath_;
    std::string rsessionConfigFile_;
    int rsessionProxyMaxWaitSeconds_;
+   bool rsessionUseFileStorage_;
    int deprecatedMemoryLimitMb_;
    int deprecatedStackLimitMb_;
    int deprecatedUserProcessLimit_;

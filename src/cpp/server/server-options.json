@@ -243,6 +243,13 @@
             "description": "The maximum time to wait in seconds for a successful response when proxying requests to rsession."
          },
          {
+            "name": "rsession-use-file-storage",
+            "memberName": "rsessionUseFileStorage_",
+            "type": "bool",
+            "defaultValue": true,
+            "description": "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See <link?> for more information."
+         },
+         {
             "name": "rsession-memory-limit-mb",
             "memberName": "deprecatedMemoryLimitMb_",
             "isDeprecated": true,
