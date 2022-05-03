@@ -617,8 +617,11 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("parseYamlOpt", function(opt)
 {
     opt <- sub("^#\\|\\s*", "", opt)
-    if (grepl(".+=.+", opt)) # R-style chunk options
-        opts <- knitr:::parse_params(opt)
+    if (any(grepl(".+=.+", opt))) # R-style chunk options
+    {
+        opts <- paste(opt, collapse=" ")
+        opts <- knitr:::parse_params(opts)
+    }
     else
     {
         opts <- .rs.fromYAML(opt)
@@ -647,15 +650,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
   # the next several lines may or may not contain YAML-style chunk options
   code <- unlist(strsplit(code, "\n", fixed = TRUE))
   rmdChunkOpts <- code[[1]]
-  yamlChunkOpts <- code[-1]
+  yamlChunkOpts <- c()
 
-  for (line in yamlChunkOpts) {
-    matches <- unlist(regmatches(line, regexec(.rs.reYamlOptChunkBegin(), line)))
+  for (line in code[-1]) {
+    match <- unlist(regmatches(line, regexec(.rs.reYamlOptChunkBegin(), line)))
     # there may be variable number of yaml chunk opts, but they should all be at the top of the chunk
-    if (length(matches) == 0)
+    if (length(match) == 0)
         break
-    opts <- append(opts, .rs.parseYamlOpt(matches))
+    yamlChunkOpts <- c(yamlChunkOpts, match)
   }
+  opts <- .rs.parseYamlOpt(yamlChunkOpts)
 
   # strip chunk indicators if present
   matches <- unlist(regmatches(rmdChunkOpts, regexec(.rs.reRmdChunkBegin(), rmdChunkOpts)))
