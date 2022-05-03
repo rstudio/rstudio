@@ -620,7 +620,21 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
     if (grepl(".+=.+", opt)) # R-style chunk options
         opts <- knitr:::parse_params(opt)
     else
+    {
         opts <- .rs.fromYAML(opt)
+        # parse truthy and falsy style yaml options
+        opts <- lapply(opts, function(value)
+                             {
+                               if (!is.character(value))
+                                 return(value)
+                               if (tolower(value) %in% c("y", "yes", "on"))
+                                 return(TRUE)
+                               if (tolower(value) %in% c("n", "no", "off"))
+                                 return(FALSE)
+                               else
+                                 return(value)
+                             })
+    }
     return(opts)
 })
 
