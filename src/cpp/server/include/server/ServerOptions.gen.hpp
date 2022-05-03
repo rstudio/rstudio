@@ -134,7 +134,10 @@ protected:
       "If enabled, cause RStudio to enforce that incoming request origins are from the host domain. This can be added for additional security. See https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#verifying-origin-with-standard-headers")
       ("www-allow-origin",
       value<std::vector<std::string>>(pWwwAllowedOrigins)->default_value(std::vector<std::string>())->multitoken(),
-      "Specifies an additional origin that requests are allowed from, even if it does not match the host domain. Used if origin checking is enabled. May be specified multiple times for multiple origins.");
+      "Specifies an additional origin that requests are allowed from, even if it does not match the host domain. Used if origin checking is enabled. May be specified multiple times for multiple origins.")
+      ("session-use-file-storage",
+      value<bool>(&sessionUseFileStorage_)->default_value(true),
+      "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See [Session Storage](../server_management/session_storage.html) for more information.");
 
    pRsession->add_options()
       ("rsession-which-r",
@@ -155,9 +158,6 @@ protected:
       ("rsession-proxy-max-wait-secs",
       value<int>(&rsessionProxyMaxWaitSeconds_)->default_value(10),
       "The maximum time to wait in seconds for a successful response when proxying requests to rsession.")
-      ("rsession-use-file-storage",
-      value<bool>(&rsessionUseFileStorage_)->default_value(true),
-      "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See <link?> for more information.")
       ("rsession-memory-limit-mb",
       value<int>(&deprecatedMemoryLimitMb_)->default_value(0),
       "The limit in MB that an rsession process may consume.")
@@ -256,13 +256,13 @@ public:
    std::string wwwFrameOrigin() const { return wwwFrameOrigin_; }
    bool wwwEnableOriginCheck() const { return wwwEnableOriginCheck_; }
    std::vector<boost::regex> wwwAllowedOrigins() const { return wwwAllowedOrigins_; }
+   bool sessionUseFileStorage() const { return sessionUseFileStorage_; }
    std::string rsessionWhichR() const { return rsessionWhichR_; }
    std::string rsessionPath() const { return rsessionPath_; }
    std::string rldpathPath() const { return rldpathPath_; }
    std::string rsessionLdLibraryPath() const { return rsessionLdLibraryPath_; }
    std::string rsessionConfigFile() const { return rsessionConfigFile_; }
    int rsessionProxyMaxWaitSeconds() const { return rsessionProxyMaxWaitSeconds_; }
-   bool rsessionUseFileStorage() const { return rsessionUseFileStorage_; }
    std::string databaseConfigFile() const { return databaseConfigFile_; }
    std::string dbCommand() const { return dbCommand_; }
    bool authNone() const { return authNone_; }
@@ -306,13 +306,13 @@ protected:
    std::string wwwFrameOrigin_;
    bool wwwEnableOriginCheck_;
    std::vector<boost::regex> wwwAllowedOrigins_;
+   bool sessionUseFileStorage_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;
    std::string rsessionLdLibraryPath_;
    std::string rsessionConfigFile_;
    int rsessionProxyMaxWaitSeconds_;
-   bool rsessionUseFileStorage_;
    int deprecatedMemoryLimitMb_;
    int deprecatedStackLimitMb_;
    int deprecatedUserProcessLimit_;

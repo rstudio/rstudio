@@ -118,7 +118,7 @@ core::system::ProcessConfig sessionProcessConfig(
    args.push_back(std::make_pair("--" kSameSiteSessionOption,
                                  safe_convert::numberToString(static_cast<int>(options.wwwSameSite()))));
 
-   args.push_back({ "--" kSessionUseFileStorage, options.rsessionUseFileStorage() ? "1" : "0"});
+   args.push_back({ "--" kSessionUseFileStorage, options.sessionUseFileStorage() ? "1" : "0"});
 
    // create launch token if we haven't already
    if (s_launcherToken.empty())
