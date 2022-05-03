@@ -389,8 +389,8 @@ void testThatCallIndexer(const RTokenCursor& cursor,
    
    if (clone.isType(RToken::STRING))
    {
-      boost::regex re("^['\"](.*)['\"]$");
-      std::string desc = boost::regex_replace(clone.contentAsUtf8(), re, "\\1");
+      static const boost::regex removeQuotesRegex("^['\"](.*)['\"]$");
+      std::string desc = boost::regex_replace(clone.contentAsUtf8(), removeQuotesRegex, "\\1");
       RSourceItem item(
          RSourceItem::Test,
          desc,
