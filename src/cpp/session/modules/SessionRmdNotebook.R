@@ -40,7 +40,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
 .rs.addFunction("reYamlOptChunkBegin", function()
 {
-   "^#\\| [a-zA-Z_-]+:\\s*.+$"
+   "^#\\| .*"
 })
 
 
@@ -617,11 +617,10 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 .rs.addFunction("parseYamlOpt", function(opt)
 {
     opt <- sub("^#\\|\\s*", "", opt)
-    opt <-  .rs.trimWhitespace(unlist(strsplit(opt, ":\\s*")))
-    key <- opt[[1]]
-    val <- opt[[2]]
-    opts <- list()
-    opts[key] <- val
+    if (grepl(".+=.+", opt)) # R-style chunk options
+        opts <- knitr:::parse_params(opt)
+    else
+        opts <- .rs.fromYAML(opt)
     return(opts)
 })
 
@@ -665,16 +664,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
     opts <- .rs.mergeLists(opts,
                            eval(substitute(knitr:::parse_params(rmdChunkOpts)),
                                 envir = .GlobalEnv))
+
+    # if a chunk option is provided in both body (yaml chunk options) and header (rmdChunkOpts)
+    # the body should override the header option
+    opts <- opts[unique(names(opts))]
     
     # convert T, F (knitr chunk style) or "true", "false" (yaml chunk style) to TRUE, FALSE as appropriate
     opts <- lapply(opts, function(opt) {
       if (identical(opt, as.name("T")))
         TRUE
-      else if (identical(opt, "true"))
-        TRUE
       else if (identical(opt, as.name("F")))
-        FALSE
-      else if (identical(opt, "false"))
         FALSE
       else
         opt
