@@ -378,13 +378,13 @@ void testThatCallIndexer(const RTokenCursor& cursor,
       return;
    
    RTokenCursor clone = cursor.clone();
-   if (!clone.moveToNextToken())
+   if (!clone.moveToNextSignificantToken())
       return;
    
    if (!clone.isType(RToken::LPAREN))
       return;
    
-   if (!clone.moveToNextToken())
+   if (!clone.moveToNextSignificantToken())
       return;
    
    if (clone.isType(RToken::STRING))
