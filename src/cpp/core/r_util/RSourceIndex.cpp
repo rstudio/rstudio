@@ -391,7 +391,7 @@ void testThatCallIndexer(const RTokenCursor& cursor,
    {
       RSourceItem item(
          RSourceItem::Test,
-         boost::join(std::vector<std::string> {"test_that(", clone.contentAsUtf8(), ")"}, ""),
+         clone.contentAsUtf8(),
          std::vector<RS4MethodParam>(), 
          status.count(RToken::LBRACE),
          cursor.row() + 1, 
