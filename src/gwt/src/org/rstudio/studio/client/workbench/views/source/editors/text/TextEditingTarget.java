@@ -2509,6 +2509,8 @@ public class TextEditingTarget implements
                      statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
                   else if (scope.isTopLevel())
                      statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
+                  else if (scope.isTest())
+                     statusBar_.setScopeType(StatusBar.SCOPE_TEST);
                   else if (scope.isFunction())
                      statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
                   else if (scope.isLambda())
