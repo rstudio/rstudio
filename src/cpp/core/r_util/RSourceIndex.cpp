@@ -389,9 +389,11 @@ void testThatCallIndexer(const RTokenCursor& cursor,
    
    if (clone.isType(RToken::STRING))
    {
+      boost::regex re("^['\"](.*)['\"]$");
+      std::string desc = boost::regex_replace(clone.contentAsUtf8(), re, "\\1");
       RSourceItem item(
          RSourceItem::Test,
-         clone.contentAsUtf8(),
+         desc,
          std::vector<RS4MethodParam>(), 
          status.count(RToken::LBRACE),
          cursor.row() + 1, 
