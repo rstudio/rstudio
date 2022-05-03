@@ -59,7 +59,7 @@
 #include <core/system/PosixSystem.hpp>
 #endif
 
-ifdef __GLIBC__
+#ifdef __GLIBC__
 #include <gnu/libc-version.h>
 #endif
 
