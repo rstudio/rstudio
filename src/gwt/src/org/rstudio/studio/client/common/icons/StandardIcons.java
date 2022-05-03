@@ -82,6 +82,9 @@ public interface StandardIcons extends ClientBundle
    @Source("functionLetter_2x.png")
    ImageResource functionLetter2x();
 
+   @Source("test_2x.png")
+   ImageResource test2x();
+
    @Source("methodLetter_2x.png")
    ImageResource methodLetter2x();
 
