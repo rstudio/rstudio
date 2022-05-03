@@ -30,6 +30,8 @@
 #include <session/SessionQuarto.hpp>
 #include <session/SessionUrlPorts.hpp>
 
+#include <session/prefs/UserPrefs.hpp>
+
 #include "SessionQuartoJob.hpp"
 
 using namespace rstudio::core;
@@ -213,16 +215,22 @@ private:
             port_ = location.port;
             path_ = location.path;
 
-            // show in viewer
-            showInViewer();
+            // show preview
+            if (prefs::userPrefs().rmdViewerType() != kRmdViewerTypeNone)
+            {
+               showInViewer();
+            }
 
             // restore the console tab after render
             activateConsole();
 
-            // emit filtered output if we are on rstudio server
+            // emit filtered output if we are on rstudio server and using the viewer
             if (session::options().programMode() == kSessionProgramModeServer)
             {
                QuartoJob::onStdErr(location.filteredOutput);
+               QuartoJob::onStdErr("Browse at: " +
+                                   core::system::getenv("RSTUDIO_HTTP_REFERER") +
+                                   rstudioServerPreviewWindowUrl() + "\n");
             }
             else
             {
@@ -239,14 +247,17 @@ private:
 
          // if the viewer is already on the site just activate it (however for revealjs go
          // back through standard presentation pane logic)
-         if (!formatIsRevealJs() &&
-              boost::algorithm::starts_with(module_context::viewerCurrentUrl(false), viewerUrl()))
+         if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypePane)
          {
-            module_context::activatePane("viewer");
-         }
-         else
-         {
-            showInViewer();
+            if (!formatIsRevealJs() &&
+                 boost::algorithm::starts_with(module_context::viewerCurrentUrl(false), viewerUrl()))
+            {
+               module_context::activatePane("viewer");
+            }
+            else
+            {
+               showInViewer();
+            }
          }
       }
 
@@ -270,58 +281,76 @@ private:
 
    void showInViewer()
    {
-      // format info
-      bool isReveal = formatIsRevealJs();
-      bool isSlidy = boost::algorithm::starts_with(format_, "slidy");
-      bool isBeamer = boost::algorithm::starts_with(format_, "beamer");
-
-      // determine height
-      int minHeight = -1; // maximize
-      if (isReveal || isSlidy)
+      if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypePane)
       {
-         minHeight = 450;
-      }
-      else if (isBeamer)
-      {
-          minHeight = 500;
-      }
+         // format info
+         bool isReveal = formatIsRevealJs();
+         bool isSlidy = boost::algorithm::starts_with(format_, "slidy");
+         bool isBeamer = boost::algorithm::starts_with(format_, "beamer");
 
-
-      std::string sourceFile = module_context::createAliasedPath(previewFile_);
-      std::string outputFile;
-      if (!outputFile_.isEmpty())
-         outputFile = module_context::createAliasedPath(outputFile_);
-      QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
-
-      // route to either viewer or presentation pane (for reveal)
-      if (isReveal)
-      {
-         std::string url = url_ports::mapUrlPorts(viewerUrl());
-         if (isFileInSessionQuartoProject(previewFile_))
+         // determine height
+         int minHeight = -1; // maximize
+         if (isReveal || isSlidy)
          {
-            url = url + urlPathForQuartoProjectOutputFile(outputFile_);
+            minHeight = 450;
+         }
+         else if (isBeamer)
+         {
+             minHeight = 500;
          }
 
-         json::Object eventData;
-         eventData["url"] = url;
-         eventData["quarto_navigation"] = module_context::quartoNavigateAsJson(quartoNav);
-         eventData["editor_state"] = editorState_;
-         eventData["slide_level"] = slideLevel_;
-         ClientEvent event(client_events::kPresentationPreview, eventData);
+         std::string sourceFile = module_context::createAliasedPath(previewFile_);
+         std::string outputFile;
+         if (!outputFile_.isEmpty())
+            outputFile = module_context::createAliasedPath(outputFile_);
+         QuartoNavigate quartoNav = QuartoNavigate::navDoc(sourceFile, outputFile, jobId());
+
+         // route to either viewer or presentation pane (for reveal)
+         if (isReveal)
+         {
+            std::string url = url_ports::mapUrlPorts(viewerUrl());
+            if (isFileInSessionQuartoProject(previewFile_))
+            {
+               url = url + urlPathForQuartoProjectOutputFile(outputFile_);
+            }
+
+            json::Object eventData;
+            eventData["url"] = url;
+            eventData["quarto_navigation"] = module_context::quartoNavigateAsJson(quartoNav);
+            eventData["editor_state"] = editorState_;
+            eventData["slide_level"] = slideLevel_;
+            ClientEvent event(client_events::kPresentationPreview, eventData);
+            module_context::enqueClientEvent(event);
+         }
+         else
+         {
+            std::string url = viewerUrl();
+
+            if (outputFile_.getExtensionLowerCase() != ".pdf")
+            {
+               if (isFileInSessionQuartoProject(previewFile_))
+                  url = url + urlPathForQuartoProjectOutputFile(outputFile_);
+            }
+
+            module_context::viewer(url,  minHeight, quartoNav);
+         }
+      }
+      else if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeWindow)
+      {
+         std::string url = rstudioServerPreviewWindowUrl();
+         ClientEvent event = browseUrlEvent(url);
          module_context::enqueClientEvent(event);
       }
-      else
+   }
+
+   std::string rstudioServerPreviewWindowUrl()
+   {
+      std::string url = url_ports::mapUrlPorts(viewerUrl());
+      if (isFileInSessionQuartoProject(previewFile_))
       {
-         std::string url = viewerUrl();
-
-         if (outputFile_.getExtensionLowerCase() != ".pdf")
-         {
-            if (isFileInSessionQuartoProject(previewFile_))
-               url = url + urlPathForQuartoProjectOutputFile(outputFile_);
-         }
-
-         module_context::viewer(url,  minHeight, quartoNav);
+         url = url + urlPathForQuartoProjectOutputFile(outputFile_);
       }
+      return url;
    }
 
    std::string viewerUrl()
