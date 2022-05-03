@@ -222,13 +222,6 @@ void detectQuartoInstallation()
    s_userInstalledPath = std::get<0>(userInstalled);
    s_quartoVersion = std::get<1>(userInstalled);
 
-   // see if the sysadmin or user has turned off quarto
-   if (session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledDisabled ||
-       session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledHidden)
-   {
-      return;
-   }
-
    // always use user installed if it's there but subject to version check
    if (!s_userInstalledPath.isEmpty())
    {
@@ -243,22 +236,6 @@ void detectQuartoInstallation()
       }
       return;
    }
-
-
-   // auto mode will enable quarto if we are in a project w/ _quarto.yml
-   // or a qmd file at the root, otherwise not
-   if (session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledAuto)
-   {
-      if (projectHasQuartoContent())
-      {
-         session::prefs::userPrefs().setQuartoEnabled(kQuartoEnabledEnabled);
-      }
-      else
-      {
-         return;
-      }
-   }
-
 
    // embedded version of quarto (subject to required version)
 #ifndef WIN32
