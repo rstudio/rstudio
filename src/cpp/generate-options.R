@@ -119,7 +119,7 @@ generateQmd <- function (optionsJson, overlayOptionsJson) {
    qmd <- paste("---",
                 paste0("title: \"", configFile, "\""),
                 "aliases:",
-                paste0("\t- /rstudio-configuration-1.html#", configFile),
+                paste0("  - /rstudio-configuration-1.html#", configFile),
                 "---",
                 "",
                 sep = "\n")
