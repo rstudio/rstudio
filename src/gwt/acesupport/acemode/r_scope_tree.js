@@ -512,6 +512,25 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
          this.printScopeTree();
       };
 
+      this.onTestScopeStart = function(desc, startPos, scopePos) {
+         debuglog("adding test_that() brace-scope " + desc);
+         var name = "test_that(" + desc + ")";
+         this.$root.addNode(
+            new this.$ScopeNodeFactory(
+               "test_that(" + desc + ")",
+               scopePos,
+               startPos,
+               ScopeNode.TYPE_BRACE,
+               {
+                  "name": "✅ " + desc,
+                  "args": []
+               }
+            )
+         );
+         
+         this.printScopeTree();
+      }
+
       this.onNamedScopeStart = function(label, pos) {
          this.$root.addNode(new this.$ScopeNodeFactory(label, pos, null, ScopeNode.TYPE_BRACE));
       };
