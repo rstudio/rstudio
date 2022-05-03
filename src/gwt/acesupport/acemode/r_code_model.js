@@ -158,7 +158,33 @@ var RCodeModel = function(session, tokenizer,
       tokenCursor.$row = clonedCursor.$row;
       tokenCursor.$offset = clonedCursor.$offset;
       return true;
+   }
 
+   // Find the associated test_that() token from an open brace, e.g.
+   // 
+   // test_that("foo() does this", {
+   // ^<<<<<<<<<<<<<<<<<<<<<<<<<<<<^
+   function findAssocTestToken(tokenCursor)
+   {
+      var clonedCursor = tokenCursor.cloneCursor();
+      if (clonedCursor.currentValue() !== "{")
+         return false;
+      if (!clonedCursor.moveToPreviousToken()) 
+         return false;
+      if (!clonedCursor.currentToken().value == ",")
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!clonedCursor.currentToken().type == "string")
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      if (!clonedCursor.currentToken().value == "(")
+         return false;
+      if (!clonedCursor.moveToPreviousToken())
+         return false;
+      var token = clonedCursor.currentToken();
+      return pIdentifier(token) && token.value == "test_that";
    }
 
    // Determine whether the token cursor lies within the
@@ -1138,6 +1164,24 @@ var RCodeModel = function(session, tokenizer,
                                                  functionName,
                                                  functionArgs);
             }
+            else if (findAssocTestToken(localCursor))
+            {
+               var descCursor = localCursor.cloneCursor();
+               descCursor.moveToPreviousToken();
+               descCursor.moveToPreviousToken();
+
+               var desc = descCursor.currentToken().value;
+
+               var testthatCursor = descCursor.cloneCursor();
+               testthatCursor.moveToPreviousToken();
+               testthatCursor.moveToPreviousToken();
+
+               this.$scopes.onTestScopeStart(desc,
+                  testthatCursor.currentPosition(),
+                  tokenCursor.currentPosition()
+               );
+
+            } 
             else
             {
                startPos = tokenCursor.currentPosition();
