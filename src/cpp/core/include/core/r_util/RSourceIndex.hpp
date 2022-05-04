@@ -130,6 +130,7 @@ public:
    bool isMethod() const { return type_ == Method; }
    bool isClass() const { return type_ == Class; }
    bool isVariable() const { return type_ == Variable; }
+   bool isTest() const { return type_ == Test; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }
@@ -140,19 +141,26 @@ public:
 
    // support for RSourceIndex::search
 
-   bool nameStartsWith(const std::string& term, bool caseSensitive) const
+   bool nameStartsWith(const std::string& term, bool caseSensitive, bool includeTestItems) const
    {
+      if (!includeTestItems && isTest())
+         return false;
+
       if (caseSensitive)
          return boost::algorithm::starts_with(name_, term);
       else
          return boost::algorithm::istarts_with(name_, term);
    }
 
-   bool nameIsSubsequence(const std::string& term, bool caseSensitive) const
+   bool nameIsSubsequence(const std::string& term, bool caseSensitive, bool includeTestItems) const
    {
+      if (!includeTestItems && isTest())
+         return false;
+
       return string_utils::isSubsequence(name_, term, !caseSensitive);
    }
 
+   // TODO: dead code ?
    bool nameContains(const std::string& term, bool caseSensitive) const
    {
       if (caseSensitive)
@@ -163,8 +171,12 @@ public:
 
    bool nameMatches(const boost::regex& regex,
                     bool prefixOnly,
-                    bool caseSensitive) const
+                    bool caseSensitive, 
+                    bool includeTestItems) const
    {
+      if (!includeTestItems && isTest())
+         return false;
+
       return regex_utils::textMatches(name_, regex, prefixOnly, caseSensitive);
    }
 
@@ -243,6 +255,8 @@ public:
       // define the predicate
       boost::function<bool(const RSourceItem&)> predicate;
 
+      bool includeTestItems = boost::algorithm::starts_with(term, "t ");
+
       // check for wildcard character
       if (term.find('*') != std::string::npos)
       {
@@ -254,16 +268,17 @@ public:
                                     _1,
                                     patternRegex,
                                     prefixOnly,
-                                    caseSensitive);
+                                    caseSensitive, 
+                                    includeTestItems);
       }
       else
       {
          if (prefixOnly)
             predicate = boost::bind(&RSourceItem::nameStartsWith,
-                                       _1, term, caseSensitive);
+                                       _1, term, caseSensitive, includeTestItems);
          else
             predicate = boost::bind(&RSourceItem::nameIsSubsequence,
-                                       _1, term, caseSensitive);
+                                       _1, term, caseSensitive, includeTestItems);
       }
 
       return search(newContext, predicate, out);
