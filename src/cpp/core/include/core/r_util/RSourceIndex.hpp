@@ -160,15 +160,6 @@ public:
       return string_utils::isSubsequence(name_, term, !caseSensitive);
    }
 
-   // TODO: dead code ?
-   bool nameContains(const std::string& term, bool caseSensitive) const
-   {
-      if (caseSensitive)
-         return boost::algorithm::contains(name_, term);
-      else
-         return boost::algorithm::icontains(name_, term);
-   }
-
    bool nameMatches(const boost::regex& regex,
                     bool prefixOnly,
                     bool caseSensitive, 
