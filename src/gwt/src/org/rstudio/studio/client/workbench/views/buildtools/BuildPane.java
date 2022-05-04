@@ -18,11 +18,14 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.HasClickHandlers;
+import com.google.gwt.event.logical.shared.ValueChangeEvent;
+import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -48,8 +51,14 @@ import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
+import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
+import org.rstudio.studio.client.projects.model.RProjectConfig;
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.quarto.QuartoHelper;
 import org.rstudio.studio.client.quarto.model.QuartoConfig;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -71,7 +80,8 @@ public class BuildPane extends WorkbenchPane
                     EventBus events,
                     Session session,
                     FileTypeRegistry fileTypeRegistry,
-                    BuildServerOperations server)
+                    BuildServerOperations server, 
+                    ProjectsServerOperations projServer)
    {
       super(constants_.buildText(), events);
       ((BuildPane.Binder) GWT.create(BuildPane.Binder.class)).bind(commands, this);
@@ -81,7 +91,15 @@ public class BuildPane extends WorkbenchPane
       fileTypeRegistry_ = fileTypeRegistry;
       server_ = server;
       compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
+      projServer_ = projServer;
       ensureWidget();
+   }
+
+   private void setInstallTooltip() 
+   {
+      boolean preclean = config_.getPackageCleanBeforeInstall();
+      String tooltip = commands_.buildAll().getTooltip() + "\n\nR CMD INSTALL" + (preclean ? "--preclean " : " ") + config_.getPackageInstallArgs() + " <pkg>";
+      buildAllButton_.setTitle(tooltip);
    }
 
    @Override
@@ -96,6 +114,49 @@ public class BuildPane extends WorkbenchPane
       boolean website = type == SessionInfo.BUILD_TOOLS_WEBSITE;
       boolean quarto = type == SessionInfo.BUILD_TOOLS_QUARTO;
 
+      if (pkg) {
+         CheckBox precleanCheckbox = new CheckBox("clean");
+         precleanCheckbox.setTitle("Clean before install, i.e. use the --preclean option");
+         
+         projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
+
+            @Override
+            public void onResponseReceived(RProjectOptions response) {
+               config_ = response.getConfig();
+               boolean preclean = config_.getPackageCleanBeforeInstall();
+               setInstallTooltip();
+               precleanCheckbox.setValue(preclean);
+            }
+
+         });
+
+         precleanCheckbox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
+
+            @Override
+            public void onValueChange(ValueChangeEvent<Boolean> event) {
+               boolean preclean = event.getValue(); 
+               
+               projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
+
+                  @Override
+                  public void onResponseReceived(RProjectOptions response) {
+                     RProjectConfig config = response.getConfig();
+                     if (config.getPackageCleanBeforeInstall() != preclean) 
+                     {
+                        config.setPackageCleanBeforeInstall(preclean);
+                        projServer_.writeProjectConfig(config, new VoidServerRequestCallback());
+                     }
+                     config_ = config;
+
+                     setInstallTooltip();
+                  }
+               });
+            }
+            
+         });
+
+         toolbar.addLeftWidget(precleanCheckbox);
+      }
       
       // quarto books get special treatment (build button is a pure menu)
       QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
@@ -111,7 +172,7 @@ public class BuildPane extends WorkbenchPane
       }
       else
       {
-         // always include build all
+         // always include Install button
          buildAllButton_ = commands_.buildAll().createToolbarButton();
          if (website)
          {
@@ -136,7 +197,6 @@ public class BuildPane extends WorkbenchPane
             toolbar.addLeftWidget(buildMenuButton);  
          }
       }
-      
       
       // sync build all button caption
       syncBuildAllUI();
@@ -514,14 +574,15 @@ public class BuildPane extends WorkbenchPane
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
    private final BuildServerOperations server_;
+   ProjectsServerOperations projServer_;
+   RProjectConfig config_;
    private String errorsBuildType_;
    private ToolbarButton buildAllButton_;
 
-
    private final CompilePanel compilePanel_;
-
 
    private final HandlerManager handlers_ = new HandlerManager(this);
 
    private static final ViewBuildtoolsConstants constants_ = GWT.create(ViewBuildtoolsConstants.class);
+
 }
