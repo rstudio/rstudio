@@ -31,7 +31,6 @@ import org.rstudio.studio.client.workbench.codesearch.model.FileItem;
 import org.rstudio.studio.client.workbench.codesearch.model.SourceItem;
 import org.rstudio.studio.client.workbench.codesearch.ui.CodeSearchResources;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.SuggestOracle.Suggestion;
@@ -138,6 +137,11 @@ class CodeSearchSuggestion implements Suggestion
       
       // resolve name (include parent if there is one)
       String name = sourceItem.getName();
+
+      // remove "t " for test items that was artifically added by testThatCallIndexer()
+      if (sourceItem.getType() == SourceItem.TEST)
+         name = name.replaceFirst("t ", "");
+         
       if (!StringUtil.isNullOrEmpty(sourceItem.getParentName()))
          name = sourceItem.getParentName() + "::" + name;
       
