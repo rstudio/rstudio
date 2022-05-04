@@ -12,3 +12,10 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+
+.rs.addFunction("invokeServerRpc", function(method, ...)
+{
+   # callback to session to invoke server RPC
+   args <- list(...)
+   .Call("rs_invokeServerRpc", method, .rs.scalarListFromList(args), PACKAGE="(embedding)")
+})
