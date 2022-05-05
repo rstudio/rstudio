@@ -97,7 +97,8 @@ namespace {
    {
    };
 
-   DBActiveSessionStorage::DBActiveSessionStorage()
+   DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId)
+      : sessionId_(sessionId)
    {
       bool success = getConnection(boost::posix_time::milliseconds(500), &connection);
       if(!success)
@@ -106,16 +107,16 @@ namespace {
       }
    }
 
-   DBActiveSessionStorage::DBActiveSessionStorage(boost::shared_ptr<core::database::IConnection> conn) :
-      connection{conn}
+   DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId, boost::shared_ptr<core::database::IConnection> conn) :
+      connection{conn}, sessionId_(sessionId)
    {
 
    }
 
-   Error DBActiveSessionStorage::readProperty(const std::string& id, const std::string& name, std::string* pValue)
+   Error DBActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
    {
       database::Query query = connection->query("SELECT "+name+" FROM active_session_metadata WHERE session_id = :id")
-         .withInput(id);
+         .withInput(sessionId_);
 
       database::Rowset results{};
       *pValue = "";
@@ -146,18 +147,18 @@ namespace {
       }
       else
       {
-         return Error{"DatabaseException", errc::DBError, "Database exception during property read [ session:"+id+" property:"+name+" ]", error, ERROR_LOCATION};
+         return Error{"DatabaseException", errc::DBError, "Database exception during property read [ session:"+sessionId_+" property:"+name+" ]", error, ERROR_LOCATION};
       }
       
       return error;
    }
 
-   Error DBActiveSessionStorage::readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
+   Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
    {
       pValues->clear();
       std::string namesString = getColumnNameList(names);
       database::Query query = connection->query("SELECT "+namesString+" FROM active_session_metadata WHERE session_id=:id")
-         .withInput(id);
+         .withInput(sessionId_);
 
       database::Rowset rowset{};
       Error error = connection->execute(query, rowset);
@@ -181,38 +182,38 @@ namespace {
       }
       else
       {
-         return Error{"DatabaseException", errc::DBError, "Database exception during proprerties read [ session:"+id+" properties:"+namesString+" ]", error, ERROR_LOCATION};
+         return Error{"DatabaseException", errc::DBError, "Database exception during proprerties read [ session:"+sessionId_+" properties:"+namesString+" ]", error, ERROR_LOCATION};
       }
 
       return error;
    }
 
-   Error DBActiveSessionStorage::readProperties(const std::string& id, std::map<std::string, std::string>* pValues)
+   Error DBActiveSessionStorage::readProperties(std::map<std::string, std::string>* pValues)
    {
       std::set<std::string> all{"*"};
-      return readProperties(id, all, pValues);
+      return readProperties(all, pValues);
    }
 
-   Error DBActiveSessionStorage::writeProperty(const std::string& id, const std::string& name, const std::string& value)
+   Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)
    {
 
       database::Query query = connection->query("UPDATE active_session_metadata SET "+name+" = :value WHERE session_id = :id")
          .withInput(value)
-         .withInput(id);
+         .withInput(sessionId_);
 
       Error error = connection->execute(query);
 
       if(error){
-         return Error{"DatabaseException", errc::DBError, "Database error while updating session metadata [ session: "+id+" property: " + name + " ]", error, ERROR_LOCATION};
+         return Error{"DatabaseException", errc::DBError, "Database error while updating session metadata [ session: "+sessionId_+" property: " + name + " ]", error, ERROR_LOCATION};
       }
 
       return error;
    }
 
-   Error DBActiveSessionStorage::writeProperties(const std::string& id, const std::map<std::string, std::string>& properties)
+   Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
    {
       database::Query query = connection->query("SELECT * FROM active_session_metadata WHERE session_id = :id")
-         .withInput(id);
+         .withInput(sessionId_);
       database::Rowset rowset{};
 
       
@@ -230,26 +231,90 @@ namespace {
             }
 
             database::Query updateQuery = connection->query("UPDATE active_session_metadata SET "+getUpdateString(properties)+" WHERE session_id = :id")
-               .withInput(id);
+               .withInput(sessionId_);
             
             error = connection->execute(updateQuery);
             if(error)
             {
-               return Error{"DatabaseException", errc::DBError, "Error while updating properties [ session:"+id+" properties:"+getKeyString(properties)+" ]", error, ERROR_LOCATION};
+               return Error{"DatabaseException", errc::DBError, "Error while updating properties [ session:"+sessionId_+" properties:"+getKeyString(properties)+" ]", error, ERROR_LOCATION};
             }
          }
          else
          {
             database::Query insertQuery = connection->query("INSERT INTO active_session_metadata (session_id, "+getKeyString(properties)+") VALUES (:id, "+getValueString(properties)+")")
-               .withInput(id);
+               .withInput(sessionId_);
 
             error = connection->execute(insertQuery);
             if(error)
             {
-               return Error{"DatabaseException", errc::DBError, "Error while updating properties [ session:"+id+" properties:"+getKeyString(properties)+" ]", error, ERROR_LOCATION};
+               return Error{"DatabaseException", errc::DBError, "Error while updating properties [ session:"+sessionId_+" properties:"+getKeyString(properties)+" ]", error, ERROR_LOCATION};
             }
          }
       }
+      return error;
+   }
+
+   Error DBActiveSessionStorage::destroy()
+   {
+      database::Query query = connection->query("DELETE FROM active_session_metadata WHERE session_id = :id")
+         .withInput(sessionId_);
+      database::Rowset rowset{};
+
+      Error error = connection->execute(query, rowset);
+
+      if(!error)
+      {
+         return Error{"DatabaseException", errc::DBError, "Error while deleting session metadata [ session:"+sessionId_+" ]", error, ERROR_LOCATION};
+      }
+      else
+      {
+         return error;
+      }
+   }
+
+
+   Error DBActiveSessionStorage::isValid(bool* pValue)
+   {
+      database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE session_id = :id")
+         .withInput(sessionId_);
+      database::Rowset rowset{};
+
+      *pValue = false;
+
+      Error error = connection->execute(query, rowset);
+
+      if(error)
+      {
+         return Error{"DatabaseException", errc::DBError, "Error while deleting session metadata [ session:"+sessionId_+" ]", error, ERROR_LOCATION};
+      }
+      database::RowsetIterator iter = rowset.begin();
+
+      // Sanity checking, but should always have 1 row containing the count of rows
+      if(iter != rowset.end())
+      {
+         int count = iter->get<int>("COUNT(*)");
+
+         // ensure one and only one
+         if(count > 1)
+         {
+            return Error{"Too Many Sessions Returned", errc::TooManySessionsReturned, ERROR_LOCATION};
+         }
+         else
+         {
+            if(count == 1)
+            {
+               *pValue = true;
+            }
+         }
+      }
+      return Success();
+   }
+
+   Error DBActiveSessionStorage::isEmpty(bool* pValue)
+   {
+      bool valid = false;
+      Error error = isValid(&valid);
+      *pValue = !valid;
       return error;
    }
 } // Namespace storage

@@ -14,7 +14,9 @@
  */
 
 #include <core/r_util/RActiveSessions.hpp>
-#include <core/r_util/RActiveSessionStorage.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
+
+#include <core/Log.hpp>
 
 #include <boost/bind/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -29,13 +31,21 @@
 
 #include <shared_core/SafeConvert.hpp>
 
-#define kSessionDirPrefix "session-"
-
 using namespace boost::placeholders;
 
 namespace rstudio {
 namespace core {
 namespace r_util {
+
+   ActiveSessions::ActiveSessions(const FilePath& rootStoragePath) : ActiveSessions(std::make_shared<FileActiveSessionsStorage>(FileActiveSessionsStorage(rootStoragePath)))
+   {
+   }
+
+   ActiveSessions::ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage)
+      : storage_(storage)
+   {
+
+   }
 
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
@@ -45,38 +55,38 @@ Error ActiveSessions::create(const std::string& project,
 {
    // generate a new id (loop until we find a unique one)
    std::string id;
-   FilePath dir;
    while (id.empty())
    {
       std::string candidateId = core::r_util::generateScopeId();
-      dir = storagePath_.completeChildPath(kSessionDirPrefix + candidateId);
-      if (!dir.exists())
+      if (!storage_->hasSessionId(candidateId))
          id = candidateId;
    }
 
-   LOG_DEBUG_MESSAGE("Creating new session directory: " + dir.getAbsolutePath() + " for editor: " + editor + " with id: " + id);
+   //Initial settings
+   std::map<std::string, std::string> initialMetadata = {
+      {"project", project},
+      {"working_dir", workingDir},
+      {"initial", initial ? "true" : "false"},
+      {"running", "false"},
+   };
 
-   // create the directory
-   Error error = dir.ensureDirectory();
-   if (error)
-      return error;
+   storage_->createSession(id, initialMetadata);
 
-   // write initial settings
-   ActiveSession activeSession(id, dir);
-   if (editor == kWorkbenchRStudio)
-   {
-      activeSession.setProject(project);
-      activeSession.setWorkingDir(workingDir);
-   }
 
-   activeSession.setInitial(initial);
-   activeSession.setLastUsed();
-   activeSession.setRunning(false);
-   activeSession.setCreated();
-   activeSession.setActivityState(kActivityStateLaunching, true);
-   activeSession.setEditor(editor);
-   if (editor == kWorkbenchRStudio)
-      activeSession.setLastResumed();
+
+   // // create the directory
+   // Error error = dir.ensureDirectory();
+   // if (error)
+   //    return error;
+
+   // // write initial settings
+   // ActiveSession activeSession(id, dir);
+   // activeSession.setProject(project);
+   // activeSession.setWorkingDir(workingDir);
+   // activeSession.setInitial(initial);
+   // activeSession.setLastUsed();
+   // activeSession.setRunning(false);
+   // activeSession.setLastResumed();
 
    // return the id if requested
    if (pId != nullptr)
@@ -86,174 +96,26 @@ Error ActiveSessions::create(const std::string& project,
    return Success();
 }
 
-namespace {
-
-bool compareActivityLevel(boost::shared_ptr<ActiveSession> a,
-                          boost::shared_ptr<ActiveSession> b)
+std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath userHomePath, bool projectSharingEnabled) const
 {
-   return *a > *b;
-}
-
-} // anonymous namespace
-
-std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
-                                       const FilePath& userHomePath,
-                                       bool projectSharingEnabled) const
-{
-   // list to return
-   std::vector<boost::shared_ptr<ActiveSession> > sessions;
-
-   // enumerate children and check for sessions
-   std::vector<FilePath> children;
-   Error error = storagePath_.getChildren(children);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return sessions;
-   }
-   std::string prefix = kSessionDirPrefix;
-   for (const FilePath& child : children)
-   {
-      if (boost::algorithm::starts_with(child.getFilename(), prefix))
-      {
-         std::string id = child.getFilename().substr(prefix.length());
-         boost::shared_ptr<ActiveSession> pSession = get(id);
-         if (!pSession->empty())
-         {
-            if (pSession->validate(userHomePath, projectSharingEnabled))
-            {
-               // Cache the sort conditions to ensure compareActivityLevel will provide a strict weak ordering.
-               // Otherwise, the conditions on which we sort (e.g. lastUsed()) can be updated on disk during a sort
-               // causing an occasional segfault.
-               pSession->cacheSortConditions();
-               sessions.push_back(pSession);
-            }
-            else
-            {
-               // Logging a message because this also happens when the rworkspaces cannot access the project directory
-               LOG_DEBUG_MESSAGE("Removing invalid session: " + pSession->id());
-
-               // remove sessions that don't have required properties
-               // (they may be here as a result of a race condition where
-               // they are removed but then suspended session data is
-               // written back into them)
-               Error error = pSession->destroy();
-               if (error)
-                  LOG_ERROR(error);
-            }
-         }
-      }
-
-   }
-
-   // sort by activity level (most active sessions first)
-   std::sort(sessions.begin(), sessions.end(), compareActivityLevel);
-
-   // return
-   return sessions;
+   return storage_->listSessions(userHomePath, projectSharingEnabled);
 }
 
 size_t ActiveSessions::count(const FilePath& userHomePath,
                              bool projectSharingEnabled) const
 {
-   return list(userHomePath, projectSharingEnabled).size();
+   return storage_->getSessionCount(userHomePath, projectSharingEnabled);
 }
 
 boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) const
 {
-   FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
-   if (scratchPath.exists())
-   {
-      LOG_DEBUG_MESSAGE("Found session: " + scratchPath.getAbsolutePath());
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(id, scratchPath));
-   }
-   else
-   {
-      LOG_DEBUG_MESSAGE("No session with path: " + scratchPath.getAbsolutePath());
-      return emptySession(id);
-   }
+   return storage_->getSession(id);
 }
 
 
 boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(const std::string& id) const
 {
    return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
-}
-
-std::vector<boost::shared_ptr<GlobalActiveSession> >
-GlobalActiveSessions::list() const
-{
-   std::vector<boost::shared_ptr<GlobalActiveSession> > sessions;
-
-   // get all active sessions for the system
-   FilePath activeSessionsDir = rootPath_;
-   if (!activeSessionsDir.exists())
-      return sessions; // no active sessions exist
-
-   std::vector<FilePath> sessionFiles;
-   Error error = activeSessionsDir.getChildren(sessionFiles);
-   if (error)
-   {
-      LOG_ERROR(error);
-      return sessions;
-   }
-
-   for (const FilePath& sessionFile : sessionFiles)
-   {
-      sessions.push_back(boost::shared_ptr<GlobalActiveSession>(new GlobalActiveSession(sessionFile)));
-   }
-
-   return sessions;
-}
-
-boost::shared_ptr<GlobalActiveSession>
-GlobalActiveSessions::get(const std::string& id) const
-{
-   FilePath sessionFile = rootPath_.completeChildPath(id);
-   if (!sessionFile.exists())
-      return boost::shared_ptr<GlobalActiveSession>();
-
-   return boost::shared_ptr<GlobalActiveSession>(new GlobalActiveSession(sessionFile));
-}
-namespace {
-
-void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
-                        const FilePath& userHomePath,
-                        bool projectSharingEnabled,
-                        boost::function<void(size_t)> onCountChanged)
-{
-   onCountChanged(pSessions->count(userHomePath, projectSharingEnabled));
-}
-
-} // anonymous namespace
-
-void trackActiveSessionCount(const FilePath& rootStoragePath,
-                             const FilePath& userHomePath,
-                             bool projectSharingEnabled,
-                             boost::function<void(size_t)> onCountChanged)
-{
-
-   boost::shared_ptr<ActiveSessions> pSessions(
-                                          new ActiveSessions(rootStoragePath));
-
-   core::system::file_monitor::Callbacks cb;
-   cb.onRegistered = boost::bind(notifyCountChanged,
-                                 pSessions,
-                                 userHomePath,
-                                 projectSharingEnabled,
-                                 onCountChanged);
-   cb.onFilesChanged = boost::bind(notifyCountChanged,
-                                   pSessions,
-                                   userHomePath,
-                                   projectSharingEnabled,
-                                   onCountChanged);
-   cb.onRegistrationError = boost::bind(log::logError, _1, ERROR_LOCATION);
-
-   core::system::file_monitor::registerMonitor(
-                   pSessions->storagePath(),
-                   false,
-                   boost::function<bool(const FileInfo&)>(),
-                   cb);
 }
 
 } // namespace r_util

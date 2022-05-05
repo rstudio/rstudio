@@ -21,16 +21,9 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/Log.hpp>
 #include <core/Settings.hpp>
-#include <core/DateTime.hpp>
-#include <shared_core/SafeConvert.hpp>
-
-#include <shared_core/json/Json.hpp>
-
-#include <core/r_util/RSessionContext.hpp>
-#include <core/r_util/RProjectFile.hpp>
-#include <core/r_util/RActiveSessionStorage.hpp>
+#include <core/r_util/RActiveSession.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 
 namespace rstudio {
 namespace core {
@@ -76,21 +69,12 @@ private:
 
    explicit ActiveSession(
       const std::string& id,
-      const FilePath& scratchPath) : 
-         id_(id),
-         scratchPath_(scratchPath)
+      const FilePath& scratchPath,
+      std::shared_ptr<IActiveSessionStorage> storage) : id_(id), scratchPath_(scratchPath), storage_(storage)
    {
-      core::Error error = scratchPath_.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-
-      propertiesPath_ = scratchPath_.completeChildPath("properites");
-      error = propertiesPath_.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-
-      storage_ = ActiveSessionStorageFactory::getFileActiveSessionStorage(scratchPath_);
    }
+
+public:
 
    const std::string kExecuting = "executing";
    const std::string kInitial = "initial";
@@ -103,15 +87,13 @@ private:
    const std::string kRVersion = "r_version";
    const std::string kRVersionHome = "r_version_home";
    const std::string kRVersionLabel = "r_version_label";
-   const std::string kWorkingDir = "working_directory";
+   const std::string kWorkingDir = "working_dir";
    const std::string kActivityState = "activity_state";
    const std::string kLastStateUpdated = "last_state_updated";
    const std::string kEditor = "editor";
    const std::string kLastResumed = "last_resumed";
    const std::string kSuspendTimestamp = "suspend_timestamp";
    const std::string kBlockingSuspend = "blocking_suspend";
-
- public:
 
    // The rsession process has exited with an exit code
    static bool isExitedState(const std::string& state)
@@ -131,9 +113,17 @@ private:
       return state == kActivityStateSuspending || state == kActivityStateShuttingDown || state == kActivityStateQuitting || state == kActivityStateResuming;
    }
 
-   bool empty() const { return scratchPath_.isEmpty(); }
+   bool empty() const
+   { 
+      bool empty = true;
+      storage_->isEmpty(&empty);
+      return empty;
+   }
 
-   std::string id() const { return id_; }
+   std::string id() const
+   {
+      return id_;
+   }
 
    const FilePath& scratchPath() const { return scratchPath_; }
 
@@ -412,6 +402,7 @@ private:
       if (!empty())
       {
          LOG_DEBUG_MESSAGE("Removing session directory: " + scratchPath_.getAbsolutePath());
+         storage_->destroy();
          return scratchPath_.removeIfExists();
       }
       else
@@ -584,9 +575,9 @@ private:
    }
 
 private:
-   std::shared_ptr<IActiveSessionStorage> storage_;
    std::string id_;
    FilePath scratchPath_;
+   std::shared_ptr<IActiveSessionStorage> storage_;
    FilePath propertiesPath_;
    SortConditions sortConditions_;
 };
@@ -594,18 +585,8 @@ private:
 class ActiveSessions : boost::noncopyable
 {
 public:
-   explicit ActiveSessions(const FilePath& rootStoragePath)
-   {
-      storagePath_ = storagePath(rootStoragePath);
-      Error error = storagePath_.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   static FilePath storagePath(const FilePath& rootStoragePath)
-   {
-      return rootStoragePath.completeChildPath("sessions/active");
-   }
+   explicit ActiveSessions(const FilePath& rootStoragePath);
+   explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage);
 
    core::Error create(const std::string& project,
                       const std::string& working,
@@ -620,55 +601,17 @@ public:
                       const std::string& editor,
                       std::string* pId) const;
 
-   std::vector<boost::shared_ptr<ActiveSession> > list(
-                                    const FilePath& userHomePath,
-                                    bool projectSharingEnabled) const;
+   std::vector<boost::shared_ptr<ActiveSession> > list(FilePath userHomePath, bool projectSharingEnabled) const;
 
    size_t count(const FilePath& userHomePath,
                 bool projectSharingEnabled) const;
 
    boost::shared_ptr<ActiveSession> get(const std::string& id) const;
 
-   FilePath storagePath() const { return storagePath_; }
-
-   boost::shared_ptr<ActiveSession> emptySession(
-      const std::string& id) const;
+   boost::shared_ptr<ActiveSession> emptySession(const std::string& id) const;
 
 private:
-   core::FilePath storagePath_;
-};
-
-// active session as tracked by rserver processes
-// these are stored in a common location per rserver
-// so that the server process can keep track of all
-// active sessions, regardless of users running them
-class GlobalActiveSession : boost::noncopyable
-{
-public:
-   explicit GlobalActiveSession(const FilePath& path) : filePath_(path)
-   {
-      settings_.initialize(filePath_);
-   }
-
-   virtual ~GlobalActiveSession() {}
-
-   std::string sessionId() { return settings_.get("sessionId", ""); }
-   void setSessionId(const std::string& sessionId) { settings_.set("sessionId", sessionId); }
-
-   std::string username() { return settings_.get("username", ""); }
-   void setUsername(const std::string& username) { settings_.set("username", username); }
-
-   std::string userHomeDir() { return settings_.get("userHomeDir", ""); }
-   void setUserHomeDir(const std::string& userHomeDir) { settings_.set("userHomeDir", userHomeDir); }
-
-   int sessionTimeoutKillHours() { return settings_.getInt("sessionTimeoutKillHours", 0); }
-   void setSessionTimeoutKillHours(int val) { settings_.set("sessionTimeoutKillHours", val); }
-
-   core::Error destroy() { return filePath_.removeIfExists(); }
-
-private:
-   core::Settings settings_;
-   core::FilePath filePath_;
+   std::shared_ptr<IActiveSessionsStorage> storage_;
 };
 
 class GlobalActiveSessions : boost::noncopyable
@@ -681,11 +624,6 @@ public:
 private:
    core::FilePath rootPath_;
 };
-
-void trackActiveSessionCount(const FilePath& rootStoragePath,
-                             const FilePath& userHomePath,
-                             bool projectSharingEnabled,
-                             boost::function<void(size_t)> onCountChanged);
 
 } // namespace r_util
 } // namespace core
