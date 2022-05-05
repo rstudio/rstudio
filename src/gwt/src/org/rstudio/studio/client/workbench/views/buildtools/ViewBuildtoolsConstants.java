@@ -250,5 +250,11 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
     @Key("serveLabel")
     String serveLabel();
 
+    /** 
+     * Translated "Install options"
+     */
+    @DefaultMessage("Install options")
+    @Key("installOptions")
+    String installMoreOptions();
 
 }

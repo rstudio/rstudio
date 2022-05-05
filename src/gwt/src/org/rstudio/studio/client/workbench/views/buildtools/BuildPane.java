@@ -95,11 +95,14 @@ public class BuildPane extends WorkbenchPane
       ensureWidget();
    }
 
-   private void setInstallTooltip() 
+   private void updateInstallTooltips() 
    {
       boolean preclean = config_.getPackageCleanBeforeInstall();
-      String tooltip = commands_.buildAll().getTooltip() + "\n\nR CMD INSTALL" + (preclean ? "--preclean " : " ") + config_.getPackageInstallArgs() + " <pkg>";
-      buildAllButton_.setTitle(tooltip);
+      String installArgs = config_.getPackageInstallArgs();
+
+      buildAllButton_.setTitle(
+         commands_.buildAll().getTooltip() + "\n\nR CMD INSTALL " + (preclean ? "--preclean " : " ") + installArgs + " <pkg>"
+      );
    }
 
    @Override
@@ -114,50 +117,6 @@ public class BuildPane extends WorkbenchPane
       boolean website = type == SessionInfo.BUILD_TOOLS_WEBSITE;
       boolean quarto = type == SessionInfo.BUILD_TOOLS_QUARTO;
 
-      if (pkg) {
-         CheckBox precleanCheckbox = new CheckBox("clean");
-         precleanCheckbox.setTitle("Clean before install, i.e. use the --preclean option");
-         
-         projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
-
-            @Override
-            public void onResponseReceived(RProjectOptions response) {
-               config_ = response.getConfig();
-               boolean preclean = config_.getPackageCleanBeforeInstall();
-               setInstallTooltip();
-               precleanCheckbox.setValue(preclean);
-            }
-
-         });
-
-         precleanCheckbox.addValueChangeHandler(new ValueChangeHandler<Boolean>() {
-
-            @Override
-            public void onValueChange(ValueChangeEvent<Boolean> event) {
-               boolean preclean = event.getValue(); 
-               
-               projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
-
-                  @Override
-                  public void onResponseReceived(RProjectOptions response) {
-                     RProjectConfig config = response.getConfig();
-                     if (config.getPackageCleanBeforeInstall() != preclean) 
-                     {
-                        config.setPackageCleanBeforeInstall(preclean);
-                        projServer_.writeProjectConfig(config, new VoidServerRequestCallback());
-                     }
-                     config_ = config;
-
-                     setInstallTooltip();
-                  }
-               });
-            }
-            
-         });
-
-         toolbar.addLeftWidget(precleanCheckbox);
-      }
-      
       // quarto books get special treatment (build button is a pure menu)
       QuartoConfig quartoConfig = session_.getSessionInfo().getQuartoConfig();
       if (quarto && QuartoHelper.isQuartoBookConfig(quartoConfig))
@@ -186,6 +145,28 @@ public class BuildPane extends WorkbenchPane
             }
          }
          toolbar.addLeftWidget(buildAllButton_);
+
+         if (pkg) 
+         {
+            ToolbarPopupMenu installMoreMenu = new ToolbarPopupMenu();
+            buildFullMenuItem_ = commands_.buildFull().createMenuItem(false);
+            installMoreMenu.addItem(buildFullMenuItem_);
+            
+            buildIncrementalMenuItem_ = commands_.buildIncremental().createMenuItem(false);
+            installMoreMenu.addItem(buildIncrementalMenuItem_);
+            installMoreMenu.addSeparator();
+            installMoreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));
+
+            toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, constants_.installMoreOptions(), installMoreMenu, true));
+
+            projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
+               @Override
+               public void onResponseReceived(RProjectOptions response) {
+                  config_ = response.getConfig();
+                  updateInstallTooltips();
+               }
+            });
+         }
          
          // book build menu
          if (sessionInfo.getBuildToolsBookdownWebsite())
@@ -201,7 +182,6 @@ public class BuildPane extends WorkbenchPane
       // sync build all button caption
       syncBuildAllUI();
       toolbar.addLeftSeparator();
-      
      
       if (quarto)
       {
@@ -507,7 +487,6 @@ public class BuildPane extends WorkbenchPane
       handlers_.fireEvent(event);
    }
    
-
    @Override
    public String errorsBuildType()
    {
@@ -578,6 +557,8 @@ public class BuildPane extends WorkbenchPane
    RProjectConfig config_;
    private String errorsBuildType_;
    private ToolbarButton buildAllButton_;
+   private MenuItem buildFullMenuItem_;
+   private MenuItem buildIncrementalMenuItem_;
 
    private final CompilePanel compilePanel_;
 
