@@ -46,7 +46,7 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { findRepoRoot, getAppPath, filterFromQFileDialogFilter, resolveAliasedPath } from './utils';
+import { findRepoRoot, getAppPath, filterFromQFileDialogFilter, resolveAliasedPath, handleLocaleCookies } from './utils';
 import { activateWindow } from './window-utils';
 
 export enum PendingQuit {
@@ -387,6 +387,9 @@ export class GwtCallback extends EventEmitter {
 
       // ask the user what version of R they'd like to use
       const chooseRDialog = new ChooseRModalWindow(rInstalls);
+     
+      void handleLocaleCookies(chooseRDialog);
+
       const [data, error] = await chooseRDialog.showModal();
       if (error) {
         logger().logError(error);
