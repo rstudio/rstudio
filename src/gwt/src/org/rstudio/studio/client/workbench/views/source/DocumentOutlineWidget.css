@@ -79,3 +79,8 @@
 .nodeLabelFunction {
    font-family: inherit;
 }
+
+.nodeLabelTest {
+   font-family: inherit;
+   color: darkgreen;
+}

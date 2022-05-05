@@ -92,7 +92,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       this.isChunk = function() { return this.scopeType == ScopeNode.TYPE_CHUNK; };
       this.isSection = function() { return this.scopeType == ScopeNode.TYPE_SECTION; };
       this.isFunction = function() { return this.isBrace() && !!this.attributes.args; };
-      this.isTest = function() { return this.isBrace() && !!this.attributes.test; };
+      this.isTest = function() { return this.isBrace() && this.attributes.type == "test"; };
 
       this.equals = function(node) {
          if (this.scopeType !== node.scopeType ||
@@ -495,7 +495,6 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       };
 
       this.onFunctionScopeStart = function(label, functionStartPos, scopePos, name, args) {
-         
          debuglog("adding function brace-scope " + label);
          this.$root.addNode(
             new this.$ScopeNodeFactory(
@@ -505,7 +504,8 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
                ScopeNode.TYPE_BRACE,
                {
                   "name": name,
-                  "args": args
+                  "args": args, 
+                  "type": "function"
                }
             )
          );
@@ -515,16 +515,18 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
 
       this.onTestScopeStart = function(desc, startPos, scopePos) {
          debuglog("adding test_that() brace-scope " + desc);
-         var name = "test_that(" + desc + ")";
+         var label = "test_that(" + desc + ")";
+         var name = desc.replace(/^['"](.*)['"]/, "$1");
+         
          this.$root.addNode(
             new this.$ScopeNodeFactory(
-               "test_that(" + desc + ")",
+               label,
                scopePos,
                startPos,
                ScopeNode.TYPE_BRACE,
                {
-                  "name": "✅ " + desc,
-                  "test": desc
+                  "name": name,
+                  "type": "test"
                }
             )
          );
