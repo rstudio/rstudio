@@ -619,7 +619,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
     opt <- sub("^#\\|\\s*", "", opt)
     if (any(grepl(".+=.+", opt))) # R-style chunk options
     {
-        opts <- paste(opt, collapse=" ")
+        opts <- paste(opt, collapse = " ")
         opts <- knitr:::parse_params(opts)
     }
     else
