@@ -100,11 +100,7 @@ export class PandocConverter {
     // we always read all forms of tables (since they can always be written back out as raw_html)
     //
     // we also always read math (since it can always be output as 'asciimath')
-    //
-    // we  disable 'smart' b/c that causes pandoc to insert non-breaking spaces before selected
-    // abbreviations like e.g. rather, we do our own implementation of 'smart' when we read
-    // PandocTokenType.Str from the ast
-
+    
     // determine type of auto_ids
     const autoIds = format.extensions.gfm_auto_identifiers ? 'gfm_auto_identifiers' : 'auto_identifiers';
     const targetFormat = adjustedFormat(
@@ -112,7 +108,7 @@ export class PandocConverter {
       ['raw_html', 'raw_attribute', 'backtick_code_blocks', autoIds, 
       'grid_tables', 'pipe_tables', 'multiline_tables', 'simple_tables',
       'tex_math_dollars'],
-      ['smart'],
+       [],
     );
 
     // run preprocessors
@@ -171,13 +167,11 @@ export class PandocConverter {
     // hoist content through pandoc into our prosemirror token parser. since we open this door when
     // reading, users could end up writing raw inlines, and in that case we want them to echo back
     // to the source document just the way they came in. for writing markdown from pm we don't
-    // ever want to generate auto identifiers so we disable them here. we also disable smart b/c
-    // we do this manually above in pandocFromProsemirror (so we can avoid pandoc's insertion of
-    // nbsp's after abbreviations, which is more approriate for final output than editing)
+    // ever want to generate auto identifiers so we disable them here.
     let format = adjustedFormat(
       pandocFormat.fullName,
       ['raw_html', 'raw_attribute'], // always enable
-      ['auto_identifiers', 'gfm_auto_identifiers', 'smart'],
+      ['auto_identifiers', 'gfm_auto_identifiers'],
     ); // always disable
 
     // disable selected format options

@@ -3,6 +3,7 @@
 
 ### New
 
+- Linux: Support for Ubuntu 22.04, Fedora 35. (#10902, #9854)
 - Source marker `message` can contain ANSI SGR codes for setting style and color (#9010)
 - Linux/MacOS: Executing a code selection that encounters an error will stop execution of remaining code (#3014)
 - Added support for hyperlinks in the console and build pane (#1941)
@@ -17,6 +18,8 @@
 - The choice of pipe operator (`magrittr` or native R 4.1+) inserted with the "Insert Pipe Operator" keyboard shortcut can now be configured at the project level as well as the global level (#9409)
 - The Git/SVN pane now supports creating ED25519-encrypted SSH keys by default. Newly created RSA SSH keys will now be 4096 bits instead of 2048 to increase security (#8255)
 - Read only R and C++ files (marked by "do not edit by hand") are ignored by the fuzzy file finder (#10912)
+- Linux: For compatibility with newer versions of glibc (>= 2.34), the seccomp filter sandbox is disabled. See https://chromium.googlesource.com/chromium/src/+/0e94f26e8/docs/linux_sandboxing.md#the-sandbox-1 for more details.
+- Changed "Jobs" tab in IDE to "Local Jobs"
 
 #### Find in Files
 
@@ -52,6 +55,7 @@
 - Fixed an intermittent hang when invoking `rstudio-server verify-installation` which caused stale `rserver` processes to exist (rstudio-pro#3041) 
 - (Windows only) Fixed an issue where multiple instances of RStudio launched at the same time could bind to the same session. (#10488)
 - Fixed unintended change of date/time formatting in the VCS commit history (#10810)
+- Fixed an issue where code of the form '1:2:3' was diagnosed incorrectly. (#10979)
 - Add back link to the title of sessions so that users can easily open sessions in new tabs and copy session links (rstudio-pro#3290)
 - (Linux Only) License-manager now works in a installer-less context (rstudio-pro#3150)
 

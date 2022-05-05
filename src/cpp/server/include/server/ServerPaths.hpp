@@ -25,12 +25,15 @@
 
 #include <session/SessionConstants.hpp>
 
+#include "../ServerSessionRpc.hpp"
+
 namespace rstudio {
 namespace server {
 
 using namespace core;
 
 inline FilePath serverTmpDir() { return options().serverDataDir().completeChildPath(kServerTmpDir); }
+inline FilePath serverRpcSocketPath() { return serverTmpDir().completeChildPath(kSessionServerRpcSocket); }
 inline FilePath serverLocalSocketPath() { return serverTmpDir().completeChildPath(kServerLocalSocket); }
 inline FilePath monitorSocketPath() { return serverTmpDir().completeChildPath(kMonitorSocket); }
 inline FilePath sessionTmpDir() { return options().serverDataDir().completeChildPath(kSessionTmpDir); }

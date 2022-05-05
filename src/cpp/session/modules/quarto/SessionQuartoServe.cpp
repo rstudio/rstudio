@@ -28,6 +28,8 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionQuarto.hpp>
+#include <session/SessionUrlPorts.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "SessionQuartoJob.hpp"
 
@@ -187,9 +189,12 @@ protected:
          FilePath outputFile = module_context::extractOutputFileCreated(renderFile_.getParent(), error);
          if (!outputFile.isEmpty())
          {
-            // navigate to viewer
-            std::string path = urlPathForQuartoProjectOutputFile(outputFile);
-            navigateToViewer(port(), path, jobId());
+            // navigate to viewer if we are using the viewer
+            if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypePane)
+            {
+               std::string path = urlPathForQuartoProjectOutputFile(outputFile);
+               navigateToViewer(port(), path, jobId());
+            }
 
             // activate the console
             ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
@@ -215,9 +220,19 @@ protected:
                path_ = location.path;
 
             // launch viewer
-            module_context::viewer(serverUrl(port_, path_),
-                                   -1,
-                                   module_context::QuartoNavigate::navWebsite(pJob_->id()));
+            if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypePane)
+            {
+               module_context::viewer(serverUrl(port_, path_),
+                                      -1,
+                                      module_context::QuartoNavigate::navWebsite(pJob_->id()));
+            }
+            else if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeWindow)
+            {
+               std::string url = rstudioServerPreviewWindowUrl();
+               ClientEvent event = browseUrlEvent(url);
+               module_context::enqueClientEvent(event);
+            }
+
 
             // now that the dev server is running restore the console tab
             ClientEvent activateConsoleEvent(client_events::kConsoleActivate, false);
@@ -227,6 +242,9 @@ protected:
             if (session::options().programMode() == kSessionProgramModeServer)
             {
                QuartoJob::onStdErr(location.filteredOutput);
+               QuartoJob::onStdErr("Browse at: " +
+                                   core::system::getenv("RSTUDIO_HTTP_REFERER") +
+                                   rstudioServerPreviewWindowUrl() + "\n");
                return;
             }
          }
@@ -252,6 +270,17 @@ private:
       renderFile_ = FilePath();
       renderFileLines_.clear();
       renderOutput_ = "";
+   }
+
+   std::string rstudioServerPreviewWindowUrl()
+   {
+      std::string url = url_ports::mapUrlPorts(viewerUrl());
+      return url;
+   }
+
+   std::string viewerUrl()
+   {
+      return "http://localhost:" + safe_convert::numberToString(port_) + "/" + path_;
    }
 
 

@@ -95,6 +95,7 @@
 #include <session/SessionSourceDatabase.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionContentUrls.hpp>
+#include <session/SessionServerRpc.hpp>
 #include <session/SessionScopes.hpp>
 #include <session/SessionClientEventService.hpp>
 #include <session/SessionUrlPorts.hpp>
@@ -497,7 +498,11 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (startClientEventService)
 
       // rpc methods
+      (socket_rpc::initialize)
       (rpc::initialize)
+#ifdef RSTUDIO_SERVER
+      (server_rpc::initialize)
+#endif
 
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))

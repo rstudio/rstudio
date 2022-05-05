@@ -128,12 +128,12 @@ public class EditingPreferencesPane extends PreferencesPane
       editingPanel.add(keyboardPanel);
 
       HorizontalPanel projectPrefsPanel = new HorizontalPanel();
+      projectPrefsPanel.getElement().getStyle().setMarginTop(5, Unit.PX);
       Label projectOverride = new Label(constants_.editingProjectOverrideInfoText());
       projectOverride.addStyleName(baseRes.styles().infoLabel());
       projectPrefsPanel.add(projectOverride);
 
       SmallButton editProjectSettings = new SmallButton(constants_.editProjectPreferencesButtonLabel());
-      editProjectSettings.getElement().getStyle().setMarginTop(1, Unit.PX);
       editProjectSettings.getElement().getStyle().setMarginLeft(5, Unit.PX);
       editProjectSettings.addClickHandler(new ClickHandler() {
          @Override

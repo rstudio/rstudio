@@ -105,8 +105,8 @@ cppTypeFromJsonType <- function (type) {
    type
 }
 
-# generates Rmd documentation for the given options
-generateRmd <- function (optionsJson, overlayOptionsJson) {
+# generates qmd documentation for the given options
+generateQmd <- function (optionsJson, overlayOptionsJson) {
    metadata <- optionsJson$metadata
    
    configFile <- metadata$configFile
@@ -116,10 +116,10 @@ generateRmd <- function (optionsJson, overlayOptionsJson) {
    }
    
    # header for Quarto file
-   rmd <- paste("---",
+   qmd <- paste("---",
                 paste0("title: \"", configFile, "\""),
                 "aliases:",
-                paste0("\t- /rstudio-configuration-1.html#", configFile),
+                paste0("  - /rstudio-configuration-1.html#", configFile),
                 "---",
                 "",
                 sep = "\n")
@@ -130,7 +130,7 @@ generateRmd <- function (optionsJson, overlayOptionsJson) {
          sprintf("The following is a list of available options that can be specified in the `%s` configuration file",
                  configFile)
    }
-   rmd <- paste0(rmd, "\n", docDescription, "\n\n")
+   qmd <- paste0(qmd, "\n", docDescription, "\n\n")
    
    # combine options and overlay options
    options <- optionsJson$options
@@ -209,12 +209,12 @@ generateRmd <- function (optionsJson, overlayOptionsJson) {
       }
       
       if (str_length(categoryOptions) > 0) {
-         rmd <- paste(rmd, sprintf("### *%s* Settings", category), sep="\n")
-         rmd <- paste(rmd, categoryOptions, sep="\n\n")
+         qmd <- paste(qmd, sprintf("### *%s* Settings", category), sep="\n")
+         qmd <- paste(qmd, categoryOptions, sep="\n\n")
       }
    }
    
-   writeLines(rmd, con = outputDocFile)
+   writeLines(qmd, con = outputDocFile)
 }
 
 # generates the include guard name
@@ -762,7 +762,7 @@ generate <- function (optionsFile) {
       generateProgramOptions(optionsJson, overlayOptionsJson)
       
       cat("Generating documentation\n")
-      generateRmd(optionsJson, overlayOptionsJson)
+      generateQmd(optionsJson, overlayOptionsJson)
    } else {
       stop(sprintf("Requested generator type %s is not supported", generatorType))
    }

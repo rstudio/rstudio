@@ -2633,11 +2633,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String pythonPreferencesText();
 
     /**
-     * Translated "(NOTE: This project has already been configured with its own Python interpreter. Use the Project Options dialog to change the version of Python used in this project.".
+     * Translated "(NOTE: This project has already been configured with its own Python interpreter. Use the Edit Project Options button to change the version of Python used in this project.)".
      *
-     * @return translated "(NOTE: This project has already been configured with its own Python interpreter. Use the Project Options dialog to change the version of Python used in this project."
+     * @return translated "(NOTE: This project has already been configured with its own Python interpreter. Use the Edit Project Options button to change the version of Python used in this project.)"
      */
-    @DefaultMessage("(NOTE: This project has already been configured with its own Python interpreter. Use the Project Options dialog to change the version of Python used in this project.")
+    @DefaultMessage("(NOTE: This project has already been configured with its own Python interpreter. Use the Edit Project Options button to change the version of Python used in this project.)")
     @Key("overrideText")
     String overrideText();
 
@@ -4530,20 +4530,20 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String editingUseNativePipeOperatorLabel();
 
     /**
-     * Translated "NOTE: Some of these settings may be overridden by project-specific preferences."
+     * Translated "NOTE: Some of these settings may be overridden by project-specific options."
      *
-     * @return translated "NOTE: Some of these settings may be overridden by project-specific preferences."
+     * @return translated "NOTE: Some of these settings may be overridden by project-specific options."
      */
-    @DefaultMessage("NOTE: Some of these settings may be overridden by project-specific preferences.")
+    @DefaultMessage("NOTE: Some of these settings may be overridden by project-specific options.")
     @Key("editingProjectOverrideInfoText")
     String editingProjectOverrideInfoText();
 
     /**
-     * Translated "Edit Project Preferences..."
+     * Translated "Edit Project Options..."
      *
-     * @return translated "Edit Project Preferences..."
+     * @return translated "Edit Project Options..."
      */
-    @DefaultMessage("Edit Project Preferences...")
+    @DefaultMessage("Edit Project Options...")
     @Key("editProjectPreferencesButtonLabel")
     String editProjectPreferencesButtonLabel();
 

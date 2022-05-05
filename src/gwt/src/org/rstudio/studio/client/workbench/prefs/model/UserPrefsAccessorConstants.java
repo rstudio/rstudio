@@ -1420,9 +1420,9 @@ public interface UserPrefsAccessorConstants extends Constants {
    String sshKeyTypeTitle();
    @DefaultStringValue("The encryption type to use for the SSH key file.")
    String sshKeyTypeDescription();
-   @DefaultStringValue("ED25519-encrypted key")
+   @DefaultStringValue("ED25519")
    String sshKeyTypeEnum_ed25519();
-   @DefaultStringValue("RSA-encrypted key")
+   @DefaultStringValue("RSA")
    String sshKeyTypeEnum_rsa();
 
    /**
@@ -1934,14 +1934,6 @@ public interface UserPrefsAccessorConstants extends Constants {
    String checkNullExternalPointersTitle();
    @DefaultStringValue("When enabled, RStudio will detect R objects containing null external pointers when building the Environment pane, and avoid introspecting their contents further.")
    String checkNullExternalPointersDescription();
-
-   /**
-    * Enable IDE features for the Quarto publishing system.
-    */
-   @DefaultStringValue("Enable Quarto features")
-   String quartoEnabledTitle();
-   @DefaultStringValue("Enable IDE features for the Quarto publishing system.")
-   String quartoEnabledDescription();
 
    /**
     * The IDE's user-interface language.

@@ -1152,7 +1152,7 @@
         "ssh_key_type": {
             "type": "string",
             "enum": ["ed25519", "rsa"],
-            "enumReadable": ["ED25519-encrypted key", "RSA-encrypted key"],
+            "enumReadable": ["ED25519", "RSA"],
             "default": "ed25519",
             "description": "The encryption type to use for the SSH key file."
         },
@@ -1589,13 +1589,6 @@
             "title": "Check values in the Environment pane for null external pointers",
             "type": "boolean",
             "default": false
-        },
-         "quarto_enabled": {
-            "type": "string",
-            "enum": ["auto", "enabled", "disabled", "hidden"],
-            "default": "auto",
-            "title": "Enable Quarto features",
-            "description": "Enable IDE features for the Quarto publishing system."
         },
          "ui_language": {
             "type": "string",
