@@ -61,12 +61,12 @@ namespace
             { "launch_parameters" , "launch-parameters" }
          };
 
-    Error FileActiveSessionStorage::readProperty(const std::string& id, const std::string& name, std::string* pValue)
+    Error FileActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
     {
         std::map<std::string, std::string> propertyValue{};
         *pValue = "";
 
-        Error error = readProperties(id, { name }, &propertyValue);
+        Error error = readProperties({ name }, &propertyValue);
 
         if (error)
             return error;
@@ -79,7 +79,7 @@ namespace
         return Success();
     }
 
-    Error FileActiveSessionStorage::readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
+    Error FileActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
     {
         std::vector<FilePath> failedFiles{};
         pValues->empty();
@@ -105,7 +105,7 @@ namespace
                 failedFiles, ERROR_LOCATION);
     }
 
-    Error FileActiveSessionStorage::readProperties(const std::string& id, std::map<std::string, std::string>* pValues)
+    Error FileActiveSessionStorage::readProperties(std::map<std::string, std::string>* pValues)
     {
         FilePath propertyDir = getPropertyDir();
         std::vector<FilePath> files{};
@@ -131,13 +131,13 @@ namespace
                 failedFiles, ERROR_LOCATION);
     }
 
-    Error FileActiveSessionStorage::writeProperty(const std::string& id, const std::string& name, const std::string& value)
+    Error FileActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)
     {
         std::map<std::string, std::string> property = {{name, value}};
-        return writeProperties(id, property);
+        return writeProperties(property);
     }
 
-    Error FileActiveSessionStorage::writeProperties(const std::string& id, const std::map<std::string, std::string>& properties)
+    Error FileActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
     {
         std::vector<FilePath> failedFiles{};
         for (auto&& prop : properties)
