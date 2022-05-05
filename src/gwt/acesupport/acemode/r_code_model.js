@@ -1180,7 +1180,6 @@ var RCodeModel = function(session, tokenizer,
                   testthatCursor.currentPosition(),
                   tokenCursor.currentPosition()
                );
-
             } 
             else
             {
