@@ -1762,11 +1762,13 @@ Error searchCode(const json::JsonRpcRequest& request,
    std::vector<std::string> names;
    std::vector<std::string> paths;
    bool moreFilesAvailable = false;
+   bool onlyTests = boost::algorithm::starts_with(term, "t ");
 
    // TODO: Refactor searchSourceFiles, searchSource to no longer take maximum number
    // of results (since we want to grab everything possible then filter before
    // sending over the wire). Simiarly with the 'more*Available' bools
-   searchFiles(term, 100, true, &names, &paths, &moreFilesAvailable);
+   if (!onlyTests)
+      searchFiles(term, 100, true, &names, &paths, &moreFilesAvailable);
 
    // search source and convert to source items
    std::vector<SourceItem> srcItems;
@@ -1780,11 +1782,14 @@ Error searchCode(const json::JsonRpcRequest& request,
 
    // search cpp source and convert to source items
    std::vector<clang::CppDefinition> cppDefinitions;
-   clang::searchDefinitions(term, &cppDefinitions);
-   std::transform(cppDefinitions.begin(),
-                  cppDefinitions.end(),
-                  std::back_inserter(srcItems),
-                  fromCppDefinition);
+   if (!onlyTests)
+   {
+      clang::searchDefinitions(term, &cppDefinitions);
+      std::transform(cppDefinitions.begin(),
+                     cppDefinitions.end(),
+                     std::back_inserter(srcItems),
+                     fromCppDefinition);
+   }
    
    // search bookdown xref index
    fillFromCrossrefs(term, &srcItems);
