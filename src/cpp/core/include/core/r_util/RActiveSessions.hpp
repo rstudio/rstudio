@@ -93,7 +93,7 @@ private:
       std::string value;
       if (!empty())
       {
-         Error error = storage_->readProperty(id_, propertyName, &value);
+         Error error = storage_->readProperty(propertyName, &value);
          if (error)
             LOG_ERROR(error);
       }
@@ -105,7 +105,7 @@ private:
    {
       if (!empty())
       {
-         Error error = storage_->writeProperty(id_, propertyName, value);
+         Error error = storage_->writeProperty(propertyName, value);
          if (error)
             LOG_ERROR(error);
       }
