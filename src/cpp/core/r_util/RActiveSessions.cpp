@@ -14,7 +14,9 @@
  */
 
 #include <core/r_util/RActiveSessions.hpp>
-#include <core/r_util/RActiveSessionStorage.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
+
+#include <core/Log.hpp>
 
 #include <boost/bind/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -36,6 +38,11 @@ using namespace boost::placeholders;
 namespace rstudio {
 namespace core {
 namespace r_util {
+
+   ActiveSessions::ActiveSessions(const FilePath& rootStoragePath)
+   {
+      
+   }
 
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
