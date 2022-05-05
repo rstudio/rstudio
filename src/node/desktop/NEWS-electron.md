@@ -12,7 +12,6 @@
 - RStudio: scaling on second monitor (#3966)
 - Rstudio Desktop Windows doesn't display .mp4 files (#4019)
 - RStudio Crashes after it is started Crashed Thread: Chrome_InProcGpuThread (#4034)
-- Display error with non-English IME (e.g. Chinese) (#4079)
 - Cursor persists on previous line with new OpenGL rendering engine (#4390)
 - Paste a file from Windows Explorer (#4572)
 - Pressing "alt gr" jumps one character back (#4584)
