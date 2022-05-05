@@ -304,11 +304,11 @@ public class RProjectConfig extends JavaScriptObject
       setPackageRoxygenizeNative(roxygenize);
    }
 
-   private static final String ROXYGENIZE_RD = "rd";
-   private static final String ROXYGENIZE_COLLATE = constants_.collateLabel();
-   private static final String ROXYGENIZE_NAMESPACE = constants_.rOxygenizenamespace();
-   private static final String ROXYGENIZE_VIGNETTE = constants_.vignetteLabel();
-   private static final String ROXYGENIZE_DELIM = ",";
+   private static final String ROXYGENIZE_RD = "rd"; //$NON-NLS-1$
+   private static final String ROXYGENIZE_COLLATE = "collate"; //$NON-NLS-1$
+   private static final String ROXYGENIZE_NAMESPACE = "namespace"; //$NON-NLS-1$
+   private static final String ROXYGENIZE_VIGNETTE = "vignette"; //$NON-NLS-1$
+   private static final String ROXYGENIZE_DELIM = ","; //$NON-NLS-1$
 
    private final boolean getPackageRoxygenize(String roclet)
    {
@@ -360,10 +360,10 @@ public class RProjectConfig extends JavaScriptObject
       this.tutorial_path = tutorialPath;
    }-*/;
 
-   public static final String MARKDOWN_WRAP_DEFAULT = constants_.defaultLabel();
-   public static final String MARKDOWN_WRAP_NONE = constants_.noneProjectLabel();
-   public static final String MARKDOWN_WRAP_COLUMN = constants_.columnLabel();
-   public static final String MARKDOWN_WRAP_SENTENCE = constants_.sentenceLabel();
+   public static final String MARKDOWN_WRAP_DEFAULT = "Default"; //$NON-NLS-1$
+   public static final String MARKDOWN_WRAP_NONE = "None"; //$NON-NLS-1$
+   public static final String MARKDOWN_WRAP_COLUMN = "Column"; //$NON-NLS-1$
+   public static final String MARKDOWN_WRAP_SENTENCE = "Sentence"; //$NON-NLS-1$
 
    public native final String getMarkdownWrap() /*-{
       return this.markdown_wrap;
@@ -381,10 +381,10 @@ public class RProjectConfig extends JavaScriptObject
       this.markdown_wrap_at_column = column;
    }-*/;
 
-   public static final String MARKDOWN_REFERENCES_DEFAULT = constants_.defaultLabel();
-   public static final String MARKDOWN_REFERENCES_BLOCK = constants_.blockLabel();
-   public static final String MARKDOWN_REFERENCES_SECTION = constants_.sectionLabel();
-   public static final String MARKDOWN_REFERENCES_DOCUMENT = constants_.documentLabel();
+   public static final String MARKDOWN_REFERENCES_DEFAULT = "Default"; //$NON-NLS-1$
+   public static final String MARKDOWN_REFERENCES_BLOCK = "Block"; //$NON-NLS-1$
+   public static final String MARKDOWN_REFERENCES_SECTION = "Section"; //$NON-NLS-1$
+   public static final String MARKDOWN_REFERENCES_DOCUMENT = "Document"; //$NON-NLS-1$
 
    public native final String getMarkdownReferences() /*-{
       return this.markdown_references;
