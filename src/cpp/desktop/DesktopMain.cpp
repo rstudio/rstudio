@@ -60,7 +60,7 @@
 #endif
 
 #ifdef __GLIBC__
-# include <gnu/libc-version.h>
+#include <gnu/libc-version.h>
 #endif
 
 QProcess* pRSessionProcess;
