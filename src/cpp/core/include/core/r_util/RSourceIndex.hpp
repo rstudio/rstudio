@@ -143,7 +143,7 @@ public:
 
    bool nameStartsWith(const std::string& term, bool caseSensitive, bool includeTestItems) const
    {
-      if (!includeTestItems && isTest())
+      if (includeTestItems != isTest())
          return false;
 
       if (caseSensitive)
@@ -154,7 +154,7 @@ public:
 
    bool nameIsSubsequence(const std::string& term, bool caseSensitive, bool includeTestItems) const
    {
-      if (!includeTestItems && isTest())
+      if (includeTestItems != isTest())
          return false;
 
       return string_utils::isSubsequence(name_, term, !caseSensitive);
@@ -165,9 +165,9 @@ public:
                     bool caseSensitive, 
                     bool includeTestItems) const
    {
-      if (!includeTestItems && isTest())
+      if (includeTestItems != isTest())
          return false;
-
+      
       return regex_utils::textMatches(name_, regex, prefixOnly, caseSensitive);
    }
 
