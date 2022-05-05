@@ -687,7 +687,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
     # the body should override the header option
     opts <- opts[unique(names(opts))]
     
-    # convert T, F (knitr chunk style) or "true", "false" (yaml chunk style) to TRUE, FALSE as appropriate
+    # convert T, F for R code chunk options to TRUE, FALSE as appropriate
     opts <- lapply(opts, function(opt) {
       if (identical(opt, as.name("T")))
         TRUE
