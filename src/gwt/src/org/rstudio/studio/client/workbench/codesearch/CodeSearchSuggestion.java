@@ -99,6 +99,9 @@ class CodeSearchSuggestion implements Suggestion
       case SourceItem.SECTION:
          image = new ImageResource2x(CodeIcons.INSTANCE.section2x());
          break;
+      case SourceItem.TEST:
+         image = new ImageResource2x(CodeIcons.INSTANCE.test2x());
+         break;
       case SourceItem.NONE:
       default:
          image = new ImageResource2x(CodeIcons.INSTANCE.keyword2x());
@@ -134,6 +137,11 @@ class CodeSearchSuggestion implements Suggestion
       
       // resolve name (include parent if there is one)
       String name = sourceItem.getName();
+
+      // remove "t " for test items that was artifically added by testThatCallIndexer()
+      if (sourceItem.getType() == SourceItem.TEST)
+         name = name.replaceFirst("t ", "");
+         
       if (!StringUtil.isNullOrEmpty(sourceItem.getParentName()))
          name = sourceItem.getParentName() + "::" + name;
       
