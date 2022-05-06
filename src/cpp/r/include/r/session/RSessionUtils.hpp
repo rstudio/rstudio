@@ -88,8 +88,6 @@ bool alwaysSaveHistory();
 
 bool restoreEnvironmentOnResume();
 
-bool useNativePipeOperator();
-
 // suppress output in scope
 class SuppressOutputInScope
 {
