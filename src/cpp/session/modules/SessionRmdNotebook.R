@@ -627,16 +627,16 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
         opts <- .rs.fromYAML(opt)
         # parse truthy and falsy style yaml options
         opts <- lapply(opts, function(value)
-                             {
-                               if (!is.character(value))
-                                 return(value)
-                               if (tolower(value) %in% c("y", "yes", "on"))
-                                 return(TRUE)
-                               if (tolower(value) %in% c("n", "no", "off"))
-                                 return(FALSE)
-                               else
-                                 return(value)
-                             })
+           {
+             if (!is.character(value))
+               return(value)
+             if (tolower(value) %in% c("y", "yes", "on"))
+               return(TRUE)
+             if (tolower(value) %in% c("n", "no", "off"))
+               return(FALSE)
+             else
+               return(value)
+           })
     }
     return(opts)
 })
@@ -659,7 +659,15 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
         break
     yamlChunkOpts <- c(yamlChunkOpts, match)
   }
-  opts <- .rs.parseYamlOpt(yamlChunkOpts)
+  
+  if (length(yamlChunkOpts) > 0)
+  {
+     opts <- tryCatch(
+     .rs.parseYamlOpt(yamlChunkOpts),
+     error = function(e) {
+        warning("Failed to parse chunk options in body:\n", e)
+     })
+  }
 
   # strip chunk indicators if present
   matches <- unlist(regmatches(rmdChunkOpts, regexec(.rs.reRmdChunkBegin(), rmdChunkOpts)))
