@@ -29,6 +29,32 @@
    }
 })
 
+.rs.addFunction("quarto.editorConfig", function(editor) {
+   scalarChar <- function(x) .rs.scalar(as.character(x))
+   if (!is.null(editor$mode)) {
+      editor$mode <- scalarChar(editor$mode)
+   }
+   
+   if (is.list(editor$markdown)) {
+      if (!is.null(editor$markdown$wrap)) {
+         editor$markdown$wrap <- scalarChar(editor$markdown$wrap)
+      }
+      if (!is.null(editor$markdown$canonical)) {
+         editor$markdown$canonical <- scalarChar(editor$markdown$canonical)
+      }
+      if (is.list(editor$markdown$references)) {
+         if (!is.null(editor$markdown$references$location)) {
+            editor$markdown$references$location <- scalarChar(editor$markdown$references$location)
+         }
+         if (!is.null(editor$markdown$references$prefix)) {
+            editor$markdown$references$prefix <- scalarChar(editor$markdown$references$prefix)
+         }
+      }
+   }
+
+   return(editor)
+})
+
 .rs.addFunction("quarto.renderPreview", function(port) {
    utils::download.file(paste0("http://localhost:", port, "/quarto-render/"),
                         destfile = tempfile(),

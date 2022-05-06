@@ -133,9 +133,9 @@ public class VisualMode implements VisualModeEditorSync,
       visualModeFormat_ = new VisualModePanmirrorFormat(docUpdateSentinel_, docDisplay_, target_, view_);
       visualModeChunks_ = new VisualModeChunks(docUpdateSentinel_, docDisplay_, target_, releaseOnDismiss, this);
       visualModeLocation_ = new VisualModeEditingLocation(docUpdateSentinel_, docDisplay_);
-      visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, visualModeFormat_);
+      visualModeWriterOptions_ = new VisualModeMarkdownWriter(docUpdateSentinel_, docDisplay_, visualModeFormat_);
       visualModeNavigation_ = new VisualModeNavigation(navigationContext_);
-      visualModeConfirm_ = new VisualModeConfirm(docUpdateSentinel_, docDisplay, this);
+      visualModeConfirm_ = new VisualModeConfirm(docUpdateSentinel_, docDisplay, target_, this);
       visualModeSpelling_ = new VisualModeSpelling(docUpdateSentinel_, docDisplay, this);
       visualModeContext_ = new VisualModePanmirrorContext(
          docUpdateSentinel_, 

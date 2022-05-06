@@ -88,9 +88,17 @@ function pandocFormatConfigFromYamlInCode(code: string, isRmd: boolean): PandocF
 
     // see if we have any markdown options defined
     let yamlFormatConfig: PandocFormatConfig | undefined;
-    const yamlMarkdownOptions = yaml?.editor_options?.markdown;
-    if (yamlMarkdownOptions instanceof Object) {
-      yamlFormatConfig = readPandocFormatConfig(yamlMarkdownOptions);
+
+    // first check 'editor' then check 'editor_options'
+    const yamlEditor = yaml?.editor;
+    if (yamlEditor && (yamlEditor instanceof Object) && 
+        yamlEditor.markdown && (yamlEditor.markdown instanceof Object)) {
+      yamlFormatConfig = readPandocFormatConfig(yamlEditor.markdown);
+    } else {
+      const yamlMarkdownOptions = yaml?.editor_options?.markdown;
+      if (yamlMarkdownOptions instanceof Object) {
+        yamlFormatConfig = readPandocFormatConfig(yamlMarkdownOptions);
+      }
     }
 
     // combine and return

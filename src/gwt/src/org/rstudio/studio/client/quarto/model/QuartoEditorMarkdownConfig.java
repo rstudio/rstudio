@@ -1,5 +1,5 @@
 /*
- * QuartoConfig.java
+ * QuartoEditorMarkdownConfig.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -14,18 +14,15 @@
  */
 package org.rstudio.studio.client.quarto.model;
 
+import org.rstudio.studio.client.panmirror.PanmirrorWriterReferencesOptions;
+
 import jsinterop.annotations.JsType;
 
 @JsType
-public class QuartoConfig
+public class QuartoEditorMarkdownConfig
 {
-   public String user_installed;
-   public boolean enabled;
-   public String version;
-   public boolean is_project;
-   public String project_dir;
-   public String project_type;
-   public String project_output_dir;
-   public String[] project_formats;
-   public QuartoEditorConfig project_editor;
+   public String wrap;
+   public PanmirrorWriterReferencesOptions references;
+   public String canonical;
+   
 }

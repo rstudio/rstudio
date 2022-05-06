@@ -1,5 +1,5 @@
 /*
- * QuartoConfig.java
+ * QuartoEditorConfig.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -17,15 +17,8 @@ package org.rstudio.studio.client.quarto.model;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class QuartoConfig
+public class QuartoEditorConfig
 {
-   public String user_installed;
-   public boolean enabled;
-   public String version;
-   public boolean is_project;
-   public String project_dir;
-   public String project_type;
-   public String project_output_dir;
-   public String[] project_formats;
-   public QuartoEditorConfig project_editor;
+   public String mode;
+   public QuartoEditorMarkdownConfig markdown;
 }
