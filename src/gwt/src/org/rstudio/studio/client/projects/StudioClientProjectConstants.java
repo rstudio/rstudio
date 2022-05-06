@@ -1043,7 +1043,7 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Create Quarto Blog")
     @Key("quartoBlogPageCaption")
     String quartoBlogPageCaption();
-    
+
     /**
      * Translated "Quarto Website".
      *
@@ -1351,6 +1351,15 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String tabWidthLabel();
 
     /**
+     * Translated "Use native pipe operator, |> (requires R 4.1+)"
+     *
+     * @return translated "Use native pipe operator, |> (requires R 4.1+)"
+     */
+    @DefaultMessage("Use native pipe operator, |> (requires R 4.1+)")
+    @Key("useNativePipeOperatorLabel")
+    String useNativePipeOperatorLabel();
+
+    /**
      * Translated "Ensure that source files end with newline".
      *
      * @return translated "Ensure that source files end with newline"
@@ -1398,9 +1407,9 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     /**
      * Translated "Use (Default) to inherit the global default setting".
      *
-     * @return translated "Use (Default) to inherit the global default setting"
+     * @return translated "Use (Default) to inherit the global default setting."
      */
-    @DefaultMessage("Use (Default) to inherit the global default setting")
+    @DefaultMessage("Use (Default) to inherit the global default setting.")
     @Key("projectGeneralInfoLabel")
     String projectGeneralInfoLabel();
 
@@ -1623,9 +1632,9 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     /**
      * Translated "Use (Default) to inherit the global default setting".
      *
-     * @return translated "Use (Default) to inherit the global default setting"
+     * @return translated "Use (Default) to inherit the global default setting."
      */
-    @DefaultMessage("Use (Default) to inherit the global default setting")
+    @DefaultMessage("Use (Default) to inherit the global default setting.")
     @Key("rMarkdownInfoLabel")
     String rMarkdownInfoLabel();
 
@@ -1821,9 +1830,9 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     /**
      * Translated "Use (Default) to inherit the global default dictionary".
      *
-     * @return translated "Use (Default) to inherit the global default dictionary"
+     * @return translated "Use (Default) to inherit the global default dictionary."
      */
-    @DefaultMessage("Use (Default) to inherit the global default dictionary")
+    @DefaultMessage("Use (Default) to inherit the global default dictionary.")
     @Key("dictionariesInfoLabel")
     String dictionariesInfoLabel();
 

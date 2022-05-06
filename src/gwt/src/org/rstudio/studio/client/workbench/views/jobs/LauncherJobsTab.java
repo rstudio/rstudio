@@ -52,7 +52,7 @@ public class LauncherJobsTab extends DelayLoadWorkbenchTab<LauncherJobsPresenter
                           Commands commands,
                           EventBus events)
    {
-      super("Launcher", shim);
+      super(constants_.launcherTitle(), shim);
       shim_ = shim;
       
       binder.bind(commands, shim);

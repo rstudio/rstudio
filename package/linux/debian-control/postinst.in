@@ -43,7 +43,7 @@ fi
 # create var directories
 mkdir -p /var/run/rstudio-server
 mkdir -p /var/lock/rstudio-server
-mkdir -p /var/log/rstudio-server
+mkdir -p /var/log/rstudio/rstudio-server
 mkdir -p /var/lib/rstudio-server
 mkdir -p /var/lib/rstudio-server/conf
 mkdir -p /var/lib/rstudio-server/body

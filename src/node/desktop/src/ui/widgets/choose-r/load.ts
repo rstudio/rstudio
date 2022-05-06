@@ -17,10 +17,11 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 
 import { Callbacks, CallbackData } from './preload';
-import { initI18n, localize } from '../../../main/i18n-manager';
+import { changeLanguage, initI18n, localize } from '../../../main/i18n-manager';
 
 import './styles.css';
 import { logger } from '../../../core/logger';
+import { checkForNewLanguage } from '../../utils';
 
 declare global {
   interface Window {
@@ -30,6 +31,10 @@ declare global {
 
 // load internationalization infrastructure
 initI18n();
+
+const updateLabels = () => {
+  localize(document, 'chooseRDialog');
+};
 
 // ensure that the custom select box is only enabled when the associated
 // radio button is checked
@@ -61,7 +66,6 @@ function callbackData(binaryPath?: string): CallbackData {
 }
 
 buttonOk.addEventListener('click', async () => {
-
   const useDefault32Radio = document.getElementById('use-default-32') as HTMLInputElement;
   if (useDefault32Radio.checked) {
     const shouldCloseWindow = await window.callbacks.useDefault32bit(callbackData());
@@ -90,7 +94,6 @@ buttonOk.addEventListener('click', async () => {
     }
     return;
   }
-
 });
 
 buttonCancel.addEventListener('click', () => {
@@ -110,5 +113,13 @@ buttonBrowse.addEventListener('click', async () => {
 });
 
 window.addEventListener('load', () => {
-  localize(document, 'chooseRDialog');
+  checkForNewLanguage()
+    .then(async (newLanguage: any) =>
+      changeLanguage('' + newLanguage).then(() => {
+        updateLabels();
+      }),
+    )
+    .catch((err: any) => {
+      console.error('An error happened when trying to fetch a new locale: ', err);
+    });
 });

@@ -2591,9 +2591,9 @@ Error permanentlyDropPriv(const std::string& newUsername, const std::string& new
 
    GidType targetGID = groupOpt.value_or(user.getGroupId());
 
-   // Refresh the destinations without providing a user since we are have the parent processes's file destinations
-   // and don't want to change the ownership of the log files to newUsername. We do still want to make sure we are set up to log in case
-   // there are errors before we call ::execve - in particular, for syslog
+   // Refresh the destinations without providing a user since we have the parent processes's file destinations
+   // and don't want to change the ownership of the log files to newUsername. We do still want to make sure we
+   // are set up to log in case there are errors before we call ::execve - in particular, for syslog
    core::log::refreshAllLogDestinations();
 
    // clear error state

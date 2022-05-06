@@ -272,17 +272,18 @@ SecureAsyncUriHandlerFunctionEx makeExtendedAsyncUriHandler(SecureAsyncUriHandle
    
 http::UriHandlerFunction secureHttpHandler(SecureUriHandlerFunction handler,
                                            bool authenticate,
-                                           bool requireUserListCookie)
+                                           bool requireUserListCookie,
+                                           bool refreshAuthCookies)
 {
    if (authenticate)
       return UriHandler(makeExtendedUriHandler(handler),
                         auth::handler::signInThenContinue,
-                        true,
+                        refreshAuthCookies,
                         requireUserListCookie);
    else
       return UriHandler(makeExtendedUriHandler(handler),
                         setHttpError,
-                        true,
+                        refreshAuthCookies,
                         requireUserListCookie);
 }
 

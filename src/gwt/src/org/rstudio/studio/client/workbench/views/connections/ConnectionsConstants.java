@@ -16,6 +16,14 @@ package org.rstudio.studio.client.workbench.views.connections;
 
 public interface ConnectionsConstants extends com.google.gwt.i18n.client.Messages {
 
+    /**
+     * Translated "Connections".
+     *
+     * @return translated "Connections"
+     */
+    @DefaultMessage("Connections")
+    @Key("connectionsTitle")
+    String connectionsTitle();
 
     /**
      * Translated "Error".

@@ -29,7 +29,6 @@ import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -250,24 +249,25 @@ public class VirtualConsole
       Entry<Integer, ClassRange> last = class_.lastEntry();
       ClassRange range = last.getValue();
 
-      if (hyperlink_ != null || range.hyperlink_ != null)
+      if (hyperlink_ != null || range.hyperlink_ != null || !StringUtil.equals(range.clazz, clazz))
       {
          // force if this needs to display an hyperlink
          // or if the previous range was an hyperlink
+         // or the classes differ (change of colour)
          forceNewRange = true;
       }
-
-      if (!forceNewRange && StringUtil.equals(range.clazz, clazz))
-      {
-         // just append to the existing output stream
-         range.appendRight(text, 0);
-      }
-      else
+      
+      if (forceNewRange)
       {
          // create a new output range with this class
          final ClassRange newRange = new ClassRange(cursor_, clazz, text, preserveHTML_, hyperlink_);
          appendChild(newRange.element);
          class_.put(cursor_, newRange);
+      }
+      else
+      {
+         // just append to the existing output stream
+         range.appendRight(text, 0);
       }
    }
 
@@ -280,20 +280,27 @@ public class VirtualConsole
    {
       int start = range.start;
       int end = start + range.length;
-
+      
       Entry<Integer, ClassRange> left = class_.floorEntry(start);
       Entry<Integer, ClassRange> right = class_.floorEntry(end);
-
+      
       // create a view into the map representing the ranges that this class
       // overlaps
       SortedMap<Integer, ClassRange> view = null;
-      if (left != null && right != null)
+      
+      if (left != null && right != null) 
+      {
          view = class_.subMap(left.getKey(), true, right.getKey(), true);
-      else if (left == null && right != null)
+      } 
+      else if (left == null && right != null) 
+      {
          view = class_.tailMap(right.getKey(), true);
-      else if (left != null)
+      } 
+      else if (left != null) 
+      {
          view = class_.headMap(left.getKey(), true);
-
+      }
+      
       // if no overlapping ranges exist, we can just create a new one
       if (view == null)
       {
@@ -375,12 +382,15 @@ public class VirtualConsole
                // reduce the original range and add ours
                overlap.trimLeft(delta);
 
+               // move the shortened range to its new start position
+               // unless it's empty
+               if (overlap.length > 0) {
+                  moves.put(l, overlap.start);
+               }
+
                if (!range.text().isEmpty())
                   insertions.add(range);
-
-               // move the shortened range to its new start position
-               moves.put(l, overlap.start);
-
+               
                if (parent_ != null && !range.text().isEmpty())
                   overlap.element.getParentElement().insertBefore(range.element, overlap.element);
 
@@ -609,21 +619,14 @@ public class VirtualConsole
                if (hyperlinkMatch != null)
                {
                   String url = hyperlinkMatch.getGroup(2);
-                  // toggle hyperlink_, and artifically add or remove styles: underline and magenta
+
+                  // toggle hyperlink_
                   if (!StringUtil.equals(url, ""))
                   {
-                     ansiCodeStyles_ = ansi_.processCode("\033[4m"); // underline
-                     ansiCodeStyles_ = ansi_.processCode("\033[35m"); // magenta
-                     currentClazz = setCurrentClazz(ansiColorMode, clazz);
-
                      hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1));
                   }
                   else
                   {
-                     ansiCodeStyles_ = ansi_.processCode("\033[39m"); // </magenta>
-                     ansiCodeStyles_ = ansi_.processCode("\033[24m"); // </underline>
-                     currentClazz = setCurrentClazz(ansiColorMode, clazz);
-                     
                      hyperlink_ = null;   
                   }
 
@@ -812,9 +815,9 @@ public class VirtualConsole
             {
                consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
             });
+            anchor.addClassName(AnsiCode.HYPERLINK_STYLE);
             anchor.setTitle(hyperlink_.getTitle());
-            anchor.addClassName("xtermHyperlink");
-
+            
             element = anchor;
          }
 
@@ -862,8 +865,7 @@ public class VirtualConsole
       {
          length += content.length() - delta;
          String text = text();
-         setText(text.substring(0,
-               text.length() - delta) + content);
+         setText(text.substring(0, text.length() - delta) + content);
       }
 
       public void overwrite(String content, int pos)

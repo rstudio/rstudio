@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
+
 #
-# install-dependencies-stretch
+# install-dependencies-jammy
 #
 # Copyright (C) 2022 by RStudio, PBC
 #
@@ -17,62 +18,60 @@
 set -e
 
 platform_codename=$(lsb_release -sc)
-if [ $platform_codename != "stretch" ] ; then
-    echo Error: This script is only for use on Debian Stretch
+if [ $platform_codename != "jammy" ] ; then
+    echo Error: This script is only for use on Ubuntu jammy
     exit 1
 fi
 
-echo Installing RStudio dependencies for Debian Stretch
+echo Installing RStudio dependencies for Ubuntu Jammy
 
 sudo apt-get update
 
 sudo apt-get -y install \
   ant \
-  bzip2 \
+  build-essential \
   clang \
-  clang-4.0 \
   cmake \
   curl \
   debsigs \
   dpkg-sig \
   expect \
   fakeroot \
-  gcc \
   git \
   gnupg1 \
   libacl1-dev \
-  libacl1-dev \
   libattr1-dev \
-  libboost-all-dev \
+  libbz2-dev \
   libcap-dev \
-  libcap-dev \
+  libclang-dev \
   libcurl4-openssl-dev \
-  libffi-dev \
-  libglib2.0-dev \
-  libpam0g-dev \
-  libpango-1.0-0 \
+  libegl1-mesa \
+  libfuse2 \
+  libgl1-mesa-dev \
+  libgtk-3-0 \
+  libpam-dev \
+  libpango1.0-dev \
   libpq-dev \
-  libsqlite-dev \
-  libssl1.0-dev \
+  libsqlite3-dev \
+  libssl-dev \
   libuser1-dev \
-  libxml-commons-external-java \
+  libxslt1-dev \
   lsof \
-  make \
-  mesa-common-dev \
-  openjdk-8-jdk  \
+  openjdk-8-jdk \
+  openjdk-11-jdk \
+  ninja-build \
   p7zip-full \
   patchelf \
-  python \
+  pkg-config \
   python3 \
   python3-venv \
-  r-base \
+  r-base-dev \
   rrdtool \
+  software-properties-common \
+  unzip \
   uuid-dev \
   wget \
-  zlib1g
-
-sudo update-alternatives --install /usr/bin/clang clang /usr/bin/clang-4.0 100
-sudo update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-4.0 100
+  zlib1g-dev
 
 # overlay
 if [ -e install-overlay-common ]
@@ -80,9 +79,12 @@ then
   ./install-overlay-common
 fi
 
-# common
+# crashpad
 cd ../common
-./install-common debian9
+sudo ./install-crashpad bionic
+
+# common
+./install-common jammy
 cd ../linux
 
 # Python packages for i18n

@@ -160,6 +160,20 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 uiPrefs.useRoxygen().setProjectValue(
                                            config.hasPackageRoxygenize());
 
+                // native pipe prefs (remove if set to defaults)
+                switch (config.getUseNativePipeOperator())
+                {
+                   case RProjectConfig.DEFAULT_VALUE:
+                      uiPrefs.insertNativePipeOperator().removeProjectValue(true);
+                      break;
+                   case RProjectConfig.YES_VALUE:
+                      uiPrefs.insertNativePipeOperator().setProjectValue(true);
+                      break;
+                   case RProjectConfig.NO_VALUE:
+                      uiPrefs.insertNativePipeOperator().setProjectValue(false);
+                      break;
+                }
+
                 // markdown prefs (if they are set to defaults then remove the project prefs, otherwise forward them on)
                 if (!config.getMarkdownWrap().equals(RProjectConfig.MARKDOWN_WRAP_DEFAULT))
                 {

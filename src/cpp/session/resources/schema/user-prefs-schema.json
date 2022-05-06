@@ -1147,7 +1147,14 @@
         "rsa_key_path": {
             "type": "string",
             "default": "",
-            "description": "The path to the RSA key file to use."
+            "description": "The path to the SSH key file to use."
+        },
+        "ssh_key_type": {
+            "type": "string",
+            "enum": ["ed25519", "rsa"],
+            "enumReadable": ["ED25519", "RSA"],
+            "default": "ed25519",
+            "description": "The encryption type to use for the SSH key file."
         },
         "use_devtools": {
             "type": "boolean",
@@ -1158,7 +1165,7 @@
         "clean_before_install": {
             "type": "boolean",
             "default": true,
-            "title": "Clean before install", 
+            "title": "Clean before install",
             "description": "Clean before install."
         },
         "use_internet2": {
@@ -1269,7 +1276,7 @@
         "data_viewer_max_cell_size": {
             "type": "integer",
             "default": 50,
-            "title": "Maximum number of character in data viewer cells", 
+            "title": "Maximum number of character in data viewer cells",
             "description": "The maximum number of characters to show in a data viewer cell."
         },
         "enable_screen_reader": {
@@ -1536,17 +1543,17 @@
             "description": "The maximum amount of seconds of retry for save operations."
         },
         "insert_native_pipe_operator": {
-            "description": "Whether the Insert Pipe Operator command should insert the native R pipe operator, |>",
+            "description": "Whether the Insert Pipe Operator command should use the native R pipe operator, |>",
             "title": "Use R's native pipe operator, |>",
             "type": "boolean",
-            "default": false 
+            "default": false
         },
         "command_palette_mru": {
             "description": "Whether to keep track of recently used commands in the Command Palette",
             "title": "Remember recently used items in Command Palette",
             "type": "boolean",
             "default": true
-        }, 
+        },
         "show_memory_usage": {
             "description": "Whether to compute and show memory usage in the Environment Pane",
             "title": "Show memory usage in Environment Pane",

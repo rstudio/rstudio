@@ -50,7 +50,7 @@ public class MarkersOutputTab extends DelayLoadWorkbenchTab<MarkersOutputPresent
                            Commands commands,
                            final Session session)
    {
-      super("Markers", shim);
+      super(constants_.markersTitle(), shim);
       shim_ = shim;
 
       events.addHandler(SessionInitEvent.TYPE, (SessionInitEvent sie) ->

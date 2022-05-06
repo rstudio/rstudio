@@ -59,6 +59,10 @@
 #include <core/system/PosixSystem.hpp>
 #endif
 
+#ifdef __GLIBC__
+# include <gnu/libc-version.h>
+#endif
+
 QProcess* pRSessionProcess;
 QString sharedSecret;
 
@@ -638,6 +642,20 @@ int main(int argc, char* argv[])
       {
          arguments.push_back(noSandbox);
       }
+
+      static char disableSeccompFilterSandbox[] = "--disable-seccomp-filter-sandbox";
+
+      // newer versions of glibc require us to disable the seccomp filter
+      // sandbox, as the sandbox included with the version of chromium bundled
+      // with Qt 5.12.x does not play well with newer versions of glibc.
+      //
+      // the seccomp filter sandbox is used to prevent user-mode applications
+      // from executing potentially malicious system calls; however, it doesn't
+      // understand some of the newer syscalls introduced in newer versions of
+      // Linux (and used by newer versions of glibc)
+      const char* libcVersion = gnu_get_libc_version();
+      if (core::Version(libcVersion) >= core::Version("2.34"))
+         arguments.push_back(disableSeccompFilterSandbox);
 
 #endif
 
