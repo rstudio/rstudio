@@ -35,6 +35,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.events.Acti
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeStyleChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
+import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.core.client.GWT;
@@ -175,7 +176,9 @@ public class DocumentOutlineWidget extends Composite
          label_.removeStyleName(RES.styles().nodeLabelChunk());
          label_.removeStyleName(RES.styles().nodeLabelSection());
          label_.removeStyleName(RES.styles().nodeLabelFunction());
-
+         label_.removeStyleName(RES.styles().nodeLabelTest());
+         label_.removeStyleName(RES.styles().nodeLabelSecundary());
+         
          if (node.isChunk())
             label_.addStyleName(RES.styles().nodeLabelChunk());
          else if (node.isSection() && !node.isMarkdownHeader() && !node.isYaml())
@@ -183,7 +186,12 @@ public class DocumentOutlineWidget extends Composite
          else if (node.isTest())
             label_.addStyleName(RES.styles().nodeLabelTest());   
          else if (node.isFunction())
+         {
             label_.addStyleName(RES.styles().nodeLabelFunction());
+            if (target_.getExtendedFileType().startsWith(SourceDocument.XT_TEST_PREFIX)) 
+               label_.addStyleName(RES.styles().nodeLabelSecundary());
+         }
+            
       }
 
       private void setIndent(int depth)
@@ -559,6 +567,8 @@ public class DocumentOutlineWidget extends Composite
       String nodeLabelSection();
       String nodeLabelFunction();
       String nodeLabelTest();
+
+      String nodeLabelSecundary();
    }
 
    public interface Resources extends ClientBundle

@@ -82,5 +82,9 @@
 
 .nodeLabelTest {
    font-family: inherit;
-   color: darkgreen;
+}
+
+.nodeLabelSecundary {
+   font-style: italic;
+   opacity: .5;
 }
