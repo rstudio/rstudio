@@ -26,11 +26,11 @@ namespace r_util {
    class IActiveSessionStorage 
    {
    public:
-      Error virtual readProperty(const std::string& id, const std::string& name, std::string* pValue) = 0;
-      Error virtual readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues) = 0;
-      Error virtual readProperties(const std::string& id, std::map<std::string, std::string>* pValues) = 0;
-      Error virtual writeProperty(const std::string& id, const std::string& name, const std::string& value) = 0;
-      Error virtual writeProperties(const std::string& id, const std::map<std::string, std::string>& properties) = 0;
+      Error virtual readProperty(const std::string& name, std::string* pValue) = 0;
+      Error virtual readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues) = 0;
+      Error virtual readProperties(std::map<std::string, std::string>* pValues) = 0;
+      Error virtual writeProperty(const std::string& name, const std::string& value) = 0;
+      Error virtual writeProperties(const std::map<std::string, std::string>& properties) = 0;
 
    protected:
       virtual ~IActiveSessionStorage() = default;
@@ -42,11 +42,11 @@ namespace r_util {
    public:
       explicit FileActiveSessionStorage(const FilePath& location);
       ~FileActiveSessionStorage() = default;
-      Error readProperty(const std::string& id, const std::string& name, std::string* pValue) override;   
-      Error readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
-      Error readProperties(const std::string& id, std::map<std::string, std::string>* pValues) override;
-      Error writeProperty(const std::string& id, const std::string& name, const std::string& value) override;
-      Error writeProperties(const std::string& id, const std::map<std::string, std::string>& properties) override;
+      Error readProperty(const std::string& name, std::string* pValue) override;   
+      Error readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
+      Error readProperties(std::map<std::string, std::string>* pValues) override;
+      Error writeProperty(const std::string& name, const std::string& value) override;
+      Error writeProperties(const std::map<std::string, std::string>& properties) override;
 
    private:
       FilePath scratchPath_;
