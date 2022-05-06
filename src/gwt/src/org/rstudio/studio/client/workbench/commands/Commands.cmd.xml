@@ -3595,16 +3595,16 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         context="packageDevelopment"/>
 
    <cmd id="buildIncremental"
-        label="Install Package incrementally"
-        menuLabel="Install Package (incrementally)"
-        desc="Install the package incrementally (not cleaning first) and restart R"
+        label="Install Package"
+        menuLabel="Install Package"
+        desc="Install the package and restart R"
         windowMode="main"
         context="packageDevelopment"/>
 
     <cmd id="buildFull"
-        label="Install Package after cleaning"
-        menuLabel="Install Package (clean first)"
-        desc="Install the package (cleaning first) and restart R"
+        label="Clean and Install Package"
+        menuLabel="Clean and Install Package"
+        desc="Clean, install the package, and restart R"
         windowMode="main"
         context="packageDevelopment"/>
 
