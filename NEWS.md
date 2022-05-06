@@ -37,6 +37,7 @@
 - Added support for using the AGG renderer (as provided by the ragg package) as a graphics backend for inline plot execution; also added support for using the backend graphics device requested by the knitr `dev` chunk option (#9931)
 - rstudioapi functions are now always evaluated in a clean environment, and will not be masked by objects in the global environment (#8031)
 - Removed support for versions of R earlier than R 3.3.0. (rstudio-pro#2887)
+- Chunk options in the body of a code chunk, prefaced by `#|` will be respected during inline code execution, and will take precedence over conflicting chunk options in the chunk header (#10645). Both YAML `tag: value` syntax and valid R expressions will be parsed.
 
 #### Python
 
