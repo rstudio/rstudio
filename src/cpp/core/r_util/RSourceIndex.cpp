@@ -390,9 +390,21 @@ void testThatCallIndexer(const RTokenCursor& cursor,
    if (clone.isType(RToken::STRING))
    {
       static const boost::regex removeQuotesRegex("^['\"](.*)['\"]$");
+      static const boost::regex removeRawStringQuotesRegex("^r['\"][(](.*)[)]['\"]$");
 
       // the test description without the quotes, but prefixed with "t "
-      std::string desc = boost::regex_replace(clone.contentAsUtf8(), removeQuotesRegex, "t \\1");
+      std::string content = clone.contentAsUtf8();
+      
+      std::string desc;
+      if (boost::regex_match(content, removeRawStringQuotesRegex))
+      {
+         desc = boost::regex_replace(content, removeRawStringQuotesRegex, "t \\1");
+      }
+      else
+      {
+         desc = boost::regex_replace(content, removeQuotesRegex, "t \\1");
+      }
+
       RSourceItem item(
          RSourceItem::Test,
          desc,
