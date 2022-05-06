@@ -617,6 +617,9 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
    # templates
    install(DIRECTORY "resources/templates"
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
+   # pandoc
+   install(DIRECTORY "resources/pandoc"
+           DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
    # JS resources
    file(GLOB JS_RESOURCE_FILES "resources/*.js")
    install(FILES ${JS_RESOURCE_FILES}
