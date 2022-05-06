@@ -89,6 +89,10 @@ export function getDesktopBridge() {
             filePath = name + defaultExtension;
           }
 
+          if (process.platform === 'win32') {
+            filePath = filePath.replace(/\\/g, '/');
+          }
+          
           // invoke callback
           return callback(filePath);
         })
