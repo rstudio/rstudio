@@ -93,6 +93,7 @@ define('mode/r_scope_tree', ["require", "exports", "module"], function(require, 
       this.isSection = function() { return this.scopeType == ScopeNode.TYPE_SECTION; };
       this.isFunction = function() { return this.isBrace() && !!this.attributes.args; };
       this.isTest = function() { return this.isBrace() && this.attributes.type == "test"; };
+      this.isTest = function() { return this.isBrace() && this.attributes.type === "test"; };
 
       this.equals = function(node) {
          if (this.scopeType !== node.scopeType ||
