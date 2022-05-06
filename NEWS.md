@@ -20,6 +20,7 @@
 - Read only R and C++ files (marked by "do not edit by hand") are ignored by the fuzzy file finder (#10912)
 - Linux: For compatibility with newer versions of glibc (>= 2.34), the seccomp filter sandbox is disabled. See https://chromium.googlesource.com/chromium/src/+/0e94f26e8/docs/linux_sandboxing.md#the-sandbox-1 for more details.
 - Changed "Jobs" tab in IDE to "Local Jobs"
+- The fuzzy finder shows `test_that()` calls when the search term starts with "t ".  
 
 #### Find in Files
 
