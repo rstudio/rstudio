@@ -162,9 +162,12 @@ public class VisualMode implements VisualModeEditorSync,
       
       // sync to outline visible prop
       releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) -> {
-         withPanmirror(() -> {
-            panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
-         });
+         if (isVisualEditorActive()) 
+         {
+            withPanmirror(() -> {
+               panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
+            });
+         }
       }));
    } 
    

@@ -38,6 +38,12 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    "^[\t >]*```+\\s*$"
 })
 
+.rs.addFunction("reYamlOptChunkBegin", function()
+{
+   "^#\\| .*"
+})
+
+
 .rs.addFunction("rnb.cachePathFromRmdPath", function(rmdPath)
 {
    .Call("rs_chunkCacheFolder", rmdPath)
@@ -608,37 +614,88 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    .rs.fromJSON(.rs.base64decode(encoded))
 })
 
+.rs.addFunction("parseYamlOpt", function(opt)
+{
+    opt <- sub("^#\\|\\s*", "", opt)
+    if (any(grepl(".+=.+", opt))) # R-style chunk options
+    {
+        opts <- paste(opt, collapse = " ")
+        opts <- knitr:::parse_params(opts)
+    }
+    else
+    {
+        opts <- .rs.fromYAML(opt)
+        # parse truthy and falsy style yaml options
+        opts <- lapply(opts, function(value)
+           {
+             if (!is.character(value))
+               return(value)
+             if (tolower(value) %in% c("y", "yes", "on"))
+               return(TRUE)
+             if (tolower(value) %in% c("n", "no", "off"))
+               return(FALSE)
+             else
+               return(value)
+           })
+    }
+    return(opts)
+})
+
 .rs.addFunction("evaluateChunkOptions", function(code)
 {
   opts <- list()
 
   Encoding(code) <- "UTF-8"
-  # if several lines of code are passed, operate only on the first 
-  code <- unlist(strsplit(code, "\n", fixed = TRUE))[[1]]
+  # if several lines of code are passed, we expect the first line to contain the standard Rmd chunk options
+  # the next several lines may or may not contain YAML-style chunk options
+  code <- unlist(strsplit(code, "\n", fixed = TRUE))
+  rmdChunkOpts <- code[[1]]
+  yamlChunkOpts <- c()
+
+  for (line in code[-1]) {
+    match <- unlist(regmatches(line, regexec(.rs.reYamlOptChunkBegin(), line)))
+    # there may be variable number of yaml chunk opts, but they should all be at the top of the chunk
+    if (length(match) == 0)
+        break
+    yamlChunkOpts <- c(yamlChunkOpts, match)
+  }
+  
+  if (length(yamlChunkOpts) > 0)
+  {
+     opts <- tryCatch(
+     .rs.parseYamlOpt(yamlChunkOpts),
+     error = function(e) {
+        warning("Failed to parse chunk options in body:\n", e)
+     })
+  }
 
   # strip chunk indicators if present
-  matches <- unlist(regmatches(code, regexec(.rs.reRmdChunkBegin(), code)))
+  matches <- unlist(regmatches(rmdChunkOpts, regexec(.rs.reRmdChunkBegin(), rmdChunkOpts)))
   if (length(matches) > 1)
-    code <- matches[[2]]
+    rmdChunkOpts <- matches[[2]]
 
   tryCatch({
     # if this is the setup chunk, it's not included by default
     setupIndicator <- "r setup"
-    if (identical(substring(code, 1, nchar(setupIndicator)), 
+    if (identical(substring(rmdChunkOpts, 1, nchar(setupIndicator)),
                   setupIndicator)) {
       opts$include <- FALSE
     }
 
     # extract and remove engine name (can be overridden below with engine=)
-    opts$engine <- unlist(strsplit(code, split = "(\\s|,)+"))[[1]]
-    code <- substring(code, nchar(opts$engine) + 1)
+    opts$engine <- unlist(strsplit(rmdChunkOpts, split = "(\\s|,)+"))[[1]]
+    rmdChunkOpts <- substring(rmdChunkOpts, nchar(opts$engine) + 1)
 
     # parse them, then merge with the defaults (evaluate in global environment)
     opts <- .rs.mergeLists(opts,
-                           eval(substitute(knitr:::parse_params(code)),
+                           eval(substitute(knitr:::parse_params(rmdChunkOpts)),
                                 envir = .GlobalEnv))
+
+    # if a chunk option is provided in both body (yaml chunk options) and header (rmdChunkOpts)
+    # the body should override the header option
+    opts <- opts[unique(names(opts))]
     
-    # convert T, F to TRUE, FALSE as appropriate
+    # convert T, F for R code chunk options to TRUE, FALSE as appropriate
     opts <- lapply(opts, function(opt) {
       if (identical(opt, as.name("T")))
         TRUE

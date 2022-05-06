@@ -58,6 +58,10 @@ public class Scope extends JavaScriptObject
       return this.isFunction();
    }-*/;
 
+   public native final boolean isTest() /*-{
+      return this.isTest();
+   }-*/;
+
    public native final Scope getParentScope() /*-{
       return this.parentScope;
    }-*/;
