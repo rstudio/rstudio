@@ -103,6 +103,12 @@ public class BuildPane extends WorkbenchPane
       buildAllButton_.setTitle(
          commands_.buildAll().getTooltip() + "\n\nR CMD INSTALL " + (preclean ? "--preclean " : " ") + installArgs + " <pkg>"
       );
+      buildFullMenuItem_.setTitle(
+         commands_.buildFull().getTooltip() + "\n\nR CMD INSTALL --preclean " + installArgs + " <pkg>"
+      );
+      buildIncrementalMenuItem_.setTitle(
+         commands_.buildIncremental().getTooltip() + "\n\nR CMD INSTALL " + installArgs + " <pkg>"
+      );
    }
 
    @Override
