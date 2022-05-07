@@ -35,7 +35,7 @@ set OPENSSL_FILES=openssl-1.1.1i.zip
 set BOOST_FILES=boost-1.78.0-win-msvc142.zip
 set YAML_CPP_FILES=yaml-cpp-0.6.3.zip
 
-set PANDOC_VERSION=2.16.2
+set PANDOC_VERSION=2.18
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
