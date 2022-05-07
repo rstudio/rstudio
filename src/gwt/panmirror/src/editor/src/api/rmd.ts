@@ -24,12 +24,13 @@ import {
   findChildren,
   findChildrenByMark,
   setTextSelection,
+  findParentNode,
 } from 'prosemirror-utils';
 
 import { getMarkRange } from './mark';
 import { precedingListItemInsertPos, precedingListItemInsert } from './list';
 import { toggleBlockType } from './command';
-import { selectionIsBodyTopLevel } from './selection';
+import { selectionIsBodyTopLevel, selectionWithinLastBodyParagraph } from './selection';
 import { uuidv4 } from './util';
 
 export interface EditorRmdChunk {
@@ -88,7 +89,12 @@ export function insertRmdChunk(chunkPlaceholder: string) {
       if (prevListItemPos) {
         precedingListItemInsert(tr, prevListItemPos, rmdNode);
       } else {
-        tr.replaceSelectionWith(rmdNode);
+        const emptyNode = findParentNode(node => node.type === state.schema.nodes.paragraph && node.childCount === 0)(tr.selection);
+        if (emptyNode && selectionWithinLastBodyParagraph(tr.selection)) {
+          tr.insert(tr.selection.from-1, rmdNode);
+        } else {
+          tr.replaceSelectionWith(rmdNode);
+        }
         setTextSelection(tr.selection.from - 2)(tr);
       }
 
