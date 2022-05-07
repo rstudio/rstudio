@@ -204,9 +204,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             node => nodeTypes.includes(node.type),
             (node, pos) => {
               // remove existing decorations for changed nodes
-              const removeDecorations = set.find(pos, pos, (spec: WidgetDecorationSpec) => {
-                return !!spec.key && spec.key.startsWith("tags:");
-              });
+              const removeDecorations = set.find(pos, pos);
               if (removeDecorations.length > 0) {
                 set = set.remove(removeDecorations);
               }
