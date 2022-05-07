@@ -1215,7 +1215,7 @@
    chars <- vapply(chars, function(x) {
       if (x %in% c('"', '\\', '/'))
          paste('\\', x, sep = '')
-      else if (charToRaw(x) < 20)
+      else if (length(charToRaw(x)) == 1 && charToRaw(x) < 20)
          paste('\\u', toupper(format(as.hexmode(as.integer(charToRaw(x))),
                                      width = 4)),
                sep = '')
