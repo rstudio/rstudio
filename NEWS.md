@@ -20,9 +20,10 @@
 - Read only R and C++ files (marked by "do not edit by hand") are ignored by the fuzzy file finder (#10912)
 - Linux: For compatibility with newer versions of glibc (>= 2.34), the seccomp filter sandbox is disabled. See https://chromium.googlesource.com/chromium/src/+/0e94f26e8/docs/linux_sandboxing.md#the-sandbox-1 for more details.
 - Changed "Jobs" tab in IDE to "Local Jobs"
-- The fuzzy finder shows `test_that()` calls when the search term starts with "t ".  
+- The fuzzy finder shows `test_that()` calls when the search term starts with "t "
 - Calls to test_that() appear in the source file outline (#11082)
 - Windows: Update embedded libclang to 13.0.1 (#11186)
+- The `RSTUDIO_SESSION_PID` and `RSTUDIO_CHILD_PROCESS_PANE` are set when child processes are made. `RSTUDIO_CHILD_PROCESS_PANE` takes terminal/build/job/render. 
 
 #### Find in Files
 
