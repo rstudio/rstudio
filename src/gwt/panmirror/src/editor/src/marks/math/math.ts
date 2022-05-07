@@ -65,7 +65,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             id: { default: null }
           },
           inclusive: false,
-          excludes: 'formatting',
+          excludes: 'formatting raw_tex',
           parseDOM: [
             {
               tag: "span[class*='math']",
@@ -269,7 +269,7 @@ const extension = (context: ExtensionContext): Extension | null => {
         new InputRule(
           new RegExp('(^|[^`])' + kInlineMathInputRulePattern + '$'),
           (state: EditorState, match: string[], start: number, end: number) => {
-            if (!markIsActive(state, schema.marks.math) && filter(state, start, end)) {
+            if (!markIsActive(state, schema.marks.math) && filter(state)) {
               const tr = state.tr;
               tr.insertText('$');
               const mark = schema.marks.math.create({ type: MathType.Inline });
