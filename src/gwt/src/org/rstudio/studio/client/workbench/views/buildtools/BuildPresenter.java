@@ -309,6 +309,16 @@ public class BuildPresenter extends BasePresenter
       startBuild("build-all");
    }
 
+   void onBuildIncremental()
+   {
+      startBuild("build-incremental");
+   }
+
+   void onBuildFull()
+   {
+      startBuild("build-full");
+   }
+
    void onDevtoolsLoadAll()
    {
       source_.withSaveFilesBeforeCommand(() ->

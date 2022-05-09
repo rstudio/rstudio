@@ -238,6 +238,8 @@ const char * const kBuildBinaryPackage = "build-binary-package";
 const char * const kTestPackage = "test-package";
 const char * const kCheckPackage = "check-package";
 const char * const kBuildAndReload = "build-all";
+const char * const kBuildIncremental = "build-incremental";
+const char * const kBuildFull = "build-full";
 const char * const kTestFile = "test-file";
 const char * const kTestShiny = "test-shiny";
 const char * const kTestShinyFile = "test-shiny-file";
@@ -470,6 +472,14 @@ private:
          {
             return true;
          }
+         else if (type == kBuildIncremental && options_.autoRoxygenizeForBuildAndReload)
+         {
+            return true;
+         }
+         else if (type == kBuildFull && options_.autoRoxygenizeForBuildAndReload)
+         {
+            return true;
+         }
          else if ( (type == kBuildSourcePackage ||
                     type == kBuildBinaryPackage) &&
                    options_.autoRoxygenizeForBuildPackage)
@@ -660,7 +670,7 @@ private:
       // windows we need to unload the library first
 #ifdef _WIN32
       if (packagePath.completeChildPath("src").exists() &&
-         (type == kBuildAndReload || type == kBuildBinaryPackage))
+         (type == kBuildAndReload || type == kBuildIncremental || type == kBuildFull || type == kBuildBinaryPackage))
       {
          std::string pkg = pkgInfo_.name();
          Error error = r::exec::RFunction(".rs.forceUnloadPackage", pkg).call();
@@ -743,7 +753,7 @@ private:
       errorOutputFilterFunction_ = isPackageBuildError;
 
       // build command
-      if (type == kBuildAndReload)
+      if (type == kBuildAndReload || type == kBuildIncremental || type == kBuildFull)
       {
          // restart R after build is completed
          restartR_ = true;
@@ -755,8 +765,8 @@ private:
          // get extra args
          std::string extraArgs = projectConfig().packageInstallArgs;
 
-         // add --preclean if this is a rebuild all
-         if (collectForcePackageRebuild() || cleanBeforeInstall() )
+         // add --preclean if necessary
+         if (type == kBuildFull || collectForcePackageRebuild() || (type == kBuildAndReload && cleanBeforeInstall()) )
          {
             if (!boost::algorithm::contains(extraArgs, "--preclean"))
                rCmd << "--preclean";
