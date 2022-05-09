@@ -286,18 +286,28 @@ const char * const kJsCallbacks = R"EOF(
       window.onmousedown = function(e) { window.parent.helpMousedown(e); }
 
    window.addEventListener("load", function(event) {
+
+      // https://github.com/rstudio/rmarkdown/blob/de02c926371fdadc4d92f08e1ad7b77db069be49/inst/rmarkdown/templates/html_vignette/resources/vignette.css#L187-L201
+      var classMap = {
+         "at": "ace_keyword ace_operator",
+         "ch": "ace_string",
+         "co": "ace_comment",
+         "cf": "ace_keyword",
+         "cn": "ace_constant ace_language",
+         "dt": "ace_identifier",
+         "dv": "ace_constant ace_numeric",
+         "er": "ace_keyword ace_operator",
+         "fu": "ace_identifier",
+         "kw": "ace_keyword",
+         "ot": "ace_keyword ace_operator",
+         "sc": "ace_keyword ace_operator",
+         "st": "ace_string",
+      };
+
       var els = document.querySelectorAll(".sourceCode span");
-      for (var i = 0, n = els.length; i < n; i++) {
-         var el = els[i];
-         if (el.className === "fu")
-            el.className = "ace_identifier ace_support ace_function";
-         else if (el.className === "at")
-            el.className = "ace_operator ace_keyword";
-         else if (el.className === "cn")
-            el.className = "ace_constant ace_language";
-         else if (el.className === "sc")
-            el.className = "ace_keyword ace_operator ace_infix";
-      }
+      for (el of els)
+         el.className = classMap[el.className] || el.className;
+
    });
 
 </script>
