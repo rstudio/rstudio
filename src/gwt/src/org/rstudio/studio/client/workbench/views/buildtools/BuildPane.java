@@ -143,7 +143,8 @@ public class BuildPane extends WorkbenchPane
             
             projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
                @Override
-               public void onResponseReceived(RProjectOptions response) {
+               public void onResponseReceived(RProjectOptions response) 
+               {
                   RProjectConfig config = response.getConfig();
                   
                   boolean preclean = config.getPackageCleanBeforeInstall();
