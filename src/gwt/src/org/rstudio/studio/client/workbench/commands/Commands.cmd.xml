@@ -3595,9 +3595,9 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         context="packageDevelopment"/>
 
    <cmd id="buildIncremental"
-        label="Install Package"
-        menuLabel="Install Package"
-        desc="Install the package and restart R"
+        label="Install Package (no preclean)"
+        menuLabel="Install Package (no preclean)"
+        desc="Install the package (no preclean) and restart R"
         windowMode="main"
         context="packageDevelopment"/>
 
