@@ -1648,7 +1648,6 @@ public class AceEditor implements DocDisplay,
 
       return new SpellingDoc() {
 
-
          @Override
          public Iterable<WordRange> getWords(int start, int end)
          {
@@ -1657,9 +1656,15 @@ public class AceEditor implements DocDisplay,
                @Override
                public Iterator<WordRange> iterator()
                {
+                  TokenPredicate spellCheckPredicate = fileType_.getSpellCheckTokenPredicate();
+                  TokenPredicate filteredTokenPredicate = (token, row, column) ->
+                  {
+                     return getSession().getFoldAt(row, column) == null && spellCheckPredicate.test(token, row, column);
+                  };
+
                   // get underlying iterator
                   Iterator<Range> ranges = AceEditor.this.getWords(
-                        fileType_.getSpellCheckTokenPredicate(),
+                        filteredTokenPredicate,
                         fileType_.getCharPredicate(),
                         positionFromIndex(start),
                         end != -1 ? positionFromIndex(end) : null).iterator();
