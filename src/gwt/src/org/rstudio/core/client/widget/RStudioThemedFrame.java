@@ -125,7 +125,8 @@ public class RStudioThemedFrame extends RStudioFrame
          style.setInnerHTML(customStyle);
          document.getHead().appendChild(style);
          
-         if (urlStyle != null) {
+         if (urlStyle != null)
+         {
             LinkElement styleLink = document.createLinkElement();
             styleLink.setHref(urlStyle);
             styleLink.setRel("stylesheet");
@@ -137,7 +138,8 @@ public class RStudioThemedFrame extends RStudioFrame
          BodyElement body = document.getBody();
          if (body != null)
          {
-            if (removeBodyStyle) body.removeAttribute("style");
+            if (removeBodyStyle)
+               body.removeAttribute("style");
             
             RStudioThemes.initializeThemes(
                RStudioGinjector.INSTANCE.getUserPrefs(),

@@ -285,6 +285,21 @@ const char * const kJsCallbacks = R"EOF(
    if (window.parent.helpMousedown)
       window.onmousedown = function(e) { window.parent.helpMousedown(e); }
 
+   window.addEventListener("load", function(event) {
+      var els = document.querySelectorAll(".sourceCode span");
+      for (var i = 0, n = els.length; i < n; i++) {
+         var el = els[i];
+         if (el.className === "fu")
+            el.className = "ace_identifier ace_support ace_function";
+         else if (el.className === "at")
+            el.className = "ace_operator ace_keyword";
+         else if (el.className === "cn")
+            el.className = "ace_constant ace_language";
+         else if (el.className === "sc")
+            el.className = "ace_keyword ace_operator ace_infix";
+      }
+   });
+
 </script>
 )EOF";
 
