@@ -2467,7 +2467,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Clean before install.
+    * Always use --preclean when installing package.
     */
    public PrefValue<Boolean> cleanBeforeInstall()
    {

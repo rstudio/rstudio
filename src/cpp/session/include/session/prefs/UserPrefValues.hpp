@@ -1436,7 +1436,7 @@ public:
    core::Error setUseDevtools(bool val);
 
    /**
-    * Clean before install.
+    * Always use --preclean when installing package.
     */
    bool cleanBeforeInstall();
    core::Error setCleanBeforeInstall(bool val);

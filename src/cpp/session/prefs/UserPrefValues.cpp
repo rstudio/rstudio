@@ -2247,7 +2247,7 @@ core::Error UserPrefValues::setUseDevtools(bool val)
 }
 
 /**
- * Clean before install.
+ * Always use --preclean when installing package.
  */
 bool UserPrefValues::cleanBeforeInstall()
 {

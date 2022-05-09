@@ -1434,11 +1434,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String useDevtoolsDescription();
 
    /**
-    * Clean before install.
+    * Always use --preclean when installing package.
     */
-   @DefaultStringValue("Clean before install")
+   @DefaultStringValue("Always use --preclean when installing package")
    String cleanBeforeInstallTitle();
-   @DefaultStringValue("Clean before install.")
+   @DefaultStringValue("Always use --preclean when installing package.")
    String cleanBeforeInstallDescription();
 
    /**

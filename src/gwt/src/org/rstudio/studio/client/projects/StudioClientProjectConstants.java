@@ -1819,11 +1819,11 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String chkUseDevtoolsCaption();
 
     /**
-     * Translated "Clean before install".
+     * Translated "Always use --preclean when installing package".
      *
-     * @return translated "Clean before install"
+     * @return translated "Always use --preclean when installing package"
      */
-    @DefaultMessage("Clean before install")
+    @DefaultMessage("Always use --preclean when installing package")
     @Key("cleanBeforeInstallLabel")
     String cleanBeforeInstallLabel();
 

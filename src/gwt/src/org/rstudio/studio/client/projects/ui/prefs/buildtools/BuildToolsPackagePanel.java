@@ -67,7 +67,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       cleanBeforeInstall_ = checkBox(constants_.cleanBeforeInstallLabel());
       cleanBeforeInstall_.addStyleName(RES.styles().buildToolsCleanBeforeInstall());
       add(cleanBeforeInstall_);
-
+      
       chkUseDevtools_ = checkBox(constants_.chkUseDevtoolsCaption());
       chkUseDevtools_.addStyleName(RES.styles().buildToolsDevtools());
       add(chkUseDevtools_);
@@ -105,7 +105,7 @@ public class BuildToolsPackagePanel extends BuildToolsPanel
       rocletPanel.add(btnConfigureRoxygen_);
       roxygenizePanel_.add(rocletPanel);
       add(roxygenizePanel_);
-      
+
       add(installAdditionalArguments_ = new AdditionalArguments(
             constants_.installMdashArgument()));
      
