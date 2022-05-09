@@ -95,22 +95,6 @@ public class BuildPane extends WorkbenchPane
       ensureWidget();
    }
 
-   private void updateInstallTooltips() 
-   {
-      boolean preclean = config_.getPackageCleanBeforeInstall();
-      String installArgs = config_.getPackageInstallArgs();
-
-      buildAllButton_.setTitle(
-         commands_.buildAll().getTooltip() + "\n\nR CMD INSTALL " + (preclean ? "--preclean " : " ") + installArgs + " <pkg>"
-      );
-      buildFullMenuItem_.setTitle(
-         commands_.buildFull().getTooltip() + "\n\nR CMD INSTALL --preclean " + installArgs + " <pkg>"
-      );
-      buildIncrementalMenuItem_.setTitle(
-         commands_.buildIncremental().getTooltip() + "\n\nR CMD INSTALL " + installArgs + " <pkg>"
-      );
-   }
-
    @Override
    protected Toolbar createMainToolbar()
    {
@@ -155,21 +139,36 @@ public class BuildPane extends WorkbenchPane
          if (pkg) 
          {
             ToolbarPopupMenu installMoreMenu = new ToolbarPopupMenu();
-            buildFullMenuItem_ = commands_.buildFull().createMenuItem(false);
-            installMoreMenu.addItem(buildFullMenuItem_);
-            
-            buildIncrementalMenuItem_ = commands_.buildIncremental().createMenuItem(false);
-            installMoreMenu.addItem(buildIncrementalMenuItem_);
-            installMoreMenu.addSeparator();
-            installMoreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));
-
             toolbar.addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, constants_.installMoreOptions(), installMoreMenu, true));
-
+            
             projServer_.readProjectOptions(new SimpleRequestCallback<RProjectOptions>() {
                @Override
                public void onResponseReceived(RProjectOptions response) {
-                  config_ = response.getConfig();
-                  updateInstallTooltips();
+                  RProjectConfig config = response.getConfig();
+                  
+                  boolean preclean = config.getPackageCleanBeforeInstall();
+                  String installArgs = config.getPackageInstallArgs();
+
+                  buildAllButton_.setTitle(
+                     commands_.buildAll().getTooltip() + "\n\nR CMD INSTALL " + (preclean ? "--preclean " : " ") + installArgs + " <pkg>"
+                  );
+                  
+                  AppCommand cmdBuildFull = commands_.buildFull();
+                  cmdBuildFull.setDesc(
+                     cmdBuildFull.getTooltip() + "\n\nR CMD INSTALL --preclean " + installArgs + " <pkg>"
+                  );
+                  buildFullMenuItem_ = cmdBuildFull.createMenuItem(false);
+
+                  AppCommand cmdBuildIncremental = commands_.buildIncremental();
+                  cmdBuildIncremental.setDesc(
+                     cmdBuildIncremental.getTooltip() + "\n\nR CMD INSTALL " + installArgs + " <pkg>"
+                  );
+                  buildIncrementalMenuItem_ = cmdBuildIncremental.createMenuItem(false);
+
+                  installMoreMenu.addItem(buildFullMenuItem_);
+                  installMoreMenu.addItem(buildIncrementalMenuItem_);
+                  installMoreMenu.addSeparator();
+                  installMoreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));
                }
             });
          }
@@ -560,7 +559,6 @@ public class BuildPane extends WorkbenchPane
    private final Session session_;
    private final BuildServerOperations server_;
    ProjectsServerOperations projServer_;
-   RProjectConfig config_;
    private String errorsBuildType_;
    private ToolbarButton buildAllButton_;
    private MenuItem buildFullMenuItem_;
