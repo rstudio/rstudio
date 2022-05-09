@@ -1646,6 +1646,12 @@ public class AceEditor implements DocDisplay,
       ArrayList<org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor>
         anchors = new ArrayList<>();
 
+      TokenPredicate spellCheckPredicate = fileType_.getSpellCheckTokenPredicate();
+      TokenPredicate filteredTokenPredicate = (token, row, column) ->
+      {
+         return getSession().getFoldAt(row, column) == null  && spellCheckPredicate.test(token, row, column);
+      };
+
       return new SpellingDoc() {
 
 
@@ -1659,7 +1665,7 @@ public class AceEditor implements DocDisplay,
                {
                   // get underlying iterator
                   Iterator<Range> ranges = AceEditor.this.getWords(
-                        fileType_.getSpellCheckTokenPredicate(),
+                        filteredTokenPredicate,
                         fileType_.getCharPredicate(),
                         positionFromIndex(start),
                         end != -1 ? positionFromIndex(end) : null).iterator();
