@@ -167,6 +167,8 @@ public class BuildPane extends WorkbenchPane
                   buildIncrementalMenuItem_ = cmdBuildIncremental.createMenuItem(false);
 
                   installMoreMenu.addItem(buildFullMenuItem_);
+                  installMoreMenu.addItem(buildIncrementalMenuItem_);
+                  
                   installMoreMenu.addSeparator();
                   installMoreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));
                }

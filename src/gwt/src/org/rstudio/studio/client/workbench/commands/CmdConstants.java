@@ -3219,9 +3219,9 @@ public interface CmdConstants extends Constants {
     String buildIncrementalDesc();
     
     // buildFull
-    @DefaultStringValue("Clean and Install Package") // $NON-NLS-1$
+    @DefaultStringValue("Clean and Install") // $NON-NLS-1$
     String buildFullLabel();
-    @DefaultStringValue("Clean and Install Package") // $NON-NLS-1$
+    @DefaultStringValue("Clean and Install") // $NON-NLS-1$
     String buildFullMenuLabel();
     @DefaultStringValue("Clean, install the package, and restart R") // $NON-NLS-1$
     String buildFullDesc();
