@@ -97,7 +97,6 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
 
     // ask the user what version of R they'd like to use
     const chooseRDialog = new ChooseRModalWindow(rInstalls);
-
     void handleLocaleCookies(chooseRDialog);
 
     const [data, error] = await chooseRDialog.showModal();
@@ -113,6 +112,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     // save the stored version of R
     const path = data.binaryPath as string;
     ElectronDesktopOptions().setRBinDir(dirname(path));
+    ElectronDesktopOptions().setRstudioPath(path);
 
     // if the user has changed the default rendering engine,
     // then we'll need to ask them to restart RStudio now
