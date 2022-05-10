@@ -40,6 +40,7 @@ const kRendererUseGpuExclusionList = 'renderer.useGpuExclusionList';
 const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds';
 
 const kRBinDir = 'platform.windows.rBinDir';
+const krstudioPath = 'platform.windows.rstudioPath';
 const kPreferR64 = 'platform.windows.preferR64';
 
 const userStateSchema = generateSchema<RStudioUserState>(properties);
@@ -272,7 +273,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (process.platform !== 'win32') {
       return;
     }
-    this.config.set(kRBinDir, rBinDir);
+    this.config.set(kRBinDir, rBinDir.replace(/\//g, '/').replace(/\\/g, '/'));
   }
 
   // Windows-only option
@@ -289,6 +290,30 @@ export class DesktopOptionsImpl implements DesktopOptions {
     }
 
     return rBinDir;
+  }
+
+  // Windows-only option
+  public setRstudioPath(rstudioPath: string): void {
+    if (process.platform !== 'win32') {
+      return;
+    }
+    console.log('setting rstudio path to ',rstudioPath.replace(/\//g, '/').replace(/\\/g, '/'));
+    this.config.set(krstudioPath, rstudioPath.replace(/\//g, '/').replace(/\\/g, '/'));
+  }
+
+  // Windows-only option
+  public rstudioPath(): string {
+    if (process.platform !== 'win32') {
+      return '';
+    }
+
+    const rstudioPath: string = this.config.get(krstudioPath, properties.platform.default.windows.rstudioPath);
+
+    if (!rstudioPath) {
+      return '';
+    }
+
+    return rstudioPath;
   }
 
   // Windows-only option
