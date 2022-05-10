@@ -14,8 +14,8 @@
  */
 
 import { ipcRenderer, webContents } from 'electron';
+import { threatPathString } from '../core/file-path';
 import { logger } from '../core/logger';
-import { threatPathString } from '../main/utils';
 
 interface VoidCallback<Type> {
   (result: Type): void;

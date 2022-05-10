@@ -17,9 +17,10 @@
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
+import { threatPathString } from '../../core/file-path';
 import { logger } from '../../core/logger';
 import { RStudioUserState } from '../../types/user-state-schema';
-import { threatPathString } from '../utils';
+
 import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
 

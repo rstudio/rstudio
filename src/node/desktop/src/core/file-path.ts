@@ -43,6 +43,11 @@ function normalizeSeparatorsNative(path: string) {
   return normalizeSeparators(path, separator);
 }
 
+// Makes sure that the path only has `/` instead of `\` or `//`
+export const threatPathString = (path: string) => {
+  return path.replace(/\//g, '/').replace(/\\/g, '/');
+};
+
 /**
  * Class representing a path on the system. May be any type of file (e.g. directory, symlink,
  * regular file, etc.)
