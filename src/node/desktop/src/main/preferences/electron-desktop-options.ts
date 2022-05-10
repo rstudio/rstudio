@@ -19,6 +19,7 @@ import Store from 'electron-store';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { logger } from '../../core/logger';
 import { RStudioUserState } from '../../types/user-state-schema';
+import { threatPathString } from '../utils';
 import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
 
@@ -273,7 +274,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (process.platform !== 'win32') {
       return;
     }
-    this.config.set(kRBinDir, rBinDir.replace(/\//g, '/').replace(/\\/g, '/'));
+    this.config.set(kRBinDir, threatPathString(rBinDir));
   }
 
   // Windows-only option
@@ -297,8 +298,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (process.platform !== 'win32') {
       return;
     }
-    console.log('setting rstudio path to ',rstudioPath.replace(/\//g, '/').replace(/\\/g, '/'));
-    this.config.set(krstudioPath, rstudioPath.replace(/\//g, '/').replace(/\\/g, '/'));
+    this.config.set(krstudioPath, threatPathString(rstudioPath));
   }
 
   // Windows-only option

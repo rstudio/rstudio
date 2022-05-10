@@ -15,6 +15,7 @@
 
 import { ipcRenderer, webContents } from 'electron';
 import { logger } from '../core/logger';
+import { threatPathString } from '../main/utils';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -90,7 +91,7 @@ export function getDesktopBridge() {
           }
 
           if (process.platform === 'win32') {
-            filePath = filePath.replace(/\\/g, '/');
+            filePath = threatPathString(filePath);
           }
           
           // invoke callback
