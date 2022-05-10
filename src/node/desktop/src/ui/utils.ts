@@ -42,6 +42,7 @@ export const checkForNewLanguage = () => {
   });
 };
 
+// Makes sure that the path only has `/` instead of `\` or `//`
 export const threatPathString = (path: string) => {
   return path.replace(/\//g, '/').replace(/\\/g, '/');
 };
