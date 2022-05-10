@@ -539,3 +539,7 @@ export const handleLocaleCookies = async (window: BrowserWindow, isMainWindow = 
     }
   });
 };
+
+export const threatPathString = (path: string) => {
+  return path.replace(/\//g, '/').replace(/\\/g, '/');
+};

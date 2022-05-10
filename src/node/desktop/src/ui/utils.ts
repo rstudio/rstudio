@@ -23,7 +23,8 @@ export const checkForNewLanguage = () => {
       } else {
         const localeLastTimeData = isLocalStorageItemSet(localeLastTimeSetStorageItemKey);
 
-        // If a new Language is set, the last time it was set will be checked against the time this function has first ran
+        // If a new Language is set, the last time it was set
+        // will be checked against the time this function has first ran
         if (localeLastTimeData.isSet) {
           const localeData = isLocalStorageItemSet(localeStorageItemKey);
 
@@ -39,4 +40,8 @@ export const checkForNewLanguage = () => {
       }
     }, 100);
   });
+};
+
+export const threatPathString = (path: string) => {
+  return path.replace(/\//g, '/').replace(/\\/g, '/');
 };
