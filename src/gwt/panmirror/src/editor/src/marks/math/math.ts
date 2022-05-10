@@ -65,7 +65,7 @@ const extension = (context: ExtensionContext): Extension | null => {
             id: { default: null }
           },
           inclusive: false,
-          excludes: 'formatting raw_tex',
+          excludes: 'formatting',
           parseDOM: [
             {
               tag: "span[class*='math']",
@@ -273,6 +273,7 @@ const extension = (context: ExtensionContext): Extension | null => {
               const tr = state.tr;
               tr.insertText('$');
               const mark = schema.marks.math.create({ type: MathType.Inline });
+              tr.removeMark(start + match[1].length, end + 1, undefined);
               tr.addMark(start + match[1].length, end + 1, mark);
               return tr;
             } else {
