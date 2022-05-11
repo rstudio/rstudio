@@ -17,7 +17,7 @@
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
-import { threatPathString } from '../../core/file-path';
+import { normalizeSeparatorsNative } from '../../core/file-path';
 import { logger } from '../../core/logger';
 import { RStudioUserState } from '../../types/user-state-schema';
 
@@ -42,7 +42,7 @@ const kRendererUseGpuExclusionList = 'renderer.useGpuExclusionList';
 const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds';
 
 const kRBinDir = 'platform.windows.rBinDir';
-const krstudioPath = 'platform.windows.rstudioPath';
+const kRExecutablePath = 'platform.windows.rstudioPath';
 const kPreferR64 = 'platform.windows.preferR64';
 
 const userStateSchema = generateSchema<RStudioUserState>(properties);
@@ -275,7 +275,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (process.platform !== 'win32') {
       return;
     }
-    this.config.set(kRBinDir, threatPathString(rBinDir));
+    this.config.set(kRBinDir, normalizeSeparatorsNative(rBinDir));
   }
 
   // Windows-only option
@@ -295,26 +295,29 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   // Windows-only option
-  public setRstudioPath(rstudioPath: string): void {
+  public setRExecutablePath(rExecutablePath: string): void {
     if (process.platform !== 'win32') {
       return;
     }
-    this.config.set(krstudioPath, threatPathString(rstudioPath));
+    this.config.set(kRExecutablePath, normalizeSeparatorsNative(rExecutablePath));
   }
 
   // Windows-only option
-  public rstudioPath(): string {
+  public rExecutablePath(): string {
     if (process.platform !== 'win32') {
       return '';
     }
 
-    const rstudioPath: string = this.config.get(krstudioPath, properties.platform.default.windows.rstudioPath);
+    const rExecutablePath: string = this.config.get(
+      kRExecutablePath,
+      properties.platform.default.windows.rstudioPath,
+    );
 
-    if (!rstudioPath) {
+    if (!rExecutablePath) {
       return '';
     }
 
-    return rstudioPath;
+    return rExecutablePath;
   }
 
   // Windows-only option
