@@ -14,7 +14,7 @@
  */
 
 import { ipcRenderer, webContents } from 'electron';
-import { threatPathString } from '../core/file-path';
+import { normalizeSeparatorsNative } from '../core/file-path';
 import { logger } from '../core/logger';
 
 interface VoidCallback<Type> {
@@ -91,7 +91,7 @@ export function getDesktopBridge() {
           }
 
           if (process.platform === 'win32') {
-            filePath = threatPathString(filePath);
+            filePath = normalizeSeparatorsNative(filePath);
           }
           
           // invoke callback

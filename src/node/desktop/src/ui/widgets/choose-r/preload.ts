@@ -15,7 +15,7 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { existsSync } from 'fs';
 import path from 'path';
-import { threatPathString } from '../../utils';
+import { normalizeSeparatorsNative } from '../../utils';
 
 export interface CallbackData {
   binaryPath?: string | unknown;
@@ -90,7 +90,7 @@ ipcRenderer.on('initialize', (event, data) => {
 
   rInstalls.forEach((rInstall) => {
     // normalize separators, etc
-    rInstall = threatPathString(path.normalize(rInstall).replace(/[/\\]+$/g, ''));
+    rInstall = normalizeSeparatorsNative(path.normalize(rInstall));
 
     // skip if we've already seen this
     if (visitedInstallations[rInstall]) {
@@ -168,5 +168,5 @@ const callbacks: Callbacks = {
 contextBridge.exposeInMainWorld('callbacks', callbacks);
 
 function isRVersionSelected(selectedVersion: string, versionToCompare: string) {
-  return threatPathString(selectedVersion) === threatPathString(versionToCompare);
+  return normalizeSeparatorsNative(selectedVersion) === normalizeSeparatorsNative(versionToCompare);
 }
