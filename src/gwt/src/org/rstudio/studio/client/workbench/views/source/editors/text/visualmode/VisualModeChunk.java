@@ -857,7 +857,7 @@ public class VisualModeChunk
             String clazz = style_.gutterIcon() + " ";
             if (StringUtil.equals(item.getType(), "error"))
                clazz += ThemeStyles.INSTANCE.gutterError();
-            else if (StringUtil.equals(item.getType(), "info"))
+            else if (StringUtil.equals(item.getType(), "info") || StringUtil.equals(item.getType(), "style"))
                clazz += ThemeStyles.INSTANCE.gutterInfo();
             else if (StringUtil.equals(item.getType(), "warning"))
                clazz += ThemeStyles.INSTANCE.gutterWarning();

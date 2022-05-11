@@ -136,7 +136,15 @@ public class VisualModeChunkRowState extends ChunkRowExecState
    @Override
    protected void setTitle(String title)
    {
-      ele_.setTitle(title);
+      String currentTitle = ele_.getTitle();
+      if (currentTitle.isEmpty())
+      {
+         ele_.setTitle(title);
+      }
+      else
+      {
+         ele_.setTitle(currentTitle + "\n" + title);
+      }
    }
 
    @Override
