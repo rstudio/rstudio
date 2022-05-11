@@ -88,7 +88,7 @@ export class ChooseRModalWindow extends ModalDialog<CallbackData | null> {
       default64bitPath: isValidInstallation(r64) ? r64 : '',
       rInstalls: this.rInstalls,
       renderingEngine: ElectronDesktopOptions().renderingEngine(),
-      selectedRVersion: ElectronDesktopOptions().rstudioPath(),
+      selectedRVersion: ElectronDesktopOptions().rExecutablePath(),
     };
 
     this.webContents.send('initialize', initData);
