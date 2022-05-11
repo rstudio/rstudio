@@ -16,6 +16,7 @@
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
+import { dirname } from 'path';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
 import { normalizeSeparatorsNative } from '../../core/file-path';
 import { logger } from '../../core/logger';
@@ -275,7 +276,8 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (process.platform !== 'win32') {
       return;
     }
-    this.config.set(kRBinDir, normalizeSeparatorsNative(rBinDir));
+    
+    this.config.set(kRBinDir, normalizeSeparatorsNative(dirname(rBinDir)));
   }
 
   // Windows-only option

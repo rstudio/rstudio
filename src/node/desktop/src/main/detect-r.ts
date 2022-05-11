@@ -13,7 +13,7 @@
  *
  */
 
-import path, { dirname, join } from 'path';
+import path, { join } from 'path';
 
 import { execSync, spawnSync } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
@@ -111,7 +111,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
 
     // save the stored version of R
     const path = data.binaryPath as string;
-    ElectronDesktopOptions().setRBinDir(dirname(path));
+    ElectronDesktopOptions().setRBinDir(path);
     ElectronDesktopOptions().setRExecutablePath(path);
 
     // if the user has changed the default rendering engine,
