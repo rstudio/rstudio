@@ -14,8 +14,8 @@
  */
 
 import { ipcRenderer, webContents } from 'electron';
-import { normalizeSeparatorsNative } from '../core/file-path';
 import { logger } from '../core/logger';
+import { normalizeSeparatorsNative } from '../ui/utils';
 
 interface VoidCallback<Type> {
   (result: Type): void;
