@@ -42,7 +42,12 @@ export const checkForNewLanguage = () => {
   });
 };
 
-// Makes sure that the path only has `/` instead of `\` or `//`
-export const threatPathString = (path: string) => {
-  return path.replace(/\//g, '/').replace(/\\/g, '/');
-};
+// Makes sure that the path only has `/` instead of `\` or `\\` or `//`
+function normalizeSeparators(path: string, separator = '/') {
+  return path.replace(/[\\/]+/g, separator);
+}
+
+export function normalizeSeparatorsNative(path: string) {
+  const separator = process.platform === 'win32' ? '\\' : '/';
+  return normalizeSeparators(path, separator);
+}
