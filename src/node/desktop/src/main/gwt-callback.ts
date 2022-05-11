@@ -407,7 +407,7 @@ export class GwtCallback extends EventEmitter {
       const rBinDir = dirname(path);
 
       ElectronDesktopOptions().setRBinDir(rBinDir);
-      ElectronDesktopOptions().setRstudioPath(path);
+      ElectronDesktopOptions().setRExecutablePath(path);
      
       logger().logDebug(`Using R: ${rBinDir}`);
       return formatSelectedVersionForUi(rBinDir);

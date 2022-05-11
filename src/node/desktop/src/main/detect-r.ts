@@ -112,7 +112,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
     // save the stored version of R
     const path = data.binaryPath as string;
     ElectronDesktopOptions().setRBinDir(dirname(path));
-    ElectronDesktopOptions().setRstudioPath(path);
+    ElectronDesktopOptions().setRExecutablePath(path);
 
     // if the user has changed the default rendering engine,
     // then we'll need to ask them to restart RStudio now
