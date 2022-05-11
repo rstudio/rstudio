@@ -98,7 +98,6 @@ public:
       }
    }
 
-
    int port()
    {
       return port_;
@@ -258,6 +257,10 @@ private:
             {
                showInViewer();
             }
+         }
+         else if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeWindow)
+         {
+            showInViewer();
          }
       }
 
