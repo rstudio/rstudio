@@ -609,14 +609,14 @@ describe('FilePath', () => {
         'c:\\\\www\\\\app\\my/folder/file.r'];
       paths.forEach((path) => {
         assert.isTrue(path.includes('\\'), `Path ${path} should contain at least a single backward slash for this test to be valid`);
-        const threatedPath = normalizeSeparatorsNative(path);
+        const normalizedPath = normalizeSeparatorsNative(path);
         assert.isFalse(
-          threatedPath.includes('\\'),
-          `Path ${threatedPath} should NOT contain backward slashes for this test to be valid`,
+          normalizedPath.includes('\\'),
+          `Path ${normalizedPath} should NOT contain backward slashes for this test to be valid`,
         );
         assert.isFalse(
-          threatedPath.includes('/'),
-          `Path ${threatedPath} should NOT contain double forward slashes for this test to be valid`,
+          normalizedPath.includes('/'),
+          `Path ${normalizedPath} should NOT contain double forward slashes for this test to be valid`,
         );
       });
     });
