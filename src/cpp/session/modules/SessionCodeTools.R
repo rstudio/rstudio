@@ -2243,7 +2243,7 @@
       return(NULL)
    # If Quarto and no R code chunks, don't parse further
    # Rmd may have yaml front matter to parse even if no R chunks
-   if (identical(code, .rs.scalar("")) && identical(extension, ".qmd"))
+   if (identical(gsub("\n", "", code), .rs.scalar("")) && identical(extension, ".qmd"))
       return(NULL)
 
    # attempt to parse extracted R code
