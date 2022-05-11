@@ -72,6 +72,22 @@ bool precompiledHeadersEnabled()
    return r::options::getOption<bool>("rstudio.libclang.usePrecompiledHeaders", true, false);
 }
 
+FilePath compilerDefinitionsHeaderPath(bool isCpp)
+{
+   std::string headerPath;
+   Error error = r::exec::RFunction(".rs.libclang.compilerDefinitionsHeaderPath")
+         .addParam("isCpp", isCpp)
+         .call(&headerPath);
+
+   if (error)
+   {
+      LOG_ERROR(error);
+      return FilePath();
+   }
+
+   return FilePath(headerPath);
+}
+
 struct SourceCppFileInfo
 {
    SourceCppFileInfo() : disableIndexing(false) {}
@@ -80,6 +96,24 @@ struct SourceCppFileInfo
    std::string rcppPkg;
    bool disableIndexing;
 };
+
+namespace {
+
+std::string guessRcppPackage(const std::string& contents)
+{
+   boost::regex reCpp11("#include\\s*<cpp11\\.hpp");
+   if (regex_utils::search(contents, reCpp11))
+      return "cpp11";
+
+   boost::regex reRcpp11("#include\\s+<Rcpp11");
+   if (regex_utils::search(contents, reRcpp11))
+      return "Rcpp11";
+
+   return "Rcpp";
+
+}
+
+} // end anonymous namespace
 
 SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
 {
@@ -95,10 +129,8 @@ SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
    // info to return
    SourceCppFileInfo info;
 
-   // check for rcpp 11
-   boost::regex reRcpp11("#include\\s+<Rcpp11");
-   bool isRcpp11 = regex_utils::search(contents, reRcpp11);
-   info.rcppPkg = isRcpp11 ? "Rcpp11" : "Rcpp";
+   // check for C++ package
+   info.rcppPkg = guessRcppPackage(contents);
    info.hash.append(info.rcppPkg);
 
    // find dependency attributes
@@ -636,7 +668,7 @@ void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
    if (info.disableIndexing)
    {
       if (verbose(1))
-         std::cerr << "CLANG SKIP INDEXING: " << srcFile << std::endl;
+         std::cerr << "CLANG SKIP INDEXING (disabled): " << srcFile << std::endl;
 
       return;
    }
@@ -696,6 +728,8 @@ Error RCompilationDatabase::executeSourceCpp(
    args.push_back("-e");
 
    // difference sequence depending on the version of Rcpp we are using
+   // NOTE: we'd like to use cpp11::cpp_source() but there's no 'dry-run'
+   // mode available
    if (rcppPkg == "Rcpp")
    {
       // we try to force --dry-run differently depending on the version of Rcpp
@@ -709,10 +743,16 @@ Error RCompilationDatabase::executeSourceCpp(
       boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE%2%)");
       args.push_back(boost::str(fmt % srcPath.getAbsolutePath() % extraParams));
    }
-   else
+   else if (rcppPkg == "Rcpp11")
    {
       core::system::setenv(&env, "MAKE", "make --dry-run");
       boost::format fmt("attributes::sourceCpp('%1%', verbose = TRUE)");
+      args.push_back(boost::str(fmt % srcPath.getAbsolutePath()));
+   }
+   else if (rcppPkg == "cpp11")
+   {
+      core::system::setenv(&env, "MAKE", "make --dry-run");
+      boost::format fmt("cpp11::cpp_source('%1%', quiet = FALSE)");
       args.push_back(boost::str(fmt % srcPath.getAbsolutePath()));
    }
 
@@ -896,7 +936,7 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
    if (!shouldIndexConfig(config))
    {
       if (verbose(1))
-         std::cerr << "CLANG SKIP INDEXING: " << filename << std::endl;
+         std::cerr << "CLANG SKIP INDEXING (no config available): " << filename << std::endl;
 
       return std::vector<std::string>();
    }
@@ -947,6 +987,9 @@ RCompilationDatabase::CompilationConfig
    // validation: if we don't have any version of Rcpp installed then
    // we can't do sourceCpp
    if (rcppPkg == "Rcpp" && !isPackageVersionInstalled("Rcpp", "0.10.1"))
+      return CompilationConfig();
+
+   if (rcppPkg == "cpp11" && !isPackageInstalled("cpp11"))
       return CompilationConfig();
 
    // start with base args
@@ -1043,7 +1086,7 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
 
 #ifdef _WIN32
    // add built-in clang compiler headers
-   // built-in headers are not required with Rtools40 (used by R 4.0.x)
+   // built-in headers are not required with Rtools40 or newer
    if (r::version_info::currentRVersion().versionMajor() < 4)
    {
       auto clArgs = clang().compileArgs(isCpp);
@@ -1071,6 +1114,17 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    discoverSystemIncludePaths(&includes);
    for (auto include : includes)
       args.push_back("-I" + include);
+#endif
+
+#ifdef _WIN32
+   // generate a set of compiler defines, to be passed along to libclang
+   // needed for some gcc-specific includes which libclang doesn't define
+   FilePath defnPath = compilerDefinitionsHeaderPath(isCpp);
+   if (defnPath.exists())
+   {
+      args.push_back("-include");
+      args.push_back(defnPath.getAbsolutePath());
+   }
 #endif
 
    if (verbose(3))
@@ -1181,7 +1235,6 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
 
 std::vector<std::string> RCompilationDatabase::rToolsArgs() const
 {
-
 #ifdef _WIN32
    if (rToolsArgs_.empty())
    {
@@ -1202,7 +1255,6 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
             std::copy(clangArgs.begin(),
                       clangArgs.end(),
                       std::back_inserter(rToolsArgs_));
-
             break;
          }
       }
@@ -1316,8 +1368,10 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       
       // state cpp file for creating precompiled headers
       FilePath cppPath = platformPath.completeChildPath(pkgName + stdArg + ".cpp");
-      boost::format fmt("#include <%1%.h>\n");
-      std::string contents = boost::str(fmt % pkgName);
+
+      boost::format fmt("#include <%1%>\n");
+      std::string headerName = pkgName == "cpp11" ? "cpp11.hpp" : (pkgName + ".h");
+      std::string contents = boost::str(fmt % headerName);
       error = core::writeStringToFile(cppPath, contents);
       if (error)
       {

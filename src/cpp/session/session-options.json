@@ -720,13 +720,6 @@
             "description": "Specifies the path to the libclang shared library"
          },
          {
-            "name": "external-libclang-headers-path",
-            "type": "core::FilePath",
-            "memberName": "libclangHeadersPath_",
-            "defaultValue": "resources/libclang/builtin-headers",
-            "description": "Specifies the path to the libclang builtin headers."
-         },
-         {
             "name": "external-winpty-path",
             "type": "core::FilePath",
             "memberName": "winptyPath_",

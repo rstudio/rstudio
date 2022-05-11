@@ -313,7 +313,7 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
    {
-      libclangPath_ += "/5.0.2";
+      libclangPath_ += "/13.0.1";
    }
    resolveRsclangPath(resourcePath_, &libclangPath_);
 

@@ -73,7 +73,11 @@ __declspec(dllimport) UImode CharacterMode;
 }
 
 // Added in R 4.2.0; loaded dynamically
+namespace rstudio {
+namespace dynload {
 int (*R_DefParamsEx)(Rstart, int);
+} // namespace dynload
+} // namespace rstudio
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -267,7 +271,11 @@ void initializeParams(RStartup* pRP)
    }
 
    // try to load R_DefParamsEx routine
-   Error error = core::system::loadSymbol(rLibrary, "R_DefParamsEx", (void**) &R_DefParamsEx);
+   Error error = core::system::loadSymbol(
+            rLibrary,
+            "R_DefParamsEx",
+            (void**) &rstudio::dynload::R_DefParamsEx);
+
    if (error)
    {
       LOG_ERROR(error);
@@ -275,7 +283,7 @@ void initializeParams(RStartup* pRP)
    }
 
    // invoke it
-   R_DefParamsEx((Rstart) pRP, 1);
+   rstudio::dynload::R_DefParamsEx((Rstart) pRP, 1);
 }
 
 } // end anonymous namespace
