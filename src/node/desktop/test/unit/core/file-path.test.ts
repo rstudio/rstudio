@@ -22,7 +22,7 @@ import fsPromises from 'fs/promises';
 import path from 'path';
 import os from 'os';
 
-import { FilePath, threatPathString } from '../../../src/core/file-path';
+import { FilePath, normalizeSeparatorsNative } from '../../../src/core/file-path';
 import { userHomePath } from '../../../src/core/user';
 import { setLogger, NullLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
@@ -603,14 +603,20 @@ describe('FilePath', () => {
       assert.strictEqual(cPath.completeChildPath('../bar'), cPath);
       assert.strictEqual(cPath.completeChildPath('/path/to/quux'), cPath);
     });
-    it('Paths only contain regular slashes', () => {
-      const paths = ['c:\\www\\app\\my/folder/file.r', 'C:\\R\\4.1.2\\bin\\\\R.exe'];
+    it('Paths only contain forward slashes with no duplicates', () => {
+      const paths = ['c:\\www\\app\\my/folder/file.r',
+        'C:\\R\\4.1.2\\bin\\\\R.exe',
+        'c:\\\\www\\\\app\\my/folder/file.r'];
       paths.forEach((path) => {
-        assert.isTrue(path.includes('\\'), `Path ${path} should contain a slash for this test to be valid`);
-        const threatedPath = threatPathString(path);
+        assert.isTrue(path.includes('\\'), `Path ${path} should contain at least a single backward slash for this test to be valid`);
+        const threatedPath = normalizeSeparatorsNative(path);
         assert.isFalse(
           threatedPath.includes('\\'),
-          `Path ${threatedPath} should NOT contain a slash for this test to be valid`,
+          `Path ${threatedPath} should NOT contain backward slashes for this test to be valid`,
+        );
+        assert.isFalse(
+          threatedPath.includes('/'),
+          `Path ${threatedPath} should NOT contain double forward slashes for this test to be valid`,
         );
       });
     });
