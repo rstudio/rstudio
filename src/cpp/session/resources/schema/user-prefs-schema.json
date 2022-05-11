@@ -1596,6 +1596,12 @@
             "default": "en",
             "title": "User Interface Language",
             "description": "The IDE's user-interface language."
+        },
+        "native_file_dialogs": {
+            "description": "Whether RStudio Desktop will use operating system File and Message dialog boxes.",
+            "title": "Use operating system File and Message dialog boxes",
+            "type": "boolean",
+            "default": true
         }
     }
 }

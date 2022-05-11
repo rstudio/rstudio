@@ -47,6 +47,24 @@
       return window.navigator.userAgent.indexOf("Electron") > 0 ? "true" : "false";
    ]]></property-provider>
 
+   <!-- Detect option to stop use of native OS file dialogs on Electron Desktop -->
+   <define-property name="rstudio.nativedialogs" values="true,false"/>
+   <property-provider name="rstudio.nativedialogs"><![CDATA[
+      try {
+         if (window.navigator.userAgent.indexOf("Electron") > 0) {
+            var cookieArr = window.document.cookie.split(";");
+            for( var i = 0; i < cookieArr.length; i++) {
+               var cookiePair = cookieArr[i].split("=");
+               if ('WEBDIALOG' === cookiePair[0].trim().toUpperCase()) {
+                  return "false";
+               }
+            }
+         }
+      } catch (e) {
+         console.error(e);
+      }
+      return "true";
+   ]]></property-provider>
 
    <!-- Set the user agent. Note that we no longer support older IE. -->
    <!-- Note that 'safari' here is effectively an alias for modern browsers. -->
@@ -77,6 +95,7 @@
       <when-type-is class="org.rstudio.studio.client.common.FileDialogs" />
       <all>
          <when-property-is name="rstudio.desktop" value="true"/>
+         <when-property-is name="rstudio.nativedialogs" value="true"/>
          <when-property-is name="rstudio.remoteDesktop" value="false"/>
       </all>
    </replace-with>
@@ -96,6 +115,7 @@
       <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
       <all>
          <when-property-is name="rstudio.desktop" value="true"/>
+         <when-property-is name="rstudio.nativedialogs" value="true"/>
          <when-property-is name="rstudio.remoteDesktop" value="false"/>
       </all>
    </replace-with>

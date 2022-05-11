@@ -404,6 +404,7 @@ namespace prefs {
 #define kUiLanguage "ui_language"
 #define kUiLanguageEn "en"
 #define kUiLanguageFr "fr"
+#define kNativeFileDialogs "native_file_dialogs"
 
 class UserPrefValues: public Preferences
 {
@@ -1812,6 +1813,12 @@ public:
     */
    std::string uiLanguage();
    core::Error setUiLanguage(std::string val);
+
+   /**
+    * Whether RStudio Desktop will use operating system File and Message dialog boxes.
+    */
+   bool nativeFileDialogs();
+   core::Error setNativeFileDialogs(bool val);
 
 };
 
