@@ -763,6 +763,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    // begin session
    using namespace module_context;
    activeSession().beginSession(rVersion(), rHomeDir(), rVersionLabel());
+   LOG_DEBUG_MESSAGE("Beginning session: " + activeSession().id() + " with activityState: " + activeSession().activityState());
 
    // setup fork handlers
    main_process::setupForkHandlers();
@@ -1135,6 +1136,8 @@ void rSuspended(const rstudio::r::session::RSuspendOptions& options)
 
    // fire event
    module_context::onSuspended(options, &(persistentState().settings()));
+
+   module_context::activeSession().setActivityState(core::r_util::kActivityStateSaved, true);
 }
 
 void rResumed()
@@ -1809,6 +1812,17 @@ void initMonitorClient()
    core::thread::safeLaunchThread(monitorWorkerThreadFunc);
 }
 
+void beforeResume()
+{
+   LOG_DEBUG_MESSAGE("Setting activityState to resuming from: " + module_context::activeSession().activityState());
+   module_context::activeSession().setActivityState(r_util::kActivityStateResuming, true);
+}
+
+void afterResume()
+{
+   LOG_DEBUG_MESSAGE("Resume complete");
+}
+
 } // anonymous namespace
 
 // run session
@@ -1864,6 +1878,8 @@ int main(int argc, char * const argv[])
 #ifndef _WIN32
       ::setpgrp();
 #endif
+
+      rstudio::r::session::setResumeCallbacks(beforeResume, afterResume);
 
       // get main thread id (used to distinguish forks which occur
       // from the main thread vs. child threads)

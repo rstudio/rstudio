@@ -157,6 +157,8 @@ public:
 
    static SessionScope vscodeSession(const std::string& id);
 
+   static SessionScope fromSessionId(const std::string &id, const std::string& editor);
+
    SessionScope()
    {
    }
