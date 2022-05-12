@@ -190,6 +190,10 @@
       gsub("#define", "# define", msg)
    }))
    
+   # libclang doesn't seem to support __float128 with a Windows target,
+   # even though gcc does -- either way, remove this define so that we
+   # don't get (hopefully spurious) libclang warnings
+   formatted <- c(formatted, "", "#undef _GLIBCXX_USE_FLOAT128")
    
    # dump it to file
    dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
