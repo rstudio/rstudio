@@ -15,24 +15,35 @@
 package org.rstudio.studio.client.projects.ui.newproject;
 
 import com.google.gwt.core.client.GWT;
+
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.MessageDialog;
+import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.StudioClientProjectConstants;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
+import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.quarto.model.QuartoCapabilities;
 import org.rstudio.studio.client.quarto.model.QuartoCommandConstants;
 import org.rstudio.studio.client.quarto.model.QuartoJupyterKernel;
 import org.rstudio.studio.client.quarto.model.QuartoNewProjectOptions;
 import org.rstudio.studio.client.quarto.ui.QuartoVisualEditorCheckBox;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
+import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.resources.client.ImageResource;
@@ -75,12 +86,12 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    }
    
    @Inject
-   private void initialize(Session session)
+   private void initialize(Session session, FilesServerOperations server)
    {
       session_ = session;
+      server_ = server;
    }
-      
-   
+
    @Override
    protected void onAddTopPanelWidgets(HorizontalPanel panel)
    {
@@ -253,6 +264,90 @@ public class NewQuartoProjectPage extends NewDirectoryPage
       super.onUnload();
       session_.persistClientState();
    }
+
+   @Override
+   protected void validateAsync(final NewProjectResult input,
+                                final OperationWithInput<Boolean> onValidated)
+   {
+      
+      final FileSystemItem projFile = FileSystemItem.createFile(input.getProjectFile());
+      final FileSystemItem projDir = projFile.getParentPath();
+      server_.stat(projDir.getPath(), new ServerRequestCallback<FileSystemItem>()
+      {
+         @Override
+         public void onResponseReceived(final FileSystemItem item)
+         {
+            // no file at this path -- safe for use
+            if (!item.exists())
+            {
+               onValidated.execute(true);
+               return;
+            }
+            
+            // if it was a file, bail
+            if (!item.isDirectory())
+            {
+               globalDisplay_.showMessage(
+                     MessageDialog.WARNING,
+                     constants_.errorCaption(),
+                     constants_.onResponseReceivedErrorMessage(item.getPath()));
+               onValidated.execute(false);
+               return;
+            }
+            
+            // check if this directory is empty
+            server_.listFiles(item, 
+                  false, // monitor
+                  false, // show hidden
+                  new ServerRequestCallback<DirectoryListing>()
+            {
+               @Override
+               public void onResponseReceived(DirectoryListing listing)
+               {
+                  boolean ok = true;
+                  JsArray<FileSystemItem> children = listing.getFiles();
+                  for (FileSystemItem child : JsUtil.asIterable(children))
+                  {
+                     boolean canIgnore =
+                           child.getExtension() == ".Rproj" ||
+                           child.getName().startsWith(".");
+                     
+                     if (canIgnore)
+                        continue;
+                     
+                     ok = false;
+                     break;
+                  }
+                  
+                  if (!ok)
+                  {
+                     globalDisplay_.showMessage(
+                          MessageDialog.WARNING,
+                          constants_.errorCaption(),
+                          constants_.directoryAlreadyExistsMessage(item.getPath()));
+                  }
+                  
+                  onValidated.execute(ok);
+               }
+               
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+                  onValidated.execute(true);
+               }
+            });
+         }
+         
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            onValidated.execute(true);
+         }
+      });
+   }
+
    
    private String fixedProjectType_;
    private SelectWidget projectTypeSelect_;
@@ -265,7 +360,7 @@ public class NewQuartoProjectPage extends NewDirectoryPage
    private QuartoVisualEditorCheckBox chkVisualEditor_;
    private Session session_;
    private QuartoCapabilities quartoCaps_ = null;
-
+   private FilesServerOperations server_;
    
    private class ClientStateValue extends JSObjectStateValue
    {
