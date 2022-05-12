@@ -396,9 +396,8 @@ try {
           def index = i
           parallel_containers["${windows_containers[i].os}-${windows_containers[i].flavor}"] = {
             def current_container = windows_containers[index]
-            node('windows') {
-
-              retry(5) {
+            retry(5) {
+              node('windows') {
                 stage('prepare container') {
                   checkout scm
                   docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
