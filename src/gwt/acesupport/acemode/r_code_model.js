@@ -761,30 +761,52 @@ var RCodeModel = function(session, tokenizer,
 
    this.$buildScopeTreeUpToRow = function(maxRow)
    {
-      function getChunkLabel(reOptions, comment) {
+      function getChunkLabel(reOptions, comment, iterator) {
 
          if (typeof reOptions === "undefined")
             return "";
          
          var match = reOptions.exec(comment);
-         if (!match)
-            return null;
-         var value = match[1];
-         var values = value.split(',');
-         if (values.length == 0)
-            return null;
-
-         // If first arg has no =, it's a label
-         if (!/=/.test(values[0])) {
-            return values[0].replace(/(^\s+)|(\s+$)/g, '');
+         if (match)
+         {
+            var value = match[1];
+            var values = value.split(',');
+            if (values.length > 0)
+            {
+               // If first arg has no =, it's a label
+               var first = values[0];
+               if (!/=/.test(first)) {
+                  var label = first.replace(/(^\s+)|(\s+$)/g, '');
+                  if (label.length)
+                     return label;
+               }
+            
+               for (var i = 0; i < values.length; i++) {
+                  match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
+                  if (match)
+                     return Utils.stripEnclosingQuotes(match[1].trim());
+               }
+            }
          }
-
-         for (var i = 0; i < values.length; i++) {
-            match = /^\s*label\s*=\s*(.*)$/.exec(values[i]);
-            if (match)
-               return Utils.stripEnclosingQuotes(match[1].trim());
+         
+         // then look for yaml label, i.e.
+         // 
+         // ```{r}
+         // #| label: foo
+         var it = iterator.clone();
+         
+         var tok = it.moveToNextToken();
+         while(tok != null && tok.type.startsWith("comment"))
+         {
+            var value = tok.value;
+            
+            var labelRegex = /^#\| *label *: *(.*)$/;
+            if (labelRegex.test(value))
+               return value.replace(labelRegex, "$1");
+            
+            tok = it.moveToNextToken();
          }
-
+         
          return null;
       }
 
@@ -1068,11 +1090,12 @@ var RCodeModel = function(session, tokenizer,
             var chunkPos = {row: chunkStartPos.row + 1, column: 0};
             var chunkNum = chunkCount;
 
-               var chunkLabel = getChunkLabel(this.$codeBeginPattern, value);
-               var scopeName = "Chunk " + chunkNum;
-               if (chunkLabel && value !== "YAML Header")
-                  scopeName += ": " + chunkLabel;
-               this.$scopes.onChunkStart(chunkLabel,
+            var chunkLabel = getChunkLabel(this.$codeBeginPattern, value, iterator);
+            var scopeName = "Chunk " + chunkNum;
+            if (chunkLabel && value !== "YAML Header")
+               scopeName += ": " + chunkLabel;
+
+            this.$scopes.onChunkStart(chunkLabel,
                                          scopeName,
                                          chunkStartPos,
                                          chunkPos);
