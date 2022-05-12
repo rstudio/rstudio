@@ -111,6 +111,7 @@ public class CreateKeyDialog extends ModalDialog<CreateKeyOptions>
                                  // set the value of rsa_key_path in computed user prefs layer to newly created file
                                  UserPrefs uiPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
                                  uiPrefs.rsaKeyPath().setValue("computed", input.getPath());
+                                 uiPrefs.haveRsaKey().setValue("computed", true);
 
                                  // update the key path
                                  if (res.getExitStatus() == 0)
