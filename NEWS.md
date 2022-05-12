@@ -22,6 +22,7 @@
 - Changed "Jobs" tab in IDE to "Local Jobs"
 - The fuzzy finder shows `test_that()` calls when the search term starts with "t ".  
 - Calls to test_that() appear in the source file outline (#11082)
+- Windows: Update embedded libclang to 13.0.1 (#11186)
 
 #### Find in Files
 
