@@ -728,8 +728,6 @@ Error RCompilationDatabase::executeSourceCpp(
    args.push_back("-e");
 
    // difference sequence depending on the version of Rcpp we are using
-   // NOTE: we'd like to use cpp11::cpp_source() but there's no 'dry-run'
-   // mode available
    if (rcppPkg == "Rcpp")
    {
       // we try to force --dry-run differently depending on the version of Rcpp
