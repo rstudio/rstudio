@@ -53,7 +53,7 @@
       try {
          if (window.navigator.userAgent.indexOf("Electron") > 0) {
             var cookieArr = window.document.cookie.split(";");
-            for( var i = 0; i < cookieArr.length; i++) {
+            for (var i = 0; i < cookieArr.length; i++) {
                var cookiePair = cookieArr[i].split("=");
                if ('WEBDIALOG' === cookiePair[0].trim().toUpperCase()) {
                   return "false";
@@ -115,7 +115,6 @@
       <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
       <all>
          <when-property-is name="rstudio.desktop" value="true"/>
-         <when-property-is name="rstudio.useNativeDialogs" value="true"/>
          <when-property-is name="rstudio.remoteDesktop" value="false"/>
       </all>
    </replace-with>
@@ -141,7 +140,10 @@
    </replace-with>
    <replace-with class="org.rstudio.studio.client.common.dialog.DesktopDialogBuilderFactory">
       <when-type-is class="org.rstudio.studio.client.common.dialog.DialogBuilderFactory"/>
-      <when-property-is name="rstudio.desktop" value="true"/>
+      <all>
+         <when-property-is name="rstudio.desktop" value="true"/>
+         <when-property-is name="rstudio.useNativeDialogs" value="true"/>
+      </all>
    </replace-with>
 
    <replace-with class="org.rstudio.studio.client.common.impl.WebTextInput">
