@@ -3350,7 +3350,7 @@ public class UserPrefsAccessor extends Prefs
    public final static String UI_LANGUAGE_FR = "fr";
 
    /**
-    * Whether RStudio Desktop will use operating system File and Message dialog boxes.
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
     */
    public PrefValue<Boolean> nativeFileDialogs()
    {

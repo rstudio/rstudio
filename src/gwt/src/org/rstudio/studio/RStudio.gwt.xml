@@ -48,8 +48,8 @@
    ]]></property-provider>
 
    <!-- Detect option to stop use of native OS file dialogs on Electron Desktop -->
-   <define-property name="rstudio.nativedialogs" values="true,false"/>
-   <property-provider name="rstudio.nativedialogs"><![CDATA[
+   <define-property name="rstudio.useNativeDialogs" values="true,false"/>
+   <property-provider name="rstudio.useNativeDialogs"><![CDATA[
       try {
          if (window.navigator.userAgent.indexOf("Electron") > 0) {
             var cookieArr = window.document.cookie.split(";");
@@ -95,7 +95,7 @@
       <when-type-is class="org.rstudio.studio.client.common.FileDialogs" />
       <all>
          <when-property-is name="rstudio.desktop" value="true"/>
-         <when-property-is name="rstudio.nativedialogs" value="true"/>
+         <when-property-is name="rstudio.useNativeDialogs" value="true"/>
          <when-property-is name="rstudio.remoteDesktop" value="false"/>
       </all>
    </replace-with>
@@ -115,7 +115,7 @@
       <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
       <all>
          <when-property-is name="rstudio.desktop" value="true"/>
-         <when-property-is name="rstudio.nativedialogs" value="true"/>
+         <when-property-is name="rstudio.useNativeDialogs" value="true"/>
          <when-property-is name="rstudio.remoteDesktop" value="false"/>
       </all>
    </replace-with>

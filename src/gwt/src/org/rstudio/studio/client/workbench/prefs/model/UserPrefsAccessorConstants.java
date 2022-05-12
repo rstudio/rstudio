@@ -1944,11 +1944,11 @@ public interface UserPrefsAccessorConstants extends Constants {
    String uiLanguageDescription();
 
    /**
-    * Whether RStudio Desktop will use operating system File and Message dialog boxes.
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
     */
-   @DefaultStringValue("Use operating system File and Message dialog boxes")
+   @DefaultStringValue("Use native file and message dialog boxes")
    String nativeFileDialogsTitle();
-   @DefaultStringValue("Whether RStudio Desktop will use operating system File and Message dialog boxes.")
+   @DefaultStringValue("Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.")
    String nativeFileDialogsDescription();
 
 

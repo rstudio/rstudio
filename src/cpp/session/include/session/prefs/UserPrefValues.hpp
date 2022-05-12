@@ -1815,7 +1815,7 @@ public:
    core::Error setUiLanguage(std::string val);
 
    /**
-    * Whether RStudio Desktop will use operating system File and Message dialog boxes.
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
     */
    bool nativeFileDialogs();
    core::Error setNativeFileDialogs(bool val);
