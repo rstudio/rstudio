@@ -351,7 +351,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
                globalDisplay_.showMessage(
                      MessageDialog.WARNING,
                      constants_.creatingProjectError(),
-                     constants_.fileAlreadyExistsMessage(item.getPath()));
+                     constants_.fileAlreadyExistsMessage(item.getPath()) + "\n\n" + constants_.pleaseEnterDirectoryNameMessage());
                onValidated.execute(false);
                return;
             }
@@ -385,7 +385,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
                      globalDisplay_.showMessage(
                           MessageDialog.WARNING,
                           constants_.creatingProjectError(),
-                          constants_.directoryAlreadyExistsMessage(item.getPath()));
+                          constants_.directoryAlreadyExistsMessage(item.getPath()) + "\n\n" + constants_.pleaseEnterDirectoryNameMessage());
                   }
                   
                   onValidated.execute(ok);
