@@ -396,7 +396,7 @@ try {
           def index = i
           parallel_containers["${windows_containers[i].os}-${windows_containers[i].flavor}"] = {
             def current_container = windows_containers[index]
-            retry(5) {
+            retry(2) {
               node('windows') {
                 stage('prepare container') {
                   checkout scm
