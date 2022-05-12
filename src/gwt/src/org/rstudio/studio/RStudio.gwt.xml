@@ -108,25 +108,6 @@
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
 
-   <replace-with class="org.rstudio.studio.client.workbench.views.packages.impl.WebCRANChooser">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
-   </replace-with>
-   <replace-with class="org.rstudio.studio.client.workbench.views.packages.impl.DesktopCRANChooser">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.packages.CRANChooser"/>
-      <all>
-         <when-property-is name="rstudio.desktop" value="true"/>
-         <when-property-is name="rstudio.remoteDesktop" value="false"/>
-      </all>
-   </replace-with>
-
-   <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.impl.WebActionsWidget">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.ActionsWidget"/>
-   </replace-with>
-   <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.impl.DesktopActionsWidget">
-      <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.ActionsWidget"/>
-      <when-property-is name="rstudio.desktop" value="true"/>
-   </replace-with>
-
     <replace-with class="org.rstudio.studio.client.workbench.views.plots.ui.export.impl.ExportPlotWeb">
        <when-type-is class="org.rstudio.studio.client.workbench.views.plots.ui.export.ExportPlot"/>
     </replace-with>
