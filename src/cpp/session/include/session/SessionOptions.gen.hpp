@@ -370,6 +370,9 @@ protected:
       ("external-libclang-path",
       value<std::string>(&libclangPath_)->default_value(kDefaultRsclangPath),
       "Specifies the path to the libclang shared library")
+      ("external-libclang-headers-path",
+      value<std::string>(&libclangHeadersPath_)->default_value("resources/libclang/builtin-headers"),
+      "Specifies the path to the libclang builtin headers.")
       ("external-winpty-path",
       value<std::string>(&winptyPath_)->default_value("bin"),
       "Specifies the path to winpty binaries.");
@@ -499,6 +502,7 @@ public:
    core::FilePath pandocPath() const { return core::FilePath(pandocPath_); }
    core::FilePath quartoPath() const { return core::FilePath(quartoPath_); }
    core::FilePath libclangPath() const { return core::FilePath(libclangPath_); }
+   core::FilePath libclangHeadersPath() const { return core::FilePath(libclangHeadersPath_); }
    core::FilePath winptyPath() const { return core::FilePath(winptyPath_); }
    int gitCommitLargeFileSize() const { return gitCommitLargeFileSize_; }
    std::string userIdentity() const { return userIdentity_; }
@@ -601,6 +605,7 @@ protected:
    std::string pandocPath_;
    std::string quartoPath_;
    std::string libclangPath_;
+   std::string libclangHeadersPath_;
    std::string winptyPath_;
    int gitCommitLargeFileSize_;
    std::string userIdentity_;
