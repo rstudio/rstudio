@@ -350,8 +350,8 @@ public class NewDirectoryPage extends NewProjectWizardPage
             {
                globalDisplay_.showMessage(
                      MessageDialog.WARNING,
-                     constants_.errorCaption(),
-                     constants_.onResponseReceivedErrorMessage(item.getPath()));
+                     constants_.creatingProjectError(),
+                     constants_.fileAlreadyExistsMessage(item.getPath()));
                onValidated.execute(false);
                return;
             }
@@ -384,7 +384,7 @@ public class NewDirectoryPage extends NewProjectWizardPage
                   {
                      globalDisplay_.showMessage(
                           MessageDialog.WARNING,
-                          constants_.errorCaption(),
+                          constants_.creatingProjectError(),
                           constants_.directoryAlreadyExistsMessage(item.getPath()));
                   }
                   

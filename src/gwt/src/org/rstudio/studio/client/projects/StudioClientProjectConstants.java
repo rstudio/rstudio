@@ -726,15 +726,15 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
      * @return translated "A file already exists at path ''{0}''"
      */
     @DefaultMessage("A file already exists at path ''{0}''")
-    @Key("onResponseReceivedErrorMessage")
-    String onResponseReceivedErrorMessage(String path);
+    @Key("fileAlreadyExistsMessage")
+    String fileAlreadyExistsMessage(String path);
 
     /**
      * Translated "Directory ''{0}'' already exists and is not empty.".
      *
      * @return translated "Directory ''{0}'' already exists and is not empty."
      */
-    @DefaultMessage("Directory ''{0}'' already exists and is not empty.")
+    @DefaultMessage("Directory ''{0}'' already exists and is not empty.\n\nPlease enter a new directory name.")
     @Key("directoryAlreadyExistsMessage")
     String directoryAlreadyExistsMessage(String path);
 
