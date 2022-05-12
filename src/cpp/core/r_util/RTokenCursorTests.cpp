@@ -24,7 +24,7 @@ using namespace core::r_util::token_cursor;
 
 bool isPipeOperator(const std::wstring& string)
 {
-   static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
+   static const boost::wregex rePipe(L"^(%[^>]*>+[^>]*%)|([|]>)$");
    return regex_utils::match(string.begin(), string.end(), rePipe);
 }
 
@@ -77,6 +77,8 @@ test_context("RTokenCursor")
       expect_true(isPipeOperator(L"%>%"));
       expect_true(isPipeOperator(L"%>>%"));
       expect_true(isPipeOperator(L"%T>%"));
+      expect_true(isPipeOperator(L"|>"));
+      expect_false(isPipeOperator(L"%!%"));
       
       RTokens rTokens(L"mtcars %>% first_level() %>% second_level(1");
       RTokenCursor cursor(rTokens);
