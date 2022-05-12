@@ -57,6 +57,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 
 public class GeneralPreferencesPane extends PreferencesPane
 {
@@ -339,6 +340,11 @@ public class GeneralPreferencesPane extends PreferencesPane
 
          fullPathInTitle_ = new CheckBox(constants_.fullProjectPathInWindowTitleLabel());
          advanced.add(lessSpaced(fullPathInTitle_));
+         if (BrowseCap.isElectron())
+         {
+            nativeFileDialogs_ = checkboxPref(prefs_.nativeFileDialogs());
+            advanced.add(nativeFileDialogs_);
+         }
       }
 
       Label otherLabel = headerLabel(constants_.otherLabel());
@@ -487,8 +493,8 @@ public class GeneralPreferencesPane extends PreferencesPane
       graphicsAntialias_.setValue(prefs.graphicsAntialiasing().getValue());
 
       initialUiLanguage_ = prefs_.uiLanguage().getValue();
+      initialNativeFileDialogs_ = prefs_.nativeFileDialogs().getValue();
    }
-
 
    @Override
    public ImageResource getIcon()
@@ -580,6 +586,23 @@ public class GeneralPreferencesPane extends PreferencesPane
       {
          LocaleCookie.setUiLanguage(uiLanguagePrefValue);
          restartRequirement.setUiReloadRequired(true);
+      }
+
+      if (BrowseCap.isElectron())
+      {
+         boolean useNativeDialogsPrefValue = nativeFileDialogs_.getValue();
+         if (useNativeDialogsPrefValue != initialNativeFileDialogs_)
+         {
+            restartRequirement.setUiReloadRequired(true);
+         }
+
+         // The uiLanguage preference is mirrored in a cookie telling GWT which language to display.
+         // Ensure consistency here and force a page reload if necessary.
+         if (WebDialogCookie.getUseWebDialogs() != useNativeDialogsPrefValue)
+         {
+            WebDialogCookie.setUseWebDialogs(useNativeDialogsPrefValue);
+            restartRequirement.setUiReloadRequired(true);
+         }
       }
 
       // Pro specific
@@ -680,6 +703,7 @@ public class GeneralPreferencesPane extends PreferencesPane
    private SelectWidget uiLanguage_;
    private CheckBox clipboardMonitoring_ = null;
    private CheckBox fullPathInTitle_ = null;
+   private CheckBox nativeFileDialogs_ = null;
    private CheckBox useGpuExclusions_ = null;
    private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;
@@ -702,4 +726,5 @@ public class GeneralPreferencesPane extends PreferencesPane
    private final UserPrefs prefs_;
    private final Session session_;
    private String initialUiLanguage_;
+   private boolean initialNativeFileDialogs_;
 }
