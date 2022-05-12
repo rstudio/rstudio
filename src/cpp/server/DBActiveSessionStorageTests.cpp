@@ -115,30 +115,30 @@ void runTests(DBActiveSessionStorage storage)
       {
          // Query All Properties
          std::map<std::string, std::string> nonexistentAllProps{};
-         REQUIRE(storage.readProperties(sessionId, &nonexistentAllProps));
+         REQUIRE(storage.readProperties(&nonexistentAllProps));
          REQUIRE(nonexistentAllProps.empty());
          
          std::map<std::string, std::string> nonexistentPropSet{};
-         REQUIRE(storage.readProperties(sessionId, propList, &nonexistentPropSet));
+         REQUIRE(storage.readProperties(propList, &nonexistentPropSet));
          REQUIRE(nonexistentPropSet.empty());
 
          // Query single property
          std::string launchParams{};
-         REQUIRE(storage.readProperty(sessionId, "launch_parameters", &launchParams));
+         REQUIRE(storage.readProperty("launch_parameters", &launchParams));
          REQUIRE(launchParams.empty());
       }
 
       WHEN("Initial minimal session data is inserted")
       {
          // Initial props is the smallest set of data that can be used to insert a new session row
-         REQUIRE_FALSE(storage.writeProperties(sessionId, initialProps));
+         REQUIRE_FALSE(storage.writeProperties(initialProps));
 
          THEN("Initial data readable from db")
          {
             std::map<std::string, std::string> readProps{};
 
             // Read All
-            REQUIRE_FALSE(storage.readProperties(sessionId, &readProps));
+            REQUIRE_FALSE(storage.readProperties(&readProps));
             REQUIRE(readProps.size() > 0);
             REQUIRE(readProps.find("user_id")->second == "7");
             REQUIRE(readProps.find("workbench")->second == "rstudio");
@@ -147,7 +147,7 @@ void runTests(DBActiveSessionStorage storage)
 
             // Read mixed property set
             std::map<std::string, std::string> initialPropertiesSubset{};
-            REQUIRE_FALSE(storage.readProperties(sessionId, propList, &initialPropertiesSubset));
+            REQUIRE_FALSE(storage.readProperties(propList, &initialPropertiesSubset));
             REQUIRE(propList.size() == initialPropertiesSubset.size());
             REQUIRE(initialPropertiesSubset.find("user_id")->second == "7");
             REQUIRE(initialPropertiesSubset.find("r_version")->second == "");
@@ -155,24 +155,24 @@ void runTests(DBActiveSessionStorage storage)
             // Read single property with properties
             std::set<std::string> propToRead{"user_id"};
             std::map<std::string, std::string> singleProp{};
-            REQUIRE_FALSE(storage.readProperties(sessionId, propToRead, &singleProp));
+            REQUIRE_FALSE(storage.readProperties(propToRead, &singleProp));
             REQUIRE(singleProp.size() == 1);
             REQUIRE(singleProp.find("user_id")->second == "7");
 
             // Single Property Reads
             // extant property
             std::string workbench{};
-            REQUIRE_FALSE(storage.readProperty(sessionId, "workbench", &workbench));
+            REQUIRE_FALSE(storage.readProperty("workbench", &workbench));
             REQUIRE(workbench == "rstudio");
 
             // missing property
             std::string rVer{};
-            REQUIRE_FALSE(storage.readProperty(sessionId, "r_version", &rVer));
+            REQUIRE_FALSE(storage.readProperty("r_version", &rVer));
             REQUIRE(rVer == "");
 
             // Property that isn't a column
             std::string nonProp{};
-            REQUIRE(storage.readProperty(sessionId, "non-existent", &nonProp));
+            REQUIRE(storage.readProperty("non-existent", &nonProp));
             REQUIRE(nonProp == "");
          }
       }
@@ -180,22 +180,22 @@ void runTests(DBActiveSessionStorage storage)
 
    GIVEN("A Prepopulated database")
    {
-      REQUIRE_FALSE(storage.writeProperties(sessionId, initialProps));
+      REQUIRE_FALSE(storage.writeProperties(initialProps));
 
       WHEN("Data is updated individually")
       {
          // Assign previously null property
-         REQUIRE_FALSE(storage.writeProperty(sessionId, "r_version", "4.0.0"));
+         REQUIRE_FALSE(storage.writeProperty("r_version", "4.0.0"));
          // Update existing property
-         REQUIRE_FALSE(storage.writeProperty(sessionId, "activity_state", "running"));
-         REQUIRE_FALSE(storage.writeProperty(sessionId, "user_id", "8"));
+         REQUIRE_FALSE(storage.writeProperty("activity_state", "running"));
+         REQUIRE_FALSE(storage.writeProperty("user_id", "8"));
          
          THEN("Changes are visible")
          {
             std::map<std::string, std::string> readProps{};
 
             // Read All
-            REQUIRE_FALSE(storage.readProperties(sessionId, &readProps));
+            REQUIRE_FALSE(storage.readProperties(&readProps));
             REQUIRE(readProps.size() > 0);
             REQUIRE(readProps.find("user_id")->second == "8");
             REQUIRE(readProps.find("workbench")->second == "rstudio");
@@ -205,7 +205,7 @@ void runTests(DBActiveSessionStorage storage)
 
             // Read mixed property set
             std::map<std::string, std::string> initialPropertiesSubset{};
-            REQUIRE_FALSE(storage.readProperties(sessionId, propList, &initialPropertiesSubset));
+            REQUIRE_FALSE(storage.readProperties(propList, &initialPropertiesSubset));
             REQUIRE(propList.size() == initialPropertiesSubset.size());
             REQUIRE(initialPropertiesSubset.find("user_id")->second == "8");
             REQUIRE(initialPropertiesSubset.find("r_version")->second == "4.0.0");
@@ -214,22 +214,22 @@ void runTests(DBActiveSessionStorage storage)
             // Read single property with properties
             std::set<std::string> propToRead{"user_id"};
             std::map<std::string, std::string> singleProp{};
-            REQUIRE_FALSE(storage.readProperties(sessionId, propToRead, &singleProp));
+            REQUIRE_FALSE(storage.readProperties(propToRead, &singleProp));
             REQUIRE(singleProp.size() == 1);
             REQUIRE(singleProp.find("user_id")->second == "8");
 
             // Single Property Reads
             // existing property
             std::string workbench{};
-            REQUIRE_FALSE(storage.readProperty(sessionId, "workbench", &workbench));
+            REQUIRE_FALSE(storage.readProperty("workbench", &workbench));
             REQUIRE(workbench == "rstudio");
             std::string rVersion{};
-            REQUIRE_FALSE(storage.readProperty(sessionId, "r_version", &rVersion));
+            REQUIRE_FALSE(storage.readProperty("r_version", &rVersion));
             REQUIRE(rVersion == "4.0.0");
 
             // missing property
             std::string rVer{};
-            REQUIRE_FALSE(storage.readProperty(sessionId, "r_version_label", &rVer));
+            REQUIRE_FALSE(storage.readProperty("r_version_label", &rVer));
             REQUIRE(rVer == "");
          }
       }
@@ -243,7 +243,7 @@ void runTests(DBActiveSessionStorage storage)
             {"session_id", "test"},
             {"r_version_label", "spicy r"}
          };
-         Error error = storage.writeProperties(sessionId, tooFewProps);
+         Error error = storage.writeProperties(tooFewProps);
          THEN("Error is returned")
          {
             REQUIRE(error);
@@ -253,10 +253,10 @@ void runTests(DBActiveSessionStorage storage)
 
       WHEN("Database is populated")
       {
-         REQUIRE_FALSE(storage.writeProperties(sessionId, initialProps));
+         REQUIRE_FALSE(storage.writeProperties(initialProps));
          THEN("Ownership cannot be transferred to user that does not exist")
          {
-            Error error = storage.writeProperty(sessionId, "user_id", "10");
+            Error error = storage.writeProperty("user_id", "10");
             REQUIRE(error);
             REQUIRE(error.getCode() == errc::DBError);
          }
@@ -268,7 +268,7 @@ TEST_CASE("Database Session Storage, Sqlite","[database][integration][session][s
    
    SqliteConnectionOptions options = sqliteConnectionOptions();
    boost::shared_ptr<IConnection> connection = initializeSQLiteDatabase(options);
-   DBActiveSessionStorage storage{connection};
+   DBActiveSessionStorage storage{sessionId, connection};
    runTests(storage);
 }
 
@@ -276,6 +276,6 @@ TEST_CASE("Databse Session Storage, Postgres","[database][integration][session][
    
    PostgresqlConnectionOptions options = postgresConnectionOptions();
    boost::shared_ptr<IConnection> connection = initializePostgresqlDatabase(options);
-   DBActiveSessionStorage storage{connection};
+   DBActiveSessionStorage storage{sessionId, connection};
    runTests(storage);
 }

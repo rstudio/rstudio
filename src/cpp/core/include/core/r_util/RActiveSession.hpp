@@ -38,28 +38,16 @@ namespace r_util {
 
 class ActiveSession : boost::noncopyable
 {
-private:
-
-   friend class ActiveSessions;
-
+public:
    explicit ActiveSession(const std::string& id) : id_(id) 
    {
    }
 
    explicit ActiveSession(
       const std::string& id,
-      const FilePath& scratchPath) : id_(id)
+      const FilePath& scratchPath,
+      std::shared_ptr<IActiveSessionStorage> storage) : id_(id), scratchPath_(scratchPath), storage_(storage)
    {
-      core::Error error = scratchPath_.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-
-      propertiesPath_ = scratchPath_.completeChildPath("properites");
-      error = propertiesPath_.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-
-      storage_ = ActiveSessionStorageFactory::getFileActiveSessionStorage(scratchPath_);
    }
 
    const std::string kExecuting = "executing";
@@ -68,23 +56,26 @@ private:
    const std::string kLastUsed = "last_used";
    const std::string kProject = "project";
    const std::string kSavePromptRequired = "save_prompt_required";
-   const std::string kSessionSuspendData = "suspended_session_data";
    const std::string kRunning = "running";
    const std::string kRVersion = "r_version";
    const std::string kRVersionHome = "r_version_home";
    const std::string kRVersionLabel = "r_version_label";
-   const std::string kWorkingDir = "working_directory";
+   const std::string kWorkingDir = "working_dir";
    const std::string kLastResumed = "last_resumed";
    const std::string kSuspendTimestamp = "suspend_timestamp";
    const std::string kBlockingSuspend = "blocking_suspend";
 
- public:
+   bool empty() const
+   { 
+      bool empty = true;
+      storage_->isEmpty(&empty);
+      return empty;
+   }
 
-   bool empty() const { return scratchPath_.isEmpty(); }
-
-   std::string id() const { return id_; }
-
-   const FilePath& scratchPath() const { return scratchPath_; }
+   std::string id() const
+   {
+      return id_;
+   }
 
    std::string readProperty(const std::string& propertyName) const
    {
@@ -114,7 +105,7 @@ private:
       return readProperty(kProject);
    }
 
-   void setProject(const std::string& project)
+   void setProject(const std::string& project) 
    {
       writeProperty(kProject, project);
    }
@@ -136,9 +127,13 @@ private:
          std::string value = readProperty(kInitial);
 
          if (!value.empty())
+         {
             return safe_convert::stringTo<bool>(value, false);
+         }
          else
+         {
             return false;
+         }
       }
       else
       {
@@ -157,10 +152,7 @@ private:
 
    void setBlockingSuspend(json::Array blocking)
    {
-      if (!empty())
-      {
-         writeProperty(kBlockingSuspend, blocking.writeFormatted());
-      }
+      writeProperty(kBlockingSuspend, blocking.writeFormatted());
    }
 
    boost::posix_time::ptime suspensionTime() const
@@ -231,9 +223,13 @@ private:
       std::string value = readProperty(kRunning);
 
       if (!value.empty())
+      {
          return safe_convert::stringTo<bool>(value, false);
+      }
       else
+      {
          return false;
+      }
    }
 
    std::string rVersion()
@@ -300,7 +296,7 @@ private:
    core::Error destroy()
    {
       if (!empty())
-         return scratchPath_.removeIfExists();
+         return storage_->destroy();
       else
          return Success();
    }
@@ -358,8 +354,6 @@ private:
       
       return sortConditions_.executing_;
    }
-
- private:
    struct SortConditions
    {
       SortConditions() :
@@ -381,6 +375,13 @@ private:
       sortConditions_.running_ = running();
       sortConditions_.lastUsed_ = lastUsed();
    }
+
+   FilePath scratchPath() const
+   {
+      return scratchPath_;
+   }
+
+   private:
 
    void setTimestampProperty(const std::string& property)
    {
@@ -408,7 +409,7 @@ private:
       }
    }
 
-   boost::posix_time::ptime ptimeTimestampProperty(const std::string& property) const
+   boost::posix_time::ptime ptimeTimestampProperty(const std::string property) const
    {
       if (!empty())
       {
@@ -444,12 +445,46 @@ private:
          writeProperty(kRunning, value);
    }
 
-   std::shared_ptr<IActiveSessionStorage> storage_;
    std::string id_;
    FilePath scratchPath_;
+   std::shared_ptr<IActiveSessionStorage> storage_;
    FilePath propertiesPath_;
    SortConditions sortConditions_;
 };
+
+// active session as tracked by rserver processes
+// these are stored in a common location per rserver
+// so that the server process can keep track of all
+// active sessions, regardless of users running them
+class GlobalActiveSession : boost::noncopyable
+{
+public:
+   explicit GlobalActiveSession(const FilePath& path) : filePath_(path)
+   {
+      settings_.initialize(filePath_);
+   }
+
+   virtual ~GlobalActiveSession() {}
+
+   std::string sessionId() { return settings_.get("sessionId", ""); }
+   void setSessionId(const std::string& sessionId) { settings_.set("sessionId", sessionId); }
+
+   std::string username() { return settings_.get("username", ""); }
+   void setUsername(const std::string& username) { settings_.set("username", username); }
+
+   std::string userHomeDir() { return settings_.get("userHomeDir", ""); }
+   void setUserHomeDir(const std::string& userHomeDir) { settings_.set("userHomeDir", userHomeDir); }
+
+   int sessionTimeoutKillHours() { return settings_.getInt("sessionTimeoutKillHours", 0); }
+   void setSessionTimeoutKillHours(int val) { settings_.set("sessionTimeoutKillHours", val); }
+
+   core::Error destroy() { return filePath_.removeIfExists(); }
+
+private:
+   core::Settings settings_;
+   core::FilePath filePath_;
+};
+
 }
 }
 }
