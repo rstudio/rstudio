@@ -397,112 +397,112 @@ try {
           parallel_containers["${windows_containers[i].os}-${windows_containers[i].flavor}"] = {
             def current_container = windows_containers[index]
             node('windows') {
-              stage('prepare container') {
-                checkout scm
-                docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
-                  def image_tag = "${current_container.os}-${rstudioReleaseBranch}"
-                  windows_image = docker.image("jenkins/ide:" + image_tag)
 
-                  retry(5) {
-                    windows_image.pull()
-                    image_name = windows_image.imageName()
+              retry(5) {
+                stage('prepare container') {
+                  checkout scm
+                  docker.withRegistry('https://263245908434.dkr.ecr.us-east-1.amazonaws.com', 'ecr:us-east-1:jenkins-aws') {
+                    def image_tag = "${current_container.os}-${rstudioReleaseBranch}"
+                    windows_image = docker.image("jenkins/ide:" + image_tag)
+                      windows_image.pull()
+                      image_name = windows_image.imageName()
                   }
                 }
-              }
-              docker.image(image_name).inside() {
-                stage('dependencies') {
-                    withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
-                      bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
+                docker.image(image_name).inside() {
+                  stage('dependencies') {
+                      withCredentials([usernameColonPassword(credentialsId: 'github-rstudio-jenkins', variable: "GITHUB_LOGIN")]) {
+                        bat 'cd dependencies/windows && set RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd && cd ../..'
+                    }
                   }
-                }
-                stage('build'){
-                  def env = "set \"RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor}\" && set \"RSTUDIO_VERSION_MINOR=${rstudioVersionMinor}\" && set \"RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}\" && set \"RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}\""
-                  bat "cd package/win32 && ${env} && set \"PACKAGE_OS=Windows\" && make-package.bat clean ${current_container.flavor} && cd ../.."
-                }
-                stage('tests'){
-                  try {
-                    bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
+                  stage('build'){
+                    def env = "set \"RSTUDIO_VERSION_MAJOR=${rstudioVersionMajor}\" && set \"RSTUDIO_VERSION_MINOR=${rstudioVersionMinor}\" && set \"RSTUDIO_VERSION_PATCH=${rstudioVersionPatch}\" && set \"RSTUDIO_VERSION_SUFFIX=${rstudioVersionSuffix}\""
+                    bat "cd package/win32 && ${env} && set \"PACKAGE_OS=Windows\" && make-package.bat clean ${current_container.flavor} && cd ../.."
                   }
-                  catch(err){
-                    currentBuild.result = "UNSTABLE"
-                  }
-                }
-                if (current_container.flavor == "electron") {
-                  stage('electron tests'){
+                  stage('tests'){
                     try {
-                      bat 'cd src/node/desktop && scripts\\run-unit-tests.cmd'
+                      bat 'cd package/win32/build/src/cpp && rstudio-tests.bat --scope core'
                     }
                     catch(err){
                       currentBuild.result = "UNSTABLE"
                     }
                   }
-                }
-                stage('sign') {
-                  def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-                  packageVersion = packageVersion.replace('+', '-')
-
-                  def packageName = "RStudio-${packageVersion}-RelWithDebInfo"
-
-                  withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
-                    bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
-
-                    bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
-                  }
-                }
-                stage('upload') {
-                  def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-                  packageVersion = packageVersion.replace('+', '-')
-
-                  def buildDest = "s3://rstudio-ide-build/${current_container.flavor}/windows"
-                  def packageName = "RStudio-${packageVersion}"
-
-                  // strip unhelpful suffixes from filenames
-                  bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
-                  bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.zip package\\win32\\build\\${packageName}.zip"
-
-                  // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
-
-                  withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
-                    retry(5) {
-                      bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
-                      bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
+                  if (current_container.flavor == "electron") {
+                    stage('electron tests'){
+                      try {
+                        bat 'cd src/node/desktop && scripts\\run-unit-tests.cmd'
+                      }
+                      catch(err){
+                        currentBuild.result = "UNSTABLE"
+                      }
                     }
                   }
+                  stage('sign') {
+                    def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                    packageVersion = packageVersion.replace('+', '-')
 
-                }
-                stage ('publish') {
-                  def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
-                  packageVersion = packageVersion.replace('+', '-')
+                    def packageName = "RStudio-${packageVersion}-RelWithDebInfo"
 
-                  def packageName = "RStudio-${packageVersion}"
-                  withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+                    withCredentials([file(credentialsId: 'ide-windows-signing-pfx', variable: 'pfx-file'), string(credentialsId: 'ide-pfx-passphrase', variable: 'pfx-passphrase')]) {
+                      bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" sign /f %pfx-file% /p %pfx-passphrase% /v /debug /n \"RStudio PBC\" /t http://timestamp.digicert.com  package\\win32\\build\\${packageName}.exe"
 
-                    // derive product
-                    def product = "${current_container.flavor}"
-                    if (rstudioVersionSuffix.contains("pro")) {
-                      product = "${current_container.flavor}-pro"
+                      bat "\"C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.19041.0\\x86\\signtool\" verify /v /pa package\\win32\\build\\${packageName}.exe"
+                    }
+                  }
+                  stage('upload') {
+                    def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                    packageVersion = packageVersion.replace('+', '-')
+
+                    def buildDest = "s3://rstudio-ide-build/${current_container.flavor}/windows"
+                    def packageName = "RStudio-${packageVersion}"
+
+                    // strip unhelpful suffixes from filenames
+                    bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.exe package\\win32\\build\\${packageName}.exe"
+                    bat "move package\\win32\\build\\${packageName}-RelWithDebInfo.zip package\\win32\\build\\${packageName}.zip"
+
+                    // windows docker container cannot reach instance-metadata endpoint. supply credentials at upload.
+
+                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
+                      retry(5) {
+                        bat "aws s3 cp package\\win32\\build\\${packageName}.exe ${buildDest}/${packageName}.exe"
+                        bat "aws s3 cp package\\win32\\build\\${packageName}.zip ${buildDest}/${packageName}.zip"
+                      }
                     }
 
-                    // publish the build (self installing exe)
-                    def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.exe -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
-                    println stdout
-
-                    // publish the build (installer-less zip)
-                    stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.zip -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.zip -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
-                    println stdout
                   }
-                }
-                if (current_container.flavor == "desktop") {
-                  stage('upload debug symbols') {
-                    // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
-                    bat '''
-                    cd package\\win32\\build
-                      FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
-                    '''
+                  stage ('publish') {
+                    def packageVersion = "${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
+                    packageVersion = packageVersion.replace('+', '-')
 
-                    // upload the breakpad symbols
-                    withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
-                      bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                    def packageName = "RStudio-${packageVersion}"
+                    withCredentials([usernamePassword(credentialsId: 'github-rstudio-jenkins', usernameVariable: 'GITHUB_USERNAME', passwordVariable: 'GITHUB_PAT')]) {
+
+                      // derive product
+                      def product = "${current_container.flavor}"
+                      if (rstudioVersionSuffix.contains("pro")) {
+                        product = "${current_container.flavor}-pro"
+                      }
+
+                      // publish the build (self installing exe)
+                      def stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.exe -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.exe -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
+                      println stdout
+
+                      // publish the build (installer-less zip)
+                      stdout = powershell(returnStdout: true, script: ".\\docker\\jenkins\\publish-build.ps1 -build ${product}/windows-xcopy -url https://s3.amazonaws.com/rstudio-ide-build/${current_container.flavor}/windows/${packageName}.zip -pat ${GITHUB_PAT} -file package\\win32\\build\\${packageName}.zip -version ${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}")
+                      println stdout
+                    }
+                  }
+                  if (current_container.flavor == "desktop") {
+                    stage('upload debug symbols') {
+                      // convert the PDB symbols to breakpad format (PDB not supported by Sentry)
+                      bat '''
+                      cd package\\win32\\build
+                        FOR /F %%G IN ('dir /s /b *.pdb') DO (..\\..\\..\\dependencies\\windows\\breakpad-tools-windows\\dump_syms %%G > %%G.sym)
+                      '''
+
+                      // upload the breakpad symbols
+                      withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+                        bat "cd package\\win32\\build\\src\\cpp && ..\\..\\..\\..\\..\\dependencies\\windows\\sentry-cli.exe --auth-token %SENTRY_API_KEY% upload-dif --log-level=debug --org rstudio --project ide-backend -t breakpad ."
+                      }
                     }
                   }
                 }
