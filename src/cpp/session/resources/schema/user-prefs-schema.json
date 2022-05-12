@@ -1594,7 +1594,7 @@
             "type": "string",
             "enum": ["en", "fr"],
             "default": "en",
-            "title": "User Interface Language",
+            "title": "User Interface Language:",
             "description": "The IDE's user-interface language."
         }
     }

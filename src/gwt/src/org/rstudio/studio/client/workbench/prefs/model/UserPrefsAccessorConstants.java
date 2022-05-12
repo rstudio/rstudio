@@ -1938,7 +1938,7 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * The IDE's user-interface language.
     */
-   @DefaultStringValue("User Interface Language")
+   @DefaultStringValue("User Interface Language:")
    String uiLanguageTitle();
    @DefaultStringValue("The IDE's user-interface language.")
    String uiLanguageDescription();
