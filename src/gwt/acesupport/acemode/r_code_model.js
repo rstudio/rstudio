@@ -800,7 +800,7 @@ var RCodeModel = function(session, tokenizer,
          {
             var value = tok.value;
             
-            var labelRegex = /^#\| *label *: *(.*)$/;
+            var labelRegex = /^#\|\s*label\s*:\s*(.*)$/;
             if (labelRegex.test(value))
                return value.replace(labelRegex, "$1");
             
