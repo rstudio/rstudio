@@ -1,5 +1,5 @@
 /*
- * RActiveSessions.hpp
+ * RActiveSession.hpp
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -489,4 +489,4 @@ private:
 }
 }
 
-#endif
+#endif // CORE_R_UTIL_R_ACTIVE_SESSION_STORAGE
