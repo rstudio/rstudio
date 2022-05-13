@@ -240,7 +240,7 @@ export function rmdChunkEngineAndLabel(text: string) {
       };
     }
 
-    // Finally, look for magic label comments: 
+    // Finally, look for label in #| comments
     // 
     // ```{r}
     // #| label: label
