@@ -18,6 +18,8 @@
 
 #include <boost/function.hpp>
 
+#include "SessionHttpConnection.hpp"
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -42,6 +44,7 @@ core::Error initialize();
 
 bool disallowSuspend();
 void resetSuspendTimeout();
+void resetSuspendTimeout(boost::shared_ptr<HttpConnection> pConnection);
 void addBlockingOp(std::string op);
 void addBlockingOp(std::string method, const boost::function<bool()>& allowSuspend);
 void removeBlockingOp(std::string op);

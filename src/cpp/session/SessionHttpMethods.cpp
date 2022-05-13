@@ -530,7 +530,7 @@ bool waitForMethod(const std::string& method,
          }
 
          // since we got a connection we can reset the timeout time
-         suspend::resetSuspendTimeout();
+         suspend::resetSuspendTimeout(ptrConnection);
 
          // after we've processed at least one waitForMethod it is now safe to
          // initialize the polledEventHandler (which is used to maintain rsession

@@ -48,6 +48,45 @@ private:
 };
 
 } // namespace filter
+
+SessionSuspendFilters::SessionSuspendFilters()
+   : m_filters()
+{
+   using namespace rstudio::session::suspend::filter;
+   m_filters.insert(m_filters.end(), {
+                       boost::make_shared<DistEventFilter>()
+                    });
+}
+
+SessionSuspendFilters::~SessionSuspendFilters()
+{
+
+}
+
+/**
+ * Determines if recieving a given HttpConnection should reset the suspend timer for the session.
+ * Assumes that the timer *should* be reset unless a filter explicitly says not to
+ *
+ * @param pConnection The HttpConnection in question
+ *
+ * @return False if any filter determines the timer should not be reset. True otherwise.
+ */
+bool SessionSuspendFilters::shouldResetSuspendTimer(boost::shared_ptr<HttpConnection> pConnection)
+{
+   // Assume we *should* reset unless we have a concrete reason not to
+   if (!pConnection)
+      return true;
+
+   for (auto &e : m_filters)
+   {
+      // bail on first filter that says we shouldn't reset the timer
+      if (!e->shouldResetSuspendTimer(pConnection))
+         return false;
+   }
+
+   return true;
+}
+
 } // namespace suspend
 } // namespace session
 } // namespace rstudio

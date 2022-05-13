@@ -26,6 +26,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionSuspend.hpp>
+#include <session/SessionSuspendFilter.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -63,6 +64,8 @@ bool s_dirtyBlockingOps = false;
 bool s_initialNotificationSent = false;
 bool s_timeoutLogSent = false;
 SuspendTimeoutState s_timeoutState = kWaitingForTimeout;
+
+SessionSuspendFilters s_suspendFilters;
 
 } // anonymous namespace
 
@@ -121,6 +124,14 @@ bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
 void resetSuspendTimeout()
 {
    s_suspendTimeoutTime = timeoutTimeFromNow();
+}
+
+void resetSuspendTimeout(boost::shared_ptr<HttpConnection> pConnection)
+{
+   if (s_suspendFilters.shouldResetSuspendTimer(pConnection))
+   {
+      resetSuspendTimeout();
+   }
 }
 
 void blockingTimestamp()
@@ -552,6 +563,7 @@ core::Error initialize()
    resetSuspendTimeout();
    resetBlockingTimestamp();
    clearBlockingOps(true);
+   s_suspendFilters = SessionSuspendFilters();
 
    return core::Success();
 }
