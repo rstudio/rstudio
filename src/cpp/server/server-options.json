@@ -197,6 +197,13 @@
             "defaultValue": null,
             "isMultitoken": true,
             "description": "Specifies an additional origin that requests are allowed from, even if it does not match the host domain. Used if origin checking is enabled. May be specified multiple times for multiple origins."
+         },
+         {
+            "name": "session-use-file-storage",
+            "memberName": "sessionUseFileStorage_",
+            "type": "bool",
+            "defaultValue": true,
+            "description": "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See [Session Storage](../server_management/session_storage.html) for more information."
          }
       ],
       "rsession": [

@@ -4498,6 +4498,8 @@ public class RemoteServer implements Server
                               boolean searchIgnoreCase,
                               FileSystemItem directory,
                               JsArrayString includeFilePatterns,
+                              boolean useGitGrep,
+                              boolean excludeGitIgnore,
                               JsArrayString excludeFilePatterns,
                               String replaceString,
                               ServerRequestCallback<String> requestCallback)
@@ -4509,8 +4511,10 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
       params.set(4, new JSONArray(includeFilePatterns));
-      params.set(5, new JSONArray(excludeFilePatterns));
-      params.set(6, new JSONString(replaceString));
+      params.set(5, JSONBoolean.getInstance(useGitGrep));
+      params.set(6, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(7, new JSONArray(excludeFilePatterns));
+      params.set(8, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, PREVIEW_REPLACE, params, requestCallback);
    }
@@ -4521,6 +4525,8 @@ public class RemoteServer implements Server
                                boolean searchIgnoreCase,
                                FileSystemItem directory,
                                JsArrayString includeFilePatterns,
+                               boolean useGitGrep,
+                               boolean excludeGitIgnore,
                                JsArrayString excludeFilePatterns,
                                int searchResults,
                                String replaceString,
@@ -4533,9 +4539,11 @@ public class RemoteServer implements Server
       params.set(3, new JSONString(directory == null ? ""
                                                      : directory.getPath()));
       params.set(4, new JSONArray(includeFilePatterns));
-      params.set(5, new JSONArray(excludeFilePatterns));
-      params.set(6, new JSONNumber(searchResults));
-      params.set(7, new JSONString(replaceString));
+      params.set(5, JSONBoolean.getInstance(useGitGrep));
+      params.set(6, JSONBoolean.getInstance(excludeGitIgnore));
+      params.set(7, new JSONArray(excludeFilePatterns));
+      params.set(8, new JSONNumber(searchResults));
+      params.set(9, new JSONString(replaceString));
 
       sendRequest(RPC_SCOPE, COMPLETE_REPLACE, params, requestCallback);
    }

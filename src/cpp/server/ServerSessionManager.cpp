@@ -20,6 +20,7 @@
 #include <boost/format.hpp>
 
 #include <shared_core/SafeConvert.hpp>
+#include <core/SocketRpc.hpp>
 #include <core/system/Process.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
@@ -118,6 +119,8 @@ core::system::ProcessConfig sessionProcessConfig(
    args.push_back(std::make_pair("--" kSameSiteSessionOption,
                                  safe_convert::numberToString(static_cast<int>(options.wwwSameSite()))));
 
+   args.push_back({ "--" kSessionUseFileStorage, options.sessionUseFileStorage() ? "1" : "0"});
+
    // create launch token if we haven't already
    if (s_launcherToken.empty())
       s_launcherToken = core::system::generateShortenedUuid();
@@ -198,6 +201,9 @@ core::system::ProcessConfig sessionProcessConfig(
    // forward path for session temp dir (used for local stream path)
    environment.push_back(
          std::make_pair(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath()));
+
+   // Set RPC socket path
+   environment.push_back({kServerRpcSocketPathEnvVar, serverRpcSocketPath().getAbsolutePath()});
 
    // build the config object and return it
    core::system::ProcessConfig config;

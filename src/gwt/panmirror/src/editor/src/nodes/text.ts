@@ -26,14 +26,7 @@ const extension = (context: ExtensionContext) => {
       text = fancyQuotesToSimple(text);
     }
   
-    if (context.pandocExtensions.smart) {
-      return text
-        .replace(/---/g, '—')
-        .replace(/--/g, '–')
-        .replace(/\.\.\./g, '…');
-    } else {
-      return text;
-    }
+    return text;
   };
 
   return {
