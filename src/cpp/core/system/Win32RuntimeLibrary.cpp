@@ -36,6 +36,12 @@ namespace runtime {
 
 namespace {
 
+// forward-declare
+class Library;
+
+// a handle to the runtime library now loaded
+Library* s_pRuntimeLibrary = nullptr;
+
 namespace defaults {
 int s_zero = 0;
 int* _errno() { return &s_zero; }
@@ -46,11 +52,11 @@ class Library : boost::noncopyable
 {
 public:
 
-   Library()
+   Library(const char* libraryName)
       : pLib_(nullptr),
         _errno(defaults::_errno)
    {
-      Error error = core::system::loadLibrary("msvcrt.dll", &pLib_);
+      Error error = core::system::loadLibrary(libraryName, &pLib_);
       if (error)
       {
          LOG_ERROR(error);
@@ -59,8 +65,6 @@ public:
 
       RS_LOAD_SYMBOL(_errno);
    }
-
-   int* (*_errno)(void);
 
    ~Library()
    {
@@ -76,18 +80,23 @@ public:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
-private:
+public:
    void* pLib_;
+   int* (*_errno)(void);
 };
 
 Library& library()
 {
-   static Library instance;
-   return instance;
+   return *s_pRuntimeLibrary;
 }
 
 } // end anonymous namespace
 
+core::Error initialize(bool isUcrt)
+{
+   s_pRuntimeLibrary = new Library(isUcrt ? "ucrtbase.dll" : "msvcrt.dll");
+   return Success();
+}
 
 int errorNumber()
 {

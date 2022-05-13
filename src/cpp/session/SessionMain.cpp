@@ -68,6 +68,10 @@
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/Xdg.hpp>
 
+#ifdef _WIN32
+# include <core/system/Win32RuntimeLibrary.hpp>
+#endif
+
 #include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/r_util/RSessionContext.hpp>
@@ -229,6 +233,12 @@
 #include "session-config.h"
 
 #include <tests/TestRunner.hpp>
+
+#ifdef _WIN32
+extern "C" {
+const char* getDLLVersion();
+}
+#endif
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -1877,6 +1887,15 @@ int main(int argc, char * const argv[])
       // move to own process group
 #ifndef _WIN32
       ::setpgrp();
+#endif
+
+#ifdef _WIN32
+      // initialize runtime library
+      Version rVersion(getDLLVersion());
+      bool isUcrt = rVersion >= Version("4.2.0");
+      error = core::runtime::initialize(isUcrt);
+      if (error)
+         LOG_ERROR(error);
 #endif
 
       rstudio::r::session::setResumeCallbacks(beforeResume, afterResume);
