@@ -495,13 +495,13 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
 #ifdef _WIN32
    {
       // on Windows, check if we're using UCRT
+      // ignore errors here since older versions of R don't define
+      // the 'crt' memober on R.version
       std::string crt;
-      Error error = rstudio::r::exec::evaluateString("R.version$crt", &crt);
-      if (error)
-         LOG_ERROR(error);
+      rstudio::r::exec::evaluateString("R.version$crt", &crt);
 
       // initialize runtime library
-      error = rstudio::core::runtime::initialize(crt == "ucrt");
+      Error error = rstudio::core::runtime::initialize(crt == "ucrt");
       if (error)
          LOG_ERROR(error);
    }
