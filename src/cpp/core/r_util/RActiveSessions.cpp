@@ -61,12 +61,19 @@ Error ActiveSessions::create(const std::string& project,
          id = candidateId;
    }
 
+   boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
+   std::string isoTime = boost::posix_time::to_iso_extended_string(time);
+
    //Initial settings
    std::map<std::string, std::string> initialMetadata = {
       {"project", project},
       {"working_dir", workingDir},
       {"initial", initial ? "true" : "false"},
       {"running", "false"},
+      {"last_used", isoTime},
+      {"running", "false"},
+      {"created", isoTime},
+      {"launch_params", ""}
    };
 
    storage_->createSession(id, initialMetadata);
