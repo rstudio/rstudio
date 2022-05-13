@@ -250,5 +250,4 @@ public interface ViewBuildtoolsConstants extends com.google.gwt.i18n.client.Mess
     @Key("serveLabel")
     String serveLabel();
 
-
 }

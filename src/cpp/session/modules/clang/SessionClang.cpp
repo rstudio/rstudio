@@ -71,20 +71,8 @@ LibraryVersion embeddedLibClangVersion()
 std::vector<std::string> embeddedLibClangCompileArgs(const LibraryVersion& version,
                                                      bool isCppFile)
 {
-   std::vector<std::string> compileArgs;
-
-   // headers path
-   FilePath headersPath = options().libclangHeadersPath();
-
-   // add compiler headers
-   std::string headersVersion = version.asString();
-   compileArgs.push_back("-I" + headersPath.completeChildPath(headersVersion).getAbsolutePath());
-
-   // add libc++ for embedded clang
-   if (isCppFile)
-      compileArgs.push_back("-I" + headersPath.completeChildPath("libc++/" + headersVersion).getAbsolutePath());
-
-   return compileArgs;
+   // we no longer include builtin libclang headers, so this is a no-op
+   return {};
 }
 
 EmbeddedLibrary embeddedLibClang()

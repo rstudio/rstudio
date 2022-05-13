@@ -167,6 +167,11 @@ public class StatusBarWidget extends Composite
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));
          scopeIcon_.setAltText(constants_.anonymousCapitalized());
       }
+      else if (type == StatusBar.SCOPE_TEST)
+      {
+         scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.test2x()));
+         scopeIcon_.setAltText(constants_.testCapitalized());
+      }
       else if (type == StatusBar.SCOPE_FUNCTION)
       {
          scopeIcon_.setResource(new ImageResource2x(StandardIcons.INSTANCE.functionLetter2x()));

@@ -86,6 +86,7 @@ import org.rstudio.studio.client.workbench.model.SessionUtils;
 import org.rstudio.studio.client.workbench.prefs.model.LocaleCookie;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.model.WebDialogCookie;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -932,11 +933,29 @@ public class Application implements ApplicationEventHandlers
       // If not, we need to set it and reload the page to ensure the correct language is shown.
       // This would happen the first time in a new browser where the UI language was previously set to
       // non-English.
+      boolean needReload = false;
       String uiLanguagePrefValue = userPrefs_.get().uiLanguage().getValue();
       String cookieValue = LocaleCookie.getUiLanguage();
       if (!StringUtil.equals(uiLanguagePrefValue, cookieValue))
       {
          LocaleCookie.setUiLanguage(uiLanguagePrefValue);
+         needReload = true;
+      }
+
+      // Check if cookie used to tell GWT to use web-based dialogs on Electron Desktop IDE matches the user
+      // preference. If not, set it and reload the page.
+      if (BrowseCap.isElectron())
+      {
+         boolean prefUseWebDialogs = !userPrefs_.get().nativeFileDialogs().getValue();
+         if (WebDialogCookie.getUseWebDialogs() != prefUseWebDialogs)
+         {
+            WebDialogCookie.setUseWebDialogs(prefUseWebDialogs);
+            needReload = true;
+         }
+      }
+
+      if (needReload)
+      {
          RStudioGinjector.INSTANCE.getEventBus().fireEvent(new ReloadEvent());
          return;
       }

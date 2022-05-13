@@ -73,7 +73,8 @@ public:
       Function = 1,
       Method = 2,
       Class = 3,
-      Variable = 4
+      Variable = 4, 
+      Test = 11
    };
 
 public:
@@ -129,6 +130,7 @@ public:
    bool isMethod() const { return type_ == Method; }
    bool isClass() const { return type_ == Class; }
    bool isVariable() const { return type_ == Variable; }
+   bool isTest() const { return type_ == Test; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }
@@ -150,14 +152,6 @@ public:
    bool nameIsSubsequence(const std::string& term, bool caseSensitive) const
    {
       return string_utils::isSubsequence(name_, term, !caseSensitive);
-   }
-
-   bool nameContains(const std::string& term, bool caseSensitive) const
-   {
-      if (caseSensitive)
-         return boost::algorithm::contains(name_, term);
-      else
-         return boost::algorithm::icontains(name_, term);
    }
 
    bool nameMatches(const boost::regex& regex,
@@ -265,7 +259,15 @@ public:
                                        _1, term, caseSensitive);
       }
 
-      return search(newContext, predicate, out);
+      // filter to keep only:
+      // - test items when the term starts with "t "
+      // - non-test items otherwise
+      bool includeTestItems = boost::algorithm::starts_with(term, "t ");
+      auto filteredPredicate = [includeTestItems, predicate](const RSourceItem& item) {
+         return includeTestItems == item.isTest() && predicate(item);
+      };
+      
+      return search(newContext, filteredPredicate, out);
    }
 
    template <typename OutputIterator>

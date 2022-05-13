@@ -20,6 +20,9 @@
 - Read only R and C++ files (marked by "do not edit by hand") are ignored by the fuzzy file finder (#10912)
 - Linux: For compatibility with newer versions of glibc (>= 2.34), the seccomp filter sandbox is disabled. See https://chromium.googlesource.com/chromium/src/+/0e94f26e8/docs/linux_sandboxing.md#the-sandbox-1 for more details.
 - Changed "Jobs" tab in IDE to "Local Jobs"
+- The fuzzy finder shows `test_that()` calls when the search term starts with "t ".  
+- Calls to test_that() appear in the source file outline (#11082)
+- Windows: Update embedded libclang to 13.0.1 (#11186)
 
 #### Find in Files
 
@@ -35,6 +38,8 @@
 - Added support for using the AGG renderer (as provided by the ragg package) as a graphics backend for inline plot execution; also added support for using the backend graphics device requested by the knitr `dev` chunk option (#9931)
 - rstudioapi functions are now always evaluated in a clean environment, and will not be masked by objects in the global environment (#8031)
 - Removed support for versions of R earlier than R 3.3.0. (rstudio-pro#2887)
+- Chunk options in the body of a code chunk, prefaced by `#|` will be respected during inline code execution, and will take precedence over conflicting chunk options in the chunk header (#10645). Both YAML `tag: value` syntax and valid R expressions will be parsed.
+- Fixed issue in R debugger that caused RStudio to lose focus out of source code when interacting with the console in certain ways, such as evaluating an expression (#10664)
 
 #### Python
 
@@ -42,6 +47,7 @@
 
 ### Fixed
 
+- Fixed an issue where vignette content was illegible when viewed with a dark theme. (#11164)
 - Fixed logging of `HRESULT` error values by logging them as hexadecimal instead of decimal (#10310)
 - Fixed notebook execution handling of knitr `message=FALSE` chunk option to suppress messages if the option is set to FALSE (#9436)
 - Fixed plot export to PDF options (#9185)
@@ -58,6 +64,8 @@
 - Fixed an issue where code of the form '1:2:3' was diagnosed incorrectly. (#10979)
 - Add back link to the title of sessions so that users can easily open sessions in new tabs and copy session links (rstudio-pro#3290)
 - (Linux Only) License-manager now works in a installer-less context (rstudio-pro#3150)
+- Fixed an issue where R raw strings were not highlighted correctly in R Markdown documents. (#11087)
+- Fixed issue with using RStudio server behind multi-level proxy servers (#11010)
 
 ### RStudio Workbench
 

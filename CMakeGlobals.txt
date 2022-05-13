@@ -231,7 +231,7 @@ if(NOT DEFINED RSTUDIO_VERIFY_R_VERSION)
 endif()
 
 # pandoc version
-set(PANDOC_VERSION "2.16.2" CACHE INTERNAL "Pandoc version")
+set(PANDOC_VERSION "2.18" CACHE INTERNAL "Pandoc version")
 
 # quarto support
 if(LINUX AND UNAME_M STREQUAL aarch64)

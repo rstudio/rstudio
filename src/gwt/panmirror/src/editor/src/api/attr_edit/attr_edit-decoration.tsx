@@ -26,6 +26,7 @@ import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 
 import { selectionIsWithinRange } from '../../api/selection';
 import './attr_edit-decoration.css';
+import { GapCursor } from 'prosemirror-gapcursor';
 
 export const kEditAttrShortcut = 'F4';
 
@@ -116,10 +117,11 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
         const tr = props.view.state.tr;
         if (node.type.spec.selectable) {
           tr.setSelection(new NodeSelection(tr.doc.resolve(pos)));
-        } else {
-          if (!selectionIsWithinRange(tr.selection, { from: pos, to: pos + node.nodeSize })) {
-            setTextSelection(pos + 1)(tr);
-          }
+        } else if (!selectionIsWithinRange(tr.selection, { from: pos, to: pos + node.nodeSize })) {
+          setTextSelection(pos + 1)(tr);
+        } else if (tr.selection instanceof NodeSelection) {
+          const cursor = new GapCursor(tr.doc.resolve(pos+1), tr.doc.resolve(pos+1));
+          tr.setSelection(cursor);
         }
         props.view.dispatch(tr);
       }
