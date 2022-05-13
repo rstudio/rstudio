@@ -72,22 +72,6 @@ bool precompiledHeadersEnabled()
    return r::options::getOption<bool>("rstudio.libclang.usePrecompiledHeaders", true, false);
 }
 
-FilePath compilerDefinitionsHeaderPath(bool isCpp)
-{
-   std::string headerPath;
-   Error error = r::exec::RFunction(".rs.libclang.compilerDefinitionsHeaderPath")
-         .addParam("isCpp", isCpp)
-         .call(&headerPath);
-
-   if (error)
-   {
-      LOG_ERROR(error);
-      return FilePath();
-   }
-
-   return FilePath(headerPath);
-}
-
 struct SourceCppFileInfo
 {
    SourceCppFileInfo() : disableIndexing(false) {}
@@ -1112,17 +1096,6 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    discoverSystemIncludePaths(&includes);
    for (auto include : includes)
       args.push_back("-I" + include);
-#endif
-
-#ifdef _WIN32
-   // generate a set of compiler defines, to be passed along to libclang
-   // needed for some gcc-specific includes which libclang doesn't define
-   FilePath defnPath = compilerDefinitionsHeaderPath(isCpp);
-   if (defnPath.exists())
-   {
-      args.push_back("-include");
-      args.push_back(defnPath.getAbsolutePath());
-   }
 #endif
 
    if (verbose(3))
