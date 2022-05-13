@@ -562,7 +562,9 @@ inline bool canFollowBinaryOperator(const RToken& rToken)
 
 inline bool isPipeOperator(const RToken& rToken)
 {
-   static const boost::wregex rePipe(L"^%[^>]*>+[^>]*%$");
+   // We're intentionally liberal here about what constitutes a pipe operator as we allow an arbitrary
+   // user-defined binary operator containing any symbols between the two % % (must contain at least one >)
+   static const boost::wregex rePipe(L"^(%[^>]*>+[^>]*%)|([|]>)$");
    return regex_utils::match(rToken.begin(), rToken.end(), rePipe);
 }
 
