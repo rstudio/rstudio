@@ -501,7 +501,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
          LOG_ERROR(error);
 
       // initialize runtime library
-      rstudio::core::runtime::initialize(crt == "ucrt");
+      error = rstudio::core::runtime::initialize(crt == "ucrt");
+      if (error)
+         LOG_ERROR(error);
    }
 #endif
 
