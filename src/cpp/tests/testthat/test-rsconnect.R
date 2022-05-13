@@ -49,3 +49,14 @@ test_that("setting UI prefs updates options", {
    .rs.writeUiPref("use_publish_ca_bundle", FALSE)
    expect_null(getOption("rsconnect.ca.bundle"))
 })
+
+test_that(".rs.rsconnectDeployList() includes _quarto.yml file (#10995 )", {
+   dir.create(tf <- tempfile()); on.exit(unlink(tf, TRUE, TRUE))
+
+   target <- file.path(tf, "test.qmd")
+   writeLines("---\ntitle: quarto document\n---\n", target)
+   writeLines('project:\n  title: "test"\n', file.path(tf, "_quarto.yml"))
+
+   res <- .rs.rsconnectDeployList(target, FALSE, target)[[1L]]
+   expect_true("_quarto.yml" %in% res)
+})
