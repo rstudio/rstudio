@@ -396,7 +396,14 @@ public class RSConnect implements SessionInitEvent.Handler,
       {
          if (input.hasDocOutput() || input.isWebsiteContentType())
          {
-            publishWithWizard(input);
+            if (input.isShiny() && !input.isMultiRmd())
+            {
+               publishAsCode(event, input.getWebsiteDir(), true);
+            }
+            else 
+            {
+               publishWithWizard(input);
+            }
          }
          else
          {
