@@ -625,6 +625,11 @@ private:
    core::FilePath rootPath_;
 };
 
+void trackActiveSessionCount(const FilePath& rootStoragePath,
+                             const FilePath& userHomePath,
+                             bool projectSharingEnabled,
+                             boost::function<void(size_t)> onCountChanged);
+
 } // namespace r_util
 } // namespace core
 } // namespace rstudio
