@@ -78,11 +78,13 @@
 #include <core/r_util/REnvironment.hpp>
 #include <core/WaitUtils.hpp>
 
-#include <r/RJsonRpc.hpp>
 #include <r/RExec.hpp>
-#include <r/ROptions.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RInterface.hpp>
+#include <r/RJsonRpc.hpp>
+#include <r/ROptions.hpp>
+#include <r/RSexp.hpp>
+#include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
 #include <r/session/RClientState.hpp>
@@ -90,7 +92,6 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/REventLoop.hpp>
-#include <r/RUtil.hpp>
 
 #include <monitor/MonitorClient.hpp>
 
@@ -233,12 +234,6 @@
 #include "session-config.h"
 
 #include <tests/TestRunner.hpp>
-
-#ifdef _WIN32
-extern "C" {
-const char* getDLLVersion();
-}
-#endif
 
 using namespace rstudio;
 using namespace rstudio::core;
@@ -496,6 +491,19 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    module_context::registerWaitForMethod(kUserPromptCompleted);
    module_context::registerWaitForMethod(kHandleUnsavedChangesCompleted);
    module_context::registerWaitForMethod(kRStudioAPIShowDialogMethod);
+
+#ifdef _WIN32
+   {
+      // on Windows, check if we're using UCRT
+      std::string crt;
+      Error error = rstudio::r::exec::evaluateString("R.version$crt", &crt);
+      if (error)
+         LOG_ERROR(error);
+
+      // initialize runtime library
+      rstudio::core::runtime::initialize(crt == "ucrt");
+   }
+#endif
 
    // execute core initialization functions
    using boost::bind;
@@ -1887,15 +1895,6 @@ int main(int argc, char * const argv[])
       // move to own process group
 #ifndef _WIN32
       ::setpgrp();
-#endif
-
-#ifdef _WIN32
-      // initialize runtime library
-      Version rVersion(getDLLVersion());
-      bool isUcrt = rVersion >= Version("4.2.0");
-      error = core::runtime::initialize(isUcrt);
-      if (error)
-         LOG_ERROR(error);
 #endif
 
       rstudio::r::session::setResumeCallbacks(beforeResume, afterResume);
