@@ -220,23 +220,43 @@ export function mergeRmdChunks(chunks: EditorRmdChunk[]) {
  * @returns An object with `engine` and `label` properties, or null.
  */
 export function rmdChunkEngineAndLabel(text: string) {
-  // Match the engine and label with a regex
-  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]+([a-zA-Z0-9/._='"-]+)/);
+
+  // Match the engine and (maybe the) label with a regex
+  const match = text.match(/^\{([a-zA-Z0-9_]+)[\s,]*([a-zA-Z0-9/._='"-]*)/);
+  
   if (match) {
+    // The first capturing group is the engine
+    const engine = match[1];
+
     // The second capturing group in the regex matches the first string after
-    // the engine. This might be a label (e.g., {r label}), but could also be
-    // a chunk option (e.g., {r echo=FALSE}). If it has an =, presume that it's
-    // an option.
-    if (match[2].indexOf("=") !== -1) {
-      return null;
+    // the engine. This might be: 
+    // - a label (e.g., {r label})
+    // - a chunk option (e.g., {r echo=FALSE}). If it has an =, presume that it's an option.
+    // - empty
+    if (match[2].length && match[2].indexOf("=") == -1) {
+      return {
+        engine: engine,
+        label: match[2],
+      };
     }
-    return {
-      engine: match[1],
-      label: match[2],
-    };
-  } else {
-    return null;
+
+    // Finally, look for label in #| comments
+    // 
+    // ```{r}
+    // #| label: label
+    // 
+    for (var line of text.split("\n")) {
+      const labelMatch = line.match(/^#\|\s*label:\s+(.*)$/);
+      if (labelMatch) {
+        return {
+          engine: engine,
+          label: labelMatch[1],
+        };
+      }
+    }
   }
+
+  return null;
 }
 
 export function haveTableCellsWithInlineRcode(doc: ProsemirrorNode) {
