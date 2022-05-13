@@ -50,12 +50,17 @@ using namespace rstudio::core;
 using namespace rstudio::core::libclang;
 using namespace boost::placeholders;
 
+#define kCompilationDatabaseVersion 1
+
 namespace rstudio {
 namespace session {
 namespace modules { 
 namespace clang {
 
 namespace {
+
+// whether re-generation of compiler definitions is required
+bool s_regenerateCompilerDefinitions = false;
 
 LibClang& clang()
 {
@@ -72,6 +77,69 @@ bool precompiledHeadersEnabled()
    return r::options::getOption<bool>("rstudio.libclang.usePrecompiledHeaders", true, false);
 }
 
+FilePath compilerDatabaseDirImpl()
+{
+   FilePath path = module_context::scopedScratchPath().completeChildPath("compilation-database");
+
+   Error error = path.ensureDirectory();
+   if (error)
+      LOG_ERROR(error);
+
+   return path;
+}
+
+FilePath compilerDatabaseDir()
+{
+   static FilePath instance = compilerDatabaseDirImpl();
+   return instance;
+}
+
+FilePath compilationConfigFilePath()
+{
+   return compilerDatabaseDir().completeChildPath("config.json");
+}
+
+FilePath compilerDefinitionsPath(bool isCpp)
+{
+   std::string name = isCpp ? "cpp-definitions.h" : "c-definitions.h";
+   return compilerDatabaseDir().completeChildPath(name);
+}
+
+void generateCompilerDefinitions(FilePath defnPath, bool isCpp)
+{
+   Error error = r::exec::RFunction(".rs.libclang.generateCompilerDefinitions")
+         .addUtf8Param(defnPath)
+         .addParam(isCpp)
+         .call();
+   if (error)
+      LOG_ERROR(error);
+}
+
+void generateCompilerDefinitions()
+{
+#ifdef _WIN32
+   // update C definitions
+   FilePath cDefnPath = compilerDefinitionsPath(false);
+   if (s_regenerateCompilerDefinitions || !cDefnPath.exists())
+      generateCompilerDefinitions(cDefnPath, false);
+
+   // update C++ definitions
+   FilePath cppDefnPath = compilerDefinitionsPath(true);
+   if (s_regenerateCompilerDefinitions || !cppDefnPath.exists())
+      generateCompilerDefinitions(cppDefnPath, true);
+
+   // we've re-generated our definitions, so unset flag
+   s_regenerateCompilerDefinitions = false;
+#endif
+}
+
+FilePath precompiledHeaderDir(const std::string& pkgName)
+{
+   return module_context::tempDir()
+         .completeChildPath("rstudio/libclang/precompiled")
+         .completeChildPath(pkgName);
+}
+
 struct SourceCppFileInfo
 {
    SourceCppFileInfo() : disableIndexing(false) {}
@@ -80,8 +148,6 @@ struct SourceCppFileInfo
    std::string rcppPkg;
    bool disableIndexing;
 };
-
-namespace {
 
 std::string guessRcppPackage(const std::string& contents)
 {
@@ -96,8 +162,6 @@ std::string guessRcppPackage(const std::string& contents)
    return "Rcpp";
 
 }
-
-} // end anonymous namespace
 
 SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
 {
@@ -432,16 +496,18 @@ void RCompilationDatabase::updateForCurrentPackage()
    std::string compilerHash = computeCompilerHash(packageCompilationConfig_.isCpp);
    
    bool isCurrent =
+         kCompilationDatabaseVersion == databaseVersion_ &&
          packageBuildFileHash == packageBuildFileHash_ &&
          compilerHash == compilerHash_ &&
          module_context::rVersion() == rVersion_;
-   
+
    if (isCurrent)
       return;
 
    // compilation config has changed; rebuild pch
    forceRebuildPrecompiledHeaders_ = true;
-   
+   s_regenerateCompilerDefinitions = true;
+
    // start with base args
    bool isCpp = true;
    core::r_util::RPackageInfo pkgInfo;
@@ -455,6 +521,7 @@ void RCompilationDatabase::updateForCurrentPackage()
       packageBuildFileHash_ = packageBuildFileHash;
       compilerHash_ = compilerHash;
       rVersion_ = module_context::rVersion();
+      databaseVersion_ = kCompilationDatabaseVersion;
 
       // save them to disk
       savePackageCompilationConfig();
@@ -542,16 +609,6 @@ std::vector<std::string> RCompilationDatabase::compileArgsForPackage(
 }
 
 
-namespace {
-
-FilePath compilationConfigFilePath()
-{
-   return module_context::scopedScratchPath().completePath("cpp-compilation-config");
-}
-
-
-} // anonymous namespace
-
 void RCompilationDatabase::savePackageCompilationConfig()
 {
    json::Object configJson;
@@ -561,6 +618,7 @@ void RCompilationDatabase::savePackageCompilationConfig()
    configJson["hash"] = packageBuildFileHash_;
    configJson["compiler"] = compilerHash_;
    configJson["rversion"] = rVersion_;
+   configJson["dbversion"] = databaseVersion_;
 
    FilePath configFilePath = compilationConfigFilePath();
    std::string jsonFormatted = configJson.writeFormatted();
@@ -617,6 +675,7 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    // errors can be ignored here since this field won't exist in older databases
    json::readObject(configJson.getObject(), "compiler", compilerHash_);
    json::readObject(configJson.getObject(), "rversion", rVersion_);
+   json::readObject(configJson.getObject(), "dbversion", databaseVersion_);
 
    packageCompilationConfig_.args.clear();
    for (const json::Value& argJson : argsJson)
@@ -1098,6 +1157,20 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
       args.push_back("-I" + include);
 #endif
 
+#ifdef _WIN32
+   // re-generate compiler definitions
+   generateCompilerDefinitions();
+
+   // include compiler definitions on Windows, as libclang may not
+   // define all of the requisite gcc defines here
+   FilePath defnPath = compilerDefinitionsPath(isCpp);
+   if (defnPath.exists())
+   {
+      args.push_back("-include");
+      args.push_back(defnPath.getAbsolutePath());
+   }
+#endif
+
    if (verbose(3))
    {
       std::cerr << "# BASE COMPILATION ARGS ----" << std::endl;
@@ -1253,17 +1326,6 @@ core::system::Options RCompilationDatabase::compilationEnvironment() const
 #endif
    return env;
 }
-
-namespace {
-
-FilePath precompiledHeaderDir(const std::string& pkgName)
-{
-   return module_context::tempDir().completeChildPath(
-      "rstudio/libclang/precompiled/"
-      + pkgName);
-}
-
-} // anonymous namespace
 
 std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       const CompilationConfig& config)

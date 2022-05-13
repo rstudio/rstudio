@@ -126,6 +126,7 @@ private:
    std::string packageBuildFileHash_;
    std::string compilerHash_;
    std::string rVersion_;
+   int databaseVersion_;
    CompilationConfig packageCompilationConfig_;
    bool usePrecompiledHeaders_;
    bool forceRebuildPrecompiledHeaders_;
