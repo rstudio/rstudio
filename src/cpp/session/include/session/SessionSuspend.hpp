@@ -19,6 +19,12 @@
 #include <boost/function.hpp>
 
 namespace rstudio {
+namespace core {
+   class Error;
+}
+}
+
+namespace rstudio {
 namespace session {
 namespace suspend {
 
@@ -31,6 +37,8 @@ const char * const kExternalPointer = "Active external data pointer";
 const char * const kActiveJob = "An active job is running";
 const char * const kCommandPrompt = "Incomplete command prompt entered";
 const char * const kGenericMethod = "Waiting for event: ";
+
+core::Error initialize();
 
 bool disallowSuspend();
 void resetSuspendTimeout();

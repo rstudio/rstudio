@@ -57,8 +57,8 @@ enum SuspendTimeoutState
 };
 
 std::unordered_set<std::string> opsBlockingSuspend;
-boost::posix_time::ptime s_suspendTimeoutTime = boost::posix_time::second_clock::universal_time();
-boost::posix_time::ptime s_blockingTimestamp = boost::posix_time::second_clock::universal_time();
+boost::posix_time::ptime s_suspendTimeoutTime(boost::posix_time::max_date_time);
+boost::posix_time::ptime s_blockingTimestamp(boost::posix_time::pos_infin);
 bool s_dirtyBlockingOps = false;
 bool s_initialNotificationSent = false;
 bool s_timeoutLogSent = false;
@@ -544,6 +544,16 @@ void handleUSR2(int unused)
 
    // note that a suspend is being forced
    s_forceSuspend = 1;
+}
+
+core::Error initialize()
+{
+   s_timeoutState = kWaitingForTimeout;
+   resetSuspendTimeout();
+   resetBlockingTimestamp();
+   clearBlockingOps(true);
+
+   return core::Success();
 }
 
 } // namespace suspend
