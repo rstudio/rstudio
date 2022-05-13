@@ -357,6 +357,9 @@
     # if this is a quarto doc then query quarto for resources
     if (nzchar(quartoSrcFile)) {
       file_list <- c(file_list, .rs.quartoFileResources(quartoSrcFile))
+      if (file.exists(file.path(dirname(target), "_quarto.yml"))) {
+        file_list <- c(file_list, "_quarto.yml")
+      }
     }
   }
 
