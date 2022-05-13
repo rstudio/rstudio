@@ -37,6 +37,8 @@ namespace r_util {
          FilePath storagePath_;
    };
 
+   FilePath buildActiveSessionStoragePath(const FilePath& rootStoragePath);
+
 } // namespace r_util
 } // namespace core 
 } // namespace rstudio

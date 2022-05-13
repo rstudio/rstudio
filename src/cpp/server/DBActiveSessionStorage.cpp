@@ -67,7 +67,7 @@ namespace {
 
    void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std::string> *targetMap)
    {
-      for(int i=0; i < iter->size(); i++)
+      for(size_t i=0; i < iter->size(); i++)
       {
          std::string key = iter->get_properties(i).get_name();
          if(key != kUserId)
@@ -93,6 +93,17 @@ namespace {
 
 } // anonymous namespace
 
+   Error getConn(boost::shared_ptr<database::IConnection>* connection) {
+      bool success = server_core::database::getConnection(boost::posix_time::milliseconds(500), connection);
+
+      if(!success)
+      {
+         return Error{"FailedToAcquireConnection", errc::ConnectionFailed, "Failed to acquire a connection in 500 milliseconds.", ERROR_LOCATION};
+      }
+
+      return Success();
+   }
+
    class ConnectionNotEstablished
    {
    };
@@ -100,27 +111,40 @@ namespace {
    DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId)
       : sessionId_(sessionId)
    {
-      bool success = getConnection(boost::posix_time::milliseconds(500), &connection);
-      if(!success)
-      {
-         throw ConnectionNotEstablished();
-      }
+      
    }
 
-   DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId, boost::shared_ptr<core::database::IConnection> conn) :
-      connection{conn}, sessionId_(sessionId)
+   DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId, boost::shared_ptr<core::database::IConnection> overrideConnection)
+      : sessionId_(sessionId), overrideConnection_(overrideConnection)
    {
 
    }
 
    Error DBActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
    {
+      *pValue = "";
+      boost::shared_ptr<database::IConnection> connection;
+      Error error = Success();
+      if(overrideConnection_ == nullptr)
+      {
+         error = getConn(&connection);
+      }
+      else
+      {
+         connection = overrideConnection_;
+      }
+      
+      if(error)
+      {
+         return error;
+      }
+
+
       database::Query query = connection->query("SELECT "+name+" FROM active_session_metadata WHERE session_id = :id")
          .withInput(sessionId_);
 
       database::Rowset results{};
-      *pValue = "";
-      Error error = connection->execute(query, results);
+      error = connection->execute(query, results);
 
       if(!error)
       {
@@ -156,12 +180,28 @@ namespace {
    Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
    {
       pValues->clear();
+      boost::shared_ptr<database::IConnection> connection;
+      Error error = Success();
+      if(overrideConnection_ == nullptr)
+      {
+         error = getConn(&connection);
+      }
+      else
+      {
+         connection = overrideConnection_;
+      }
+
+      if(error)
+      {
+         return error;
+      }
+      
       std::string namesString = getColumnNameList(names);
       database::Query query = connection->query("SELECT "+namesString+" FROM active_session_metadata WHERE session_id=:id")
          .withInput(sessionId_);
 
       database::Rowset rowset{};
-      Error error = connection->execute(query, rowset);
+      error = connection->execute(query, rowset);
 
       if(!error)
       {
@@ -196,12 +236,27 @@ namespace {
 
    Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)
    {
+      boost::shared_ptr<database::IConnection> connection;
+      Error error = Success();
+      if(overrideConnection_ == nullptr)
+      {
+         error = getConn(&connection);
+      }
+      else
+      {
+         connection = overrideConnection_;
+      }
+
+      if(error)
+      {
+         return error;
+      }
 
       database::Query query = connection->query("UPDATE active_session_metadata SET "+name+" = :value WHERE session_id = :id")
          .withInput(value)
          .withInput(sessionId_);
 
-      Error error = connection->execute(query);
+      error = connection->execute(query);
 
       if(error){
          return Error{"DatabaseException", errc::DBError, "Database error while updating session metadata [ session: "+sessionId_+" property: " + name + " ]", error, ERROR_LOCATION};
@@ -212,13 +267,27 @@ namespace {
 
    Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
    {
+      boost::shared_ptr<database::IConnection> connection;
+      Error error = Success();
+      if(overrideConnection_ == nullptr)
+      {
+         error = getConn(&connection);
+      }
+      else
+      {
+         connection = overrideConnection_;
+      }
+
       database::Query query = connection->query("SELECT * FROM active_session_metadata WHERE session_id = :id")
          .withInput(sessionId_);
       database::Rowset rowset{};
 
-      
+      if(error)
+      {
+         return error;
+      }
 
-      Error error = connection->execute(query, rowset);
+      error = connection->execute(query, rowset);
       if(!error)
       {
          database::RowsetIterator iter = rowset.begin();
@@ -256,11 +325,27 @@ namespace {
 
    Error DBActiveSessionStorage::destroy()
    {
+      boost::shared_ptr<database::IConnection> connection;
+      Error error = Success();
+      if(overrideConnection_ == nullptr)
+      {
+         error = getConn(&connection);
+      }
+      else
+      {
+         connection = overrideConnection_;
+      }
+
+      if(error)
+      {
+         return error;
+      }
+
       database::Query query = connection->query("DELETE FROM active_session_metadata WHERE session_id = :id")
          .withInput(sessionId_);
       database::Rowset rowset{};
 
-      Error error = connection->execute(query, rowset);
+      error = connection->execute(query, rowset);
 
       if(!error)
       {
@@ -275,13 +360,29 @@ namespace {
 
    Error DBActiveSessionStorage::isValid(bool* pValue)
    {
+      boost::shared_ptr<database::IConnection> connection;
+      Error error = Success();
+      if(overrideConnection_ == nullptr)
+      {
+         error = getConn(&connection);
+      }
+      else
+      {
+         connection = overrideConnection_;
+      }
+
+      if(error)
+      {
+         return error;
+      }
+
       database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE session_id = :id")
          .withInput(sessionId_);
       database::Rowset rowset{};
 
       *pValue = false;
 
-      Error error = connection->execute(query, rowset);
+      error = connection->execute(query, rowset);
 
       if(error)
       {
@@ -312,9 +413,9 @@ namespace {
 
    Error DBActiveSessionStorage::isEmpty(bool* pValue)
    {
-      bool valid = false;
-      Error error = isValid(&valid);
-      *pValue = !valid;
+      bool val;
+      Error error = isValid(&val);
+      *pValue = !val;
       return error;
    }
 } // Namespace storage

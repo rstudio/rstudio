@@ -24,6 +24,7 @@ file(GLOB_RECURSE SERVER_HEADER_FILES "*.h*")
 # source files
 set(SERVER_SOURCE_FILES
    DBActiveSessionStorage.cpp
+   DBActiveSessionsStorage.cpp
    ServerBrowser.cpp
    ServerErrorCategory.cpp
    ServerEval.cpp

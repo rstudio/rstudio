@@ -71,22 +71,6 @@ Error ActiveSessions::create(const std::string& project,
 
    storage_->createSession(id, initialMetadata);
 
-
-
-   // // create the directory
-   // Error error = dir.ensureDirectory();
-   // if (error)
-   //    return error;
-
-   // // write initial settings
-   // ActiveSession activeSession(id, dir);
-   // activeSession.setProject(project);
-   // activeSession.setWorkingDir(workingDir);
-   // activeSession.setInitial(initial);
-   // activeSession.setLastUsed();
-   // activeSession.setRunning(false);
-   // activeSession.setLastResumed();
-
    // return the id if requested
    if (pId != nullptr)
    {
@@ -115,6 +99,47 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
 boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(const std::string& id) const
 {
    return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
+}
+
+namespace {
+
+void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
+                        const FilePath& userHomePath,
+                        bool projectSharingEnabled,
+                        boost::function<void(size_t)> onCountChanged)
+{
+   onCountChanged(pSessions->count(userHomePath, projectSharingEnabled));
+}
+
+} // anonymous namespace
+
+void trackActiveSessionCount(const FilePath& rootStoragePath,
+                             const FilePath& userHomePath,
+                             bool projectSharingEnabled,
+                             boost::function<void(size_t)> onCountChanged)
+{
+
+   boost::shared_ptr<ActiveSessions> pSessions(
+                                          new ActiveSessions(rootStoragePath));
+
+   core::system::file_monitor::Callbacks cb;
+   cb.onRegistered = boost::bind(notifyCountChanged,
+                                 pSessions,
+                                 userHomePath,
+                                 projectSharingEnabled,
+                                 onCountChanged);
+   cb.onFilesChanged = boost::bind(notifyCountChanged,
+                                   pSessions,
+                                   userHomePath,
+                                   projectSharingEnabled,
+                                   onCountChanged);
+   cb.onRegistrationError = boost::bind(log::logError, _1, ERROR_LOCATION);
+
+   core::system::file_monitor::registerMonitor(
+                   buildActiveSessionStoragePath(rootStoragePath),
+                   false,
+                   boost::function<bool(const FileInfo&)>(),
+                   cb);
 }
 
 } // namespace r_util

@@ -19,7 +19,7 @@ namespace storage
    {
    public:
       explicit DBActiveSessionStorage(const std::string& sessionId);
-      explicit DBActiveSessionStorage(const std::string& sessionId, boost::shared_ptr<core::database::IConnection> connection);
+      explicit DBActiveSessionStorage(const std::string& sessionId, boost::shared_ptr<core::database::IConnection> overrideConnection);
       ~DBActiveSessionStorage() = default;
       Error readProperty(const std::string& name, std::string* pValue) override;   
       Error readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
@@ -30,9 +30,11 @@ namespace storage
       Error isValid(bool* pValue) override;
       Error isEmpty(bool* pValue) override;
    private:
-      boost::shared_ptr<core::database::IConnection> connection;
       std::string sessionId_;
+      boost::shared_ptr<database::IConnection> overrideConnection_;
    };
+   
+   Error getConn(boost::shared_ptr<database::IConnection>* connection);
 
 namespace errc
 {
@@ -41,8 +43,10 @@ namespace errc
       DBError = 1,
       SessionNotFound = 2,
       TooManySessionsReturned = 3,
+      ConnectionFailed = 4
    };
 }
+
 } // namespace storage
 } // namespace server
 } // namespace rstudio

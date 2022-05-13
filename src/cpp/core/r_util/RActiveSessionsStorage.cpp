@@ -17,14 +17,14 @@ namespace
    }
 }
 
-   static FilePath buildStoragePath(const FilePath& rootStoragePath)
+   FilePath buildActiveSessionStoragePath(const FilePath& rootStoragePath)
    {
       return rootStoragePath.completeChildPath("sessions/active");
    }
 
    FileActiveSessionsStorage::FileActiveSessionsStorage(const FilePath& rootStoragePath)
    {
-      storagePath_ = buildStoragePath(rootStoragePath);
+      storagePath_ = buildActiveSessionStoragePath(rootStoragePath);
       Error error = storagePath_.ensureDirectory();
       if (error)
       {
