@@ -36,6 +36,7 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 class RPackageInfo;
+class RToolsInfo;
 } // namespace r_util
 } // namespace core
 } // namespace rstudio
@@ -102,7 +103,10 @@ private:
          core::r_util::RPackageInfo* pPkgInfo = nullptr,
          bool* pIsCpp = nullptr);
 
-   std::vector<std::string> rToolsArgs() const;
+#ifdef _WIN32
+   core::r_util::RToolsInfo& rToolsInfo() const;
+#endif
+
    core::system::Options compilationEnvironment() const;
    std::vector<std::string> precompiledHeaderArgs(const CompilationConfig& config);
 
@@ -110,16 +114,13 @@ private:
 
 private:
 
-   // Rtools arguments (cache once we successfully get them)
-   mutable std::vector<std::string> rToolsArgs_;
-
    // track the sourceCpp hash values used to derive args (don't re-run
    // detection if hash hasn't changed)
-   typedef std::map<std::string,std::string> SourceCppHashes;
+   typedef std::map<std::string, std::string> SourceCppHashes;
    SourceCppHashes sourceCppHashes_;
 
    // source file compilation settings
-   typedef std::map<std::string,CompilationConfig> ConfigMap;
+   typedef std::map<std::string, CompilationConfig> ConfigMap;
    ConfigMap sourceCppConfigMap_;
 
    // package compliation settings (track file modification times on build

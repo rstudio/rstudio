@@ -1169,9 +1169,15 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    // may not be compatible with the Rtools headers
    args.push_back("-nostdinc");
 
-   // add Rtools headers
-   auto rtArgs = rToolsArgs();
+   // ask Eigen not to try to vectorize, since that involves
+   // including intrinsics that aren't compatible with libclang
+   args.push_back("-DEIGEN_DONT_VECTORIZE");
+
+   // add Rtools arguments
+   auto rtInfo = rToolsInfo();
+   auto rtArgs = rtInfo.clangArgs();
    args.insert(args.end(), rtArgs.begin(), rtArgs.end());
+
 #else
    // add system include headers as reported by compiler
    std::vector<std::string> includes;
@@ -1299,43 +1305,37 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
 
 }
 
-std::vector<std::string> RCompilationDatabase::rToolsArgs() const
-{
 #ifdef _WIN32
-   if (rToolsArgs_.empty())
-   {
-      // scan for Rtools
-      std::string rVersion = module_context::rVersion();
-      bool usingMingwGcc49 = module_context::usingMingwGcc49();
-      std::vector<core::r_util::RToolsInfo> rTools;
-      core::r_util::scanForRTools(usingMingwGcc49, rVersion, &rTools);
 
-      // enumerate them to see if we have a compatible version
-      // (go in reverse order for most recent first)
-      std::vector<r_util::RToolsInfo>::const_reverse_iterator it = rTools.rbegin();
-      for ( ; it != rTools.rend(); ++it)
+core::r_util::RToolsInfo findRtools()
+{
+   // scan for Rtools
+   std::string rVersion = module_context::rVersion();
+   bool usingMingwGcc49 = module_context::usingMingwGcc49();
+   std::vector<core::r_util::RToolsInfo> rTools;
+   core::r_util::scanForRTools(usingMingwGcc49, rVersion, &rTools);
+
+   // enumerate them to see if we have a compatible version
+   // (go in reverse order for most recent first)
+   std::vector<r_util::RToolsInfo>::const_reverse_iterator it = rTools.rbegin();
+   for ( ; it != rTools.rend(); ++it)
+   {
+      if (module_context::isRtoolsCompatible(*it))
       {
-         if (module_context::isRtoolsCompatible(*it))
-         {
-            std::vector<std::string> clangArgs = it->clangArgs();
-            std::copy(clangArgs.begin(),
-                      clangArgs.end(),
-                      std::back_inserter(rToolsArgs_));
-            break;
-         }
+         return *it;
       }
    }
-#endif
 
-   if (rSourceIndex().verbose() > 2)
-   {
-      std::cerr << "# R TOOLS ARGS ----" << std::endl;
-      core::debug::print(rToolsArgs_);
-      std::cerr << std::endl;
-   }
-
-   return rToolsArgs_;
+   return core::r_util::RToolsInfo();
 }
+
+core::r_util::RToolsInfo& RCompilationDatabase::rToolsInfo() const
+{
+   static core::r_util::RToolsInfo instance = findRtools();
+   return instance;
+}
+
+#endif
 
 core::system::Options RCompilationDatabase::compilationEnvironment() const
 {
@@ -1355,8 +1355,10 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    // args to return
    std::vector<std::string> args;
 
-   // precompiled header dir
+   // get package name
    std::string pkgName = config.PCH;
+
+   // precompiled header dir
    FilePath precompiledDir = precompiledHeaderDir(pkgName);
 
    // further scope to actual path of package (as the locations of the
@@ -1477,6 +1479,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
                             nullptr,
                             0,
                             CXTranslationUnit_ForSerialization);
+
       if (tu == nullptr)
       {
          LOG_ERROR_MESSAGE("Error parsing translation unit " +
