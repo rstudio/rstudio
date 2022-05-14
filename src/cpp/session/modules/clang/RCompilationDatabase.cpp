@@ -162,8 +162,8 @@ std::string guessRcppPackage(const std::string& contents)
    if (regex_utils::search(contents, reRcpp11))
       return "Rcpp11";
 
-   // we need to pre-compiled RcppArmadillo if used as Rcpp will
-   // complain if we try to include Rcpp before RcppArmadillo
+   // we need to use pre-compiled RcppArmadillo headers instead
+   // of Rcpp as otherwise Rcpp will complain about include order
    boost::regex reRcppArmadillo("#include\\s+<RcppArmadillo");
    if (regex_utils::search(contents, reRcppArmadillo))
       return "RcppArmadillo";
@@ -424,7 +424,7 @@ std::string packagePCH(const std::string& linkingTo)
 
    if (verbose(1))
    {
-      std::cerr << "PACKAGE PCH: " << pch << std::endl;
+      std::cerr << "PACKAGE PCH: " << (pch.empty() ? "(none)" : pch) << std::endl;
    }
 
    return pch;
