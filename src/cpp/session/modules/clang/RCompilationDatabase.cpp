@@ -159,6 +159,12 @@ std::string guessRcppPackage(const std::string& contents)
    if (regex_utils::search(contents, reRcpp11))
       return "Rcpp11";
 
+   // we need to pre-compiled RcppArmadillo if used as Rcpp will
+   // complain if we try to include Rcpp before RcppArmadillo
+   boost::regex reRcppArmadillo("#include\\s+<RcppArmadillo");
+   if (regex_utils::search(contents, reRcppArmadillo))
+      return "RcppArmadillo";
+
    return "Rcpp";
 
 }
@@ -771,7 +777,7 @@ Error RCompilationDatabase::executeSourceCpp(
    args.push_back("-e");
 
    // difference sequence depending on the version of Rcpp we are using
-   if (rcppPkg == "Rcpp")
+   if (rcppPkg == "Rcpp" || rcppPkg == "RcppArmadillo")
    {
       // we try to force --dry-run differently depending on the version of Rcpp
       std::string extraParams;
@@ -1027,7 +1033,10 @@ RCompilationDatabase::CompilationConfig
 
    // validation: if we don't have any version of Rcpp installed then
    // we can't do sourceCpp
-   if (rcppPkg == "Rcpp" && !isPackageVersionInstalled("Rcpp", "0.10.1"))
+   if ((rcppPkg == "Rcpp" || rcppPkg == "RcppArmadillo") && !isPackageVersionInstalled("Rcpp", "0.10.1"))
+      return CompilationConfig();
+
+   if (rcppPkg == "RcppArmadillo" && !isPackageInstalled("RcppArmadillo"))
       return CompilationConfig();
 
    if (rcppPkg == "cpp11" && !isPackageInstalled("cpp11"))
@@ -1204,8 +1213,7 @@ std::vector<std::string> RCompilationDatabase::packageCompilationArgs(
    if (!pkgInfo.linkingTo().empty())
    {
       // Get includes implied by the LinkingTo field
-      std::vector<std::string> includes = includesForLinkingTo(
-               pkgInfo.linkingTo());
+      std::vector<std::string> includes = includesForLinkingTo(pkgInfo.linkingTo());
 
       // add them to args
       args.insert(args.begin(), includes.begin(), includes.end());
@@ -1414,9 +1422,15 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
 
       // get common compilation args
       std::vector<std::string> args = config.args;
-      
-      // add this package's path to the args
-      std::vector<std::string> pkgArgs = includesForLinkingTo(pkgName);
+
+      // get the appropriate include paths for this package
+      std::vector<std::string> pkgArgs;
+      error = r::exec::RFunction(".rs.includesForPackage")
+            .addParam(pkgName)
+            .call(&pkgArgs);
+      if (error)
+         LOG_ERROR(error);
+
       args.insert(args.begin(), pkgArgs.begin(), pkgArgs.end());
 
       // enforce compilation with requested standard

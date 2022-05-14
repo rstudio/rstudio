@@ -61,16 +61,38 @@
    
    linkingTo <- .rs.parseLinkingTo(linkingTo)
    for (pkg in linkingTo) {
-      includeDir <- system.file("include", package = pkg)
+      
+      includeDir <- if (identical(pkg, "R"))
+         R.home("include")
+      else
+         system.file("include", package = pkg)
+      
       if (file.exists(includeDir)) {
          includes <- c(
             includes,
             paste("-I", .rs.asBuildPath(includeDir), sep = "")
          )
       }
+      
    }
    
    includes
+})
+
+.rs.addFunction("includesForPackage", function(package)
+{
+   # find the package path
+   pkgPath <- find.package(package, quiet = TRUE)
+   if (!file.exists(pkgPath))
+      return(.rs.includesForLinkingTo(package))
+   
+   # read the description file
+   desc <- .rs.readPackageDescription(pkgPath)
+   if (is.null(desc$LinkingTo))
+      return(.rs.includesForLinkingTo(package))
+   
+   linkingTo <- paste(package, desc$LinkingTo, "R", sep = ", ")
+   .rs.includesForLinkingTo(linkingTo)
 })
 
 .rs.addFunction("asBuildPath", function(path)
