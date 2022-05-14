@@ -1459,7 +1459,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
       // create args array
       if (rSourceIndex().verbose() > 0)
       {
-         std::cerr << "# GENERATING PRECOMPILED HEADERS ----" << std::endl;
+         std::cerr << "# GENERATING PRECOMPILED HEADERS (" << pkgName << ") ----" << std::endl;
          core::debug::print(args);
          std::cerr << std::endl;
       }
