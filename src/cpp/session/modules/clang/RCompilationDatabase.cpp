@@ -59,6 +59,9 @@ namespace clang {
 
 namespace {
 
+// whether the compilation database needs to be rebuilt
+bool s_rebuildCompilationDatabase = false;
+
 // whether re-generation of compiler definitions is required
 bool s_regenerateCompilerDefinitions = false;
 
@@ -507,8 +510,11 @@ void RCompilationDatabase::updateForCurrentPackage()
          compilerHash == compilerHash_ &&
          module_context::rVersion() == rVersion_;
 
-   if (isCurrent)
+   if (isCurrent && !s_rebuildCompilationDatabase)
       return;
+
+   // we're about to rebuild the database, so unset flag now
+   s_rebuildCompilationDatabase = false;
 
    // compilation config has changed; rebuild pch
    forceRebuildPrecompiledHeaders_ = true;
@@ -683,12 +689,27 @@ void RCompilationDatabase::restorePackageCompilationConfig()
    json::readObject(configJson.getObject(), "rversion", rVersion_);
    json::readObject(configJson.getObject(), "dbversion", databaseVersion_);
 
-   packageCompilationConfig_.args.clear();
+   // unpack compiler arguments
+   std::vector<std::string> args;
    for (const json::Value& argJson : argsJson)
    {
       if (json::isType<std::string>(argJson))
-         packageCompilationConfig_.args.push_back(argJson.getString());
+         args.push_back(argJson.getString());
    }
+
+   // if the config references an '-include' that no longer exists,
+   // then force the database to be rebuilt
+   for (int i = 0, n = args.size(); i < n - 1; i++)
+   {
+      if (args[i] == "-include")
+      {
+         if (!FilePath(args[i + 1]).exists())
+            s_rebuildCompilationDatabase = true;
+      }
+   }
+
+   // update args
+   packageCompilationConfig_.args = args;
    
    if (verbose(1))
    {
