@@ -63,7 +63,7 @@ public:
 private:
 
    core::Error executeSourceCpp(core::system::Options env,
-                                const std::string& rcppPkg,
+                                const std::string& cppPkg,
                                 const core::FilePath& srcPath,
                                 core::system::ProcessResult* pResult);
 
@@ -90,7 +90,8 @@ private:
       std::string PCH;
       bool isCpp;
    };
-   CompilationConfig configForSourceCpp(const std::string& rcppPkg,
+
+   CompilationConfig configForSourceCpp(const std::string& cppPkg,
                                         core::FilePath srcFile);
 
    std::vector<std::string> argsForRCmdSHLIB(core::system::Options env,

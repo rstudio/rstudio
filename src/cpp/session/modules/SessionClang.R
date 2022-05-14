@@ -48,7 +48,7 @@
 .rs.addFunction("packagePCH", function(linkingTo)
 {
    linkingTo <- .rs.parseLinkingTo(linkingTo)
-   packages <- c("RcppArmadillo", "RcppEigen", "Rcpp11", "Rcpp")
+   packages <- c("RcppArmadillo", "RcppEigen", "Rcpp11", "Rcpp", "cpp11")
    for (package in packages)
       if (package %in% linkingTo)
          return(package)

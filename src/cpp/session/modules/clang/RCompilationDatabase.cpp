@@ -148,28 +148,21 @@ struct SourceCppFileInfo
    SourceCppFileInfo() : disableIndexing(false) {}
    bool empty() const { return hash.empty(); }
    std::string hash;
-   std::string rcppPkg;
+   std::string cppPkg;
    bool disableIndexing;
 };
 
-std::string guessRcppPackage(const std::string& contents)
+std::string guessCppPackage(const std::string& contents)
 {
-   boost::regex reCpp11("#include\\s*<cpp11\\.hpp");
-   if (regex_utils::search(contents, reCpp11))
-      return "cpp11";
+   auto packages = { "cpp11", "Rcpp11", "RcppArmadillo", "Rcpp" };
+   for (auto&& package : packages)
+   {
+      boost::regex pattern("#include\\s*[<\"]" + std::string(package));
+      if (regex_utils::search(contents, pattern))
+         return package;
+   }
 
-   boost::regex reRcpp11("#include\\s+<Rcpp11");
-   if (regex_utils::search(contents, reRcpp11))
-      return "Rcpp11";
-
-   // we need to use pre-compiled RcppArmadillo headers instead
-   // of Rcpp as otherwise Rcpp will complain about include order
-   boost::regex reRcppArmadillo("#include\\s+<RcppArmadillo");
-   if (regex_utils::search(contents, reRcppArmadillo))
-      return "RcppArmadillo";
-
-   return "Rcpp";
-
+   return "";
 }
 
 SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
@@ -187,8 +180,8 @@ SourceCppFileInfo sourceCppFileInfo(const core::FilePath& srcPath)
    SourceCppFileInfo info;
 
    // check for C++ package
-   info.rcppPkg = guessRcppPackage(contents);
-   info.hash.append(info.rcppPkg);
+   info.cppPkg = guessCppPackage(contents);
+   info.hash.append(info.cppPkg);
 
    // find dependency attributes
    boost::regex re(
@@ -744,7 +737,7 @@ void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
    }
 
    // get config
-   CompilationConfig config = configForSourceCpp(info.rcppPkg, srcFile);
+   CompilationConfig config = configForSourceCpp(info.cppPkg, srcFile);
 
    // save it
    if (!config.empty())
@@ -760,7 +753,7 @@ void RCompilationDatabase::updateForSourceCpp(const core::FilePath& srcFile)
 
 Error RCompilationDatabase::executeSourceCpp(
                                       core::system::Options env,
-                                      const std::string& rcppPkg,
+                                      const std::string& cppPkg,
                                       const core::FilePath& srcPath,
                                       core::system::ProcessResult* pResult)
 {
@@ -798,7 +791,7 @@ Error RCompilationDatabase::executeSourceCpp(
    args.push_back("-e");
 
    // difference sequence depending on the version of Rcpp we are using
-   if (rcppPkg == "Rcpp" || rcppPkg == "RcppArmadillo")
+   if (cppPkg == "Rcpp" || cppPkg == "RcppArmadillo")
    {
       // we try to force --dry-run differently depending on the version of Rcpp
       std::string extraParams;
@@ -811,13 +804,13 @@ Error RCompilationDatabase::executeSourceCpp(
       boost::format fmt("Rcpp::sourceCpp('%1%', showOutput = TRUE%2%)");
       args.push_back(boost::str(fmt % srcPath.getAbsolutePath() % extraParams));
    }
-   else if (rcppPkg == "Rcpp11")
+   else if (cppPkg == "Rcpp11")
    {
       core::system::setenv(&env, "MAKE", "make --dry-run");
       boost::format fmt("attributes::sourceCpp('%1%', verbose = TRUE)");
       args.push_back(boost::str(fmt % srcPath.getAbsolutePath()));
    }
-   else if (rcppPkg == "cpp11")
+   else if (cppPkg == "cpp11")
    {
       core::system::setenv(&env, "MAKE", "make --dry-run");
       boost::format fmt("cpp11::cpp_source('%1%', quiet = FALSE)");
@@ -1043,24 +1036,24 @@ std::vector<std::string> RCompilationDatabase::compileArgsForTranslationUnit(
 }
 
 RCompilationDatabase::CompilationConfig
-         RCompilationDatabase::configForSourceCpp(const std::string& rcppPkg,
+         RCompilationDatabase::configForSourceCpp(const std::string& cppPkg,
                                                   FilePath srcFile)
 {
    // validation: if this is Rcpp11 and we don't have the attributes
    // package then there's no way for us to execute sourceCpp
    using namespace module_context;
-   if (rcppPkg == "Rcpp11" && !isPackageInstalled("attributes"))
+   if (cppPkg == "Rcpp11" && !isPackageInstalled("attributes"))
       return CompilationConfig();
 
    // validation: if we don't have any version of Rcpp installed then
    // we can't do sourceCpp
-   if ((rcppPkg == "Rcpp" || rcppPkg == "RcppArmadillo") && !isPackageVersionInstalled("Rcpp", "0.10.1"))
+   if ((cppPkg == "Rcpp" || cppPkg == "RcppArmadillo") && !isPackageVersionInstalled("Rcpp", "0.10.1"))
       return CompilationConfig();
 
-   if (rcppPkg == "RcppArmadillo" && !isPackageInstalled("RcppArmadillo"))
+   if (cppPkg == "RcppArmadillo" && !isPackageInstalled("RcppArmadillo"))
       return CompilationConfig();
 
-   if (rcppPkg == "cpp11" && !isPackageInstalled("cpp11"))
+   if (cppPkg == "cpp11" && !isPackageInstalled("cpp11"))
       return CompilationConfig();
 
    // start with base args
@@ -1085,7 +1078,7 @@ RCompilationDatabase::CompilationConfig
    // execute sourceCpp
    core::system::ProcessResult result;
    core::system::Options env = compilationEnvironment();
-   Error error = executeSourceCpp(env, rcppPkg, srcFile, &result);
+   Error error = executeSourceCpp(env, cppPkg, srcFile, &result);
    if (error)
    {
       LOG_ERROR(error);
@@ -1100,7 +1093,7 @@ RCompilationDatabase::CompilationConfig
 
    CompilationConfig config;
    config.args = args;
-   config.PCH = rcppPkg;
+   config.PCH = cppPkg;
    config.isCpp = true;
    return config;
 
@@ -1383,7 +1376,7 @@ std::vector<std::string> RCompilationDatabase::precompiledHeaderArgs(
    pkgPath = core::hash::crc32HexHash(pkgPath);
    precompiledDir = precompiledDir.completeChildPath(pkgPath);
 
-   // platform/rcpp version specific directory name
+   // platform / cpp version specific directory name
    std::string clangVersion = clang().version().asString();
    std::string platformDir;
    error = r::exec::RFunction(".rs.clangPCHPath")
