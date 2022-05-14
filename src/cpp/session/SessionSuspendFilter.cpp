@@ -15,36 +15,50 @@
 
 #include <unordered_set>
 
-#include "core/DistributedEvents.hpp"
-
 #include "session/SessionSuspendFilter.hpp"
 
 namespace rstudio {
 namespace session {
 namespace suspend {
+
+// Define new filters here
 namespace filter  {
 
+/**
+ * Marks the /distributed_events URI as a connection that should not reset a session's suspend timeout
+ */
 class DistEventFilter : public SessionSuspendFilter
 {
 public:
-   DistEventFilter()
-      : m_uri(kDistributedEventsEndpoint),
-        m_filteredEvents()
-   {
-      m_filteredEvents.insert({
-                                 core::DistEvtUserLeft
-                              });
-   };
-   ~DistEventFilter() {};
+   DistEventFilter()  {}
+   ~DistEventFilter() {}
 
    virtual bool shouldResetSuspendTimer(boost::shared_ptr<HttpConnection> pConnection) override
    {
+      if (pConnection->request().uri() == "/distributed_events")
+         return false;
+
       return true;
    };
+};
 
-private:
-   std::string m_uri;
-   std::unordered_set<core::DistEvtType> m_filteredEvents;
+/**
+ * /rpc/set_currently_editing shouldn't reset a session's suspend timer because what
+ * another user is doing/editing shouldn't affect our session
+ */
+class SetEditingFilter : public SessionSuspendFilter
+{
+public:
+   SetEditingFilter()  {}
+   ~SetEditingFilter() {}
+
+   virtual bool shouldResetSuspendTimer(boost::shared_ptr<HttpConnection> pConnection) override
+   {
+      if (pConnection->request().uri() == "/rpc/set_currently_editing")
+         return false;
+
+      return true;
+   };
 };
 
 } // namespace filter
@@ -53,15 +67,15 @@ SessionSuspendFilters::SessionSuspendFilters()
    : m_filters()
 {
    using namespace rstudio::session::suspend::filter;
+
+   // Add filters here to prevent specific connections from resetting a session's suspend timeout
    m_filters.insert(m_filters.end(), {
-                       boost::make_shared<DistEventFilter>()
+                       boost::make_shared<DistEventFilter>(),
+                       boost::make_shared<SetEditingFilter>()
                     });
 }
 
-SessionSuspendFilters::~SessionSuspendFilters()
-{
-
-}
+SessionSuspendFilters::~SessionSuspendFilters() {}
 
 /**
  * Determines if recieving a given HttpConnection should reset the suspend timer for the session.

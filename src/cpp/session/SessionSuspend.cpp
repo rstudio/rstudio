@@ -50,7 +50,7 @@ bool s_suspendedFromTimeout = false;
 // was the underlying r session resumed
 bool s_rSessionResumed = false;
 
-// keep track of what operations are blocking session from suspending
+// Track what the suspend timeout is waiting for
 enum SuspendTimeoutState
 {
    kWaitingForTimeout,
@@ -65,6 +65,7 @@ bool s_initialNotificationSent = false;
 bool s_timeoutLogSent = false;
 SuspendTimeoutState s_timeoutState = kWaitingForTimeout;
 
+// Filter for HttpConnections that should *not* reset the suspend timeout
 SessionSuspendFilters s_suspendFilters;
 
 } // anonymous namespace
@@ -130,6 +131,9 @@ void resetSuspendTimeout(boost::shared_ptr<HttpConnection> pConnection)
 {
    if (s_suspendFilters.shouldResetSuspendTimer(pConnection))
    {
+      LOG_DEBUG_MESSAGE(pConnection->request().uri() +
+                        " URI resetting suspend timeout. Request: " +
+                        pConnection->request().body());
       resetSuspendTimeout();
    }
 }
@@ -234,8 +238,8 @@ void addBlockingOp(std::string op)
 
 void addBlockingOp(std::string method, const boost::function<bool()>& allowSuspend)
 {
-   // Only a blocking op if the allowSuspend() is actually the disallowSuspend() method
-   if (allowSuspend == disallowSuspend)
+   // Add if suspension is actually blocked
+   if (!allowSuspend())
    {
       addBlockingOp(kGenericMethod + method);
    }

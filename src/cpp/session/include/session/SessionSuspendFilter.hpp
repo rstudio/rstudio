@@ -39,7 +39,7 @@ public:
  *
  * By default, accepted HttpConnections will reset a session's suspend timeout. To
  * add a new filter for a specific type of filter, simply
- * 1. define the filter in SessionSuspendFilter.cpp and implementing the
+ * 1. define the filter in SessionSuspendFilter.cpp and implement the
  *    SessionSuspendFilter interface
  * 2. add the new filter instance into this class' constructor
  */
