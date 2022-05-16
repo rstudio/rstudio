@@ -14,19 +14,16 @@
  */
 
 #include <core/r_util/RActiveSessions.hpp>
-#include <core/r_util/RActiveSessionsStorage.hpp>
-
-#include <core/Log.hpp>
 
 #include <boost/bind/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/r_util/RActiveSessionsStorage.hpp>
+#include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
-
 #include <core/system/System.hpp>
 #include <core/system/FileMonitor.hpp>
-
 #include <core/r_util/RSessionContext.hpp>
 
 #include <shared_core/SafeConvert.hpp>
@@ -37,15 +34,17 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-   ActiveSessions::ActiveSessions(const FilePath& rootStoragePath) : ActiveSessions(std::make_shared<FileActiveSessionsStorage>(FileActiveSessionsStorage(rootStoragePath)))
-   {
-   }
+ActiveSessions::ActiveSessions(const FilePath& rootStoragePath) : 
+   ActiveSessions(std::make_shared<FileActiveSessionsStorage>(FileActiveSessionsStorage(rootStoragePath)), rootStoragePath)
+{
+   
+}
 
-   ActiveSessions::ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage)
-      : storage_(storage)
-   {
+ActiveSessions::ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath)
+   : rootStoragePath_(rootStoragePath), storage_(storage)
+{
 
-   }
+}
 
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
@@ -74,7 +73,7 @@ Error ActiveSessions::create(const std::string& project,
       {"last_used", isoTime},
       {"running", "false"},
       {"created", isoTime},
-      {"launch_params", ""}
+      {"launch_parameters", ""}
    };
 
    storage_->createSession(id, initialMetadata);
@@ -87,15 +86,37 @@ Error ActiveSessions::create(const std::string& project,
    return Success();
 }
 
+namespace
+{
+
+bool compareActivityLevel(boost::shared_ptr<ActiveSession> a,
+                        boost::shared_ptr<ActiveSession> b)
+{
+   return *a > *b;
+}
+
+} // anonymous namespace
+
 std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath userHomePath, bool projectSharingEnabled) const
 {
-   return storage_->listSessions(userHomePath, projectSharingEnabled);
+   std::vector<std::string> sessionIds = storage_->listSessionIds();
+   std::vector<boost::shared_ptr<ActiveSession>> sessions{};
+   for(std::string id : sessionIds)
+   {
+      boost::shared_ptr<ActiveSession> candidateSession = storage_->getSession(id);
+      if(candidateSession->validate(userHomePath, projectSharingEnabled))
+         sessions.push_back(candidateSession);
+   }
+
+   // sort by activity level (most active sessions first)
+   std::sort(sessions.begin(), sessions.end(), compareActivityLevel);
+   return sessions;
 }
 
 size_t ActiveSessions::count(const FilePath& userHomePath,
                              bool projectSharingEnabled) const
 {
-   return storage_->getSessionCount(userHomePath, projectSharingEnabled);
+   return storage_->getSessionCount();
 }
 
 boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) const

@@ -16,34 +16,34 @@
 #ifndef DB_ACTIVE_SESSIONS_STORAGE_HPP
 #define DB_ACTIVE_SESSIONS_STORAGE_HPP
 
-#include "core/r_util/RActiveSession.hpp"
-#include "core/r_util/RActiveSessionsStorage.hpp"
-#include "shared_core/Error.hpp"
-#include "shared_core/FilePath.hpp"
+#include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 
-namespace rstudio
-{
-namespace server
-{
-namespace storage
-{
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
-   using namespace core;
-   using namespace core::r_util;
+namespace rstudio {
+namespace server {
+namespace storage {
 
-   class DBActiveSessionsStorage : public IActiveSessionsStorage
-   {
-      public:
-         explicit DBActiveSessionsStorage(const std::string& userId);
-         ~DBActiveSessionsStorage() = default;
-         core::Error createSession(const std::string& id, std::map<std::string, std::string> initialProperties) override;
-         std::vector< boost::shared_ptr<ActiveSession> > listSessions(FilePath userHomePath, bool projectSharingEnabled) const override;
-         size_t getSessionCount(const FilePath& userHomePath, bool projectSharingEnabled) const override;
-         boost::shared_ptr<ActiveSession> getSession(const std::string& id) const override;
-         bool hasSessionId(const std::string& sessionId) const override;
-      private:
-         std::string userId_;
-   };
+using namespace core;
+using namespace core::r_util;
+
+class DBActiveSessionsStorage : public IActiveSessionsStorage
+{
+public:
+   explicit DBActiveSessionsStorage(const std::string& userId, const FilePath& rootStoragePath);
+   ~DBActiveSessionsStorage() = default;
+   core::Error createSession(const std::string& id, std::map<std::string, std::string> initialProperties) override;
+   std::vector< std::string > listSessionIds() const override;
+   size_t getSessionCount() const override;
+   boost::shared_ptr<ActiveSession> getSession(const std::string& id) const override;
+   bool hasSessionId(const std::string& sessionId) const override;
+private:
+   std::string userId_;
+   FilePath rootStoragePath_;
+};
+
 } // namespace storage
 } // namespace server
 } // namespace rstudio

@@ -19,11 +19,19 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <core/Log.hpp>
+#include <core/Settings.hpp>
+#include <core/DateTime.hpp>
+
+#include <core/r_util/RSessionContext.hpp>
+#include <core/r_util/RProjectFile.hpp>
+#include <core/r_util/RActiveSessionStorage.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
+
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
-#include <core/Settings.hpp>
-#include <core/r_util/RActiveSession.hpp>
-#include <core/r_util/RActiveSessionsStorage.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -59,10 +67,8 @@ static const std::string kActivityStateKilled = "killed";
 
 class ActiveSession : boost::noncopyable
 {
-private:
 
-   friend class ActiveSessions;
-
+public:
    explicit ActiveSession(const std::string& id) : id_(id) 
    {
    }
@@ -73,8 +79,6 @@ private:
       std::shared_ptr<IActiveSessionStorage> storage) : id_(id), scratchPath_(scratchPath), storage_(storage)
    {
    }
-
-public:
 
    const std::string kExecuting = "executing";
    const std::string kInitial = "initial";
@@ -419,10 +423,11 @@ public:
          return false;
       }
 
-      if (!propertiesPath_.exists())
+      bool validStorage = false;
+      Error storageError = storage_->isValid(&validStorage);
+      if (storageError || !validStorage)
       {
-         LOG_DEBUG_MESSAGE("ActiveSession validation failed: " + propertiesPath_.getAbsolutePath() + " not accessible to the session user");
-         return false;
+         LOG_DEBUG_MESSAGE("ActiveSession validation failed: properties storage not valid");
       }
 
       bool isRSession = editor() == kWorkbenchRStudio || editor().empty();
@@ -578,15 +583,16 @@ private:
    std::string id_;
    FilePath scratchPath_;
    std::shared_ptr<IActiveSessionStorage> storage_;
-   FilePath propertiesPath_;
    SortConditions sortConditions_;
 };
+
+class IActiveSessionsStorage;
 
 class ActiveSessions : boost::noncopyable
 {
 public:
    explicit ActiveSessions(const FilePath& rootStoragePath);
-   explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage);
+   explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
 
    core::Error create(const std::string& project,
                       const std::string& working,
@@ -611,7 +617,41 @@ public:
    boost::shared_ptr<ActiveSession> emptySession(const std::string& id) const;
 
 private:
+   FilePath rootStoragePath_;
    std::shared_ptr<IActiveSessionsStorage> storage_;
+};
+
+// active session as tracked by rserver processes
+// these are stored in a common location per rserver
+// so that the server process can keep track of all
+// active sessions, regardless of users running them
+class GlobalActiveSession : boost::noncopyable
+{
+public:
+   explicit GlobalActiveSession(const FilePath& path) : filePath_(path)
+   {
+      settings_.initialize(filePath_);
+   }
+
+   virtual ~GlobalActiveSession() {}
+
+   std::string sessionId() { return settings_.get("sessionId", ""); }
+   void setSessionId(const std::string& sessionId) { settings_.set("sessionId", sessionId); }
+
+   std::string username() { return settings_.get("username", ""); }
+   void setUsername(const std::string& username) { settings_.set("username", username); }
+
+   std::string userHomeDir() { return settings_.get("userHomeDir", ""); }
+   void setUserHomeDir(const std::string& userHomeDir) { settings_.set("userHomeDir", userHomeDir); }
+
+   int sessionTimeoutKillHours() { return settings_.getInt("sessionTimeoutKillHours", 0); }
+   void setSessionTimeoutKillHours(int val) { settings_.set("sessionTimeoutKillHours", val); }
+
+   core::Error destroy() { return filePath_.removeIfExists(); }
+
+private:
+   core::Settings settings_;
+   core::FilePath filePath_;
 };
 
 class GlobalActiveSessions : boost::noncopyable
