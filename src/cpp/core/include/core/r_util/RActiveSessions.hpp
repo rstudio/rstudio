@@ -19,15 +19,17 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/Settings.hpp>
 #include <core/r_util/RActiveSession.hpp>
 #include <core/r_util/RActiveSessionsStorage.hpp>
 
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+
 namespace rstudio {
 namespace core {
 namespace r_util {
+
 class ActiveSessions : boost::noncopyable
 {
 public:

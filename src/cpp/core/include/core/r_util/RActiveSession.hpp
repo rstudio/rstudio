@@ -19,18 +19,18 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
-#include <shared_core/SafeConvert.hpp>
-
-#include <shared_core/json/Json.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RActiveSessionStorage.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -485,8 +485,8 @@ private:
    core::FilePath filePath_;
 };
 
-}
-}
-}
+} // namespace r_util
+} // namespace core
+} // namespace rstudio
 
 #endif // CORE_R_UTIL_R_ACTIVE_SESSION_STORAGE

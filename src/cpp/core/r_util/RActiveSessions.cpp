@@ -14,19 +14,16 @@
  */
 
 #include <core/r_util/RActiveSessions.hpp>
-#include <core/r_util/RActiveSessionsStorage.hpp>
-
-#include <core/Log.hpp>
 
 #include <boost/bind/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
+#include <core/r_util/RActiveSessionsStorage.hpp>
+#include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
-
 #include <core/system/System.hpp>
 #include <core/system/FileMonitor.hpp>
-
 #include <core/r_util/RSessionContext.hpp>
 
 #include <shared_core/SafeConvert.hpp>
@@ -37,15 +34,15 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-   ActiveSessions::ActiveSessions(const FilePath& rootStoragePath) : ActiveSessions(std::make_shared<FileActiveSessionsStorage>(FileActiveSessionsStorage(rootStoragePath)))
-   {
-   }
+ActiveSessions::ActiveSessions(const FilePath& rootStoragePath) : ActiveSessions(std::make_shared<FileActiveSessionsStorage>(FileActiveSessionsStorage(rootStoragePath)))
+{
+}
 
-   ActiveSessions::ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage)
-      : storage_(storage)
-   {
+ActiveSessions::ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage)
+   : storage_(storage)
+{
 
-   }
+}
 
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
@@ -73,7 +70,7 @@ Error ActiveSessions::create(const std::string& project,
       {"last_used", isoTime},
       {"running", "false"},
       {"created", isoTime},
-      {"launch_params", ""}
+      {"launch_parameters", ""}
    };
 
    storage_->createSession(id, initialMetadata);

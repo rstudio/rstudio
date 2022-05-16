@@ -16,7 +16,6 @@
 #ifndef CORE_R_UTIL_R_ACTIVE_SESSIONS_STORAGE
 #define CORE_R_UTIL_R_ACTIVE_SESSIONS_STORAGE
 
-
 #include <core/r_util/RActiveSession.hpp>
 #include <shared_core/Error.hpp>
 
