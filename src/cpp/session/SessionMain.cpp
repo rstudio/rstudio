@@ -68,17 +68,23 @@
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/system/Xdg.hpp>
 
+#ifdef _WIN32
+# include <core/system/Win32RuntimeLibrary.hpp>
+#endif
+
 #include <core/system/FileMonitor.hpp>
 #include <core/text/TemplateFilter.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/REnvironment.hpp>
 #include <core/WaitUtils.hpp>
 
-#include <r/RJsonRpc.hpp>
 #include <r/RExec.hpp>
-#include <r/ROptions.hpp>
 #include <r/RFunctionHook.hpp>
 #include <r/RInterface.hpp>
+#include <r/RJsonRpc.hpp>
+#include <r/ROptions.hpp>
+#include <r/RSexp.hpp>
+#include <r/RUtil.hpp>
 #include <r/session/RSession.hpp>
 #include <r/session/RSessionState.hpp>
 #include <r/session/RClientState.hpp>
@@ -86,7 +92,6 @@
 #include <r/session/RConsoleHistory.hpp>
 #include <r/session/RGraphics.hpp>
 #include <r/session/REventLoop.hpp>
-#include <r/RUtil.hpp>
 
 #include <monitor/MonitorClient.hpp>
 
@@ -484,6 +489,21 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
    module_context::registerWaitForMethod(kUserPromptCompleted);
    module_context::registerWaitForMethod(kHandleUnsavedChangesCompleted);
    module_context::registerWaitForMethod(kRStudioAPIShowDialogMethod);
+
+#ifdef _WIN32
+   {
+      // on Windows, check if we're using UCRT
+      // ignore errors here since older versions of R don't define
+      // the 'crt' memober on R.version
+      std::string crt;
+      rstudio::r::exec::evaluateString("R.version$crt", &crt);
+
+      // initialize runtime library
+      Error error = rstudio::core::runtime::initialize(crt == "ucrt");
+      if (error)
+         LOG_ERROR(error);
+   }
+#endif
 
    // execute core initialization functions
    using boost::bind;
