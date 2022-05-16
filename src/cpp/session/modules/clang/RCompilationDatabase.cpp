@@ -1147,7 +1147,7 @@ std::vector<std::string> RCompilationDatabase::argsForRCmdSHLIB(
 std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) const
 {
    std::vector<std::string> args;
-
+   
 #ifdef _WIN32
    // add built-in clang compiler headers
    // built-in headers are not required with Rtools40 or newer
@@ -1156,13 +1156,7 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
       auto clArgs = clang().compileArgs(isCpp);
       args.insert(args.end(), clArgs.begin(), clArgs.end());
    }
-#else
-   // add built-in clang compiler headers
-   auto clArgs = clang().compileArgs(isCpp);
-   args.insert(args.end(), clArgs.begin(), clArgs.end());
-#endif
-
-#ifdef _WIN32
+   
    // disable inclusion of default system headers
    // otherwise, libclang will discover and use headers as provided with
    // an installation of Visual Studio (if available), and those headers
@@ -1178,15 +1172,6 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    auto rtArgs = rtInfo.clangArgs();
    args.insert(args.end(), rtArgs.begin(), rtArgs.end());
 
-#else
-   // add system include headers as reported by compiler
-   std::vector<std::string> includes;
-   discoverSystemIncludePaths(&includes);
-   for (auto include : includes)
-      args.push_back("-I" + include);
-#endif
-
-#ifdef _WIN32
    // re-generate compiler definitions
    generateCompilerDefinitions();
 
@@ -1198,6 +1183,17 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
       args.push_back("-include");
       args.push_back(defnPath.getAbsolutePath());
    }
+   
+#else
+   // add built-in clang compiler headers
+   auto clArgs = clang().compileArgs(isCpp);
+   args.insert(args.end(), clArgs.begin(), clArgs.end());
+   
+   // add system include headers as reported by compiler
+   std::vector<std::string> includes;
+   discoverSystemIncludePaths(&includes);
+   for (auto&& include : includes)
+      args.push_back("-I" + include);
 #endif
 
    if (verbose(3))
