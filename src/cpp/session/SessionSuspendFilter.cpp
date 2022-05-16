@@ -15,7 +15,7 @@
 
 #include <unordered_set>
 
-#include "session/SessionSuspendFilter.hpp"
+#include <session/SessionSuspendFilter.hpp>
 
 namespace rstudio {
 namespace session {
@@ -91,10 +91,10 @@ bool SessionSuspendFilters::shouldResetSuspendTimer(boost::shared_ptr<HttpConnec
    if (!pConnection)
       return true;
 
-   for (auto &e : m_filters)
+   for (auto &filter : m_filters)
    {
       // bail on first filter that says we shouldn't reset the timer
-      if (!e->shouldResetSuspendTimer(pConnection))
+      if (!filter->shouldResetSuspendTimer(pConnection))
          return false;
    }
 

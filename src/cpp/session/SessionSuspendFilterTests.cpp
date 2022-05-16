@@ -22,6 +22,9 @@ namespace session {
 namespace suspend {
 namespace tests {
 
+/**
+ * Dummy test implementation for testing HttpConnections with specific URIs
+ */ 
 class TestConnection : public HttpConnection
 {
 public:
@@ -47,17 +50,26 @@ public:
 test_context("Session Suspend Filters")
 {
    SessionSuspendFilters filters = SessionSuspendFilters();
+   boost::shared_ptr<HttpConnection> notYourEvent = boost::make_shared<TestConnection>("This is not the event you are looking for");
 
-   boost::shared_ptr<HttpConnection> distEvent = boost::make_shared<TestConnection>("/distributed_event");
-   boost::shared_ptr<HttpConnection> notDistEvent = boost::make_shared<TestConnection>("Not a Distributed Event");
+   boost::shared_ptr<HttpConnection> distEvent = boost::make_shared<TestConnection>("/distributed_events");
    test_that("Connections with /distributed_event URI should not reset a session's suspend timeout")
    {
-      expect_false(true);
       expect_false(filters.shouldResetSuspendTimer(distEvent));
    }
    test_that("Connections without /distributed_event URI can reset a session's suspend timeout")
    {
-      expect_false(filters.shouldResetSuspendTimer(notDistEvent));
+      expect_true(filters.shouldResetSuspendTimer(notYourEvent));
+   }
+
+   boost::shared_ptr<HttpConnection> currentlyEditing = boost::make_shared<TestConnection>("/rpc/set_currently_editing");
+   test_that("Connections with /rpc/set_currently_editing URI should not reset a session's suspend timeout")
+   {
+      expect_false(filters.shouldResetSuspendTimer(currentlyEditing));
+   }
+   test_that("Connections without /rpc/set_currently_editing URI can reset a session's suspend timeout")
+   {
+      expect_true(filters.shouldResetSuspendTimer(notYourEvent));
    }
 }
 
