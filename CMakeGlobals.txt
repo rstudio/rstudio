@@ -238,6 +238,10 @@ if(LINUX AND UNAME_M STREQUAL aarch64)
    # disabled on linux aarch64
    message(STATUS "quarto does not yet support aarch64 builds of Linux; disabling quarto")
    set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
+elseif(LINUX AND ENV{OPERATING_SYSTEM} STREQUAL centos_7)
+   # disable on Centos 7, use operating system from Jenkins if available
+   message(STATUS "quarto is not supported on Centos7; disabling quarto")
+   set(QUARTO_ENABLED FALSE CACHE INTERNAL "")
 else()
    # enable by default
    set(QUARTO_ENABLED TRUE CACHE INTERNAL "")
