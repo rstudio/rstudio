@@ -67,6 +67,7 @@
 - Fixed an issue where R raw strings were not highlighted correctly in R Markdown documents. (#11087)
 - Fixed issue with using RStudio server behind multi-level proxy servers (#11010)
 - Fixed a regression in which the "(Use Default Version)" option was not present in some R version selector drop downs (rstudio-pro#3451)
+- Fix opening a remote session via downloaded rdprsp file in Mac Desktop Pro when it (RDP) is already open (rstudio-pro#3291)
 
 ### RStudio Workbench
 
