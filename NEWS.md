@@ -66,6 +66,7 @@
 - (Linux Only) License-manager now works in a installer-less context (rstudio-pro#3150)
 - Fixed an issue where R raw strings were not highlighted correctly in R Markdown documents. (#11087)
 - Fixed issue with using RStudio server behind multi-level proxy servers (#11010)
+- Fixed an issue where other users' actions could prevent a session's auto suspend (Pro #3362)
 
 ### RStudio Workbench
 
