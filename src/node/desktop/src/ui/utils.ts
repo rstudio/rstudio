@@ -1,5 +1,3 @@
-import path from "path";
-
 const isLocalStorageItemSet = (key: string) => {
   if (typeof window !== "undefined") {
     const value = window.localStorage.getItem(key);
