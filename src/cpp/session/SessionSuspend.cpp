@@ -572,3 +572,4 @@ core::Error initialize()
 } // namespace suspend
 } // namespace session
 } // namespace rstudio
+

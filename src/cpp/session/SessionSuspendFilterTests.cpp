@@ -77,3 +77,4 @@ test_context("Session Suspend Filters")
 } // namespace suspend
 } // namespace session
 } // namespace rstudio
+

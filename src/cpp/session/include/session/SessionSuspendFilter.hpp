@@ -63,3 +63,4 @@ protected:
 } // namespace rstudio
 
 #endif // SESSION_SUSPEND_FILTER_HPP
+
