@@ -96,15 +96,10 @@ endforeach()
 
 # verify libclang is installed (Windows only)
 if(WIN32)
-   set(LIBCLANG_VERSION "5.0.2")
+   set(LIBCLANG_VERSION "13.0.1")
    set(LIBCLANG_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/${LIBCLANG_VERSION}")
    if(NOT EXISTS "${LIBCLANG_DIR}")
       message(FATAL_ERROR "libclang ${LIBCLANG_VERSION} not found  (re-run install-dependencies script to install)")
-   endif()
-
-   set(LIBCLANG_HEADERS_DIR "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers")
-   if(NOT EXISTS "${LIBCLANG_HEADERS_DIR}")
-      message(FATAL_ERROR "libclang builtin-headers not found  (re-run install-dependencies script to install)")
    endif()
 endif()
 
@@ -150,6 +145,7 @@ set(SESSION_SOURCE_FILES
    SessionSourceDatabase.cpp
    SessionSourceDatabaseSupervisor.cpp
    SessionSuspend.cpp
+   SessionSuspendFilter.cpp
    SessionUriHandlers.cpp
    SessionUrlPorts.cpp
    SessionWorkerContext.cpp
@@ -751,10 +747,6 @@ if(NOT RSTUDIO_SESSION_WIN32 AND NOT RSESSION_ALTERNATE_BUILD)
       file(GLOB LIBCLANG_64_FILES "${LIBCLANG_DIR}/x86_64/*")
       install(PROGRAMS ${LIBCLANG_64_FILES}
               DESTINATION  ${RSTUDIO_INSTALL_BIN}/rsclang/x86_64)
-
-      # install libclang builtin-headers
-      install(DIRECTORY "${RSTUDIO_DEPENDENCIES_DIR}/common/libclang/builtin-headers"
-              DESTINATION "${RSTUDIO_INSTALL_SUPPORTING}/resources/libclang")
    endif()
 
    # install winpty on windows

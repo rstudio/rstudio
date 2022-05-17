@@ -721,13 +721,13 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     String validateAsyncMessage(String packageName);
 
     /**
-     * Translated "A file already exists at path ''{0}''".
+     * Translated "A file already exists at path ''{0}''.".
      *
-     * @return translated "A file already exists at path ''{0}''"
+     * @return translated "A file already exists at path ''{0}''."
      */
-    @DefaultMessage("A file already exists at path ''{0}''")
-    @Key("onResponseReceivedErrorMessage")
-    String onResponseReceivedErrorMessage(String path);
+    @DefaultMessage("A file already exists at path ''{0}''.")
+    @Key("fileAlreadyExistsMessage")
+    String fileAlreadyExistsMessage(String path);
 
     /**
      * Translated "Directory ''{0}'' already exists and is not empty.".
@@ -737,6 +737,15 @@ public interface StudioClientProjectConstants extends com.google.gwt.i18n.client
     @DefaultMessage("Directory ''{0}'' already exists and is not empty.")
     @Key("directoryAlreadyExistsMessage")
     String directoryAlreadyExistsMessage(String path);
+
+    /**
+     * Translated "Please enter a new directory name.".
+     *
+     * @return translated "Please enter a new directory name."
+     */
+    @DefaultMessage("Please enter a new directory name.")
+    @Key("pleaseEnterDirectoryNameMessage")
+    String pleaseEnterDirectoryNameMessage();
 
     /**
      * Translated "Quarto Book".

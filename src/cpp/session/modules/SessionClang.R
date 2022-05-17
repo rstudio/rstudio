@@ -140,4 +140,66 @@
    normalizePath(paths, winslash = "/", mustWork = FALSE)
 })
 
-
+.rs.addFunction("libclang.compilerDefinitionsHeaderPath", function(compiler = NULL, isCpp = TRUE)
+{
+   # if we already have a definition, use it
+   name <- if (isCpp) "cpp-definitions.h" else "c-definitions.h"
+   path <- file.path(tempdir(), "rstudio", name)
+   if (file.exists(path))
+      return(path)
+   
+   # put rtools on PATH for windows
+   if (.rs.platform.isWindows)
+   {
+      envpath <- Sys.getenv("PATH")
+      on.exit(Sys.setenv(PATH = envpath), add = TRUE)
+      .rs.addRToolsToPath()
+   }
+   
+   if (is.null(compiler))
+   {
+      # if compiler is not set, then use the default C++ compiler
+      exe <- if (.rs.platform.isWindows) "R.exe" else "R"
+      R <- file.path(R.home("bin"), exe)
+      compiler <- if (isCpp) "CXX" else "CC"
+      cxx <- system2(R, c("CMD", "config", compiler), stdout = TRUE, stderr = TRUE)
+      
+      # take only last line, in case R or the compiler spat out other output
+      compiler <- tail(cxx, n = 1L)
+   }
+   
+   # create a dummy c++ file
+   file <- tempfile(fileext = if (isCpp) ".cpp" else ".c")
+   writeLines("void test() {}", con = file)
+   
+   # build a command for printing compiler definitions
+   command <- paste(compiler, "-dM -E", basename(file))
+   
+   # run it
+   output <- local({
+      owd <- setwd(tempdir())
+      on.exit(setwd(owd), add = TRUE)
+      suppressWarnings(system(command, intern = TRUE))
+   })
+   
+   # for each line, only define if it's not already defined
+   formatted <- unlist(lapply(output, function(line) {
+      parts <- strsplit(line, "\\s+", perl = TRUE)[[1L]]
+      fmt <- "#ifndef %s\n%s\n#endif\n"
+      msg <- sprintf(fmt, gsub("\\(.*", "", parts[[2L]]), line)
+      gsub("#define", "# define", msg)
+   }))
+   
+   # libclang doesn't seem to support __float128 with a Windows target,
+   # even though gcc does -- either way, remove this define so that we
+   # don't get (hopefully spurious) libclang warnings
+   formatted <- c(formatted, "", "#undef _GLIBCXX_USE_FLOAT128")
+   
+   # dump it to file
+   dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
+   writeLines(formatted, con = path)
+   
+   # return path
+   normalizePath(path)
+   
+})

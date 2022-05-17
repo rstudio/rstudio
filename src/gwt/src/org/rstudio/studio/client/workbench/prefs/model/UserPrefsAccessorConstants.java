@@ -1938,10 +1938,18 @@ public interface UserPrefsAccessorConstants extends Constants {
    /**
     * The IDE's user-interface language.
     */
-   @DefaultStringValue("User Interface Language")
+   @DefaultStringValue("User Interface Language:")
    String uiLanguageTitle();
    @DefaultStringValue("The IDE's user-interface language.")
    String uiLanguageDescription();
+
+   /**
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+    */
+   @DefaultStringValue("Use native file and message dialog boxes")
+   String nativeFileDialogsTitle();
+   @DefaultStringValue("Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.")
+   String nativeFileDialogsDescription();
 
 
 

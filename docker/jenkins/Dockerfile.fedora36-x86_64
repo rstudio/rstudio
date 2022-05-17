@@ -17,7 +17,7 @@ RUN dnf install -y \
     gcc \
     gcc-c++ \
     git \
-    gpg \
+    gpg1 \
     gtk3 \
     java-11-openjdk \
     java-11-openjdk-devel \
