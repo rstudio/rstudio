@@ -304,8 +304,10 @@ public:
    bool validate(const FilePath& userHomePath,
                  bool projectSharingEnabled) const
    {
-      // ensure the scratch path and properties paths exist
-      if (!scratchPath_.exists() || !propertiesPath_.exists())
+      // ensure the scratch path and properties storage is valid.
+      bool propertiesValid = false;
+      storage_->isValid(&propertiesValid);
+      if (!scratchPath_.exists() || !propertiesValid)
          return false;
 
       // ensure the properties are there
@@ -343,8 +345,8 @@ public:
       {
          if (sortConditions_.running_ == rhs.sortConditions_.running_)
          {
-
-   
+            if (sortConditions_.lastUsed_ == rhs.sortConditions_.lastUsed_)
+               return id() > rhs.id();
 
             return sortConditions_.lastUsed_ > rhs.sortConditions_.lastUsed_;
          }

@@ -45,6 +45,7 @@ public:
 private:
    std::string sessionId_;
    boost::shared_ptr<database::IConnection> overrideConnection_;
+   Error getConnectionOrOverride(boost::shared_ptr<database::IConnection>* connection);
 };
 
 Error getConn(boost::shared_ptr<database::IConnection>* connection);

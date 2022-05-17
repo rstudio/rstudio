@@ -107,7 +107,6 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
       }
    }
 }
-
 } // anonymous namespace
 
 Error getConn(boost::shared_ptr<database::IConnection>* connection) {
@@ -121,9 +120,16 @@ Error getConn(boost::shared_ptr<database::IConnection>* connection) {
    return Success();
 }
 
-class ConnectionNotEstablished
+Error DBActiveSessionStorage::getConnectionOrOverride(boost::shared_ptr<database::IConnection>* connection)
 {
-};
+   if(overrideConnection_ == nullptr)
+      return getConn(connection);
+   else
+   {
+      *connection = overrideConnection_;
+      return Success();
+   }
+}
 
 DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId)
    : sessionId_(sessionId)
@@ -141,11 +147,7 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
 {
    *pValue = "";
    boost::shared_ptr<database::IConnection> connection;
-   Error error = Success();
-   if(overrideConnection_ == nullptr)
-      error = getConn(&connection);
-   else
-      connection = overrideConnection_;
+   Error error = getConnectionOrOverride(&connection);
    
    if(error)
    {
@@ -194,11 +196,7 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
 {
    pValues->clear();
    boost::shared_ptr<database::IConnection> connection;
-   Error error = Success();
-   if(overrideConnection_ == nullptr)
-      error = getConn(&connection);
-   else
-      connection = overrideConnection_;
+   Error error = getConnectionOrOverride(&connection);
 
    if(error)
    {
@@ -246,11 +244,7 @@ Error DBActiveSessionStorage::readProperties(std::map<std::string, std::string>*
 Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)
 {
    boost::shared_ptr<database::IConnection> connection;
-   Error error = Success();
-   if(overrideConnection_ == nullptr)
-      error = getConn(&connection);
-   else
-      connection = overrideConnection_;
+   Error error = getConnectionOrOverride(&connection);
 
    if(error)
    {
@@ -273,11 +267,12 @@ Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::
 Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
 {
    boost::shared_ptr<database::IConnection> connection;
-   Error error = Success();
-   if(overrideConnection_ == nullptr)
-      error = getConn(&connection);
-   else
-      connection = overrideConnection_;
+   Error error = getConnectionOrOverride(&connection);
+
+   if(error)
+   {
+      return error;
+   }
 
    database::Query query = connection->query("SELECT * FROM "+kTableName+" WHERE "+kSessionIdColumnName+" = :id")
       .withInput(sessionId_);
@@ -327,11 +322,7 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
 Error DBActiveSessionStorage::destroy()
 {
    boost::shared_ptr<database::IConnection> connection;
-   Error error = Success();
-   if(overrideConnection_ == nullptr)
-      error = getConn(&connection);
-   else
-      connection = overrideConnection_;
+   Error error = getConnectionOrOverride(&connection);
 
    if(error)
    {
@@ -358,11 +349,7 @@ Error DBActiveSessionStorage::destroy()
 Error DBActiveSessionStorage::isValid(bool* pValue)
 {
    boost::shared_ptr<database::IConnection> connection;
-   Error error = Success();
-   if(overrideConnection_ == nullptr)
-      error = getConn(&connection);
-   else
-      connection = overrideConnection_;
+   Error error = getConnectionOrOverride(&connection);
 
    if(error)
    {

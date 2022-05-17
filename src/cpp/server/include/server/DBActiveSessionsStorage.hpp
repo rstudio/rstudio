@@ -32,15 +32,16 @@ using namespace core::r_util;
 class DBActiveSessionsStorage : public IActiveSessionsStorage
 {
 public:
-   explicit DBActiveSessionsStorage(const std::string& userId);
+   explicit DBActiveSessionsStorage(const std::string& userId, const FilePath& rootStoragePath);
    ~DBActiveSessionsStorage() = default;
    core::Error createSession(const std::string& id, std::map<std::string, std::string> initialProperties) override;
-   std::vector< boost::shared_ptr<ActiveSession> > listSessions(FilePath userHomePath, bool projectSharingEnabled) const override;
-   size_t getSessionCount(const FilePath& userHomePath, bool projectSharingEnabled) const override;
+   std::vector< std::string > listSessionIds() const override;
+   size_t getSessionCount() const override;
    boost::shared_ptr<ActiveSession> getSession(const std::string& id) const override;
    bool hasSessionId(const std::string& sessionId) const override;
 private:
    std::string userId_;
+   FilePath rootStoragePath_;
 };
 
 } // namespace storage

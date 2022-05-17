@@ -34,12 +34,14 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-ActiveSessions::ActiveSessions(const FilePath& rootStoragePath) : ActiveSessions(std::make_shared<FileActiveSessionsStorage>(FileActiveSessionsStorage(rootStoragePath)))
+ActiveSessions::ActiveSessions(const FilePath& rootStoragePath) : 
+   ActiveSessions(std::make_shared<FileActiveSessionsStorage>(FileActiveSessionsStorage(rootStoragePath)), rootStoragePath)
 {
+   
 }
 
-ActiveSessions::ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage)
-   : storage_(storage)
+ActiveSessions::ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath)
+   : rootStoragePath_(rootStoragePath), storage_(storage)
 {
 
 }
@@ -85,13 +87,21 @@ Error ActiveSessions::create(const std::string& project,
 
 std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath userHomePath, bool projectSharingEnabled) const
 {
-   return storage_->listSessions(userHomePath, projectSharingEnabled);
+   std::vector<std::string> sessionIds = storage_->listSessionIds();
+   std::vector<boost::shared_ptr<ActiveSession>> sessions{};
+   for(std::string id : sessionIds)
+   {
+      boost::shared_ptr<ActiveSession> candidateSession = storage_->getSession(id);
+      if(candidateSession->validate(userHomePath, projectSharingEnabled))
+         sessions.push_back(candidateSession);
+   }
+   return sessions;
 }
 
 size_t ActiveSessions::count(const FilePath& userHomePath,
                              bool projectSharingEnabled) const
 {
-   return storage_->getSessionCount(userHomePath, projectSharingEnabled);
+   return storage_->getSessionCount();
 }
 
 boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) const

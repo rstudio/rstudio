@@ -27,8 +27,6 @@ namespace r_util {
 namespace
 {
 
-constexpr const char* kSessionDirPrefix = "session-";
-
 FilePath getSessionDirPath(const FilePath& storagePath, const std::string& sessionId)
 {
    return storagePath.completeChildPath(kSessionDirPrefix + sessionId);
@@ -78,10 +76,10 @@ core::Error FileActiveSessionsStorage::createSession(const std::string& id, std:
    return error;
 }
 
-std::vector<boost::shared_ptr<ActiveSession> > FileActiveSessionsStorage::listSessions(FilePath userHomePath, bool projectSharingEnabled) const
+std::vector<std::string> FileActiveSessionsStorage::listSessionIds() const
 {
    // list to return
-   std::vector<boost::shared_ptr<ActiveSession> > sessions;
+   std::vector<std::string> sessions;
 
    // enumerate children and check for sessions
    std::vector<FilePath> children;
@@ -97,42 +95,18 @@ std::vector<boost::shared_ptr<ActiveSession> > FileActiveSessionsStorage::listSe
       if (boost::algorithm::starts_with(child.getFilename(), prefix))
       {
          std::string id = child.getFilename().substr(prefix.length());
-         boost::shared_ptr<ActiveSession> pSession = getSession(id);
-         if (!pSession->empty())
-         {
-            if (pSession->validate(userHomePath, projectSharingEnabled))
-            {
-               // Cache the sort conditions to ensure compareActivityLevel will provide a strict weak ordering.
-               // Otherwise, the conditions on which we sort (e.g. lastUsed()) can be updated on disk during a sort
-               // causing an occasional segfault.
-               pSession->cacheSortConditions();
-               sessions.push_back(pSession);
-            }
-            else
-            {
-               // remove sessions that don't have required properties
-               // (they may be here as a result of a race condition where
-               // they are removed but then suspended session data is
-               // written back into them)
-               Error error = pSession->destroy();
-               if (error)
-                  LOG_ERROR(error);
-            }
-         }
+         sessions.push_back(id);
       }
 
    }
-
-   // sort by activity level (most active sessions first)
-   std::sort(sessions.begin(), sessions.end(), compareActivityLevel);
 
    // return
    return sessions;
 }
 
-size_t FileActiveSessionsStorage::getSessionCount(const FilePath& userHomePath, bool projectSharingEnabled) const
+size_t FileActiveSessionsStorage::getSessionCount() const
 {
-   return listSessions(userHomePath, projectSharingEnabled).size();
+   return listSessionIds().size();
 }
 
 // Returns a shared pointer to the session, or an empty session if it does not exist

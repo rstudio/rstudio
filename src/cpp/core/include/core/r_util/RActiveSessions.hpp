@@ -34,7 +34,7 @@ class ActiveSessions : boost::noncopyable
 {
 public:
    explicit ActiveSessions(const FilePath& rootStoragePath);
-   explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage);
+   explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
 
    core::Error create(const std::string& project,
                       const std::string& working,
@@ -58,6 +58,7 @@ public:
    boost::shared_ptr<ActiveSession> emptySession(const std::string& id) const;
 
 private:
+   FilePath rootStoragePath_;
    std::shared_ptr<IActiveSessionsStorage> storage_;
 };
 

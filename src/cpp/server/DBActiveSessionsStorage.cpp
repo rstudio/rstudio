@@ -26,7 +26,8 @@ namespace storage {
 
 using namespace server_core::database;
 
-DBActiveSessionsStorage::DBActiveSessionsStorage(const std::string& userId) : userId_(userId)
+DBActiveSessionsStorage::DBActiveSessionsStorage(const std::string& userId, const FilePath& rootStoragePath)
+   : userId_(userId), rootStoragePath_(rootStoragePath)
 {
 }
 
@@ -36,10 +37,10 @@ core::Error DBActiveSessionsStorage::createSession(const std::string& id, std::m
    return storage.writeProperties(initialProperties);
 }
 
-std::vector< boost::shared_ptr<ActiveSession> > DBActiveSessionsStorage::listSessions(FilePath userHomePath, bool projectSharingEnabled) const
+std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
 {
    boost::shared_ptr<database::IConnection> connection;
-   std::vector<boost::shared_ptr<ActiveSession>> sessions;
+   std::vector<std::string> sessions;
    Error error = getConn(&connection);
 
    if(error)
@@ -58,8 +59,7 @@ std::vector< boost::shared_ptr<ActiveSession> > DBActiveSessionsStorage::listSes
       while(iter != rowset.end())
       {
          std::string sessionId = iter->get<std::string>("session_id");
-         DBActiveSessionStorage sessionStorage{sessionId};
-         sessions.push_back(boost::shared_ptr<ActiveSession>(getSession(sessionId)));
+         sessions.push_back(sessionId);
       }
    }
    else
@@ -70,18 +70,17 @@ std::vector< boost::shared_ptr<ActiveSession> > DBActiveSessionsStorage::listSes
    return sessions;
 }
 
-size_t DBActiveSessionsStorage::getSessionCount(const FilePath& userHomePath, bool projectSharingEnabled) const
+size_t DBActiveSessionsStorage::getSessionCount() const
 {
    boost::shared_ptr<database::IConnection> connection;
-   std::vector<boost::shared_ptr<ActiveSession>> sessions;
+   std::vector<std::string> sessions;
    Error error = getConn(&connection);
 
    if(error)
    {
       LOG_ERROR(error);
    }
-
-   if(!error)
+   else
    {
       database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE user_id=:id")
          .withInput(userId_);
@@ -99,10 +98,11 @@ size_t DBActiveSessionsStorage::getSessionCount(const FilePath& userHomePath, bo
 
 boost::shared_ptr<ActiveSession> DBActiveSessionsStorage::getSession(const std::string& id) const
 {
+   FilePath scratchPath = rootStoragePath_.completeChildPath(kSessionDirPrefix + id);
    if(hasSessionId(id))
    {
-      // THIS IS WRONG, needs scratch path
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
+      DBActiveSessionStorage storage{id};
+      return boost::shared_ptr<ActiveSession>(new ActiveSession(id, scratchPath, std::make_shared<DBActiveSessionStorage>(storage)));
    }
    else
    {
