@@ -17,7 +17,7 @@ import fs from 'fs';
 import fsPromises from 'fs/promises';
 
 import { logger } from './logger';
-import path from 'path';
+import { sep } from 'path';
 import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
 import { err, Expected, ok } from './expected';
@@ -49,12 +49,11 @@ function normalizeSeparators(path: string, separator = '/') {
  * Removes duplicated separators from a path based on platform.
  *
  * @export
- * @param {string} _path
+ * @param {string} path
  * @return {*} 
  */
-export function normalizeSeparatorsNative(_path: string) {
-  const separator = path.sep;
-  return normalizeSeparators(_path, separator);
+export function normalizeSeparatorsNative(path: string) {
+  return normalizeSeparators(path, sep);
 }
 
 /**
