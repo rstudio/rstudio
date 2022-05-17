@@ -42,7 +42,6 @@ const kRendererEngine = 'renderer.engine';
 const kRendererUseGpuExclusionList = 'renderer.useGpuExclusionList';
 const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds';
 
-const kRBinDir = 'platform.windows.rBinDir';
 const kRExecutablePath = 'platform.windows.rstudioPath';
 const kPreferR64 = 'platform.windows.preferR64';
 
@@ -272,25 +271,15 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   // Windows-only option
-  public setRBinDir(rBinDir: string): void {
-    if (process.platform !== 'win32') {
-      return;
-    }
-    
-    this.config.set(kRBinDir, normalizeSeparatorsNative(dirname(rBinDir)));
-  }
-
-  // Windows-only option
   public rBinDir(): string {
     if (process.platform !== 'win32') {
       return '';
     }
 
-    let rBinDir: string = this.config.get(kRBinDir, properties.platform.default.windows.rBinDir);
+    let rBinDir: string = dirname(this.rExecutablePath());
 
     if (!rBinDir) {
       rBinDir = this.legacyOptions.rBinDir() ?? properties.platform.default.windows.rBinDir;
-      this.config.set(kRBinDir, rBinDir);
     }
 
     return rBinDir;
@@ -301,6 +290,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
     if (process.platform !== 'win32') {
       return;
     }
+
     this.config.set(kRExecutablePath, normalizeSeparatorsNative(rExecutablePath));
   }
 
@@ -310,10 +300,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
       return '';
     }
 
-    const rExecutablePath: string = this.config.get(
-      kRExecutablePath,
-      properties.platform.default.windows.rstudioPath,
-    );
+    const rExecutablePath: string = this.config.get(kRExecutablePath, properties.platform.default.windows.rstudioPath);
 
     if (!rExecutablePath) {
       return '';
