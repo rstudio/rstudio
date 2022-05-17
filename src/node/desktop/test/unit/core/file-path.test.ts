@@ -606,7 +606,8 @@ describe('FilePath', () => {
     it('Paths only contain forward slashes with no duplicates', () => {
       const paths = ['c:\\www\\app\\my/folder/file.r',
         'C:\\R\\4.1.2\\bin\\\\R.exe',
-        'c:\\\\www\\\\app\\my/folder/file.r'];
+        'c:\\\\www\\\\app\\my/folder/file.r',
+        'T:\\R-3.6.3\\bin\\x64\\R.exe' ];
       paths.forEach((path) => {
         assert.isTrue(path.includes('\\'), `Path ${path} should contain at least a single backward slash for this test to be valid`);
         const normalizedPath = normalizeSeparatorsNative(path);
