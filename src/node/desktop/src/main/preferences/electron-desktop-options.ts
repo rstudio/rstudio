@@ -42,7 +42,7 @@ const kRendererEngine = 'renderer.engine';
 const kRendererUseGpuExclusionList = 'renderer.useGpuExclusionList';
 const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds';
 
-const kRExecutablePath = 'platform.windows.rstudioPath';
+const kRExecutablePath = 'platform.windows.rExecutablePath';
 const kPreferR64 = 'platform.windows.preferR64';
 
 const userStateSchema = generateSchema<RStudioUserState>(properties);
@@ -304,7 +304,7 @@ export class DesktopOptionsImpl implements DesktopOptions {
       return '';
     }
 
-    const rExecutablePath: string = this.config.get(kRExecutablePath, properties.platform.default.windows.rstudioPath);
+    const rExecutablePath: string = this.config.get(kRExecutablePath, properties.platform.default.windows.rExecutablePath);
 
     if (!rExecutablePath) {
       return '';
