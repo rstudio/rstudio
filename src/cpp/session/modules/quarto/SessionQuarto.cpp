@@ -619,6 +619,8 @@ SEXP rs_quartoFileResources(SEXP targetSEXP)
 SEXP rs_quartoFileProject(SEXP basenameSEXP, SEXP dirnameSEXP)
 {
    std::vector<std::string> project;
+   std::vector<std::string> resources;
+
    std::string basename = r::sexp::safeAsString(basenameSEXP);
    std::string dirname = r::sexp::safeAsString(dirnameSEXP);
 
@@ -635,12 +637,17 @@ SEXP rs_quartoFileProject(SEXP basenameSEXP, SEXP dirnameSEXP)
          if (proj.isString())
          {
             project.push_back(proj.getString());
-         }   
+         }
+
+         jsonInspect["resources"].getArray().toVectorString(resources);   
       }
    }
    
    r::sexp::Protect protect;
-   return r::sexp::create(project, &protect);
+   SEXP out = r::sexp::createList({"project", "resources"}, &protect);
+   SET_VECTOR_ELT(out, 0, r::sexp::create(project, &protect));
+   SET_VECTOR_ELT(out, 1, r::sexp::create(resources, &protect));
+   return out;
 }
 
 Error quartoCreateProject(const json::JsonRpcRequest& request,

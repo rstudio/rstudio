@@ -356,16 +356,18 @@
   }
 
   if (nzchar(quartoSrcFile)) {
+    # query quarto for project and resources
+    project <- .rs.quartoFileProject(quartoSrcFile)
+    resources <- project$resources
+    project <- project$project
+    
     # query quarto for resources
-    file_list <- c(file_list, .rs.quartoFileResources(quartoSrcFile))
+    file_list <- c(file_list, resources)
 
     # per-directory option may be given in _metadata.yml
     if (file.exists(file.path(dirname(quartoSrcFile), "_metadata.yml"))) {
       file_list <- c(file_list, "_metadata.yml")
     }
-
-    # query quarto for project
-    project <- .rs.quartoFileProject(quartoSrcFile)
     
     if (length(project)) {
       if (identical(project, "")) {
