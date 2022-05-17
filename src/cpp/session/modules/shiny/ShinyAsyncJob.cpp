@@ -57,6 +57,8 @@ void ShinyAsyncJob::start()
 
    // start the R process
    core::system::Options environment;
+   environment.push_back(std::make_pair("RSTUDIO_CHILD_PROCESS_PANE", "job"));
+   
    async_r::AsyncRProcess::start(cmd.c_str(), environment, path_.getParent(), 
          async_r::AsyncRProcessOptions::R_PROCESS_NO_RDATA);
 

@@ -626,6 +626,9 @@ private:
       environment.push_back(std::make_pair("RSTUDIO_VERSION", parsableRStudioVersion()));
       environment.push_back(std::make_pair("RSTUDIO_LONG_VERSION", RSTUDIO_VERSION));
 
+      // inform that this runs in the Render pane
+      environment.push_back(std::make_pair("RSTUDIO_CHILD_PROCESS_PANE", "render"));
+      
       // set the not cran env var
       environment.push_back(std::make_pair("NOT_CRAN", "true"));
 
