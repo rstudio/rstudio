@@ -20,7 +20,7 @@ import { randomString } from '../unit-utils';
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
-import os from 'os';
+import os, { platform } from 'os';
 
 import { FilePath, normalizeSeparatorsNative } from '../../../src/core/file-path';
 import { userHomePath } from '../../../src/core/user';
@@ -604,20 +604,29 @@ describe('FilePath', () => {
       assert.strictEqual(cPath.completeChildPath('/path/to/quux'), cPath);
     });
     it('Paths only contain forward slashes with no duplicates', () => {
-      const paths = ['c:\\www\\app\\my/folder/file.r',
-        'C:\\R\\4.1.2\\bin\\\\R.exe',
+      const paths = [
+        'c:\\www\\app\\my/folder/file.r',
+        'C:\\R\\4.1.2/bin/R.exe',
         'c:\\\\www\\\\app\\my/folder/file.r',
-        'T:\\R-3.6.3\\bin\\x64\\R.exe' ];
+        'T:\\R-3.6.3\\bin\\x64\\R.exe',
+      ];
+    
+      const correctSeparator = process.platform === 'win32' ? '\\' : '/';
+      const wrongSeparator = process.platform !== 'win32' ? '\\' : '/';
+
       paths.forEach((path) => {
-        assert.isTrue(path.includes('\\'), `Path ${path} should contain at least a single backward slash for this test to be valid`);
         const normalizedPath = normalizeSeparatorsNative(path);
-        assert.isFalse(
-          normalizedPath.includes('\\'),
-          `Path ${normalizedPath} should NOT contain backward slashes for this test to be valid`,
+       
+        assert.include(
+          normalizedPath,
+          correctSeparator,
+          `Path ${normalizedPath} should contain backward slashes for this test to be valid after normalization`,
         );
-        assert.isFalse(
-          normalizedPath.includes('/'),
-          `Path ${normalizedPath} should NOT contain double forward slashes for this test to be valid`,
+       
+        assert.notInclude(
+          normalizedPath,
+          wrongSeparator,
+          `Path ${normalizedPath} should NOT forward slashes for this test to be valid after normalization`,
         );
       });
     });
