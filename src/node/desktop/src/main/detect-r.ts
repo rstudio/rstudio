@@ -111,7 +111,7 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
 
     // save the stored version of R
     const path = data.binaryPath as string;
-    ElectronDesktopOptions().setRBinDir(path);
+
     ElectronDesktopOptions().setRExecutablePath(path);
 
     // if the user has changed the default rendering engine,
@@ -195,6 +195,7 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
 
   // resolve path to binary if we were given a directory
   let rExecutable = new FilePath(R);
+  
   if (rExecutable.isDirectory()) {
     rExecutable = rExecutable.completeChildPath(process.platform === 'win32' ? 'R.exe' : 'R');
   }
