@@ -244,9 +244,9 @@ RToolsInfo::RToolsInfo(const std::string& name,
 
       // set GNUC levels
       // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
-      clangArgs.push_back("-D__GNUC__=5");
-      clangArgs.push_back("-D__GNUC_MINOR__=0");
-      clangArgs.push_back("-D__GNUC_PATCHLEVEL__=2");
+      clangArgs.push_back("-D__GNUC__=9");
+      clangArgs.push_back("-D__GNUC_MINOR__=3");
+      clangArgs.push_back("-D__GNUC_PATCHLEVEL__=0");
 
       auto stems = {
          "x86_64-w64-mingw32.static.posix/lib/gcc/x86_64-w64-mingw32.static.posix/10.3.0/include/c++",

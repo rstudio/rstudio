@@ -1196,27 +1196,36 @@ public:
       
       // Figure out if this function call is being made as part of a magrittr
       // chain. If so, then we implicitly set the first argument as that object.
-      if (isPipeOperator(cursor.previousSignificantToken()))
+      RToken prevToken = cursor.previousSignificantToken();
+
+      if (isPipeOperator(prevToken))
       {
-         // If magrittr sees a '.' at the top level (ie: used standalone as
+         // For a magrittr style pipe, if magrittr sees a '.' at the top level (ie: used standalone as
          // an argument) it treats that as a request to move the 'lhs' to
          // that position. (This is not true when '.' is used as part of
          // a more complicated expression)
-         bool usesTopLevelDot = core::algorithm::contains(unnamedArguments, ".");
-         if (!usesTopLevelDot)
+
+         // For a native R style pipe |>, this is only true if we see a '_' at the top level
+
+         bool usesTopLevelPlaceholder;
+         if (prevToken.contentEquals(L"|>"))
+            usesTopLevelPlaceholder = core::algorithm::contains(unnamedArguments, "_");
+         else
+            usesTopLevelPlaceholder = core::algorithm::contains(unnamedArguments, ".");
+         if (!usesTopLevelPlaceholder)
          {
             for (auto&& item : namedArguments)
             {
                if (item.second == ".")
                {
-                  usesTopLevelDot = true;
+                  usesTopLevelPlaceholder = true;
                   break;
                }
             }
          }
 
          std::string chainHead = cursor.getHeadOfPipeChain();
-         if (!chainHead.empty() && !usesTopLevelDot)
+         if (!chainHead.empty() && !usesTopLevelPlaceholder)
             unnamedArguments.insert(unnamedArguments.begin(), chainHead);
       }
 

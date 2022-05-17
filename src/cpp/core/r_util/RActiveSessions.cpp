@@ -40,6 +40,7 @@ namespace r_util {
 Error ActiveSessions::create(const std::string& project,
                              const std::string& workingDir,
                              bool initial,
+                             const std::string& editor,
                              std::string* pId) const
 {
    // generate a new id (loop until we find a unique one)
@@ -53,6 +54,8 @@ Error ActiveSessions::create(const std::string& project,
          id = candidateId;
    }
 
+   LOG_DEBUG_MESSAGE("Creating new session directory: " + dir.getAbsolutePath() + " for editor: " + editor + " with id: " + id);
+
    // create the directory
    Error error = dir.ensureDirectory();
    if (error)
@@ -60,12 +63,20 @@ Error ActiveSessions::create(const std::string& project,
 
    // write initial settings
    ActiveSession activeSession(id, dir);
-   activeSession.setProject(project);
-   activeSession.setWorkingDir(workingDir);
+   if (editor == kWorkbenchRStudio)
+   {
+      activeSession.setProject(project);
+      activeSession.setWorkingDir(workingDir);
+   }
+
    activeSession.setInitial(initial);
    activeSession.setLastUsed();
    activeSession.setRunning(false);
-   activeSession.setLastResumed();
+   activeSession.setCreated();
+   activeSession.setActivityState(kActivityStateLaunching, true);
+   activeSession.setEditor(editor);
+   if (editor == kWorkbenchRStudio)
+      activeSession.setLastResumed();
 
    // return the id if requested
    if (pId != nullptr)
@@ -119,6 +130,9 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(
             }
             else
             {
+               // Logging a message because this also happens when the rworkspaces cannot access the project directory
+               LOG_DEBUG_MESSAGE("Removing invalid session: " + pSession->id());
+
                // remove sessions that don't have required properties
                // (they may be here as a result of a race condition where
                // they are removed but then suspended session data is
@@ -149,9 +163,15 @@ boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) cons
 {
    FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
    if (scratchPath.exists())
+   {
+      LOG_DEBUG_MESSAGE("Found session: " + scratchPath.getAbsolutePath());
       return boost::shared_ptr<ActiveSession>(new ActiveSession(id, scratchPath));
+   }
    else
+   {
+      LOG_DEBUG_MESSAGE("No session with path: " + scratchPath.getAbsolutePath());
       return emptySession(id);
+   }
 }
 
 

@@ -3065,6 +3065,19 @@ core::Error UserPrefValues::setUiLanguage(std::string val)
    return writePref("ui_language", val);
 }
 
+/**
+ * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+ */
+bool UserPrefValues::nativeFileDialogs()
+{
+   return readPref<bool>("native_file_dialogs");
+}
+
+core::Error UserPrefValues::setNativeFileDialogs(bool val)
+{
+   return writePref("native_file_dialogs", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -3302,6 +3315,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kPythonProjectEnvironmentAutomaticActivate,
       kCheckNullExternalPointers,
       kUiLanguage,
+      kNativeFileDialogs,
    });
 }
    

@@ -149,7 +149,6 @@
 
       new[(start + 1):(end - 1)] <- splat[(start + 1):(end - 1)]
    }
-   new <- new[new != ""]
    .rs.scalar(paste(new, collapse = "\n"))
 })
 

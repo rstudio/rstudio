@@ -787,7 +787,7 @@ main <- function () {
    cat("Press [enter] to continue or CTRL+C to skip")
    a <- readLines("stdin",n=1);
 
-   system("./report-options.sh")
+   system("bash report-options.sh")
 }
 
 main()
