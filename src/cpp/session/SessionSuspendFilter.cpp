@@ -13,9 +13,9 @@
  *
  */
 
-#include <unordered_set>
-
 #include <session/SessionSuspendFilter.hpp>
+
+#include <unordered_set>
 
 namespace rstudio {
 namespace session {
@@ -78,7 +78,7 @@ SessionSuspendFilters::SessionSuspendFilters()
 SessionSuspendFilters::~SessionSuspendFilters() {}
 
 /**
- * Determines if recieving a given HttpConnection should reset the suspend timer for the session.
+ * Determines if the request should reset the suspend timer for the session.
  * Assumes that the timer *should* be reset unless a filter explicitly says not to
  *
  * @param pConnection The HttpConnection in question

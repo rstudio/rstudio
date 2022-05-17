@@ -131,9 +131,6 @@ void resetSuspendTimeout(boost::shared_ptr<HttpConnection> pConnection)
 {
    if (s_suspendFilters.shouldResetSuspendTimer(pConnection))
    {
-      LOG_DEBUG_MESSAGE(pConnection->request().uri() +
-                        " URI resetting suspend timeout. Request: " +
-                        pConnection->request().body());
       resetSuspendTimeout();
    }
 }

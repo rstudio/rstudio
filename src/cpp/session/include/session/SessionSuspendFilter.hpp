@@ -34,14 +34,17 @@ public:
 
 /**
  * This class holds an expandable list of filter instances that help a session decide
- * whether or not its suspend timeout should be reset, based on the characteristics
- * of a recieved HttpConnection.
+ * whether or not its suspend timeout should be reset, based any characteristics
+ * of a request.
  *
  * By default, accepted HttpConnections will reset a session's suspend timeout. To
- * add a new filter for a specific type of filter, simply
+ * add a new filter for a specific type of request, simply
  * 1. define the filter in SessionSuspendFilter.cpp and implement the
  *    SessionSuspendFilter interface
  * 2. add the new filter instance into this class' constructor
+ * 
+ * Turn on session protocol debug to aid in discovering which requests are triggering
+ * session suspend timeout resets
  */
 class SessionSuspendFilters
 {
