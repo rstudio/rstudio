@@ -276,10 +276,14 @@ export class DesktopOptionsImpl implements DesktopOptions {
       return '';
     }
 
-    let rBinDir: string = dirname(this.rExecutablePath());
+    const rExecutablePath = this.rExecutablePath();
 
-    if (!rBinDir) {
+    let rBinDir = '';
+
+    if (!rExecutablePath || rExecutablePath === '') {
       rBinDir = this.legacyOptions.rBinDir() ?? properties.platform.default.windows.rBinDir;
+    } else {
+      rBinDir = dirname(rExecutablePath);
     }
 
     return rBinDir;
