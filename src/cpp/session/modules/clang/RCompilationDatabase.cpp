@@ -102,6 +102,8 @@ FilePath compilationConfigFilePath()
    return compilerDatabaseDir().completeChildPath("config.json");
 }
 
+#ifdef _WIN32
+
 FilePath compilerDefinitionsPath(bool isCpp)
 {
    std::string name = isCpp ? "cpp-definitions.h" : "c-definitions.h";
@@ -120,7 +122,6 @@ void generateCompilerDefinitions(FilePath defnPath, bool isCpp)
 
 void generateCompilerDefinitions()
 {
-#ifdef _WIN32
    // update C definitions
    FilePath cDefnPath = compilerDefinitionsPath(false);
    if (s_regenerateCompilerDefinitions || !cDefnPath.exists())
@@ -133,8 +134,9 @@ void generateCompilerDefinitions()
 
    // we've re-generated our definitions, so unset flag
    s_regenerateCompilerDefinitions = false;
-#endif
 }
+
+#endif
 
 FilePath precompiledHeaderDir(const std::string& pkgName)
 {
