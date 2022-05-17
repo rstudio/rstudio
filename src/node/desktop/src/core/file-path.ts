@@ -34,13 +34,27 @@ export class FilePathError extends Error {
 const homePathAlias = '~/';
 const homePathLeafAlias = '~';
 
+/**
+ * Removes duplicate separators from a path, given a separator for search.
+ *
+ * @param {string} path
+ * @param {string} [separator='/']
+ * @return {*} 
+ */
 function normalizeSeparators(path: string, separator = '/') {
   return path.replace(/[\\/]+/g, separator);
 }
 
-export function normalizeSeparatorsNative(path: string) {
-  const separator = process.platform === 'win32' ? '\\' : '/';
-  return normalizeSeparators(path, separator);
+/**
+ * Removes duplicated separators from a path based on platform.
+ *
+ * @export
+ * @param {string} _path
+ * @return {*} 
+ */
+export function normalizeSeparatorsNative(_path: string) {
+  const separator = path.sep;
+  return normalizeSeparators(_path, separator);
 }
 
 /**
