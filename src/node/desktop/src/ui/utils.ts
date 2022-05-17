@@ -57,11 +57,11 @@ function normalizeSeparators(path: string, separator = '/') {
  * Removes duplicated separators from a path based on platform.
  *
  * @export
- * @param {string} _path
+ * @param {string} path
  * @return {*} 
  */
-export function normalizeSeparatorsNative(_path: string) {
+export function normalizeSeparatorsNative(path: string) {
   /* using conditional to set the separator based on platform as `path` is not available here */
   const separator = process.platform === 'win32' ? '\\' : '/';
-  return normalizeSeparators(_path, separator);
+  return normalizeSeparators(path, separator);
 }
