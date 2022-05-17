@@ -18,6 +18,14 @@
 
 #include <boost/function.hpp>
 
+#include "SessionHttpConnection.hpp"
+
+namespace rstudio {
+namespace core {
+   class Error;
+}
+}
+
 namespace rstudio {
 namespace session {
 namespace suspend {
@@ -32,8 +40,11 @@ const char * const kActiveJob = "An active job is running";
 const char * const kCommandPrompt = "Incomplete command prompt entered";
 const char * const kGenericMethod = "Waiting for event: ";
 
+core::Error initialize();
+
 bool disallowSuspend();
 void resetSuspendTimeout();
+void resetSuspendTimeout(boost::shared_ptr<HttpConnection> pConnection);
 void addBlockingOp(std::string op);
 void addBlockingOp(std::string method, const boost::function<bool()>& allowSuspend);
 void removeBlockingOp(std::string op);

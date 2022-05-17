@@ -566,6 +566,9 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // r utils
       (r_utils::initialize)
 
+      // suspend timeout
+      (suspend::initialize)
+
       // modules with c++ implementations
       (modules::spelling::initialize)
       (modules::lists::initialize)
