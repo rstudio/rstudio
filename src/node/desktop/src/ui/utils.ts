@@ -1,3 +1,5 @@
+import path from "path";
+
 const isLocalStorageItemSet = (key: string) => {
   if (typeof window !== "undefined") {
     const value = window.localStorage.getItem(key);
@@ -42,12 +44,26 @@ export const checkForNewLanguage = () => {
   });
 };
 
-// Makes sure that the path only has `/` instead of `\` or `\\` or `//`
+/**
+ * Removes duplicate separators from a path, given a separator for search.
+ *
+ * @param {string} path
+ * @param {string} [separator='/']
+ * @return {*} 
+ */
 function normalizeSeparators(path: string, separator = '/') {
   return path.replace(/[\\/]+/g, separator);
 }
 
-export function normalizeSeparatorsNative(path: string) {
+/**
+ * Removes duplicated separators from a path based on platform.
+ *
+ * @export
+ * @param {string} _path
+ * @return {*} 
+ */
+export function normalizeSeparatorsNative(_path: string) {
+  /* using conditional to set the separator based on platform as `path` is not available here */
   const separator = process.platform === 'win32' ? '\\' : '/';
-  return normalizeSeparators(path, separator);
+  return normalizeSeparators(_path, separator);
 }
