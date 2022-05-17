@@ -139,7 +139,7 @@ public class VisualModeChunk
       outputHost_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
 
       ChunkOutputUi output = null;
-      if (index > 0)
+      if (index >= 0)
       {
          Position pos = parent_.positionFromIndex(index);
          scope_ = parent_.getScopeAtPosition(pos);
