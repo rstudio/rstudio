@@ -201,10 +201,7 @@ public class VisualModeMarkdownWriter
                options.references.prefix = attr.pandocAutoIdentifier("a" + filename).substring(1) + "-";
             }
          }
-         
-        
       }
-      
       
       // check if this represents a line wrapping change
       boolean wrapChanged = lastUsedWriterOptions_ != null &&
@@ -216,9 +213,6 @@ public class VisualModeMarkdownWriter
       // return context
       return new Options(options, wrapChanged);
    }
-
-   
-   
    
    private PanmirrorWriterOptions lastUsedWriterOptions_ = null;
    private WorkbenchContext workbenchContext_;
