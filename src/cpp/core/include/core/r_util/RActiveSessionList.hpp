@@ -1,5 +1,5 @@
 /*
- * RActiveSessions.hpp
+ * RActiveSessionList.hpp
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -21,7 +21,7 @@
 
 #include <core/Settings.hpp>
 #include <core/r_util/RActiveSession.hpp>
-#include <core/r_util/RActiveSessionsStorage.hpp>
+#include <core/r_util/RActiveSessionListStorage.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -30,11 +30,11 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-class ActiveSessions : boost::noncopyable
+class ActiveSessionList : boost::noncopyable
 {
 public:
-   explicit ActiveSessions(const FilePath& rootStoragePath);
-   explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
+   explicit ActiveSessionList(const FilePath& rootStoragePath);
+   explicit ActiveSessionList(const std::shared_ptr<IActiveSessionListStorage> storage, const FilePath& rootStoragePath);
 
    core::Error create(const std::string& project,
                       const std::string& working,
@@ -59,13 +59,13 @@ public:
 
 private:
    FilePath rootStoragePath_;
-   std::shared_ptr<IActiveSessionsStorage> storage_;
+   std::shared_ptr<IActiveSessionListStorage> storage_;
 };
 
-class GlobalActiveSessions : boost::noncopyable
+class GlobalActiveSessionList : boost::noncopyable
 {
 public:
-   explicit GlobalActiveSessions(const FilePath& rootPath) : rootPath_(rootPath) {}
+   explicit GlobalActiveSessionList(const FilePath& rootPath) : rootPath_(rootPath) {}
    std::vector<boost::shared_ptr<GlobalActiveSession> > list() const;
    boost::shared_ptr<GlobalActiveSession> get(const std::string& id) const;
 

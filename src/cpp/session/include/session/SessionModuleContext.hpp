@@ -32,7 +32,7 @@
 #include <core/http/UriHandler.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RToolsInfo.hpp>
-#include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionList.hpp>
 #include <core/Thread.hpp>
 
 #include <session/SessionOptions.hpp>
@@ -111,7 +111,7 @@ std::string rVersionModule();
 
 // active sessions
 core::r_util::ActiveSession& activeSession();
-core::r_util::ActiveSessions& activeSessions();
+core::r_util::ActiveSessionList& activeSessions();
 
 // get a temp file
 core::FilePath tempFile(const std::string& prefix, 

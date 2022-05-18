@@ -101,9 +101,9 @@ set(CORE_SOURCE_FILES
    markdown/sundown/html_smartypants.c
    markdown/sundown/markdown.c
    markdown/sundown/stack.c
-   r_util/RActiveSessions.cpp
+   r_util/RActiveSessionList.cpp
    r_util/RActiveSessionStorage.cpp
-   r_util/RActiveSessionsStorage.cpp
+   r_util/RActiveSessionListStorage.cpp
    r_util/RPackageInfo.cpp
    r_util/RProjectFile.cpp
    r_util/RSessionContext.cpp

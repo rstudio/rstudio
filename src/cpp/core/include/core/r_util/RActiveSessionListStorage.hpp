@@ -1,5 +1,5 @@
 /*
- * RActiveSessionsStorage.hpp
+ * RActiveSessionListStorage.hpp
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -23,7 +23,7 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-   class IActiveSessionsStorage
+   class IActiveSessionListStorage
    {
    public:
       virtual core::Error createSession(const std::string& id, std::map<std::string, std::string> initialProperties) = 0;
@@ -32,15 +32,15 @@ namespace r_util {
       virtual boost::shared_ptr<ActiveSession> getSession(const std::string& id) const = 0;
       virtual bool hasSessionId(const std::string& sessionId) const = 0;
    protected:
-      virtual ~IActiveSessionsStorage() = default;
-      IActiveSessionsStorage() = default;
+      virtual ~IActiveSessionListStorage() = default;
+      IActiveSessionListStorage() = default;
    };
 
-   class FileActiveSessionsStorage : public IActiveSessionsStorage
+   class FileActiveSessionListStorage : public IActiveSessionListStorage
    {
    public:
-      explicit FileActiveSessionsStorage(const FilePath& rootStoragePath);
-      ~FileActiveSessionsStorage() = default;
+      explicit FileActiveSessionListStorage(const FilePath& rootStoragePath);
+      ~FileActiveSessionListStorage() = default;
       core::Error createSession(const std::string& id, std::map<std::string, std::string> initialProperties) override;
       std::vector< std::string > listSessionIds() const override;
       size_t getSessionCount() const override;

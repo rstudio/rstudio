@@ -33,7 +33,7 @@
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
 
-#include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionList.hpp>
 #include <core/r_util/RProjectFile.hpp>
 
 #ifndef _WIN32
@@ -225,7 +225,7 @@ SessionScopeState validateSessionScope(const SessionScope& scope,
                           std::string* pProjectFilePath)
 {
    // does this session exist?
-   r_util::ActiveSessions activeSessions(userScratchPath);
+   r_util::ActiveSessionList activeSessions(userScratchPath);
    boost::shared_ptr<r_util::ActiveSession> pSession
                                           = activeSessions.get(scope.id());
    if (pSession->empty() || !pSession->validate(userHomePath,

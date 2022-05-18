@@ -34,7 +34,6 @@
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RUserData.hpp>
 #include <core/r_util/RSessionContext.hpp>
-#include <core/r_util/RActiveSessions.hpp>
 #include <core/r_util/RVersionsPosix.hpp>
 
 #include <monitor/MonitorConstants.hpp>

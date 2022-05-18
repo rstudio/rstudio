@@ -1912,11 +1912,11 @@ r_util::ActiveSession& activeSession()
 }
 
 
-r_util::ActiveSessions& activeSessions()
+r_util::ActiveSessionList& activeSessions()
 {
-   static boost::shared_ptr<r_util::ActiveSessions> pSessions;
+   static boost::shared_ptr<r_util::ActiveSessionList> pSessions;
    if (!pSessions)
-      pSessions.reset(new r_util::ActiveSessions(userScratchPath()));
+      pSessions.reset(new r_util::ActiveSessionList(userScratchPath()));
    return *pSessions;
 }
 

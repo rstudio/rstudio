@@ -1,5 +1,5 @@
 /*
- * RActiveSessionsStorage.cpp
+ * RActiveSessionListStorage.cpp
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -13,10 +13,10 @@
  *
  */
 
-#include <core/r_util/RActiveSessionsStorage.hpp>
+#include <core/r_util/RActiveSessionListStorage.hpp>
 
 #include <core/r_util/RActiveSessionStorage.hpp>
-#include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionList.hpp>
 
 #include <algorithm>
 
@@ -45,7 +45,7 @@ FilePath buildActiveSessionStoragePath(const FilePath& rootStoragePath)
    return rootStoragePath.completeChildPath("sessions/active");
 }
 
-FileActiveSessionsStorage::FileActiveSessionsStorage(const FilePath& rootStoragePath)
+FileActiveSessionListStorage::FileActiveSessionListStorage(const FilePath& rootStoragePath)
 {
    storagePath_ = buildActiveSessionStoragePath(rootStoragePath);
    Error error = storagePath_.ensureDirectory();
@@ -55,13 +55,13 @@ FileActiveSessionsStorage::FileActiveSessionsStorage(const FilePath& rootStorage
    }
 }
 
-bool FileActiveSessionsStorage::hasSessionId(const std::string& sessionId) const
+bool FileActiveSessionListStorage::hasSessionId(const std::string& sessionId) const
 {
    FilePath dir = getSessionDirPath(storagePath_, sessionId);
    return dir.exists();
 }
 
-core::Error FileActiveSessionsStorage::createSession(const std::string& id, std::map<std::string, std::string> initialProperties)
+core::Error FileActiveSessionListStorage::createSession(const std::string& id, std::map<std::string, std::string> initialProperties)
 {
    FilePath sessionScratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
    Error error = sessionScratchPath.ensureDirectory();
@@ -76,7 +76,7 @@ core::Error FileActiveSessionsStorage::createSession(const std::string& id, std:
    return error;
 }
 
-std::vector<std::string> FileActiveSessionsStorage::listSessionIds() const
+std::vector<std::string> FileActiveSessionListStorage::listSessionIds() const
 {
    // list to return
    std::vector<std::string> sessions;
@@ -104,13 +104,13 @@ std::vector<std::string> FileActiveSessionsStorage::listSessionIds() const
    return sessions;
 }
 
-size_t FileActiveSessionsStorage::getSessionCount() const
+size_t FileActiveSessionListStorage::getSessionCount() const
 {
    return listSessionIds().size();
 }
 
 // Returns a shared pointer to the session, or an empty session if it does not exist
-boost::shared_ptr<ActiveSession> FileActiveSessionsStorage::getSession(const std::string& id) const
+boost::shared_ptr<ActiveSession> FileActiveSessionListStorage::getSession(const std::string& id) const
 {
    FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
    if (scratchPath.exists())

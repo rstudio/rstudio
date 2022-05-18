@@ -1,5 +1,5 @@
 /*
- * DBActiveSessionsStorage.hpp
+ * DBActiveSessionListStorage.hpp
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -17,7 +17,7 @@
 #define DB_ACTIVE_SESSIONS_STORAGE_HPP
 
 #include <core/r_util/RActiveSession.hpp>
-#include <core/r_util/RActiveSessionsStorage.hpp>
+#include <core/r_util/RActiveSessionListStorage.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
@@ -29,11 +29,11 @@ namespace storage {
 using namespace core;
 using namespace core::r_util;
 
-class DBActiveSessionsStorage : public IActiveSessionsStorage
+class DBActiveSessionListStorage : public IActiveSessionListStorage
 {
 public:
-   explicit DBActiveSessionsStorage(const std::string& userId, const FilePath& rootStoragePath);
-   ~DBActiveSessionsStorage() = default;
+   explicit DBActiveSessionListStorage(const std::string& userId, const FilePath& rootStoragePath);
+   ~DBActiveSessionListStorage() = default;
    core::Error createSession(const std::string& id, std::map<std::string, std::string> initialProperties) override;
    std::vector< std::string > listSessionIds() const override;
    size_t getSessionCount() const override;

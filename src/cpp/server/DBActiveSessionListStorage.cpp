@@ -1,5 +1,5 @@
 /*
- * DBActiveSessionsStorage.cpp
+ * DBActiveSessionListStorage.cpp
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -13,7 +13,7 @@
  *
  */
 
-#include <server/DBActiveSessionsStorage.hpp>
+#include <server/DBActiveSessionListStorage.hpp>
 
 #include <core/Database.hpp>
 #include <server/DBActiveSessionStorage.hpp>
@@ -26,18 +26,18 @@ namespace storage {
 
 using namespace server_core::database;
 
-DBActiveSessionsStorage::DBActiveSessionsStorage(const std::string& userId, const FilePath& rootStoragePath)
+DBActiveSessionListStorage::DBActiveSessionListStorage(const std::string& userId, const FilePath& rootStoragePath)
    : userId_(userId), rootStoragePath_(rootStoragePath)
 {
 }
 
-core::Error DBActiveSessionsStorage::createSession(const std::string& id, std::map<std::string, std::string> initialProperties)
+core::Error DBActiveSessionListStorage::createSession(const std::string& id, std::map<std::string, std::string> initialProperties)
 {
    DBActiveSessionStorage storage{id};
    return storage.writeProperties(initialProperties);
 }
 
-std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
+std::vector< std::string > DBActiveSessionListStorage::listSessionIds() const
 {
    boost::shared_ptr<database::IConnection> connection;
    std::vector<std::string> sessions;
@@ -70,7 +70,7 @@ std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
    return sessions;
 }
 
-size_t DBActiveSessionsStorage::getSessionCount() const
+size_t DBActiveSessionListStorage::getSessionCount() const
 {
    boost::shared_ptr<database::IConnection> connection;
    std::vector<std::string> sessions;
@@ -96,7 +96,7 @@ size_t DBActiveSessionsStorage::getSessionCount() const
    return (size_t) 0;
 }
 
-boost::shared_ptr<ActiveSession> DBActiveSessionsStorage::getSession(const std::string& id) const
+boost::shared_ptr<ActiveSession> DBActiveSessionListStorage::getSession(const std::string& id) const
 {
    FilePath scratchPath = rootStoragePath_.completeChildPath(kSessionDirPrefix + id);
    if(hasSessionId(id))
@@ -110,7 +110,7 @@ boost::shared_ptr<ActiveSession> DBActiveSessionsStorage::getSession(const std::
    }
 }
 
-bool DBActiveSessionsStorage::hasSessionId(const std::string& sessionId) const
+bool DBActiveSessionListStorage::hasSessionId(const std::string& sessionId) const
 {
    boost::shared_ptr<database::IConnection> connection;
    bool hasId = false;
