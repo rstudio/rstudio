@@ -298,9 +298,6 @@ Error createSshKey(const json::JsonRpcRequest& request,
    // type
    cmd << "-t" << type;
 
-   if (type == kSshKeyTypeRsa)
-      cmd << "-b 4096";
-
    // passphrase (optional)
    cmd << "-N";
    if (!passphrase.empty())

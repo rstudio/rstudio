@@ -114,7 +114,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             checkBox.addValueChangeHandler(this);
             checkBoxes_.add(checkBox);
             flowPanel.add(checkBox);
-            if (StringUtil.equals(module, PaneManager.PRESENTATION_PANE))
+            if (module == "Presentation")
               checkBox.setVisible(false);
          }
 
@@ -517,13 +517,14 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          PaneConfig prevConfig = userPrefs_.panes().getGlobalValue().cast();
          boolean consoleLeftOnTop = prevConfig.getConsoleLeftOnTop();
          boolean consoleRightOnTop = prevConfig.getConsoleRightOnTop();
-         if (panes.get(0).equals(PaneManager.CONSOLE_PANE))
+         final String kConsole = "Console";
+         if (panes.get(0).equals(kConsole))
             consoleLeftOnTop = true;
-         else if (panes.get(1).equals(PaneManager.CONSOLE_PANE))
+         else if (panes.get(1).equals(kConsole))
             consoleLeftOnTop = false;
-         else if (panes.get(2).equals(PaneManager.CONSOLE_PANE))
+         else if (panes.get(2).equals(kConsole))
             consoleRightOnTop = true;
-         else if (panes.get(3).equals(PaneManager.CONSOLE_PANE))
+         else if (panes.get(3).equals(kConsole))
             consoleRightOnTop = false;
 
          if (displayColumnCount_ != additionalColumnCount_)
@@ -551,9 +552,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       for (int i = 0; i < visiblePanes_.length; i++)
       {
          String value = visiblePanes_[i].getValue(visiblePanes_[i].getSelectedIndex());
-         if (StringUtil.equals(value, UserPrefsAccessor.Panes.QUADRANTS_TABSET1))
+         if (value == "TabSet1")
             visiblePanePanels_[i].add(tabSet1ModuleList_);
-         else if (StringUtil.equals(value, UserPrefsAccessor.Panes.QUADRANTS_TABSET2))
+         else if (value == "TabSet2")
             visiblePanePanels_[i].add(tabSet2ModuleList_);
       }
    }

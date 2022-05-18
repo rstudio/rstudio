@@ -51,7 +51,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    public PlotsPane(Commands commands, EventBus events, PlotsServerOperations server,
          DependencyManager dependencies)
    {
-      super(constants_.plotsTitle(), events);
+      super("Plots", events);
       commands_ = commands;
       server_ = server;
       dependencies_ = dependencies;

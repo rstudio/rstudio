@@ -298,9 +298,6 @@ namespace prefs {
 #define kSvnExePath "svn_exe_path"
 #define kTerminalPath "terminal_path"
 #define kRsaKeyPath "rsa_key_path"
-#define kSshKeyType "ssh_key_type"
-#define kSshKeyTypeEd25519 "ed25519"
-#define kSshKeyTypeRsa "rsa"
 #define kUseDevtools "use_devtools"
 #define kCleanBeforeInstall "clean_before_install"
 #define kUseInternet2 "use_internet2"
@@ -1423,16 +1420,10 @@ public:
    core::Error setTerminalPath(std::string val);
 
    /**
-    * The path to the SSH key file to use.
+    * The path to the RSA key file to use.
     */
    std::string rsaKeyPath();
    core::Error setRsaKeyPath(std::string val);
-
-   /**
-    * The encryption type to use for the SSH key file.
-    */
-   std::string sshKeyType();
-   core::Error setSshKeyType(std::string val);
 
    /**
     * Whether to use the devtools R package.
@@ -1765,7 +1756,7 @@ public:
    core::Error setSaveRetryTimeout(int val);
 
    /**
-    * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
+    * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
     */
    bool insertNativePipeOperator();
    core::Error setInsertNativePipeOperator(bool val);

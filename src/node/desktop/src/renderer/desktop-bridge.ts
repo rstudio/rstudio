@@ -13,8 +13,7 @@
  *
  */
 
-import { ipcRenderer, webContents } from 'electron';
-import { logger } from '../core/logger';
+import { ipcRenderer } from 'electron';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -371,20 +370,6 @@ export function getDesktopBridge() {
         .invoke('desktop_set_pending_quit', pendingQuit)
         .then((response) => callback(response))
         .catch((error) => reportIpcError('setPendingQuit', error));
-    },
-
-    openFile: (path: string) => {
-      if (!path) {
-        return;
-      }
-      const webcontents = webContents
-        .getAllWebContents();
-
-      if (webcontents.length) {
-        webcontents[0]
-          .executeJavaScript(`window.desktopHooks.openFile("${path}")`)
-          .catch((error: unknown) => logger().logError(error));
-      }
     },
 
     openProjectInNewWindow: (projectFilePath: string) => {

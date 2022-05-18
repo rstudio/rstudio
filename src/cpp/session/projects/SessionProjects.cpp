@@ -137,7 +137,7 @@ bool findProjectFile(const std::string& path, std::string* pResult)
    // sets that as the result and returns true.
    //
    // Otherwise, looks for an .Rproj file in the specified path as follows:
-   //
+   // 
    // 1. If it finds an .Rproj with same name as folder, returns it:
    //          /home/gary/foo -> /home/gary/foo/foo.Rproj
    //
@@ -181,7 +181,7 @@ Error findProjectInFolder(const json::JsonRpcRequest& request,
    Error error = json::readParams(request.params, &folder);
    if (error)
       return error;
-
+   
    std::string result;
    findProjectFile(folder, &result);
    pResponse->setResult(result);
@@ -220,9 +220,9 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
                             "inputs", inputsJson);
    if (error)
       return error;
-
+   
    FilePath projectPath = projectFilePath.getParent();
-
+   
    return r::exec::RFunction(".rs.initializeProjectFromTemplate")
          .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
          .addParam(string_utils::utf8ToSystem(projectPath.getAbsolutePath()))
@@ -293,7 +293,7 @@ Error createProject(const json::JsonRpcRequest& request,
 
    }
 
-
+   
    // if we have a custom project template, call that first
    if (!projectTemplateOptions.isNull() &&
        json::isType<json::Object>(projectTemplateOptions))
@@ -302,7 +302,7 @@ Error createProject(const json::JsonRpcRequest& request,
       if (error)
          return error;
    }
-
+   
    // default project scaffolding
    error = projectFilePath.getParent().ensureDirectory();
    if (error)
@@ -317,7 +317,7 @@ Error createProject(const json::JsonRpcRequest& request,
                                        ProjectContext::defaultConfig());
       if (error)
          return error;
-
+   
       return Success();
    }
    else
@@ -331,12 +331,12 @@ Error createProjectFile(const json::JsonRpcRequest& request,
                         json::JsonRpcResponse* pResponse)
 {
    using namespace projects;
-
+   
    std::string projDir;
    Error error = json::readParams(request.params, &projDir);
    if (error)
       return error;
-
+   
    // Resolve the path and ensure it exists
    FilePath projDirPath = module_context::resolveAliasedPath(projDir);
    FilePath projFilePath;
@@ -357,11 +357,11 @@ Error createProjectFile(const json::JsonRpcRequest& request,
                projFilePath,
                ProjectContext::buildDefaults(),
                ProjectContext::defaultConfig());
-
+      
       if (error)
          LOG_ERROR(error);
    }
-
+   
    // Return the name of the discovered and/or created .Rproj filename
    pResponse->setResult(module_context::createAliasedPath(projFilePath));
    return Success();
@@ -381,7 +381,6 @@ json::Object projectConfigJson(const r_util::RProjectConfig& config)
    configJson["enable_code_indexing"] = config.enableCodeIndexing;
    configJson["use_spaces_for_tab"] = config.useSpacesForTab;
    configJson["num_spaces_for_tab"] = config.numSpacesForTab;
-   configJson["use_native_pipe_operator"] = config.useNativePipeOperator;
    configJson["auto_append_newline"] = config.autoAppendNewline;
    configJson["strip_trailing_whitespace"] = config.stripTrailingWhitespace;
    configJson["line_endings"] = config.lineEndings;
@@ -584,7 +583,6 @@ Error writeProjectConfig(const json::Object& configJson)
                     "enable_code_indexing", config.enableCodeIndexing,
                     "use_spaces_for_tab", config.useSpacesForTab,
                     "num_spaces_for_tab", config.numSpacesForTab,
-                    "use_native_pipe_operator", config.useNativePipeOperator,
                     "default_encoding", config.encoding,
                     "default_sweave_engine", config.defaultSweaveEngine,
                     "default_latex_program", config.defaultLatexProgram,
@@ -682,10 +680,10 @@ Error writeProjectConfig(const json::Object& configJson)
                             "python_type", config.pythonType,
                             "python_version", config.pythonVersion,
                             "python_path", config.pythonPath);
-
+   
    if (error)
       return error;
-
+   
    // ensure Python path is project-relative
    FilePath projectDir = s_projectContext.directory();
    FilePath pythonPath = module_context::resolveAliasedPath(config.pythonPath);
@@ -980,7 +978,7 @@ SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)
 {
    std::string absolutePath = r::sexp::asUtf8String(projectFilePathSEXP);
    FilePath projectFilePath(absolutePath);
-
+   
    Error error = r_util::writeProjectFile(
             projectFilePath,
             ProjectContext::buildDefaults(),
@@ -998,17 +996,17 @@ SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSE
 {
    std::string projectFileAbsolutePath = r::sexp::asString(projectFileAbsolutePathSEXP);
    const FilePath projectFilePath(projectFileAbsolutePath);
-
+   
    std::vector<std::string> docRelativePaths;
    bool success = r::sexp::fillVectorString(docRelativePathsSEXP, &docRelativePaths);
    if (!success)
       return R_NilValue;
-
+   
    for (const std::string& path : docRelativePaths)
    {
       addFirstRunDoc(projectFilePath, path);
    }
-
+   
    return R_NilValue;
 }
 
@@ -1016,7 +1014,7 @@ SEXP rs_requestOpenProject(SEXP projectFileSEXP, SEXP newSessionSEXP)
 {
    std::string projectFile = r::sexp::asUtf8String(projectFileSEXP);
    bool newSession = r::sexp::asLogical(newSessionSEXP);
-
+   
    // opening projects in a new session is only supported in desktop, RSP
    if (newSession &&
        options().programMode() == kSessionProgramModeServer &&
@@ -1024,14 +1022,14 @@ SEXP rs_requestOpenProject(SEXP projectFileSEXP, SEXP newSessionSEXP)
    {
       newSession = false;
    }
-
+   
    json::Object data;
    data["project_file"] = projectFile;
    data["new_session"] = newSession;
-
+   
    ClientEvent event(client_events::kRequestOpenProject, data);
    module_context::enqueClientEvent(event);
-
+   
    return R_NilValue;
 }
 
@@ -1041,7 +1039,7 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_writeProjectFile);
    RS_REGISTER_CALL_METHOD(rs_addFirstRunDoc);
    RS_REGISTER_CALL_METHOD(rs_requestOpenProject);
-
+   
    // call project-context initialize
    Error error = s_projectContext.initialize();
    if (error)
@@ -1113,15 +1111,15 @@ json::Array websiteOutputFormatsJson()
    if (projectContext().config().buildType == r_util::kBuildTypeWebsite)
    {
       std::vector<std::string> formats;
-
+      
       Error error = r::exec::RFunction(".rs.getAllOutputFormats")
             .addUtf8Param(projectContext().buildTargetPath())
             .addParam(projectContext().defaultEncoding())
             .call(&formats);
-
+      
       if (error)
          LOG_ERROR(error);
-
+      
       formatsJson = json::toJsonArray(formats);
    }
    return formatsJson;
@@ -1130,3 +1128,4 @@ json::Array websiteOutputFormatsJson()
 } // namespace projects
 } // namespace session
 } // namespace rstudio
+

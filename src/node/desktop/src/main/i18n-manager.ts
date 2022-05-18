@@ -16,7 +16,6 @@
 
 import i18next from 'i18next';
 import * as en from '../assets/locales/en.json';
-import * as fr from '../assets/locales/fr.json';
 
 // Initialize the translation resources, as required for a document.
 const initI18n = () => {
@@ -24,7 +23,6 @@ const initI18n = () => {
     .init({
       resources: {
         en: { translation: en },
-        fr: { translation: fr },
       },
       fallbackLng: 'en',
     })
@@ -34,33 +32,30 @@ const initI18n = () => {
     });
 };
 
-const changeLanguage = async (language = 'en') => {
-  return i18next.changeLanguage(language).catch((err) => {
-    console.log('Something went wrong changing language to ' + language, err);
-  });
-};
-
 /**
  * Localize a document
- *
+ * 
  * Find document elements containing translatable text,
  * that is, elements with the 'data-18n-id' attribute set,
  * and replace the contents of those elements with the appropriate
  * translated equivalent (if any).
- *
+ * 
  * @param document The document, whose elements will be translated.
  * @param scope The scope in which translations are defiend.
  */
 function localize(document: Document, scope: string): void {
+
   try {
     localizeImpl(document, scope);
   } catch (err) {
     const prefix = i18next.t('i18nManager.errorLocalizingDocument');
     console.log(`${prefix}: ${err}`);
   }
+
 }
 
 function localizeImpl(document: Document, scope: string): void {
+
   // find translatable elements, and translate them
   const elements = document.querySelectorAll('[data-i18n]');
   elements.forEach((el) => {
@@ -70,6 +65,7 @@ function localizeImpl(document: Document, scope: string): void {
       el.innerHTML = i18next.t(fullId);
     }
   });
+
 }
 
-export { initI18n, localize, changeLanguage };
+export { initI18n, localize };

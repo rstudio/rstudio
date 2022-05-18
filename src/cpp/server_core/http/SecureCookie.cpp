@@ -204,7 +204,7 @@ std::string readSecureCookie(const std::string& signedCookieValue)
    return value;
 }
 
-http::Cookie set(const std::string& name,
+void set(const std::string& name,
          const std::string& value,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
@@ -229,8 +229,6 @@ http::Cookie set(const std::string& name,
 
    // add to response
    pResponse->addCookie(cookie);
-
-   return cookie;
 }
 
 void remove(const http::Request& request,
@@ -267,7 +265,6 @@ const std::string& getKey()
 {
    return s_secureCookieKey;
 }
-
 const std::string& getKeyFileUsed()
 {
    return s_secureCookieKeyPath;

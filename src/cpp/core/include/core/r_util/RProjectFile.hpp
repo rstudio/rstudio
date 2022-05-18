@@ -64,7 +64,7 @@ std::ostream& operator << (std::ostream& stream, const YesNoAskValue& val);
 struct RProjectBuildDefaults
 {
    RProjectBuildDefaults()
-      : useDevtools(true),
+      : useDevtools(true), 
         cleanBeforeInstall(true)
    {
    }
@@ -83,7 +83,6 @@ struct RProjectConfig
         enableCodeIndexing(true),
         useSpacesForTab(true),
         numSpacesForTab(2),
-        useNativePipeOperator(DefaultValue),
         autoAppendNewline(false),
         stripTrailingWhitespace(false),
         lineEndings(kLineEndingsUseDefault),
@@ -128,7 +127,6 @@ struct RProjectConfig
    bool enableCodeIndexing;
    bool useSpacesForTab;
    int numSpacesForTab;
-   int useNativePipeOperator;
    bool autoAppendNewline;
    bool stripTrailingWhitespace;
    int lineEndings;
@@ -200,8 +198,9 @@ bool isWebsiteDirectory(const FilePath& projectDir);
 FilePath websiteRootDirectory(const FilePath& filePath);
 
 } // namespace r_util
-} // namespace core
+} // namespace core 
 } // namespace rstudio
 
 
 #endif // CORE_R_UTIL_R_PROJECT_FILE_HPP
+

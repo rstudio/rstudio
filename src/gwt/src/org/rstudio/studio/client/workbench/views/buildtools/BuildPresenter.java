@@ -317,7 +317,7 @@ public class BuildPresenter extends BasePresenter
          {
             sendLoadCommandToConsole("devtools::load_all(\"" + loadAllPath + "\")");
          });
-      }, () -> {}, constants_.buildText());
+      }, () -> {}, "Build");
    }
    
    void onServeQuartoSite()
@@ -425,7 +425,7 @@ public class BuildPresenter extends BasePresenter
          {
             terminalHelper_.warnBusyTerminalBeforeCommand(() ->
                   executeBuildNoBusyCheck(type, subType),
-                  constants_.buildText(), constants_.terminalTerminatedQuestion(),
+                  "Build", constants_.terminalTerminatedQuestion(),
                   userPrefs_.busyDetection().getValue());
          }
       });
@@ -453,7 +453,7 @@ public class BuildPresenter extends BasePresenter
             }
 
          });
-      }, () -> {}, constants_.buildText());
+      }, () -> {}, "Build");
    }
 
    void onStopBuild()

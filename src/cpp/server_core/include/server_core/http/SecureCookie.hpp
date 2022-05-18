@@ -53,7 +53,7 @@ std::string readSecureCookie(const std::string& signedCookieValue);
 
 core::Error hashWithSecureKey(const std::string& value, std::string* pHMAC);
 
-http::Cookie set(const std::string& name,
+void set(const std::string& name,
          const std::string& value,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,

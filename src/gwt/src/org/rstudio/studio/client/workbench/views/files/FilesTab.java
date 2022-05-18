@@ -50,7 +50,7 @@ public class FilesTab extends DelayLoadWorkbenchTab<Files>
                    EventBus events,
                    Commands commands)
    {
-      super(constants_.filesTitle(), shim);
+      super("Files", shim);
       binder.bind(commands, shim);
       events.addHandler(OpenFileInBrowserEvent.TYPE, shim);
       events.addHandler(DirectoryNavigateEvent.TYPE, shim);

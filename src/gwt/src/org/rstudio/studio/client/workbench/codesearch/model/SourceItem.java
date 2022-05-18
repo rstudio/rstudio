@@ -72,10 +72,6 @@ public class SourceItem extends JavaScriptObject
    public final native JsObject getMetadata() /*-{
       return this.metadata || {};
    }-*/;
-
-   public final native boolean getHidden() /*-{
-      return this.hidden;
-   }-*/;
    
    public final boolean hasXRef()
    {

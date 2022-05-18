@@ -173,7 +173,7 @@ public class FindInFilesDialog extends ModalDialog<FindInFilesDialog.State>
 
    public FindInFilesDialog(OperationWithInput<State> operation)
    {
-      super(constants_.findInFilesCaption(), Roles.getDialogRole(), operation);
+      super("Find in Files", Roles.getDialogRole(), operation);
 
       dirChooser_ = new DirectoryChooserTextBox(constants_.searchInLabel(),
          ElementIds.TextBoxButtonId.FIND_IN,

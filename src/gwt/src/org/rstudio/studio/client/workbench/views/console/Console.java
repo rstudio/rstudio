@@ -34,7 +34,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane.ConsoleMode;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleActivateEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
@@ -229,7 +228,7 @@ public class Console
    public void onLayoutZoomConsole()
    {
       onActivateConsole();
-      events_.fireEvent(new ZoomPaneEvent(PaneManager.CONSOLE_PANE));
+      events_.fireEvent(new ZoomPaneEvent("Console"));
    }
 
    public Display getDisplay()

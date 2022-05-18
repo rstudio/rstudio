@@ -43,7 +43,7 @@ public class AnsiCode
    public static final int BLURRED = 2;
    public static final int BOLD_BLURRED_OFF = 22;
    public static final String BOLD_STYLE = "xtermBold";
-   public static final String BLURRED_STYLE = "xtermBlur";
+   public static final String BLURRED_STYLE = "NYI";
 
    public static final int ITALIC = 3;
    public static final int ITALIC_OFF = 23;
@@ -99,8 +99,6 @@ public class AnsiCode
    public static final int FONT_SIX = 16;
    public static final int FONT_SEVEN = 17;
    public static final int FONT_EIGHT = 18;
-
-   public static final String HYPERLINK_STYLE = "xtermHyperlink";
 
    // Font-nine is used by RStudio to reduce spacing between lines
    public static final int FONT_NINE = 19;
@@ -392,12 +390,12 @@ public class AnsiCode
          }
          else if (codeVal == BLURRED)
          {
-            clazzes_.add(BLURRED_STYLE);
+            // NYI clazzes_.add(BLURRED_STYLE);
          }
          else if (codeVal == BOLD_BLURRED_OFF)
          {
             clazzes_.remove(BOLD_STYLE);
-            clazzes_.remove(BLURRED_STYLE);
+            // NYI clazzes_.remove(BLURRED_STYLE);
          }
          else if (codeVal == ITALIC)
          {

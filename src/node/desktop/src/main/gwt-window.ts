@@ -25,16 +25,6 @@ export abstract class GwtWindow extends DesktopBrowserWindow {
   constructor(options: WindowConstructorOptions) {
     super(options);
     this.window.on('focus', this.onActivated.bind(this));
-
-    // when a GWT window is navigated (for example, because we opened a new project),
-    // we need to clear the history -- otherwise, Electron may attempt to handle the
-    // mouse forward + backward buttons and "navigate" to the previously-open project,
-    // which will fail
-    //
-    // https://github.com/rstudio/rstudio/issues/11016
-    this.window.webContents.on('did-navigate', (event, params) => {
-      this.window.webContents.clearHistory();
-    });
   }
 
   zoomActualSize(): void {

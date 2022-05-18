@@ -407,7 +407,7 @@ describe('FilePath', () => {
       assert(isSuccessful(result));
       const newPath = path.join(target, extraFolder);
       assert.isTrue(fs.existsSync(newPath));
-      fs.rmSync(path.join(os.tmpdir(), firstLevel), { recursive: true });
+      fs.rmdirSync(path.join(os.tmpdir(), firstLevel), { recursive: true });
     });
     it('createDirectorySync should fail when it cannot create the directory', () => {
       const fp = new FilePath(cannotCreatePath);
@@ -502,7 +502,7 @@ describe('FilePath', () => {
       assert(isSuccessful(result));
       const newPath = path.join(target, extraFolder);
       assert.isTrue(await FilePath.existsAsync(newPath));
-      await fsPromises.rm(path.join(os.tmpdir(), firstLevel), { recursive: true });
+      await fsPromises.rmdir(path.join(os.tmpdir(), firstLevel), { recursive: true });
     });
     it('createDirectory should fail when it cannot create the directory', async () => {
       const fp = new FilePath(cannotCreatePath);

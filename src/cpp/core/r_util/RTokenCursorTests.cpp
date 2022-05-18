@@ -149,18 +149,6 @@ test_context("RTokenCursor")
       // isPipeOperator exercises the token's begin/end iterators
       expect_false(token_utils::isPipeOperator(result));
    }
-   
-   test_that("1:2:3 is parsed appropriately")
-   {
-      RTokens rTokens(L"1:2:3");
-      expect_true(rTokens.size() == 5);
-      expect_true(rTokens.at(0).isType(RToken::NUMBER));
-      expect_true(rTokens.at(1).isType(RToken::OPER));
-      expect_true(rTokens.at(2).isType(RToken::NUMBER));
-      expect_true(rTokens.at(3).isType(RToken::OPER));
-      expect_true(rTokens.at(4).isType(RToken::NUMBER));
-      
-   }
 }
 
 } // namespace unit_tests

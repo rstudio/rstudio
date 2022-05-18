@@ -110,33 +110,12 @@ Error runVerifyInstallationSession(core::system::User& user,
 
 } // namespace overlay
 
-/*
- * This is called from the socket proxy before it reads data from the socket to ensure
- * the socket connection is still valid. When there's no valid UserSession, false is returned
- * to cause the connection to be closed.
- *
- * When the session is alive, the socket's last activity time is updated to 'now' to preserve the
- * UserSession for the case where the websocket is actively being used, but the rserver session
- * has passively timed out.
- *
- * With normal rserver RPCs, we differentiate between background requests and those that represent real
- * user interactivity but do not have a way to do that for websockets. Tying websocket activity to
- * normal session activity is probably too permissive, but closing the socket when a user is actively
- * using the session causes them to lose work.
- */
-bool checkForValidUserSession(const std::string& username)
+bool sessionCookieValid(const std::string& cookieValue)
 {
-   bool res = auth::handler::UserSession::userSessionValid(username);
+   bool res = !auth::handler::isCookieRevoked(cookieValue);
    if (!res)
-      LOG_DEBUG_MESSAGE("Closing socket connection - user session for: " + username + " has been invalidated");
-   else
-       auth::handler::UserSession::updateSocketLastActiveTime(username);
+      LOG_DEBUG_MESSAGE("Closing socket connection - cookie has been revoked due to user signout");
    return res;
-}
-
-void socketConnectionClosed(const std::string& username)
-{
-   auth::handler::UserSession::removeUserSessionConnection(username);
 }
    
 namespace {
@@ -354,7 +333,6 @@ void sendSparkUIResponse(
 void handleLocalhostResponse(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       boost::shared_ptr<http::IAsyncClient> ptrLocalhost,
-      const std::string& username,
       const std::string& port,
       const std::string& baseAddress,
       bool ipv6,
@@ -374,12 +352,8 @@ void handleLocalhostResponse(
       boost::shared_ptr<http::Socket> ptrServer =
          boost::static_pointer_cast<http::Socket>(ptrLocalhost);
 
-      auth::handler::UserSession::addUserSessionConnection(username);
-
       // connect the sockets
-      http::SocketProxy::create(ptrClient, ptrServer,
-                                boost::bind(checkForValidUserSession, username),
-                                boost::bind(socketConnectionClosed, username));
+      http::SocketProxy::create(ptrClient, ptrServer, boost::bind(sessionCookieValid, ptrConnection->request().cookieValue(kUserIdCookie)));
    }
    // normal response, write and close (handle redirects if necessary)
    else
@@ -982,8 +956,6 @@ void proxyRpcRequest(
    bool refreshCredentials = shouldRefreshCredentials(ptrConnection->request());
    if (refreshCredentials)
    {
-      auth::handler::UserSession::updateSessionLastActiveTime(username);
-
       auth::handler::refreshAuthCookies(userIdentifier,
                                         ptrConnection->request(),
                                         &ptrConnection->response());
@@ -1132,7 +1104,7 @@ void proxyLocalhostRequest(
    }
 
    LocalhostResponseHandler onResponse =
-         boost::bind(handleLocalhostResponse, ptrConnection, _3, username, port, _2, ipv6, _1);
+         boost::bind(handleLocalhostResponse, ptrConnection, _3, port, _2, ipv6, _1);
    http::ErrorHandler onError = boost::bind(handleLocalhostError, ptrConnection, _1);
 
    // see if the request should be handled by the overlay (unless it should be handled by the server)
@@ -1162,7 +1134,7 @@ void proxyLocalhostRequest(
 
    // execute request
    pClient->execute(
-            boost::bind(handleLocalhostResponse, ptrConnection, pClient, username, port, address, ipv6, _1),
+            boost::bind(handleLocalhostResponse, ptrConnection, pClient, port, address, ipv6, _1),
             onError);
 }
 

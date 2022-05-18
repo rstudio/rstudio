@@ -53,7 +53,7 @@ public class FindOutputPane extends WorkbenchPane
    public FindOutputPane(Commands commands,
                          EventBus eventBus)
    {
-      super(constants_.findResultsTitle());
+      super("Find Results");
       commands_ = commands;
       eventBus_ = eventBus;
       ensureWidget();

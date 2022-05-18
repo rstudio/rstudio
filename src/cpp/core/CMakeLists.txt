@@ -35,6 +35,7 @@ set(CORE_SOURCE_FILES
    ConfigProfile.cpp
    ConfigUtils.cpp
    CrashHandler.cpp
+   Database.cpp
    DateTime.cpp
    ExponentialBackoff.cpp
    Exec.cpp
@@ -131,10 +132,6 @@ set(CORE_SOURCE_FILES
    text/TermBufferParser.cpp
    zlib/zlib.cpp
 )
-
-if (RSTUDIO_HAS_SOCI)
-   list(APPEND CORE_SOURCE_FILES Database.cpp)
-endif()
 
 # UNIX specific
 if (UNIX)
@@ -324,9 +321,6 @@ target_link_libraries(rstudio-core
 if (RSTUDIO_UNIT_TESTS_ENABLED)
 
    file(GLOB_RECURSE CORE_TEST_FILES "*Tests.cpp")
-   if (NOT RSTUDIO_HAS_SOCI)
-      list(REMOVE_ITEM CORE_TEST_FILES "${CMAKE_CURRENT_SOURCE_DIR}/DatabaseTests.cpp")
-   endif()
 
    add_executable(rstudio-core-tests
       TestMain.cpp

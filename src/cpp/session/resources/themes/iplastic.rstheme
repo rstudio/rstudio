@@ -180,10 +180,9 @@
 .xtermInvertColor { color: #eeeeee; }
 .xtermInvertBgColor { background-color: #333333; }
 .xtermBold { font-weight: bold; }
-.xtermBlur { filter: blur(1px); }
 .xtermUnderline { text-decoration: underline; }
-.xtermHyperlink { text-decoration: underline; cursor: pointer; text-decoration-style: dotted; color: #75507b; }
-.xtermHyperlink:hover { text-decoration: underline; text-decoration-style: solid; }
+.xtermHyperlink { cursor: pointer; }
+.xtermHyperlink:hover { text-decoration: underline; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }

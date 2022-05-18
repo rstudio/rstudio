@@ -16,14 +16,13 @@
  */
 
 /* eslint-disable @typescript-eslint/no-implicit-any-catch */
-import { changeLanguage, initI18n } from '../../main/i18n-manager';
+import { initI18n } from '../../main/i18n-manager';
 import i18next from 'i18next';
-import { checkForNewLanguage } from '../utils';
 
 const loadPageLocalization = () => {
   initI18n();
 
-  const updateLabels = () => {
+  window.addEventListener('load', () => {
     const i18nIds = [
       'cannotConnectToR',
       'rstudioCantEstablishAConnectionToR',
@@ -66,18 +65,6 @@ const loadPageLocalization = () => {
     } catch (err) {
       console.log('Error occurred when loading i18n: ', err);
     }
-  };
-
-  window.addEventListener('load', () => {
-    checkForNewLanguage()
-      .then(async (newLanguage: any) =>
-        changeLanguage('' + newLanguage).then(() => {
-          updateLabels();
-        }),
-      )
-      .catch((err: any) => {
-        console.error('An error happened when trying to fetch a new locale: ', err);
-      });
   });
 };
 

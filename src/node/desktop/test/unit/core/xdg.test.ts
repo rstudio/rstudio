@@ -157,7 +157,7 @@ describe('Xdg', () => {
       const result = Xdg.systemConfigDir();
       assert.isTrue(result.getAbsolutePath().startsWith(fullDir));
       assert.isTrue(hasExpectedEnding(result));
-      fs.rmSync(fullDir, { recursive: true });
+      fs.rmdirSync(fullDir, { recursive: true });
       assert.isFalse(fs.existsSync(fullDir));
     });
     it('systemConfigFile returns default location if requested file not found', () => {

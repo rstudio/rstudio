@@ -958,11 +958,11 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String weaveRnwHelpTitle();
 
     /**
-     * Translated "SSH key:".
+     * Translated "SSH RSA key:".
      *
-     * @return translated "SSH key:"
+     * @return translated "SSH RSA key:"
      */
-    @DefaultMessage("SSH key:")
+    @DefaultMessage("SSH RSA key:")
     @Key("sshRSAKeyFormLabel")
     String sshRSAKeyFormLabel();
 
@@ -976,11 +976,11 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String viewPublicKeyCaption();
 
     /**
-     * Translated "Create SSH Key...".
+     * Translated "Create RSA Key...".
      *
-     * @return translated "Create SSH Key..."
+     * @return translated "Create RSA Key..."
      */
-    @DefaultMessage("Create SSH Key...")
+    @DefaultMessage("Create RSA Key...")
     @Key("createRSAKeyButtonLabel")
     String createRSAKeyButtonLabel();
 
@@ -1745,20 +1745,20 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String vCSHelpLink();
 
     /**
-     * Translated "Create SSH Key".
+     * Translated "Create RSA Key".
      *
-     * @return translated "Create SSH Key"
+     * @return translated "Create RSA Key"
      */
-    @DefaultMessage("Create SSH Key")
+    @DefaultMessage("Create RSA Key")
     @Key("createKeyDialogCaption")
     String createKeyDialogCaption();
 
     /**
-     * Translated "Creating SSH Key".
+     * Translated "Create RSA Key".
      *
-     * @return translated "Creating SSH Key"
+     * @return translated "Create RSA Key"
      */
-    @DefaultMessage("Creating SSH Key...")
+    @DefaultMessage("Creating RSA Key...")
     @Key("onProgressLabel")
     String onProgressLabel();
 
@@ -1790,49 +1790,22 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String showValidateErrorMessage();
 
     /**
-     * Translated "The SSH key will be created at:".
+     * Translated "The RSA key will be created at:".
      *
-     * @return translated "The SSH key will be created at:"
+     * @return translated "The RSA key will be created at:"
      */
-    @DefaultMessage("The SSH key will be created at:")
+    @DefaultMessage("The RSA key will be created at:")
     @Key("pathCaption")
     String pathCaption();
 
     /**
-     * Translated "SSH key management".
+     * Translated "SSH/RSA key management".
      *
-     * @return translated "SSH key management"
+     * @return translated "SSH/RSA key management"
      */
-    @DefaultMessage("SSH key management")
+    @DefaultMessage("SSH/RSA key management")
     @Key("pathHelpCaption")
     String pathHelpCaption();
-
-    /**
-     * Translated "SSH key type: ".
-     *
-     * @return translated "SSH key type: "
-     */
-    @DefaultMessage("SSH key type: ")
-    @Key("sshKeyTypeLabel")
-    String sshKeyTypeLabel();
-
-    /**
-     * Translated "RSA"
-     *
-     * @return translated "RSA"
-     */
-    @DefaultMessage("RSA")
-    @Key("sshKeyRSAOption")
-    String sshKeyRSAOption();
-
-    /**
-     * Translated "ED25519"
-     *
-     * @return translated "ED25519"
-     */
-    @DefaultMessage("ED25519")
-    @Key("sshKeyEd25519Option")
-    String sshKeyEd25519Option();
 
     /**
      * Translated "Passphrase (optional):".
@@ -1862,11 +1835,11 @@ public interface StudioClientCommonConstants extends com.google.gwt.i18n.client.
     String confirmOverwriteKeyCaption();
 
     /**
-     * Translated "An SSH key already exists at {0}. Do you want to overwrite the existing key?".
+     * Translated "An RSA key already exists at {0}. Do you want to overwrite the existing key?".
      *
-     * @return translated "An SSH key already exists at {0}. Do you want to overwrite the existing key?"
+     * @return translated "An RSA key already exists at {0}. Do you want to overwrite the existing key?"
      */
-    @DefaultMessage("An SSH key already exists at {0}. Do you want to overwrite the existing key?")
+    @DefaultMessage("An RSA key already exists at {0}. Do you want to overwrite the existing key?")
     @Key("confirmOverwriteKeyMessage")
     String confirmOverwriteKeyMessage(String path);
 

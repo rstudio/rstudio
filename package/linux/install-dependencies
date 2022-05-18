@@ -10,16 +10,16 @@ else
    cmake_version=$(cmake --version | grep -oP "cmake version \K[\w.]+")
    version_array=(${cmake_version//./ })
    if ((${version_array[0]} < 3)) || 
-      ( ((${version_array[0]} == 3)) && ((${version_array[1]} < 19)) ) ||
-      ( ((${version_array[0]} == 3)) && ((${version_array[1]} == 19)) && ((${version_array[2]} < 8)) ); then
+      ( ((${version_array[0]} == 3)) && ((${version_array[1]} < 4)) ) ||
+      ( ((${version_array[0]} == 3)) && ((${version_array[1]} == 4)) && ((${version_array[2]} < 3)) ); then
       install_cmake=true
    fi
 fi
 
 if $install_cmake ; then
- 	CMAKE_VERSION=cmake-3.19.8
+ 	CMAKE_VERSION=cmake-3.4.3
 	CMAKE_TARBALL=$CMAKE_VERSION.tar.gz
-	wget http://www.cmake.org/files/v3.19/$CMAKE_TARBALL
+	wget http://www.cmake.org/files/v3.4/$CMAKE_TARBALL
 	tar xf $CMAKE_TARBALL
 	cd $CMAKE_VERSION
 	./bootstrap 

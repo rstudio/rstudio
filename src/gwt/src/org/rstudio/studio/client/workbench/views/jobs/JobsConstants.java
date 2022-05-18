@@ -53,15 +53,6 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
     String localJobUnfinished();
 
     /**
-     * Translated "Jobs".
-     *
-     * @return translated "Jobs"
-     */
-    @DefaultMessage("Jobs")
-    @Key("jobsTitle")
-    String jobsTitle();
-
-    /**
      * Translated "Cannot retrieve job output".
      *
      * @return translated "Cannot retrieve job output"
@@ -340,13 +331,5 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
     @Key("viewAllJobsTitle")
     String viewAllJobsTitle();
 
-    /**
-     * Translated "Launcher".
-     *
-     * @return translated "Launcher"
-     */
-    @DefaultMessage("Launcher")
-    @Key("launcherTitle")
-    String launcherTitle();
 
 }

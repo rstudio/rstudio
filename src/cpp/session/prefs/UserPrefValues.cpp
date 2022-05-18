@@ -2208,7 +2208,7 @@ core::Error UserPrefValues::setTerminalPath(std::string val)
 }
 
 /**
- * The path to the SSH key file to use.
+ * The path to the RSA key file to use.
  */
 std::string UserPrefValues::rsaKeyPath()
 {
@@ -2218,19 +2218,6 @@ std::string UserPrefValues::rsaKeyPath()
 core::Error UserPrefValues::setRsaKeyPath(std::string val)
 {
    return writePref("rsa_key_path", val);
-}
-
-/**
- * The encryption type to use for the SSH key file.
- */
-std::string UserPrefValues::sshKeyType()
-{
-   return readPref<std::string>("ssh_key_type");
-}
-
-core::Error UserPrefValues::setSshKeyType(std::string val)
-{
-   return writePref("ssh_key_type", val);
 }
 
 /**
@@ -2949,7 +2936,7 @@ core::Error UserPrefValues::setSaveRetryTimeout(int val)
 }
 
 /**
- * Whether the Insert Pipe Operator command should use the native R pipe operator, |>
+ * Whether the Insert Pipe Operator command should insert the native R pipe operator, |>
  */
 bool UserPrefValues::insertNativePipeOperator()
 {
@@ -3250,7 +3237,6 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSvnExePath,
       kTerminalPath,
       kRsaKeyPath,
-      kSshKeyType,
       kUseDevtools,
       kCleanBeforeInstall,
       kUseInternet2,

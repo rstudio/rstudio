@@ -41,23 +41,6 @@ if(EXISTS "/etc/redhat-release")
    endif()
 endif()
 
-# detect Ubuntu 22.04
-set(IS_UBUNTU_JAMMY FALSE)
-if(EXISTS "/etc/os-release")
-  file(READ "/etc/os-release" OS_RELEASE)
-  string(FIND "${OS_RELEASE}" "UBUNTU_CODENAME=jammy" OS_RELEASE_JAMMY_POS)
-  if(OS_RELEASE_JAMMY_POS GREATER 0)
-    set(IS_UBUNTU_JAMMY TRUE)
-  endif()
-endif()
-
-# set libssl dependency
-if(IS_UBUNTU_JAMMY)
-  set(RSTUDIO_DEBIAN_DEPENDS_SSL "libssl-dev")
-else()
-  set(RSTUDIO_DEBIAN_DEPENDS_SSL "libssl1.0.0 | libssl1.0.2 | libssl1.1")
-endif()
-
 # configuration specific
 if(RSTUDIO_SERVER)
 
@@ -87,7 +70,7 @@ if(RSTUDIO_SERVER)
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, ${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libsqlite3-0, libpq5, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libsqlite3-0, libpq5, ")
 
 elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
 
@@ -119,7 +102,7 @@ elseif(RSTUDIO_DESKTOP OR RSTUDIO_ELECTRON)
   endif()
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, ${RSTUDIO_DEBIAN_DEPENDS_SSL}, libclang-dev, libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
 
 endif()
 

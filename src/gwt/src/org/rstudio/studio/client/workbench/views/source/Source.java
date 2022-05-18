@@ -123,7 +123,6 @@ import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
-import org.rstudio.studio.client.workbench.ui.PaneManager;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.console.shell.events.SuppressNextShellFocusEvent;
@@ -1418,7 +1417,7 @@ public class Source implements InsertSourceEvent.Handler,
             public void execute()
             {
                events_.fireEvent(new ZoomPaneEvent(columnManager_.getActive().getName(),
-                  PaneManager.SOURCE_COLUMN));
+                  "SourceColumn"));
             }
          });
    }

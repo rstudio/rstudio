@@ -111,9 +111,7 @@ void setSessionContextSource(SessionContextSource source);
 
 core::http::Headers getAuthCookies(const core::http::Response& response);
 
-bool checkForValidUserSession(const std::string& username);
-
-void socketConnectionClosed(const std::string& username);
+bool sessionCookieValid(const std::string& cookieValue);
 
 } // namespace session_proxy
 } // namespace server

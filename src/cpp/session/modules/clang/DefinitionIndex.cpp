@@ -50,7 +50,6 @@ struct CppDefinitions
 {
    std::string file;
    std::time_t fileLastWrite;
-   bool hidden;
    std::deque<CppDefinition> definitions;
 };
 
@@ -66,7 +65,7 @@ bool insertDefinition(const CppDefinition& definition,
    return true;
 }
 
-typedef std::pair<bool, boost::function<bool(const CppDefinition&)>> DefinitionVisitor;
+typedef boost::function<bool(const CppDefinition&)> DefinitionVisitor;
 
 CXChildVisitResult cursorVisitor(CXCursor cxCursor,
                                  CXCursor,
@@ -145,20 +144,18 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
       parentName = parent.displayName();
    }
 
-   DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
-
    // create the definition
    CppDefinition definition(cursor.getUSR(),
                             kind,
                             parentName,
                             name,
-                            visitor.first,
                             cursor.getSourceLocation().getSpellingLocation());
 
    // yield the definition if it's not a namespace (break if requested)
    if (kind != CppNamespaceDefinition)
    {
-      if (!visitor.second(definition))
+      DefinitionVisitor& visitor = *((DefinitionVisitor*)clientData);
+      if (!visitor(definition))
          return CXChildVisit_Break;
    }
 
@@ -174,12 +171,6 @@ CXChildVisitResult cursorVisitor(CXCursor cxCursor,
    {
       return CXChildVisit_Continue;
    }
-}
-
-bool isGeneratedFile(const FilePath& inputFile) {
-   std::string contents;
-   Error error = core::readStringFromFile(inputFile, &contents);
-   return boost::algorithm::contains(contents, "do not edit by hand");
 }
 
 void fileChangeHandler(const core::system::FileChangeEvent& event)
@@ -240,18 +231,16 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
          CppDefinitions definitions;
          definitions.file = file;
          definitions.fileLastWrite = event.fileInfo().lastWriteTime();
-         definitions.hidden = isGeneratedFile(FilePath(definitions.file));
          s_definitionsByFile[file] = definitions;
+         DefinitionVisitor visitor =
+            boost::bind(insertDefinition, _1, &s_definitionsByFile[file]);
 
-         DefinitionVisitor visitor = std::make_pair(
-            definitions.hidden,
-            boost::bind(insertDefinition, _1, &s_definitionsByFile[file])
-         );
+         // visit the cursors
          libclang::clang().visitChildren(
               libclang::clang().getTranslationUnitCursor(tu),
               cursorVisitor,
               (CXClientData)&visitor);
-         
+
          // dispose translation unit and index
          libclang::clang().disposeTranslationUnit(tu);
          libclang::clang().disposeIndex(index);
@@ -355,12 +344,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
       {
          // search for the definition
          CppDefinition def;
-         DefinitionVisitor visitor = std::make_pair(
-            // hidden: does not matter. This CppDefinition is only used for location
-            //         can consider that the definition is not hidden
-            false, 
-            boost::bind(findUSR, USR, _1, &def)
-         );
+         DefinitionVisitor visitor = boost::bind(findUSR, USR, _1, &def);
 
          // visit the cursors
          libclang::clang().visitChildren(
@@ -437,7 +421,6 @@ json::Object cppDefinitionToJson(const CppDefinition& definition)
    definitionJson["file"] = definition.location.filePath.getAbsolutePath();
    definitionJson["line"] = numberTo<int>(definition.location.line, 1);
    definitionJson["column"] = numberTo<int>(definition.location.column, 1);
-   definitionJson["hidden"] = definition.hidden;
    return definitionJson;
 }
 
@@ -455,9 +438,7 @@ CppDefinition cppDefinitionFromJson(const json::Object& object)
                                   "name", definition.name,
                                   "file", file,
                                   "line", line,
-                                  "column", column, 
-                                  "hidden", definition.hidden
-                                  );
+                                  "column", column);
    if (error)
    {
       LOG_ERROR(error);
@@ -531,12 +512,6 @@ void loadDefinitionIndex()
       if (!FilePath::exists(definitions.file))
          continue;
 
-      // if the json does not have the hidden field, bail
-      // so that the file is parsed again
-      error = json::readObject(definitionsJson.getObject(), "hidden", definitions.hidden);
-      if (error)
-         continue;
-
       for (const json::Value& defJson : defsArrayJson)
       {
          if (!json::isType<json::Object>(defJson))
@@ -573,7 +548,6 @@ void saveDefinitionIndex()
                      std::back_inserter(defsArrayJson),
                      cppDefinitionToJson);
       definitionsJson["definitions"] = defsArrayJson;
-      definitionsJson["hidden"] = definitions.hidden;
 
       indexJson.push_back(definitionsJson);
    }
@@ -606,23 +580,16 @@ void searchDefinitions(const std::string& term,
    // first search translation units we have an in-memory index for
    // (this will reflect unsaved changes in editor buffers)
    TranslationUnits units = rSourceIndex().getIndexedTranslationUnits();
-   for (TranslationUnits::iterator it = units.begin(); it != units.end(); ++it)
+   for (const TranslationUnits::value_type& unit : units)
    {
-      const TranslationUnit& unit = it->second;
-      const std::string& filename = it->first;
-
-      bool hidden = isGeneratedFile(FilePath(filename));
-      
       // search for matching definitions
-      DefinitionVisitor visitor = std::make_pair(
-         hidden, 
-         boost::bind(insertMatching, term, pattern, _1, pDefinitions)
-      );
+      DefinitionVisitor visitor =
+         boost::bind(insertMatching, term, pattern, _1, pDefinitions);
 
       // visit the cursors
       libclang::clang().visitChildren(
            libclang::clang().getTranslationUnitCursor(
-                                 unit.getCXTranslationUnit()),
+                                 unit.second.getCXTranslationUnit()),
            cursorVisitor,
            (CXClientData)&visitor);
    }

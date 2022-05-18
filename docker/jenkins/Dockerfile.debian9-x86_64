@@ -1,64 +1,67 @@
-FROM ubuntu:jammy
+FROM debian:stretch
 
-ENV OPERATING_SYSTEM=ubuntu_jammy
+ENV OPERATING_SYSTEM=debian_9
 
-ARG AWS_REGION=us-east-1
-
-# install needed packages. replace httpredir apt source with cloudfront
+# update apt repository to cloudfront's mirror and add cran35 to apt sources
 RUN set -x \
-    && sed -i "s/archive.ubuntu.com/$AWS_REGION.ec2.archive.ubuntu.com/" /etc/apt/sources.list \
+    && sed -i "s/deb.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
+    && sed -i "s/security.debian.org/cloudfront.debian.net/" /etc/apt/sources.list \
     && export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
-    && apt-get install -y gnupg1
+    && apt-get install -y gnupg1 \
+    && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys '95C0FAF38DB3CCAD0C080A7BDC78B2DDEABC47B7' \
+    && echo 'deb http://cran.rstudio.com/bin/linux/debian stretch-cran35/' >> /etc/apt/sources.list \
+    && apt-get update
 
-RUN apt-get update && \
-    export DEBIAN_FRONTEND=noninteractive && \
-    apt-get install -y \
+# update system
+RUN set -x \
+    && apt-get update -y
+
+# install necessary packages
+RUN apt-get update -y && apt-get install -y \
     ant \
-    build-essential \
-    clang \
+    libboost-all-dev \
+    bzip2 \
+    clang-4.0 \
     curl \
     debsigs \
     dpkg-sig \
     expect \
     fakeroot \
-    git-core \
-    libattr1-dev \
+    gcc \
+    git \
+    gnupg1 \
+    openjdk-8-jdk  \
     libacl1-dev \
-    libbz2-dev \
     libcap-dev \
     libcurl4-openssl-dev \
-    libfuse2 \
-    libgtk-3-0 \
-    libgl1-mesa-dev \
-    libegl1-mesa \
-    libpam-dev \
-    libpango1.0-dev \
+    libpam0g-dev \
+    libffi-dev \
     libpq-dev \
     libsqlite3-dev \
-    libuser1-dev \
-    libssl-dev \
     libxml2-dev \
-    libxslt1-dev \
-    lsof \
     ninja-build \
-    openjdk-11-jdk \
-    p7zip-full \
-    patchelf \
-    pkg-config \
-    python3-dev \
-    python-is-python3 \
-    r-base \
-    sudo \
-    unzip \
+    procps \
     uuid-dev \
-    valgrind \
+    make \
+    p7zip-full \
+    libssl1.0-dev \
+    libpango-1.0-0 \
+    r-base \
+    rrdtool \
+    sudo \
     wget \
-    xvfb \
-    zlib1g-dev
-
-# ensure we use the java 11 compiler
-RUN update-alternatives --set java /usr/lib/jvm/java-11-openjdk-amd64/bin/java
+    libxml-commons-external-java \
+    mesa-common-dev \
+    zlib1g \
+    libattr1-dev \
+    libcap-dev \
+    libacl1-dev \
+    lsof \
+    python \
+    libuser1-dev \
+    libglib2.0-dev \
+    valgrind
 
 # copy RStudio tools (needed so that our other dependency scripts can find it)
 RUN mkdir -p /tools
@@ -74,11 +77,14 @@ RUN bash /tmp/install-boost || bash /tmp/install-boost
 
 # install cmake
 COPY package/linux/install-dependencies /tmp/
-RUN /bin/bash /tmp/install-dependencies
+RUN bash /tmp/install-dependencies
+
+# add clang to system path
+ENV PATH=/usr/lib/llvm-4.0/bin:$PATH
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad bionic
+RUN bash /tmp/install-crashpad debian9
 
 # copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
@@ -90,7 +96,7 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common bionic
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common debian9
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/
@@ -108,4 +114,3 @@ ARG JENKINS_UID=999
 RUN groupadd -g $JENKINS_GID jenkins && \
     useradd -m -d /var/lib/jenkins -u $JENKINS_UID -g jenkins jenkins && \
     echo "jenkins ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
-

@@ -24,7 +24,7 @@ import { Expected, ok, err, expect } from '../core/expected';
 import { logger } from '../core/logger';
 import { Err, success, safeError } from '../core/err';
 import { ChooseRModalWindow } from '..//ui/widgets/choose-r';
-import { createStandaloneErrorDialog, handleLocaleCookies } from './utils';
+import { createStandaloneErrorDialog } from './utils';
 import { t } from 'i18next';
 
 import { ElectronDesktopOptions } from './preferences/electron-desktop-options';
@@ -97,9 +97,6 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
 
     // ask the user what version of R they'd like to use
     const chooseRDialog = new ChooseRModalWindow(rInstalls);
-
-    void handleLocaleCookies(chooseRDialog);
-
     const [data, error] = await chooseRDialog.showModal();
     if (error) {
       return err(error);

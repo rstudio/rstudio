@@ -67,7 +67,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                      Provider<UserState> pUserState,
                      HtmlMessageListener htmlMessageListener)
    {
-      super(constants_.viewerTitle(), events);
+      super("Viewer", events);
       commands_ = commands;
       globalDisplay_ = globalDisplay;
       server_ = server;

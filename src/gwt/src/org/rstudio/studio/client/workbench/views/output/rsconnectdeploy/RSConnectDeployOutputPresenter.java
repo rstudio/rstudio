@@ -50,7 +50,7 @@ public class RSConnectDeployOutputPresenter extends BusyPresenter
                                    Binder binder,
                                    EventBus events)
    {
-      super(outputFactory.create(constants_.deployTitle(), ""));
+      super(outputFactory.create("Deploy", ""));
       binder.bind(commands, this);
       view_ = (CompileOutputPaneDisplay) getView();
       view_.setHasLogs(false);

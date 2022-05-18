@@ -61,7 +61,7 @@
                 }
             },
             "default": {
-                "zoomLevel": 1.0,
+                "zoomLevel": 1.5,
                 "windowBounds": { "width": 1200, "height": 900, "x": 0, "y": 0 },
                 "accessibility": false
             }

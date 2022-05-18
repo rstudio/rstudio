@@ -43,7 +43,7 @@ public class SourceCppOutputTab extends DelayLoadWorkbenchTab<SourceCppOutputPre
    @Inject
    public SourceCppOutputTab(Shim shim, Commands commands, EventBus events)
    {
-      super(constants_.sourceCppTitle(), shim);
+      super("Source Cpp", shim);
       GWT.<Binder>create(Binder.class).bind(commands, shim);
 
       events.addHandler(SourceCppStartedEvent.TYPE, shim);

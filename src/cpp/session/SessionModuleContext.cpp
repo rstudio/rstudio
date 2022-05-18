@@ -1185,23 +1185,49 @@ FilePath tempDir()
 
 FilePath findProgram(const std::string& name)
 {
-   // NOTE: Previously, we checked both 'system::findProgramOnPath()' as well
-   // as R's 'Sys.which()'. We prefer using 'findProgramOnPath()' here as it
-   // is threadsafe, and there are some contexts where this function might be
-   // invoked on a background thread, e.g. when called via the offlineService()
-   // thread.
-   //
-   // The main concern is Windows, where it's possible that the rsession and
-   // embedded R process could be referencing separate 'environ' blocks,
-   // and so the PATHs used for finding programs may be different. However,
-   // ~1 year of testing didn't identify any real issues so we just use the
-   // thread-safe version now.
-   FilePath resultPath;
-   Error error = system::findProgramOnPath(name, &resultPath);
-   if (error)
-      return FilePath();
+   // Added isMainThread() test here to allow the console to run offline.
+   // On starting a terminal, it does 'which svn' and adds that dir to the
+   // path if it find one
+   // FUTURE: Can we always use findProgramOnPath? It will be a lot faster since R's
+   // version seems to fork a process to call the shell's 'which'
+   // Be careful of Windows there are two copies of the environment so
+   // R's env might be out of sync with rsession's PATH.
+   if (!core::thread::isMainThread())
+   {
+      FilePath resultPath;
+      Error error = system::findProgramOnPath(name, &resultPath);
+      if (error)
+      {
+         return FilePath();
+      }
+      return resultPath;
+   }
+   else
+   {
+      std::string which;
+      FilePath resultPath;
 
-   return resultPath;
+      // For now, going to check both ways and log warnings if they don't match
+      Error error = r::exec::RFunction("Sys.which", name).call(&which);
+      Error dbgError = system::findProgramOnPath(name, &resultPath);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return FilePath();
+      }
+      else
+      {
+         if (dbgError && which != "")
+         {
+            LOG_WARNING_MESSAGE("findProgramOnPath returns error: " + dbgError.asString() + " Sys.which returns: " + resultPath.getAbsolutePath());
+         }
+         else if (which != resultPath.getAbsolutePath())
+         {
+            LOG_WARNING_MESSAGE("findProgramOnPath returns wrong result: " + which + " != " + resultPath.getAbsolutePath());
+         }
+         return FilePath(which);
+      }
+   }
 }
 
 bool addTinytexToPathIfNecessary()

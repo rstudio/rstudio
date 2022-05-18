@@ -74,14 +74,14 @@ FilePath defaultLogPathImpl()
 {
 #ifdef RSTUDIO_SERVER
 #ifdef RSTUDIO_PRO_BUILD
-   return FilePath(RSTUDIO_DEFAULT_LOG_PATH);
+   return FilePath("/var/log/rstudio/rstudio-server");
 #else
    // For open-source Server, support logging even if RStudio Server is run
    // as a non-root user.
    if (core::system::effectiveUserIsRoot())
    {
       // server: root uses default documented logging directory
-      return FilePath(RSTUDIO_DEFAULT_LOG_PATH);
+      return FilePath("/var/log/rstudio/rstudio-server");
    }
    else
    {

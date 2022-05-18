@@ -86,47 +86,36 @@ public class CodeSearchOracle extends SuggestOracle
             char prevChar = StringUtil.charAt(suggestionLower, matchPos - 1);
             if (prevChar == '_' || prevChar == '-' ||
                   (!isFile && prevChar == '.'))
+            {
                penalty = j + 1;
+            }
          }
          
          // Less penalty for case-sensitive matches
          if (StringUtil.charAt(suggestion, matchPos) == query.charAt(j))
             penalty--;
-            
+         
+         // More penalty for 'uninteresting' files
+         if (suggestion == "RcppExports.R" ||
+             suggestion == "RcppExports.cpp")
+            penalty += 6;
+         
+         // More penalty for 'uninteresting' extensions (e.g. .Rd)
+         String extension = StringUtil.getExtension(suggestionLower);
+         if (extension.toLowerCase() == "rd")
+            penalty += 6;
+         
          totalPenalty += penalty;
       }
       
       // Penalize file targets
       if (isFile)
-      {
          totalPenalty++;
-
-         // More penalty for 'uninteresting' files
-         if (isUninterestingFile(suggestion))
-            totalPenalty += 6;
-      }
       
       // Penalize unmatched characters
       totalPenalty += (query.length() - matches.size()) * query.length();
       
       return totalPenalty;
-   }
-
-   public static boolean isUninterestingFile(String filename)
-   {
-      if (filename == "RcppExports.R" ||
-          filename == "RcppExports.cpp" ||
-          filename == "cpp11.R" ||
-          filename == "cpp11.cpp" ||
-          filename == "arrowExports.R" ||
-          filename == "arrowExports.cpp")
-         return true;
-
-      String extension = StringUtil.getExtension(filename);
-      if (extension.toLowerCase() == "rd")
-         return true;
-      
-      return false;
    }
    
    @Override

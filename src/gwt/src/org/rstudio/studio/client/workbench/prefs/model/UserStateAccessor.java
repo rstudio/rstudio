@@ -108,7 +108,7 @@ public class UserStateAccessor extends Prefs
       protected View() {} 
 
       public final native double getZoomLevel() /*-{
-         return this && this.zoomLevel || 1;
+         return this && this.zoomLevel || 1.5;
       }-*/;
 
       public final native JavaScriptObject getWindowBounds() /*-{

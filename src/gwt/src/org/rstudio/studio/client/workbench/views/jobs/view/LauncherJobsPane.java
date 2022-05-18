@@ -35,7 +35,7 @@ public class LauncherJobsPane extends WorkbenchPane
    public LauncherJobsPane(UserPrefs uiPrefs,
                            LauncherJobsPaneWidgets widgets)
    {
-      super(constants_.launcherTitle());
+      super("Launcher");
       
       uiPrefs_ = uiPrefs;
       widgets_ = widgets;

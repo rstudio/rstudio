@@ -329,7 +329,7 @@ describe('Font tests', () => {
     })();
     const testDesktopOptions = ElectronDesktopOptions(kTestingConfigDirectory, mockLegacyOptions);
 
-    assert.strictEqual(testDesktopOptions.zoomLevel(), 1.0);
+    assert.strictEqual(testDesktopOptions.zoomLevel(), 1.5);
   });
 
   it('set zoom level overrides legacy zoom level', () => {

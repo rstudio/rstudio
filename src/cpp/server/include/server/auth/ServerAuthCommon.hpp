@@ -85,8 +85,6 @@ void prepareHandler(handler::Handler& handler,
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier);
 
-boost::optional<boost::posix_time::time_duration> getCookieExpiry(bool staySignedIn);
-
 } // namespace common
 } // namespace auth
 } // namespace server

@@ -126,14 +126,14 @@ options(help_type = "html")
    
    # order matches by subsequence match score
    scores <- .rs.scoreMatches(tolower(flat), tolower(query))
-   ordered <- flat[order(scores, nchar(flat))]
+   ordered <- flat[order(scores)]
    matches <- unique(ordered[.rs.isSubsequence(tolower(ordered), tolower(query))])
    
    # force first character to match, but allow typos after.
    # also keep matches with one or more leading '.', so that e.g.
    # the prefix 'libpaths' can match '.libPaths'
    if (nzchar(query)) {
-      first <- .rs.escapeForRegex(substring(query, 1L, 1L))
+      first <- substring(query, 1, 1)
       pattern <- sprintf("^[.]*[%s]", first)
       matches <- grep(pattern, matches, value = TRUE, perl = TRUE)
    }
@@ -711,15 +711,17 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("search", function(query)
 {
-   # first, check and see if we can get an exact match
-   exactMatch <- help(query, help_type = "html")
+   exactMatch = help(query, help_type = "html")
    if (length(exactMatch) == 1)
    {
       print(exactMatch)
       return()
    }
-   
-   # if that failed, then we'll do an explicit search
-   fmt <- "help/doc/html/Search?pattern=%s&title=1&keyword=1&alias=1"
-   sprintf(fmt, utils::URLencode(query, reserved = TRUE))
+   else
+   {
+      paste("help/doc/html/Search?pattern=",
+            utils::URLencode(query, reserved = TRUE),
+            "&title=1&keyword=1&alias=1",
+            sep = "")
+   }
 })

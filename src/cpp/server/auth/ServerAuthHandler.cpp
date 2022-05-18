@@ -26,11 +26,8 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/Thread.hpp>
-#include <core/PeriodicCommand.hpp>
-#include <server/ServerScheduler.hpp>
 
 #include <server_core/ServerDatabase.hpp>
-#include <server_core/http/SecureCookie.hpp>
 
 #include <server/ServerConstants.hpp>
 #include <server/ServerObject.hpp>
@@ -38,7 +35,6 @@
 #include <server/ServerUriHandlers.hpp>
 
 #include <server/auth/ServerSecureUriHandler.hpp>
-#include <server/auth/ServerAuthCommon.hpp>
 
 #include <session/SessionScopes.hpp>
 
@@ -74,15 +70,12 @@ std::map<std::string, boost::posix_time::ptime> s_loginTimes;
 // allows for quickly removing the first element
 std::deque<RevokedCookie> s_revokedCookies;
 
-// Tracks the set of cookies that are authorized for the user session, so they can all be revoked on signout
-std::map<std::string,boost::shared_ptr<UserSession>> s_userSessions;
-
 boost::posix_time::ptime s_lastCookieCheckTime = boost::posix_time::second_clock::universal_time();
 boost::posix_time::time_duration s_cookieCheckDuration = boost::posix_time::seconds(5);
 
 // mutex for providing concurrent access to internal structures
 // necessary because auth happens on the thread pool
-boost::recursive_mutex s_mutex;
+boost::mutex s_mutex;
 
 // global auth handler
 Handler s_handler;
@@ -172,9 +165,7 @@ Error writeRevokedCookieToDatabase(const RevokedCookie& cookie,
          .withInput(cookie.cookie);
 
    Error error = connection->execute(query);
-   // Ignore duplicate key errors for postgres and sqlite in case another cluster member has already processed this revoke cookie request
-   if (error && !boost::algorithm::contains(error.getMessage(), "duplicate key") &&
-                !boost::algorithm::contains(error.getMessage(), "UNIQUE constraint"))
+   if (error)
    {
       error.addProperty("description", "Could not insert revoked cookie into the database");
       return error;
@@ -188,7 +179,7 @@ Error writeRevokedCookiesToDatabase()
    boost::shared_ptr<IConnection> connection = server_core::database::getConnection();
    Transaction transaction(connection);
 
-   RECURSIVE_LOCK_MUTEX(s_mutex)
+   LOCK_MUTEX(s_mutex)
    {
       for (auto it = s_revokedCookies.begin(); it != s_revokedCookies.end(); ++it)
       {
@@ -227,83 +218,15 @@ Error readRevocationListFromFile(const FilePath& revocationList,
    return Success();
 }
 
-bool invalidateExpiredSessions()
-{
-   RECURSIVE_LOCK_MUTEX(s_mutex)
-   {
-      if (s_userSessions.size() == 0)
-      {
-         return true;
-      }
-
-      boost::posix_time::time_duration timeoutInterval = common::getCookieExpiry(true).get();
-
-      boost::posix_time::ptime expireTime = boost::posix_time::second_clock::universal_time() - timeoutInterval;
-      for (auto it = s_userSessions.begin(); it != s_userSessions.end();)
-      {
-         const boost::shared_ptr<UserSession> pUserSession = it->second;
-         if (pUserSession->lastActiveTime() < expireTime)
-         {
-            if (pUserSession->numConnections() == 0 || pUserSession->lastSocketActiveTime() < expireTime)
-            {
-               // Because the user's session has passively expired, we are not going to actively revoke the cookies across the cluster.
-               // Each cookie has an expire time built in so it will expire on its own in the browser
-               // pUserSession->invalidateSessionCookies();
-               LOG_DEBUG_MESSAGE("Expired UserSession for: " + pUserSession->username());
-
-               it = s_userSessions.erase(it);
-            }
-            else
-            {
-               LOG_DEBUG_MESSAGE("Preserving expired UserSession with: " + std::to_string(pUserSession->numConnections()) +
-                                 " for: " + pUserSession->username());
-               ++it;
-            }
-         }
-         else
-         {
-            ++it;
-         }
-      }
-   }
-   END_LOCK_MUTEX
-
-   return true;
-}
-
-void addToUserSessionConnections(const std::string& username, int val)
-{
-   RECURSIVE_LOCK_MUTEX(s_mutex)
-   {
-      boost::shared_ptr<UserSession> pUserSession = UserSession::lookupUserSession(username);
-      if (pUserSession)
-      {
-         int newCt = pUserSession->numConnections() + val;
-         if (newCt < 0)
-         {
-            LOG_ERROR_MESSAGE("Invalid negative UserSession connection count: " + std::to_string(newCt));
-            newCt = 0;
-         }
-         pUserSession->setNumConnections(newCt);
-         LOG_DEBUG_MESSAGE("UserSession: " + username + " has: " + std::to_string(newCt) + " socket connections after adding: " + std::to_string(val));
-      }
-   }
-   END_LOCK_MUTEX
-}
-
-
 } // anonymous namespace
 
 bool isCookieRevoked(const std::string& cookie)
 {
-   if (cookie.empty())
-      return true;
-
    bool attemptedConnection = false;
    boost::shared_ptr<IConnection> connection;
    boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
 
-   RECURSIVE_LOCK_MUTEX(s_mutex)
+   LOCK_MUTEX(s_mutex)
    {
       bool removeStaleCookies = now > s_lastCookieCheckTime + s_cookieCheckDuration;
 
@@ -317,9 +240,7 @@ bool isCookieRevoked(const std::string& cookie)
       {
          const RevokedCookie& other = *it;
          if (other.cookie == cookie)
-         {
             return true;
-         }
 
          if (removeStaleCookies && other.expiration <= now)
          {
@@ -457,150 +378,6 @@ RevokedCookie::RevokedCookie(const std::string& cookie)
    this->expiration = cookieExpiration(cookie);
 }
 
-boost::shared_ptr<UserSession> UserSession::createUserSession(const std::string& username)
-{
-   RECURSIVE_LOCK_MUTEX(s_mutex)
-   {
-      boost::shared_ptr<UserSession> pUserSession = UserSession::lookupUserSession(username);
-      if (pUserSession)
-      {
-         LOG_DEBUG_MESSAGE("Reusing active session for: " + username + " that did not expire and was not logged out");
-         // This session may have been created from the same user with a different browser, but that user never explicitly signed out and the
-         // session itself has not expired. We'll keep the cookies from that session so websockets using them will be closed if the user signs out.
-         //UserSession::invalidateUserSession(username);
-      }
-      else
-      {
-         pUserSession = boost::make_shared<UserSession>(username);
-         s_userSessions[username] = pUserSession;
-
-         LOG_DEBUG_MESSAGE("Created new UserSession for: " + username + " (total: " + std::to_string(s_userSessions.size()) + ")");
-      }
-      return pUserSession;
-   }
-   END_LOCK_MUTEX
-   return boost::shared_ptr<UserSession>();
-}
-
-void UserSession::updateSessionLastActiveTime(const std::string& username)
-{
-   RECURSIVE_LOCK_MUTEX(s_mutex)
-   {
-      boost::shared_ptr<UserSession> pUserSession = UserSession::getOrCreateUserSession(username);
-      if (pUserSession)
-      {
-         pUserSession->updateLastActiveTime();
-      }
-   }
-   END_LOCK_MUTEX
-}
-
-void UserSession::updateSocketLastActiveTime(const std::string& username)
-{
-   RECURSIVE_LOCK_MUTEX(s_mutex)
-   {
-      boost::shared_ptr<UserSession> pUserSession = UserSession::lookupUserSession(username);
-      if (pUserSession)
-      {
-         pUserSession->updateSocketLastActiveTime();
-      }
-   }
-   END_LOCK_MUTEX
-}
-
-boost::shared_ptr<UserSession> UserSession::lookupUserSession(const std::string& username)
-{
-   RECURSIVE_LOCK_MUTEX(s_mutex)
-   {
-      std::map<std::string, boost::shared_ptr<UserSession>>::iterator it = s_userSessions.find(username);
-      if (it == s_userSessions.end())
-         return boost::shared_ptr<UserSession>();
-      return it->second;
-   }
-   END_LOCK_MUTEX
-   return boost::shared_ptr<UserSession>(); // not reached
-}
-
-bool UserSession::userSessionValid(const std::string& username)
-{
-   boost::shared_ptr<UserSession> pUserSession = lookupUserSession(username);
-   return pUserSession != nullptr;
-}
-
-void UserSession::addUserSessionConnection(const std::string& username)
-{
-   LOG_DEBUG_MESSAGE("Adding connection for: " + username);
-   addToUserSessionConnections(username, 1);
-}
-
-void UserSession::removeUserSessionConnection(const std::string& username)
-{
-   LOG_DEBUG_MESSAGE("Removing a connection for: " + username);
-   addToUserSessionConnections(username, -1);
-}
-
-boost::shared_ptr<UserSession> UserSession::getOrCreateUserSession(const std::string& username)
-{
-   RECURSIVE_LOCK_MUTEX(s_mutex)
-   {
-      boost::shared_ptr<UserSession> pUserSession = lookupUserSession(username);
-      if (!pUserSession)
-         pUserSession = UserSession::createUserSession(username);
-      return pUserSession;
-   }
-   END_LOCK_MUTEX
-   return boost::shared_ptr<UserSession>(); // not reached
-}
-
-void UserSession::removeUserSession(const std::string& username)
-{
-   RECURSIVE_LOCK_MUTEX(s_mutex)
-   {
-      s_userSessions.erase(username);
-   }
-   END_LOCK_MUTEX
-}
-
-bool UserSession::invalidateUserSession(const std::string& username)
-{
-   RECURSIVE_LOCK_MUTEX(s_mutex)
-   {
-      boost::shared_ptr<UserSession> pUserSession = lookupUserSession(username);
-      if (pUserSession)
-      {
-          pUserSession->invalidateSessionCookies();
-          UserSession::removeUserSession(username);
-          return true;
-      }
-   }
-   END_LOCK_MUTEX
-
-   return false;
-}
-
-void UserSession::invalidateSessionCookies()
-{
-   for (std::string cookie : sessionCookies_)
-   {
-      invalidateAuthCookie(cookie);
-   }
-}
-
-void UserSession::updateLastActiveTime()
-{
-   lastActiveTime_ = boost::posix_time::microsec_clock::universal_time();
-}
-
-void UserSession::updateSocketLastActiveTime()
-{
-   lastSocketActiveTime_ = boost::posix_time::microsec_clock::universal_time();
-}
-
-void UserSession::updateLastCookieRefreshTime()
-{
-   lastCookieRefreshTime_ = boost::posix_time::microsec_clock::universal_time();
-}
-
 std::string getUserIdentifier(const core::http::Request& request,
                               bool requireUserListCookie)
 {
@@ -666,12 +443,9 @@ void registerHandler(const Handler& handler)
    // register uri handlers
    uri_handlers::addBlocking(kSignIn, s_handler.signIn);
 
-   // For signout, do not refresh auth cookies right before invalidating them
    uri_handlers::addBlocking(kSignOut,
-          auth::secureHttpHandler(boost::bind(s_handler.signOut, _2, _3),
-                                  false,   /* authenticate */
-                                  true,    /* requireUserListCookie */
-                                  false)); /* refreshAuthCookies */
+                             auth::secureHttpHandler(
+                                boost::bind(s_handler.signOut, _2, _3)));
 
    uri_handlers::add(kRefreshCredentialsAndContinue,
                      s_handler.refreshCredentialsThenContinue);
@@ -708,7 +482,7 @@ void signOut(const http::Request& request, http::Response* pResponse)
 
 bool isUserSignInThrottled(const std::string& user)
 {
-   RECURSIVE_LOCK_MUTEX(s_mutex)
+   LOCK_MUTEX(s_mutex)
    {
       auto it = s_loginTimes.find(user);
 
@@ -719,13 +493,11 @@ bool isUserSignInThrottled(const std::string& user)
          return false;
       }
 
-      int throttlingSeconds = options().authSignInThrottleSeconds();
       if (it->second >
-          now - boost::posix_time::seconds(throttlingSeconds))
+          now - boost::posix_time::seconds(options().authSignInThrottleSeconds()))
       {
          // user is trying to sign back in too quickly
          // prevent the request
-         LOG_WARNING_MESSAGE("Too many attempts within " + safe_convert::numberToString(throttlingSeconds) + " seconds for '" + user + "'");
          return true;
       }
       else
@@ -741,22 +513,6 @@ bool isUserSignInThrottled(const std::string& user)
    return false;
 }
 
-void UserSession::insertSessionCookie(const std::string& userIdentifier, const std::string& cookie)
-{
-   RECURSIVE_LOCK_MUTEX(s_mutex)
-   {
-      boost::shared_ptr<UserSession> session = UserSession::getOrCreateUserSession(userIdentifier);
-
-      if (session)
-      {
-         LOG_DEBUG_MESSAGE("Adding session cookie: " + cookie + " for user: " + userIdentifier);
-         session->addSessionCookie(cookie);
-         session->updateLastCookieRefreshTime();
-      }
-   }
-   END_LOCK_MUTEX
-}
-
 void refreshAuthCookies(const std::string& userIdentifier,
                         const http::Request& request,
                         http::Response* pResponse)
@@ -764,47 +520,14 @@ void refreshAuthCookies(const std::string& userIdentifier,
    if (server::options().authTimeoutMinutes() > 0 &&
        !s_handler.refreshAuthCookies.empty())
    {
-      // Allocate new auth cookies periodically, rather than on every request to reduce CPU, and limit the
-      // number of cookies to revoke should the user signout.
-      boost::shared_ptr<UserSession> pUserSession = UserSession::getOrCreateUserSession(userIdentifier);
-      boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
-      if (now < pUserSession->lastCookieRefreshTime() + boost::posix_time::seconds(30))
-      {
-         return;
-      }
-
       // clear any existing auth cookies first - this method can be invoked multiple
       // times depending on the handler type (for example, an upload handler)
       pResponse->clearCookies();
       std::string persistCookie = request.cookieValue(kPersistAuthCookie);
       bool persist = persistCookie == "1" ? true : false;
-
-      // We might have long-lasting socket connections using the old cookie, that will need to close
-      // and reconnect when we refresh the auth cookie. For example, if a user signs out with a vscode
-      // or shiny app running in another tab and the auth cookies are refreshed right before the signout,
-      // we only will invalidate the new cookie unless we invalidate this one here.
-      std::string currentCookie = request.cookieValue(kUserIdCookie);
-      if (!currentCookie.empty())
-      {
-         LOG_DEBUG_MESSAGE("Refreshing auth: replacing old cookie: " + currentCookie);
-      }
-
       s_handler.refreshAuthCookies(request, userIdentifier, persist, pResponse);
    }
 }
-
-void applyRemoteRevokedCookie(const std::string& cookieValue)
-{
-   insertRevokedCookie(RevokedCookie(cookieValue));
-   std::string username = core::http::secure_cookie::readSecureCookie(cookieValue);
-   if (!username.empty())
-   {
-      // We received a revoked cookie for this user from a remote rserver so we interpret that as signing out cluster-wide
-      if (UserSession::invalidateUserSession(username))
-         LOG_DEBUG_MESSAGE("Invalidated UserSession for: " + username + " from revoked cookie received from remote server");
-   }
-}
-
 
 void insertRevokedCookie(const RevokedCookie& cookie)
 {
@@ -812,7 +535,7 @@ void insertRevokedCookie(const RevokedCookie& cookie)
    if (cookie.expiration <= boost::posix_time::second_clock::universal_time())
       return;
 
-   RECURSIVE_LOCK_MUTEX(s_mutex)
+   LOCK_MUTEX(s_mutex)
    {
       for (auto it = s_revokedCookies.begin(); it != s_revokedCookies.end(); ++it)
       {
@@ -833,8 +556,6 @@ void insertRevokedCookie(const RevokedCookie& cookie)
 void invalidateAuthCookie(const std::string& cookie,
                           ExponentialBackoffPtr backoffPtr)
 {
-   LOG_DEBUG_MESSAGE("Invalidated auth cookie: " + cookie);
-
    if (cookie.empty())
       return;
 
@@ -936,12 +657,6 @@ Error initialize()
          if (error)
             LOG_ERROR(error);
       }
-
-      // Periodically cleanup idle/expired UserSessions, used for validating websocket connections
-      scheduler::addCommand(boost::shared_ptr<ScheduledCommand>(
-         new PeriodicCommand(boost::posix_time::seconds(10),
-                             boost::bind(invalidateExpiredSessions),
-                             false)));
 
       return overlay::initialize();
    }

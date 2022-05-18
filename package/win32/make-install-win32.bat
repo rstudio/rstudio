@@ -19,6 +19,7 @@ if defined CLEANBUILD (
 REM perform 32-bit build
 if not exist %WIN32_BUILD_PATH% mkdir %WIN32_BUILD_PATH%
 cd %WIN32_BUILD_PATH%
+if exist CMakeCache.txt del CMakeCache.txt
 
 REM Build the project
 set VS_TOOLS="%ProgramFiles(x86)%\Microsoft Visual Studio\2019\BuildTools\Common7\Tools"

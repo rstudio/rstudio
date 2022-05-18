@@ -54,7 +54,7 @@ public class TestsOutputTab
                          EventBus events,
                          final Session session)
    {
-      super(constants_.testsTaskName(), shim);
+      super("Tests", shim);
       shim_ = shim;
 
       events.addHandler(BuildStartedEvent.TYPE, shim);

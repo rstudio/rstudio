@@ -15,7 +15,6 @@ set PACKAGE_VERSION_SET=
 
 if "%1" == "--help" goto :showhelp
 if "%1" == "-h" goto :showhelp
-if "%1" == "help" goto :showhelp
 if "%1" == "/?" goto :showhelp
 
 for %%A in (%*) do (
@@ -93,7 +92,7 @@ if not defined RSTUDIO_VERSION_SUFFIX set RSTUDIO_VERSION_SUFFIX=-dev+999
 set RSTUDIO_VERSION_FULL=%RSTUDIO_VERSION_MAJOR%.%RSTUDIO_VERSION_MINOR%.%RSTUDIO_VERSION_PATCH%%RSTUDIO_VERSION_SUFFIX%
 
 REM put version and product name into package.json
-call :set-version %RSTUDIO_VERSION_FULL% RStudio
+call :set-version %RSTUDIO_VERSION_FULL% rstudio
 
 REM Establish build dir
 set BUILD_DIR=build

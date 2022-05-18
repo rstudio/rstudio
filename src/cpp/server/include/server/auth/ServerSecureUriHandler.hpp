@@ -70,8 +70,7 @@ typedef boost::variant<SecureAsyncUriHandlerFunctionEx,
 core::http::UriHandlerFunction secureHttpHandler(
                                     SecureUriHandlerFunction handler,
                                     bool authenticate = false,
-                                    bool requireUserListCookie = true,
-                                    bool refreshAuthCookies = true);
+                                    bool requireUserListCookie = true);
 
 core::http::UriHandlerFunction secureJsonRpcHandler(
                                     SecureUriHandlerFunction handler);

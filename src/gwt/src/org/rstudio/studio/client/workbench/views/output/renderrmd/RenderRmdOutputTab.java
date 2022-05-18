@@ -59,7 +59,7 @@ public class RenderRmdOutputTab
                              Commands commands,
                              final Session session)
    {
-      super(constants_.renderTitle(), shim);
+      super("Render", shim);
       shim_ = shim;
 
       GWT.<Binder>create(Binder.class).bind(commands, shim_);
