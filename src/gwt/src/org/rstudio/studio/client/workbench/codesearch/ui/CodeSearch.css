@@ -84,9 +84,3 @@
 .codeSearchDialogMainWidget .codeSearchWidget .search {
    width: 100%;
 }
-
-.codeSearchDialogTips {
-   padding-top: 10px;
-   color: #555;
-   font-size: smaller;
-}

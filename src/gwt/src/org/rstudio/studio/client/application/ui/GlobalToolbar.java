@@ -149,11 +149,6 @@ public class GlobalToolbar extends Toolbar
          {
             return null;
          }
-
-         @Override
-         public void setTipsVisible(boolean visible) 
-         {}
-
       });
 
       searchWidget_ = codeSearch.getSearchWidget();

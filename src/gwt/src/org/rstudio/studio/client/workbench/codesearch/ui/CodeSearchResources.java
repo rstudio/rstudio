@@ -42,7 +42,6 @@ public interface CodeSearchResources extends ClientBundle
       
       String itemContext();
       String codeSearchDialogMainWidget();
-      String codeSearchDialogTips();
    }
 
   
