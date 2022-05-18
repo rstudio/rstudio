@@ -23,6 +23,7 @@ import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
@@ -53,6 +54,12 @@ public class CodeSearchDialog extends ModalDialogBase
       codeSearch_ = pCodeSearch_.get();
       codeSearch_.setObserver(this);
       mainPanel.add(codeSearch_.getSearchWidget());
+
+      tips_ = new HTML("<p>Start typing to fuzzy search functions and files.</p><p>Special cases: <br>&nbsp;&nbsp;- Start with <b>\"t \"</b> to search for test cases. <br>&nbsp;&nbsp;- Include a <b>*</b> to use a regular expression.</p>");
+      tips_.addStyleName(CodeSearchResources.INSTANCE.styles().codeSearchDialogTips());
+      tips_.setVisible(false);
+      mainPanel.add(tips_);
+            
       return mainPanel;
    }
    
@@ -98,10 +105,17 @@ public class CodeSearchDialog extends ModalDialogBase
    @Override
    public String getCueText()
    {
-      return "";
+      return constants_.tipsCue();
+   }
+
+   @Override 
+   public void setTipsVisible(boolean visible)
+   {
+      tips_.setVisible(visible);
    }
   
    Provider<CodeSearch> pCodeSearch_;
    CodeSearch codeSearch_;
    private static final CodeSearchConstants constants_ = GWT.create(CodeSearchConstants.class);
+   private HTML tips_;
 }

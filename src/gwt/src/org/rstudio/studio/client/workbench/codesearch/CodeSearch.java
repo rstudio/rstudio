@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.codesearch;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.FilePosition;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.XRef;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.SearchDisplay;
@@ -53,6 +54,7 @@ public class CodeSearch
       String getCueText();
       void onCompleted();
       void onCancel();
+      void setTipsVisible(boolean visible);
    }
 
 
@@ -65,7 +67,6 @@ public class CodeSearch
       SuggestBox.DefaultSuggestionDisplay getSuggestionDisplay();
 
       CodeSearchOracle getSearchOracle();
-
    }
 
    @Inject
@@ -168,12 +169,15 @@ public class CodeSearch
         @Override
         public void onValueChange(ValueChangeEvent<String> event)
         {
-           boolean hasSearch = event.getValue().length() != 0;
-           if (!hasSearch)
+           String value = event.getValue();
+           boolean hasSearch = value.length() != 0;
+           boolean isTips = StringUtil.equals(value, "?");
+           if (!hasSearch || isTips)
            {
               display_.getSearchOracle().invalidateSearches();
               display_.getSuggestionDisplay().hideSuggestions();
            }
+           observer_.setTipsVisible(isTips);
         }
      });
 

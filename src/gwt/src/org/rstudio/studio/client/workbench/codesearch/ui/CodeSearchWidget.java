@@ -36,7 +36,7 @@ public class CodeSearchWidget extends SearchWidget
    {
       super(constants_.codeSearchLabel(),
             oracle,
-            new TextBoxWithCue(constants_.textBoxWithCue()),
+            new TextBoxWithCue(constants_.goToFileFunction()),
             new SuggestBox.DefaultSuggestionDisplay());
       
       oracle_ = oracle;   

@@ -49,6 +49,15 @@ public interface CodeSearchConstants extends com.google.gwt.i18n.client.Messages
      * @return translated "Go to file/function"
      */
     @DefaultMessage("Go to file/function")
-    @Key("textBoxWithCue")
-    String textBoxWithCue();
+    @Key("goToFileFunction")
+    String goToFileFunction();
+
+    /** 
+     * Translated "Type \"?\" for tips"
+     * 
+     * @return translated "Type \"?\" for tips"
+     */
+    @DefaultMessage("Type \"?\" for tips")
+    @Key("tipsCue")
+    String tipsCue();
 }
