@@ -23,6 +23,7 @@
 - The fuzzy finder shows `test_that()` calls when the search term starts with "t ".  
 - Calls to test_that() appear in the source file outline (#11082)
 - Windows: Update embedded libclang to 13.0.1 (#11186)
+- Added a warning when renv is actively overriding repository settings in Global Options (#9947)
 
 #### Find in Files
 
