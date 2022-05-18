@@ -20,7 +20,7 @@ public interface ShellOutputWriter
 {
    void consoleWriteError(String string);
    void consoleWriteExtendedError(
-         String string, UnhandledError traceInfo, 
+         UnhandledError error, 
          boolean expand, String command);
    void consoleWriteOutput(String output);
    void consoleWritePrompt(String prompt);

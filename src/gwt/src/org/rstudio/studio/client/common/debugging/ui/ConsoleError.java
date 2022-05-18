@@ -69,7 +69,20 @@ public class ConsoleError extends Composite
       initWidget(uiBinder.createAndBindUi(this));
       
       VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
-      vc.submit(err.getErrorMessage());
+      if (err.getIsRlangError())
+      {
+         String[] lines = err.getErrorMessage().split("\n");
+         for (int i = 0; i < lines.length; i++)
+         {
+            String line = lines[i];
+            if (!line.contains("to see where the error occurred."))
+               vc.submit(line + "\n");
+         }
+      }
+      else 
+      {
+         vc.submit(err.getErrorMessage());
+      }
       
       errorMessage.addStyleName(errorClass);
 

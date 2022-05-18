@@ -54,8 +54,7 @@
    }
    
    .framePanel {
-      margin-top: 1em;
-      margin-left: 2em;
+      margin-top: 2em;
       white-space: pre;
       font-size: smaller;
       opacity: 0.7;

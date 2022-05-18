@@ -340,7 +340,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       if (!debugging_)
       {
          view_.consoleWriteExtendedError(
-               event.getError().getErrorMessage(),
                event.getError(),
                prefs_.autoExpandErrorTracebacks().getValue(),
                getHistoryEntry(0));

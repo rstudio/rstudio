@@ -320,17 +320,18 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    public void consoleWriteExtendedError(
-         final String error, UnhandledError traceInfo,
+         UnhandledError error,
          boolean expand, String command)
    {
-      List<Element> errorNodes = outputNodes_.get(error);
+      String message = error.getErrorMessage();
+      List<Element> errorNodes = outputNodes_.get(message);
 
       if (errorNodes == null || errorNodes.isEmpty())
          return;
       
       clearPendingInput();
       ConsoleError errorWidget = new ConsoleError(
-            traceInfo, styles_.error(), this, command);
+            error, styles_.error(), this, command);
 
       errorWidget.setTracebackVisible(expand);
 
@@ -351,7 +352,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
       
       scrollPanel_.onContentSizeChanged();
-      outputNodes_.remove(error);
+      outputNodes_.remove(message);
    }
 
    @Override
