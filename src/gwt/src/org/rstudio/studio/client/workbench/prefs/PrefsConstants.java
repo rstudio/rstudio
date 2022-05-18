@@ -1877,11 +1877,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String packagesInfoBarText();
     
     /**
-     * Translated "This project's repositories are managed by the renv package. These settings will not apply.".
+     * Translated "This project's repositories are managed by renv.".
      *
-     * @return translated "This project's repositories are managed by the renv package. These settings will not apply."
+     * @return translated "This project's repositories are managed by renv."
      */
-    @DefaultMessage("This project's repositories are managed by the renv package. These settings will not apply.")
+    @DefaultMessage("This project's repositories are managed by renv.")
     @Key("packagesRenvInfoBarText")
     String packagesRenvInfoBarText();
 
