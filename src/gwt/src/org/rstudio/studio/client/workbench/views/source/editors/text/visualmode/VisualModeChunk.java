@@ -870,7 +870,10 @@ public class VisualModeChunk
             // Apply title to elements so lint text appears when hovered
             for (VisualModeChunkRowState state: states)
             {
-               state.setTitle(item.getText());
+               if (state.getTitle().isEmpty())
+                  state.setTitle(item.getText());
+               else
+                  state.appendToTitle(item.getText());
             }
          }
       }

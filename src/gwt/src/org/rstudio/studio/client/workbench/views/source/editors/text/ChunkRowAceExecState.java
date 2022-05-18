@@ -86,6 +86,12 @@ public class ChunkRowAceExecState extends ChunkRowExecState
       // Not supported for Ace markers
    }
 
+   @Override
+   public void appendToTitle(String text)
+   {
+      // Not supported for Ace markers
+   }
+
    protected void addClazz(int state)
    {
       editor_.getRenderer().addGutterDecoration(getRow() - 1, getClazz(state));
