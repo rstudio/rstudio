@@ -6181,6 +6181,28 @@ public class TextEditingTarget implements
       if (reEvalFalse.test(headerText))
          return false;
 
+      // Also check for YAML style chunk option with eval false
+      Pattern reYamlOpt = Pattern.create("^#\\| .*");
+      Pattern reYamlEvalFalse = Pattern.create("eval\\s*:\\s*false");
+      int start = chunk.getBodyStart().getRow();
+      int end = chunk.getEnd().getRow();
+      ArrayList<String> chunkBody = JsArrayUtil.fromJsArrayString(docDisplay_.getLines(start, end));
+      for (String line : chunkBody)
+      {
+         if (reYamlOpt.test(line))
+         {
+            // both #| eval: false and #| eval = FALSE style comments are permitted
+            if (reYamlEvalFalse.test(line) || reEvalFalse.test(line))
+               return false;
+         }
+         else
+         {
+            // all yaml chunk options should be at the beginning of the chunk, so we can stop early once we get to a
+            // line that does not start with #|
+            break;
+         }
+      }
+
       return true;
    }
 
