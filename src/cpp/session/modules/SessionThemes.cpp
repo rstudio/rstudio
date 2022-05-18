@@ -160,47 +160,49 @@ void getThemesInLocation(
                continue;
             }
 
-            boost::smatch matches;
-            bool found = boost::regex_search(
-               themeContents,
-               matches,
-               boost::regex("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
+            boost::regex reThemeName("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)");
+            boost::smatch mThemeName;
+            bool themeNameFound = boost::regex_search(themeContents, mThemeName, reThemeName);
 
             // If there's no name specified,use the name of the file
             std::string name;
-            if (!found || (matches.size() < 2) || (matches[1] == ""))
+            if (!themeNameFound || (mThemeName.size() < 2) || (mThemeName[1] == ""))
             {
                name = themeFile.getStem();
             }
             else
             {
                // If there's at least one name specified, get the first one.
-               name = matches[1];
+               name = mThemeName[1];
             }
+            
+            WLOGF("Reading theme: '{}'", name);
 
             // Find out if the theme is dark or not.
-            found = boost::regex_search(
-                     themeContents,
-                     matches,
-                     boost::regex("rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
-
+            boost::regex reThemeIsDark("rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)");
+            boost::smatch mThemeIsDark;
+            bool themeIsDarkFound = boost::regex_search(themeContents, mThemeIsDark, reThemeIsDark);
+            
             bool isDark = false;
-            if (found && (matches.size() >= 2))
+            if (themeIsDarkFound && (mThemeIsDark.size() >= 2))
             {
                try
                {
-                  isDark = convertToBool(matches[1].str());
+                  isDark = convertToBool(mThemeIsDark[1].str());
                }
                catch (boost::bad_lexical_cast&)
                {
-                  LOG_WARNING_MESSAGE("rs-theme-is-dark value is not a valid boolean string "
-                        " for theme \"" + name + "\" (" + themeFile.getAbsolutePath() + ")");
+                  WLOGF("rs-theme-is-dark value ('{}') is not a valid boolean string for theme \"{}\" ({})",
+                        mThemeIsDark[1].str(),
+                        name,
+                        themeFile.getAbsolutePath());
                }
             }
             else
             {
-               LOG_WARNING_MESSAGE("rs-theme-is-dark is not set for theme \"" + name + "\" (" +
-                     themeFile.getAbsolutePath() + ")");
+               WLOGF("rs-theme-is-dark not set for theme \"{}\" ({})",
+                     name,
+                     themeFile.getAbsolutePath());
             }
 
             (*themeMap)[boost::algorithm::to_lower_copy(name)] = std::make_tuple(
