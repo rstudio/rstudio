@@ -89,7 +89,8 @@ define_source_file_names(rstudio-shared-core)
 
 target_link_libraries(rstudio-shared-core
    ${Boost_LIBRARIES}
-   ${SHARED_CORE_SYSTEM_LIBS})
+   ${SHARED_CORE_SYSTEM_LIBS}
+   fmt::fmt)
 
 # Define executable for running unit tests
 if (RSTUDIO_UNIT_TESTS_ENABLED)
