@@ -17,10 +17,10 @@ import fs from 'fs';
 import fsPromises from 'fs/promises';
 
 import { logger } from './logger';
-import path from 'path';
+import { sep } from 'path';
 import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
-import { err, expect, Expected, ok } from './expected';
+import { err, Expected, ok } from './expected';
 
 /** An Error containing 'path' that triggered the error */
 export class FilePathError extends Error {
@@ -34,13 +34,26 @@ export class FilePathError extends Error {
 const homePathAlias = '~/';
 const homePathLeafAlias = '~';
 
+/**
+ * Removes duplicate separators from a path, given a separator for search.
+ *
+ * @param {string} path
+ * @param {string} [separator='/']
+ * @return {*} 
+ */
 function normalizeSeparators(path: string, separator = '/') {
-  return path.replace(/[\\/]/g, separator);
+  return path.replace(/[\\/]+/g, separator);
 }
 
-function normalizeSeparatorsNative(path: string) {
-  const separator = process.platform === 'win32' ? '\\' : '/';
-  return normalizeSeparators(path, separator);
+/**
+ * Removes duplicated separators from a path based on platform.
+ *
+ * @export
+ * @param {string} path
+ * @return {*} 
+ */
+export function normalizeSeparatorsNative(path: string) {
+  return normalizeSeparators(path, sep);
 }
 
 /**
@@ -671,13 +684,11 @@ export class FilePath {
    * Checks whether this file path is a directory.
    */
   isDirectory(): boolean {
-    
     const stat = fs.lstatSync(this.path, {
       throwIfNoEntry: false,
     });
 
     return stat != null && stat.isDirectory();
-
   }
 
   /**

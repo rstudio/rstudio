@@ -13,7 +13,7 @@
  *
  */
 
-import path, { dirname, join } from 'path';
+import path, { join } from 'path';
 
 import { execSync, spawnSync } from 'child_process';
 import { existsSync, readdirSync } from 'fs';
@@ -97,7 +97,6 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
 
     // ask the user what version of R they'd like to use
     const chooseRDialog = new ChooseRModalWindow(rInstalls);
-
     void handleLocaleCookies(chooseRDialog);
 
     const [data, error] = await chooseRDialog.showModal();
@@ -112,7 +111,8 @@ export async function promptUserForR(platform = process.platform): Promise<Expec
 
     // save the stored version of R
     const path = data.binaryPath as string;
-    ElectronDesktopOptions().setRBinDir(dirname(path));
+
+    ElectronDesktopOptions().setRExecutablePath(path);
 
     // if the user has changed the default rendering engine,
     // then we'll need to ask them to restart RStudio now
@@ -195,6 +195,7 @@ export function detectREnvironment(rPath?: string): Expected<REnvironment> {
 
   // resolve path to binary if we were given a directory
   let rExecutable = new FilePath(R);
+  
   if (rExecutable.isDirectory()) {
     rExecutable = rExecutable.completeChildPath(process.platform === 'win32' ? 'R.exe' : 'R');
   }
