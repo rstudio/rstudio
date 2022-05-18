@@ -96,7 +96,7 @@ private:
     QMap<QString, QVector<QPointer<MenuActionBinder>>> binders_;
 
 #ifdef Q_OS_MAC
-    // This terrible hack is to around some Main Menu quirks when the UI is being
+    // This terrible hack is to work around some Main Menu quirks when the UI is being
     // displayed in French. We aren't going to ever make the Qt desktop fully
     // support UI language switching, but want to at least make the initial experimental
     // release work reasonably well.
