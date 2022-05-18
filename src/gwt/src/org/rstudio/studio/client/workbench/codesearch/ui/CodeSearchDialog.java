@@ -17,16 +17,20 @@ package org.rstudio.studio.client.workbench.codesearch.ui;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchConstants;
+
+import elemental2.dom.URL;
 
 public class CodeSearchDialog extends ModalDialogBase 
                               implements CodeSearch.Observer
@@ -46,13 +50,18 @@ public class CodeSearchDialog extends ModalDialogBase
    
    @Override
    protected Widget createMainWidget()
-   {     
-      VerticalPanel mainPanel = new VerticalPanel();
-      mainPanel.addStyleName(
+   {  
+      HorizontalPanel mainPanel = new HorizontalPanel();
+
+      VerticalPanel searchPanel = new VerticalPanel();
+      searchPanel.addStyleName(
          CodeSearchResources.INSTANCE.styles().codeSearchDialogMainWidget());
       codeSearch_ = pCodeSearch_.get();
       codeSearch_.setObserver(this);
-      mainPanel.add(codeSearch_.getSearchWidget());
+      searchPanel.add(codeSearch_.getSearchWidget());
+
+      mainPanel.add(searchPanel);
+      mainPanel.add(new HelpButton(new URL("https://support.rstudio.com/hc/en-us/articles/200710523-Navigating-Code-in-the-RStudio-IDE"), "Fuzzy finder help"));
       return mainPanel;
    }
    
