@@ -1936,6 +1936,14 @@ public interface UserPrefsAccessorConstants extends Constants {
    String checkNullExternalPointersDescription();
 
    /**
+    * Enable IDE features for the Quarto publishing system.
+    */
+   @DefaultStringValue("Enable Quarto features")
+   String quartoEnabledTitle();
+   @DefaultStringValue("Enable IDE features for the Quarto publishing system.")
+   String quartoEnabledDescription();
+
+   /**
     * The IDE's user-interface language.
     */
    @DefaultStringValue("User Interface Language")

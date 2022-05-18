@@ -134,10 +134,7 @@ protected:
       "If enabled, cause RStudio to enforce that incoming request origins are from the host domain. This can be added for additional security. See https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html#verifying-origin-with-standard-headers")
       ("www-allow-origin",
       value<std::vector<std::string>>(pWwwAllowedOrigins)->default_value(std::vector<std::string>())->multitoken(),
-      "Specifies an additional origin that requests are allowed from, even if it does not match the host domain. Used if origin checking is enabled. May be specified multiple times for multiple origins.")
-      ("session-use-file-storage",
-      value<bool>(&sessionUseFileStorage_)->default_value(true),
-      "Whether to use the file system to store metadata about the session storage or the internal database. Setting this to false may require special network configuration. See [Session Storage](../server_management/session_storage.html) for more information.");
+      "Specifies an additional origin that requests are allowed from, even if it does not match the host domain. Used if origin checking is enabled. May be specified multiple times for multiple origins.");
 
    pRsession->add_options()
       ("rsession-which-r",
@@ -256,7 +253,6 @@ public:
    std::string wwwFrameOrigin() const { return wwwFrameOrigin_; }
    bool wwwEnableOriginCheck() const { return wwwEnableOriginCheck_; }
    std::vector<boost::regex> wwwAllowedOrigins() const { return wwwAllowedOrigins_; }
-   bool sessionUseFileStorage() const { return sessionUseFileStorage_; }
    std::string rsessionWhichR() const { return rsessionWhichR_; }
    std::string rsessionPath() const { return rsessionPath_; }
    std::string rldpathPath() const { return rldpathPath_; }
@@ -306,7 +302,6 @@ protected:
    std::string wwwFrameOrigin_;
    bool wwwEnableOriginCheck_;
    std::vector<boost::regex> wwwAllowedOrigins_;
-   bool sessionUseFileStorage_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;

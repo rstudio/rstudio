@@ -41,8 +41,6 @@ public interface FindInFilesServerOperations
                        boolean searchIgnoreCase,
                        FileSystemItem dictionary,
                        JsArrayString includeFilePatterns,
-                       boolean useGitGrep,
-                       boolean excludeGitIgnore,
                        JsArrayString excludeFilePatterns,
                        String replaceString,
                        ServerRequestCallback<String> requestCallback);
@@ -52,8 +50,6 @@ public interface FindInFilesServerOperations
                         boolean searchIgnoreCase,
                         FileSystemItem dictionary,
                         JsArrayString includeFilePatterns,
-                        boolean useGitGrep,
-                        boolean excludeGitIgnore,
                         JsArrayString excludeFilePatterns,
                         int searchResults,
                         String replaceString,

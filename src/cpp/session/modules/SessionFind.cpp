@@ -986,7 +986,7 @@ private:
             // (git grep doesn't prepend a '.' so we need to be careful here)
             if (boost::algorithm::starts_with(file, "./"))
             {
-               file = workingDir_ + file.substr(1);
+               file = workingDir_ + file.substr(2);
             }
             else if (findResults().gitFlag())
             {

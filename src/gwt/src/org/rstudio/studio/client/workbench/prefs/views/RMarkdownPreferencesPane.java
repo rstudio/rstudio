@@ -485,6 +485,28 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          
       });
       
+
+      VerticalTabPanel quarto = new VerticalTabPanel(ElementIds.RMARKDOWN_QUARTO_PREFS);
+      quarto.add(headerLabel("Quarto"));
+      quarto.add(new Label(constants_.quartoPreviewLabel(), true));
+      chkEnableQuarto_ = new CheckBox(constants_.enableQuartoPreviewCheckboxLabel());
+      quarto.add(spacedBefore(chkEnableQuarto_));
+      lblQuartoVersion_ = new Label("", true);
+      lblQuartoVersion_.setVisible(false);
+      lblQuartoVersion_.addStyleName(res_.styles().checkBoxAligned());
+      quarto.add(spacedBefore(lblQuartoVersion_));      
+      quarto.add(spaced(lblQuartoPath_ = new Label()));
+      lblQuartoPath_.addStyleName(baseRes.styles().infoLabel());
+      lblQuartoPath_.addStyleName(res_.styles().checkBoxAligned());
+      lblQuartoPath_.setVisible(false);
+      lblQuartoUsing_ = new Label("Create Quarto documents and projects using the New File and New Project commands.");
+      quarto.add(lblQuartoUsing_);
+      
+      HelpLink helpLink = new HelpLink(constants_.helpLinkCaption(), "https://quarto.org", false, false);
+      nudgeRight(helpLink);
+      helpLink.addStyleName(res_.styles().newSection());
+      quarto.add(helpLink);
+      
    
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel(constants_.tabPanelTitle());
       tabPanel.setSize("435px", "533px");
@@ -492,6 +514,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       tabPanel.add(advanced, constants_.tabPanelAdvanced(), advanced.getBasePanelId());
       tabPanel.add(visualMode, constants_.tabPanelVisual(), visualMode.getBasePanelId());
       tabPanel.add(citations, constants_.tabPanelCitations(), citations.getBasePanelId());
+      if (!prefs.quartoEnabled().getValue().equals(UserPrefs.QUARTO_ENABLED_HIDDEN))
+         tabPanel.add(quarto, "Quarto", quarto.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -532,6 +556,43 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       zoteroLibs_.setLibraries(prefs_.zoteroLibraries().getValue());
       zoteroLibs_.addAvailableLibraries();
+      
+      QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
+      if (prefs.quartoEnabled().getValue().equals(UserPrefs.QUARTO_ENABLED_ENABLED))
+      {
+         chkEnableQuarto_.setValue(true);
+      }
+      else if (prefs.quartoEnabled().getValue().equals(UserPrefs.QUARTO_ENABLED_DISABLED))
+      {
+         chkEnableQuarto_.setValue(false);
+      }
+      else // auto
+      {
+         chkEnableQuarto_.setValue(
+           !config.user_installed.isEmpty()
+         );
+      }
+      
+      // let user know what version of quarto we are using (only 
+      // show version info for non-embedded versions)
+      lblQuartoVersion_.setText("Quarto v" + config.version);
+      lblQuartoVersion_.setVisible(chkEnableQuarto_.getValue() && 
+            !config.user_installed.isEmpty());
+      lblQuartoPath_.setText(config.user_installed);
+      lblQuartoPath_.setVisible(lblQuartoVersion_.isVisible());
+      lblQuartoUsing_.setVisible(lblQuartoVersion_.isVisible());
+   
+      // only write quarto pref if the user interacts with it
+      chkEnableQuarto_.addValueChangeHandler(event -> {
+         boolean showVersion = !config.user_installed.isEmpty() && event.getValue();
+         lblQuartoVersion_.setVisible(showVersion);
+         lblQuartoPath_.setVisible(showVersion);
+         lblQuartoUsing_.setVisible(showVersion);
+         writeEnableQuarto_ = event.getValue()  
+            ? UserPrefs.QUARTO_ENABLED_ENABLED 
+            : UserPrefs.QUARTO_ENABLED_DISABLED;
+      });
+ 
    }
    
    private void manageZoteroUI(boolean showLibs)
@@ -603,7 +664,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          state_.zoteroDataDir().setGlobalValue(zoteroDataDir_.getText());
       
       state_.zoteroApiKey().setGlobalValue(zoteroApiKey_.getKey());
-       
+      
+      if (writeEnableQuarto_ != null)
+      {
+         prefs_.quartoEnabled().setGlobalValue(writeEnableQuarto_);
+         restartRequirement = new RestartRequirement(true, true, true);
+      }
+      
       return restartRequirement;
    }
 
@@ -632,6 +699,12 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final CheckBox zoteroUseBetterBibtex_;
    private PanmirrorZoteroLocalConfig zoteroLocalConfig_ = new PanmirrorZoteroLocalConfig();
    private boolean zoteroIsAuto_ = false;
+   
+   private final CheckBox chkEnableQuarto_;
+   private final Label lblQuartoVersion_;
+   private final Label lblQuartoPath_;
+   private final Label lblQuartoUsing_;
+   private String writeEnableQuarto_ = null;
    
    private final static PrefsConstants constants_ = GWT.create(PrefsConstants.class);
 }

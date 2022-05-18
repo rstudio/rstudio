@@ -55,8 +55,6 @@
 
 using namespace rstudio::core;
 
-const char * const kRStudioQuarto = "RSTUDIO_QUARTO";
-
 // ignored unused functions when quarto not enabled
 #ifndef QUARTO_ENABLED
 #pragma GCC diagnostic push
@@ -134,27 +132,9 @@ void showQuartoVersionWarning(const Version& version, const Version& requiredVer
 }
 
 
-std::tuple<FilePath,Version,bool> userInstalledQuarto()
+std::tuple<FilePath,Version> userInstalledQuarto()
 {
-   // start with quarto on the path
-   bool env = false;
    FilePath quartoPath = module_context::findProgram("quarto");
-
-   // refine with RSTUDIO_QUARTO environment variable
-   std::string rstudioQuarto = core::system::getenv(kRStudioQuarto);
-   if (!rstudioQuarto.empty())
-   {
-#ifdef WIN32
-      if (!boost::algorithm::ends_with(rstudioQuarto, ".cmd"))
-         rstudioQuarto = rstudioQuarto + ".cmd";
-#endif
-      if (FilePath::exists(rstudioQuarto))
-      {
-         env = true;
-         quartoPath = FilePath(rstudioQuarto);
-      }
-   }
-
    if (!quartoPath.isEmpty())
    {
       Error error = core::system::realPath(quartoPath, &quartoPath);
@@ -163,7 +143,7 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
          Version pathVersion = readQuartoVersion(quartoPath);
          if (!pathVersion.empty())
          {
-            return std::make_tuple(quartoPath, pathVersion, env);
+            return std::make_tuple(quartoPath, pathVersion);
          }
       }
       else
@@ -171,7 +151,7 @@ std::tuple<FilePath,Version,bool> userInstalledQuarto()
          LOG_ERROR(error);
       }
    }
-   return std::make_tuple(FilePath(), Version(), false);
+   return std::make_tuple(FilePath(), Version());
 }
 
 core::FilePath quartoConfigFilePath(const FilePath& dirPath)
@@ -185,6 +165,41 @@ core::FilePath quartoConfigFilePath(const FilePath& dirPath)
       return quartoYaml;
 
    return FilePath();
+}
+
+
+bool projectHasQuartoContent()
+{
+   using namespace session::projects;
+   const ProjectContext& context = projectContext();
+   if (context.hasProject())
+   {
+      if (!quartoConfigFilePath(context.directory()).isEmpty())
+      {
+         return true;
+      }
+      else
+      {
+         // look for a qmd file at the top level
+         std::vector<FilePath> files;
+         Error error = context.directory().getChildren(files);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return false;
+         }
+         for (auto file : files)
+         {
+            if (file.getExtensionLowerCase() == ".qmd")
+               return true;
+         }
+         return false;
+      }
+   }
+   else
+   {
+      return false;
+   }
 }
 
 
@@ -206,7 +221,13 @@ void detectQuartoInstallation()
    auto userInstalled = userInstalledQuarto();
    s_userInstalledPath = std::get<0>(userInstalled);
    s_quartoVersion = std::get<1>(userInstalled);
-   bool prepend = std::get<2>(userInstalled);
+
+   // see if the sysadmin or user has turned off quarto
+   if (session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledDisabled ||
+       session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledHidden)
+   {
+      return;
+   }
 
    // always use user installed if it's there but subject to version check
    if (!s_userInstalledPath.isEmpty())
@@ -215,14 +236,6 @@ void detectQuartoInstallation()
       {
          s_quartoPath = std::get<0>(userInstalled);
          s_quartoVersion = std::get<1>(userInstalled);
-         // prepend to path if RSTUDIO_QUARTO is defined
-         if (prepend)
-         {
-            core::system::addToPath(
-               string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath()),
-               true
-            );
-         }
       }
       else
       {
@@ -230,6 +243,22 @@ void detectQuartoInstallation()
       }
       return;
    }
+
+
+   // auto mode will enable quarto if we are in a project w/ _quarto.yml
+   // or a qmd file at the root, otherwise not
+   if (session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledAuto)
+   {
+      if (projectHasQuartoContent())
+      {
+         session::prefs::userPrefs().setQuartoEnabled(kQuartoEnabledEnabled);
+      }
+      else
+      {
+         return;
+      }
+   }
+
 
    // embedded version of quarto (subject to required version)
 #ifndef WIN32

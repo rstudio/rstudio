@@ -88,7 +88,6 @@
 #define kSessionAsyncRpcTimeoutMs         "session-async-rpc-timeout-ms"
 #define kSessionHandleOfflineEnabled      "session-handle-offline-enabled"
 #define kSessionHandleOfflineTimeoutMs    "session-handle-offline-timeout-ms"
-#define kSessionUseFileStorage            "session-use-file-storage"
 
 #define kLauncherSessionOption            "launcher-session"
 

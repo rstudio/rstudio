@@ -113,43 +113,6 @@ const extension = (context: ExtensionContext): Extension | null => {
             });
           },
 
-          tokensFilter: (tokens: PandocToken[], writer: ProsemirrorWriter) => {
-            const filtered: PandocToken[] = [];
-            for (let i=0; i<tokens.length; i++) {
-              if (isSingleLineHtmlRawBlock(tokens[i]) && 
-                  isParaOrPlain(tokens[i+1]) &&
-                  isSingleLineHtmlRawBlock(tokens[i+2])) {
-
-                const beginTag = (tokens[i].c[kRawBlockContent] as string).trimRight();
-                const endTag = (tokens[i+2].c[kRawBlockContent] as string).trimRight();
-                const match = beginTag.match(/^<(.*?)>$/);
-                if (match && (endTag === "</" + match[1] + ">")) {
-                 
-                  const innerContent = tokens[i+1].c as PandocToken[];
-                  innerContent.unshift({
-                    t: PandocTokenType.RawInline,
-                    c: ["html", beginTag]
-                  });
-                  innerContent.push({
-                    t: PandocTokenType.RawInline,
-                    c: ["html", endTag]
-                  });
-                  filtered.push({
-                    t: PandocTokenType.Para,
-                    c: innerContent
-                  });
-                  i += 2;
-                } else {
-                  filtered.push(tokens[i]);
-                }
-              } else {
-                filtered.push(tokens[i]);
-              } 
-            } 
-
-            return filtered;
-          },
-
           // we define a custom blockReader here so that we can convert html and tex blocks with
           // a single line of code into paragraph with a raw inline
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
@@ -243,25 +206,6 @@ const extension = (context: ExtensionContext): Extension | null => {
     },
   };
 };
-
-function isSingleLineHtmlRawBlock(tok?: PandocToken) {
-  if (tok?.t === PandocTokenType.RawBlock) {
-    const format = tok.c[kRawBlockFormat];
-    const text = tok.c[kRawBlockContent] as string;
-    const textTrimmed = text.trimRight();
-    return isRawHTMLFormat(format) && isSingleLineHTML(textTrimmed);
-  } else {
-    return false;
-  }
-}
-
-function isParaOrPlain(tok?: PandocToken) {
-  if (tok) {
-    return tok.t === PandocTokenType.Plain || tok.t === PandocTokenType.Para;
-  } else {
-    return false;
-  }
-}
 
 function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) {
   // single lines of html should be read as inline html (allows for

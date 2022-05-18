@@ -7050,19 +7050,8 @@ public class TextEditingTarget implements
                   QUARTO_BEAMER_FORMAT, 
                   QUARTO_HTML_FORMAT, 
                   QUARTO_REVEALJS_FORMAT, 
-                  QUARTO_SLIDY_FORMAT,
-                  QUARTO_MARKDOWN_FORMAT,
-                  QUARTO_COMMONMARK_FORMAT,
-                  QUARTO_GFM_FORMAT,
-                  QUARTO_MARKUA_FORMAT,
-                  QUARTO_LATEX_FORMAT,
-                  QUARTO_JATS_FORMAT,
-                  QUARTO_DOCBOOK_FORMAT,
-                  QUARTO_ASCIIDOC_FORMAT,
-                  QUARTO_RST_FORMAT,
-                  QUARTO_MEDIAWIKI_FORMAT,
-                  QUARTO_NATIVE_FORMAT
-            ));
+                  QUARTO_SLIDY_FORMAT)
+            );
             return previewFormats.stream()
                .filter(fmt -> format.startsWith(fmt))
                .findAny()
@@ -7099,19 +7088,6 @@ public class TextEditingTarget implements
    private static final String QUARTO_HTML_FORMAT = "html";
    private static final String QUARTO_SLIDY_FORMAT = "slidy";
    private static final String QUARTO_REVEALJS_FORMAT = "revealjs";
-   private static final String QUARTO_MARKDOWN_FORMAT = "markdown";
-   private static final String QUARTO_COMMONMARK_FORMAT = "commonmark";
-   private static final String QUARTO_GFM_FORMAT = "gfm";
-   private static final String QUARTO_MARKUA_FORMAT = "markua";
-   private static final String QUARTO_LATEX_FORMAT = "latex";
-   private static final String QUARTO_JATS_FORMAT = "jats";
-   private static final String QUARTO_DOCBOOK_FORMAT = "docbook";
-   private static final String QUARTO_ASCIIDOC_FORMAT = "asciidoc";
-   private static final String QUARTO_RST_FORMAT = "asciidoc";
-   private static final String QUARTO_MEDIAWIKI_FORMAT = "mediawiki";
-   private static final String QUARTO_NATIVE_FORMAT = "native";
-   
-   
    
    private boolean isQuartoRevealJs(String format)
    {

@@ -227,9 +227,17 @@ class PandocWriter implements PandocOutput {
             });
           }
 
-          // no smart quotes in editor
+          // reverse smart punctuation. pandoc does this autmoatically for markdown
+          // writing w/ +smart, however this also results in nbsp's being inserted
+          // after selected abbreviations like e.g. and Mr., and we don't want that
+          // to happen for editing (b/c the nbsp's weren't put there by the user
+          // and are not obviously visible)
           if (this.extensions.smart) {
-            textRun = fancyQuotesToSimple(textRun);
+            textRun = textRun
+              .replace(/—/g, '---')
+              .replace(/–/g, '--')
+              .replace(/…/g, '...');
+              textRun = fancyQuotesToSimple(textRun);
           }
        
           this.writeToken(PandocTokenType.Str, textRun);

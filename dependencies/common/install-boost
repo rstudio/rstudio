@@ -115,18 +115,13 @@ if [ "$PLATFORM" = "Darwin" ]; then
       install
 
 else
-   # set up cxxflags
-   cxxflags="-fPIC -std=c++11"
-   if grep -siq jammy /etc/os-release; then
-      cxxflags="${cxxflags} -DPTHREAD_STACK_MIN=$(getconf PTHREAD_STACK_MIN)"
-   fi
 
    # plain old build for other platforms
-   ./bjam                    \
-      "${BOOST_BJAM_FLAGS}"  \
-      --prefix="$BOOST_DIR"  \
-      variant=release        \
-      cxxflags="${cxxflags}" \
+   ./bjam                         \
+      "${BOOST_BJAM_FLAGS}"       \
+      --prefix="$BOOST_DIR"       \
+      variant=release             \
+      cxxflags="-fPIC -std=c++11" \
       install
 
 fi

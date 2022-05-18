@@ -16,9 +16,9 @@ ALL=$1
 
 function inDocs() {
 	line=$1
-	MENTION_COUNT=$(grep -l -w "\`$line\`" ../../docs/server/*/*.qmd | wc -l)
-	EXAMPLE_COUNT=$(grep -l -e "^\b$line\b" ../../docs/server/*/*.qmd | wc -l)
-	COMMAND_COUNT=$(grep -l -w "\-\-$line" ../../docs/server/*/*.qmd | wc -l)
+	MENTION_COUNT=$(grep -l -w "\`$line\`" ../../docs/server/*.Rmd | wc -l)
+	EXAMPLE_COUNT=$(grep -l -e "^\b$line\b" ../../docs/server/*.Rmd | wc -l)
+	COMMAND_COUNT=$(grep -l -w "\-\-$line" ../../docs/server/*.Rmd | wc -l)
 	if [[ $MENTION_COUNT -ne 0 || $EXAMPLE_COUNT -ne 0 || $COMMAND_COUNT -ne 0 ]]; then
 		return 1
 	fi

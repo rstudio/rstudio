@@ -44,10 +44,7 @@ export function texLength(text: string) {
     // only letters, backslashes, and open brace/bracket allowed (unless we are in braces or brackets)
     const inBraces = braceLevel >= 1;
     const inBrackets = bracketLevel >= 1;
-    if (i > 0 && ch === ' ' && text[i+1] === '\\') {
-      i++; // skip the \
-      continue;
-    } if (i > 0 && !isLetter(ch) && ch !== '\\' && ch !== '{' && ch !== '[' && !inBraces && !inBrackets) {
+    if (i > 0 && !isLetter(ch) && ch !== '\\' && ch !== '{' && ch !== '[' && !inBraces && !inBrackets) {
       return i;
     }
 
