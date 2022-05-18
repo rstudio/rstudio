@@ -320,12 +320,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    public void consoleWriteExtendedError(
-         UnhandledError error,
+         final UnhandledError error,
          boolean expand, String command)
    {
       String message = error.getErrorMessage();
       List<Element> errorNodes = outputNodes_.get(message);
-
+      
       if (errorNodes == null || errorNodes.isEmpty())
          return;
       
@@ -373,7 +373,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteError(final String error)
    {
       clearPendingInput();
-      
       output(error, getErrorClass(), ConsoleAction.ERROR, false /*ignoreLineCount*/,
             isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
    }

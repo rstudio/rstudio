@@ -71,19 +71,13 @@ public class ConsoleError extends Composite
       VirtualConsole vc = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(errorMessage.getElement());
       if (err.getIsRlangError())
       {
-         String[] lines = err.getErrorMessage().split("\n");
-         for (int i = 0; i < lines.length; i++)
-         {
-            String line = lines[i];
-            if (!line.contains("to see where the error occurred."))
-               vc.submit(line + "\n");
-         }
+         vc.submit(err.getRlangErrorMessage());
       }
-      else 
+      else
       {
          vc.submit(err.getErrorMessage());
       }
-      
+            
       errorMessage.addStyleName(errorClass);
 
       rerunText.setVisible(command_ != null);
@@ -128,7 +122,8 @@ public class ConsoleError extends Composite
 
          VirtualConsole vcTracebackBranch = RStudioGinjector.INSTANCE.getVirtualConsoleFactory().create(tracebackBranch.getElement());
          vcTracebackBranch.submit(trace.get(1));
-      } else 
+      } 
+      else 
       {
          tracebackLinkFull.getElement().getStyle().setDisplay(Style.Display.NONE);
          for (int i = err.getErrorFrames().length() - 1; i >= 0; i--)

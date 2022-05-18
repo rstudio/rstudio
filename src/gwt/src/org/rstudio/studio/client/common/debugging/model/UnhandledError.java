@@ -26,6 +26,10 @@ public class UnhandledError extends JavaScriptObject
    public final native String getErrorMessage() /*-{
       return this.message;
    }-*/;
+
+   public final native String getRlangErrorMessage() /*-{
+      return this.rlang_message;
+   }-*/;
    
    public final native JsArray<ErrorFrame> getErrorFrames() /*-{
       return this.frames;

@@ -104,7 +104,7 @@
    if (foundUserCode || !userOnly)
    {
       trace <- list()
-      message <- geterrmessage()
+      rlang_message <- message <- geterrmessage()
       is_abort <- FALSE
       if (.rs.isPackageInstalled("rlang")) {
          # identify if stop() was called from rlang::signal_abort()
@@ -116,9 +116,12 @@
          
          if (is_abort) {
             # retrieve information from the real condition, instead of the fallback error
-            cnd <- frames[[length(frames) - 3L]]$cnd # using rlang::last_error() does not give the footer
+            cnd <- frames[[length(frames) - 3L]]$cnd
             trace <- cnd$trace
             message <- paste0(paste(rlang:::cnd_message(cnd, inherit = TRUE, prefix = TRUE), collapse = "\n"), "\n")
+
+            # same but without the footer, i.e. "Run `rlang::last_error()` ... to see where the error occured."
+            rlang_message <- paste0(paste(rlang:::cnd_message(rlang::last_error(), inherit = TRUE, prefix = TRUE), collapse = "\n"), "\n")           
          } else {
             # a regular stop() error, we can keep the message, but still
             # retrieve the traceback with rlang
@@ -133,6 +136,7 @@
       err <- list(
          frames = ammended_stack,
          message = .rs.scalar(message), 
+         rlang_message = .rs.scalar(rlang_message),
          trace = trace, 
          rlang = .rs.scalar(is_abort)
          )
