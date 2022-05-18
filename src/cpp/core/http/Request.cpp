@@ -93,6 +93,19 @@ std::string Request::rootPath() const
    return rootPathHeader;
 }
 
+std::string firstInList(const std::string& input)
+{
+   std::string res;
+
+   // Take the first if there's a list
+   std::size_t pos = input.find(',');
+   if (pos != std::string::npos)
+      res = input.substr(0, pos);
+   else
+      res = input;
+   return res;
+}
+
 std::string Request::proxiedUri() const
 {
    // if using the product-specific header use it
@@ -139,15 +152,24 @@ std::string Request::proxiedUri() const
    {
       protocol = "http";
    }
+   else
+   {
+      protocol = firstInList(protocol);
+   }
+
 
    // might be using the legacy X-Forwarded headers
    std::string forwardedHost = headerValue("X-Forwarded-Host");
    if (!forwardedHost.empty())
    {
+      forwardedHost = firstInList(forwardedHost);
+
       // get the port that may be specified in the request
       std::string port = headerValue("X-Forwarded-Port");
       if (!port.empty())
       {
+         port = firstInList(port);
+
          std::size_t pos = forwardedHost.find(':');
          if (pos == std::string::npos)
          {

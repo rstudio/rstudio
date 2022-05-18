@@ -18,8 +18,15 @@
 
 namespace rstudio {
 namespace core {
+class Error;
+} // end namespace core
+} // end namespace rstudio
+
+namespace rstudio {
+namespace core {
 namespace runtime {
 
+core::Error initialize(bool isUcrt);
 int errorNumber();
 
 } // end namespace runtime

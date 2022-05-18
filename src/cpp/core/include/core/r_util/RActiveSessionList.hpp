@@ -40,12 +40,13 @@ public:
                       const std::string& working,
                       std::string* pId) const
    {
-      return create(project, working, true, pId);
+      return create(project, working, true, kWorkbenchRStudio, pId);
    }
 
    core::Error create(const std::string& project,
                       const std::string& working,
                       bool initial,
+                      const std::string& editor,
                       std::string* pId) const;
 
    std::vector<boost::shared_ptr<ActiveSession> > list(FilePath userHomePath, bool projectSharingEnabled) const;

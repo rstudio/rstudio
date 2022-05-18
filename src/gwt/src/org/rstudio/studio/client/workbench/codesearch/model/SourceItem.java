@@ -39,6 +39,7 @@ public class SourceItem extends JavaScriptObject
    public static final int FIGURE     =  8;
    public static final int TABLE      =  9;
    public static final int MATH       = 10;
+   public static final int TEST       = 11;
 
    public final native int getType() /*-{
       return this.type;

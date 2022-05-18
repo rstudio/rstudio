@@ -635,16 +635,15 @@ public class AceEditor implements DocDisplay,
    public void insertAssignmentOperator()
    {
       if (DocumentMode.isCursorInRMode(this))
-         insertAssignmentOperatorImpl("<-");
+         insertOperatorWithSpacing("<-");
       else
-         insertAssignmentOperatorImpl("=");
+         insertOperatorWithSpacing("=");
    }
 
-   @SuppressWarnings("deprecation")
-   private void insertAssignmentOperatorImpl(String op)
+   private void insertOperatorWithSpacing(String op)
    {
       boolean hasWhitespaceBefore =
-            Character.isSpace(getCharacterBeforeCursor()) ||
+            Character.isWhitespace(getCharacterBeforeCursor()) ||
             (!hasSelection() && getCursorPosition().getColumn() == 0);
 
       String insertion = hasWhitespaceBefore
@@ -654,20 +653,12 @@ public class AceEditor implements DocDisplay,
       insertCode(insertion, false);
    }
 
-   @SuppressWarnings("deprecation")
-   public void insertPipeOperator()
+   private void insertPipeOperator()
    {
-      boolean hasWhitespaceBefore =
-            Character.isSpace(getCharacterBeforeCursor()) ||
-            (!hasSelection() && getCursorPosition().getColumn() == 0);
-
-      // Use magrittr style pipes unless user has opted into new native pipe syntax in R 4.1+
-      String pipe = userPrefs_.insertNativePipeOperator().getValue() ? "|>" : "%>%";
-
-      if (hasWhitespaceBefore)
-         insertCode(pipe + " ", false);
-      else
-         insertCode(" " + pipe + " ", false);
+      // Use magrittr style pipes if the user has not opted into new native pipe syntax
+      boolean nativePipePreferred = RStudioGinjector.INSTANCE.getUserPrefs().insertNativePipeOperator().getValue();
+      String pipe =  nativePipePreferred ? NATIVE_R_PIPE : MAGRITTR_PIPE;
+      insertOperatorWithSpacing(pipe);
    }
 
    private boolean shouldIndentOnPaste()
@@ -1666,7 +1657,6 @@ public class AceEditor implements DocDisplay,
 
       return new SpellingDoc() {
 
-
          @Override
          public Iterable<WordRange> getWords(int start, int end)
          {
@@ -1675,9 +1665,15 @@ public class AceEditor implements DocDisplay,
                @Override
                public Iterator<WordRange> iterator()
                {
+                  TokenPredicate spellCheckPredicate = fileType_.getSpellCheckTokenPredicate();
+                  TokenPredicate filteredTokenPredicate = (token, row, column) ->
+                  {
+                     return getSession().getFoldAt(row, column) == null && spellCheckPredicate.test(token, row, column);
+                  };
+
                   // get underlying iterator
                   Iterator<Range> ranges = AceEditor.this.getWords(
-                        fileType_.getSpellCheckTokenPredicate(),
+                        filteredTokenPredicate,
                         fileType_.getCharPredicate(),
                         positionFromIndex(start),
                         end != -1 ? positionFromIndex(end) : null).iterator();

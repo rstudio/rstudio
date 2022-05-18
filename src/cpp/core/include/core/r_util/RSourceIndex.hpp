@@ -73,11 +73,12 @@ public:
       Function = 1,
       Method = 2,
       Class = 3,
-      Variable = 4
+      Variable = 4, 
+      Test = 11
    };
 
 public:
-   RSourceItem() : type_(None), braceLevel_(0), line_(0), column_(0)
+   RSourceItem() : type_(None), braceLevel_(0), line_(0), column_(0), hidden_(false)
    {
    }
 
@@ -86,13 +87,15 @@ public:
                const std::vector<RS4MethodParam>& signature,
                int braceLevel,
                std::size_t line,
-               std::size_t column)
+               std::size_t column, 
+               bool hidden)
       : type_(type),
         name_(name),
         signature_(signature),
         braceLevel_(braceLevel),
         line_(line),
-        column_(column)
+        column_(column), 
+        hidden_(hidden)
    {
    }
 
@@ -107,14 +110,16 @@ private:
                const std::vector<RS4MethodParam>& signature,
                int braceLevel,
                std::size_t line,
-               std::size_t column)
+               std::size_t column, 
+               bool hidden)
       : context_(context),
         type_(type),
         name_(name),
         signature_(signature),
         braceLevel_(braceLevel),
         line_(line),
-        column_(column)
+        column_(column), 
+        hidden_(hidden)
    {
    }
 
@@ -125,12 +130,14 @@ public:
    bool isMethod() const { return type_ == Method; }
    bool isClass() const { return type_ == Class; }
    bool isVariable() const { return type_ == Variable; }
+   bool isTest() const { return type_ == Test; }
    const std::string& context() const { return context_; }
    const std::string& name() const { return name_; }
    const std::vector<RS4MethodParam>& signature() const { return signature_; }
    const int braceLevel() const { return braceLevel_; }
    int line() const { return core::safe_convert::numberTo<std::size_t, int>(line_,0); }
    int column() const { return core::safe_convert::numberTo<std::size_t, int>(column_,0); }
+   bool hidden() const { return hidden_; }
 
    // support for RSourceIndex::search
 
@@ -145,14 +152,6 @@ public:
    bool nameIsSubsequence(const std::string& term, bool caseSensitive) const
    {
       return string_utils::isSubsequence(name_, term, !caseSensitive);
-   }
-
-   bool nameContains(const std::string& term, bool caseSensitive) const
-   {
-      if (caseSensitive)
-         return boost::algorithm::contains(name_, term);
-      else
-         return boost::algorithm::icontains(name_, term);
    }
 
    bool nameMatches(const boost::regex& regex,
@@ -170,7 +169,8 @@ public:
                          signature_,
                          braceLevel_,
                          line_,
-                         column_);
+                         column_, 
+                         hidden_);
    }
 
 private:
@@ -181,6 +181,7 @@ private:
    int braceLevel_;
    std::size_t line_;
    std::size_t column_;
+   bool hidden_;
 };
 
 
@@ -258,7 +259,15 @@ public:
                                        _1, term, caseSensitive);
       }
 
-      return search(newContext, predicate, out);
+      // filter to keep only:
+      // - test items when the term starts with "t "
+      // - non-test items otherwise
+      bool includeTestItems = boost::algorithm::starts_with(term, "t ");
+      auto filteredPredicate = [includeTestItems, predicate](const RSourceItem& item) {
+         return includeTestItems == item.isTest() && predicate(item);
+      };
+      
+      return search(newContext, filteredPredicate, out);
    }
 
    template <typename OutputIterator>

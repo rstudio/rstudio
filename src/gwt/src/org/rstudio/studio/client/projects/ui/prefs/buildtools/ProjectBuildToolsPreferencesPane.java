@@ -109,11 +109,21 @@ public class ProjectBuildToolsPreferencesPane extends ProjectPreferencesPane
       for (BuildToolsPanel panel : buildToolsPanels_.values())
          panel.save(options);
 
-      // require reload if the build type or roxygen settings changed
+      boolean reload = false;
+
+      // reload if the build type or roxygen settings changed
       String initialBuildType = initialConfig_.getBuildType();
       String selectedBuildType = buildTypeSelect_.getValue();
+      if (initialBuildType != selectedBuildType)
+         reload = true;
 
-      return new RestartRequirement(initialBuildType != selectedBuildType, false, false);
+      // reload if "clean before install" changed
+      boolean initialClean = initialConfig_.getPackageCleanBeforeInstall();
+      boolean selectedClean = config.getPackageCleanBeforeInstall();
+      if (initialClean != selectedClean)
+         reload = true;
+
+      return new RestartRequirement(reload, false, false);
    }
 
 

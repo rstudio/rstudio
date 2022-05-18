@@ -1158,8 +1158,8 @@
         "clean_before_install": {
             "type": "boolean",
             "default": true,
-            "title": "Clean before install", 
-            "description": "Clean before install."
+            "title": "Always use --preclean when installing package",
+            "description": "Always use --preclean when installing package."
         },
         "use_internet2": {
             "type": "boolean",
@@ -1594,8 +1594,14 @@
             "type": "string",
             "enum": ["en", "fr"],
             "default": "en",
-            "title": "User Interface Language",
+            "title": "User Interface Language:",
             "description": "The IDE's user-interface language."
+        },
+        "native_file_dialogs": {
+            "description": "Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.",
+            "title": "Use native file and message dialog boxes",
+            "type": "boolean",
+            "default": true
         }
     }
 }

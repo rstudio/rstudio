@@ -206,7 +206,7 @@ public class NewQuartoDocumentDialog extends ModalDialog<NewQuartoDocumentDialog
       
       // use project default if available, otherwise use last result
       QuartoConfig config = session_.getSessionInfo().getQuartoConfig();
-      String editor = config.project_editor;
+      String editor = config.project_editor != null ? config.project_editor.mode : null;
       if (StringUtil.isNullOrEmpty(editor))
          editor = lastResult_.getEditor();
       editorCheckBox_.setValue(editor.equals(QuartoCommandConstants.EDITOR_VISUAL));

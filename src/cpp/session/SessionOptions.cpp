@@ -305,14 +305,13 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
 #endif // _WIN32
    resolvePath(resourcePath_, &hunspellDictionariesPath_);
    resolvePath(resourcePath_, &mathjaxPath_);
-   resolvePath(resourcePath_, &libclangHeadersPath_);
    resolvePandocPath(resourcePath_, &pandocPath_);
    resolveQuartoPath(resourcePath_, &quartoPath_);
 
    // rsclang
    if (libclangPath_ != kDefaultRsclangPath)
    {
-      libclangPath_ += "/5.0.2";
+      libclangPath_ += "/13.0.1";
    }
    resolveRsclangPath(resourcePath_, &libclangPath_);
 

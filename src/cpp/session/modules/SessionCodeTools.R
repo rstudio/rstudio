@@ -1215,7 +1215,7 @@
    chars <- vapply(chars, function(x) {
       if (x %in% c('"', '\\', '/'))
          paste('\\', x, sep = '')
-      else if (charToRaw(x) < 20)
+      else if (length(charToRaw(x)) == 1 && charToRaw(x) < 32)
          paste('\\u', toupper(format(as.hexmode(as.integer(charToRaw(x))),
                                      width = 4)),
                sep = '')
@@ -2243,7 +2243,7 @@
       return(NULL)
    # If Quarto and no R code chunks, don't parse further
    # Rmd may have yaml front matter to parse even if no R chunks
-   if (identical(code, .rs.scalar("")) && identical(extension, ".qmd"))
+   if (identical(gsub("\n", "", code), .rs.scalar("")) && identical(extension, ".qmd"))
       return(NULL)
 
    # attempt to parse extracted R code

@@ -51,6 +51,8 @@ bool s_isR3 = false;
 // is this R 3.3 or greater
 bool s_isR3_3 = false;
 
+boost::function<void()> s_beforeResumeCallback, s_afterResumeCallback;
+
 // function for deferred deserialization actions. this encapsulates parts of 
 // the initialization process that are potentially highly latent. this allows
 // clients to bring their UI up and then receive an event indicating that the
@@ -175,6 +177,9 @@ void deferredRestoreNewSession()
 void restoreSession(const FilePath& suspendedSessionPath,
                     std::string* pErrorMessages)
 {
+   if (s_beforeResumeCallback)
+     s_beforeResumeCallback();
+
    // don't show output during deserialization (packages loaded
    // during deserialization sometimes print messages)
    utils::SuppressOutputInScope suppressOutput;
@@ -196,6 +201,9 @@ void restoreSession(const FilePath& suspendedSessionPath,
                                           deferredRestoreSuspendedSession,
                                           deferredRestoreAction);
    }
+
+   if (s_afterResumeCallback)
+     s_afterResumeCallback();
 }
 
 // one-time per session initialization
@@ -419,6 +427,12 @@ void reportHistoryAccessError(const std::string& context,
    std::string path = createAliasedPath(historyFilePath);
    std::string errmsg = context + " " + path + ": " + summary;
    REprintf("Error attempting to %s\n", errmsg.c_str());
+}
+
+void setResumeCallbacks(boost::function<void()> before, boost::function<void()> after)
+{
+   s_beforeResumeCallback = before;
+   s_afterResumeCallback = after;
 }
    
 namespace utils {

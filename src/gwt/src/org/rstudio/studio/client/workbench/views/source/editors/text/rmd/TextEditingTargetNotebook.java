@@ -186,7 +186,7 @@ public class TextEditingTargetNotebook
             // propagate to YAML
             String yaml = RmdEditorOptions.set(
                   YamlFrontMatter.getFrontMatter(docDisplay_),
-                  CHUNK_OUTPUT_TYPE, event.getValue());
+                  CHUNK_OUTPUT_TYPE, event.getValue(), false);
 
             if (editingTarget_.isVisualEditorActive())
             {

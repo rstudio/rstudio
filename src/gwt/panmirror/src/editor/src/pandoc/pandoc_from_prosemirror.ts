@@ -215,6 +215,9 @@ class PandocWriter implements PandocOutput {
     if (this.options[kPreventBracketEscape]) {
       preventEscapeCharacters.push('[', ']');
     }
+    if (this.extensions.smart) {
+      preventEscapeCharacters.push('\'', '"');
+    }
 
     if (text) {
       let textRun = '';

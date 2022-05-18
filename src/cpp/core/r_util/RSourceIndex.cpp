@@ -312,6 +312,7 @@ void addSourceItem(RSourceItem::Type type,
                    const std::vector<RS4MethodParam>& signature,
                    const RToken& token,
                    const IndexStatus& status,
+                   bool hidden, 
                    RSourceIndex* pIndex)
 {
    pIndex->addSourceItem(RSourceItem(
@@ -320,13 +321,15 @@ void addSourceItem(RSourceItem::Type type,
                             signature,
                             status.count(RToken::LBRACE),
                             token.row() + 1,
-                            token.column() + 1));
+                            token.column() + 1, 
+                            hidden));
 }
 
-typedef boost::function<void(const RTokenCursor&, const IndexStatus&, RSourceIndex*)> Indexer;
+typedef boost::function<void(const RTokenCursor&, const IndexStatus&, bool isReadOnlyFile, RSourceIndex*)> Indexer;
 
 void libraryCallIndexer(const RTokenCursor& cursor,
                         const IndexStatus& status,
+                        bool isReadOnlyFile, 
                         RSourceIndex* pIndex)
 {
    if (!cursor.isType(RToken::ID))
@@ -363,8 +366,61 @@ void libraryCallIndexer(const RTokenCursor& cursor,
    }
 }
 
+void testThatCallIndexer(const RTokenCursor& cursor,
+                         const IndexStatus& status,
+                         bool isReadOnlyFile, 
+                         RSourceIndex* pIndex)
+{
+   if (!cursor.isType(RToken::ID))
+      return;
+   
+   if (!(cursor.contentEquals(L"test_that")))
+      return;
+   
+   RTokenCursor clone = cursor.clone();
+   if (!clone.moveToNextSignificantToken())
+      return;
+   
+   if (!clone.isType(RToken::LPAREN))
+      return;
+   
+   if (!clone.moveToNextSignificantToken())
+      return;
+   
+   if (clone.isType(RToken::STRING))
+   {
+      static const boost::regex removeQuotesRegex("^['\"](.*)['\"]$");
+      static const boost::regex removeRawStringQuotesRegex("^r['\"][(](.*)[)]['\"]$");
+
+      // the test description without the quotes, but prefixed with "t "
+      std::string content = clone.contentAsUtf8();
+      
+      std::string desc;
+      if (boost::regex_match(content, removeRawStringQuotesRegex))
+      {
+         desc = boost::regex_replace(content, removeRawStringQuotesRegex, "t \\1");
+      }
+      else
+      {
+         desc = boost::regex_replace(content, removeQuotesRegex, "t \\1");
+      }
+
+      RSourceItem item(
+         RSourceItem::Test,
+         desc,
+         std::vector<RS4MethodParam>(), 
+         status.count(RToken::LBRACE),
+         cursor.row() + 1, 
+         cursor.column() + 1, 
+         isReadOnlyFile
+      );
+      pIndex->addSourceItem(item);
+   }
+}
+
 void s4MethodIndexer(const RTokenCursor& cursor,
                      const IndexStatus& status,
+                     bool isReadOnlyFile, 
                      RSourceIndex* pIndex)
 {
    if (isMethodOrClassDefinition(cursor))
@@ -418,6 +474,7 @@ void s4MethodIndexer(const RTokenCursor& cursor,
                     signature,
                     rTokens.at(i + 2),
                     status,
+                    isReadOnlyFile,
                     pIndex);
    }
 }
@@ -462,6 +519,7 @@ bool isVariableIndexable(const RTokenCursor& cursor,
 
 void variableAssignmentIndexer(const RTokenCursor& cursor,
                                const IndexStatus& status,
+                               bool isReadOnlyFile, 
                                RSourceIndex* pIndex)
 {
    // check for indexable location
@@ -531,7 +589,8 @@ void variableAssignmentIndexer(const RTokenCursor& cursor,
             std::vector<RS4MethodParam>(),
             status.count(RToken::LBRACE),
             prevToken.row() + 1,
-            prevToken.column() + 1);
+            prevToken.column() + 1, 
+            isReadOnlyFile);
    
    pIndex->addSourceItem(item);
    
@@ -544,7 +603,8 @@ std::vector<Indexer> makeIndexers()
    indexers.push_back(libraryCallIndexer);
    indexers.push_back(s4MethodIndexer);
    indexers.push_back(variableAssignmentIndexer);
-   
+   indexers.push_back(testThatCallIndexer);
+
    return indexers;
 }
 
@@ -557,6 +617,8 @@ RSourceIndex::RSourceIndex(const std::string& context, const std::string& code)
    
    // clear any (source-local) inferred packages
    inferredPkgNames_.clear();
+
+   bool isReadOnlyFile = boost::algorithm::contains(code, "do not edit by hand");
 
    // tokenize and create token cursor
    std::wstring wCode = string_utils::utf8ToWide(code, context);
@@ -575,7 +637,7 @@ RSourceIndex::RSourceIndex(const std::string& context, const std::string& code)
       
       for (const Indexer& indexer : indexers)
       {
-         indexer(cursor, status, this);
+         indexer(cursor, status, isReadOnlyFile, this);
       }
    }
    while (cursor.moveToNextToken());

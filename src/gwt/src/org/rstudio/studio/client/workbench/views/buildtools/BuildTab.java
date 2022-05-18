@@ -38,6 +38,10 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       @Handler
       public abstract void onBuildAll();
       @Handler
+      public abstract void onBuildIncremental();
+      @Handler
+      public abstract void onBuildFull();
+      @Handler
       public abstract void onDevtoolsLoadAll();
       @Handler
       public abstract void onCleanAll();

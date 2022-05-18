@@ -155,6 +155,7 @@ void ScriptJob::start()
       "exportRdata = " + exportRdata + ");";
      
    core::system::Options environment;
+   environment.push_back(std::make_pair("RSTUDIO_CHILD_PROCESS_PANE", "job"));
 
    // build options for async R process; default to no rdata unless we have other options (most
    // common is a vanilla R process)

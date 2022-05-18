@@ -266,6 +266,8 @@ bool browserContextActive();
 // quit
 void quit(bool saveWorkspace, int status = EXIT_SUCCESS);
 
+void setResumeCallbacks(boost::function<void()> before, boost::function<void()> after);
+
 } // namespace session
 } // namespace r
 } // namespace rstudio

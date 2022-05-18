@@ -1085,7 +1085,7 @@ void readQuartoProjectConfig(const FilePath& configFile,
                              std::string* pOutputDir,
                              std::vector<std::string>* pFormats,
                              std::vector<std::string>* pBibliographies,
-                             std::string* pEditor)
+                             json::Object* pEditor)
 {
    // read the config
    std::string configText;
@@ -1156,22 +1156,30 @@ void readQuartoProjectConfig(const FilePath& configFile,
             else if (key == "editor" && pEditor != nullptr)
             {
                auto node = it->second;
-               if (node.Type() == YAML::NodeType::Scalar)
+               if (node.Type() == YAML::NodeType::Map)
                {
-                  *pEditor = node.as<std::string>();
-               }
-               else if (node.Type() == YAML::NodeType::Map)
-               {
-                  for (auto editorId = node.begin(); editorId != node.end(); ++editorId)
+                  r::sexp::Protect protect;
+                  auto editorSEXP = r::sexp::create(node, &protect);
+
+                  SEXP editorJsonSEXP;
+                  Error error = r::exec::RFunction(".rs.quarto.editorConfig", editorSEXP)
+                       .call(&editorJsonSEXP, &protect);
+                  if (!error)
                   {
-                     if ((editorId->first.as<std::string>() == "type" || editorId->first.as<std::string>() == "mode") &&
-                         editorId->second.Type() == YAML::NodeType::Scalar)
-                     {
-                        std::string value = editorId->second.as<std::string>();
-                        if (value == "visual" || value == "source")
-                           *pEditor = value;
-                     }
+                     error = r::sexp::extract(editorJsonSEXP, pEditor);
+                     if (error)
+                        LOG_ERROR(error);
                   }
+                  else
+                  {
+                     LOG_ERROR(error);
+                  }
+               }
+               else if (node.Type() == YAML::NodeType::Scalar)
+               {
+                  json::Object editor;
+                  editor["mode"] = node.as<std::string>();
+                  *pEditor = editor;
                }
             }
          }
@@ -1275,6 +1283,11 @@ Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_quartoFileResources, 1);
 
+   // source SessionQuarto.R so we can call it from config init
+   Error error = module_context::sourceModuleRFile("SessionQuarto.R");
+   if (error)
+      return error;
+
    // initialize config at startup
    quartoConfig(true);
 
@@ -1287,7 +1300,6 @@ Error initialize()
      (boost::bind(module_context::registerRpcMethod, "quarto_capabilities", quartoCapabilitiesRpc))
      (boost::bind(module_context::registerRpcMethod, "get_qmd_publish_details", getQmdPublishDetails))
      (boost::bind(module_context::registerRpcMethod, "quarto_create_project", quartoCreateProject))
-     (boost::bind(module_context::sourceModuleRFile, "SessionQuarto.R"))
      (boost::bind(quarto::preview::initialize))
      (boost::bind(quarto::serve::initialize))
      (boost::bind(quarto::xrefs::initialize))

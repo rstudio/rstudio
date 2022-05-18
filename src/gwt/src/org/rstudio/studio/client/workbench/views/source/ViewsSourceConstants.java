@@ -1998,6 +1998,15 @@ public interface ViewsSourceConstants extends com.google.gwt.i18n.client.Message
     String functionCapitalized();
 
     /**
+     * Translated "Test".
+     *
+     * @return translated "Test"
+     */
+    @DefaultMessage("Test")
+    @Key("testCapitalized")
+    String testCapitalized();
+
+    /**
      * Translated "Chunk".
      *
      * @return translated "Chunk"

@@ -2444,7 +2444,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Clean before install.
+    * Always use --preclean when installing package.
     */
    public PrefValue<Boolean> cleanBeforeInstall()
    {
@@ -3349,6 +3349,18 @@ public class UserPrefsAccessor extends Prefs
    public final static String UI_LANGUAGE_EN = "en";
    public final static String UI_LANGUAGE_FR = "fr";
 
+   /**
+    * Whether RStudio Desktop will use the operating system's native File and Message dialog boxes.
+    */
+   public PrefValue<Boolean> nativeFileDialogs()
+   {
+      return bool(
+         "native_file_dialogs",
+         _constants.nativeFileDialogsTitle(), 
+         _constants.nativeFileDialogsDescription(), 
+         true);
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -3819,6 +3831,8 @@ public class UserPrefsAccessor extends Prefs
          quartoEnabled().setValue(layer, source.getString("quarto_enabled"));
       if (source.hasKey("ui_language"))
          uiLanguage().setValue(layer, source.getString("ui_language"));
+      if (source.hasKey("native_file_dialogs"))
+         nativeFileDialogs().setValue(layer, source.getBool("native_file_dialogs"));
    }
    public List<PrefValue<?>> allPrefs()
    {
@@ -4057,6 +4071,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(checkNullExternalPointers());
       prefs.add(quartoEnabled());
       prefs.add(uiLanguage());
+      prefs.add(nativeFileDialogs());
       return prefs;
    }
    

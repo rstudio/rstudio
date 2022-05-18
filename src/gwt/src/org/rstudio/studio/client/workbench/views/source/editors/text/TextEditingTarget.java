@@ -2509,6 +2509,8 @@ public class TextEditingTarget implements
                      statusBar_.setScopeType(StatusBar.SCOPE_SECTION);
                   else if (scope.isTopLevel())
                      statusBar_.setScopeType(StatusBar.SCOPE_TOP_LEVEL);
+                  else if (scope.isTest())
+                     statusBar_.setScopeType(StatusBar.SCOPE_TEST);
                   else if (scope.isFunction())
                      statusBar_.setScopeType(StatusBar.SCOPE_FUNCTION);
                   else if (scope.isLambda())
@@ -3281,16 +3283,35 @@ public class TextEditingTarget implements
       // only do this for markdown files
       if (fileType_.isMarkdown())
       {
-         // check canonical pref
-         boolean canonical = prefs_.visualMarkdownEditingCanonical().getValue();
+         boolean canonical = false;
          
-         // if we are cannonical but the global value isn't canonical then make sure this
-         // file is in the current project
-         if (canonical && !prefs_.visualMarkdownEditingCanonical().getGlobalValue())
+         // start with quarto project level pref if its in play
+         boolean foundQuartoCanonical = false;
+         QuartoConfig quarto = session_.getSessionInfo().getQuartoConfig();
+         boolean isQuartoDoc = QuartoHelper.isWithinQuartoProjectDir(docUpdateSentinel_.getPath(), quarto);
+         if (isQuartoDoc)
          {
-            canonical = VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_);
+            if (quarto.project_editor != null && quarto.project_editor.markdown != null && quarto.project_editor.markdown.canonical != null)
+            {
+               canonical = Boolean.parseBoolean(quarto.project_editor.markdown.canonical);
+               foundQuartoCanonical = true;
+            }
          }
-
+         
+         if (!foundQuartoCanonical)
+         {
+            // check canonical pref
+            canonical = prefs_.visualMarkdownEditingCanonical().getValue();
+            
+            // if we are cannonical but the global value isn't canonical then make sure this
+            // file is in the current project
+            if (canonical && !prefs_.visualMarkdownEditingCanonical().getGlobalValue())
+            {
+               canonical = VisualModeUtil.isDocInProject(workbenchContext_, docUpdateSentinel_);
+            }
+         }
+        
+         
          // check for a file based canonical setting
          String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
          String yamlCanonical = RmdEditorOptions.getMarkdownOption(yaml,  "canonical");

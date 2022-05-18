@@ -274,6 +274,10 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
           // save current state in stack
           stack[0] = state;
 
+          // save the name of the next state
+          // (needed because state names can be mutated in multi-mode documents)
+          stack[1] = this.next;
+
           // save the expected suffix for exit
           stack[2] =
             $complements[value[value.length - 1]] +
@@ -480,7 +484,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
         token : "string",
         regex : "[\\]})][-]*['\"]",
         onMatch: function(value, state, stack, line) {
-          this.next = (value === stack[2]) ? stack[0] : "rawstring";
+          this.next = (value === stack[2]) ? stack[0] : stack[1];
           return this.token;
         }
       },

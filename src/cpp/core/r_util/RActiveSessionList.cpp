@@ -49,16 +49,21 @@ ActiveSessionList::ActiveSessionList(const std::shared_ptr<IActiveSessionListSto
 Error ActiveSessionList::create(const std::string& project,
                              const std::string& workingDir,
                              bool initial,
+                             const std::string& editor,
                              std::string* pId) const
 {
    // generate a new id (loop until we find a unique one)
    std::string id;
+   FilePath dir;
    while (id.empty())
    {
       std::string candidateId = core::r_util::generateScopeId();
-      if (!storage_->hasSessionId(candidateId))
+      dir = rootStoragePath_.completeChildPath(kSessionDirPrefix + candidateId);
+      if (!storage_->hasSessionId(candidateId) && !dir.exists())
          id = candidateId;
    }
+
+   LOG_DEBUG_MESSAGE("Creating new session directory: " + dir.getAbsolutePath() + " for editor: " + editor + " with id: " + id);
 
    boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
    std::string isoTime = boost::posix_time::to_iso_extended_string(time);
@@ -77,6 +82,12 @@ Error ActiveSessionList::create(const std::string& project,
 
    storage_->createSession(id, initialMetadata);
 
+   boost::shared_ptr<ActiveSession> activeSession = storage_->getSession(id);
+   activeSession->setActivityState(kActivityStateLaunching, true);
+
+   if (editor == kWorkbenchRStudio)
+      activeSession->setLastResumed();
+
    // return the id if requested
    if (pId != nullptr)
    {
@@ -93,7 +104,23 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessionList::list(FilePath 
    {
       boost::shared_ptr<ActiveSession> candidateSession = storage_->getSession(id);
       if(candidateSession->validate(userHomePath, projectSharingEnabled))
+      {
+         candidateSession->cacheSortConditions();
          sessions.push_back(candidateSession);
+      }
+      else
+      {
+         // Logging a message because this also happens when the rworkspaces cannot access the project directory
+         LOG_DEBUG_MESSAGE("Removing invalid session: " + candidateSession->id());
+
+         // remove sessions that don't have required properties
+         // (they may be here as a result of a race condition where
+         // they are removed but then suspended session data is
+         // written back into them)
+         Error error = candidateSession->destroy();
+         if (error)
+            LOG_ERROR(error);
+      }
    }
    return sessions;
 }
@@ -106,7 +133,18 @@ size_t ActiveSessionList::count(const FilePath& userHomePath,
 
 boost::shared_ptr<ActiveSession> ActiveSessionList::get(const std::string& id) const
 {
-   return storage_->getSession(id);
+   FilePath scratchPath = rootStoragePath_.completeChildPath(kSessionDirPrefix + id);
+   if (scratchPath.exists() && storage_->hasSessionId(id))
+   {
+      
+      LOG_DEBUG_MESSAGE("Found session: " + scratchPath.getAbsolutePath());
+      return storage_->getSession(id);
+   }
+   else
+   {
+      LOG_DEBUG_MESSAGE("No session with path: " + scratchPath.getAbsolutePath());
+      return emptySession(id);
+   }
 }
 
 

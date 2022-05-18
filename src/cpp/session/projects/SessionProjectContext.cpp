@@ -774,6 +774,11 @@ json::Object ProjectContext::uiPrefs() const
    json::Object uiPrefs;
    uiPrefs[kUseSpacesForTab] = config_.useSpacesForTab;
    uiPrefs[kNumSpacesForTab] = config_.numSpacesForTab;
+   // only set project value if explicitly set to Yes or No
+   if (config_.useNativePipeOperator == r_util::YesValue)
+      uiPrefs[kInsertNativePipeOperator] = true;
+   if (config_.useNativePipeOperator == r_util::NoValue)
+      uiPrefs[kInsertNativePipeOperator] = false;
    uiPrefs[kAutoAppendNewline] = config_.autoAppendNewline;
    uiPrefs[kStripTrailingWhitespace] = config_.stripTrailingWhitespace;
    uiPrefs[kDefaultEncoding] = defaultEncoding();

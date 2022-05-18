@@ -115,6 +115,18 @@ SessionScope SessionScope::vscodeSession(const std::string& id)
    return SessionScope(ProjectId(kVSCodeId), id);
 }
 
+SessionScope SessionScope::fromSessionId(const std::string& id, const std::string& editor)
+{
+   if (editor == kWorkbenchJupyterLab)
+      return jupyterLabSession(id);
+   else if (editor == kWorkbenchJupyterNotebook)
+      return jupyterNotebookSession(id);
+   else if (editor == kWorkbenchVSCode)
+      return vscodeSession(id);
+   else
+      return projectNone(id);
+}
+
 bool SessionScope::isProjectNone() const
 {
    return project_.id() == kProjectNoneId;
