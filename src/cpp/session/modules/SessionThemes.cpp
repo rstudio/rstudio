@@ -66,29 +66,6 @@ const std::string kLocalCustomThemeLocation = "theme/custom/local/";
 typedef std::map<std::string, std::tuple<std::string, std::string, bool> > ThemeMap;
 
 /**
- * @brief Converts a string to a boolean value. Throws an bad_lexical_cast exception if the string
- *        is not valid.
- *
- * @param toConvert     The string to convert to boolean.
- *
- * @throw bad_lexical_cast    If the string cannot be converted to boolean.
- *
- * @return The converted value.
- */
-bool convertToBool(const std::string& toConvert)
-{
-   std::string preppedStr = boost::regex_replace(
-            toConvert,
-            boost::regex("true", boost::regex::icase),
-            "1");
-   preppedStr = boost::regex_replace(
-            preppedStr,
-            boost::regex("false", boost::regex::icase),
-            "0");
-   return boost::lexical_cast<bool>(preppedStr);
-}
-
-/**
  * @brief Gets an error out of the object, if there is one, and updates pResponse.
  *
  * @param object        The object to check for an error.
@@ -176,8 +153,6 @@ void getThemesInLocation(
                name = mThemeName[1];
             }
             
-            WLOGF("Reading theme: '{}'", name);
-
             // Find out if the theme is dark or not.
             boost::regex reThemeIsDark("rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)");
             boost::smatch mThemeIsDark;
@@ -186,11 +161,16 @@ void getThemesInLocation(
             bool isDark = false;
             if (themeIsDarkFound && (mThemeIsDark.size() >= 2))
             {
-               try
+               std::string value = mThemeIsDark[1].str();
+               if (core::string_utils::hasTruthyValue(value))
                {
-                  isDark = convertToBool(mThemeIsDark[1].str());
+                  isDark = true;
                }
-               catch (boost::bad_lexical_cast&)
+               else if (core::string_utils::hasFalsyValue(value))
+               {
+                  isDark = false;
+               }
+               else
                {
                   WLOGF("rs-theme-is-dark value ('{}') is not a valid boolean string for theme \"{}\" ({})",
                         mThemeIsDark[1].str(),
@@ -421,15 +401,20 @@ SEXP rs_getThemeColors()
  */
 FilePath getDefaultTheme(const http::Request& request)
 {
-   std::string isDarkStr = request.queryParamValue("dark");
+   std::string value = request.queryParamValue("dark");
+   
    bool isDark = false;
-   try
+   if (core::string_utils::hasTruthyValue(value))
    {
-      isDark = convertToBool(isDarkStr);
+      isDark = true;
    }
-   catch (boost::bad_lexical_cast&)
+   else if (core::string_utils::hasFalsyValue(value))
    {
-      LOG_WARNING_MESSAGE("\"dark\" parameter for request is missing or not a true or false value: " + isDarkStr);
+      isDark = false;
+   }
+   else
+   {
+      LOG_WARNING_MESSAGE("\"dark\" parameter for request is missing or not a true or false value: " + value);
    }
 
    if (isDark)
