@@ -23,7 +23,6 @@
 - The fuzzy finder shows `test_that()` calls when the search term starts with "t "
 - Calls to test_that() appear in the source file outline (#11082)
 - Windows: Update embedded libclang to 13.0.1 (#11186)
-- The `RSTUDIO_SESSION_PID` and `RSTUDIO_CHILD_PROCESS_PANE` are set when child processes are made. `RSTUDIO_CHILD_PROCESS_PANE` takes terminal/build/job/render. 
 
 #### Find in Files
 
