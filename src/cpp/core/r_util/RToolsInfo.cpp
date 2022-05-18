@@ -242,6 +242,12 @@ RToolsInfo::RToolsInfo(const std::string& name,
       std::replace(rtoolsPath.begin(), rtoolsPath.end(), '/', '\\');
       environmentVars.push_back({"RTOOLS42_HOME", rtoolsPath});
 
+      // undefine _MSC_VER, so that we can "pretend" to be gcc
+      // this is important for C++ libraries which might try to use
+      // MSVC-specific tools when _MSC_VER is defined (e.g. Eigen), which might
+      // not actually be defined or available in Rtools
+      clangArgs.push_back("-U_MSC_VER");
+
       // set GNUC levels
       // (required for _mingw.h, which otherwise tries to use incompatible MSVC defines)
       clangArgs.push_back("-D__GNUC__=9");
