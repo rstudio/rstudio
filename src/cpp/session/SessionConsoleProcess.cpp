@@ -190,6 +190,14 @@ void ConsoleProcess::commonInit()
    // always redirect stderr to stdout so output is interleaved
    options_.redirectStdErrToStdOut = true;
 
+   // ensure that we have an environment block to modify
+   if (!options_.environment)
+   {
+      core::system::Options childEnv;
+      core::system::environment(&childEnv);
+      options_.environment = childEnv;
+   }
+
    if (interactionMode() != InteractionNever || options_.smartTerminal)
    {
 #ifdef _WIN32
@@ -220,15 +228,7 @@ void ConsoleProcess::commonInit()
       }
       else // terminal
       {
-         // undefine TERM, as it puts git-bash in a mode that winpty doesn't
-         // support; was set in SessionMain.cpp::main to support color in
-         // the R Console
-         if (!options_.environment)
-         {
-            core::system::Options childEnv;
-            core::system::environment(&childEnv);
-            options_.environment = childEnv;
-         }
+         // undefine TERM, as it puts git-bash in a mode that winpty doesn't support;
          core::system::unsetenv(&(options_.environment.get()), "TERM");
 
          // request a pseudoterminal if this is an interactive console process
@@ -244,15 +244,7 @@ void ConsoleProcess::commonInit()
       options_.pseudoterminal = core::system::Pseudoterminal(options_.cols,
                                                              options_.rows);
 
-      // define TERM (but first make sure we have an environment
-      // block to modify)
-      if (!options_.environment)
-      {
-         core::system::Options childEnv;
-         core::system::environment(&childEnv);
-         options_.environment = childEnv;
-      }
-
+      // define TERM
       core::system::setenv(&(options_.environment.get()), "TERM",
                            options_.smartTerminal ? core::system::kSmartTerm :
                                                     core::system::kDumbTerm);
