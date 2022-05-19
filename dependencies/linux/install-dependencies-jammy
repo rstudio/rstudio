@@ -39,6 +39,7 @@ sudo apt-get -y install \
   fakeroot \
   git \
   gnupg1 \
+  jq \
   libacl1-dev \
   libattr1-dev \
   libbz2-dev \
