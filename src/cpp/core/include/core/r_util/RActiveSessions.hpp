@@ -36,6 +36,24 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
+// Constants for RPCs related to session metadata ===========================
+// RPC endpoint
+constexpr const char * kSessionStorageRpc = "/storage/session_metadata";
+
+// Methods for the RPC
+constexpr const char * kSessionStorageReadMethod = "read";
+constexpr const char * kReadAllMethod = "read_all";
+constexpr const char * kWriteMethod = "write";
+
+// Fiels in the RPC bodies
+constexpr const char * kSessionStorageMethodField = "sub_method";
+constexpr const char * kSessionStorageUserIdField = "userId";
+constexpr const char * kSessionStorageFieldsField = "fields";
+constexpr const char * kSessionStorageIdField = "id";
+constexpr const char * kSessionStorageSessionsField = "sessions";
+
+// End RPC constants ========================================================
+
 // Transitional states - set in the activeSession metadata when rpc requests are made to change the state
 //   These will override the job launcher state.
 static const std::string kActivityStateResuming = "resuming";
