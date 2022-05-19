@@ -49,7 +49,7 @@ export const checkForNewLanguage = () => {
  * @param {string} [separator='/']
  * @return {*} 
  */
-function normalizeSeparators(path: string, separator = '/') {
+export function normalizeSeparators(path: string, separator = '/') {
   return path.replace(/[\\/]+/g, separator);
 }
 
