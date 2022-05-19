@@ -40,6 +40,7 @@ FORMULAS=(
    cmake
    coreutils
    gettext
+   jq
    krb5
    libpq
    openjdk@11
