@@ -126,7 +126,7 @@
                 "windows": {
                     "rBinDir": "",
                     "preferR64": true,
-                    "rstudioPath": ""
+                    "rExecutablePath": ""
                 }
             }
         },

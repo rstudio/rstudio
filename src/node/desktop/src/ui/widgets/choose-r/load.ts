@@ -42,7 +42,6 @@ const selectWidget = document.getElementById('select') as HTMLSelectElement;
 const radioChooseCustom = document.getElementById('use-custom') as HTMLInputElement;
 const radioButtons = document.querySelectorAll('input[type="radio"]');
 
-selectWidget.disabled = !radioChooseCustom.checked;
 radioButtons.forEach((radioButton) => {
   radioButton.addEventListener('click', () => {
     selectWidget.disabled = !radioChooseCustom.checked;

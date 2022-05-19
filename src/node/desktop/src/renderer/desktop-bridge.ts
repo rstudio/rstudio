@@ -15,6 +15,7 @@
 
 import { ipcRenderer, webContents } from 'electron';
 import { logger } from '../core/logger';
+import { normalizeSeparatorsNative } from '../ui/utils';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -89,10 +90,10 @@ export function getDesktopBridge() {
           }
 
           if (process.platform === 'win32') {
-            filePath = filePath.replace(/\\/g, '/');
-          } else {
-            filePath = filePath.replace(process.env.HOME as string, '~');
+            filePath = normalizeSeparatorsNative(filePath);
           }
+          
+          filePath = filePath.replace(normalizeSeparatorsNative(process.env.HOME as string), '~');
 
           // invoke callback
           return callback(filePath);
