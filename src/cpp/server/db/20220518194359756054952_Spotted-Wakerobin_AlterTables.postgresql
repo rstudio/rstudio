@@ -1,0 +1,8 @@
+ALTER TABLE active_session_metadata
+ADD COLUMN executing TEXT IF NOT EXISTS;
+
+ALTER TABLE active_session_metadata
+ADD COLUMN last_state_updated TEXT IF NOT EXISTS;
+
+/* Update the version to the latest after all alter statements are applied. */
+UPDATE schema_version SET current_version = '20220518194359756054952' , release_name = 'Spotted Wakerobin';

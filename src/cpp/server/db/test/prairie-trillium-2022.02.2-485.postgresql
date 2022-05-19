@@ -1,0 +1,200 @@
+--
+-- PostgreSQL database dump
+--
+
+-- Dumped from database version 12.10 (Ubuntu 12.10-0ubuntu0.20.04.1)
+-- Dumped by pg_dump version 12.10 (Ubuntu 12.10-0ubuntu0.20.04.1)
+
+SET statement_timeout = 0;
+SET lock_timeout = 0;
+SET idle_in_transaction_session_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SELECT pg_catalog.set_config('search_path', '', false);
+SET check_function_bodies = false;
+SET xmloption = content;
+SET client_min_messages = warning;
+SET row_security = off;
+
+SET default_tablespace = '';
+
+SET default_table_access_method = heap;
+
+--
+-- Name: active_session_metadata; Type: TABLE; Schema: public; Owner: rstudio
+--
+
+CREATE TABLE public.active_session_metadata (
+    session_id text NOT NULL,
+    user_id integer NOT NULL,
+    workbench text NOT NULL,
+    created text NOT NULL,
+    last_used text NOT NULL,
+    r_version text,
+    r_version_label text,
+    r_version_home text,
+    project text,
+    working_directory text,
+    activity_state text NOT NULL,
+    label text NOT NULL,
+    launch_parameters text NOT NULL,
+    save_prompt_required text DEFAULT 'not_required'::text NOT NULL
+);
+
+
+ALTER TABLE public.active_session_metadata OWNER TO rstudio;
+
+--
+-- Name: licensed_users; Type: TABLE; Schema: public; Owner: rstudio
+--
+
+CREATE TABLE public.licensed_users (
+    user_name text NOT NULL,
+    locked boolean DEFAULT false NOT NULL,
+    last_sign_in text NOT NULL,
+    is_admin boolean DEFAULT false NOT NULL,
+    user_id integer DEFAULT '-1'::integer NOT NULL,
+    id integer NOT NULL
+);
+
+
+ALTER TABLE public.licensed_users OWNER TO rstudio;
+
+--
+-- Name: licensed_users_id_seq; Type: SEQUENCE; Schema: public; Owner: rstudio
+--
+
+CREATE SEQUENCE public.licensed_users_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.licensed_users_id_seq OWNER TO rstudio;
+
+--
+-- Name: licensed_users_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: rstudio
+--
+
+ALTER SEQUENCE public.licensed_users_id_seq OWNED BY public.licensed_users.id;
+
+
+--
+-- Name: revoked_cookie; Type: TABLE; Schema: public; Owner: rstudio
+--
+
+CREATE TABLE public.revoked_cookie (
+    expiration text NOT NULL,
+    cookie_data text NOT NULL
+);
+
+
+ALTER TABLE public.revoked_cookie OWNER TO rstudio;
+
+--
+-- Name: schema_version; Type: TABLE; Schema: public; Owner: rstudio
+--
+
+CREATE TABLE public.schema_version (
+    current_version text NOT NULL,
+    release_name text NOT NULL
+);
+
+
+ALTER TABLE public.schema_version OWNER TO rstudio;
+
+--
+-- Name: licensed_users id; Type: DEFAULT; Schema: public; Owner: rstudio
+--
+
+ALTER TABLE ONLY public.licensed_users ALTER COLUMN id SET DEFAULT nextval('public.licensed_users_id_seq'::regclass);
+
+
+--
+-- Data for Name: active_session_metadata; Type: TABLE DATA; Schema: public; Owner: rstudio
+--
+
+COPY public.active_session_metadata (session_id, user_id, workbench, created, last_used, r_version, r_version_label, r_version_home, project, working_directory, activity_state, label, launch_parameters, save_prompt_required) FROM stdin;
+\.
+
+
+--
+-- Data for Name: licensed_users; Type: TABLE DATA; Schema: public; Owner: rstudio
+--
+
+COPY public.licensed_users (user_name, locked, last_sign_in, is_admin, user_id, id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: revoked_cookie; Type: TABLE DATA; Schema: public; Owner: rstudio
+--
+
+COPY public.revoked_cookie (expiration, cookie_data) FROM stdin;
+2022-05-19T15:05:10Z	testuser|Thu%2C%2019%20May%202022%2015%3A05%3A10%20GMT|imaoBxmiq23IfkYyAJuouPCPG7KPTip9nPIkGXOl%2Bho%3D
+2022-05-19T15:11:12Z	testuser2|Thu%2C%2019%20May%202022%2015%3A11%3A12%20GMT|kcs1Jyf53in3Jbj%2B78LWEg7%2BCEMvoukwwSGLiXaE27k%3D
+\.
+
+
+--
+-- Data for Name: schema_version; Type: TABLE DATA; Schema: public; Owner: rstudio
+--
+
+COPY public.schema_version (current_version, release_name) FROM stdin;
+20210916132211194382021	Prairie Trillium
+\.
+
+
+--
+-- Name: licensed_users_id_seq; Type: SEQUENCE SET; Schema: public; Owner: rstudio
+--
+
+SELECT pg_catalog.setval('public.licensed_users_id_seq', 1, false);
+
+
+--
+-- Name: active_session_metadata active_session_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: rstudio
+--
+
+ALTER TABLE ONLY public.active_session_metadata
+    ADD CONSTRAINT active_session_metadata_pkey PRIMARY KEY (session_id);
+
+
+--
+-- Name: licensed_users licensed_users_pkey; Type: CONSTRAINT; Schema: public; Owner: rstudio
+--
+
+ALTER TABLE ONLY public.licensed_users
+    ADD CONSTRAINT licensed_users_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: revoked_cookie revoked_cookie_pkey; Type: CONSTRAINT; Schema: public; Owner: rstudio
+--
+
+ALTER TABLE ONLY public.revoked_cookie
+    ADD CONSTRAINT revoked_cookie_pkey PRIMARY KEY (cookie_data);
+
+
+--
+-- Name: revoked_cookie_expiration_index; Type: INDEX; Schema: public; Owner: rstudio
+--
+
+CREATE INDEX revoked_cookie_expiration_index ON public.revoked_cookie USING btree (expiration);
+
+
+--
+-- Name: active_session_metadata fk_user; Type: FK CONSTRAINT; Schema: public; Owner: rstudio
+--
+
+ALTER TABLE ONLY public.active_session_metadata
+    ADD CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES public.licensed_users(id) ON DELETE CASCADE;
+
+
+--
+-- PostgreSQL database dump complete
+--
+
