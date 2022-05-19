@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.Toolbar;
@@ -27,7 +28,9 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.core.client.widget.UserPrefMenuItem;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.quarto.model.QuartoConfig;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.files.FilesConstants;
@@ -49,7 +52,11 @@ public class FileCommandToolbar extends Toolbar
       newFileMenu.addItem(commands.touchSourceDoc().createMenuItem(false));
       newFileMenu.addSeparator();
       newFileMenu.addItem(commands.touchRMarkdownDoc().createMenuItem(false));
-      newFileMenu.addItem(commands.touchQuartoDoc().createMenuItem(false));
+      // if quarto is disabled, remove Quarto file from the new blank file dropdown
+      AppCommand touchQuarto = commands.touchQuartoDoc();
+      QuartoConfig quartoConfig = RStudioGinjector.INSTANCE.getSession().getSessionInfo().getQuartoConfig();
+      touchQuarto.setVisible(quartoConfig.enabled);
+      newFileMenu.addItem(touchQuarto.createMenuItem(false));
       newFileMenu.addSeparator();
       // these two commands will automatically set up files and folders, so they do not need touch commands
       newFileMenu.addItem(commands.newRShinyApp().createMenuItem(false));
