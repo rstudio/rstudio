@@ -109,6 +109,7 @@ public class LintItem extends JavaScriptObject
             row: items[key]["start.row"],
             column: items[key]["start.column"],
             html: items[key]["text"],
+            text: items[key]["raw"],
             type: type
          });
       }

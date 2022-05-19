@@ -69,6 +69,7 @@
 - Fixed an issue with project sharing where other users' actions could prevent a session's auto suspend (rstudio-pro#3362)
 - Fixed a regression in which the "(Use Default Version)" option was not present in some R version selector drop downs (rstudio-pro#3451)
 - Fix opening a remote session via downloaded rdprsp file in Mac Desktop Pro when it (RDP) is already open (rstudio-pro#3291)
+- Fixed several error marker issues in visual mode where they did not display (#10949 #10483)
 
 ### RStudio Workbench
 
