@@ -69,7 +69,6 @@ export function getDesktopBridge() {
       ipcRenderer
         .invoke('desktop_get_save_file_name', caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner)
         .then((result) => {
-
           // if the result was canceled, bail early
           if (result.canceled as boolean) {
             return callback('');
@@ -91,8 +90,10 @@ export function getDesktopBridge() {
 
           if (process.platform === 'win32') {
             filePath = filePath.replace(/\\/g, '/');
+          } else {
+            filePath = filePath.replace(process.env.HOME as string, '~');
           }
-          
+
           // invoke callback
           return callback(filePath);
         })
@@ -378,11 +379,11 @@ export function getDesktopBridge() {
     },
 
     openFile: (path: string) => {
+      console.log('open file: ');
       if (!path) {
         return;
       }
-      const webcontents = webContents
-        .getAllWebContents();
+      const webcontents = webContents.getAllWebContents();
 
       if (webcontents.length) {
         webcontents[0]
