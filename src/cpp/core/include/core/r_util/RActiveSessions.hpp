@@ -178,6 +178,52 @@ private:
       }
    }
 
+   Error readProperties(const std::set<std::string>& propertyNames, std::map<std::string, std::string>* pValues) const
+   {
+      std::map<std::string, std::string> values;
+      if (!empty())
+      {
+         if (!propertyNames.empty())
+            return storage_->readProperties(propertyNames, pValues);
+         else
+         {
+            // If no properties are specified, read them all
+            std::set<std::string> allProperties {
+               kExecuting,
+               kInitial,
+               kLabel,
+               kLastUsed,
+               kProject,
+               kSavePromptRequired,
+               kSessionSuspendData,
+               kRunning,
+               kRVersion,
+               kRVersionHome,
+               kRVersionLabel,
+               kWorkingDir,
+               kActivityState,
+               kLastStateUpdated,
+               kEditor,
+               kLastResumed,
+               kSuspendTimestamp,
+               kBlockingSuspend
+             };
+
+            return storage_->readProperties(allProperties, pValues);
+         }
+      }
+
+      return Success();
+   }
+
+   Error writeProperties(const std::map<std::string, std::string>& properites) const
+   {
+      if (!empty())
+         return storage_->writeProperties(properites);
+
+      return Success();
+   }
+
    std::string project() const
    {
       return readProperty(kProject);
