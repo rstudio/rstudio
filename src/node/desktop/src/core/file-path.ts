@@ -17,7 +17,7 @@ import fs from 'fs';
 import fsPromises from 'fs/promises';
 
 import { logger } from './logger';
-import { sep } from 'path';
+import path, { sep } from 'path';
 import { Err, success, safeError } from './err';
 import { userHomePath } from './user';
 import { err, Expected, ok } from './expected';
