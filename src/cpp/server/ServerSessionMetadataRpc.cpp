@@ -199,16 +199,16 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    boost::optional<system::User> sessionOwner;
    bool isAdmin;
    
-   std::string method;
-   error = json::readObject(rpcRequest.kwparams, std::string(kSessionStorageMethodField), method);
+   std::string operation;
+   error = json::readObject(rpcRequest.kwparams, std::string(kSessionStorageOperationField), operation);
    if (error)
    {
-      std::string description = "Invalid type supplied for required field \"" + std::string(kSessionStorageMethodField) + "\".";
+      std::string description = "Invalid type supplied for required field \"" + std::string(kSessionStorageOperationField) + "\".";
       json::errc::errc_t err = json::errc::ParamTypeMismatch;
       if (json::isMissingMemberError(error))
       {
          err = json::errc::ParamMissing;
-         description = "Required field \"" + std::string(kSessionStorageMethodField) + "\" is missing.";
+         description = "Required field \"" + std::string(kSessionStorageOperationField) + "\" is missing.";
       }
 
       error = Error(err, error, ERROR_LOCATION);
@@ -220,7 +220,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
       return json::setJsonRpcError(error, &pConnection->response(), true);
    } 
 
-   const BaseError baseError = [method, username, body](
+   const BaseError baseError = [operation, username, body](
       boost::system::error_code errorCode,
       const Error& cause,
       const ErrorLocation& errorLocation)
@@ -228,7 +228,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
 
       Error error = Error(errorCode, cause, errorLocation);
       error.addProperty("user", username);
-      error.addProperty("method", method);
+      error.addProperty("operation", operation);
       error.addProperty("body", body);
       return error;
    };
@@ -239,7 +239,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    if (error)
       return json::setJsonRpcError(error, &pConnection->response(), true);
 
-   if ((method != kReadAllMethod) && !rpcRequest.kwparams.hasMember(kSessionStorageIdField))
+   if ((operation != kSessionStroageReadAllOp) && !rpcRequest.kwparams.hasMember(kSessionStorageIdField))
       return json::setJsonRpcError(
          missingFieldError(baseError, username, kSessionStorageIdField, ERROR_LOCATION), &pConnection->response(), true);
 
@@ -247,7 +247,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
       return json::setJsonRpcError(
          missingFieldError(baseError, username, kSessionStorageFieldsField, ERROR_LOCATION), &pConnection->response(), true);
 
-   if (method == kWriteMethod)
+   if (operation == kSessionStorageWriteOp)
    {
       std::string sessionId;
       std::map<std::string, std::string> fields;
@@ -282,7 +282,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
          response.setResult(true);
       }
    }
-   else if (method == kSessionStorageReadMethod)
+   else if (operation == kSessionStorageReadOp)
    {
       std::string sessionId;
       std::set<std::string> fields;
@@ -316,7 +316,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
       else
          response.setResult(json::toJsonValue(result));
    }
-   else if (method == kReadAllMethod)
+   else if (operation == kSessionStroageReadAllOp)
    {
       std::set<std::string> fields;
       error = json::readObject(rpcRequest.kwparams, kSessionStorageFieldsField, fields);
@@ -354,9 +354,9 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    else 
    {
       error = Error(json::errc::ParamInvalid, ERROR_LOCATION);
-      error.addOrUpdateProperty("description", "Invalid method requested for Session Metadata RPC: " + method);
+      error.addOrUpdateProperty("description", "Invalid operation requested for Session Metadata RPC: " + operation);
       error.addProperty("user", username);
-      error.addProperty("method", method);
+      error.addProperty("operation", operation);
       LOG_ERROR(error);
       return json::setJsonRpcError(error, &pConnection->response(), true);
    }

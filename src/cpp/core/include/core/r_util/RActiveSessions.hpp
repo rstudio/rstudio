@@ -41,12 +41,12 @@ namespace r_util {
 constexpr const char * kSessionStorageRpc = "/storage/session_metadata";
 
 // Methods for the RPC
-constexpr const char * kSessionStorageReadMethod = "read";
-constexpr const char * kReadAllMethod = "read_all";
-constexpr const char * kWriteMethod = "write";
+constexpr const char * kSessionStorageReadOp = "read";
+constexpr const char * kSessionStroageReadAllOp = "read_all";
+constexpr const char * kSessionStorageWriteOp = "write";
 
 // Fiels in the RPC bodies
-constexpr const char * kSessionStorageMethodField = "sub_method";
+constexpr const char * kSessionStorageOperationField = "operation";
 constexpr const char * kSessionStorageUserIdField = "userId";
 constexpr const char * kSessionStorageFieldsField = "fields";
 constexpr const char * kSessionStorageIdField = "id";
