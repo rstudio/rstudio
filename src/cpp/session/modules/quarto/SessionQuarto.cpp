@@ -208,6 +208,12 @@ void detectQuartoInstallation()
    s_quartoVersion = std::get<1>(userInstalled);
    bool prepend = std::get<2>(userInstalled);
 
+   // see if quarto has been disabled due to the user's operating system
+   if (session::prefs::userPrefs().quartoEnabled() == kQuartoEnabledDisabled)
+   {
+      return;
+   }
+
    // always use user installed if it's there but subject to version check
    if (!s_userInstalledPath.isEmpty())
    {

@@ -198,7 +198,7 @@ public class UserStateAccessor extends Prefs
       protected Platform() {} 
 
       public final native JavaScriptObject getWindows() /*-{
-         return this && this.windows || {"rBinDir":"","preferR64":true,"rstudioPath":""};
+         return this && this.windows || {"rBinDir":"","preferR64":true,"rExecutablePath":""};
       }-*/;
 
    }

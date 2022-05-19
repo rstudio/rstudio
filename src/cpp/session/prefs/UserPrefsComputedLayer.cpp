@@ -46,6 +46,11 @@ Error UserPrefsComputedLayer::readPrefs()
 {
    json::Object layer;
 
+#ifndef QUARTO_ENABLED
+   // Quarto disabled due to platform ----------------------------------------
+   layer[kQuartoEnabled] = kQuartoEnabledDisabled;
+#endif
+
    // VCS executable paths ---------------------------------------------------
    layer[kGitExePath] = modules::git::detectedGitExePath().getAbsolutePath();
    layer[kSvnExePath] = modules::svn::detectedSvnExePath().getAbsolutePath();

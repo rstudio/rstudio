@@ -3331,6 +3331,25 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Enable IDE features for the Quarto publishing system.
+    */
+   public PrefValue<String> quartoEnabled()
+   {
+      return enumeration(
+         "quarto_enabled",
+         _constants.quartoEnabledTitle(), 
+         _constants.quartoEnabledDescription(), 
+         new String[] {
+            QUARTO_ENABLED_ENABLED,
+            QUARTO_ENABLED_DISABLED
+         },
+         "enabled");
+   }
+
+   public final static String QUARTO_ENABLED_ENABLED = "enabled";
+   public final static String QUARTO_ENABLED_DISABLED = "disabled";
+
+   /**
     * The IDE's user-interface language.
     */
    public PrefValue<String> uiLanguage()
@@ -3829,6 +3848,8 @@ public class UserPrefsAccessor extends Prefs
          pythonProjectEnvironmentAutomaticActivate().setValue(layer, source.getBool("python_project_environment_automatic_activate"));
       if (source.hasKey("check_null_external_pointers"))
          checkNullExternalPointers().setValue(layer, source.getBool("check_null_external_pointers"));
+      if (source.hasKey("quarto_enabled"))
+         quartoEnabled().setValue(layer, source.getString("quarto_enabled"));
       if (source.hasKey("ui_language"))
          uiLanguage().setValue(layer, source.getString("ui_language"));
       if (source.hasKey("native_file_dialogs"))
@@ -4070,6 +4091,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(sessionProtocolDebug());
       prefs.add(pythonProjectEnvironmentAutomaticActivate());
       prefs.add(checkNullExternalPointers());
+      prefs.add(quartoEnabled());
       prefs.add(uiLanguage());
       prefs.add(nativeFileDialogs());
       return prefs;

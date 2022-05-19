@@ -3053,6 +3053,19 @@ core::Error UserPrefValues::setCheckNullExternalPointers(bool val)
 }
 
 /**
+ * Enable IDE features for the Quarto publishing system.
+ */
+std::string UserPrefValues::quartoEnabled()
+{
+   return readPref<std::string>("quarto_enabled");
+}
+
+core::Error UserPrefValues::setQuartoEnabled(std::string val)
+{
+   return writePref("quarto_enabled", val);
+}
+
+/**
  * The IDE's user-interface language.
  */
 std::string UserPrefValues::uiLanguage()
@@ -3314,6 +3327,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kSessionProtocolDebug,
       kPythonProjectEnvironmentAutomaticActivate,
       kCheckNullExternalPointers,
+      kQuartoEnabled,
       kUiLanguage,
       kNativeFileDialogs,
    });
