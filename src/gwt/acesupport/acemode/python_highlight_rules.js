@@ -111,7 +111,7 @@ var PythonHighlightRules = function() {
         "start" : [  {
             // chunk metadata comments
             token : "comment.doc.tag",
-            regex : "#[|].*$",
+            regex : "#\\s*[|].*$",
             next  : "start"
         }, {
             token : "comment",

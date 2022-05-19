@@ -233,7 +233,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       {
         // R Markdown chunk metadata comments
         token : "comment.doc.tag",
-        regex : "#[|].*$",
+        regex : "#\\s*[|].*$",
         next  : "start"
       },
       {
