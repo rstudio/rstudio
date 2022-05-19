@@ -90,10 +90,12 @@ export function getDesktopBridge() {
           }
 
           if (process.platform === 'win32') {
-            filePath = normalizeSeparatorsNative(filePath);
+            filePath = normalizeSeparatorsNative(filePath, '/');
           }
-          
-          filePath = filePath.replace(normalizeSeparatorsNative(process.env.HOME as string), '~');
+
+          /* this makes sure the file path and HOME path 
+          only contains forward slashes as separators for correct comparison */
+          filePath = filePath.replace(normalizeSeparatorsNative(process.env.HOME as string, '/'), '~');
 
           // invoke callback
           return callback(filePath);
