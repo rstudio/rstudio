@@ -44,6 +44,7 @@ set(SERVER_SOURCE_FILES
    ServerSessionRpc.cpp
    ServerSessionRpcOverlay.cpp
    ServerSessionManager.cpp
+   ServerSessionMetadataRpc.cpp
    ServerXdgVars.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerAuthCommon.cpp
