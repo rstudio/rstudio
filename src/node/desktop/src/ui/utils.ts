@@ -60,13 +60,8 @@ export function normalizeSeparators(path: string, separator = '/') {
  * @param {string} path
  * @return {*} 
  */
-export function normalizeSeparatorsNative(path: string, forcedSeparator = '') {
+export function normalizeSeparatorsNative(path: string) {
   /* using conditional to set the separator based on platform as `path` is not available here */
-  let separator = process.platform === 'win32' ? '\\' : '/';
-
-  if (forcedSeparator !== '') {
-    separator = forcedSeparator;
-  }
-
+  const separator = process.platform === 'win32' ? '\\' : '/';
   return normalizeSeparators(path, separator);
 }
