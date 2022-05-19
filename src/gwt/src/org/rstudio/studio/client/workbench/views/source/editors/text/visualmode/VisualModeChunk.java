@@ -139,7 +139,7 @@ public class VisualModeChunk
       outputHost_.getStyle().setPosition(com.google.gwt.dom.client.Style.Position.RELATIVE);
 
       ChunkOutputUi output = null;
-      if (index > 0)
+      if (index >= 0)
       {
          Position pos = parent_.positionFromIndex(index);
          scope_ = parent_.getScopeAtPosition(pos);
@@ -857,7 +857,7 @@ public class VisualModeChunk
             String clazz = style_.gutterIcon() + " ";
             if (StringUtil.equals(item.getType(), "error"))
                clazz += ThemeStyles.INSTANCE.gutterError();
-            else if (StringUtil.equals(item.getType(), "info"))
+            else if (StringUtil.equals(item.getType(), "info") || StringUtil.equals(item.getType(), "style"))
                clazz += ThemeStyles.INSTANCE.gutterInfo();
             else if (StringUtil.equals(item.getType(), "warning"))
                clazz += ThemeStyles.INSTANCE.gutterWarning();
@@ -870,7 +870,10 @@ public class VisualModeChunk
             // Apply title to elements so lint text appears when hovered
             for (VisualModeChunkRowState state: states)
             {
-               state.setTitle(item.getText());
+               if (state.getTitle().isEmpty())
+                  state.setTitle(item.getText());
+               else
+                  state.appendToTitle(item.getText());
             }
          }
       }

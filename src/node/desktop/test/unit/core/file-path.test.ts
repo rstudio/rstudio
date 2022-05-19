@@ -20,9 +20,9 @@ import { randomString } from '../unit-utils';
 import fs from 'fs';
 import fsPromises from 'fs/promises';
 import path from 'path';
-import os from 'os';
+import os, { platform } from 'os';
 
-import { FilePath } from '../../../src/core/file-path';
+import { FilePath, normalizeSeparatorsNative } from '../../../src/core/file-path';
 import { userHomePath } from '../../../src/core/user';
 import { setLogger, NullLogger } from '../../../src/core/logger';
 import { clearCoreSingleton } from '../../../src/core/core-state';
@@ -602,6 +602,33 @@ describe('FilePath', () => {
       const cPath = new FilePath('/path/to/foo');
       assert.strictEqual(cPath.completeChildPath('../bar'), cPath);
       assert.strictEqual(cPath.completeChildPath('/path/to/quux'), cPath);
+    });
+    it('Paths only contain forward slashes with no duplicates', () => {
+      const paths = [
+        'c:\\www\\app\\my/folder/file.r',
+        'C:\\R\\4.1.2/bin/R.exe',
+        'c:\\\\www\\\\app\\my/folder/file.r',
+        'T:\\R-3.6.3\\bin\\x64\\R.exe',
+      ];
+    
+      const correctSeparator = process.platform === 'win32' ? '\\' : '/';
+      const wrongSeparator = process.platform !== 'win32' ? '\\' : '/';
+
+      paths.forEach((path) => {
+        const normalizedPath = normalizeSeparatorsNative(path);
+       
+        assert.include(
+          normalizedPath,
+          correctSeparator,
+          `Path ${normalizedPath} should contain backward slashes for this test to be valid after normalization`,
+        );
+       
+        assert.notInclude(
+          normalizedPath,
+          wrongSeparator,
+          `Path ${normalizedPath} should NOT forward slashes for this test to be valid after normalization`,
+        );
+      });
     });
   });
 
