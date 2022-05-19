@@ -387,7 +387,7 @@ bool shouldShowUserLicenseWarning()
    return false;
 }
 
-bool isUserAdmin()
+bool isUserAdmin(const std::string& username)
 {
    return false;
 }
