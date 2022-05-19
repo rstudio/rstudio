@@ -19,6 +19,7 @@
 #include <core/r_util/RActiveSessionStorage.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
 
 namespace rstudio {
 namespace session {
@@ -27,11 +28,18 @@ namespace storage {
 class RpcActiveSessionStorage : public core::r_util::IActiveSessionStorage 
 {
    public:
-      core::Error readProperty(const std::string& id, const std::string& name, std::string* pValue) override;
-      core::Error readProperties(const std::string& id, const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
-      core::Error readProperties(const std::string& id, std::map<std::string, std::string>* pValues) override;
-      core::Error writeProperty(const std::string& id, const std::string& name, const std::string& value) override;
-      core::Error writeProperties(const std::string& id, const std::map<std::string, std::string>& properties) override;
+      RpcActiveSessionStorage(const core::system::User& user, std::string sessionId);
+      
+      core::Error readProperty(const std::string& name, std::string* pValue) override;
+      core::Error readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
+      core::Error readProperties(std::map<std::string, std::string>* pValues) override;
+      core::Error writeProperty(const std::string& name, const std::string& value) override;
+      core::Error writeProperties(const std::map<std::string, std::string>& properties) override;
+
+   private:
+      const core::system::User _user;
+
+      const std::string _id;
 };
 
 } // namespace storage
