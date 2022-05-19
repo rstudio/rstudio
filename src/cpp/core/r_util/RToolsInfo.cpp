@@ -297,8 +297,8 @@ std::string RToolsInfo::url(const std::string& repos) const
 
    if (name() == "4.2")
    {
-      // TODO: replace with CRAN URL once available
-      url = "https://rstudio.org/links/rtools42";
+      std::string suffix = "bin/windows/Rtools/rtools42/rtools.html";
+      url = core::http::URL::complete(repos, suffix);
    }
    else if (name() == "4.0")
    {

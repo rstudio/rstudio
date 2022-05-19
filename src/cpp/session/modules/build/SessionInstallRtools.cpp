@@ -16,9 +16,12 @@
 #include "SessionInstallRtools.hpp"
 
 #include <boost/format.hpp>
+#include <boost/regex.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
+#include <core/FileUtils.hpp>
+#include <core/RegexUtils.hpp>
 
 #include <core/r_util/RToolsInfo.hpp>
 
@@ -88,6 +91,31 @@ Error installRtools()
    error = tempPath.ensureDirectory();
    if (error)
       return error;
+
+   if (version == "4.2")
+   {
+      try
+      {
+         FilePath tmpFile;
+         FilePath::tempFilePath(tmpFile);
+         r::exec::RFunction("utils:::download.file")
+               .addParam("url", url)
+               .addParam("destfile", tmpFile.getAbsolutePath())
+               .addParam("mode", "rb")
+               .call();
+
+         std::string rToolsHome = file_utils::readFile(tmpFile);
+         boost::regex reLinkPattern("<a\\shref=\"(.*\\.exe)\">\\s*Rtools42 installer<\\/a>", boost::regex::icase);
+         boost::cmatch matches;
+         if (regex_utils::match(rToolsHome.c_str(), matches, reLinkPattern))
+            url = matches[1];
+      }
+      catch (std::exception& e)
+      {
+         // Use RStudio's hosted copy as a fallback
+         url = "https://rstudio.org/links/rtools42";
+      }
+   }
 
    // form path to destination file
    std::string rtoolsBinary = url.substr(url.find_last_of('/') + 1);
