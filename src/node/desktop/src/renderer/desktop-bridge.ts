@@ -93,9 +93,12 @@ export function getDesktopBridge() {
             filePath = normalizeSeparators(filePath, '/');
           }
 
+          const expandedHomePath = normalizeSeparators(process.env.HOME as string, '/');
+          const homePath = '~';
+
           /* this makes sure the file path and HOME path 
           only contains forward slashes as separators for correct comparison */
-          filePath = filePath.replace(normalizeSeparators(process.env.HOME as string, '/'), '~');
+          filePath = homePath + filePath.substring(expandedHomePath.length);
 
           // invoke callback
           return callback(filePath);
