@@ -232,8 +232,17 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
       error.addProperty("body", body);
       return error;
    };
+
    if (rpcRequest.kwparams.hasMember(kSessionStorageUserIdField))
-      sessionOwnerUid = rpcRequest.kwparams[kSessionStorageUserIdField].getUInt();
+   {
+      error = readObject(rpcRequest.kwparams, kSessionStorageUserIdField, sessionOwnerUid);
+      if (error)
+      {
+         error = baseError(json::errc::ParamInvalid, error, ERROR_LOCATION);
+         error.addProperty("field", "kSessionStorageUserField");
+         return json::setJsonRpcError(error, &pConnection->response(), true);
+      }
+   }
 
    error = authorizeRequest(baseError, username, sessionOwnerUid, &requester, &sessionOwner, &isAdmin);
    if (error)
