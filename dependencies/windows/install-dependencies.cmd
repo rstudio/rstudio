@@ -15,7 +15,7 @@ for %%X in (R.exe 7z.exe cmake.exe) do (
   )
 )
 
-set WGET_ARGS=-c --no-check-certificate
+set WGET_ARGS=-c --no-check-certificate --no-hsts
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
