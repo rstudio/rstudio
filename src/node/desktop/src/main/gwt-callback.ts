@@ -425,11 +425,7 @@ export class GwtCallback extends EventEmitter {
         if (url === 'chrome://gpu' || url === 'chrome://accessibility') {
           const window = new BrowserWindow({
             autoHideMenuBar: true,
-            webPreferences: {
-               contextIsolation: true,
-               nodeIntegration: false,
-               sandbox: true,
-            },
+            webPreferences: { sandbox: true, },
             acceptFirstMouse: true
           });
  
