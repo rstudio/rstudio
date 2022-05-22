@@ -160,7 +160,7 @@ export class MainWindow extends GwtWindow {
     //         Qt::DirectConnection);
 
     // setWindowIcon(QIcon(QString::fromUtf8(":/icons/RStudio.ico")));
-    // setWindowTitle(desktop::activation().editionName());
+    this.window.setTitle(appState().activation().editionName());
 
     // Error error = pLauncher_->initialize();
     // if (error) {
@@ -218,9 +218,9 @@ export class MainWindow extends GwtWindow {
     this.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
       .then((projectDir) => {
         if (projectDir.length > 0) {
-          this.window.setTitle(`${projectDir} - RStudio`);
+          this.window.setTitle(`${projectDir} - ${appState().activation().editionName()}`);
         } else {
-          this.window.setTitle('RStudio');
+          this.window.setTitle(appState().activation().editionName());
         }
         this.avoidMoveCursorIfNecessary();
       })
