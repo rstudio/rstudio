@@ -80,6 +80,7 @@ public class PackagesPreferencesPane extends PreferencesPane
       infoBar_ = new InfoBar(InfoBar.WARNING);
       infoBar_.setText(constants_.packagesInfoBarText());
       infoBar_.addStyleName(res_.styles().themeInfobar());
+      infoBar_.getElement().setId(ElementIds.PACKAGE_INFO_BAR);
       spaced(infoBar_);
 
       ClickHandler selectPrimaryRepo = (clickEvent) ->
