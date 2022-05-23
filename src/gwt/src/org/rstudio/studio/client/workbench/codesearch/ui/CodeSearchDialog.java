@@ -30,8 +30,6 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Provider;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearchConstants;
 
-import elemental2.dom.URL;
-
 public class CodeSearchDialog extends ModalDialogBase 
                               implements CodeSearch.Observer
 
