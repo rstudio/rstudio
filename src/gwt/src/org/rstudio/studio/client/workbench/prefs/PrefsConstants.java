@@ -1877,11 +1877,11 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     String packagesInfoBarText();
     
     /**
-     * Translated "This project's repositories are managed by renv.".
+     * Translated "Repositories are being managed by a renv.lock file".
      *
-     * @return translated "This project's repositories are managed by renv."
+     * @return translated "Repositories are being managed by a renv.lock file"
      */
-    @DefaultMessage("This project's repositories are managed by renv.")
+    @DefaultMessage("Repositories are being managed by a renv.lock file")
     @Key("packagesRenvInfoBarText")
     String packagesRenvInfoBarText();
 
