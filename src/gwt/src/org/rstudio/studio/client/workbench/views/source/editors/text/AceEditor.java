@@ -55,6 +55,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.AceSupport;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.KeyboardTracker;
@@ -498,6 +499,7 @@ public class AceEditor implements DocDisplay,
                case AceEditorCommandEvent.PASTE_LAST_YANK:            pasteLastYank();            break;
                case AceEditorCommandEvent.INSERT_ASSIGNMENT_OPERATOR: insertAssignmentOperator(); break;
                case AceEditorCommandEvent.INSERT_PIPE_OPERATOR:       insertPipeOperator();       break;
+               case AceEditorCommandEvent.INSERT_CHUNK_OPTION:        insertChunkOption();        break;
                case AceEditorCommandEvent.JUMP_TO_MATCHING:           jumpToMatching();           break;
                case AceEditorCommandEvent.SELECT_TO_MATCHING:         selectToMatching();         break;
                case AceEditorCommandEvent.EXPAND_TO_MATCHING:         expandToMatching();         break;
@@ -659,6 +661,61 @@ public class AceEditor implements DocDisplay,
       boolean nativePipePreferred = RStudioGinjector.INSTANCE.getUserPrefs().insertNativePipeOperator().getValue();
       String pipe =  nativePipePreferred ? NATIVE_R_PIPE : MAGRITTR_PIPE;
       insertOperatorWithSpacing(pipe);
+   }
+   
+   private void insertChunkOption()
+   {
+      String language = this.getLanguageMode(this.getCursorPosition());
+      String comment = "#";
+      Debug.logToRConsole(language);
+      switch(this.fileType_.getEditorLanguage().getModeName()) {
+      case "scala":
+      case "csharp":
+      case "fsharp":
+      case "cpp":
+      case "cc":
+      case "java":
+      case "groovy":
+      case "js":
+      case "d3":
+      case "ojs":
+      case "node":
+      case "sass":
+      case "go":
+      case "asy":
+      case "dot":
+         comment = "//";
+         break;  
+      
+      case "sql":
+      case "mysql":
+      case "psql":
+      case "lua":
+      case "haskell":
+         comment = "--";
+         break;
+         
+      case "matlab":
+      case "tkiz":
+         comment = "%";
+         break;
+      
+      case "fortran":
+      case "fortran95":
+         comment = "!";
+         break;
+      
+      
+      case "stata":
+         comment = "*";
+         break;
+
+      case "mermaid":
+         comment = "%%";
+         break;
+      }
+      
+      insertCode(comment + "| ", false);
    }
 
    private boolean shouldIndentOnPaste()

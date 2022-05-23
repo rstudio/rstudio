@@ -64,6 +64,9 @@ var ScalaHighlightRules = require("ace/mode/scala_highlight_rules").ScalaHighlig
 var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
+var MermaidHighlightRules = require("mode/mermaid").MermaidHighlightRules;
+var DotHighlightRules = require("ace/mode/dot").DotHighlightRules;
+
 
 var escaped = function(ch) {
     return "(?:[^" + lang.escapeRegExp(ch) + "\\\\]|\\\\.)*";
@@ -201,6 +204,8 @@ var MarkdownHighlightRules = function() {
         github_embed("xml", "xmlcode-"),
         github_embed("html", "htmlcode-"),
         github_embed("css", "csscode-"),
+        github_embed("mermaid", "mermaidcode-"),
+        github_embed("dot", "dotcode-"),
         github_embed("perl", "perlcode-"),
         github_embed("python", "pythoncode-"),
         github_embed("ruby", "rubycode-"),
@@ -481,6 +486,18 @@ var MarkdownHighlightRules = function() {
     }]);
     
     this.embedRules(RubyHighlightRules, "rubycode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+    
+    this.embedRules(MermaidHighlightRules, "mermaidcode-", [{
+        token : "support.function",
+        regex : "^\\s*```",
+        next  : "pop"
+    }]);
+    
+    this.embedRules(DotHighlightRules, "dotcode-", [{
         token : "support.function",
         regex : "^\\s*```",
         next  : "pop"

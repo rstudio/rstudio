@@ -34,6 +34,9 @@ var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
 var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+var MermaidHighlightRules = require("mode/mermaid").MermaidHighlightRules;
+var DotHighlightRules = require("ace/mode/dot").DotHighlightRules;
+
 var Utils = require("mode/utils");
 
 function makeDateRegex()
@@ -157,7 +160,27 @@ var RMarkdownHighlightRules = function() {
       this.$reChunkEndString,
       ["start", "listblock", "allowBlock"]
    );
-
+   
+   // Embed mermaid highlight rules
+   Utils.embedRules(
+      this,
+      MermaidHighlightRules,
+      "mermaid",
+      this.$reMermaidChunkStartString,
+      this.$reChunkEndString,
+      ["start", "listblock", "allowBlock"]
+   );
+   
+   // Embed dot highlight rules
+   Utils.embedRules(
+	  this,
+	  DotHighlightRules,
+	  "dot",
+	  this.$reDotChunkStartString,
+	  this.$reChunkEndString,
+	  ["start", "listblock", "allowBlock"]
+   );
+   
    // Embed JavaScript highlighting rules
    Utils.embedRules(
       this,
@@ -231,6 +254,8 @@ oop.inherits(RMarkdownHighlightRules, TextHighlightRules);
    this.$reMarkdownChunkStartString   = engineRegex("block");
    this.$rePerlChunkStartString       = engineRegex("perl");
    this.$rePythonChunkStartString     = engineRegex("python");
+   this.$reMermaidChunkStartString    = engineRegex("mermaid");
+   this.$reDotChunkStartString        = engineRegex("dot");
    this.$reRubyChunkStartString       = engineRegex("ruby");
    this.$reShChunkStartString         = engineRegex("(?:bash|sh)");
    this.$reStanChunkStartString       = engineRegex("stan");

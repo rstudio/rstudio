@@ -45,6 +45,7 @@ public class AceEditorCommandEvent extends CrossWindowEvent<AceEditorCommandEven
    public static final int BLOCK_INDENT               = 21;
    public static final int BLOCK_OUTDENT              = 22;
    public static final int REINDENT                   = 23;
+   public static final int INSERT_CHUNK_OPTION        = 24;
 
    public static final int EXECUTION_POLICY_FOCUSED = 1;
    public static final int EXECUTION_POLICY_ALWAYS  = 2;
