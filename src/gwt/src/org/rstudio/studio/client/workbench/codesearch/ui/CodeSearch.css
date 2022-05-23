@@ -82,5 +82,9 @@
 }
 
 .codeSearchDialogMainWidget .codeSearchWidget .search {
-   width: 240px;
+   width: 100%;
+}
+
+.codeSearchDialogHelpLink {
+   padding-top: 10px;
 }

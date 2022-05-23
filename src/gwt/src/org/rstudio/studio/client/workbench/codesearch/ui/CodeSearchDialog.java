@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ModalDialogBase;
+import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 
 import com.google.gwt.core.client.Scheduler;
@@ -49,17 +50,16 @@ public class CodeSearchDialog extends ModalDialogBase
    @Override
    protected Widget createMainWidget()
    {  
-      HorizontalPanel mainPanel = new HorizontalPanel();
-
-      VerticalPanel searchPanel = new VerticalPanel();
-      searchPanel.addStyleName(
+      VerticalPanel mainPanel = new VerticalPanel();
+      mainPanel.addStyleName(
          CodeSearchResources.INSTANCE.styles().codeSearchDialogMainWidget());
       codeSearch_ = pCodeSearch_.get();
       codeSearch_.setObserver(this);
-      searchPanel.add(codeSearch_.getSearchWidget());
+      mainPanel.add(codeSearch_.getSearchWidget());
 
-      mainPanel.add(searchPanel);
-      mainPanel.add(new HelpButton("navigating_code", "Using the File / Function Finder"));
+      HelpLink help = new HelpLink(constants_.usingFuzzyFinder(), "navigating_code");
+      help.addStyleName(CodeSearchResources.INSTANCE.styles().codeSearchDialogHelpLink());
+      mainPanel.add(help);
       return mainPanel;
    }
    

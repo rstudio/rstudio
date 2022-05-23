@@ -51,4 +51,14 @@ public interface CodeSearchConstants extends com.google.gwt.i18n.client.Messages
     @DefaultMessage("Go to file/function")
     @Key("textBoxWithCue")
     String textBoxWithCue();
+
+    /**
+     * Translated "Using the File / Function Finder".
+     *
+     * @return translated "Using the File / Function Finder"
+     */
+    @DefaultMessage("Using the File / Function Finder")
+    @Key("usingFuzzyFinder")
+    String usingFuzzyFinder();
+
 }
