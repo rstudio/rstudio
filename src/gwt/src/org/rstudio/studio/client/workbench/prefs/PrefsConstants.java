@@ -1875,6 +1875,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("CRAN repositories modified outside package preferences.")
     @Key("packagesInfoBarText")
     String packagesInfoBarText();
+    
+    /**
+     * Translated "This project's repositories are managed by renv.".
+     *
+     * @return translated "This project's repositories are managed by renv."
+     */
+    @DefaultMessage("This project's repositories are managed by renv.")
+    @Key("packagesRenvInfoBarText")
+    String packagesRenvInfoBarText();
 
     /**
      * Translated "Primary CRAN repository:".
