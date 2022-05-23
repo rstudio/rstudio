@@ -61,7 +61,7 @@ public class CodeSearchDialog extends ModalDialogBase
       searchPanel.add(codeSearch_.getSearchWidget());
 
       mainPanel.add(searchPanel);
-      mainPanel.add(new HelpButton(new URL("https://support.rstudio.com/hc/en-us/articles/200710523-Navigating-Code-in-the-RStudio-IDE"), "Fuzzy finder help"));
+      mainPanel.add(new HelpButton("navigating_code", "Using the File / Function Finder"));
       return mainPanel;
    }
    
