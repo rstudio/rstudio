@@ -14,7 +14,7 @@
  */
 
 #define RSTUDIO_DEBUG_LABEL "codesearch"
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_ENABLE_DEBUG_MACROS
 
 #include "SessionCodeSearch.hpp"
 
@@ -213,7 +213,7 @@ void print_tree(tree<Entry> const& tr)
       int depth = tr.depth(it);
       for (int i = 0; i < depth; i++)
          std::cerr << "--";
-      std::cerr << (*it).fileInfo.getAbsolutePath() << "\n";
+      std::cerr << (*it).fileInfo.absolutePath() << "\n";
    }
 #endif
 }
@@ -269,7 +269,7 @@ public:
       //     --> foo/bar
       //                  --> foo/bar/baz
       iterator parent = begin();
-      DEBUG("First parent: '" << (*parent).fileInfo.getAbsolutePath() << "'");
+      DEBUG("First parent: '" << (*parent).fileInfo.absolutePath() << "'");
 
       std::string::size_type matchIndex = absolutePath.find('/');
       
@@ -281,7 +281,7 @@ public:
                   true);
          
          Entry entry(path);
-         DEBUG("Entry: '" << entry.fileInfo.getAbsolutePath() << "'");
+         DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
 
          if (isSamePath(*parent, entry))
          {
@@ -290,7 +290,7 @@ public:
 
          else if (number_of_children(parent) == 0)
          {
-            DEBUG("- Inserting new node as first child of '" << (*parent).fileInfo.getAbsolutePath() << "'");
+            DEBUG("- Inserting new node as first child of '" << (*parent).fileInfo.absolutePath() << "'");
 
             iterator newItr = append_child(parent, entry);
             DEBUG("- Parent now has " << number_of_children(parent) << " children.");
@@ -305,7 +305,7 @@ public:
 
             for (; it != end; ++it)
             {
-               DEBUG("-- Current node: '" << (*it).fileInfo.getAbsolutePath() << "'");
+               DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
                if (isSamePath(*it, entry))
                {
                   DEBUG("-- Found it!");
@@ -315,12 +315,12 @@ public:
 
             if (it == end)
             {
-               DEBUG("- Adding another child to parent '" << (*parent).fileInfo.getAbsolutePath() << "'");
+               DEBUG("- Adding another child to parent '" << (*parent).fileInfo.absolutePath() << "'");
                parent = append_child(parent, entry);
             }
             else
             {
-               DEBUG("- Node already exists; setting parent to child (" << (*parent).fileInfo.getAbsolutePath() << ")");
+               DEBUG("- Node already exists; setting parent to child (" << (*parent).fileInfo.absolutePath() << ")");
                parent = it;
             }
          }
@@ -330,8 +330,8 @@ public:
       DEBUG("Exiting directory node insertion phase");
       
       // Now, we have the filename. We append that to the parent.
-      DEBUG("Parent: '" << (*parent).fileInfo.getAbsolutePath() << "'");
-      DEBUG("Entry: '" << entry.fileInfo.getAbsolutePath() << "'");
+      DEBUG("Parent: '" << (*parent).fileInfo.absolutePath() << "'");
+      DEBUG("Entry: '" << entry.fileInfo.absolutePath() << "'");
       if (parent.number_of_children() == 0)
       {
          DEBUG("- No children at parent node; adding child");
@@ -357,8 +357,8 @@ public:
          sibling_iterator end = parent.end();
          for (; it != end; ++it)
          {
-            DEBUG("-- Current node: '" << (*it).fileInfo.getAbsolutePath() << "'");
-            DEBUG("-- Entry       : '" << entry.fileInfo.getAbsolutePath() << "'");
+            DEBUG("-- Current node: '" << (*it).fileInfo.absolutePath() << "'");
+            DEBUG("-- Entry       : '" << entry.fileInfo.absolutePath() << "'");
             
             if (isSamePath(*it, entry))
             {
@@ -423,7 +423,7 @@ private:
       sibling_iterator end = parent.end();
       for (; it != end; ++it)
       {
-         DEBUG("- Current branch: '" << (*it).fileInfo.getAbsolutePath() << "'");
+         DEBUG("- Current branch: '" << (*it).fileInfo.absolutePath() << "'");
          if (isSamePath(*it, entry))
          {
             *pResult = it;
@@ -621,7 +621,7 @@ public:
       EntryTree::iterator parent = pEntries_->find(parentEntry);
       if (parent != pEntries_->end())
       {
-         DEBUG("Found node: '" + (*parent).fileInfo.getAbsolutePath() + "'");
+         DEBUG("Found node: '" + (*parent).fileInfo.absolutePath() + "'");
          DEBUG("Node has: '" << pEntries_->number_of_children(parent) << "' children.");
          DEBUG("Node has: '" << pEntries_->number_of_siblings(parent) << "' siblings.");
 
@@ -639,7 +639,7 @@ public:
       {
          const Entry& entry = *it;
          
-         DEBUG("Node: '" << (*it).fileInfo.getAbsolutePath() << "'");
+         DEBUG("Node: '" << (*it).fileInfo.absolutePath() << "'");
          
          // skip if it's not a source file
          if (sourceFilesOnly && !isSourceFile(entry.fileInfo))
@@ -900,7 +900,7 @@ private:
          pEntries_->erase(it);
       else
       {
-         DEBUG("Failed to remove index entry for file: '" << fileInfo.getAbsolutePath() << "'");
+         DEBUG("Failed to remove index entry for file: '" << fileInfo.absolutePath() << "'");
          print_tree(*pEntries_);
       }
    }
