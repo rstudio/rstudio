@@ -188,7 +188,7 @@
        getRversion() >= "4.0.0" &&
        getRversion() < "4.2.0" &&
        (.rs.startsWith(compiler, "/mingw32/bin") ||
-        .rs.startsWith(compiler, "/mingw64/bin"))
+        .rs.startsWith(compiler, "/mingw64/bin")))
    {
       for (root in c("C:/rtools40", "C:/RBuildTools/4.0"))
       {
