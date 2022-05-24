@@ -175,11 +175,29 @@
    # use the default compiler configured by R   
    exe <- if (.rs.platform.isWindows) "R.exe" else "R"
    R <- file.path(R.home("bin"), exe)
-   compiler <- if (isCpp) "CXX" else "CC"
-   cxx <- system2(R, c("CMD", "config", compiler), stdout = TRUE, stderr = TRUE)
+   args <- c("CMD", "config", if (isCpp) "CXX" else "CC")
+   output <- system2(R, args, stdout = TRUE, stderr = TRUE)
    
    # take only last line, in case R or the compiler spat out other output
-   compiler <- tail(cxx, n = 1L)
+   compiler <- tail(output, n = 1L)
+   
+   # on Windows, with Rtools40, the path to the compiler is only valid
+   # within an MinGW shell; we work around this by just replacing the compiler
+   # path with the "real" path
+   if (.rs.platform.isWindows &&
+       getRversion() >= "4.0.0" &&
+       getRversion() < "4.2.0" &&
+       .rs.startsWith(compiler, "/mingw64/bin"))
+   {
+      for (root in c("C:/rtools40", "C:/RBuildTools/4.0"))
+      {
+         if (file.exists(root))
+         {
+            compiler <- paste0(root, compiler)
+            break
+         }
+      }
+   }
    
    # create a dummy c++ file
    file <- tempfile(fileext = if (isCpp) ".cpp" else ".c")
@@ -189,11 +207,15 @@
    command <- paste(compiler, "-dM -E", basename(file))
    
    # run it
-   output <- local({
+   output <- .rs.tryCatch({
       owd <- setwd(tempdir())
       on.exit(setwd(owd), add = TRUE)
       suppressWarnings(system(command, intern = TRUE))
    })
+   
+   # if an error occurs, then nothing to do
+   if (inherits(output, "error"))
+      return()
    
    # for each line, only define if it's not already defined
    formatted <- unlist(lapply(output, function(line) {
