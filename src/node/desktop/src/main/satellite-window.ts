@@ -42,6 +42,8 @@ export class SatelliteWindow extends GwtWindow {
     appState().gwtCallback?.registerOwner(this);
 
     this.on(DesktopBrowserWindow.CLOSE_WINDOW_SHORTCUT, this.onCloseWindowShortcut.bind(this));
+
+    this.window.on('close', this.onCloseWindowShortcut.bind(this));
   }
 
   onActivated(): void {
