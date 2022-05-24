@@ -130,6 +130,42 @@ boost::shared_ptr<ActiveSession> ActiveSessions::emptySession(const std::string&
    return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
 }
 
+std::vector<boost::shared_ptr<GlobalActiveSession> >
+GlobalActiveSessions::list() const
+{
+   std::vector<boost::shared_ptr<GlobalActiveSession> > sessions;
+
+   // get all active sessions for the system
+   FilePath activeSessionsDir = rootPath_;
+   if (!activeSessionsDir.exists())
+      return sessions; // no active sessions exist
+
+   std::vector<FilePath> sessionFiles;
+   Error error = activeSessionsDir.getChildren(sessionFiles);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return sessions;
+   }
+
+   for (const FilePath& sessionFile : sessionFiles)
+   {
+      sessions.push_back(boost::shared_ptr<GlobalActiveSession>(new GlobalActiveSession(sessionFile)));
+   }
+
+   return sessions;
+}
+
+boost::shared_ptr<GlobalActiveSession>
+GlobalActiveSessions::get(const std::string& id) const
+{
+   FilePath sessionFile = rootPath_.completeChildPath(id);
+   if (!sessionFile.exists())
+      return boost::shared_ptr<GlobalActiveSession>();
+
+   return boost::shared_ptr<GlobalActiveSession>(new GlobalActiveSession(sessionFile));
+}
+
 namespace {
 
 void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
@@ -165,7 +201,7 @@ void trackActiveSessionCount(const FilePath& rootStoragePath,
    cb.onRegistrationError = boost::bind(log::logError, _1, ERROR_LOCATION);
 
    core::system::file_monitor::registerMonitor(
-                   buildActiveSessionStoragePath(rootStoragePath),
+                   ActiveSessions::storagePath(rootStoragePath),
                    false,
                    boost::function<bool(const FileInfo&)>(),
                    cb);

@@ -34,14 +34,9 @@ FilePath getSessionDirPath(const FilePath& storagePath, const std::string& sessi
 
 } // anonymous namespace
 
-FilePath buildActiveSessionStoragePath(const FilePath& rootStoragePath)
-{
-   return rootStoragePath.completeChildPath("sessions/active");
-}
-
 FileActiveSessionsStorage::FileActiveSessionsStorage(const FilePath& rootStoragePath)
 {
-   storagePath_ = buildActiveSessionStoragePath(rootStoragePath);
+   storagePath_ = ActiveSessions::storagePath(rootStoragePath);
    Error error = storagePath_.ensureDirectory();
    if (error)
    {

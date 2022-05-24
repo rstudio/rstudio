@@ -594,6 +594,11 @@ public:
    explicit ActiveSessions(const FilePath& rootStoragePath);
    explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
 
+   static FilePath storagePath(const FilePath& rootStoragePath)
+   {
+      return rootStoragePath.completeChildPath("sessions/active");
+   }
+
    core::Error create(const std::string& project,
                       const std::string& working,
                       std::string* pId) const
@@ -613,6 +618,8 @@ public:
                 bool projectSharingEnabled) const;
 
    boost::shared_ptr<ActiveSession> get(const std::string& id) const;
+
+   FilePath storagePath() const { return rootStoragePath_; }
 
    boost::shared_ptr<ActiveSession> emptySession(const std::string& id) const;
 
@@ -637,6 +644,9 @@ public:
 
    std::string sessionId() { return settings_.get("sessionId", ""); }
    void setSessionId(const std::string& sessionId) { settings_.set("sessionId", sessionId); }
+
+   std::string userId() { return settings_.get("userId", ""); }
+   void setUserId(const std::string& userId) { settings_.set("userId", userId); }
 
    std::string username() { return settings_.get("username", ""); }
    void setUsername(const std::string& username) { settings_.set("username", username); }
