@@ -2025,6 +2025,9 @@ int main(int argc, char * const argv[])
       // whether rstudio is running
       core::system::setenv("RSTUDIO", "1");
 
+      // The pid of the session process
+      core::system::setenv("RSTUDIO_SESSION_PID", core::safe_convert::numberToString(::getpid()));
+
       // Mirror the R getOptions("width") value in an environment variable
       core::system::setenv("RSTUDIO_CONSOLE_WIDTH",
                safe_convert::numberToString(rstudio::r::options::kDefaultWidth));
