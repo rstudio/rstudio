@@ -14,7 +14,7 @@
  */
 
 #define RSTUDIO_DEBUG_LABEL "codesearch"
-#define RSTUDIO_ENABLE_DEBUG_MACROS
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 #include "SessionCodeSearch.hpp"
 
