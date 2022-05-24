@@ -403,7 +403,7 @@
 })
 
 .rs.addFunction("quartoFileProject", function(target) {
-   .Call("rs_quartoFileProject", basename(target), dirname(target))
+   .Call("rs_quartoFileProject", basename(target), dirname(target), PACKAGE = "(embedding)")
 })
 
 # Given a list of files of the form:
