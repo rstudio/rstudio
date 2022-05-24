@@ -184,6 +184,7 @@ public class ElementIds
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
    public final static String PACKAGE_CPP_PREFS = "package_cpp_prefs";
+   public final static String PACKAGE_INFO_BAR = "package_info_bar";
 
    public final static String TERMINAL_GENERAL_PREFS = "terminal_general_prefs";
    public final static String TERMINAL_CLOSING_PREFS = "terminal_closing_prefs";

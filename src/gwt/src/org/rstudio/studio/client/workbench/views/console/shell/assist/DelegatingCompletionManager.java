@@ -187,7 +187,7 @@ public abstract class DelegatingCompletionManager
          return false;
       
       String line = docDisplay_.getCurrentLineUpToCursor(); 
-      Pattern pattern = Pattern.create("^\\s*#[|]\\s*.*$", "");
+      Pattern pattern = Pattern.create("^\\s*#\\s*[|]\\s*.*$", "");
       Match match = pattern.match(line, 0);
       return match != null;
    }

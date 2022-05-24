@@ -15,7 +15,7 @@ for %%X in (R.exe 7z.exe cmake.exe) do (
   )
 )
 
-set WGET_ARGS=-c --no-check-certificate
+set WGET_ARGS=-c --no-check-certificate --no-hsts
 set UNZIP_ARGS=-q
 
 set BASEURL=https://s3.amazonaws.com/rstudio-buildtools/
@@ -39,7 +39,13 @@ set PANDOC_VERSION=2.18
 set PANDOC_NAME=pandoc-%PANDOC_VERSION%
 set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
-set QUARTO_VERSION=0.9.230
+REM set QUARTO_VERSION=0.9.230
+
+REM Get latest Quarto release version
+cd install-quarto
+for /F "delims=" %%L in ('powershell.exe -File get-quarto-version.ps1') do (set "QUARTO_VERSION=%%L")
+cd ..
+
 set QUARTO_FILE=quarto-%QUARTO_VERSION%-win.zip
 
 set LIBCLANG_VERSION=13.0.1
@@ -168,7 +174,8 @@ if not exist pandoc\%PANDOC_VERSION% (
 
 
 
-wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
+REM wget %WGET_ARGS% https://s3.amazonaws.com/rstudio-buildtools/quarto/%QUARTO_VERSION%/%QUARTO_FILE%
+wget %WGET_ARGS% https://github.com/quarto-dev/quarto-cli/releases/latest/download/%QUARTO_FILE%
 echo Unzipping Quarto %QUARTO_FILE%
 rmdir /s /q quarto
 mkdir quarto

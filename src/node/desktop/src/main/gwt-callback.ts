@@ -423,8 +423,12 @@ export class GwtCallback extends EventEmitter {
       (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
         // handle some internal chrome urls specially
         if (url === 'chrome://gpu' || url === 'chrome://accessibility') {
-          const window = new BrowserWindow();
-
+          const window = new BrowserWindow({
+            autoHideMenuBar: true,
+            webPreferences: { sandbox: true, },
+            acceptFirstMouse: true
+          });
+ 
           // ensure window can be closed with Ctrl+W (Cmd+W on macOS)
           window.webContents.on('before-input-event', (event, input) => {
             const ctrlOrMeta = process.platform === 'darwin' ? input.meta : input.control;

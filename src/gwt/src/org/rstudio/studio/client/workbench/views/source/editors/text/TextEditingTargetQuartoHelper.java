@@ -113,7 +113,7 @@ public class TextEditingTargetQuartoHelper
       // line is blank other than the comment prefix, remove that
       // prefix and insert a newline (terminating the block)
       {
-         Pattern pattern = Pattern.create("^\\s*#[|]\\s*$", "");
+         Pattern pattern = Pattern.create("^\\s*#\\s*[|]\\s*$", "");
          Match match = pattern.match(line, 0);
          if (match != null)
          {

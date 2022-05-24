@@ -15,7 +15,7 @@
 
 import { ipcRenderer, webContents } from 'electron';
 import { logger } from '../core/logger';
-import { normalizeSeparatorsNative } from '../ui/utils';
+import { normalizeSeparators } from '../ui/utils';
 
 interface VoidCallback<Type> {
   (result: Type): void;
@@ -70,7 +70,6 @@ export function getDesktopBridge() {
       ipcRenderer
         .invoke('desktop_get_save_file_name', caption, label, dir, defaultExtension, forceDefaultExtension, focusOwner)
         .then((result) => {
-
           // if the result was canceled, bail early
           if (result.canceled as boolean) {
             return callback('');
@@ -91,9 +90,16 @@ export function getDesktopBridge() {
           }
 
           if (process.platform === 'win32') {
-            filePath = normalizeSeparatorsNative(filePath);
+            filePath = normalizeSeparators(filePath, '/');
           }
-          
+
+          const expandedHomePath = normalizeSeparators(process.env.HOME as string, '/');
+          const homePath = '~';
+
+          /* this makes sure the file path and HOME path 
+          only contains forward slashes as separators for correct comparison */
+          filePath = homePath + filePath.substring(expandedHomePath.length);
+
           // invoke callback
           return callback(filePath);
         })
@@ -382,8 +388,7 @@ export function getDesktopBridge() {
       if (!path) {
         return;
       }
-      const webcontents = webContents
-        .getAllWebContents();
+      const webcontents = webContents.getAllWebContents();
 
       if (webcontents.length) {
         webcontents[0]

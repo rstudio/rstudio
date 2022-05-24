@@ -23,6 +23,7 @@ RUN yum install -y \
     gtk3 \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
+    jq \
     libcurl-devel \
     libacl-devel \
     libcap-devel \ 

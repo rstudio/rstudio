@@ -31,6 +31,7 @@ RUN apt-get update && \
     expect \
     fakeroot \
     git-core \
+    jq \
     libattr1-dev \
     libacl1-dev \
     libbz2-dev \

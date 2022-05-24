@@ -1875,6 +1875,15 @@ public interface PrefsConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("CRAN repositories modified outside package preferences.")
     @Key("packagesInfoBarText")
     String packagesInfoBarText();
+    
+    /**
+     * Translated "Repositories are being managed by a renv.lock file".
+     *
+     * @return translated "Repositories are being managed by a renv.lock file"
+     */
+    @DefaultMessage("Repositories are being managed by a renv.lock file")
+    @Key("packagesRenvInfoBarText")
+    String packagesRenvInfoBarText();
 
     /**
      * Translated "Primary CRAN repository:".

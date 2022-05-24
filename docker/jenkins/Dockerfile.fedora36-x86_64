@@ -21,6 +21,7 @@ RUN dnf install -y \
     gtk3 \
     java-11-openjdk \
     java-11-openjdk-devel \
+    jq \
     libXScrnSaver-devel \
     libXcursor-devel \
     libXrandr-devel \
