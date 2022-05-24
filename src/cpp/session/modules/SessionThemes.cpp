@@ -66,29 +66,6 @@ const std::string kLocalCustomThemeLocation = "theme/custom/local/";
 typedef std::map<std::string, std::tuple<std::string, std::string, bool> > ThemeMap;
 
 /**
- * @brief Converts a string to a boolean value. Throws an bad_lexical_cast exception if the string
- *        is not valid.
- *
- * @param toConvert     The string to convert to boolean.
- *
- * @throw bad_lexical_cast    If the string cannot be converted to boolean.
- *
- * @return The converted value.
- */
-bool convertToBool(const std::string& toConvert)
-{
-   std::string preppedStr = boost::regex_replace(
-            toConvert,
-            boost::regex("true", boost::regex::icase),
-            "1");
-   preppedStr = boost::regex_replace(
-            preppedStr,
-            boost::regex("false", boost::regex::icase),
-            "0");
-   return boost::lexical_cast<bool>(preppedStr);
-}
-
-/**
  * @brief Gets an error out of the object, if there is one, and updates pResponse.
  *
  * @param object        The object to check for an error.
@@ -160,47 +137,52 @@ void getThemesInLocation(
                continue;
             }
 
-            boost::smatch matches;
-            bool found = boost::regex_search(
-               themeContents,
-               matches,
-               boost::regex("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
+            boost::regex reThemeName("rs-theme-name\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)");
+            boost::smatch mThemeName;
+            bool themeNameFound = boost::regex_search(themeContents, mThemeName, reThemeName);
 
             // If there's no name specified,use the name of the file
             std::string name;
-            if (!found || (matches.size() < 2) || (matches[1] == ""))
+            if (!themeNameFound || (mThemeName.size() < 2) || (mThemeName[1] == ""))
             {
                name = themeFile.getStem();
             }
             else
             {
                // If there's at least one name specified, get the first one.
-               name = matches[1];
+               name = mThemeName[1];
             }
-
+            
             // Find out if the theme is dark or not.
-            found = boost::regex_search(
-                     themeContents,
-                     matches,
-                     boost::regex("rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)"));
-
+            boost::regex reThemeIsDark("rs-theme-is-dark\\s*:\\s*([^\\*]+?)\\s*(?:\\*|$)");
+            boost::smatch mThemeIsDark;
+            bool themeIsDarkFound = boost::regex_search(themeContents, mThemeIsDark, reThemeIsDark);
+            
             bool isDark = false;
-            if (found && (matches.size() >= 2))
+            if (themeIsDarkFound && (mThemeIsDark.size() >= 2))
             {
-               try
+               std::string value = mThemeIsDark[1].str();
+               if (core::string_utils::hasTruthyValue(value))
                {
-                  isDark = convertToBool(matches[1].str());
+                  isDark = true;
                }
-               catch (boost::bad_lexical_cast&)
+               else if (core::string_utils::hasFalsyValue(value))
                {
-                  LOG_WARNING_MESSAGE("rs-theme-is-dark value is not a valid boolean string "
-                        " for theme \"" + name + "\" (" + themeFile.getAbsolutePath() + ")");
+                  isDark = false;
+               }
+               else
+               {
+                  WLOGF("rs-theme-is-dark value ('{}') is not a valid boolean string for theme \"{}\" ({})",
+                        mThemeIsDark[1].str(),
+                        name,
+                        themeFile.getAbsolutePath());
                }
             }
             else
             {
-               LOG_WARNING_MESSAGE("rs-theme-is-dark is not set for theme \"" + name + "\" (" +
-                     themeFile.getAbsolutePath() + ")");
+               WLOGF("rs-theme-is-dark not set for theme \"{}\" ({})",
+                     name,
+                     themeFile.getAbsolutePath());
             }
 
             (*themeMap)[boost::algorithm::to_lower_copy(name)] = std::make_tuple(
@@ -419,15 +401,20 @@ SEXP rs_getThemeColors()
  */
 FilePath getDefaultTheme(const http::Request& request)
 {
-   std::string isDarkStr = request.queryParamValue("dark");
+   std::string value = request.queryParamValue("dark");
+   
    bool isDark = false;
-   try
+   if (core::string_utils::hasTruthyValue(value))
    {
-      isDark = convertToBool(isDarkStr);
+      isDark = true;
    }
-   catch (boost::bad_lexical_cast&)
+   else if (core::string_utils::hasFalsyValue(value))
    {
-      LOG_WARNING_MESSAGE("\"dark\" parameter for request is missing or not a true or false value: " + isDarkStr);
+      isDark = false;
+   }
+   else
+   {
+      LOG_WARNING_MESSAGE("\"dark\" parameter for request is missing or not a true or false value: " + value);
    }
 
    if (isDark)

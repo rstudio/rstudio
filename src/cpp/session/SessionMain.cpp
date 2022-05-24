@@ -1924,7 +1924,7 @@ int main(int argc, char * const argv[])
       // (some users on Windows report these having trailing
       // slashes, which confuses a number of RStudio routines)
       boost::regex reTrailing("[/\\\\]+$");
-      for (const std::string& envvar : {"HOME", "R_USER"})
+      for (const char* envvar : {"HOME", "R_USER"})
       {
          std::string oldVal = core::system::getenv(envvar);
          if (!oldVal.empty())

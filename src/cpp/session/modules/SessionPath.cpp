@@ -43,6 +43,8 @@ namespace session {
 namespace modules { 
 namespace path {
 
+#ifdef __APPLE__
+
 namespace {
 
 bool containsPathEntry(
@@ -198,8 +200,10 @@ std::string homePath(const std::string& suffix)
          .getAbsolutePath();
 }
 
+
 } // anonymous namespace
 
+#endif
 
 Error initialize()
 {
