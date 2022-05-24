@@ -594,6 +594,8 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
 SEXP rs_quartoFileResources(SEXP targetSEXP)
 {
    std::vector<std::string> resources;
+   
+#ifdef QUARTO_ENABLED
    std::string target = r::sexp::safeAsString(targetSEXP);
    if (!target.empty())
    {
@@ -611,6 +613,7 @@ SEXP rs_quartoFileResources(SEXP targetSEXP)
          LOG_ERROR(error);
       }
    }
+#endif
 
    r::sexp::Protect protect;
    return r::sexp::create(resources, &protect);
@@ -621,6 +624,7 @@ SEXP rs_quartoFileProject(SEXP basenameSEXP, SEXP dirnameSEXP)
    std::vector<std::string> project;
    std::vector<std::string> resources;
 
+#ifdef QUARTO_ENABLED
    std::string basename = r::sexp::safeAsString(basenameSEXP);
    std::string dirname = r::sexp::safeAsString(dirnameSEXP);
 
@@ -642,6 +646,7 @@ SEXP rs_quartoFileProject(SEXP basenameSEXP, SEXP dirnameSEXP)
          jsonInspect["resources"].getArray().toVectorString(resources);   
       }
    }
+#endif
    
    r::sexp::Protect protect;
    SEXP out = r::sexp::createList({"project", "resources"}, &protect);
