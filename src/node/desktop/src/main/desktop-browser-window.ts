@@ -253,9 +253,11 @@ export class DesktopBrowserWindow extends EventEmitter {
       this.finishLoading(false);
     });
 
-    this.window.on('close', (event: Electron.Event) => {
-      this.closeEvent(event);
-    });
+    if (!this.options.name.includes('satellite')) {
+      this.window.on('close', (event: Electron.Event) => {
+        this.closeEvent(event);
+      });
+    }
 
     this.window.on('closed', () => {
       this.emit(DesktopBrowserWindow.WINDOW_DESTROYED);
