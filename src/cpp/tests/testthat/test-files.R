@@ -74,9 +74,6 @@ test_that("file listings are correct", {
 })
 
 test_that("our list.files, list.dirs hooks function as expected", {
-   
-   library(testthat)
-   
    # use native R routines
    .rs.files.restoreBindings()
    on.exit(.rs.files.replaceBindings(), add = TRUE)
