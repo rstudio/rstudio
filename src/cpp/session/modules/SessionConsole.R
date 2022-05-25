@@ -1,4 +1,3 @@
-
 #
 # SessionConsole.R
 #
