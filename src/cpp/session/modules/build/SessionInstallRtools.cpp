@@ -31,14 +31,14 @@
 #include <session/SessionConsoleProcess.hpp>
 #include <session/prefs/UserPrefs.hpp>
 
+#define kFallbackUrl "https://rstudio.org/links/rtools42";
+
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace session {  
 namespace modules {
 namespace build {
-
-std::string kFallbackUrl = "https://rstudio.org/links/rtools42";
 
 std::string resolveRtools42InstallerUrl(const std::string& url)
 {
