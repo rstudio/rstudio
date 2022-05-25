@@ -105,10 +105,14 @@ Error installRtools()
                .call();
 
          std::string rToolsHome = file_utils::readFile(tmpFile);
-         boost::regex reLinkPattern("<a\\shref=\"(.*\\.exe)\">\\s*Rtools42 installer<\\/a>", boost::regex::icase);
-         boost::cmatch matches;
-         if (regex_utils::match(rToolsHome.c_str(), matches, reLinkPattern))
+
+         boost::regex reLinkPattern("<a\\shref=\"(.*rtools.*\\.exe)\">\\s*.+<\\/a>", boost::regex::icase);
+         boost::smatch matches;
+         if (regex_utils::match(rToolsHome, matches, reLinkPattern))
             url = matches[1];
+         else
+            // Use RStudio's hosted copy as a fallback if no match is found
+            url = "https://rstudio.org/links/rtools42";
       }
       catch (std::exception& e)
       {
