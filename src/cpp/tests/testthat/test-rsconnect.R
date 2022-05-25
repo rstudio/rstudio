@@ -51,6 +51,11 @@ test_that("setting UI prefs updates options", {
 })
 
 test_that(".rs.rsconnectDeployList() includes _quarto.yml and _metadata.yml files (#10995 )", {
+   if (!existsFunction(".rs.quartoFileProject")) {
+      # if Quarto is disabled (e.g. on Centos7), skip this test
+      return(TRUE)
+   }
+   
    dir.create(tf <- tempfile()); on.exit(unlink(tf, TRUE, TRUE))
    dir.create(file.path(tf, "sub"))
 
