@@ -277,6 +277,7 @@ if has-scope "r"; then
    export RS_CRASH_HANDLER_PATH="@CMAKE_CURRENT_BINARY_DIR@/server/crash-handler-proxy/crash-handler-proxy"
    export RS_CRASHPAD_HANDLER_PATH="@RSTUDIO_TOOLS_ROOT@/crashpad/crashpad/out/Default/crashpad_handler"
 
+   export QUARTO_ENABLED="@QUARTO_ENABLED@"
    runWatchdogProcess 5m false                                                   \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}"                \
       --run-script "\"source('${TESTTHAT_TESTS_DIR}/run-tests.R'); runTests()\"" \
