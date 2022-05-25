@@ -70,10 +70,18 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_ = prefs;
       server_ = server;
       commands_ = commands;
+
+      boolean hasProject = session.getSessionInfo().getActiveProjectFile() != null;
+
       PreferencesDialogBaseResources baseRes = PreferencesDialogBaseResources.INSTANCE;
 
       VerticalTabPanel editingPanel = new VerticalTabPanel(ElementIds.EDIT_EDITING_PREFS);
-      editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
+      
+      // Extra UI shown when a project is open makes the pane overflow on some
+      // browsers, so don't display initial "General" section title to regain
+      // some vertical space.
+      if (!hasProject)
+         editingPanel.add(headerLabel(constants_.generalHeaderLabel()));
 
       editingPanel.add(tight(spacesForTab_ = checkboxPref(prefs_.useSpacesForTab(),false /*defaultSpace*/)));
       editingPanel.add(indent(tabWidth_ = numericPref(constants_.editingTabWidthLabel(), 1, UserPrefs.MAX_TAB_WIDTH,
@@ -147,8 +155,6 @@ public class EditingPreferencesPane extends PreferencesPane
       projectPrefsPanel.add(editProjectSettings);
       editingPanel.add(projectPrefsPanel);
 
-      String activeProjectFile = session.getSessionInfo().getActiveProjectFile();
-      boolean hasProject = activeProjectFile != null;
       projectPrefsPanel.setVisible(hasProject);
 
       Label executionLabel = headerLabel(constants_.editingExecutionLabel());
