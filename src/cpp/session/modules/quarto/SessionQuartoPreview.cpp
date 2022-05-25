@@ -98,7 +98,6 @@ public:
       }
    }
 
-
    int port()
    {
       return port_;
@@ -107,6 +106,11 @@ public:
    std::string jobId()
    {
       return pJob_->id();
+   }
+
+   std::string viewerType()
+   {
+      return viewerType_;
    }
 
    Error render(const json::Value& editorState)
@@ -127,7 +131,7 @@ public:
 
 protected:
    explicit QuartoPreview(const FilePath& previewFile, const std::string& format, const json::Value& editorState)
-      : QuartoJob(), previewFile_(previewFile), format_(format), editorState_(editorState), slideLevel_(-1), port_(0)
+      : QuartoJob(), previewFile_(previewFile), format_(format), editorState_(editorState), slideLevel_(-1), port_(0), viewerType_(prefs::userPrefs().rmdViewerType())
    {
      readInputFileLines();
 
@@ -216,7 +220,7 @@ private:
             path_ = location.path;
 
             // show preview
-            if (prefs::userPrefs().rmdViewerType() != kRmdViewerTypeNone)
+            if (viewerType_ != kRmdViewerTypeNone)
             {
                showInViewer();
             }
@@ -247,7 +251,7 @@ private:
 
          // if the viewer is already on the site just activate it (however for revealjs go
          // back through standard presentation pane logic)
-         if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypePane)
+         if (viewerType_ == kRmdViewerTypePane)
          {
             if (!formatIsRevealJs() &&
                  boost::algorithm::starts_with(module_context::viewerCurrentUrl(false), viewerUrl()))
@@ -281,7 +285,7 @@ private:
 
    void showInViewer()
    {
-      if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypePane)
+      if (viewerType_ == kRmdViewerTypePane)
       {
          // format info
          bool isReveal = formatIsRevealJs();
@@ -335,7 +339,7 @@ private:
             module_context::viewer(url,  minHeight, quartoNav);
          }
       }
-      else if (prefs::userPrefs().rmdViewerType() == kRmdViewerTypeWindow)
+      else if (viewerType_ == kRmdViewerTypeWindow)
       {
          std::string url = rstudioServerPreviewWindowUrl();
          ClientEvent event = browseUrlEvent(url);
@@ -390,6 +394,7 @@ private:
    int slideLevel_;
    int port_;
    std::string path_;
+   std::string viewerType_;
 };
 
 // preview singleton
@@ -451,8 +456,8 @@ Error quartoPreviewRpc(const json::JsonRpcRequest& request,
    {
       if (s_pPreview && s_pPreview->isRunning() && (s_pPreview->port() > 0) &&
           (s_pPreview->previewFile() == previewFilePath) &&
-          (s_pPreview->format() == format &&
-           !s_pPreview->hasModifiedProject()))
+          (s_pPreview->format() == format && !s_pPreview->hasModifiedProject()) &&
+          (s_pPreview->viewerType() == prefs::userPrefs().rmdViewerType()))
       {
          json::Object eventJson;
          eventJson["id"] = s_pPreview->jobId();
