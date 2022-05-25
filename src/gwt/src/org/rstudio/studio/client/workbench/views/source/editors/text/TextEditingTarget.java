@@ -190,6 +190,7 @@ import org.rstudio.studio.client.workbench.views.source.events.RecordNavigationP
 import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.SourceNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.model.*;
+import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsDiffEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.ShowVcsHistoryEvent;
@@ -6451,6 +6452,11 @@ public class TextEditingTarget implements
       // If this is a Python file, use reticulate.
       if (fileType_.isPython())
       {
+         if (extendedType_.startsWith(SourceDocument.XT_PY_SHINY_PREFIX))
+         {
+            runPyShinyApp();
+            return;
+         }
          sourcePython();
          return;
       }
@@ -6576,6 +6582,17 @@ public class TextEditingTarget implements
             events_.fireEvent(new LaunchPlumberAPIEvent(getPath()));
          }
       }, () -> {}, "Run Plumber API");
+   }
+
+   private void runPyShinyApp()
+   {
+      source_.withSaveFilesBeforeCommand(() ->
+      {
+         // TODO: quote or shell-escape file path
+         // TODO: launch URL
+         // TODO: figure out how to invoke venv!?
+         events_.fireEvent(new SendToTerminalEvent("command shiny run --reload " + getPath() + "\n", true));
+      }, () -> {}, "Run Shiny Application");
    }
 
    private void sourcePython()

@@ -848,7 +848,7 @@ public class TextEditingTargetWidget
 
       // don't show the run buttons for cpp files, or R files in Shiny/Tests/Plumber
       runButton_.setVisible(canExecuteCode && !canExecuteChunks && !isCpp &&
-            !(isShinyFile() || isTestFile() || isPlumberFile()) && !(isScript && !terminalAllowed));
+            !(isShinyFile() || isPyShinyFile() || isTestFile() || isPlumberFile()) && !(isScript && !terminalAllowed));
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
 
       // show insertion options for various knitr engines in rmarkdown v2
@@ -896,7 +896,7 @@ public class TextEditingTargetWidget
 
       commands_.enableProsemirrorDevTools().setVisible(isMarkdown);
 
-      if (isShinyFile() || isTestFile() || isPlumberFile())
+      if (isShinyFile() || isPyShinyFile() || isTestFile() || isPlumberFile())
       {
          sourceOnSave_.setVisible(false);
          srcOnSaveLabel_.setVisible(false);
@@ -908,7 +908,7 @@ public class TextEditingTargetWidget
       testShinyButton_.setVisible(false);
       testThatButton_.setVisible(false);
       compareTestButton_.setVisible(false);
-      if (isShinyFile())
+      if (isShinyFile() || isPyShinyFile())
       {
          shinyLaunchButton_.setVisible(true);
          plumberLaunchButton_.setVisible(false);
@@ -985,6 +985,12 @@ public class TextEditingTargetWidget
    {
       return extendedType_ != null &&
              extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
+   }
+
+   private boolean isPyShinyFile()
+   {
+      return extendedType_ != null &&
+             extendedType_.startsWith(SourceDocument.XT_PY_SHINY_PREFIX);
    }
 
    private boolean isVisualMode()
@@ -1076,7 +1082,7 @@ public class TextEditingTargetWidget
       
       
       texToolbarButton_.setText(width >= 520, constants_.format());
-      runButton_.setText(((width >= 480) && !isShinyFile()), constants_.run());
+      runButton_.setText(((width >= 480) && !(isShinyFile() || isPyShinyFile())), constants_.run());
       compilePdfButton_.setText(width >= 450, constants_.compilePdf());
       previewHTMLButton_.setText(width >= 450, previewCommandText_);
       knitDocumentButton_.setText(width >= 450, knitCommandText_);
@@ -1683,6 +1689,13 @@ public class TextEditingTargetWidget
             sourceButton_.setLeftImage(
                   commands_.debugContinue().getImageResource());
          }
+      }
+      else if (isPyShinyFile())
+      {
+         sourceCommandText_ = constants_.runApp();
+         sourceCommandDesc = constants_.runTheShinyApp();
+         sourceButton_.setLeftImage(
+               commands_.debugContinue().getImageResource());
       }
 
       sourceButton_.setTitle(sourceCommandDesc);
