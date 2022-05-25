@@ -514,7 +514,8 @@ std::vector<std::string> fileMonitorIgnoredComponents()
       "/.quarto",
 
       // ignore things within a .git folder
-      "/.git",
+      // ... but allow e.g. .github
+      "/.git/",
 
       // ignore some directories within the revdep folder
       "/revdep/checks",
