@@ -182,6 +182,12 @@ export R_HOME=$(R RHOME)
 export R_DOC_DIR=$(R --vanilla -s -e "cat(paste(R.home('doc'), sep=':'))")
 export R_LIB_DIR=$(R --vanilla -s -e "cat(paste(R.home('lib'), sep=':'))")
 
+# Hack: on Fedora36 (docker), the reported R_DOC_DIR doesn't exist which triggers
+# test failures; create the folder if missing
+if [ ! -e "${R_DOC_DIR}" ]; then
+   sudo mkdir "${R_DOC_DIR}"
+fi
+
 # On macOS, we need to tell the rsession executable where to look for libR.dylib
 if [ "$(uname)" = "Darwin" ]; then
    export DYLD_INSERT_LIBRARIES="${R_LIB_DIR}/libR.dylib"
@@ -271,6 +277,7 @@ if has-scope "r"; then
    export RS_CRASH_HANDLER_PATH="@CMAKE_CURRENT_BINARY_DIR@/server/crash-handler-proxy/crash-handler-proxy"
    export RS_CRASHPAD_HANDLER_PATH="@RSTUDIO_TOOLS_ROOT@/crashpad/crashpad/out/Default/crashpad_handler"
 
+   export QUARTO_ENABLED="@QUARTO_ENABLED@"
    runWatchdogProcess 5m false                                                   \
       "@CMAKE_CURRENT_BINARY_DIR@/session/${RSTUDIO_SESSION_BIN}"                \
       --run-script "\"source('${TESTTHAT_TESTS_DIR}/run-tests.R'); runTests()\"" \

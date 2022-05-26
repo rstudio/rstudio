@@ -11,3 +11,5 @@
 !src/gwt/panmirror/src/editor/yarn.lock
 !src/gwt/panmirror/src/editor/package.json
 
+# exclusion ignores
+dependencies/windows/tools/.wget-hsts

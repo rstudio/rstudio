@@ -20,9 +20,10 @@
 - Read only R and C++ files (marked by "do not edit by hand") are ignored by the fuzzy file finder (#10912)
 - Linux: For compatibility with newer versions of glibc (>= 2.34), the seccomp filter sandbox is disabled. See https://chromium.googlesource.com/chromium/src/+/0e94f26e8/docs/linux_sandboxing.md#the-sandbox-1 for more details.
 - Changed "Jobs" tab in IDE to "Local Jobs"
-- The fuzzy finder shows `test_that()` calls when the search term starts with "t ".  
+- The fuzzy finder shows `test_that()` calls when the search term starts with "t "
 - Calls to test_that() appear in the source file outline (#11082)
 - Windows: Update embedded libclang to 13.0.1 (#11186)
+- Added a warning when renv is actively overriding repository settings in Global Options (#9947)
 
 #### Find in Files
 
@@ -66,6 +67,11 @@
 - (Linux Only) License-manager now works in a installer-less context (rstudio-pro#3150)
 - Fixed an issue where R raw strings were not highlighted correctly in R Markdown documents. (#11087)
 - Fixed issue with using RStudio server behind multi-level proxy servers (#11010)
+- Fixed an issue with project sharing where other users' actions could prevent a session's auto suspend (rstudio-pro#3362)
+- Fixed a regression in which the "(Use Default Version)" option was not present in some R version selector drop downs (rstudio-pro#3451)
+- Fix opening a remote session via downloaded rdprsp file in Mac Desktop Pro when it (RDP) is already open (rstudio-pro#3291)
+- Fixed several error marker issues in visual mode where they did not display (#10949 #10483)
+- Allow Jupyter and VScode sessions to be renamed from the homepage (rstudio-pro#1686)
 
 ### RStudio Workbench
 

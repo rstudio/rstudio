@@ -19,6 +19,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     gdb \
     git \
     java-1_8_0-openjdk-devel  \
+    jq \
     libacl-devel \
     libatk-1_0-0 \
     libatk-bridge-2_0-0 \

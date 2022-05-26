@@ -319,6 +319,9 @@ private:
       else
          core::system::unsetenv(&environment, "RSTUDIO_CONSOLE_WIDTH");
 
+      // this runs in the build pane as a child process of this process
+      core::system::setenv(&environment, "RSTUDIO_CHILD_PROCESS_PANE", "build");
+      
       FilePath buildTargetPath = projects::projectContext().buildTargetPath();
       const core::r_util::RProjectConfig& config = projectConfig();
       if (type == kTestFile)

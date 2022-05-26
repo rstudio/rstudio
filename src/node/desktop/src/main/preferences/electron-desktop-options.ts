@@ -16,9 +16,12 @@
 
 import { BrowserWindow, Rectangle, screen } from 'electron';
 import Store from 'electron-store';
+import { dirname } from 'path';
 import { properties } from '../../../../../cpp/session/resources/schema/user-state-schema.json';
+import { normalizeSeparatorsNative } from '../../core/file-path';
 import { logger } from '../../core/logger';
 import { RStudioUserState } from '../../types/user-state-schema';
+
 import { generateSchema, legacyPreferenceManager } from './../preferences/preferences';
 import DesktopOptions from './desktop-options';
 
@@ -39,7 +42,7 @@ const kRendererEngine = 'renderer.engine';
 const kRendererUseGpuExclusionList = 'renderer.useGpuExclusionList';
 const kRendererUseGpuDriverBugWorkarounds = 'renderer.useGpuDriverBugWorkarounds';
 
-const kRBinDir = 'platform.windows.rBinDir';
+const kRExecutablePath = 'platform.windows.rExecutablePath';
 const kPreferR64 = 'platform.windows.preferR64';
 
 const userStateSchema = generateSchema<RStudioUserState>(properties);
@@ -268,27 +271,46 @@ export class DesktopOptionsImpl implements DesktopOptions {
   }
 
   // Windows-only option
-  public setRBinDir(rBinDir: string): void {
-    if (process.platform !== 'win32') {
-      return;
-    }
-    this.config.set(kRBinDir, rBinDir);
-  }
-
-  // Windows-only option
   public rBinDir(): string {
     if (process.platform !== 'win32') {
       return '';
     }
 
-    let rBinDir: string = this.config.get(kRBinDir, properties.platform.default.windows.rBinDir);
+    const rExecutablePath = this.rExecutablePath();
 
-    if (!rBinDir) {
+    let rBinDir = '';
+
+    if (!rExecutablePath || rExecutablePath === '') {
       rBinDir = this.legacyOptions.rBinDir() ?? properties.platform.default.windows.rBinDir;
-      this.config.set(kRBinDir, rBinDir);
+    } else {
+      rBinDir = dirname(rExecutablePath);
     }
 
     return rBinDir;
+  }
+
+  // Windows-only option
+  public setRExecutablePath(rExecutablePath: string): void {
+    if (process.platform !== 'win32') {
+      return;
+    }
+
+    this.config.set(kRExecutablePath, normalizeSeparatorsNative(rExecutablePath));
+  }
+
+  // Windows-only option
+  public rExecutablePath(): string {
+    if (process.platform !== 'win32') {
+      return '';
+    }
+
+    const rExecutablePath: string = this.config.get(kRExecutablePath, properties.platform.default.windows.rExecutablePath);
+
+    if (!rExecutablePath) {
+      return '';
+    }
+
+    return rExecutablePath;
   }
 
   // Windows-only option

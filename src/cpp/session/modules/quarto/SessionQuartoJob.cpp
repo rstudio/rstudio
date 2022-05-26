@@ -55,6 +55,10 @@ Error QuartoJob::start()
    environment(&env);
    options.environment = env;
 
+   // this runs in the job pane as a child process of this process
+   core::system::setenv(&(options.environment.get()), "RSTUDIO_CHILD_PROCESS_PANE", "job");
+   core::system::setenv(&(options.environment.get()), "RSTUDIO_SESSION_PID", safe_convert::numberToString(::getpid()));
+   
    // callbacks
    core::system::ProcessCallbacks cb;
    cb.onStarted = boost::bind(&QuartoJob::onStarted, QuartoJob::shared_from_this(), _1);

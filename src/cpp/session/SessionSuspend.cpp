@@ -26,6 +26,7 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionSuspend.hpp>
+#include <session/SessionSuspendFilter.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -49,7 +50,7 @@ bool s_suspendedFromTimeout = false;
 // was the underlying r session resumed
 bool s_rSessionResumed = false;
 
-// keep track of what operations are blocking session from suspending
+// Track what the suspend timeout is waiting for
 enum SuspendTimeoutState
 {
    kWaitingForTimeout,
@@ -57,12 +58,15 @@ enum SuspendTimeoutState
 };
 
 std::unordered_set<std::string> opsBlockingSuspend;
-boost::posix_time::ptime s_suspendTimeoutTime = boost::posix_time::second_clock::universal_time();
-boost::posix_time::ptime s_blockingTimestamp = boost::posix_time::second_clock::universal_time();
+boost::posix_time::ptime s_suspendTimeoutTime(boost::posix_time::max_date_time);
+boost::posix_time::ptime s_blockingTimestamp(boost::posix_time::pos_infin);
 bool s_dirtyBlockingOps = false;
 bool s_initialNotificationSent = false;
 bool s_timeoutLogSent = false;
 SuspendTimeoutState s_timeoutState = kWaitingForTimeout;
+
+// Filter for HttpConnections that should *not* reset the suspend timeout
+SessionSuspendFilters s_suspendFilters;
 
 } // anonymous namespace
 
@@ -121,6 +125,14 @@ bool isTimedOut(const boost::posix_time::ptime& timeoutTime)
 void resetSuspendTimeout()
 {
    s_suspendTimeoutTime = timeoutTimeFromNow();
+}
+
+void resetSuspendTimeout(boost::shared_ptr<HttpConnection> pConnection)
+{
+   if (s_suspendFilters.shouldResetSuspendTimer(pConnection))
+   {
+      resetSuspendTimeout();
+   }
 }
 
 void blockingTimestamp()
@@ -223,8 +235,8 @@ void addBlockingOp(std::string op)
 
 void addBlockingOp(std::string method, const boost::function<bool()>& allowSuspend)
 {
-   // Only a blocking op if the allowSuspend() is actually the disallowSuspend() method
-   if (allowSuspend == disallowSuspend)
+   // Add if suspension is actually blocked
+   if (!allowSuspend())
    {
       addBlockingOp(kGenericMethod + method);
    }
@@ -546,6 +558,18 @@ void handleUSR2(int unused)
    s_forceSuspend = 1;
 }
 
+core::Error initialize()
+{
+   s_timeoutState = kWaitingForTimeout;
+   resetSuspendTimeout();
+   resetBlockingTimestamp();
+   clearBlockingOps(true);
+   s_suspendFilters = SessionSuspendFilters();
+
+   return core::Success();
+}
+
 } // namespace suspend
 } // namespace session
 } // namespace rstudio
+

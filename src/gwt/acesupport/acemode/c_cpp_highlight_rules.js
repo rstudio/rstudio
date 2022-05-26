@@ -105,9 +105,13 @@ var c_cppHighlightRules = function() {
    this.$rules = {
       "start" : [
          {
-            // Attributes
+            // Comment Attributes
             token: "comment.doc.tag",
             regex: "\\/\\/\\s*\\[\\[.*\\]\\].*$"
+         }, {
+            // C++11 Attributes
+            token: "comment.doc.tag",
+            regex: "^\\s*\\[\\[(.*)\\]\\]"
          }, {
             // Roxygen
             token : "comment",

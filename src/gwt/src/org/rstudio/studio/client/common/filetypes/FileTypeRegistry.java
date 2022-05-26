@@ -327,6 +327,8 @@ public class FileTypeRegistry
       register("README", TEXT, new ImageResource2x(icons.iconText2x()));
       register(".gitignore", TEXT, new ImageResource2x(icons.iconText2x()));
       register(".Rbuildignore", TEXT, new ImageResource2x(icons.iconText2x()));
+      register(".lintr", TEXT, new ImageResource2x(icons.iconText2x()));
+      register("renv.lock", JSON, new ImageResource2x(icons.iconDCF2x()));
       register("packrat.lock", DCF, new ImageResource2x(icons.iconDCF2x()));
       register("*.r", R, new ImageResource2x(icons.iconRdoc2x()));
       register("*.q", R, new ImageResource2x(icons.iconRdoc2x()));

@@ -197,13 +197,11 @@ public class VisualModeMarkdownWriter
             {
                String filename = FileSystemItem.createFile(docPath).getStem();
                PanmirrorUIToolsAttr attr = new PanmirrorUITools().attr;
-               options.references.prefix = attr.pandocAutoIdentifier(filename) + "-";
+               // artifically add "a" and then remove it after pandocAutoIdentifier()
+               options.references.prefix = attr.pandocAutoIdentifier("a" + filename).substring(1) + "-";
             }
          }
-         
-        
       }
-      
       
       // check if this represents a line wrapping change
       boolean wrapChanged = lastUsedWriterOptions_ != null &&
@@ -215,9 +213,6 @@ public class VisualModeMarkdownWriter
       // return context
       return new Options(options, wrapChanged);
    }
-
-   
-   
    
    private PanmirrorWriterOptions lastUsedWriterOptions_ = null;
    private WorkbenchContext workbenchContext_;

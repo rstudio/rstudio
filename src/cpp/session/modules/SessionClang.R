@@ -48,7 +48,7 @@
 .rs.addFunction("packagePCH", function(linkingTo)
 {
    linkingTo <- .rs.parseLinkingTo(linkingTo)
-   packages <- c("RcppArmadillo", "RcppEigen", "Rcpp11", "Rcpp")
+   packages <- c("RcppArmadillo", "RcppEigen", "Rcpp11", "Rcpp", "cpp11")
    for (package in packages)
       if (package %in% linkingTo)
          return(package)
@@ -61,16 +61,38 @@
    
    linkingTo <- .rs.parseLinkingTo(linkingTo)
    for (pkg in linkingTo) {
-      includeDir <- system.file("include", package = pkg)
+      
+      includeDir <- if (identical(pkg, "R"))
+         R.home("include")
+      else
+         system.file("include", package = pkg)
+      
       if (file.exists(includeDir)) {
          includes <- c(
             includes,
             paste("-I", .rs.asBuildPath(includeDir), sep = "")
          )
       }
+      
    }
    
    includes
+})
+
+.rs.addFunction("includesForPackage", function(package)
+{
+   # find the package path
+   pkgPath <- find.package(package, quiet = TRUE)
+   if (!file.exists(pkgPath))
+      return(.rs.includesForLinkingTo(package))
+   
+   # read the description file
+   desc <- .rs.readPackageDescription(pkgPath)
+   if (is.null(desc$LinkingTo))
+      return(.rs.includesForLinkingTo(package))
+   
+   linkingTo <- paste(package, desc$LinkingTo, "R", sep = ", ")
+   .rs.includesForLinkingTo(linkingTo)
 })
 
 .rs.addFunction("asBuildPath", function(path)
@@ -140,14 +162,8 @@
    normalizePath(paths, winslash = "/", mustWork = FALSE)
 })
 
-.rs.addFunction("libclang.compilerDefinitionsHeaderPath", function(compiler = NULL, isCpp = TRUE)
+.rs.addFunction("libclang.generateCompilerDefinitions", function(path, isCpp = TRUE)
 {
-   # if we already have a definition, use it
-   name <- if (isCpp) "cpp-definitions.h" else "c-definitions.h"
-   path <- file.path(tempdir(), "rstudio", name)
-   if (file.exists(path))
-      return(path)
-   
    # put rtools on PATH for windows
    if (.rs.platform.isWindows)
    {
@@ -155,17 +171,33 @@
       on.exit(Sys.setenv(PATH = envpath), add = TRUE)
       .rs.addRToolsToPath()
    }
+
+   # use the default compiler configured by R   
+   exe <- if (.rs.platform.isWindows) "R.exe" else "R"
+   R <- file.path(R.home("bin"), exe)
+   args <- c("CMD", "config", if (isCpp) "CXX" else "CC")
+   output <- system2(R, args, stdout = TRUE, stderr = TRUE)
    
-   if (is.null(compiler))
+   # take only last line, in case R or the compiler spat out other output
+   compiler <- tail(output, n = 1L)
+   
+   # on Windows, with Rtools40, the path to the compiler is only valid
+   # within an MinGW shell; we work around this by just replacing the compiler
+   # path with the "real" path
+   if (.rs.platform.isWindows &&
+       getRversion() >= "4.0.0" &&
+       getRversion() < "4.2.0" &&
+       (.rs.startsWith(compiler, "/mingw32/bin") ||
+        .rs.startsWith(compiler, "/mingw64/bin")))
    {
-      # if compiler is not set, then use the default C++ compiler
-      exe <- if (.rs.platform.isWindows) "R.exe" else "R"
-      R <- file.path(R.home("bin"), exe)
-      compiler <- if (isCpp) "CXX" else "CC"
-      cxx <- system2(R, c("CMD", "config", compiler), stdout = TRUE, stderr = TRUE)
-      
-      # take only last line, in case R or the compiler spat out other output
-      compiler <- tail(cxx, n = 1L)
+      for (root in c("C:/rtools40", "C:/RBuildTools/4.0"))
+      {
+         if (file.exists(root))
+         {
+            compiler <- paste0(root, compiler)
+            break
+         }
+      }
    }
    
    # create a dummy c++ file
@@ -176,11 +208,15 @@
    command <- paste(compiler, "-dM -E", basename(file))
    
    # run it
-   output <- local({
+   output <- .rs.tryCatch({
       owd <- setwd(tempdir())
       on.exit(setwd(owd), add = TRUE)
       suppressWarnings(system(command, intern = TRUE))
    })
+   
+   # if an error occurs, then nothing to do
+   if (inherits(output, "error"))
+      return()
    
    # for each line, only define if it's not already defined
    formatted <- unlist(lapply(output, function(line) {
@@ -193,7 +229,16 @@
    # libclang doesn't seem to support __float128 with a Windows target,
    # even though gcc does -- either way, remove this define so that we
    # don't get (hopefully spurious) libclang warnings
-   formatted <- c(formatted, "", "#undef _GLIBCXX_USE_FLOAT128")
+   if (.rs.platform.isWindows && isCpp)
+   {
+      formatted <- c(
+         "#include <bits/c++config.h>",
+         "",
+         formatted,
+         "",
+         "#undef _GLIBCXX_USE_FLOAT128"
+      )
+   }
    
    # dump it to file
    dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
