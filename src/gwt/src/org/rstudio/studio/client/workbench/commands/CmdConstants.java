@@ -674,17 +674,17 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Show _Tutorial") // $NON-NLS-1$
     String activateTutorialMenuLabel();
     
-    // activateJobs
-    @DefaultStringValue("Show Jobs Pane") // $NON-NLS-1$
-    String activateJobsLabel();
-    @DefaultStringValue("Show _Jobs") // $NON-NLS-1$
-    String activateJobsMenuLabel();
+    // activateBackgroundJobs
+    @DefaultStringValue("Show Background Jobs Pane") // $NON-NLS-1$
+    String activateBackgroundJobsLabel();
+    @DefaultStringValue("Show Background _Jobs") // $NON-NLS-1$
+    String activateBackgroundJobsMenuLabel();
     
-    // activateLauncherJobs
-    @DefaultStringValue("Show Launcher Pane") // $NON-NLS-1$
-    String activateLauncherJobsLabel();
-    @DefaultStringValue("Show _Launcher") // $NON-NLS-1$
-    String activateLauncherJobsMenuLabel();
+    // activateWorkbenchJobs
+    @DefaultStringValue("Show Workbench Jobs Pane") // $NON-NLS-1$
+    String activateWorkbenchJobsLabel();
+    @DefaultStringValue("Show _Workbench Jobs") // $NON-NLS-1$
+    String activateWorkbenchJobsMenuLabel();
     
     // activateCompilePDF
     @DefaultStringValue("Show Compile PDF Pane") // $NON-NLS-1$
@@ -3754,49 +3754,49 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Run the current R script as a local job") // $NON-NLS-1$
     String sourceAsJobDesc();
     
-    // clearJobs
-    @DefaultStringValue("_Clear Local Jobs") // $NON-NLS-1$
-    String clearJobsMenuLabel();
-    @DefaultStringValue("Clean up all completed local jobs") // $NON-NLS-1$
-    String clearJobsDesc();
+    // clearBackgroundJobs
+    @DefaultStringValue("_Clear Background Jobs") // $NON-NLS-1$
+    String clearBackgroundJobsMenuLabel();
+    @DefaultStringValue("Clean up all completed background jobs") // $NON-NLS-1$
+    String clearBackgroundJobsDesc();
     
-    // runSelectionAsJob
-    @DefaultStringValue("Ru_n Selection as Local Job") // $NON-NLS-1$
-    String runSelectionAsJobMenuLabel();
-    @DefaultStringValue("Run the selected code as a local job") // $NON-NLS-1$
-    String runSelectionAsJobDesc();
+    // runSelectionAsBackgroundJob
+    @DefaultStringValue("Ru_n Selection as Background Job") // $NON-NLS-1$
+    String runSelectionAsBackgroundJobMenuLabel();
+    @DefaultStringValue("Run the selected code as a background job") // $NON-NLS-1$
+    String runSelectionAsBackgroundJobDesc();
     
-    // startLauncherJob
-    @DefaultStringValue("Start Launcher Job") // $NON-NLS-1$
-    String startLauncherJobButtonLabel();
-    @DefaultStringValue("Start Launcher _Job...") // $NON-NLS-1$
-    String startLauncherJobMenuLabel();
-    @DefaultStringValue("Run a background job on a cluster") // $NON-NLS-1$
-    String startLauncherJobDesc();
+    // startWorkbenchJob
+    @DefaultStringValue("Start Workbench Job") // $NON-NLS-1$
+    String startWorkbenchJobButtonLabel();
+    @DefaultStringValue("Start Workbench _Job...") // $NON-NLS-1$
+    String startWorkbenchJobMenuLabel();
+    @DefaultStringValue("Run a job on a cluster") // $NON-NLS-1$
+    String startWorkbenchJobDesc();
     
-    // sourceAsLauncherJob
-    @DefaultStringValue("Source as Launcher Job...") // $NON-NLS-1$
-    String sourceAsLauncherJobMenuLabel();
+    // sourceAsWorkbenchJob
+    @DefaultStringValue("Source as Workbench Job...") // $NON-NLS-1$
+    String sourceAsWorkbenchJobMenuLabel();
     @DefaultStringValue("Run the current R script on a cluster") // $NON-NLS-1$
-    String sourceAsLauncherJobDesc();
+    String sourceAsWorkbenchJobDesc();
     
-    // runSelectionAsLauncherJob
-    @DefaultStringValue("Run Selection as _Launcher Job") // $NON-NLS-1$
-    String runSelectionAsLauncherJobMenuLabel();
-    @DefaultStringValue("Run the selected code as a launcher job") // $NON-NLS-1$
-    String runSelectionAsLauncherJobDesc();
+    // runSelectionAsWorkbenchJob
+    @DefaultStringValue("Run Selection as _Workbench Job") // $NON-NLS-1$
+    String runSelectionAsWorkbenchJobMenuLabel();
+    @DefaultStringValue("Run the selected code as a Workbench job") // $NON-NLS-1$
+    String runSelectionAsWorkbenchJobDesc();
     
-    // sortLauncherJobsRecorded
+    // sortWorkbenchJobsRecorded
     @DefaultStringValue("Sort by Submission Time") // $NON-NLS-1$
-    String sortLauncherJobsRecordedMenuLabel();
-    @DefaultStringValue("Sort jobs by time submitted") // $NON-NLS-1$
-    String sortLauncherJobsRecordedDesc();
+    String sortWorkbenchJobsRecordedMenuLabel();
+    @DefaultStringValue("Sort Workbench jobs by time submitted") // $NON-NLS-1$
+    String sortWorkbenchJobsRecordedDesc();
     
-    // sortLauncherJobsState
+    // sortWorkbenchJobsState
     @DefaultStringValue("Sort by Job State") // $NON-NLS-1$
-    String sortLauncherJobsStateMenuLabel();
-    @DefaultStringValue("Sort jobs by current state") // $NON-NLS-1$
-    String sortLauncherJobsStateDesc();
+    String sortWorkbenchJobsStateMenuLabel();
+    @DefaultStringValue("Sort Workbench jobs by current state") // $NON-NLS-1$
+    String sortWorkbenchJobsStateDesc();
     
     // showFileMenu
     @DefaultStringValue("Show File Menu") // $NON-NLS-1$

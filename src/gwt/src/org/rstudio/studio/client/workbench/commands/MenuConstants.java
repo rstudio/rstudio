@@ -112,13 +112,13 @@ public interface MenuConstants extends Constants {
     @DefaultStringValue("_Terminal") // $NON-NLS-1$
     String main$_Tools$_TerminalLabel();
     
-    // main$_Tools$_Jobs
-    @DefaultStringValue("_Jobs") // $NON-NLS-1$
-    String main$_Tools$_JobsLabel();
+    // main$_Tools$Background_Jobs
+    @DefaultStringValue("Background _Jobs") // $NON-NLS-1$
+    String main$_Tools$Background_JobsLabel();
     
-    // main$_Tools$_Launcher
-    @DefaultStringValue("_Launcher") // $NON-NLS-1$
-    String main$_Tools$_LauncherLabel();
+    // main$_Tools$_Workbench_Jobs
+    @DefaultStringValue("_Workbench Jobs") // $NON-NLS-1$
+    String main$_Tools$_Workbench_JobsLabel();
     
     // main$_Tools$_Addins
     @DefaultStringValue("_Addins") // $NON-NLS-1$
