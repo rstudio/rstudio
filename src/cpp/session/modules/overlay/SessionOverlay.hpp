@@ -32,7 +32,7 @@ namespace overlay {
 
 bool isSuspendable();
 
-bool launcherJobsFeatureDisplayed();
+bool workbenchJobsFeatureDisplayed();
 
 void streamLauncherOutput(const std::string& jobId,
                           bool listening);

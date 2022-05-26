@@ -673,14 +673,14 @@ public abstract class
    // Addins
    public abstract AppCommand browseAddins();
 
-   // Jobs
+   // Background Jobs
    public abstract AppCommand startBackgroundJob();
    public abstract AppCommand sourceAsJob();
    public abstract AppCommand clearBackgroundJobs();
    public abstract AppCommand activateBackgroundJobs();
    public abstract AppCommand runSelectionAsBackgroundJob();
 
-   // Launcher Jobs
+   // Workbench Jobs
    public abstract AppCommand startWorkbenchJob();
    public abstract AppCommand sourceAsWorkbenchJob();
    public abstract AppCommand runSelectionAsWorkbenchJob();

@@ -549,8 +549,8 @@ public class SessionInfo extends JavaScriptObject
       return this.job_state;
    }-*/;
 
-   public final native boolean getLauncherJobsEnabled() /*-{
-      return this.launcher_jobs_enabled;
+   public final native boolean getWorkbenchJobsEnabled() /*-{
+      return this.workbench_jobs_enabled;
    }-*/;
 
    public final native boolean getShowHelpHome() /*-{
