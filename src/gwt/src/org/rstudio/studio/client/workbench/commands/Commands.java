@@ -674,19 +674,19 @@ public abstract class
    public abstract AppCommand browseAddins();
 
    // Jobs
-   public abstract AppCommand startJob();
+   public abstract AppCommand startBackgroundJob();
    public abstract AppCommand sourceAsJob();
-   public abstract AppCommand clearJobs();
-   public abstract AppCommand activateJobs();
-   public abstract AppCommand runSelectionAsJob();
+   public abstract AppCommand clearBackgroundJobs();
+   public abstract AppCommand activateBackgroundJobs();
+   public abstract AppCommand runSelectionAsBackgroundJob();
 
    // Launcher Jobs
-   public abstract AppCommand startLauncherJob();
-   public abstract AppCommand sourceAsLauncherJob();
-   public abstract AppCommand runSelectionAsLauncherJob();
-   public abstract AppCommand activateLauncherJobs();
-   public abstract AppCommand sortLauncherJobsRecorded();
-   public abstract AppCommand sortLauncherJobsState();
+   public abstract AppCommand startWorkbenchJob();
+   public abstract AppCommand sourceAsWorkbenchJob();
+   public abstract AppCommand runSelectionAsWorkbenchJob();
+   public abstract AppCommand activateWorkbenchJobs();
+   public abstract AppCommand sortWorkbenchJobsRecorded();
+   public abstract AppCommand sortWorkbenchJobsState();
 
    // Other
    public abstract AppCommand checkSpelling();
