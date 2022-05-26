@@ -35,7 +35,9 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.Bool;
+import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotResources;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
@@ -120,16 +122,24 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                                                      new ClickHandler() {
          @Override
          public void onClick(ClickEvent event)
-         {  
-            // get temp file for preview
-            FileSystemItem tempDir = 
-                  FileSystemItem.createDir(sessionInfo.getTempDir());
-            FileSystemItem previewPath = 
-                  FileSystemItem.createFile(tempDir.completePath("preview.pdf"));
-                
-            // invoke handler
-            SavePlotAsHandler handler = createSavePlotAsHandler();
-            handler.attemptSave(previewPath, true, true, null);
+         {
+            server_.getPlotTempdir(new SimpleRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String response)
+               {
+                  FileSystemItem tempDir = 
+                        FileSystemItem.createDir(response);
+
+                  // get temp file for preview
+                  FileSystemItem previewPath = 
+                        FileSystemItem.createFile(tempDir.completePath("preview.pdf"));
+                  
+                  // invoke handler
+                  SavePlotAsHandler handler = createSavePlotAsHandler();
+                  handler.attemptSave(previewPath, true, true, null);
+               }
+            });
          }
       });
       addLeftButton(previewButton, ElementIds.PREVIEW_BUTTON);

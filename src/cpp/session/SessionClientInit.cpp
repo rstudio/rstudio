@@ -237,13 +237,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["scratch_dir"] = options.userScratchPath().getAbsolutePath();
    }
 
-   // temp dir
-   FilePath tempDir = rstudio::r::session::utils::tempDir();
-   Error error = tempDir.ensureDirectory();
-   if (error)
-      LOG_ERROR(error);
-   sessionInfo["temp_dir"] = tempDir.getAbsolutePath();
-
    // R_LIBS_USER
    sessionInfo["r_libs_user"] = module_context::rLibsUser();
    
@@ -263,7 +256,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // source documents
    json::Array jsonDocs;
-   error = modules::source::clientInitDocuments(&jsonDocs);
+   Error error = modules::source::clientInitDocuments(&jsonDocs);
    if (error)
       LOG_ERROR(error);
    sessionInfo["source_documents"] = jsonDocs;
