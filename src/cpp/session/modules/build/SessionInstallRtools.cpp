@@ -26,7 +26,6 @@
 #include <core/r_util/RToolsInfo.hpp>
 
 #include <r/RExec.hpp>
-#include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -138,6 +137,7 @@ Error installRtools()
 
    return Success();
 }
+
 
 } // namespace build
 } // namespace modules
