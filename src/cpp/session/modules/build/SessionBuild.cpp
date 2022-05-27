@@ -2343,6 +2343,7 @@ Error initialize()
       (bind(registerRpcMethod, "devtools_load_all_path", devtoolsLoadAllPath))
       (bind(registerRpcMethod, "get_bookdown_formats", getBookdownFormats))
       (bind(sourceModuleRFile, "SessionBuild.R"))
+      (bind(initRtools))
       (bind(source_cpp::initialize));
    return initBlock.execute();
 }
