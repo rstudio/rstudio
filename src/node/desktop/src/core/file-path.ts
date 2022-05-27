@@ -46,7 +46,7 @@ function normalizeSeparators(path: string, separator = '/') {
 }
 
 /**
- * Normalizes separatos of a given path based on the current platform.
+ * Normalizes separators of a given path based on the current platform.
  *
  * @export
  * @param {string} path
