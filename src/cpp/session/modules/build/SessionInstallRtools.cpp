@@ -26,6 +26,7 @@
 #include <core/r_util/RToolsInfo.hpp>
 
 #include <r/RExec.hpp>
+#include <core/Exec.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -136,6 +137,18 @@ Error installRtools()
    module_context::enqueClientEvent(event);
 
    return Success();
+}
+
+Error initialize()
+{
+   using boost::bind;
+   using namespace module_context;
+
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+         (bind(sourceModuleRFile, "SessionInstallRtools.R"))
+
+   return initBlock.execute();
 }
 
 
