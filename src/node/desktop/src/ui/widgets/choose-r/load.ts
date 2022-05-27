@@ -64,7 +64,7 @@ function callbackData(binaryPath?: string): CallbackData {
   };
 }
 
-buttonOk.addEventListener('click', okButton);
+buttonOk.addEventListener('click', accept);
 
 buttonCancel.addEventListener('click', closeWindow);
 
