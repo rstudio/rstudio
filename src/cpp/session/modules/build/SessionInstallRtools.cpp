@@ -120,7 +120,7 @@ Error installRtools()
    error = r::options::setOption<int>("timeout", std::max(3600, originalTimeoutOption));
 
    if (error)
-       module_context::consoleWriteOutput("To avoid timeouts when downloading the installer, set `options(timeout=3600).\n`");
+       module_context::consoleWriteOutput("To avoid timeouts when downloading the installer, set `options(timeout=3600)`.\n");
 
    // download it
    error = r::exec::RFunction("utils:::download.file")
