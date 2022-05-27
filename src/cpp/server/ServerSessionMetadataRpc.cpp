@@ -47,7 +47,7 @@ typedef std::function<Error (boost::system::error_code, const Error&, const Erro
 
 inline FilePath userDataDir(const system::User& user)
 {
-   return system::xdg::userDataDir(user.getUsername());
+   return system::xdg::userDataDir(user.getUsername(), user.getHomePath());
 }
 
 
