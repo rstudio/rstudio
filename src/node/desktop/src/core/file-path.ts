@@ -42,7 +42,7 @@ const homePathLeafAlias = '~';
  * @return {*} 
  */
 function normalizeSeparators(path: string, separator = '/') {
-  return path.replace(/[\\/]+/g, separator);
+  return path.replace(/[\\]/g, separator);
 }
 
 /**
