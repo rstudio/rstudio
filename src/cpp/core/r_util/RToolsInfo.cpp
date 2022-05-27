@@ -191,7 +191,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
    else if (name == "4.0")
    {
       versionMin = "4.0.0";
-      versionMax = "4.2.0";
+      versionMax = "4.1.99";
 
       // PATH for utilities
       relativePathEntries.push_back("usr/bin");

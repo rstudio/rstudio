@@ -47,7 +47,7 @@ std::string resolveRtools42InstallerUrl(const std::string& url)
    Error error = r::exec::RFunction("utils:::download.file")
          .addParam("url", url)
          .addParam("destfile", tmpFile.getAbsolutePath())
-         .addParam("mode", "rb")
+         .addParam("mode", "w")
          .call();
    if (error) {
       LOG_ERROR(error);
@@ -70,6 +70,7 @@ Error installRtools()
    bool gcc49 = module_context::usingMingwGcc49();
    FilePath installPath("C:\\Rtools");
    std::vector<r_util::RToolsInfo> availableRtools;
+   availableRtools.push_back(r_util::RToolsInfo("4.2", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("4.0", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("3.5", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("3.4", installPath, gcc49));
