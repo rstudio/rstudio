@@ -18,7 +18,7 @@
    tryCatch({
        tmp <- tempfile()
        utils::download.file(url, tmp, mode = "w", quiet = TRUE)
-       homePageHtml <- paste(readLines(tmp), collapse=" ")
+       homePageHtml <- paste(readLines(tmp), collapse = " ")
        unlink(tmp)
      },
      error = function(e) {
