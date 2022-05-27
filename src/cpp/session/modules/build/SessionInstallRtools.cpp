@@ -114,6 +114,7 @@ Error installRtools()
    FilePath installerPath = tempPath.completeChildPath(rtoolsBinary);
    std::string destfile = string_utils::utf8ToSystem(installerPath.getAbsolutePath());
 
+   // The Rtools installer can be a large file, so we want to increase the default timeout, and respect the user's configured timeout settings
    int timeoutOption = r::options::getOption<int>("timeout", 300);
    int timeout = std::max(300, timeoutOption);
 
