@@ -139,19 +139,6 @@ Error installRtools()
    return Success();
 }
 
-Error initRtools()
-{
-   using boost::bind;
-   using namespace module_context;
-
-   ExecBlock initBlock;
-   initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionInstallRtools.R"));
-
-   return initBlock.execute();
-}
-
-
 } // namespace build
 } // namespace modules
 } // namespace session
