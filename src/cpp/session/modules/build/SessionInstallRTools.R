@@ -26,6 +26,7 @@
      reLinkPattern <- ".*<a\\shref=\"(.*rtools.*\\.exe)\">\\s*.+<\\/a>.*"
      if (grepl(reLinkPattern, homePageHtml)) {
        urlRoot <- dirname(url)
+       # extract the relative url to the installer exe file
        installerUrl <- gsub(reLinkPattern, "\\1", homePageHtml)
        file.path(urlRoot, installerUrl)
      }

@@ -97,7 +97,7 @@ Error installRtools()
 
    if (version == "4.2")
    {
-     Error error = r::exec::RFunction()
+     Error error = r::exec::RFunction(".rs.findRtools42Installer")
             .addParam("url", url)
             .addParam("fallbackUrl", kFallbackUrl)
             .call(&url);
