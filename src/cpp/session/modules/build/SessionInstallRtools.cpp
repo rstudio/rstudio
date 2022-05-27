@@ -107,7 +107,6 @@ Error installRtools()
         url = kFallbackUrl;
      }
    }
-}
 
    // form path to destination file
    std::string rtoolsBinary = url.substr(url.find_last_of('/') + 1);
