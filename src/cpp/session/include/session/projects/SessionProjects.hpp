@@ -37,6 +37,7 @@
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RSourceIndex.hpp>
 #include <core/r_util/RPackageInfo.hpp>
+#include <core/r_util/RSessionContext.hpp>
 
 namespace rstudio {
 namespace session {
@@ -266,6 +267,8 @@ private:
 };
 
 ProjectContext& projectContext();
+
+core::r_util::ProjectId& projectId();
 
 void addFirstRunDocs(const core::FilePath& projectFilePath, const std::vector<std::string>& docs);
 
