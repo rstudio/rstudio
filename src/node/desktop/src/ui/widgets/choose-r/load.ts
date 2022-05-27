@@ -64,7 +64,70 @@ function callbackData(binaryPath?: string): CallbackData {
   };
 }
 
-buttonOk.addEventListener('click', async () => {
+buttonOk.addEventListener('click', accept);
+
+buttonCancel.addEventListener('click', closeWindow);
+
+let isBrowseDialogOpen = false;
+buttonBrowse.addEventListener('click', async () => {
+  isBrowseDialogOpen = true;
+  try {
+    const shouldCloseDialog = await window.callbacks.browse(callbackData());
+
+    if (shouldCloseDialog) {
+      window.close();
+    }
+  } catch (err) {
+    logger().logDebug(`Error occurred when trying to browse for R: ${err}`);
+  } finally {
+    /** 
+    * Without this timeout, the Choose R Modal will also be closed together with the Browse Dialog.
+    * As the modal keeps focused while interacting with the Browse Dialog,
+    * as soon as the dialog is closed, the `Esc` keypress event will also be triggered in the modal.
+    */
+    setTimeout(() => {
+      isBrowseDialogOpen = false;
+    }, 150);
+  }
+});
+
+window.addEventListener('load', () => {
+  window.addEventListener(
+    'keyup',
+    (event) => {
+      switch (event.key) {
+        case 'Enter':
+          if (document.activeElement !== buttonBrowse) {
+            void accept();
+          }
+          break;
+        case 'Escape':
+          if (!isBrowseDialogOpen) {
+            closeWindow();
+          }
+          break;
+      }
+    },
+    true,
+  );
+
+  checkForNewLanguage()
+    .then(async (newLanguage: any) =>
+      changeLanguage('' + newLanguage).then(() => {
+        updateLabels();
+      }),
+    )
+    .catch((err: any) => {
+      console.error('An error happened when trying to fetch a new locale: ', err);
+    });
+});
+
+function closeWindow() {
+  window.callbacks.cancel();
+  window.close();
+}
+
+async function accept() {
   const useDefault32Radio = document.getElementById('use-default-32') as HTMLInputElement;
   if (useDefault32Radio.checked) {
     const shouldCloseWindow = await window.callbacks.useDefault32bit(callbackData());
@@ -93,32 +156,4 @@ buttonOk.addEventListener('click', async () => {
     }
     return;
   }
-});
-
-buttonCancel.addEventListener('click', () => {
-  window.callbacks.cancel();
-  window.close();
-});
-
-buttonBrowse.addEventListener('click', async () => {
-  try {
-    const shouldCloseDialog = await window.callbacks.browse(callbackData());
-    if (shouldCloseDialog) {
-      window.close();
-    }
-  } catch (err) {
-    logger().logDebug(`Error occurred when trying to browse for R: ${err}`);
-  }
-});
-
-window.addEventListener('load', () => {
-  checkForNewLanguage()
-    .then(async (newLanguage: any) =>
-      changeLanguage('' + newLanguage).then(() => {
-        updateLabels();
-      }),
-    )
-    .catch((err: any) => {
-      console.error('An error happened when trying to fetch a new locale: ', err);
-    });
-});
+}

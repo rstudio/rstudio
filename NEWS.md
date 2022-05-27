@@ -24,6 +24,7 @@
 - Calls to test_that() appear in the source file outline (#11082)
 - Windows: Update embedded libclang to 13.0.1 (#11186)
 - Added a warning when renv is actively overriding repository settings in Global Options (#9947)
+- Workbench now supports project sharing in single-session mode (i.e. when `server-multiple-sessions=0`) (rstudio-pro#1263)
 
 #### Find in Files
 
