@@ -26,6 +26,7 @@
 #include <core/r_util/RToolsInfo.hpp>
 
 #include <r/RExec.hpp>
+#include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
@@ -97,9 +98,13 @@ Error installRtools()
 
    if (version == "4.2")
    {
+     int timeoutOption = r::options::getOption<int>("timeout", 300);
+     int timeout = std::max(300, timeoutOption);
+
      Error error = r::exec::RFunction(".rs.findRtools42Installer")
             .addParam("url", url)
             .addParam("fallbackUrl", kFallbackUrl)
+            .addParam("timeout", timeout)
             .call(&url);
      if (error)
      {
