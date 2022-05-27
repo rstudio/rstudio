@@ -44,6 +44,8 @@ namespace {
 
 ProjectContext s_projectContext;
 
+core::r_util::ProjectId s_projectId;
+
 
 void onSuspend(Settings*)
 {
@@ -896,7 +898,7 @@ void startup(const std::string& firstProjectPath)
    std::string switchToProject = projSettings.switchToProjectPath();
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
-   // check for explicit project none scope
+   // check for explicit project none scope specified on the command line or desktop via initialProjectPath env var
    if (session::options().sessionScope().isProjectNone() ||
       session::options().initialProjectPath().getAbsolutePath() == kProjectNone)
    {
@@ -937,7 +939,6 @@ void startup(const std::string& firstProjectPath)
    else if (prefs::userPrefs().restoreLastProject() &&
             !lastProjectPath.isEmpty())
    {
-
       // get last project path
       projectFilePath = lastProjectPath;
 
@@ -973,6 +974,38 @@ void startup(const std::string& firstProjectPath)
 
          module_context::events().onClientInit.connect(boost::bind(onClientInit, openProjectError));
       }
+   }
+
+   core::FilePath sessionTmpDir(core::system::getenv(kSessionTmpDirEnvVar));
+   core::FilePath ctxFile = sessionTmpDir.completeChildPath(system::username() + "-d.ctx");
+   ctxFile.removeIfExists();
+   if (options().sessionScope().empty())
+   {
+      // This is single-session mode where the project is discovered from last-project-path and other places
+      // depending on how we are started. The server needs to know the project and session id for routing of
+      // sharing events so that's stored in the "user-d.ctx" file.
+      const core::r_util::ActiveSession& session = module_context::activeSession();
+      core::r_util::ProjectId projectId = session::projectToProjectId(
+               options().userScratchPath(),
+               FilePath(options().getOverlayOption(kSessionSharedStoragePath)),
+               session.project());
+      s_projectId = projectId;
+
+      if (options().projectSharingEnabled())
+      {
+         std::string sessionId = session.id();
+         std::string sessionCtxStr = projectId.userId() + projectId.id() + ":" + sessionId;
+         core::writeStringToFile(ctxFile, sessionCtxStr);
+
+         // This file is written by the session user and accessed by rserver so needs open read access
+         ctxFile.changeFileMode(FileMode::USER_READ_WRITE_ALL_READ);
+      }
+   }
+   else
+   {
+      // multi-session mode where the -p option specified the project, and it's discovered via the stream path
+      // for project sharing events
+      s_projectId = options().sessionScope().projectId();
    }
 }
 
@@ -1091,6 +1124,11 @@ Error initialize()
 ProjectContext& projectContext()
 {
    return s_projectContext;
+}
+
+core::r_util::ProjectId& projectId()
+{
+   return s_projectId;
 }
 
 void addFirstRunDocs(const FilePath& projectFilePath, const std::vector<std::string>& docs)
