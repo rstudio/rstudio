@@ -28,6 +28,7 @@ namespace modules {
 namespace build {
 
 core::Error installRtools();
+core::Error initialize();
 
 } // namespace build
 } // namespace modules
