@@ -50,7 +50,6 @@ inline FilePath userDataDir(const system::User& user)
    return system::xdg::userDataDir(user.getUsername(), user.getHomePath());
 }
 
-
 inline std::unique_ptr<r_util::ActiveSessions> getActiveSessions(const system::User& user)
 {
    return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(userDataDir(user)));
