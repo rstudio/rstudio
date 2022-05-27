@@ -40,30 +40,6 @@ namespace build {
 
 std::string kFallbackUrl = "https://rstudio.org/links/rtools42";
 
-std::string resolveRtools42InstallerUrl(const std::string& url)
-{
-   FilePath tmpFile;
-   FilePath::tempFilePath(tmpFile);
-   Error error = r::exec::RFunction("utils:::download.file")
-         .addParam("url", url)
-         .addParam("destfile", tmpFile.getAbsolutePath())
-         .addParam("mode", "w")
-         .call();
-   if (error) {
-      LOG_ERROR(error);
-      return kFallbackUrl;
-   }
-
-   std::string rToolsHome = file_utils::readFile(tmpFile);
-   boost::regex reLinkPattern("<a\\shref=\"(.*rtools.*\\.exe)\">\\s*.+<\\/a>", boost::regex::icase);
-   boost::smatch matches;
-
-   if (regex_utils::match(rToolsHome, matches, reLinkPattern))
-      return matches[1];
-   // Use RStudio's hosted copy as a fallback if no match is found
-   return kFallbackUrl;
-}
-
 Error installRtools()
 {
    // populate list of known Rtools installers
@@ -120,7 +96,18 @@ Error installRtools()
       return error;
 
    if (version == "4.2")
-      url = resolveRtools42InstallerUrl(url);
+   {
+     Error error = r::exec::RFunction()
+            .addParam("url", url)
+            .addParam("fallbackUrl", kFallbackUrl)
+            .call(&url);
+     if (error)
+     {
+        LOG_ERROR(error);
+        url = kFallbackUrl;
+     }
+   }
+}
 
    // form path to destination file
    std::string rtoolsBinary = url.substr(url.find_last_of('/') + 1);
