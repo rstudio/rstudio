@@ -98,7 +98,7 @@ window.addEventListener('load', () => {
       switch (event.key) {
         case 'Enter':
           if (document.activeElement !== buttonBrowse) {
-            void okButton();
+            void accept();
           }
           break;
         case 'Escape':
@@ -127,7 +127,7 @@ function closeWindow() {
   window.close();
 }
 
-async function okButton() {
+async function accept() {
   const useDefault32Radio = document.getElementById('use-default-32') as HTMLInputElement;
   if (useDefault32Radio.checked) {
     const shouldCloseWindow = await window.callbacks.useDefault32bit(callbackData());
