@@ -79,11 +79,16 @@ buttonBrowse.addEventListener('click', async () => {
     }
   } catch (err) {
     logger().logDebug(`Error occurred when trying to browse for R: ${err}`);
+  } finally {
+    /** 
+    * Without this timeout, the Choose R Modal will also be closed together with the Browse Dialog.
+    * As the modal keeps focused while interacting with the Browse Dialog,
+    * as soon as the dialog is closed, the `Esc` keypress event will also be triggered in the modal.
+    */
+    setTimeout(() => {
+      isBrowseDialogOpen = false;
+    }, 150);
   }
-
-  setTimeout(() => {
-    isBrowseDialogOpen = false;
-  }, 150);
 });
 
 window.addEventListener('load', () => {
