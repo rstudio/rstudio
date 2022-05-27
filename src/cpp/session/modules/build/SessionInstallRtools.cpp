@@ -146,7 +146,7 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
-         (bind(sourceModuleRFile, "SessionInstallRtools.R"))
+         (bind(sourceModuleRFile, "SessionInstallRtools.R"));
 
    return initBlock.execute();
 }
