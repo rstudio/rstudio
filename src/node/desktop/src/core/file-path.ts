@@ -35,7 +35,7 @@ const homePathAlias = '~/';
 const homePathLeafAlias = '~';
 
 /**
- * Removes duplicate separators from a path, given a separator for search.
+ * Normalize separators of a given path.
  *
  * @param {string} path
  * @param {string} [separator='/']
@@ -46,7 +46,7 @@ function normalizeSeparators(path: string, separator = '/') {
 }
 
 /**
- * Removes duplicated separators from a path based on platform.
+ * Normalizes separatos of a given path based on the current platform.
  *
  * @export
  * @param {string} path
