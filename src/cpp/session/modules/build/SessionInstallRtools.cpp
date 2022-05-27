@@ -117,7 +117,10 @@ Error installRtools()
    // The Rtools installer can be a large file, so we want to increase the timeout option if less than 5 min
    // and respect the user's original configured timeout settings
    int originalTimeoutOption = r::options::getOption<int>("timeout");
-   r::options::setOption<int>("timeout", std::max(300, originalTimeoutOption));
+   error = r::options::setOption<int>("timeout", std::max(300, originalTimeoutOption));
+
+   if (error)
+       module_context::consoleWriteOutput("To avoid timeouts when downloading the installer, set `options(timeout=300).\n`");
 
    // download it
    error = r::exec::RFunction("utils:::download.file")
@@ -126,7 +129,7 @@ Error installRtools()
        .addParam("mode", "wb")
        .call();
 
-   r::options::setOption<int>("timeout", originalTimeoutOption)
+   r::options::setOption<int>("timeout", originalTimeoutOption);
 
    if (error)
    {
