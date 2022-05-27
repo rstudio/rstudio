@@ -98,13 +98,9 @@ Error installRtools()
 
    if (version == "4.2")
    {
-     int timeoutOption = r::options::getOption<int>("timeout", 300);
-     int timeout = std::max(300, timeoutOption);
-
      Error error = r::exec::RFunction(".rs.findRtools42Installer")
             .addParam("url", url)
             .addParam("fallbackUrl", kFallbackUrl)
-            .addParam("timeout", timeout)
             .call(&url);
      if (error)
      {
@@ -118,11 +114,15 @@ Error installRtools()
    FilePath installerPath = tempPath.completeChildPath(rtoolsBinary);
    std::string destfile = string_utils::utf8ToSystem(installerPath.getAbsolutePath());
 
+   int timeoutOption = r::options::getOption<int>("timeout", 300);
+   int timeout = std::max(300, timeoutOption);
+
    // download it
    error = r::exec::RFunction("utils:::download.file")
        .addParam("url", url)
        .addParam("destfile", destfile)
        .addParam("mode", "wb")
+       .addParam("timeout", timeout)
        .call();
 
    if (error)
