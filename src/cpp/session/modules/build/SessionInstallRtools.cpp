@@ -139,7 +139,7 @@ Error installRtools()
    return Success();
 }
 
-Error initialize()
+Error initRtools()
 {
    using boost::bind;
    using namespace module_context;
