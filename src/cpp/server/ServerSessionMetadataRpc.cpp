@@ -168,9 +168,18 @@ Error authorizeRequest(
    // or the user in the request is not the same as the request initiator, disallow access
    if (!*pRequesterIsAdmin && (!sessionOwner || (*pRequesterUser != pSessionUser->get())))
    {
+      std::string desc = "User " + pRequesterUser->getUsername() + " has made a request for ";
+      if (sessionOwner)
+         desc += "a session owned by " + pSessionUser->get().getUsername() + " and is not an admin.";
+      else
+         desc += "sessions owned by any user and is not an admin.";
+         
       error = baseErrorFun(json::errc::Unauthorized, Success(), ERROR_LOCATION);
-      error.addProperty("description", "User " + pRequesterUser->getUsername() + " has made a request for a session owned by " + pSessionUser->get().getUsername() + " and is not an admin.");
-      error.addProperty("sessionOwner", pSessionUser->get().getUsername());
+      error.addProperty("description", desc);
+      error.addProperty("user", requester);
+      
+      if (sessionOwner)
+         error.addProperty("sessionOwner", pSessionUser->get().getUsername());
       LOG_ERROR(error);
    }
 
