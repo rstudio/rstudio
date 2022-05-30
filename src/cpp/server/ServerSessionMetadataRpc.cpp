@@ -19,6 +19,7 @@
 #include <set>
 #include <map>
 #include <memory>
+#include <vector>
 
 #include <shared_core/json/Json.hpp>
 #include <shared_core/system/User.hpp>
@@ -39,6 +40,13 @@ using namespace rstudio::core::r_util;
 namespace rstudio {
 namespace server {
 namespace session_metadata {
+namespace overlay {
+
+Error handleGlobalReadAll(
+   const std::set<std::string>& fields,
+   std::vector<std::map<std::string, std::string>>* pValues);
+
+} // namespace overlay
 
 namespace {
 
@@ -124,6 +132,8 @@ Error handleReadAll(
          }
       }
    }
+   else
+      return overlay::handleGlobalReadAll(fields, pValues);
 
    // Because we only log errors and always return success, the user may experience silent 
    // failures. Depending on the use case of this call it may be fine.
@@ -177,7 +187,6 @@ Error authorizeRequest(
       error = baseErrorFun(json::errc::Unauthorized, Success(), ERROR_LOCATION);
       error.addProperty("description", desc);
       error.addProperty("user", requester);
-      
       if (sessionOwner)
          error.addProperty("sessionOwner", pSessionUser->get().getUsername());
       LOG_ERROR(error);
