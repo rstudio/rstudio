@@ -24,6 +24,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.google.gwt.dom.client.Node;
+import com.google.gwt.dom.client.SpanElement;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
@@ -32,6 +33,7 @@ import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
@@ -804,25 +806,73 @@ public class VirtualConsole
             element = Document.get().createSpanElement();
             if (className != null)
                element.addClassName(clazz);
+
+            setText(text);
          }
          else 
          {
-            AnchorElement anchor = Document.get().createAnchorElement();
-            if (className != null)
-               anchor.addClassName(clazz);
-            Event.sinkEvents(anchor, Event.ONCLICK);
-            Event.setEventListener(anchor, event ->
+            String url = hyperlink_.url;
+
+            if (url.startsWith("rstudio:run"))
             {
-               consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
-            });
-            anchor.addClassName(AnsiCode.HYPERLINK_STYLE);
-            anchor.setTitle(hyperlink_.getTitle());
+               SpanElement span = Document.get().createSpanElement();
+               span.addClassName(AnsiCode.COMMAND_STYLE);
+
+               AnchorElement anchor = Document.get().createAnchorElement();
+               anchor.setInnerText(text);
+               if (className != null)
+                  anchor.addClassName(clazz);
+               
+               SpanElement run = Document.get().createSpanElement();
+               run.setInnerText(" \u25B6 ");
+               run.setTitle("Run in the console");
+               run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
+               
+               span.appendChild(anchor);
+               span.appendChild(run);
+
+               Event.sinkEvents(span, Event.ONMOUSEOVER | Event.ONMOUSEOUT);
+               Event.setEventListener(span, event ->
+               {
+                  if (event.getTypeInt() == Event.ONMOUSEOVER)
+                  {
+                     run.setClassName(AnsiCode.COMMAND_VISIBLE_STYLE);
+                  }
+                  else
+                  {
+                     run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
+                  }
+                  
+               });
+
+               Event.sinkEvents(run, Event.ONCLICK);
+               Event.setEventListener(run, event ->
+               {
+                  consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
+               });
+
+               element = span;
+            }
+            else 
+            {
+               AnchorElement anchor = Document.get().createAnchorElement();
+               if (className != null)
+                  anchor.addClassName(clazz);
+               Event.sinkEvents(anchor, Event.ONCLICK);
             
-            element = anchor;
+               Event.setEventListener(anchor, event ->
+               {
+                  consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
+               });
+               anchor.addClassName(AnsiCode.HYPERLINK_STYLE);
+               anchor.setTitle(hyperlink_.getTitle());
+
+               element = anchor;
+               setText(text);
+            }
+            
          }
 
-         setText(text);
-        
          if (captureNewElements_)
             newElements_.add(element);
       }
