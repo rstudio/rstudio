@@ -656,7 +656,7 @@
          ".xtermUnderline { text-decoration: underline; }",
          ".xtermHyperlink { text-decoration: underline; cursor: pointer; text-decoration-style: dotted; }",
          ".xtermHyperlink:hover { text-decoration: underline; text-decoration-style: solid; }",
-         ".xtermCommand { border-bottom: 1px solid #aaa; background: #eee; }", 
+         sprintf(".xtermCommand { border-bottom: 1px solid #aaa; background: #%s; }", if(isDark) "111" else "eee"), 
          ".xtermCommandHidden { display: none; }", 
          ".xtermCommandVisible { display: inline; cursor: pointer; color: green; }", 
          ".xtermBlink { text-decoration: blink; }",

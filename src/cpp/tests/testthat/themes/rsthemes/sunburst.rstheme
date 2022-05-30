@@ -221,7 +221,7 @@
 .xtermUnderline { text-decoration: underline; }
 .xtermHyperlink { text-decoration: underline; cursor: pointer; text-decoration-style: dotted; }
 .xtermHyperlink:hover { text-decoration: underline; text-decoration-style: solid; }
-.xtermCommand { border-bottom: 1px solid #aaa; background: #eee; }
+.xtermCommand { border-bottom: 1px solid #aaa; background: #111; }
 .xtermCommandHidden { display: none; }
 .xtermCommandVisible { display: inline; cursor: pointer; color: green; }
 .xtermBlink { text-decoration: blink; }
