@@ -1,7 +1,7 @@
 # locdiff
 
 Locdiff is a command-line utility to generate a CSV showing all English UI strings that
-have been added, removed, and modified between two commit hashes of the RStudio IDE.
+have been added or modified between two commit hashes of the RStudio IDE repository.
 
 The tool compares two cloned instances of the RStudio repo; one named "old" and one "new".
 You must create these yourself and checkout the desired commit hashes in each.
@@ -26,8 +26,10 @@ mv rstudio new
 cd old
 git checkout 9f796939
 cd ../new
-git checkout ######## (commit hash of "after")
+git checkout main
 cd ..
 npm i
-node locdiff > results.csv
+node locdiff
 ```
+
+Results are written to `locdiff.csv`, which can be loaded into Excel, etc.
