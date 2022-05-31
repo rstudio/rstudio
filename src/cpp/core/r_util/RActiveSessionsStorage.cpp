@@ -109,6 +109,6 @@ boost::shared_ptr<ActiveSession> FileActiveSessionsStorage::getSession(const std
       return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
 }
 
-} // namsepace core
 } // namespace r_util
+} // namsepace core
 } // namespace rstudio
