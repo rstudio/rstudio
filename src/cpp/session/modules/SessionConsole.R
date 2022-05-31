@@ -33,15 +33,6 @@
   } else if (grepl("^rstudio:viewer:", url)) {
     url <- sub("^rstudio:viewer:", "", url)
     return(.rs.api.viewer(url))
-  } else if (grepl("^(ide|rstudio):run:?", url)) {
-    # use `text` as the code unless *:run is followed
-    # e.g. rstudio:run:head(mtcars)
-    code <- sub("^(ide|rstudio):run:?", "", url)
-    if (identical(code, "")) {
-      code <- text  
-    }
-    arguments <- append(list(code), params)
-    do.call(.rs.api.sendToConsole, arguments)
   } else if (grepl("^file://", url)) {
     # file://some/file/path
     file <- sub("file://", "", url)
