@@ -161,7 +161,7 @@ namespace
 
    Error FileActiveSessionStorage::isEmpty(bool* pValue)
    {
-      *pValue = (scratchPath_.exists());
+      *pValue = (!scratchPath_.exists());
       return Success();
    }
 
