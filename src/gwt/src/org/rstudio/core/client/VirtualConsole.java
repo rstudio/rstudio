@@ -851,6 +851,7 @@ public class VirtualConsole
                Event.sinkEvents(run, Event.ONCLICK);
                Event.setEventListener(run, event ->
                {
+                  run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
                   consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
                });
 
