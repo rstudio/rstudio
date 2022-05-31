@@ -597,9 +597,9 @@ public:
    explicit ActiveSessions(const FilePath& rootStoragePath);
    explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
 
-   static FilePath storagePath(const FilePath& rootStoragePath)
+   static FilePath storagePath(const FilePath& path)
    {
-      return rootStoragePath.completeChildPath("sessions/active");
+      return path.completeChildPath("sessions/active");
    }
 
    core::Error create(const std::string& project,
@@ -622,12 +622,12 @@ public:
 
    boost::shared_ptr<ActiveSession> get(const std::string& id) const;
 
-   FilePath storagePath() const { return rootStoragePath_; }
+   FilePath storagePath() const { return storagePath_; }
 
    boost::shared_ptr<ActiveSession> emptySession(const std::string& id) const;
 
 private:
-   FilePath rootStoragePath_;
+   FilePath storagePath_;
    std::shared_ptr<IActiveSessionsStorage> storage_;
 };
 
