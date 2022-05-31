@@ -5240,7 +5240,7 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onRunSelectionAsJob()
+   void onRunSelectionAsBackgroundJob()
    {
       withVisualModeSelection(() ->
       {
@@ -5249,7 +5249,7 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onRunSelectionAsLauncherJob()
+   void onRunSelectionAsWorkbenchJob()
    {
       withVisualModeSelection(() ->
       {
@@ -6417,7 +6417,7 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   public void onSourceAsLauncherJob()
+   public void onSourceAsWorkbenchJob()
    {
       saveThenExecute(null, true, () ->
       {

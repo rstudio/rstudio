@@ -2290,10 +2290,10 @@ public class SourceColumnManager implements CommandPaletteEntrySource,
       dynamicCommands_.add(commands_.openNewTerminalAtEditorLocation());
       dynamicCommands_.add(commands_.sendFilenameToTerminal());
       dynamicCommands_.add(commands_.renameSourceDoc());
-      dynamicCommands_.add(commands_.sourceAsLauncherJob());
+      dynamicCommands_.add(commands_.sourceAsWorkbenchJob());
       dynamicCommands_.add(commands_.sourceAsJob());
-      dynamicCommands_.add(commands_.runSelectionAsJob());
-      dynamicCommands_.add(commands_.runSelectionAsLauncherJob());
+      dynamicCommands_.add(commands_.runSelectionAsBackgroundJob());
+      dynamicCommands_.add(commands_.runSelectionAsWorkbenchJob());
       dynamicCommands_.add(commands_.toggleSoftWrapMode());
       for (AppCommand command : dynamicCommands_)
       {

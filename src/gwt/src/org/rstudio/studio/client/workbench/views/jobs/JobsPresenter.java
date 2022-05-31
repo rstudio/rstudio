@@ -133,7 +133,7 @@ public class JobsPresenter extends BasePresenter
    }
    
    @Handler
-   public void onActivateJobs()
+   public void onActivateBackgroundJobs()
    {
       // Ensure that console pane is not minimized
       commands_.activateConsolePane().execute();

@@ -170,22 +170,22 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
     String numJobsLabel(int jobs);
 
     /**
-     * Translated "Run Selection as Job".
+     * Translated "Run Selection as Background Job".
      *
-     * @return translated "Run Selection as Job"
+     * @return translated "Run Selection as Background Job"
      */
-    @DefaultMessage("Run Selection as Job")
-    @Key("runSelectionAsJobCaption")
-    String runSelectionAsJobCaption();
+    @DefaultMessage("Run Selection as Background Job")
+    @Key("runSelectionAsBackgroundJobCaption")
+    String runSelectionAsBackgroundJobCaption();
 
     /**
-     * Translated "Run Script as Local Job".
+     * Translated "Run Script as Background Job".
      *
-     * @return translated "Run Script as Local Job"
+     * @return translated "Run Script as Background Job"
      */
-    @DefaultMessage("Run Script as Local Job")
-    @Key("runScriptAsLocalJobCaption")
-    String runScriptAsLocalJobCaption();
+    @DefaultMessage("Run Script as Background Job")
+    @Key("runScriptAsBackgroundJobCaption")
+    String runScriptAsBackgroundJobCaption();
 
     /**
      * Translated "Stop job".

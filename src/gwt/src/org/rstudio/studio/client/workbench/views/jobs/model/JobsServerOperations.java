@@ -24,6 +24,6 @@ public interface JobsServerOperations
    void setJobListening(String id, boolean listening, boolean bypassLauncherCall,
                         ServerRequestCallback<JsArray<JobOutput> > output);
    void startJob(JobLaunchSpec spec, ServerRequestCallback<String> callback);
-   void clearJobs(ServerRequestCallback<Void> callback);
+   void clearBackgroundJobs(ServerRequestCallback<Void> callback);
    void executeJobAction(String id, String action, ServerRequestCallback<Void> callback);
 }

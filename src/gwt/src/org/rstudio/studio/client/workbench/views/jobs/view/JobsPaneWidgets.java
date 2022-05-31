@@ -101,7 +101,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
       toolbar_.removeAllWidgets();
       toolbar_.addLeftWidget(startButton_ = commands_.startJob().createToolbarButton());
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.clearJobs().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.clearBackgroundJobs().createToolbarButton());
       progress_ = null;
    }
    

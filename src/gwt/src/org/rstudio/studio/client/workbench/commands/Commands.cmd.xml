@@ -259,8 +259,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <separator/>
             <cmd refid="executeAllCode"/>
          </menu>
-         <cmd refid="runSelectionAsLauncherJob"/>
-         <cmd refid="runSelectionAsJob"/>
+         <cmd refid="runSelectionAsWorkbenchJob"/>
+         <cmd refid="runSelectionAsBackgroundJob"/>
          <menu label="_Terminal">
             <cmd refid="sendToTerminal"/>
             <cmd refid="openNewTerminalAtEditorLocation"/>

@@ -382,8 +382,8 @@ Error runScriptJob(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error clearJobs(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+Error clearBackgroundJobs(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
 {
    removeCompletedLocalJobs();
    return Success();
@@ -502,7 +502,7 @@ core::Error initialize()
       (bind(module_context::registerRpcMethod, "job_output", jobOutput))
       (bind(module_context::registerRpcMethod, "set_job_listening", setJobListening))
       (bind(module_context::registerRpcMethod, "run_script_job", runScriptJob))
-      (bind(module_context::registerRpcMethod, "clear_jobs", clearJobs))
+      (bind(module_context::registerRpcMethod, "clear_background_jobs", clearBackgroundJobs))
       (bind(module_context::registerRpcMethod, "execute_job_action", executeJobAction))
       (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
 

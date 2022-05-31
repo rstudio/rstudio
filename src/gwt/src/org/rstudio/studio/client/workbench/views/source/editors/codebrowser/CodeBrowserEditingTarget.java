@@ -267,13 +267,13 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
 
    @Handler
-   void onRunSelectionAsJob()
+   void onRunSelectionAsBackgroundJob()
    {
       codeExecution_.runSelectionAsJob(false /*useLauncher*/);
    }
 
    @Handler
-   void onRunSelectionAsLauncherJob()
+   void onRunSelectionAsWorkbenchJob()
    {
       codeExecution_.runSelectionAsJob(true /*useLauncher*/);
    }
@@ -468,8 +468,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
       commands.add(commands_.executeCode());
       commands.add(commands_.executeCodeWithoutFocus());
       commands.add(commands_.executeLastCode());
-      commands.add(commands_.runSelectionAsJob());
-      commands.add(commands_.runSelectionAsLauncherJob());
+      commands.add(commands_.runSelectionAsBackgroundJob());
+      commands.add(commands_.runSelectionAsWorkbenchJob());
       commands.add(commands_.sendToTerminal());
 
       if (SourceWindowManager.isMainSourceWindow())

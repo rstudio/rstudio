@@ -181,14 +181,14 @@ public class JobManager implements JobRefreshEvent.Handler,
    }
 
    @Handler
-   public void onClearJobs()
+   public void onClearBackgroundJobs()
    {
       display_.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
             constants_.removeCompletedLocalJobsCaption(),
             constants_.removeCompletedLocalJobsMessage(),
             false, // include cancel
-            () ->  server_.clearJobs(new VoidServerRequestCallback()),
+            () ->  server_.clearBackgroundJobs(new VoidServerRequestCallback()),
             null,  // do nothing on No
             null,  // do nothing on Cancel
             constants_.removeJobsLabel(),
@@ -383,7 +383,7 @@ public class JobManager implements JobRefreshEvent.Handler,
 
    private void showJobLauncherDialog(FileSystemItem path, FileSystemItem workingDir, String code)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog(constants_.runSelectionAsJobCaption(),
+      JobLauncherDialog dialog = new JobLauncherDialog(constants_.runSelectionAsBackgroundJobCaption(),
             JobLauncherDialog.JobSource.Selection,
             path,
             workingDir,
@@ -399,7 +399,7 @@ public class JobManager implements JobRefreshEvent.Handler,
 
    private void showJobLauncherDialog(FileSystemItem path)
    {
-      JobLauncherDialog dialog = new JobLauncherDialog(constants_.runScriptAsLocalJobCaption(),
+      JobLauncherDialog dialog = new JobLauncherDialog(constants_.runScriptAsBackgroundJobCaption(),
             JobLauncherDialog.JobSource.Script,
             path,
             spec ->
