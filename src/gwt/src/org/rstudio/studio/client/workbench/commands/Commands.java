@@ -674,7 +674,7 @@ public abstract class
    public abstract AppCommand browseAddins();
 
    // Background Jobs
-   public abstract AppCommand startBackgroundJob();
+   public abstract AppCommand startJob();
    public abstract AppCommand sourceAsJob();
    public abstract AppCommand clearBackgroundJobs();
    public abstract AppCommand activateBackgroundJobs();

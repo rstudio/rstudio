@@ -506,7 +506,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="showTerminalOptions"/>
           </menu>
          <menu label="Background _Jobs">
-            <cmd refid="startBackgroundJob"/>
+            <cmd refid="startJob"/>
             <cmd refid="clearBackgroundJobs"/>
             <separator/>
             <cmd refid="activateBackgroundJobs"/>
