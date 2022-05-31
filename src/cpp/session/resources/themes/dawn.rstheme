@@ -175,9 +175,10 @@
 .xtermUnderline { text-decoration: underline; }
 .xtermHyperlink { text-decoration: underline; cursor: pointer; text-decoration-style: dotted; }
 .xtermHyperlink:hover { text-decoration: underline; text-decoration-style: solid; }
-.xtermCommand { border-bottom: 1px solid #aaa; background: #eee; }
+.xtermCommand { text-decoration: underline; text-decoration-style: dotted; }
+.xtermCommand:hover { text-decoration: none; }
 .xtermCommandHidden { display: none; }
-.xtermCommandVisible { display: inline; cursor: pointer; color: green; }
+.xtermCommandVisible { margin-left: 10px; display: inline; cursor: pointer; color: green; background: #eee; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }
