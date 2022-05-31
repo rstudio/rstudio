@@ -648,9 +648,6 @@ public:
    std::string sessionId() { return settings_.get("sessionId", ""); }
    void setSessionId(const std::string& sessionId) { settings_.set("sessionId", sessionId); }
 
-   std::string userId() { return settings_.get("userId", ""); }
-   void setUserId(const std::string& userId) { settings_.set("userId", userId); }
-
    std::string username() { return settings_.get("username", ""); }
    void setUsername(const std::string& username) { settings_.set("username", username); }
 
