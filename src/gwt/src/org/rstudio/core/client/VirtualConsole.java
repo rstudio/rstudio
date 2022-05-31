@@ -31,6 +31,7 @@ import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -41,6 +42,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.model.VirtualConsoleServerOperations;
 
 /**
@@ -92,12 +94,13 @@ public class VirtualConsole
    }
 
    @Inject
-   public VirtualConsole(@Assisted Element parent, final Preferences prefs, final VirtualConsoleServerOperations consoleServer)
+   public VirtualConsole(@Assisted Element parent, final Preferences prefs, final VirtualConsoleServerOperations consoleServer, final EventBus events)
    {
       prefs_ = prefs;
       parent_ = parent;
       consoleServer_ = consoleServer;
       popup_ = new VirtualConsolePopupPanel(); 
+      events_ = events;
 
       VirtualScrollerManager.init();
    }
@@ -852,7 +855,7 @@ public class VirtualConsole
                Event.setEventListener(run, event ->
                {
                   run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
-                  consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
+                  events_.fireEvent(new SendToConsoleEvent(command, true));
                });
 
                element = span;
@@ -983,4 +986,5 @@ public class VirtualConsole
    private final VirtualConsoleServerOperations consoleServer_;
 
    VirtualConsolePopupPanel popup_;
+   private final EventBus events_;
 }
