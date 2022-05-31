@@ -187,11 +187,12 @@
 
 .popupTitle {
    color: #888888;
-   margin: 10px;
+   margin: 5px;
 }
 
 .popupCode {
    font-size: smaller;
    font-family: fixedWidthFont;
-   margin: 10px;
+   margin-left: 5px;
+   margin-bottom: 5px;
 }
