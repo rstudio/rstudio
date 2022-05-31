@@ -4020,14 +4020,14 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          windowMode="main"/>
 
     <cmd id="startJob"
-         menuLabel="_Start Local Job..."
-         buttonLabel="Start Local Job"
+         menuLabel="_Start Background Job..."
+         buttonLabel="Start Background Job"
          desc="Run a background local job"
          windowMode="main"/>
 
     <cmd id="sourceAsJob"
-         menuLabel="Source as Local Job..."
-         desc="Run the current R script as a local job"
+         menuLabel="Source as Background Job..."
+         desc="Run the current R script as a background job"
          windowMode="any"/>
 
     <cmd id="clearBackgroundJobs"

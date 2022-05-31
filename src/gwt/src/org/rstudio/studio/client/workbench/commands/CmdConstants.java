@@ -3741,17 +3741,17 @@ public interface CmdConstants extends Constants {
     String sparkHelpDesc();
     
     // startJob
-    @DefaultStringValue("Start Local Job") // $NON-NLS-1$
+    @DefaultStringValue("Start Background Job") // $NON-NLS-1$
     String startJobButtonLabel();
-    @DefaultStringValue("_Start Local Job...") // $NON-NLS-1$
+    @DefaultStringValue("_Start Background Job...") // $NON-NLS-1$
     String startJobMenuLabel();
     @DefaultStringValue("Run a background local job") // $NON-NLS-1$
     String startJobDesc();
     
     // sourceAsJob
-    @DefaultStringValue("Source as Local Job...") // $NON-NLS-1$
+    @DefaultStringValue("Source as Background Job...") // $NON-NLS-1$
     String sourceAsJobMenuLabel();
-    @DefaultStringValue("Run the current R script as a local job") // $NON-NLS-1$
+    @DefaultStringValue("Run the current R script as a background job") // $NON-NLS-1$
     String sourceAsJobDesc();
     
     // clearBackgroundJobs
