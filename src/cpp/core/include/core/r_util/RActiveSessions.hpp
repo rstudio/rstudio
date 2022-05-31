@@ -78,6 +78,9 @@ public:
       const FilePath& scratchPath,
       std::shared_ptr<IActiveSessionStorage> storage) : id_(id), scratchPath_(scratchPath), storage_(storage)
    {
+      core::Error error = scratchPath_.ensureDirectory();
+      if (error)
+         LOG_ERROR(error);
    }
 
    const std::string kExecuting = "executing";
