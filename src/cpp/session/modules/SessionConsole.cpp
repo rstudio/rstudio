@@ -193,6 +193,11 @@ void syncConsoleColorEnv()
       
       // Allow cli::style_hyperlink()
       core::system::setenv("RSTUDIO_CLI_HYPERLINKS", "true");
+
+      // Allow cli::style_hyperlink(url = "ide:run:<code>")
+      core::system::setenv("R_CLI_HAS_HYPERLINK_IDE_RUN", "true");
+      core::system::setenv("R_CLI_HAS_HYPERLINK_IDE_HELP", "true");
+      core::system::setenv("R_CLI_HAS_HYPERLINK_IDE_VIGNETTE", "true");
    }
    else
    {
@@ -200,6 +205,9 @@ void syncConsoleColorEnv()
       core::system::unsetenv("TERM");
       core::system::unsetenv("CLICOLOR_FORCE");
       core::system::unsetenv("RSTUDIO_CLI_HYPERLINKS");
+      core::system::unsetenv("R_CLI_HAS_HYPERLINK_IDE_RUN");
+      core::system::unsetenv("R_CLI_HAS_HYPERLINK_IDE_HELP");
+      core::system::unsetenv("R_CLI_HAS_HYPERLINK_IDE_VIGNETTE");
    }
 }
 
