@@ -97,6 +97,7 @@ public class VirtualConsole
       prefs_ = prefs;
       parent_ = parent;
       consoleServer_ = consoleServer;
+      popup_ = new VirtualConsolePopupPanel(); 
 
       VirtualScrollerManager.init();
    }
@@ -826,7 +827,6 @@ public class VirtualConsole
                SpanElement run = Document.get().createSpanElement();
                run.setInnerText(" \u25B6 ");
                String command = StringUtil.equals(url, "rstudio:run") ? text : url.replaceFirst("rstudio:run:", "");
-               run.setTitle("Run in the console:" + "\n\n" + command );
                run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
                
                span.appendChild(anchor);
@@ -838,10 +838,13 @@ public class VirtualConsole
                   if (event.getTypeInt() == Event.ONMOUSEOVER)
                   {
                      run.setClassName(AnsiCode.COMMAND_VISIBLE_STYLE);
+                     Rectangle bounds = new Rectangle(span.getAbsoluteLeft(), span.getAbsoluteBottom(), span.getClientWidth(), span.getClientHeight());
+                     popup_.showCommand(command, new VirtualConsolePopupPositioner(bounds, popup_));
                   }
                   else
                   {
                      run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
+                     popup_.hide();
                   }
                });
 
@@ -977,4 +980,6 @@ public class VirtualConsole
    // Injected ----
    private final Preferences prefs_;
    private final VirtualConsoleServerOperations consoleServer_;
+
+   VirtualConsolePopupPanel popup_;
 }

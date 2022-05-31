@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
+import com.google.gwt.i18n.client.Messages.DefaultMessage;
+
 public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
@@ -286,4 +288,13 @@ public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
     @DefaultMessage("Session Suspended")
     @Key("sessionSuspendedTitle")
     String sessionSuspendedTitle();
+
+    /**
+     * Translated "Run the code in the console"
+     * 
+     * @return translated "Run the code in the console"
+     */
+    @DefaultMessage("Run the code in the console")
+    @Key("runCodeInConsole")
+    String runCodeInConsole();
 }

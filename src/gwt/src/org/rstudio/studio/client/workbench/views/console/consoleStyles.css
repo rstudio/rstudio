@@ -184,3 +184,14 @@
    font-style: italic;
    color: #888888;
 }
+
+.popupTitle {
+   color: #888888;
+   margin: 10px;
+}
+
+.popupCode {
+   font-size: smaller;
+   font-family: fixedWidthFont;
+   margin: 10px;
+}
