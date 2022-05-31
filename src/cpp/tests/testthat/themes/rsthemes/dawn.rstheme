@@ -222,9 +222,9 @@
 .xtermHyperlink { text-decoration: underline; cursor: pointer; text-decoration-style: dotted; }
 .xtermHyperlink:hover { text-decoration: underline; text-decoration-style: solid; }
 .xtermCommand { text-decoration: underline; text-decoration-style: dotted; }
-.xtermCommand:hover { text-decoration: none; }
+.xtermCommand:hover { text-decoration: none; background: #eee; }
 .xtermCommandHidden { display: none; }
-.xtermCommandVisible { margin-left: 10px; display: inline; cursor: pointer; color: green; background: #eee; }
+.xtermCommandVisible { margin-left: 5px; display: inline; cursor: pointer; color: green; background: #eee; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }
