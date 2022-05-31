@@ -27,13 +27,13 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
+
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
@@ -825,7 +825,8 @@ public class VirtualConsole
                
                SpanElement run = Document.get().createSpanElement();
                run.setInnerText(" \u25B6 ");
-               run.setTitle("Run in the console");
+               String command = StringUtil.equals(url, "rstudio:run") ? text : url.replaceFirst("rstudio:run:", "");
+               run.setTitle("Run in the console:" + "\n\n" + command );
                run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
                
                span.appendChild(anchor);
@@ -842,7 +843,6 @@ public class VirtualConsole
                   {
                      run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
                   }
-                  
                });
 
                Event.sinkEvents(run, Event.ONCLICK);
