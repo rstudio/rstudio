@@ -79,15 +79,15 @@ core::json::Object jobsAsJson();
 
 void removeAllJobs();
 
-void removeAllLocalJobs();
+void removeAllBackgroundJobs();
 
-void removeAllLauncherJobs();
+void removeAllWorkbenchJobs();
 
-void removeCompletedLocalJobs();
+void removeCompletedBackgroundJobs();
 
 void endAllJobStreaming();
 
-bool localJobsRunning();
+bool backgroundJobsRunning();
 
 } // namespace jobs
 } // namespace modules

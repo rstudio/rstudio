@@ -45,7 +45,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
       userPrefs_ = userPrefs;
       list_ = list;
 
-      toolbar_ = new Toolbar(constants_.jobsTabLabel());
+      toolbar_ = new Toolbar(constants_.backgroundJobsTabLabel());
       
       allJobs_ = new ToolbarButton(
             ToolbarButton.NoText,

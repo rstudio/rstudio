@@ -185,8 +185,8 @@ public class JobManager implements JobRefreshEvent.Handler,
    {
       display_.showYesNoMessage(
             GlobalDisplay.MSG_QUESTION,
-            constants_.removeCompletedLocalJobsCaption(),
-            constants_.removeCompletedLocalJobsMessage(),
+            constants_.removeCompletedBackgroundJobsCaption(),
+            constants_.removeCompletedBackgroundJobsMessage(),
             false, // include cancel
             () ->  server_.clearBackgroundJobs(new VoidServerRequestCallback()),
             null,  // do nothing on No

@@ -121,9 +121,9 @@ public class JobsPresenter extends BasePresenter
       if (running > 0)
       {
          globalDisplay_.showMessage(GlobalDisplay.MSG_INFO,
-               constants_.localJobsRunningCaption(),
-               constants_.localJobsRunningMessage(running > 1 ?
-               constants_.localJobsUnfinished() : constants_.localJobUnfinished()));
+               constants_.backgroundJobsRunningCaption(),
+               constants_.backgroundJobsRunningMessage(running > 1 ?
+               constants_.backgroundJobsUnfinished() : constants_.backgroundJobUnfinished()));
          return;
       }
       
