@@ -169,9 +169,7 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
    error = connection->execute(query, results);
 
    if (error)
-   {
       return Error("DatabaseException", errc::DBError, "Database exception during property read [ session:" + sessionId_ + " property:" + name + " ]", error, ERROR_LOCATION);
-   }
 
    database::RowsetIterator iter = results.begin();
    if (iter == results.end())
