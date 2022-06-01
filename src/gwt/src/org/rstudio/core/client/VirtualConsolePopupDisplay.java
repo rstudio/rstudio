@@ -21,6 +21,6 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 public interface VirtualConsolePopupDisplay 
                     extends HasCloseHandlers<PopupPanel> 
 {
-    void showCommand(String command, PositionCallback callback);
+    void showCommand(String command, boolean supported, PositionCallback callback);
     void setPopupPosition(int x, int y);
 }

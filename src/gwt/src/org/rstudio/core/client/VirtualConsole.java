@@ -42,6 +42,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.console.model.VirtualConsoleServerOperations;
 
@@ -101,6 +102,7 @@ public class VirtualConsole
       consoleServer_ = consoleServer;
       popup_ = new VirtualConsolePopupPanel(); 
       events_ = events;
+      styles_ = ConsoleResources.INSTANCE.consoleStyles();
 
       VirtualScrollerManager.init();
    }
@@ -819,46 +821,42 @@ public class VirtualConsole
 
             if (url.startsWith("rstudio:run"))
             {
-               SpanElement span = Document.get().createSpanElement();
-               span.addClassName(AnsiCode.COMMAND_STYLE);
-
                AnchorElement anchor = Document.get().createAnchorElement();
                anchor.setInnerText(text);
+               anchor.addClassName(styles_.xtermCommand());
                if (className != null)
                   anchor.addClassName(clazz);
                
-               SpanElement run = Document.get().createSpanElement();
-               run.setInnerText(" \u25B6 ");
                String command = StringUtil.equals(url, "rstudio:run") ? text : url.replaceFirst("rstudio:run:", "");
-               run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
+               boolean supported = 
+                  command.matches("^testthat::snapshot_(accept|review)[(]'\\w+'[)]$") || 
+                  StringUtil.equals(command, "rlang::last_error()");
+               anchor.addClassName(supported ? styles_.xtermSupportedCommand() : styles_.xtermUnsupportedCommand());
                
-               span.appendChild(anchor);
-               span.appendChild(run);
-
-               Event.sinkEvents(span, Event.ONMOUSEOVER | Event.ONMOUSEOUT);
-               Event.setEventListener(span, event ->
+               Event.sinkEvents(anchor, Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONCLICK);
+               Event.setEventListener(anchor, event ->
                {
                   if (event.getTypeInt() == Event.ONMOUSEOVER)
                   {
-                     run.setClassName(AnsiCode.COMMAND_VISIBLE_STYLE);
-                     Rectangle bounds = new Rectangle(span.getAbsoluteLeft(), span.getAbsoluteBottom(), span.getClientWidth(), span.getClientHeight());
-                     popup_.showCommand(command, new VirtualConsolePopupPositioner(bounds, popup_));
-                  }
-                  else
+                     Rectangle bounds = new Rectangle(anchor.getAbsoluteLeft(), anchor.getAbsoluteBottom(), anchor.getClientWidth(), anchor.getClientHeight());
+                     popup_.showCommand(command, supported, new VirtualConsolePopupPositioner(bounds, popup_));
+                  } 
+                  else if (event.getTypeInt() == Event.ONMOUSEOUT)
                   {
-                     run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
                      popup_.hide();
                   }
+                  else if (event.getTypeInt() == Event.ONCLICK) 
+                  {
+                     if (supported)
+                     {
+                        events_.fireEvent(new SendToConsoleEvent(command, true));
+                     }
+                     popup_.hide();
+                  }
+
                });
 
-               Event.sinkEvents(run, Event.ONCLICK);
-               Event.setEventListener(run, event ->
-               {
-                  run.setClassName(AnsiCode.COMMAND_HIDDEN_STYLE);
-                  events_.fireEvent(new SendToConsoleEvent(command, true));
-               });
-
-               element = span;
+               element = anchor;
             }
             else 
             {
@@ -987,4 +985,6 @@ public class VirtualConsole
 
    VirtualConsolePopupPanel popup_;
    private final EventBus events_;
+   private final ConsoleResources.ConsoleStyles styles_;
+    
 }

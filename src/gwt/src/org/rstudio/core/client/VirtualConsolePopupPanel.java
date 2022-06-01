@@ -58,7 +58,7 @@ public class VirtualConsolePopupPanel extends ThemedPopupPanel implements Virtua
     }
 
     @Override
-    public void showCommand(String command, PositionCallback callback)
+    public void showCommand(String command, boolean supported, PositionCallback callback)
     {
         container_ = new VerticalPanel();
         Label title = new Label(constants_.runCodeInConsole());
@@ -69,6 +69,14 @@ public class VirtualConsolePopupPanel extends ThemedPopupPanel implements Virtua
 
         container_.add(title);
         container_.add(code);
+
+        if (!supported)
+        {
+            Label info = new Label("Arbitrary commands are not supported");
+            info.setStyleName(styles_.popupInfo());
+            container_.add(info);
+        }
+        
         setWidget(container_);
 
         if (callback != null)

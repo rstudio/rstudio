@@ -49,8 +49,14 @@ public interface ConsoleResources extends ClientBundle
       String packageName();
       String packageDescription();
       String truncatedLabel();
+      
       String popupTitle();
       String popupCode();
+      String popupInfo();
+
+      String xtermCommand();
+      String xtermSupportedCommand();
+      String xtermUnsupportedCommand();
    }
 
    public static final String KEYWORD_CLASS_NAME = " ace_keyword";
