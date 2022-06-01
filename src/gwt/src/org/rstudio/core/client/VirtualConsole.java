@@ -819,7 +819,7 @@ public class VirtualConsole
          {
             String url = hyperlink_.url;
 
-            if (url.startsWith("rstudio:run"))
+            if (url.startsWith("rstudio:run") || url.startsWith("ide:run"))
             {
                AnchorElement anchor = Document.get().createAnchorElement();
                anchor.setInnerText(text);
@@ -827,7 +827,7 @@ public class VirtualConsole
                if (className != null)
                   anchor.addClassName(clazz);
                
-               String command = StringUtil.equals(url, "rstudio:run") ? text : url.replaceFirst("rstudio:run:", "");
+               String command = getCommand(text, url);
                boolean supported = 
                   command.matches("^testthat::snapshot_(accept|review)[(]'\\w+'[)]$") || 
                   StringUtil.equals(command, "rlang::last_error()");
@@ -882,6 +882,20 @@ public class VirtualConsole
             newElements_.add(element);
       }
 
+      private String getCommand(String text, String url)
+      {
+         String command = text;
+         if (url.startsWith("rstudio:run:"))
+         {
+            command = url.replaceFirst("rstudio:run:", "");
+         }
+         else if (url.startsWith("ide:run:"))
+         {
+            command = url.replaceFirst("ide:run:", "");
+         }
+         return command;
+      }
+      
       private void setText(String text)
       {
          if (isHTML_)
