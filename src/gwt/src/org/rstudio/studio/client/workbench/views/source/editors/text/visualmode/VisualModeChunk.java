@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,7 +65,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextCodeUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextPanmirrorUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
@@ -738,6 +736,12 @@ public class VisualModeChunk
       case "javascript":
       case "ojs":
          editor.setFileType(FileTypeRegistry.JS);
+         break;
+      case "mermaid":
+         editor.setFileType(FileTypeRegistry.MERMAID);
+         break;
+      case "dot":
+         editor.setFileType(FileTypeRegistry.GRAPHVIZ);
          break;
       case "tex":
       case "latex":
