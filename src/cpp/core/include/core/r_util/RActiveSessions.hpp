@@ -65,6 +65,27 @@ static const std::string kActivityStateCanceled = "canceled";
 static const std::string kActivityStateFinished = "finished";
 static const std::string kActivityStateKilled = "killed";
 
+static constexpr const char* kCreated = "created";
+static constexpr const char* kExecuting = "executing";
+static constexpr const char* kInitial = "initial";
+static constexpr const char* kLastUsed = "last_used";
+static constexpr const char* kLabel = "label";
+static constexpr const char* kProject = "project";
+static constexpr const char* kSavePromptRequired = "save_prompt_required";
+static constexpr const char* kSessionSuspendData = "suspended_session_data";
+static constexpr const char* kRunning = "running";
+static constexpr const char* kRVersion = "r_version";
+static constexpr const char* kRVersionHome = "r_version_home";
+static constexpr const char* kRVersionLabel = "r_version_label";
+static constexpr const char* kWorkingDir = "working_directory";
+static constexpr const char* kActivityState = "activity_state";
+static constexpr const char* kLastStateUpdated = "last_state_updated";
+static constexpr const char* kEditor = "editor";
+static constexpr const char* kLastResumed = "last_resumed";
+static constexpr const char* kSuspendTimestamp = "suspend_timestamp";
+static constexpr const char* kBlockingSuspend = "blocking_suspend";
+static constexpr const char* kLaunchParameters = "launch_parameters";
+
 class ActiveSession : boost::noncopyable
 {
 
@@ -82,25 +103,6 @@ public:
       if (error)
          LOG_ERROR(error);
    }
-
-   const std::string kExecuting = "executing";
-   const std::string kInitial = "initial";
-   const std::string kLabel = "label";
-   const std::string kLastUsed = "last_used";
-   const std::string kProject = "project";
-   const std::string kSavePromptRequired = "save_prompt_required";
-   const std::string kSessionSuspendData = "suspended_session_data";
-   const std::string kRunning = "running";
-   const std::string kRVersion = "r_version";
-   const std::string kRVersionHome = "r_version_home";
-   const std::string kRVersionLabel = "r_version_label";
-   const std::string kWorkingDir = "working_dir";
-   const std::string kActivityState = "activity_state";
-   const std::string kLastStateUpdated = "last_state_updated";
-   const std::string kEditor = "editor";
-   const std::string kLastResumed = "last_resumed";
-   const std::string kSuspendTimestamp = "suspend_timestamp";
-   const std::string kBlockingSuspend = "blocking_suspend";
 
    // The rsession process has exited with an exit code
    static bool isExitedState(const std::string& state)
@@ -278,17 +280,17 @@ public:
 
    double created() const
    {
-      return timestampProperty("created");
+      return timestampProperty(kCreated);
    }
 
    boost::posix_time::ptime createdTime() const
    {
-      return ptimeTimestampProperty("created");
+      return ptimeTimestampProperty(kCreated);
    }
 
    void setCreated()
    {
-      setTimestampProperty("created");
+      setTimestampProperty(kCreated);
    }
 
    bool executing() const

@@ -69,19 +69,18 @@ Error ActiveSessions::create(const std::string& project,
 
    //Initial settings
    std::map<std::string, std::string> initialMetadata = {
-      {"project", project},
-      {"working_dir", workingDir},
-      {"initial", initial ? "true" : "false"},
-      {"running", "false"},
-      {"last_used", isoTime},
-      {"running", "false"},
-      {"created", isoTime},
-      {"launch_parameters", ""}};
+      {kProject, project},
+      {kWorkingDir, workingDir},
+      {kInitial, initial ? "true" : "false"},
+      {kRunning, "false"},
+      {kLastUsed, isoTime},
+      {kCreated, isoTime},
+      {kLaunchParameters, ""},
+      {kLabel, project == kProjectNone ? workingDir : project}};
 
    storage_->createSession(id, initialMetadata);
    boost::shared_ptr<ActiveSession> activeSession = storage_->getSession(id);
 
-   activeSession->setLabel(project == kProjectNone ? workingDir : project);
    if (editor == kWorkbenchRStudio)
       activeSession->setLastResumed();
 
