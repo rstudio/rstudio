@@ -1119,11 +1119,7 @@ Error writeProjectFile(const FilePath& projectFilePath,
                build.append("PackageUseDevtools: Yes\n");
             }
 
-            if (config.packageCleanBeforeInstall)
-            {
-               build.append("PackageCleanBeforeInstall: Yes\n");
-            }
-            else
+            if (!config.packageCleanBeforeInstall)
             {
                build.append("PackageCleanBeforeInstall: No\n");
             }
