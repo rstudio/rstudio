@@ -52,6 +52,7 @@ public interface ConsoleResources extends ClientBundle
 
       String popupPanel();
       String popupCode();
+      String popupArbitraryCode();
       String popupInfo();
 
       String xtermCommand();

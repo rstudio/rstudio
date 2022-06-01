@@ -63,21 +63,18 @@ public class VirtualConsolePopupPanel extends ThemedPopupPanel implements Virtua
     {
         container_ = new VerticalPanel();
         container_.addStyleName(styles_.popupPanel());
-        Label code = new Label(command);
-        code.setStyleName(styles_.popupCode());
         
-        HTML altClick = new HTML("<b>alt-click</b> to copy the code to the console without executing it.");
-        altClick.setStyleName(styles_.popupInfo());
+        Label code = new Label(command);
+        code.setStyleName(supported ? styles_.popupCode() : styles_.popupArbitraryCode());
         
         container_.add(code);
-        if (supported)
+        if (!supported)
         {
-            HTML click = new HTML("<b>click</b> to run the code in the console.");
+            Label click = new Label("* Arbitrary commands don't run directly but are instead copied in the console.");
             click.setStyleName(styles_.popupInfo());
             container_.add(click);
         }
-        container_.add(altClick);
-    
+        
         setWidget(container_);
 
         if (callback != null)

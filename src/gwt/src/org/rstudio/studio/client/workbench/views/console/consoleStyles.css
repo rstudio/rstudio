@@ -197,6 +197,15 @@
    margin-bottom: 10px;
 }
 
+.popupArbitraryCode {
+   font-family: fixedWidthFont;
+   opacity: 0.8;
+   margin-top: 5px;
+   margin-left: 5px;
+   margin-right: 5px;
+   margin-bottom: 10px;
+}
+
 .popupInfo {
    font-size: smaller;
    opacity: .7;

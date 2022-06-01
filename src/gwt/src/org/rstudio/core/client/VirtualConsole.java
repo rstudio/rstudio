@@ -830,6 +830,7 @@ public class VirtualConsole
                boolean supported = 
                   command.matches("^testthat::snapshot_(accept|review)[(]'\\w+'[)]$") || 
                   StringUtil.equals(command, "rlang::last_error()");
+
                anchor.addClassName(supported ? styles_.xtermSupportedCommand() : styles_.xtermUnsupportedCommand());
                
                Event.sinkEvents(anchor, Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONCLICK);
@@ -846,16 +847,8 @@ public class VirtualConsole
                   }
                   else if (event.getTypeInt() == Event.ONCLICK) 
                   {
-                     if (event.getAltKey())
-                     {
-                        popup_.hide();
-                        events_.fireEvent(new SendToConsoleEvent(command, false));
-                     } 
-                     else if (supported)
-                     {
-                        popup_.hide();
-                        events_.fireEvent(new SendToConsoleEvent(command, true));
-                     }
+                     popup_.hide();
+                     events_.fireEvent(new SendToConsoleEvent(command, supported));
                   }
 
                });
