@@ -3364,10 +3364,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Insert Pipe Operator") // $NON-NLS-1$
     String insertPipeOperatorLabel();
     
-    // insertChunkOption
-    @DefaultStringValue("Insert Chunk Option") // $NON-NLS-1$
-    String insertChunkOptionLabel();
-    
     // openNextFileOnFilesystem
     @DefaultStringValue("Open Next File on Filesystem") // $NON-NLS-1$
     String openNextFileOnFilesystemLabel();

@@ -680,8 +680,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <shortcut refid="insertAssignmentOperator" value="Alt+-" title="Insert Assignment Operator"/>
          <shortcut refid="insertPipeOperator" value="Meta+Shift+M" title="Insert Pipe Operator" />
          <shortcut refid="insertPipeOperator" value="Ctrl+Shift+M" title="Insert Pipe Operator" disableModes="sublime"/>
-         <shortcut refid="insertChunkOption" value="Meta+Shift+." if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="insertChunkOption" value="Ctrl+Shift+." if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="renameInScope" value="Cmd+Alt+Shift+M" />
          <shortcut refid="insertRoxygenSkeleton" value="Cmd+Shift+Alt+R" title="Insert Roxygen Skeleton" />
       </shortcutgroup>
@@ -3729,10 +3727,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         label="Insert Pipe Operator"
         context="editor"/>
         
-   <cmd id="insertChunkOption"
-        label="Insert Chunk Option"
-        context="editor"/>
-
    <cmd id="openNextFileOnFilesystem"
         label="Open Next File on Filesystem"/>
 

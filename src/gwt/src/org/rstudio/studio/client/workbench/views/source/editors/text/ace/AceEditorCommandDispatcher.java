@@ -89,14 +89,6 @@ public class AceEditorCommandDispatcher
    }
    
    @Handler
-   public void onInsertChunkOption()
-   {
-      fireEvent(
-            AceEditorCommandEvent.INSERT_CHUNK_OPTION,
-            AceEditorCommandEvent.EXECUTION_POLICY_FOCUSED);
-   }
-   
-   @Handler
    public void onJumpToMatching()
    {
       fireEvent(

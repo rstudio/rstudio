@@ -204,7 +204,6 @@ public abstract class
    public abstract AppCommand pasteLastYank();
    public abstract AppCommand insertAssignmentOperator();
    public abstract AppCommand insertPipeOperator();
-   public abstract AppCommand insertChunkOption();
    public abstract AppCommand openNextFileOnFilesystem();
    public abstract AppCommand openPreviousFileOnFilesystem();
    public abstract AppCommand toggleSoftWrapMode();
