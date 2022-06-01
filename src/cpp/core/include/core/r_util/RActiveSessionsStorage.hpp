@@ -33,6 +33,7 @@ namespace r_util {
       virtual size_t getSessionCount() const = 0;
       virtual boost::shared_ptr<ActiveSession> getSession(const std::string& id) const = 0;
       virtual bool hasSessionId(const std::string& sessionId) const = 0;
+
    protected:
       virtual ~IActiveSessionsStorage() = default;
       IActiveSessionsStorage() = default;
@@ -48,6 +49,7 @@ namespace r_util {
       size_t getSessionCount() const override;
       boost::shared_ptr<ActiveSession> getSession(const std::string& id) const override;
       bool hasSessionId(const std::string& sessionId) const override;
+      
    private:
       FilePath storagePath_;
    };

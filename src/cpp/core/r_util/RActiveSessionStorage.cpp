@@ -25,165 +25,166 @@ namespace r_util {
 
 namespace
 {
-   Error createError(const std::string& errorName, const std::string& preamble, 
-      const std::vector<FilePath>& files, const ErrorLocation& errorLocation)
+Error createError(const std::string& errorName, const std::string& preamble, 
+   const std::vector<FilePath>& files, const ErrorLocation& errorLocation)
+{
+   std::string errorMessage = preamble + "[ ";
+   auto iter = files.begin();
+   while(iter != files.end())
    {
-      std::string errorMessage = preamble + "[ ";
-      auto iter = files.begin();
-      while(iter != files.end())
-      {
-         errorMessage += "'" + iter->getAbsolutePath() + "'";
-         iter++;
-         if(iter != files.end())
-            errorMessage += ", ";
-      }
-      errorMessage += " ]";
-      return Error{errorName, 1, errorMessage, errorLocation};
+      errorMessage += "'" + iter->getAbsolutePath() + "'";
+      iter++;
+      if(iter != files.end())
+         errorMessage += ", ";
    }
+   errorMessage += " ]";
+   return Error{errorName, 1, errorMessage, errorLocation};
+}
 } // anonymous namespace
 
-   FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& scratchPath) :
-      scratchPath_ (scratchPath)
-   {
-      Error error = scratchPath_.ensureDirectory();
-      if(error)
-         LOG_ERROR(error);
-   }
+FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& scratchPath) :
+   scratchPath_ (scratchPath)
+{
+   Error error = scratchPath_.ensureDirectory();
+   if(error)
+      LOG_ERROR(error);
+}
 
-   const std::map<std::string, std::string> FileActiveSessionStorage::fileNames =
+const std::map<std::string, std::string> FileActiveSessionStorage::fileNames =
+   {
+      { "last_used" , "last-used" },
+      { "r_version" , "r-version" },
+      { "r_version_label" , "r-version-label" },
+      { "r_version_home" , "r-version-home" },
+      { "working_directory" , "working-dir" },
+      { "launch_parameters" , "launch-parameters" }
+      };
+
+Error FileActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
+{
+   std::map<std::string, std::string> propertyValue{};
+   *pValue = "";
+
+   Error error = readProperties({ name }, &propertyValue);
+
+   if (error)
+      return error;
+
+   std::map<std::string, std::string>::iterator iter = propertyValue.find(name);
+
+   if(iter != propertyValue.end())
+      *pValue = iter->second;
+   
+   return Success();
+}
+
+Error FileActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
+{
+   std::vector<FilePath> failedFiles{};
+   pValues->empty();
+   for (const std::string &name : names)
+   {
+      FilePath readPath = getPropertyFile(name);
+      std::string value = "";
+
+      if (readPath.exists())
       {
-         { "last_used" , "last-used" },
-         { "r_version" , "r-version" },
-         { "r_version_label" , "r-version-label" },
-         { "r_version_home" , "r-version-home" },
-         { "working_directory" , "working-dir" },
-         { "launch_parameters" , "launch-parameters" }
-       };
-
-   Error FileActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
-   {
-      std::map<std::string, std::string> propertyValue{};
-      *pValue = "";
-
-      Error error = readProperties({ name }, &propertyValue);
-
-      if (error)
-         return error;
-
-      std::map<std::string, std::string>::iterator iter = propertyValue.find(name);
-
-      if(iter != propertyValue.end())
-         *pValue = iter->second;
-      
-      return Success();
-   }
-
-   Error FileActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
-   {
-      std::vector<FilePath> failedFiles{};
-      pValues->empty();
-      for (const std::string &name : names)
-      {
-         FilePath readPath = getPropertyFile(name);
-         std::string value = "";
-
-         if (readPath.exists())
-         {
-            Error error = core::readStringFromFile(readPath, &value);
-            if (error)
-               failedFiles.push_back(readPath);
-            boost::algorithm::trim(value);
-         }
-         pValues->insert(std::pair<std::string, std::string>{name, value});
-      }
-
-      if(failedFiles.empty())
-         return Success();
-      else
-         return createError("UnableToReadFiles", "Failed to read from the following files ", 
-            failedFiles, ERROR_LOCATION);
-   }
-
-   Error FileActiveSessionStorage::readProperties(std::map<std::string, std::string>* pValues)
-   {
-      FilePath propertyDir = getPropertyDir();
-      std::vector<FilePath> files{};
-      std::vector<FilePath> failedFiles{};
-      pValues->empty();
-      propertyDir.getChildren(files);
-
-      for(FilePath file : files) {
-         std::string value = "";
-         Error error = core::readStringFromFile(file, &value);
-
-         if(error)
-            failedFiles.push_back(file);
-
-         std::string propertyName = getFileNameProperty(file.getFilename());
-         pValues->insert(std::pair<std::string, std::string>{propertyName, value});
-      }
-
-      if(failedFiles.empty())
-         return Success();
-      else
-         return createError("UnableToReadFiles", "Failed to read from the following files ",
-            failedFiles, ERROR_LOCATION);
-   }
-
-   Error FileActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)
-   {
-      std::map<std::string, std::string> property = {{name, value}};
-      return writeProperties(property);
-   }
-
-   Error FileActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
-   {
-      std::vector<FilePath> failedFiles{};
-      for (auto&& prop : properties)
-      {
-         FilePath writePath = getPropertyFile(prop.first);
-         Error error = core::writeStringToFile(writePath, prop.second);
+         Error error = core::readStringFromFile(readPath, &value);
          if (error)
-            failedFiles.push_back(writePath);
+            failedFiles.push_back(readPath);
+         boost::algorithm::trim(value);
       }
-      
-      if (failedFiles.empty())
-         return Success();
-      else
-         return createError("UnableToWriteFiles", "Failed to write to the following files ", 
-            failedFiles, ERROR_LOCATION);
+      pValues->insert(std::pair<std::string, std::string>{name, value});
    }
 
-   Error FileActiveSessionStorage::destroy()
-   {
-      return scratchPath_.removeIfExists();
-   }
-
-   Error FileActiveSessionStorage::isEmpty(bool* pValue)
-   {
-      *pValue = (!scratchPath_.exists());
+   if(failedFiles.empty())
       return Success();
+   else
+      return createError("UnableToReadFiles", "Failed to read from the following files ", 
+         failedFiles, ERROR_LOCATION);
+}
+
+Error FileActiveSessionStorage::readProperties(std::map<std::string, std::string>* pValues)
+{
+   FilePath propertyDir = getPropertyDir();
+   std::vector<FilePath> files{};
+   std::vector<FilePath> failedFiles{};
+   pValues->empty();
+   propertyDir.getChildren(files);
+
+   for(FilePath file : files) {
+      std::string value = "";
+      Error error = core::readStringFromFile(file, &value);
+
+      if(error)
+         failedFiles.push_back(file);
+
+      std::string propertyName = getFileNameProperty(file.getFilename());
+      pValues->insert(std::pair<std::string, std::string>{propertyName, value});
    }
 
-   Error FileActiveSessionStorage::isValid(bool* pValue)
-   {
-      *pValue = scratchPath_.exists();
+   if(failedFiles.empty())
       return Success();
-   }
+   else
+      return createError("UnableToReadFiles", "Failed to read from the following files ",
+         failedFiles, ERROR_LOCATION);
+}
 
-   FilePath FileActiveSessionStorage::getPropertyDir() const
-   {
-      FilePath propertiesDir = scratchPath_.completeChildPath(propertiesDirName_);
-      propertiesDir.ensureDirectory();
-      return propertiesDir;
-   }
+Error FileActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)
+{
+   std::map<std::string, std::string> property = {{name, value}};
+   return writeProperties(property);
+}
 
-   FilePath FileActiveSessionStorage::getPropertyFile(const std::string& name) const
+Error FileActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
+{
+   std::vector<FilePath> failedFiles{};
+   for (auto&& prop : properties)
    {
-      FilePath propertiesDir = getPropertyDir();
-      const std::string& fileName = getPropertyFileName(name);
-      return propertiesDir.completeChildPath(fileName);
+      FilePath writePath = getPropertyFile(prop.first);
+      Error error = core::writeStringToFile(writePath, prop.second);
+      if (error)
+         failedFiles.push_back(writePath);
    }
+   
+   if (failedFiles.empty())
+      return Success();
+   else
+      return createError("UnableToWriteFiles", "Failed to write to the following files ", 
+         failedFiles, ERROR_LOCATION);
+}
+
+Error FileActiveSessionStorage::destroy()
+{
+   return scratchPath_.removeIfExists();
+}
+
+Error FileActiveSessionStorage::isEmpty(bool* pValue)
+{
+   *pValue = (!scratchPath_.exists());
+   return Success();
+}
+
+Error FileActiveSessionStorage::isValid(bool* pValue)
+{
+   *pValue = scratchPath_.exists();
+   return Success();
+}
+
+FilePath FileActiveSessionStorage::getPropertyDir() const
+{
+   FilePath propertiesDir = scratchPath_.completeChildPath(propertiesDirName_);
+   propertiesDir.ensureDirectory();
+   return propertiesDir;
+}
+
+FilePath FileActiveSessionStorage::getPropertyFile(const std::string& name) const
+{
+   FilePath propertiesDir = getPropertyDir();
+   const std::string& fileName = getPropertyFileName(name);
+   return propertiesDir.completeChildPath(fileName);
+}
+
 } // namespace r_util
 } // namespace core
 } // namespace rstudio
