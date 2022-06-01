@@ -43,7 +43,7 @@ public class VirtualConsolePopupPositioner implements PositionCallback
             popupHeight, 
             cursorBounds_.getLeft(), 
             cursorBounds_.getBottom(), 
-            0, 
+            5, 
             true);
 
         popup_.setPopupPosition(coords.getLeft(), coords.getTop());
