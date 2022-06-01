@@ -25,7 +25,7 @@ RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-o
   choco install -y 7zip; `
   choco install -y ninja --version "1.10.0"; `
   choco install -y python; `
-  choco install -y nsis --version "3.08"
+  choco install -y nsis --version "3.08"; `
   choco install -y jq
 
 RUN choco install -y visualstudio2019buildtools --version 16.11.10.0; `
