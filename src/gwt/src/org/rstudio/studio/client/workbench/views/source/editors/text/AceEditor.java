@@ -667,7 +667,6 @@ public class AceEditor implements DocDisplay,
    {
       String language = this.getLanguageMode(this.getCursorPosition());
       String comment = "#";
-      Debug.logToRConsole(language);
       switch(this.fileType_.getEditorLanguage().getModeName()) {
       case "scala":
       case "csharp":
