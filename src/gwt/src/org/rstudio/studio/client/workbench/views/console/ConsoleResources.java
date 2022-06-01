@@ -49,8 +49,8 @@ public interface ConsoleResources extends ClientBundle
       String packageName();
       String packageDescription();
       String truncatedLabel();
-      
-      String popupTitle();
+
+      String popupPanel();
       String popupCode();
       String popupInfo();
 

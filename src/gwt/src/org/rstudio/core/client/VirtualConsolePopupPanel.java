@@ -19,6 +19,7 @@ import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -61,22 +62,22 @@ public class VirtualConsolePopupPanel extends ThemedPopupPanel implements Virtua
     public void showCommand(String command, boolean supported, PositionCallback callback)
     {
         container_ = new VerticalPanel();
-        Label title = new Label(constants_.runCodeInConsole());
-        title.setStyleName(styles_.popupTitle());
-        
+        container_.addStyleName(styles_.popupPanel());
         Label code = new Label(command);
         code.setStyleName(styles_.popupCode());
-
-        container_.add(title);
-        container_.add(code);
-
-        if (!supported)
-        {
-            Label info = new Label("To run arbitrary commands, press [alt] and click. ");
-            info.setStyleName(styles_.popupInfo());
-            container_.add(info);
-        }
         
+        HTML altClick = new HTML("<b>alt-click</b> to copy the code to the console without executing it.");
+        altClick.setStyleName(styles_.popupInfo());
+        
+        container_.add(code);
+        if (supported)
+        {
+            HTML click = new HTML("<b>click</b> to run the code in the console.");
+            click.setStyleName(styles_.popupInfo());
+            container_.add(click);
+        }
+        container_.add(altClick);
+    
         setWidget(container_);
 
         if (callback != null)

@@ -846,15 +846,15 @@ public class VirtualConsole
                   }
                   else if (event.getTypeInt() == Event.ONCLICK) 
                   {
-                     if (supported)
-                     {
-                        popup_.hide();
-                        events_.fireEvent(new SendToConsoleEvent(command, true));
-                     }
-                     else if (event.getAltKey())
+                     if (event.getAltKey())
                      {
                         popup_.hide();
                         events_.fireEvent(new SendToConsoleEvent(command, false));
+                     } 
+                     else if (supported)
+                     {
+                        popup_.hide();
+                        events_.fireEvent(new SendToConsoleEvent(command, true));
                      }
                   }
 

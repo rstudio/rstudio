@@ -185,24 +185,24 @@
    color: #888888;
 }
 
-.popupTitle {
-   color: #888888;
+.popupPanel {
    margin: 5px;
 }
 
 .popupCode {
-   font-size: smaller;
    font-family: fixedWidthFont;
+   margin-top: 5px;
    margin-left: 5px;
-   margin-bottom: 5px;
    margin-right: 5px;
+   margin-bottom: 10px;
 }
 
 .popupInfo {
    font-size: smaller;
-   color: red;
+   opacity: .7;
    font-style: italic;
-   margin: 5px;
+   margin-left: 5px;
+   margin-right: 5px;
 }
 
 .xtermCommand {
