@@ -24,7 +24,6 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 
 import com.google.gwt.dom.client.Node;
-import com.google.gwt.dom.client.SpanElement;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 
@@ -35,7 +34,6 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
