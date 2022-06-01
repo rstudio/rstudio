@@ -334,7 +334,6 @@ Error DBActiveSessionStorage::destroy()
    return error;
 }
 
-
 Error DBActiveSessionStorage::isValid(bool* pValue)
 {
    boost::shared_ptr<database::IConnection> connection;

@@ -93,7 +93,7 @@ size_t DBActiveSessionsStorage::getSessionCount() const
       }
    }
 
-   return (size_t) 0;
+   return 0;
 }
 
 boost::shared_ptr<ActiveSession> DBActiveSessionsStorage::getSession(const std::string& id) const
