@@ -168,32 +168,27 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
    database::Rowset results{};
    error = connection->execute(query, results);
 
-   if (!error)
-   {
-      database::RowsetIterator iter = results.begin();
-      if (iter != results.end())
-      {
-         if (name != kUserId)
-         {
-            *pValue = iter->get<std::string>(name, "");
-         }
-         else
-         {
-            *pValue = std::to_string(iter->get<int>(name));
-         }
-         if (++iter != results.end()) 
-         {
-            return Error("Too many sessions returned", errc::TooManySessionsReturned, ERROR_LOCATION);
-         }
-      }
-      else
-      {
-         return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
-      }
-   }
-   else
+   if (error)
    {
       return Error("DatabaseException", errc::DBError, "Database exception during property read [ session:" + sessionId_ + " property:" + name + " ]", error, ERROR_LOCATION);
+   }
+
+   database::RowsetIterator iter = results.begin();
+   if (iter == results.end())
+      return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
+
+   if (name != kUserId)
+      *pValue = iter->get<std::string>(name, "");
+   else
+      *pValue = std::to_string(iter->get<int>(name));
+
+
+   if (++iter != results.end())
+   {
+      int count = 1;
+      while (iter++ != results.end())
+         count++;
+      return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
    }
    
    return error;
@@ -215,26 +210,21 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
    database::Rowset rowset{};
    error = connection->execute(query, rowset);
 
-   if (!error)
-   {
-      database::RowsetIterator iter = rowset.begin();
-      if (iter != rowset.end())
-      {
-         populateMapWithRow(iter, pValues);
-         // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
-         if (++iter != rowset.end())
-         {
-            return Error("Too many sessions returned", errc::TooManySessionsReturned, ERROR_LOCATION);
-         }
-      }
-      else
-      {
-         return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
-      }
-   }
-   else
-   {
+   if (error)
       return Error("DatabaseException", errc::DBError, "Database exception during proprerties read [ session:" + sessionId_ + " properties:" + namesString + " ]", error, ERROR_LOCATION);
+
+   database::RowsetIterator iter = rowset.begin();
+   if (iter == rowset.end())
+      return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
+
+   populateMapWithRow(iter, pValues);
+   // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
+   if (++iter != rowset.end())
+   {
+      int count = 1;
+      while (iter++ != rowset.end())
+         count++;
+      return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
    }
 
    return error;
@@ -260,9 +250,8 @@ Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::
 
    error = connection->execute(query);
 
-   if (error){
+   if (error)
       return Error("DatabaseException", errc::DBError, "Database error while updating session metadata [ session: " + sessionId_ + " property: " + name + " ]", error, ERROR_LOCATION);
-   }
 
    return error;
 }
@@ -283,38 +272,42 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
       return error;
 
    error = connection->execute(query, rowset);
-   if (!error)
+
+   if (error)
+      return Error("DatabaseException", errc::DBError, "Error while checking for existing row for upsert [ session:" + sessionId_ + " properties:" + getKeyString(properties) + " ]", error, ERROR_LOCATION);
+   
+
+   database::RowsetIterator iter = rowset.begin();
+   if (iter != rowset.end())
    {
-      database::RowsetIterator iter = rowset.begin();
-      if (iter != rowset.end())
+      // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
+      if (++iter != rowset.end())
       {
-         // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
-         if (++iter != rowset.end())
-         {
-            return Error("Too many sessions returned", errc::TooManySessionsReturned, ERROR_LOCATION);
-         }
-
-         database::Query updateQuery = connection->query("UPDATE " + kTableName + " SET " + getUpdateString(properties) + " WHERE session_id = :id")
-            .withInput(sessionId_);
-         
-         error = connection->execute(updateQuery);
-         if (error)
-         {
-            return Error("DatabaseException", errc::DBError, "Error while updating properties [ session:" + sessionId_ + " properties:" + getKeyString(properties) + " ]", error, ERROR_LOCATION);
-         }
+         int count = 1;
+         while (iter++ != rowset.end())
+            count++;
+         return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
       }
-      else
-      {
-         database::Query insertQuery = connection->query("INSERT INTO " + kTableName + " (" + kSessionIdColumnName + ", " + getKeyString(properties) + ") VALUES (:id, " + getValueString(properties) + ")")
-            .withInput(sessionId_);
 
-         error = connection->execute(insertQuery);
-         if (error)
-         {
-            return Error("DatabaseException", errc::DBError, "Error while updating properties [ session:" + sessionId_ + " properties:" + getKeyString(properties) + " ]", error, ERROR_LOCATION);
-         }
-      }
+      database::Query updateQuery = connection->query("UPDATE " + kTableName + " SET " + getUpdateString(properties) + " WHERE session_id = :id")
+         .withInput(sessionId_);
+      
+      error = connection->execute(updateQuery);
+
+      if (error)
+         return Error("DatabaseException", errc::DBError, "Error while updating properties [ session:" + sessionId_ + " properties:" + getKeyString(properties) + " ]", error, ERROR_LOCATION);
    }
+   else
+   {
+      database::Query insertQuery = connection->query("INSERT INTO " + kTableName + " (" + kSessionIdColumnName + ", " + getKeyString(properties) + ") VALUES (:id, " + getValueString(properties) + ")")
+         .withInput(sessionId_);
+
+      error = connection->execute(insertQuery);
+
+      if (error)
+         return Error("DatabaseException", errc::DBError, "Error while updating properties [ session:" + sessionId_ + " properties:" + getKeyString(properties) + " ]", error, ERROR_LOCATION);
+   }
+
    return error;
 }
 
@@ -332,14 +325,10 @@ Error DBActiveSessionStorage::destroy()
 
    error = connection->execute(query, rowset);
 
-   if (!error)
-   {
+   if (error)
       return Error("DatabaseException", errc::DBError, "Error while deleting session metadata [ session:" + sessionId_ + " ]", error, ERROR_LOCATION);
-   }
-   else
-   {
-      return error;
-   }
+      
+   return error;
 }
 
 
@@ -360,9 +349,8 @@ Error DBActiveSessionStorage::isValid(bool* pValue)
    error = connection->execute(query, rowset);
 
    if (error)
-   {
-      return Error("DatabaseException", errc::DBError, "Error while deleting session metadata [ session:" + sessionId_ + " ]", error, ERROR_LOCATION);
-   }
+      return Error("DatabaseException", errc::DBError, "Error while retrieving session count for [ session:" + sessionId_ + " ]", error, ERROR_LOCATION);
+      
    database::RowsetIterator iter = rowset.begin();
 
    // Sanity checking, but should always have 1 row containing the count of rows
@@ -372,16 +360,10 @@ Error DBActiveSessionStorage::isValid(bool* pValue)
 
       // ensure one and only one
       if (count > 1)
-      {
-         return Error("Too Many Sessions Returned", errc::TooManySessionsReturned, ERROR_LOCATION);
-      }
+         return Error("Too Many Sessions Returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
       else
-      {
          if (count == 1)
-         {
             *pValue = true;
-         }
-      }
    }
    return Success();
 }
