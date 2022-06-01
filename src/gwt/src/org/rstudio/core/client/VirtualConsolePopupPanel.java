@@ -72,7 +72,7 @@ public class VirtualConsolePopupPanel extends ThemedPopupPanel implements Virtua
 
         if (!supported)
         {
-            Label info = new Label("Arbitrary commands are not supported");
+            Label info = new Label("To run arbitrary commands, press [alt] and click. ");
             info.setStyleName(styles_.popupInfo());
             container_.add(info);
         }

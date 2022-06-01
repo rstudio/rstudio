@@ -35,6 +35,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
@@ -851,6 +852,10 @@ public class VirtualConsole
                      {
                         events_.fireEvent(new SendToConsoleEvent(command, true));
                      }
+                     else if (event.getAltKey())
+                     {
+                        events_.fireEvent(new SendToConsoleEvent(command, false));
+                     }
                      popup_.hide();
                   }
 
@@ -895,7 +900,7 @@ public class VirtualConsole
          }
          return command;
       }
-      
+
       private void setText(String text)
       {
          if (isHTML_)
