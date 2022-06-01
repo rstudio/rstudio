@@ -206,9 +206,7 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
    Error error = getConnectionOrOverride(&connection);
 
    if (error)
-   {
       return error;
-   }
    
    std::string namesString = getColumnNameList(names);
    database::Query query = connection->query("SELECT " + namesString + " FROM " + kTableName + " WHERE " + kSessionIdColumnName + "=:id")
@@ -254,9 +252,7 @@ Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::
    Error error = getConnectionOrOverride(&connection);
 
    if (error)
-   {
       return error;
-   }
 
    database::Query query = connection->query("UPDATE " + kTableName + " SET " + name + " = :value WHERE " + kSessionIdColumnName + " = :id")
       .withInput(value)
@@ -277,18 +273,14 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
    Error error = getConnectionOrOverride(&connection);
 
    if (error)
-   {
       return error;
-   }
 
    database::Query query = connection->query("SELECT * FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
    database::Rowset rowset{};
 
    if (error)
-   {
       return error;
-   }
 
    error = connection->execute(query, rowset);
    if (!error)
@@ -332,9 +324,7 @@ Error DBActiveSessionStorage::destroy()
    Error error = getConnectionOrOverride(&connection);
 
    if (error)
-   {
       return error;
-   }
 
    database::Query query = connection->query("DELETE FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
@@ -359,9 +349,7 @@ Error DBActiveSessionStorage::isValid(bool* pValue)
    Error error = getConnectionOrOverride(&connection);
 
    if (error)
-   {
       return error;
-   }
 
    database::Query query = connection->query("SELECT COUNT(*) FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
