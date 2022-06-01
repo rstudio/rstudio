@@ -431,6 +431,9 @@ public:
       if (storageError || !validStorage)
       {
          LOG_DEBUG_MESSAGE("ActiveSession validation failed: properties storage not valid");
+         if(storageError)
+            LOG_ERROR(storageError);
+         return false;
       }
 
       bool isRSession = editor() == kWorkbenchRStudio || editor().empty();
