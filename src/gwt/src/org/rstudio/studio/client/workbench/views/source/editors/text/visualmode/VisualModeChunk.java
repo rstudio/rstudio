@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.visualmode;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -59,11 +60,13 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetQuartoHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextCodeUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextPanmirrorUi;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkDefinition;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
@@ -277,7 +280,7 @@ public class VisualModeChunk
       chunkHost_.appendChild(outputHost_);
       
       // Create the chunk toolbar
-      if (scope_ != null)
+      if (scope_ != null && isRunnableChunk(scope_))
       {
          createToolbar();
       }
@@ -472,23 +475,40 @@ public class VisualModeChunk
    public void setScope(Scope scope)
    {
       scope_ = scope;
-
-      // Update the toolbar's location, or create one if we don't have one yet
-      if (toolbar_ == null)
-      {
-         createToolbar();
-      }
-      else
-      {
-         toolbar_.setScope(scope);
-      }
       
+      if (isRunnableChunk(scope))
+      {
+         if (toolbar_ == null)
+         {
+            createToolbar();
+         }
+         else
+         {
+            toolbar_.setScope(scope);
+         }
+      }
+      else if (toolbar_ != null)
+      {
+         host_.removeChild(toolbar_.getToolbar().getElement());
+         toolbar_ = null;
+      }
+     
       // Update the chunk definition location
       if (def_ != null)
       {
          def_.setRow(scope.getEnd().getRow());
       }
    }
+   
+  
+   private boolean isRunnableChunk(Scope scope)
+   {
+      return TextEditingTargetScopeHelper.isRunnableChunk(
+         target_.getDocDisplay(),
+         scope.getPreamble().getRow()
+      );
+   }
+   
    
    /**
     * Loads a chunk output widget into the chunk.
