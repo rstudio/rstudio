@@ -24,7 +24,7 @@ endfunction()
 set(CODESIGN_FLAGS
    --options runtime
    --timestamp
-   --entitlements "@CMAKE_CURRENT_SOURCE_DIR@/entitlements.plist"
+   --entitlements "@CMAKE_CURRENT_SOURCE_DIR@/entitlements-electron.plist"
    --force
    --deep)
 
