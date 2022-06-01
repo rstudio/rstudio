@@ -829,7 +829,7 @@ public class VirtualConsole
                String command = getCommand(text, url);
                boolean supported = 
                   command.matches("^testthat::snapshot_(accept|review)[(]'\\w+'[)]$") || 
-                  command.matches("^rlang::last_(error|trace)[(][)]");
+                  command.matches("^rlang::last_(error|trace)[(][)]$");
 
                anchor.addClassName(supported ? styles_.xtermSupportedCommand() : styles_.xtermUnsupportedCommand());
                
