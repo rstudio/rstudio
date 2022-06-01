@@ -64,8 +64,8 @@ var ScalaHighlightRules = require("ace/mode/scala_highlight_rules").ScalaHighlig
 var ShHighlightRules = require("mode/sh_highlight_rules").ShHighlightRules;
 var StanHighlightRules = require("mode/stan_highlight_rules").StanHighlightRules;
 var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
-var MermaidHighlightRules = require("mode/mermaid").MermaidHighlightRules;
-var DotHighlightRules = require("ace/mode/dot").DotHighlightRules;
+var MermaidHighlightRules = require("mode/mermaid_highlight_rules").MermaidHighlightRules;
+var DotHighlightRules = require("ace/mode/dot_highlight_rules").DotHighlightRules;
 
 
 var escaped = function(ch) {

@@ -34,8 +34,8 @@ var SqlHighlightRules = require("mode/sql_highlight_rules").SqlHighlightRules;
 var JavaScriptHighlightRules = require("ace/mode/javascript_highlight_rules").JavaScriptHighlightRules;
 var CssHighlightRules = require("ace/mode/css_highlight_rules").CssHighlightRules;
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
-var MermaidHighlightRules = require("mode/mermaid").MermaidHighlightRules;
-var DotHighlightRules = require("ace/mode/dot").DotHighlightRules;
+var MermaidHighlightRules = require("mode/mermaid_highlight_rules").MermaidHighlightRules;
+var DotHighlightRules = require("ace/mode/dot_highlight_rules").DotHighlightRules;
 
 var Utils = require("mode/utils");
 
