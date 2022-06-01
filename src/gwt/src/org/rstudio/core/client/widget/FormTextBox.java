@@ -27,4 +27,9 @@ public class FormTextBox extends TextBox
    {
       getElement().setId(id);
    }
+   
+   public void setSpellcheck(String spellcheck)
+   {
+      getElement().setAttribute("spellcheck", spellcheck);
+   }
 }

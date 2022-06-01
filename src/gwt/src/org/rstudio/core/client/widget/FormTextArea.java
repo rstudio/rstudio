@@ -30,4 +30,9 @@ public class FormTextArea extends TextArea
    {
       Roles.getTextboxRole().setAriaLabelProperty(getElement(), label);
    }
+   
+   public void setSpellcheck(String spellcheck)
+   {
+      getElement().setAttribute("spellcheck", spellcheck);
+   }
 }
