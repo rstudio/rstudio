@@ -309,25 +309,29 @@ export function findRInstallationsWin32(): string[] {
 
   const rInstallations = new Set<string>();
 
-  // list all installed versions from registry
-  const keyName = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core';
-  const regQueryCommand = `reg query ${keyName} /s /v InstallPath`;
-  const [output, error] = executeCommand(regQueryCommand);
-  if (error) {
-    logger().logError(error);
-    return Array.from(rInstallations.values());
-  }
+  for (const view of ['/reg:32', '/reg:64']) {
 
-  // parse the actual path from the output
-  const lines = output.split(EOL);
-  for (const line of lines) {
-    const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
-    if (match != null) {
-      const rInstallation = match[1];
-      if (existsSync(rInstallation)) {
-        rInstallations.add(rInstallation);
+    // list all installed versions from registry
+    const keyName = 'HKEY_LOCAL_MACHINE\\SOFTWARE\\R-Core';
+    const regQueryCommand = `reg query ${keyName} /s /v InstallPath ${view}`;
+    const [output, error] = executeCommand(regQueryCommand);
+    if (error) {
+      logger().logError(error);
+      continue;
+    }
+
+    // parse the actual path from the output
+    const lines = output.split(EOL);
+    for (const line of lines) {
+      const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
+      if (match != null) {
+        const rInstallation = match[1];
+        if (existsSync(rInstallation)) {
+          rInstallations.add(rInstallation);
+        }
       }
     }
+
   }
 
   // look for R installations in some common locations
@@ -338,6 +342,7 @@ export function findRInstallationsWin32(): string[] {
   ];
 
   for (const location of commonLocations) {
+
     // nothing to do if it doesn't exist
     if (!existsSync(location)) {
       continue;
@@ -351,6 +356,7 @@ export function findRInstallationsWin32(): string[] {
         rInstallations.add(path);
       }
     }
+
   }
 
   return Array.from(rInstallations.values());
@@ -370,23 +376,27 @@ export function isValidBinary(rExePath: string): boolean {
 
 function findDefaultInstallPathWin32(version: string): string {
 
-  // query registry for R install path
-  const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\${version}`;
-  const regQueryCommand = `reg query ${keyName} /v InstallPath`;
-  const [output, error] = executeCommand(regQueryCommand);
-  if (error) {
-    logger().logError(error);
-    return '';
-  }
+  for (const view of ['/reg:32', '/reg:64']) {
 
-  // parse the actual path from the output
-  const lines = output.split(EOL);
-  for (const line of lines) {
-    const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
-    if (match != null) {
-      const rLocation = match[1];
-      return rLocation;
+    // query registry for R install path
+    const keyName = `HKEY_LOCAL_MACHINE\\SOFTWARE\\R-core\\${version}`;
+    const regQueryCommand = `reg query ${keyName} /v InstallPath ${view}`;
+    const [output, error] = executeCommand(regQueryCommand);
+    if (error) {
+      logger().logError(error);
+      continue;
     }
+
+    // parse the actual path from the output
+    const lines = output.split(EOL);
+    for (const line of lines) {
+      const match = /^\s*InstallPath\s*REG_SZ\s*(.*)$/.exec(line);
+      if (match != null) {
+        const rLocation = match[1];
+        return rLocation;
+      }
+    }
+
   }
 
   return '';

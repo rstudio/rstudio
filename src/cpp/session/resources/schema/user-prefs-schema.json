@@ -976,6 +976,7 @@
                 ".github",
                 ".gitignore",
                 ".httr-oauth",
+                ".lintr",
                 ".r",
                 ".rbuildignore",
                 ".rdata"   ,

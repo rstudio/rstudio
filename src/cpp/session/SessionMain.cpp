@@ -1924,7 +1924,7 @@ int main(int argc, char * const argv[])
       // (some users on Windows report these having trailing
       // slashes, which confuses a number of RStudio routines)
       boost::regex reTrailing("[/\\\\]+$");
-      for (const std::string& envvar : {"HOME", "R_USER"})
+      for (const char* envvar : {"HOME", "R_USER"})
       {
          std::string oldVal = core::system::getenv(envvar);
          if (!oldVal.empty())
@@ -2024,6 +2024,9 @@ int main(int argc, char * const argv[])
       // set the rstudio environment variable so code can check for
       // whether rstudio is running
       core::system::setenv("RSTUDIO", "1");
+
+      // The pid of the session process
+      core::system::setenv("RSTUDIO_SESSION_PID", core::safe_convert::numberToString(::getpid()));
 
       // Mirror the R getOptions("width") value in an environment variable
       core::system::setenv("RSTUDIO_CONSOLE_WIDTH",

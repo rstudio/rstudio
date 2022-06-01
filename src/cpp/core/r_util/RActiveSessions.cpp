@@ -75,6 +75,7 @@ Error ActiveSessions::create(const std::string& project,
    activeSession.setCreated();
    activeSession.setActivityState(kActivityStateLaunching, true);
    activeSession.setEditor(editor);
+   activeSession.setLabel(project == kProjectNone ? workingDir : project);
    if (editor == kWorkbenchRStudio)
       activeSession.setLastResumed();
 

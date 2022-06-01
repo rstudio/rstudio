@@ -47,6 +47,24 @@ namespace rstudio {
 namespace core {
 namespace string_utils {
 
+bool hasTruthyValue(const std::string& string)
+{
+   for (const char* value : { "TRUE", "True", "true", "YES", "Yes", "yes", "1" })
+      if (string == value)
+         return true;
+   
+   return false;
+}
+
+bool hasFalsyValue(const std::string& string)
+{
+   for (const char* value : { "FALSE", "False", "false", "NO", "No", "no", "0" })
+      if (string == value)
+         return true;
+   
+   return false;
+}
+
 bool isTruthy(const std::string& string,
               bool valueIfEmpty)
 {

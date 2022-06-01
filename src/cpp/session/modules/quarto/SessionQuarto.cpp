@@ -594,6 +594,8 @@ Error getQmdPublishDetails(const json::JsonRpcRequest& request,
 SEXP rs_quartoFileResources(SEXP targetSEXP)
 {
    std::vector<std::string> resources;
+   
+#ifdef QUARTO_ENABLED
    std::string target = r::sexp::safeAsString(targetSEXP);
    if (!target.empty())
    {
@@ -611,9 +613,46 @@ SEXP rs_quartoFileResources(SEXP targetSEXP)
          LOG_ERROR(error);
       }
    }
+#endif
 
    r::sexp::Protect protect;
    return r::sexp::create(resources, &protect);
+}
+
+SEXP rs_quartoFileProject(SEXP basenameSEXP, SEXP dirnameSEXP)
+{
+   std::vector<std::string> project;
+   std::vector<std::string> resources;
+
+#ifdef QUARTO_ENABLED
+   std::string basename = r::sexp::safeAsString(basenameSEXP);
+   std::string dirname = r::sexp::safeAsString(dirnameSEXP);
+
+   json::Object jsonInspect;
+   std::string output;
+   core::system::ProcessResult result;
+   Error error = runQuarto({"inspect", basename}, FilePath(dirname), &result);
+   if (!error)
+   {
+      error = jsonInspect.parse(result.stdOut);
+      if (!error)
+      {
+         json::Value proj = jsonInspect["project"];
+         if (proj.isString())
+         {
+            project.push_back(proj.getString());
+         }
+
+         jsonInspect["resources"].getArray().toVectorString(resources);   
+      }
+   }
+#endif
+   
+   r::sexp::Protect protect;
+   SEXP out = r::sexp::createList({"project", "resources"}, &protect);
+   SET_VECTOR_ELT(out, 0, r::sexp::create(project, &protect));
+   SET_VECTOR_ELT(out, 1, r::sexp::create(resources, &protect));
+   return out;
 }
 
 Error quartoCreateProject(const json::JsonRpcRequest& request,
@@ -795,8 +834,6 @@ Error quartoInspect(const std::string& path,
    // Parse JSON result
    return pResultObject->parse(result.stdOut);
 }
-
-
 
 bool handleQuartoPreview(const core::FilePath& sourceFile,
                          const core::FilePath& outputFile,
@@ -1253,6 +1290,7 @@ namespace quarto {
 Error initialize()
 {
    RS_REGISTER_CALL_METHOD(rs_quartoFileResources, 1);
+   RS_REGISTER_CALL_METHOD(rs_quartoFileProject, 2);
 
    // source SessionQuarto.R so we can call it from config init
    Error error = module_context::sourceModuleRFile("SessionQuarto.R");

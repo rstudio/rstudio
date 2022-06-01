@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.ApplicationCommandManager;
@@ -324,6 +325,15 @@ public class SourceWindow implements LastSourceDocClosedEvent.Handler,
                public void onReadyToQuit(boolean saveChanges)
                {
                   markReadyToClose();
+                  if (BrowseCap.isElectron())
+                  {
+                     // Fix: https://github.com/rstudio/rstudio/issues/10906
+                     // On Electron, the 'unload' event isn't being received when we close
+                     // the satellite window via WindowEx.get().close() below; we rely on 
+                     // Satellite.java invoking `opener.notifyRStudioSatelliteClosed` in response 
+                     // to that event so invoke it directly here.
+                     satellite_.notifyRStudioSatelliteClosed();
+                  }
 
                   // we may be in the middle of closing the window already, so
                   // defer the closure request

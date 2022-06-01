@@ -805,7 +805,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.on('desktop_set_busy', (event, busy) => {});
 
     ipcMain.on('desktop_set_window_title', (event, title: string) => {
-      this.mainWindow.window.setTitle(`${title} - RStudio`);
+      this.mainWindow.window.setTitle(`${title} - ${appState().activation().editionName()}`);
     });
 
     ipcMain.on('desktop_install_rtools', (event, version, installerPath) => {

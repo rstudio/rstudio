@@ -643,7 +643,8 @@ int main(int argc, char * const argv[])
 
             if (depth == 1 &&
                 (boost::ends_with(file.getFilename(), "-d") ||
-                 boost::ends_with(file.getFilename(), "-d.pid")))
+                 boost::ends_with(file.getFilename(), "-d.pid") ||
+                 boost::ends_with(file.getFilename(), "-d.ctx")))
                return false;
 
             return true;

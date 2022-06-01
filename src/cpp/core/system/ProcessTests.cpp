@@ -588,7 +588,9 @@ test_context("ProcessTests")
       }
       lock.unlock();
 
-      REQUIRE(exitCode == 1);
+      // 143 is the exit code for SIGTERM - it's 128 + signum (15 = SIGTERM) as set by the shell
+      // We also sometimes see exitCode of 1 for generic exits so we allow either one.
+      REQUIRE((exitCode == 1 || exitCode == 143));
    }
 }
 

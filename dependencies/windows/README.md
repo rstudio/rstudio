@@ -8,7 +8,7 @@ installed.
 Bootstrap
 =============================================================================
 - Open an Administrator PowerShell and execute this command:
-    - `Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/rstudio/rstudio/master/dependencies/windows/Install-RStudio-Prereqs.ps1'))`
+    - `Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/rstudio/rstudio/main/dependencies/windows/Install-RStudio-Prereqs.ps1'))`
 - Wait for the script to complete
 
 Install Qt SDK

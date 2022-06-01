@@ -1903,7 +1903,7 @@
 
          # Perhaps not the most efficient, but probably the easiest way to detect
          # appropriate calls to `opts_chunk$set`.
-         callName <- as.character(node)
+         callName <- as.character(node)[[1L]]
          if (callName == "knitr:::opts_chunk$set" ||
              callName == "knitr::opts_chunk$set" ||
              callName == "opts_chunk$set")

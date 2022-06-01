@@ -58,7 +58,7 @@ define("mode/r_highlight_rules", ["require", "exports", "module"], function(requ
       {
         // roxygen tag accepting a parameter
         token : ["keyword", "comment"],
-        regex : "(@(?:export|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
+        regex : "(@(?:export|field|inheritParams|name|param|rdname|slot|template|useDynLib))(\\s+)(?=[a-zA-Z0-9._-])",
         merge : false,
         next  : "rd-highlight"
       },

@@ -84,6 +84,15 @@ FilePath compilerDatabaseDirImpl()
 {
    FilePath path = module_context::scopedScratchPath().completeChildPath("compilation-database");
 
+   // on Windows, use different compilation databases for different architectures
+#ifdef _WIN32
+# ifdef _WIN64
+   path = path.completeChildPath("mingw64");
+# else
+   path = path.completeChildPath("mingw32");
+# endif
+#endif
+
    Error error = path.ensureDirectory();
    if (error)
       LOG_ERROR(error);
