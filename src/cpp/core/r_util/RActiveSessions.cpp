@@ -76,7 +76,8 @@ Error ActiveSessions::create(const std::string& project,
       {kLastUsed, isoTime},
       {kCreated, isoTime},
       {kLaunchParameters, ""},
-      {kLabel, project == kProjectNone ? workingDir : project}};
+      {kLabel, project == kProjectNone ? workingDir : project},
+      {kEditor, editor}};
 
    storage_->createSession(id, initialMetadata);
    boost::shared_ptr<ActiveSession> activeSession = storage_->getSession(id);
