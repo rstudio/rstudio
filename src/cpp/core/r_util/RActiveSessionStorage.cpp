@@ -69,7 +69,7 @@ Error FileActiveSessionStorage::readProperty(const std::string& name, std::strin
    if (error)
       return error;
 
-   std::map<std::string, std::string>::iterator iter = propertyValue.find(name);
+   std::map<std::string, std::string>::const_iterator iter = propertyValue.find(name);
 
    if(iter != propertyValue.end())
       *pValue = iter->second;
@@ -122,11 +122,11 @@ Error FileActiveSessionStorage::readProperties(std::map<std::string, std::string
       pValues->insert(std::pair<std::string, std::string>{propertyName, value});
    }
 
-   if(failedFiles.empty())
-      return Success();
-   else
+   if(!failedFiles.empty())
       return createError("UnableToReadFiles", "Failed to read from the following files ",
          failedFiles, ERROR_LOCATION);
+      
+   return Success();
 }
 
 Error FileActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)

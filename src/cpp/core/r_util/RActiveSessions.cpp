@@ -108,7 +108,7 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath use
 {
    std::vector<std::string> sessionIds = storage_->listSessionIds();
    std::vector<boost::shared_ptr<ActiveSession>> sessions{};
-   for(std::string id : sessionIds)
+   for(const std::string& id : sessionIds)
    {
       boost::shared_ptr<ActiveSession> candidateSession = storage_->getSession(id);
       if (candidateSession->validate(userHomePath, projectSharingEnabled))
