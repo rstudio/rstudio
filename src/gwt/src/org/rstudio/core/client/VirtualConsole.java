@@ -848,10 +848,12 @@ public class VirtualConsole
                   {
                      if (supported)
                      {
+                        popup_.hide();
                         events_.fireEvent(new SendToConsoleEvent(command, true));
                      }
                      else if (event.getAltKey())
                      {
+                        popup_.hide();
                         events_.fireEvent(new SendToConsoleEvent(command, false));
                      }
                   }
