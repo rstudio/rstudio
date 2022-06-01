@@ -76,14 +76,14 @@ Error ActiveSessions::create(const std::string& project,
       {"last_used", isoTime},
       {"running", "false"},
       {"created", isoTime},
-      {"launch_parameters", ""}:
+      {"launch_parameters", ""}};
 
    storage_->createSession(id, initialMetadata);
    boost::shared_ptr<ActiveSession> activeSession = storage_->getSession(id);
 
-   activeSession.setLabel(project == kProjectNone ? workingDir : project);
+   activeSession->setLabel(project == kProjectNone ? workingDir : project);
    if (editor == kWorkbenchRStudio)
-      activeSession.setLastResumed();
+      activeSession->setLastResumed();
 
    // return the id if requested
    if (pId != nullptr)
@@ -212,5 +212,9 @@ void trackActiveSessionCount(const FilePath& rootStoragePath,
                    false,
                    boost::function<bool(const FileInfo&)>(),
                    cb);
-}compare
+
+}
+
+} // namespace r_util
+} // namespace core
 } // namespace rstudio
