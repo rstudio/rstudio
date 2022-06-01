@@ -38,38 +38,47 @@ const std::string kSessionIdColumnName = "session_id";
 
 std::string getKeyString(const std::map<std::string, std::string>& sourceMap)
 {
-   std::string keys = std::accumulate(++sourceMap.begin(), sourceMap.end(), 
-               sourceMap.begin()->first, [](std::string a, std::pair<std::string, std::string> b) {
-                  return a + ", " + b.first;
-               });
+   std::string keys = std::accumulate(
+      ++sourceMap.begin(),
+      sourceMap.end(),
+      sourceMap.begin()->first,
+      [](std::string a, std::pair<std::string, std::string> b) {
+         return a + ", " + b.first;
+      });
    return keys;
 }
 
 std::string getValueString(const std::map<std::string, std::string>& sourceMap)
 {
-   std::string values = std::accumulate(++sourceMap.begin(), sourceMap.end(), 
-               "'" + sourceMap.begin()->second + "'", [](std::string a, std::pair<std::string, std::string> b) {
-                  std::string str{a};
-                  if(b.first == kUserId)
-                  {
-                     a += ", " + b.second;
-                  }
-                  else
-                  {
-                     a += ", '" + b.second + "'";
-                  }
-                  return a;
-               });
+   std::string values = std::accumulate(
+      ++sourceMap.begin(),
+      sourceMap.end(),
+      "'" + sourceMap.begin()->second + "'",
+      [](std::string a, std::pair<std::string, std::string> b) {
+         std::string str{a};
+         if (b.first == kUserId)
+         {
+            a += ", " + b.second;
+         }
+         else
+         {
+            a += ", '" + b.second + "'";
+         }
+         return a;
+      });
    return values;
 
 }
 
 std::string getUpdateString(const std::map<std::string, std::string>& sourceMap)
 {
-   std::string setValuesString = std::accumulate(++sourceMap.begin(), sourceMap.end(),
-               sourceMap.begin()->first + " = '" + sourceMap.begin()->second + "'", [](std::string a, std::pair<std::string, std::string> iter){
-                  return a + ", " + iter.first + " = '" + iter.second + "'";
-               });
+   std::string setValuesString = std::accumulate(
+      ++sourceMap.begin(),
+      sourceMap.end(),
+      sourceMap.begin()->first + " = '" + sourceMap.begin()->second + "'",
+      [](std::string a, std::pair<std::string, std::string> iter){
+         return a + ", " + iter.first + " = '" + iter.second + "'";
+      });
    return setValuesString;
 }
 
@@ -87,7 +96,7 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
    for(size_t i=0; i < iter->size(); i++)
    {
       std::string key = iter->get_properties(i).get_name();
-      if(key != kUserId)
+      if (key != kUserId)
       {
          pTargetMap->insert(
             std::pair<std::string, std::string>{
@@ -112,9 +121,9 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
 Error getConn(boost::shared_ptr<database::IConnection>* connection) {
    bool success = server_core::database::getConnection(boost::posix_time::milliseconds(500), connection);
 
-   if(!success)
+   if (!success)
    {
-      return Error{"FailedToAcquireConnection", errc::ConnectionFailed, "Failed to acquire a connection in 500 milliseconds.", ERROR_LOCATION};
+      return Error("FailedToAcquireConnection", errc::ConnectionFailed, "Failed to acquire a connection in 500 milliseconds.", ERROR_LOCATION);
    }
 
    return Success();
@@ -122,7 +131,7 @@ Error getConn(boost::shared_ptr<database::IConnection>* connection) {
 
 Error DBActiveSessionStorage::getConnectionOrOverride(boost::shared_ptr<database::IConnection>* connection)
 {
-   if(overrideConnection_ == nullptr)
+   if (overrideConnection_ == nullptr)
       return getConn(connection);
    else
    {
@@ -149,24 +158,22 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
    
-   if(error)
-   {
+   if (error)
       return error;
-   }
 
 
-   database::Query query = connection->query("SELECT "+name+" FROM "+kTableName+" WHERE "+kSessionIdColumnName+" = :id")
+   database::Query query = connection->query("SELECT " + name + " FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
 
    database::Rowset results{};
    error = connection->execute(query, results);
 
-   if(!error)
+   if (!error)
    {
       database::RowsetIterator iter = results.begin();
-      if(iter != results.end())
+      if (iter != results.end())
       {
-         if(name != kUserId)
+         if (name != kUserId)
          {
             *pValue = iter->get<std::string>(name, "");
          }
@@ -174,19 +181,19 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
          {
             *pValue = std::to_string(iter->get<int>(name));
          }
-         if(++iter != results.end()) 
+         if (++iter != results.end()) 
          {
-            return Error{"Too many sessions returned", errc::TooManySessionsReturned, ERROR_LOCATION};
+            return Error("Too many sessions returned", errc::TooManySessionsReturned, ERROR_LOCATION);
          }
       }
       else
       {
-         return Error{"Session does not exist", errc::SessionNotFound, ERROR_LOCATION};
+         return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
       }
    }
    else
    {
-      return Error{"DatabaseException", errc::DBError, "Database exception during property read [ session:"+sessionId_+" property:"+name+" ]", error, ERROR_LOCATION};
+      return Error("DatabaseException", errc::DBError, "Database exception during property read [ session:" + sessionId_ + " property:" + name + " ]", error, ERROR_LOCATION);
    }
    
    return error;
@@ -198,38 +205,38 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
 
-   if(error)
+   if (error)
    {
       return error;
    }
    
    std::string namesString = getColumnNameList(names);
-   database::Query query = connection->query("SELECT "+namesString+" FROM "+kTableName+" WHERE "+kSessionIdColumnName+"=:id")
+   database::Query query = connection->query("SELECT " + namesString + " FROM " + kTableName + " WHERE " + kSessionIdColumnName + "=:id")
       .withInput(sessionId_);
 
    database::Rowset rowset{};
    error = connection->execute(query, rowset);
 
-   if(!error)
+   if (!error)
    {
       database::RowsetIterator iter = rowset.begin();
-      if(iter != rowset.end())
+      if (iter != rowset.end())
       {
          populateMapWithRow(iter, pValues);
          // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
-         if(++iter != rowset.end())
+         if (++iter != rowset.end())
          {
-            return Error{"Too many sessions returned", errc::TooManySessionsReturned, ERROR_LOCATION};
+            return Error("Too many sessions returned", errc::TooManySessionsReturned, ERROR_LOCATION);
          }
       }
       else
       {
-         return Error{"Session does not exist", errc::SessionNotFound, ERROR_LOCATION};
+         return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
       }
    }
    else
    {
-      return Error{"DatabaseException", errc::DBError, "Database exception during proprerties read [ session:"+sessionId_+" properties:"+namesString+" ]", error, ERROR_LOCATION};
+      return Error("DatabaseException", errc::DBError, "Database exception during proprerties read [ session:" + sessionId_ + " properties:" + namesString + " ]", error, ERROR_LOCATION);
    }
 
    return error;
@@ -246,19 +253,19 @@ Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
 
-   if(error)
+   if (error)
    {
       return error;
    }
 
-   database::Query query = connection->query("UPDATE "+kTableName+" SET "+name+" = :value WHERE "+kSessionIdColumnName+" = :id")
+   database::Query query = connection->query("UPDATE " + kTableName + " SET " + name + " = :value WHERE " + kSessionIdColumnName + " = :id")
       .withInput(value)
       .withInput(sessionId_);
 
    error = connection->execute(query);
 
-   if(error){
-      return Error{"DatabaseException", errc::DBError, "Database error while updating session metadata [ session: "+sessionId_+" property: " + name + " ]", error, ERROR_LOCATION};
+   if (error){
+      return Error("DatabaseException", errc::DBError, "Database error while updating session metadata [ session: " + sessionId_ + " property: " + name + " ]", error, ERROR_LOCATION);
    }
 
    return error;
@@ -269,50 +276,50 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
 
-   if(error)
+   if (error)
    {
       return error;
    }
 
-   database::Query query = connection->query("SELECT * FROM "+kTableName+" WHERE "+kSessionIdColumnName+" = :id")
+   database::Query query = connection->query("SELECT * FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
    database::Rowset rowset{};
 
-   if(error)
+   if (error)
    {
       return error;
    }
 
    error = connection->execute(query, rowset);
-   if(!error)
+   if (!error)
    {
       database::RowsetIterator iter = rowset.begin();
-      if(iter != rowset.end())
+      if (iter != rowset.end())
       {
          // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
-         if(++iter != rowset.end())
+         if (++iter != rowset.end())
          {
-            return Error{"Too many sessions returned", errc::TooManySessionsReturned, ERROR_LOCATION};
+            return Error("Too many sessions returned", errc::TooManySessionsReturned, ERROR_LOCATION);
          }
 
-         database::Query updateQuery = connection->query("UPDATE "+kTableName+" SET "+getUpdateString(properties)+" WHERE session_id = :id")
+         database::Query updateQuery = connection->query("UPDATE " + kTableName + " SET " + getUpdateString(properties) + " WHERE session_id = :id")
             .withInput(sessionId_);
          
          error = connection->execute(updateQuery);
-         if(error)
+         if (error)
          {
-            return Error{"DatabaseException", errc::DBError, "Error while updating properties [ session:"+sessionId_+" properties:"+getKeyString(properties)+" ]", error, ERROR_LOCATION};
+            return Error("DatabaseException", errc::DBError, "Error while updating properties [ session:" + sessionId_ + " properties:" + getKeyString(properties) + " ]", error, ERROR_LOCATION);
          }
       }
       else
       {
-         database::Query insertQuery = connection->query("INSERT INTO "+kTableName+" ("+kSessionIdColumnName+", "+getKeyString(properties)+") VALUES (:id, "+getValueString(properties)+")")
+         database::Query insertQuery = connection->query("INSERT INTO " + kTableName + " (" + kSessionIdColumnName + ", " + getKeyString(properties) + ") VALUES (:id, " + getValueString(properties) + ")")
             .withInput(sessionId_);
 
          error = connection->execute(insertQuery);
-         if(error)
+         if (error)
          {
-            return Error{"DatabaseException", errc::DBError, "Error while updating properties [ session:"+sessionId_+" properties:"+getKeyString(properties)+" ]", error, ERROR_LOCATION};
+            return Error("DatabaseException", errc::DBError, "Error while updating properties [ session:" + sessionId_ + " properties:" + getKeyString(properties) + " ]", error, ERROR_LOCATION);
          }
       }
    }
@@ -324,20 +331,20 @@ Error DBActiveSessionStorage::destroy()
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
 
-   if(error)
+   if (error)
    {
       return error;
    }
 
-   database::Query query = connection->query("DELETE FROM "+kTableName+" WHERE "+kSessionIdColumnName+" = :id")
+   database::Query query = connection->query("DELETE FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
    database::Rowset rowset{};
 
    error = connection->execute(query, rowset);
 
-   if(!error)
+   if (!error)
    {
-      return Error{"DatabaseException", errc::DBError, "Error while deleting session metadata [ session:"+sessionId_+" ]", error, ERROR_LOCATION};
+      return Error("DatabaseException", errc::DBError, "Error while deleting session metadata [ session:" + sessionId_ + " ]", error, ERROR_LOCATION);
    }
    else
    {
@@ -351,12 +358,12 @@ Error DBActiveSessionStorage::isValid(bool* pValue)
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
 
-   if(error)
+   if (error)
    {
       return error;
    }
 
-   database::Query query = connection->query("SELECT COUNT(*) FROM "+kTableName+" WHERE "+kSessionIdColumnName+" = :id")
+   database::Query query = connection->query("SELECT COUNT(*) FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
    database::Rowset rowset{};
 
@@ -364,25 +371,25 @@ Error DBActiveSessionStorage::isValid(bool* pValue)
 
    error = connection->execute(query, rowset);
 
-   if(error)
+   if (error)
    {
-      return Error{"DatabaseException", errc::DBError, "Error while deleting session metadata [ session:"+sessionId_+" ]", error, ERROR_LOCATION};
+      return Error("DatabaseException", errc::DBError, "Error while deleting session metadata [ session:" + sessionId_ + " ]", error, ERROR_LOCATION);
    }
    database::RowsetIterator iter = rowset.begin();
 
    // Sanity checking, but should always have 1 row containing the count of rows
-   if(iter != rowset.end())
+   if (iter != rowset.end())
    {
       int count = iter->get<int>("COUNT(*)");
 
       // ensure one and only one
-      if(count > 1)
+      if (count > 1)
       {
-         return Error{"Too Many Sessions Returned", errc::TooManySessionsReturned, ERROR_LOCATION};
+         return Error("Too Many Sessions Returned", errc::TooManySessionsReturned, ERROR_LOCATION);
       }
       else
       {
-         if(count == 1)
+         if (count == 1)
          {
             *pValue = true;
          }

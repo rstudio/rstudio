@@ -23,8 +23,7 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
-namespace
-{
+namespace {
 Error createError(const std::string& errorName, const std::string& preamble, 
    const std::vector<FilePath>& files, const ErrorLocation& errorLocation)
 {
@@ -38,7 +37,7 @@ Error createError(const std::string& errorName, const std::string& preamble,
          errorMessage += ", ";
    }
    errorMessage += " ]";
-   return Error{errorName, 1, errorMessage, errorLocation};
+   return Error(errorName, 1, errorMessage, errorLocation);
 }
 } // anonymous namespace
 
@@ -80,9 +79,9 @@ Error FileActiveSessionStorage::readProperty(const std::string& name, std::strin
 
 Error FileActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
 {
-   std::vector<FilePath> failedFiles{};
+   std::vector<FilePath> failedFiles;
    pValues->empty();
-   for (const std::string &name : names)
+   for (const std::string& name : names)
    {
       FilePath readPath = getPropertyFile(name);
       std::string value = "";

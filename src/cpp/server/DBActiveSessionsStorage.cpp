@@ -64,7 +64,7 @@ std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
    }
    else
    {
-      Error logError{"DatabaseException", errc::DBError, "Exception occured while ", error, ERROR_LOCATION};
+      Error logError("DatabaseException", errc::DBError, "Exception occured while ", error, ERROR_LOCATION);
       LOG_ERROR(logError);
    }
    return sessions;
@@ -130,7 +130,7 @@ bool DBActiveSessionsStorage::hasSessionId(const std::string& sessionId) const
          iter++;
          if(iter != rowset.end())
          {
-            Error logError{"Too many sessions were returned when checking for the presence of an ID", errc::TooManySessionsReturned, ERROR_LOCATION};
+            Error logError("Too many sessions were returned when checking for the presence of an ID", errc::TooManySessionsReturned, ERROR_LOCATION);
             LOG_ERROR(logError);
          }
       }

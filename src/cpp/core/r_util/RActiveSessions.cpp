@@ -18,13 +18,13 @@
 #include <boost/bind/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/r_util/RActiveSessionsStorage.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/system/System.hpp>
-#include <core/system/FileMonitor.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 #include <core/r_util/RSessionContext.hpp>
+#include <core/system/FileMonitor.hpp>
+#include <core/system/System.hpp>
 
 #include <shared_core/SafeConvert.hpp>
 
@@ -76,8 +76,7 @@ Error ActiveSessions::create(const std::string& project,
       {"last_used", isoTime},
       {"running", "false"},
       {"created", isoTime},
-      {"launch_parameters", ""}
-   };
+      {"launch_parameters", ""}:
 
    storage_->createSession(id, initialMetadata);
    boost::shared_ptr<ActiveSession> activeSession = storage_->getSession(id);
@@ -98,7 +97,7 @@ namespace
 {
 
 bool compareActivityLevel(boost::shared_ptr<ActiveSession> a,
-                        boost::shared_ptr<ActiveSession> b)
+                          boost::shared_ptr<ActiveSession> b)
 {
    return *a > *b;
 }
@@ -112,7 +111,7 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath use
    for(std::string id : sessionIds)
    {
       boost::shared_ptr<ActiveSession> candidateSession = storage_->getSession(id);
-      if(candidateSession->validate(userHomePath, projectSharingEnabled))
+      if (candidateSession->validate(userHomePath, projectSharingEnabled))
          sessions.push_back(candidateSession);
    }
 
@@ -213,8 +212,5 @@ void trackActiveSessionCount(const FilePath& rootStoragePath,
                    false,
                    boost::function<bool(const FileInfo&)>(),
                    cb);
-}
-
-} // namespace r_util
-} // namespace core
+}compare
 } // namespace rstudio

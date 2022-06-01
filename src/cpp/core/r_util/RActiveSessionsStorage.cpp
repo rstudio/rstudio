@@ -39,9 +39,7 @@ FileActiveSessionsStorage::FileActiveSessionsStorage(const FilePath& rootStorage
    storagePath_ = ActiveSessions::storagePath(rootStoragePath);
    Error error = storagePath_.ensureDirectory();
    if (error)
-   {
       LOG_ERROR(error);
-   }
 }
 
 bool FileActiveSessionsStorage::hasSessionId(const std::string& sessionId) const
@@ -56,13 +54,10 @@ core::Error FileActiveSessionsStorage::createSession(const std::string& id, std:
    Error error = sessionScratchPath.ensureDirectory();
 
    if(error)
-   {
       return error;
-   }
 
    FileActiveSessionStorage session = FileActiveSessionStorage{sessionScratchPath};
-   error = session.writeProperties(initialProperties);
-   return error;
+   return session.writeProperties(initialProperties);
 }
 
 std::vector<std::string> FileActiveSessionsStorage::listSessionIds() const
