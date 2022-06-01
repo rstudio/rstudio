@@ -230,6 +230,11 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
 
 Error DBActiveSessionStorage::readProperties(std::map<std::string, std::string>* pValues)
 {
+   // Normally we avoid using * in select lists to avoid unexpected names, 
+   // or orders of columns. However in this case we explicitly want all columns,
+   // and our readProperties uses the populateMapWithRow which discovers the
+   // column names, so new or unexpected column names will not cause issues.
+   
    std::set<std::string> all{"*"};
    return readProperties(all, pValues);
 }
