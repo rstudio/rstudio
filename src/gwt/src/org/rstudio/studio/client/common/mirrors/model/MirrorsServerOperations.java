@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.common.mirrors.model;
 
+import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.JsArray;
@@ -29,4 +30,7 @@ public interface MirrorsServerOperations
 
    void getCRANActives(
          ServerRequestCallback<JsArray<CRANMirror>> requestCallback);
+
+   void readProjectOptions(
+         ServerRequestCallback<RProjectOptions> requestCallback);
 }

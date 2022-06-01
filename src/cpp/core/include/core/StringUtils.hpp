@@ -52,6 +52,9 @@ private:
    std::string needle_;
 };
 
+bool hasTruthyValue(const std::string& string);
+bool hasFalsyValue(const std::string& string);
+
 bool isTruthy(const std::string& string,
               bool valueIfEmpty = false);
 

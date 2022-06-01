@@ -2036,7 +2036,7 @@ public class UserPrefsAccessor extends Prefs
          "always_shown_extensions",
          _constants.alwaysShownExtensionsTitle(), 
          _constants.alwaysShownExtensionsDescription(), 
-         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
+         JsArrayUtil.createStringArray(".circleci", ".gitattributes", ".github", ".gitignore", ".httr-oauth", ".lintr", ".r", ".rbuildignore", ".rdata", ".renvignore", ".renviron", ".rhistory", ".rprofile", ".ruserdata"));
    }
 
    /**

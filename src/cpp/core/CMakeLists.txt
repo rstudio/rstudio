@@ -319,6 +319,7 @@ target_link_libraries(rstudio-core
    ${SOCI_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
    ${YAML_CPP_LIBRARIES}
+   fmt::fmt
 )
 
 # define executable (for running unit tests)

@@ -80,6 +80,11 @@ Error ActiveSessions::create(const std::string& project,
    };
 
    storage_->createSession(id, initialMetadata);
+   boost::shared_ptr<ActiveSession> activeSession = storage_->getSession(id);
+
+   activeSession.setLabel(project == kProjectNone ? workingDir : project);
+   if (editor == kWorkbenchRStudio)
+      activeSession.setLastResumed();
 
    // return the id if requested
    if (pId != nullptr)
