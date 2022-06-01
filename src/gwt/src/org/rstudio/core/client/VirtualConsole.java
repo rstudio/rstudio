@@ -854,7 +854,6 @@ public class VirtualConsole
                      {
                         events_.fireEvent(new SendToConsoleEvent(command, false));
                      }
-                     popup_.hide();
                   }
 
                });
