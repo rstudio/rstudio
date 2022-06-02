@@ -12,19 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client;
+package org.rstudio.core.client.hyperlink;
 
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 
-public class VirtualConsolePopupPositioner implements PositionCallback
+public class HyperlinkPopupPositioner implements PositionCallback
 {
-
-    private Rectangle cursorBounds_;
-    private VirtualConsolePopupDisplay popup_;
-   
-    public VirtualConsolePopupPositioner(Rectangle rect, VirtualConsolePopupPanel popup)
+    public HyperlinkPopupPositioner(Rectangle rect, HyperlinkPopupPanel popup)
     {
         cursorBounds_ = rect;
         popup_ = popup;
@@ -49,5 +46,6 @@ public class VirtualConsolePopupPositioner implements PositionCallback
         popup_.setPopupPosition(coords.getLeft(), coords.getTop());
     }
    
-
+    private Rectangle cursorBounds_;
+    private HyperlinkPopupPanel popup_;
 }

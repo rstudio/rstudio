@@ -1,5 +1,5 @@
 /*
- * VirtualConsolePopupDisplay.java
+ * HyperlinkPopupDisplay.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -12,13 +12,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client;
+package org.rstudio.core.client.hyperlink;
 
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
-public interface VirtualConsolePopupDisplay 
+public interface HyperlinkPopupDisplay 
                     extends HasCloseHandlers<PopupPanel> 
 {
     void showCommand(String command, boolean supported, PositionCallback callback);

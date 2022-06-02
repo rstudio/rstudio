@@ -12,14 +12,13 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.core.client;
+package org.rstudio.core.client.hyperlink;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -29,9 +28,9 @@ import org.rstudio.core.client.widget.ThemedPopupPanel;
 import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
-public class VirtualConsolePopupPanel extends ThemedPopupPanel implements VirtualConsolePopupDisplay
+public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPopupDisplay
 {
-    public VirtualConsolePopupPanel()
+    public HyperlinkPopupPanel()
     {
         super();
         autoConstrain_ = false;

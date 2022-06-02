@@ -27,23 +27,17 @@ import com.google.gwt.dom.client.Node;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 
+import org.rstudio.core.client.hyperlink.Hyperlink;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.console.model.VirtualConsoleServerOperations;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -94,15 +88,10 @@ public class VirtualConsole
    }
 
    @Inject
-   public VirtualConsole(@Assisted Element parent, final Preferences prefs, final VirtualConsoleServerOperations consoleServer, final EventBus events)
+   public VirtualConsole(@Assisted Element parent, final Preferences prefs)
    {
       prefs_ = prefs;
       parent_ = parent;
-      consoleServer_ = consoleServer;
-      popup_ = new VirtualConsolePopupPanel(); 
-      events_ = events;
-      styles_ = ConsoleResources.INSTANCE.consoleStyles();
-
       VirtualScrollerManager.init();
    }
 
@@ -764,37 +753,6 @@ public class VirtualConsole
       return currentClazz;
    }
 
-   private class Hyperlink
-   {
-      public Hyperlink(String url, String params)
-      {
-         this.url = url;
-         this.params = params;
-      }
-
-      public String getTitle()
-      {
-         if (url.startsWith("rstudio:viewer:")) 
-         {
-            return "open in viewer: " + url.replace("rstudio:viewer:", "");
-         }
-         else if (StringUtil.equals(url, "rstudio:help")) 
-         {
-            return "help(" + params.replace(":", ", ") + ")";
-         }
-         else if (StringUtil.equals(url, "rstudio:vignette")) 
-         {
-            return "vignette(" + params.replace(":", ", ") + ")";
-         }
-         else
-         {
-            return url;
-         }
-      }
-
-      public String url;
-      public String params;
-   }
    private class ClassRange
    {
       public ClassRange(int pos, String className, String text, boolean isHTML, Hyperlink hyperlink)
@@ -816,81 +774,11 @@ public class VirtualConsole
          }
          else 
          {
-            String url = hyperlink_.url;
-
-            if (url.startsWith("rstudio:run") || url.startsWith("ide:run"))
-            {
-               AnchorElement anchor = Document.get().createAnchorElement();
-               anchor.setInnerText(text);
-               anchor.addClassName(styles_.xtermCommand());
-               if (className != null)
-                  anchor.addClassName(clazz);
-               
-               String command = getCommand(text, url);
-               boolean supported = 
-                  command.matches("^testthat::snapshot_(accept|review)[(]'\\w+'[)]$") || 
-                  command.matches("^rlang::last_(error|trace)[(][)]$");
-
-               anchor.addClassName(supported ? styles_.xtermSupportedCommand() : styles_.xtermUnsupportedCommand());
-               
-               Event.sinkEvents(anchor, Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONCLICK);
-               Event.setEventListener(anchor, event ->
-               {
-                  if (event.getTypeInt() == Event.ONMOUSEOVER)
-                  {
-                     Rectangle bounds = new Rectangle(anchor.getAbsoluteLeft(), anchor.getAbsoluteBottom(), anchor.getClientWidth(), anchor.getClientHeight());
-                     popup_.showCommand(command, supported, new VirtualConsolePopupPositioner(bounds, popup_));
-                  } 
-                  else if (event.getTypeInt() == Event.ONMOUSEOUT)
-                  {
-                     popup_.hide();
-                  }
-                  else if (event.getTypeInt() == Event.ONCLICK) 
-                  {
-                     popup_.hide();
-                     events_.fireEvent(new SendToConsoleEvent(command, supported));
-                  }
-
-               });
-
-               element = anchor;
-            }
-            else 
-            {
-               AnchorElement anchor = Document.get().createAnchorElement();
-               if (className != null)
-                  anchor.addClassName(clazz);
-               Event.sinkEvents(anchor, Event.ONCLICK);
-            
-               Event.setEventListener(anchor, event ->
-               {
-                  consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
-               });
-               anchor.addClassName(AnsiCode.HYPERLINK_STYLE);
-               anchor.setTitle(hyperlink_.getTitle());
-
-               element = anchor;
-               setText(text);
-            }
-            
+            element = hyperlink_.getElement(text, clazz);
          }
 
          if (captureNewElements_)
             newElements_.add(element);
-      }
-
-      private String getCommand(String text, String url)
-      {
-         String command = text;
-         if (url.startsWith("rstudio:run:"))
-         {
-            command = url.replaceFirst("rstudio:run:", "");
-         }
-         else if (url.startsWith("ide:run:"))
-         {
-            command = url.replaceFirst("ide:run:", "");
-         }
-         return command;
       }
 
       private void setText(String text)
@@ -992,10 +880,4 @@ public class VirtualConsole
 
    // Injected ----
    private final Preferences prefs_;
-   private final VirtualConsoleServerOperations consoleServer_;
-
-   VirtualConsolePopupPanel popup_;
-   private final EventBus events_;
-   private final ConsoleResources.ConsoleStyles styles_;
-    
 }
