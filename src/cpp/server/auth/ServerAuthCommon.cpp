@@ -179,7 +179,7 @@ ErrorType checkUser(const std::string& username, bool authenticated)
 
    // ensure user is licensed to use the product
    bool isLicensed = false;
-   core::Error error = auth::handler::overlay::isUserLicensed(username, &isLicensed);
+   core::Error error = auth::handler::isUserLicensed(username, &isLicensed);
    if (error)
    {
       using namespace monitor;
