@@ -146,6 +146,11 @@ Error readOptions(const std::string& databaseConfigFile,
       if (error)
          return error;
 
+      // want to ensure users other than the server can't read the database
+      error = databaseFile.changeFileMode(FileMode::USER_READ_WRITE);
+      if (error)
+         return error;
+
       if (databaseFileUser.has_value())
       {
          // always ensure the database file user is correct, if specified
