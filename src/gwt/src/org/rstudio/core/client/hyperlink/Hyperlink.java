@@ -14,6 +14,9 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -27,9 +30,21 @@ public abstract class Hyperlink
     public Hyperlink(String url, String params, String text, String clazz)
     {
         this.url = url;
-        this.params = params;
         this.text = text;
         this.clazz = clazz;
+        this.params = params; 
+        params_ = new TreeMap<>();
+        if (params.length() > 0)
+        {
+            for (String param: params.split(":"))
+            {
+                String[] bits = param.split("=");
+                String key = bits[0].trim();
+                String value = bits[1].trim();
+                params_.put(key, value);
+            }
+        }
+
         anchor_ = Document.get().createAnchorElement();
 
         popup_ = new HyperlinkPopupPanel();
@@ -78,6 +93,10 @@ public abstract class Hyperlink
         {
             return new Command(url, params, text, clazz);
         }
+        else if (url.startsWith("file://"))
+        {
+            return new FileHyperlink(url, params, text, clazz);
+        }
         else
         {
             return new DefaultHyperlink(url, params, text, clazz);
@@ -85,10 +104,12 @@ public abstract class Hyperlink
     }
 
     public String url;
-    public String params;
     public String text;
     public String clazz;
 
+    public String params; // TODO: remove
+    protected Map<String, String> params_;
+    
     protected AnchorElement anchor_;
 
     private final HyperlinkPopupPanel popup_;

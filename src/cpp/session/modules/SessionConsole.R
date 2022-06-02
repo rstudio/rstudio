@@ -33,19 +33,6 @@
   } else if (grepl("^rstudio:viewer:", url)) {
     url <- sub("^rstudio:viewer:", "", url)
     return(.rs.api.viewer(url))
-  } else if (grepl("^file://", url)) {
-    # file://some/file/path
-    file <- sub("file://", "", url)
-    line <- -1L
-    col <- -1L
-    
-    if (!is.null(params$line)) {
-      line <- as.numeric(params$line)
-    }
-    if (!is.null(params$col)) {
-      col <- as.numeric(params$col)
-    }
-    .rs.api.navigateToFile(file, line = line, col = col, moveCursor = TRUE)
   } else {
     utils::browseURL(url)
   }

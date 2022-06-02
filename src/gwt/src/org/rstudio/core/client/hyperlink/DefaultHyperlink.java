@@ -44,11 +44,11 @@ public class DefaultHyperlink extends Hyperlink
         }
         else if (StringUtil.equals(url, "rstudio:help")) 
         {
-            return "help(" + params.replace(":", ", ") + ")";
+            return "help()"; // + params.replace(":", ", ") + ")";
         }
         else if (StringUtil.equals(url, "rstudio:vignette")) 
         {
-            return "vignette(" + params.replace(":", ", ") + ")";
+            return "vignette()"; // + params.replace(":", ", ") + ")";
         }
         else
         {
