@@ -53,13 +53,6 @@ public class VignetteHyperlink extends Hyperlink
         return label;
     }
     
-    @Override
-    public void setAnchorClass() 
-    {
-        super.setAnchorClass();
-        anchor_.addClassName(AnsiCode.HYPERLINK_STYLE);
-    }
-
     private String topic_;
     private String pkg_;
     private SourceServerOperations server_;

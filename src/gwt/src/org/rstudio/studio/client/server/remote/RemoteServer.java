@@ -692,17 +692,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
 
-   @Override
-   public void consoleFollowHyperlink(String url, String text, String params, ServerRequestCallback<Void> requestCallback) {
-      JSONArray array = new JSONArrayBuilder()
-            .add(url)
-            .add(text)
-            .add(params)
-            .get();
-
-      sendRequest(RPC_SCOPE, CONSOLE_FOLLOW_HYPERLINK, array, requestCallback);
-   }
-
    public void resetConsoleActions(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, RESET_CONSOLE_ACTIONS, requestCallback);
@@ -6588,7 +6577,6 @@ public class RemoteServer implements Server
    private static final String FIND_FUNCTION_IN_SEARCH_PATH = "find_function_in_search_path";
 
    private static final String CONSOLE_INPUT = "console_input";
-   private static final String CONSOLE_FOLLOW_HYPERLINK = "console_follow_hyperlink";
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";

@@ -50,12 +50,5 @@ public class WebHyperlink extends Hyperlink {
         return null;
     }
     
-    @Override
-    public void setAnchorClass() 
-    {
-        super.setAnchorClass();
-        anchor_.addClassName(AnsiCode.HYPERLINK_STYLE);
-    }
-
     private SourceServerOperations server_;
 }

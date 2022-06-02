@@ -76,13 +76,6 @@ public class FileHyperlink extends Hyperlink
         return new HTML("<b>Navigate to file</b>: " + filename);
     }
     
-    @Override
-    public void setAnchorClass() 
-    {
-        super.setAnchorClass();
-        anchor_.addClassName(AnsiCode.HYPERLINK_STYLE);
-    }
-
     private String filename;
     private int line;
     private int col;

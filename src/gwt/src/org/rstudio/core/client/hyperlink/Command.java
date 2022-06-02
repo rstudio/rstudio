@@ -19,7 +19,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 public class Command extends Hyperlink
@@ -27,7 +26,6 @@ public class Command extends Hyperlink
     public Command(String url, String params, String text, String clazz)
     {
         super(url, params, text, clazz);
-        styles_ = ConsoleResources.INSTANCE.consoleStyles();
         
         command_ = getCommand(text, url);
         supported_ = 
@@ -36,11 +34,9 @@ public class Command extends Hyperlink
     }
 
     @Override
-    public void setAnchorClass() 
+    public String getAnchorClass() 
     {
-        super.setAnchorClass();
-        anchor_.addClassName(styles_.xtermCommand());
-        anchor_.addClassName(supported_ ? styles_.xtermSupportedCommand() : styles_.xtermUnsupportedCommand());
+        return styles_.xtermCommand();
     }
 
     @Override 
@@ -73,7 +69,6 @@ public class Command extends Hyperlink
     private String command_;
     private boolean supported_;
 
-    private final ConsoleResources.ConsoleStyles styles_;
     private static final EventBus events_ = RStudioGinjector.INSTANCE.getEventBus();
     
 }

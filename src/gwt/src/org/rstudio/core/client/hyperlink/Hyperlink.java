@@ -23,7 +23,9 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 public abstract class Hyperlink
 {
@@ -32,7 +34,8 @@ public abstract class Hyperlink
         this.url = url;
         this.text = text;
         this.clazz = clazz;
-        this.params = params; 
+
+        // [params] of the form key1=value1:key2=value2
         params_ = new TreeMap<>();
         if (params.length() > 0)
         {
@@ -46,14 +49,16 @@ public abstract class Hyperlink
         }
 
         anchor_ = Document.get().createAnchorElement();
-
+        styles_ = ConsoleResources.INSTANCE.consoleStyles();
         popup_ = new HyperlinkPopupPanel();
     }
 
     public Element getElement()
     {
         anchor_.setInnerText(text);
-        setAnchorClass();
+        anchor_.setClassName(getAnchorClass());
+        if (clazz != null)
+            anchor_.addClassName(clazz);
         
         Event.sinkEvents(anchor_, Event.ONMOUSEOVER | Event.ONMOUSEOUT | Event.ONCLICK);
         Event.setEventListener(anchor_, event ->
@@ -78,10 +83,9 @@ public abstract class Hyperlink
         return anchor_;
     }
 
-    public void setAnchorClass()
+    public String getAnchorClass()
     {
-        if (clazz != null)
-            anchor_.addClassName(clazz);
+        return AnsiCode.HYPERLINK_STYLE;
     }
 
     public abstract void onClick();
@@ -111,18 +115,17 @@ public abstract class Hyperlink
         }
         else
         {
-            return new DefaultHyperlink(url, params, text, clazz);
+            return new UnsupportedHyperlink(url, params, text, clazz);
         }
     }
 
     public String url;
     public String text;
     public String clazz;
-
-    public String params; // TODO: remove
     protected Map<String, String> params_;
     
     protected AnchorElement anchor_;
 
+    protected final ConsoleResources.ConsoleStyles styles_;
     private final HyperlinkPopupPanel popup_;
 }

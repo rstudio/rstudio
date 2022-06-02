@@ -17,7 +17,6 @@ package org.rstudio.core.client;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.views.console.model.VirtualConsoleServerOperations;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -71,25 +70,16 @@ public class VirtualConsoleTests extends GWTTestCase
       public boolean screenReaderEnabled_ = false;
    }
 
-   private static class FakeVirtualConsoleServerOperations implements VirtualConsoleServerOperations
-   {
-      
-      @Override
-      public void consoleFollowHyperlink(String url, String text, String params,
-            ServerRequestCallback<Void> requestCallback) {}
-      
-   }
-
    private static String consolify(String text)
    {
-      VirtualConsole console = new VirtualConsole(null, new FakePrefs(), new FakeVirtualConsoleServerOperations());
+      VirtualConsole console = new VirtualConsole(null, new FakePrefs());
       console.submit(text);
       return console.toString();
    }
 
    private VirtualConsole getVC(Element ele)
    {
-      return new VirtualConsole(ele, new FakePrefs(), new FakeVirtualConsoleServerOperations());
+      return new VirtualConsole(ele, new FakePrefs());
    }
 
    private static String setCsiCode(int code)
@@ -745,9 +735,8 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = 230;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      FakeVirtualConsoleServerOperations consoleOperations = new FakeVirtualConsoleServerOperations();
       prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_STRIP;
-      VirtualConsole vc = new VirtualConsole(ele, prefs, consoleOperations);
+      VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(
          AnsiCode.CSI + fgColor + ";" +
          AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" + bgColor + ";" +
@@ -763,9 +752,8 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = 230;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      FakeVirtualConsoleServerOperations consoleOperations = new FakeVirtualConsoleServerOperations();
       prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_OFF;
-      VirtualConsole vc = new VirtualConsole(ele, prefs, consoleOperations);
+      VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(
          AnsiCode.CSI + fgColor + ";" +
          AnsiCode.BACKGROUND_EXT + ";" + AnsiCode.EXT_BY_INDEX + ";" + bgColor + ";" +
@@ -781,9 +769,8 @@ public class VirtualConsoleTests extends GWTTestCase
       int bgColor = AnsiCode.BackColorNum.GREEN;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      FakeVirtualConsoleServerOperations consoleOperations = new FakeVirtualConsoleServerOperations();
       prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_STRIP;
-      VirtualConsole vc = new VirtualConsole(ele, prefs, consoleOperations);
+      VirtualConsole vc = new VirtualConsole(ele, prefs,);
       vc.submit(AnsiCode.CSI + color);
       vc.submit(AnsiCode.SGR + AnsiCode.CSI);
       vc.submit(Integer.toString(bgColor));
@@ -797,9 +784,8 @@ public class VirtualConsoleTests extends GWTTestCase
       int color = AnsiCode.ForeColorNum.MAGENTA;
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      FakeVirtualConsoleServerOperations consoleOperations = new FakeVirtualConsoleServerOperations();
       prefs.ansiMode_ = UserPrefs.ANSI_CONSOLE_MODE_OFF;
-      VirtualConsole vc = new VirtualConsole(ele, prefs, consoleOperations);
+      VirtualConsole vc = new VirtualConsole(ele, prefs);
       vc.submit(AnsiCode.CSI + color, "myStyle");
       vc.submit(AnsiCode.SGR + "Hello", "myStyle");
       String expected ="<span class=\"myStyle\"><ESC>[35mHello</span>";
@@ -1075,9 +1061,8 @@ public class VirtualConsoleTests extends GWTTestCase
    {
       PreElement ele = Document.get().createPreElement();
       FakePrefs prefs = new FakePrefs();
-      FakeVirtualConsoleServerOperations consoleOperations = new FakeVirtualConsoleServerOperations();
       prefs.screenReaderEnabled_ = true;
-      VirtualConsole vc = new VirtualConsole(ele, prefs, consoleOperations);
+      VirtualConsole vc = new VirtualConsole(ele, prefs);
       String text = "Hello World\nHow are you?";
       vc.submit(text, "someclass", false, true);
       String newText = vc.getNewText();

@@ -17,7 +17,6 @@ package org.rstudio.core.client.hyperlink;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.AnsiCode;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
@@ -45,13 +44,6 @@ public class HelpHyperlink extends Hyperlink
         return label;
     }
     
-    @Override
-    public void setAnchorClass() 
-    {
-        super.setAnchorClass();
-        anchor_.addClassName(AnsiCode.HYPERLINK_STYLE);
-    }
-
     private String topic_;
     private String pkg_;
     private HelpServerOperations server_;

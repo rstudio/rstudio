@@ -12,8 +12,3 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
-
-.rs.addJsonRpcHandler("console_follow_hyperlink", function(url, text, params)
-{
-  utils::browseURL(url)
-})
