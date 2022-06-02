@@ -19,7 +19,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.studio.client.RStudioGinjector;

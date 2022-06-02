@@ -93,11 +93,7 @@ public abstract class Hyperlink
     
     public static Hyperlink create(String url, String params, String text, String clazz)
     {
-        if (url.startsWith("ide:run") || url.startsWith("rstudio:run"))
-        {
-            return new Command(url, params, text, clazz);
-        }
-        else if (url.startsWith("file://"))
+        if (url.startsWith("file://"))
         {
             return new FileHyperlink(url, params, text, clazz);
         }
@@ -112,6 +108,10 @@ public abstract class Hyperlink
         else if (url.startsWith("http://") || url.startsWith("https://"))
         {
             return new WebHyperlink(url, params, text, clazz);
+        }
+        else if (url.startsWith("ide:run") || url.startsWith("rstudio:run"))
+        {
+            return new CommandHyperlink(url, params, text, clazz);
         }
         else
         {

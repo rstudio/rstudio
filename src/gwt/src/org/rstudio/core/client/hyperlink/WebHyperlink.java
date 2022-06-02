@@ -14,9 +14,9 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.AnsiCode;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -47,7 +47,7 @@ public class WebHyperlink extends Hyperlink {
     @Override
     public Widget getPopupContent() 
     {
-        return null;
+        return new Label(url);
     }
     
     private SourceServerOperations server_;

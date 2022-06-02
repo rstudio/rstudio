@@ -1,5 +1,5 @@
 /*
- * Command.java
+ * CommandHyperlink.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -21,9 +21,9 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
-public class Command extends Hyperlink
+public class CommandHyperlink extends Hyperlink
 {
-    public Command(String url, String params, String text, String clazz)
+    public CommandHyperlink(String url, String params, String text, String clazz)
     {
         super(url, params, text, clazz);
         
