@@ -1,5 +1,5 @@
 /*
- * VignetteHyperlink.java
+ * HelpHyperlink.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.hyperlink;
 
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.AnsiCode;
@@ -23,20 +22,19 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-public class VignetteHyperlink extends Hyperlink 
-{
-    public VignetteHyperlink(String url, String params, String text, String clazz) 
+public class WebHyperlink extends Hyperlink {
+
+    public WebHyperlink(String url, String params, String text, String clazz) 
     {
         super(url, params, text, clazz);
-        topic_ = params_.get("topic");
-        pkg_ = params_.get("package");
         server_ = RStudioGinjector.INSTANCE.getServer();
     }
 
     @Override
     public void onClick() 
     {
-        String code = "print(vignette('" + topic_ + "', package = '" + pkg_ + "'))";
+        // TODO: this probably does not need to go through R
+        String code = "utils::browseURL('" + url + "')";
         server_.executeRCode(code, new ServerRequestCallback<String>(){
             @Override
             public void onResponseReceived(String response) {}
@@ -49,8 +47,7 @@ public class VignetteHyperlink extends Hyperlink
     @Override
     public Widget getPopupContent() 
     {
-        HTML label = new HTML("Vignette <b>" + topic_ + "</b> in {" + pkg_ + "}");
-        return label;
+        return null;
     }
     
     @Override
@@ -60,7 +57,5 @@ public class VignetteHyperlink extends Hyperlink
         anchor_.addClassName(AnsiCode.HYPERLINK_STYLE);
     }
 
-    private String topic_;
-    private String pkg_;
     private SourceServerOperations server_;
 }

@@ -105,7 +105,11 @@ public abstract class Hyperlink
         {
             return new VignetteHyperlink(url, params, text, clazz);
         }
-        else 
+        else if (url.startsWith("http://") || url.startsWith("https://"))
+        {
+            return new WebHyperlink(url, params, text, clazz);
+        }
+        else
         {
             return new DefaultHyperlink(url, params, text, clazz);
         }
