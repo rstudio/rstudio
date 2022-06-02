@@ -339,7 +339,7 @@ export class MenuCallback extends EventEmitter {
      * @returns the final template list after removing unnecessary separators and hidden items
      */
     const recursiveCopy = (menuItemTemplates: MenuItemConstructorOptions[]) => {
-      const newMenuTemplate = new Array<MenuItemConstructorOptions>();
+      let newMenuTemplate = new Array<MenuItemConstructorOptions>();
 
       for (const menuItemTemplate of menuItemTemplates) {
         let referenceMenuItemTemplate;
@@ -369,7 +369,7 @@ export class MenuCallback extends EventEmitter {
         newMenuTemplate.push(newMenuItemTemplate);
       }
 
-      return newMenuTemplate.filter((item, idx, arr) => {
+      newMenuTemplate = newMenuTemplate.filter((item, idx, arr) => {
         if (item.type !== 'separator') {
           return removeItemsWithEmptySubmenuList(item);
         }
@@ -377,6 +377,25 @@ export class MenuCallback extends EventEmitter {
         const prevItem = arr[idx - 1];
         return idx !== 0 && prevItem.type !== 'separator' && idx != arr.length - 1;
       });
+
+      if (process.platform === 'darwin') {
+        newMenuTemplate = newMenuTemplate.reduce((menuTemplateList: MenuItemConstructorOptions[], menuItem) => {
+          if (menuItem.id === 'Help') {
+            const windowMenuItem: MenuItemConstructorOptions = {
+              id: 'Window',
+              visible: true,
+              role: 'windowMenu',
+              label: 'Window',
+            };
+
+            menuTemplateList.push(windowMenuItem);
+          }
+          menuTemplateList.push(menuItem);
+          return menuTemplateList;
+        }, []);
+      }
+
+      return newMenuTemplate;
     };
 
     const newMainMenuTemplate = recursiveCopy(this.mainMenuTemplate);
