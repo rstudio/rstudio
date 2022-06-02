@@ -44,5 +44,10 @@ bool Options::supportsDriversLicensing() const
    return !allowOverlay();
 }
 
+bool Options::supportsProjectSharing() const
+{
+   return false;
+}
+
 } // namespace session
 } // namespace rstudio
