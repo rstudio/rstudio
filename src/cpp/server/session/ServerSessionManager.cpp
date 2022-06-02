@@ -15,7 +15,7 @@
 
 #include <core/CrashHandler.hpp>
 
-#include <server/ServerSessionManager.hpp>
+#include <server/session/ServerSessionManager.hpp>
 
 #include <boost/format.hpp>
 
@@ -35,7 +35,7 @@
 
 #include <server/auth/ServerValidateUser.hpp>
 
-#include "ServerREnvironment.hpp"
+#include "../ServerREnvironment.hpp"
 #include "server-config.h"
 
 

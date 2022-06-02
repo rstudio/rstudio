@@ -13,7 +13,7 @@
  *
  */
 
-#include <server/ServerSessionProxy.hpp>
+#include <server/session/ServerSessionProxy.hpp>
 
 #include <vector>
 #include <sstream>
@@ -69,7 +69,7 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerErrorCategory.hpp>
 
-#include <server/ServerSessionManager.hpp>
+#include <server/session/ServerSessionManager.hpp>
 
 #include <server/ServerConstants.hpp>
 

@@ -41,18 +41,18 @@ set(SERVER_SOURCE_FILES
    ServerPAMAuthOverlay.cpp
    ServerProcessSupervisor.cpp
    ServerREnvironment.cpp
-   ServerSessionProxy.cpp
-   ServerSessionProxyOverlay.cpp
-   ServerSessionRpc.cpp
-   ServerSessionRpcOverlay.cpp
-   ServerSessionManager.cpp
-   ServerSessionMetadataRpc.cpp
-   ServerSessionMetadataRpcOverlay.cpp
    ServerXdgVars.cpp
    auth/ServerAuthHandler.cpp
    auth/ServerAuthCommon.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
+   session/ServerSessionProxy.cpp
+   session/ServerSessionProxyOverlay.cpp
+   session/ServerSessionRpc.cpp
+   session/ServerSessionRpcOverlay.cpp
+   session/ServerSessionManager.cpp
+   session/ServerSessionMetadataRpc.cpp
+   session/ServerSessionMetadataRpcOverlay.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/ServerAddins.cpp
 )
 

@@ -23,9 +23,9 @@
 #include <server/ServerConstants.hpp>
 #include <server/ServerOptions.hpp>
 
-#include <session/SessionConstants.hpp>
+#include <server/session/ServerSessionRpc.hpp>
 
-#include "../ServerSessionRpc.hpp"
+#include <session/SessionConstants.hpp>
 
 namespace rstudio {
 namespace server {

@@ -13,7 +13,7 @@
  *
  */
 
-#include "ServerSessionRpc.hpp"
+#include <server/session/ServerSessionRpc.hpp>
 
 #include <shared_core/json/Json.hpp>
 
@@ -24,7 +24,7 @@
 #include <server_core/SecureKeyFile.hpp>
 
 #include <server/ServerPaths.hpp>
-#include <server/ServerSessionManager.hpp>
+#include <server/session/ServerSessionManager.hpp>
 
 #define kInvalidSecretEndpoint "/invalid_secret"
 

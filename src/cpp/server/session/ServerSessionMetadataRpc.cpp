@@ -13,7 +13,7 @@
  *
  */
 
-#include <server/ServerSessionMetadataRpc.hpp>
+#include <server/session/ServerSessionMetadataRpc.hpp>
 
 #include <string>
 #include <set>
@@ -32,7 +32,7 @@
 #include <server/ServerOptions.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
 
-#include "ServerSessionRpc.hpp"
+#include <server/session/ServerSessionRpc.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::core::r_util;

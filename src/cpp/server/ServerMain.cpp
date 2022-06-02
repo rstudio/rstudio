@@ -54,11 +54,12 @@
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerScheduler.hpp>
-#include <server/ServerSessionProxy.hpp>
-#include <server/ServerSessionManager.hpp>
 #include <server/ServerProcessSupervisor.hpp>
 #include <server/ServerPaths.hpp>
-#include <server/ServerSessionMetadataRpc.hpp>
+
+#include <server/session/ServerSessionProxy.hpp>
+#include <server/session/ServerSessionManager.hpp>
+#include <server/session/ServerSessionMetadataRpc.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/system/User.hpp>
