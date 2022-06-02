@@ -31,7 +31,7 @@ DBActiveSessionsStorage::DBActiveSessionsStorage(const std::string& userId, cons
 {
 }
 
-core::Error DBActiveSessionsStorage::createSession(const std::string& id, std::map<std::string, std::string> initialProperties)
+core::Error DBActiveSessionsStorage::initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties)
 {
    DBActiveSessionStorage storage{id};
    return storage.writeProperties(initialProperties);
@@ -96,17 +96,16 @@ size_t DBActiveSessionsStorage::getSessionCount() const
    return 0;
 }
 
-boost::shared_ptr<ActiveSession> DBActiveSessionsStorage::getSession(const std::string& id) const
+std::shared_ptr<IActiveSessionStorage> DBActiveSessionsStorage::getSessionStorage(const std::string& id) const
 {
    FilePath scratchPath = rootStoragePath_.completeChildPath(kSessionDirPrefix + id);
    if(hasSessionId(id))
    {
-      DBActiveSessionStorage storage{id};
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(id, scratchPath, std::make_shared<DBActiveSessionStorage>(storage)));
+      return std::make_shared<DBActiveSessionStorage>(id);
    }
    else
    {
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
+      return std::shared_ptr<IActiveSessionStorage>();
    }
 }
 

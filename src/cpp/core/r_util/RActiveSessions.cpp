@@ -17,6 +17,7 @@
 
 #include <boost/bind/bind.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/make_shared.hpp>
 
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
@@ -33,6 +34,27 @@ using namespace boost::placeholders;
 namespace rstudio {
 namespace core {
 namespace r_util {
+
+const std::string ActiveSession::kCreated = "created";
+const std::string ActiveSession::kExecuting = "executing";
+const std::string ActiveSession::kInitial = "initial";
+const std::string ActiveSession::kLastUsed = "last_used";
+const std::string ActiveSession::kLabel = "label";
+const std::string ActiveSession::kProject = "project";
+const std::string ActiveSession::kSavePromptRequired = "save_prompt_required";
+const std::string ActiveSession::kSessionSuspendData = "suspended_session_data";
+const std::string ActiveSession::kRunning = "running";
+const std::string ActiveSession::kRVersion = "r_version";
+const std::string ActiveSession::kRVersionHome = "r_version_home";
+const std::string ActiveSession::kRVersionLabel = "r_version_label";
+const std::string ActiveSession::kWorkingDir = "working_directory";
+const std::string ActiveSession::kActivityState = "activity_state";
+const std::string ActiveSession::kLastStateUpdated = "last_state_updated";
+const std::string ActiveSession::kEditor = "editor";
+const std::string ActiveSession::kLastResumed = "last_resumed";
+const std::string ActiveSession::kSuspendTimestamp = "suspend_timestamp";
+const std::string ActiveSession::kBlockingSuspend = "blocking_suspend";
+const std::string ActiveSession::kLaunchParameters = "launch_parameters";
 
 ActiveSessions::ActiveSessions(const FilePath& rootStoragePath) : 
    ActiveSessions(std::make_shared<FileActiveSessionsStorage>(FileActiveSessionsStorage(rootStoragePath)), rootStoragePath)
@@ -69,21 +91,20 @@ Error ActiveSessions::create(const std::string& project,
 
    //Initial settings
    std::map<std::string, std::string> initialMetadata = {
-      {kProject, project},
-      {kWorkingDir, workingDir},
-      {kInitial, initial ? "true" : "false"},
-      {kRunning, "false"},
-      {kLastUsed, isoTime},
-      {kCreated, isoTime},
-      {kLaunchParameters, ""},
-      {kLabel, project == kProjectNone ? workingDir : project},
-      {kEditor, editor}};
-
-   storage_->createSession(id, initialMetadata);
-   boost::shared_ptr<ActiveSession> activeSession = storage_->getSession(id);
+      {ActiveSession::kProject, project},
+      {ActiveSession::kWorkingDir, workingDir},
+      {ActiveSession::kInitial, initial ? "true" : "false"},
+      {ActiveSession::kRunning, "false"},
+      {ActiveSession::kLastUsed, isoTime},
+      {ActiveSession::kCreated, isoTime},
+      {ActiveSession::kLaunchParameters, ""},
+      {ActiveSession::kLabel, project == kProjectNone ? workingDir : project},
+      {ActiveSession::kEditor, editor}};
 
    if (editor == kWorkbenchRStudio)
-      activeSession->setLastResumed();
+      initialMetadata[ActiveSession::kLastResumed] = isoTime;
+
+   storage_->initSessionProperties(id, initialMetadata);
 
    // return the id if requested
    if (pId != nullptr)
@@ -110,7 +131,7 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath use
    std::vector<boost::shared_ptr<ActiveSession>> sessions{};
    for(const std::string& id : sessionIds)
    {
-      boost::shared_ptr<ActiveSession> candidateSession = storage_->getSession(id);
+      boost::shared_ptr<ActiveSession> candidateSession = get(id);
       if (candidateSession->validate(userHomePath, projectSharingEnabled))
          sessions.push_back(candidateSession);
    }
@@ -128,7 +149,11 @@ size_t ActiveSessions::count(const FilePath& userHomePath,
 
 boost::shared_ptr<ActiveSession> ActiveSessions::get(const std::string& id) const
 {
-   return storage_->getSession(id);
+   std::shared_ptr<IActiveSessionStorage> candidateStorage = storage_->getSessionStorage(id);
+   if (candidateStorage != nullptr)
+      return boost::shared_ptr<ActiveSession>(new ActiveSession(id, storagePath_.completeChildPath(kSessionDirPrefix + id), candidateStorage));
+   else
+      return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
 }
 
 

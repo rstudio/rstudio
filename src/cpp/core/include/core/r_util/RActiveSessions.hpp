@@ -65,31 +65,11 @@ static const std::string kActivityStateCanceled = "canceled";
 static const std::string kActivityStateFinished = "finished";
 static const std::string kActivityStateKilled = "killed";
 
-static constexpr const char* kCreated = "created";
-static constexpr const char* kExecuting = "executing";
-static constexpr const char* kInitial = "initial";
-static constexpr const char* kLastUsed = "last_used";
-static constexpr const char* kLabel = "label";
-static constexpr const char* kProject = "project";
-static constexpr const char* kSavePromptRequired = "save_prompt_required";
-static constexpr const char* kSessionSuspendData = "suspended_session_data";
-static constexpr const char* kRunning = "running";
-static constexpr const char* kRVersion = "r_version";
-static constexpr const char* kRVersionHome = "r_version_home";
-static constexpr const char* kRVersionLabel = "r_version_label";
-static constexpr const char* kWorkingDir = "working_directory";
-static constexpr const char* kActivityState = "activity_state";
-static constexpr const char* kLastStateUpdated = "last_state_updated";
-static constexpr const char* kEditor = "editor";
-static constexpr const char* kLastResumed = "last_resumed";
-static constexpr const char* kSuspendTimestamp = "suspend_timestamp";
-static constexpr const char* kBlockingSuspend = "blocking_suspend";
-static constexpr const char* kLaunchParameters = "launch_parameters";
-
 class ActiveSession : boost::noncopyable
 {
+private:
+   friend class ActiveSessions;
 
-public:
    explicit ActiveSession(const std::string& id) : id_(id) 
    {
    }
@@ -103,6 +83,28 @@ public:
       if (error)
          LOG_ERROR(error);
    }
+
+public:
+   static const std::string kCreated;
+   static const std::string kExecuting;
+   static const std::string kInitial;
+   static const std::string kLastUsed;
+   static const std::string kLabel;
+   static const std::string kProject;
+   static const std::string kSavePromptRequired;
+   static const std::string kSessionSuspendData;
+   static const std::string kRunning;
+   static const std::string kRVersion;
+   static const std::string kRVersionHome;
+   static const std::string kRVersionLabel;
+   static const std::string kWorkingDir;
+   static const std::string kActivityState;
+   static const std::string kLastStateUpdated;
+   static const std::string kEditor;
+   static const std::string kLastResumed;
+   static const std::string kSuspendTimestamp;
+   static const std::string kBlockingSuspend;
+   static const std::string kLaunchParameters;
 
    // The rsession process has exited with an exit code
    static bool isExitedState(const std::string& state)
@@ -507,7 +509,6 @@ public:
    {
       SortConditions() :
          executing_(false),
-         running_(false),
          lastUsed_(0)
       {
          

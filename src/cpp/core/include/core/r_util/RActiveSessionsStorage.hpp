@@ -28,10 +28,10 @@ namespace r_util {
    class IActiveSessionsStorage
    {
    public:
-      virtual core::Error createSession(const std::string& id, std::map<std::string, std::string> initialProperties) = 0;
+      virtual core::Error initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties) = 0;
       virtual std::vector< std::string > listSessionIds() const = 0;
       virtual size_t getSessionCount() const = 0;
-      virtual boost::shared_ptr<ActiveSession> getSession(const std::string& id) const = 0;
+      virtual std::shared_ptr<IActiveSessionStorage> getSessionStorage(const std::string& id) const = 0;
       virtual bool hasSessionId(const std::string& sessionId) const = 0;
 
    protected:
@@ -44,10 +44,10 @@ namespace r_util {
    public:
       explicit FileActiveSessionsStorage(const FilePath& rootStoragePath);
       ~FileActiveSessionsStorage() = default;
-      core::Error createSession(const std::string& id, std::map<std::string, std::string> initialProperties) override;
+      core::Error initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties) override;
       std::vector< std::string > listSessionIds() const override;
       size_t getSessionCount() const override;
-      boost::shared_ptr<ActiveSession> getSession(const std::string& id) const override;
+      std::shared_ptr<IActiveSessionStorage> getSessionStorage(const std::string& id) const override;
       bool hasSessionId(const std::string& sessionId) const override;
       
    private:

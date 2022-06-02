@@ -34,10 +34,10 @@ class DBActiveSessionsStorage : public IActiveSessionsStorage
 public:
    explicit DBActiveSessionsStorage(const std::string& userId, const FilePath& rootStoragePath);
    ~DBActiveSessionsStorage() = default;
-   core::Error createSession(const std::string& id, std::map<std::string, std::string> initialProperties) override;
+   core::Error initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties) override;
    std::vector< std::string > listSessionIds() const override;
    size_t getSessionCount() const override;
-   boost::shared_ptr<ActiveSession> getSession(const std::string& id) const override;
+   std::shared_ptr<IActiveSessionStorage> getSessionStorage(const std::string& id) const override;
    bool hasSessionId(const std::string& sessionId) const override;
 private:
    std::string userId_;

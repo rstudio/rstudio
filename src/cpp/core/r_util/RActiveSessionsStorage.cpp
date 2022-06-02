@@ -48,7 +48,7 @@ bool FileActiveSessionsStorage::hasSessionId(const std::string& sessionId) const
    return dir.exists();
 }
 
-core::Error FileActiveSessionsStorage::createSession(const std::string& id, std::map<std::string, std::string> initialProperties)
+core::Error FileActiveSessionsStorage::initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties)
 {
    FilePath sessionScratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
    Error error = sessionScratchPath.ensureDirectory();
@@ -93,15 +93,14 @@ size_t FileActiveSessionsStorage::getSessionCount() const
    return listSessionIds().size();
 }
 
-// Returns a shared pointer to the session, or an empty session if it does not exist
-boost::shared_ptr<ActiveSession> FileActiveSessionsStorage::getSession(const std::string& id) const
+// Returns a shared pointer to the session storage, or an empty session session storage pointer if it does not exist
+std::shared_ptr<IActiveSessionStorage> FileActiveSessionsStorage::getSessionStorage(const std::string& id) const
 {
    FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
    if (scratchPath.exists())
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(id, scratchPath,
-         std::make_shared<FileActiveSessionStorage>(FileActiveSessionStorage(scratchPath))));
+      return std::make_shared<FileActiveSessionStorage>(scratchPath);
    else
-      return boost::shared_ptr<ActiveSession>(new ActiveSession(id));
+      return std::shared_ptr<IActiveSessionStorage>();
 }
 
 } // namespace r_util

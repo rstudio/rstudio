@@ -1,6 +1,6 @@
 /*
  * RActiveSessionStorage.hpp
- *
+*
  * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
