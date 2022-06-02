@@ -10,7 +10,7 @@
     "saveImageAs": "Enregistrer l'image sous",
     "copyImage": "Copier l'image",
     "reload": "Recharger",
-    "copyImageAddress": "Adresse de l'image à copier",
+    "copyImageAddress": "Copier l'adresse de l'image",
     "cut": "Couper",
     "copy": "Copier",
     "paste": "Coller",
@@ -22,7 +22,7 @@
     "save": "Sauvegarder"
   },
   "chooseRDialog": {
-    "documentTitle": "Choisir l'installation R",
+    "documentTitle": "Choisir l'installation de R",
     "title": "RStudio requiert une installation existante de R.",
     "subtitle": "Veuillez sélectionner la version de R à utiliser.",
     "use64BitR": "Utilisez la version 64 bits par défaut de R sur votre machine",
@@ -36,7 +36,7 @@
     "renderingEngineChangedTitle": "Moteur de rendu modifié",
     "renderingEngineChangedMessage": "Le moteur de rendu a été modifié. Veuillez redémarrer RStudio pour que ces modifications prennent effet.",
     "rLaunchFailedTitle": "Erreur de chargement de R",
-    "rLaunchFailedMessage": "Une erreur s'est produite lors de la tentative de chargement de la version sélectionnée de R. Veuillez sélectionner une installation R différente."
+    "rLaunchFailedMessage": "Une erreur s'est produite lors de la tentative de chargement de la version sélectionnée de R. Veuillez sélectionner une installation de R différente."
   },
   "uiFolder": {
     "chooseRExecutable": "Choisissez l'exécutable de R",
@@ -45,11 +45,11 @@
     "okCaps": "OK",
     "cancel": "Annuler",
     "errorStartingR": "Erreur de démarrage de R",
-    "problemReportCopiedToClipboard": "Rapport de problème copié dans le presse-papiers",
-    "couldNotCopyProblemReportToClipboard": "Impossible de copier le rapport de problème dans le presse-papiers.",
+    "problemReportCopiedToClipboard": "Rapport d'erreur copié dans le presse-papiers.",
+    "couldNotCopyProblemReportToClipboard": "Impossible de copier le rapport d'erreur dans le presse-papiers.",
     "rLogo": "Logo de R",
     "warning": "Avertissement",
-    "rstudioVersion": "Version RStudio",
+    "rstudioVersion": "Version de RStudio",
     "errorMessage": "Message d'erreur",
     "processOutput": "Sortie du processus",
     "rSessionExitedWithCode": "Le processus de la session R a quitté avec le code {{- exitCode}}.",
@@ -62,7 +62,7 @@
     "makeSureThatRStartsUpCorrectly": "Assurez-vous que R démarre correctement en dehors de RStudio (en utilisant RGui, R.app, ou R dans un terminal).",
     "fullyUninstallAllVersionsOfRFromYourMachine": "Désinstaller complètement toutes les versions de R de votre machine, et réinstaller la version que vous souhaitez utiliser avec RStudio.",
     "removeStartupCustomizationsSuchAs": "Supprimez les personnalisations de démarrage telles qu'un fichier {{- rProfileFileExtension}}, s'il est présent.",
-    "ifPostingThisReportOnlineUseTheCopyProblemReport": "Si vous affichez ce rapport en ligne, utilisez le bouton Copier le rapport de problème ci-dessous pour générer une version textuelle de ce diagnostic.",
+    "ifPostingThisReportOnlineUseTheCopyProblemReport": "Si vous publiez ce rapport en ligne, utilisez le bouton Copier le rapport de problème ci-dessous pour générer une version textuelle de ce diagnostic.",
     "furtherTroubleshootingHelpCanBeFound": "Une aide supplémentaire au dépannage peut être trouvée sur notre site Web :",
     "troubleshootingRstudioStartup": "Dépannage du démarrage de RStudio",
     "copyProblemReport": "Copier le rapport de problème",
@@ -92,7 +92,7 @@
   },
   "gwtCallbackTs": {
     "unimplemented": "Non implémenté",
-    "callbackNyiLowercase": "{{ipcName}} rappel de la NYI"
+    "callbackNyiLowercase": "{{ipcName}} pas encore implémenté"
   },
   "mainTs": {
     "unhandledException": "Exception non gérée"
@@ -108,6 +108,6 @@
     "rSessionFailedToStart": "La session R n'a pas réussi à démarrer."
   },
   "i18nManager": {
-    "errorLocalizingDocument": "Erreur de localisation du document:"
+    "errorLocalizingDocument": "Erreur de localisation du document :"
   }
 }
