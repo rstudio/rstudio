@@ -647,8 +647,6 @@ Error isUserLicensed(const std::string& username,
       // of the licensing check
       return error;
    }
-
-   return isUserLicensed(user, false, pLicensed);
 }
 
 Error isUserLicensed(const system::User& user,
