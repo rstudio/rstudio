@@ -116,6 +116,28 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
       }
    }
 }
+
+Error getSessionCount(boost::shared_ptr<database::IConnection> connection, std::string sessionId, int* pCount)
+{
+   database::Query query = connection->query("SELECT COUNT(*) FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
+      .withInput(sessionId);
+   database::Rowset rowset{};
+
+   Error error = connection->execute(query, rowset);
+
+   if (error)
+      return Error("DatabaseException", errc::DBError, "Error while retrieving session count for [ session:" + sessionId + " ]", error, ERROR_LOCATION);
+      
+   database::RowsetIterator iter = rowset.begin();
+
+   // Sanity checking, but should always have 1 row containing the count of rows
+   if (iter != rowset.end())
+   {
+      *pCount = iter->get<int>("COUNT(*)");
+   }
+   return error;
+}
+
 } // anonymous namespace
 
 Error getConn(boost::shared_ptr<database::IConnection>* connection) {
@@ -338,44 +360,48 @@ Error DBActiveSessionStorage::isValid(bool* pValue)
 {
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
+   int count = 0;
 
-   if (error)
+
+
       return error;
 
-   database::Query query = connection->query("SELECT COUNT(*) FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
-      .withInput(sessionId_);
-   database::Rowset rowset{};
+   error = getSessionCount(connection, sessionId_, &count);
 
    *pValue = false;
 
-   error = connection->execute(query, rowset);
-
-   if (error)
-      return Error("DatabaseException", errc::DBError, "Error while retrieving session count for [ session:" + sessionId_ + " ]", error, ERROR_LOCATION);
-      
-   database::RowsetIterator iter = rowset.begin();
-
-   // Sanity checking, but should always have 1 row containing the count of rows
-   if (iter != rowset.end())
-   {
-      int count = iter->get<int>("COUNT(*)");
-
-      // ensure one and only one
-      if (count > 1)
-         return Error("Too Many Sessions Returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
-      else
-         if (count == 1)
-            *pValue = true;
-   }
+   // ensure one and only one
+   if (count > 1)
+      return Error("Too Many Sessions Returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
+   else
+      if (count == 1)
+         *pValue = true;
    return Success();
 }
 
 Error DBActiveSessionStorage::isEmpty(bool* pValue)
 {
-   bool val;
-   Error error = isValid(&val);
-   *pValue = !val;
-   return error;
+   boost::shared_ptr<database::IConnection> connection;
+   Error error = getConnectionOrOverride(&connection);
+   int count = 0;
+
+   if (error)
+      return error;
+
+   error = getSessionCount(connection, sessionId_, &count);
+
+   if (error)
+      return error;
+
+   *pValue = false;
+
+   // ensure one and only one
+   if (count > 1)
+      return Error("Too Many Sessions Returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
+   else
+      if (count == 0)
+         *pValue = true;
+   return Success();
 }
 
 } // Namespace storage
