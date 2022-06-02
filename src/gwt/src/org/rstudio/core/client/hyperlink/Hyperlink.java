@@ -101,7 +101,11 @@ public abstract class Hyperlink
         {
             return new HelpHyperlink(url, params, text, clazz);
         }
-        else
+        else if(url.startsWith("ide:vignette") || url.startsWith("rstudio:vignette"))
+        {
+            return new VignetteHyperlink(url, params, text, clazz);
+        }
+        else 
         {
             return new DefaultHyperlink(url, params, text, clazz);
         }

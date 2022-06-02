@@ -15,23 +15,5 @@
 
 .rs.addJsonRpcHandler("console_follow_hyperlink", function(url, text, params)
 {
-  # key1=value1:key2:value2 pattern, see https://iterm2.com/documentation-escape-codes.html
-  if (identical(params, "")) {
-    params <- list()
-  } else {
-    params <- strsplit(params, ":")[[1L]]
-
-    names  <- sapply(params, function(p) sub("=.+$", "", p))
-    params <- lapply(params, function(p) sub("^[^=]+=", "", p))
-    names(params) <- names
-  }
-  
-  if (identical(url, "rstudio:vignette") || identical(url, "ide:vignette")) {
-    print(vignette(params$topic, package = params$package))
-  } else if (grepl("^rstudio:viewer:", url)) {
-    url <- sub("^rstudio:viewer:", "", url)
-    return(.rs.api.viewer(url))
-  } else {
-    utils::browseURL(url)
-  }
+  utils::browseURL(url)
 })

@@ -1,5 +1,5 @@
 /*
- * HelpHyperlink.java
+ * VignetteHyperlink.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -19,12 +19,14 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.codetools.RCompletionType;
-import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
-public class HelpHyperlink extends Hyperlink
+public class VignetteHyperlink extends Hyperlink 
 {
-    public HelpHyperlink(String url, String params, String text, String clazz) 
+
+    public VignetteHyperlink(String url, String params, String text, String clazz) 
     {
         super(url, params, text, clazz);
         topic_ = params_.get("topic");
@@ -33,15 +35,22 @@ public class HelpHyperlink extends Hyperlink
     }
 
     @Override
-    public void onClick()
+    public void onClick() 
     {
-        server_.showHelpTopic(topic_, pkg_, RCompletionType.FUNCTION);
+        String code = "print(vignette('" + topic_ + "', package = '" + pkg_ + "'))";
+        server_.executeRCode(code, new ServerRequestCallback<String>(){
+            @Override
+            public void onResponseReceived(String response) {}
+
+            @Override
+            public void onError(ServerError error) {}
+        });
     }
 
     @Override
-    public Widget getPopupContent()
+    public Widget getPopupContent() 
     {
-        HTML label = new HTML("Help for " + pkg_ + "::<b>" + topic_ + "</b>()");
+        HTML label = new HTML("Vignette <b>" + topic_ + "</b> in {" + pkg_ + "}");
         return label;
     }
     
@@ -54,5 +63,5 @@ public class HelpHyperlink extends Hyperlink
 
     private String topic_;
     private String pkg_;
-    private HelpServerOperations server_;
+    private SourceServerOperations server_;
 }
