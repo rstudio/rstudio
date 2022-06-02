@@ -23,7 +23,7 @@ namespace server {
 namespace pam_auth {
 namespace overlay {
 
-void intialize();
+void initialize();
 bool canSetSignInCookies();
 void onUserPasswordAvailable(const std::string& username,
                          const std::string& password);

@@ -82,7 +82,7 @@ typedef lib::function<void(connection_hdl)> fail_handler;
 /**
  * The interrupt handler is called when a connection receives an interrupt
  * request from the application. Interrupts allow the application to trigger a
- * handler to be run in the absense of a WebSocket level handler trigger (like
+ * handler to be run in the absence of a WebSocket level handler trigger (like
  * a new message).
  *
  * This is typically used by another application thread to schedule some tasks
@@ -669,9 +669,9 @@ public:
      */
     lib::error_code send(message_ptr msg);
 
-    /// Asyncronously invoke handler::on_inturrupt
+    /// Asynchronously invoke handler::on_inturrupt
     /**
-     * Signals to the connection to asyncronously invoke the on_inturrupt
+     * Signals to the connection to asynchronously invoke the on_inturrupt
      * callback for this connection's handler once it is safe to do so.
      *
      * When the on_inturrupt handler callback is called it will be from
@@ -847,7 +847,7 @@ public:
     // Subprotocol negotiation //
     /////////////////////////////
 
-    /// Gets the negotated subprotocol
+    /// Gets the negotiated subprotocol
     /**
      * Retrieves the subprotocol that was negotiated during the handshake. This
      * method is valid in the open handler and later.
@@ -870,7 +870,7 @@ public:
      * Adds a subprotocol to the list to send with the opening handshake. This
      * may be called multiple times to request more than one. If the server
      * supports one of these, it may choose one. If so, it will return it
-     * in it's handshake reponse and the value will be available via
+     * in it's handshake response and the value will be available via
      * get_subprotocol(). Subprotocol requests should be added in order of
      * preference.
      *
@@ -885,7 +885,7 @@ public:
      * Adds a subprotocol to the list to send with the opening handshake. This
      * may be called multiple times to request more than one. If the server
      * supports one of these, it may choose one. If so, it will return it
-     * in it's handshake reponse and the value will be available via
+     * in it's handshake response and the value will be available via
      * get_subprotocol(). Subprotocol requests should be added in order of
      * preference.
      *
@@ -1272,7 +1272,7 @@ private:
     /**
      * If no arguments are present no close code/reason will be specified.
      *
-     * Note: the close code/reason values provided here may be overrided by
+     * Note: the close code/reason values provided here may be overridden by
      * other settings (such as silent close).
      *
      * @param code The close code to send
@@ -1286,7 +1286,7 @@ private:
     /**
      * If no arguments are present no close code/reason will be specified.
      *
-     * Note: the close code/reason values provided here may be overrided by
+     * Note: the close code/reason values provided here may be overridden by
      * other settings (such as silent close).
      *
      * The ack flag determines what to do in the case of a blank status and
@@ -1456,7 +1456,7 @@ private:
      */
     size_t m_send_buffer_size;
 
-    /// buffer holding the various parts of the current message being writen
+    /// buffer holding the various parts of the current message being written
     /**
      * Lock m_write_lock
      */

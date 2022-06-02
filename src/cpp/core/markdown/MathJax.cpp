@@ -128,7 +128,7 @@ MathJaxFilter::MathJaxFilter(const std::vector<html_utils::ExcludePattern>& excl
                              &displayMathBlocks_);
 
          // latex display equations (latex designator optional, used for
-         // syntactic compatiblity w/ wordpress-style inline equations)
+         // syntactic compatibility w/ wordpress-style inline equations)
          filter(boost::regex("\\${2}(?:latex\\s)?([\\s\\S]+?)\\${2}"),
                              &rangeText,
                              &displayMathBlocks_);

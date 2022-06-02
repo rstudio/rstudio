@@ -26,7 +26,7 @@ include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
 
-# disable gcc visiblity attribute (not supported by some mingw versinos)
+# disable gcc visibility attribute (not supported by some mingw versinos)
 set(EXTRA_COMPILE_DEFINITIONS "NO_VIZ")
 
 if(MSVC)

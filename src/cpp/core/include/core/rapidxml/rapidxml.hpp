@@ -89,7 +89,7 @@ namespace rapidxml
 
         //! Gets pointer to character data where error happened.
         //! Ch should be the same as char type of xml_document that produced the error.
-        //! \return Pointer to location within the parsed string where error occured.
+        //! \return Pointer to location within the parsed string where error occurred.
         template<class Ch>
         Ch *where() const
         {
@@ -403,7 +403,7 @@ namespace rapidxml
         }
 
         //! Allocates a new node from the pool, and optionally assigns name and value to it. 
-        //! If the allocation request cannot be accomodated, this function will throw <code>std::bad_alloc</code>.
+        //! If the allocation request cannot be accommodated, this function will throw <code>std::bad_alloc</code>.
         //! If exceptions are disabled by defining RAPIDXML_NO_EXCEPTIONS, this function
         //! will call rapidxml::parse_error_handler() function.
         //! \param type Type of node to create.
@@ -436,7 +436,7 @@ namespace rapidxml
         }
 
         //! Allocates a new attribute from the pool, and optionally assigns name and value to it.
-        //! If the allocation request cannot be accomodated, this function will throw <code>std::bad_alloc</code>.
+        //! If the allocation request cannot be accommodated, this function will throw <code>std::bad_alloc</code>.
         //! If exceptions are disabled by defining RAPIDXML_NO_EXCEPTIONS, this function
         //! will call rapidxml::parse_error_handler() function.
         //! \param name Name to assign to the attribute, or 0 to assign no name.
@@ -467,7 +467,7 @@ namespace rapidxml
         }
 
         //! Allocates a char array of given size from the pool, and optionally copies a given string to it.
-        //! If the allocation request cannot be accomodated, this function will throw <code>std::bad_alloc</code>.
+        //! If the allocation request cannot be accommodated, this function will throw <code>std::bad_alloc</code>.
         //! If exceptions are disabled by defining RAPIDXML_NO_EXCEPTIONS, this function
         //! will call rapidxml::parse_error_handler() function.
         //! \param source String to initialize the allocated memory with, or 0 to not initialize it.
@@ -710,7 +710,7 @@ namespace rapidxml
         //! <br><br>
         //! Note that node does not own its name or value, it only stores a pointer to it. 
         //! It will not delete or otherwise free the pointer on destruction.
-        //! It is reponsibility of the user to properly manage lifetime of the string.
+        //! It is the responsibility of the user to properly manage lifetime of the string.
         //! The easiest way to achieve it is to use memory_pool of the document to allocate the string -
         //! on destruction of the document the string will be automatically freed.
         //! <br><br>
@@ -737,7 +737,7 @@ namespace rapidxml
         //! <br><br>
         //! Note that node does not own its name or value, it only stores a pointer to it. 
         //! It will not delete or otherwise free the pointer on destruction.
-        //! It is reponsibility of the user to properly manage lifetime of the string.
+        //! It is the responsibility of the user to properly manage lifetime of the string.
         //! The easiest way to achieve it is to use memory_pool of the document to allocate the string -
         //! on destruction of the document the string will be automatically freed.
         //! <br><br>
@@ -1327,7 +1327,7 @@ namespace rapidxml
     
         // Note that some of the pointers below have UNDEFINED values if certain other pointers are 0.
         // This is required for maximum performance, as it allows the parser to omit initialization of 
-        // unneded/redundant values.
+        // unneeded/redundant values.
         //
         // The rules are as follows:
         // 1. first_node and first_attribute contain valid pointers, or 0 if node has no children/attributes respectively

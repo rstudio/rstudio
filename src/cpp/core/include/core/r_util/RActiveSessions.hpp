@@ -84,7 +84,7 @@ private:
       if (error)
          LOG_ERROR(error);
 
-      propertiesPath_ = scratchPath_.completeChildPath("properites");
+      propertiesPath_ = scratchPath_.completeChildPath("properties");
       error = propertiesPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
