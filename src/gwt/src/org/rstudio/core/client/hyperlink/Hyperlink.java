@@ -114,6 +114,10 @@ public abstract class Hyperlink
             {
                 return new TestthatCommandHyperlink(url, params, text, clazz);
             }
+            else if (url.matches("^ide:command:rlang::last_(error|trace)$"))
+            {
+                return new RlangCommandHyperlink(url, params, text, clazz);
+            }
             else 
             {
                 return new CommandHyperlink(url, params, text, clazz);
