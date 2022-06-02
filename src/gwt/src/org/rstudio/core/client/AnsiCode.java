@@ -100,8 +100,6 @@ public class AnsiCode
    public static final int FONT_SEVEN = 17;
    public static final int FONT_EIGHT = 18;
 
-   public static final String HYPERLINK_STYLE = "xtermHyperlink";
-   
    // Font-nine is used by RStudio to reduce spacing between lines
    public static final int FONT_NINE = 19;
    public static final String FONT_NINE_STYLE = "xtermFont9";

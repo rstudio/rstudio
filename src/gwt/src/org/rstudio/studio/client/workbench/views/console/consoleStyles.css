@@ -214,6 +214,17 @@
    margin-right: 5px;
 }
 
+.xtermHyperlink {
+   text-decoration: underline; 
+   cursor: pointer; 
+   text-decoration-style: dotted;
+}
+
+.xtermHyperlink:hover { 
+   text-decoration: underline; 
+   text-decoration-style: solid; 
+}
+
 .xtermCommand {
    text-decoration: underline; 
    text-decoration-style: dotted;

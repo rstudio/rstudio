@@ -85,7 +85,7 @@ public abstract class Hyperlink
 
     public String getAnchorClass()
     {
-        return AnsiCode.HYPERLINK_STYLE;
+        return styles_.xtermHyperlink();
     }
 
     public abstract void onClick();

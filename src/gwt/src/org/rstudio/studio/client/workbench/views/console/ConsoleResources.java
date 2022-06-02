@@ -55,6 +55,7 @@ public interface ConsoleResources extends ClientBundle
       String popupArbitraryCode();
       String popupInfo();
 
+      String xtermHyperlink();
       String xtermCommand();
       String xtermUnsupportedHyperlink();
    }
