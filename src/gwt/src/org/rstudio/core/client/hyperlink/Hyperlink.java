@@ -23,7 +23,6 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.Rectangle;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
@@ -109,9 +108,16 @@ public abstract class Hyperlink
         {
             return new WebHyperlink(url, params, text, clazz);
         }
-        else if (url.startsWith("ide:run") || url.startsWith("rstudio:run"))
+        else if (url.startsWith("ide:command:"))
         {
-            return new CommandHyperlink(url, params, text, clazz);
+            if (url.matches("^ide:command:testthat::snapshot_(accept|review)$"))
+            {
+                return new TestthatCommandHyperlink(url, params, text, clazz);
+            }
+            else 
+            {
+                return new CommandHyperlink(url, params, text, clazz);
+            }
         }
         else
         {

@@ -15,60 +15,41 @@
 package org.rstudio.core.client.hyperlink;
 
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
-
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 public class CommandHyperlink extends Hyperlink
 {
     public CommandHyperlink(String url, String params, String text, String clazz)
     {
         super(url, params, text, clazz);
-        
-        command_ = getCommand(text, url);
-        supported_ = 
-            command_.matches("^testthat::snapshot_(accept|review)[(]'\\w+'[)]$") || 
-            command_.matches("^rlang::last_(error|trace)[(][)]$");
+        command_ = url.replaceFirst("^ide:command:", "");
     }
 
     @Override
     public String getAnchorClass() 
     {
-        return styles_.xtermCommand();
+        return styles_.xtermUnsupportedHyperlink();
     }
 
     @Override 
-    public void onClick()
-    {
-        events_.fireEvent(new SendToConsoleEvent(command_, supported_));
-    }
+    public void onClick(){}
 
     @Override
-    public Widget getPopupContent() {
-        Label code = new Label(command_);
-        code.setStyleName(styles_.popupCode());
-        return code;
-    }
-
-    private String getCommand(String text, String url)
+    public Widget getPopupContent() 
     {
-        String command = text;
-        if (url.startsWith("rstudio:run:"))
-        {
-            command = url.replaceFirst("rstudio:run:", "");
-        }
-        else if (url.startsWith("ide:run:"))
-        {
-            command = url.replaceFirst("ide:run:", "");
-        }
-        return command;
+        VerticalPanel panel = new VerticalPanel();
+
+        Label title = new Label("Unsupported command");
+        title.setStyleName(styles_.popupInfo());
+
+        Label commandLabel = new Label(command_);
+        commandLabel.setStyleName(styles_.popupCode());
+
+        panel.add(title);
+        panel.add(commandLabel);
+        return panel;
     }
-
-    private String command_;
-    private boolean supported_;
-
-    private static final EventBus events_ = RStudioGinjector.INSTANCE.getEventBus();
     
+    private String command_;    
 }
