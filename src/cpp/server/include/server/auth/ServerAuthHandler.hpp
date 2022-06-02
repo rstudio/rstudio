@@ -209,11 +209,11 @@ bool isCookieRevoked(const std::string& cookie);
 // User functions
 core::Error addUser(boost::asio::io_service& ioService, const std::string& username, bool isAdmin = false);
 core::json::Array getAllUsers();
-core::Error getUser(const boost::shared_ptr<core::database::IConnection>& connection,
-                       const core::system::User& user,
-                       bool* pLocked,
-                       boost::posix_time::ptime* pLastSignin,
-                       bool* pExists);
+core::Error getUserFromDatabase(const boost::shared_ptr<core::database::IConnection>& connection,
+                                const core::system::User& user,
+                                bool* pLocked,
+                                boost::posix_time::ptime* pLastSignin,
+                                bool* pExists);
 bool isUserActive(const boost::posix_time::ptime& lastSignin);
 core::Error updateLastSignin(const boost::shared_ptr<core::database::IConnection>& connection,
                              const core::system::User& user);

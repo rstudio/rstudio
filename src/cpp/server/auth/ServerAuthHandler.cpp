@@ -412,11 +412,11 @@ bool isCookieRevoked(const std::string& cookie)
    return false;
 }
 
-Error getUser(const boost::shared_ptr<IConnection>& connection,
-                 const system::User& user,
-                 bool* pLocked,
-                 boost::posix_time::ptime* pLastSignin,
-                 bool* pExists)
+Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
+                          const system::User& user,
+                          bool* pLocked,
+                          boost::posix_time::ptime* pLastSignin,
+                          bool* pExists)
 {
    *pLocked = true;
 
@@ -495,13 +495,13 @@ Error addUser(boost::asio::io_service& ioService,
       return error;
 
    // NOTE: this implementation runs the same query twice - once here in the call to 
-   // getUser and once in isUserLicensed; however, this function is only called by the 
+   // getUserFromDatabase and once in isUserLicensed; however, this function is only called by the 
    // rstudio-server add-user command, so the slightly worse performance should not
    // be a concern.
    // check if user already exists - if they do, there's nothing for us to do
    bool exists = false, locked;
    boost::posix_time::ptime lastSignin;
-   error = getUser(connection, user, &locked, &lastSignin, &exists);
+   error = getUserFromDatabase(connection, user, &locked, &lastSignin, &exists);
    if (error)
       return error;
 
@@ -664,7 +664,7 @@ Error isUserLicensed(const system::User& user,
    // check to see if the user is in the list of named users
    boost::posix_time::ptime lastSignin;
    bool exists = false, locked = false;
-   Error error = getUser(connection, user, &locked, &lastSignin, &exists);
+   Error error = getUserFromDatabase(connection, user, &locked, &lastSignin, &exists);
    if (error)
       return error;
 
