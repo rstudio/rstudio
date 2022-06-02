@@ -38,7 +38,7 @@ set(CODESIGN_FLAGS
 if(@RSTUDIO_CODESIGN_USE_CREDENTIALS@)
    echo("codesign: using RStudio's credentials")
    list(APPEND CODESIGN_FLAGS
-      -s 8A388E005EF927A09B952C6E71B0E8F2F467AB26
+      -s 4D663D999011E80361D8848C8487D70E4C41DB60
       -i org.rstudio.RStudio)
 else()
    echo("codesign: using ad-hoc signature")

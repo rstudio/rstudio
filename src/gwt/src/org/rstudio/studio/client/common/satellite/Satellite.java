@@ -199,6 +199,9 @@ public class Satellite implements HasCloseHandlers<Satellite>
       $wnd.opener.registerAsRStudioSatellite(name, $wnd);
    }-*/;
 
+   public native void notifyRStudioSatelliteClosed() /*-{
+      $wnd.opener.notifyRStudioSatelliteClosed($wnd.RStudioSatelliteName);
+   }-*/;
 
    // check whether the current window is a satellite
    public static native boolean isCurrentWindowSatellite() /*-{

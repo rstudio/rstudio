@@ -1,0 +1,15 @@
+{
+  "name": "locdiff",
+  "version": "1.0.0",
+  "description": "Generate CSV showing added, deleted, and modified UI strings",
+  "type": "module",
+  "main": "locdiff.js",
+  "license": "AGPLv3",
+  "dependencies": {
+    "csv-writer": "^1.6.0",
+    "glob": "^8.0.3"
+  },
+  "devDependencies": {
+    "eslint": "^8.16.0"
+  }
+}

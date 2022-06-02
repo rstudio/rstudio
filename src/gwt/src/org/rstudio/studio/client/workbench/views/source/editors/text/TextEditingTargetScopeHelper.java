@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
@@ -21,6 +25,7 @@ import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ScopeList.ScopePredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 
 public class TextEditingTargetScopeHelper
 {
@@ -194,6 +199,37 @@ public class TextEditingTargetScopeHelper
             return scope.getPreamble().compareTo(position) < 0;
          }
       });
+   }
+   
+
+   public static boolean isRunnableChunk(DocDisplay docDisplay, int row)
+   {
+      // extract chunk header
+      String header = docDisplay.getLine(row);
+      
+      // parse contents
+      Map<String, String> options = RChunkHeaderParser.parse(header);
+      
+      // check runnable engine
+      String engine = StringUtil.stringValue(options.get("engine"));
+      return isExecutableKnitrEngine(docDisplay, engine);
+   }
+   
+   private static boolean isExecutableKnitrEngine(DocDisplay docDisplay, String engine)
+   {
+      if (docDisplay.showChunkOutputInline())
+      {
+         // treat all chunks as executable in notebook mode
+         List<String> dontRunEngines = Arrays.asList("js", "css", "ojs", "mermaid", "dot");
+         return !dontRunEngines.contains(engine);
+      }
+      else
+      {
+         // when executing chunks in the R console, only R and Python chunks are
+         // executable
+         return engine.equalsIgnoreCase("r") ||
+                engine.equalsIgnoreCase("python");
+      }
    }
    
    public final static int PREVIOUS_CHUNKS  = 0;
