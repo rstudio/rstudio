@@ -1,5 +1,5 @@
 /*
- * VirtualConsolePopupPanel.java
+ * HyperlinkPopupPanel.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -22,6 +22,7 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
+import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
@@ -58,21 +59,12 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
     }
 
     @Override
-    public void showCommand(String command, boolean supported, PositionCallback callback)
+    public void show(Widget content, PositionCallback callback)
     {
         container_ = new VerticalPanel();
         container_.addStyleName(styles_.popupPanel());
         
-        Label code = new Label(command);
-        code.setStyleName(supported ? styles_.popupCode() : styles_.popupArbitraryCode());
-        
-        container_.add(code);
-        if (!supported)
-        {
-            Label click = new Label("* Arbitrary commands don't run directly but are instead copied in the console.");
-            click.setStyleName(styles_.popupInfo());
-            container_.add(click);
-        }
+        container_.add(content);
         
         setWidget(container_);
 

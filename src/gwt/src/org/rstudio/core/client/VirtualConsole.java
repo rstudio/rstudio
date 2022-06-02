@@ -619,7 +619,7 @@ public class VirtualConsole
                   // toggle hyperlink_
                   if (!StringUtil.equals(url, ""))
                   {
-                     hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1));
+                     hyperlink_ = new HyperlinkInfo(url, /*params=*/ hyperlinkMatch.getGroup(1));
                   }
                   else
                   {
@@ -755,7 +755,7 @@ public class VirtualConsole
 
    private class ClassRange
    {
-      public ClassRange(int pos, String className, String text, boolean isHTML, Hyperlink hyperlink)
+      public ClassRange(int pos, String className, String text, boolean isHTML, HyperlinkInfo hyperlink)
       {
          clazz  = className;
          start = pos;
@@ -774,7 +774,7 @@ public class VirtualConsole
          }
          else 
          {
-            element = hyperlink_.getElement(text, clazz);
+            element = Hyperlink.create(hyperlink.url_, hyperlink_.params_, text, clazz).getElement();
          }
 
          if (captureNewElements_)
@@ -850,10 +850,20 @@ public class VirtualConsole
       public int length;
       public int start;
       public final Element element;
-      public final Hyperlink hyperlink_;
+      public final HyperlinkInfo hyperlink_;
       private boolean isHTML_;
    }
 
+   private class HyperlinkInfo {
+      public HyperlinkInfo(String url, String params)
+      {
+         url_ = url;
+         params_ = params;
+      }
+
+      public String url_;
+      public String params_;
+   }
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
 
    // only a select few panes should be virtualized. default it to off everywhere.
@@ -870,7 +880,7 @@ public class VirtualConsole
    private AnsiCode ansi_;
    private String partialAnsiCode_;
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
-   private Hyperlink hyperlink_;
+   private HyperlinkInfo hyperlink_;
 
    // Elements added by last submit call (only if forceNewRange was true)
    private boolean captureNewElements_ = false;
