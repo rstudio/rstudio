@@ -315,37 +315,6 @@ void addToUserSessionConnections(const std::string& username, int val)
    END_LOCK_MUTEX
 }
 
-Error getNumActiveUsers(const boost::shared_ptr<IConnection>& connection,
-                        size_t* pNumActiveUsers)
-{
-   std::string expiration = getExpiredDateStr();
-
-   size_t numActive = 0;
-   bool dataReturned = false;
-
-   std::string queryStr = "SELECT count(*) FROM licensed_users WHERE locked = false AND last_sign_in > :exp";
-   if (connection->driver() == Driver::Sqlite)
-      boost::replace_all(queryStr, "false", "0");
-
-   Query query = connection->query(queryStr)
-         .withInput(expiration)
-         .withOutput(numActive);
-
-   Error error = connection->execute(query, &dataReturned);
-   if (error)
-      return error;
-
-   if (!dataReturned)
-   {
-      return systemError(boost::system::errc::io_error,
-                         "Database returned no count of licensed users",
-                         ERROR_LOCATION);
-   }
-
-   *pNumActiveUsers = numActive;
-   return Success();
-}
-
 } // anonymous namespace
 
 bool isCookieRevoked(const std::string& cookie)
@@ -788,6 +757,37 @@ std::string getExpiredDateStr()
    boost::posix_time::ptime oneYearAgo = boost::posix_time::microsec_clock::universal_time() -
          boost::posix_time::time_duration(kHoursInOneYear, 0, 0);
    return date_time::format(oneYearAgo, date_time::kIso8601Format);
+}
+
+Error getNumActiveUsers(const boost::shared_ptr<IConnection>& connection,
+                        size_t* pNumActiveUsers)
+{
+   std::string expiration = getExpiredDateStr();
+
+   size_t numActive = 0;
+   bool dataReturned = false;
+
+   std::string queryStr = "SELECT count(*) FROM licensed_users WHERE locked = false AND last_sign_in > :exp";
+   if (connection->driver() == Driver::Sqlite)
+      boost::replace_all(queryStr, "false", "0");
+
+   Query query = connection->query(queryStr)
+         .withInput(expiration)
+         .withOutput(numActive);
+
+   Error error = connection->execute(query, &dataReturned);
+   if (error)
+      return error;
+
+   if (!dataReturned)
+   {
+      return systemError(boost::system::errc::io_error,
+                         "Database returned no count of licensed users",
+                         ERROR_LOCATION);
+   }
+
+   *pNumActiveUsers = numActive;
+   return Success();
 }
 
 namespace overlay {

@@ -230,6 +230,8 @@ core::Error isUserLicensed(const core::system::User& user,
                            bool* pLicensed);
 unsigned int getActiveUserCount();
 std::string getExpiredDateStr();
+core::Error getNumActiveUsers(const boost::shared_ptr<core::database::IConnection>& connection,
+                              size_t* pNumActiveUsers);
 
 namespace overlay {
 
