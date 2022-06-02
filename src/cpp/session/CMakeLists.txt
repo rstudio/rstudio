@@ -140,6 +140,7 @@ set(SESSION_SOURCE_FILES
    SessionPersistentState.cpp
    SessionPostback.cpp
    SessionRpcActiveSessionStorage.cpp
+   SessionRpcActiveSessionsStorage.cpp
    SessionServerRpc.cpp
    SessionServerRpcOverlay.cpp
    SessionSSH.cpp
