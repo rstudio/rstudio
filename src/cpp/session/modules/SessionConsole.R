@@ -26,9 +26,7 @@
     names(params) <- names
   }
   
-  if (identical(url, "rstudio:help") || identical(url, "ide:help")) {
-    .rs.showHelpTopic(params$topic, params$package) 
-  } else if (identical(url, "rstudio:vignette") || identical(url, "ide:vignette")) {
+  if (identical(url, "rstudio:vignette") || identical(url, "ide:vignette")) {
     print(vignette(params$topic, package = params$package))
   } else if (grepl("^rstudio:viewer:", url)) {
     url <- sub("^rstudio:viewer:", "", url)

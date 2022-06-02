@@ -97,6 +97,10 @@ public abstract class Hyperlink
         {
             return new FileHyperlink(url, params, text, clazz);
         }
+        else if(url.startsWith("ide:help") || url.startsWith("rstudio:help"))
+        {
+            return new HelpHyperlink(url, params, text, clazz);
+        }
         else
         {
             return new DefaultHyperlink(url, params, text, clazz);
