@@ -36,6 +36,10 @@ class RpcActiveSessionStorage : public core::r_util::IActiveSessionStorage
       core::Error writeProperty(const std::string& name, const std::string& value) override;
       core::Error writeProperties(const std::map<std::string, std::string>& properties) override;
 
+      core::Error destroy() override;
+      core::Error isValid(bool* pValue) override;
+      core::Error isEmpty(bool* pValue) override;
+
    private:
       const core::system::User _user;
 

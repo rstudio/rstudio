@@ -178,6 +178,25 @@ Error RpcActiveSessionStorage::writeProperties(const std::map<std::string, std::
    return Success();
 }
 
+Error RpcActiveSessionStorage::destroy()
+{
+   return Success();
+}
+
+Error RpcActiveSessionStorage::isValid(bool* pValue)
+{
+   // We're within the session, so it must be valid.
+   *pValue = true;
+   return Success();
+}
+
+Error RpcActiveSessionStorage::isEmpty(bool* pValue)
+{
+   // We're within the session, so it must not be empty.
+   *pValue = false;
+   return Success();
+}
+
 } // namespace storage
 } // namespace session
 } // namespace rstudio
