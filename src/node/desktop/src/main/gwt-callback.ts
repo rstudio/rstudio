@@ -386,7 +386,7 @@ export class GwtCallback extends EventEmitter {
       }
 
       // ask the user what version of R they'd like to use
-      const chooseRDialog = new ChooseRModalWindow(rInstalls);
+      const chooseRDialog = new ChooseRModalWindow(rInstalls, mainWindow.window);
 
       void handleLocaleCookies(chooseRDialog);
 

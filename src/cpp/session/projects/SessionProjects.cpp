@@ -991,6 +991,7 @@ void startup(const std::string& firstProjectPath)
                session.project());
       s_projectId = projectId;
 
+#ifndef _WIN32
       if (options().projectSharingEnabled())
       {
          std::string sessionId = session.id();
@@ -1000,6 +1001,7 @@ void startup(const std::string& firstProjectPath)
          // This file is written by the session user and accessed by rserver so needs open read access
          ctxFile.changeFileMode(FileMode::USER_READ_WRITE_ALL_READ);
       }
+#endif
    }
    else
    {

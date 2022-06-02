@@ -15,13 +15,10 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
@@ -29,7 +26,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.DocumentChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
@@ -299,33 +295,10 @@ public class TextEditingTargetChunks
    
    private boolean isRunnableChunk(int row)
    {
-      // extract chunk header
-      String header = target_.getDocDisplay().getLine(row);
+      return TextEditingTargetScopeHelper.isRunnableChunk(target_.getDocDisplay(), row);
       
-      // parse contents
-      Map<String, String> options = RChunkHeaderParser.parse(header);
-      
-      // check runnable engine
-      String engine = StringUtil.stringValue(options.get("engine"));
-      return isExecutableKnitrEngine(engine);
    }
    
-   private boolean isExecutableKnitrEngine(String engine)
-   {
-      if (target_.getDocDisplay().showChunkOutputInline())
-      {
-         // treat all chunks as executable in notebook mode
-         List<String> dontRunEngines = Arrays.asList("js", "css", "ojs");
-         return !dontRunEngines.contains(engine);
-      }
-      else
-      {
-         // when executing chunks in the R console, only R and Python chunks are
-         // executable
-         return engine.equalsIgnoreCase("r") ||
-                engine.equalsIgnoreCase("python");
-      }
-   }
    
    private final TextEditingTarget target_;
    private final ArrayList<ChunkContextCodeUi> toolbars_;

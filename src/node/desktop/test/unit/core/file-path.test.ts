@@ -603,12 +603,14 @@ describe('FilePath', () => {
       assert.strictEqual(cPath.completeChildPath('../bar'), cPath);
       assert.strictEqual(cPath.completeChildPath('/path/to/quux'), cPath);
     });
-    it('Paths only contain forward slashes with no duplicates', () => {
+    it('Paths contain correct slashes based on OS', () => {
       const paths = [
         'c:\\www\\app\\my/folder/file.r',
         'C:\\R\\4.1.2/bin/R.exe',
-        'c:\\\\www\\\\app\\my/folder/file.r',
+        'c:\\www\\\\app\\my/folder/file.r',
         'T:\\R-3.6.3\\bin\\x64\\R.exe',
+        '\\\\TOWER\\downloads\\R-3.6.3\\bin\\x64\\R.exe',
+        'C:\\R\\4.1.2/bin/R.exe'
       ];
     
       const correctSeparator = process.platform === 'win32' ? '\\' : '/';

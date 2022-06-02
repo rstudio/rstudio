@@ -3726,7 +3726,7 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
    <cmd id="insertPipeOperator"
         label="Insert Pipe Operator"
         context="editor"/>
-
+        
    <cmd id="openNextFileOnFilesystem"
         label="Open Next File on Filesystem"/>
 

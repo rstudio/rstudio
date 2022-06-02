@@ -1,4 +1,3 @@
-
 #
 # SessionConsole.R
 #
@@ -27,17 +26,17 @@
     names(params) <- names
   }
   
-  if (identical(url, "rstudio:help")) {
+  if (identical(url, "rstudio:help") || identical(url, "ide:help")) {
     .rs.showHelpTopic(params$topic, params$package) 
-  } else if (identical(url, "rstudio:vignette")) {
+  } else if (identical(url, "rstudio:vignette") || identical(url, "ide:vignette")) {
     print(vignette(params$topic, package = params$package))
   } else if (grepl("^rstudio:viewer:", url)) {
     url <- sub("^rstudio:viewer:", "", url)
     return(.rs.api.viewer(url))
-  } else if (grepl("^rstudio:run:?", url)) {
-    # use `text` as the code unless rstudio:run is followed
+  } else if (grepl("^(ide|rstudio):run:?", url)) {
+    # use `text` as the code unless *:run is followed
     # e.g. rstudio:run:head(mtcars)
-    code <- sub("^rstudio:run:?", "", url)
+    code <- sub("^(ide|rstudio):run:?", "", url)
     if (identical(code, "")) {
       code <- text  
     }

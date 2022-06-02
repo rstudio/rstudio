@@ -19,18 +19,19 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <shared_core/Error.hpp>
-#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
-#include <shared_core/SafeConvert.hpp>
-
-#include <shared_core/json/Json.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RProjectFile.hpp>
 #include <core/r_util/RActiveSessionStorage.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -85,7 +86,6 @@ static const std::string kActivityStateKilled = "killed";
 class ActiveSession : boost::noncopyable
 {
 private:
-
    friend class ActiveSessions;
 
    explicit ActiveSession(const std::string& id) : id_(id) 
@@ -94,42 +94,35 @@ private:
 
    explicit ActiveSession(
       const std::string& id,
-      const FilePath& scratchPath) : 
-         id_(id),
-         scratchPath_(scratchPath)
+      const FilePath& scratchPath,
+      std::shared_ptr<IActiveSessionStorage> storage) : id_(id), scratchPath_(scratchPath), storage_(storage)
    {
       core::Error error = scratchPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
-
-      propertiesPath_ = scratchPath_.completeChildPath("properites");
-      error = propertiesPath_.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-
-      storage_ = ActiveSessionStorageFactory::getFileActiveSessionStorage(scratchPath_);
    }
 
-   const std::string kExecuting = "executing";
-   const std::string kInitial = "initial";
-   const std::string kLabel = "label";
-   const std::string kLastUsed = "last_used";
-   const std::string kProject = "project";
-   const std::string kSavePromptRequired = "save_prompt_required";
-   const std::string kSessionSuspendData = "suspended_session_data";
-   const std::string kRunning = "running";
-   const std::string kRVersion = "r_version";
-   const std::string kRVersionHome = "r_version_home";
-   const std::string kRVersionLabel = "r_version_label";
-   const std::string kWorkingDir = "working_directory";
-   const std::string kActivityState = "activity_state";
-   const std::string kLastStateUpdated = "last_state_updated";
-   const std::string kEditor = "editor";
-   const std::string kLastResumed = "last_resumed";
-   const std::string kSuspendTimestamp = "suspend_timestamp";
-   const std::string kBlockingSuspend = "blocking_suspend";
-
- public:
+public:
+   static const std::string kCreated;
+   static const std::string kExecuting;
+   static const std::string kInitial;
+   static const std::string kLastUsed;
+   static const std::string kLabel;
+   static const std::string kProject;
+   static const std::string kSavePromptRequired;
+   static const std::string kSessionSuspendData;
+   static const std::string kRunning;
+   static const std::string kRVersion;
+   static const std::string kRVersionHome;
+   static const std::string kRVersionLabel;
+   static const std::string kWorkingDir;
+   static const std::string kActivityState;
+   static const std::string kLastStateUpdated;
+   static const std::string kEditor;
+   static const std::string kLastResumed;
+   static const std::string kSuspendTimestamp;
+   static const std::string kBlockingSuspend;
+   static const std::string kLaunchParameters;
 
    // The rsession process has exited with an exit code
    static bool isExitedState(const std::string& state)
@@ -149,9 +142,17 @@ private:
       return state == kActivityStateSuspending || state == kActivityStateShuttingDown || state == kActivityStateQuitting || state == kActivityStateResuming;
    }
 
-   bool empty() const { return scratchPath_.isEmpty(); }
+   bool empty() const
+   { 
+      bool empty = true;
+      storage_->isEmpty(&empty);
+      return empty;
+   }
 
-   std::string id() const { return id_; }
+   std::string id() const
+   {
+      return id_;
+   }
 
    const FilePath& scratchPath() const { return scratchPath_; }
 
@@ -345,17 +346,17 @@ private:
 
    double created() const
    {
-      return timestampProperty("created");
+      return timestampProperty(kCreated);
    }
 
    boost::posix_time::ptime createdTime() const
    {
-      return ptimeTimestampProperty("created");
+      return ptimeTimestampProperty(kCreated);
    }
 
    void setCreated()
    {
-      setTimestampProperty("created");
+      setTimestampProperty(kCreated);
    }
 
    bool executing() const
@@ -476,6 +477,7 @@ private:
       if (!empty())
       {
          LOG_DEBUG_MESSAGE("Removing session directory: " + scratchPath_.getAbsolutePath());
+         storage_->destroy();
          return scratchPath_.removeIfExists();
       }
       else
@@ -492,9 +494,13 @@ private:
          return false;
       }
 
-      if (!propertiesPath_.exists())
+      bool validStorage = false;
+      Error storageError = storage_->isValid(&validStorage);
+      if (storageError || !validStorage)
       {
-         LOG_DEBUG_MESSAGE("ActiveSession validation failed: " + propertiesPath_.getAbsolutePath() + " not accessible to the session user");
+         LOG_DEBUG_MESSAGE("ActiveSession validation failed: properties storage not valid");
+         if(storageError)
+            LOG_ERROR(storageError);
          return false;
       }
 
@@ -567,7 +573,6 @@ private:
    {
       SortConditions() :
          executing_(false),
-         running_(false),
          lastUsed_(0)
       {
          
@@ -648,27 +653,23 @@ private:
    }
 
 private:
-   std::shared_ptr<IActiveSessionStorage> storage_;
    std::string id_;
    FilePath scratchPath_;
-   FilePath propertiesPath_;
+   std::shared_ptr<IActiveSessionStorage> storage_;
    SortConditions sortConditions_;
 };
+
+class IActiveSessionsStorage;
 
 class ActiveSessions : boost::noncopyable
 {
 public:
-   explicit ActiveSessions(const FilePath& rootStoragePath)
-   {
-      storagePath_ = storagePath(rootStoragePath);
-      Error error = storagePath_.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
-   }
+   explicit ActiveSessions(const FilePath& rootStoragePath);
+   explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
 
-   static FilePath storagePath(const FilePath& rootStoragePath)
+   static FilePath storagePath(const FilePath& path)
    {
-      return rootStoragePath.completeChildPath("sessions/active");
+      return path.completeChildPath("sessions/active");
    }
 
    core::Error create(const std::string& project,
@@ -684,9 +685,7 @@ public:
                       const std::string& editor,
                       std::string* pId) const;
 
-   std::vector<boost::shared_ptr<ActiveSession> > list(
-                                    const FilePath& userHomePath,
-                                    bool projectSharingEnabled) const;
+   std::vector<boost::shared_ptr<ActiveSession> > list(FilePath userHomePath, bool projectSharingEnabled) const;
 
    size_t count(const FilePath& userHomePath,
                 bool projectSharingEnabled) const;
@@ -695,11 +694,11 @@ public:
 
    FilePath storagePath() const { return storagePath_; }
 
-   boost::shared_ptr<ActiveSession> emptySession(
-      const std::string& id) const;
+   boost::shared_ptr<ActiveSession> emptySession(const std::string& id) const;
 
 private:
-   core::FilePath storagePath_;
+   FilePath storagePath_;
+   std::shared_ptr<IActiveSessionsStorage> storage_;
 };
 
 // active session as tracked by rserver processes

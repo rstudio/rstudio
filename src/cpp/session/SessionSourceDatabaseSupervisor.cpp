@@ -50,8 +50,6 @@ namespace supervisor {
 
 namespace {
 
-const char * const kSessionDirPrefix = "s-";
-
 FilePath sdbSourceDatabaseRoot()
 {
    return module_context::scopedScratchPath().completePath("sdb");
@@ -165,7 +163,7 @@ bool isNotSessionDir(const FilePath& filePath)
 {
    return !filePath.isDirectory() || !boost::algorithm::starts_with(
                                                 filePath.getFilename(),
-                                                kSessionDirPrefix);
+                                                rstudio::core::r_util::kSessionDirPrefix);
 }
 
 Error enumerateSessionDirs(std::vector<FilePath>* pSessionDirs)
@@ -565,7 +563,7 @@ Error detachFromSourceDatabase()
 FilePath sessionDirPath()
 {
    return sourceDatabaseRoot().completePath(
-      kSessionDirPrefix +
+      rstudio::core::r_util::kSessionDirPrefix +
       module_context::activeSession().id());
 }
 
