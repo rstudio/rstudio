@@ -450,7 +450,7 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
             *pLastSignin = lastSignin;
 
          // If any matching user row is not locked, the user is not locked.
-         *pLocked = (locked && *pLocked);
+         *pLocked = (overlay::isUserLocked(locked) && *pLocked);
 
          foundUser = true;
       }
@@ -814,6 +814,11 @@ bool shouldShowUserLicenseWarning()
 }
 
 bool isUserAdmin()
+{
+   return false;
+}
+
+bool isUserLocked(bool lockedColumn)
 {
    return false;
 }

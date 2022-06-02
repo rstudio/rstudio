@@ -238,6 +238,7 @@ bool canStaySignedIn();
 bool isUserListCookieValid(const std::string& cookieValue);
 bool shouldShowUserLicenseWarning();
 bool isUserAdmin(const std::string& username);
+bool isUserLocked(bool lockedColumn);
 std::string getUserListCookieValue();
 unsigned int getNamedUserLimit();
 core::json::Array getLicensedUsers();
