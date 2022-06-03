@@ -187,6 +187,7 @@
 
 .popupPanel {
    margin: 5px;
+   max-width: 400px;
 }
 
 .popupCode {
@@ -223,6 +224,18 @@
    margin-right: 5px;
 }
 
+.popupHelpPanel {
+   margin: 5px;
+}
+
+.popupHelpTitle {
+   font-weight: bold;
+}
+
+.popupHelpDescription {
+   font-size: small;
+}
+
 .xtermHyperlink {
    text-decoration: underline; 
    cursor: pointer; 
@@ -232,6 +245,12 @@
 .xtermHyperlink:hover { 
    text-decoration: underline; 
    text-decoration-style: solid; 
+}
+
+.helpHyperlink {
+   text-decoration: underline; 
+   cursor: help; 
+   text-decoration-style: dotted;
 }
 
 .xtermCommand {
@@ -245,4 +264,3 @@
    text-decoration-style: dotted;
    cursor: not-allowed;
 }
-
