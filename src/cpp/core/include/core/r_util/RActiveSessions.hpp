@@ -127,7 +127,8 @@ public:
    bool empty() const
    { 
       bool empty = true;
-      storage_->isEmpty(&empty);
+      if (storage_)
+         storage_->isEmpty(&empty);
       return empty;
    }
 
@@ -427,6 +428,12 @@ public:
       if (!scratchPath_.exists())
       {
          LOG_DEBUG_MESSAGE("ActiveSession validation failed: " + scratchPath_.getAbsolutePath() + " not accessible to the session user");
+         return false;
+      }
+
+      if (empty())
+      {
+         LOG_DEBUG_MESSAGE("ActiveSession validation failed on empty session");
          return false;
       }
 
