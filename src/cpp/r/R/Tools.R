@@ -1316,7 +1316,7 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 {
    # collect information about the running version of R / RStudio
    rstudioInfo <- .rs.api.versionInfo()
-   rstudioVersion <- format(rstudioInfo$version)
+   rstudioVersion <- format(rstudioInfo$long_version)
    
    rstudioEdition <- sprintf(
       "%s [%s]",
