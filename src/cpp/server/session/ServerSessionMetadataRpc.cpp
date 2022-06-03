@@ -280,11 +280,11 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
       return json::setJsonRpcError(
          missingFieldError(baseError, username, kSessionStorageUserIdField, ERROR_LOCATION), &pConnection->response(), true);
 
-   if ((operation != kSessionStroageReadAllOp) && !rpcRequest.kwparams.hasMember(kSessionStorageIdField))
+   if ((operation != kSessionStroageReadAllOp) && (operation != kSessionStorageCountOp) && !rpcRequest.kwparams.hasMember(kSessionStorageIdField))
       return json::setJsonRpcError(
          missingFieldError(baseError, username, kSessionStorageIdField, ERROR_LOCATION), &pConnection->response(), true);
 
-   if (!rpcRequest.kwparams.hasMember(kSessionStorageFieldsField))
+   if ((operation != kSessionStorageCountOp) && (operation != kSessionStorageDeleteOp) && !rpcRequest.kwparams.hasMember(kSessionStorageFieldsField))
       return json::setJsonRpcError(
          missingFieldError(baseError, username, kSessionStorageFieldsField, ERROR_LOCATION), &pConnection->response(), true);
 
