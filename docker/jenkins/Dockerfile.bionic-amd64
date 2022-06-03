@@ -114,6 +114,10 @@ COPY dependencies/linux/install-qt-linux /tmp/
 RUN export QT_VERSION=5.12.8 && \
     cd /tmp && /bin/bash ./install-qt-linux
 
+# cachebust for Quarto release
+ADD https://api.github.com/repos/quarto-dev/quarto-cli/releases quarto_releases
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
+
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
