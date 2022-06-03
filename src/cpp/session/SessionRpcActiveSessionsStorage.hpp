@@ -16,4 +16,32 @@
 #ifndef SESSION_RPC_ACTIVE_SESSIONS_STORAGE_HPP
 #define SESSION_RPC_ACTIVE_SESSIONS_STORAGE_HPP
 
+#include <core/r_util/RActiveSessionsStorage.hpp>
+
+#include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
+
+namespace rstudio {
+namespace session {
+namespace storage {
+
+class RpcActiveSessionsStorage : public core::r_util::IActiveSessionsStorage
+{
+public:
+   explicit RpcActiveSessionsStorage(const core::system::User& user);
+
+   core::Error initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties) override;
+   std::vector<std::string> listSessionIds() const override;
+   size_t getSessionCount() const  override;
+   std::shared_ptr<core::r_util::IActiveSessionStorage> getSessionStorage(const std::string& id)  const override;
+   bool hasSessionId(const std::string& sessionId)  const override;
+
+private:
+   core::system::User _user;
+};
+
+} // namespace storage
+} // namespace session
+} // namespace rstudio
+
 #endif
