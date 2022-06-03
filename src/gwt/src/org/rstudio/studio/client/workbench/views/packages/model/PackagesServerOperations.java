@@ -37,6 +37,9 @@ public interface PackagesServerOperations extends PackratServerOperations
    void isPackageLoaded(String packageName, String libName,
                         ServerRequestCallback<Boolean> requestCallback);
    
+   void getPackageHyperlinkRisk(String packageName,
+                                ServerRequestCallback<String> requestCallback);
+   
    void isPackageInstalled(String packageName,
                            String version,
                            ServerRequestCallback<Boolean> requestCallback);

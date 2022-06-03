@@ -1295,6 +1295,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, IS_PACKAGE_LOADED, params, requestCallback);
    }
 
+   public void getPackageHyperlinkRisk(
+                       String packageName,
+                       ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      sendRequest(RPC_SCOPE, GET_PACKAGE_HYPERLINK_RISK, params, requestCallback);
+   }
+
    public void isPackageInstalled(String packageName,
                                   String version,
                                   ServerRequestCallback<Boolean> requestCallback)
@@ -6628,6 +6637,7 @@ public class RemoteServer implements Server
    private static final String GET_PACKAGE_NEWS_URL = "get_package_news_url";
    private static final String GET_PACKAGE_INSTALL_CONTEXT = "get_package_install_context";
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
+   private static final String GET_PACKAGE_HYPERLINK_RISK = "get_package_hyperlink_risk";
    private static final String IS_PACKAGE_INSTALLED = "is_package_installed";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";

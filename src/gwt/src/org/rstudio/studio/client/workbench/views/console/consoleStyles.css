@@ -199,7 +199,7 @@
 
 .popupArbitraryCode {
    font-family: fixedWidthFont;
-   opacity: 0.8;
+   opacity: 0.7;
    margin-top: 5px;
    margin-left: 5px;
    margin-right: 5px;
@@ -210,6 +210,15 @@
    font-size: smaller;
    opacity: .7;
    font-style: italic;
+   margin-left: 5px;
+   margin-right: 5px;
+}
+
+.popupWarning {
+   font-size: smaller;
+   opacity: .7;
+   font-style: italic;
+   color: red;
    margin-left: 5px;
    margin-right: 5px;
 }

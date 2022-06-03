@@ -108,20 +108,9 @@ public abstract class Hyperlink
         {
             return new WebHyperlink(url, params, text, clazz);
         }
-        else if (url.startsWith("ide:command:"))
+        else if (url.startsWith("ide:run:") || url.startsWith("rstudio:run:"))
         {
-            if (url.matches("^ide:command:testthat::snapshot_(accept|review)$"))
-            {
-                return new TestthatCommandHyperlink(url, params, text, clazz);
-            }
-            else if (url.matches("^ide:command:rlang::last_(error|trace)$"))
-            {
-                return new RlangCommandHyperlink(url, params, text, clazz);
-            }
-            else 
-            {
-                return new CommandHyperlink(url, params, text, clazz);
-            }
+            return new RunHyperlink(url, params, text, clazz);
         }
         else
         {
