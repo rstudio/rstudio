@@ -15,6 +15,7 @@
 package org.rstudio.core.client.hyperlink;
 
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.studio.client.RStudioGinjector;
@@ -33,7 +34,6 @@ public class WebHyperlink extends Hyperlink {
     @Override
     public void onClick() 
     {
-        // TODO: this probably does not need to go through R
         String code = "utils::browseURL('" + url + "')";
         server_.executeRCode(code, new ServerRequestCallback<String>(){
             @Override
@@ -47,7 +47,19 @@ public class WebHyperlink extends Hyperlink {
     @Override
     public Widget getPopupContent() 
     {
-        return new Label(url);
+        VerticalPanel panel = new VerticalPanel();
+
+        Label urlLabel = new Label(url);
+        urlLabel.setStyleName(styles_.popupCode());
+        panel.add(urlLabel);
+
+        /*
+            // TODO: maybe we can show a screenshot ?
+            Frame frame = new Frame(url);
+            panel.add(frame);
+        */
+
+        return panel;
     }
     
     private SourceServerOperations server_;
