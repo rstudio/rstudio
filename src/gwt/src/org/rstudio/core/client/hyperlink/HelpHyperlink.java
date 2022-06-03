@@ -93,7 +93,6 @@ public class HelpHyperlink extends Hyperlink
     {
         return styles_.helpHyperlink();
     }
-
     
     private String topic_;
     private String pkg_;

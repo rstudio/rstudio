@@ -15,12 +15,14 @@
 package org.rstudio.core.client.hyperlink;
 
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 
 public class VignetteHyperlink extends Hyperlink 
 {
@@ -35,24 +37,45 @@ public class VignetteHyperlink extends Hyperlink
     @Override
     public void onClick() 
     {
-        String code = "print(vignette('" + topic_ + "', package = '" + pkg_ + "'))";
-        server_.executeRCode(code, new ServerRequestCallback<String>(){
-            @Override
-            public void onResponseReceived(String response) {}
-
-            @Override
-            public void onError(ServerError error) {}
-        });
+        server_.showVignette(topic_, pkg_);
     }
 
     @Override
     public Widget getPopupContent() 
     {
-        HTML label = new HTML("Vignette <b>" + topic_ + "</b> in {" + pkg_ + "}");
-        return label;
+        final VerticalPanel panel = new VerticalPanel();
+
+        HTML label = new HTML("<b>" + topic_ + "</b> {" + pkg_ + "} <hr/>");
+        label.setStyleName(styles_.popupCode());
+        panel.add(label);
+
+        server_.getVignetteTitle(topic_, pkg_, new ServerRequestCallback<String>() {
+
+            @Override
+            public void onResponseReceived(String response) {
+                VerticalPanel helpPanel = new VerticalPanel();
+                helpPanel.setStyleName(styles_.popupHelpPanel());
+                Label title = new Label(response);
+                title.setStyleName(styles_.popupHelpTitle());
+
+                helpPanel.add(title);
+                
+                panel.add(helpPanel);
+            }
+
+            @Override
+            public void onError(ServerError error) {
+                Label notFound = new Label("No vignette found for `"+topic_+"` in package {" + pkg_ + "}");
+                notFound.setStyleName(styles_.popupWarning());
+                panel.add(notFound);
+            }
+               
+        });
+        
+        return panel;
     }
     
     private String topic_;
     private String pkg_;
-    private SourceServerOperations server_;
+    private HelpServerOperations server_;
 }

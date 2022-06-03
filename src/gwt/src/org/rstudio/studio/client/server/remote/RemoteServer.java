@@ -1472,6 +1472,30 @@ public class RemoteServer implements Server
                   null);
    }
 
+   public void getVignetteTitle(String topic,
+                                String pkgName, 
+                                ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(topic));
+      params.set(1, new JSONString(pkgName));
+      sendRequest(RPC_SCOPE,
+                  GET_VIGNETTE_TITLE,
+                  params,
+                  requestCallback);
+   }
+
+   public void showVignette(String topic, String pkgName) 
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(topic));
+      params.set(1, new JSONString(pkgName));
+      sendRequest(RPC_SCOPE,
+                  SHOW_VIGNETTE,
+                  params,
+                  null);
+   }
+   
    public void search(String query,
                       ServerRequestCallback<JsArrayString> requestCallback)
    {
@@ -6652,6 +6676,8 @@ public class RemoteServer implements Server
    private static final String GET_CUSTOM_HELP = "get_custom_help";
    private static final String GET_CUSTOM_PARAMETER_HELP = "get_custom_parameter_help";
    private static final String SHOW_CUSTOM_HELP_TOPIC = "show_custom_help_topic";
+   private static final String GET_VIGNETTE_TITLE = "get_vignette_title";
+   private static final String SHOW_VIGNETTE = "show_vignette";
 
    private static final String STAT = "stat";
    private static final String IS_TEXT_FILE = "is_text_file";
