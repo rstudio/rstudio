@@ -518,7 +518,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (startClientEventService)
 
       // rpc methods
-      (socket_rpc::initialize)
       (rpc::initialize)
 #ifdef RSTUDIO_SERVER
       (server_rpc::initialize)
@@ -2015,6 +2014,11 @@ int main(int argc, char * const argv[])
                                         true); // force log dir to be under user's home directory
          }
       }
+
+      // Initialize session rpc
+      error = socket_rpc::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
 
       // initialize overlay
       error = rsession::overlay::initialize();
