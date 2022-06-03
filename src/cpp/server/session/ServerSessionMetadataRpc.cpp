@@ -33,6 +33,7 @@
 #include <server/auth/ServerAuthHandler.hpp>
 
 #include <server/session/ServerSessionRpc.hpp>
+#include <server/DBActiveSessionsStorage.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::core::r_util;
@@ -60,7 +61,14 @@ inline FilePath userDataDir(const system::User& user)
 
 inline std::unique_ptr<r_util::ActiveSessions> getActiveSessions(const system::User& user)
 {
-   return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(userDataDir(user)));
+   if (options().sessionUseFileStorage())
+      return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(userDataDir(user)));
+   else
+      return std::unique_ptr<r_util::ActiveSessions>(
+         new r_util::ActiveSessions(
+            std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::DBActiveSessionsStorage(
+               std::to_string(user.getUserId()))),
+            userDataDir(user)));
 }
 
 inline boost::shared_ptr<r_util::ActiveSession> getActiveSession(const system::User& user, const std::string& sessionId)
@@ -77,19 +85,6 @@ Error missingFieldError(
    Error error = baseErrorFun(json::errc::ParamMissing, Success(), errorLocation);
    error.addProperty("description", "Session metadata RPC request is missing required field \"" + field + "\": " + body);
    error.addProperty("field", field);
-   LOG_ERROR(error);
-   return error;
-}
-
-Error noUserIdError(
-   const BaseError& baseErrorFun,
-   const std::string& username,
-   const std::string& sessionId,
-   const ErrorLocation& errorLocation)
-{
-   Error error = baseErrorFun(json::errc::ParamMissing, Success(), errorLocation);
-   error.addProperty("description", "User " + username + " has made a request for a session " + sessionId + " without the required " + kSessionStorageUserIdField + " field.");
-   error.addProperty("sessionId", sessionId);
    LOG_ERROR(error);
    return error;
 }
@@ -146,6 +141,22 @@ Error handleWrite(
    const std::map<std::string, std::string>& values)
 {
    return getActiveSession(user, sessionId)->writeProperties(values);
+}
+
+Error handleDelete(
+   const system::User& user,
+   const std::string& sessionId)
+{
+   return getActiveSession(user, sessionId)->destroy();
+}
+
+Error handleCount(const system::User& user, size_t* pCount)
+{
+   *pCount = getActiveSessions(user)->count(
+      user.getHomePath(),
+      options().getOverlayOption("server-project-sharing") == "1");
+
+   return Success();
 }
 
 Error authorizeRequest(
@@ -265,6 +276,10 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    if (error)
       return json::setJsonRpcError(error, &pConnection->response(), true);
 
+   if ((operation != kSessionStroageReadAllOp) && !sessionOwner)
+      return json::setJsonRpcError(
+         missingFieldError(baseError, username, kSessionStorageUserIdField, ERROR_LOCATION), &pConnection->response(), true);
+
    if ((operation != kSessionStroageReadAllOp) && !rpcRequest.kwparams.hasMember(kSessionStorageIdField))
       return json::setJsonRpcError(
          missingFieldError(baseError, username, kSessionStorageIdField, ERROR_LOCATION), &pConnection->response(), true);
@@ -288,14 +303,6 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
          return json::setJsonRpcError(error, &pConnection->response(), true);
       }
 
-      if (!sessionOwner)
-      {
-         // This should be impossible because we already did validation that this field exists.
-         assert(false);
-         error = noUserIdError(baseError, username, sessionId, ERROR_LOCATION);
-         return json::setJsonRpcError(error, &pConnection->response(), true);
-      }
-
       error = handleWrite(sessionOwner.get(), sessionId, fields);
       if (error)
       {
@@ -304,9 +311,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
          return json::setJsonRpcError(error, &pConnection->response(), true);
       }
       else
-      {
          response.setResult(true);
-      }
    }
    else if (operation == kSessionStorageReadOp)
    {
@@ -320,14 +325,6 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
             err = json::errc::ParamMissing;
          error = baseError(err, error, ERROR_LOCATION);
          LOG_ERROR(error);
-         return json::setJsonRpcError(error, &pConnection->response(), true);
-      }
-
-      if (!sessionOwner)
-      {
-         // This should be impossible because we already did validation that this field exists.
-         assert(false);
-         error = noUserIdError(baseError, username, sessionId, ERROR_LOCATION);
          return json::setJsonRpcError(error, &pConnection->response(), true);
       }
 
@@ -376,6 +373,47 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
          sessionsObj.insert(kSessionStorageSessionsField, sessionArray);
          response.setResult(sessionsObj);
       }
+   }
+   else if (operation == kSessionStorageCountOp)
+   {
+      size_t count;
+      error = handleCount(sessionOwner.get(), &count);
+      if (error)
+      {
+         error = baseError(json::errc::ExecutionError, error, ERROR_LOCATION);
+         LOG_ERROR(error);
+         return json::setJsonRpcError(error, &pConnection->response(), true);
+      }
+      else
+      {
+         json::Object countObj;
+         countObj[kSessionStorageCountField] = count;
+         response.setResult(countObj);
+      }
+   }
+   else if (operation == kSessionStorageDeleteOp)
+   {
+      std::string sessionId;
+      error = json::readObject(rpcRequest.kwparams, kSessionStorageIdField, sessionId);
+      if (error)
+      {
+         json::errc::errc_t err = json::errc::ParamTypeMismatch;
+         if (json::isMissingMemberError(error))
+            err = json::errc::ParamMissing;
+         error = baseError(err, error, ERROR_LOCATION);
+         LOG_ERROR(error);
+         return json::setJsonRpcError(error, &pConnection->response(), true);
+      }
+
+      error = handleDelete(sessionOwner.get(), sessionId);
+      if (error)
+      {
+         error = baseError(json::errc::ExecutionError, error, ERROR_LOCATION);
+         LOG_ERROR(error);
+         return json::setJsonRpcError(error, &pConnection->response(), true);
+      }
+      else
+         response.setResult(true);
    }
    else 
    {
