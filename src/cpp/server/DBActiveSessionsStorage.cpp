@@ -26,8 +26,8 @@ namespace storage {
 
 using namespace server_core::database;
 
-DBActiveSessionsStorage::DBActiveSessionsStorage(const std::string& userId, const FilePath& rootStoragePath)
-   : userId_(userId), rootStoragePath_(rootStoragePath)
+DBActiveSessionsStorage::DBActiveSessionsStorage(const std::string& userId)
+   : userId_(userId)
 {
 }
 
@@ -98,8 +98,7 @@ size_t DBActiveSessionsStorage::getSessionCount() const
 
 std::shared_ptr<IActiveSessionStorage> DBActiveSessionsStorage::getSessionStorage(const std::string& id) const
 {
-   FilePath scratchPath = rootStoragePath_.completeChildPath(kSessionDirPrefix + id);
-   if(hasSessionId(id))
+   if (hasSessionId(id))
    {
       return std::make_shared<DBActiveSessionStorage>(id);
    }
@@ -115,29 +114,16 @@ bool DBActiveSessionsStorage::hasSessionId(const std::string& sessionId) const
    bool hasId = false;
    Error error = getConn(&connection);
 
-   if(!error)
+   if (!error)
    {
-      database::Query query = connection->query("SELECT * FROM active_session_metadata WHERE session_id=:id")
+      database::Query query = connection->query("SELECT count(*) FROM active_session_metadata WHERE session_id=:id")
          .withInput(sessionId);
-      database::Rowset rowset{};
-      connection->execute(query, rowset);
+      error = connection->execute(query, &hasId);
+   }
 
-      database::RowsetIterator iter = rowset.begin();
-      if(iter != rowset.end())
-      {
-         hasId = true;
-         iter++;
-         if(iter != rowset.end())
-         {
-            Error logError("Too many sessions were returned when checking for the presence of an ID", errc::TooManySessionsReturned, ERROR_LOCATION);
-            LOG_ERROR(logError);
-         }
-      }
-   }
-   else
-   {
+   if (error)
       LOG_ERROR(error);
-   }
+
    return hasId;
 }
 

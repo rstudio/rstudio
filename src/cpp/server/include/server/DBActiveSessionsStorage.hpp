@@ -32,7 +32,7 @@ using namespace core::r_util;
 class DBActiveSessionsStorage : public IActiveSessionsStorage
 {
 public:
-   explicit DBActiveSessionsStorage(const std::string& userId, const FilePath& rootStoragePath);
+   explicit DBActiveSessionsStorage(const std::string& userId);
    ~DBActiveSessionsStorage() = default;
    core::Error initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties) override;
    std::vector< std::string > listSessionIds() const override;
@@ -41,7 +41,6 @@ public:
    bool hasSessionId(const std::string& sessionId) const override;
 private:
    std::string userId_;
-   FilePath rootStoragePath_;
 };
 
 } // namespace storage
