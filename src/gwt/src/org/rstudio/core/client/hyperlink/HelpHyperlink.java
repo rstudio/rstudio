@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -77,7 +78,11 @@ public class HelpHyperlink extends Hyperlink
             }
 
             @Override
-            public void onError(ServerError error) {}
+            public void onError(ServerError error) {
+                Label notFound = new Label("No documentation found for `"+topic_+"` in package {" + pkg_ + "}");
+                notFound.setStyleName(styles_.popupWarning());
+                panel.add(notFound);
+            }
             
         });
         
