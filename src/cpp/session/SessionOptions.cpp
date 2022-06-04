@@ -603,6 +603,16 @@ void Options::resolveRsclangPath(const FilePath& resourcePath,
    resolvePath(resourcePath, pPath);
 }
 #endif
+
+// This is defined in the overlay for RSERVER configs but that's not included in all desktop configs
+#ifndef RSTUDIO_SERVER
+
+bool Options::supportsProjectSharing() const
+{
+   return false;
+}
+
+#endif
    
 } // namespace session
 } // namespace rstudio
