@@ -86,8 +86,8 @@ Error ActiveSessions::create(const std::string& project,
          id = candidateId;
    }
 
-   boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
-   std::string isoTime = boost::posix_time::to_iso_extended_string(time);
+   double now = date_time::millisecondsSinceEpoch();
+   std::string millisTime = safe_convert::numberToString(now);
 
    //Initial settings
    std::map<std::string, std::string> initialMetadata = {
@@ -95,14 +95,14 @@ Error ActiveSessions::create(const std::string& project,
       {ActiveSession::kWorkingDir, workingDir},
       {ActiveSession::kInitial, initial ? "true" : "false"},
       {ActiveSession::kRunning, "false"},
-      {ActiveSession::kLastUsed, isoTime},
-      {ActiveSession::kCreated, isoTime},
+      {ActiveSession::kLastUsed, millisTime},
+      {ActiveSession::kCreated, millisTime},
       {ActiveSession::kLaunchParameters, ""},
       {ActiveSession::kLabel, project == kProjectNone ? workingDir : project},
       {ActiveSession::kEditor, editor}};
 
    if (editor == kWorkbenchRStudio)
-      initialMetadata[ActiveSession::kLastResumed] = isoTime;
+      initialMetadata[ActiveSession::kLastResumed] = millisTime;
 
    storage_->initSessionProperties(id, initialMetadata);
 
