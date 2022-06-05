@@ -58,6 +58,7 @@ struct QuartoConfig
    std::string project_type;
    std::string project_dir;
    std::string project_output_dir;
+   std::string project_execute_dir;
    std::vector<std::string> project_formats;
    std::vector<std::string> project_bibliographies;
    core::json::Object project_editor;
@@ -92,6 +93,7 @@ core::FilePath quartoProjectConfigFile(const core::FilePath& filePath);
 void readQuartoProjectConfig(const core::FilePath& configFile,
                              std::string* pType,
                              std::string* pOutputDir = nullptr,
+                             std::string* pExecuteDir = nullptr,
                              std::vector<std::string>* pFormats = nullptr,
                              std::vector<std::string>* pBibliographies = nullptr,
                              core::json::Object* pEditor = nullptr);
