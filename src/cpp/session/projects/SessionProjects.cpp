@@ -978,7 +978,11 @@ void startup(const std::string& firstProjectPath)
 
    core::FilePath sessionTmpDir(core::system::getenv(kSessionTmpDirEnvVar));
    core::FilePath ctxFile = sessionTmpDir.completeChildPath(system::username() + "-d.ctx");
-   ctxFile.removeIfExists();
+
+   bool needsCtxFile = options().supportsProjectSharing();
+   if (needsCtxFile)
+      ctxFile.removeIfExists();
+
    if (options().sessionScope().empty())
    {
       // This is single-session mode where the project is discovered from last-project-path and other places
@@ -991,7 +995,8 @@ void startup(const std::string& firstProjectPath)
                session.project());
       s_projectId = projectId;
 
-      if (options().projectSharingEnabled())
+#ifndef _WIN32
+      if (needsCtxFile)
       {
          std::string sessionId = session.id();
          std::string sessionCtxStr = projectId.userId() + projectId.id() + ":" + sessionId;
@@ -1000,6 +1005,7 @@ void startup(const std::string& firstProjectPath)
          // This file is written by the session user and accessed by rserver so needs open read access
          ctxFile.changeFileMode(FileMode::USER_READ_WRITE_ALL_READ);
       }
+#endif
    }
    else
    {

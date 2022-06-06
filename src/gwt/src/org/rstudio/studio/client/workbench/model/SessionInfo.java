@@ -115,10 +115,6 @@ public class SessionInfo extends JavaScriptObject
       return this.scratch_dir;
    }-*/;
 
-   public final native String getTempDir() /*-{
-      return this.temp_dir;
-   }-*/;
-
    public final native JsArray<PrefLayer> getPrefs() /*-{
       if (!this.user_prefs)
          this.user_prefs = [ {} ];

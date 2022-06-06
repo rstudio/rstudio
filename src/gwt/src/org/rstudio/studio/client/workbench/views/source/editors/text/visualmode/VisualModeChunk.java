@@ -59,6 +59,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetCompilePdfHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPrefsHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetQuartoHelper;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetScopeHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.EditorBehavior;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -277,7 +278,7 @@ public class VisualModeChunk
       chunkHost_.appendChild(outputHost_);
       
       // Create the chunk toolbar
-      if (scope_ != null)
+      if (scope_ != null && isRunnableChunk(scope_))
       {
          createToolbar();
       }
@@ -472,23 +473,40 @@ public class VisualModeChunk
    public void setScope(Scope scope)
    {
       scope_ = scope;
-
-      // Update the toolbar's location, or create one if we don't have one yet
-      if (toolbar_ == null)
-      {
-         createToolbar();
-      }
-      else
-      {
-         toolbar_.setScope(scope);
-      }
       
+      if (isRunnableChunk(scope))
+      {
+         if (toolbar_ == null)
+         {
+            createToolbar();
+         }
+         else
+         {
+            toolbar_.setScope(scope);
+         }
+      }
+      else if (toolbar_ != null)
+      {
+         host_.removeChild(toolbar_.getToolbar().getElement());
+         toolbar_ = null;
+      }
+     
       // Update the chunk definition location
       if (def_ != null)
       {
          def_.setRow(scope.getEnd().getRow());
       }
    }
+   
+  
+   private boolean isRunnableChunk(Scope scope)
+   {
+      return TextEditingTargetScopeHelper.isRunnableChunk(
+         target_.getDocDisplay(),
+         scope.getPreamble().getRow()
+      );
+   }
+   
    
    /**
     * Loads a chunk output widget into the chunk.
@@ -718,6 +736,12 @@ public class VisualModeChunk
       case "javascript":
       case "ojs":
          editor.setFileType(FileTypeRegistry.JS);
+         break;
+      case "mermaid":
+         editor.setFileType(FileTypeRegistry.MERMAID);
+         break;
+      case "dot":
+         editor.setFileType(FileTypeRegistry.GRAPHVIZ);
          break;
       case "tex":
       case "latex":

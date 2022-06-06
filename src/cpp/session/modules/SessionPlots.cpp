@@ -37,6 +37,8 @@
 #include <r/RSexp.hpp>
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
+
+#include <r/session/RSessionUtils.hpp>
 #include <r/session/RGraphics.hpp>
 
 #include <session/SessionModuleContext.hpp>
@@ -55,7 +57,19 @@ namespace {
 
 // locations
 #define kGraphics "/graphics"
+
+Error getPlotTempdir(const json::JsonRpcRequest& request, 
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string tempdir;
+   Error error = r::exec::RFunction("tempdir").callUtf8(&tempdir);
+   if (error)
+      LOG_ERROR(error);
    
+   pResponse->setResult(tempdir);
+   return Success();
+}
+
 Error nextPlot(const json::JsonRpcRequest& request, 
                json::JsonRpcResponse* pResponse)
 {   
@@ -903,6 +917,7 @@ Error initialize()
    using namespace module_context;
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_plot_tempdir", getPlotTempdir))
       (bind(registerRpcMethod, "next_plot", nextPlot))
       (bind(registerRpcMethod, "previous_plot", previousPlot))
       (bind(registerRpcMethod, "remove_plot", removePlot))

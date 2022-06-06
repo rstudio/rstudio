@@ -1,6 +1,6 @@
 /*
  * RActiveSessionStorage.hpp
- *
+*
  * Copyright (C) 2022 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
@@ -31,6 +31,9 @@ namespace r_util {
       Error virtual readProperties(std::map<std::string, std::string>* pValues) = 0;
       Error virtual writeProperty(const std::string& name, const std::string& value) = 0;
       Error virtual writeProperties(const std::map<std::string, std::string>& properties) = 0;
+      Error virtual destroy() = 0;
+      Error virtual isValid(bool* pValue) = 0;
+      Error virtual isEmpty(bool* pValue) = 0;
 
    protected:
       virtual ~IActiveSessionStorage() = default;
@@ -47,8 +50,16 @@ namespace r_util {
       Error readProperties(std::map<std::string, std::string>* pValues) override;
       Error writeProperty(const std::string& name, const std::string& value) override;
       Error writeProperties(const std::map<std::string, std::string>& properties) override;
+      Error destroy() override;
+      Error isValid(bool* pValue) override;
+      Error isEmpty(bool* pValue) override;
 
    private:
+      // Scratch Path Example : ~/.local/share/rstudio/sessions/active/session-6d0bdd18
+      // This contains the properties directory, as well as susspended session data, session-persistence-state etc
+      // Baked into this path is the session id
+
+      // Properties Path Example : ~/.local/share/rstudio/sessions/active/session-6d0bdd18/properites
       FilePath scratchPath_;
       const std::string propertiesDirName_ = "properites";
 
@@ -79,13 +90,6 @@ namespace r_util {
          return fileName;
       }
    };
-
-   class ActiveSessionStorageFactory
-   {
-   public:
-      static std::shared_ptr<IActiveSessionStorage> getFileActiveSessionStorage(const FilePath& scratchPath);
-   };
-
 } // namespace r_util
 } // namespace core
 } // namespace rstudio

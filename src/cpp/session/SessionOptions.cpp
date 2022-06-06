@@ -603,6 +603,11 @@ void Options::resolveRsclangPath(const FilePath& resourcePath,
    resolvePath(resourcePath, pPath);
 }
 #endif
+
+bool Options::supportsProjectSharing() const
+{
+   return false;
+}
    
 } // namespace session
 } // namespace rstudio

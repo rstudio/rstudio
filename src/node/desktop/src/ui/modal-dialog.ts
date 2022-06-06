@@ -13,19 +13,18 @@
  *
  */
 
-import { BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow, BrowserWindowConstructorOptions, ipcMain } from 'electron';
 import { err, Expected, ok } from '../core/expected';
 import { safeError } from '../core/err';
 
 export abstract class ModalDialog<T> extends BrowserWindow {
-
   abstract onShowModal(): Promise<T>;
 
-  private readonly _widgetUrl : string;
-  private _ipcMainChannels : string[];
+  private readonly _widgetUrl: string;
+  private _ipcMainChannels: string[];
 
-  constructor(url: string, preload: string) {
-    super({
+  constructor(url: string, preload: string, parentWindow: BrowserWindow | null = null) {
+    let options: BrowserWindowConstructorOptions = {
       minWidth: 400,
       minHeight: 400,
       width: 400,
@@ -34,7 +33,13 @@ export abstract class ModalDialog<T> extends BrowserWindow {
       webPreferences: {
         preload: preload,
       },
-    });
+    };
+
+    if (parentWindow !== null) {
+      options = { ...options, parent: parentWindow, modal: true };
+    }
+
+    super(options);
 
     // initialize instance variables
     this._widgetUrl = url;
@@ -72,7 +77,6 @@ export abstract class ModalDialog<T> extends BrowserWindow {
   }
 
   async showModalImpl(): Promise<T> {
-
     // load the associated HTML
     await this.loadURL(this._widgetUrl);
 
@@ -81,6 +85,5 @@ export abstract class ModalDialog<T> extends BrowserWindow {
 
     // invoke derived class's callback and return the response
     return this.onShowModal();
-
   }
 }

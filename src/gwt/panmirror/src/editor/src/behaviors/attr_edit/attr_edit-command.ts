@@ -189,7 +189,7 @@ async function editNodeAttrs(
 function idHint(node: ProsemirrorNode, pandocExtensions: PandocExtensions) {
   if (node.type === node.type.schema.nodes.heading) {
     const unemoji = pandocExtensions.gfm_auto_identifiers;
-    const text = fragmentText(node.content, unemoji);
+    const text = `sec-${fragmentText(node.content, unemoji)}`;
 
     if (pandocExtensions.gfm_auto_identifiers) {
       return gfmAutoIdentifier(text, pandocExtensions.ascii_identifiers);

@@ -968,6 +968,7 @@ QuartoConfig quartoConfig(bool refresh)
             readQuartoProjectConfig(configFile,
                                     &s_quartoConfig.project_type,
                                     &s_quartoConfig.project_output_dir,
+                                    &s_quartoConfig.project_execute_dir,
                                     &s_quartoConfig.project_formats,
                                     &s_quartoConfig.project_bibliographies,
                                     &s_quartoConfig.project_editor);
@@ -1037,6 +1038,7 @@ json::Object quartoConfigJSON(bool refresh)
    quartoConfigJSON["project_dir"] = config.project_dir;
    quartoConfigJSON["project_type"] = config.project_type;
    quartoConfigJSON["project_output_dir"] = config.project_output_dir;
+   quartoConfigJSON["project_execute_dir"] = config.project_execute_dir;
    quartoConfigJSON["project_formats"] = json::toJsonArray(config.project_formats);
    quartoConfigJSON["project_editor"] = config.project_editor;
    return quartoConfigJSON;
@@ -1091,6 +1093,7 @@ FilePath quartoProjectConfigFile(const core::FilePath& filePath)
 void readQuartoProjectConfig(const FilePath& configFile,
                              std::string* pType,
                              std::string* pOutputDir,
+                             std::string* pExecuteDir,
                              std::vector<std::string>* pFormats,
                              std::vector<std::string>* pBibliographies,
                              json::Object* pEditor)
@@ -1126,8 +1129,12 @@ void readQuartoProjectConfig(const FilePath& configFile,
                            projValue = kQuartoProjectWebsite;
                         *pType = projValue;
                      }
-                     else if (projKey == "output-dir" && pOutputDir != nullptr)
+                     else if (projKey == "output-dir" && pOutputDir != nullptr) {
                         *pOutputDir = projValue;
+                     }
+                     else if (projKey == "execute-dir" && pExecuteDir != nullptr) {
+                        *pExecuteDir = projValue;
+                     }
                   }
                }
             }
