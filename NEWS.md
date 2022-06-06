@@ -80,6 +80,7 @@
 - Add a -G option to `rsandbox` to allow configuring the effective group of the process (#3214)
 - When resuming a suspended session with the Kubernetes Launcher Plugin, the container image that was previously being used will now be selected by default (#1520)
 - Upgrade the default version of `code-server` to 4.2.0 to resolve issue with the latest Python VS Code extension (Pro #3320)
+- JupyterLab Sessions are now configured to be run with the `rsw_jupyterlab` extension. If not globally installed, this will be auto-installed for users on their first JupyterLab session launch (Pro #3429)
 
 ### Deprecated / Removed
 
