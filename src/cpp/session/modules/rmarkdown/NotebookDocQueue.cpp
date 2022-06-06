@@ -90,11 +90,16 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
                    nullptr, // output dir
                    &executeDir);
 
-             // if the execution dir is set to 'project', infer the project root from the location
-             // of the Quarto config file and use it as the directory for execution
              if (executeDir == quarto::kQuartoExecuteDirProject)
              {
+                // if the execution dir is set to 'project', infer the project root from the location
+                // of the Quarto config file and use it as the directory for execution
                 setWorkingDir(quartoConfig.getParent().getAbsolutePath(), QuartoProjectDir);
+             }
+             else if (executeDir == quarto::kQuartoExecuteDirFile)
+             {
+                // if the execution dir is set to 'file', use the directory of the document
+                setWorkingDir(qmdPath.getParent().getAbsolutePath(), QuartoProjectDir);
              }
          }
       }
