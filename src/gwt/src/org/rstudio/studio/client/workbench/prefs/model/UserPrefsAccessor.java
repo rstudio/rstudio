@@ -2085,7 +2085,7 @@ public class UserPrefsAccessor extends Prefs
    public final static String JOBS_TAB_VISIBILITY_DEFAULT = "default";
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+    * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<Boolean> showLauncherJobsTab()
    {
@@ -2097,7 +2097,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+    * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    public PrefValue<String> launcherJobsSort()
    {
