@@ -1009,13 +1009,13 @@
         "show_launcher_jobs_tab": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench."
+            "description": "Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench."
         },
         "launcher_jobs_sort": {
             "type": "string",
             "enum": ["recorded", "state"],
             "default": "recorded",
-            "description": "How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench."
+            "description": "How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench."
         },
         "busy_detection": {
             "type": "string",

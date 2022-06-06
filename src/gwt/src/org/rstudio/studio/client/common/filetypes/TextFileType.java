@@ -425,8 +425,8 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeSubsequentChunks());
          results.add(commands.executeCurrentChunk());
          results.add(commands.executeNextChunk());
-         results.add(commands.runSelectionAsJob());
-         results.add(commands.runSelectionAsLauncherJob());
+         results.add(commands.runSelectionAsBackgroundJob());
+         results.add(commands.runSelectionAsWorkbenchJob());
       }
       if (isMarkdown())
       {
@@ -461,10 +461,10 @@ public class TextFileType extends EditableFileType
 
       if (isR())
       {
-         results.add(commands.sourceAsLauncherJob());
+         results.add(commands.sourceAsWorkbenchJob());
          results.add(commands.sourceAsJob());
-         results.add(commands.runSelectionAsJob());
-         results.add(commands.runSelectionAsLauncherJob());
+         results.add(commands.runSelectionAsBackgroundJob());
+         results.add(commands.runSelectionAsWorkbenchJob());
          results.add(commands.runDocumentFromServerDotR());
       }
 

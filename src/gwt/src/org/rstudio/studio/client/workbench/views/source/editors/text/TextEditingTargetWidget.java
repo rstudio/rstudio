@@ -505,7 +505,7 @@ public class TextEditingTargetWidget
          mgr.getSourceCommand(commands_.sourceActiveDocumentWithEcho(), column_).createMenuItem());
       sourceMenu.addSeparator();
       sourceMenu.addItem(
-         mgr.getSourceCommand(commands_.sourceAsLauncherJob(), column_).createMenuItem());
+         mgr.getSourceCommand(commands_.sourceAsWorkbenchJob(), column_).createMenuItem());
       sourceMenu.addItem(
          mgr.getSourceCommand(commands_.sourceAsJob(), column_).createMenuItem());
 

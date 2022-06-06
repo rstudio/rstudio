@@ -19,7 +19,7 @@
 - The Git/SVN pane now supports creating ED25519-encrypted SSH keys by default. Newly created RSA SSH keys will now be 4096 bits instead of 2048 to increase security (#8255)
 - Read only R and C++ files (marked by "do not edit by hand") are ignored by the fuzzy file finder (#10912)
 - Linux: For compatibility with newer versions of glibc (>= 2.34), the seccomp filter sandbox is disabled. See https://chromium.googlesource.com/chromium/src/+/0e94f26e8/docs/linux_sandboxing.md#the-sandbox-1 for more details.
-- Changed "Jobs" tab in IDE to "Local Jobs"
+- Changed "Jobs" tab in IDE to "Background Jobs" (#11296)
 - The fuzzy finder shows `test_that()` calls when the search term starts with "t "
 - Calls to test_that() appear in the source file outline (#11082)
 - Windows: Update embedded libclang to 13.0.1 (#11186)

@@ -6175,9 +6175,9 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void clearJobs(ServerRequestCallback<Void> callback)
+   public void clearBackgroundJobs(ServerRequestCallback<Void> callback)
    {
-      sendRequest(RPC_SCOPE, "clear_jobs", callback);
+      sendRequest(RPC_SCOPE, "clear_background_jobs", callback);
    }
 
    @Override

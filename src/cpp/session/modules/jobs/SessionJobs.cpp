@@ -382,10 +382,10 @@ Error runScriptJob(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error clearJobs(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+Error clearBackgroundJobs(const json::JsonRpcRequest& request,
+                          json::JsonRpcResponse* pResponse)
 {
-   removeCompletedLocalJobs();
+   removeCompletedBackgroundJobs();
    return Success();
 }
 
@@ -439,7 +439,7 @@ Error executeJobAction(const json::JsonRpcRequest& request,
 
 void onSuspend(const r::session::RSuspendOptions&, core::Settings*)
 {
-   removeAllLocalJobs();
+   removeAllBackgroundJobs();
 }
 
 void onResume(const Settings& settings)
@@ -457,7 +457,7 @@ void onClientInit()
 
 void onShutdown(bool terminatedNormally)
 {
-   removeAllLocalJobs();
+   removeAllBackgroundJobs();
 }
 
 } // anonymous namespace
@@ -469,8 +469,8 @@ core::json::Object jobState()
 
 bool isSuspendable()
 {
-   // don't suspend while we're running local jobs
-   return !localJobsRunning();
+   // don't suspend while we're running background jobs
+   return !backgroundJobsRunning();
 }
 
 core::Error initialize()
@@ -502,7 +502,7 @@ core::Error initialize()
       (bind(module_context::registerRpcMethod, "job_output", jobOutput))
       (bind(module_context::registerRpcMethod, "set_job_listening", setJobListening))
       (bind(module_context::registerRpcMethod, "run_script_job", runScriptJob))
-      (bind(module_context::registerRpcMethod, "clear_jobs", clearJobs))
+      (bind(module_context::registerRpcMethod, "clear_background_jobs", clearBackgroundJobs))
       (bind(module_context::registerRpcMethod, "execute_job_action", executeJobAction))
       (bind(module_context::sourceModuleRFile, "SessionJobs.R"));
 

@@ -45,7 +45,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
       userPrefs_ = userPrefs;
       list_ = list;
 
-      toolbar_ = new Toolbar(constants_.jobsTabLabel());
+      toolbar_ = new Toolbar(constants_.backgroundJobsTabLabel());
       
       allJobs_ = new ToolbarButton(
             ToolbarButton.NoText,
@@ -101,7 +101,7 @@ public class JobsPaneWidgets implements JobsPaneOperations
       toolbar_.removeAllWidgets();
       toolbar_.addLeftWidget(startButton_ = commands_.startJob().createToolbarButton());
       toolbar_.addLeftSeparator();
-      toolbar_.addLeftWidget(commands_.clearJobs().createToolbarButton());
+      toolbar_.addLeftWidget(commands_.clearBackgroundJobs().createToolbarButton());
       progress_ = null;
    }
    

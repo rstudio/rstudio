@@ -1017,9 +1017,9 @@ public class Application implements ApplicationEventHandlers
          commands_.loadServerHome().remove();
       }
 
-      if (!sessionInfo.getLauncherJobsEnabled())
+      if (!sessionInfo.getWorkbenchJobsEnabled())
       {
-         removeJobLauncherCommands();
+         removeWorkbenchJobCommands();
       }
 
       // only enable suspendSession() in devmode
@@ -1314,17 +1314,17 @@ public class Application implements ApplicationEventHandlers
       commands_.projectMru14().remove();
     }
 
-   private void removeJobLauncherCommands()
+   private void removeWorkbenchJobCommands()
    {
-      // we will not remove the launcher commands if we have session servers defined
+      // we will not remove the workbench job commands if we have session servers defined
       Command removeCommands = () ->
       {
-         commands_.startLauncherJob().remove();
-         commands_.sourceAsLauncherJob().remove();
-         commands_.runSelectionAsLauncherJob().remove();
-         commands_.activateLauncherJobs().remove();
-         commands_.sortLauncherJobsRecorded().remove();
-         commands_.sortLauncherJobsState().remove();
+         commands_.startWorkbenchJob().remove();
+         commands_.sourceAsWorkbenchJob().remove();
+         commands_.runSelectionAsWorkbenchJob().remove();
+         commands_.activateWorkbenchJobs().remove();
+         commands_.sortWorkbenchJobsRecorded().remove();
+         commands_.sortWorkbenchJobsState().remove();
       };
 
       if (Desktop.hasDesktopFrame())
