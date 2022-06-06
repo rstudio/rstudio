@@ -904,6 +904,9 @@ const char* const kQuartoProjectWebsite = "website";
 const char* const kQuartoProjectSite = "site"; // 'website' used to be 'site'
 const char* const kQuartoProjectBook = "book";
 
+// possible values for the execute-dir project option
+const char* const kQuartoExecuteDirProject = "project";
+const char* const kQuartoExecuteDirFile = "file";
 
 QuartoConfig quartoConfig(bool refresh)
 {

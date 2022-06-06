@@ -21,6 +21,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/SessionQuarto.hpp>
 
 using namespace rstudio::core;
 using namespace boost::placeholders;
@@ -73,7 +74,35 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
       // precedence
       setWorkingDir(docWorkingDir, SetupChunkDir);
    }
-   else if (!workingDir.empty())
+   else if (!docPath_.empty())
+   {
+      // if this is a Quarto document, check to see if the associated project configuration file (if
+      // present) specifies a working directory for computations
+      FilePath qmdPath = module_context::resolveAliasedPath(docPath_);
+      if (qmdPath.hasExtensionLowerCase(".qmd"))
+      {
+         FilePath quartoConfig = quarto::quartoProjectConfigFile(qmdPath);
+         if (!quartoConfig.isEmpty())
+         {
+             std::string executeDir;
+             quarto::readQuartoProjectConfig(quartoConfig,
+                   nullptr, // type
+                   nullptr, // output dir
+                   &executeDir);
+
+             // if the execution dir is set to 'project', infer the project root from the location
+             // of the Quarto config file and use it as the directory for execution
+             if (executeDir == quarto::kQuartoExecuteDirProject)
+             {
+                setWorkingDir(quartoConfig.getParent().getAbsolutePath(), QuartoProjectDir);
+             }
+         }
+      }
+   }
+
+   // if no working directory has been specified yet (still at defaults) and a global directory was
+   // supplied, use it
+   if (getWorkingDirSource() == DefaultDir && !workingDir.empty())
    {
       // working directory given by IDE (current dir or project dir)
       setWorkingDir(workingDir, GlobalDir);
