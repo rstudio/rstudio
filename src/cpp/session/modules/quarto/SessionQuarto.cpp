@@ -1216,47 +1216,47 @@ void readQuartoProjectConfig(const FilePath& configFile,
 // Returns an empty FilePath if no directory is specified.
 FilePath getQuartoExecutionDir(const std::string& docPath)
 {
-    // Ensure we have a path to work with (an empty string will resolve to the home directory below)
-    if (docPath.empty())
+   // Ensure we have a path to work with (an empty string will resolve to the home directory below)
+   if (docPath.empty())
+   {
+      return FilePath();
+   }
+
+   // Resolve path, and ensure the document is a Quarto file
+   FilePath qmdPath = module_context::resolveAliasedPath(docPath);
+   if (!qmdPath.hasExtensionLowerCase(".qmd"))
+   {
+      return FilePath();
+   }
+
+   // Find the Quarto configuration file associated with this document
+   FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
+   if (quartoConfig.isEmpty())
+   {
+      return FilePath();
+   }
+
+   // Read the Quarto configuration file
+   std::string executeDir;
+   quarto::readQuartoProjectConfig(quartoConfig,
+            nullptr, // type
+            nullptr, // output dir
+            &executeDir);
+
+    if (executeDir == quarto::kQuartoExecuteDirProject)
     {
-        return FilePath();
+       // If the execution dir is set to 'project', infer the project root from the location
+       // of the Quarto config file and use it as the directory for execution
+       return quartoConfig.getParent();
+    }
+    else if (executeDir == quarto::kQuartoExecuteDirFile)
+    {
+       // If the execution dir is set to 'file', use the directory of the document
+       return qmdPath.getParent();
     }
 
-    // Resolve path, and ensure the document is a Quarto file
-    FilePath qmdPath = module_context::resolveAliasedPath(docPath);
-    if (!qmdPath.hasExtensionLowerCase(".qmd"))
-    {
-        return FilePath();
-    }
-
-    // Find the Quarto configuration file associated with this document
-    FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
-    if (quartoConfig.isEmpty())
-    {
-        return FilePath();
-    }
-
-    // Read the Quarto configuration file
-    std::string executeDir;
-    quarto::readQuartoProjectConfig(quartoConfig,
-             nullptr, // type
-             nullptr, // output dir
-             &executeDir);
-
-     if (executeDir == quarto::kQuartoExecuteDirProject)
-     {
-         // If the execution dir is set to 'project', infer the project root from the location
-         // of the Quarto config file and use it as the directory for execution
-         return quartoConfig.getParent();
-     }
-     else if (executeDir == quarto::kQuartoExecuteDirFile)
-     {
-         // If the execution dir is set to 'file', use the directory of the document
-         return qmdPath.getParent();
-     }
-
-     // In all other cases, treat the execution directory as unspecified
-     return FilePath();
+    // In all other cases, treat the execution directory as unspecified
+    return FilePath();
 }
 
 } // namespace quarto
