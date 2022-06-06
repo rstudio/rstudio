@@ -74,6 +74,7 @@
 - Fix opening a remote session via downloaded rdprsp file in Mac Desktop Pro when it (RDP) is already open (rstudio-pro#3291)
 - Fixed several error marker issues in visual mode where they did not display (#10949 #10483)
 - Allow Jupyter and VScode sessions to be renamed from the homepage (rstudio-pro#1686)
+- Fixed a user-facing error and added logging when the a session fails to launch due to a misconfigured launcher (rstudio-pro#1684)
 
 ### RStudio Workbench
 
