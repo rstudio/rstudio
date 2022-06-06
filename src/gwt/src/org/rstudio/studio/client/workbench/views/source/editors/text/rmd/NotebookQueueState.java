@@ -455,6 +455,16 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
       
       return unit;
    }
+
+   /**
+    * Calculate string length based on Unicode code points. This is a low-effort workaround
+    * to calculating length on strings that include non-BMP characters like emojis.
+    * @param text input string
+    * @return the string length based on atomic parts of text
+    */
+   private native int codePointLength(String text) /*-{
+      return Array.from(text).length;
+   }-*/;
    
    private NotebookExecRange getNotebookExecRange(Scope scope, Range range)
    {
@@ -470,13 +480,14 @@ public class NotebookQueueState implements NotebookRangeExecutedEvent.Handler,
            row++)
       {
          String line = docDisplay_.getLine(row);
-         for (int col = 0; col <= line.length(); col++)
+         int lineLength = codePointLength(line);
+         for (int col = 0; col <= lineLength; col++)
          {
             if (startPos.getRow() == row && startPos.getColumn() == col)
             {
                start = pos;
             }
-            else if (endPos.getRow() == row && endPos.getColumn() == col)
+            else if (endPos.getRow() == row && (endPos.getColumn() == col || col == lineLength))
             {
                end = pos;
                break;
