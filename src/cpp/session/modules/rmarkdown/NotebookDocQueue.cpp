@@ -74,34 +74,12 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
       // precedence
       setWorkingDir(docWorkingDir, SetupChunkDir);
    }
-   else if (!docPath_.empty())
+   else
    {
-      // if this is a Quarto document, check to see if the associated project configuration file (if
-      // present) specifies a working directory for computations
-      FilePath qmdPath = module_context::resolveAliasedPath(docPath_);
-      if (qmdPath.hasExtensionLowerCase(".qmd"))
+      FilePath qmdExecutionPath = quarto::getQuartoExecutionDir(docPath_);
+      if (!qmdExecutionPath.isEmpty())
       {
-         FilePath quartoConfig = quarto::quartoProjectConfigFile(qmdPath);
-         if (!quartoConfig.isEmpty())
-         {
-             std::string executeDir;
-             quarto::readQuartoProjectConfig(quartoConfig,
-                   nullptr, // type
-                   nullptr, // output dir
-                   &executeDir);
-
-             if (executeDir == quarto::kQuartoExecuteDirProject)
-             {
-                // if the execution dir is set to 'project', infer the project root from the location
-                // of the Quarto config file and use it as the directory for execution
-                setWorkingDir(quartoConfig.getParent().getAbsolutePath(), QuartoProjectDir);
-             }
-             else if (executeDir == quarto::kQuartoExecuteDirFile)
-             {
-                // if the execution dir is set to 'file', use the directory of the document
-                setWorkingDir(qmdPath.getParent().getAbsolutePath(), QuartoProjectDir);
-             }
-         }
+         setWorkingDir(qmdExecutionPath.getAbsolutePath(), QuartoProjectDir);
       }
    }
 

@@ -102,6 +102,8 @@ void readQuartoProjectConfig(const core::FilePath& configFile,
 
 core::json::Value quartoXRefIndex();
 
+core::FilePath getQuartoExecutionDir(const std::string& docPath);
+
 } // namespace quarto
 } // namespace session
 } // namespace rstudio
