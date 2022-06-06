@@ -99,6 +99,7 @@ Error ActiveSessions::create(const std::string& project,
       {ActiveSession::kCreated, millisTime},
       {ActiveSession::kLaunchParameters, ""},
       {ActiveSession::kLabel, project == kProjectNone ? workingDir : project},
+      {ActiveSession::kActivityState, kActivityStateLaunching},
       {ActiveSession::kEditor, editor}};
 
    if (editor == kWorkbenchRStudio)
