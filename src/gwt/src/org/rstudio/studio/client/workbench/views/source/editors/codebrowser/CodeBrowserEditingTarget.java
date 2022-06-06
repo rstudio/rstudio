@@ -269,13 +269,13 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Handler
    void onRunSelectionAsBackgroundJob()
    {
-      codeExecution_.runSelectionAsJob(false /*workbenchJob*/);
+      codeExecution_.runSelectionAsJob(false /*isWorkbenchJob*/);
    }
 
    @Handler
    void onRunSelectionAsWorkbenchJob()
    {
-      codeExecution_.runSelectionAsJob(true /*workbenchJob*/);
+      codeExecution_.runSelectionAsJob(true /*isWorkbenchJob*/);
    }
 
    @Handler

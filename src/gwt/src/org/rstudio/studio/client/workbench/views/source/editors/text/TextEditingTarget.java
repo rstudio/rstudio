@@ -5244,7 +5244,7 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.runSelectionAsJob(false /*workbenchJob*/);
+         codeExecution_.runSelectionAsJob(false /*isWorkbenchJob*/);
       });
    }
 
@@ -5253,7 +5253,7 @@ public class TextEditingTarget implements
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.runSelectionAsJob(true /*workbenchJob*/);
+         codeExecution_.runSelectionAsJob(true /*isWorkbenchJob*/);
       });
    }
 

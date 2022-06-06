@@ -177,7 +177,7 @@ public class EditingTargetCodeExecution
             false);
    }
    
-   public void runSelectionAsJob(boolean workbenchJob)
+   public void runSelectionAsJob(boolean isWorkbenchJob)
    {
       Range selectionRange = docDisplay_.getSelectionRange();
       boolean noSelection = selectionRange.isEmpty();
@@ -188,7 +188,7 @@ public class EditingTargetCodeExecution
       }
       String code = codeExtractor_.extractCode(docDisplay_, selectionRange);
       String targetPath = target_ == null ? null : target_.getPath();
-      if (workbenchJob)
+      if (isWorkbenchJob)
          events_.fireEvent(new LauncherJobRunSelectionEvent(targetPath, code));
       else
          events_.fireEvent(new JobRunSelectionEvent(targetPath, code));
