@@ -75,6 +75,7 @@
 - Fixed several error marker issues in visual mode where they did not display (#10949 #10483)
 - Allow Jupyter and VScode sessions to be renamed from the homepage (rstudio-pro#1686)
 - Fixed a user-facing error and added logging when the a session fails to launch due to a misconfigured launcher (rstudio-pro#1684)
+- Fixed executing incorrect R code chunk in RMD files when non-BMP Unicode characters were used (#10632)
 
 ### RStudio Workbench
 
