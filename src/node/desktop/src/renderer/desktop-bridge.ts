@@ -391,6 +391,7 @@ export function getDesktopBridge() {
       const webcontents = webContents.getAllWebContents();
 
       if (webcontents.length) {
+        path = path.replaceAll('\\', '\\\\').replaceAll('"', '\\"').replaceAll('\n', '\\n');
         webcontents[0]
           .executeJavaScript(`window.desktopHooks.openFile("${path}")`)
           .catch((error: unknown) => logger().logError(error));

@@ -2,7 +2,7 @@
   "compilerOptions": {
     "incremental": true,
     "module": "commonjs",
-    "target": "es2020",
+    "target": "es2021",
     "sourceMap": true,
     "removeComments": true,
     "baseUrl": ".",
@@ -13,7 +13,7 @@
     "paths": {
       "*": ["node_modules/*"]
     },
-    "lib": ["es2020", "DOM"],
+    "lib": ["es2021", "DOM"],
     "resolveJsonModule": true
   },
   "include": ["src/**/*", "test/**/*"],
