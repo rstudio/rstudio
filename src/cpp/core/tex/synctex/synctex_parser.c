@@ -2857,7 +2857,7 @@ return_on_error:
 	return 3;	/*	Bad parameter.	*/
 }
 
-/*	Opens the ouput file, taking into account the eventual build_directory.
+/*	Opens the output file, taking into account the eventual build_directory.
  *	0 on success, non 0 on error. */
 int _synctex_open(const char * output, const char * build_directory, char ** synctex_name_ref, gzFile * file_ref, synctex_bool_t add_quotes, synctex_io_mode_t * io_mode_ref) {
 #	define synctex_name (*synctex_name_ref)
@@ -2936,7 +2936,7 @@ synctex_scanner_t synctex_scanner_parse(synctex_scanner_t scanner) {
 	scanner->pre_unit = 8192;
 	scanner->pre_x_offset = scanner->pre_y_offset = 578;
 	/*  initialize the offset with a fake unprobable value,
-	 *  If there is a post scriptum section, this value will be overriden by the real life value */
+	 *  If there is a post scriptum section, this value will be overridden by the real life value */
 	scanner->x_offset = scanner->y_offset = 6.027e23f;
 #   define DEFINE_synctex_scanner_class(NAME)\
 	scanner->class[synctex_node_type_##NAME] = synctex_class_##NAME;\
@@ -3561,7 +3561,7 @@ int synctex_display_query(synctex_scanner_t scanner,const char * name,int line,i
 				start_ref = (synctex_node_t *)SYNCTEX_START;
 				end_ref   = (synctex_node_t *)SYNCTEX_START;
 next_end:
-				end_ref += 1; /*  we allways have start_ref<= end_ref*/
+				end_ref += 1; /*  we always have start_ref<= end_ref*/
 				if (end_ref < (synctex_node_t *)SYNCTEX_END) {
 					node = *end_ref;
 					while ((node = SYNCTEX_PARENT(node))) {
@@ -3773,7 +3773,7 @@ int _synctex_point_h_distance(synctex_point_t hitPoint, synctex_node_t node, syn
 		int min,med,max;
 		switch(node->class->type) {
 			/*  The distance between a point and a box is special.
-			 *  It is not the euclidian distance, nor something similar.
+			 *  It is not the euclidean distance, nor something similar.
 			 *  We have to take into account the particular layout,
 			 *  and the box hierarchy.
 			 *  Given a box, there are 9 regions delimited by the lines of the edges of the box.
@@ -3791,7 +3791,7 @@ int _synctex_point_h_distance(synctex_point_t hitPoint, synctex_node_t node, syn
 				/*  getting the box bounds, taking into account negative width, height and depth. */
 				min = visible?SYNCTEX_HORIZ_V(node):SYNCTEX_HORIZ(node);
 				max = min + (visible?SYNCTEX_ABS_WIDTH_V(node):SYNCTEX_ABS_WIDTH(node));
-				/*  We allways have min <= max */
+				/*  We always have min <= max */
 				if (hitPoint.h<min) {
 					return min - hitPoint.h; /*  regions 1+4+7, result is > 0 */
 				} else if (hitPoint.h>max) {
@@ -3807,7 +3807,7 @@ int _synctex_point_h_distance(synctex_point_t hitPoint, synctex_node_t node, syn
 				 *  For these boxes, no visible dimension available */
 				min = SYNCTEX_HORIZ(node);
 				max = min + SYNCTEX_ABS_WIDTH(node);
-				/*  We allways have min <= max */
+				/*  We always have min <= max */
 				if (hitPoint.h<min) {
 					return min - hitPoint.h; /*  regions 1+4+7, result is > 0 */
 				} else if (hitPoint.h>max) {
@@ -3876,7 +3876,7 @@ int _synctex_point_v_distance(synctex_point_t hitPoint, synctex_node_t node,sync
 		int min,max;
 		switch(node->class->type) {
 			/*  The distance between a point and a box is special.
-			 *  It is not the euclidian distance, nor something similar.
+			 *  It is not the euclidean distance, nor something similar.
 			 *  We have to take into account the particular layout,
 			 *  and the box hierarchy.
 			 *  Given a box, there are 9 regions delimited by the lines of the edges of the box.
@@ -3895,7 +3895,7 @@ int _synctex_point_v_distance(synctex_point_t hitPoint, synctex_node_t node,sync
 				min = SYNCTEX_VERT_V(node);
 				max = min + SYNCTEX_ABS_DEPTH_V(node);
 				min -= SYNCTEX_ABS_HEIGHT_V(node);
-				/*  We allways have min <= max */
+				/*  We always have min <= max */
 				if (hitPoint.v<min) {
 					return min - hitPoint.v; /*  regions 1+2+3, result is > 0 */
 				} else if (hitPoint.v>max) {
@@ -3911,7 +3911,7 @@ int _synctex_point_v_distance(synctex_point_t hitPoint, synctex_node_t node,sync
 				min = SYNCTEX_VERT(node);
 				max = min + SYNCTEX_ABS_DEPTH(node);
 				min -= SYNCTEX_ABS_HEIGHT(node);
-				/*  We allways have min <= max */
+				/*  We always have min <= max */
 				if (hitPoint.v<min) {
 					return min - hitPoint.v; /*  regions 1+2+3, result is > 0 */
 				} else if (hitPoint.v>max) {
@@ -3967,7 +3967,7 @@ int _synctex_node_distance_to_point(synctex_point_t hitPoint, synctex_node_t nod
 		int minH,maxH,minV,maxV;
 		switch(node->class->type) {
 			/*  The distance between a point and a box is special.
-			 *  It is not the euclidian distance, nor something similar.
+			 *  It is not the euclidean distance, nor something similar.
 			 *  We have to take into account the particular layout,
 			 *  and the box hierarchy.
 			 *  Given a box, there are 9 regions delimited by the lines of the edges of the box.

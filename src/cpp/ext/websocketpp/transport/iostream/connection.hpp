@@ -416,7 +416,7 @@ protected:
         m_reading = true;
     }
 
-    /// Asyncronous Transport Write
+    /// Asynchronous Transport Write
     /**
      * Write len bytes in buf to the output method. Call handler to report
      * success or failure. handler may or may not be called during async_write,
@@ -457,7 +457,7 @@ protected:
         handler(ec);
     }
 
-    /// Asyncronous Transport Write (scatter-gather)
+    /// Asynchronous Transport Write (scatter-gather)
     /**
      * Write a sequence of buffers to the output method. Call handler to report
      * success or failure. handler may or may not be called during async_write,

@@ -78,7 +78,7 @@
 		</dict>
 		<dict>
 			<key>name</key>
-			<string>Class inheritence</string>
+			<string>Class inheritance</string>
 			<key>scope</key>
 			<string>entity.other.inherited-class</string>
 			<key>settings</key>
