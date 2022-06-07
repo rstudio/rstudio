@@ -2297,18 +2297,19 @@ assign(x = ".rs.acCompletionTypes",
       # NOTE: For Markdown link completions, we overload the meaning of the
       # function call string here, and use it as a signal to generate paths
       # relative to the R markdown path.
-      isRmd <- .rs.endsWith(tolower(filePath), ".rmd")
+      isNotebook <- .rs.endsWith(tolower(filePath), ".rmd") ||
+                    .rs.endsWith(tolower(filePath), ".qmd")
       
       path <- NULL
       
       # if in an Rmd file, ask it for its desired working dir (can be changed
       # with the knitr root.dir option)
-      if (isRmd)
+      if (isNotebook)
       {
-         path <- .Call("rs_getRmdWorkingDir", filePath, documentId)
+         path <- .Call("rs_getNotebookWorkingDir", filePath, documentId)
       }
       
-      if (is.null(path) && isRmd)
+      if (is.null(path) && isNotebook)
       {
          # for R Markdown documents without an explicit working dir,
          # use preferences instead

@@ -36,12 +36,14 @@ namespace modules {
 namespace rmarkdown {
 namespace notebook {
 
-// possible sources for specifying the working directory in a notebook execution queue
+// possible sources for specifying the working directory in a notebook execution queue, in
+// increasing order of precedence/specificity
 enum WorkingDirSource
 {
-   DefaultDir    = 0,    // working directory was unspecified (default)
-   GlobalDir     = 1,    // working dir was specified by the IDE (globally)
-   SetupChunkDir = 2     // working dir was specified by the doc's setup chunk
+   DefaultDir       = 0,    // working directory was unspecified (default)
+   GlobalDir        = 1,    // working dir was specified by the IDE (globally)
+   QuartoProjectDir = 2,    // working dir was specified in Quarto project config (project level)
+   SetupChunkDir    = 3     // working dir was specified by the doc's setup chunk (doc level)
 };
 
 class NotebookDocQueue : boost::noncopyable
