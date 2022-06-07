@@ -131,8 +131,4 @@ public abstract class Hyperlink
     private final HyperlinkPopupPanel popup_;
 
     private static HyperlinkResources RES = HyperlinkResources.INSTANCE;
-    static {
-        RES.hyperlinkStyles().ensureInjected();
-    }
-
 }
