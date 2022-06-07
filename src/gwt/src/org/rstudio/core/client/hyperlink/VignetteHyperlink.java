@@ -22,7 +22,6 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpInfoPopupPanelResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 
@@ -31,8 +30,17 @@ public class VignetteHyperlink extends Hyperlink
     public VignetteHyperlink(String url, String params, String text, String clazz) 
     {
         super(url, params, text, clazz);
-        topic_ = params_.get("topic");
-        pkg_ = params_.get("package");
+        if (url.contains(":vignette:"))
+        {
+            String[] splat = url.replaceFirst("^.*vignette:", "").split("::");
+            pkg_ = splat[0];
+            topic_ = splat[1];
+        }
+        else 
+        {
+            topic_ = params_.get("topic");
+            pkg_ = params_.get("package");
+        }
         server_ = RStudioGinjector.INSTANCE.getServer();
     }
 

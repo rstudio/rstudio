@@ -32,8 +32,17 @@ public class HelpHyperlink extends Hyperlink
     public HelpHyperlink(String url, String params, String text, String clazz) 
     {
         super(url, params, text, clazz);
-        topic_ = params_.get("topic");
-        pkg_ = params_.get("package");
+        if (url.contains(":help:"))
+        {
+            String[] splat = url.replaceFirst("^.*help:", "").split("::");
+            pkg_ = splat[0];
+            topic_ = splat[1];
+        }
+        else 
+        {
+            topic_ = params_.get("topic");
+            pkg_ = params_.get("package");
+        }
         server_ = RStudioGinjector.INSTANCE.getServer();
         helpAvailable_ = false;
     }
