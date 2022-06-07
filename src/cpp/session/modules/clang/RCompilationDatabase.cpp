@@ -1159,6 +1159,10 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
 {
    std::vector<std::string> args;
    
+   // ask Eigen not to try to vectorize, since that involves
+   // including intrinsics that aren't compatible with libclang
+   args.push_back("-DEIGEN_DONT_VECTORIZE");
+
 #ifdef _WIN32
    // add built-in clang compiler headers
    // built-in headers are not required with Rtools40 or newer
@@ -1173,10 +1177,6 @@ std::vector<std::string> RCompilationDatabase::baseCompilationArgs(bool isCpp) c
    // an installation of Visual Studio (if available), and those headers
    // may not be compatible with the Rtools headers
    args.push_back("-nostdinc");
-
-   // ask Eigen not to try to vectorize, since that involves
-   // including intrinsics that aren't compatible with libclang
-   args.push_back("-DEIGEN_DONT_VECTORIZE");
 
    // add Rtools arguments
    auto rtInfo = rToolsInfo();
