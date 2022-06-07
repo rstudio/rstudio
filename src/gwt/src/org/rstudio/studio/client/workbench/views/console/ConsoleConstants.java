@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.console;
 
-import com.google.gwt.i18n.client.Messages.DefaultMessage;
-
 public interface ConsoleConstants extends com.google.gwt.i18n.client.Messages {
 
     /**
