@@ -60,7 +60,7 @@ SEXP rs_getNotebookWorkingDir(SEXP notebookFileSEXP, SEXP docIdSEXP)
    {
       dir = module_context::resolveAliasedPath(workingDir);
    }
-   else
+   else if (quarto::docIsQuarto(docId))
    {
       // if this is a Quarto document, attempt to look up its desired
       // working directory that way (returns an empty FilePath if not
