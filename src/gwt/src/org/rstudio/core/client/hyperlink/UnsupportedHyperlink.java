@@ -32,9 +32,7 @@ public class UnsupportedHyperlink extends Hyperlink
     }
 
     @Override
-    public void onClick() {
-        // nothing
-    }
+    public void onClick() {}
 
     @Override
     public Widget getPopupContent() {
@@ -43,11 +41,7 @@ public class UnsupportedHyperlink extends Hyperlink
         Label urlLabel = new Label(url);
         urlLabel.setStyleName(styles_.popupArbitraryCode());
 
-        Label title =  new Label("Unsupported hyperlink");
-        title.setStyleName(styles_.popupWarning());
-
         panel.add(urlLabel);
-        panel.add(title);
         return panel;
     }
 }
