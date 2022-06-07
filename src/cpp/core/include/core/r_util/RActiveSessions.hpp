@@ -78,6 +78,8 @@ static const std::string kActivityStateRunning = "running";
 static const std::string kActivityStateSaved = "saved";
 // Session marks itself finished
 static const std::string kActivityStateEnded = "ended";
+// Request to quit/shutdown job launcher session has been received - waiting for job status "Finished" to destroy
+static const std::string kActivityStateDestroyPending = "destroy_pending";
 
 // Exited states - job/process is not running
 static const std::string kActivityStateSuspended = "suspended";
@@ -137,18 +139,20 @@ public:
    // The rsession has marked itself as saved/ended or the process is exited
    static bool isSessionEndedState(const std::string& state)
    {
-      return isExitedState(state) || state == kActivityStateEnded || state == kActivityStateSaved;
+      return isExitedState(state) || state == kActivityStateEnded || state == kActivityStateSaved || state == kActivityStateDestroyPending;
    }
 
    static bool isTransitionState(const std::string& state)
    {
-      return state == kActivityStateSuspending || state == kActivityStateShuttingDown || state == kActivityStateQuitting || state == kActivityStateResuming;
+      return state == kActivityStateSuspending || state == kActivityStateShuttingDown || state == kActivityStateQuitting ||
+             state == kActivityStateResuming || state == kActivityStateDestroyPending;
    }
 
    bool empty() const
    { 
       bool empty = true;
-      storage_->isEmpty(&empty);
+      if (storage_)
+         storage_->isEmpty(&empty);
       return empty;
    }
 
@@ -494,6 +498,12 @@ public:
       if (!scratchPath_.exists())
       {
          LOG_DEBUG_MESSAGE("ActiveSession validation failed: " + scratchPath_.getAbsolutePath() + " not accessible to the session user");
+         return false;
+      }
+
+      if (empty())
+      {
+         LOG_DEBUG_MESSAGE("ActiveSession validation failed on empty session");
          return false;
       }
 

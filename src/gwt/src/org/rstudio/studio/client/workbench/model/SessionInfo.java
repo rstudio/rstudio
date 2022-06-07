@@ -115,10 +115,6 @@ public class SessionInfo extends JavaScriptObject
       return this.scratch_dir;
    }-*/;
 
-   public final native String getTempDir() /*-{
-      return this.temp_dir;
-   }-*/;
-
    public final native JsArray<PrefLayer> getPrefs() /*-{
       if (!this.user_prefs)
          this.user_prefs = [ {} ];
@@ -549,8 +545,8 @@ public class SessionInfo extends JavaScriptObject
       return this.job_state;
    }-*/;
 
-   public final native boolean getLauncherJobsEnabled() /*-{
-      return this.launcher_jobs_enabled;
+   public final native boolean getWorkbenchJobsEnabled() /*-{
+      return this.workbench_jobs_enabled;
    }-*/;
 
    public final native boolean getShowHelpHome() /*-{

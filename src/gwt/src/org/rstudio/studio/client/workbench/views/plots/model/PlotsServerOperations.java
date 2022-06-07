@@ -34,6 +34,8 @@ public interface PlotsServerOperations
                            int height, 
                            boolean attachment);
    
+   void getPlotTempdir(ServerRequestCallback<String> requestCallback);
+   
    void nextPlot(ServerRequestCallback<Void> requestCallback);
    void previousPlot(ServerRequestCallback<Void> requestCallback);
    

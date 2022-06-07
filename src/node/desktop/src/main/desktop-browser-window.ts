@@ -64,6 +64,10 @@ export interface WindowConstructorOptions {
 
   /** Attach to this `BrowserWindow` instead of creating a new one */
   existingWindow?: BrowserWindow;
+
+  /** Skip locale cookie detection (for unit tests; otherwise we get
+   * warnings about Possible EventEmitter memory leak on [cookies]) */
+  skipLocaleDetection?: boolean;
 }
 
 /**
@@ -91,6 +95,7 @@ export class DesktopBrowserWindow extends EventEmitter {
     this.options.adjustTitle = this.options.adjustTitle ?? false;
     this.options.autohideMenu = this.options.autohideMenu ?? false;
     this.options.allowExternalNavigate = this.options.allowExternalNavigate ?? false;
+    this.options.skipLocaleDetection = this.options.skipLocaleDetection ?? false;
 
     const apiKeys = [['--api-keys=desktopInfo', ...(this.options.addApiKeys ?? [])].join('|')];
 
@@ -114,7 +119,9 @@ export class DesktopBrowserWindow extends EventEmitter {
         acceptFirstMouse: true,
       });
 
-      void handleLocaleCookies(this.window, true);
+      if (!options.skipLocaleDetection) {
+        void handleLocaleCookies(this.window, true);
+      }
 
       const customStyles =
         // eslint-disable-next-line max-len

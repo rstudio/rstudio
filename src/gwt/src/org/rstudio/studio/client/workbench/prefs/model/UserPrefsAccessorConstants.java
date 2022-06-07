@@ -1222,19 +1222,19 @@ public interface UserPrefsAccessorConstants extends Constants {
    String jobsTabVisibilityDescription();
 
    /**
-    * Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.
+    * Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    @DefaultStringValue("")
    String showLauncherJobsTabTitle();
-   @DefaultStringValue("Whether to show the Launcher jobs tab in RStudio Pro and RStudio Workbench.")
+   @DefaultStringValue("Whether to show the Workbench Jobs tab in RStudio Pro and RStudio Workbench.")
    String showLauncherJobsTabDescription();
 
    /**
-    * How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.
+    * How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.
     */
    @DefaultStringValue("")
    String launcherJobsSortTitle();
-   @DefaultStringValue("How to sort jobs in the Launcher tab in RStudio Pro and RStudio Workbench.")
+   @DefaultStringValue("How to sort jobs in the Workbench Jobs tab in RStudio Pro and RStudio Workbench.")
    String launcherJobsSortDescription();
 
    /**

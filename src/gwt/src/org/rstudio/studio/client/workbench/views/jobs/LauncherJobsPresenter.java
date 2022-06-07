@@ -115,7 +115,7 @@ public class LauncherJobsPresenter extends BasePresenter
    }
    
    @Handler
-   public void onActivateLauncherJobs()
+   public void onActivateWorkbenchJobs()
    {
       // Ensure that console pane is not minimized
       commands_.activateConsolePane().execute();

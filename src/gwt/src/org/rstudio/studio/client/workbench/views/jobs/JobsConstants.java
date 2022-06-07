@@ -19,47 +19,47 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
     /**
      * Translated "Connect to Existing Data Sources".
      *
-     * @return translated "Local Jobs Still Running"
+     * @return translated "Background Jobs Still Running"
      */
-    @DefaultMessage("Local Jobs Still Running")
-    @Key("localJobsRunningCaption")
-    String localJobsRunningCaption();
+    @DefaultMessage("Background Jobs Still Running")
+    @Key("backgroundJobsRunningCaption")
+    String backgroundJobsRunningCaption();
 
     /**
-     * Translated "The Jobs tab cannot be closed while there {0}\n\nWait until all local jobs have completed.".
+     * Translated "The Background Jobs tab cannot be closed while there {0}\n\nWait until all background jobs have completed.".
      *
-     * @return translated "The Jobs tab cannot be closed while there {0}\n\nWait until all local jobs have completed."
+     * @return translated "The Background Jobs tab cannot be closed while there {0}\n\nWait until all background jobs have completed."
      */
-    @DefaultMessage("The Jobs tab cannot be closed while there {0}\\n\\nWait until all local jobs have completed.")
-    @Key("localJobsRunningMessage")
-    String localJobsRunningMessage(String localJobMessage);
+    @DefaultMessage("The Background Jobs tab cannot be closed while there {0}\\n\\nWait until all background jobs have completed.")
+    @Key("backgroundJobsRunningMessage")
+    String backgroundJobsRunningMessage(String localJobMessage);
 
     /**
-     * Translated "are unfinished local jobs.".
+     * Translated "are unfinished background jobs.".
      *
-     * @return translated "are unfinished local jobs."
+     * @return translated "are unfinished background jobs."
      */
-    @DefaultMessage("are unfinished local jobs.")
-    @Key("localJobsUnfinished")
-    String localJobsUnfinished();
+    @DefaultMessage("are unfinished background jobs.")
+    @Key("backgroundJobsUnfinished")
+    String backgroundJobsUnfinished();
 
     /**
-     * Translated "is an unfinished local job.".
+     * Translated "is an unfinished background job.".
      *
-     * @return translated "is an unfinished local job."
+     * @return translated "is an unfinished background job."
      */
-    @DefaultMessage("is an unfinished local job.")
-    @Key("localJobUnfinished")
-    String localJobUnfinished();
+    @DefaultMessage("is an unfinished background job.")
+    @Key("backgroundJobUnfinished")
+    String backgroundJobUnfinished();
 
     /**
-     * Translated "Jobs".
+     * Translated "Background Jobs".
      *
-     * @return translated "Jobs"
+     * @return translated "Background Jobs"
      */
-    @DefaultMessage("Jobs")
-    @Key("jobsTitle")
-    String jobsTitle();
+    @DefaultMessage("Background Jobs")
+    @Key("backgroundJobsTitle")
+    String backgroundJobsTitle();
 
     /**
      * Translated "Cannot retrieve job output".
@@ -125,22 +125,22 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
     String unknownState(int state);
 
     /**
-     * Translated "Remove Completed Local Jobs".
+     * Translated "Remove Completed Background Jobs".
      *
-     * @return translated "Remove Completed Local Jobs"
+     * @return translated "Remove Completed Background Jobs"
      */
-    @DefaultMessage("Remove Completed Local Jobs")
-    @Key("removeCompletedLocalJobsCaption")
-    String removeCompletedLocalJobsCaption();
+    @DefaultMessage("Remove Completed Background Jobs")
+    @Key("removeCompletedBackgroundJobsCaption")
+    String removeCompletedBackgroundJobsCaption();
 
     /**
-     * Translated "Are you sure you want to remove completed local jobs from the list of jobs?\n\nOnce removed, local jobs cannot be recovered.".
+     * Translated "Are you sure you want to remove completed background jobs from the list of jobs?\n\nOnce removed, background jobs cannot be recovered.".
      *
-     * @return translated "Are you sure you want to remove completed local jobs from the list of jobs?\n\nOnce removed, local jobs cannot be recovered."
+     * @return translated "Are you sure you want to remove completed background jobs from the list of jobs?\n\nOnce removed, background jobs cannot be recovered."
      */
-    @DefaultMessage("Are you sure you want to remove completed local jobs from the list of jobs?\\n\\nOnce removed, local jobs cannot be recovered.")
-    @Key("removeCompletedLocalJobsMessage")
-    String removeCompletedLocalJobsMessage();
+    @DefaultMessage("Are you sure you want to remove completed background jobs from the list of jobs?\\n\\nOnce removed, background jobs cannot be recovered.")
+    @Key("removeCompletedBackgroundJobsMessage")
+    String removeCompletedBackgroundJobsMessage();
 
     /**
      * Translated "Remove jobs".
@@ -170,38 +170,38 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
     String numJobsLabel(int jobs);
 
     /**
-     * Translated "Run Selection as Job".
+     * Translated "Run Selection as Background Job".
      *
-     * @return translated "Run Selection as Job"
+     * @return translated "Run Selection as Background Job"
      */
-    @DefaultMessage("Run Selection as Job")
-    @Key("runSelectionAsJobCaption")
-    String runSelectionAsJobCaption();
+    @DefaultMessage("Run Selection as Background Job")
+    @Key("runSelectionAsBackgroundJobCaption")
+    String runSelectionAsBackgroundJobCaption();
 
     /**
-     * Translated "Run Script as Local Job".
+     * Translated "Run Script as Background Job".
      *
-     * @return translated "Run Script as Local Job"
+     * @return translated "Run Script as Background Job"
      */
-    @DefaultMessage("Run Script as Local Job")
-    @Key("runScriptAsLocalJobCaption")
-    String runScriptAsLocalJobCaption();
+    @DefaultMessage("Run Script as Background Job")
+    @Key("runScriptAsBackgroundJobCaption")
+    String runScriptAsBackgroundJobCaption();
 
     /**
-     * Translated "Stop job".
+     * Translated "Stop background job".
      *
-     * @return translated "Stop job"
+     * @return translated "Stop background job"
      */
-    @DefaultMessage("Stop job")
+    @DefaultMessage("Stop background job")
     @Key("stopJobTitle")
     String stopJobTitle();
 
     /**
-     * Translated "Select Job".
+     * Translated "Select Background Job".
      *
-     * @return translated "Select Job"
+     * @return translated "Select Background Job"
      */
-    @DefaultMessage("Select Job")
+    @DefaultMessage("Select Background Job")
     @Key("selectJobText")
     String selectJobText();
 
@@ -323,30 +323,30 @@ public interface JobsConstants extends com.google.gwt.i18n.client.Messages {
     String terminateJobsCaption();
 
     /**
-     * Translated "Jobs Tab".
+     * Translated "Background Jobs Tab".
      *
-     * @return translated "Jobs Tab"
+     * @return translated "Background Jobs Tab"
      */
-    @DefaultMessage("Jobs Tab")
-    @Key("jobsTabLabel")
-    String jobsTabLabel();
+    @DefaultMessage("Background Jobs Tab")
+    @Key("backgroundJobsTabLabel")
+    String backgroundJobsTabLabel();
 
     /**
-     * Translated "View all jobs".
+     * Translated "View all background jobs".
      *
-     * @return translated "View all jobs"
+     * @return translated "View all background jobs"
      */
-    @DefaultMessage("View all jobs")
+    @DefaultMessage("View all background jobs")
     @Key("viewAllJobsTitle")
     String viewAllJobsTitle();
 
     /**
-     * Translated "Launcher".
+     * Translated "Workbench Jobs".
      *
-     * @return translated "Launcher"
+     * @return translated "Workbench Jobs"
      */
-    @DefaultMessage("Launcher")
-    @Key("launcherTitle")
-    String launcherTitle();
+    @DefaultMessage("Workbench Jobs")
+    @Key("workbenchJobsTitle")
+    String workbenchJobsTitle();
 
 }

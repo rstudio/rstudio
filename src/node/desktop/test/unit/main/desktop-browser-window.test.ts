@@ -22,7 +22,7 @@ import { DesktopBrowserWindow } from '../../../src/main/desktop-browser-window';
 if (!isWindowsDocker()) {
   describe('DesktopBrowserWindow', () => {
     it('construction creates a hidden BrowserWindow', () => {
-      const win = new DesktopBrowserWindow({ name: '_blank' });
+      const win = new DesktopBrowserWindow({ name: '_blank', skipLocaleDetection: true });
       assert.isObject(win);
       assert.isObject(win.window);
       assert.isFalse(win.window.isVisible());

@@ -5240,20 +5240,20 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   void onRunSelectionAsJob()
+   void onRunSelectionAsBackgroundJob()
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.runSelectionAsJob(false /*useLauncher*/);
+         codeExecution_.runSelectionAsJob(false /*isWorkbenchJob*/);
       });
    }
 
    @Handler
-   void onRunSelectionAsLauncherJob()
+   void onRunSelectionAsWorkbenchJob()
    {
       withVisualModeSelection(() ->
       {
-         codeExecution_.runSelectionAsJob(true /*useLauncher*/);
+         codeExecution_.runSelectionAsJob(true /*isWorkbenchJob*/);
       });
    }
 
@@ -6417,7 +6417,7 @@ public class TextEditingTarget implements
    }
 
    @Handler
-   public void onSourceAsLauncherJob()
+   public void onSourceAsWorkbenchJob()
    {
       saveThenExecute(null, true, () ->
       {

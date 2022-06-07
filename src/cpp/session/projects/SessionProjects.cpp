@@ -978,7 +978,11 @@ void startup(const std::string& firstProjectPath)
 
    core::FilePath sessionTmpDir(core::system::getenv(kSessionTmpDirEnvVar));
    core::FilePath ctxFile = sessionTmpDir.completeChildPath(system::username() + "-d.ctx");
-   ctxFile.removeIfExists();
+
+   bool needsCtxFile = options().supportsProjectSharing();
+   if (needsCtxFile)
+      ctxFile.removeIfExists();
+
    if (options().sessionScope().empty())
    {
       // This is single-session mode where the project is discovered from last-project-path and other places
@@ -992,7 +996,7 @@ void startup(const std::string& firstProjectPath)
       s_projectId = projectId;
 
 #ifndef _WIN32
-      if (options().projectSharingEnabled())
+      if (needsCtxFile)
       {
          std::string sessionId = session.id();
          std::string sessionCtxStr = projectId.userId() + projectId.id() + ":" + sessionId;

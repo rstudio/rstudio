@@ -34,7 +34,7 @@ import { pathToFileURL } from 'url';
 import i18next from 'i18next';
 import { findFontsSync } from 'node-system-fonts';
 import path, { dirname } from 'path';
-import { FilePath } from '../core/file-path';
+import { FilePath, normalizeSeparatorsNative } from '../core/file-path';
 import { logger } from '../core/logger';
 import { isCentOS } from '../core/system';
 import { resolveTemplateVar } from '../core/template-filter';
@@ -46,7 +46,13 @@ import { GwtWindow } from './gwt-window';
 import { MainWindow } from './main-window';
 import { openMinimalWindow } from './minimal-window';
 import { defaultFonts, ElectronDesktopOptions } from './preferences/electron-desktop-options';
-import { findRepoRoot, getAppPath, filterFromQFileDialogFilter, resolveAliasedPath, handleLocaleCookies } from './utils';
+import {
+  findRepoRoot,
+  getAppPath,
+  filterFromQFileDialogFilter,
+  resolveAliasedPath,
+  handleLocaleCookies,
+} from './utils';
 import { activateWindow } from './window-utils';
 
 export enum PendingQuit {
@@ -57,7 +63,6 @@ export enum PendingQuit {
 }
 
 function formatSelectedVersionForUi(rBinDir: string) {
-
   // binDir will have format <R_HOME>/bin/<arch>,
   // so we need two dirname()s to get the home path
   const rHome = dirname(dirname(rBinDir));
@@ -135,6 +140,7 @@ export class GwtCallback extends EventEmitter {
         canChooseDirectories: boolean,
         focusOwner: boolean,
       ) => {
+        console.log('desktop_get_open_file_name');
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
           defaultPath: resolveAliasedPath(dir),
@@ -176,6 +182,7 @@ export class GwtCallback extends EventEmitter {
         forceDefaultExtension: boolean,
         focusOwner: boolean,
       ) => {
+        console.log('desktop_get_save_file_name');
         const saveDialogOptions: SaveDialogOptions = {
           title: caption,
           defaultPath: resolveAliasedPath(dir),
@@ -201,6 +208,7 @@ export class GwtCallback extends EventEmitter {
     ipcMain.handle(
       'desktop_get_existing_directory',
       async (event, caption: string, label: string, dir: string, focusOwner: boolean) => {
+        console.log('desktop_get_existing_directory');
         const openDialogOptions: OpenDialogOptions = {
           title: caption,
           defaultPath: resolveAliasedPath(dir),
@@ -343,7 +351,8 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_show_folder', (event, path: string) => {
-      shell.openPath(path).catch((value) => {
+      shell.openPath(normalizeSeparatorsNative(path)).catch((value) => {
+        console.log('error:', value);
         logger().logErrorMessage(value);
       });
     });
@@ -378,7 +387,6 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.handle('desktop_choose_r_version', async () => {
-
       // discover available R installations
       const rInstalls = findRInstallationsWin32();
       if (rInstalls.length === 0) {
@@ -407,10 +415,9 @@ export class GwtCallback extends EventEmitter {
       const rBinDir = dirname(path);
 
       ElectronDesktopOptions().setRExecutablePath(path);
-     
+
       logger().logDebug(`Using R: ${rBinDir}`);
       return formatSelectedVersionForUi(rBinDir);
-
     });
 
     ipcMain.handle('desktop_device_pixel_ratio', () => {
@@ -425,17 +432,16 @@ export class GwtCallback extends EventEmitter {
         if (url === 'chrome://gpu' || url === 'chrome://accessibility') {
           const window = new BrowserWindow({
             autoHideMenuBar: true,
-            webPreferences: { sandbox: true, },
-            acceptFirstMouse: true
+            webPreferences: { sandbox: true },
+            acceptFirstMouse: true,
           });
- 
+
           // ensure window can be closed with Ctrl+W (Cmd+W on macOS)
           window.webContents.on('before-input-event', (event, input) => {
             const ctrlOrMeta = process.platform === 'darwin' ? input.meta : input.control;
             if (ctrlOrMeta && input.key.toLowerCase() === 'w') {
               event.preventDefault();
               window.close();
-
             }
           });
 
@@ -754,7 +760,9 @@ export class GwtCallback extends EventEmitter {
         docUrl = pathToFileURL(path.join(getAppPath(), 'www', 'docs', 'keyboard.htm'));
       } else {
         // dev build scenario
-        docUrl = pathToFileURL(new FilePath(findRepoRoot()).completeChildPath('src/gwt/www/docs/keyboard.htm').getAbsolutePath());
+        docUrl = pathToFileURL(
+          new FilePath(findRepoRoot()).completeChildPath('src/gwt/www/docs/keyboard.htm').getAbsolutePath(),
+        );
       }
       shell.openExternal(docUrl.toString());
     });

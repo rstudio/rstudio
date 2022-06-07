@@ -173,10 +173,14 @@ public:
       return core::string_utils::LineEndingPosix;
    }
 
+   // Returns false if project sharing has been explicitly disabled for the session
    bool projectSharingEnabled() const
    {
       return projectSharingEnabled_;
    }
+
+   // Unlike projectSharingEnabled(), this only returns true for versions that support the project sharing feature (i.e. Workbench)
+   bool supportsProjectSharing() const;
 
    std::string monitorSharedSecret() const
    {

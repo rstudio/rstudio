@@ -86,8 +86,8 @@ Error ActiveSessions::create(const std::string& project,
          id = candidateId;
    }
 
-   boost::posix_time::ptime time = boost::posix_time::second_clock::universal_time();
-   std::string isoTime = boost::posix_time::to_iso_extended_string(time);
+   double now = date_time::millisecondsSinceEpoch();
+   std::string millisTime = safe_convert::numberToString(now);
 
    //Initial settings
    std::map<std::string, std::string> initialMetadata = {
@@ -95,14 +95,15 @@ Error ActiveSessions::create(const std::string& project,
       {ActiveSession::kWorkingDir, workingDir},
       {ActiveSession::kInitial, initial ? "true" : "false"},
       {ActiveSession::kRunning, "false"},
-      {ActiveSession::kLastUsed, isoTime},
-      {ActiveSession::kCreated, isoTime},
+      {ActiveSession::kLastUsed, millisTime},
+      {ActiveSession::kCreated, millisTime},
       {ActiveSession::kLaunchParameters, ""},
       {ActiveSession::kLabel, project == kProjectNone ? workingDir : project},
+      {ActiveSession::kActivityState, kActivityStateLaunching},
       {ActiveSession::kEditor, editor}};
 
    if (editor == kWorkbenchRStudio)
-      initialMetadata[ActiveSession::kLastResumed] = isoTime;
+      initialMetadata[ActiveSession::kLastResumed] = millisTime;
 
    storage_->initSessionProperties(id, initialMetadata);
 
@@ -133,7 +134,24 @@ std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath use
    {
       boost::shared_ptr<ActiveSession> candidateSession = get(id);
       if (candidateSession->validate(userHomePath, projectSharingEnabled))
+      {
+         // Cache the sort conditions to ensure compareActivityLevel will provide a strict weak ordering.
+         // Otherwise, the conditions on which we sort (e.g. lastUsed()) can be updated on disk during a sort
+         // causing an occasional segfault.
+         candidateSession->cacheSortConditions();
          sessions.push_back(candidateSession);
+      }
+      else
+      {
+         LOG_DEBUG_MESSAGE("Removing invalid session: " + candidateSession->id());
+         // remove sessions that don't have required properties
+         // (they may be here as a result of a race condition where
+         // they are removed but then suspended session data is
+         // written back into them)
+         Error error = candidateSession->destroy();
+         if (error)
+            LOG_ERROR(error);
+      }
    }
 
    // sort by activity level (most active sessions first)

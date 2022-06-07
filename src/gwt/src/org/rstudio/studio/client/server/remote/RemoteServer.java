@@ -1763,6 +1763,11 @@ public class RemoteServer implements Server
 
       return previewURL;
    }
+   
+   public void getPlotTempdir(ServerRequestCallback<String> requestCallback)
+   {
+      sendRequest(RPC_SCOPE, GET_PLOT_TEMPDIR, requestCallback);
+   }
 
    public void nextPlot(ServerRequestCallback<Void> requestCallback)
    {
@@ -6170,9 +6175,9 @@ public class RemoteServer implements Server
    }
 
    @Override
-   public void clearJobs(ServerRequestCallback<Void> callback)
+   public void clearBackgroundJobs(ServerRequestCallback<Void> callback)
    {
-      sendRequest(RPC_SCOPE, "clear_jobs", callback);
+      sendRequest(RPC_SCOPE, "clear_background_jobs", callback);
    }
 
    @Override
@@ -6664,6 +6669,7 @@ public class RemoteServer implements Server
    private static final String TOUCH_FILE = "touch_file";
    private static final String COMPLETE_UPLOAD = "complete_upload";
 
+   private static final String GET_PLOT_TEMPDIR = "get_plot_tempdir";
    private static final String NEXT_PLOT = "next_plot";
    private static final String PREVIOUS_PLOT = "previous_plot";
    private static final String REMOVE_PLOT = "remove_plot";

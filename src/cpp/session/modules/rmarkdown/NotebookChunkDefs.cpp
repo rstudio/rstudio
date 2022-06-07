@@ -27,6 +27,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
+#include <session/SessionQuarto.hpp>
 
 using namespace rstudio::core;
 
@@ -37,13 +38,15 @@ namespace rmarkdown {
 namespace notebook {
 namespace {
 
-SEXP rs_getRmdWorkingDir(SEXP rmdFileSEXP, SEXP docIdSEXP)
+// Get the desired working directory of a notebook-like document
+// (R Markdown or Quarto).
+SEXP rs_getNotebookWorkingDir(SEXP notebookFileSEXP, SEXP docIdSEXP)
 {
    r::sexp::Protect protect;
    FilePath dir;
 
    // extract the document's path and ID
-   std::string docPath = r::sexp::safeAsString(rmdFileSEXP, "");
+   std::string docPath = r::sexp::safeAsString(notebookFileSEXP, "");
    if (docPath.empty()) 
       return R_NilValue;
    std::string docId = r::sexp::safeAsString(docIdSEXP, "");
@@ -54,7 +57,16 @@ SEXP rs_getRmdWorkingDir(SEXP rmdFileSEXP, SEXP docIdSEXP)
    std::string workingDir;
    getChunkValue(docPath, docId, kChunkWorkingDir, &workingDir);
    if (!workingDir.empty())
+   {
       dir = module_context::resolveAliasedPath(workingDir);
+   }
+   else if (quarto::docIsQuarto(docId))
+   {
+      // if this is a Quarto document, attempt to look up its desired
+      // working directory that way (returns an empty FilePath if not
+      // a Quarto doc or no explicit working directory is set)
+      dir = quarto::getQuartoExecutionDir(docPath);
+   }
 
    // if we found a valid working directory, return it
    if (dir.exists())
@@ -225,7 +237,7 @@ void extractChunkIds(const json::Array& chunkOutputs,
 
 core::Error initChunkDefs()
 {
-   RS_REGISTER_CALL_METHOD(rs_getRmdWorkingDir, 2);
+   RS_REGISTER_CALL_METHOD(rs_getNotebookWorkingDir, 2);
    return Success();
 }
 

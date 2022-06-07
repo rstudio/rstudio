@@ -259,8 +259,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <separator/>
             <cmd refid="executeAllCode"/>
          </menu>
-         <cmd refid="runSelectionAsLauncherJob"/>
-         <cmd refid="runSelectionAsJob"/>
+         <cmd refid="runSelectionAsWorkbenchJob"/>
+         <cmd refid="runSelectionAsBackgroundJob"/>
          <menu label="_Terminal">
             <cmd refid="sendToTerminal"/>
             <cmd refid="openNewTerminalAtEditorLocation"/>
@@ -347,8 +347,8 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          <cmd refid="activateConnections"/>
          <cmd refid="activatePresentation2"/>
          <cmd refid="activateTutorial"/>
-         <cmd refid="activateJobs"/>
-         <cmd refid="activateLauncherJobs"/>
+         <cmd refid="activateBackgroundJobs"/>
+         <cmd refid="activateWorkbenchJobs"/>
          <menu label="Show Other _Panes">
             <cmd refid="activatePresentation"/>
             <cmd refid="activateCompilePDF"/>
@@ -505,16 +505,16 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <separator/>
             <cmd refid="showTerminalOptions"/>
           </menu>
-         <menu label="_Jobs">
+         <menu label="Background _Jobs">
             <cmd refid="startJob"/>
-            <cmd refid="clearJobs"/>
+            <cmd refid="clearBackgroundJobs"/>
             <separator/>
-            <cmd refid="activateJobs"/>
+            <cmd refid="activateBackgroundJobs"/>
           </menu>
-         <menu label="_Launcher">
-            <cmd refid="startLauncherJob"/>
+         <menu label="_Workbench Jobs">
+            <cmd refid="startWorkbenchJob"/>
             <separator/>
-            <cmd refid="activateLauncherJobs"/>
+            <cmd refid="activateWorkbenchJobs"/>
          </menu>
          <menu label="_Addins">
             <cmd refid="browseAddins"/>
@@ -1479,14 +1479,14 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Show _Tutorial"
         windowMode="main"/>
 
-   <cmd id="activateJobs"
-        label="Show Jobs Pane"
-        menuLabel = "Show _Jobs"
+   <cmd id="activateBackgroundJobs"
+        label="Show Background Jobs Pane"
+        menuLabel = "Show Background _Jobs"
         windowMode="main"/>
 
-   <cmd id="activateLauncherJobs"
-        label="Show Launcher Pane"
-        menuLabel = "Show _Launcher"
+   <cmd id="activateWorkbenchJobs"
+        label="Show Workbench Jobs Pane"
+        menuLabel = "Show _Workbench Jobs"
         windowMode="main"/>
 
    <cmd id="activateCompilePDF"
@@ -4020,52 +4020,52 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
          windowMode="main"/>
 
     <cmd id="startJob"
-         menuLabel="_Start Local Job..."
-         buttonLabel="Start Local Job"
+         menuLabel="_Start Background Job..."
+         buttonLabel="Start Background Job"
          desc="Run a background local job"
          windowMode="main"/>
 
     <cmd id="sourceAsJob"
-         menuLabel="Source as Local Job..."
-         desc="Run the current R script as a local job"
+         menuLabel="Source as Background Job..."
+         desc="Run the current R script as a background job"
          windowMode="any"/>
 
-    <cmd id="clearJobs"
-         menuLabel="_Clear Local Jobs"
-         desc="Clean up all completed local jobs"
+    <cmd id="clearBackgroundJobs"
+         menuLabel="_Clear Background Jobs"
+         desc="Clean up all completed background jobs"
          windowMode="main"/>
 
-    <cmd id="runSelectionAsJob"
-         menuLabel="Ru_n Selection as Local Job"
-         desc="Run the selected code as a local job"
+    <cmd id="runSelectionAsBackgroundJob"
+         menuLabel="Ru_n Selection as Background Job"
+         desc="Run the selected code as a background job"
          windowMode="any"/>
 
-    <cmd id="startLauncherJob"
-         menuLabel="Start Launcher _Job..."
-         buttonLabel="Start Launcher Job"
-         desc="Run a background job on a cluster"
+    <cmd id="startWorkbenchJob"
+         menuLabel="Start Workbench _Job..."
+         buttonLabel="Start Workbench Job"
+         desc="Run a job on a cluster"
          windowMode="main"/>
 
-    <cmd id="sourceAsLauncherJob"
-         menuLabel="Source as Launcher Job..."
+    <cmd id="sourceAsWorkbenchJob"
+         menuLabel="Source as Workbench Job..."
          desc="Run the current R script on a cluster"
          windowMode="any"/>
 
-    <cmd id="runSelectionAsLauncherJob"
-         menuLabel="Run Selection as _Launcher Job"
-         desc="Run the selected code as a launcher job"
+    <cmd id="runSelectionAsWorkbenchJob"
+         menuLabel="Run Selection as _Workbench Job"
+         desc="Run the selected code as a Workbench job"
          windowMode="any"/>
 
-    <cmd id="sortLauncherJobsRecorded"
+    <cmd id="sortWorkbenchJobsRecorded"
          menuLabel="Sort by Submission Time"
-         desc="Sort jobs by time submitted"
+         desc="Sort Workbench jobs by time submitted"
          rebindable="false"
          checkable="true"
          windowMode="any"/>
 
-    <cmd id="sortLauncherJobsState"
+    <cmd id="sortWorkbenchJobsState"
          menuLabel="Sort by Job State"
-         desc="Sort jobs by current state"
+         desc="Sort Workbench jobs by current state"
          rebindable="false"
          checkable="true"
          windowMode="any"/>
