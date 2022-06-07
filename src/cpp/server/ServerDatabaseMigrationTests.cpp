@@ -279,6 +279,6 @@ TEST_CASE("Upgrading Postgres Database", "[database][integration][upgrade][.post
     }
 }
 
-}
-}
-}
+} // namespace db
+} // namespace server
+} // namespace rstudio
