@@ -2,6 +2,9 @@ ALTER TABLE active_session_metadata
 ADD COLUMN executing TEXT IF NOT EXISTS;
 
 ALTER TABLE active_session_metadata
+ADD COLUMN running TEXT IF NOT EXISTS;
+
+ALTER TABLE active_session_metadata
 ADD COLUMN last_state_updated TEXT IF NOT EXISTS;
 
 /* Update the version to the latest after all alter statements are applied. */

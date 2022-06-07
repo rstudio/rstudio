@@ -2,6 +2,9 @@ ALTER TABLE active_session_metadata
 ADD COLUMN executing TEXT;
 
 ALTER TABLE active_session_metadata
+ADD COLUMN running TEXT;
+
+ALTER TABLE active_session_metadata
 ADD COLUMN last_state_updated TEXT;
 
 /* Update the version to the latest after all alter statements are applied. */
