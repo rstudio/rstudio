@@ -24,7 +24,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.Rectangle;
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 public abstract class Hyperlink
 {
@@ -48,7 +47,7 @@ public abstract class Hyperlink
         }
 
         anchor_ = Document.get().createAnchorElement();
-        styles_ = ConsoleResources.INSTANCE.consoleStyles();
+        styles_ = RES.hyperlinkStyles();
         popup_ = new HyperlinkPopupPanel();
     }
 
@@ -128,6 +127,12 @@ public abstract class Hyperlink
     
     protected AnchorElement anchor_;
 
-    protected final ConsoleResources.ConsoleStyles styles_;
+    protected final HyperlinkResources.HyperlinkStyles styles_;
     private final HyperlinkPopupPanel popup_;
+
+    private static HyperlinkResources RES = HyperlinkResources.INSTANCE;
+    static {
+        RES.hyperlinkStyles().ensureInjected();
+    }
+
 }

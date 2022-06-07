@@ -74,7 +74,7 @@ public class FileHyperlink extends Hyperlink
         final VerticalPanel panel = new VerticalPanel();
         
         Label label = new Label(filename);
-        label.setStyleName(styles_.popupCode());
+        label.setStyleName(styles_.code());
         panel.add(label);
         
         return panel;

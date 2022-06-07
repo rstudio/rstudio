@@ -50,7 +50,7 @@ public class WebHyperlink extends Hyperlink {
         VerticalPanel panel = new VerticalPanel();
 
         Label urlLabel = new Label(url);
-        urlLabel.setStyleName(styles_.popupCode());
+        urlLabel.setStyleName(styles_.code());
         panel.add(urlLabel);
 
         /*

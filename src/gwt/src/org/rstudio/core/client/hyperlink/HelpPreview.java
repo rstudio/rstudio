@@ -18,7 +18,6 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpInfoPopupPanelResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
@@ -31,17 +30,17 @@ public class HelpPreview extends VerticalPanel
         pkgName_ = pkgName;
         topic_ = topic;
         
-        final ConsoleResources.ConsoleStyles styles_ = ConsoleResources.INSTANCE.consoleStyles();
+        final HyperlinkResources.HyperlinkStyles styles_ = HyperlinkResources.INSTANCE.hyperlinkStyles();
         setStyleName(RES.styles().helpPopup());
         addStyleName(styles_.helpPreview());
 
         ParsedInfo parsed = info.parse(pkgName_ + "::" + topic_);
         Label title = new Label(parsed.getTitle());
-        title.setStyleName(styles_.popupHelpTitle());
+        title.setStyleName(styles_.helpTitle());
 
         HTML description = new HTML(parsed.getDescription());
         description.setStyleName(RES.styles().helpBodyText());
-        description.addStyleName(styles_.popupHelpDescription());
+        description.addStyleName(styles_.helpDescription());
         
         add(title);
         add(description);

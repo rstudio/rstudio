@@ -39,7 +39,7 @@ public class UnsupportedHyperlink extends Hyperlink
         VerticalPanel panel = new VerticalPanel();
 
         Label urlLabel = new Label(url);
-        urlLabel.setStyleName(styles_.popupArbitraryCode());
+        urlLabel.setStyleName(styles_.arbitraryCode());
 
         panel.add(urlLabel);
         return panel;

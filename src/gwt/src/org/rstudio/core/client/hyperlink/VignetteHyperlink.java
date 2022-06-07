@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpInfoPopupPanelResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 
@@ -56,7 +57,7 @@ public class VignetteHyperlink extends Hyperlink
         final VerticalPanel panel = new VerticalPanel();
 
         HTML label = new HTML("Vignette: <b>" + topic_ + "</b> {" + pkg_ + "}");
-        label.setStyleName(styles_.popupCode());
+        label.setStyleName(styles_.code());
         panel.add(label);
 
         server_.getVignetteTitle(topic_, pkg_, new ServerRequestCallback<String>() {
@@ -69,7 +70,7 @@ public class VignetteHyperlink extends Hyperlink
                 helpPanel.addStyleName(styles_.helpPreview());
 
                 Label title = new Label(response);
-                title.setStyleName(styles_.popupHelpDescription());
+                title.setStyleName(styles_.helpDescription());
                 helpPanel.add(title);
 
                 panel.add(helpPanel);
@@ -78,8 +79,8 @@ public class VignetteHyperlink extends Hyperlink
             @Override
             public void onError(ServerError error) {
                 Label notFound = new Label("No vignette found");
-                notFound.setStyleName(styles_.popupWarning());
-                notFound.addStyleName(styles_.promptFullHelp());
+                notFound.setStyleName(styles_.warning());
+                notFound.addStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
                 panel.add(notFound);
             }
                

@@ -24,6 +24,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 
@@ -59,7 +60,7 @@ public class HelpHyperlink extends Hyperlink
         final VerticalPanel panel = new VerticalPanel();
         
         HTML label = new HTML("<b>" + topic_ + "</b> {" + pkg_ + "}");
-        label.setStyleName(styles_.popupCode());
+        label.setStyleName(styles_.code());
         panel.add(label);
         
         server_.getHelp(topic_, pkg_, RCompletionType.FUNCTION, new ServerRequestCallback<HelpInfo>() {
@@ -75,8 +76,8 @@ public class HelpHyperlink extends Hyperlink
             public void onError(ServerError error) {
                 helpAvailable_ = false;
                 Label notFound = new Label("No documentation found");
-                notFound.setStyleName(styles_.promptFullHelp());
-                notFound.addStyleName(styles_.popupWarning());
+                notFound.setStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
+                notFound.addStyleName(styles_.warning());
                 panel.add(notFound);
             }
             

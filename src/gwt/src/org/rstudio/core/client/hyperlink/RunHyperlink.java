@@ -28,6 +28,7 @@ import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
@@ -63,7 +64,7 @@ public class RunHyperlink extends Hyperlink
         if (package_ != null)
         {
             server_.isPackageHyperlinkSafe(package_, new ServerRequestCallback<Boolean>(){
-                
+
                 @Override
                 public void onResponseReceived(Boolean response) {
                     events_.fireEvent(new SendToConsoleEvent(code_, response));
@@ -83,7 +84,7 @@ public class RunHyperlink extends Hyperlink
 
         Label commandLabel = new Label(code_);
         commandLabel.setStyleName( 
-            allowed_ ? styles_.popupCode() : styles_.popupArbitraryCode()
+            allowed_ ? styles_.code() : styles_.arbitraryCode()
         );
         panel.add(commandLabel);
         
@@ -96,7 +97,7 @@ public class RunHyperlink extends Hyperlink
                     HelpPreview preview = new HelpPreview(response, package_, fun_);
                     
                     HTML more = new HTML("Click to run the code in the console.");
-                    more.setStyleName(styles_.promptFullHelp());
+                    more.setStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
                     preview.add(more);
 
                     panel.add(preview);
