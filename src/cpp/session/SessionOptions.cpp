@@ -45,6 +45,8 @@
 #include <session/SessionScopes.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
 
+#include "SessionRpcActiveSessionsStorage.hpp"
+
 #include "session-config.h"
 
 using namespace rstudio::core;
@@ -352,15 +354,32 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty())
    {
-        scopeState_ = r_util::validateSessionScope(
-                       scope,
-                       userHomePath(),
-                       userScratchPath(),
-                       session::projectIdToFilePath(userScratchPath(), 
-                                 FilePath(getOverlayOption(
-                                       kSessionSharedStoragePath))),
-                       projectSharingEnabled(),
-                       &initialProjectPath_);
+      std::shared_ptr<r_util::IActiveSessionsStorage> storage;
+      if (sessionUseFileStorage())
+         storage = std::shared_ptr<r_util::IActiveSessionsStorage>(new r_util::FileActiveSessionsStorage(userScratchPath()));
+      else
+      {
+         system::User user;
+         error = system::User::getCurrentUser(user);
+         if (error)
+         {
+            LOG_ERROR(error);
+            return ProgramStatus::exitFailure();
+         }
+
+         storage = std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::RpcActiveSessionsStorage(user));
+      }
+
+      scopeState_ = r_util::validateSessionScope(
+         storage,
+         scope,
+         userHomePath(),
+         userScratchPath(),
+         session::projectIdToFilePath(userScratchPath(), 
+         FilePath(getOverlayOption(
+                  kSessionSharedStoragePath))),
+         projectSharingEnabled(),
+         &initialProjectPath_);
    }
    else
    {

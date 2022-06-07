@@ -47,14 +47,21 @@ std::vector<std::string> RpcActiveSessionsStorage::listSessionIds() const
 {   
    std::vector<std::string> ids;
 
+   json::Array fields;
+   fields.push_back(ActiveSession::kCreated);
+
    json::Object body;
    body[kSessionStorageUserIdField] = _user.getUserId();
    // We only really want the ID here, but an empty list will get all fields. Just ask for a single field instead.
-   body[kSessionStorageFieldsField] = { ActiveSession::kCreated };
+   body[kSessionStorageFieldsField] = fields;
    body[kSessionStorageOperationField] = kSessionStroageReadAllOp;
 
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+   
    json::Value result;
-   Error error = server_rpc::invokeServerRpc(kSessionStorageRpc, body, &result);
+   Error error = server_rpc::invokeServerRpc(request.method, request.toJsonObject(), &result);
    if (error)
    {
       LOG_ERROR(error);
@@ -103,7 +110,48 @@ std::vector<std::string> RpcActiveSessionsStorage::listSessionIds() const
 
 size_t RpcActiveSessionsStorage::getSessionCount() const 
 {
-   return 0;
+   json::Object body;
+   body[kSessionStorageUserIdField] = _user.getUserId();
+   body[kSessionStorageOperationField] = kSessionStorageCountOp;
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::Value result;
+   Error error = server_rpc::invokeServerRpc(request.method, request.toJsonObject(), &result);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return 0;
+   }
+
+   json::JsonRpcResponse response;
+   bool success = json::JsonRpcResponse::parse(result, &response);
+   if (!success)
+   {
+      error = Error(json::errc::ParseError, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unable to parse the response from the server when listing all sessions owned by user " + _user.getUsername());
+      error.addProperty("response", result.write());
+      LOG_ERROR(error);
+      return 0;
+   }
+
+   if (!response.result().isObject())
+   {
+      LOG_ERROR_MESSAGE("Unexpected response  from the server when listing all sessions owned by user " + _user.getUsername() + ": " + result.write());
+      return 0;
+   }
+
+   size_t count = 0;
+   error = json::readObject(response.result().getObject(), kSessionStorageCountField, count);
+
+   if (error)
+      LOG_ERROR(error);
+   
+   return count;
 }
 
 std::shared_ptr<core::r_util::IActiveSessionStorage> RpcActiveSessionsStorage::getSessionStorage(const std::string& id) const 
@@ -113,7 +161,12 @@ std::shared_ptr<core::r_util::IActiveSessionStorage> RpcActiveSessionsStorage::g
 
 bool RpcActiveSessionsStorage::hasSessionId(const std::string& sessionId) const 
 {
-   return false;
+   bool empty = true;
+   Error error = getSessionStorage(sessionId)->isEmpty(&empty);
+   
+   if (error)
+      LOG_ERROR(error);
+   return !empty;
 }
 
 } // namespace storage

@@ -53,6 +53,8 @@ class FilePath;
 
 namespace r_util {
 
+class IActiveSessionsStorage;
+
 enum SessionScopeState
 {
    ScopeValid, 
@@ -200,12 +202,14 @@ private:
    std::string id_;
 };
 
-SessionScopeState validateSessionScope(const SessionScope& scope,
-                          const core::FilePath& userHomePath,
-                          const core::FilePath& userScratchPath,
-                          core::r_util::ProjectIdToFilePath projectIdToFilePath,
-                          bool projectSharingEnabled,
-                          std::string* pProjectFilePath);
+SessionScopeState validateSessionScope(
+   std::shared_ptr<IActiveSessionsStorage> storage,
+   const SessionScope& scope,
+   const core::FilePath& userHomePath,
+   const core::FilePath& userScratchPath,
+   core::r_util::ProjectIdToFilePath projectIdToFilePath,
+   bool projectSharingEnabled,
+   std::string* pProjectFilePath);
 
 bool isSharedPath(const std::string& projectPath,
                   const core::FilePath& userHomePath);

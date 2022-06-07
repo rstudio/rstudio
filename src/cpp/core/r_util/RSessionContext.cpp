@@ -35,6 +35,7 @@
 
 #include <core/r_util/RActiveSessions.hpp>
 #include <core/r_util/RProjectFile.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 
 #ifndef _WIN32
 #include <sys/stat.h>
@@ -229,15 +230,17 @@ bool isSharedPath(const std::string& projectPath,
    return false;
 }
 
-SessionScopeState validateSessionScope(const SessionScope& scope,
-                          const core::FilePath& userHomePath,
-                          const core::FilePath& userScratchPath,
-                          core::r_util::ProjectIdToFilePath projectIdToFilePath,
-                          bool projectSharingEnabled,
-                          std::string* pProjectFilePath)
+SessionScopeState validateSessionScope(
+   std::shared_ptr<IActiveSessionsStorage> storage,
+   const SessionScope& scope,
+   const core::FilePath& userHomePath,
+   const core::FilePath& userScratchPath,
+   core::r_util::ProjectIdToFilePath projectIdToFilePath,
+   bool projectSharingEnabled,
+   std::string* pProjectFilePath)
 {
    // does this session exist?
-   r_util::ActiveSessions activeSessions(userScratchPath);
+   r_util::ActiveSessions activeSessions(storage, userScratchPath);
    boost::shared_ptr<r_util::ActiveSession> pSession
                                           = activeSessions.get(scope.id());
    if (pSession->empty() || !pSession->validate(userHomePath,

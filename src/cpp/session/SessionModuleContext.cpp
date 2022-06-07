@@ -84,6 +84,7 @@
 
 #include <shared_core/system/User.hpp>
 
+#include "SessionRpcActiveSessionsStorage.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionReticulate.hpp"
@@ -1916,7 +1917,22 @@ r_util::ActiveSessions& activeSessions()
 {
    static boost::shared_ptr<r_util::ActiveSessions> pSessions;
    if (!pSessions)
-      pSessions.reset(new r_util::ActiveSessions(userScratchPath()));
+   {
+      if (options().sessionUseFileStorage())
+         pSessions.reset(new r_util::ActiveSessions(userScratchPath()));
+      else
+      {
+         system::User user;
+         Error error = system::User::getCurrentUser(user);
+         // TODO: what to do if this fails?
+         if (error)
+            LOG_ERROR(error);
+
+         pSessions.reset(new r_util::ActiveSessions(
+            std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::RpcActiveSessionsStorage(user)),
+            userScratchPath()));
+      }
+   }
    return *pSessions;
 }
 

@@ -49,8 +49,12 @@ Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string
    body[kSessionStorageFieldsField] = fields;
    body[kSessionStorageOperationField] = kSessionStorageReadOp;
 
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
    json::Value result;
-   Error error = server_rpc::invokeServerRpc(kSessionStorageRpc, body, &result);
+   Error error = server_rpc::invokeServerRpc(request.method, request.toJsonObject(), &result);
    if (error)
       return error;
 
@@ -78,8 +82,12 @@ Error RpcActiveSessionStorage::readProperties(const std::set<std::string>& names
    body[kSessionStorageFieldsField] = json::toJsonArray(names);
    body[kSessionStorageOperationField] = kSessionStorageReadOp;
 
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
    json::Value result;
-   Error error = server_rpc::invokeServerRpc(kSessionStorageRpc, body, &result);
+   Error error = server_rpc::invokeServerRpc(request.method, request.toJsonObject(), &result);
    if (error)
       return error;
 
@@ -152,8 +160,12 @@ Error RpcActiveSessionStorage::writeProperty(const std::string& name, const std:
    body[kSessionStorageFieldsField] = fields;
    body[kSessionStorageOperationField] = kSessionStorageWriteOp;
 
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
    json::Value result;
-   Error error = server_rpc::invokeServerRpc(kSessionStorageRpc, body, &result);
+   Error error = server_rpc::invokeServerRpc(request.method, request.toJsonObject(), &result);
    if (error)
       return error;
 
@@ -169,22 +181,32 @@ Error RpcActiveSessionStorage::writeProperties(const std::map<std::string, std::
    body[kSessionStorageFieldsField] = json::toJsonValue(properties);
    body[kSessionStorageOperationField] = kSessionStorageWriteOp;
 
-   json::Value result;
-   Error error = server_rpc::invokeServerRpc(kSessionStorageRpc, body, &result);
-   if (error)
-      return error;
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
 
-   // No need to wait for the response here.
-   return Success();
+   json::Value result;
+   return server_rpc::invokeServerRpc(request.method, request.toJsonObject(), &result);
 }
 
 Error RpcActiveSessionStorage::destroy()
 {
-   return Success();
+   json::Object body;
+   body[kSessionStorageUserIdField] = _user.getUserId();
+   body[kSessionStorageIdField] = _id;
+   body[kSessionStorageOperationField] = kSessionStorageDeleteOp;
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::Value result;
+   return server_rpc::invokeServerRpc(request.method, request.toJsonObject(), &result);
 }
 
 Error RpcActiveSessionStorage::isValid(bool* pValue)
 {
+   // TODO: actual validation
    // We're within the session, so it must be valid.
    *pValue = true;
    return Success();
@@ -192,6 +214,7 @@ Error RpcActiveSessionStorage::isValid(bool* pValue)
 
 Error RpcActiveSessionStorage::isEmpty(bool* pValue)
 {
+   // TODO: actual emptiness check
    // We're within the session, so it must not be empty.
    *pValue = false;
    return Success();
