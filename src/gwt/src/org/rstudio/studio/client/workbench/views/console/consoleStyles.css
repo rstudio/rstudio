@@ -186,14 +186,13 @@
 }
 
 .popupPanel {
-   margin: 5px;
    max-width: 400px;
 }
 
 .popupCode {
    font-family: fixedWidthFont;
-   margin-top: 5px;
    margin-left: 5px;
+   margin-top: 5px;
    margin-right: 5px;
    margin-bottom: 10px;
 }
@@ -201,8 +200,8 @@
 .popupArbitraryCode {
    font-family: fixedWidthFont;
    opacity: 0.7;
-   margin-top: 5px;
    margin-left: 5px;
+   margin-top: 5px;
    margin-right: 5px;
    margin-bottom: 10px;
 }
@@ -216,24 +215,12 @@
 }
 
 .popupWarning {
-   font-size: smaller;
-   opacity: .7;
    font-style: italic;
    color: red;
-   margin-left: 5px;
-   margin-right: 5px;
 }
 
 .popupHelpPanel {
    margin: 5px;
-}
-
-.popupHelpTitle {
-   font-weight: bold;
-}
-
-.popupHelpDescription {
-   font-size: small;
 }
 
 .xtermHyperlink {
@@ -263,4 +250,23 @@
    text-decoration: underline; 
    text-decoration-style: dotted;
    cursor: not-allowed;
+}
+
+.helpPreview {
+   padding-top: 5px;
+   margin-left: 0px !important;
+}
+
+.popupHelpTitle {
+   font-weight: bold;
+   padding-left: 5px;
+}
+
+.popupHelpDescription {
+   padding-left: 5px;
+   padding-bottom: 5px;
+}
+
+.popupVignetteTitle {
+   padding-bottom: 5px;
 }

@@ -26,7 +26,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
-import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
 
 public class HelpHyperlink extends Hyperlink
 {
@@ -36,6 +35,7 @@ public class HelpHyperlink extends Hyperlink
         topic_ = params_.get("topic");
         pkg_ = params_.get("package");
         server_ = RStudioGinjector.INSTANCE.getServer();
+        helpAvailable_ = false;
     }
 
     @Override
@@ -48,8 +48,8 @@ public class HelpHyperlink extends Hyperlink
     public Widget getPopupContent()
     {
         final VerticalPanel panel = new VerticalPanel();
-
-        HTML label = new HTML("<b>" + topic_ + "</b> {" + pkg_ + "} <hr/>");
+        
+        HTML label = new HTML("<b>" + topic_ + "</b> {" + pkg_ + "}");
         label.setStyleName(styles_.popupCode());
         panel.add(label);
         
@@ -57,30 +57,17 @@ public class HelpHyperlink extends Hyperlink
 
             @Override
             public void onResponseReceived(HelpInfo response) {
-                ParsedInfo parsed = response.parse(pkg_ + "::" + topic_);
-                
-                VerticalPanel helpPanel = new VerticalPanel();
-                helpPanel.setStyleName(styles_.popupHelpPanel());
-                Label title = new Label(parsed.getTitle());
-                title.setStyleName(styles_.popupHelpTitle());
-
-                HTML description = new HTML(parsed.getDescription());
-                description.setStyleName(styles_.popupHelpDescription());
-
-                HTML more = new HTML("<hr/>" + "Click for additional help.");
-                more.setStyleName(styles_.popupInfo());
-
-                helpPanel.add(title);
-                helpPanel.add(description);
-                helpPanel.add(more);
-
-                panel.add(helpPanel);
+                helpAvailable_ = true;
+                HelpPreview preview = new HelpPreview(response, pkg_, topic_);
+                panel.add(preview);
             }
 
             @Override
             public void onError(ServerError error) {
-                Label notFound = new Label("No documentation found for `"+topic_+"` in package {" + pkg_ + "}");
-                notFound.setStyleName(styles_.popupWarning());
+                helpAvailable_ = false;
+                Label notFound = new Label("No documentation found");
+                notFound.setStyleName(styles_.promptFullHelp());
+                notFound.addStyleName(styles_.popupWarning());
                 panel.add(notFound);
             }
             
@@ -94,7 +81,13 @@ public class HelpHyperlink extends Hyperlink
         return styles_.helpHyperlink();
     }
     
+    public boolean clickable()
+    {
+        return helpAvailable_;
+    }
+
     private String topic_;
     private String pkg_;
+    private boolean helpAvailable_;
     private HelpServerOperations server_;
 }

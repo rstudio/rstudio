@@ -24,10 +24,12 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.packages.model.PackagesServerOperations;
+import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
 public class RunHyperlink extends Hyperlink
 {
@@ -39,10 +41,13 @@ public class RunHyperlink extends Hyperlink
         if (match == null)
         {
             package_ = null;
+            allowed_ = false;
         }
         else 
         {
             package_ = match.getGroup(1);
+            fun_ = match.getGroup(2);
+            allowed_ = true;
         }
         server_ = RStudioGinjector.INSTANCE.getServer();
     }
@@ -89,34 +94,49 @@ public class RunHyperlink extends Hyperlink
     @Override
     public Widget getPopupContent() 
     {
-        VerticalPanel panel = new VerticalPanel();
+        final VerticalPanel panel = new VerticalPanel();
 
         Label commandLabel = new Label(code_);
         commandLabel.setStyleName( 
-            (package_ == null) ? styles_.popupArbitraryCode() : styles_.popupCode()
+            allowed_ ? styles_.popupCode() : styles_.popupArbitraryCode()
         );
         panel.add(commandLabel);
         
-        if (package_ == null)
+        if (allowed_)
         {
-            HTML hint = new HTML("Code must be of the form <b>pkg::fun(...)</b>.");
-            hint.setStyleName(styles_.popupWarning());
-            panel.add(hint);
-        } 
-        else
-        {
-            Label title = new Label("Run code in the console.");
-            title.setStyleName(styles_.popupInfo());
-            panel.add(title);
+            server_.getHelp(fun_, package_, RCompletionType.FUNCTION, new ServerRequestCallback<HelpInfo>() {
+
+                @Override
+                public void onResponseReceived(HelpInfo response) {
+                    HelpPreview preview = new HelpPreview(response, package_, fun_);
+                    
+                    HTML more = new HTML("Click to run the code in the console.");
+                    more.setStyleName(styles_.promptFullHelp());
+                    preview.add(more);
+
+                    panel.add(preview);
+                }
+    
+                @Override
+                public void onError(ServerError error) {}
+                
+            });
         }
 
         return panel;
     }
+
+    public boolean clickable()
+    {
+        return allowed_;
+    }
     
     private String code_;    
     private String package_;
+    private String fun_;
+    private boolean allowed_;
     private static final EventBus events_ = RStudioGinjector.INSTANCE.getEventBus();
-    private PackagesServerOperations server_;
+    private Server server_;
 
     // allow code of the form pkg::fn(<args>) where args does not have ;()
     private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(\\w+)::(\\w+)[(][^();]*[)]$");

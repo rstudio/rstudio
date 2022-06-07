@@ -16,7 +16,8 @@ package org.rstudio.core.client.hyperlink;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.FilePosition;
@@ -59,9 +60,7 @@ public class FileHyperlink extends Hyperlink
                         columnManager.scrollToPosition(position, true, new Command(){
 
                             @Override
-                            public void execute() {
-                                
-                            }
+                            public void execute() {}
                             
                         } );
                     });
@@ -72,10 +71,17 @@ public class FileHyperlink extends Hyperlink
 
     @Override
     public Widget getPopupContent() {
-        return new HTML("<b>Navigate to file</b>: " + filename);
+        final VerticalPanel panel = new VerticalPanel();
+        
+        Label label = new Label(filename);
+        label.setStyleName(styles_.popupCode());
+        panel.add(label);
+        
+        return panel;
     }
     
     private String filename;
     private int line;
     private int col;
+
 }

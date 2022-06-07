@@ -17,6 +17,7 @@ package org.rstudio.core.client.hyperlink;
 import java.util.Map;
 import java.util.TreeMap;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -71,12 +72,11 @@ public abstract class Hyperlink
             {
                 popup_.hide();
             }
-            else if (event.getTypeInt() == Event.ONCLICK) 
+            else if (event.getTypeInt() == Event.ONCLICK && clickable()) 
             {
                 popup_.hide();
                 onClick();
             }
-
         });
 
         return anchor_;
@@ -87,6 +87,10 @@ public abstract class Hyperlink
         return styles_.xtermHyperlink();
     }
 
+    public boolean clickable()
+    {
+        return true;
+    }
     public abstract void onClick();
     public abstract Widget getPopupContent();
     

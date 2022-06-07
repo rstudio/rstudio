@@ -40,14 +40,14 @@ public class UnsupportedHyperlink extends Hyperlink
     public Widget getPopupContent() {
         VerticalPanel panel = new VerticalPanel();
 
-        Label title =  new Label("Unsupported hyperlink");
-        title.setStyleName(styles_.popupInfo());
-
         Label urlLabel = new Label(url);
-        urlLabel.setStyleName(styles_.popupCode());
+        urlLabel.setStyleName(styles_.popupArbitraryCode());
 
-        panel.add(title);
+        Label title =  new Label("Unsupported hyperlink");
+        title.setStyleName(styles_.popupWarning());
+
         panel.add(urlLabel);
+        panel.add(title);
         return panel;
     }
 }
