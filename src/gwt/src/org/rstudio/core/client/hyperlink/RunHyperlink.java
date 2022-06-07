@@ -62,26 +62,11 @@ public class RunHyperlink extends Hyperlink
     public void onClick(){
         if (package_ != null)
         {
-            server_.getPackageHyperlinkRisk(package_, new ServerRequestCallback<String>(){
-
+            server_.isPackageHyperlinkSafe(package_, new ServerRequestCallback<Boolean>(){
+                
                 @Override
-                public void onResponseReceived(String response) {
-                    if (StringUtil.equals(response, "loaded") || StringUtil.equals(response, "allowed"))
-                    {
-                        // package is loaded or in the allow list (e.g. testthat)
-                        events_.fireEvent(new SendToConsoleEvent(code_, true));
-                    }
-                    else if (StringUtil.equals(response, "installed")) 
-                    {
-                        // package is installed but not loaded
-                        events_.fireEvent(new SendToConsoleEvent(code_, false));
-                    }
-                    else
-                    {
-                        // package is not installed, make the code a comment
-                        // maybe this should offer to install it ?
-                        events_.fireEvent(new SendToConsoleEvent("# " + code_, false));
-                    }
+                public void onResponseReceived(Boolean response) {
+                    events_.fireEvent(new SendToConsoleEvent(code_, response));
                 }
     
                 @Override

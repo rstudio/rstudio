@@ -270,29 +270,16 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.isPackageLoaded(packageName, libName)
 })
 
-.rs.addFunction("getPackageHyperlinkRisk", function(packageName)
+.rs.addFunction("isPackageHyperlinkSafe", function(packageName)
 {
-   if (packageName %in% .packages())
-   {
-      .rs.scalar("loaded")
-   }
-   else if (packageName %in% c("testthat", "rlang", "devtools", "usethis"))
-   {
-      .rs.scalar("allowed")
-   }
-   else if (packageName %in% rownames(installed.packages()))
-   {
-      .rs.scalar("installed")
-   }
-   else 
-   {
-      .rs.scalar("unknown")
-   }
+   .rs.scalar(
+      packageName %in% .packages() || packageName %in% c("testthat", "rlang", "devtools", "usethis")
+   )
 })
 
-.rs.addJsonRpcHandler( "get_package_hyperlink_risk", function(packageName)
+.rs.addJsonRpcHandler( "is_package_hyperlink_safe", function(packageName)
 {
-   .rs.getPackageHyperlinkRisk(packageName)
+   .rs.isPackageHyperlinkSafe(packageName)
 })
 
 .rs.addFunction("forceUnloadPackage", function(package)
