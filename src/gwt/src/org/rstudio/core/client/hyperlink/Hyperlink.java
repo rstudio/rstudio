@@ -99,6 +99,10 @@ public abstract class Hyperlink
         {
             return new FileHyperlink(url, params, text, clazz);
         }
+        else if (url.startsWith("http://") || url.startsWith("https://"))
+        {
+            return new WebHyperlink(url, params, text, clazz);
+        }
         else if(url.startsWith("ide:help") || url.startsWith("rstudio:help"))
         {
             return new HelpHyperlink(url, params, text, clazz);
@@ -106,10 +110,6 @@ public abstract class Hyperlink
         else if(url.startsWith("ide:vignette") || url.startsWith("rstudio:vignette"))
         {
             return new VignetteHyperlink(url, params, text, clazz);
-        }
-        else if (url.startsWith("http://") || url.startsWith("https://"))
-        {
-            return new WebHyperlink(url, params, text, clazz);
         }
         else if (url.startsWith("ide:run:") || url.startsWith("rstudio:run:"))
         {
