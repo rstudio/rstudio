@@ -90,6 +90,8 @@ core::FilePath quartoBinary();
 
 bool projectIsQuarto();
 
+bool docIsQuarto(const std::string& docId);
+
 core::FilePath quartoProjectConfigFile(const core::FilePath& filePath);
 
 void readQuartoProjectConfig(const core::FilePath& configFile,

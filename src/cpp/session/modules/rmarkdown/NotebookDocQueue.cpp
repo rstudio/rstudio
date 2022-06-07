@@ -74,12 +74,15 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
       // precedence
       setWorkingDir(docWorkingDir, SetupChunkDir);
    }
-   else
+   else if (quarto::docIsQuarto(docId))
    {
+      // Quarto documents can have an execution directory specified in their
+      // project configuration (i.e. _quarto.yml); if it's set there, use
+      // it.
       FilePath qmdExecutionPath = quarto::getQuartoExecutionDir(docPath_);
       if (!qmdExecutionPath.isEmpty())
       {
-         setWorkingDir(qmdExecutionPath.getAbsolutePath(), QuartoProjectDir);
+        setWorkingDir(qmdExecutionPath.getAbsolutePath(), QuartoProjectDir);
       }
    }
 

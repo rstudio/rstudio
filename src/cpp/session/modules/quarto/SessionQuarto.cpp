@@ -1064,6 +1064,28 @@ bool projectIsQuarto()
    }
 }
 
+// Looks up the document in the source database and returns true IFF the
+// document is Quarto markdown. There are a variety of heuristics that
+// are employed to ascertain this (see onDetectQuartoSourceType for
+// details).
+//
+// Takes a docId rather than a path so that we can detect Quarto even
+// in unsaved buffers.
+bool docIsQuarto(const std::string& docId)
+{
+    boost::shared_ptr<source_database::SourceDocument> pDoc(new source_database::SourceDocument());
+    Error error = source_database::get(docId, pDoc);
+    if (error)
+    {
+        // If it doesn't exist in the source database, presume it isn't Quarto.
+        LOG_ERROR(error);
+        return false;
+    }
+
+    // Detect the document's extended type
+    std::string xt = onDetectQuartoSourceType(pDoc);
+    return xt == kQuartoXt;
+}
 
 FilePath quartoProjectConfigFile(const core::FilePath& filePath)
 {
@@ -1222,14 +1244,8 @@ FilePath getQuartoExecutionDir(const std::string& docPath)
       return FilePath();
    }
 
-   // Resolve path, and ensure the document is a Quarto file
-   FilePath qmdPath = module_context::resolveAliasedPath(docPath);
-   if (!qmdPath.hasExtensionLowerCase(".qmd"))
-   {
-      return FilePath();
-   }
-
    // Find the Quarto configuration file associated with this document
+   FilePath qmdPath = module_context::resolveAliasedPath(docPath);
    FilePath quartoConfig = quartoProjectConfigFile(qmdPath);
    if (quartoConfig.isEmpty())
    {
@@ -1243,20 +1259,20 @@ FilePath getQuartoExecutionDir(const std::string& docPath)
             nullptr, // output dir
             &executeDir);
 
-    if (executeDir == quarto::kQuartoExecuteDirProject)
-    {
-       // If the execution dir is set to 'project', infer the project root from the location
-       // of the Quarto config file and use it as the directory for execution
-       return quartoConfig.getParent();
-    }
-    else if (executeDir == quarto::kQuartoExecuteDirFile)
-    {
-       // If the execution dir is set to 'file', use the directory of the document
-       return qmdPath.getParent();
-    }
+   if (executeDir == quarto::kQuartoExecuteDirProject)
+   {
+      // If the execution dir is set to 'project', infer the project root from the location
+      // of the Quarto config file and use it as the directory for execution
+      return quartoConfig.getParent();
+   }
+   else if (executeDir == quarto::kQuartoExecuteDirFile)
+   {
+      // If the execution dir is set to 'file', use the directory of the document
+      return qmdPath.getParent();
+   }
 
-    // In all other cases, treat the execution directory as unspecified
-    return FilePath();
+   // In all other cases, treat the execution directory as unspecified
+   return FilePath();
 }
 
 } // namespace quarto
