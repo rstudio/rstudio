@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ResultCallback;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
@@ -38,10 +39,10 @@ public class FileHyperlink extends Hyperlink
         col = -1;
 
         if (params_.containsKey("line"))
-            line = Integer.parseInt(params_.get("line"));
+            line = StringUtil.parseInt(params_.get("line"), -1);
         
         if (params_.containsKey("col"))
-            col = Integer.parseInt(params_.get("col"));    
+            col = StringUtil.parseInt(params_.get("col"), -1);    
     }
 
     @Override
