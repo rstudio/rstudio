@@ -1,0 +1,96 @@
+@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+
+.xtermHyperlink {
+    text-decoration: underline; 
+    cursor: pointer; 
+    text-decoration-style: dotted;
+}
+
+.xtermHyperlink:hover { 
+    text-decoration: underline; 
+    text-decoration-style: solid; 
+}
+
+.xtermCommand {
+    text-decoration: underline; 
+    text-decoration-style: dotted;
+    cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAASCAYAAABb0P4QAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAVtJREFUeNpi/P//PwM1ASNNDKzvmSoNZNsAsTgB9S+B+EhjSfZTnCpABtZ1T0l5/ur1uf8EAEgNSC1IDy7MBDWXS0JUxJCQd6BquGB8gZUxGOHFRGmYoRvKRI2IQDaUBVli61XcMe6tzQjSyMAgyzBx4srjE7EZ+iF8CSOKgW/efQDTIkICWNiCRLkUxUCQZkJsfADkQliyyftPJICqBevjXxH9H4bRkw1FAOwyWCxrG5gJf3z/TpJYzW9fv1LUNjSTwWYYOJaBPP33796J37x995W6qrIYPsOu3bj1/u2bN8qM/xlcdXQcF8kwfOXQaDPnZGH9+//nv3//fnBw/GUBJpSLnz68Z+meMuvr71+/5H7/+in++/dv0b9//goBw4SViZnpCwsLyxtWVraXLCysD4FqtwIdceEf8zc+RmBKYmH8z8Pwl+kP+1+mz+w//n1gHBrFFzUBQIABAKPICa9z2cbGAAAAAElFTkSuQmCC'), e-resize;
+}
+
+.code {
+    font-family: fixedWidthFont;
+    margin-left: 5px;
+    margin-top: 5px;
+    margin-right: 5px;
+    margin-bottom: 10px;
+}
+ 
+.arbitraryCode {
+    font-family: fixedWidthFont;
+    opacity: 0.7;
+    margin-left: 5px;
+    margin-top: 5px;
+    margin-right: 5px;
+    margin-bottom: 10px;
+}
+ 
+.xtermUnsupportedHyperlink { 
+    text-decoration: underline; 
+    text-decoration-style: dotted;
+    cursor: not-allowed;
+}
+ 
+.helpPreview {
+    color: #000023;
+    background-color: #ffffca;
+    padding: 5px;
+    border-top: 1px solid #ccc;
+    z-index: 9001;
+    
+    padding-top: 5px;
+    margin-left: 0px;
+}
+ 
+.helpTitle {
+    font-weight: bold;
+}
+ 
+.helpDescription {
+    margin-top: 4px;
+    margin-bottom: 4px; 
+}
+ 
+.helpHyperlink {
+    text-decoration: underline; 
+    cursor: help; 
+    text-decoration-style: dotted;
+}
+ 
+.warning {
+    font-size: smaller;
+    font-style: italic;
+    color: red;
+    padding-left: 5px;
+}
+ 
+.helpTitlePanel {
+    width: 100%;
+}
+
+.helpTitlePanelPackage {
+    font-family: fixedWidthFont;
+    float: right;
+    padding-right: 5px;
+    color: #ccc;
+}
+
+.helpTitlePanelTopic {
+    font-family: fixedWidthFont;
+    padding-left: 5px;
+}
+
+.popupPanel {
+    max-width: 400px;
+}
+ 

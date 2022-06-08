@@ -245,8 +245,6 @@
 .xtermBold { font-weight: bold; }
 .xtermBlur { filter: blur(1px); }
 .xtermUnderline { text-decoration: underline; }
-.xtermHyperlink { text-decoration: underline; cursor: pointer; text-decoration-style: dotted; }
-.xtermHyperlink:hover { text-decoration: underline; text-decoration-style: solid; }
 .xtermBlink { text-decoration: blink; }
 .xtermHidden { visibility: hidden; }
 .xtermItalic { font-style: italic; }

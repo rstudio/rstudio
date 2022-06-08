@@ -692,17 +692,6 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, CONSOLE_INPUT, params, requestCallback);
    }
 
-   @Override
-   public void consoleFollowHyperlink(String url, String text, String params, ServerRequestCallback<Void> requestCallback) {
-      JSONArray array = new JSONArrayBuilder()
-            .add(url)
-            .add(text)
-            .add(params)
-            .get();
-
-      sendRequest(RPC_SCOPE, CONSOLE_FOLLOW_HYPERLINK, array, requestCallback);
-   }
-
    public void resetConsoleActions(ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, RESET_CONSOLE_ACTIONS, requestCallback);
@@ -1306,6 +1295,15 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE, IS_PACKAGE_LOADED, params, requestCallback);
    }
 
+   public void isPackageHyperlinkSafe(
+                       String packageName,
+                       ServerRequestCallback<Boolean> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(packageName));
+      sendRequest(RPC_SCOPE, IS_PACKAGE_HYPERLINK_SAFE, params, requestCallback);
+   }
+
    public void isPackageInstalled(String packageName,
                                   String version,
                                   ServerRequestCallback<Boolean> requestCallback)
@@ -1474,6 +1472,30 @@ public class RemoteServer implements Server
                   null);
    }
 
+   public void getVignetteTitle(String topic,
+                                String pkgName, 
+                                ServerRequestCallback<String> requestCallback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(topic));
+      params.set(1, new JSONString(pkgName));
+      sendRequest(RPC_SCOPE,
+                  GET_VIGNETTE_TITLE,
+                  params,
+                  requestCallback);
+   }
+
+   public void showVignette(String topic, String pkgName) 
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(topic));
+      params.set(1, new JSONString(pkgName));
+      sendRequest(RPC_SCOPE,
+                  SHOW_VIGNETTE,
+                  params,
+                  null);
+   }
+   
    public void search(String query,
                       ServerRequestCallback<JsArrayString> requestCallback)
    {
@@ -6588,7 +6610,6 @@ public class RemoteServer implements Server
    private static final String FIND_FUNCTION_IN_SEARCH_PATH = "find_function_in_search_path";
 
    private static final String CONSOLE_INPUT = "console_input";
-   private static final String CONSOLE_FOLLOW_HYPERLINK = "console_follow_hyperlink";
    private static final String RESET_CONSOLE_ACTIONS = "reset_console_actions";
    private static final String INTERRUPT = "interrupt";
    private static final String ABORT = "abort";
@@ -6640,6 +6661,7 @@ public class RemoteServer implements Server
    private static final String GET_PACKAGE_NEWS_URL = "get_package_news_url";
    private static final String GET_PACKAGE_INSTALL_CONTEXT = "get_package_install_context";
    private static final String IS_PACKAGE_LOADED = "is_package_loaded";
+   private static final String IS_PACKAGE_HYPERLINK_SAFE = "is_package_hyperlink_safe";
    private static final String IS_PACKAGE_INSTALLED = "is_package_installed";
    private static final String SET_CRAN_MIRROR = "set_cran_mirror";
    private static final String GET_CRAN_MIRRORS = "get_cran_mirrors";
@@ -6654,6 +6676,8 @@ public class RemoteServer implements Server
    private static final String GET_CUSTOM_HELP = "get_custom_help";
    private static final String GET_CUSTOM_PARAMETER_HELP = "get_custom_parameter_help";
    private static final String SHOW_CUSTOM_HELP_TOPIC = "show_custom_help_topic";
+   private static final String GET_VIGNETTE_TITLE = "get_vignette_title";
+   private static final String SHOW_VIGNETTE = "show_vignette";
 
    private static final String STAT = "stat";
    private static final String IS_TEXT_FILE = "is_text_file";

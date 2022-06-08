@@ -1,5 +1,5 @@
 /*
- * VirtualConsoleServerOperations.java
+ * HyperlinkPopupDisplay.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -12,10 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.console.model;
-import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
+package org.rstudio.core.client.hyperlink;
 
-public interface VirtualConsoleServerOperations {
-    void consoleFollowHyperlink(String url, String text, String params, ServerRequestCallback<Void> requestCallback);
+import com.google.gwt.event.logical.shared.HasCloseHandlers;
+import com.google.gwt.user.client.ui.PopupPanel;
+import com.google.gwt.user.client.ui.Widget;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
+
+public interface HyperlinkPopupDisplay 
+                    extends HasCloseHandlers<PopupPanel> 
+{
+    void show(Widget content, PositionCallback callback);
+    void setPopupPosition(int x, int y);
 }

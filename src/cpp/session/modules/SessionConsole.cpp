@@ -253,7 +253,6 @@ Error initialize()
    using boost::bind;
    ExecBlock initBlock;
    initBlock.addFunctions()
-      (bind(sourceModuleRFile, "SessionConsole.R"))
       (bind(registerRpcMethod, "reset_console_actions", resetConsoleActions));
 
    return initBlock.execute();
