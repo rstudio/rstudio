@@ -49,8 +49,6 @@ public interface ConsoleResources extends ClientBundle
       String packageName();
       String packageDescription();
       String truncatedLabel();
-
-      String popupPanel();
    }
 
    public static final String KEYWORD_CLASS_NAME = " ace_keyword";

@@ -44,5 +44,7 @@ public interface HyperlinkResources extends ClientBundle
         String helpTitlePanel();
         String helpTitlePanelPackage();
         String helpTitlePanelTopic();
+
+        String popupPanel();
     }
 }

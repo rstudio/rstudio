@@ -89,3 +89,8 @@
     font-family: fixedWidthFont;
     padding-left: 5px;
 }
+
+.popupPanel {
+    max-width: 400px;
+}
+ 

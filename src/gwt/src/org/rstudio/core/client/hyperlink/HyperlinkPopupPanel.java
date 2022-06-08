@@ -25,7 +25,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
-import org.rstudio.studio.client.workbench.views.console.ConsoleConstants;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPopupDisplay
@@ -34,13 +33,10 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
     {
         super();
         autoConstrain_ = false;
-        styles_ = ConsoleResources.INSTANCE.consoleStyles();
-
-        setStylePrimaryName(styles_.completionPopup());
+        setStylePrimaryName(ConsoleResources.INSTANCE.consoleStyles().completionPopup());
 
         addCloseHandler(new CloseHandler<PopupPanel>()
         {
-
             @Override
             public void onClose(CloseEvent<PopupPanel> event)
             {
@@ -62,7 +58,7 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
     public void show(Widget content, PositionCallback callback)
     {
         container_ = new VerticalPanel();
-        container_.addStyleName(styles_.popupPanel());
+        container_.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().popupPanel());
         
         container_.add(content);
         
@@ -80,7 +76,5 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
         super.setPopupPosition(left, top);
     }
 
-    private final ConsoleResources.ConsoleStyles styles_;
     private VerticalPanel container_;
-    private static final ConsoleConstants constants_ = GWT.create(ConsoleConstants.class);
 }
