@@ -14,11 +14,14 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import java.util.Map;
+
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
@@ -27,7 +30,7 @@ import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations
 
 public class VignetteHyperlink extends Hyperlink 
 {
-    public VignetteHyperlink(String url, String params, String text, String clazz) 
+    public VignetteHyperlink(String url, Map<String, String> params, String text, String clazz) 
     {
         super(url, params, text, clazz);
         if (url.contains(":vignette:"))
@@ -38,8 +41,8 @@ public class VignetteHyperlink extends Hyperlink
         }
         else 
         {
-            topic_ = params_.get("topic");
-            pkg_ = params_.get("package");
+            topic_ = params.get("topic");
+            pkg_ = params.get("package");
         }
         server_ = RStudioGinjector.INSTANCE.getServer();
     }
@@ -91,6 +94,14 @@ public class VignetteHyperlink extends Hyperlink
         });
         
         return panel;
+    }
+
+    public static boolean handles(String url, Map<String, String> params)
+    {
+        if (StringUtil.equals(url, "ide:vignette") || StringUtil.equals(url, "rstudio:vignette"))
+            return params.containsKey("topic") && params.containsKey("package");
+        
+        return url.matches("^(ide|rstudio):vignette:(\\w+)::(\\w+)$");
     }
     
     private String topic_;

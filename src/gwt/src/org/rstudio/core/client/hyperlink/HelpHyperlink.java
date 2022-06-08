@@ -14,12 +14,14 @@
  */
 package org.rstudio.core.client.hyperlink;
 
-import com.google.gwt.core.client.GWT;
+import java.util.Map;
+
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.ServerError;
@@ -30,19 +32,20 @@ import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations
 
 public class HelpHyperlink extends Hyperlink
 {
-    public HelpHyperlink(String url, String params, String text, String clazz) 
+    public HelpHyperlink(String url, Map<String, String> params, String text, String clazz) 
     {
         super(url, params, text, clazz);
-        if (url.contains(":help:"))
+        if (url.startsWith("ide:help:") || url.startsWith("rstudio:help:"))
         {
-            String[] splat = url.replaceFirst("^.*help:", "").split("::");
+            String suffix = url.replaceFirst("^.*help:", "");
+            String[] splat = suffix.split("::");
             pkg_ = splat[0];
             topic_ = splat[1];
         }
         else 
         {
-            topic_ = params_.get("topic");
-            pkg_ = params_.get("package");
+            topic_ = params.get("topic");
+            pkg_ = params.get("package");
         }
         server_ = RStudioGinjector.INSTANCE.getServer();
         helpAvailable_ = false;
@@ -59,33 +62,36 @@ public class HelpHyperlink extends Hyperlink
     {
         final VerticalPanel panel = new VerticalPanel();
         
-        HTML label = new HTML("<b>" + topic_ + "</b> {" + pkg_ + "}");
-        label.setStyleName(styles_.code());
-        panel.add(label);
-        
-        server_.getHelp(topic_, pkg_, RCompletionType.FUNCTION, new ServerRequestCallback<HelpInfo>()
+        if (topic_ != null && pkg_ != null)
         {
-
-            @Override
-            public void onResponseReceived(HelpInfo response)
-            {
-                helpAvailable_ = true;
-                HelpPreview preview = new HelpPreview(response, pkg_, topic_);
-                panel.add(preview);
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-                helpAvailable_ = false;
-                Label notFound = new Label("No documentation found");
-                notFound.setStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
-                notFound.addStyleName(styles_.warning());
-                panel.add(notFound);
-            }
+            HTML label = new HTML("<b>" + topic_ + "</b> {" + pkg_ + "}");
+            label.setStyleName(styles_.code());
+            panel.add(label);
             
-        });
-        
+            server_.getHelp(topic_, pkg_, RCompletionType.FUNCTION, new ServerRequestCallback<HelpInfo>()
+            {
+
+                @Override
+                public void onResponseReceived(HelpInfo response)
+                {
+                    helpAvailable_ = true;
+                    HelpPreview preview = new HelpPreview(response, pkg_, topic_);
+                    panel.add(preview);
+                }
+
+                @Override
+                public void onError(ServerError error)
+                {
+                    helpAvailable_ = false;
+                    Label notFound = new Label("No documentation found");
+                    notFound.setStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
+                    notFound.addStyleName(styles_.warning());
+                    panel.add(notFound);
+                }
+                
+            });
+        }
+
         return panel;
     }
 
@@ -97,6 +103,14 @@ public class HelpHyperlink extends Hyperlink
     public boolean clickable()
     {
         return helpAvailable_;
+    }
+
+    public static boolean handles(String url, Map<String, String> params)
+    {
+        if (StringUtil.equals(url, "ide:help") || StringUtil.equals(url, "rstudio:help"))
+            return params.containsKey("topic") && params.containsKey("package");
+        
+        return url.matches("^(ide|rstudio):help:(\\w+)::(\\w+)$");
     }
 
     private String topic_;

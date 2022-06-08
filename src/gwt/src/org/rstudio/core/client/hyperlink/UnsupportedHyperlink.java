@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import java.util.Map;
+
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -21,7 +23,7 @@ import com.google.gwt.user.client.ui.Widget;
 public class UnsupportedHyperlink extends Hyperlink
 {
 
-    public UnsupportedHyperlink(String url, String params, String text, String clazz)
+    public UnsupportedHyperlink(String url, Map<String, String> params, String text, String clazz)
     {
         super(url, params, text, clazz);
     }
@@ -42,8 +44,19 @@ public class UnsupportedHyperlink extends Hyperlink
 
         Label urlLabel = new Label(url);
         urlLabel.setStyleName(styles_.arbitraryCode());
-
         panel.add(urlLabel);
+        
+        if (!params.isEmpty())
+        {
+            for (Map.Entry<String, String> param: params.entrySet())
+            {
+                Label paramLabel = new Label(param.getKey() + ": " + param.getValue());
+                paramLabel.setStyleName(styles_.warning());
+                panel.add(paramLabel);
+            }
+
+        }
+        
         return panel;
     }
 }

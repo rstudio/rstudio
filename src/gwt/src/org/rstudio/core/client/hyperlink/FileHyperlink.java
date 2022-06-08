@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import java.util.Map;
+
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -29,7 +31,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 
 public class FileHyperlink extends Hyperlink 
 {
-    public FileHyperlink(String url, String params, String text, String clazz)
+    public FileHyperlink(String url, Map<String, String> params, String text, String clazz)
     {
         super(url, params, text, clazz);
 
@@ -37,11 +39,11 @@ public class FileHyperlink extends Hyperlink
         line = -1;
         col = -1;
 
-        if (params_.containsKey("line"))
-            line = StringUtil.parseInt(params_.get("line"), -1);
+        if (params.containsKey("line"))
+            line = StringUtil.parseInt(params.get("line"), -1);
         
-        if (params_.containsKey("col"))
-            col = StringUtil.parseInt(params_.get("col"), -1);    
+        if (params.containsKey("col"))
+            col = StringUtil.parseInt(params.get("col"), -1);    
     }
 
     @Override

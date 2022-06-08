@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import java.util.Map;
+
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -25,7 +27,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 public class WebHyperlink extends Hyperlink {
 
-    public WebHyperlink(String url, String params, String text, String clazz) 
+    public WebHyperlink(String url, Map<String, String> params, String text, String clazz) 
     {
         super(url, params, text, clazz);
         server_ = RStudioGinjector.INSTANCE.getServer();
@@ -55,6 +57,7 @@ public class WebHyperlink extends Hyperlink {
 
         /*
             // TODO: maybe we can show a screenshot ?
+            //       perhaps using {webshot} ?
             Frame frame = new Frame(url);
             panel.add(frame);
         */
@@ -62,5 +65,10 @@ public class WebHyperlink extends Hyperlink {
         return panel;
     }
     
+    public static boolean handles(String url)
+    {
+        return url.startsWith("http://") || url.startsWith("https://");
+    }
+
     private SourceServerOperations server_;
 }

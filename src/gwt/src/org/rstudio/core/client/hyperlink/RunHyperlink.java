@@ -14,69 +14,54 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import java.util.Map;
+
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.Server;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
 public class RunHyperlink extends Hyperlink
 {
-    public RunHyperlink(String url, String params, String text, String clazz)
+    public RunHyperlink(String url, Map<String, String> params, String text, String clazz)
     {
         super(url, params, text, clazz);
         code_ = url.replaceFirst("^(ide|rstudio):run:", "");
         Match match = HYPERLINK_PATTERN.match(code_, 0);
-        if (match == null)
-        {
-            package_ = null;
-            allowed_ = false;
-        }
-        else 
-        {
-            package_ = match.getGroup(1);
-            fun_ = match.getGroup(2);
-            allowed_ = true;
-        }
+        package_ = match.getGroup(2);
+        fun_ = match.getGroup(3);
         server_ = RStudioGinjector.INSTANCE.getServer();
     }
 
     @Override
     public String getAnchorClass() 
     {
-        return (package_ == null) ? styles_.xtermUnsupportedHyperlink() : styles_.xtermCommand();
+        return styles_.xtermCommand();
     }
 
     @Override 
     public void onClick()
     {
-        if (package_ != null)
-        {
-            server_.isPackageHyperlinkSafe(package_, new ServerRequestCallback<Boolean>(){
+        server_.isPackageHyperlinkSafe(package_, new SimpleRequestCallback<Boolean>(){
 
-                @Override
-                public void onResponseReceived(Boolean response)
-                {
-                    events_.fireEvent(new SendToConsoleEvent(code_, response));
-                }
-    
-                @Override
-                public void onError(ServerError error) {}
-                
-            });
-        }
+            @Override
+            public void onResponseReceived(Boolean response)
+            {
+                events_.fireEvent(new SendToConsoleEvent(code_, response));
+            }
+            
+        });
     }
 
     @Override
@@ -85,49 +70,39 @@ public class RunHyperlink extends Hyperlink
         final VerticalPanel panel = new VerticalPanel();
 
         Label commandLabel = new Label(code_);
-        commandLabel.setStyleName( 
-            allowed_ ? styles_.code() : styles_.arbitraryCode()
-        );
+        commandLabel.setStyleName(styles_.code());
         panel.add(commandLabel);
         
-        if (allowed_)
+        server_.getHelp(fun_, package_, RCompletionType.FUNCTION, new SimpleRequestCallback<HelpInfo>()
         {
-            server_.getHelp(fun_, package_, RCompletionType.FUNCTION, new ServerRequestCallback<HelpInfo>()
+            @Override
+            public void onResponseReceived(HelpInfo response)
             {
-
-                @Override
-                public void onResponseReceived(HelpInfo response)
-                {
-                    HelpPreview preview = new HelpPreview(response, package_, fun_);
-                    
-                    HTML more = new HTML("Click to run the code in the console.");
-                    more.setStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
-                    preview.add(more);
-
-                    panel.add(preview);
-                }
-    
-                @Override
-                public void onError(ServerError error) {}
+                HelpPreview preview = new HelpPreview(response, package_, fun_);
                 
-            });
-        }
+                HTML more = new HTML("Click to run the code in the console.");
+                more.setStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
+                preview.add(more);
 
-        return panel;
+                panel.add(preview);
+            }
+            
+        });
+    
+    return panel;
     }
 
-    public boolean clickable()
+    public static boolean handles(String url)
     {
-        return allowed_;
+        return HYPERLINK_PATTERN.test(url);
     }
     
     private String code_;    
     private String package_;
     private String fun_;
-    private boolean allowed_;
     private static final EventBus events_ = RStudioGinjector.INSTANCE.getEventBus();
     private Server server_;
 
     // allow code of the form pkg::fn(<args>) where args does not have ;()
-    private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(\\w+)::(\\w+)[(][^();]*[)]$");
+    private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(rstudio|ide):run:(\\w+)::(\\w+)[(][^();]*[)]$");
 }
