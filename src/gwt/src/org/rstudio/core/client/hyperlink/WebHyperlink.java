@@ -21,7 +21,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class WebHyperlink extends Hyperlink {
@@ -35,12 +35,7 @@ public class WebHyperlink extends Hyperlink {
     @Override
     public void onClick() 
     {
-        String code = "utils::browseURL('" + url + "')";
-        server_.executeRCode(code, new SimpleRequestCallback<String>(){
-            @Override
-            public void onResponseReceived(String response) {}
-        });
-
+        RStudioGinjector.INSTANCE.getGlobalDisplay().openWindow(url, new NewWindowOptions());
     }
 
     @Override
