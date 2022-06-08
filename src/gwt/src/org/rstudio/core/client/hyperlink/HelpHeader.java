@@ -22,14 +22,16 @@ public class HelpHeader extends Composite
 {
     public HelpHeader(String topic, String pkgName)
     {
+        HyperlinkResources.HyperlinkStyles styles = HyperlinkResources.INSTANCE.hyperlinkStyles();
+
         HorizontalPanel titlePanel = new HorizontalPanel();
-        titlePanel.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpTitlePanel());
+        titlePanel.setStyleName(styles.helpTitlePanel());
         Label topicLabel = new Label(topic);
-        topicLabel.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpTitlePanelTopic());
+        topicLabel.setStyleName(styles.helpTitlePanelTopic());
         titlePanel.add(topicLabel);
 
         Label pkgLabel = new Label("{" + pkgName + "}");
-        pkgLabel.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpTitlePanelPackage());
+        pkgLabel.setStyleName(styles.helpTitlePanelPackage());
         titlePanel.add(pkgLabel);
 
         initWidget(titlePanel);
