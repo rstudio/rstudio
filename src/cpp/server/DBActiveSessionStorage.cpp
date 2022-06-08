@@ -16,6 +16,7 @@
 #include <server/DBActiveSessionStorage.hpp>
 
 #include <core/Database.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <server_core/ServerDatabase.hpp>
 
 #include <numeric>
@@ -120,22 +121,15 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
 Error getSessionCount(boost::shared_ptr<database::IConnection> connection, std::string sessionId, int* pCount)
 {
    database::Query query = connection->query("SELECT COUNT(*) FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
-      .withInput(sessionId);
-   database::Rowset rowset{};
+      .withInput(sessionId)
+      .withOutput(*pCount);
 
-   Error error = connection->execute(query, rowset);
+   Error error = connection->execute(query);
 
    if (error)
       return Error("DatabaseException", errc::DBError, "Error while retrieving session count for [ session:" + sessionId + " ]", error, ERROR_LOCATION);
-      
-   database::RowsetIterator iter = rowset.begin();
 
-   // Sanity checking, but should always have 1 row containing the count of rows
-   if (iter != rowset.end())
-   {
-      *pCount = iter->get<int>("COUNT(*)");
-   }
-   return error;
+   return Success();
 }
 
 } // anonymous namespace
@@ -358,17 +352,18 @@ Error DBActiveSessionStorage::destroy()
 
 Error DBActiveSessionStorage::isValid(bool* pValue)
 {
+   *pValue = false;
+
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
-   int count = 0;
+   int count;
 
-
-
+   if (error)
       return error;
 
    error = getSessionCount(connection, sessionId_, &count);
-
-   *pValue = false;
+   if (error)
+      return error;
 
    // ensure one and only one
    if (count > 1)
