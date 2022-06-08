@@ -105,7 +105,7 @@ PostgresqlConnectionOptions postgresConnectionOptions()
 }
 
 void updateTest(DatasetVersion version, DatasetType type, std::string path){
-    std::string testName = "A "+ versionToString(version) + " " + typeToString(Sqlite) + " Database";
+    std::string testName = "A "+ versionToString(version) + " " + typeToString(type) + " Database";
     GIVEN(testName)
     {
         FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
