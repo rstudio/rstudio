@@ -38,7 +38,8 @@ public class RunHyperlink extends Hyperlink
     {
         super(url, params, text, clazz);
         code_ = url.replaceFirst("^(ide|rstudio):run:", "");
-        Match match = HYPERLINK_PATTERN.match(code_, 0);
+        
+        Match match = HYPERLINK_PATTERN.match(url, 0);
         package_ = match.getGroup(2);
         fun_ = match.getGroup(3);
         server_ = RStudioGinjector.INSTANCE.getServer();
@@ -72,24 +73,10 @@ public class RunHyperlink extends Hyperlink
         Label commandLabel = new Label(code_);
         commandLabel.setStyleName(styles_.code());
         panel.add(commandLabel);
-        
-        server_.getHelp(fun_, package_, RCompletionType.FUNCTION, new SimpleRequestCallback<HelpInfo>()
-        {
-            @Override
-            public void onResponseReceived(HelpInfo response)
-            {
-                HelpPreview preview = new HelpPreview(response, package_, fun_);
-                
-                HTML more = new HTML("Click to run the code in the console.");
-                more.setStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
-                preview.add(more);
 
-                panel.add(preview);
-            }
-            
-        });
-    
-    return panel;
+        panel.add(new HelpPreview(fun_, package_));
+        
+        return panel;
     }
 
     public static boolean handles(String url)

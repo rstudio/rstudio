@@ -72,7 +72,6 @@ public class VignetteHyperlink extends Hyperlink
                 {
                     VerticalPanel helpPanel = new VerticalPanel();
 
-                    helpPanel.setStyleName(HelpInfoPopupPanelResources.INSTANCE.styles().helpPopup());
                     helpPanel.addStyleName(styles_.helpPreview());
 
                     Label title = new Label(response);

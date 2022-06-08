@@ -14,44 +14,67 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 
-import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpInfoPopupPanelResources;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
+import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
 
-public class HelpPreview extends VerticalPanel
+public class HelpPreview extends Composite
 {
-    public HelpPreview(HelpInfo info, String pkgName, String topic)
+    public HelpPreview(String topic, String pkgName)
     {
         super();
-        pkgName_ = pkgName;
+        
         topic_ = topic;
+        pkgName_ = pkgName;
+        server_ = RStudioGinjector.INSTANCE.getServer();
+        panel_ = new VerticalPanel();
         
-        final HyperlinkResources.HyperlinkStyles styles_ = HyperlinkResources.INSTANCE.hyperlinkStyles();
-        setStyleName(RES.styles().helpPopup());
-        addStyleName(styles_.helpPreview());
-
-        ParsedInfo parsed = info.parse(pkgName_ + "::" + topic_);
-        Label title = new Label(parsed.getTitle());
-        title.setStyleName(styles_.helpTitle());
-
-        HTML description = new HTML(parsed.getDescription());
-        description.setStyleName(RES.styles().helpBodyText());
-        description.addStyleName(styles_.helpDescription());
+        initWidget(panel_);
         
-        add(title);
-        add(description);
-    }
+        server_.getHelp(topic_, pkgName_, RCompletionType.FUNCTION, new SimpleRequestCallback<HelpInfo>()
+        {
+            @Override
+            public void onResponseReceived(HelpInfo response)
+            {
+                if (response != null)
+                {
+                    VerticalPanel previewPanel = new VerticalPanel();
+                    previewPanel.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreview());
 
-    private static HelpInfoPopupPanelResources RES =
-         HelpInfoPopupPanelResources.INSTANCE;
-    static {
-        RES.styles().ensureInjected();
+                    ParsedInfo parsed = response.parse(pkgName_ + "::" + topic_);
+                    Label title = new Label(parsed.getTitle());
+                    title.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpTitle());
+
+                    HTML description = new HTML(parsed.getDescription());
+                    description.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpDescription());
+                    
+                    previewPanel.add(title);
+                    previewPanel.add(description);
+                    panel_.add(previewPanel);
+                }
+                else 
+                {
+                    Label notFound = new Label("No documentation found");
+                    notFound.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().warning());
+                    panel_.add(notFound);
+                }
+                
+            }            
+        });
     }
    
-    private String pkgName_;
+    private VerticalPanel panel_;
+    
     private String topic_;
+    private String pkgName_;
+    private HelpServerOperations server_;
 }

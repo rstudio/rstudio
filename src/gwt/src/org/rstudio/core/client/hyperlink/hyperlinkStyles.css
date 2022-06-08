@@ -42,8 +42,14 @@
 }
  
 .helpPreview {
+    color: #000023;
+    background-color: #ffffca;
+    padding: 5px;
+    border-top: 1px solid #ccc;
+    z-index: 9001;
+    
     padding-top: 5px;
-    margin-left: 0px !important;
+    margin-left: 0px;
 }
  
 .helpTitle {
@@ -52,8 +58,8 @@
 }
  
 .helpDescription {
-    padding-left: 5px;
-    padding-bottom: 5px;
+    margin-top: 4px;
+    margin-bottom: 4px; 
 }
  
 .helpHyperlink {
@@ -63,7 +69,9 @@
 }
  
 .warning {
+    font-size: smaller;
     font-style: italic;
     color: red;
+    padding-left: 5px;
 }
  

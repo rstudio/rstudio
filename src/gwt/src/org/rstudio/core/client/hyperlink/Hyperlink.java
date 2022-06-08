@@ -117,8 +117,7 @@ public abstract class Hyperlink
         else 
         {
             return new UnsupportedHyperlink(url, params, text, clazz);
-        }
-        
+        }    
     }
 
     public String url;
