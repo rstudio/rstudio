@@ -13,6 +13,7 @@
  *
  */
 
+import { logger } from '../core/logger';
 import { jsLiteralEscape } from '../core/string-utils';
 import { MainWindow } from './main-window';
 
@@ -29,6 +30,9 @@ export class RCommandEvaluator {
     }
 
     rCmd = jsLiteralEscape(rCmd);
-    this.window?.executeJavaScript(`window.desktopHooks.evaluateRCmd("${rCmd}")`);
+    this.window?.executeJavaScript(`window.desktopHooks.evaluateRCmd("${rCmd}")`)
+      .catch((error) => {
+        logger().logError(error);
+      });
   }
 }

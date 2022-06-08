@@ -441,9 +441,6 @@ export class MenuCallback extends EventEmitter {
     // some shortcuts (namely, the Edit shortcuts) don't have bindings on the client side.
     // populate those here when discovered
 
-    // TODO: probably need to not use the roles here, and instead follow pattern in the C++
-    // code where we assign shortcuts to these commands and let them flow through
-    // our regular command handling
     if (cmdId === 'zoomActualSize') {
       menuItemOpts.accelerator = 'CommandOrControl+0';
     } else if (cmdId === 'zoomIn') {

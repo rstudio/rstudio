@@ -33,15 +33,15 @@ export function resolveTemplateVar(varName: string, vars: Map<string, string>): 
     if (varName.startsWith('!')) {
       prefix = '!';
       varName = varName.slice(1);
-    } else if (varName.startsWith("'")) {
-      prefix = "'";
+    } else if (varName.startsWith('\'')) {
+      prefix = '\'';
       varName = varName.slice(1);
     }
     const result = vars.get(varName);
     if (result) {
       if (prefix === '!') {
         return result;
-      } else if (prefix === "'") {
+      } else if (prefix === '\'') {
         return jsLiteralEscape(result);
       } else {
         return htmlEscape(result, true);

@@ -313,9 +313,6 @@ export class DesktopBrowserWindow extends EventEmitter {
     if (succeeded) {
       this.syncWindowTitle();
 
-      // TODO: Qt version sets up a tiny resize of the window here in response to the
-      // window being shown on a different screen. Need to test if this is necessary.
-
       const cmd = `if (window.opener && window.opener.registerDesktopChildWindow)
          window.opener.registerDesktopChildWindow('${this.options.name}', window);`;
       this.executeJavaScript(cmd).catch((error) => {

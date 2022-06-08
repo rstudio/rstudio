@@ -304,7 +304,8 @@ export class DesktopOptionsImpl implements DesktopOptions {
       return '';
     }
 
-    const rExecutablePath: string = this.config.get(kRExecutablePath, properties.platform.default.windows.rExecutablePath);
+    const rExecutablePath: string = this.config.get(kRExecutablePath,
+      properties.platform.default.windows.rExecutablePath);
 
     if (!rExecutablePath) {
       return '';

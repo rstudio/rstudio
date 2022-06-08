@@ -204,8 +204,6 @@ export class Application implements AppState {
     }
 
     // TODO: desktop pro session handling
-    // TODO: 'file/project' file open handling (e.g. launch by double-clicking a .R or .Rproj file)
-    // TODO: select 32bit session for 32bit R on Windows
 
     // launch a local session
     this.sessionLauncher = new SessionLauncher(this.sessionPath, confPath, new FilePath(), this.appLaunch);
