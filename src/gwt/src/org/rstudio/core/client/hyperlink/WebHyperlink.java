@@ -1,5 +1,5 @@
 /*
- * HelpHyperlink.java
+ * WebHyperlink.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -21,8 +21,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class WebHyperlink extends Hyperlink {
@@ -37,13 +36,11 @@ public class WebHyperlink extends Hyperlink {
     public void onClick() 
     {
         String code = "utils::browseURL('" + url + "')";
-        server_.executeRCode(code, new ServerRequestCallback<String>(){
+        server_.executeRCode(code, new SimpleRequestCallback<String>(){
             @Override
             public void onResponseReceived(String response) {}
-
-            @Override
-            public void onError(ServerError error) {}
         });
+
     }
 
     @Override
