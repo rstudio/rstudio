@@ -61,12 +61,7 @@ public class FileHyperlink extends Hyperlink
                     Scheduler.get().scheduleDeferred(() ->
                     {
                         FilePosition position = FilePosition.create(line, Math.max(col, 1));
-                        columnManager.scrollToPosition(position, true, new Command(){
-
-                            @Override
-                            public void execute() {}
-                            
-                        } );
+                        columnManager.scrollToPosition(position, true, () -> {});
                     });
                 }
             }
