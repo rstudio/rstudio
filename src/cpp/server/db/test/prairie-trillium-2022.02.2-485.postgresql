@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 12.10 (Ubuntu 12.10-0ubuntu0.20.04.1)
--- Dumped by pg_dump version 12.10 (Ubuntu 12.10-0ubuntu0.20.04.1)
+-- Dumped from database version 12.11 (Ubuntu 12.11-0ubuntu0.20.04.1)
+-- Dumped by pg_dump version 12.11 (Ubuntu 12.11-0ubuntu0.20.04.1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -117,35 +117,27 @@ ALTER TABLE ONLY public.licensed_users ALTER COLUMN id SET DEFAULT nextval('publ
 -- Data for Name: active_session_metadata; Type: TABLE DATA; Schema: public; Owner: rstudio
 --
 
-COPY public.active_session_metadata (session_id, user_id, workbench, created, last_used, r_version, r_version_label, r_version_home, project, working_directory, activity_state, label, launch_parameters, save_prompt_required) FROM stdin;
-\.
 
 
 --
 -- Data for Name: licensed_users; Type: TABLE DATA; Schema: public; Owner: rstudio
 --
 
-COPY public.licensed_users (user_name, locked, last_sign_in, is_admin, user_id, id) FROM stdin;
-\.
 
 
 --
 -- Data for Name: revoked_cookie; Type: TABLE DATA; Schema: public; Owner: rstudio
 --
 
-COPY public.revoked_cookie (expiration, cookie_data) FROM stdin;
-2022-05-19T15:05:10Z	testuser|Thu%2C%2019%20May%202022%2015%3A05%3A10%20GMT|imaoBxmiq23IfkYyAJuouPCPG7KPTip9nPIkGXOl%2Bho%3D
-2022-05-19T15:11:12Z	testuser2|Thu%2C%2019%20May%202022%2015%3A11%3A12%20GMT|kcs1Jyf53in3Jbj%2B78LWEg7%2BCEMvoukwwSGLiXaE27k%3D
-\.
+INSERT INTO public.revoked_cookie VALUES ('2022-06-08T21:22:21Z', 'testuser|Wed%2C%2008%20Jun%202022%2021%3A22%3A21%20GMT|%2F0FgGJnJ4DZr8Aowl%2Fn1mTK1xZonMeyCb11ukGV%2FZiU%3D');
+INSERT INTO public.revoked_cookie VALUES ('2022-06-08T21:22:32Z', 'testuser2|Wed%2C%2008%20Jun%202022%2021%3A22%3A32%20GMT|vy%2B6fdKl3FDRoX%2FmpHRtKX%2BCndxmkVH5oYs8tjh%2F%2FTY%3D');
 
 
 --
 -- Data for Name: schema_version; Type: TABLE DATA; Schema: public; Owner: rstudio
 --
 
-COPY public.schema_version (current_version, release_name) FROM stdin;
-20210916132211194382021	Prairie Trillium
-\.
+INSERT INTO public.schema_version VALUES ('20210916132211194382021', 'Prairie Trillium');
 
 
 --
@@ -197,4 +189,3 @@ ALTER TABLE ONLY public.active_session_metadata
 --
 -- PostgreSQL database dump complete
 --
-
