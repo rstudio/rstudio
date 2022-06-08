@@ -15,7 +15,6 @@
 package org.rstudio.core.client.hyperlink;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
