@@ -20,8 +20,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpInfoPopupPanelResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
@@ -60,33 +59,35 @@ public class VignetteHyperlink extends Hyperlink
         label.setStyleName(styles_.code());
         panel.add(label);
 
-        server_.getVignetteTitle(topic_, pkg_, new ServerRequestCallback<String>()
+        server_.getVignetteTitle(topic_, pkg_, new SimpleRequestCallback<String>()
         {
 
             @Override
             public void onResponseReceived(String response)
             {
-                VerticalPanel helpPanel = new VerticalPanel();
+                if (response.length() > 0) 
+                {
+                    VerticalPanel helpPanel = new VerticalPanel();
 
-                helpPanel.setStyleName(RES.styles().helpPopup());
-                helpPanel.addStyleName(styles_.helpPreview());
+                    helpPanel.setStyleName(HelpInfoPopupPanelResources.INSTANCE.styles().helpPopup());
+                    helpPanel.addStyleName(styles_.helpPreview());
 
-                Label title = new Label(response);
-                title.setStyleName(styles_.helpDescription());
-                helpPanel.add(title);
+                    Label title = new Label(response);
+                    title.setStyleName(styles_.helpDescription());
+                    helpPanel.add(title);
 
-                panel.add(helpPanel);
+                    panel.add(helpPanel);
+                }
+                else 
+                {
+                    Label notFound = new Label("No vignette found");
+                    notFound.setStyleName(styles_.warning());
+                    notFound.addStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
+                    panel.add(notFound);
+                }
+                
             }
 
-            @Override
-            public void onError(ServerError error)
-            {
-                Label notFound = new Label("No vignette found");
-                notFound.setStyleName(styles_.warning());
-                notFound.addStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
-                panel.add(notFound);
-            }
-               
         });
         
         return panel;
@@ -95,10 +96,4 @@ public class VignetteHyperlink extends Hyperlink
     private String topic_;
     private String pkg_;
     private HelpServerOperations server_;
-
-    private static HelpInfoPopupPanelResources RES =
-         HelpInfoPopupPanelResources.INSTANCE;
-    static {
-        RES.styles().ensureInjected();
-    }
 }

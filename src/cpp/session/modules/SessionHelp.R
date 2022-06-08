@@ -400,9 +400,10 @@ options(help_type = "html")
 
 .rs.addJsonRpcHandler("get_vignette_title", function(topic, package)
 {
-   .rs.tryCatch(
-      .rs.scalar(utils::vignette(topic, package)$Title)
-   )
+   title <- tryCatch(utils::vignette(topic, package)$Title, 
+            error = function(e) "", 
+            warning = function(e) "")
+   .rs.scalar(title)         
 })
 
 .rs.addJsonRpcHandler("show_vignette", function(topic, package)
