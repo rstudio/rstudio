@@ -54,7 +54,6 @@
  
 .helpTitle {
     font-weight: bold;
-    padding-left: 5px;
 }
  
 .helpDescription {
@@ -75,3 +74,18 @@
     padding-left: 5px;
 }
  
+.helpTitlePanel {
+    width: 100%;
+}
+
+.helpTitlePanelPackage {
+    font-family: fixedWidthFont;
+    float: right;
+    padding-right: 5px;
+    color: #ccc;
+}
+
+.helpTitlePanelTopic {
+    font-family: fixedWidthFont;
+    padding-left: 5px;
+}

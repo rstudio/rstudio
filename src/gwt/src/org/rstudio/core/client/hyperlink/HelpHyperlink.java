@@ -16,7 +16,6 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -43,7 +42,6 @@ public class HelpHyperlink extends Hyperlink
             pkg_ = params.get("package");
         }
         server_ = RStudioGinjector.INSTANCE.getServer();
-        helpAvailable_ = false;
     }
 
     @Override
@@ -56,11 +54,7 @@ public class HelpHyperlink extends Hyperlink
     public Widget getPopupContent()
     {
         final VerticalPanel panel = new VerticalPanel();
-        
-        HTML label = new HTML("<b>" + topic_ + "</b> {" + pkg_ + "}");
-        label.setStyleName(styles_.code());
-        panel.add(label);
-
+        panel.add(new HelpHeader(topic_, pkg_));
         panel.add(new HelpPreview(topic_, pkg_));
         
         return panel;
@@ -71,11 +65,6 @@ public class HelpHyperlink extends Hyperlink
         return styles_.helpHyperlink();
     }
     
-    public boolean clickable()
-    {
-        return helpAvailable_;
-    }
-
     public static boolean handles(String url, Map<String, String> params)
     {
         if (StringUtil.equals(url, "ide:help") || StringUtil.equals(url, "rstudio:help"))
@@ -86,6 +75,5 @@ public class HelpHyperlink extends Hyperlink
 
     private String topic_;
     private String pkg_;
-    private boolean helpAvailable_;
     private HelpServerOperations server_;
 }

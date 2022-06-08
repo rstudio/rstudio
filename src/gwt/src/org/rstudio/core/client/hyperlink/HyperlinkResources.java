@@ -40,5 +40,9 @@ public interface HyperlinkResources extends ClientBundle
         String xtermHyperlink();
         String xtermCommand();
         String xtermUnsupportedHyperlink();
+
+        String helpTitlePanel();
+        String helpTitlePanelPackage();
+        String helpTitlePanelTopic();
     }
 }

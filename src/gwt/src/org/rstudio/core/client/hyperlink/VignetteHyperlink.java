@@ -16,7 +16,6 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
-import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -25,7 +24,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.console.shell.assist.HelpInfoPopupPanelResources;
 import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 
 public class VignetteHyperlink extends Hyperlink 
@@ -58,9 +56,7 @@ public class VignetteHyperlink extends Hyperlink
     {
         final VerticalPanel panel = new VerticalPanel();
 
-        HTML label = new HTML("Vignette: <b>" + topic_ + "</b> {" + pkg_ + "}");
-        label.setStyleName(styles_.code());
-        panel.add(label);
+        panel.add(new HelpHeader("Vignette: " + topic_, pkg_));
 
         server_.getVignetteTitle(topic_, pkg_, new SimpleRequestCallback<String>()
         {
