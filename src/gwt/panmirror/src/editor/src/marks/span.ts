@@ -80,7 +80,7 @@ const extension = (context: ExtensionContext) => {
             },
           ],
           writer: {
-            priority: 11,
+            priority: 12,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               output.writeToken(PandocTokenType.Span, () => {
                 output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
