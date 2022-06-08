@@ -37,7 +37,7 @@ public class FileHyperlink extends Hyperlink
 
         if (url.matches("^file:///[a-zA-Z]:"))
         {
-            filename = url.replaceFirst("^file:///[a-zA-Z]:", "");
+            filename = url.replaceFirst("^file:///", "");
         }
         else
         {
