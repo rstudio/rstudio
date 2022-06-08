@@ -29,7 +29,8 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 
 public class FileHyperlink extends Hyperlink 
 {
-    public FileHyperlink(String url, String params, String text, String clazz) {
+    public FileHyperlink(String url, String params, String text, String clazz)
+    {
         super(url, params, text, clazz);
 
         filename = url.replaceFirst("file://", "");
@@ -44,13 +45,15 @@ public class FileHyperlink extends Hyperlink
     }
 
     @Override
-    public void onClick() {
+    public void onClick()
+    {
         final SourceColumnManager columnManager = RStudioGinjector.INSTANCE.getSourceColumnManager(); 
         
         columnManager.editFile(filename, new ResultCallback<EditingTarget, ServerError>()
         {
             @Override
-            public void onSuccess(final EditingTarget result){
+            public void onSuccess(final EditingTarget result)
+            {
                 if (line != -1) 
                 {
                     // give ace time to render before scrolling to position
@@ -70,7 +73,8 @@ public class FileHyperlink extends Hyperlink
     }
 
     @Override
-    public Widget getPopupContent() {
+    public Widget getPopupContent()
+    {
         final VerticalPanel panel = new VerticalPanel();
         
         Label label = new Label(filename);

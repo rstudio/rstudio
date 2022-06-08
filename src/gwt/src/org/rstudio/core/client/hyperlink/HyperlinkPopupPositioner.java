@@ -28,7 +28,8 @@ public class HyperlinkPopupPositioner implements PositionCallback
     }
 
     @Override
-    public void setPosition(int popupWidth, int popupHeight) {
+    public void setPosition(int popupWidth, int popupHeight)
+    {
         if (cursorBounds_ == null)
         {
            assert false : "Positioning popup but no cursor bounds available";

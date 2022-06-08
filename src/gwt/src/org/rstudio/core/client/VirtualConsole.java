@@ -854,7 +854,8 @@ public class VirtualConsole
       private boolean isHTML_;
    }
 
-   private class HyperlinkInfo {
+   private class HyperlinkInfo
+   {
       public HyperlinkInfo(String url, String params)
       {
          url_ = url;

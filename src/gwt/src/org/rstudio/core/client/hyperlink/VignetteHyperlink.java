@@ -60,10 +60,12 @@ public class VignetteHyperlink extends Hyperlink
         label.setStyleName(styles_.code());
         panel.add(label);
 
-        server_.getVignetteTitle(topic_, pkg_, new ServerRequestCallback<String>() {
+        server_.getVignetteTitle(topic_, pkg_, new ServerRequestCallback<String>()
+        {
 
             @Override
-            public void onResponseReceived(String response) {
+            public void onResponseReceived(String response)
+            {
                 VerticalPanel helpPanel = new VerticalPanel();
 
                 helpPanel.setStyleName(RES.styles().helpPopup());
@@ -77,7 +79,8 @@ public class VignetteHyperlink extends Hyperlink
             }
 
             @Override
-            public void onError(ServerError error) {
+            public void onError(ServerError error)
+            {
                 Label notFound = new Label("No vignette found");
                 notFound.setStyleName(styles_.warning());
                 notFound.addStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());

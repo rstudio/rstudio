@@ -21,7 +21,8 @@ import com.google.gwt.user.client.ui.Widget;
 public class UnsupportedHyperlink extends Hyperlink
 {
 
-    public UnsupportedHyperlink(String url, String params, String text, String clazz) {
+    public UnsupportedHyperlink(String url, String params, String text, String clazz)
+    {
         super(url, params, text, clazz);
     }
 
@@ -35,7 +36,8 @@ public class UnsupportedHyperlink extends Hyperlink
     public void onClick() {}
 
     @Override
-    public Widget getPopupContent() {
+    public Widget getPopupContent()
+    {
         VerticalPanel panel = new VerticalPanel();
 
         Label urlLabel = new Label(url);

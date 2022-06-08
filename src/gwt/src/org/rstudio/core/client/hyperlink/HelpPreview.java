@@ -1,5 +1,5 @@
 /*
- * FileHyperlink.java
+ * HelpPreview.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *

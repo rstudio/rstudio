@@ -102,11 +102,11 @@ public abstract class Hyperlink
         {
             return new WebHyperlink(url, params, text, clazz);
         }
-        else if(url.startsWith("ide:help") || url.startsWith("rstudio:help"))
+        else if (url.startsWith("ide:help") || url.startsWith("rstudio:help"))
         {
             return new HelpHyperlink(url, params, text, clazz);
         }
-        else if(url.startsWith("ide:vignette") || url.startsWith("rstudio:vignette"))
+        else if (url.startsWith("ide:vignette") || url.startsWith("rstudio:vignette"))
         {
             return new VignetteHyperlink(url, params, text, clazz);
         }

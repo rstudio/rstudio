@@ -277,7 +277,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    )
 })
 
-.rs.addJsonRpcHandler( "is_package_hyperlink_safe", function(packageName)
+.rs.addJsonRpcHandler("is_package_hyperlink_safe", function(packageName)
 {
    .rs.isPackageHyperlinkSafe(packageName)
 })

@@ -38,7 +38,8 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
 
         setStylePrimaryName(styles_.completionPopup());
 
-        addCloseHandler(new CloseHandler<PopupPanel>(){
+        addCloseHandler(new CloseHandler<PopupPanel>()
+        {
 
             @Override
             public void onClose(CloseEvent<PopupPanel> event)

@@ -63,17 +63,20 @@ public class HelpHyperlink extends Hyperlink
         label.setStyleName(styles_.code());
         panel.add(label);
         
-        server_.getHelp(topic_, pkg_, RCompletionType.FUNCTION, new ServerRequestCallback<HelpInfo>() {
+        server_.getHelp(topic_, pkg_, RCompletionType.FUNCTION, new ServerRequestCallback<HelpInfo>()
+        {
 
             @Override
-            public void onResponseReceived(HelpInfo response) {
+            public void onResponseReceived(HelpInfo response)
+            {
                 helpAvailable_ = true;
                 HelpPreview preview = new HelpPreview(response, pkg_, topic_);
                 panel.add(preview);
             }
 
             @Override
-            public void onError(ServerError error) {
+            public void onError(ServerError error)
+            {
                 helpAvailable_ = false;
                 Label notFound = new Label("No documentation found");
                 notFound.setStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());

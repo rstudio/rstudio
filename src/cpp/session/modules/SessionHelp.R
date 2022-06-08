@@ -398,13 +398,15 @@ options(help_type = "html")
       utils::browseURL(url)
 })
 
-.rs.addJsonRpcHandler("get_vignette_title", function(topic, package){
+.rs.addJsonRpcHandler("get_vignette_title", function(topic, package)
+{
    .rs.tryCatch(
       .rs.scalar(utils::vignette(topic, package)$Title)
    )
 })
 
-.rs.addJsonRpcHandler("show_vignette", function(topic, package){
+.rs.addJsonRpcHandler("show_vignette", function(topic, package)
+{
    print(utils::vignette(topic, package))
 })
 

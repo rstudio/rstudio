@@ -60,13 +60,15 @@ public class RunHyperlink extends Hyperlink
     }
 
     @Override 
-    public void onClick(){
+    public void onClick()
+    {
         if (package_ != null)
         {
             server_.isPackageHyperlinkSafe(package_, new ServerRequestCallback<Boolean>(){
 
                 @Override
-                public void onResponseReceived(Boolean response) {
+                public void onResponseReceived(Boolean response)
+                {
                     events_.fireEvent(new SendToConsoleEvent(code_, response));
                 }
     
@@ -90,10 +92,12 @@ public class RunHyperlink extends Hyperlink
         
         if (allowed_)
         {
-            server_.getHelp(fun_, package_, RCompletionType.FUNCTION, new ServerRequestCallback<HelpInfo>() {
+            server_.getHelp(fun_, package_, RCompletionType.FUNCTION, new ServerRequestCallback<HelpInfo>()
+            {
 
                 @Override
-                public void onResponseReceived(HelpInfo response) {
+                public void onResponseReceived(HelpInfo response)
+                {
                     HelpPreview preview = new HelpPreview(response, package_, fun_);
                     
                     HTML more = new HTML("Click to run the code in the console.");
