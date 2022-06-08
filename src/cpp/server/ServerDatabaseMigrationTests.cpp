@@ -111,7 +111,7 @@ void updateTest(DatasetVersion version, DatasetType type, std::string path){
         FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
         boost::shared_ptr<IConnection> connection;
 
-        if(type == Sqlite)
+        if (type == Sqlite)
         {
             SqliteConnectionOptions options = sqliteConnectionOptions();
             //Delete the db if it exists
@@ -120,7 +120,7 @@ void updateTest(DatasetVersion version, DatasetType type, std::string path){
 
             REQUIRE_FALSE(connect(options, &connection));
         }
-        else
+        else if (type == Postgres)
         {
             PostgresqlConnectionOptions options = postgresConnectionOptions();
             REQUIRE_FALSE(connect(options, &connection));
@@ -131,9 +131,10 @@ void updateTest(DatasetVersion version, DatasetType type, std::string path){
             CREATE SCHEMA public;
             GRANT ALL ON SCHEMA public TO )"" + options.username + R""(;
             GRANT ALL ON SCHEMA public TO public;
+            ALTER DATABASE )"" + options.database + R""( SET search_path = public;
             )"";
 
-            connection->executeStr(queryStr);
+            REQUIRE_FALSE(connection->executeStr(queryStr));
         }
 
         std::string dbDump;
@@ -141,6 +142,13 @@ void updateTest(DatasetVersion version, DatasetType type, std::string path){
         REQUIRE(dbDumpPath.exists());
         REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
         REQUIRE_FALSE(connection->executeStr(dbDump));
+
+         // added, because dropping the schema ends up also dropping
+         // the search_path for that connection, so we need to reset it
+         // for postgres connections. Additionally some of our datasets also
+         // overwrite the search_path.
+         if (type == Postgres)
+            REQUIRE_FALSE(connection->executeStr("SET search_path = public;"));
 
         FilePath migrationPath = workingDir.completeChildPath("db");
         SchemaUpdater schemaUpdater = {connection, migrationPath};
