@@ -1,11 +1,11 @@
 ALTER TABLE active_session_metadata
-ADD COLUMN executing TEXT IF NOT EXISTS;
+ADD COLUMN IF NOT EXISTS executing TEXT;
 
 ALTER TABLE active_session_metadata
-ADD COLUMN running TEXT IF NOT EXISTS;
+ADD COLUMN IF NOT EXISTS running TEXT;
 
 ALTER TABLE active_session_metadata
-ADD COLUMN last_state_updated TEXT IF NOT EXISTS;
+ADD COLUMN IF NOT EXISTS last_state_updated TEXT;
 
 /* Update the version to the latest after all alter statements are applied. */
 UPDATE schema_version SET current_version = '20220518194359756054952' , release_name = 'Spotted Wakerobin';
