@@ -28,14 +28,14 @@ namespace server {
 namespace storage {
 
 
-DBActiveSessionsStorage::DBActiveSessionsStorage(const std::string& userId)
-   : userId_(userId)
+DBActiveSessionsStorage::DBActiveSessionsStorage(const system::User& user)
+   : user_(user)
 {
 }
 
 core::Error DBActiveSessionsStorage::initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties)
 {
-   DBActiveSessionStorage storage{id};
+   DBActiveSessionStorage storage(id, user_);
    return storage.writeProperties(initialProperties);
 }
 
@@ -51,7 +51,7 @@ std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
    }
 
    database::Query query = connection->query("SELECT session_id FROM active_session_metadata WHERE user_id=:id")
-      .withInput(userId_);
+      .withInput(user_.getUserId());
    database::Rowset rowset{};
    error = connection->execute(query, rowset);
 
@@ -85,7 +85,7 @@ size_t DBActiveSessionsStorage::getSessionCount() const
    else
    {
       database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE user_id=:id")
-         .withInput(userId_);
+         .withInput(user_.getUserId());
       database::Rowset rowset{};
       error = connection->execute(query, rowset);
 
@@ -107,7 +107,7 @@ std::shared_ptr<IActiveSessionStorage> DBActiveSessionsStorage::getSessionStorag
 
    if (!error && hasId)
    {
-      return std::make_shared<DBActiveSessionStorage>(id);
+      return std::make_shared<DBActiveSessionStorage>(id, user_);
    }
    else
    {

@@ -20,6 +20,7 @@
 #include <core/r_util/RActiveSessionStorage.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
 
 namespace rstudio {
 namespace server {
@@ -28,8 +29,11 @@ namespace storage {
 class DBActiveSessionStorage : public core::r_util::IActiveSessionStorage 
 {
 public:
-   explicit DBActiveSessionStorage(const std::string& sessionId);
-   explicit DBActiveSessionStorage(const std::string& sessionId, boost::shared_ptr<core::database::IConnection> overrideConnection);
+   explicit DBActiveSessionStorage(const std::string& sessionId, const core::system::User& user);
+   explicit DBActiveSessionStorage(
+      const std::string& sessionId,
+      const core::system::User& user,
+      boost::shared_ptr<core::database::IConnection> overrideConnection);
    ~DBActiveSessionStorage() = default;
    core::Error readProperty(const std::string& name, std::string* pValue) override;   
    core::Error readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
@@ -41,7 +45,10 @@ public:
 
 private:
    std::string sessionId_;
+   core::system::User user_;
+
    boost::shared_ptr<core::database::IConnection> overrideConnection_;
+
    core::Error getConnectionOrOverride(boost::shared_ptr<core::database::IConnection>* connection);
 };
 

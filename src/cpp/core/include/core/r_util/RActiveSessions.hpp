@@ -674,8 +674,7 @@ class IActiveSessionsStorage;
 class ActiveSessions : boost::noncopyable
 {
 public:
-   explicit ActiveSessions(const FilePath& rootStoragePath);
-   explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
+   explicit ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
 
    static FilePath storagePath(const FilePath& path)
    {
@@ -755,7 +754,8 @@ private:
    core::FilePath rootPath_;
 };
 
-void trackActiveSessionCount(const FilePath& rootStoragePath,
+void trackActiveSessionCount(std::shared_ptr<IActiveSessionsStorage> storage,
+                             const FilePath& rootStoragePath,
                              const FilePath& userHomePath,
                              bool projectSharingEnabled,
                              boost::function<void(size_t)> onCountChanged);

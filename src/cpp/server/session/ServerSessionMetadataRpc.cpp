@@ -27,6 +27,7 @@
 #include <core/Log.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 #include <core/system/Xdg.hpp>
 
 #include <server/ServerOptions.hpp>
@@ -62,12 +63,16 @@ inline FilePath userDataDir(const system::User& user)
 inline std::unique_ptr<r_util::ActiveSessions> getActiveSessions(const system::User& user)
 {
    if (options().sessionUseFileStorage())
-      return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(userDataDir(user)));
+   {
+      FilePath storageDir = userDataDir(user);
+      return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(
+         std::shared_ptr<r_util::IActiveSessionsStorage>(new FileActiveSessionsStorage(storageDir)),
+         storageDir));
+   }
    else
       return std::unique_ptr<r_util::ActiveSessions>(
          new r_util::ActiveSessions(
-            std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::DBActiveSessionsStorage(
-               std::to_string(user.getUserId()))),
+            std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::DBActiveSessionsStorage(user)),
             userDataDir(user)));
 }
 

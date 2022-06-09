@@ -56,14 +56,9 @@ const std::string ActiveSession::kSuspendTimestamp = "suspend_timestamp";
 const std::string ActiveSession::kBlockingSuspend = "blocking_suspend";
 const std::string ActiveSession::kLaunchParameters = "launch_parameters";
 
-ActiveSessions::ActiveSessions(const FilePath& rootStoragePath) : 
-   ActiveSessions(std::make_shared<FileActiveSessionsStorage>(FileActiveSessionsStorage(rootStoragePath)), rootStoragePath)
-{
-   
-}
 
-ActiveSessions::ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath)
-   : storage_(storage)
+ActiveSessions::ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath) :
+   storage_(storage)
 {
    storagePath_ = storagePath(rootStoragePath);
    Error error = storagePath_.ensureDirectory();
@@ -233,14 +228,15 @@ void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
 
 } // anonymous namespace
 
-void trackActiveSessionCount(const FilePath& rootStoragePath,
+void trackActiveSessionCount(std::shared_ptr<IActiveSessionsStorage> storage,
+                             const FilePath& rootStoragePath,
                              const FilePath& userHomePath,
                              bool projectSharingEnabled,
                              boost::function<void(size_t)> onCountChanged)
 {
 
    boost::shared_ptr<ActiveSessions> pSessions(
-                                          new ActiveSessions(rootStoragePath));
+                                          new ActiveSessions(storage, rootStoragePath));
 
    core::system::file_monitor::Callbacks cb;
    cb.onRegistered = boost::bind(notifyCountChanged,

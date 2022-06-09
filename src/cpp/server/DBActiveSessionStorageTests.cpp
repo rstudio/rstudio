@@ -264,18 +264,26 @@ void runTests(DBActiveSessionStorage storage)
    }
 }
 
-TEST_CASE("Database Session Storage, Sqlite","[database][integration][session][sqlite]"){
-   
+TEST_CASE("Database Session Storage, Sqlite","[database][integration][session][sqlite]")
+{
+   system::User currUser;
+   Error error = system::User::getCurrentUser(currUser);
+   REQUIRE(!error);
+
    SqliteConnectionOptions options = sqliteConnectionOptions();
    boost::shared_ptr<IConnection> connection = initializeSQLiteDatabase(options);
-   DBActiveSessionStorage storage{sessionId, connection};
+   DBActiveSessionStorage storage{sessionId, currUser, connection};
    runTests(storage);
 }
 
-TEST_CASE("Databse Session Storage, Postgres","[database][integration][session][.postgres]"){
-   
+TEST_CASE("Databse Session Storage, Postgres","[database][integration][session][.postgres]")
+{
+   system::User currUser;
+   Error error = system::User::getCurrentUser(currUser);
+   REQUIRE(!error);
+
    PostgresqlConnectionOptions options = postgresConnectionOptions();
    boost::shared_ptr<IConnection> connection = initializePostgresqlDatabase(options);
-   DBActiveSessionStorage storage{sessionId, connection};
+   DBActiveSessionStorage storage{sessionId, currUser, connection};
    runTests(storage);
 }

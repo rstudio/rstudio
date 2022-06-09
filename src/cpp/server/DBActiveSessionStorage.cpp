@@ -170,16 +170,17 @@ Error DBActiveSessionStorage::getConnectionOrOverride(boost::shared_ptr<database
    }
 }
 
-DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId)
-   : sessionId_(sessionId)
+DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId, const system::User& user) :
+   sessionId_(sessionId),
+   user_(user)
 {
-   
 }
 
-DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId, boost::shared_ptr<core::database::IConnection> overrideConnection)
-   : sessionId_(sessionId), overrideConnection_(overrideConnection)
+DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId, const system::User& user, boost::shared_ptr<core::database::IConnection> overrideConnection) :
+   sessionId_(sessionId),
+   user_(user),
+   overrideConnection_(overrideConnection)
 {
-
 }
 
 Error DBActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
@@ -333,7 +334,22 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
    }
    else
    {
-      database::Query insertQuery = connection->query("INSERT INTO " + kTableName + " (" + kSessionIdColumnName + ", " + getKeyString(properties) + ") VALUES (:id, " + getValueString(properties) + ")")
+      // First update, ensure the user_id FK gets inserted. No value necessary since it will do a select.
+      std::map<std::string, std::string> propsCopy(properties);
+      propsCopy[kUserId] = "(SELECT id FROM licensed_users WHERE user_name='" + user_.getUsername() + "' AND user_id=" + std::to_string(user_.getUserId()) +")";
+
+      std::string queryStr = "INSERT INTO " +
+            kTableName +
+            " (" +
+            kSessionIdColumnName +
+            ", " +
+            getKeyString(propsCopy) +
+            ") VALUES (:id, " +
+            getValueString(propsCopy) +
+            ")";
+
+      LOG_DEBUG_MESSAGE("Insert Session query: " + queryStr);
+      database::Query insertQuery = connection->query(queryStr)
          .withInput(sessionId_);
 
       error = connection->execute(insertQuery);

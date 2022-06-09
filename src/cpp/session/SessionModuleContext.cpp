@@ -49,6 +49,7 @@
 #include <core/system/Xdg.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
@@ -1919,7 +1920,12 @@ r_util::ActiveSessions& activeSessions()
    if (!pSessions)
    {
       if (options().sessionUseFileStorage())
-         pSessions.reset(new r_util::ActiveSessions(userScratchPath()));
+      {
+         FilePath storageDir = userScratchPath();
+         pSessions.reset(new r_util::ActiveSessions(
+            std::shared_ptr<r_util::IActiveSessionsStorage>(new r_util::FileActiveSessionsStorage(storageDir)),
+            storageDir));
+      }
       else
       {
          system::User user;
