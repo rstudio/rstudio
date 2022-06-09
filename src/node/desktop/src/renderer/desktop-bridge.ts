@@ -246,13 +246,6 @@ export function getDesktopBridge() {
         .catch((error) => reportIpcError('chooseRVersion', error));
     },
 
-    devicePixelRatio: (callback: VoidCallback<number>) => {
-      ipcRenderer
-        .invoke('desktop_device_pixel_ratio')
-        .then((ratio) => callback(ratio))
-        .catch((error) => reportIpcError('devicePixelRatio', error));
-    },
-
     openMinimalWindow: (name: string, url: string, width: number, height: number) => {
       ipcRenderer.send('desktop_open_minimal_window', name, url, width, height);
     },
