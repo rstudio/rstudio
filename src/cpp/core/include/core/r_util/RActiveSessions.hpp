@@ -150,10 +150,7 @@ public:
 
    bool empty() const
    { 
-      bool empty = true;
-      if (storage_)
-         storage_->isEmpty(&empty);
-      return empty;
+      return storage_ == nullptr;
    }
 
    std::string id() const
