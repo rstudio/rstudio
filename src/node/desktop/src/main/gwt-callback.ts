@@ -545,11 +545,6 @@ export class GwtCallback extends EventEmitter {
       ElectronDesktopOptions().setRenderingEngine(engine);
     });
 
-    ipcMain.handle('desktop_filter_text', (event, text: string) => {
-      GwtCallback.unimpl('desktop_filter_text');
-      return text;
-    });
-
     ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
       desktop.cleanClipboard(stripHtml);
     });
@@ -629,11 +624,6 @@ export class GwtCallback extends EventEmitter {
       if (font !== undefined) {
         ElectronDesktopOptions().setFixedWidthFont(font);
       }
-    });
-
-    ipcMain.handle('desktop_get_zoom_levels', () => {
-      GwtCallback.unimpl('desktop_get_zoom_levels');
-      return '';
     });
 
     ipcMain.on('desktop_get_zoom_level', (event) => {
@@ -772,11 +762,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_set_shiny_dialog_url', (event, url) => {
       GwtCallback.unimpl('desktop_set_shiny_dialog_url');
-    });
-
-    ipcMain.handle('desktop_get_scrolling_compensation_type', () => {
-      GwtCallback.unimpl('desktop_get_scrolling_compensation_type');
-      return '';
     });
 
     ipcMain.handle('desktop_is_macos', () => {

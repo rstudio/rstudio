@@ -343,13 +343,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_set_desktop_rendering_engine', engine);
     },
 
-    filterText: (text: string, callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_filter_text', text)
-        .then((filtered) => callback(filtered))
-        .catch((error) => reportIpcError('filterText', error));
-    },
-
     cleanClipboard: (stripHtml: boolean) => {
       ipcRenderer.send('desktop_clean_clipboard', stripHtml);
     },
@@ -403,13 +396,6 @@ export function getDesktopBridge() {
 
     setFixedWidthFont: (font: string) => {
       ipcRenderer.send('desktop_set_fixed_width_font', font);
-    },
-
-    getZoomLevels: (callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_get_zoom_levels')
-        .then((levels) => callback(levels))
-        .catch((error) => reportIpcError('getZoomLevels', error));
     },
 
     getZoomLevel: (callback: VoidCallback<number>) => {
@@ -559,13 +545,6 @@ export function getDesktopBridge() {
 
     setShinyDialogUrl: (url: string) => {
       ipcRenderer.send('desktop_set_shiny_dialog_url', url);
-    },
-
-    getScrollingCompensationType: (callback: VoidCallback<string>) => {
-      ipcRenderer
-        .invoke('desktop_get_scrolling_compensation_type')
-        .then((compensationType) => callback(compensationType))
-        .catch((error) => reportIpcError('getScrollingCompensationType', error));
     },
 
     isMacOS: (callback: VoidCallback<boolean>) => {
