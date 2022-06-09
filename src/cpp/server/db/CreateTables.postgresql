@@ -100,6 +100,9 @@ CREATE TABLE active_session_metadata(
    /* Boolean representing whether the session is currently executing R code */
    executing TEXT,
 
+   /* Boolean representing whether the session is currently running */
+   running TEXT,
+
    /* The last session state updated */
    last_state_updated TEXT,
 
