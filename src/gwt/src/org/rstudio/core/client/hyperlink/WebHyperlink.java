@@ -22,14 +22,12 @@ import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 public class WebHyperlink extends Hyperlink {
 
     public WebHyperlink(String url, Map<String, String> params, String text, String clazz) 
     {
         super(url, params, text, clazz);
-        server_ = RStudioGinjector.INSTANCE.getServer();
     }
 
     @Override
@@ -61,6 +59,4 @@ public class WebHyperlink extends Hyperlink {
     {
         return url.startsWith("http://") || url.startsWith("https://");
     }
-
-    private SourceServerOperations server_;
 }
