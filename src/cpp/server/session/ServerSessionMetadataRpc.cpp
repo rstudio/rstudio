@@ -150,11 +150,16 @@ Error handleDelete(
    return getActiveSession(user, sessionId)->destroy();
 }
 
-Error handleCount(const system::User& user, size_t* pCount)
+Error handleCount(const system::User& user, const boost::optional<std::string>& sessionId, size_t* pCount)
 {
-   *pCount = getActiveSessions(user)->count(
-      user.getHomePath(),
-      options().getOverlayOption("server-project-sharing") == "1");
+   if (sessionId)
+      *pCount = getActiveSession(user, sessionId.get())->empty() ? 0 : 1;
+   else
+   {
+      *pCount = getActiveSessions(user)->count(
+         user.getHomePath(),
+         options().getOverlayOption("server-project-sharing") == "1");
+   }
 
    return Success();
 }
@@ -376,8 +381,20 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
    }
    else if (operation == kSessionStorageCountOp)
    {
+      boost::optional<std::string> sessionId;
+      error = json::readObject(rpcRequest.kwparams, kSessionStorageIdField, sessionId);
+      if (error)
+      {
+         json::errc::errc_t err = json::errc::ParamTypeMismatch;
+         if (json::isMissingMemberError(error))
+            err = json::errc::ParamMissing;
+         error = baseError(err, error, ERROR_LOCATION);
+         LOG_ERROR(error);
+         return json::setJsonRpcError(error, &pConnection->response(), true);
+      }
+
       size_t count;
-      error = handleCount(sessionOwner.get(), &count);
+      error = handleCount(sessionOwner.get(), sessionId, &count);
       if (error)
       {
          error = baseError(json::errc::ExecutionError, error, ERROR_LOCATION);
