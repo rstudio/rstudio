@@ -40,9 +40,9 @@ public interface HyperlinkResources extends ClientBundle
         String hyperlinkRun();
         String hyperlinkUnsupported();
 
-        String helpTitlePanel();
-        String helpTitlePanelPackage();
-        String helpTitlePanelTopic();
+        String helpTitle();
+        String helpTitlePackage();
+        String helpTitleTopic();
 
         String popupPanel();
     }

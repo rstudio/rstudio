@@ -75,18 +75,18 @@
     margin-bottom: 4px; 
 }
 
-.helpTitlePanel {
+.helpTitle {
     width: 100%;
 }
 
-.helpTitlePanelPackage {
+.helpTitlePackage {
     font-family: fixedWidthFont;
     float: right;
     padding-right: 5px;
     color: #ccc;
 }
 
-.helpTitlePanelTopic {
+.helpTitleTopic {
     font-family: fixedWidthFont;
     padding-left: 5px;
 }

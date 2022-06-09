@@ -25,13 +25,13 @@ public class HelpHeader extends Composite
         HyperlinkResources.HyperlinkStyles styles = HyperlinkResources.INSTANCE.hyperlinkStyles();
 
         HorizontalPanel titlePanel = new HorizontalPanel();
-        titlePanel.setStyleName(styles.helpTitlePanel());
+        titlePanel.setStyleName(styles.helpTitle());
         Label topicLabel = new Label(topic);
-        topicLabel.setStyleName(styles.helpTitlePanelTopic());
+        topicLabel.setStyleName(styles.helpTitleTopic());
         titlePanel.add(topicLabel);
 
         Label pkgLabel = new Label("{" + pkgName + "}");
-        pkgLabel.setStyleName(styles.helpTitlePanelPackage());
+        pkgLabel.setStyleName(styles.helpTitlePackage());
         titlePanel.add(pkgLabel);
 
         initWidget(titlePanel);
