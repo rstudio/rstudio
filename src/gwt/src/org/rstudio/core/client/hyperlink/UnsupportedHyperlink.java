@@ -31,7 +31,7 @@ public class UnsupportedHyperlink extends Hyperlink
     @Override
     public String getAnchorClass() 
     {
-        return styles_.xtermUnsupportedHyperlink();
+        return styles_.hyperlinkUnsupported();
     }
 
     @Override

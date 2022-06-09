@@ -78,7 +78,7 @@ public class RunHyperlink extends Hyperlink
     @Override
     public String getAnchorClass()
     {
-        return styles_.xtermRunHyperlink();
+        return styles_.hyperlinkRun();
     }
 
     private String code_;    

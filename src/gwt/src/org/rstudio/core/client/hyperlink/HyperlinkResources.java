@@ -29,7 +29,6 @@ public interface HyperlinkResources extends ClientBundle
     {
         String helpPreview();
 
-        String helpHyperlink();
         String helpTitle();
         String helpDescription();
 
@@ -37,9 +36,10 @@ public interface HyperlinkResources extends ClientBundle
         String arbitraryCode();
         String warning();
 
-        String xtermHyperlink();
-        String xtermRunHyperlink();
-        String xtermUnsupportedHyperlink();
+        String hyperlink();
+        String hyperlinkHelp();
+        String hyperlinkRun();
+        String hyperlinkUnsupported();
 
         String helpTitlePanel();
         String helpTitlePanelPackage();

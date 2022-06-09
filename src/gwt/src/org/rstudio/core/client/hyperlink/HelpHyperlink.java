@@ -62,7 +62,7 @@ public class HelpHyperlink extends Hyperlink
 
     public String getAnchorClass()
     {
-        return styles_.helpHyperlink();
+        return styles_.hyperlinkHelp();
     }
     
     public static boolean handles(String url, Map<String, String> params)

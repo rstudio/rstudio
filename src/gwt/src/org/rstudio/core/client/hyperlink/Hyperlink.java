@@ -70,7 +70,7 @@ public abstract class Hyperlink
 
     public String getAnchorClass()
     {
-        return styles_.xtermHyperlink();
+        return styles_.hyperlink();
     }
 
     public boolean clickable()
