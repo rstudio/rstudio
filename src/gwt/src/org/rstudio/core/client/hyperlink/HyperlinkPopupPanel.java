@@ -58,7 +58,7 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
     public void show(Widget content, PositionCallback callback)
     {
         container_ = new VerticalPanel();
-        container_.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().popupPanel());
+        container_.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().hyperlinkPopup());
         
         container_.add(content);
         

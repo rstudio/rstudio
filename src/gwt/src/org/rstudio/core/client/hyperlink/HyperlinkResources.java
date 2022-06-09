@@ -27,23 +27,24 @@ public interface HyperlinkResources extends ClientBundle
 
     public interface HyperlinkStyles extends CssResource
     {
-        String helpPreview();
-        String helpPreviewTitle();
-        String helpPreviewDescription();
-
-        String code();
-        String arbitraryCode();
-        String warning();
-
         String hyperlink();
         String hyperlinkHelp();
         String hyperlinkRun();
         String hyperlinkUnsupported();
 
+        String hyperlinkPopup();
+
+        String code();
+        String arbitraryCode();
+        String warning();
+
         String helpTitle();
         String helpTitlePackage();
         String helpTitleTopic();
 
-        String popupPanel();
+        String helpPreview();
+        String helpPreviewTitle();
+        String helpPreviewDescription();
+
     }
 }
