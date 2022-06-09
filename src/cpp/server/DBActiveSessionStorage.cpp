@@ -16,6 +16,7 @@
 #include <server/DBActiveSessionStorage.hpp>
 
 #include <core/Database.hpp>
+#include <core/r_util/RActiveSessions.hpp>
 #include <shared_core/SafeConvert.hpp>
 #include <server_core/ServerDatabase.hpp>
 
@@ -47,6 +48,9 @@ std::string getKeyString(const std::map<std::string, std::string>& sourceMap)
       sourceMap.end(),
       sourceMap.begin()->first,
       [](std::string a, std::pair<std::string, std::string> b) {
+         if (b.first == ActiveSession::kEditor)
+            return a + ", workbench";
+
          return a + ", " + b.first;
       });
    return keys;
@@ -81,6 +85,9 @@ std::string getUpdateString(const std::map<std::string, std::string>& sourceMap)
       sourceMap.end(),
       sourceMap.begin()->first + " = '" + sourceMap.begin()->second + "'",
       [](std::string a, std::pair<std::string, std::string> iter){
+         if (iter.first == ActiveSession::kEditor)
+            return a + ", workbench" + " = '" + iter.second + "'";
+         
          return a + ", " + iter.first + " = '" + iter.second + "'";
       });
    return setValuesString;
@@ -90,7 +97,11 @@ std::string getColumnNameList(const std::set<std::string>& colNames)
 {
    std::string cols = std::accumulate(++colNames.begin(), colNames.end(), 
                *(colNames.begin()), [](std::string a, std::string b) {
-               return a + ", " + b;
+                  if (a == ActiveSession::kEditor)
+                     return "workbench, " + b;
+                  if (b == ActiveSession::kEditor)
+                     return a + ", workbench";
+                  return a + ", " + b;
                });
    return cols;
 }
