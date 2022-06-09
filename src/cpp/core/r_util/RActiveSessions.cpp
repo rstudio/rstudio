@@ -81,8 +81,13 @@ Error ActiveSessions::create(const std::string& project,
    std::string id;
    while (id.empty())
    {
+      bool hasId = true;
       std::string candidateId = core::r_util::generateScopeId();
-      if (!storage_->hasSessionId(candidateId))
+      Error error = storage_->hasSessionId(candidateId, &hasId);
+      if (error)
+         return error;
+
+      if (!hasId)
          id = candidateId;
    }
 

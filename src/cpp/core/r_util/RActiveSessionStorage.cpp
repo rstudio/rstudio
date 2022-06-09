@@ -50,14 +50,14 @@ FileActiveSessionStorage::FileActiveSessionStorage(const FilePath& scratchPath) 
 }
 
 const std::map<std::string, std::string> FileActiveSessionStorage::fileNames =
-   {
-      { "last_used" , "last-used" },
-      { "r_version" , "r-version" },
-      { "r_version_label" , "r-version-label" },
-      { "r_version_home" , "r-version-home" },
-      { "working_directory" , "working-dir" },
-      { "launch_parameters" , "launch-parameters" }
-      };
+{
+   { "last_used" , "last-used" },
+   { "r_version" , "r-version" },
+   { "r_version_label" , "r-version-label" },
+   { "r_version_home" , "r-version-home" },
+   { "working_directory" , "working-dir" },
+   { "launch_parameters" , "launch-parameters" }
+};
 
 Error FileActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
 {
@@ -80,7 +80,7 @@ Error FileActiveSessionStorage::readProperty(const std::string& name, std::strin
 Error FileActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
 {
    std::vector<FilePath> failedFiles;
-   pValues->empty();
+   pValues->clear();
    for (const std::string& name : names)
    {
       FilePath readPath = getPropertyFile(name);
@@ -105,10 +105,11 @@ Error FileActiveSessionStorage::readProperties(const std::set<std::string>& name
 
 Error FileActiveSessionStorage::readProperties(std::map<std::string, std::string>* pValues)
 {
+
    FilePath propertyDir = getPropertyDir();
    std::vector<FilePath> files{};
    std::vector<FilePath> failedFiles{};
-   pValues->empty();
+   pValues->clear();
    propertyDir.getChildren(files);
 
    for(FilePath file : files) {
@@ -156,12 +157,6 @@ Error FileActiveSessionStorage::writeProperties(const std::map<std::string, std:
 Error FileActiveSessionStorage::destroy()
 {
    return scratchPath_.removeIfExists();
-}
-
-Error FileActiveSessionStorage::isEmpty(bool* pValue)
-{
-   *pValue = (!scratchPath_.exists());
-   return Success();
 }
 
 Error FileActiveSessionStorage::isValid(bool* pValue)

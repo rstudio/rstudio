@@ -19,12 +19,14 @@
 #include <server/DBActiveSessionStorage.hpp>
 #include <server_core/ServerDatabase.hpp>
 
+using namespace rstudio::core;
+using namespace rstudio::core::r_util;
+using namespace rstudio::server_core::database;
 
 namespace rstudio {
 namespace server {
 namespace storage {
 
-using namespace server_core::database;
 
 DBActiveSessionsStorage::DBActiveSessionsStorage(const std::string& userId)
    : userId_(userId)
@@ -98,7 +100,12 @@ size_t DBActiveSessionsStorage::getSessionCount() const
 
 std::shared_ptr<IActiveSessionStorage> DBActiveSessionsStorage::getSessionStorage(const std::string& id) const
 {
-   if (hasSessionId(id))
+   bool hasId = false;
+   Error error = hasSessionId(id, &hasId);
+   if (error)
+      LOG_ERROR(error);
+
+   if (!error && hasId)
    {
       return std::make_shared<DBActiveSessionStorage>(id);
    }
@@ -108,23 +115,19 @@ std::shared_ptr<IActiveSessionStorage> DBActiveSessionsStorage::getSessionStorag
    }
 }
 
-bool DBActiveSessionsStorage::hasSessionId(const std::string& sessionId) const
+Error DBActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool* pHasSessionId) const
 {
    boost::shared_ptr<database::IConnection> connection;
-   bool hasId = false;
    Error error = getConn(&connection);
 
    if (!error)
    {
       database::Query query = connection->query("SELECT count(*) FROM active_session_metadata WHERE session_id=:id")
          .withInput(sessionId);
-      error = connection->execute(query, &hasId);
+      error = connection->execute(query, pHasSessionId);
    }
 
-   if (error)
-      LOG_ERROR(error);
-
-   return hasId;
+   return error;
 }
 
 } // namespace storage

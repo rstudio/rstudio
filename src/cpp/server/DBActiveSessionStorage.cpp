@@ -21,11 +21,14 @@
 
 #include <numeric>
 
+using namespace rstudio::core;
+using namespace rstudio::core::r_util;
+using namespace rstudio::server_core::database;
+
 namespace rstudio {
 namespace server {
 namespace storage {
 
-using namespace server_core::database;
 namespace {
 
 // This is the column name of the foreign key between the active_session_metadata
@@ -205,7 +208,7 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
       return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
    }
    
-   return error;
+   return Success();
 }
 
 Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
@@ -277,6 +280,7 @@ Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::
 
 Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
 {
+   LOG_DEBUG_MESSAGE("Writing session properties: " + sessionId_);
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
 
@@ -370,31 +374,6 @@ Error DBActiveSessionStorage::isValid(bool* pValue)
       return Error("Too Many Sessions Returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
    else
       if (count == 1)
-         *pValue = true;
-   return Success();
-}
-
-Error DBActiveSessionStorage::isEmpty(bool* pValue)
-{
-   boost::shared_ptr<database::IConnection> connection;
-   Error error = getConnectionOrOverride(&connection);
-   int count = 0;
-
-   if (error)
-      return error;
-
-   error = getSessionCount(connection, sessionId_, &count);
-
-   if (error)
-      return error;
-
-   *pValue = false;
-
-   // ensure one and only one
-   if (count > 1)
-      return Error("Too Many Sessions Returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
-   else
-      if (count == 0)
          *pValue = true;
    return Success();
 }

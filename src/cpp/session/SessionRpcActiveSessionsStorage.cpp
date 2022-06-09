@@ -16,6 +16,7 @@
 
 #include "SessionRpcActiveSessionsStorage.hpp"
 
+#include <core/Log.hpp>
 #include <shared_core/json/Json.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -159,14 +160,58 @@ std::shared_ptr<core::r_util::IActiveSessionStorage> RpcActiveSessionsStorage::g
    return std::shared_ptr<core::r_util::IActiveSessionStorage>(new RpcActiveSessionStorage(_user, id));
 }
 
-bool RpcActiveSessionsStorage::hasSessionId(const std::string& sessionId) const 
-{
-   bool empty = true;
-   Error error = getSessionStorage(sessionId)->isEmpty(&empty);
-   
+Error RpcActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool* pHasSessionId) const 
+{   
+   LOG_DEBUG_MESSAGE("Checking whether session id " + sessionId + " is in use.");
+   json::Object body;
+   body[kSessionStorageUserIdField] = _user.getUserId();
+   body[kSessionStorageIdField] = sessionId;
+   body[kSessionStorageOperationField] = kSessionStorageCountOp; 
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::Value result;
+   Error error = server_rpc::invokeServerRpc(request.method, request.toJsonObject(), &result);
    if (error)
+      return error;
+   
+   json::JsonRpcResponse response;
+   bool success = json::JsonRpcResponse::parse(result, &response);
+   if (!success)
+   {
+      error = Error(json::errc::ParseError, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unable to parse the response from the server when checking whether session with id " + sessionId + " is empty.");
+      error.addProperty("response", result.write());
+
+
       LOG_ERROR(error);
-   return !empty;
+      return error;
+   }
+
+   if (!response.result().isObject())
+   {
+      error = Error(json::errc::ParseError, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unexpected to JSON value in the response from the server when checking whether session with id " + sessionId + " is empty.");
+      error.addProperty("response", result.write());
+
+      LOG_ERROR(error);
+      return error;
+   }
+
+   int count = 0;
+   error = json::readObject(response.result().getObject(), kSessionStorageCountField, count);
+   if (error)
+      return error;
+
+   *pHasSessionId = count == 0;
+
+   return error;
 }
 
 } // namespace storage

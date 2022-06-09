@@ -32,7 +32,7 @@ namespace r_util {
       virtual std::vector< std::string > listSessionIds() const = 0;
       virtual size_t getSessionCount() const = 0;
       virtual std::shared_ptr<IActiveSessionStorage> getSessionStorage(const std::string& id) const = 0;
-      virtual bool hasSessionId(const std::string& sessionId) const = 0;
+      virtual Error hasSessionId(const std::string& sessionId, bool* pHasSessionId) const = 0;
 
    protected:
       virtual ~IActiveSessionsStorage() = default;
@@ -48,7 +48,7 @@ namespace r_util {
       std::vector< std::string > listSessionIds() const override;
       size_t getSessionCount() const override;
       std::shared_ptr<IActiveSessionStorage> getSessionStorage(const std::string& id) const override;
-      bool hasSessionId(const std::string& sessionId) const override;
+      Error hasSessionId(const std::string& sessionId, bool* pHasSessionId) const override;
       
    private:
       FilePath storagePath_;

@@ -20,6 +20,7 @@
 
 #include <shared_core/json/Json.hpp>
 
+#include <core/Log.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RActiveSessions.hpp>
 
@@ -40,6 +41,8 @@ RpcActiveSessionStorage::RpcActiveSessionStorage(const system::User& user, std::
 
 Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
 {
+   LOG_DEBUG_MESSAGE("Reading property " + name + " from server for session " + _id);
+
    json::Array fields;
    fields.push_back(name);
    
@@ -76,6 +79,9 @@ Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string
 
 Error RpcActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
 {   
+   if (!names.empty())
+      LOG_DEBUG_MESSAGE("Reading properties { " + boost::join(names, ", ") + " } from server for session " + _id);
+      
    json::Object body;
    body[kSessionStorageUserIdField] = _user.getUserId();
    body[kSessionStorageIdField] = _id;
@@ -146,11 +152,13 @@ Error RpcActiveSessionStorage::readProperties(const std::set<std::string>& names
 
 Error RpcActiveSessionStorage::readProperties(std::map<std::string, std::string>* pValues)
 {
+   LOG_DEBUG_MESSAGE("Reading properties all properties from server for session " + _id);
    return readProperties({}, pValues);
 }
 
 Error RpcActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)
 {
+   LOG_DEBUG_MESSAGE("Writing property " + name + " with value " + value + " from server for session " + _id);
    json::Object fields;
    fields[name] = value;
 
@@ -175,6 +183,21 @@ Error RpcActiveSessionStorage::writeProperty(const std::string& name, const std:
 
 Error RpcActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
 {
+   std::string strProps;
+   if (log::isLogLevel(log::LogLevel::DEBUG))
+   {
+      for (auto itr = properties.begin(); itr != properties.end(); ++itr)
+      {
+         if (!strProps.empty())
+            strProps.append(", ");
+
+         strProps.append(itr->first)
+            .append(" = ")
+            .append(itr->second);
+      }
+   }
+
+   LOG_DEBUG_MESSAGE("Writing properties { " + strProps + " } from server for session " + _id);
    json::Object body;
    body[kSessionStorageUserIdField] = _user.getUserId();
    body[kSessionStorageIdField] = _id;
@@ -206,17 +229,10 @@ Error RpcActiveSessionStorage::destroy()
 
 Error RpcActiveSessionStorage::isValid(bool* pValue)
 {
+   LOG_DEBUG_MESSAGE("Checking whether session is valid for id: " + _id);
    // TODO: actual validation
    // We're within the session, so it must be valid.
    *pValue = true;
-   return Success();
-}
-
-Error RpcActiveSessionStorage::isEmpty(bool* pValue)
-{
-   // TODO: actual emptiness check
-   // We're within the session, so it must not be empty.
-   *pValue = false;
    return Success();
 }
 

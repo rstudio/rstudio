@@ -34,7 +34,7 @@ public:
    std::vector<std::string> listSessionIds() const override;
    size_t getSessionCount() const  override;
    std::shared_ptr<core::r_util::IActiveSessionStorage> getSessionStorage(const std::string& id)  const override;
-   bool hasSessionId(const std::string& sessionId)  const override;
+   core::Error hasSessionId(const std::string& sessionId, bool* pHasSessionId)  const override;
 
 private:
    core::system::User _user;

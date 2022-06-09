@@ -42,10 +42,12 @@ FileActiveSessionsStorage::FileActiveSessionsStorage(const FilePath& rootStorage
       LOG_ERROR(error);
 }
 
-bool FileActiveSessionsStorage::hasSessionId(const std::string& sessionId) const
+Error FileActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool* pHasSessionId) const
 {
    FilePath dir = getSessionDirPath(storagePath_, sessionId);
-   return dir.exists();
+   *pHasSessionId = dir.exists();
+
+   return Success();
 }
 
 core::Error FileActiveSessionsStorage::initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties)

@@ -38,7 +38,6 @@ class RpcActiveSessionStorage : public core::r_util::IActiveSessionStorage
 
       core::Error destroy() override;
       core::Error isValid(bool* pValue) override;
-      core::Error isEmpty(bool* pValue) override;
 
    private:
       const core::system::User _user;

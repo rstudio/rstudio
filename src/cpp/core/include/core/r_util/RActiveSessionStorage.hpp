@@ -33,7 +33,6 @@ namespace r_util {
       Error virtual writeProperties(const std::map<std::string, std::string>& properties) = 0;
       Error virtual destroy() = 0;
       Error virtual isValid(bool* pValue) = 0;
-      Error virtual isEmpty(bool* pValue) = 0;
 
    protected:
       virtual ~IActiveSessionStorage() = default;
@@ -52,7 +51,6 @@ namespace r_util {
       Error writeProperties(const std::map<std::string, std::string>& properties) override;
       Error destroy() override;
       Error isValid(bool* pValue) override;
-      Error isEmpty(bool* pValue) override;
 
    private:
       // Scratch Path Example : ~/.local/share/rstudio/sessions/active/session-6d0bdd18
