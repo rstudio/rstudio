@@ -224,7 +224,10 @@ void detectQuartoInstallation()
          sysSetenv.addParam("PATH", sysPath);
          Error error = sysSetenv.call();
          if (error)
+         {
+            LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
             LOG_ERROR(error);
+         }
       }
       else
       {
@@ -254,7 +257,10 @@ void detectQuartoInstallation()
       sysSetenv.addParam("PATH", sysPath);
       Error error = sysSetenv.call();
       if (error)
+      {
+         LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
          LOG_ERROR(error);
+      }
    }
    else
    {

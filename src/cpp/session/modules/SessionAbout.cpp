@@ -22,7 +22,6 @@
 #include <session/SessionModuleContext.hpp>
 
 #include "session-config.h"
-#include <session/SessionQuarto.hpp>
 
 using namespace rstudio::core;
 
@@ -35,9 +34,6 @@ namespace {
 Error productInfo(const json::JsonRpcRequest& request,
                   json::JsonRpcResponse* pResponse)
 {
-   session::quarto::quartoBinary();
-   session::quarto::quartoConfig(true);
-
    json::Object result;
    result["version"] = RSTUDIO_VERSION;
    result["version_major"] = RSTUDIO_VERSION_MAJOR;
