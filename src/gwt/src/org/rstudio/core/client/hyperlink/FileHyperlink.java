@@ -88,6 +88,11 @@ public class FileHyperlink extends Hyperlink
         
         return panel;
     }
+
+    public static boolean handles(String url)
+    {
+        return url.startsWith("file://");
+    }
     
     private String filename;
     private int line;

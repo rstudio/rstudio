@@ -94,7 +94,7 @@ public abstract class Hyperlink
                 params.put(key, value);
             }
         }
-        if (url.startsWith("file://"))
+        if (FileHyperlink.handles(url))
         {
             return new FileHyperlink(url, params, text, clazz);
         }
