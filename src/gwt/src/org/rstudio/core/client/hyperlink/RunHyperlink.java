@@ -16,7 +16,6 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -41,12 +40,6 @@ public class RunHyperlink extends Hyperlink
         code_ = url.replaceFirst("^(ide|rstudio):run:", "");
         
         server_ = RStudioGinjector.INSTANCE.getServer();
-    }
-
-    @Override
-    public String getAnchorClass() 
-    {
-        return styles_.xtermCommand();
     }
 
     @Override 
@@ -82,6 +75,12 @@ public class RunHyperlink extends Hyperlink
         return HYPERLINK_PATTERN.test(url);
     }
     
+    @Override
+    public String getAnchorClass()
+    {
+        return styles_.xtermRunHyperlink();
+    }
+
     private String code_;    
     private String package_;
     private String fun_;
