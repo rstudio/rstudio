@@ -16,7 +16,7 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
-import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -26,22 +26,20 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.Server;
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
 
 public class RunHyperlink extends Hyperlink
 {
     public RunHyperlink(String url, Map<String, String> params, String text, String clazz)
     {
         super(url, params, text, clazz);
-        code_ = url.replaceFirst("^(ide|rstudio):run:", "");
         
         Match match = HYPERLINK_PATTERN.match(url, 0);
         package_ = match.getGroup(2);
         fun_ = match.getGroup(3);
+        code_ = url.replaceFirst("^(ide|rstudio):run:", "");
+        
         server_ = RStudioGinjector.INSTANCE.getServer();
     }
 
@@ -91,5 +89,5 @@ public class RunHyperlink extends Hyperlink
     private Server server_;
 
     // allow code of the form pkg::fn(<args>) where args does not have ;()
-    private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(rstudio|ide):run:(\\w+)::(\\w+)[(][^();]*[)]$");
+    private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(rstudio|ide):run:(\\w+)::(\\w+)[(][^();]*[)]$", "");
 }
