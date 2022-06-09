@@ -100,6 +100,12 @@ CREATE TABLE active_session_metadata(
    /* The last session state updated */
    last_state_updated TEXT,
 
+   /* Initial */
+   initial TEXT,
+
+   /* Time the session was last resumed */
+   last_resumed TEXT,
+
    PRIMARY KEY (session_id),
    
    /* User entries should not be deleted, but if they are, remove all of that user's sessions */
