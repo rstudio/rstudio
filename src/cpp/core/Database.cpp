@@ -827,6 +827,7 @@ const std::map<std::string, int>& SchemaVersion::versionMap()
             versions[""] = 0;
             versions["Ghost Orchid"] = 1;
             versions["Prairie Trillium"] = 2;
+            versions["Spotted Wakerobin"] = 3;
          }
       }
       END_LOCK_MUTEX
