@@ -221,10 +221,10 @@ public:
       return Success();
    }
 
-   Error writeProperties(const std::map<std::string, std::string>& properites) const
+   Error writeProperties(const std::map<std::string, std::string>& properties) const
    {
       if (!empty())
-         return storage_->writeProperties(properites);
+         return storage_->writeProperties(properties);
 
       return Success();
    }
