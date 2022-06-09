@@ -81,10 +81,7 @@ public class FileHyperlink extends Hyperlink
     public Widget getPopupContent()
     {
         final VerticalPanel panel = new VerticalPanel();
-        
-        Label label = new Label(filename);
-        label.setStyleName(styles_.code());
-        panel.add(label);
+        panel.add(new HyperlinkPopupHeader(filename));
         
         return panel;
     }

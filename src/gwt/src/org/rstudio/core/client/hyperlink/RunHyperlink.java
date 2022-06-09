@@ -61,10 +61,7 @@ public class RunHyperlink extends Hyperlink
     {
         final VerticalPanel panel = new VerticalPanel();
 
-        Label commandLabel = new Label(code_);
-        commandLabel.setStyleName(styles_.code());
-        panel.add(commandLabel);
-
+        panel.add(new HyperlinkPopupHeader(code_));
         panel.add(new HelpPreview(fun_, package_));
         
         return panel;

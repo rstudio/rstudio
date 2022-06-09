@@ -41,11 +41,8 @@ public class UnsupportedHyperlink extends Hyperlink
     public Widget getPopupContent()
     {
         VerticalPanel panel = new VerticalPanel();
+        panel.add(new HyperlinkPopupHeader(url));
 
-        Label urlLabel = new Label(url);
-        urlLabel.setStyleName(styles_.arbitraryCode());
-        panel.add(urlLabel);
-        
         if (!params.isEmpty())
         {
             for (Map.Entry<String, String> param: params.entrySet())

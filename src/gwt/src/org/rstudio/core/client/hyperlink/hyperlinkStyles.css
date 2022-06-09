@@ -37,15 +37,6 @@
     margin-right: 5px;
     margin-bottom: 10px;
 }
- 
-.arbitraryCode {
-    font-family: fixedWidthFont;
-    opacity: 0.7;
-    margin-left: 5px;
-    margin-top: 5px;
-    margin-right: 5px;
-    margin-bottom: 10px;
-}
 
 .warning {
     font-size: smaller;
@@ -53,7 +44,27 @@
     color: red;
     padding-left: 5px;
 }
- 
+
+.hyperlinkPopup {
+    max-width: 400px;
+}
+
+.hyperlinkPopupHeader {
+    width: 100%;
+}
+
+.hyperlinkPopupHeaderLeft {
+    font-family: fixedWidthFont;
+    padding-left: 5px;
+}
+
+.hyperlinkPopupHeaderRight {
+    font-family: fixedWidthFont;
+    float: right;
+    padding-right: 5px;
+    color: #ccc;
+}
+
 .helpPreview {
     color: #000023;
     background-color: #ffffca;
@@ -74,24 +85,3 @@
     margin-top: 4px;
     margin-bottom: 4px; 
 }
-
-.helpTitle {
-    width: 100%;
-}
-
-.helpTitlePackage {
-    font-family: fixedWidthFont;
-    float: right;
-    padding-right: 5px;
-    color: #ccc;
-}
-
-.helpTitleTopic {
-    font-family: fixedWidthFont;
-    padding-left: 5px;
-}
-
-.hyperlinkPopup {
-    max-width: 400px;
-}
- 

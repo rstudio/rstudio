@@ -55,7 +55,7 @@ public class VignetteHyperlink extends Hyperlink
     public Widget getPopupContent() 
     {
         final VerticalPanel panel = new VerticalPanel();
-        panel.add(new HelpHeader("Vignette: " + topic_, pkg_));
+        panel.add(new HyperlinkPopupHeader("Vignette: " + topic_, "{" + pkg_ + "}"));
 
         server_.getVignetteTitle(topic_, pkg_, new SimpleRequestCallback<String>()
         {

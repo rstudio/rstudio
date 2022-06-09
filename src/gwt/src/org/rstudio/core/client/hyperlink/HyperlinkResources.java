@@ -35,13 +35,12 @@ public interface HyperlinkResources extends ClientBundle
         String hyperlinkPopup();
 
         String code();
-        String arbitraryCode();
         String warning();
 
-        String helpTitle();
-        String helpTitlePackage();
-        String helpTitleTopic();
-
+        String hyperlinkPopupHeader();
+        String hyperlinkPopupHeaderLeft();
+        String hyperlinkPopupHeaderRight();
+        
         String helpPreview();
         String helpPreviewTitle();
         String helpPreviewDescription();

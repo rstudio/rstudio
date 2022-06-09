@@ -16,7 +16,6 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -40,10 +39,7 @@ public class WebHyperlink extends Hyperlink {
     public Widget getPopupContent() 
     {
         VerticalPanel panel = new VerticalPanel();
-
-        Label urlLabel = new Label(url);
-        urlLabel.setStyleName(styles_.code());
-        panel.add(urlLabel);
+        panel.add(new HyperlinkPopupHeader(url));
 
         /*
             // TODO: maybe we can show a screenshot ?

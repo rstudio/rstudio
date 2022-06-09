@@ -54,7 +54,7 @@ public class HelpHyperlink extends Hyperlink
     public Widget getPopupContent()
     {
         final VerticalPanel panel = new VerticalPanel();
-        panel.add(new HelpHeader(topic_, pkg_));
+        panel.add(new HyperlinkPopupHeader(topic_, "{" + pkg_ + "}"));
         panel.add(new HelpPreview(topic_, pkg_));
         
         return panel;
