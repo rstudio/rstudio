@@ -91,7 +91,7 @@ COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
 COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
-RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common bionic
+RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common jammy
 
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/
