@@ -2132,14 +2132,17 @@ Error readObject(const Object& in_object, const std::string& in_name, std::map<s
 
    if (!(*itr).getValue().isObject())
       return jsonReadError(JsonReadError::INVALID_TYPE,
-                           "Member " + in_name + " is not an array.",
+                           "Member " + in_name + " is not an object.",
                            ERROR_LOCATION);
 
    Object obj = (*itr).getValue().getObject();
    for (auto objItr = obj.begin(); objItr != obj.end(); ++objItr)
    {
-      const std::string& key = (*objItr).getName();
-      const Value& value = (*objItr).getValue();
+      // NOTE: DO NOT CHANGE THIS TO A REFERENCE =====================================================================================
+      // This was a reference before, and it would cause the key to sometimes come out as gibberish. Not sure why, but a full 
+      // copy fixes it.
+      std::string key = (*objItr).getName();
+      Value value = (*objItr).getValue();
       if (!isType<T>(value))
       {
          std::ostringstream msgStream;
@@ -2151,7 +2154,7 @@ Error readObject(const Object& in_object, const std::string& in_name, std::map<s
             ERROR_LOCATION);
       }
 
-      out_values[key] = value.getValue<T>();
+      out_values.emplace(key, value.getValue<T>());
    }
 
    return Success();
