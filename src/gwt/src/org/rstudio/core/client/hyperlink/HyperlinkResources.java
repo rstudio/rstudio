@@ -28,9 +28,8 @@ public interface HyperlinkResources extends ClientBundle
     public interface HyperlinkStyles extends CssResource
     {
         String helpPreview();
-
-        String helpTitle();
-        String helpDescription();
+        String helpPreviewTitle();
+        String helpPreviewDescription();
 
         String code();
         String arbitraryCode();

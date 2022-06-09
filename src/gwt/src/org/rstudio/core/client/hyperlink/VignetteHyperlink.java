@@ -55,12 +55,10 @@ public class VignetteHyperlink extends Hyperlink
     public Widget getPopupContent() 
     {
         final VerticalPanel panel = new VerticalPanel();
-
         panel.add(new HelpHeader("Vignette: " + topic_, pkg_));
 
         server_.getVignetteTitle(topic_, pkg_, new SimpleRequestCallback<String>()
         {
-
             @Override
             public void onResponseReceived(String response)
             {
@@ -71,7 +69,7 @@ public class VignetteHyperlink extends Hyperlink
                     helpPanel.addStyleName(styles_.helpPreview());
 
                     Label title = new Label(response);
-                    title.setStyleName(styles_.helpDescription());
+                    title.setStyleName(styles_.helpPreviewDescription());
                     helpPanel.add(title);
 
                     panel.add(helpPanel);
@@ -83,9 +81,7 @@ public class VignetteHyperlink extends Hyperlink
                     notFound.addStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
                     panel.add(notFound);
                 }
-                
             }
-
         });
         
         return panel;

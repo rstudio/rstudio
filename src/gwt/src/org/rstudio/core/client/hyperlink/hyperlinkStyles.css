@@ -46,6 +46,13 @@
     margin-right: 5px;
     margin-bottom: 10px;
 }
+
+.warning {
+    font-size: smaller;
+    font-style: italic;
+    color: red;
+    padding-left: 5px;
+}
  
 .helpPreview {
     color: #000023;
@@ -56,24 +63,18 @@
     
     padding-top: 5px;
     margin-left: 0px;
+    width: 100%;
 }
  
-.helpTitle {
+.helpPreviewTitle {
     font-weight: bold;
 }
  
-.helpDescription {
+.helpPreviewDescription {
     margin-top: 4px;
     margin-bottom: 4px; 
 }
- 
-.warning {
-    font-size: smaller;
-    font-style: italic;
-    color: red;
-    padding-left: 5px;
-}
- 
+
 .helpTitlePanel {
     width: 100%;
 }

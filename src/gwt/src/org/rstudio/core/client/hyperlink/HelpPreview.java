@@ -51,10 +51,10 @@ public class HelpPreview extends Composite
 
                     ParsedInfo parsed = response.parse(pkgName_ + "::" + topic_);
                     Label title = new Label(parsed.getTitle());
-                    title.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpTitle());
+                    title.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreviewTitle());
 
                     HTML description = new HTML(parsed.getDescription());
-                    description.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpDescription());
+                    description.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreviewDescription());
                     
                     previewPanel.add(title);
                     previewPanel.add(description);
