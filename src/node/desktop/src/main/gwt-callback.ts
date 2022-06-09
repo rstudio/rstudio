@@ -418,11 +418,6 @@ export class GwtCallback extends EventEmitter {
       return formatSelectedVersionForUi(rBinDir);
     });
 
-    ipcMain.handle('desktop_device_pixel_ratio', () => {
-      GwtCallback.unimpl('desktop_device_pixel_ratio');
-      return 1.0;
-    });
-
     ipcMain.on(
       'desktop_open_minimal_window',
       (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
