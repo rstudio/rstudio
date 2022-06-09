@@ -13,8 +13,6 @@
  *
  */
 
-// TODO clean this up
-
 import {
   app,
   BrowserWindow,

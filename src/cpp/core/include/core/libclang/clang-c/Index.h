@@ -7,7 +7,7 @@
 |*                                                                            *|
 |*===----------------------------------------------------------------------===*|
 |*                                                                            *|
-|* This header provides a public inferface to a Clang library for extracting  *|
+|* This header provides a public interface to a Clang library for extracting  *|
 |* high-level symbol information from source files without exposing the full  *|
 |* Clang C++ API.                                                             *|
 |*                                                                            *|
@@ -1669,7 +1669,7 @@ enum CXCursorKind {
 
   /**
    * \brief An expression that refers to some value declaration, such
-   * as a function, varible, or enumerator.
+   * as a function, variable, or enumerator.
    */
   CXCursor_DeclRefExpr                   = 101,
 
@@ -4485,7 +4485,7 @@ enum CXCompletionChunkKind {
    * for "int x", indicating that the current argument will initialize that
    * parameter. After typing further, to \c add(17, (where the code-completion
    * point is after the ","), the code-completion string will contain a
-   * "current paremeter" chunk to "int y".
+   * "current parameter" chunk to "int y".
    */
   CXCompletionChunk_CurrentParameter,
   /**
@@ -5714,7 +5714,7 @@ typedef enum {
 
   /**
    * \brief Skip a function/method body that was already parsed during an
-   * indexing session assosiated with a \c CXIndexAction object.
+   * indexing session associated with a \c CXIndexAction object.
    * Bodies in system headers are always skipped.
    */
   CXIndexOpt_SkipParsedBodiesInSession = 0x10

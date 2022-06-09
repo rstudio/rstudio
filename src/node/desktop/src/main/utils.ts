@@ -162,7 +162,7 @@ export function rsessionExeName(): string {
  */
 export function findRepoRoot(): string {
   if (app.isPackaged) {
-    return "";
+    return '';
   }
   for (let dir = process.cwd(); dir !== path.dirname(dir); dir = path.dirname(dir)) {
     // check for release file
@@ -171,7 +171,7 @@ export function findRepoRoot(): string {
       return dir;
     }
   }
-  return "";
+  return '';
 }
 
 // used to help find built C++ sources in developer configurations
@@ -179,7 +179,7 @@ function findBuildRoot(): string {
   // look for the project root directory. note that the current
   // working directory may differ depending on how we are launched
   // (e.g. unit tests will have their parent folder as the working directory)
-  let dir = findRepoRoot();
+  const dir = findRepoRoot();
   if (dir.length > 0) {
     return findBuildRootImpl(dir);
   }
@@ -395,9 +395,6 @@ export function raiseAndActivateWindow(window: BrowserWindow): void {
 }
 
 export function getDpiZoomScaling(): number {
-  // TODO: because Qt is already high-DPI aware and automatically
-  // scales in most scenarios, we no longer need to detect and
-  // apply a custom scale -- but more testing is warranted
   return 1.0;
 }
 

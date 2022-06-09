@@ -398,6 +398,18 @@ options(help_type = "html")
       utils::browseURL(url)
 })
 
+.rs.addJsonRpcHandler("get_vignette_title", function(topic, package)
+{
+   title <- tryCatch(utils::vignette(topic, package)$Title, 
+                     error = function(e) "", 
+                     warning = function(e) "")
+   .rs.scalar(title)         
+})
+
+.rs.addJsonRpcHandler("show_vignette", function(topic, package)
+{
+   print(utils::vignette(topic, package))
+})
 
 .rs.addFunction("getHelpFunction", function(name, src, envir = parent.frame())
 {

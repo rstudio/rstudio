@@ -46,4 +46,10 @@ public interface HelpServerOperations
                                ServerRequestCallback<HelpInfo.Custom> requestCallback);
    
    void showCustomHelpTopic(String helpHandler, String topic, String source);
+
+   void getVignetteTitle(String topic,
+                         String pkgName, 
+                         ServerRequestCallback<String> requestCallback);
+
+   void showVignette(String topic, String pkgName);
 }

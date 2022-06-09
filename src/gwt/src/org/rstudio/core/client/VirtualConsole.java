@@ -26,20 +26,18 @@ import java.util.TreeSet;
 import com.google.gwt.dom.client.Node;
 import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
+
+import org.rstudio.core.client.hyperlink.Hyperlink;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.virtualscroller.VirtualScrollerManager;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.dom.client.AnchorElement;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.Event;
 import com.google.inject.Inject;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
-import org.rstudio.studio.client.workbench.views.console.model.VirtualConsoleServerOperations;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -90,12 +88,10 @@ public class VirtualConsole
    }
 
    @Inject
-   public VirtualConsole(@Assisted Element parent, final Preferences prefs, final VirtualConsoleServerOperations consoleServer)
+   public VirtualConsole(@Assisted Element parent, final Preferences prefs)
    {
       prefs_ = prefs;
       parent_ = parent;
-      consoleServer_ = consoleServer;
-
       VirtualScrollerManager.init();
    }
 
@@ -623,7 +619,7 @@ public class VirtualConsole
                   // toggle hyperlink_
                   if (!StringUtil.equals(url, ""))
                   {
-                     hyperlink_ = new Hyperlink(url, /*params=*/ hyperlinkMatch.getGroup(1));
+                     hyperlink_ = new HyperlinkInfo(url, /*params=*/ hyperlinkMatch.getGroup(1));
                   }
                   else
                   {
@@ -757,40 +753,9 @@ public class VirtualConsole
       return currentClazz;
    }
 
-   private class Hyperlink
-   {
-      public Hyperlink(String url, String params)
-      {
-         this.url = url;
-         this.params = params;
-      }
-
-      public String getTitle()
-      {
-         if (url.startsWith("rstudio:viewer:")) 
-         {
-            return "open in viewer: " + url.replace("rstudio:viewer:", "");
-         }
-         else if (StringUtil.equals(url, "rstudio:help")) 
-         {
-            return "help(" + params.replace(":", ", ") + ")";
-         }
-         else if (StringUtil.equals(url, "rstudio:vignette")) 
-         {
-            return "vignette(" + params.replace(":", ", ") + ")";
-         }
-         else
-         {
-            return url;
-         }
-      }
-
-      public String url;
-      public String params;
-   }
    private class ClassRange
    {
-      public ClassRange(int pos, String className, String text, boolean isHTML, Hyperlink hyperlink)
+      public ClassRange(int pos, String className, String text, boolean isHTML, HyperlinkInfo hyperlink)
       {
          clazz  = className;
          start = pos;
@@ -804,25 +769,14 @@ public class VirtualConsole
             element = Document.get().createSpanElement();
             if (className != null)
                element.addClassName(clazz);
+
+            setText(text);
          }
          else 
          {
-            AnchorElement anchor = Document.get().createAnchorElement();
-            if (className != null)
-               anchor.addClassName(clazz);
-            Event.sinkEvents(anchor, Event.ONCLICK);
-            Event.setEventListener(anchor, event ->
-            {
-               consoleServer_.consoleFollowHyperlink(hyperlink_.url, text, hyperlink_.params, new VoidServerRequestCallback());
-            });
-            anchor.addClassName(AnsiCode.HYPERLINK_STYLE);
-            anchor.setTitle(hyperlink_.getTitle());
-            
-            element = anchor;
+            element = Hyperlink.create(hyperlink.url_, hyperlink_.params_, text, clazz).getElement();
          }
 
-         setText(text);
-        
          if (captureNewElements_)
             newElements_.add(element);
       }
@@ -896,10 +850,21 @@ public class VirtualConsole
       public int length;
       public int start;
       public final Element element;
-      public final Hyperlink hyperlink_;
+      public final HyperlinkInfo hyperlink_;
       private boolean isHTML_;
    }
 
+   private class HyperlinkInfo
+   {
+      public HyperlinkInfo(String url, String params)
+      {
+         url_ = url;
+         params_ = params;
+      }
+
+      public String url_;
+      public String params_;
+   }
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
 
    // only a select few panes should be virtualized. default it to off everywhere.
@@ -916,7 +881,7 @@ public class VirtualConsole
    private AnsiCode ansi_;
    private String partialAnsiCode_;
    private AnsiCode.AnsiClazzes ansiCodeStyles_ = new AnsiCode.AnsiClazzes();
-   private Hyperlink hyperlink_;
+   private HyperlinkInfo hyperlink_;
 
    // Elements added by last submit call (only if forceNewRange was true)
    private boolean captureNewElements_ = false;
@@ -926,5 +891,4 @@ public class VirtualConsole
 
    // Injected ----
    private final Preferences prefs_;
-   private final VirtualConsoleServerOperations consoleServer_;
 }

@@ -41,6 +41,7 @@ import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.LinkColumn;
 import org.rstudio.core.client.files.filedialog.FileDialogResources;
+import org.rstudio.core.client.hyperlink.HyperlinkResources;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
 import org.rstudio.core.client.resources.CoreResources;
@@ -413,6 +414,7 @@ public class RStudio implements EntryPoint
       CoreResources.INSTANCE.styles().ensureInjected();
       StudioResources.INSTANCE.styles().ensureInjected();
       ConsoleResources.INSTANCE.consoleStyles().ensureInjected();
+      HyperlinkResources.INSTANCE.hyperlinkStyles().ensureInjected();
       FileDialogResources.INSTANCE.styles().ensureInjected();
       ManipulatorResources.INSTANCE.manipulatorStyles().ensureInjected();
       PackagesCellTableResources.INSTANCE.cellTableStyle().ensureInjected();

@@ -37,7 +37,7 @@ namespace none {
 /// Thread safe stub "random" integer generator.
 /**
  * This template class provides a random integer stub. The interface mimics the
- * WebSocket++ RNG generator classes but the generater function always returns
+ * WebSocket++ RNG generator classes but the generator function always returns
  * zero. This can be used to stub out the RNG for unit and performance testing.
  *
  * Call operator() to generate the next number

@@ -186,7 +186,7 @@ float synctex_scanner_magnification(synctex_scanner_t scanner);
 
 /*  Managing the input file names.
  *  Given a tag, synctex_scanner_get_name will return the corresponding file name.
- *  Conversely, given a file name, synctex_scanner_get_tag will retur, the corresponding tag.
+ *  Conversely, given a file name, synctex_scanner_get_tag will return, the corresponding tag.
  *  The file name must be the very same as understood by TeX.
  *  For example, if you \input myDir/foo.tex, the file name is myDir/foo.tex.
  *  No automatic path expansion is performed.
@@ -283,7 +283,7 @@ int synctex_node_column(synctex_node_t node);
 /*  In order to enhance forward synchronization,
  *  non void horizontal boxes have supplemental cached information.
  *  The mean line is the average of the line numbers of the included nodes.
- *  The child count is the number of chidren.
+ *  The child count is the number of children.
  */
 int synctex_node_mean_line(synctex_node_t node);
 int synctex_node_child_count(synctex_node_t node);

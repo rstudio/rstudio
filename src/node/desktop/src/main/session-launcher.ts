@@ -194,18 +194,6 @@ export class SessionLauncher {
     logger().logDiagnostic('\nConnected to R session, attempting to initialize...\n');
 
     // TODO - reimplement
-    // one-time workbench initialized hook for startup file association
-    // if (!filename_.isNull() && !filename_.isEmpty()) {
-    //   StringSlotBinder* filenameBinder = new StringSlotBinder(filename_);
-    //   // use 'once' here so it only fires for the first session
-    //   this.mainWindow?.once(MainWindow.FIRST_WORKBENCH_INITIALIZED, filenameBinder);
-    //   pMainWindow_->connect(filenameBinder,
-    //                         SIGNAL(triggered(QString)),
-    //                         pMainWindow_,
-    //                         SLOT(openFileInRStudio(QString)));
-    // }
-
-    // TODO - reimplement
     // pMainWindow_->connect(pAppLaunch_,
     //                       SIGNAL(openFileRequest(QString)),
     //                       pMainWindow_,
