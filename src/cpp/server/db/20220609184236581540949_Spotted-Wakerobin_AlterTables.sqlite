@@ -1,8 +1,0 @@
-ALTER TABLE active_session_metadata
-ADD COLUMN initial TEXT;
-
-ALTER TABLE active_session_metadata
-ADD COLUMN last_resumed TEXT;
-
-/* Update the version to the latest after all alter statements are applied. */
-UPDATE schema_version SET current_version = '20220609184236581540949' , release_name = 'Spotted Wakerobin';
