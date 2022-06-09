@@ -14,17 +14,16 @@
  */
 package org.rstudio.core.client.hyperlink;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.ThemedPopupPanel;
+import org.rstudio.core.client.widget.VerticalFlexPanel;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPopupDisplay
@@ -57,7 +56,7 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
     @Override
     public void show(Widget content, PositionCallback callback)
     {
-        container_ = new VerticalPanel();
+        container_ = new VerticalFlexPanel();
         container_.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().popupPanel());
         
         container_.add(content);
@@ -76,5 +75,5 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
         super.setPopupPosition(left, top);
     }
 
-    private VerticalPanel container_;
+    private VerticalFlexPanel container_;
 }

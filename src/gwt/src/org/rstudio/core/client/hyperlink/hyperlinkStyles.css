@@ -1,96 +1,126 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@external rstudio-themes-dark-menus;
 
 .xtermHyperlink {
-    text-decoration: underline; 
-    cursor: pointer; 
-    text-decoration-style: dotted;
+  display: inline-block;
+  text-decoration: underline; 
+  cursor: pointer; 
+  text-decoration-style: dotted;
 }
 
 .xtermHyperlink:hover { 
-    text-decoration: underline; 
-    text-decoration-style: solid; 
+  text-decoration-style: solid; 
 }
 
 .xtermCommand {
-    text-decoration: underline; 
-    text-decoration-style: dotted;
-    cursor: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABQAAAASCAYAAABb0P4QAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAVtJREFUeNpi/P//PwM1ASNNDKzvmSoNZNsAsTgB9S+B+EhjSfZTnCpABtZ1T0l5/ur1uf8EAEgNSC1IDy7MBDWXS0JUxJCQd6BquGB8gZUxGOHFRGmYoRvKRI2IQDaUBVli61XcMe6tzQjSyMAgyzBx4srjE7EZ+iF8CSOKgW/efQDTIkICWNiCRLkUxUCQZkJsfADkQliyyftPJICqBevjXxH9H4bRkw1FAOwyWCxrG5gJf3z/TpJYzW9fv1LUNjSTwWYYOJaBPP33796J37x995W6qrIYPsOu3bj1/u2bN8qM/xlcdXQcF8kwfOXQaDPnZGH9+//nv3//fnBw/GUBJpSLnz68Z+meMuvr71+/5H7/+in++/dv0b9//goBw4SViZnpCwsLyxtWVraXLCysD4FqtwIdceEf8zc+RmBKYmH8z8Pwl+kP+1+mz+w//n1gHBrFFzUBQIABAKPICa9z2cbGAAAAAElFTkSuQmCC'), e-resize;
+  display: inline-flex;
+  position: relative;
+  text-decoration: underline; 
+  text-decoration-style: dotted; 
+  cursor: pointer; 
+  padding-left: 0;
+  overflow: hidden;
+  transition: all 150ms ease-out;
+}
+
+.xtermCommand:hover {
+  padding-left: 1em;
+  transition: all 150ms 50ms ease-out;
+}
+
+.xtermCommand::before {
+  content: "\025B6";
+  position: absolute;
+  top: 0;
+  margin-left: -1em;
+  display: flex;
+  justify-content: flex-start;
+  color: green;
+}
+
+.rstudio-themes-dark-menus .xtermCommand::before {
+  color: #2bc52b;
 }
 
 .code {
-    font-family: fixedWidthFont;
-    margin-left: 5px;
-    margin-top: 5px;
-    margin-right: 5px;
-    margin-bottom: 10px;
+  font-family: fixedWidthFont;
+  padding: 5px;
 }
- 
+
 .arbitraryCode {
-    font-family: fixedWidthFont;
-    opacity: 0.7;
-    margin-left: 5px;
-    margin-top: 5px;
-    margin-right: 5px;
-    margin-bottom: 10px;
+  font-family: fixedWidthFont;
+  opacity: 0.7;
+  padding: 5px;
 }
- 
+
 .xtermUnsupportedHyperlink { 
-    text-decoration: underline; 
-    text-decoration-style: dotted;
-    cursor: not-allowed;
+  display: inline-block;
+  text-decoration: underline; 
+  text-decoration-style: dotted;
 }
- 
+
 .helpPreview {
-    color: #000023;
-    background-color: #ffffca;
-    padding: 5px;
-    border-top: 1px solid #ccc;
-    z-index: 9001;
-    
-    padding-top: 5px;
-    margin-left: 0px;
+  color: #000023;
+  background-color: #ffffca;
+  padding: 5px;
+  border-top: 1px solid #ccc;
+  z-index: 9001;
+  padding-top: 5px;
+  margin-left: 0px;
 }
- 
+
+.rstudio-themes-dark-menus .helpPreview {
+  background-color: THEME_DARKGREY_BACKGROUND;
+  color: white;
+}
+
 .helpTitle {
-    font-weight: bold;
+  font-weight: bold;
 }
- 
+
 .helpDescription {
-    margin-top: 4px;
-    margin-bottom: 4px; 
+  margin-top: 4px;
+  margin-bottom: 4px; 
 }
- 
+
 .helpHyperlink {
-    text-decoration: underline; 
-    cursor: help; 
-    text-decoration-style: dotted;
+  display: inline-block;
+  text-decoration: underline; 
+  cursor: pointer; 
+  text-decoration-style: dotted;
 }
- 
+
+.helpHyperlink:hover { 
+  text-decoration-style: solid; 
+}
+
 .warning {
-    font-size: smaller;
-    font-style: italic;
-    color: red;
-    padding-left: 5px;
+  font-size: smaller;
+  font-style: italic;
+  color: red;
+  padding-left: 5px;
 }
- 
+
 .helpTitlePanel {
-    width: 100%;
+  width: 100%;
 }
 
 .helpTitlePanelPackage {
-    font-family: fixedWidthFont;
-    float: right;
-    padding-right: 5px;
-    color: #ccc;
+  font-family: fixedWidthFont;
+  float: right;
+  padding: 5px;
+  color: #888;
+  opacity: 80%;
 }
 
 .helpTitlePanelTopic {
-    font-family: fixedWidthFont;
-    padding-left: 5px;
+  font-family: fixedWidthFont;
+  padding: 5px;
 }
 
 .popupPanel {
-    max-width: 400px;
+  max-width: 400px;
 }
- 
+

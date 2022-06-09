@@ -51,7 +51,7 @@ public abstract class Hyperlink
         {
             if (event.getTypeInt() == Event.ONMOUSEOVER)
             {
-                Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
+                Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteTop(), anchor_.getClientWidth(), anchor_.getClientHeight());
                 popup_.show(getPopupContent(), new HyperlinkPopupPositioner(bounds, popup_));
             } 
             else if (event.getTypeInt() == Event.ONMOUSEOUT)

@@ -16,8 +16,6 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -68,10 +66,7 @@ public class RunHyperlink extends Hyperlink
     {
         final VerticalPanel panel = new VerticalPanel();
 
-        Label commandLabel = new Label(code_);
-        commandLabel.setStyleName(styles_.code());
-        panel.add(commandLabel);
-
+        panel.add(new RunHeader(code_));
         panel.add(new HelpPreview(fun_, package_));
         
         return panel;
