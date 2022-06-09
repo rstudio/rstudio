@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -52,7 +53,7 @@ public class VignetteHyperlink extends Hyperlink
     }
 
     @Override
-    public Widget getPopupContent() 
+    public void getPopupContent(CommandWithArg<Widget> onReady)
     {
         final VerticalPanel panel = new VerticalPanel();
         panel.add(new HyperlinkPopupHeader("Vignette: " + topic_, "{" + pkg_ + "}"));
@@ -81,10 +82,9 @@ public class VignetteHyperlink extends Hyperlink
                     notFound.addStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
                     panel.add(notFound);
                 }
+                onReady.execute(panel);
             }
         });
-        
-        return panel;
     }
 
     public static boolean handles(String url, Map<String, String> params)

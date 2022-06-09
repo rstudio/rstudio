@@ -19,6 +19,7 @@ import java.util.Map;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
@@ -51,13 +52,14 @@ public class HelpHyperlink extends Hyperlink
     }
 
     @Override
-    public Widget getPopupContent()
+    public void getPopupContent(CommandWithArg<Widget> onReady)
     {
         final VerticalPanel panel = new VerticalPanel();
         panel.add(new HyperlinkPopupHeader(topic_, "{" + pkg_ + "}"));
-        panel.add(new HelpPreview(topic_, pkg_));
-        
-        return panel;
+        panel.add(new HelpPreview(topic_, pkg_, () -> 
+        {
+            onReady.execute(panel);
+        }));
     }
 
     public String getAnchorClass()

@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Label;
@@ -22,13 +23,13 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
+import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo;
-import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 import org.rstudio.studio.client.workbench.views.help.model.HelpInfo.ParsedInfo;
 
 public class HelpPreview extends Composite
 {
-    public HelpPreview(String topic, String pkgName)
+    public HelpPreview(String topic, String pkgName, Command onReady)
     {
         super();
         
@@ -38,42 +39,61 @@ public class HelpPreview extends Composite
         panel_ = new VerticalPanel();
         
         initWidget(panel_);
-        
-        server_.getHelp(topic_, pkgName_, RCompletionType.FUNCTION, new SimpleRequestCallback<HelpInfo>()
+
+        server_.isPackageInstalled(pkgName_, null, new SimpleRequestCallback<Boolean>()
         {
             @Override
-            public void onResponseReceived(HelpInfo response)
+            public void onResponseReceived(Boolean installed)
             {
-                if (response != null)
+                if (installed)
                 {
-                    VerticalPanel previewPanel = new VerticalPanel();
-                    previewPanel.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreview());
-
-                    ParsedInfo parsed = response.parse(pkgName_ + "::" + topic_);
-                    Label title = new Label(parsed.getTitle());
-                    title.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreviewTitle());
-
-                    HTML description = new HTML(parsed.getDescription());
-                    description.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreviewDescription());
-                    
-                    previewPanel.add(title);
-                    previewPanel.add(description);
-                    panel_.add(previewPanel);
-                }
+                    server_.getHelp(topic_, pkgName_, RCompletionType.FUNCTION, new SimpleRequestCallback<HelpInfo>()
+                    {
+                        @Override
+                        public void onResponseReceived(HelpInfo response)
+                        {
+                            if (response != null)
+                            {
+                                VerticalPanel previewPanel = new VerticalPanel();
+                                previewPanel.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreview());
+            
+                                ParsedInfo parsed = response.parse(pkgName_ + "::" + topic_);
+                                Label title = new Label(parsed.getTitle());
+                                title.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreviewTitle());
+            
+                                HTML description = new HTML(parsed.getDescription());
+                                description.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreviewDescription());
+                                
+                                previewPanel.add(title);
+                                previewPanel.add(description);
+                                panel_.add(previewPanel);
+                            }
+                            else 
+                            {
+                                Label notFound = new Label("No documentation found");
+                                notFound.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().warning());
+                                panel_.add(notFound);
+                            }
+            
+                            onReady.execute();
+                        }            
+                    });
+                } 
                 else 
                 {
-                    Label notFound = new Label("No documentation found");
-                    notFound.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().warning());
-                    panel_.add(notFound);
+                    Label notInstalled = new Label("package " + pkgName + " is not installed");
+                    notInstalled.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().warning());
+                    panel_.add(notInstalled);
+                    onReady.execute();
                 }
-                
-            }            
+            }
         });
+        
     }
    
     private VerticalPanel panel_;
     
     private String topic_;
     private String pkgName_;
-    private HelpServerOperations server_;
+    private Server server_;
 }

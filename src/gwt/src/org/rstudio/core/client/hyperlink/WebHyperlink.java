@@ -19,6 +19,7 @@ import java.util.Map;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 
@@ -36,19 +37,11 @@ public class WebHyperlink extends Hyperlink {
     }
 
     @Override
-    public Widget getPopupContent() 
+    public void getPopupContent(CommandWithArg<Widget> onReady)
     {
         VerticalPanel panel = new VerticalPanel();
         panel.add(new HyperlinkPopupHeader(url));
-
-        /*
-            // TODO: maybe we can show a screenshot ?
-            //       perhaps using {webshot} ?
-            Frame frame = new Frame(url);
-            panel.add(frame);
-        */
-
-        return panel;
+        onReady.execute(panel);
     }
     
     public static boolean handles(String url)

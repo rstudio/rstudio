@@ -16,12 +16,9 @@ package org.rstudio.core.client.hyperlink;
 
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.user.client.ui.PopupPanel;
-import com.google.gwt.user.client.ui.Widget;
-import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 
 public interface HyperlinkPopupDisplay 
                     extends HasCloseHandlers<PopupPanel> 
 {
-    void show(Widget content, PositionCallback callback);
     void setPopupPosition(int x, int y);
 }

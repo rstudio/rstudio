@@ -16,10 +16,10 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -57,14 +57,15 @@ public class RunHyperlink extends Hyperlink
     }
 
     @Override
-    public Widget getPopupContent() 
+    public void getPopupContent(CommandWithArg<Widget> onReady)
     {
         final VerticalPanel panel = new VerticalPanel();
 
         panel.add(new HyperlinkPopupHeader(code_));
-        panel.add(new HelpPreview(fun_, package_));
-        
-        return panel;
+        panel.add(new HelpPreview(fun_, package_, () -> 
+        {
+            onReady.execute(panel);
+        }));
     }
 
     public static boolean handles(String url)

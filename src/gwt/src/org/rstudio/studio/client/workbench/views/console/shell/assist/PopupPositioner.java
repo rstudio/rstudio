@@ -44,7 +44,7 @@ public class PopupPositioner implements PositionCallback
             popupHeight,
             cursorBounds_.getLeft(),
             cursorBounds_.getBottom(),
-            5,
+            10,
             true);
       
       popup_.setPopupPosition(coords.getLeft(), coords.getTop());

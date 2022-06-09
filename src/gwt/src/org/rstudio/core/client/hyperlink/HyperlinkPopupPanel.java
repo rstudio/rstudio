@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.hyperlink;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -52,22 +51,15 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
                 hide();
             }
         });
+        
     }
 
-    @Override
-    public void show(Widget content, PositionCallback callback)
+    public void setContent(Widget content)
     {
         container_ = new VerticalPanel();
         container_.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().hyperlinkPopup());
-        
-        container_.add(content);
-        
         setWidget(container_);
-
-        if (callback != null)
-            setPopupPositionAndShow(callback);
-        else
-            show();
+        container_.add(content);
     }
 
     @Override
