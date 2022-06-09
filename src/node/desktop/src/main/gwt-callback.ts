@@ -508,18 +508,6 @@ export class GwtCallback extends EventEmitter {
       GwtCallback.unimpl('desktop_export_page_region_to_file');
     });
 
-    ipcMain.on('desktop_print_text', (event, text) => {
-      GwtCallback.unimpl('desktop_print_text');
-    });
-
-    ipcMain.on('desktop_paint_print_text', (event, printer) => {
-      GwtCallback.unimpl('desktop_paint_print_text');
-    });
-
-    ipcMain.on('desktop_print_finished', (event, result) => {
-      GwtCallback.unimpl('desktop_print_finished');
-    });
-
     ipcMain.handle('desktop_supports_clipboard_metafile', () => {
       return process.platform === 'win32';
     });

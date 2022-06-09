@@ -302,18 +302,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_export_page_region_to_file', targetPath, format, left, top, width, height);
     },
 
-    printText: (text: string) => {
-      ipcRenderer.send('desktop_print_text', text);
-    },
-
-    paintPrintText: (printer: string) => {
-      ipcRenderer.send('desktop_paint_print_text', printer);
-    },
-
-    printFinished: (result: number) => {
-      ipcRenderer.send('desktop_print_finished', result);
-    },
-
     supportsClipboardMetafile: (callback: VoidCallback<boolean>) => {
       ipcRenderer
         .invoke('desktop_supports_clipboard_metafile')
