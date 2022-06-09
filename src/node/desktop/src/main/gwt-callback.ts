@@ -489,10 +489,6 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_close_named_window', (event, name: string) => {
-      GwtCallback.unimpl('desktop_close_named_window');
-    });
-
     ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
       (_event, x: number, y: number, width: number, height: number) => {

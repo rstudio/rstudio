@@ -88,7 +88,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
                                   int height, Command onPrepared);
    void prepareForNamedWindow(String name, boolean allowExternalNavigation,
          boolean showDesktopToolbar, Command onPrepared);
-   void closeNamedWindow(String name);
    
    void copyPageRegionToClipboard(int left, int top, int width, int height,
                                   Command onCopied);
