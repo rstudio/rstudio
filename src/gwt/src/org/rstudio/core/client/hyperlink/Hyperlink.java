@@ -70,7 +70,7 @@ public abstract class Hyperlink
                 visible_ = false;
                 popup_.hide();
             }
-            else if (event.getTypeInt() == Event.ONCLICK && clickable()) 
+            else if (event.getTypeInt() == Event.ONCLICK) 
             {
                 visible_ = false;
                 popup_.hide();
@@ -86,10 +86,6 @@ public abstract class Hyperlink
         return styles_.hyperlink();
     }
 
-    public boolean clickable()
-    {
-        return true;
-    }
     public abstract void onClick();
     
     public abstract void getPopupContent(CommandWithArg<Widget> onReady);

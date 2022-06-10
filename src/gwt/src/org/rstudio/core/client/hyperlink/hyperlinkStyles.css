@@ -1,5 +1,8 @@
 @eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+@eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
+@eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
+@external rstudio-themes-dark-menus;
 
 .hyperlink {
     text-decoration: underline; 
@@ -12,18 +15,6 @@
     text-decoration-style: solid; 
 }
 
-.hyperlinkRun {
-    text-decoration: underline; 
-    text-decoration-style: dotted;
-    cursor: pointer;
-}
-
-.hyperlinkHelp {
-    text-decoration: underline; 
-    cursor: help; 
-    text-decoration-style: dotted;
-}
-
 .hyperlinkUnsupported { 
     text-decoration: underline; 
     text-decoration-style: dotted;
@@ -33,7 +24,6 @@
 .warning {
     font-size: smaller;
     font-style: italic;
-    color: red;
     padding: 5px;
 }
 
@@ -43,18 +33,18 @@
 
 .hyperlinkPopupHeader {
     width: 100%;
+    padding: 5px;
 }
 
 .hyperlinkPopupHeaderLeft {
     font-family: fixedWidthFont;
-    padding-left: 5px;
 }
 
 .hyperlinkPopupHeaderRight {
     font-family: fixedWidthFont;
     float: right;
-    padding-right: 5px;
     color: #ccc;
+    padding-left: 20px;
 }
 
 .hyperlinkPopupHeaderRun::before {
@@ -63,16 +53,36 @@
     margin-right: 0.5em;
 }
 
+.rstudio-themes-dark-menus .hyperlinkPopupHeaderRun::before {
+    color: #2bc52b;
+}
+
+.hyperlinkPopupHeaderHelp::before {
+    content: "?";
+    color: green;
+    margin-right: 0.5em;
+    font-weight: bolder;
+}
+
+.rstudio-themes-dark-menus .hyperlinkPopupHeaderHelp::before {
+    color: #2bc52b;
+}
+
 .helpPreview {
     color: #000023;
-    background-color: #ffffca;
+    background-color: THEME_DEFAULT_BACKGROUND;
     padding: 5px;
     border-top: 1px solid #ccc;
     z-index: 9001;
     
-    padding-top: 5px;
+    padding: 5px;
     margin-left: 0px;
     width: 100%;
+}
+
+.rstudio-themes-dark-menus .helpPreview {
+    background-color: THEME_DARKGREY_BACKGROUND;
+    color: white;
 }
  
 .helpPreviewTitle {

@@ -49,9 +49,9 @@ public class UnsupportedHyperlink extends Hyperlink
         {
             for (Map.Entry<String, String> param: params.entrySet())
             {
-                Label paramLabel = new Label(param.getKey() + ": " + param.getValue());
+                Label paramLabel = new Label();
                 paramLabel.setStyleName(styles_.warning());
-                panel.add(paramLabel);
+                panel.add(new WarningLabel(param.getKey() + ": " + param.getValue()));
             }
 
         }

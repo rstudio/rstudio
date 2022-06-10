@@ -1,5 +1,5 @@
 /*
- * RunHyperlinkPopupHeader.java
+ * WarningLabel.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -14,12 +14,17 @@
  */
 package org.rstudio.core.client.hyperlink;
 
-public class RunHyperlinkPopupHeader extends HyperlinkPopupHeader
-{
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Label;
 
-    public RunHyperlinkPopupHeader(String left) {
-        super(left);
-        topicLabel.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().hyperlinkPopupHeaderRun());
+public class WarningLabel extends Composite
+{
+    public WarningLabel(String text)
+    {
+        Label label = new Label(text);
+        label.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().warning());
+        label.addStyleName("ace_constant");
+
+        initWidget(label);
     }
-        
 }

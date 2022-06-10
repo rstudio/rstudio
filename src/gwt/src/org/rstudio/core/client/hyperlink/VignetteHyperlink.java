@@ -16,7 +16,6 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
-import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -26,7 +25,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.server.Server;
-import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 public class VignetteHyperlink extends Hyperlink 
 {
@@ -67,9 +65,7 @@ public class VignetteHyperlink extends Hyperlink
             {
                 if (!installed)
                 {
-                    Label notInstalled = new Label("Package not installed");
-                    notInstalled.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().warning());
-                    panel.add(notInstalled);
+                    panel.add(new WarningLabel("Package not installed"));
                     onReady.execute(panel);
                 }
                 else 
@@ -91,10 +87,7 @@ public class VignetteHyperlink extends Hyperlink
                             }
                             else 
                             {
-                                Label notFound = new Label("No vignette found");
-                                notFound.setStyleName(styles_.warning());
-                                notFound.addStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
-                                panel.add(notFound);
+                                panel.add(new WarningLabel("No vignette found"));
                             }
                             onReady.execute(panel);
                         }

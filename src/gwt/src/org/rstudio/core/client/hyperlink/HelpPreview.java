@@ -70,9 +70,7 @@ public class HelpPreview extends Composite
                             }
                             else 
                             {
-                                Label notFound = new Label("No documentation found");
-                                notFound.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().warning());
-                                panel_.add(notFound);
+                                panel_.add(new WarningLabel("No documentation found"));
                             }
             
                             onReady.execute();
@@ -81,9 +79,8 @@ public class HelpPreview extends Composite
                 } 
                 else 
                 {
-                    Label notInstalled = new Label("package " + pkgName + " is not installed");
-                    notInstalled.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().warning());
-                    panel_.add(notInstalled);
+                    panel_.add(new WarningLabel("Package is not installed"));
+
                     onReady.execute();
                 }
             }

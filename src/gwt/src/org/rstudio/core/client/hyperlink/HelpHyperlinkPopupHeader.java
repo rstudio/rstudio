@@ -1,5 +1,5 @@
 /*
- * RunHyperlinkPopupHeader.java
+ * HelpHyperlinkPopupHeader.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -14,12 +14,12 @@
  */
 package org.rstudio.core.client.hyperlink;
 
-public class RunHyperlinkPopupHeader extends HyperlinkPopupHeader
+public class HelpHyperlinkPopupHeader extends HyperlinkPopupHeader
 {
 
-    public RunHyperlinkPopupHeader(String left) {
-        super(left);
-        topicLabel.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().hyperlinkPopupHeaderRun());
+    public HelpHyperlinkPopupHeader(String left, String pkg) {
+        super(left, "{" + pkg + "}");
+        topicLabel.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().hyperlinkPopupHeaderHelp());
     }
         
 }

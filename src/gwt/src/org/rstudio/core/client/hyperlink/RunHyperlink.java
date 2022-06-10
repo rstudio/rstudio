@@ -72,12 +72,6 @@ public class RunHyperlink extends Hyperlink
     {
         return HYPERLINK_PATTERN.test(url);
     }
-    
-    @Override
-    public String getAnchorClass()
-    {
-        return styles_.hyperlinkRun();
-    }
 
     private String code_;    
     private String package_;
