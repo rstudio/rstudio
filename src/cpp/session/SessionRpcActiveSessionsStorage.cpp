@@ -38,12 +38,6 @@ RpcActiveSessionsStorage::RpcActiveSessionsStorage(const core::system::User& use
 {
 }
 
-core::Error RpcActiveSessionsStorage::initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties)
-{
-   RpcActiveSessionStorage sessionStorage(_user, id);
-   return sessionStorage.writeProperties(initialProperties);
-}
-
 std::vector<std::string> RpcActiveSessionsStorage::listSessionIds() const 
 {   
    std::vector<std::string> ids;

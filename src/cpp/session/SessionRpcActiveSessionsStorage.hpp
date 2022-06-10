@@ -30,7 +30,6 @@ class RpcActiveSessionsStorage : public core::r_util::IActiveSessionsStorage
 public:
    explicit RpcActiveSessionsStorage(const core::system::User& user);
 
-   core::Error initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties) override;
    std::vector<std::string> listSessionIds() const override;
    size_t getSessionCount() const  override;
    std::shared_ptr<core::r_util::IActiveSessionStorage> getSessionStorage(const std::string& id)  const override;

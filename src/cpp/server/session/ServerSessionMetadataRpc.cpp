@@ -60,20 +60,20 @@ inline FilePath userDataDir(const system::User& user)
    return system::xdg::userDataDir(user.getUsername(), user.getHomePath());
 }
 
-inline std::unique_ptr<r_util::ActiveSessions> getActiveSessions(const system::User& user)
+inline std::shared_ptr<r_util::IActiveSessionsStorage> getActiveSessionsStorage(const FilePath& storageDir, const system::User& user)
 {
    if (options().sessionUseFileStorage())
-   {
-      FilePath storageDir = userDataDir(user);
-      return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(
-         std::shared_ptr<r_util::IActiveSessionsStorage>(new FileActiveSessionsStorage(storageDir)),
-         storageDir));
-   }
+      return std::shared_ptr<r_util::IActiveSessionsStorage>(new FileActiveSessionsStorage(storageDir));
    else
-      return std::unique_ptr<r_util::ActiveSessions>(
-         new r_util::ActiveSessions(
-            std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::DBActiveSessionsStorage(user)),
-            userDataDir(user)));
+      return std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::DBActiveSessionsStorage(user));
+}
+
+inline std::unique_ptr<r_util::ActiveSessions> getActiveSessions(const system::User& user)
+{
+   FilePath storageDir = userDataDir(user);
+   return std::unique_ptr<r_util::ActiveSessions>(new r_util::ActiveSessions(
+      getActiveSessionsStorage(storageDir, user),
+      storageDir));
 }
 
 inline boost::shared_ptr<r_util::ActiveSession> getActiveSession(const system::User& user, const std::string& sessionId)
@@ -158,7 +158,14 @@ Error handleDelete(
 Error handleCount(const system::User& user, const boost::optional<std::string>& sessionId, size_t* pCount)
 {
    if (sessionId)
-      *pCount = getActiveSession(user, sessionId.get())->empty() ? 0 : 1;
+   {
+      bool hasId = true;
+      Error error = getActiveSessionsStorage(userDataDir(user), user)->hasSessionId(sessionId.get(), &hasId);
+      if (error)
+         return error;
+
+      *pCount = hasId ? 1 : 0;
+   }
    else
    {
       *pCount = getActiveSessions(user)->count(

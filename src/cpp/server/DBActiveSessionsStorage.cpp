@@ -33,12 +33,6 @@ DBActiveSessionsStorage::DBActiveSessionsStorage(const system::User& user)
 {
 }
 
-core::Error DBActiveSessionsStorage::initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties)
-{
-   DBActiveSessionStorage storage(id, user_);
-   return storage.writeProperties(initialProperties);
-}
-
 std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
 {
    boost::shared_ptr<database::IConnection> connection;
@@ -100,19 +94,7 @@ size_t DBActiveSessionsStorage::getSessionCount() const
 
 std::shared_ptr<IActiveSessionStorage> DBActiveSessionsStorage::getSessionStorage(const std::string& id) const
 {
-   bool hasId = false;
-   Error error = hasSessionId(id, &hasId);
-   if (error)
-      LOG_ERROR(error);
-
-   if (!error && hasId)
-   {
-      return std::make_shared<DBActiveSessionStorage>(id, user_);
-   }
-   else
-   {
-      return std::shared_ptr<IActiveSessionStorage>();
-   }
+   return std::make_shared<DBActiveSessionStorage>(id, user_);
 }
 
 Error DBActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool* pHasSessionId) const

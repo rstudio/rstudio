@@ -50,18 +50,6 @@ Error FileActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool
    return Success();
 }
 
-core::Error FileActiveSessionsStorage::initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties)
-{
-   FilePath sessionScratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
-   Error error = sessionScratchPath.ensureDirectory();
-
-   if(error)
-      return error;
-
-   FileActiveSessionStorage session = FileActiveSessionStorage{sessionScratchPath};
-   return session.writeProperties(initialProperties);
-}
-
 std::vector<std::string> FileActiveSessionsStorage::listSessionIds() const
 {
    // list to return
@@ -99,10 +87,7 @@ size_t FileActiveSessionsStorage::getSessionCount() const
 std::shared_ptr<IActiveSessionStorage> FileActiveSessionsStorage::getSessionStorage(const std::string& id) const
 {
    FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
-   if (scratchPath.exists())
-      return std::make_shared<FileActiveSessionStorage>(scratchPath);
-   else
-      return std::shared_ptr<IActiveSessionStorage>();
+   return std::make_shared<FileActiveSessionStorage>(scratchPath);
 }
 
 } // namespace r_util
