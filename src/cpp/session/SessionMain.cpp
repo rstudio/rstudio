@@ -1286,9 +1286,16 @@ void rCleanup(bool terminatedNormally)
       // destroy session if requested
       if (s_destroySession)
       {
-         Error error = module_context::activeSession().destroy();
-         if (error)
-            LOG_ERROR(error);
+         // If the launcher is enabled, keeping the activeSession around until the job shows an exit status
+         // at which point it will be removed by rworkspaces
+         if (options().getBoolOverlayOption(kLauncherSessionOption))
+            module_context::activeSession().setActivityState(r_util::kActivityStateDestroyPending, true);
+         else
+         {
+            Error error = module_context::activeSession().destroy();
+            if (error)
+               LOG_ERROR(error);
+         }
 
          // fire destroy event to modules
          module_context::events().onDestroyed();

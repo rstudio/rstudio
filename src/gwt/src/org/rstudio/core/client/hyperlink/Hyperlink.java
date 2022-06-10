@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 
 public abstract class Hyperlink
@@ -50,16 +51,28 @@ public abstract class Hyperlink
         Event.setEventListener(anchor_, event ->
         {
             if (event.getTypeInt() == Event.ONMOUSEOVER)
-            {
-                Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
-                popup_.show(getPopupContent(), new HyperlinkPopupPositioner(bounds, popup_));
+            {   
+                visible_ = true;
+                getPopupContent((content) -> {
+                    if (visible_)
+                    {
+                        popup_.setContent(content);
+
+                        Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
+                        HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
+                        popup_.setPopupPositionAndShow(positioner);
+                    }
+                    
+                });
             } 
             else if (event.getTypeInt() == Event.ONMOUSEOUT)
             {
+                visible_ = false;
                 popup_.hide();
             }
             else if (event.getTypeInt() == Event.ONCLICK && clickable()) 
             {
+                visible_ = false;
                 popup_.hide();
                 onClick();
             }
@@ -70,7 +83,7 @@ public abstract class Hyperlink
 
     public String getAnchorClass()
     {
-        return styles_.xtermHyperlink();
+        return styles_.hyperlink();
     }
 
     public boolean clickable()
@@ -78,8 +91,9 @@ public abstract class Hyperlink
         return true;
     }
     public abstract void onClick();
-    public abstract Widget getPopupContent();
     
+    public abstract void getPopupContent(CommandWithArg<Widget> onReady);
+
     public static Hyperlink create(String url, String paramsTxt, String text, String clazz)
     {
         // [params] of the form key1=value1:key2=value2
@@ -124,11 +138,11 @@ public abstract class Hyperlink
     public String text;
     public String clazz;
     public Map<String, String> params;
-    
+    private boolean visible_;
     protected AnchorElement anchor_;
-
+    
     protected final HyperlinkResources.HyperlinkStyles styles_;
     private final HyperlinkPopupPanel popup_;
-
+    
     private static HyperlinkResources RES = HyperlinkResources.INSTANCE;
 }

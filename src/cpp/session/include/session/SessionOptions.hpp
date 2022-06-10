@@ -291,7 +291,7 @@ private:
    void resolveRsclangPath(const core::FilePath& resourcePath, std::string* pPath);
 
    void resolveOverlayOptions();
-   bool allowOverlay() const;
+   bool allowOverlay() const override;
 };
   
 } // namespace session

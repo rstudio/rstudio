@@ -443,6 +443,54 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    FilePath reposFile(rCRANReposFile());
    rCRANMultipleRepos_ = parseReposConfig(reposFile);
 
+   // if the allow overlay is enabled, emit warnings for any overlay option it masks
+   if (allowOverlay())
+   {
+      // it'd be nicer to iterate over the `allow` options_description object, but the
+      // variable-to-value mapping is not accessible here since it's only available
+      // during the parse phase
+      std::vector<std::string> violations;
+      if (!allowVcsExecutableEdit_)
+         violations.push_back("allow-vcs-executable-edit");
+      if (!allowCRANReposEdit_)
+         violations.push_back("allow-r-cran-repos-edit");
+      if (!allowVcs_)
+         violations.push_back("allow-vcs");
+      if (!allowPackageInstallation_)
+         violations.push_back("allow-package-installation");
+      if (!allowShell_)
+         violations.push_back("allow-shell");
+      if (!allowTerminalWebsockets_)
+         violations.push_back("allow-terminal-websockets");
+      if (!allowFileDownloads_)
+         violations.push_back("allow-file-downloads");
+      if (!allowFileUploads_)
+         violations.push_back("allow-file-uploads");
+      if (!allowRemovePublicFolder_)
+         violations.push_back("allow-remove-public-folder");
+      if (!allowRpubsPublish_)
+         violations.push_back("allow-rpubs-publish");
+      if (!allowExternalPublish_)
+         violations.push_back("allow-external-publish");
+      if (!allowFullUI_)
+         violations.push_back("allow-full-ui");
+      if (!allowLauncherJobs_)
+         violations.push_back("allow-launcher-jobs");
+
+      if (violations.size() == 1)
+      {
+         LOG_WARNING_MESSAGE("The option '" +
+                             violations[0] +
+                             "' was set, but it is not supported in this edition of RStudio and will be ignored");
+      }
+      else if (violations.size() > 1)
+      {
+         LOG_WARNING_MESSAGE("The following options were set, but are not supported in this edition of RStudio "
+                             "and will be ignored: " +
+                             boost::algorithm::join(violations, ", "));
+      }
+   }
+
    // return status
    return status;
 }

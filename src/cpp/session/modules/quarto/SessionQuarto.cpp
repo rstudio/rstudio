@@ -208,25 +208,33 @@ void detectQuartoInstallation()
    s_quartoVersion = std::get<1>(userInstalled);
    bool prepend = std::get<2>(userInstalled);
 
+   std::string sysPath = core::system::getenv("PATH");
+   r::exec::RFunction sysSetenv("Sys.setenv");
+
    // always use user installed if it's there but subject to version check
    if (!s_userInstalledPath.isEmpty())
    {
-      if (std::get<1>(userInstalled) >= kQuartoRecommendedVersion)
+      if (s_quartoVersion >= kQuartoRecommendedVersion)
       {
-         s_quartoPath = std::get<0>(userInstalled);
-         s_quartoVersion = std::get<1>(userInstalled);
-         // prepend to path if RSTUDIO_QUARTO is defined
-         if (prepend)
+         s_quartoPath = s_userInstalledPath;
+         const std::string quartoPath = string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath());
+
+         if (sysPath.find(quartoPath) != std::string::npos)
+            return;
+
+         // prepend to path only if RSTUDIO_QUARTO is defined
+         core::system::addToPath(&sysPath, quartoPath, prepend);
+         sysSetenv.addParam("PATH", sysPath);
+         Error error = sysSetenv.call();
+         if (error)
          {
-            core::system::addToPath(
-               string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath()),
-               true
-            );
+            LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
+            LOG_ERROR(error);
          }
       }
       else
       {
-         showQuartoVersionWarning(std::get<1>(userInstalled), kQuartoRecommendedVersion);
+         showQuartoVersionWarning(s_quartoVersion, kQuartoRecommendedVersion);
       }
       return;
    }
@@ -245,11 +253,20 @@ void detectQuartoInstallation()
    {
       s_quartoPath = embeddedQuartoPath;
       s_quartoVersion = embeddedVersion;
+      const std::string quartoPath = string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath());
+
+      if (sysPath.find(quartoPath) != std::string::npos)
+         return;
+
       // append to path
-      core::system::addToPath(
-         string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath()),
-         false
-      );
+      core::system::addToPath(&sysPath, quartoPath, false);
+      sysSetenv.addParam("PATH", sysPath);
+      Error error = sysSetenv.call();
+      if (error)
+      {
+         LOG_DEBUG_MESSAGE("Error setting PATH: " + sysPath);
+         LOG_ERROR(error);
+      }
    }
    else
    {

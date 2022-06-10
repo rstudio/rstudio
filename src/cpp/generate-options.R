@@ -317,6 +317,8 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
             # handle any implicit conversions that we should support
             if (identical(type, "core::FilePath")) {
                accessorCode <- sprintf("return core::FilePath(%s);", memberName)
+            } else if (identical(category, "allow")) {
+               accessorCode <- sprintf("return %s || allowOverlay();", memberName)
             } else {
                accessorCode <- sprintf("return %s;", memberName)
             }
@@ -516,6 +518,7 @@ generateProgramOptions <- function (optionsJson, overlayOptionsJson) {
    classContents <- paste(classContents, buildOptions, sep="\n\n")
    classContents <- paste(classContents, accessors, sep="\n\n")
    classContents <- paste(classContents, members, sep="\n\n")
+   classContents <- paste(classContents, "  virtual bool allowOverlay() const { return false; };\n")
    
    # finally, close out the class
    classContents <- paste0(classContents, "};")

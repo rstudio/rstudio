@@ -992,7 +992,7 @@ void startup(const std::string& firstProjectPath)
       core::r_util::ProjectId projectId = session::projectToProjectId(
                options().userScratchPath(),
                FilePath(options().getOverlayOption(kSessionSharedStoragePath)),
-               session.project());
+               module_context::createAliasedPath(projectFilePath.getParent()));
       s_projectId = projectId;
 
 #ifndef _WIN32

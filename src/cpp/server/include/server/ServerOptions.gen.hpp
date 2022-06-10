@@ -334,6 +334,7 @@ protected:
    std::string authRevocationListDir_;
    bool authCookiesForceSecure_;
    int monitorIntervalSeconds_;
+   virtual bool allowOverlay() const { return false; };
 };
 
 } // namespace server

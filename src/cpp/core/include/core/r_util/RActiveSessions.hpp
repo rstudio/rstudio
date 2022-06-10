@@ -449,7 +449,6 @@ public:
       setLastUsed();
       setRunning(true);
       setRVersion(rVersion, rVersionHome, rVersionLabel);
-      setActivityState(kActivityStateRunning, true);
    }
 
    void endSession()

@@ -654,11 +654,6 @@ QString GwtCallback::chooseRVersion()
 #endif
 }
 
-double GwtCallback::devicePixelRatio()
-{
-   return desktop::devicePixelRatio(pMainWindow_);
-}
-
 void GwtCallback::openMinimalWindow(QString name,
                                     QString url,
                                     int width,
@@ -732,16 +727,6 @@ void GwtCallback::prepareForNamedWindow(QString name,
 {
    pOwner_->webPage()->prepareForWindow(
                 PendingWindow(name, allowExternalNavigate, showDesktopToolbar));
-}
-
-void GwtCallback::closeNamedWindow(QString name)
-{
-   // close the requested window
-   pOwner_->webPage()->closeWindow(name);
-
-   // bring the main window to the front (so we don't lose RStudio context
-   // entirely)
-   desktop::raiseAndActivateWindow(pMainWindow_);
 }
 
 void GwtCallback::activateSatelliteWindow(QString name)

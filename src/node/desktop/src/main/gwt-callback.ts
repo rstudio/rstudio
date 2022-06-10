@@ -418,11 +418,6 @@ export class GwtCallback extends EventEmitter {
       return formatSelectedVersionForUi(rBinDir);
     });
 
-    ipcMain.handle('desktop_device_pixel_ratio', () => {
-      GwtCallback.unimpl('desktop_device_pixel_ratio');
-      return 1.0;
-    });
-
     ipcMain.on(
       'desktop_open_minimal_window',
       (event: IpcMainEvent, name: string, url: string, width: number, height: number) => {
@@ -494,10 +489,6 @@ export class GwtCallback extends EventEmitter {
       },
     );
 
-    ipcMain.on('desktop_close_named_window', (event, name: string) => {
-      GwtCallback.unimpl('desktop_close_named_window');
-    });
-
     ipcMain.handle(
       'desktop_copy_page_region_to_clipboard',
       (_event, x: number, y: number, width: number, height: number) => {
@@ -515,18 +506,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_export_page_region_to_file', (event, targetPath, format, left, top, width, height) => {
       GwtCallback.unimpl('desktop_export_page_region_to_file');
-    });
-
-    ipcMain.on('desktop_print_text', (event, text) => {
-      GwtCallback.unimpl('desktop_print_text');
-    });
-
-    ipcMain.on('desktop_paint_print_text', (event, printer) => {
-      GwtCallback.unimpl('desktop_paint_print_text');
-    });
-
-    ipcMain.on('desktop_print_finished', (event, result) => {
-      GwtCallback.unimpl('desktop_print_finished');
     });
 
     ipcMain.handle('desktop_supports_clipboard_metafile', () => {
@@ -564,11 +543,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_set_desktop_rendering_engine', (event, engine) => {
       ElectronDesktopOptions().setRenderingEngine(engine);
-    });
-
-    ipcMain.handle('desktop_filter_text', (event, text: string) => {
-      GwtCallback.unimpl('desktop_filter_text');
-      return text;
     });
 
     ipcMain.on('desktop_clean_clipboard', (event, stripHtml) => {
@@ -650,11 +624,6 @@ export class GwtCallback extends EventEmitter {
       if (font !== undefined) {
         ElectronDesktopOptions().setFixedWidthFont(font);
       }
-    });
-
-    ipcMain.handle('desktop_get_zoom_levels', () => {
-      GwtCallback.unimpl('desktop_get_zoom_levels');
-      return '';
     });
 
     ipcMain.on('desktop_get_zoom_level', (event) => {
@@ -793,11 +762,6 @@ export class GwtCallback extends EventEmitter {
 
     ipcMain.on('desktop_set_shiny_dialog_url', (event, url) => {
       GwtCallback.unimpl('desktop_set_shiny_dialog_url');
-    });
-
-    ipcMain.handle('desktop_get_scrolling_compensation_type', () => {
-      GwtCallback.unimpl('desktop_get_scrolling_compensation_type');
-      return '';
     });
 
     ipcMain.handle('desktop_is_macos', () => {

@@ -1,7 +1,5 @@
-package org.rstudio.core.client.hyperlink;
-
 /*
- * HelpHeader.java
+ * HyperlinkPopupHeader.java
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -14,26 +12,37 @@ package org.rstudio.core.client.hyperlink;
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.core.client.hyperlink;
+
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 
-public class HelpHeader extends Composite
+public class HyperlinkPopupHeader extends Composite
 {
-    public HelpHeader(String topic, String pkgName)
+    public HyperlinkPopupHeader(String left)
+    {
+        this(left, "");
+    }
+
+    public HyperlinkPopupHeader(String left, String right)
     {
         HyperlinkResources.HyperlinkStyles styles = HyperlinkResources.INSTANCE.hyperlinkStyles();
 
         HorizontalPanel titlePanel = new HorizontalPanel();
-        titlePanel.setStyleName(styles.helpTitlePanel());
-        Label topicLabel = new Label(topic);
-        topicLabel.setStyleName(styles.helpTitlePanelTopic());
+        titlePanel.setStyleName(styles.hyperlinkPopupHeader());
+
+        Label topicLabel = new Label(left);
+        topicLabel.setStyleName(styles.hyperlinkPopupHeaderLeft());
         titlePanel.add(topicLabel);
 
-        Label pkgLabel = new Label("{" + pkgName + "}");
-        pkgLabel.setStyleName(styles.helpTitlePanelPackage());
-        titlePanel.add(pkgLabel);
-
+        if (right.length() > 0)
+        {
+            Label pkgLabel = new Label(right);
+            pkgLabel.setStyleName(styles.hyperlinkPopupHeaderRight());
+            titlePanel.add(pkgLabel);
+        }
+        
         initWidget(titlePanel);
     }
 }
