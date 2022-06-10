@@ -13,11 +13,13 @@
  *
  */
 
-#include <core/r_util/RActiveSessionStorage.hpp>
-#include <core/FileSerializer.hpp>
-#include <core/Log.hpp>
-#include <core/system/Xdg.hpp>
 #include <boost/current_function.hpp>
+
+#include <core/Log.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionStorage.hpp>
+#include <core/system/Xdg.hpp>
 
 namespace rstudio {
 namespace core {
@@ -177,6 +179,210 @@ FilePath FileActiveSessionStorage::getPropertyFile(const std::string& name) cons
    FilePath propertiesDir = getPropertyDir();
    const std::string& fileName = getPropertyFileName(name);
    return propertiesDir.completeChildPath(fileName);
+}
+
+
+RpcActiveSessionStorage::RpcActiveSessionStorage(const system::User& user, const std::string& sessionId, const InvokeRpc& invokeRpcFunc) :
+   user_(user),
+   id_(std::move(sessionId)),
+   invokeRpcFunc_(invokeRpcFunc)
+{
+}
+
+Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
+{
+   LOG_DEBUG_MESSAGE("Reading property " + name + " from server for session " + id_);
+
+   json::Array fields;
+   fields.push_back(name);
+   
+   json::Object body;
+   body[kSessionStorageUserIdField] = user_.getUserId();
+   body[kSessionStorageIdField] = id_;
+   body[kSessionStorageFieldsField] = fields;
+   body[kSessionStorageOperationField] = kSessionStorageReadOp;
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::JsonRpcResponse response;
+   Error error = invokeRpcFunc_(request, &response);
+   if (error)
+      return error;
+
+   if (!response.result().isObject())
+   {
+      error = Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unexpected type for result field in response when reading fields for session " + id_ + " owned by user " + user_.getUsername());
+      error.addProperty("response", response.result().write());
+
+      LOG_ERROR(error);
+   if (error)
+      return error;
+
+   // No need to wait for the response here.
+   return Success();
+      return error;
+   }
+
+
+   return json::readObject(response.result().getObject(), name, *pValue);
+}
+
+Error RpcActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
+{   
+   if (!names.empty())
+      LOG_DEBUG_MESSAGE("Reading properties { " + boost::join(names, ", ") + " } from server for session " + id_);
+      
+   json::Object body;
+   body[kSessionStorageUserIdField] = user_.getUserId();
+   body[kSessionStorageIdField] = id_;
+   body[kSessionStorageFieldsField] = json::toJsonArray(names);
+   body[kSessionStorageOperationField] = kSessionStorageReadOp;
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::JsonRpcResponse response;
+   Error error = invokeRpcFunc_(request, &response);
+   if (error)
+      return error;
+
+   json::Object resultObj;
+   if (!response.result().isObject())
+   {
+      error = Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unexpected type for result field in response when reading fields for session " + id_ + " owned by user " + user_.getUsername());
+      error.addProperty("response", response.result().write());
+
+      LOG_ERROR(error);
+      return error;
+   }
+
+   resultObj = response.result().getObject();
+
+   for (const auto& name: names)
+   {
+      std::string value;
+      error = json::readObject(resultObj, name, value);
+      if (error)
+         LOG_ERROR(error);
+      else
+         (*pValues)[name] = value;
+   }
+
+   if (names.empty())
+   {
+      if (!response.result().isObject())
+      {
+         error = Error(json::errc::ParseError, ERROR_LOCATION);
+         error.addProperty(
+            "description",
+            "Unable to parse the response from the server when reading the fields for session " + id_ + " owned by user " + user_.getUsername());
+         error.addProperty("response", response.result().write());
+
+         if (!names.empty())
+            error.addProperty("fields", boost::algorithm::join(names, ", "));
+
+         LOG_ERROR(error);
+         return error;
+      }
+
+      json::Object resultObj = response.result().getObject();
+      for (auto itr = resultObj.begin(); itr != resultObj.end(); ++itr)
+         if ((*itr).getValue().isString())
+            (*pValues)[(*itr).getName()] = (*itr).getValue().getString();
+   }
+
+   return Success();
+}
+
+Error RpcActiveSessionStorage::readProperties(std::map<std::string, std::string>* pValues)
+{
+   LOG_DEBUG_MESSAGE("Reading properties all properties from server for session " + id_);
+   return readProperties({}, pValues);
+}
+
+Error RpcActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)
+{
+   LOG_DEBUG_MESSAGE("Writing property " + name + " with value " + value + " from server for session " + id_);
+   json::Object fields;
+   fields[name] = value;
+
+   json::Object body;
+   body[kSessionStorageUserIdField] = user_.getUserId();
+   body[kSessionStorageIdField] = id_;
+   body[kSessionStorageFieldsField] = fields;
+   body[kSessionStorageOperationField] = kSessionStorageWriteOp;
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::JsonRpcResponse response;
+   return invokeRpcFunc_(request, &response);
+}
+
+Error RpcActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
+{
+   std::string strProps;
+   #undef DEBUG
+   if (log::isLogLevel(log::LogLevel::DEBUG))
+   {
+      for (auto itr = properties.begin(); itr != properties.end(); ++itr)
+      {
+         if (!strProps.empty())
+            strProps.append(", ");
+
+         strProps.append(itr->first)
+            .append(" = ")
+            .append(itr->second);
+      }
+   }
+
+   LOG_DEBUG_MESSAGE("Writing properties { " + strProps + " } from server for session " + id_);
+   json::Object body;
+   body[kSessionStorageUserIdField] = user_.getUserId();
+   body[kSessionStorageIdField] = id_;
+   body[kSessionStorageFieldsField] = json::toJsonValue(properties);
+   body[kSessionStorageOperationField] = kSessionStorageWriteOp;
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::JsonRpcResponse response;
+   return invokeRpcFunc_(request, &response);
+}
+
+Error RpcActiveSessionStorage::destroy()
+{
+   json::Object body;
+   body[kSessionStorageUserIdField] = user_.getUserId();
+   body[kSessionStorageIdField] = id_;
+   body[kSessionStorageOperationField] = kSessionStorageDeleteOp;
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::JsonRpcResponse response;
+   return invokeRpcFunc_(request, &response);
+}
+
+Error RpcActiveSessionStorage::isValid(bool* pValue)
+{
+   LOG_DEBUG_MESSAGE("Checking whether session is valid for id: " + id_);
+   // TODO: actual validation
+   // We're within the session, so it must be valid.
+   *pValue = true;
+   return Success();
 }
 
 } // namespace r_util

@@ -109,6 +109,7 @@ file(GLOB_RECURSE SESSION_HEADER_FILES "*.h*")
 
 # source files
 set(SESSION_SOURCE_FILES
+   SessionActiveSessionsStorage.cpp
    SessionAsyncRProcess.cpp
    SessionAsyncDownloadFile.cpp
    SessionClientEvent.cpp
@@ -139,8 +140,6 @@ set(SESSION_SOURCE_FILES
    SessionPerFilePathStorage.cpp
    SessionPersistentState.cpp
    SessionPostback.cpp
-   SessionRpcActiveSessionStorage.cpp
-   SessionRpcActiveSessionsStorage.cpp
    SessionServerRpc.cpp
    SessionServerRpcOverlay.cpp
    SessionSSH.cpp

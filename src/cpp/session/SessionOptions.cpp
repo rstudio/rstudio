@@ -35,17 +35,17 @@
 #include <core/r_util/RUserData.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 #include <core/r_util/RVersionsPosix.hpp>
 
 #include <monitor/MonitorConstants.hpp>
 
 #include <r/session/RSession.hpp>
 
+#include <session/SessionActiveSessionsStorage.hpp>
 #include <session/SessionConstants.hpp>
 #include <session/SessionScopes.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
-
-#include "SessionRpcActiveSessionsStorage.hpp"
 
 #include "session-config.h"
 
@@ -355,19 +355,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    if (!scope.empty())
    {
       std::shared_ptr<r_util::IActiveSessionsStorage> storage;
-      if (sessionUseFileStorage())
-         storage = std::shared_ptr<r_util::IActiveSessionsStorage>(new r_util::FileActiveSessionsStorage(userScratchPath()));
-      else
+      Error error = storage::activeSessionsStorage(&storage);
+      if (error)
       {
-         system::User user;
-         error = system::User::getCurrentUser(user);
-         if (error)
-         {
-            LOG_ERROR(error);
-            return ProgramStatus::exitFailure();
-         }
-
-         storage = std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::RpcActiveSessionsStorage(user));
+         LOG_ERROR(error);
+         return ProgramStatus::exitFailure();
       }
 
       scopeState_ = r_util::validateSessionScope(

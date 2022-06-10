@@ -16,13 +16,15 @@
 #ifndef CORE_R_UTIL_R_ACTIVE_SESSIONS_STORAGE
 #define CORE_R_UTIL_R_ACTIVE_SESSIONS_STORAGE
 
+#include <core/json/JsonRpc.hpp>
+#include <core/r_util/RActiveSessionStorage.hpp>
 #include <core/r_util/RActiveSessions.hpp>
+
 #include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {
 namespace r_util {
-
    class ActiveSession;
 
    class IActiveSessionsStorage
@@ -50,6 +52,21 @@ namespace r_util {
       
    private:
       FilePath storagePath_;
+   };
+
+   class RpcActiveSessionsStorage : public core::r_util::IActiveSessionsStorage
+   {
+   public:
+      explicit RpcActiveSessionsStorage(const core::system::User& user, InvokeRpc invokeRpcFunc);
+
+      std::vector<std::string> listSessionIds() const override;
+      size_t getSessionCount() const  override;
+      std::shared_ptr<core::r_util::IActiveSessionStorage> getSessionStorage(const std::string& id)  const override;
+      core::Error hasSessionId(const std::string& sessionId, bool* pHasSessionId)  const override;
+
+   private:
+      const core::system::User user_;
+      const InvokeRpc invokeRpcFunc_;
    };
 
    constexpr const char* kSessionDirPrefix = "session-";

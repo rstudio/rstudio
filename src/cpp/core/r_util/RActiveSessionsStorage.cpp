@@ -90,6 +90,143 @@ std::shared_ptr<IActiveSessionStorage> FileActiveSessionsStorage::getSessionStor
    return std::make_shared<FileActiveSessionStorage>(scratchPath);
 }
 
+
+RpcActiveSessionsStorage::RpcActiveSessionsStorage(const core::system::User& user, InvokeRpc invokeRpcFunc) :
+   user_(user),
+   invokeRpcFunc_(std::move(invokeRpcFunc))
+{
+}
+
+std::vector<std::string> RpcActiveSessionsStorage::listSessionIds() const 
+{   
+   std::vector<std::string> ids;
+
+   json::Array fields;
+   fields.push_back(ActiveSession::kCreated);
+
+   json::Object body;
+   body[kSessionStorageUserIdField] = user_.getUserId();
+   // We only really want the ID here, but an empty list will get all fields. Just ask for a single field instead.
+   body[kSessionStorageFieldsField] = fields;
+   body[kSessionStorageOperationField] = kSessionStroageReadAllOp;
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+   
+   json::JsonRpcResponse response;
+   Error error = invokeRpcFunc_(request, &response);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return ids;
+   }
+
+   json::Array sessionsArr;
+   if (!response.result().isObject())
+   {
+      LOG_ERROR_MESSAGE("Unexpected response from the server when listing all sessions owned by user " + user_.getUsername() + ": " + response.result().write());
+      return ids;
+   }
+
+   error = json::readObject(response.result().getObject(), kSessionStorageSessionsField, sessionsArr);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return ids;
+   }
+
+   for (json::Array::Iterator itr = sessionsArr.begin(); itr != sessionsArr.end(); ++itr)
+   {
+      std::string id;
+      error = json::readObject((*itr).getObject(), kSessionStorageIdField, id);
+      if (error)
+         LOG_ERROR(error);
+      else
+         ids.push_back(id);
+   }
+
+   return ids;
+}
+
+size_t RpcActiveSessionsStorage::getSessionCount() const 
+{
+   json::Object body;
+   body[kSessionStorageUserIdField] = user_.getUserId();
+   body[kSessionStorageOperationField] = kSessionStorageCountOp;
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::JsonRpcResponse response;
+   Error error = invokeRpcFunc_(request, &response);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return 0;
+   }
+
+   if (!response.result().isObject())
+   {
+      LOG_ERROR_MESSAGE("Unexpected response from the server when listing all sessions owned by user " + user_.getUsername() + ": " + response.result().write());
+      return 0;
+   }
+
+   size_t count = 0;
+   error = json::readObject(response.result().getObject(), kSessionStorageCountField, count);
+
+   if (error)
+      LOG_ERROR(error);
+   
+   return count;
+}
+
+std::shared_ptr<core::r_util::IActiveSessionStorage> RpcActiveSessionsStorage::getSessionStorage(const std::string& id) const 
+{
+   return std::shared_ptr<core::r_util::IActiveSessionStorage>(new RpcActiveSessionStorage(user_, id, invokeRpcFunc_));
+}
+
+Error RpcActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool* pHasSessionId) const 
+{   
+   LOG_DEBUG_MESSAGE("Checking whether session id " + sessionId + " is in use.");
+   json::Object body;
+   body[kSessionStorageUserIdField] = user_.getUserId();
+   body[kSessionStorageIdField] = sessionId;
+   body[kSessionStorageOperationField] = kSessionStorageCountOp; 
+
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
+
+   json::JsonRpcResponse response;
+   Error error = invokeRpcFunc_(request, &response);
+   if (error)
+      return error;
+
+   if (!response.result().isObject())
+   {
+      error = Error(json::errc::ParseError, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unexpected to JSON value in the response from the server when checking whether session with id " + sessionId + " is empty.");
+      error.addProperty("response", response.result().write());
+
+      LOG_ERROR(error);
+      return error;
+   }
+
+   int count = 0;
+   error = json::readObject(response.result().getObject(), kSessionStorageCountField, count);
+   if (error)
+      return error;
+
+   *pHasSessionId = count == 0;
+
+   return error;
+}
+
+
 } // namespace r_util
 } // namsepace core
 } // namespace rstudio

@@ -107,6 +107,26 @@ void rpcWorkerThreadFunc()
 
 } // anonymous namespace
 
+Error invokeServerRpc(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
+{
+   json::Value result;
+   Error error = invokeServerRpc(request.method, request.toJsonObject(), &result);
+   if (error)
+      return error;
+
+   bool success = json::JsonRpcResponse::parse(result, pResponse);
+   if (!success)
+   {
+      error = Error(json::errc::ParseError, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unable to parse the response for RPC request: " + request.toJsonObject().write());
+      error.addProperty("response", result.write());
+   }
+
+   return error;
+}
+
 Error invokeServerRpc(const std::string& endpoint,
                       const json::Object& request,
                       json::Value* pResult)

@@ -63,6 +63,7 @@
 #include <r/session/RSession.hpp>
 #include <r/session/RConsoleActions.hpp>
 
+#include <session/SessionActiveSessionsStorage.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionClientEvent.hpp>
@@ -85,7 +86,6 @@
 
 #include <shared_core/system/User.hpp>
 
-#include "SessionRpcActiveSessionsStorage.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionReticulate.hpp"
@@ -1919,26 +1919,20 @@ r_util::ActiveSessions& activeSessions()
    static boost::shared_ptr<r_util::ActiveSessions> pSessions;
    if (!pSessions)
    {
-      if (options().sessionUseFileStorage())
-      {
-         FilePath storageDir = userScratchPath();
-         pSessions.reset(new r_util::ActiveSessions(
-            std::shared_ptr<r_util::IActiveSessionsStorage>(new r_util::FileActiveSessionsStorage(storageDir)),
-            storageDir));
-      }
-      else
-      {
-         system::User user;
-         Error error = system::User::getCurrentUser(user);
-         // TODO: what to do if this fails?
-         if (error)
-            LOG_ERROR(error);
+      std::shared_ptr<r_util::IActiveSessionsStorage> storage;
+      Error error = storage::activeSessionsStorage(&storage);
 
-         pSessions.reset(new r_util::ActiveSessions(
-            std::shared_ptr<r_util::IActiveSessionsStorage>(new storage::RpcActiveSessionsStorage(user)),
-            userScratchPath()));
-      }
+      // The only real error we can get here is if the current user can't 
+      // be retrieved, but if that's the case we should have exited with a 
+      // failure during start-up. We'll probably SegFault in any calls to the
+      // ActiveSession object, but the process is in a very broken state anyway
+      // Log before we crash so we can know what went wrong
+      if (error)
+         LOG_ERROR(error);
+
+      pSessions.reset(new r_util::ActiveSessions(storage, userScratchPath()));
    }
+   
    return *pSessions;
 }
 
