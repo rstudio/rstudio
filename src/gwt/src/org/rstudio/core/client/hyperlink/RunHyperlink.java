@@ -16,11 +16,10 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
-import com.google.gwt.core.client.GWT;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -43,12 +42,6 @@ public class RunHyperlink extends Hyperlink
         server_ = RStudioGinjector.INSTANCE.getServer();
     }
 
-    @Override
-    public String getAnchorClass() 
-    {
-        return styles_.xtermCommand();
-    }
-
     @Override 
     public void onClick()
     {
@@ -64,17 +57,15 @@ public class RunHyperlink extends Hyperlink
     }
 
     @Override
-    public Widget getPopupContent() 
+    public void getPopupContent(CommandWithArg<Widget> onReady)
     {
         final VerticalPanel panel = new VerticalPanel();
 
-        Label commandLabel = new Label(code_);
-        commandLabel.setStyleName(styles_.code());
-        panel.add(commandLabel);
-
-        panel.add(new HelpPreview(fun_, package_));
-        
-        return panel;
+        panel.add(new HyperlinkPopupHeader(code_));
+        panel.add(new HelpPreview(fun_, package_, () -> 
+        {
+            onReady.execute(panel);
+        }));
     }
 
     public static boolean handles(String url)
@@ -82,6 +73,12 @@ public class RunHyperlink extends Hyperlink
         return HYPERLINK_PATTERN.test(url);
     }
     
+    @Override
+    public String getAnchorClass()
+    {
+        return styles_.hyperlinkRun();
+    }
+
     private String code_;    
     private String package_;
     private String fun_;

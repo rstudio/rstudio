@@ -20,6 +20,8 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.CommandWithArg;
+
 public class UnsupportedHyperlink extends Hyperlink
 {
 
@@ -31,21 +33,18 @@ public class UnsupportedHyperlink extends Hyperlink
     @Override
     public String getAnchorClass() 
     {
-        return styles_.xtermUnsupportedHyperlink();
+        return styles_.hyperlinkUnsupported();
     }
 
     @Override
     public void onClick() {}
 
     @Override
-    public Widget getPopupContent()
+    public void getPopupContent(CommandWithArg<Widget> onReady)
     {
         VerticalPanel panel = new VerticalPanel();
+        panel.add(new HyperlinkPopupHeader(url));
 
-        Label urlLabel = new Label(url);
-        urlLabel.setStyleName(styles_.arbitraryCode());
-        panel.add(urlLabel);
-        
         if (!params.isEmpty())
         {
             for (Map.Entry<String, String> param: params.entrySet())
@@ -57,6 +56,6 @@ public class UnsupportedHyperlink extends Hyperlink
 
         }
         
-        return panel;
+        onReady.execute(panel);
     }
 }
