@@ -109,6 +109,9 @@ CREATE TABLE active_session_metadata(
    /* Things which are blocking the suspension of the session, if any */
    blocking_suspend TEXT,
 
+   /* Time at which the session suspeneded */
+   suspend_timestamp TEXT,
+
    PRIMARY KEY (session_id),
    
    /* User entries should not be deleted, but if they are, remove all of that user's sessions */
