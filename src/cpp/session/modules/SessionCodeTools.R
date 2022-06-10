@@ -990,6 +990,16 @@
 
 .rs.addJsonRpcHandler("get_args", function(name, src, helpHandler)
 {
+   if (grepl("::", name) && identical(src, ""))
+   {
+      bits <- strsplit(name, "::")[[1L]]
+      if (length(bits) == 2L)
+      {
+         name <- bits[2L]
+         src <- bits[1L]
+      }
+   }
+
    # call custom help handler if provided
    if (nzchar(helpHandler)) {
 
