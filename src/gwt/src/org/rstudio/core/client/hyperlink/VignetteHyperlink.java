@@ -16,6 +16,7 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
+import com.google.gwt.user.client.ui.Frame;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -24,8 +25,8 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
-import org.rstudio.studio.client.workbench.views.help.model.HelpServerOperations;
 
 public class VignetteHyperlink extends Hyperlink 
 {
@@ -56,35 +57,54 @@ public class VignetteHyperlink extends Hyperlink
     public void getPopupContent(CommandWithArg<Widget> onReady)
     {
         final VerticalPanel panel = new VerticalPanel();
-        panel.add(new HyperlinkPopupHeader("Vignette: " + topic_, "{" + pkg_ + "}"));
+        HyperlinkPopupHeader header = new HyperlinkPopupHeader(topic_, "{" + pkg_ + "}");
+        panel.add(header);
 
-        server_.getVignetteTitle(topic_, pkg_, new SimpleRequestCallback<String>()
+        server_.isPackageInstalled(pkg_, null, new SimpleRequestCallback<Boolean>()
         {
             @Override
-            public void onResponseReceived(String response)
+            public void onResponseReceived(Boolean installed)
             {
-                if (response.length() > 0) 
+                if (!installed)
                 {
-                    VerticalPanel helpPanel = new VerticalPanel();
-
-                    helpPanel.addStyleName(styles_.helpPreview());
-
-                    Label title = new Label(response);
-                    title.setStyleName(styles_.helpPreviewDescription());
-                    helpPanel.add(title);
-
-                    panel.add(helpPanel);
+                    Label notInstalled = new Label("Package not installed");
+                    notInstalled.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().warning());
+                    panel.add(notInstalled);
+                    onReady.execute(panel);
                 }
                 else 
                 {
-                    Label notFound = new Label("No vignette found");
-                    notFound.setStyleName(styles_.warning());
-                    notFound.addStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
-                    panel.add(notFound);
+                    server_.getVignetteTitle(topic_, pkg_, new SimpleRequestCallback<String>()
+                    {
+                        @Override
+                        public void onResponseReceived(String response)
+                        {
+                            if (response.length() > 0) 
+                            {
+                                VerticalPanel previewPanel = new VerticalPanel();
+                                previewPanel.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreview());
+            
+                                Label title = new Label(response);
+                                title.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreviewTitle());
+                                previewPanel.add(title);
+                                panel.add(previewPanel);
+                            }
+                            else 
+                            {
+                                Label notFound = new Label("No vignette found");
+                                notFound.setStyleName(styles_.warning());
+                                notFound.addStyleName(ConsoleResources.INSTANCE.consoleStyles().promptFullHelp());
+                                panel.add(notFound);
+                            }
+                            onReady.execute(panel);
+                        }
+                    });
                 }
-                onReady.execute(panel);
+
             }
         });
+
+        
     }
 
     public static boolean handles(String url, Map<String, String> params)
@@ -97,5 +117,5 @@ public class VignetteHyperlink extends Hyperlink
     
     private String topic_;
     private String pkg_;
-    private HelpServerOperations server_;
+    private Server server_;
 }
