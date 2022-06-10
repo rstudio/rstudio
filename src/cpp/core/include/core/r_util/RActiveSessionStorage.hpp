@@ -113,6 +113,7 @@ class RpcActiveSessionStorage : public core::r_util::IActiveSessionStorage
       const std::string id_;
       const InvokeRpc invokeRpcFunc_;
 };
+
 } // namespace r_util
 } // namespace core
 } // namespace rstudio
