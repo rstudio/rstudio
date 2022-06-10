@@ -84,7 +84,23 @@ public class VignetteHyperlink extends Hyperlink
                                 Label title = new Label(response);
                                 title.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreviewTitle());
                                 previewPanel.add(title);
-                                panel.add(previewPanel);
+
+                                server_.getVignetteDescription(topic_, pkg_, new SimpleRequestCallback<String>()
+                                {
+                                    @Override
+                                    public void onResponseReceived(String description)
+                                    {
+                                        if (description.length() > 0)
+                                        {
+                                            Label descriptionLabel = new Label(description);
+                                            descriptionLabel.setStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().helpPreviewDescription());
+                                            previewPanel.add(descriptionLabel);
+                                        }
+
+                                        panel.add(previewPanel);
+                                        onReady.execute(panel);
+                                    }
+                                });
                             }
                             else 
                             {

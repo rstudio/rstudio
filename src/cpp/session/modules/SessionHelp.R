@@ -406,6 +406,31 @@ options(help_type = "html")
    .rs.scalar(title)         
 })
 
+.rs.addJsonRpcHandler("get_vignette_description", function(topic, package)
+{
+   description <- tryCatch(
+      {
+         v <- vignette(topic, package)
+
+         Dir <- v$Dir
+         File <- v$File
+         if (grepl("[.]Rmd$", File))
+         {
+            description <- rmarkdown::yaml_front_matter(file.path(Dir, "doc", File))$description
+            if (is.null(description))
+            {
+               description <- ""
+            }
+            description
+         }
+         else ""
+
+      }, 
+      error = function(e) "", 
+      warning = function(e) "")
+   .rs.scalar(description)         
+})
+
 .rs.addJsonRpcHandler("show_vignette", function(topic, package)
 {
    print(utils::vignette(topic, package))
