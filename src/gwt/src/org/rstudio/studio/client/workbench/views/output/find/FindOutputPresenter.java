@@ -314,11 +314,10 @@ public class FindOutputPresenter extends BasePresenter
                            excludeFilePatterns.push(pattern);
 
                         String serverQuery = dialogState_.getQuery();
-                        if (dialogState_.isWholeWord())
-                           serverQuery = "\\b" + serverQuery + "\\b";
 
                         server_.completeReplace(serverQuery,
                                                 dialogState_.isRegex() || dialogState_.isWholeWord(),
+                                                dialogState_.isWholeWord(),
                                                 !dialogState_.isCaseSensitive(),
                                                 searchPath,
                                                 includeFilePatterns,
@@ -505,11 +504,10 @@ public class FindOutputPresenter extends BasePresenter
       view_.disableReplace();
 
       String serverQuery = dialogState_.getQuery();
-      if (dialogState_.isWholeWord())
-         serverQuery = "\\b" + serverQuery + "\\b";
 
       server_.beginFind(serverQuery,
          dialogState_.isRegex() || dialogState_.isWholeWord(),
+         dialogState_.isWholeWord(),
          !dialogState_.isCaseSensitive(),
          searchPath,
          includeFilePatterns,
@@ -530,6 +528,12 @@ public class FindOutputPresenter extends BasePresenter
                super.onResponseReceived(handle);
                view_.ensureVisible(true);
                view_.setStopSearchButtonVisible(true);
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+              Debug.logError(error);
+              stopAndClear();
             }
          });
    }
