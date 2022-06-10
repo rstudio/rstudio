@@ -118,4 +118,4 @@ CREATE TABLE active_session_metadata(
 /* Index to be used for sorting revoked cookies by expiration */
 CREATE INDEX revoked_cookie_expiration_index ON revoked_cookie(expiration);
 
-INSERT INTO schema_version (current_version, release_name) VALUES ('20220518194359756054952', 'Spotted Wakerobin');
+INSERT INTO schema_version (current_version, release_name) VALUES ('20220610180402900844286', 'Spotted Wakerobin');
