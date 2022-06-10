@@ -43,4 +43,13 @@ public interface HyperlinkConstants extends com.google.gwt.i18n.client.Messages 
     @Key("noVignette")
     String noVignette();
 
+    /**
+     * Translated "click to run".
+     *
+     * @return translated "click to run"
+     */
+    @DefaultMessage("click to run")
+    @Key("clickToRun")
+    String clickToRun();
+
 }

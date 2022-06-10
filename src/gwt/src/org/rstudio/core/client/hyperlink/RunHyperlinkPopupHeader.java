@@ -14,12 +14,15 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import com.google.gwt.core.client.GWT;
+
 public class RunHyperlinkPopupHeader extends HyperlinkPopupHeader
 {
 
     public RunHyperlinkPopupHeader(String left) {
-        super(left);
+        super(left, "(" + constants_.clickToRun() + ")");
         topicLabel.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().hyperlinkPopupHeaderRun());
     }
         
+    private static final HyperlinkConstants constants_ = GWT.create(HyperlinkConstants.class);
 }
