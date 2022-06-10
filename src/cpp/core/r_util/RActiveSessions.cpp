@@ -102,10 +102,10 @@ Error ActiveSessions::create(const std::string& project,
       {ActiveSession::kActivityState, kActivityStateLaunching},
       {ActiveSession::kEditor, editor}};
 
+   auto session = get(id);
+   session->writeProperties(initialMetadata);
    if (editor == kWorkbenchRStudio)
-      initialMetadata[ActiveSession::kLastResumed] = millisTime;
-
-   get(id)->writeProperties(initialMetadata);
+      session->setLastResumed();
 
    // return the id if requested
    if (pId != NULL)
