@@ -15,10 +15,15 @@
 
 #include <core/r_util/RActiveSessionsStorage.hpp>
 
+#include <algorithm>
+
+#include <core/SocketRpc.hpp>
+
 #include <core/r_util/RActiveSessionStorage.hpp>
 #include <core/r_util/RActiveSessions.hpp>
 
-#include <algorithm>
+#include <core/system/Environment.hpp>
+
 
 namespace rstudio {
 namespace core {
@@ -96,6 +101,37 @@ RpcActiveSessionsStorage::RpcActiveSessionsStorage(const core::system::User& use
    invokeRpcFunc_(std::move(invokeRpcFunc))
 {
 }
+
+std::shared_ptr<r_util::IActiveSessionsStorage> RpcActiveSessionsStorage::createDefaultStorage(const system::User& user) 
+{
+   return std::shared_ptr<r_util::IActiveSessionsStorage>(new r_util::RpcActiveSessionsStorage(
+      user,
+      [](const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
+      {
+         FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
+         LOG_DEBUG_MESSAGE("Invoking rserver RPC '" + request.method + "' on socket " + 
+               rpcSocket.getAbsolutePath());
+
+         json::Value result;
+         Error error = socket_rpc::invokeRpc(rpcSocket, request.method, request.toJsonObject(), &result);
+         if (error)
+            return error;
+
+         
+         bool success = json::JsonRpcResponse::parse(result, pResponse);
+         if (!success)
+         {
+            error = Error(json::errc::ParseError, ERROR_LOCATION);
+            error.addProperty(
+               "description",
+               "Unable to parse the response for RPC request: " + request.toJsonObject().write());
+            error.addProperty("response", result.write());
+         }
+
+         return error;
+      }));
+}
+
 
 std::vector<std::string> RpcActiveSessionsStorage::listSessionIds() const 
 {   
