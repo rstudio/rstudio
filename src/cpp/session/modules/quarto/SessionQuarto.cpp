@@ -219,7 +219,7 @@ void detectQuartoInstallation()
          s_quartoPath = s_userInstalledPath;
          const std::string quartoPath = string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath());
 
-         if (sysPath.find(quartoPath) == std::string::npos)
+         if (sysPath.find(quartoPath) != std::string::npos)
             return;
 
          // prepend to path only if RSTUDIO_QUARTO is defined
@@ -255,7 +255,7 @@ void detectQuartoInstallation()
       s_quartoVersion = embeddedVersion;
       const std::string quartoPath = string_utils::utf8ToSystem(s_quartoPath.getParent().getAbsolutePath());
 
-      if (sysPath.find(quartoPath) == std::string::npos)
+      if (sysPath.find(quartoPath) != std::string::npos)
          return;
 
       // append to path
