@@ -56,11 +56,15 @@ public abstract class Hyperlink
                 getPopupContent((content) -> {
                     if (visible_)
                     {
-                        popup_.setContent(content);
+                        if (content != null)
+                        {
+                            popup_.setContent(content);
 
-                        Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
-                        HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
-                        popup_.setPopupPositionAndShow(positioner);
+                            Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
+                            HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
+                            popup_.setPopupPositionAndShow(positioner);
+                        }
+                        
                     }
                     
                 });
@@ -88,7 +92,10 @@ public abstract class Hyperlink
 
     public abstract void onClick();
     
-    public abstract void getPopupContent(CommandWithArg<Widget> onReady);
+    public void getPopupContent(CommandWithArg<Widget> onReady)
+    {
+        onReady.execute(null);
+    }
 
     public static Hyperlink create(String url, String paramsTxt, String text, String clazz)
     {
