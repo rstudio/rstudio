@@ -30,14 +30,6 @@
     cursor: not-allowed;
 }
 
-.code {
-    font-family: fixedWidthFont;
-    margin-left: 5px;
-    margin-top: 5px;
-    margin-right: 5px;
-    margin-bottom: 10px;
-}
-
 .warning {
     font-size: smaller;
     font-style: italic;

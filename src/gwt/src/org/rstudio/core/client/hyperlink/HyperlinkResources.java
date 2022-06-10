@@ -34,7 +34,6 @@ public interface HyperlinkResources extends ClientBundle
 
         String hyperlinkPopup();
 
-        String code();
         String warning();
 
         String hyperlinkPopupHeader();
