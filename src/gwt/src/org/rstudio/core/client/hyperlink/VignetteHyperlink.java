@@ -16,6 +16,7 @@ package org.rstudio.core.client.hyperlink;
 
 import java.util.Map;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -65,7 +66,7 @@ public class VignetteHyperlink extends Hyperlink
             {
                 if (!installed)
                 {
-                    panel.add(new WarningLabel("Package not installed"));
+                    panel.add(new WarningLabel(constants_.noPackage()));
                     onReady.execute(panel);
                 }
                 else 
@@ -87,7 +88,7 @@ public class VignetteHyperlink extends Hyperlink
                             }
                             else 
                             {
-                                panel.add(new WarningLabel("No vignette found"));
+                                panel.add(new WarningLabel(constants_.noVignette()));
                             }
                             onReady.execute(panel);
                         }
@@ -111,4 +112,6 @@ public class VignetteHyperlink extends Hyperlink
     private String topic_;
     private String pkg_;
     private Server server_;
+
+    private static final HyperlinkConstants constants_ = GWT.create(HyperlinkConstants.class);
 }

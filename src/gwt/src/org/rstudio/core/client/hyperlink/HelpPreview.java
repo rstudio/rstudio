@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
@@ -70,7 +71,7 @@ public class HelpPreview extends Composite
                             }
                             else 
                             {
-                                panel_.add(new WarningLabel("No documentation found"));
+                                panel_.add(new WarningLabel(constants_.noDocumentation()));
                             }
             
                             onReady.execute();
@@ -79,7 +80,7 @@ public class HelpPreview extends Composite
                 } 
                 else 
                 {
-                    panel_.add(new WarningLabel("Package is not installed"));
+                    panel_.add(new WarningLabel(constants_.noPackage()));
 
                     onReady.execute();
                 }
@@ -93,4 +94,6 @@ public class HelpPreview extends Composite
     private String topic_;
     private String pkgName_;
     private Server server_;
+
+    private static final HyperlinkConstants constants_ = GWT.create(HyperlinkConstants.class);
 }
