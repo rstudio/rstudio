@@ -16,7 +16,7 @@ SqliteConnectionOptions sqliteConnectionOptions()
    return SqliteConnectionOptions { tempDb.getAbsolutePath() };
 }
 
-boost::shared_ptr<IConnection> initializeSQLiteDatabase(SqliteConnectionOptions options)
+boost::shared_ptr<IConnection> initializeSQLiteDatabase(SqliteConnectionOptions options, system::User user)
 {
    // Delete the db if it exists
    FilePath dbPath(options.file);
@@ -34,7 +34,7 @@ boost::shared_ptr<IConnection> initializeSQLiteDatabase(SqliteConnectionOptions 
    REQUIRE_FALSE(connection->executeStr(createDbStr));
 
    // Insert a user to own the sessions
-   REQUIRE_FALSE(connection->executeStr("INSERT INTO licensed_users (user_name, last_sign_in, user_id, id) VALUES ('test1', '2020-04-30T00:00:00.000Z', 5001, 7)"));
+   REQUIRE_FALSE(connection->executeStr("INSERT INTO licensed_users (user_name, last_sign_in, user_id, id) VALUES ('"+user.getUsername()+"', '2020-04-30T00:00:00.000Z', "+std::to_string(user.getUserId())+", 7)"));
    REQUIRE_FALSE(connection->executeStr("INSERT INTO licensed_users (user_name, last_sign_in, user_id, id) VALUES ('test2', '2020-04-30T00:00:00.000Z', 5002, 8)"));
    
    return connection;
@@ -57,7 +57,7 @@ PostgresqlConnectionOptions postgresConnectionOptions()
    return options;
 }
 
-boost::shared_ptr<IConnection> initializePostgresqlDatabase(PostgresqlConnectionOptions options)
+boost::shared_ptr<IConnection> initializePostgresqlDatabase(PostgresqlConnectionOptions options, system::User user)
 {
    // Establish the connection
    boost::shared_ptr<IConnection> connection;
@@ -79,7 +79,7 @@ boost::shared_ptr<IConnection> initializePostgresqlDatabase(PostgresqlConnection
    connection->executeStr("COMMIT");
 
    // Insert a user to own the sessions
-   REQUIRE_FALSE(connection->executeStr("INSERT INTO licensed_users (user_name, last_sign_in, user_id, id) VALUES ('test1', '2020-04-30T00:00:00.000Z', 5001, 7)"));
+   REQUIRE_FALSE(connection->executeStr("INSERT INTO licensed_users (user_name, last_sign_in, user_id, id) VALUES ('"+user.getUsername()+"', '2020-04-30T00:00:00.000Z', "+std::to_string(user.getUserId())+", 7)"));
    REQUIRE_FALSE(connection->executeStr("INSERT INTO licensed_users (user_name, last_sign_in, user_id, id) VALUES ('test2', '2020-04-30T00:00:00.000Z', 5002, 8)"));
 
    return connection;
@@ -271,7 +271,7 @@ TEST_CASE("Database Session Storage, Sqlite","[database][integration][session][s
    REQUIRE(!error);
 
    SqliteConnectionOptions options = sqliteConnectionOptions();
-   boost::shared_ptr<IConnection> connection = initializeSQLiteDatabase(options);
+   boost::shared_ptr<IConnection> connection = initializeSQLiteDatabase(options, currUser);
    DBActiveSessionStorage storage{sessionId, currUser, connection};
    runTests(storage);
 }
@@ -283,7 +283,7 @@ TEST_CASE("Databse Session Storage, Postgres","[database][integration][session][
    REQUIRE(!error);
 
    PostgresqlConnectionOptions options = postgresConnectionOptions();
-   boost::shared_ptr<IConnection> connection = initializePostgresqlDatabase(options);
+   boost::shared_ptr<IConnection> connection = initializePostgresqlDatabase(options, currUser);
    DBActiveSessionStorage storage{sessionId, currUser, connection};
    runTests(storage);
 }
