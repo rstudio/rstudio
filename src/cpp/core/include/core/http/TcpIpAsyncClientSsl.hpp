@@ -94,6 +94,13 @@ protected:
    }
 
 
+   virtual void addErrorProperties(Error& error)
+   {
+      AsyncClient::addErrorProperties(error);
+      error.addProperty("address", address_);
+      error.addProperty("port", port_);
+   }
+
 private:
 
    void performHandshake()
