@@ -74,7 +74,20 @@ Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string
       return error;
    }
 
-   return response.getField(name, pValue);
+   if (!response.result().isObject())
+   {
+      error = Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unexpected type for result field in response when reading fields for session " + _id + " owned by user " + _user.getUsername());
+      error.addProperty("response", result.write());
+
+      LOG_ERROR(error);
+      return error;
+   }
+
+
+   return json::readObject(response.result().getObject(), name, *pValue);
 }
 
 Error RpcActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
@@ -114,10 +127,25 @@ Error RpcActiveSessionStorage::readProperties(const std::set<std::string>& names
       return error;
    }
 
+   json::Object resultObj;
+   if (!response.result().isObject())
+   {
+      error = Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unexpected type for result field in response when reading fields for session " + _id + " owned by user " + _user.getUsername());
+      error.addProperty("response", result.write());
+
+      LOG_ERROR(error);
+      return error;
+   }
+
+   resultObj = response.result().getObject();
+
    for (const auto& name: names)
    {
       std::string value;
-      error = response.getField(name, &value);
+      error = json::readObject(resultObj, name, value);
       if (error)
          LOG_ERROR(error);
       else
