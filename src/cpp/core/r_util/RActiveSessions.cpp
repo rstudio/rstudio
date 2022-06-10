@@ -93,8 +93,8 @@ Error ActiveSessions::create(const std::string& project,
    std::map<std::string, std::string> initialMetadata = {
       {ActiveSession::kProject, project},
       {ActiveSession::kWorkingDir, workingDir},
-      {ActiveSession::kInitial, initial ? "true" : "false"},
-      {ActiveSession::kRunning, "false"},
+      {ActiveSession::kInitial, initial ? "1" : "0"},
+      {ActiveSession::kRunning, "0"},
       {ActiveSession::kLastUsed, millisTime},
       {ActiveSession::kCreated, millisTime},
       {ActiveSession::kLaunchParameters, ""},
@@ -105,13 +105,12 @@ Error ActiveSessions::create(const std::string& project,
    if (editor == kWorkbenchRStudio)
       initialMetadata[ActiveSession::kLastResumed] = millisTime;
 
-   storage_->initSessionProperties(id, initialMetadata);
+   get(id)->writeProperties(initialMetadata);
 
    // return the id if requested
-   if (pId != nullptr)
-   {
+   if (pId != NULL)
       *pId = id;
-   }
+   
    return Success();
 }
 

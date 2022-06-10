@@ -281,7 +281,7 @@ public:
          std::string value = readProperty(kInitial);
 
          if (!value.empty())
-            return safe_convert::stringTo<bool>(value, false);
+            return value == "1" ?  true : false;
          else
             return false;
       }
@@ -296,7 +296,7 @@ public:
 
    void setInitial(bool initial)
    {
-      std::string value = safe_convert::numberToString(initial);
+      std::string value = initial ? "1" : "0";
       writeProperty(kInitial, value);
    }
 
@@ -368,14 +368,14 @@ public:
       std::string value = readProperty(kExecuting);
 
       if (!value.empty())
-         return safe_convert::stringTo<bool>(value, false);
+         return value == "1" ? true : false;
       else
          return false;
    }
 
    void setExecuting(bool executing)
    {
-      std::string value = safe_convert::numberToString(executing);
+      std::string value = executing ? "1" : "0";
       writeProperty(kExecuting, value);
    }
 
@@ -401,7 +401,7 @@ public:
       std::string value = readProperty(kRunning);
 
       if (!value.empty())
-         return safe_convert::stringTo<bool>(value, false);
+         return value == "1" ? true : false;
       else
          return false;
    }
@@ -658,7 +658,7 @@ public:
 
    void setRunning(bool running)
    {
-         std::string value = safe_convert::numberToString(running);
+         std::string value = running ?  "1" : "0";
          writeProperty(kRunning, value);
    }
 
