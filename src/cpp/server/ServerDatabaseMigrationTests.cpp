@@ -19,6 +19,17 @@ namespace overlay {
     void overlayDatasetPath(std::map<DatasetVersion, std::map<DatasetType, std::string>>& datasetPath);
 }
 
+// When adding additional datasets are made available, the following pieces
+// need to be updated. Add a DatasetVersion value to the enum in
+// ServerDatabaseDataset.hpp. Then add a version entry to the datasetPath,
+// providing the path to sqlite and postgres database dump for that version.
+// Finally update the versionToString function to include the new dataset.
+// That completes necessary updates to this test.
+// In Summary:
+//      1) Add new version name to ServerDatabaseDataset.hpp
+//      2) Add entry to datasetPath
+//      3) Add switch case to versionToString function.
+
 std::map<DatasetVersion, std::map<DatasetType, std::string>> datasetPath {
     {
         JulietRose, {
@@ -31,8 +42,42 @@ std::map<DatasetVersion, std::map<DatasetType, std::string>> datasetPath {
             {Sqlite, "db/test/ghost-orchid-2021.09.1-372.sqlite.sql"},
             {Postgres, "db/test/ghost-orchid-2021.09.1-372.postgresql"}
         }
+    },
+    {
+        PrairieTrillium, {
+            {Sqlite, "db/test/prairie-trillium-2022.02.2-485.sqlite.sql"},
+            {Postgres, "db/test/prairie-trillium-2022.02.2-485.postgresql"}
+        }
     }
 };
+
+std::string versionToString(DatasetVersion version)
+{
+    switch(version)
+    {
+        case JulietRose:
+            return "Juliet Rose";
+        case GhostOrchid:
+            return "Ghost Orchid";
+        case PrairieTrillium:
+            return "Prairie Trillium";
+        default:
+            return "UNKNOWN";
+    }
+}
+
+std::string typeToString(DatasetType type)
+{
+    switch(type)
+    {
+        case Sqlite:
+            return "Sqlite";
+        case Postgres:
+            return "Postgres";
+        default:
+            return "UKNOWN";
+    }
+}
 
 SqliteConnectionOptions sqliteConnectionOptions()
 {
@@ -57,6 +102,76 @@ PostgresqlConnectionOptions postgresConnectionOptions()
    options.password = (dbPass) ? dbPass : "postgres";
 
    return options;
+}
+
+void updateTest(DatasetVersion version, DatasetType type, std::string path){
+    std::string testName = "A "+ versionToString(version) + " " + typeToString(type) + " Database";
+    GIVEN(testName)
+    {
+        FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
+        boost::shared_ptr<IConnection> connection;
+
+        if (type == Sqlite)
+        {
+            SqliteConnectionOptions options = sqliteConnectionOptions();
+            //Delete the db if it exists
+            FilePath db(options.file);
+            db.removeIfExists();
+
+            REQUIRE_FALSE(connect(options, &connection));
+        }
+        else if (type == Postgres)
+        {
+            PostgresqlConnectionOptions options = postgresConnectionOptions();
+            REQUIRE_FALSE(connect(options, &connection));
+
+            std::string queryStr =
+            R""(
+            DROP SCHEMA public CASCADE;
+            CREATE SCHEMA public;
+            GRANT ALL ON SCHEMA public TO )"" + options.username + R""(;
+            GRANT ALL ON SCHEMA public TO public;
+            ALTER DATABASE )"" + options.database + R""( SET search_path = public;
+            )"";
+
+            REQUIRE_FALSE(connection->executeStr(queryStr));
+        }
+
+        std::string dbDump;
+        FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[version][type]);
+        REQUIRE(dbDumpPath.exists());
+        REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
+        REQUIRE_FALSE(connection->executeStr(dbDump));
+
+         // added, because dropping the schema ends up also dropping
+         // the search_path for that connection, so we need to reset it
+         // for postgres connections. Additionally some of our datasets also
+         // overwrite the search_path.
+         if (type == Postgres)
+            REQUIRE_FALSE(connection->executeStr("SET search_path = public;"));
+
+        FilePath migrationPath = workingDir.completeChildPath("db");
+        SchemaUpdater schemaUpdater = {connection, migrationPath};
+
+        THEN("Schema is out of date")
+        {
+            bool initiallyUpToDate = false;
+            REQUIRE_FALSE(schemaUpdater.isUpToDate(&initiallyUpToDate));
+            REQUIRE_FALSE(initiallyUpToDate);
+        }
+
+        WHEN("Schema updater is run")
+        {
+            REQUIRE_FALSE(schemaUpdater.update());
+
+            THEN("Schema is up to date")
+            {
+                bool finallyUpToDate = false;
+                REQUIRE_FALSE(schemaUpdater.isUpToDate(&finallyUpToDate));
+                REQUIRE(finallyUpToDate);
+            }
+        }
+    }
 }
 
 TEST_CASE("Upgrading Sqlite Database","[database][integration][upgrade][sqlite]")
@@ -92,7 +207,6 @@ TEST_CASE("Upgrading Sqlite Database","[database][integration][upgrade][sqlite]"
             std::string createDbStr;
             REQUIRE_FALSE(readStringFromFile(createDbPath, &createDbStr));
             REQUIRE_FALSE(connection->executeStr(createDbStr));
-
             THEN("The Schema is now up to date")
             {
                 bool createdUpToDate = false;
@@ -102,88 +216,13 @@ TEST_CASE("Upgrading Sqlite Database","[database][integration][upgrade][sqlite]"
         }
     }
 
-    GIVEN("A populated Juliet Rose Sqlite Database")
+    // Attempt an upgrade from each previous version
+    for(auto version : datasetPath)
     {
-        FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
-
-        boost::shared_ptr<IConnection> connection;
-        SqliteConnectionOptions options = sqliteConnectionOptions();
-        
-        //Delete the db if it exists
-        FilePath db(options.file);
-        db.removeIfExists();
-
-        REQUIRE_FALSE(connect(options, &connection));
-
-        std::string dbDump;
-        FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[JulietRose][Sqlite]);
-        REQUIRE(dbDumpPath.exists());
-        REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
-        REQUIRE_FALSE(connection->executeStr(dbDump));
-
-        FilePath migrationPath = workingDir.completeChildPath("db");
-        SchemaUpdater schemaUpdater = {connection, migrationPath};
-
-        THEN("Schema is out of date")
-        {
-            bool initiallyUpToDate = false;
-            REQUIRE_FALSE(schemaUpdater.isUpToDate(&initiallyUpToDate));
-            REQUIRE_FALSE(initiallyUpToDate);
-        }
-
-        WHEN("Schema updater is run")
-        {
-            REQUIRE_FALSE(schemaUpdater.update());
-
-            THEN("Schema is up to date")
-            {
-                bool finallyUpToDate = false;
-                REQUIRE_FALSE(schemaUpdater.isUpToDate(&finallyUpToDate));
-                REQUIRE(finallyUpToDate);
-            }
-        }
-    }
-
-    GIVEN("A populated Ghost Orchid Sqlite Database")
-    {
-        FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
-
-        boost::shared_ptr<IConnection> connection;
-        SqliteConnectionOptions options = sqliteConnectionOptions();
-        
-        //Delete the db if it exists
-        FilePath db(options.file);
-        db.removeIfExists();
-
-        REQUIRE_FALSE(connect(options, &connection));
-
-        std::string dbDump;
-        FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[GhostOrchid][Sqlite]);
-        REQUIRE(dbDumpPath.exists());
-        REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
-        REQUIRE_FALSE(connection->executeStr(dbDump));
-
-        FilePath migrationPath = workingDir.completeChildPath("db");
-        SchemaUpdater schemaUpdater = {connection, migrationPath};
-
-        THEN("Schema is out of date")
-        {
-            bool initiallyUpToDate = false;
-            REQUIRE_FALSE(schemaUpdater.isUpToDate(&initiallyUpToDate));
-            REQUIRE_FALSE(initiallyUpToDate);
-        }
-
-        WHEN("Schema updater is run")
-        {
-            REQUIRE_FALSE(schemaUpdater.update());
-
-            THEN("Schema is up to date")
-            {
-                bool finallyUpToDate = false;
-                REQUIRE_FALSE(schemaUpdater.isUpToDate(&finallyUpToDate));
-                REQUIRE(finallyUpToDate);
-            }
-        }
+        DatasetVersion ver = version.first;
+        DatasetType type = Sqlite;
+        std::string datasetPath = version.second[type];
+        updateTest(ver, type, datasetPath);
     }
 }
 
@@ -238,108 +277,16 @@ TEST_CASE("Upgrading Postgres Database", "[database][integration][upgrade][.post
         }
     }
 
-    GIVEN("A populated Juliet Rose Postgres Database")
+    // Attempt an upgrade from each previous version
+    for(auto version : datasetPath)
     {
-        FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
-
-        boost::shared_ptr<IConnection> connection;
-        PostgresqlConnectionOptions options = postgresConnectionOptions();
-        REQUIRE_FALSE(connect(options, &connection));
-
-        std::string queryStr =
-         R""(
-         DROP SCHEMA public CASCADE;
-         CREATE SCHEMA public;
-         GRANT ALL ON SCHEMA public TO )"" + options.username + R""(;
-         GRANT ALL ON SCHEMA public TO public;
-         )"";
-
-        connection->executeStr(queryStr);
-
-        std::string dbDump;
-        FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[JulietRose][Postgres]);
-        REQUIRE(dbDumpPath.exists());
-        REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
-        REQUIRE_FALSE(connection->executeStr(dbDump));
-        
-        //Reconnect to fix a search path problem regarding the public schema
-        REQUIRE_FALSE(connect(options, &connection));
-
-        FilePath migrationPath = workingDir.completeChildPath("db");
-        SchemaUpdater schemaUpdater = {connection, migrationPath};
-
-        THEN("Schema is out of date")
-        {
-            bool initiallyUpToDate = false;
-            REQUIRE_FALSE(schemaUpdater.isUpToDate(&initiallyUpToDate));
-            REQUIRE_FALSE(initiallyUpToDate);
-        }
-
-        WHEN("Schema updater is run")
-        {
-            REQUIRE_FALSE(schemaUpdater.update());
-
-            THEN("Schema is up to date")
-            {
-                bool finallyUpToDate = false;
-                REQUIRE_FALSE(schemaUpdater.isUpToDate(&finallyUpToDate));
-                REQUIRE(finallyUpToDate);
-            }
-        }
-    }
-
-    GIVEN("A populated Ghost Orchid Postgres Database")
-    {
-        FilePath workingDir = system::currentWorkingDir(system::currentProcessId());
-
-        boost::shared_ptr<IConnection> connection;
-        PostgresqlConnectionOptions options = postgresConnectionOptions();
-        REQUIRE_FALSE(connect(options, &connection));
-
-        std::string queryStr =
-         R""(
-         DROP SCHEMA public CASCADE;
-         CREATE SCHEMA public;
-         GRANT ALL ON SCHEMA public TO )"" + options.username + R""(;
-         GRANT ALL ON SCHEMA public TO public;
-         )"";
-
-        connection->executeStr(queryStr);
-
-        std::string dbDump;
-        FilePath dbDumpPath = workingDir.completeChildPath(datasetPath[GhostOrchid][Postgres]);
-        REQUIRE(dbDumpPath.exists());
-        REQUIRE_FALSE(readStringFromFile(dbDumpPath, &dbDump));
-        dbDump = "BEGIN;\n" + dbDump +"\nCOMMIT;";
-        REQUIRE_FALSE(connection->executeStr(dbDump));
-        
-        //Reconnect to fix a search path problem regarding the public schema
-        REQUIRE_FALSE(connect(options, &connection));
-
-        FilePath migrationPath = workingDir.completeChildPath("db");
-        SchemaUpdater schemaUpdater = {connection, migrationPath};
-
-        THEN("Schema is out of date")
-        {
-            bool initiallyUpToDate = false;
-            REQUIRE_FALSE(schemaUpdater.isUpToDate(&initiallyUpToDate));
-            REQUIRE_FALSE(initiallyUpToDate);
-        }
-
-        WHEN("Schema updater is run")
-        {
-            REQUIRE_FALSE(schemaUpdater.update());
-
-            THEN("Schema is up to date")
-            {
-                bool finallyUpToDate = false;
-                REQUIRE_FALSE(schemaUpdater.isUpToDate(&finallyUpToDate));
-                REQUIRE(finallyUpToDate);
-            }
-        }
+        DatasetVersion ver = version.first;
+        DatasetType type = Postgres;
+        std::string datasetPath = version.second[type];
+        updateTest(ver, type, datasetPath);
     }
 }
 
-}
-}
-}
+} // namespace db
+} // namespace server
+} // namespace rstudio
