@@ -213,7 +213,7 @@ public class PanmirrorDialogs {
    
    public Promise<PanmirrorAttrEditResult> editDiv(PanmirrorAttrProps attr, boolean removeEnabled)
    {
-      return editPanmirrorAttr(constants_.divAttributesCaption(), removeEnabled ? constants_.unwrapSpanRemoveButtonCaption() : null, null, attr);
+      return editPanmirrorAttr(constants_.divAttributesCaption(), removeEnabled ? constants_.unwrapDivTitle() : null, null, attr);
    }
    
 
