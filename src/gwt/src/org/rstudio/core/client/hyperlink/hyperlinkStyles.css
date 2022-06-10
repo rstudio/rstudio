@@ -65,6 +65,12 @@
     color: #ccc;
 }
 
+.hyperlinkPopupHeaderRun::before {
+    content: "\025B6";
+    color: green;
+    margin-right: 0.5em;
+}
+
 .helpPreview {
     color: #000023;
     background-color: #ffffca;

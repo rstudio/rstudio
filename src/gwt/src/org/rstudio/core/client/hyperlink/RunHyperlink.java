@@ -61,7 +61,9 @@ public class RunHyperlink extends Hyperlink
     {
         final VerticalPanel panel = new VerticalPanel();
 
-        panel.add(new HyperlinkPopupHeader(code_));
+        HyperlinkPopupHeader header = new HyperlinkPopupHeader(code_);
+        header.topicLabel.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().hyperlinkPopupHeaderRun());
+        panel.add(header);
         panel.add(new HelpPreview(fun_, package_, () -> 
         {
             onReady.execute(panel);

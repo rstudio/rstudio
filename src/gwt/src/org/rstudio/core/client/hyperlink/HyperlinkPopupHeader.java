@@ -32,17 +32,21 @@ public class HyperlinkPopupHeader extends Composite
         HorizontalPanel titlePanel = new HorizontalPanel();
         titlePanel.setStyleName(styles.hyperlinkPopupHeader());
 
-        Label topicLabel = new Label(left);
+        topicLabel = new Label(left);
         topicLabel.setStyleName(styles.hyperlinkPopupHeaderLeft());
         titlePanel.add(topicLabel);
 
+        pkgLabel = new Label(right);
+        pkgLabel.setStyleName(styles.hyperlinkPopupHeaderRight());
+            
         if (right.length() > 0)
         {
-            Label pkgLabel = new Label(right);
-            pkgLabel.setStyleName(styles.hyperlinkPopupHeaderRight());
             titlePanel.add(pkgLabel);
         }
         
         initWidget(titlePanel);
     }
+
+    public Label topicLabel;
+    public Label pkgLabel;
 }
