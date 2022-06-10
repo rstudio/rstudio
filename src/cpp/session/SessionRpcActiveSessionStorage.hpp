@@ -40,9 +40,9 @@ class RpcActiveSessionStorage : public core::r_util::IActiveSessionStorage
       core::Error isValid(bool* pValue) override;
 
    private:
-      const core::system::User _user;
+      const core::system::User user_;
 
-      const std::string _id;
+      const std::string id_;
 };
 
 } // namespace storage

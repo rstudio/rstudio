@@ -36,7 +36,7 @@ public:
    core::Error hasSessionId(const std::string& sessionId, bool* pHasSessionId)  const override;
 
 private:
-   core::system::User _user;
+   core::system::User user_;
 };
 
 } // namespace storage
