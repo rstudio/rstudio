@@ -41,17 +41,24 @@ const std::string kTableName = "active_session_metadata";
 const std::string kSessionIdColumnName = "session_id";
 
 
+inline const std::string& columnName(const std::string& name)
+{
+   static const std::string workbench = "workbench";
+   if (name == ActiveSession::kEditor)
+      return workbench;
+
+   return name;
+}
+
 std::string getKeyString(const std::map<std::string, std::string>& sourceMap)
 {
    std::string keys = std::accumulate(
       ++sourceMap.begin(),
       sourceMap.end(),
       sourceMap.begin()->first,
-      [](std::string a, std::pair<std::string, std::string> b) {
-         if (b.first == ActiveSession::kEditor)
-            return a + ", workbench";
-
-         return a + ", " + b.first;
+      [](std::string a, std::pair<std::string, std::string> b)
+      {
+         return a + ", " + columnName(b.first);
       });
    return keys;
 }
@@ -85,11 +92,8 @@ std::string getUpdateString(const std::map<std::string, std::string>& sourceMap)
       sourceMap.end(),
       sourceMap.begin()->first + " = '" + sourceMap.begin()->second + "'",
       [](std::string a, std::pair<std::string, std::string> iter)
-      {
-         if (iter.first == ActiveSession::kEditor)
-            return a + ", workbench" + " = '" + iter.second + "'";
-         
-         return a + ", " + iter.first + " = '" + iter.second + "'";
+      {         
+         return a + ", " + columnName(iter.first) + " = '" + iter.second + "'";
       });
    return setValuesString;
 }
@@ -101,11 +105,7 @@ std::string getColumnNameList(const std::set<std::string>& colNames)
       colNames.end(), 
       *(colNames.begin()), [](std::string a, std::string b)
       {
-         if (a == ActiveSession::kEditor)
-            return "workbench, " + b;
-         if (b == ActiveSession::kEditor)
-            return a + ", workbench";
-         return a + ", " + b;
+         return columnName(a) + ", " + columnName(b);
       });
    return cols;
 }
@@ -115,16 +115,7 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
    for(size_t i=0; i < iter->size(); i++)
    {
       std::string key = iter->get_properties(i).get_name();
-      if (key == "workbench")
-      {
-         pTargetMap->insert(
-            std::pair<std::string, std::string>{
-               ActiveSession::kEditor,
-               iter->get<std::string>(key, "")
-            }
-         );
-      }
-      else if (key == kUserId)
+      if (key == kUserId)
       {
          pTargetMap->insert(
             std::pair<std::string, std::string>{
@@ -137,7 +128,7 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
       {
          pTargetMap->insert(
             std::pair<std::string, std::string>{
-               key,
+               columnName(key),
                iter->get<std::string>(key, "")
             }
          );
@@ -206,12 +197,8 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
       return error;
 
    std::string queryStr = "SELECT ";
-   if (name == ActiveSession::kEditor)
-      queryStr.append("workbench");
-   else
-      queryStr.append(name);
-
    queryStr
+      .append(columnName(name))
       .append(" FROM ")
       .append(kTableName)
       .append(" WHERE ")
@@ -304,7 +291,7 @@ Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::
    if (error)
       return error;
 
-   database::Query query = connection->query("UPDATE " + kTableName + " SET " + name + " = :value WHERE " + kSessionIdColumnName + " = :id")
+   database::Query query = connection->query("UPDATE " + kTableName + " SET " + columnName(name) + " = :value WHERE " + kSessionIdColumnName + " = :id")
       .withInput(value)
       .withInput(sessionId_);
 
