@@ -257,7 +257,7 @@ Error RpcActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool*
    if (error)
       return error;
 
-   *pHasSessionId = count == 0;
+   *pHasSessionId = count > 0;
 
    return error;
 }
