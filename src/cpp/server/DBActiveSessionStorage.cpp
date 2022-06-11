@@ -205,33 +205,18 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
       .append(kSessionIdColumnName)
       .append(" = :id");
 
-
    database::Query query = connection->query(queryStr)
-      .withInput(sessionId_);
+      .withInput(sessionId_)
+      .withOutput(*pValue);
 
-   database::Rowset results{};
-   error = connection->execute(query, results);
+   bool hasData;
+   error = connection->execute(query, &hasData);
 
    if (error)
       return Error("DatabaseException", errc::DBError, "Database exception during property read [ session:" + sessionId_ + " property:" + name + " ]", error, ERROR_LOCATION);
 
-   database::RowsetIterator iter = results.begin();
-   if (iter == results.end())
+   if (!hasData)
       return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
-
-   if (name != kUserId)
-      *pValue = iter->get<std::string>(name, "");
-   else
-      *pValue = std::to_string(iter->get<int>(name));
-
-
-   if (++iter != results.end())
-   {
-      int count = 1;
-      while (iter++ != results.end())
-         count++;
-      return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
-   }
    
    return Success();
 }
