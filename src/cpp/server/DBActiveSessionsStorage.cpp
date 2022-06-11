@@ -73,20 +73,18 @@ size_t DBActiveSessionsStorage::getSessionCount() const
    Error error = getConn(&connection);
 
    if(error)
-   {
       LOG_ERROR(error);
-   }
    else
    {
+      int count;
       database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE user_id=:id")
-         .withInput(user_.getUserId());
-      database::Rowset rowset{};
-      error = connection->execute(query, rowset);
+         .withInput(user_.getUserId())
+         .withOutput(count);
 
-      if(!error)
-      {
-         return rowset.begin()->get<size_t>("COUNT(*)");
-      }
+      error = connection->execute(query);
+
+      if(error)
+         LOG_ERROR(error);
    }
 
    return 0;
@@ -104,9 +102,16 @@ Error DBActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool* 
 
    if (!error)
    {
-      database::Query query = connection->query("SELECT count(*) FROM active_session_metadata WHERE session_id=:id")
-         .withInput(sessionId);
-      error = connection->execute(query, pHasSessionId);
+      int count;
+      database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE session_id=:id")
+         .withInput(sessionId)
+         .withOutput(count);
+
+      error = connection->execute(query);
+      if (error)
+         return error;
+
+      *pHasSessionId = count > 0;
    }
 
    return error;
