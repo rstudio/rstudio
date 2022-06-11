@@ -245,6 +245,7 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
       return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
 
    populateMapWithRow(iter, pValues);
+   
    // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
    if (++iter != rowset.end())
    {
