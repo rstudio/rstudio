@@ -100,6 +100,14 @@ Error handleRead(
    const std::set<std::string>& fields,
    std::map<std::string, std::string>* pValues)
 {
+   if (fields.size() == 1)
+   {
+      std::string field = *fields.begin();
+      pValues->emplace(field, getActiveSession(user, sessionId)->readProperty(field));
+
+      return Success();
+   }
+
    return getActiveSession(user, sessionId)->readProperties(fields, pValues);
 }
 
@@ -116,10 +124,24 @@ Error handleReadAll(
             userDataDir(user.get()),
             options().getOverlayOption("server-project-sharing") == "1");
 
+      std::string field;
+      if (fields.size() == 1)
+      {
+         field = *fields.begin();
+      }
+
       for (const auto& session: sessions)
       {
          std::map<std::string, std::string> sessionProps;
-         Error error = session->readProperties(fields, &sessionProps);
+         Error error;
+         
+         if (field.empty())
+            error = session->readProperties(fields, &sessionProps);
+         else
+         {
+            sessionProps.emplace(field, session->readProperty(field));
+         }
+
          if (error)
          {
             error.addProperty("session-id", session->id());
