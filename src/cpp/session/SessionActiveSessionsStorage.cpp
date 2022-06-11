@@ -29,9 +29,8 @@ namespace storage {
 
 Error activeSessionsStorage(std::shared_ptr<IActiveSessionsStorage>* pStorage) 
 {
-   std::shared_ptr<IActiveSessionsStorage> storage;
    if (options().sessionUseFileStorage())
-      storage = std::shared_ptr<IActiveSessionsStorage>(new FileActiveSessionsStorage(options().userScratchPath()));
+      pStorage->reset(new FileActiveSessionsStorage(options().userScratchPath()));
    else
    {
       system::User user;
