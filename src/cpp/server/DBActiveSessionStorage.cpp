@@ -189,6 +189,8 @@ DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId, con
 
 Error DBActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
 {
+   static const std::string empty;
+
    *pValue = "";
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
@@ -207,7 +209,7 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
 
    database::Query query = connection->query(queryStr)
       .withInput(sessionId_)
-      .withOutput(*pValue);
+      .withOutput(empty, *pValue);
 
    bool hasData;
    error = connection->execute(query, &hasData);
@@ -245,7 +247,7 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
       return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
 
    populateMapWithRow(iter, pValues);
-   
+
    // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
    if (++iter != rowset.end())
    {
