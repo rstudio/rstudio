@@ -517,12 +517,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // client event service
       (startClientEventService)
 
-      // rpc methods
-      (rpc::initialize)
-#ifdef RSTUDIO_SERVER
-      (server_rpc::initialize)
-#endif
-
       // json-rpc listeners
       (bind(registerRpcMethod, kConsoleInput, bufferConsoleInput))
       (bind(registerRpcMethod, "suspend_for_restart", suspendForRestart))
@@ -2022,10 +2016,20 @@ int main(int argc, char * const argv[])
          }
       }
 
-      // Initialize session rpc
+      // Initialize rpc methods
       error = socket_rpc::initialize();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
+
+      error = rpc::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+
+#ifdef RSTUDIO_SERVER
+      error = server_rpc::initialize();
+      if (error)
+         return sessionExitFailure(error, ERROR_LOCATION);
+#endif
 
       // initialize overlay
       error = rsession::overlay::initialize();
