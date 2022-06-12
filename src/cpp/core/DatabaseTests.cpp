@@ -541,7 +541,7 @@ TEST_CASE("Database", "[.database]")
 
       const std::string def = "Default";
       std::string out;
-      Query selectQuery = connection->query("select text from Test where id=252").withOutput(&out, def);
+      Query selectQuery = connection->query("select text from Test where id=252").withOutput(def, out);
       REQUIRE_FALSE(connection->execute(selectQuery));
 
       CHECK(out == def);      
