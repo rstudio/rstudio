@@ -530,22 +530,6 @@ TEST_CASE("Database", "[.database]")
       CHECK(connectionStr == "host='[fd9a:3b89:ca91:43a2:0:0:0:0]' port='2345' user='joe' dbname='rstudio-test'");
       CHECK(password == "12345");
    }
-
-   test_that("Can query null fields with default values")
-   {
-      boost::shared_ptr<IConnection> connection;
-      REQUIRE_FALSE(connect(sqliteConnectionOptions(), &connection));
-
-      Query insertQuery = connection->query("insert into Test(id) values(:id)").withInput(252);
-      REQUIRE_FALSE(connection->execute(insertQuery));
-
-      const std::string def = "Default";
-      std::string out;
-      Query selectQuery = connection->query("select text from Test where id=252").withOutput(def, out);
-      REQUIRE_FALSE(connection->execute(selectQuery));
-
-      CHECK(out == def);      
-   }
 }
 
 } // namespace unit_tests

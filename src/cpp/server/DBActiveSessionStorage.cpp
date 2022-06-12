@@ -115,24 +115,12 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
    for(size_t i=0; i < iter->size(); i++)
    {
       std::string key = iter->get_properties(i).get_name();
+
       if (key == kUserId)
-      {
-         pTargetMap->insert(
-            std::pair<std::string, std::string>{
-               key,
-               std::to_string(iter->get<int>(key))
-            }
-         );
-      }
+         pTargetMap->emplace(key, std::to_string(iter->get<int>(key)));
       else
-      {
-         pTargetMap->insert(
-            std::pair<std::string, std::string>{
-               columnName(key),
-               iter->get<std::string>(key, "")
-            }
-         );
-      }
+         pTargetMap->emplace(columnName(key),
+               iter->get<std::string>(key, ""));
    }
 }
 
@@ -208,18 +196,33 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
       .append(" = :id");
 
    database::Query query = connection->query(queryStr)
-      .withInput(sessionId_)
-      .withOutput(empty, *pValue);
+      .withInput(sessionId_);
 
-   bool hasData;
-   error = connection->execute(query, &hasData);
+   database::Rowset rowset;
+   error = connection->execute(query, rowset);
 
    if (error)
       return Error("DatabaseException", errc::DBError, "Database exception during property read [ session:" + sessionId_ + " property:" + name + " ]", error, ERROR_LOCATION);
 
-   if (!hasData)
+   auto iter = rowset.begin();
+
+   if (iter == rowset.end())
       return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
-   
+
+   if (name != kUserId)
+      *pValue = iter->get<std::string>(0, "");
+   else
+      *pValue = std::to_string(iter->get<int>(0));
+
+   // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
+   if (++iter != rowset.end())
+   {
+      int count = 1;
+      while (iter++ != rowset.end())
+         ++count;
+      return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
+   }
+
    return Success();
 }
 
@@ -236,7 +239,7 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
    database::Query query = connection->query("SELECT " + namesString + " FROM " + kTableName + " WHERE " + kSessionIdColumnName + "=:id")
       .withInput(sessionId_);
 
-   database::Rowset rowset{};
+   database::Rowset rowset;
    error = connection->execute(query, rowset);
 
    if (error)
@@ -253,7 +256,7 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
    {
       int count = 1;
       while (iter++ != rowset.end())
-         count++;
+         ++count;
       return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
    }
 
@@ -302,7 +305,7 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
 
    database::Query query = connection->query("SELECT * FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
-   database::Rowset rowset{};
+   database::Rowset rowset;
 
    if (error)
       return error;
@@ -321,7 +324,7 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
       {
          int count = 1;
          while (iter++ != rowset.end())
-            count++;
+            ++count;
          return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
       }
 
@@ -372,7 +375,7 @@ Error DBActiveSessionStorage::destroy()
 
    database::Query query = connection->query("DELETE FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
-   database::Rowset rowset{};
+   database::Rowset rowset;
 
    error = connection->execute(query, rowset);
 

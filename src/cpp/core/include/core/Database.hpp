@@ -99,17 +99,7 @@ public:
       statement_.exchange(soci::into(out));
       return *this;
    }
-
-   template <typename T>
-   Query& withOutput(const T& defaultVal, T& out)
-   {
-      soci::indicator ind;
-      statement_.exchange(soci::into(out, ind));
-      if (ind == soci::indicator::i_null)
-         out = defaultVal;
-      return *this;
-   }
-
+   
    template <typename T>
    Query& withOutput(T& out, const std::string& varName)
    {
