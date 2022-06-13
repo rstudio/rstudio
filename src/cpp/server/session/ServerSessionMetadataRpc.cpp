@@ -177,6 +177,15 @@ Error handleDelete(
    return getActiveSession(user, sessionId)->destroy();
 }
 
+Error handleValidate(
+   const system::User& user,
+   const std::string& sessionId,
+   bool* pValid)
+{
+   *pValid = getActiveSession(user, sessionId)->validate(user.getHomePath(), false);
+   return Success();
+}
+
 Error handleCount(const system::User& user, const boost::optional<std::string>& sessionId, size_t* pCount)
 {
    if (sessionId)
@@ -465,6 +474,31 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
       }
       else
          response.setResult(true);
+   }
+   else if (operation == kSessionStorageValidateOp)
+   {
+      std::string sessionId;
+      error = json::readObject(rpcRequest.kwparams, kSessionStorageIdField, sessionId);
+      if (error)
+      {
+         json::errc::errc_t err = json::errc::ParamTypeMismatch;
+         if (json::isMissingMemberError(error))
+            err = json::errc::ParamMissing;
+         error = baseError(err, error, ERROR_LOCATION);
+         LOG_ERROR(error);
+         return json::setJsonRpcError(error, &pConnection->response(), true);
+      }
+
+      bool valid = false;
+      error = handleValidate(sessionOwner.get(), sessionId, &valid);
+      if (error)
+      {
+         error = baseError(json::errc::ExecutionError, error, ERROR_LOCATION);
+         LOG_ERROR(error);
+         return json::setJsonRpcError(error, &pConnection->response(), true);
+      }
+      else
+         response.setResult(valid);
    }
    else 
    {

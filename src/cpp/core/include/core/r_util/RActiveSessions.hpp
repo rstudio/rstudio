@@ -47,6 +47,7 @@ constexpr const char * kSessionStroageReadAllOp = "read_all";
 constexpr const char * kSessionStorageWriteOp = "write";
 constexpr const char * kSessionStorageCountOp = "count";
 constexpr const char * kSessionStorageDeleteOp = "delete";
+constexpr const char * kSessionStorageValidateOp = "validate";
 
 // Fiels in the RPC bodies
 constexpr const char * kSessionStorageOperationField = "operation";
@@ -55,6 +56,7 @@ constexpr const char * kSessionStorageFieldsField = "fields";
 constexpr const char * kSessionStorageIdField = "id";
 constexpr const char * kSessionStorageSessionsField = "sessions";
 constexpr const char * kSessionStorageCountField = "count";
+constexpr const char * kSessionStorageProjectSharingField = "projectSharingEnabled";
 
 // End RPC constants ========================================================
 

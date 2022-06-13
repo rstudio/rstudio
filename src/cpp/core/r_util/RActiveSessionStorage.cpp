@@ -380,10 +380,34 @@ Error RpcActiveSessionStorage::isValid(bool* pValue)
 {
    LOG_DEBUG_MESSAGE("Checking whether session is valid for id: " + id_);
    
-   std::string created;
-   readProperty(ActiveSession::kCreated, &created);
+   json::Object body;
+   body[kSessionStorageUserIdField] = user_.getUserId();
+   body[kSessionStorageIdField] = id_;
+   body[kSessionStorageOperationField] = kSessionStorageValidateOp;
+   
+   json::JsonRpcRequest request;
+   request.method = kSessionStorageRpc;
+   request.kwparams = body;
 
-   *pValue = !created.empty();
+   json::JsonRpcResponse response;
+   Error error = invokeRpcFunc_(request, &response);
+   if (error)
+      return error;
+
+   if (!response.result().isBool())
+   {
+      error = Error(json::errc::ParseError, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unexpected response from the server when validating session " + id_ + " owned by user " + user_.getUsername());
+      error.addProperty("response", response.result().write());
+
+      LOG_ERROR(error);
+      return error;
+   }
+
+   *pValue = response.result().getBool();
+
    return Success();
 }
 
