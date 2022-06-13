@@ -115,7 +115,6 @@ public:
    static const std::string kLabel;
    static const std::string kProject;
    static const std::string kSavePromptRequired;
-   static const std::string kSessionSuspendData;
    static const std::string kRunning;
    static const std::string kRVersion;
    static const std::string kRVersionHome;
@@ -200,7 +199,6 @@ public:
                kLastUsed,
                kProject,
                kSavePromptRequired,
-               kSessionSuspendData,
                kRunning,
                kRVersion,
                kRVersionHome,
@@ -467,7 +465,7 @@ public:
          LOG_DEBUG_MESSAGE("Ending session: " + id() + " with previous activityState: " + curState);
    }
 
-   uintmax_t suspendSize()
+   uintmax_t suspendSize() const
    {
       FilePath suspendPath = scratchPath_.completePath("suspended-session-data");
       if (!suspendPath.exists())

@@ -42,7 +42,6 @@ const std::string ActiveSession::kLastUsed = "last_used";
 const std::string ActiveSession::kLabel = "label";
 const std::string ActiveSession::kProject = "project";
 const std::string ActiveSession::kSavePromptRequired = "save_prompt_required";
-const std::string ActiveSession::kSessionSuspendData = "suspended_session_data";
 const std::string ActiveSession::kRunning = "running";
 const std::string ActiveSession::kRVersion = "r_version";
 const std::string ActiveSession::kRVersionHome = "r_version_home";
