@@ -326,15 +326,15 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
 
    if ((operation != kSessionStroageReadAllOp) && !sessionOwner)
       return json::setJsonRpcError(
-         missingFieldError(baseError, username, kSessionStorageUserIdField, ERROR_LOCATION), &pConnection->response(), true);
+         missingFieldError(baseError, kSessionStorageUserIdField, body, ERROR_LOCATION), &pConnection->response(), true);
 
    if ((operation != kSessionStroageReadAllOp) && (operation != kSessionStorageCountOp) && !rpcRequest.kwparams.hasMember(kSessionStorageIdField))
       return json::setJsonRpcError(
-         missingFieldError(baseError, username, kSessionStorageIdField, ERROR_LOCATION), &pConnection->response(), true);
+         missingFieldError(baseError, kSessionStorageIdField, body, ERROR_LOCATION), &pConnection->response(), true);
 
-   if ((operation != kSessionStorageCountOp) && (operation != kSessionStorageDeleteOp) && !rpcRequest.kwparams.hasMember(kSessionStorageFieldsField))
+   if ((operation != kSessionStorageCountOp) && (operation != kSessionStorageDeleteOp) && (operation != kSessionStorageValidateOp) && !rpcRequest.kwparams.hasMember(kSessionStorageFieldsField))
       return json::setJsonRpcError(
-         missingFieldError(baseError, username, kSessionStorageFieldsField, ERROR_LOCATION), &pConnection->response(), true);
+         missingFieldError(baseError, kSessionStorageFieldsField, body, ERROR_LOCATION), &pConnection->response(), true);
 
    if (operation == kSessionStorageWriteOp)
    {
