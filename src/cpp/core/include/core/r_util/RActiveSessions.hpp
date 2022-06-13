@@ -256,9 +256,13 @@ public:
 
    void setActivityState(const std::string& activityState, bool isTransition)
    {
-      writeProperty(kActivityState, activityState);
       if (isTransition)
-         setLastStateUpdated();
+         writeProperties({
+            {kActivityState, activityState},
+            {kLastStateUpdated, getNowAsTimestamp()}
+         });
+      else
+         writeProperty(kActivityState, activityState);
    }
 
    std::string editor() const
@@ -601,9 +605,13 @@ public:
 
    void setTimestampProperty(const std::string& property)
    {
+      writeProperty(property, getNowAsTimestamp());
+   }
+
+   static std::string getNowAsTimestamp()
+   {
       double now = date_time::millisecondsSinceEpoch();
-      std::string value = safe_convert::numberToString(now);
-      writeProperty(property, value);
+      return safe_convert::numberToString(now);
    }
 
    double timestampProperty(const std::string& property) const
@@ -620,8 +628,7 @@ public:
    {
       if (!empty())
       {
-         std::string suspendTime = boost::posix_time::to_iso_extended_string(time);
-         writeProperty(property, suspendTime);
+         writeProperty(property, getAsPTimestamp(time));
       }
    }
 
@@ -653,6 +660,18 @@ public:
          }
       }
       return boost::posix_time::not_a_date_time;
+   }
+
+   static std::string getNowAsPTimestamp()
+   {
+      const boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
+      return getAsPTimestamp(now);
+   }
+
+
+   static std::string getAsPTimestamp(const boost::posix_time::ptime& time)
+   {
+      return boost::posix_time::to_iso_extended_string(time);
    }
 
    void setRunning(bool running)

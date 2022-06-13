@@ -99,12 +99,14 @@ Error ActiveSessions::create(const std::string& project,
       {ActiveSession::kLaunchParameters, ""},
       {ActiveSession::kLabel, project == kProjectNone ? workingDir : project},
       {ActiveSession::kActivityState, kActivityStateLaunching},
-      {ActiveSession::kEditor, editor}};
+      {ActiveSession::kEditor, editor}
+   };
+
+   if (editor == kWorkbenchRStudio)
+     initialMetadata.emplace(ActiveSession::kLastResumed, ActiveSession::getNowAsPTimestamp());
 
    auto session = get(id);
    session->writeProperties(initialMetadata);
-   if (editor == kWorkbenchRStudio)
-      session->setLastResumed();
 
    // return the id if requested
    if (pId != NULL)
