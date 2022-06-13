@@ -61,6 +61,7 @@ std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
       {
          std::string sessionId = iter->get<std::string>("session_id");
          sessions.push_back(sessionId);
+         ++iter;
       }
    }
    else
