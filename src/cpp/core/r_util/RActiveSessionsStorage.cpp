@@ -103,35 +103,32 @@ RpcActiveSessionsStorage::RpcActiveSessionsStorage(const core::system::User& use
 {
 }
 
-std::shared_ptr<r_util::IActiveSessionsStorage> RpcActiveSessionsStorage::createDefaultStorage(const system::User& user, const FilePath& rootStoragePath) 
+InvokeRpc RpcActiveSessionsStorage::getDefaultRpcFunc() 
 {
-   return std::shared_ptr<r_util::IActiveSessionsStorage>(new r_util::RpcActiveSessionsStorage(
-      user,
-      rootStoragePath,
-      [](const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
-      {
-         FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
-         LOG_DEBUG_MESSAGE("Invoking rserver RPC '" + request.method + "' on socket " + 
-               rpcSocket.getAbsolutePath());
+   return [](const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
+   {
+      FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
+      LOG_DEBUG_MESSAGE("Invoking rserver RPC '" + request.method + "' on socket " + 
+            rpcSocket.getAbsolutePath());
 
-         json::Value result;
-         Error error = socket_rpc::invokeRpc(rpcSocket, request.method, request.toJsonObject(), &result);
-         if (error)
-            return error;
-
-         
-         bool success = json::JsonRpcResponse::parse(result, pResponse);
-         if (!success)
-         {
-            error = Error(json::errc::ParseError, ERROR_LOCATION);
-            error.addProperty(
-               "description",
-               "Unable to parse the response for RPC request: " + request.toJsonObject().write());
-            error.addProperty("response", result.write());
-         }
-
+      json::Value result;
+      Error error = socket_rpc::invokeRpc(rpcSocket, request.method, request.toJsonObject(), &result);
+      if (error)
          return error;
-      }));
+
+      
+      bool success = json::JsonRpcResponse::parse(result, pResponse);
+      if (!success)
+      {
+         error = Error(json::errc::ParseError, ERROR_LOCATION);
+         error.addProperty(
+            "description",
+            "Unable to parse the response for RPC request: " + request.toJsonObject().write());
+         error.addProperty("response", result.write());
+      }
+
+      return error;
+   };
 }
 
 

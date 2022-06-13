@@ -59,7 +59,7 @@ namespace r_util {
    public:
       explicit RpcActiveSessionsStorage(const core::system::User& user, const FilePath& rootStoragePath, InvokeRpc invokeRpcFunc);
 
-      static std::shared_ptr<r_util::IActiveSessionsStorage> createDefaultStorage(const core::system::User& user, const FilePath& rootStoragePath);
+      static InvokeRpc getDefaultRpcFunc();
 
       std::vector<std::string> listSessionIds() const override;
       size_t getSessionCount() const  override;
