@@ -44,9 +44,12 @@ std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
       LOG_ERROR(error);
    }
 
+   system::UidType uid = user_.getUserId();
+   const std::string& uname = user_.getUsername();
+
    database::Query query = connection->query("SELECT session_id FROM active_session_metadata WHERE user_id=(SELECT id FROM licensed_users WHERE user_id=:id AND user_name=:name)")
-      .withInput(user_.getUserId())
-      .withInput(user_.getUsername());
+      .withInput(uid)
+      .withInput(uname);
    
    database::Rowset rowset{};
    error = connection->execute(query, rowset);
@@ -78,10 +81,13 @@ size_t DBActiveSessionsStorage::getSessionCount() const
       LOG_ERROR(error);
    else
    {
+      system::UidType uid = user_.getUserId();
+      const std::string& uname = user_.getUsername();
+
       int count;
       database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE user_id=(SELECT id FROM licensed_users WHERE user_id=:id AND user_name=:name)")
-         .withInput(user_.getUserId())
-         .withInput(user_.getUsername())
+         .withInput(uid)
+         .withInput(uname)
          .withOutput(count);
 
       error = connection->execute(query);
