@@ -14,10 +14,17 @@
  */
 package org.rstudio.core.client.hyperlink;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.Event.NativePreviewEvent;
+import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -28,9 +35,10 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPopupDisplay
 {
-    public HyperlinkPopupPanel()
+    public HyperlinkPopupPanel(Hyperlink hyperlink)
     {
         super();
+        hyperlink_ = hyperlink;
         autoConstrain_ = false;
         setStylePrimaryName(ConsoleResources.INSTANCE.consoleStyles().completionPopup());
 
@@ -52,6 +60,40 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
             }
         });
         
+        handler_ = new NativePreviewHandler()
+        {
+            @Override
+            public void onPreviewNativeEvent(NativePreviewEvent previewEvent)
+            {
+                // any click outside the container or help popup should dismiss
+                if (previewEvent.getTypeInt() == Event.ONMOUSEDOWN)
+                {
+                    Element targetEl = previewEvent.getNativeEvent().getEventTarget().cast();
+                    if (!container_.getElement().isOrHasChild(targetEl) &&
+                        (container_ == null) || 
+                        (container_.getElement() == null) || 
+                        !container_.getElement().isOrHasChild(targetEl))
+                    {
+                        hide();
+                    }
+                }
+                
+                if (previewEvent.getTypeInt() == Event.ONKEYDOWN)
+                {
+                    NativeEvent event = previewEvent.getNativeEvent();
+                    int keyCode = event.getKeyCode();
+                    if (keyCode == KeyCodes.KEY_ESCAPE)
+                    {
+                        event.stopPropagation();
+                        hide();
+                    }
+                    else if (keyCode == KeyCodes.KEY_F1)
+                    {
+                        hyperlink_.showHelp();
+                    }
+                }
+            }
+        };
     }
 
     public void setContent(Widget content)
@@ -60,6 +102,8 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
         container_.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().hyperlinkPopup());
         setWidget(container_);
         container_.add(content);
+
+        registerNativeHandler(handler_);
     }
 
     @Override
@@ -68,5 +112,29 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
         super.setPopupPosition(left, top);
     }
 
+    @Override
+    public void hide()
+    {
+        unregisterNativeHandler();
+        super.hide();
+    }
+
+    private void registerNativeHandler(NativePreviewHandler handler)
+    {
+        if (handlerRegistration_ != null)
+            handlerRegistration_.removeHandler();
+        handlerRegistration_ = Event.addNativePreviewHandler(handler);
+    }
+
+    private void unregisterNativeHandler()
+    {
+        if (handlerRegistration_ != null)
+            handlerRegistration_.removeHandler();
+    }
+
     private VerticalPanel container_;
+    private final NativePreviewHandler handler_;
+    private HandlerRegistration handlerRegistration_;
+    private Hyperlink hyperlink_;
+   
 }
