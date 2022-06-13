@@ -98,12 +98,18 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
 
     public void setContent(Widget content)
     {
+        if (current_ != null)
+        {
+            current_.hide();
+            current_ = null;
+        }
         container_ = new VerticalPanel();
         container_.addStyleName(HyperlinkResources.INSTANCE.hyperlinkStyles().hyperlinkPopup());
         setWidget(container_);
         container_.add(content);
 
         registerNativeHandler(handler_);
+        current_ = this;
     }
 
     @Override
@@ -137,4 +143,5 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
     private HandlerRegistration handlerRegistration_;
     private Hyperlink hyperlink_;
    
+    private static HyperlinkPopupPanel current_;
 }
