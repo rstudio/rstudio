@@ -1169,7 +1169,9 @@ void readQuartoProjectConfig(const FilePath& configFile,
                         // migrate 'site' to 'website'
                         if (projValue == kQuartoProjectSite)
                            projValue = kQuartoProjectWebsite;
-                        *pType = projValue;
+                        
+                        if (pType != nullptr)
+                           *pType = projValue;
                      }
                      else if (projKey == "output-dir" && pOutputDir != nullptr) {
                         *pOutputDir = projValue;
@@ -1270,11 +1272,8 @@ FilePath getQuartoExecutionDir(const std::string& docPath)
    }
 
    // Read the Quarto configuration file
-   std::string executeDir;
-   quarto::readQuartoProjectConfig(quartoConfig,
-            nullptr, // type
-            nullptr, // output dir
-            &executeDir);
+   std::string type, outputDir, executeDir;
+   quarto::readQuartoProjectConfig(quartoConfig, &type, &outputDir, &executeDir);
 
    if (executeDir == quarto::kQuartoExecuteDirProject)
    {
