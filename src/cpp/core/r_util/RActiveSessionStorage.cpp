@@ -379,9 +379,11 @@ Error RpcActiveSessionStorage::destroy()
 Error RpcActiveSessionStorage::isValid(bool* pValue)
 {
    LOG_DEBUG_MESSAGE("Checking whether session is valid for id: " + id_);
-   // TODO: actual validation
-   // We're within the session, so it must be valid.
-   *pValue = true;
+   
+   std::string created;
+   readProperty(ActiveSession::kCreated, &created);
+
+   *pValue = !created.empty();
    return Success();
 }
 
