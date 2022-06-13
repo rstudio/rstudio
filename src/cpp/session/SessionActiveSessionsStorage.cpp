@@ -27,6 +27,14 @@ namespace rstudio {
 namespace session {
 namespace storage {
 
+InvokeRpc getSessionRpcInvoker()
+{
+   return [](const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
+   {
+      return server_rpc::invokeServerRpc(request, pResponse);
+   };
+}
+
 Error activeSessionsStorage(std::shared_ptr<IActiveSessionsStorage>* pStorage) 
 {
    FilePath storagePath = options().userScratchPath();
@@ -45,10 +53,7 @@ Error activeSessionsStorage(std::shared_ptr<IActiveSessionsStorage>* pStorage)
       pStorage->reset(new RpcActiveSessionsStorage(
             user,
             storagePath,
-            [](const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
-            {
-               return server_rpc::invokeServerRpc(request, pResponse);
-            }));
+            getSessionRpcInvoker()));
    }
 
    return Success();

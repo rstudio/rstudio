@@ -23,6 +23,8 @@ namespace rstudio {
 namespace session {
 namespace storage {
 
+core::r_util::InvokeRpc getSessionRpcInvoker();
+
 core::Error activeSessionsStorage(std::shared_ptr<core::r_util::IActiveSessionsStorage>* pStorage);
 
 } // namespace storage
