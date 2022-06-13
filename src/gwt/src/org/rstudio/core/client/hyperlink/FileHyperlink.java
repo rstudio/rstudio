@@ -17,10 +17,7 @@ package org.rstudio.core.client.hyperlink;
 import java.util.Map;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.ui.VerticalPanel;
-import com.google.gwt.user.client.ui.Widget;
 
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
@@ -75,15 +72,6 @@ public class FileHyperlink extends Hyperlink
                 }
             }
         });
-    }
-
-    @Override
-    public void getPopupContent(CommandWithArg<Widget> onReady)
-    {
-        final VerticalPanel panel = new VerticalPanel();
-        panel.add(new HyperlinkPopupHeader(filename));
-        
-        onReady.execute(panel);
     }
 
     public static boolean handles(String url)

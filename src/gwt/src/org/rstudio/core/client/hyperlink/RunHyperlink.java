@@ -61,7 +61,7 @@ public class RunHyperlink extends Hyperlink
     {
         final VerticalPanel panel = new VerticalPanel();
 
-        panel.add(new HyperlinkPopupHeader(code_));
+        panel.add(new RunHyperlinkPopupHeader(code_));
         panel.add(new HelpPreview(fun_, package_, () -> 
         {
             onReady.execute(panel);
@@ -71,12 +71,6 @@ public class RunHyperlink extends Hyperlink
     public static boolean handles(String url)
     {
         return HYPERLINK_PATTERN.test(url);
-    }
-    
-    @Override
-    public String getAnchorClass()
-    {
-        return styles_.hyperlinkRun();
     }
 
     private String code_;    

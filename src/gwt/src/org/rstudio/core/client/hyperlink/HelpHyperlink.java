@@ -55,18 +55,13 @@ public class HelpHyperlink extends Hyperlink
     public void getPopupContent(CommandWithArg<Widget> onReady)
     {
         final VerticalPanel panel = new VerticalPanel();
-        panel.add(new HyperlinkPopupHeader(topic_, "{" + pkg_ + "}"));
+        panel.add(new HelpHyperlinkPopupHeader(topic_, pkg_));
         panel.add(new HelpPreview(topic_, pkg_, () -> 
         {
             onReady.execute(panel);
         }));
     }
 
-    public String getAnchorClass()
-    {
-        return styles_.hyperlinkHelp();
-    }
-    
     public static boolean handles(String url, Map<String, String> params)
     {
         if (StringUtil.equals(url, "ide:help") || StringUtil.equals(url, "rstudio:help"))

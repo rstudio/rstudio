@@ -56,11 +56,15 @@ public abstract class Hyperlink
                 getPopupContent((content) -> {
                     if (visible_)
                     {
-                        popup_.setContent(content);
+                        if (content != null)
+                        {
+                            popup_.setContent(content);
 
-                        Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
-                        HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
-                        popup_.setPopupPositionAndShow(positioner);
+                            Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
+                            HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
+                            popup_.setPopupPositionAndShow(positioner);
+                        }
+                        
                     }
                     
                 });
@@ -70,7 +74,7 @@ public abstract class Hyperlink
                 visible_ = false;
                 popup_.hide();
             }
-            else if (event.getTypeInt() == Event.ONCLICK && clickable()) 
+            else if (event.getTypeInt() == Event.ONCLICK) 
             {
                 visible_ = false;
                 popup_.hide();
@@ -86,13 +90,12 @@ public abstract class Hyperlink
         return styles_.hyperlink();
     }
 
-    public boolean clickable()
-    {
-        return true;
-    }
     public abstract void onClick();
     
-    public abstract void getPopupContent(CommandWithArg<Widget> onReady);
+    public void getPopupContent(CommandWithArg<Widget> onReady)
+    {
+        onReady.execute(null);
+    }
 
     public static Hyperlink create(String url, String paramsTxt, String text, String clazz)
     {
