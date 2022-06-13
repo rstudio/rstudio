@@ -42,7 +42,6 @@ const std::string ActiveSession::kLastUsed = "last_used";
 const std::string ActiveSession::kLabel = "label";
 const std::string ActiveSession::kProject = "project";
 const std::string ActiveSession::kSavePromptRequired = "save_prompt_required";
-const std::string ActiveSession::kSessionSuspendData = "suspended_session_data";
 const std::string ActiveSession::kRunning = "running";
 const std::string ActiveSession::kRVersion = "r_version";
 const std::string ActiveSession::kRVersionHome = "r_version_home";
@@ -56,14 +55,9 @@ const std::string ActiveSession::kSuspendTimestamp = "suspend_timestamp";
 const std::string ActiveSession::kBlockingSuspend = "blocking_suspend";
 const std::string ActiveSession::kLaunchParameters = "launch_parameters";
 
-ActiveSessions::ActiveSessions(const FilePath& rootStoragePath) : 
-   ActiveSessions(std::make_shared<FileActiveSessionsStorage>(FileActiveSessionsStorage(rootStoragePath)), rootStoragePath)
-{
-   
-}
 
-ActiveSessions::ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath)
-   : storage_(storage)
+ActiveSessions::ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath) :
+   storage_(storage)
 {
    storagePath_ = storagePath(rootStoragePath);
    Error error = storagePath_.ensureDirectory();
@@ -81,8 +75,13 @@ Error ActiveSessions::create(const std::string& project,
    std::string id;
    while (id.empty())
    {
+      bool hasId = true;
       std::string candidateId = core::r_util::generateScopeId();
-      if (!storage_->hasSessionId(candidateId))
+      Error error = storage_->hasSessionId(candidateId, &hasId);
+      if (error)
+         return error;
+
+      if (!hasId)
          id = candidateId;
    }
 
@@ -93,25 +92,26 @@ Error ActiveSessions::create(const std::string& project,
    std::map<std::string, std::string> initialMetadata = {
       {ActiveSession::kProject, project},
       {ActiveSession::kWorkingDir, workingDir},
-      {ActiveSession::kInitial, initial ? "true" : "false"},
-      {ActiveSession::kRunning, "false"},
+      {ActiveSession::kInitial, initial ? "1" : "0"},
+      {ActiveSession::kRunning, "0"},
       {ActiveSession::kLastUsed, millisTime},
       {ActiveSession::kCreated, millisTime},
       {ActiveSession::kLaunchParameters, ""},
       {ActiveSession::kLabel, project == kProjectNone ? workingDir : project},
       {ActiveSession::kActivityState, kActivityStateLaunching},
-      {ActiveSession::kEditor, editor}};
+      {ActiveSession::kEditor, editor}
+   };
 
    if (editor == kWorkbenchRStudio)
-      initialMetadata[ActiveSession::kLastResumed] = millisTime;
+     initialMetadata.emplace(ActiveSession::kLastResumed, ActiveSession::getNowAsPTimestamp());
 
-   storage_->initSessionProperties(id, initialMetadata);
+   auto session = get(id);
+   session->writeProperties(initialMetadata);
 
    // return the id if requested
-   if (pId != nullptr)
-   {
+   if (pId != NULL)
       *pId = id;
-   }
+   
    return Success();
 }
 
@@ -228,14 +228,15 @@ void notifyCountChanged(boost::shared_ptr<ActiveSessions> pSessions,
 
 } // anonymous namespace
 
-void trackActiveSessionCount(const FilePath& rootStoragePath,
+void trackActiveSessionCount(std::shared_ptr<IActiveSessionsStorage> storage,
+                             const FilePath& rootStoragePath,
                              const FilePath& userHomePath,
                              bool projectSharingEnabled,
                              boost::function<void(size_t)> onCountChanged)
 {
 
    boost::shared_ptr<ActiveSessions> pSessions(
-                                          new ActiveSessions(rootStoragePath));
+                                          new ActiveSessions(storage, rootStoragePath));
 
    core::system::file_monitor::Callbacks cb;
    cb.onRegistered = boost::bind(notifyCountChanged,

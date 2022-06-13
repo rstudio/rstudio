@@ -99,7 +99,7 @@ public:
       statement_.exchange(soci::into(out));
       return *this;
    }
-
+   
    template <typename T>
    Query& withOutput(T& out, const std::string& varName)
    {

@@ -49,6 +49,7 @@
 #include <core/system/Xdg.hpp>
 
 #include <core/r_util/RPackageInfo.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RUtil.hpp>
@@ -62,6 +63,7 @@
 #include <r/session/RSession.hpp>
 #include <r/session/RConsoleActions.hpp>
 
+#include <session/SessionActiveSessionsStorage.hpp>
 #include <session/SessionOptions.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionClientEvent.hpp>
@@ -1916,7 +1918,21 @@ r_util::ActiveSessions& activeSessions()
 {
    static boost::shared_ptr<r_util::ActiveSessions> pSessions;
    if (!pSessions)
-      pSessions.reset(new r_util::ActiveSessions(userScratchPath()));
+   {
+      std::shared_ptr<r_util::IActiveSessionsStorage> storage;
+      Error error = storage::activeSessionsStorage(&storage);
+
+      // The only real error we can get here is if the current user can't 
+      // be retrieved, but if that's the case we should have exited with a 
+      // failure during start-up. We'll probably SegFault in any calls to the
+      // ActiveSession object, but the process is in a very broken state anyway
+      // Log before we crash so we can know what went wrong
+      if (error)
+         LOG_ERROR(error);
+
+      pSessions.reset(new r_util::ActiveSessions(storage, userScratchPath()));
+   }
+   
    return *pSessions;
 }
 

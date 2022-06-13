@@ -21,27 +21,24 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/system/User.hpp>
 
 namespace rstudio {
 namespace server {
 namespace storage {
 
-using namespace core;
-using namespace core::r_util;
-
-class DBActiveSessionsStorage : public IActiveSessionsStorage
+class DBActiveSessionsStorage : public core::r_util::IActiveSessionsStorage
 {
 public:
-   explicit DBActiveSessionsStorage(const std::string& userId, const FilePath& rootStoragePath);
+   explicit DBActiveSessionsStorage(const core::system::User& user);
    ~DBActiveSessionsStorage() = default;
-   core::Error initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties) override;
+   
    std::vector< std::string > listSessionIds() const override;
    size_t getSessionCount() const override;
-   std::shared_ptr<IActiveSessionStorage> getSessionStorage(const std::string& id) const override;
-   bool hasSessionId(const std::string& sessionId) const override;
+   std::shared_ptr<core::r_util::IActiveSessionStorage> getSessionStorage(const std::string& id) const override;
+   core::Error hasSessionId(const std::string& sessionId, bool* pHasSessionId) const override;
 private:
-   std::string userId_;
-   FilePath rootStoragePath_;
+   core::system::User user_;
 };
 
 } // namespace storage

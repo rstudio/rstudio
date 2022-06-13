@@ -106,6 +106,12 @@ CREATE TABLE active_session_metadata(
    /* Time the session was last resumed */
    last_resumed TEXT,
 
+   /* Things which are blocking the suspension of the session, if any */
+   blocking_suspend TEXT,
+
+   /* Time at which the session suspeneded */
+   suspend_timestamp TEXT,
+
    PRIMARY KEY (session_id),
    
    /* User entries should not be deleted, but if they are, remove all of that user's sessions */
@@ -115,4 +121,4 @@ CREATE TABLE active_session_metadata(
 /* Index to be used for sorting revoked cookies by expiration */
 CREATE INDEX revoked_cookie_expiration_index ON revoked_cookie(expiration);
 
-INSERT INTO schema_version (current_version, release_name) VALUES ('20220518194359756054952', 'Spotted Wakerobin');
+INSERT INTO schema_version (current_version, release_name) VALUES ('20220610180402900844286', 'Spotted Wakerobin');

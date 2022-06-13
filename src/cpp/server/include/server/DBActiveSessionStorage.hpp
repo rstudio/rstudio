@@ -20,35 +20,39 @@
 #include <core/r_util/RActiveSessionStorage.hpp>
 
 #include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
 
 namespace rstudio {
 namespace server {
 namespace storage {
 
-using namespace core;
-using namespace core::r_util;
-
-class DBActiveSessionStorage : public IActiveSessionStorage 
+class DBActiveSessionStorage : public core::r_util::IActiveSessionStorage 
 {
 public:
-   explicit DBActiveSessionStorage(const std::string& sessionId);
-   explicit DBActiveSessionStorage(const std::string& sessionId, boost::shared_ptr<core::database::IConnection> overrideConnection);
+   explicit DBActiveSessionStorage(const std::string& sessionId, const core::system::User& user);
+   explicit DBActiveSessionStorage(
+      const std::string& sessionId,
+      const core::system::User& user,
+      boost::shared_ptr<core::database::IConnection> overrideConnection);
    ~DBActiveSessionStorage() = default;
-   Error readProperty(const std::string& name, std::string* pValue) override;   
-   Error readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
-   Error readProperties(std::map<std::string, std::string>* pValues) override;
-   Error writeProperty(const std::string& name, const std::string& value) override;
-   Error writeProperties(const std::map<std::string, std::string>& properties) override;
-   Error destroy() override;
-   Error isValid(bool* pValue) override;
-   Error isEmpty(bool* pValue) override;
+   core::Error readProperty(const std::string& name, std::string* pValue) override;   
+   core::Error readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues) override;
+   core::Error readProperties(std::map<std::string, std::string>* pValues) override;
+   core::Error writeProperty(const std::string& name, const std::string& value) override;
+   core::Error writeProperties(const std::map<std::string, std::string>& properties) override;
+   core::Error destroy() override;
+   core::Error isValid(bool* pValue) override;
+
 private:
    std::string sessionId_;
-   boost::shared_ptr<database::IConnection> overrideConnection_;
-   Error getConnectionOrOverride(boost::shared_ptr<database::IConnection>* connection);
+   core::system::User user_;
+
+   boost::shared_ptr<core::database::IConnection> overrideConnection_;
+
+   core::Error getConnectionOrOverride(boost::shared_ptr<core::database::IConnection>* connection);
 };
 
-Error getConn(boost::shared_ptr<database::IConnection>* connection);
+core::Error getConn(boost::shared_ptr<core::database::IConnection>* connection);
 
 namespace errc
 {

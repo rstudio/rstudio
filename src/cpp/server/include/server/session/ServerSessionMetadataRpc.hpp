@@ -1,5 +1,5 @@
 /*
- * ServerLogVars.cpp
+ * SessionSessionMetadataRpc.hpp
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -13,33 +13,19 @@
  *
  */
 
-#include "ServerLogVars.hpp"
+#ifndef SERVER_SESSION_METADATA_RPC_HPP
+#define SERVER_SESSION_METADATA_RPC_HPP
 
-#include <core/LogOptions.hpp>
-
-#include <server/session/ServerSessionManager.hpp>
-
-using namespace rstudio::core;
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace server {
-namespace log_vars {
+namespace session_metadata {
 
-namespace {
+core::Error initialize();
 
-void sessionProfileFilter(core::r_util::SessionLaunchProfile* pProfile)
-{
-   core::log::forwardLogOptionsEnvVars(&(pProfile->config.environment));
-}
-
-} // anonymous namespace
-
-Error initialize()
-{
-   sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
-   return Success();
-}
-
-} // namespace log_vars
+} // namespace session_metadata
 } // namespace server
 } // namespace rstudio
+
+#endif

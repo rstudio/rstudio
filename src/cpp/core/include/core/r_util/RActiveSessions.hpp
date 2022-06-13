@@ -37,6 +37,29 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
+// Constants for RPCs related to session metadata ===========================
+// RPC endpoint
+constexpr const char * kSessionStorageRpc = "/storage/session_metadata";
+
+// Methods for the RPC
+constexpr const char * kSessionStorageReadOp = "read";
+constexpr const char * kSessionStroageReadAllOp = "read_all";
+constexpr const char * kSessionStorageWriteOp = "write";
+constexpr const char * kSessionStorageCountOp = "count";
+constexpr const char * kSessionStorageDeleteOp = "delete";
+constexpr const char * kSessionStorageValidateOp = "validate";
+
+// Fiels in the RPC bodies
+constexpr const char * kSessionStorageOperationField = "operation";
+constexpr const char * kSessionStorageUserIdField = "userId";
+constexpr const char * kSessionStorageFieldsField = "fields";
+constexpr const char * kSessionStorageIdField = "id";
+constexpr const char * kSessionStorageSessionsField = "sessions";
+constexpr const char * kSessionStorageCountField = "count";
+constexpr const char * kSessionStorageProjectSharingField = "projectSharingEnabled";
+
+// End RPC constants ========================================================
+
 // Transitional states - set in the activeSession metadata when rpc requests are made to change the state
 //   These will override the job launcher state.
 static const std::string kActivityStateResuming = "resuming";
@@ -94,7 +117,6 @@ public:
    static const std::string kLabel;
    static const std::string kProject;
    static const std::string kSavePromptRequired;
-   static const std::string kSessionSuspendData;
    static const std::string kRunning;
    static const std::string kRVersion;
    static const std::string kRVersionHome;
@@ -129,10 +151,7 @@ public:
 
    bool empty() const
    { 
-      bool empty = true;
-      if (storage_)
-         storage_->isEmpty(&empty);
-      return empty;
+      return storage_ == nullptr;
    }
 
    std::string id() const
@@ -165,6 +184,51 @@ public:
       }
    }
 
+   Error readProperties(const std::set<std::string>& propertyNames, std::map<std::string, std::string>* pValues) const
+   {
+      std::map<std::string, std::string> values;
+      if (!empty())
+      {
+         if (!propertyNames.empty())
+            return storage_->readProperties(propertyNames, pValues);
+         else
+         {
+            // If no properties are specified, read them all
+            std::set<std::string> allProperties {
+               kExecuting,
+               kInitial,
+               kLabel,
+               kLastUsed,
+               kProject,
+               kSavePromptRequired,
+               kRunning,
+               kRVersion,
+               kRVersionHome,
+               kRVersionLabel,
+               kWorkingDir,
+               kActivityState,
+               kLastStateUpdated,
+               kEditor,
+               kLastResumed,
+               kSuspendTimestamp,
+               kBlockingSuspend
+             };
+
+            return storage_->readProperties(allProperties, pValues);
+         }
+      }
+
+      return Success();
+   }
+
+   Error writeProperties(const std::map<std::string, std::string>& properties) const
+   {
+      if (!empty())
+         return storage_->writeProperties(properties);
+
+      return Success();
+   }
+
    std::string project() const
    {
       return readProperty(kProject);
@@ -192,9 +256,13 @@ public:
 
    void setActivityState(const std::string& activityState, bool isTransition)
    {
-      writeProperty(kActivityState, activityState);
       if (isTransition)
-         setLastStateUpdated();
+         writeProperties({
+            {kActivityState, activityState},
+            {kLastStateUpdated, getNowAsTimestamp()}
+         });
+      else
+         writeProperty(kActivityState, activityState);
    }
 
    std::string editor() const
@@ -217,7 +285,7 @@ public:
          std::string value = readProperty(kInitial);
 
          if (!value.empty())
-            return safe_convert::stringTo<bool>(value, false);
+            return value == "1" ?  true : false;
          else
             return false;
       }
@@ -232,7 +300,7 @@ public:
 
    void setInitial(bool initial)
    {
-      std::string value = safe_convert::numberToString(initial);
+      std::string value = initial ? "1" : "0";
       writeProperty(kInitial, value);
    }
 
@@ -304,14 +372,14 @@ public:
       std::string value = readProperty(kExecuting);
 
       if (!value.empty())
-         return safe_convert::stringTo<bool>(value, false);
+         return value == "1" ? true : false;
       else
          return false;
    }
 
    void setExecuting(bool executing)
    {
-      std::string value = safe_convert::numberToString(executing);
+      std::string value = executing ? "1" : "0";
       writeProperty(kExecuting, value);
    }
 
@@ -337,7 +405,7 @@ public:
       std::string value = readProperty(kRunning);
 
       if (!value.empty())
-         return safe_convert::stringTo<bool>(value, false);
+         return value == "1" ? true : false;
       else
          return false;
    }
@@ -403,7 +471,7 @@ public:
          LOG_DEBUG_MESSAGE("Ending session: " + id() + " with previous activityState: " + curState);
    }
 
-   uintmax_t suspendSize()
+   uintmax_t suspendSize() const
    {
       FilePath suspendPath = scratchPath_.completePath("suspended-session-data");
       if (!suspendPath.exists())
@@ -416,9 +484,8 @@ public:
    {
       if (!empty())
       {
-         LOG_DEBUG_MESSAGE("Removing session directory: " + scratchPath_.getAbsolutePath());
-         storage_->destroy();
-         return scratchPath_.removeIfExists();
+         LOG_DEBUG_MESSAGE("Removing session " + id_);
+         return storage_->destroy();
       }
       else
          return Success();
@@ -538,9 +605,13 @@ public:
 
    void setTimestampProperty(const std::string& property)
    {
+      writeProperty(property, getNowAsTimestamp());
+   }
+
+   static std::string getNowAsTimestamp()
+   {
       double now = date_time::millisecondsSinceEpoch();
-      std::string value = safe_convert::numberToString(now);
-      writeProperty(property, value);
+      return safe_convert::numberToString(now);
    }
 
    double timestampProperty(const std::string& property) const
@@ -557,8 +628,7 @@ public:
    {
       if (!empty())
       {
-         std::string suspendTime = boost::posix_time::to_iso_extended_string(time);
-         writeProperty(property, suspendTime);
+         writeProperty(property, getAsPTimestamp(time));
       }
    }
 
@@ -592,9 +662,21 @@ public:
       return boost::posix_time::not_a_date_time;
    }
 
+   static std::string getNowAsPTimestamp()
+   {
+      const boost::posix_time::ptime now = boost::posix_time::second_clock::universal_time();
+      return getAsPTimestamp(now);
+   }
+
+
+   static std::string getAsPTimestamp(const boost::posix_time::ptime& time)
+   {
+      return boost::posix_time::to_iso_extended_string(time);
+   }
+
    void setRunning(bool running)
    {
-         std::string value = safe_convert::numberToString(running);
+         std::string value = running ?  "1" : "0";
          writeProperty(kRunning, value);
    }
 
@@ -610,8 +692,7 @@ class IActiveSessionsStorage;
 class ActiveSessions : boost::noncopyable
 {
 public:
-   explicit ActiveSessions(const FilePath& rootStoragePath);
-   explicit ActiveSessions(const std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
+   explicit ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage, const FilePath& rootStoragePath);
 
    static FilePath storagePath(const FilePath& path)
    {
@@ -691,7 +772,8 @@ private:
    core::FilePath rootPath_;
 };
 
-void trackActiveSessionCount(const FilePath& rootStoragePath,
+void trackActiveSessionCount(std::shared_ptr<IActiveSessionsStorage> storage,
+                             const FilePath& rootStoragePath,
                              const FilePath& userHomePath,
                              bool projectSharingEnabled,
                              boost::function<void(size_t)> onCountChanged);

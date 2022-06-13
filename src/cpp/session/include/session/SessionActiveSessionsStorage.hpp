@@ -1,5 +1,5 @@
 /*
- * ServerLogVars.cpp
+ * SessionActiveSessionsStorage.hpp
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -13,33 +13,22 @@
  *
  */
 
-#include "ServerLogVars.hpp"
+#ifndef SESSION_ACTIVE_SESSIONS_STORAGE_HPP
+#define SESSION_ACTIVE_SESSIONS_STORAGE_HPP
 
-#include <core/LogOptions.hpp>
-
-#include <server/session/ServerSessionManager.hpp>
-
-using namespace rstudio::core;
+#include <shared_core/Error.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 
 namespace rstudio {
-namespace server {
-namespace log_vars {
+namespace session {
+namespace storage {
 
-namespace {
+core::r_util::InvokeRpc getSessionRpcInvoker();
 
-void sessionProfileFilter(core::r_util::SessionLaunchProfile* pProfile)
-{
-   core::log::forwardLogOptionsEnvVars(&(pProfile->config.environment));
-}
+core::Error activeSessionsStorage(std::shared_ptr<core::r_util::IActiveSessionsStorage>* pStorage);
 
-} // anonymous namespace
-
-Error initialize()
-{
-   sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
-   return Success();
-}
-
-} // namespace log_vars
-} // namespace server
+} // namespace storage
+} // namespace session
 } // namespace rstudio
+
+#endif

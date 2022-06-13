@@ -1819,6 +1819,25 @@ inline Value toJsonValue(const std::set<T>& in_set)
    return std::move(results);
 }
 
+/**
+ * @brief Internal utility function. Converts a vector value to a JSON array value.
+ *
+ * @tparam T            The C/C++ type of the vector elements.
+ *
+ * @param in_vector     The vector value to convert to a JSON array value.
+ *
+ * @return The converted JSON array value.
+ */
+template <typename T>
+inline Value toJsonValue(const std::map<std::string, T>& in_map)
+{
+   Object results;
+   for (auto&& pair : in_map)
+      results.insert(pair.first, pair.second);
+
+   return std::move(results);
+}
+
 } // namespace detail
 
 /**
@@ -2091,6 +2110,57 @@ Error readObject(const Object& in_object, const std::string& in_name, std::set<T
 }
 
 /**
+ * @brief Reads an array member from an object.
+ *
+ * @tparam T            The type of values of the array member.
+ *
+ * @param in_object     The object from which the member should be read.
+ * @param in_name       The name of the member to read.
+ * @param out_values    The set of unique values of the array member, if no error occurs.
+ *
+ * @return Success if the member could be found and its values are of type T; Error otherwise.
+ */
+template <typename T>
+Error readObject(const Object& in_object, const std::string& in_name, std::map<std::string, T>& out_values)
+{
+   Object::Iterator itr = in_object.find(in_name);
+   if ((itr == in_object.end()) || (*itr).getValue().isNull())
+      return jsonReadError(
+         JsonReadError::MISSING_MEMBER,
+         "Member " + in_name + " does not exist in the specified JSON object.",
+         ERROR_LOCATION);
+
+   if (!(*itr).getValue().isObject())
+      return jsonReadError(JsonReadError::INVALID_TYPE,
+                           "Member " + in_name + " is not an object.",
+                           ERROR_LOCATION);
+
+   Object obj = (*itr).getValue().getObject();
+   for (auto objItr = obj.begin(); objItr != obj.end(); ++objItr)
+   {
+      // NOTE: DO NOT CHANGE THIS TO A REFERENCE =====================================================================================
+      // This was a reference before, and it would cause the key to sometimes come out as gibberish. Not sure why, but a full 
+      // copy fixes it.
+      std::string key = (*objItr).getName();
+      Value value = (*objItr).getValue();
+      if (!isType<T>(value))
+      {
+         std::ostringstream msgStream;
+         msgStream << "Member " << key << " of object " + in_name << " is of type " <<  value.getType() <<
+                   " which is not compatible with the requested type " << typeid(T).name() << ".";
+         return jsonReadError(
+            JsonReadError::INVALID_TYPE,
+            msgStream.str(),
+            ERROR_LOCATION);
+      }
+
+      out_values.emplace(key, value.getValue<T>());
+   }
+
+   return Success();
+}
+
+/**
  * @brief Reads an optional array member from an object.
  *
  * @tparam T            The type of values of the array member.
@@ -2133,6 +2203,32 @@ Error readObject(const Object& in_object, const std::string& in_name, boost::opt
    out_values = boost::none;
 
    std::set<T> values;
+   Error error = readObject(in_object, in_name, values);
+   if (error && !isMissingMemberError(error))
+      return error;
+   else if (!error)
+      out_values = values;
+
+   return Success();
+}
+
+/**
+ * @brief Reads an array member from an object.
+ *
+ * @tparam T            The type of values of the array member.
+ *
+ * @param in_object     The object from which the member should be read.
+ * @param in_name       The name of the member to read.
+ * @param out_values    The set of unique values of the array member, if no error occurs.
+ *
+ * @return Success if the member could be found and its values are of type T; Error otherwise.
+ */
+template <typename T>
+Error readObject(const Object& in_object, const std::string& in_name, boost::optional<std::map<std::string, T> >& out_values)
+{
+   out_values = boost::none;
+
+   std::map<std::string, T> values;
    Error error = readObject(in_object, in_name, values);
    if (error && !isMissingMemberError(error))
       return error;

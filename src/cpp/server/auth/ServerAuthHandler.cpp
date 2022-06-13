@@ -767,7 +767,7 @@ Error getNumActiveUsers(const boost::shared_ptr<IConnection>& connection,
    size_t numActive = 0;
    bool dataReturned = false;
 
-   std::string queryStr = "SELECT count(*) FROM licensed_users WHERE locked = false AND last_sign_in > :exp";
+   std::string queryStr = "SELECT COUNT(*) FROM licensed_users WHERE locked = false AND last_sign_in > :exp";
    if (connection->driver() == Driver::Sqlite)
       boost::replace_all(queryStr, "false", "0");
 

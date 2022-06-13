@@ -16,23 +16,24 @@
 #ifndef CORE_R_UTIL_R_ACTIVE_SESSIONS_STORAGE
 #define CORE_R_UTIL_R_ACTIVE_SESSIONS_STORAGE
 
+#include <core/json/JsonRpc.hpp>
+#include <core/r_util/RActiveSessionStorage.hpp>
 #include <core/r_util/RActiveSessions.hpp>
+
 #include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {
 namespace r_util {
-
    class ActiveSession;
 
    class IActiveSessionsStorage
    {
    public:
-      virtual core::Error initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties) = 0;
       virtual std::vector< std::string > listSessionIds() const = 0;
       virtual size_t getSessionCount() const = 0;
       virtual std::shared_ptr<IActiveSessionStorage> getSessionStorage(const std::string& id) const = 0;
-      virtual bool hasSessionId(const std::string& sessionId) const = 0;
+      virtual Error hasSessionId(const std::string& sessionId, bool* pHasSessionId) const = 0;
 
    protected:
       virtual ~IActiveSessionsStorage() = default;
@@ -44,14 +45,31 @@ namespace r_util {
    public:
       explicit FileActiveSessionsStorage(const FilePath& rootStoragePath);
       ~FileActiveSessionsStorage() = default;
-      core::Error initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties) override;
       std::vector< std::string > listSessionIds() const override;
       size_t getSessionCount() const override;
       std::shared_ptr<IActiveSessionStorage> getSessionStorage(const std::string& id) const override;
-      bool hasSessionId(const std::string& sessionId) const override;
+      Error hasSessionId(const std::string& sessionId, bool* pHasSessionId) const override;
       
    private:
       FilePath storagePath_;
+   };
+
+   class RpcActiveSessionsStorage : public core::r_util::IActiveSessionsStorage
+   {
+   public:
+      explicit RpcActiveSessionsStorage(const core::system::User& user, const FilePath& rootStoragePath, InvokeRpc invokeRpcFunc);
+
+      static InvokeRpc getDefaultRpcFunc();
+
+      std::vector<std::string> listSessionIds() const override;
+      size_t getSessionCount() const  override;
+      std::shared_ptr<core::r_util::IActiveSessionStorage> getSessionStorage(const std::string& id)  const override;
+      core::Error hasSessionId(const std::string& sessionId, bool* pHasSessionId)  const override;
+
+   private:
+      const core::system::User user_;
+      FilePath storagePath_;
+      const InvokeRpc invokeRpcFunc_;
    };
 
    constexpr const char* kSessionDirPrefix = "session-";

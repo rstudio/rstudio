@@ -17,7 +17,7 @@
 #include <core/http/AsyncConnection.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
-#include <server/ServerSessionProxy.hpp>
+#include <server/session/ServerSessionProxy.hpp>
 
 using namespace rstudio::core;
 

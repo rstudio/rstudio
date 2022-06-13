@@ -16,15 +16,20 @@
 #include <server/DBActiveSessionStorage.hpp>
 
 #include <core/Database.hpp>
+#include <core/r_util/RActiveSessions.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <server_core/ServerDatabase.hpp>
 
 #include <numeric>
+
+using namespace rstudio::core;
+using namespace rstudio::core::r_util;
+using namespace rstudio::server_core::database;
 
 namespace rstudio {
 namespace server {
 namespace storage {
 
-using namespace server_core::database;
 namespace {
 
 // This is the column name of the foreign key between the active_session_metadata
@@ -36,14 +41,24 @@ const std::string kTableName = "active_session_metadata";
 const std::string kSessionIdColumnName = "session_id";
 
 
+inline const std::string& columnName(const std::string& name)
+{
+   static const std::string workbench = "workbench";
+   if (name == ActiveSession::kEditor)
+      return workbench;
+
+   return name;
+}
+
 std::string getKeyString(const std::map<std::string, std::string>& sourceMap)
 {
    std::string keys = std::accumulate(
       ++sourceMap.begin(),
       sourceMap.end(),
       sourceMap.begin()->first,
-      [](std::string a, std::pair<std::string, std::string> b) {
-         return a + ", " + b.first;
+      [](std::string a, std::pair<std::string, std::string> b)
+      {
+         return a + ", " + columnName(b.first);
       });
    return keys;
 }
@@ -76,18 +91,22 @@ std::string getUpdateString(const std::map<std::string, std::string>& sourceMap)
       ++sourceMap.begin(),
       sourceMap.end(),
       sourceMap.begin()->first + " = '" + sourceMap.begin()->second + "'",
-      [](std::string a, std::pair<std::string, std::string> iter){
-         return a + ", " + iter.first + " = '" + iter.second + "'";
+      [](std::string a, std::pair<std::string, std::string> iter)
+      {         
+         return a + ", " + columnName(iter.first) + " = '" + iter.second + "'";
       });
    return setValuesString;
 }
 
 std::string getColumnNameList(const std::set<std::string>& colNames)
 {
-   std::string cols = std::accumulate(++colNames.begin(), colNames.end(), 
-               *(colNames.begin()), [](std::string a, std::string b) {
-               return a + ", " + b;
-               });
+   std::string cols = std::accumulate(
+      ++colNames.begin(),
+      colNames.end(), 
+      *(colNames.begin()), [](std::string a, std::string b)
+      {
+         return columnName(a) + ", " + columnName(b);
+      });
    return cols;
 }
 
@@ -96,46 +115,27 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
    for(size_t i=0; i < iter->size(); i++)
    {
       std::string key = iter->get_properties(i).get_name();
-      if (key != kUserId)
-      {
-         pTargetMap->insert(
-            std::pair<std::string, std::string>{
-               key,
-               iter->get<std::string>(key, "")
-            }
-         );
-      }
+
+      if (key == kUserId)
+         pTargetMap->emplace(key, std::to_string(iter->get<int>(key)));
       else
-      {
-         pTargetMap->insert(
-            std::pair<std::string, std::string>{
-               key,
-               std::to_string(iter->get<int>(key))
-            }
-         );
-      }
+         pTargetMap->emplace(columnName(key),
+               iter->get<std::string>(key, ""));
    }
 }
 
 Error getSessionCount(boost::shared_ptr<database::IConnection> connection, std::string sessionId, int* pCount)
 {
    database::Query query = connection->query("SELECT COUNT(*) FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
-      .withInput(sessionId);
-   database::Rowset rowset{};
+      .withInput(sessionId)
+      .withOutput(*pCount);
 
-   Error error = connection->execute(query, rowset);
+   Error error = connection->execute(query);
 
    if (error)
       return Error("DatabaseException", errc::DBError, "Error while retrieving session count for [ session:" + sessionId + " ]", error, ERROR_LOCATION);
-      
-   database::RowsetIterator iter = rowset.begin();
 
-   // Sanity checking, but should always have 1 row containing the count of rows
-   if (iter != rowset.end())
-   {
-      *pCount = iter->get<int>("COUNT(*)");
-   }
-   return error;
+   return Success();
 }
 
 } // anonymous namespace
@@ -162,20 +162,23 @@ Error DBActiveSessionStorage::getConnectionOrOverride(boost::shared_ptr<database
    }
 }
 
-DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId)
-   : sessionId_(sessionId)
+DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId, const system::User& user) :
+   sessionId_(sessionId),
+   user_(user)
 {
-   
 }
 
-DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId, boost::shared_ptr<core::database::IConnection> overrideConnection)
-   : sessionId_(sessionId), overrideConnection_(overrideConnection)
+DBActiveSessionStorage::DBActiveSessionStorage(const std::string& sessionId, const system::User& user, boost::shared_ptr<core::database::IConnection> overrideConnection) :
+   sessionId_(sessionId),
+   user_(user),
+   overrideConnection_(overrideConnection)
 {
-
 }
 
 Error DBActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
 {
+   static const std::string empty;
+
    *pValue = "";
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
@@ -183,35 +186,44 @@ Error DBActiveSessionStorage::readProperty(const std::string& name, std::string*
    if (error)
       return error;
 
+   std::string queryStr = "SELECT ";
+   queryStr
+      .append(columnName(name))
+      .append(" FROM ")
+      .append(kTableName)
+      .append(" WHERE ")
+      .append(kSessionIdColumnName)
+      .append(" = :id");
 
-   database::Query query = connection->query("SELECT " + name + " FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
+   database::Query query = connection->query(queryStr)
       .withInput(sessionId_);
 
-   database::Rowset results{};
-   error = connection->execute(query, results);
+   database::Rowset rowset;
+   error = connection->execute(query, rowset);
 
    if (error)
       return Error("DatabaseException", errc::DBError, "Database exception during property read [ session:" + sessionId_ + " property:" + name + " ]", error, ERROR_LOCATION);
 
-   database::RowsetIterator iter = results.begin();
-   if (iter == results.end())
+   auto iter = rowset.begin();
+
+   if (iter == rowset.end())
       return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
 
    if (name != kUserId)
-      *pValue = iter->get<std::string>(name, "");
+      *pValue = iter->get<std::string>(0, "");
    else
-      *pValue = std::to_string(iter->get<int>(name));
+      *pValue = std::to_string(iter->get<int>(0));
 
-
-   if (++iter != results.end())
+   // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
+   if (++iter != rowset.end())
    {
       int count = 1;
-      while (iter++ != results.end())
-         count++;
+      while (iter++ != rowset.end())
+         ++count;
       return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
    }
-   
-   return error;
+
+   return Success();
 }
 
 Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
@@ -227,7 +239,7 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
    database::Query query = connection->query("SELECT " + namesString + " FROM " + kTableName + " WHERE " + kSessionIdColumnName + "=:id")
       .withInput(sessionId_);
 
-   database::Rowset rowset{};
+   database::Rowset rowset;
    error = connection->execute(query, rowset);
 
    if (error)
@@ -238,12 +250,13 @@ Error DBActiveSessionStorage::readProperties(const std::set<std::string>& names,
       return Error("Session does not exist", errc::SessionNotFound, ERROR_LOCATION);
 
    populateMapWithRow(iter, pValues);
+
    // Sanity check number of returned rows, by using the pk in the where clause we should only get 1 row
    if (++iter != rowset.end())
    {
       int count = 1;
       while (iter++ != rowset.end())
-         count++;
+         ++count;
       return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
    }
 
@@ -269,7 +282,7 @@ Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::
    if (error)
       return error;
 
-   database::Query query = connection->query("UPDATE " + kTableName + " SET " + name + " = :value WHERE " + kSessionIdColumnName + " = :id")
+   database::Query query = connection->query("UPDATE " + kTableName + " SET " + columnName(name) + " = :value WHERE " + kSessionIdColumnName + " = :id")
       .withInput(value)
       .withInput(sessionId_);
 
@@ -283,6 +296,7 @@ Error DBActiveSessionStorage::writeProperty(const std::string& name, const std::
 
 Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
 {
+   LOG_DEBUG_MESSAGE("Writing session properties: " + sessionId_);
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
 
@@ -291,7 +305,7 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
 
    database::Query query = connection->query("SELECT * FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
-   database::Rowset rowset{};
+   database::Rowset rowset;
 
    if (error)
       return error;
@@ -310,7 +324,7 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
       {
          int count = 1;
          while (iter++ != rowset.end())
-            count++;
+            ++count;
          return Error("Too many sessions returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
       }
 
@@ -324,7 +338,22 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
    }
    else
    {
-      database::Query insertQuery = connection->query("INSERT INTO " + kTableName + " (" + kSessionIdColumnName + ", " + getKeyString(properties) + ") VALUES (:id, " + getValueString(properties) + ")")
+      // First update, ensure the user_id FK gets inserted. No value necessary since it will do a select.
+      std::map<std::string, std::string> propsCopy(properties);
+      propsCopy[kUserId] = "(SELECT id FROM licensed_users WHERE user_name='" + user_.getUsername() + "' AND user_id=" + std::to_string(user_.getUserId()) +")";
+
+      std::string queryStr = "INSERT INTO " +
+            kTableName +
+            " (" +
+            kSessionIdColumnName +
+            ", " +
+            getKeyString(propsCopy) +
+            ") VALUES (:id, " +
+            getValueString(propsCopy) +
+            ")";
+
+      LOG_DEBUG_MESSAGE("Insert Session query: " + queryStr);
+      database::Query insertQuery = connection->query(queryStr)
          .withInput(sessionId_);
 
       error = connection->execute(insertQuery);
@@ -346,7 +375,7 @@ Error DBActiveSessionStorage::destroy()
 
    database::Query query = connection->query("DELETE FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
-   database::Rowset rowset{};
+   database::Rowset rowset;
 
    error = connection->execute(query, rowset);
 
@@ -358,48 +387,24 @@ Error DBActiveSessionStorage::destroy()
 
 Error DBActiveSessionStorage::isValid(bool* pValue)
 {
+   *pValue = false;
+
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
-   int count = 0;
+   int count;
 
-
-
+   if (error)
       return error;
 
    error = getSessionCount(connection, sessionId_, &count);
-
-   *pValue = false;
+   if (error)
+      return error;
 
    // ensure one and only one
    if (count > 1)
       return Error("Too Many Sessions Returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
    else
       if (count == 1)
-         *pValue = true;
-   return Success();
-}
-
-Error DBActiveSessionStorage::isEmpty(bool* pValue)
-{
-   boost::shared_ptr<database::IConnection> connection;
-   Error error = getConnectionOrOverride(&connection);
-   int count = 0;
-
-   if (error)
-      return error;
-
-   error = getSessionCount(connection, sessionId_, &count);
-
-   if (error)
-      return error;
-
-   *pValue = false;
-
-   // ensure one and only one
-   if (count > 1)
-      return Error("Too Many Sessions Returned", errc::TooManySessionsReturned, "Expected only one session returned, found " + std::to_string(count) + "[ session:" + sessionId_ + " ]", ERROR_LOCATION);
-   else
-      if (count == 0)
          *pValue = true;
    return Success();
 }

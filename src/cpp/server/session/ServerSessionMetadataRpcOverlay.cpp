@@ -1,5 +1,5 @@
 /*
- * ServerLogVars.cpp
+ * SessionSessionMetadataRpcOverlay.cpp
  *
  * Copyright (C) 2022 by RStudio, PBC
  *
@@ -13,33 +13,30 @@
  *
  */
 
-#include "ServerLogVars.hpp"
+#include <string>
+#include <set>
+#include <map>
+#include <vector>
 
-#include <core/LogOptions.hpp>
+#include <shared_core/Error.hpp>
 
-#include <server/session/ServerSessionManager.hpp>
 
 using namespace rstudio::core;
 
 namespace rstudio {
 namespace server {
-namespace log_vars {
+namespace session_metadata {
+namespace overlay {
 
-namespace {
-
-void sessionProfileFilter(core::r_util::SessionLaunchProfile* pProfile)
+Error handleGlobalReadAll(
+   const std::set<std::string>& fields,
+   std::vector<std::map<std::string, std::string>>* pValues)
 {
-   core::log::forwardLogOptionsEnvVars(&(pProfile->config.environment));
-}
-
-} // anonymous namespace
-
-Error initialize()
-{
-   sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
+   // This will never be reached in this code, client should get an unauthorized error first.
    return Success();
 }
 
-} // namespace log_vars
+} // namespace overlay
+} // namespace session_metadata
 } // namespace server
 } // namespace rstudio

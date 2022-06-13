@@ -168,7 +168,7 @@ struct JsonRpcRequest
       kwparams.clear();
    }
 
-   Object toJsonObject()
+   Object toJsonObject() const
    {
       Object obj;
       obj["method"] = method;

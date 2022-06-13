@@ -18,11 +18,15 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
+
 #include <core/SocketRpc.hpp>
+#include <core/json/JsonRpc.hpp>
 
 namespace rstudio {
 namespace session {
 namespace server_rpc {
+
+core::Error invokeServerRpc(const core::json::JsonRpcRequest& request, core::json::JsonRpcResponse* pResponse);
 
 core::Error invokeServerRpc(const std::string& endpoint,
                             const core::json::Object& request,

@@ -19,22 +19,18 @@
 #include <server/DBActiveSessionStorage.hpp>
 #include <server_core/ServerDatabase.hpp>
 
+using namespace rstudio::core;
+using namespace rstudio::core::r_util;
+using namespace rstudio::server_core::database;
 
 namespace rstudio {
 namespace server {
 namespace storage {
 
-using namespace server_core::database;
 
-DBActiveSessionsStorage::DBActiveSessionsStorage(const std::string& userId, const FilePath& rootStoragePath)
-   : userId_(userId), rootStoragePath_(rootStoragePath)
+DBActiveSessionsStorage::DBActiveSessionsStorage(const system::User& user)
+   : user_(user)
 {
-}
-
-core::Error DBActiveSessionsStorage::initSessionProperties(const std::string& id, std::map<std::string, std::string> initialProperties)
-{
-   DBActiveSessionStorage storage{id};
-   return storage.writeProperties(initialProperties);
 }
 
 std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
@@ -48,8 +44,13 @@ std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
       LOG_ERROR(error);
    }
 
-   database::Query query = connection->query("SELECT session_id FROM active_session_metadata WHERE user_id=:id")
-      .withInput(userId_);
+   system::UidType uid = user_.getUserId();
+   const std::string& uname = user_.getUsername();
+
+   database::Query query = connection->query("SELECT session_id FROM active_session_metadata WHERE user_id=(SELECT id FROM licensed_users WHERE user_id=:id AND user_name=:name)")
+      .withInput(uid)
+      .withInput(uname);
+   
    database::Rowset rowset{};
    error = connection->execute(query, rowset);
 
@@ -60,6 +61,7 @@ std::vector< std::string > DBActiveSessionsStorage::listSessionIds() const
       {
          std::string sessionId = iter->get<std::string>("session_id");
          sessions.push_back(sessionId);
+         ++iter;
       }
    }
    else
@@ -77,20 +79,22 @@ size_t DBActiveSessionsStorage::getSessionCount() const
    Error error = getConn(&connection);
 
    if(error)
-   {
       LOG_ERROR(error);
-   }
    else
    {
-      database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE user_id=:id")
-         .withInput(userId_);
-      database::Rowset rowset{};
-      error = connection->execute(query, rowset);
+      system::UidType uid = user_.getUserId();
+      const std::string& uname = user_.getUsername();
 
-      if(!error)
-      {
-         return rowset.begin()->get<size_t>("COUNT(*)");
-      }
+      int count;
+      database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE user_id=(SELECT id FROM licensed_users WHERE user_id=:id AND user_name=:name)")
+         .withInput(uid)
+         .withInput(uname)
+         .withOutput(count);
+
+      error = connection->execute(query);
+
+      if(error)
+         LOG_ERROR(error);
    }
 
    return 0;
@@ -98,47 +102,29 @@ size_t DBActiveSessionsStorage::getSessionCount() const
 
 std::shared_ptr<IActiveSessionStorage> DBActiveSessionsStorage::getSessionStorage(const std::string& id) const
 {
-   FilePath scratchPath = rootStoragePath_.completeChildPath(kSessionDirPrefix + id);
-   if(hasSessionId(id))
-   {
-      return std::make_shared<DBActiveSessionStorage>(id);
-   }
-   else
-   {
-      return std::shared_ptr<IActiveSessionStorage>();
-   }
+   return std::make_shared<DBActiveSessionStorage>(id, user_);
 }
 
-bool DBActiveSessionsStorage::hasSessionId(const std::string& sessionId) const
+Error DBActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool* pHasSessionId) const
 {
    boost::shared_ptr<database::IConnection> connection;
-   bool hasId = false;
    Error error = getConn(&connection);
 
-   if(!error)
+   if (!error)
    {
-      database::Query query = connection->query("SELECT * FROM active_session_metadata WHERE session_id=:id")
-         .withInput(sessionId);
-      database::Rowset rowset{};
-      connection->execute(query, rowset);
+      int count;
+      database::Query query = connection->query("SELECT COUNT(*) FROM active_session_metadata WHERE session_id=:id")
+         .withInput(sessionId)
+         .withOutput(count);
 
-      database::RowsetIterator iter = rowset.begin();
-      if(iter != rowset.end())
-      {
-         hasId = true;
-         iter++;
-         if(iter != rowset.end())
-         {
-            Error logError("Too many sessions were returned when checking for the presence of an ID", errc::TooManySessionsReturned, ERROR_LOCATION);
-            LOG_ERROR(logError);
-         }
-      }
+      error = connection->execute(query);
+      if (error)
+         return error;
+
+      *pHasSessionId = count > 0;
    }
-   else
-   {
-      LOG_ERROR(error);
-   }
-   return hasId;
+
+   return error;
 }
 
 } // namespace storage

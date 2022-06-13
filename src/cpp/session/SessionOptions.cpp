@@ -35,12 +35,14 @@
 #include <core/r_util/RUserData.hpp>
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RActiveSessions.hpp>
+#include <core/r_util/RActiveSessionsStorage.hpp>
 #include <core/r_util/RVersionsPosix.hpp>
 
 #include <monitor/MonitorConstants.hpp>
 
 #include <r/session/RSession.hpp>
 
+#include <session/SessionActiveSessionsStorage.hpp>
 #include <session/SessionConstants.hpp>
 #include <session/SessionScopes.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
@@ -352,15 +354,24 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    r_util::SessionScope scope = sessionScope();
    if (!scope.empty())
    {
-        scopeState_ = r_util::validateSessionScope(
-                       scope,
-                       userHomePath(),
-                       userScratchPath(),
-                       session::projectIdToFilePath(userScratchPath(), 
-                                 FilePath(getOverlayOption(
-                                       kSessionSharedStoragePath))),
-                       projectSharingEnabled(),
-                       &initialProjectPath_);
+      std::shared_ptr<r_util::IActiveSessionsStorage> storage;
+      Error error = storage::activeSessionsStorage(&storage);
+      if (error)
+      {
+         LOG_ERROR(error);
+         return ProgramStatus::exitFailure();
+      }
+
+      scopeState_ = r_util::validateSessionScope(
+         storage,
+         scope,
+         userHomePath(),
+         userScratchPath(),
+         session::projectIdToFilePath(userScratchPath(), 
+         FilePath(getOverlayOption(
+                  kSessionSharedStoragePath))),
+         projectSharingEnabled(),
+         &initialProjectPath_);
    }
    else
    {
