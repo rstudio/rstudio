@@ -480,9 +480,8 @@ public:
    {
       if (!empty())
       {
-         LOG_DEBUG_MESSAGE("Removing session directory: " + scratchPath_.getAbsolutePath());
-         storage_->destroy();
-         return scratchPath_.removeIfExists();
+         LOG_DEBUG_MESSAGE("Removing session " + id_);
+         return storage_->destroy();
       }
       else
          return Success();

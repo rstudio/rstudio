@@ -96,7 +96,7 @@ private:
 class RpcActiveSessionStorage : public core::r_util::IActiveSessionStorage 
 {
    public:
-      explicit RpcActiveSessionStorage(const core::system::User& user, const std::string& sessionId, const InvokeRpc& invokeRpcFunc);
+      explicit RpcActiveSessionStorage(const core::system::User& user, const std::string& sessionId, const FilePath& scratchPath, const InvokeRpc& invokeRpcFunc);
       ~RpcActiveSessionStorage() override = default;
       
       core::Error readProperty(const std::string& name, std::string* pValue) override;
@@ -111,6 +111,7 @@ class RpcActiveSessionStorage : public core::r_util::IActiveSessionStorage
    private:
       const core::system::User user_;
       const std::string id_;
+      FilePath scratchPath_;
       const InvokeRpc invokeRpcFunc_;
 };
 

@@ -96,16 +96,18 @@ std::shared_ptr<IActiveSessionStorage> FileActiveSessionsStorage::getSessionStor
 }
 
 
-RpcActiveSessionsStorage::RpcActiveSessionsStorage(const core::system::User& user, InvokeRpc invokeRpcFunc) :
+RpcActiveSessionsStorage::RpcActiveSessionsStorage(const core::system::User& user, const FilePath& rootStoragePath, InvokeRpc invokeRpcFunc) :
    user_(user),
+   storagePath_(rootStoragePath),
    invokeRpcFunc_(std::move(invokeRpcFunc))
 {
 }
 
-std::shared_ptr<r_util::IActiveSessionsStorage> RpcActiveSessionsStorage::createDefaultStorage(const system::User& user) 
+std::shared_ptr<r_util::IActiveSessionsStorage> RpcActiveSessionsStorage::createDefaultStorage(const system::User& user, const FilePath& rootStoragePath) 
 {
    return std::shared_ptr<r_util::IActiveSessionsStorage>(new r_util::RpcActiveSessionsStorage(
       user,
+      rootStoragePath,
       [](const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
       {
          FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
@@ -220,7 +222,8 @@ size_t RpcActiveSessionsStorage::getSessionCount() const
 
 std::shared_ptr<core::r_util::IActiveSessionStorage> RpcActiveSessionsStorage::getSessionStorage(const std::string& id) const 
 {
-   return std::shared_ptr<core::r_util::IActiveSessionStorage>(new RpcActiveSessionStorage(user_, id, invokeRpcFunc_));
+   FilePath scratchPath = storagePath_.completeChildPath(kSessionDirPrefix + id);
+   return std::shared_ptr<core::r_util::IActiveSessionStorage>(new RpcActiveSessionStorage(user_, id, scratchPath, invokeRpcFunc_));
 }
 
 Error RpcActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool* pHasSessionId) const 

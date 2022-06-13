@@ -29,8 +29,9 @@ namespace storage {
 
 Error activeSessionsStorage(std::shared_ptr<IActiveSessionsStorage>* pStorage) 
 {
+   FilePath storagePath = options().userScratchPath();
    if (options().sessionUseFileStorage())
-      pStorage->reset(new FileActiveSessionsStorage(options().userScratchPath()));
+      pStorage->reset(new FileActiveSessionsStorage(storagePath));
    else
    {
       system::User user;
@@ -43,6 +44,7 @@ Error activeSessionsStorage(std::shared_ptr<IActiveSessionsStorage>* pStorage)
 
       pStorage->reset(new RpcActiveSessionsStorage(
             user,
+            storagePath,
             [](const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
             {
                return server_rpc::invokeServerRpc(request, pResponse);

@@ -182,9 +182,10 @@ FilePath FileActiveSessionStorage::getPropertyFile(const std::string& name) cons
 }
 
 
-RpcActiveSessionStorage::RpcActiveSessionStorage(const system::User& user, const std::string& sessionId, const InvokeRpc& invokeRpcFunc) :
+RpcActiveSessionStorage::RpcActiveSessionStorage(const system::User& user, const std::string& sessionId, const FilePath& scratchPath, const InvokeRpc& invokeRpcFunc) :
    user_(user),
    id_(std::move(sessionId)),
+   scratchPath_(scratchPath),
    invokeRpcFunc_(invokeRpcFunc)
 {
 }
@@ -373,7 +374,33 @@ Error RpcActiveSessionStorage::destroy()
    request.kwparams = body;
 
    json::JsonRpcResponse response;
-   return invokeRpcFunc_(request, &response);
+   Error error = invokeRpcFunc_(request, &response);
+   if (error)
+      return error;
+
+   if (!response.result().isBool())
+   {
+      error = Error(json::errc::ParseError, ERROR_LOCATION);
+      error.addProperty(
+         "description",
+         "Unexpected response from the server when validating session " + id_ + " owned by user " + user_.getUsername());
+      error.addProperty("response", response.result().write());
+
+      LOG_ERROR(error);
+      return error;
+   }
+
+   // Deletion was successful on the server side.
+   if (response.result().getBool())
+      return scratchPath_.removeIfExists();
+
+   error = Error(json::errc::ExecutionError, ERROR_LOCATION);
+   error.addProperty(
+      "descritpion",
+      "Server was unable to destroy the session " + id_ + ".");
+      
+   LOG_ERROR(error);
+   return error;
 }
 
 Error RpcActiveSessionStorage::isValid(bool* pValue)
