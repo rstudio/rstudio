@@ -25,6 +25,7 @@ import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
+import org.rstudio.studio.client.common.codetools.RCompletionType;
 import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
@@ -71,6 +72,10 @@ public class RunHyperlink extends Hyperlink
     public static boolean handles(String url)
     {
         return HYPERLINK_PATTERN.test(url);
+    }
+
+    public void showHelp(){
+        server_.showHelpTopic(fun_, package_, RCompletionType.FUNCTION);
     }
 
     private String code_;    

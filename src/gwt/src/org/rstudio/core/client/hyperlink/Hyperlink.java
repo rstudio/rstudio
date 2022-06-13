@@ -37,7 +37,7 @@ public abstract class Hyperlink
 
         anchor_ = Document.get().createAnchorElement();
         styles_ = RES.hyperlinkStyles();
-        popup_ = new HyperlinkPopupPanel();
+        popup_ = new HyperlinkPopupPanel(this);
     }
 
     public Element getElement()
@@ -52,31 +52,16 @@ public abstract class Hyperlink
         {
             if (event.getTypeInt() == Event.ONMOUSEOVER)
             {   
-                visible_ = true;
                 getPopupContent((content) -> {
-                    if (visible_)
-                    {
-                        if (content != null)
-                        {
-                            popup_.setContent(content);
+                    popup_.setContent(content);
 
-                            Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
-                            HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
-                            popup_.setPopupPositionAndShow(positioner);
-                        }
-                        
-                    }
-                    
+                    Rectangle bounds = new Rectangle(anchor_.getAbsoluteLeft(), anchor_.getAbsoluteBottom(), anchor_.getClientWidth(), anchor_.getClientHeight());
+                    HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
+                    popup_.setPopupPositionAndShow(positioner);
                 });
             } 
-            else if (event.getTypeInt() == Event.ONMOUSEOUT)
-            {
-                visible_ = false;
-                popup_.hide();
-            }
             else if (event.getTypeInt() == Event.ONCLICK) 
             {
-                visible_ = false;
                 popup_.hide();
                 onClick();
             }
@@ -92,10 +77,8 @@ public abstract class Hyperlink
 
     public abstract void onClick();
     
-    public void getPopupContent(CommandWithArg<Widget> onReady)
-    {
-        onReady.execute(null);
-    }
+    public void getPopupContent(CommandWithArg<Widget> onReady){}
+    public void showHelp(){}
 
     public static Hyperlink create(String url, String paramsTxt, String text, String clazz)
     {
@@ -141,7 +124,6 @@ public abstract class Hyperlink
     public String text;
     public String clazz;
     public Map<String, String> params;
-    private boolean visible_;
     protected AnchorElement anchor_;
     
     protected final HyperlinkResources.HyperlinkStyles styles_;
