@@ -38,7 +38,7 @@ public:
    std::shared_ptr<core::r_util::IActiveSessionStorage> getSessionStorage(const std::string& id) const override;
    core::Error hasSessionId(const std::string& sessionId, bool* pHasSessionId) const override;
 private:
-   core::system::User user_;
+   const core::system::User user_;
 };
 
 } // namespace storage

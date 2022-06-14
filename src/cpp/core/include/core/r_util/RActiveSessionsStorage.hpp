@@ -67,6 +67,8 @@ namespace r_util {
       core::Error hasSessionId(const std::string& sessionId, bool* pHasSessionId)  const override;
 
    private:
+      void migrateSessions() const;
+
       const core::system::User user_;
       FilePath storagePath_;
       const InvokeRpc invokeRpcFunc_;
