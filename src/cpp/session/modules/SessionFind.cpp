@@ -665,6 +665,13 @@ private:
          decodedLine.append(
             Replacer::decode(std::string(inputPos, end), encoding_, firstDecodeError_));
 
+      if (pMatchOn->getSize() == 0)
+      {
+         // If we reach here, grep has found a malformed match
+         pContent = nullptr;
+         pFullLineContent = nullptr;
+         return;
+      }
       *pFullLineContent = decodedLine;
       if (!findResults().replace())
          adjustForPreview(&decodedLine, pMatchOn, pMatchOff);
@@ -1026,6 +1033,11 @@ private:
             json::Array replaceMatchOn, replaceMatchOff;
             processContents(&lineInfo.decodedPreview, &lineInfo.decodedContents,
                &matchOn, &matchOff);
+
+            // If we reach here, grep has found a malformed match (usually due to a bad regex)
+            // and processContents was not able to identify the corresponding match string
+            if (matchOn.getSize() == 0)
+               continue;
 
             if (findResults().replace() &&
                 !(findResults().preview() &&
