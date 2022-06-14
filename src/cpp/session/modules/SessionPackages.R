@@ -270,16 +270,25 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    .rs.isPackageLoaded(packageName, libName)
 })
 
-.rs.addFunction("isPackageHyperlinkSafe", function(packageName)
+.rs.addFunction("isCodeHyperlinkSafe", function(code)
 {
-   .rs.scalar(
-      packageName %in% .packages() || packageName %in% c("testthat", "rlang", "devtools", "usethis")
-   )
+   # `code` is in the form <pkg>::<fun>(<arg>)
+
+   # 1) check that the package is either loaded or allowed
+   allowed_pkgs <- c(.packages(), c("testthat", "rlang", "devtools", "usethis"))
+   pkg <- sub("::.*$", "", code)
+   if (!pkg %in% allowed_pkgs) {
+      return(.rs.scalar(FALSE))
+   }
+
+   # 2) check embedded function calls
+   args <- sub("^[^(]*(.*)[)]$", "\\1", code)
+   .rs.scalar(!grepl("[()]", args))
 })
 
-.rs.addJsonRpcHandler("is_package_hyperlink_safe", function(packageName)
+.rs.addJsonRpcHandler("is_code_hyperlink_safe", function(code)
 {
-   .rs.isPackageHyperlinkSafe(packageName)
+   .rs.isCodeHyperlinkSafe(code)
 })
 
 .rs.addFunction("forceUnloadPackage", function(package)

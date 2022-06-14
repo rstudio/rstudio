@@ -46,7 +46,7 @@ public class RunHyperlink extends Hyperlink
     @Override 
     public void onClick()
     {
-        server_.isPackageHyperlinkSafe(package_, new SimpleRequestCallback<Boolean>(){
+        server_.isCodeHyperlinkSafe(code_, new SimpleRequestCallback<Boolean>(){
 
             @Override
             public void onResponseReceived(Boolean response)
@@ -84,6 +84,6 @@ public class RunHyperlink extends Hyperlink
     private static final EventBus events_ = RStudioGinjector.INSTANCE.getEventBus();
     private Server server_;
 
-    // allow code of the form pkg::fn(<args>) where args does not have ;()
-    private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(rstudio|ide):run:(\\w+)::(\\w+)[(][^();]*[)]$", "");
+    // allow code of the form pkg::fn(<args>) where <args> does not have ";"
+    private static final Pattern HYPERLINK_PATTERN = Pattern.create("^(rstudio|ide):run:(\\w+)::(\\w+)[(][^;]*[)]$", "");
 }
