@@ -1853,29 +1853,35 @@ void afterResume()
    LOG_DEBUG_MESSAGE("Resume complete");
 }
 
+std::string getenvForLog(const std::string& envVar)
+{
+   std::string envVal = core::system::getenv("LD_LIBRARY_PATH");
+   if (envVal.empty())
+     return "(empty)";
+   return envVal;
+}
+
 void logStartingEnv()
 {
 #ifdef __linux__
-   LOG_DEBUG_MESSAGE("Starting R session with LD_LIBRARY_PATH: " + core::system::getenv("LD_LIBRARY_PATH"));
+   LOG_DEBUG_MESSAGE("Starting R session with LD_LIBRARY_PATH: " + getenvForLog("LD_LIBRARY_PATH"));
 #endif
 #ifdef __APPLE__
-   std::string envVars[] = {"LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "DYLD_FALLBACK_LIBRARY_PATH"};
-   bool any = false;
+   std::string envVars[] = {"DYLD_LIBRARY_PATH", "DYLD_FALLBACK_LIBRARY_PATH", "DYLD_INSERT_LIBRARIES"};
+   std::string msg = "Starting R session with: ";
+   bool first = true;
    for (std::string varName:envVars)
    {
-      std::string envVal = core::system::getenv(varName);
-      if (!envVal.empty())
-      {
-         LOG_DEBUG_MESSAGE("Starting R session with " + varName + ": " + envVal);
-         any = true;
-         break;
-      }
+      if (!first)
+         msg += ", ";
+      else
+         first = false;
+      msg += varName + ": " + getenvForLog(varName);
    }
-   if (!any)
-      LOG_DEBUG_MESSAGE("Starting R session with default system library path");
+   LOG_DEBUG_MESSAGE(msg);
 #endif
 #ifdef _WIN32
-   LOG_DEBUG_MESSAGE("Starting R session");
+   LOG_DEBUG_MESSAGE("Starting R session with PATH: " + getenvForLog("PATH"));
 #endif
 }
 
