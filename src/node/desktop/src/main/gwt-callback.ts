@@ -310,7 +310,7 @@ export class GwtCallback extends EventEmitter {
     });
 
     ipcMain.on('desktop_set_global_mouse_selection', (event, selection: string) => {
-      clipboard.writeText(selection, 'selection');
+      clipboard.writeText(selection, process.platform === 'linux' ? 'selection' : 'clipboard');
     });
 
     ipcMain.handle('desktop_get_global_mouse_selection', () => {
