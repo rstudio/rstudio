@@ -1034,6 +1034,8 @@ private:
             processContents(&lineInfo.decodedPreview, &lineInfo.decodedContents,
                &matchOn, &matchOff);
 
+            // If we reach here, grep has found a malformed match (usually due to a bad regex)
+            // and processContents was not able to identify the corresponding match string
             if (matchOn.getSize() == 0)
                continue;
 
