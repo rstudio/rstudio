@@ -117,7 +117,7 @@ std::shared_ptr<IActiveSessionStorage> FileActiveSessionsStorage::getSessionStor
 
 RpcActiveSessionsStorage::RpcActiveSessionsStorage(const core::system::User& user, const FilePath& rootStoragePath, InvokeRpc invokeRpcFunc) :
    user_(user),
-   storagePath_(rootStoragePath),
+   storagePath_(ActiveSessions::storagePath(rootStoragePath)),
    invokeRpcFunc_(std::move(invokeRpcFunc))
 {
 }
@@ -314,6 +314,12 @@ void RpcActiveSessionsStorage::migrateSessions() const
                {
                   error.addProperty("operation", "Attempting to migrate old sessions for user " + user_.getUsername());
                   LOG_ERROR(error);
+                  continue;
+               }
+
+               // Skip workspaces
+               if (sessionId == kWorkspacesId)
+               {
                   continue;
                }
 
