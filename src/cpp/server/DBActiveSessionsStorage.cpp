@@ -28,8 +28,8 @@ namespace server {
 namespace storage {
 
 
-DBActiveSessionsStorage::DBActiveSessionsStorage(const system::User& user)
-   : user_(user)
+DBActiveSessionsStorage::DBActiveSessionsStorage(const system::User& user) :
+   user_(user)
 {
 }
 

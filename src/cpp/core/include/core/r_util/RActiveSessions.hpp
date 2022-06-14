@@ -37,6 +37,8 @@ namespace rstudio {
 namespace core {
 namespace r_util {
 
+class RpcActiveSessionsStorage;
+
 // Constants for RPCs related to session metadata ===========================
 // RPC endpoint
 constexpr const char * kSessionStorageRpc = "/storage/session_metadata";
@@ -94,6 +96,7 @@ class ActiveSession : boost::noncopyable
 {
 private:
    friend class ActiveSessions;
+   friend class RpcActiveSessionsStorage;
 
    explicit ActiveSession(const std::string& id) : id_(id) 
    {
@@ -211,7 +214,9 @@ public:
                kEditor,
                kLastResumed,
                kSuspendTimestamp,
-               kBlockingSuspend
+               kBlockingSuspend,
+               kCreated,
+               kLaunchParameters
              };
 
             return storage_->readProperties(allProperties, pValues);
