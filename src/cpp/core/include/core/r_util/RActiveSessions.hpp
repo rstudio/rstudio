@@ -214,7 +214,9 @@ public:
                kEditor,
                kLastResumed,
                kSuspendTimestamp,
-               kBlockingSuspend
+               kBlockingSuspend,
+               kCreated,
+               kLaunchParameters
              };
 
             return storage_->readProperties(allProperties, pValues);
