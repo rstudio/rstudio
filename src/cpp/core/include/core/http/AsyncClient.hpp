@@ -297,6 +297,9 @@ protected:
 
    void handleError(const Error& error)
    {
+      Error httpError = error;
+      addErrorProperties(httpError);
+
       // check to see if the socket was closed purposefully
       // if so, we will ignore the error
       LOCK_MUTEX(socketMutex_)
@@ -311,7 +314,7 @@ protected:
 
       // invoke error handler
       if (errorHandler_)
-         errorHandler_(error);
+         errorHandler_(httpError);
 
       // free handlers to ensure they do not keep a strong reference to us
       // this will allow us to properly clean up in that case
@@ -331,6 +334,16 @@ protected:
                                 description,
                                 location);
       handleError(error);
+   }
+
+   virtual void addErrorProperties(Error& error)
+   {
+      std::string host = request_.host();
+      if (!host.empty())
+         error.addProperty("host", host);
+      std::string uri = request_.uri();
+      if (!uri.empty())
+         error.addProperty("uri", uri);
    }
    
 private:

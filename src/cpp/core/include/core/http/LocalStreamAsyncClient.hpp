@@ -127,6 +127,14 @@ private:
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
    }
 
+   virtual void addErrorProperties(Error& error)
+   {
+      AsyncClient::addErrorProperties(error);
+
+      error.addProperty("path", localStreamPath_);
+      if (validateUid_.is_initialized())
+         error.addProperty("user-id", validateUid_.get());
+   }
 
    const boost::shared_ptr<LocalStreamAsyncClient> sharedFromThis()
    {

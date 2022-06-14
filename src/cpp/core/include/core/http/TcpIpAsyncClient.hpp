@@ -81,6 +81,13 @@ private:
       return address_ + ":" + port_;
    }
 
+   virtual void addErrorProperties(Error& error)
+   {
+      AsyncClient::addErrorProperties(error);
+      error.addProperty("address", address_);
+      error.addProperty("port", port_);
+   }
+
    const boost::shared_ptr<TcpIpAsyncClient> sharedFromThis()
    {
       boost::shared_ptr<AsyncClient<boost::asio::ip::tcp::socket> > ptrShared
