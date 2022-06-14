@@ -208,13 +208,13 @@ size_t RpcActiveSessionsStorage::getSessionCount() const
       return 0;
    }
 
-   size_t count = 0;
+   uint64_t count = 0;
    error = json::readObject(response.result().getObject(), kSessionStorageCountField, count);
 
    if (error)
       LOG_ERROR(error);
    
-   return count;
+   return (size_t) count;
 }
 
 std::shared_ptr<core::r_util::IActiveSessionStorage> RpcActiveSessionsStorage::getSessionStorage(const std::string& id) const 

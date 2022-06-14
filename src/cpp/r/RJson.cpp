@@ -162,7 +162,7 @@ Error jsonValueFromVectorElement(SEXP vectorSEXP,
                }
                case UINT32:
                {
-                  if ((value >= 0) && (value <= UINT32_MAX))
+                  if (value >= 0)
                   {
                      *pValue = static_cast<uint32_t>(value);
                      break;
