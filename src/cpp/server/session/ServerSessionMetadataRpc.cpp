@@ -447,7 +447,7 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
       else
       {
          json::Object countObj;
-         countObj[kSessionStorageCountField] = count;
+         countObj[kSessionStorageCountField] = (uint64_t) count;
          response.setResult(countObj);
       }
    }
