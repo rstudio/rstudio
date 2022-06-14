@@ -25,5 +25,9 @@
   <key>com.apple.security.automation.apple-events</key>
   <true/>
 
+  <!--- Allow debugging compiled code in R and R packages -->
+  <key>com.apple.security.get-task-allow</key>
+  <true/>
+
 </dict>
 </plist>
