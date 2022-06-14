@@ -340,8 +340,7 @@ public class Presentation2Pane extends WorkbenchPane implements Presentation2.Di
       @Override
       protected int getMaxHeight()
       {
-         return Window.getClientHeight() - toolbar_.getAbsoluteTop() -
-               toolbar_.getOffsetHeight() - 200;
+         return 350;
       }
    }
    
