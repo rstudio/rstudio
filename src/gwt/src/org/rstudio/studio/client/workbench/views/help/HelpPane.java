@@ -44,9 +44,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.ShortcutManager;
@@ -57,6 +57,13 @@ import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.hyperlink.HelpHyperlinkPopupHeader;
+import org.rstudio.core.client.hyperlink.HelpPageShower;
+import org.rstudio.core.client.hyperlink.HelpPreview;
+import org.rstudio.core.client.hyperlink.HyperlinkPopupPanel;
+import org.rstudio.core.client.hyperlink.HyperlinkPopupPositioner;
+import org.rstudio.core.client.regex.Match;
+import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.FindTextBox;
@@ -286,6 +293,10 @@ public class HelpPane extends WorkbenchPane
       $wnd.helpMousedown = function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseDown(*)(e);
       };
+
+      $wnd.helpMouseover = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseOver(*)(e);
+      }
       
    }-*/;
 
@@ -358,6 +369,47 @@ public class HelpPane extends WorkbenchPane
          event.stopPropagation();
          event.preventDefault();
          commands_.helpForward().execute();
+      }
+   }
+
+   private void handleMouseOver(NativeEvent event)
+   {
+      EventTarget target = event.getEventTarget();
+      if (AnchorElement.is(target)) 
+      {
+         AnchorElement anchor = AnchorElement.as(Element.as(target));
+         String url = anchor.getHref();
+         Match match = HELP_PATTERN.match(url, 0);
+         if (match != null) 
+         {
+            String pkg = match.getGroup(1);
+            String topic = match.getGroup(2);
+
+            GWT.log("pkg   = " + pkg);
+            GWT.log("topic = " + topic);
+
+            HyperlinkPopupPanel popup_ = new HyperlinkPopupPanel(new HelpPageShower() {
+
+               @Override
+               public void showHelpPage() {
+                  showHelp(url);
+               }
+               
+            });
+
+            final VerticalPanel panel = new VerticalPanel();
+            panel.add(new HelpHyperlinkPopupHeader(topic, pkg));
+            panel.add(new HelpPreview(topic, pkg, () -> 
+            {
+               popup_.setContent(panel);
+
+               Rectangle bounds = new Rectangle(event.getClientX() + getIFrameEx().getAbsoluteLeft(), event.getClientY() + getIFrameEx().getAbsoluteTop(), anchor.getClientWidth(), anchor.getClientHeight());
+               HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
+               popup_.setPopupPositionAndShow(positioner);
+            }));
+
+         }
+         
       }
    }
 
@@ -912,4 +964,6 @@ public class HelpPane extends WorkbenchPane
    private static int popoutCount_ = 0;
    private SearchDisplay searchWidget_;
    private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
+
+   private static final Pattern HELP_PATTERN = Pattern.create("^.*/help/library/([^/]*)/help/(.*)$", "");
 }

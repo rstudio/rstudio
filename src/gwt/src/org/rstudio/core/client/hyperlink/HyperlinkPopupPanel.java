@@ -35,7 +35,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 
 public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPopupDisplay
 {
-    public HyperlinkPopupPanel(Hyperlink hyperlink)
+    public HyperlinkPopupPanel(HelpPageShower hyperlink)
     {
         super();
         hyperlink_ = hyperlink;
@@ -89,7 +89,7 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
                     }
                     else if (keyCode == KeyCodes.KEY_F1)
                     {
-                        hyperlink_.showHelp();
+                        hyperlink_.showHelpPage();
                     }
                 }
             }
@@ -141,7 +141,7 @@ public class HyperlinkPopupPanel extends ThemedPopupPanel implements HyperlinkPo
     private VerticalPanel container_;
     private final NativePreviewHandler handler_;
     private HandlerRegistration handlerRegistration_;
-    private Hyperlink hyperlink_;
+    private HelpPageShower hyperlink_;
    
     private static HyperlinkPopupPanel current_;
 }

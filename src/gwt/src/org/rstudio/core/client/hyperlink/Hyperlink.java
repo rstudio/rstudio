@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Rectangle;
 
-public abstract class Hyperlink
+public abstract class Hyperlink implements HelpPageShower
 {
     public Hyperlink(String url, Map<String, String> params, String text, String clazz)
     {
@@ -78,7 +78,9 @@ public abstract class Hyperlink
     public abstract void onClick();
     
     public void getPopupContent(CommandWithArg<Widget> onReady){}
-    public void showHelp(){}
+    
+    @Override
+    public void showHelpPage(){}
 
     public static Hyperlink create(String url, String paramsTxt, String text, String clazz)
     {
