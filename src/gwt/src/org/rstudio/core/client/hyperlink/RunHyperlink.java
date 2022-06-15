@@ -20,6 +20,7 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -71,7 +72,15 @@ public class RunHyperlink extends Hyperlink
 
     public static boolean handles(String url)
     {
-        return HYPERLINK_PATTERN.test(url);
+        Match match = HYPERLINK_PATTERN.match(url, 0);
+        if (match == null) 
+            return false;
+
+        String pkg = match.getGroup(2);
+        if (StringUtil.equals(pkg, "base") || StringUtil.equals(pkg, "utils") || StringUtil.equals(pkg, "stats"))
+            return false;
+        
+        return true;
     }
 
     public void showHelp(){
