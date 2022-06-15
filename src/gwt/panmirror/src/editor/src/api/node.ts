@@ -79,7 +79,7 @@ export type NodeTraversalFn = (
 export function findTopLevelBodyNodes(doc: ProsemirrorNode, predicate: (node: ProsemirrorNode) => boolean) {
   const body = findChildrenByType(doc, doc.type.schema.nodes.body, false)[0];
   const offset = body.pos + 1;
-  const nodes = findChildren(body.node, predicate, false);
+  const nodes = findChildren(body.node, predicate, true);
   return nodes.map(value => ({ ...value, pos: value.pos + offset }));
 }
 
