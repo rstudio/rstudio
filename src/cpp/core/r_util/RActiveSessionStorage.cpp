@@ -360,10 +360,14 @@ Error RpcActiveSessionStorage::writeProperties(const std::map<std::string, std::
 
    json::JsonRpcResponse response;
    return invokeRpcFunc_(request, &response);
+#endif
 }
 
 Error RpcActiveSessionStorage::destroy()
 {
+#ifdef _WIN32
+   return Success();
+#else
    json::Object body;
    body[kSessionStorageUserIdField] = user_.getUserId();
    body[kSessionStorageIdField] = id_;
