@@ -461,11 +461,6 @@ public class VisualModePanmirrorFormat
          {
             return new Pair<>("goldmark", "");
          }
-         // github document
-         else if (isGitHubDocument())
-         {
-            return new Pair<>("gfm", "");
-         }
       }
    
       return null;   

@@ -38,6 +38,10 @@ InvokeRpc getSessionRpcInvoker()
 Error activeSessionsStorage(std::shared_ptr<IActiveSessionsStorage>* pStorage) 
 {
    FilePath storagePath = options().userScratchPath();
+
+#ifdef _WIN32
+   pStorage->reset(new FileActiveSessionsStorage(storagePath));
+#else
    if (options().sessionUseFileStorage())
       pStorage->reset(new FileActiveSessionsStorage(storagePath));
    else
@@ -55,6 +59,7 @@ Error activeSessionsStorage(std::shared_ptr<IActiveSessionsStorage>* pStorage)
             storagePath,
             getSessionRpcInvoker()));
    }
+#endif
 
    return Success();
 }

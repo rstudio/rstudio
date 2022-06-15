@@ -1846,6 +1846,38 @@ void afterResume()
    LOG_DEBUG_MESSAGE("Resume complete");
 }
 
+std::string getenvForLog(const std::string& envVar)
+{
+   std::string envVal = core::system::getenv("LD_LIBRARY_PATH");
+   if (envVal.empty())
+     return "(empty)";
+   return envVal;
+}
+
+void logStartingEnv()
+{
+#ifdef __linux__
+   LOG_DEBUG_MESSAGE("Starting R session with LD_LIBRARY_PATH: " + getenvForLog("LD_LIBRARY_PATH"));
+#endif
+#ifdef __APPLE__
+   std::string envVars[] = {"DYLD_LIBRARY_PATH", "DYLD_FALLBACK_LIBRARY_PATH", "DYLD_INSERT_LIBRARIES"};
+   std::string msg = "Starting R session with: ";
+   bool first = true;
+   for (std::string varName:envVars)
+   {
+      if (!first)
+         msg += ", ";
+      else
+         first = false;
+      msg += varName + ": " + getenvForLog(varName);
+   }
+   LOG_DEBUG_MESSAGE(msg);
+#endif
+#ifdef _WIN32
+   LOG_DEBUG_MESSAGE("Starting R session with PATH: " + getenvForLog("PATH"));
+#endif
+}
+
 } // anonymous namespace
 
 // run session
@@ -1901,6 +1933,8 @@ int main(int argc, char * const argv[])
 #ifndef _WIN32
       ::setpgrp();
 #endif
+
+      logStartingEnv();
 
       rstudio::r::session::setResumeCallbacks(beforeResume, afterResume);
 

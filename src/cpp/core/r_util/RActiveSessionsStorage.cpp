@@ -124,6 +124,12 @@ RpcActiveSessionsStorage::RpcActiveSessionsStorage(const core::system::User& use
 
 InvokeRpc RpcActiveSessionsStorage::getDefaultRpcFunc() 
 {
+#ifdef _WIN32
+   return [](const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
+   {
+      return Success();
+   };
+#else
    return [](const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
    {
       FilePath rpcSocket(core::system::getenv(kServerRpcSocketPathEnvVar));
@@ -148,6 +154,7 @@ InvokeRpc RpcActiveSessionsStorage::getDefaultRpcFunc()
 
       return error;
    };
+#endif
 }
 
 
@@ -158,6 +165,7 @@ std::vector<std::string> RpcActiveSessionsStorage::listSessionIds() const
 
    std::vector<std::string> ids;
 
+#ifndef _WIN32
    json::Array fields;
    fields.push_back(ActiveSession::kCreated);
 
@@ -202,12 +210,16 @@ std::vector<std::string> RpcActiveSessionsStorage::listSessionIds() const
       else
          ids.push_back(id);
    }
+#endif
 
    return ids;
 }
 
 size_t RpcActiveSessionsStorage::getSessionCount() const 
 {
+   uint64_t count = 0;
+
+#ifndef _WIN32
    json::Object body;
    body[kSessionStorageUserIdField] = user_.getUserId();
    body[kSessionStorageOperationField] = kSessionStorageCountOp;
@@ -230,12 +242,12 @@ size_t RpcActiveSessionsStorage::getSessionCount() const
       return 0;
    }
 
-   uint64_t count = 0;
    error = json::readObject(response.result().getObject(), kSessionStorageCountField, count);
 
    if (error)
       LOG_ERROR(error);
-   
+#endif
+
    return (size_t) count;
 }
 
@@ -247,6 +259,10 @@ std::shared_ptr<core::r_util::IActiveSessionStorage> RpcActiveSessionsStorage::g
 
 Error RpcActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool* pHasSessionId) const 
 {   
+#ifdef _WIN32
+   *pHasSessionId = false;
+   return Success();
+#else
    LOG_DEBUG_MESSAGE("Checking whether session id " + sessionId + " is in use.");
    json::Object body;
    body[kSessionStorageUserIdField] = user_.getUserId();
@@ -282,10 +298,12 @@ Error RpcActiveSessionsStorage::hasSessionId(const std::string& sessionId, bool*
    *pHasSessionId = count > 0;
 
    return error;
+#endif
 }
 
 void RpcActiveSessionsStorage::migrateSessions() const
 {
+#ifndef _WIN32
    static const std::string migratedFileName = ".migrated";
    static const std::string properites = "properites";
 
@@ -361,6 +379,7 @@ void RpcActiveSessionsStorage::migrateSessions() const
 
       rootMigratedFile.ensureFile();
    }
+#endif
 }
 
 } // namespace r_util
