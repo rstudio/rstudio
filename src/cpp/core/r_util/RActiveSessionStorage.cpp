@@ -192,6 +192,9 @@ RpcActiveSessionStorage::RpcActiveSessionStorage(const system::User& user, const
 
 Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string* pValue)
 {
+#ifdef _WIN32
+   return Success();
+#else
    LOG_DEBUG_MESSAGE("Reading property " + name + " from server for session " + id_);
 
    json::Array fields;
@@ -231,10 +234,12 @@ Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string
 
 
    return json::readObject(response.result().getObject(), name, *pValue);
+#endif
 }
 
 Error RpcActiveSessionStorage::readProperties(const std::set<std::string>& names, std::map<std::string, std::string>* pValues)
 {   
+#ifndef _WIN32
    if (!names.empty())
       LOG_DEBUG_MESSAGE("Reading properties { " + boost::join(names, ", ") + " } from server for session " + id_);
       
@@ -301,6 +306,7 @@ Error RpcActiveSessionStorage::readProperties(const std::set<std::string>& names
             (*pValues)[(*itr).getName()] = (*itr).getValue().getString();
    }
 
+#endif
    return Success();
 }
 
@@ -312,6 +318,9 @@ Error RpcActiveSessionStorage::readProperties(std::map<std::string, std::string>
 
 Error RpcActiveSessionStorage::writeProperty(const std::string& name, const std::string& value)
 {
+#ifdef _WIN32
+   return Success();
+#else
    LOG_DEBUG_MESSAGE("Writing property " + name + " with value " + value + " from server for session " + id_);
    json::Object fields;
    fields[name] = value;
@@ -328,10 +337,14 @@ Error RpcActiveSessionStorage::writeProperty(const std::string& name, const std:
 
    json::JsonRpcResponse response;
    return invokeRpcFunc_(request, &response);
+#endif
 }
 
 Error RpcActiveSessionStorage::writeProperties(const std::map<std::string, std::string>& properties)
 {
+#ifdef _WIN32
+   return Success();
+#else
    std::string strProps;
    #undef DEBUG
    if (log::isLogLevel(log::LogLevel::DEBUG))
@@ -401,10 +414,12 @@ Error RpcActiveSessionStorage::destroy()
       
    LOG_ERROR(error);
    return error;
+#endif
 }
 
 Error RpcActiveSessionStorage::isValid(bool* pValue)
 {
+#ifndef _WIN32
    LOG_DEBUG_MESSAGE("Checking whether session is valid for id: " + id_);
    
    json::Object body;
@@ -434,6 +449,7 @@ Error RpcActiveSessionStorage::isValid(bool* pValue)
    }
 
    *pValue = response.result().getBool();
+#endif
 
    return Success();
 }
