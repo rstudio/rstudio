@@ -696,6 +696,5 @@ elseif(WIN32 AND NOT RSTUDIO_SESSION_WIN32)
       ${TESTS_INCLUDE_DIR}
    )
 
-   add_subdirectory(urlopener)
    add_subdirectory(synctex/rsinverse)
 endif()
