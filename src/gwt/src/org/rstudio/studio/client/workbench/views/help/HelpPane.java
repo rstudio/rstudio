@@ -17,6 +17,7 @@ package org.rstudio.studio.client.workbench.views.help;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -75,12 +76,15 @@ import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.MouseNavigateEvent;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
+import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -105,6 +109,7 @@ public class HelpPane extends WorkbenchPane
       searchProvider_ = searchProvider;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
+      server_ = RStudioGinjector.INSTANCE.getServer();
 
       prefs_ = prefs;
 
@@ -297,6 +302,10 @@ public class HelpPane extends WorkbenchPane
       $wnd.helpMouseover = function(e) {
          thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleMouseOver(*)(e);
       }
+
+      $wnd.helpClick = function(e) {
+         thiz.@org.rstudio.studio.client.workbench.views.help.HelpPane::handleClick(*)(e);
+      }
       
    }-*/;
 
@@ -337,10 +346,17 @@ public class HelpPane extends WorkbenchPane
          }
       }
 
-
       // don't let backspace perform browser back
       DomUtils.preventBackspaceCausingBrowserBack(e);
 
+      // ESC closes help preview popup
+      if (e.getKeyCode() == KeyCodes.KEY_ESCAPE)
+      {
+         if (popup_ != null)
+            popup_.hide();
+         popup_ = null;
+      }
+      
       // delegate to the shortcut manager
       NativeKeyDownEvent evt = new NativeKeyDownEvent(e);
       ShortcutManager.INSTANCE.onKeyDown(evt);
@@ -385,10 +401,9 @@ public class HelpPane extends WorkbenchPane
             String pkg = match.getGroup(1);
             String topic = match.getGroup(2);
 
-            GWT.log("pkg   = " + pkg);
-            GWT.log("topic = " + topic);
-
-            HyperlinkPopupPanel popup_ = new HyperlinkPopupPanel(new HelpPageShower() {
+            if (popup_ != null)
+               popup_.hide();
+            popup_ = new HyperlinkPopupPanel(new HelpPageShower() {
 
                @Override
                public void showHelpPage() {
@@ -397,20 +412,41 @@ public class HelpPane extends WorkbenchPane
                
             });
 
-            final VerticalPanel panel = new VerticalPanel();
-            panel.add(new HelpHyperlinkPopupHeader(topic, pkg));
-            panel.add(new HelpPreview(topic, pkg, () -> 
-            {
-               popup_.setContent(panel);
+            // pkg might not be the actual package
+            // so we need to do the same as what the internal help system would:
+            server_.followHelpTopic(topic, pkg, new SimpleRequestCallback<JsArrayString>(){
 
-               Rectangle bounds = new Rectangle(event.getClientX() + getIFrameEx().getAbsoluteLeft(), event.getClientY() + getIFrameEx().getAbsoluteTop(), anchor.getClientWidth(), anchor.getClientHeight());
-               HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
-               popup_.setPopupPositionAndShow(positioner);
-            }));
+               @Override
+               public void onResponseReceived(JsArrayString files)
+               {
+                  if (files.length() == 1)
+                  {
+                     String resolvedPackage = files.get(0).replaceFirst("/help/.*$", "").replaceFirst("^.*/", "");
+                     
+                     final VerticalPanel panel = new VerticalPanel();
+                     panel.add(new HelpHyperlinkPopupHeader(topic, resolvedPackage));
+                     panel.add(new HelpPreview(topic, resolvedPackage, () -> 
+                     {
+                        popup_.setContent(panel);
+
+                        Rectangle bounds = new Rectangle(event.getClientX() + getIFrameEx().getAbsoluteLeft(), event.getClientY() + getIFrameEx().getAbsoluteTop(), anchor.getClientWidth(), anchor.getClientHeight());
+                        HyperlinkPopupPositioner positioner = new HyperlinkPopupPositioner(bounds, popup_);
+                        popup_.setPopupPositionAndShow(positioner);
+                     }));
+                  }
+               }
+            });
 
          }
          
       }
+   }
+
+   private void handleClick(NativeEvent event)
+   {
+      if (popup_ != null)
+         popup_.hide();
+      popup_ = null;
    }
 
    private void helpNavigated(Document doc)
@@ -964,6 +1000,8 @@ public class HelpPane extends WorkbenchPane
    private static int popoutCount_ = 0;
    private SearchDisplay searchWidget_;
    private static final HelpConstants constants_ = GWT.create(HelpConstants.class);
+   private Server server_;
+   HyperlinkPopupPanel popup_;
 
    private static final Pattern HELP_PATTERN = Pattern.create("^.*/help/library/([^/]*)/help/(.*)$", "");
 }

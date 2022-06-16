@@ -51,9 +51,11 @@ public interface HelpServerOperations
                          String pkgName, 
                          ServerRequestCallback<String> requestCallback);
 
-   public void getVignetteDescription(String topic,
+   void getVignetteDescription(String topic,
                                       String pkgName, 
                                       ServerRequestCallback<String> requestCallback);
 
    void showVignette(String topic, String pkgName);
+
+   void followHelpTopic(String topic, String pkg, ServerRequestCallback<JsArrayString> requestCallback);
 }
