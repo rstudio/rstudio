@@ -93,3 +93,17 @@
     margin-top: 4px;
     margin-bottom: 4px; 
 }
+
+.helpPreviewDescription a {
+    pointer-events: none;
+    text-decoration: none;
+    color: #000023;
+}
+
+.rstudio-themes-dark-menus .helpPreviewDescription a {
+    color: #FFF;
+}
+
+.rstudio-themes-dark-menus .helpPreviewDescription span {
+    color: #bfbfbf !important;
+}
