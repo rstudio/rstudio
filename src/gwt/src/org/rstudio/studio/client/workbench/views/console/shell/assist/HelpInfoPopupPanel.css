@@ -23,6 +23,7 @@
 .helpBodyText a {
    pointer-events: none;
    text-decoration: none;
+   color: #000023 !important; 
 }
 
 .rstudio-themes-dark-menus .helpBodyText a {
