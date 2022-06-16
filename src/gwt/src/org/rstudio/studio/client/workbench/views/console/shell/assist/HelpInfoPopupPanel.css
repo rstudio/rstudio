@@ -20,12 +20,22 @@
    margin-bottom: 4px;
 }
 
+.helpBodyText a {
+   pointer-events: none;
+   text-decoration: none;
+}
+
 .rstudio-themes-dark-menus .helpBodyText a {
    color: #FFF;
 }
 
 .rstudio-themes-dark-menus .helpBodyText span {
    color: #bfbfbf !important;
+}
+
+.helpTitleText {
+   font-weight: bold;
+   margin-bottom: 4px;
 }
 
 .snippetText {

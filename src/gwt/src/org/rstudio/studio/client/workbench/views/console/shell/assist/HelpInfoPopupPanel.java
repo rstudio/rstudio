@@ -80,6 +80,10 @@ public class HelpInfoPopupPanel extends PopupPanel
       }
       vpanel_.add(lblSig);
       
+      Label lblTitle = new Label(help.getTitle());
+      lblTitle.setStylePrimaryName(RES.styles().helpTitleText());
+      vpanel_.add(lblTitle);
+
       HTML htmlDesc = new HTML(help.getDescription());
       htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
       vpanel_.add(htmlDesc);
