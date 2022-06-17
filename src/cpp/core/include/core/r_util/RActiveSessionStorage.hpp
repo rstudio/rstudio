@@ -61,9 +61,9 @@ private:
    // This contains the properties directory, as well as susspended session data, session-persistence-state etc
    // Baked into this path is the session id
 
-   // Properties Path Example : ~/.local/share/rstudio/sessions/active/session-6d0bdd18/properites
+   // Properties Path Example : ~/.local/share/rstudio/sessions/active/session-6d0bdd18/properties
    FilePath scratchPath_;
-   const std::string propertiesDirName_ = "properites";
+   const std::string propertiesDirName_ = "properties";
 
    FilePath getPropertyDir() const;
    FilePath getPropertyFile(const std::string& name) const;

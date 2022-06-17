@@ -305,7 +305,7 @@ void RpcActiveSessionsStorage::migrateSessions() const
 {
 #ifndef _WIN32
    static const std::string migratedFileName = ".migrated";
-   static const std::string properites = "properites";
+   static const std::string properties = "properties";
 
    FilePath rootMigratedFile = storagePath_.completeChildPath(migratedFileName);
    if (!rootMigratedFile.exists())
@@ -324,7 +324,7 @@ void RpcActiveSessionsStorage::migrateSessions() const
          FilePath migratedFile = child.completeChildPath(migratedFileName);
          if (!migratedFile.exists())
          {
-            if (child.completeChildPath(properites).exists())
+            if (child.completeChildPath(properties).exists())
             {
                std::string sessionId;
                Error error = sessionIdFromFolder(child, &sessionId);
