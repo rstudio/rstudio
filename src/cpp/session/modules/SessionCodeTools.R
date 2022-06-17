@@ -351,7 +351,10 @@
       list(generic = generic)
    )
 
-   methods <- eval(call, envir = globalenv())
+   methods <- .rs.tryCatch(eval(call, envir = globalenv()))
+   if (inherits(methods, "error"))
+      return(NULL)
+      
    info <- attr(methods, "info")
    if (!is.data.frame(info))
       return(NULL)
