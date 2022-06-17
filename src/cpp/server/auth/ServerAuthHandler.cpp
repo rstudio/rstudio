@@ -387,6 +387,8 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
                           boost::posix_time::ptime* pLastSignin,
                           bool* pExists)
 {
+   LOG_DEBUG_MESSAGE("Getting user from database: " + user.getUsername());
+   
    *pLocked = true;
 
    Rowset rows;
@@ -427,6 +429,8 @@ Error getUserFromDatabase(const boost::shared_ptr<IConnection>& connection,
       // If the user ID was uninitialized, update it now.
       if (row.get<int>(1) < 0)
       {
+         LOG_DEBUG_MESSAGE("Updating posix user ID in database: " + user.getUsername());
+   
          Query setUidQuery = connection->query("UPDATE licensed_users SET user_id = :uid WHERE user_name = :username and user_id = :olduid")
             .withInput(user.getUserId())
             .withInput(username)
@@ -564,6 +568,8 @@ Error addUserToDatabase(const boost::shared_ptr<IConnection>& connection,
                         const system::User& user,
                         bool isAdmin)
 {   
+   LOG_DEBUG_MESSAGE("Adding user to database: " + user.getUsername());
+
    std::string currentTime = date_time::format(boost::posix_time::microsec_clock::universal_time(),
                                                 date_time::kIso8601Format);
    int locked = 0;
@@ -936,11 +942,54 @@ boost::shared_ptr<UserSession> UserSession::lookupUserSession(const std::string&
    RECURSIVE_LOCK_MUTEX(s_mutex)
    {
       std::map<std::string, boost::shared_ptr<UserSession>>::iterator it = s_userSessions.find(username);
-      if (it == s_userSessions.end())
+      bool sessionFound = it != s_userSessions.end();
+
+      // Lookup the user in the database
+      system::User user;
+      Error error = system::User::getUserFromIdentifier(username, user);
+      if (error)
+      {
+         LOG_ERROR(error);
+
+         if (sessionFound)
+            removeUserSession(username);
+
+         return boost::shared_ptr<UserSession>();
+      }
+
+      bool locked, exists;
+      boost::posix_time::ptime lastSignIn;
+      boost::shared_ptr<IConnection> connection = server_core::database::getConnection();
+      error = getUserFromDatabase(connection, user, &locked, &lastSignIn, &exists);
+      if (error)
+      {
+         LOG_ERROR(error);
+
+         if (sessionFound)
+            removeUserSession(username);
+
+         return boost::shared_ptr<UserSession>();
+      }
+      else if (!exists)
+      {
+         error = addUserToDatabase(connection, user, false);
+         if (error)
+         {
+            LOG_ERROR(error);
+
+            if (sessionFound)
+               removeUserSession(username);
+
+            return boost::shared_ptr<UserSession>();
+         }
+      }
+
+      if (!sessionFound)
          return boost::shared_ptr<UserSession>();
       return it->second;
    }
    END_LOCK_MUTEX
+
    return boost::shared_ptr<UserSession>(); // not reached
 }
 
