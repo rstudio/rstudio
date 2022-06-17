@@ -95,6 +95,8 @@ size_t DBActiveSessionsStorage::getSessionCount() const
 
       if(error)
          LOG_ERROR(error);
+
+      return count;
    }
 
    return 0;
