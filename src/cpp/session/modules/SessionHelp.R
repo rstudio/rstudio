@@ -764,6 +764,10 @@ options(help_type = "html")
 .rs.addFunction("followHelpTopic", function(topic, package)
 {
    tryCatch({
+      # useful for topic like ">=" that gets encoded by the help 
+      # system as ">%3D"
+      topic <- utils::URLdecode(topic)
+
       # first look in the specified package
       file <- utils::help(topic, package = (package), help_type = "text", try.all.packages = FALSE)
 
