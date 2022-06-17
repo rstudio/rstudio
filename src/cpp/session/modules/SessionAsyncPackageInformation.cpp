@@ -194,15 +194,10 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
       std::string line = splat[i].substr(::strlen("#!json: "));
       
       json::Value value;
-      if (!value.parse(line))
+      Error jsonError = value.parse(line);
+      if (jsonError)
       {
-         std::string subset;
-         if (splat[i].length() > 60)
-            subset = splat[i].substr(0, 60) + "...";
-         else
-            subset = splat[i];
-
-         LOG_ERROR_MESSAGE("Failed to parse JSON: '" + subset + "'");
+         LOG_ERROR(jsonError);
          continue;
       }
       

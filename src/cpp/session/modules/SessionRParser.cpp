@@ -13,7 +13,7 @@
  *
  */
 
-#define RSTUDIO_DEBUG_LABEL "rparser"
+// #define RSTUDIO_DEBUG_LABEL "r_parser"
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // We use a couple internal R functions here; in particular,
@@ -52,6 +52,7 @@ namespace session {
 namespace modules {
 namespace rparser {
 
+
 void LintItems::dump()
 {
    for (std::size_t i = 0; i < lintItems_.size(); ++i)
@@ -62,6 +63,8 @@ using namespace core;
 using namespace core::r_util;
 using namespace core::r_util::token_utils;
 using namespace token_cursor;
+
+void doParse(RTokenCursor&, ParseStatus&);
 
 namespace {
 
@@ -965,10 +968,22 @@ void handleString(RTokenCursor& cursor,
       boost::sregex_token_iterator end;
       for (; it != end; ++it)
       {
-         status.node()->addReferencedSymbol(
-                  gsl::narrow_cast<int>(cursor.row()),
-                  gsl::narrow_cast<int>(cursor.column()),
-                  *it);
+         // glue strings can contain arbitrary R expressions; to handle
+         // this properly, we need to create a separate R parsers that inherits
+         // the current parser context and uses that to reference symbols, etc.
+         //
+         // In order to make sure the token positions are computed correctly,
+         // we insert whitespace before
+         core::collection::Position position = cursor.currentPosition();
+         position.column += (it->begin() - value.begin());
+         
+         RTokens rTokens(string_utils::utf8ToWide(*it), position, RTokens::StripComments);
+         if (rTokens.empty())
+            continue;
+   
+         RTokenCursor subCursor(rTokens);
+         DEBUG("Parsing glue expression '" << *it << "' (" << subCursor << ")");
+         doParse(subCursor, status);
       }
    }
 }
@@ -1401,6 +1416,10 @@ public:
    static void applyFixups(RTokenCursor cursor,
                            MatchedCall* pCall)
    {
+      // the 'object' argument to `UseMethod()` is optional
+      if (cursor.contentEquals(L"UseMethod"))
+         pCall->functionInfo().infoForFormal("object").setMissingnessHandled(true);
+      
       // the 'env' argument to `substitute()` is optional
       if (cursor.contentEquals(L"substitute"))
          pCall->functionInfo().infoForFormal("env").setMissingnessHandled(true);
@@ -1524,8 +1543,6 @@ private:
 };
 
 } // anonymous namespace
-
-void doParse(RTokenCursor&, ParseStatus&);
 
 ParseResults parse(const FilePath& filePath,
                    const std::wstring& rCode,
@@ -2159,10 +2176,7 @@ bool makeSymbolsAvailableInCallFromObjectNames(RTokenCursor cursor,
 
 void doParse(RTokenCursor& cursor, ParseStatus& status)
 {
-   DEBUG("Beginning parse...");
-   // Return early if the document is empty (only whitespace or comments)
-   if (cursor.isAtEndOfDocument())
-      return;
+   DEBUG("Beginning parse (" << cursor << ")");
    
    cursor.fwdOverWhitespaceAndComments();
    bool startedWithUnaryOperator = false;
@@ -2175,6 +2189,7 @@ void doParse(RTokenCursor& cursor, ParseStatus& status)
 START:
       
       DEBUG("== Current state: " << status.currentStateAsString());
+      DEBUG("== Cursor: " << cursor);
       
       checkIncorrectComparison(cursor, status);
       
@@ -2415,12 +2430,6 @@ START:
       if (isValidAsIdentifier(cursor))
       {
          DEBUG("-- Identifier -- " << cursor);
-         if (cursor.isAtEndOfDocument())
-         {
-            while (status.isInControlFlowStatement())
-               status.popState();
-            return;
-         }
          
          if (cursor.isType(RToken::ID))
          {
@@ -2429,6 +2438,13 @@ START:
          else if (cursor.isType(RToken::STRING))
          {
             handleString(cursor, status);
+         }
+         
+         if (cursor.isAtEndOfDocument())
+         {
+            while (status.isInControlFlowStatement())
+               status.popState();
+            return;
          }
          
          // Identifiers following identifiers on the same line is

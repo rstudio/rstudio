@@ -194,6 +194,18 @@ public:
         column_(0)
    {
    }
+   
+   // An alternate constructor, to be used when tokenizing some code
+   // whose positions should be computed relative to some offset.
+   RTokenizer(const std::wstring& data, std::size_t row, std::size_t column)
+      : data_(data),
+        begin_(data_.begin()),
+        end_(data_.end()),
+        pos_(data_.begin()),
+        row_(row),
+        column_(column)
+   {
+   }
 
    virtual ~RTokenizer() {}
 
@@ -274,8 +286,10 @@ public:
    const_iterator begin() const { return tokens_.begin(); }
    const_iterator end() const { return tokens_.end(); }
    
-   explicit RTokens(const std::wstring& code, int flags = None)
-      : tokenizer_(code)
+   explicit RTokens(const std::wstring& code,
+                    const core::collection::Position& position,
+                    int flags = None)
+      : tokenizer_(code, position.row, position.column)
    {
       while (RToken token = tokenizer_.nextToken())
       {
@@ -287,10 +301,15 @@ public:
 
          push_back(token);
       }
+      
    }
    
-   friend std::ostream& operator <<(std::ostream& os,
-                                    const RTokens& rTokens)
+   explicit RTokens(const std::wstring& code, int flags = None)
+      : RTokens(code, core::collection::Position(), flags)
+   {
+   }
+   
+   friend std::ostream& operator <<(std::ostream& os, const RTokens& rTokens)
    {
       for (std::size_t i = 0, n = rTokens.size(); i < n; ++i)
          os << rTokens.atUnsafe(i) << std::endl;
