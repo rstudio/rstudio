@@ -336,6 +336,9 @@ Error getAvailableSymbolsForPackage(const FilePath& filePath,
    // Add project symbols (ie, top-level symbols within an R package)
    code_search::addAllProjectSymbols(pSymbols);
    
+   // The '.packageName' symbol is implicitly defined by R for packages.
+   pSymbols->insert(".packageName");
+   
    // Symbols inferred from the NAMESPACE (importFrom, import)
    addNamespaceSymbols(pSymbols);
    

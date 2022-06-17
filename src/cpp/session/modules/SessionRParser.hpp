@@ -471,7 +471,7 @@ public:
    {
       addLintItem(rToken,
                   LintTypeStyle,
-                  "no definition for '" + rToken.contentAsUtf8() + "' in scope");
+                  "no definition for '" + token_utils::getSymbolName(rToken) + "' in scope");
    }
    
    void unexpectedAssignmentInArgumentList(const RToken& rToken)

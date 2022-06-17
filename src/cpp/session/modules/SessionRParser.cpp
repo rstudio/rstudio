@@ -902,12 +902,39 @@ void handleIdentifier(RTokenCursor& cursor,
       
       // Check that parent assignments reference a variable within scope
       if (isParentLeftAssign(cursor.nextSignificantToken()))
-         if (!status.node()->symbolHasDefinitionInTree(cursor.contentAsUtf8(), cursor.currentPosition()))
+      {
+         std::string symbolName = token_utils::getSymbolName(cursor);
+         if (!status.node()->symbolHasDefinitionInTree(symbolName, cursor.currentPosition()))
             status.lint().noExistingDefinitionForParentAssignment(cursor);
+      }
       
       // Add a definition for this symbol
-      if (isLeftAssign(cursor.nextSignificantToken()) ||
-          isRightAssign(cursor.previousSignificantToken()))
+      if (isParentLeftAssign(cursor.nextSignificantToken()) ||
+          isParentRightAssign(cursor.previousSignificantToken()))
+      {
+         
+         // A parent assignment eithers modifes a binding in a parent scope,
+         // or adds a binding at the top level. Check and see if this symbol
+         // has already been defined; if not, add a top-level definition.
+         auto symbolName = token_utils::getSymbolName(cursor);
+         for (auto node = status.node()->getParent();
+              node != nullptr;
+              node = node->getParent())
+         {
+            if (node->isRootNode())
+            {
+               node->addDefinedSymbol(cursor);
+               break;
+            }
+            
+            if (node->getReferencedSymbols().count(symbolName))
+            {
+               break;
+            }
+         }
+      }
+      else if (isLeftAssign(cursor.nextSignificantToken()) ||
+               isRightAssign(cursor.previousSignificantToken()))
       {
          DEBUG("--- Adding definition for symbol");
          status.node()->addDefinedSymbol(cursor);
@@ -937,8 +964,12 @@ void handleString(RTokenCursor& cursor,
       boost::sregex_token_iterator it(value.begin(), value.end(), re, 1);
       boost::sregex_token_iterator end;
       for (; it != end; ++it)
-         status.node()->addReferencedSymbol(gsl::narrow_cast<int>(cursor.row()),
-                                            gsl::narrow_cast<int>(cursor.column()), *it);
+      {
+         status.node()->addReferencedSymbol(
+                  gsl::narrow_cast<int>(cursor.row()),
+                  gsl::narrow_cast<int>(cursor.column()),
+                  *it);
+      }
    }
 }
 
@@ -1122,7 +1153,7 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       {
          std::string pkgName = projects::projectContext().packageInfo().name();
          if (RSourceIndex::hasFunctionInformation(fnName, pkgName))
-                  return RSourceIndex::getFunctionInformation(fnName, pkgName);
+            return RSourceIndex::getFunctionInformation(fnName, pkgName);
       }
       
       // Try looking up the symbol by name.
@@ -1370,6 +1401,14 @@ public:
    static void applyFixups(RTokenCursor cursor,
                            MatchedCall* pCall)
    {
+      // the 'env' argument to `substitute()` is optional
+      if (cursor.contentEquals(L"substitute"))
+         pCall->functionInfo().infoForFormal("env").setMissingnessHandled(true);
+      
+      // the 'x' argument to `invisible()` is implicitly NULL
+      if (cursor.contentEquals(L"invisible"))
+         pCall->functionInfo().infoForFormal("x").setMissingnessHandled(true);
+
       // `old.packages()` delegates the 'method' formal even when missing
       // same with `available.packages()`
       if (cursor.contentEquals(L"old.packages") ||
