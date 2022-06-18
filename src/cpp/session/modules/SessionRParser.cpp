@@ -1806,18 +1806,15 @@ void validateGlueCallImpl(RTokenCursor cursor,
       // Check for open delimiter.
       if (value.substr(i, open.size()) == open)
       {
-         fmt::print("Found open '{}' at {}\n", open, i);
          i += open.size();
          if (value.substr(i, open.size()) == open)
          {
-            fmt::print("Found open '{}' at {}; skipping\n", open, i);
             i += open.size();
             continue;
          }
          
          if (delimCount == 0)
          {
-            fmt::print("Marking start: {}\n", i);
             start = i;
          }
          
@@ -1827,11 +1824,9 @@ void validateGlueCallImpl(RTokenCursor cursor,
       // Check for close delimiter
       if (value.substr(i, close.size()) == close)
       {
-         fmt::print("Found close '{}' at {}'\n", close, i);
          i += close.size();
          if (value.substr(i, close.size()) == close)
          {
-            fmt::print("Found close '{}' at {}; skipping\n", close, i);
             i += close.size();
             continue;
          }
@@ -1845,7 +1840,6 @@ void validateGlueCallImpl(RTokenCursor cursor,
             position.column += start;
 
             std::string rCode = value.substr(start, i - start - close.size());
-            fmt::print("Parsing code: '{}'\n", rCode);
             RTokens rTokens(string_utils::utf8ToWide(rCode), position, RTokens::StripComments);
             if (rTokens.empty())
                continue;
