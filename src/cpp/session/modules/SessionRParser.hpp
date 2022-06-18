@@ -601,12 +601,18 @@ public:
    {
       return referencedSymbols_;
    }
-
+   
    void addDefinedSymbol(int row,
                          int column,
                          const std::string& name)
    {
       definedSymbols_[name].push_back(Position(row, column));
+   }
+   
+   void addDefinedSymbol(const std::string& name,
+                         const Position& position)
+   {
+      definedSymbols_[name].push_back(position);
    }
    
    void addDefinedSymbol(const RToken& rToken,
@@ -1131,6 +1137,11 @@ public:
       
       DEBUG("Entering function scope: '" << name << "' at " << position);
       pushState(ParseStateFunctionArgumentList);
+   }
+   
+   void exitFunctionScope()
+   {
+      popState();
    }
    
    void pushState(ParseState state)
