@@ -13,12 +13,14 @@
  *
  */
 
-#define RSTUDIO_DEBUG_LABEL "r_parser"
-#define RSTUDIO_ENABLE_DEBUG_MACROS
+// #define RSTUDIO_DEBUG_LABEL "r_parser"
+// #define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
 #define R_INTERNAL_FUNCTIONS
+
+#include <fmt/format.h>
 
 #include <core/Debug.hpp>
 #include <core/Macros.hpp>
@@ -1790,43 +1792,79 @@ void addExtraScopedSymbolsForCall(RTokenCursor startCursor,
 
 void validateGlueCallImpl(RTokenCursor cursor,
                           ParseStatus& status,
+                          const std::string& open,
+                          const std::string& close,
                           const std::vector<std::string>& dataMask)
 {
    auto cursorPosition = cursor.currentPosition();
    const std::string& value = cursor.contentAsUtf8();
-   boost::regex re("{([^}]+)}");
-   boost::sregex_token_iterator it(value.begin(), value.end(), re, 1);
-   boost::sregex_token_iterator end;
-   for (; it != end; ++it)
-   {
-      // glue strings can contain arbitrary R expressions; to handle
-      // this properly, we need to create a separate R parsers that inherits
-      // the current parser context and uses that to reference symbols, etc.
-      //
-      // In order to make sure the token positions are computed correctly,
-      // we insert whitespace before
-      auto position = cursorPosition;
-      position.column += (it->begin() - value.begin());
-      
-      RTokens rTokens(string_utils::utf8ToWide(*it), position, RTokens::StripComments);
-      if (rTokens.empty())
-         continue;
-
-      RTokenCursor subCursor(rTokens);
-      DEBUG("Parsing glue expression '" << *it << "' (" << subCursor << ")");
-      
-      // glue expressions can provide data to be formatted; for example,
-      //
-      //     glue("{x}", x = 42)
-      //
-      // so we need to make those symbols implicitly available while parsing
-      status.addChildAndSetAsCurrentNode(ParseNode::createNode("(glue)"), position);
-      for (const std::string& mask : dataMask)
-         status.node()->addDefinedSymbol(mask, cursorPosition);
-      doParse(subCursor, status);
-      status.setParentAsCurrent();
-   }
    
+   std::size_t start;
+   int delimCount = 0;
+   for (std::size_t i = 0, n = value.size(); i < n; i++)
+   {
+      // Check for open delimiter.
+      if (value.substr(i, open.size()) == open)
+      {
+         fmt::print("Found open '{}' at {}\n", open, i);
+         i += open.size();
+         if (value.substr(i, open.size()) == open)
+         {
+            fmt::print("Found open '{}' at {}; skipping\n", open, i);
+            i += open.size();
+            continue;
+         }
+         
+         if (delimCount == 0)
+         {
+            fmt::print("Marking start: {}\n", i);
+            start = i;
+         }
+         
+         delimCount += 1;
+      }
+      
+      // Check for close delimiter
+      if (value.substr(i, close.size()) == close)
+      {
+         fmt::print("Found close '{}' at {}'\n", close, i);
+         i += close.size();
+         if (value.substr(i, close.size()) == close)
+         {
+            fmt::print("Found close '{}' at {}; skipping\n", close, i);
+            i += close.size();
+            continue;
+         }
+         
+         delimCount -= 1;
+         
+         if (delimCount == 0)
+         {
+            // We found out code; handle it now.
+            auto position = cursorPosition;
+            position.column += start;
+
+            std::string rCode = value.substr(start, i - start - close.size());
+            fmt::print("Parsing code: '{}'\n", rCode);
+            RTokens rTokens(string_utils::utf8ToWide(rCode), position, RTokens::StripComments);
+            if (rTokens.empty())
+               continue;
+
+            RTokenCursor subCursor(rTokens);
+
+            // glue expressions can provide data to be formatted; for example,
+            //
+            //     glue("{x}", x = 42)
+            //
+            // so we need to make those symbols implicitly available while parsing
+            status.addChildAndSetAsCurrentNode(ParseNode::createNode("(glue)"), position);
+            for (const std::string& mask : dataMask)
+               status.node()->addDefinedSymbol(mask, cursorPosition);
+            doParse(subCursor, status);
+            status.setParentAsCurrent();
+         }
+      }
+   }
 }
 
 // Validate a call to 'glue()' of the form:
@@ -1838,6 +1876,8 @@ void validateGlueCallImpl(RTokenCursor cursor,
 // existing bindings in the current scope.
 void validateGlueCall(RTokenCursor cursor,
                       ParseStatus& status,
+                      const std::string& open,
+                      const std::string& close,
                       const std::vector<std::string>& dataMask)
 {
    
@@ -1852,7 +1892,7 @@ void validateGlueCall(RTokenCursor cursor,
    {
       // If this is a string, validate it
       if (cursor.isType(RToken::STRING))
-         validateGlueCallImpl(cursor, status, dataMask);
+         validateGlueCallImpl(cursor, status, open, close, dataMask);
       
       // If we've reached a closing parenthesis, break
       if (cursor.isType(RToken::RPAREN))
@@ -1899,7 +1939,21 @@ void validateFunctionCall(RTokenCursor cursor,
          keys.push_back(entry.first);
       }
 
-      validateGlueCall(cursor, status, keys);
+      std::string open = "{";
+      if (matched.namedArguments().count(".open"))
+      {
+         std::string value = matched.namedArguments().at(".open");
+         Error error = string_utils::jsonLiteralUnescape(value, &open);
+      }
+      
+      std::string close = "}";
+      if (matched.namedArguments().count(".close"))
+      {
+         std::string value = matched.namedArguments().at(".close");
+         Error error = string_utils::jsonLiteralUnescape(value, &close);
+      }
+      
+      validateGlueCall(cursor, status, open, close, keys);
    }
    
    // Bail if the function has no formals (e.g. certain primitives),

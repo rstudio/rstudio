@@ -100,6 +100,9 @@ std::string jsonLiteralUnescape(const std::string& str);
 std::string jsonHtmlEscape(const std::string& str);
 std::string singleQuotedStrEscape(const std::string& str);
 
+Error jsonLiteralUnescape(const std::string& string,
+                          std::string* pEscaped);
+
 void convertLineEndings(std::string* str, LineEnding type);
 
 bool detectLineEndings(const FilePath& filePath, LineEnding* pType);

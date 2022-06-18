@@ -502,6 +502,21 @@ std::string jsonLiteralUnescape(const std::string& str)
    return value.getString();
 }
 
+Error jsonLiteralUnescape(const std::string& str, std::string* pEscaped)
+{
+   json::Value value;
+   
+   Error error = value.parse(str);
+   if (error)
+      return error;
+   
+   if (!json::isType<std::string>(value))
+      return Error(boost::system::errc::invalid_argument, ERROR_LOCATION);
+   
+   *pEscaped = value.getString();
+   return Success();
+}
+
 std::string singleQuotedStrEscape(const std::string& str)
 {
    std::string escapes = "'\\";
