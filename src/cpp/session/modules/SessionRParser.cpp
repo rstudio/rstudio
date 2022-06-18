@@ -13,8 +13,8 @@
  *
  */
 
-// #define RSTUDIO_DEBUG_LABEL "r_parser"
-// #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_DEBUG_LABEL "r_parser"
+#define RSTUDIO_ENABLE_DEBUG_MACROS
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
@@ -746,7 +746,10 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       // but the pattern is uncommon enough that it's better that we just don't
       // supply incorrect diagnostics, rather than attempt to supply correct diagnostics.
       if (status.node()->findVariable(cursor.contentAsUtf8(), cursor.currentPosition()))
+      {
+         DEBUG("***** Found variable masking definition; giving up");
          return FunctionInformation();
+      }
       
       // If we're within a package project, then attempt searching the
       // source index for the formals associated with this function.
@@ -754,8 +757,16 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
       if (projects::projectContext().isPackageProject())
       {
          std::string pkgName = projects::projectContext().packageInfo().name();
+         DEBUG("***** Checking if package '" << pkgName << "' knows about function '" << fnName << "'");
          if (RSourceIndex::hasFunctionInformation(fnName, pkgName))
+         {
+            DEBUG("***** Found function definition in source index");
             return RSourceIndex::getFunctionInformation(fnName, pkgName);
+         }
+         else
+         {
+            DEBUG("***** Couldn't find information on function '" << fnName << "' from package '" << pkgName << "'");
+         }
       }
       
       // Try looking up the symbol by name.
@@ -774,7 +785,10 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
             RSourceIndex::getFunctionInformationAnywhere(fnName, inferredPkgs, &lookupFailed);
       
       if (!lookupFailed)
+      {
+         DEBUG("**** Found function definition via fallback");
          return info;
+      }
       
    }
    
@@ -783,7 +797,10 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
    r::sexp::Protect protect;
    SEXP functionSEXP = resolveFunctionAssociatedWithCall(cursor, &protect);
    if (functionSEXP == R_UnboundValue || !Rf_isFunction(functionSEXP))
+   {
+      DEBUG("***** Function definition is not available on search path; giving up");
       return FunctionInformation();
+   }
    
    // Get the formals associated with this function.
    FunctionInformation info(
@@ -795,6 +812,22 @@ FunctionInformation getInfoAssociatedWithFunctionAtCursor(
             &info,
             true,
             true);
+   
+   if (error)
+   {
+      DEBUG("***** Couldn't resolve function information from search path definition");
+   }
+   else
+   {
+      if (info.binding())
+      {
+         DEBUG("***** Using definition from search path (" << info.binding()->name << " from " << info.binding()->origin);
+      }
+      else
+      {
+         DEBUG("***** Using definition from search path");
+      }
+   }
    
    return info;
    
@@ -2005,6 +2038,11 @@ void validateFunctionCall(RTokenCursor cursor,
 // code.
 bool skipFormulas(RTokenCursor& origin, ParseStatus& status)
 {
+   // don't skip in 'case' function calls
+   for (auto&& name : status.functionNames())
+      if (name == L"case")
+         return false;
+   
    RTokenCursor cursor = origin.clone();
    bool foundTilde = false;
 
