@@ -47,6 +47,21 @@ namespace rstudio {
 namespace core {
 namespace string_utils {
 
+bool hasSubstringAtOffset(
+      const std::string& string,
+      const std::string& substring,
+      std::size_t offset)
+{
+   if (substring.size() + offset >= string.size())
+      return false;
+   
+   for (std::size_t i = 0, n = substring.size(); i < n; i++)
+      if (string[offset + i] != substring[i])
+         return false;
+   
+   return true;
+}
+
 bool hasTruthyValue(const std::string& string)
 {
    for (const char* value : { "TRUE", "True", "true", "YES", "Yes", "yes", "1" })

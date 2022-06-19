@@ -52,6 +52,11 @@ private:
    std::string needle_;
 };
 
+bool hasSubstringAtOffset(
+      const std::string& string,
+      const std::string& substring,
+      std::size_t offset = 0);
+
 bool hasTruthyValue(const std::string& string);
 bool hasFalsyValue(const std::string& string);
 

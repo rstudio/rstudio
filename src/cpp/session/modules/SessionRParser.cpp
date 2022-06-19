@@ -1799,63 +1799,109 @@ void validateGlueCallImpl(RTokenCursor cursor,
    auto cursorPosition = cursor.currentPosition();
    const std::string& value = cursor.contentAsUtf8();
    
-   std::size_t start;
-   int delimCount = 0;
-   for (std::size_t i = 0, n = value.size(); i < n; i++)
+   auto processCode = [&](std::size_t start, std::size_t end)
    {
-      // Check for open delimiter.
-      if (value.substr(i, open.size()) == open)
-      {
-         i += open.size();
-         if (value.substr(i, open.size()) == open)
-         {
-            i += open.size();
-            continue;
-         }
-         
-         if (delimCount == 0)
-         {
-            start = i;
-         }
-         
-         delimCount += 1;
-      }
+       // We found out code; handle it now.
+       auto position = cursorPosition;
+       position.column += start;
+
+       std::string rCode = value.substr(start, end - start);
+       std::cerr << "Code: '" << rCode << "'" << std::endl;
+       RTokens rTokens(string_utils::utf8ToWide(rCode), position, RTokens::StripComments);
+       if (rTokens.empty())
+          return false;
+
+       RTokenCursor subCursor(rTokens);
+
+       // glue expressions can provide data to be formatted; for example,
+       //
+       //     glue("{x}", x = 42)
+       //
+       // so we need to make those symbols implicitly available while parsing
+       status.addChildAndSetAsCurrentNode(ParseNode::createNode("(glue)"), position);
+       for (const std::string& mask : dataMask)
+          status.node()->addDefinedSymbol(mask, cursorPosition);
+       doParse(subCursor, status);
+       status.setParentAsCurrent();
+       
+       return true;
+   };
+   
+   std::size_t start, end, it = 0;
+   
+   while (true)
+   {
+      // If we've moved beyond the string bounds, bail
+      if (it >= value.size())
+         break;
       
-      // Check for close delimiter
-      if (value.substr(i, close.size()) == close)
+      // Find an opening delimiter.
+      it = value.find(open, it);
+      if (it == std::string::npos)
+         break;
+      
+      // Move over open delimiter.
+      it += open.size();
+
+      // Check for escape.
+      if (string_utils::hasSubstringAtOffset(value, open, it))
       {
-         i += close.size();
-         if (value.substr(i, close.size()) == close)
+         it += open.size();
+         continue;
+      }
+         
+      // Save start location.
+      start = it;
+      
+      // Start looking for an end delimiter. We also need to count
+      // matching pairs of open + closing delimiters within.
+      int depth = 0;
+      while (true)
+      {
+         // Check for end of string.
+         if (it >= value.size())
+            break;
+         
+         // Check for closing delimiter.
+         if (string_utils::hasSubstringAtOffset(value, close, it))
          {
-            i += close.size();
+            if (depth > 0)
+            {
+               // Move over closing delimiter.
+               it += close.size();
+               
+               // Consume one matching delimiter.
+               --depth;
+               
+               // Keep looking.
+               continue;
+            }
+            else
+            {
+               // Save the location.
+               end = it;
+               
+               // Move over closing delimiter.
+               it += close.size();
+               
+               // Process the inner code.
+               processCode(start, end);
+               break;
+            }
+         }
+         
+         // Check for opening delimiter.
+         else if (string_utils::hasSubstringAtOffset(value, open, it))
+         {
+            it += open.size();
+            ++depth;
             continue;
          }
          
-         delimCount -= 1;
-         
-         if (delimCount == 0)
+         // Nothing matched.
+         else
          {
-            // We found out code; handle it now.
-            auto position = cursorPosition;
-            position.column += start;
-
-            std::string rCode = value.substr(start, i - start - close.size());
-            RTokens rTokens(string_utils::utf8ToWide(rCode), position, RTokens::StripComments);
-            if (rTokens.empty())
-               continue;
-
-            RTokenCursor subCursor(rTokens);
-
-            // glue expressions can provide data to be formatted; for example,
-            //
-            //     glue("{x}", x = 42)
-            //
-            // so we need to make those symbols implicitly available while parsing
-            status.addChildAndSetAsCurrentNode(ParseNode::createNode("(glue)"), position);
-            for (const std::string& mask : dataMask)
-               status.node()->addDefinedSymbol(mask, cursorPosition);
-            doParse(subCursor, status);
-            status.setParentAsCurrent();
+            ++it;
          }
       }
    }
@@ -1887,6 +1933,17 @@ void validateGlueCall(RTokenCursor cursor,
       // If this is a string, validate it
       if (cursor.isType(RToken::STRING))
          validateGlueCallImpl(cursor, status, open, close, dataMask);
+      
+      // Skip strings following named arguments, e.g. '= "foo"'
+      if (cursor.contentEquals(L"=") &&
+          cursor.nextSignificantToken().isType(RToken::STRING))
+      {
+         if (!cursor.moveToNextSignificantToken())
+            break;
+         
+         if (!cursor.moveToNextSignificantToken())
+            break;
+      }
       
       // If we've reached a closing parenthesis, break
       if (cursor.isType(RToken::RPAREN))
