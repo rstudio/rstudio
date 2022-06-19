@@ -15,6 +15,7 @@
 
 // #define RSTUDIO_DEBUG_LABEL "r_parser"
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
+#define RSTUDIO_ENABLE_GLUE_DEBUG
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
@@ -30,6 +31,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <core/r_util/RTokenCursor.hpp>
+#include <core/text/TextCursor.hpp>
 
 #include "SessionRParser.hpp"
 #include "SessionCodeSearch.hpp"
@@ -1796,17 +1798,63 @@ void validateGlueCallImpl(RTokenCursor cursor,
                           const std::string& close,
                           const std::vector<std::string>& dataMask)
 {
-   auto cursorPosition = cursor.currentPosition();
-   const std::string& value = cursor.contentAsUtf8();
+   // A helper macro for debugging.
+#ifdef RSTUDIO_ENABLE_GLUE_DEBUG
+# define GLUE(...)                                                 \
+   do                                                              \
+   {                                                               \
+      const char* fmt = "glue({}; {}; '{}'):";                     \
+      std::string prefix = fmt::format(fmt, state, it, value[it]); \
+      std::string suffix = fmt::format(__VA_ARGS__);               \
+      fmt::print("{} {}\n", prefix, suffix);                       \
+   }                                                               \
+   while (0)
+#else
+# define GLUE(...) do {} while (0)
+#endif
    
+   auto cursorPosition = cursor.currentPosition();
+   
+   // Get the value of the current string.
+   // Note that we're working with the _raw_ token value, which
+   // implies that embedded escapes may be included.
+   std::string value = cursor.contentAsUtf8();
+   
+   // Helper function for processing code once we've successfully found it.
    auto processCode = [&](std::size_t start, std::size_t end)
    {
        // We found out code; handle it now.
        auto position = cursorPosition;
        position.column += start;
 
+       // Extract the code.
        std::string rCode = value.substr(start, end - start);
-       std::cerr << "Code: '" << rCode << "'" << std::endl;
+       
+       // Un-escape quoted delimiters within the code.
+       // This is necessary to handle glue expressions of the form:
+       //
+       //    glue("Value: { \"Embedded string\" }")
+       //
+       // where the code we want to actually parse is just "Embedded string".
+       //
+       // We do this with a bit of a hack, where we replace such escapes
+       // with whitespace.
+       text::TextCursor cursor(rCode);
+       do
+       {
+          if (!cursor.consumeUntil('\\'))
+             break;
+          
+          if (!cursor.advance())
+             break;
+          
+          char ch = cursor.peek();
+          if (ch == '"' || ch == '\'' || ch == '`')
+             rCode[cursor.offset() - 1] = ' ';
+       }
+       while (cursor.advance());
+       
+       std::cerr << "Parsing code: '" << rCode << "'" << std::endl;
        RTokens rTokens(string_utils::utf8ToWide(rCode), position, RTokens::StripComments);
        if (rTokens.empty())
           return false;
@@ -1827,84 +1875,205 @@ void validateGlueCallImpl(RTokenCursor cursor,
        return true;
    };
    
-   std::size_t start, end, it = 0;
+   enum State {
+      Top,
+      Code,
+      String,
+      EmbeddedString,
+   };
+   
+   // The string delimiter used for an inner string.
+   char stringDelimiter = 0;
+   
+   // The 'start' + 'end' markers for an inner piece of code.
+   std::size_t start, end = 0;
+   
+   // The string iterator. We start at index 1, so that we can
+   // skip the initial quoting character.
+   std::size_t it = 1;
+   
+   // The length of the string. We subtract 1 so we can skip
+   // the closing quoting characters.
+   std::size_t n = value.size() - 1;
+   
+   // The depth (number of opening delimiters) within an R string.
+   int depth = 0;
+   
+   // The previous state; used for processing inner strings.
+   State previousState = Top;
+   
+   // The current state.
+   State state = Top;
+   
+   GLUE("Parsing string: {}", value);
+   
+   // Move to RESTART label, to avoid initial iterator advancement.
+   goto RESTART;
    
    while (true)
    {
-      // If we've moved beyond the string bounds, bail
-      if (it >= value.size())
+      // Advance the iterator.
+      ++it;
+      
+      // The 'RESTART' loop is used for cases where we don't need
+      // automatic advance of the iterator position.
+      RESTART:
+      
+      // Check for end of string.
+      if (it >= n)
          break;
       
-      // Find an opening delimiter.
-      it = value.find(open, it);
-      if (it == std::string::npos)
-         break;
+      GLUE("Current character: '{}'", value[it]);
       
-      // Move over open delimiter.
-      it += open.size();
-
-      // Check for escape.
-      if (string_utils::hasSubstringAtOffset(value, open, it))
+      switch (state)
       {
-         it += open.size();
+      
+      case Top:
+      {
+         GLUE("Entering 'Top' state.");
+         
+         // Check for open delimiter.
+         if (string_utils::hasSubstringAtOffset(value, open, it))
+         {
+            // Consume the delimiter.
+            it += open.size();
+            
+            // Save the start state.
+            start = it;
+            
+            // If it's escaped, restart.
+            if (string_utils::hasSubstringAtOffset(value, open, it))
+            {
+               GLUE("Found escaped opening delimiter {}.", open);
+               it += open.size();
+               goto RESTART;
+            }
+            else
+            {
+               GLUE("Found opening delimiter {}.", open);
+            }
+            
+            // Otherwise, enter the code state.
+            state = Code;
+            goto RESTART;
+         }
+         
          continue;
       }
          
-      // Save start location.
-      start = it;
-      
-      // Start looking for an end delimiter. We also need to count
-      // matching pairs of open + closing delimiters within.
-      int depth = 0;
-      while (true)
+      case Code:
       {
-         // Check for end of string.
-         if (it >= value.size())
-            break;
+         GLUE("Entering 'Code' state.");
          
-         // Check for closing delimiter.
+         char ch = value[it];
+         
+         // Check for escape.
+         if (ch == '\\')
+         {
+            ch = value[it + 1];
+            if (ch == '"' || ch == '\'' || ch == '`')
+            {
+               stringDelimiter = ch;
+               previousState = Code;
+               state = EmbeddedString;
+               continue;
+            }
+         }
+         
+         // Consume strings.
+         if (ch == '`' || ch == '"' || ch == '\'')
+         {
+            GLUE("Consuming string with delimiter {}.", ch);
+            stringDelimiter = ch;
+            previousState = Code;
+            state = String;
+            continue;
+         }
+         
+         // Check for close delimiter.
          if (string_utils::hasSubstringAtOffset(value, close, it))
          {
             if (depth > 0)
             {
-               // Move over closing delimiter.
+               GLUE("Found closing delimiter {}; decreasing depth.", close);
+               
+               // This matches an opening delimiter; consume it and keep going.
                it += close.size();
-               
-               // Consume one matching delimiter.
-               --depth;
-               
-               // Keep looking.
-               continue;
+               depth -= 1;
+               goto RESTART;
             }
             else
             {
-               // Save the location.
+               GLUE("Found matching delimiter {}; parsing code.", close);
+                     
+               // We found our closing delimiter; save the location.
                end = it;
                
-               // Move over closing delimiter.
+               // Consume the delimiter.
                it += close.size();
                
-               // Process the inner code.
+               // Parse the associated code.
                processCode(start, end);
-               break;
+               
+               // Go back to the Top state.
+               state = Top;
+               goto RESTART;
             }
          }
-         
-         // Check for opening delimiter.
          else if (string_utils::hasSubstringAtOffset(value, open, it))
          {
+            GLUE("Found opening delimiter {}; increasing depth.", open);
+            depth += 1;
             it += open.size();
-            ++depth;
+            goto RESTART;
+         }
+         
+         continue;
+      }
+         
+      case EmbeddedString:
+      {
+         GLUE("Entering 'EmbeddedString' state.");
+         
+         if (value[it] == '\\')
+         {
+            it += 1;
+            
+            char ch = value[it];
+            if (ch == stringDelimiter)
+               state = previousState;
+         }
+         
+         continue;
+      }
+         
+      case String:
+      {
+         GLUE("Entering 'String' state.");
+         
+         // Skip escapes.
+         if (value[it] == '\\')
+         {
+            GLUE("Consuming escape in string.");
+            it += 1;
             continue;
          }
          
-         // Nothing matched.
-         else
+         // Check for closing delimiter.
+         if (value[it] == stringDelimiter)
          {
-            ++it;
+            GLUE("Found end of string; returning to previous state.");
+            state = previousState;
+            continue;
          }
+         
+         continue;
+      }
+         
       }
    }
+
+#undef GLUE
 }
 
 // Validate a call to 'glue()' of the form:

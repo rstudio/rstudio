@@ -52,7 +52,7 @@ bool hasSubstringAtOffset(
       const std::string& substring,
       std::size_t offset)
 {
-   if (substring.size() + offset >= string.size())
+   if (substring.size() + offset > string.size())
       return false;
    
    for (std::size_t i = 0, n = substring.size(); i < n; i++)
