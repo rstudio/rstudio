@@ -90,7 +90,7 @@ std::string sessionId = "testId";
 std::map<std::string, std::string> initialProps
 {
    {"user_id", "7"},
-   {"workbench", "rstudio"},
+   {"editor", "rstudio"},
    {"created", "2020-04-30T00:00:00.000Z"},
    {"last_used", "2020-04-30T00:00:00.000Z"},
    {"activity_state", "idle"},
@@ -100,7 +100,7 @@ std::map<std::string, std::string> initialProps
 
 std::set<std::string> propList{
    "user_id",
-   "workbench",
+   "editor",
    "r_version",
    "r_version_label",
    "label",
@@ -141,7 +141,7 @@ void runTests(DBActiveSessionStorage storage)
             REQUIRE_FALSE(storage.readProperties(&readProps));
             REQUIRE(readProps.size() > 0);
             REQUIRE(readProps.find("user_id")->second == "7");
-            REQUIRE(readProps.find("workbench")->second == "rstudio");
+            REQUIRE(readProps.find("editor")->second == "rstudio");
             REQUIRE(readProps.find("r_version")->second == "");
             REQUIRE(readProps.find("activity_state")->second == "idle");
 
@@ -161,9 +161,9 @@ void runTests(DBActiveSessionStorage storage)
 
             // Single Property Reads
             // extant property
-            std::string workbench{};
-            REQUIRE_FALSE(storage.readProperty("workbench", &workbench));
-            REQUIRE(workbench == "rstudio");
+            std::string editor{};
+            REQUIRE_FALSE(storage.readProperty("editor", &editor));
+            REQUIRE(editor == "rstudio");
 
             // missing property
             std::string rVer{};
@@ -198,7 +198,7 @@ void runTests(DBActiveSessionStorage storage)
             REQUIRE_FALSE(storage.readProperties(&readProps));
             REQUIRE(readProps.size() > 0);
             REQUIRE(readProps.find("user_id")->second == "8");
-            REQUIRE(readProps.find("workbench")->second == "rstudio");
+            REQUIRE(readProps.find("editor")->second == "rstudio");
             REQUIRE(readProps.find("r_version")->second == "4.0.0");
             REQUIRE(readProps.find("activity_state")->second == "running");
             REQUIRE(readProps.find("r_version_label")->second == "");
@@ -220,9 +220,9 @@ void runTests(DBActiveSessionStorage storage)
 
             // Single Property Reads
             // existing property
-            std::string workbench{};
-            REQUIRE_FALSE(storage.readProperty("workbench", &workbench));
-            REQUIRE(workbench == "rstudio");
+            std::string editor{};
+            REQUIRE_FALSE(storage.readProperty("editor", &editor));
+            REQUIRE(editor == "rstudio");
             std::string rVersion{};
             REQUIRE_FALSE(storage.readProperty("r_version", &rVersion));
             REQUIRE(rVersion == "4.0.0");
