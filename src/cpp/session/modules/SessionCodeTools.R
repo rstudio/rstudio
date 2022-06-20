@@ -1431,9 +1431,11 @@
       datasets = datasets
    )
 
-   # Write the JSON to stdout; parent processes
+   # Write the JSON to stdout; the parent will read and process it
+   flush.console()
    json <- paste("#!json:", .rs.toJSON(output))
-   cat(json, sep = "\n")
+   writeLines(c("", json, ""))
+   flush.console()
 
    # Return output for debug purposes
    invisible(output)

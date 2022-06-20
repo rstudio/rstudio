@@ -15,7 +15,10 @@
 
 // #define RSTUDIO_DEBUG_LABEL "r_parser"
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
-#define RSTUDIO_ENABLE_GLUE_DEBUG
+
+// Define this if you want extra debug printing for how
+// RStudio attempts to parse and diagnose glue expressions.
+// #define RSTUDIO_ENABLE_GLUE_DEBUG
 
 // We use a couple internal R functions here; in particular,
 // simple accessors (which we know will not longjmp)
@@ -1823,66 +1826,60 @@ void validateGlueCallImpl(RTokenCursor cursor,
    // Helper function for processing code once we've successfully found it.
    auto processCode = [&](std::size_t start, std::size_t end)
    {
-       // We found out code; handle it now.
-       auto position = cursorPosition;
-       position.column += start;
+      // Compute the token position.
+      auto position = cursorPosition;
+      position.column += start;
 
-       // Extract the code.
-       std::string rCode = value.substr(start, end - start);
-       
-       // Un-escape escaped delimiters within the code.
-       // This is necessary to handle glue expressions of the form:
-       //
-       //    glue("Value: { \"Embedded string\" }")
-       //
-       // where the code we want to actually parse is just "Embedded string".
-       //
-       // We use this somewhat hacky approach to ensure that we don't need
-       // to try and recompute token offsets.
-       text::TextCursor cursor(rCode);
-       do
-       {
-          // Look for an escape.
-          if (!cursor.consumeUntil('\\'))
-             break;
-          
-          // Check for a delimiter following.
-          char ch = cursor.peek(1);
-          if (ch != '"' && ch != '\'' && ch != '`')
-             continue;
-          
-          // Make it parsable.
-          rCode[cursor.offset()] = ' ';
-       }
-       while (cursor.advance());
-       
-       std::cerr << "Parsing code: '" << rCode << "'" << std::endl;
-       RTokens rTokens(string_utils::utf8ToWide(rCode), position, RTokens::StripComments);
-       if (rTokens.empty())
-          return false;
+      // Extract the code.
+      std::string rCode = value.substr(start, end - start);
 
-       RTokenCursor subCursor(rTokens);
+      // Un-escape escaped delimiters within the code.
+      // This is necessary to handle glue expressions of the form:
+      //
+      //    glue("Value: { \"Embedded string\" }")
+      //
+      // where the code we want to actually parse is just "Embedded string".
+      //
+      // We use this somewhat hacky approach to ensure that we don't need
+      // to try and recompute token offsets.
+      text::TextCursor cursor(rCode);
+      do
+      {
+         // Look for an escape.
+         if (!cursor.consumeUntil('\\'))
+            break;
 
-       // glue expressions can provide data to be formatted; for example,
-       //
-       //     glue("{x}", x = 42)
-       //
-       // so we need to make those symbols implicitly available while parsing
-       status.addChildAndSetAsCurrentNode(ParseNode::createNode("(glue)"), position);
-       for (const std::string& mask : dataMask)
-          status.node()->addDefinedSymbol(mask, cursorPosition);
-       doParse(subCursor, status);
-       status.setParentAsCurrent();
-       
-       return true;
+         // Check for a delimiter following.
+         char ch = cursor.peek(1);
+         if (ch != '"' && ch != '\'' && ch != '`')
+            continue;
+
+         // Make it parsable.
+         rCode[cursor.offset()] = ' ';
+      }
+      while (cursor.advance());
+
+      RTokens rTokens(string_utils::utf8ToWide(rCode), position, RTokens::StripComments);
+      if (rTokens.empty())
+         return false;
+
+      RTokenCursor subCursor(rTokens);
+
+      // glue expressions can provide data to be formatted; for example,
+      //
+      //     glue("{x}", x = 42)
+      //
+      // so we need to make those symbols implicitly available while parsing
+      status.addChildAndSetAsCurrentNode(ParseNode::createNode("(glue)"), position);
+      for (const std::string& mask : dataMask)
+         status.node()->addDefinedSymbol(mask, cursorPosition);
+      doParse(subCursor, status);
+      status.setParentAsCurrent();
+
+      return true;
    };
    
-   enum State {
-      Top,
-      Code,
-      String,
-      EmbeddedString,
-   };
+   enum State { Top, Code, String, EmbeddedString, };
    
    // The string delimiter used for an inner string.
    char stringDelimiter = 0;
@@ -1932,8 +1929,6 @@ void validateGlueCallImpl(RTokenCursor cursor,
       
       case Top:
       {
-         GLUE("Entering 'Top' state.");
-         
          // Check for open delimiter.
          if (string_utils::hasSubstringAtOffset(value, open, it))
          {
@@ -1965,8 +1960,6 @@ void validateGlueCallImpl(RTokenCursor cursor,
          
       case Code:
       {
-         GLUE("Entering 'Code' state.");
-         
          char ch = value[it];
          
          // Check for escape.
@@ -1975,6 +1968,7 @@ void validateGlueCallImpl(RTokenCursor cursor,
             ch = value[it + 1];
             if (ch == '"' || ch == '\'' || ch == '`')
             {
+               ++it;
                stringDelimiter = ch;
                previousState = Code;
                state = EmbeddedString;
@@ -1988,7 +1982,7 @@ void validateGlueCallImpl(RTokenCursor cursor,
             GLUE("Consuming string with delimiter {}.", ch);
             stringDelimiter = ch;
             previousState = Code;
-            state = String;
+            state = EmbeddedString;
             continue;
          }
          
@@ -2035,9 +2029,11 @@ void validateGlueCallImpl(RTokenCursor cursor,
          
       case EmbeddedString:
       {
-         GLUE("Entering 'EmbeddedString' state.");
-         
-         if (value[it] == '\\')
+         if (value[it] == stringDelimiter)
+         {
+            state = previousState;
+         }
+         else if (value[it] == '\\')
          {
             it += 1;
             
@@ -2051,8 +2047,6 @@ void validateGlueCallImpl(RTokenCursor cursor,
          
       case String:
       {
-         GLUE("Entering 'String' state.");
-         
          // Skip escapes.
          if (value[it] == '\\')
          {
@@ -2618,6 +2612,10 @@ START:
                MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
             }
             while (cursor.contentEquals(L"!"));
+         }
+         else if (cursor.contentEquals(L"~"))
+         {
+            MOVE_TO_NEXT_SIGNIFICANT_TOKEN(cursor, status);
          }
          else
          {

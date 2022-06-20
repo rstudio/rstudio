@@ -1048,7 +1048,7 @@ void afterSessionInitHook(bool newSession)
    
    if (projects::projectContext().isPackageProject())
    {
-      std::string packageName = projects::ProjectContext().packageInfo().name();
+      std::string packageName = projects::projectContext().packageInfo().name();
       RSourceIndex::addGloballyInferredPackage(packageName);
       r_packages::AsyncPackageInformationProcess::update();
    }

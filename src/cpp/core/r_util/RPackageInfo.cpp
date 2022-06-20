@@ -75,17 +75,20 @@ Error RPackageInfo::read(const FilePath& packageDir)
    FilePath descFilePath = packageDir.completeChildPath("DESCRIPTION");
    if (!descFilePath.exists())
       return core::fileNotFoundError(descFilePath, ERROR_LOCATION);
+   
    std::string errMsg;
-   std::map<std::string,std::string> fields;
+   std::map<std::string, std::string> fields;
    Error error = text::parseDcfFile(descFilePath, true, &fields, &errMsg);
    if (error)
       return error;
 
    error = readField(fields, "Package", &name_, descFilePath, ERROR_LOCATION);
-   if (error) return error;
+   if (error)
+      return error;
    
    error = readField(fields, "Version", &version_, descFilePath, ERROR_LOCATION);
-   if (error) return error;
+   if (error)
+      return error;
    
    readField(fields, "Depends", &depends_);
    readField(fields, "Imports", &imports_);

@@ -46,7 +46,7 @@ public:
    bool consumeUntil(char ch);
    bool consumeUntil(const std::string& text);
    
-   char peek(std::size_t count = 0);
+   char peek(std::size_t count = 0) const;
    char operator*() const { return text_[offset_]; }
    
    std::size_t offset() const { return offset_; }

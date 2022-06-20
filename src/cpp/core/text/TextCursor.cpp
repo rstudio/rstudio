@@ -73,7 +73,7 @@ bool TextCursor::consumeUntil(const std::string& text)
    return true;
 }
 
-char TextCursor::peek(std::size_t count)
+char TextCursor::peek(std::size_t count) const
 {
    auto offset = offset_ + count;
    if (UNLIKELY(offset >= size_))
