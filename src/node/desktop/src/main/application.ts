@@ -13,7 +13,7 @@
  *
  */
 
-import { app, BrowserWindow, screen, WebContents } from 'electron';
+import { app, BrowserWindow, Menu, screen, WebContents } from 'electron';
 import i18next from 'i18next';
 import path from 'path';
 import { getenv, setenv } from '../core/environment';
@@ -213,6 +213,8 @@ export class Application implements AppState {
       this.argsManager.handleAfterSessionLaunchCommands();
     });
 
+    this.setDockMenu();
+
     return run();
   }
 
@@ -294,5 +296,16 @@ export class Application implements AppState {
         baseUrl,
       );
     }
+  }
+
+  setDockMenu(){
+    const  menuDock = Menu.buildFromTemplate([{
+      label: 'New RStudio Window',
+      click: () => {
+        this.appLaunch?.launchRStudio({});
+      }
+    }]);
+
+    app.dock.setMenu(menuDock);
   }
 }
