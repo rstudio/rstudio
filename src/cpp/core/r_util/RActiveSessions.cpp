@@ -60,9 +60,6 @@ ActiveSessions::ActiveSessions(std::shared_ptr<IActiveSessionsStorage> storage, 
    storage_(storage)
 {
    storagePath_ = storagePath(rootStoragePath);
-   Error error = storagePath_.ensureDirectory();
-   if (error)
-      LOG_ERROR(error);
 }
 
 Error ActiveSessions::create(const std::string& project,

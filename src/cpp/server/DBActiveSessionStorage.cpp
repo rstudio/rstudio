@@ -40,14 +40,22 @@ const std::string kUserId = "user_id";
 const std::string kTableName = "active_session_metadata";
 const std::string kSessionIdColumnName = "session_id";
 
+static const std::string kEditorColumnName = "workbench";
 
-inline const std::string& columnName(const std::string& name)
+inline const std::string& columnName(const std::string& propertyName)
 {
-   static const std::string workbench = "workbench";
-   if (name == ActiveSession::kEditor)
-      return workbench;
+   if (propertyName == ActiveSession::kEditor)
+      return kEditorColumnName;
 
-   return name;
+   return propertyName;
+}
+
+inline const std::string& propertyName(const std::string& columnName)
+{
+   if (columnName == kEditorColumnName)
+      return ActiveSession::kEditor;
+
+   return columnName;
 }
 
 std::string getKeyString(const std::map<std::string, std::string>& sourceMap)
@@ -55,7 +63,7 @@ std::string getKeyString(const std::map<std::string, std::string>& sourceMap)
    std::string keys = std::accumulate(
       ++sourceMap.begin(),
       sourceMap.end(),
-      sourceMap.begin()->first,
+      columnName(sourceMap.begin()->first),
       [](std::string a, std::pair<std::string, std::string> b)
       {
          return a + ", " + columnName(b.first);
@@ -90,7 +98,7 @@ std::string getUpdateString(const std::map<std::string, std::string>& sourceMap)
    std::string setValuesString = std::accumulate(
       ++sourceMap.begin(),
       sourceMap.end(),
-      sourceMap.begin()->first + " = '" + sourceMap.begin()->second + "'",
+      columnName(sourceMap.begin()->first) + " = '" + sourceMap.begin()->second + "'",
       [](std::string a, std::pair<std::string, std::string> iter)
       {         
          return a + ", " + columnName(iter.first) + " = '" + iter.second + "'";
@@ -103,9 +111,9 @@ std::string getColumnNameList(const std::set<std::string>& colNames)
    std::string cols = std::accumulate(
       ++colNames.begin(),
       colNames.end(), 
-      *(colNames.begin()), [](std::string a, std::string b)
+      columnName(*(colNames.begin())), [](std::string a, std::string b)
       {
-         return columnName(a) + ", " + columnName(b);
+         return a + ", " + columnName(b);
       });
    return cols;
 }
@@ -119,7 +127,7 @@ void populateMapWithRow(database::RowsetIterator iter, std::map<std::string, std
       if (key == kUserId)
          pTargetMap->emplace(key, std::to_string(iter->get<int>(key)));
       else
-         pTargetMap->emplace(columnName(key),
+         pTargetMap->emplace(propertyName(key),
                iter->get<std::string>(key, ""));
    }
 }
@@ -367,6 +375,8 @@ Error DBActiveSessionStorage::writeProperties(const std::map<std::string, std::s
 
 Error DBActiveSessionStorage::destroy()
 {
+   LOG_DEBUG_MESSAGE("Removing active session for: " + sessionId_ + " from database");
+
    boost::shared_ptr<database::IConnection> connection;
    Error error = getConnectionOrOverride(&connection);
 
@@ -375,12 +385,14 @@ Error DBActiveSessionStorage::destroy()
 
    database::Query query = connection->query("DELETE FROM " + kTableName + " WHERE " + kSessionIdColumnName + " = :id")
       .withInput(sessionId_);
-   database::Rowset rowset;
 
-   error = connection->execute(query, rowset);
+   error = connection->execute(query);
 
    if (error)
       return Error("DatabaseException", errc::DBError, "Error while deleting session metadata [ session:" + sessionId_ + " ]", error, ERROR_LOCATION);
+
+   if (!query.getAffectedRows())
+      LOG_DEBUG_MESSAGE("Failed to delete active session from database - no rows removed for: " + sessionId_);
       
    return error;
 }

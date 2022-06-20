@@ -35,6 +35,7 @@
 
 #include <server/session/ServerSessionRpc.hpp>
 #include <server/DBActiveSessionsStorage.hpp>
+#include <server/DBActiveSessionStorage.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::core::r_util;
@@ -100,14 +101,6 @@ Error handleRead(
    const std::set<std::string>& fields,
    std::map<std::string, std::string>* pValues)
 {
-   if (fields.size() == 1)
-   {
-      std::string field = *fields.begin();
-      pValues->emplace(field, getActiveSession(user, sessionId)->readProperty(field));
-
-      return Success();
-   }
-
    return getActiveSession(user, sessionId)->readProperties(fields, pValues);
 }
 
@@ -118,9 +111,9 @@ Error handleReadAll(
 {
    if (user)
    {
-      std::unique_ptr<ActiveSessions> aciveSessions = getActiveSessions(user.get());
+      std::unique_ptr<ActiveSessions> activeSessions = getActiveSessions(user.get());
       std::vector<boost::shared_ptr<ActiveSession> > sessions = 
-         aciveSessions->list(
+         activeSessions->list(
             userDataDir(user.get()),
             options().getOverlayOption("server-project-sharing") == "1");
 
@@ -174,7 +167,18 @@ Error handleDelete(
    const system::User& user,
    const std::string& sessionId)
 {
-   return getActiveSession(user, sessionId)->destroy();
+   boost::shared_ptr<r_util::ActiveSession> session = getActiveSession(user, sessionId);
+   if (session && !session->empty())
+   {
+      session->destroy();
+      return Success();
+   }
+   else
+   {
+      Error err(json::errc::InvalidSession, "No session to delete", ERROR_LOCATION);
+      err.addProperty("sessionId", sessionId);
+      return err;
+   }
 }
 
 Error handleValidate(
@@ -380,8 +384,13 @@ void handleMetadataRpcImpl(const std::string& username, boost::shared_ptr<core::
       error = handleRead(sessionOwner.get(), sessionId, fields, &result);
       if (error)
       {
-         error = baseError(json::errc::ExecutionError, error, ERROR_LOCATION);
-         LOG_ERROR(error);
+         if (error.getCode() == rstudio::server::storage::errc::SessionNotFound)
+            LOG_DEBUG_MESSAGE("Session not found for read properties of session: " + sessionId + ":" + *fields.begin() + " (" + std::to_string(fields.size()) + " properties total)");
+         else
+         {
+            error = baseError(json::errc::ExecutionError, error, ERROR_LOCATION);
+            LOG_ERROR(error);
+         }
          return json::setJsonRpcError(error, &pConnection->response(), true);
       }
       else
