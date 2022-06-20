@@ -107,9 +107,6 @@ private:
       const FilePath& scratchPath,
       std::shared_ptr<IActiveSessionStorage> storage) : id_(id), scratchPath_(scratchPath), storage_(storage)
    {
-      core::Error error = scratchPath_.ensureDirectory();
-      if (error)
-         LOG_ERROR(error);
    }
 
 public:
@@ -499,13 +496,6 @@ public:
    bool validate(const FilePath& userHomePath,
                  bool projectSharingEnabled) const
    {
-      // ensure the scratch path and properties paths exist
-      if (!scratchPath_.exists())
-      {
-         LOG_DEBUG_MESSAGE("ActiveSession validation failed: " + scratchPath_.getAbsolutePath() + " not accessible to the session user");
-         return false;
-      }
-
       if (empty())
       {
          LOG_DEBUG_MESSAGE("ActiveSession validation failed on empty session");
