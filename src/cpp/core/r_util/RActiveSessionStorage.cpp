@@ -217,6 +217,18 @@ Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string
 
    if (!response.result().isObject())
    {
+      if (response.error().isObject())
+      {
+        // The JSON rpc returned an explicit error code so return that directly to the caller
+        int code;
+        error = json::readObject(response.error().getObject(), "code", code);
+        if (!error)
+        {
+           std::string errorMessage;
+           json::readObject(response.error().getObject(), "message", errorMessage);
+           return Error("Read property response", code, errorMessage, ERROR_LOCATION);
+        }
+      }
       error = Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
       error.addProperty(
          "description",
@@ -224,11 +236,6 @@ Error RpcActiveSessionStorage::readProperty(const std::string& name, std::string
       error.addProperty("response", response.result().write());
 
       LOG_ERROR(error);
-   if (error)
-      return error;
-
-   // No need to wait for the response here.
-   return Success();
       return error;
    }
 
