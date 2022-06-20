@@ -13,7 +13,7 @@
  *
  */
 
-import { BrowserWindow, dialog, Menu, session } from 'electron';
+import { app, BrowserWindow, dialog, Menu, session } from 'electron';
 import { ChildProcess } from 'child_process';
 
 import { logger } from '../core/logger';
@@ -217,8 +217,12 @@ export class MainWindow extends GwtWindow {
 
     this.executeJavaScript('window.desktopHooks.getActiveProjectDir()')
       .then((projectDir) => {
+        if (process.platform == 'darwin') app.dock.setBadge('');
+
         if (projectDir.length > 0) {
           this.window.setTitle(`${projectDir} - ${appState().activation().editionName()}`);
+       
+          if (process.platform == 'darwin') app.dock.setBadge(projectDir);
         } else {
           this.window.setTitle(appState().activation().editionName());
         }
