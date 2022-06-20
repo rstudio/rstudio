@@ -64,6 +64,10 @@ Error PersistentState::initialize()
 
    // session settings
    scratchPath = module_context::sessionScratchPath();
+   // May need to create this if not using session file storage
+   error = scratchPath.ensureDirectory();
+   if (error)
+      return error;
    statePath = scratchPath.completePath("session-persistent-state");
    return sessionSettings_.initialize(statePath);
 }
