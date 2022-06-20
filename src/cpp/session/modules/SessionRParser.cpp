@@ -1830,27 +1830,29 @@ void validateGlueCallImpl(RTokenCursor cursor,
        // Extract the code.
        std::string rCode = value.substr(start, end - start);
        
-       // Un-escape quoted delimiters within the code.
+       // Un-escape escaped delimiters within the code.
        // This is necessary to handle glue expressions of the form:
        //
        //    glue("Value: { \"Embedded string\" }")
        //
        // where the code we want to actually parse is just "Embedded string".
        //
-       // We do this with a bit of a hack, where we replace such escapes
-       // with whitespace.
+       // We use this somewhat hacky approach to ensure that we don't need
+       // to try and recompute token offsets.
        text::TextCursor cursor(rCode);
        do
        {
+          // Look for an escape.
           if (!cursor.consumeUntil('\\'))
              break;
           
-          if (!cursor.advance())
-             break;
+          // Check for a delimiter following.
+          char ch = cursor.peek(1);
+          if (ch != '"' && ch != '\'' && ch != '`')
+             continue;
           
-          char ch = cursor.peek();
-          if (ch == '"' || ch == '\'' || ch == '`')
-             rCode[cursor.offset() - 1] = ' ';
+          // Make it parsable.
+          rCode[cursor.offset()] = ' ';
        }
        while (cursor.advance());
        
