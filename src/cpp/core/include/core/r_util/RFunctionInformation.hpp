@@ -170,11 +170,11 @@ public:
       if (binding_)
       {
          const Binding& binding = *binding_;
-         WLOGF("Function '{}' from '{}' has no formal '{}'", binding.name, binding.origin, formalName);
+         DLOGF("Function '{}' from '{}' has no formal '{}'", binding.name, binding.origin, formalName);
       }
       else
       {
-         WLOGF("Synthetic function has no formal '{}'", formalName);
+         DLOGF("Synthetic function has no formal '{}'", formalName);
       };
       
       return noSuchFormal_;
