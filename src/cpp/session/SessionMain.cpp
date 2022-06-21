@@ -1969,6 +1969,9 @@ int main(int argc, char * const argv[])
          }
       }
 
+      // Initialize rpc to rserver before options. Rpc validates session scope with db session storage
+      error = socket_rpc::initialize();
+
       // read program options
       std::ostringstream osWarnings;
       Options& options = rsession::options();
@@ -2050,8 +2053,6 @@ int main(int argc, char * const argv[])
          }
       }
 
-      // Initialize rpc methods
-      error = socket_rpc::initialize();
       if (error)
          return sessionExitFailure(error, ERROR_LOCATION);
 

@@ -202,8 +202,9 @@ core::system::ProcessConfig sessionProcessConfig(
    environment.push_back(
          std::make_pair(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath()));
 
-   // Set RPC socket path
+   // Set RPC socket path and secret
    environment.push_back({kServerRpcSocketPathEnvVar, serverRpcSocketPath().getAbsolutePath()});
+   environment.push_back({kServerRpcSecretEnvVar, core::socket_rpc::secret()});
 
    // build the config object and return it
    core::system::ProcessConfig config;
