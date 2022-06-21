@@ -147,11 +147,6 @@ public interface DesktopFrame extends JavaScriptPassthrough
    
    void openProjectInNewWindow(String projectFilePath);
    void openSessionInNewWindow(String workingDirectoryPath);
-   
-   void openTerminal(String terminalPath,
-                     String workingDirectory,
-                     String extraPathEntries,
-                     String shellType);
 
    void setFixedWidthFont(String font);
    void setZoomLevel(double zoomLevel);

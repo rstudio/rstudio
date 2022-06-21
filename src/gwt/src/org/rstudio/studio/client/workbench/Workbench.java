@@ -79,7 +79,6 @@ import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
-import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
 import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialLaunchEvent;
@@ -416,30 +415,6 @@ public class Workbench implements BusyEvent.Handler,
             indicator.onError(msg);
          }
       });
-   }
-
-   @Handler
-   public void onShowShellDialog()
-   {
-      if (Desktop.isDesktop())
-      {
-         server_.getTerminalOptions(new SimpleRequestCallback<TerminalOptions>()
-         {
-            @Override
-            public void onResponseReceived(TerminalOptions options)
-            {
-               Desktop.getFrame().openTerminal(
-                     StringUtil.notNull(options.getTerminalPath()),
-                     StringUtil.notNull(options.getWorkingDirectory()),
-                     StringUtil.notNull(options.getExtraPathEntries()),
-                     options.getShellType());
-            }
-         });
-      }
-      else
-      {
-         eventBus_.fireEvent(new ActivateNamedTerminalEvent());
-      }
    }
 
    @Handler
