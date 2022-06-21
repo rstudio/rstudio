@@ -50,11 +50,9 @@ TEST_CASE("TextCursor")
       CHECK(cursor.advance());
       CHECK(*cursor == 'd');
       
-      CHECK(cursor.advance());
-      CHECK(*cursor == '\0');
-      
+      // check that we can't advance once we've reached
+      // the end of our string
       CHECK(!cursor.advance());
-      CHECK(*cursor == '\0');
    }
 }
 

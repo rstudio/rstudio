@@ -24,7 +24,7 @@ namespace text {
 bool TextCursor::advance(std::size_t count)
 {
    std::size_t offset = offset_ + count;
-   if (UNLIKELY(offset > size_))
+   if (UNLIKELY(offset >= size_))
       return false;
    
    offset_ = offset;
@@ -42,9 +42,6 @@ bool TextCursor::consume(char ch)
 
 bool TextCursor::consume(const std::string& text)
 {
-   if (text.size() > offset_ + size_)
-      return false;
-   
    for (std::size_t i = 0, n = text.size(); i < n; i++)
       if (text_[offset_ + i] != text[i])
          return false;
