@@ -575,10 +575,6 @@ export class GwtCallback extends EventEmitter {
       }
     });
 
-    ipcMain.on('desktop_open_terminal', (event, terminalPath, workingDirectory, extraPathEntries, shellType) => {
-      GwtCallback.unimpl('desktop_open_terminal');
-    });
-
     ipcMain.on('desktop_get_fixed_width_font_list', (event) => {
       event.returnValue = this.monospaceFonts.join('\n');
     });

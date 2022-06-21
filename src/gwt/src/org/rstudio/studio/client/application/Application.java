@@ -986,7 +986,6 @@ public class Application implements ApplicationEventHandlers
 
       if (!sessionInfo.getAllowShell())
       {
-         commands_.showShellDialog().remove();
          removeTerminalCommands();
       }
 

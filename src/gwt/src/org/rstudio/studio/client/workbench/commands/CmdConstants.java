@@ -2670,14 +2670,6 @@ public interface CmdConstants extends Constants {
     @DefaultStringValue("Setup version control for the current project") // $NON-NLS-1$
     String versionControlProjectSetupDesc();
     
-    // showShellDialog
-    @DefaultStringValue("Open Shell") // $NON-NLS-1$
-    String showShellDialogLabel();
-    @DefaultStringValue("_Shell...") // $NON-NLS-1$
-    String showShellDialogMenuLabel();
-    @DefaultStringValue("Execute shell commands") // $NON-NLS-1$
-    String showShellDialogDesc();
-    
     // newTerminal
     @DefaultStringValue("New Terminal") // $NON-NLS-1$
     String newTerminalLabel();
