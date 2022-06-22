@@ -124,7 +124,7 @@ inline Error initTcpIpAcceptor(
    }
    else
    {
-      // legacy (2022.06 and older) behavior
+      // legacy (2022.02 and older) behavior
       DLOGF("Setting SO_REUSEADDR socket option on connection");
       acceptor.set_option(tcp::acceptor::reuse_address(true), ec);
       if (ec)
