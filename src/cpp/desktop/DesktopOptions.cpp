@@ -13,13 +13,19 @@
  *
  */
 
+#ifdef _WIN32
+# include <winsock.h>
+#endif
+
 #include "DesktopOptions.hpp"
 
 #include <QtGui>
+
 #include <QApplication>
 #include <QDesktopWidget>
 
 #include <boost/algorithm/string/split.hpp>
+#include <boost/scope_exit.hpp>
 
 #include <shared_core/SafeConvert.hpp>
 
@@ -30,6 +36,7 @@
 
 #include "DesktopInfo.hpp"
 #include "DesktopUtils.hpp"
+
 
 #define kRStudioDesktopSessionPortValidationEnabled "RSTUDIO_DESKTOP_SESSION_PORT_VALIDATION_ENABLED"
 #define kRStudioDesktopSessionPortRange "RSTUDIO_DESKTOP_SESSION_PORT_RANGE"
@@ -54,23 +61,45 @@ bool portIsOpen(int port)
    if (!needsValidation)
       return true;
 
-   // Create a socket
-   QTcpSocket socket;
+#ifdef _WIN32
+   // NOTE: Ideally, we'd just use QTcpSocket or some other helper from
+   // Qt or Boost, but we had trouble getting these to work in the presence
+   // of Windows proxy servers, so we just hand-roll some winsock below.
 
-   // Set up an error handler
-   QObject::connect(&socket, QOverload<QAbstractSocket::SocketError>::of(&QAbstractSocket::error), [&]()
+   // define a listener socket
+   SOCKET listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+   if (listener == INVALID_SOCKET)
    {
-      DLOGF(
-               "An error occurred while attempting to bind to port {}: {}",
-               port,
-               socket.errorString().toStdString());
-   });
-
-   if (!socket.bind(port))
-   {
-      DLOGF("Failed to bind TCP socket to port {}", port);
-      return false;
+      DLOGF("Error in socket() [error code {}]; assuming port available", WSAGetLastError());
+      return true;
    }
+
+   // define the address we want to bind to
+   sockaddr_in address;
+   address.sin_family = AF_INET;
+   address.sin_addr.s_addr = inet_addr("127.0.0.1");
+   address.sin_port = htons(port);
+
+   // try to bind the socket
+   int bindResult = bind(listener, (SOCKADDR*) &address, sizeof(address));
+   if (bindResult == SOCKET_ERROR)
+   {
+      int error = WSAGetLastError();
+      DLOGF("Error binding to port {} [error code {}]", port, error);
+   }
+   else
+   {
+      DLOGF("Successfully bound to port {}", port);
+   }
+
+   // clean up sockets +
+   closesocket(listener);
+
+   return bindResult != SOCKET_ERROR;
+#else
+   // TODO: macOS / Linux
+#endif
+
 
    // we found a good port; close our socket and save it
    //
@@ -79,7 +108,6 @@ bool portIsOpen(int port)
    // communicate to us which port it wants to use via some
    // separate channel
    DLOGF("Successfully bound TCP socket to port {}", port);
-   socket.close();
    return true;
 }
 
