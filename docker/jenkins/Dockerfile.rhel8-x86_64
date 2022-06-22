@@ -93,12 +93,6 @@ COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common rhel8
 
-# install Qt SDK
-COPY dependencies/common/install-qt.sh /tmp/
-COPY dependencies/linux/install-qt-linux /tmp/
-RUN export QT_VERSION=5.12.8 && \
-    cd /tmp && /bin/bash ./install-qt-linux
-
 # get libuser header files (libuser-devel not currently available on rhel8)
 RUN wget https://pagure.io/libuser/archive/libuser-0.62/libuser-libuser-0.62.tar.gz
 RUN tar zxvf libuser-libuser-0.62.tar.gz

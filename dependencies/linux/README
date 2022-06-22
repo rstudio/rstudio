@@ -9,19 +9,7 @@ systems. Specific version requirements for various components include:
 - R 3.3.0
 - CMake 3.4.3 or newer
 - Boost 1.78
-- Qt 5.12.8 [Required only for Desktop]
 - patchelf 0.9 [Required only for Desktop]
-
-Installation of Qt SDK
-=============================================================================
-
-To build RStudio Desktop, install Qt from https://qt.io. Include the
-QtWebEngine component.
-
-If the required version isn't showing up when installing via the Qt online
-installer click the "Archive" checkbox on the "Select Components" screen, then
-the Filter button. The list of available versions will expand to include older
-versions.
 
 Installing Dependencies for Debian/Ubuntu, Fedora, RedHat/CentOS, or OpenSUSE
 =============================================================================
@@ -76,11 +64,7 @@ For example, on Ubuntu 18.04 (Bionic), you might run:
 
    ./install-crashpad bionic
 
-3) Optionally install the Qt SDK, including QtWebEngine, from
-https://qt.io. You should do this if you are building the Desktop version
-and don't have Qt and QtWebEngine installed on the system:
-
-4) If your system doesn't meet the minimum version requirements for CMake
-(3.4.3) you can download a Linux binary of the latest version of CMake here:
+3) If your system doesn't meet the minimum version requirements for CMake
+(3.19.8) you can download a Linux binary of the latest version of CMake here:
 
   - https://cmake.org/download/

@@ -108,12 +108,6 @@ COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 # install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common bionic
 
-# install Qt SDK
-COPY dependencies/common/install-qt.sh /tmp/
-COPY dependencies/linux/install-qt-linux /tmp/
-RUN export QT_VERSION=5.12.8 && \
-    cd /tmp && /bin/bash ./install-qt-linux
-
 # cachebust for Quarto release
 ADD https://quarto.org/docs/download/_download.json quarto_releases
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-quarto
