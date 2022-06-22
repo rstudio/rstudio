@@ -114,8 +114,9 @@ Error handleReadAll(
       std::unique_ptr<ActiveSessions> activeSessions = getActiveSessions(user.get());
       std::vector<boost::shared_ptr<ActiveSession> > sessions = 
          activeSessions->list(
-            userDataDir(user.get()),
-            options().getOverlayOption("server-project-sharing") == "1");
+            user->getHomePath(),
+            options().getOverlayOption("server-project-sharing") == "1",
+            false); // don't validate sessions as there's no access to the project dir from the server
 
       std::string field;
       if (fields.size() == 1)
