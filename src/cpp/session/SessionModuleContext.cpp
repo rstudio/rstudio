@@ -1892,8 +1892,8 @@ r_util::ActiveSession& activeSession()
                activeSessions().list(userHomePath(), options().projectSharingEnabled(), true);
          if (sessions.size() > 0)
          {
-            // there is only one session, so this must be singleton session mode
-            // reopen that session
+            // there is more than one session but no session id was passed in. This is OS server or pro with server-multiple-sessions=0
+            // so we must be referring to the most recent session.
             pSession = sessions.front();
 
             if (sessions.size() == 1)
