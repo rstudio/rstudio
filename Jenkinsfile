@@ -96,7 +96,7 @@ def s3_upload(type, flavor, os, arch) {
   def renamedTarballFile = ""
   
   // add installer-less tarball if desktop
-  if (flavor == "desktop" || flavor == "electron") {
+  if (flavor == "electron") {
     tarballFile = sh (
       script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
       returnStdout: true
@@ -117,10 +117,10 @@ def s3_upload(type, flavor, os, arch) {
   withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
     sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/${flavor}/${os}/${arch}/${packageFile} ${wwwRstudioOrgPem}"
     // for the last linux build, on OS only we also update windows to avoid the need for publish-daily-binary.bat
-    if (flavor == "desktop" && os == "rhel8") {
+    if (flavor == "electron" && os == "rhel8") {
        def packageName = "RStudio-${rstudioVersionMajor}.${rstudioVersionMinor}.${rstudioVersionPatch}${rstudioVersionSuffix}"
        packageName = packageName.replace('+', '-')
-       sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/windows/${packageName}.exe ${wwwRstudioOrgPem}"
+       sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/electron/windows/${packageName}.exe ${wwwRstudioOrgPem}"
     }
   }
 
@@ -130,9 +130,7 @@ def s3_upload(type, flavor, os, arch) {
     // derive product
     def product="${flavor}"
     if (rstudioVersionSuffix.contains("pro")) {
-        if (product == "desktop") {
-            product = "desktop-pro"
-        } else if (product == "electron") {
+        if (product == "electron") {
             product = "electron-pro"
         } else if (product == "server") {
             product = "workbench"
@@ -230,24 +228,18 @@ try {
 
     timestamps {
         def containers = [
-          [os: 'opensuse15', arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'OpenSUSE 15'],
           [os: 'opensuse15', arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'OpenSUSE 15'],
           [os: 'opensuse15', arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'OpenSUSE 15'],
-          [os: 'centos7',    arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'CentOS 7'],
           [os: 'centos7',    arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'CentOS 7'],
           [os: 'centos7',    arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'CentOS 7'],
           [os: 'bionic',     arch: 'amd64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Bionic'],
-          [os: 'bionic',     arch: 'amd64',  flavor: 'desktop',  variant: '',  package_os: 'Ubuntu Bionic'],
           [os: 'bionic',     arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Bionic'],
           [os: 'jammy',      arch: 'amd64',  flavor: 'server',   variant: '',  package_os: 'Ubuntu Jammy'],
-          [os: 'jammy',      arch: 'amd64',  flavor: 'desktop',  variant: '',  package_os: 'Ubuntu Jammy'],
           [os: 'jammy',      arch: 'amd64',  flavor: 'electron', variant: '',  package_os: 'Ubuntu Jammy'],
           [os: 'fedora36',   arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'Fedora 36'],
-          [os: 'fedora36',   arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'Fedora 36'],
           [os: 'fedora36',   arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'Fedora 36'],
           [os: 'rhel8',      arch: 'x86_64', flavor: 'server',   variant: '',  package_os: 'RHEL 8'],
-          [os: 'rhel8',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 8'],
-          [os: 'rhel8',      arch: 'x86_64', flavor: 'desktop',  variant: '',  package_os: 'RHEL 8']
+          [os: 'rhel8',      arch: 'x86_64', flavor: 'electron', variant: '',  package_os: 'RHEL 8']
         ]
         containers = limit_builds(containers)
 
@@ -318,7 +310,6 @@ try {
         }
 
         def windows_containers = [
-          [os: 'windows', arch: 'x86_64', flavor: 'desktop',  variant: '', package_os: 'Windows'],
           [os: 'windows', arch: 'x86_64', flavor: 'electron',  variant: '', package_os: 'Windows']
         ]
  
@@ -515,7 +506,6 @@ try {
 
         // trigger macos build if we're in open-source repo
         if (env.JOB_NAME.startsWith('IDE/open-source-pipeline')) {
-          trigger_external_build('IDE/macos-pipeline')
           trigger_external_build('IDE/macos-electron')
         }
 

@@ -484,7 +484,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
             <cmd refid="versionControlProjectSetup"/>
          </menu>
          <separator/>
-         <cmd refid="showShellDialog"/>
          <menu label="_Terminal">
             <cmd refid="newTerminal"/>
             <separator/>
@@ -3114,12 +3113,6 @@ See `/src/gwt/tools/i18n-helpers/README.md`.
         menuLabel="Project _Setup..."
         desc="Setup version control for the current project"
         context="vcs"
-        windowMode="main"/>
-
-   <cmd id="showShellDialog"
-        label="Open Shell"
-        menuLabel="_Shell..."
-        desc="Execute shell commands"
         windowMode="main"/>
 
    <cmd id="newTerminal"

@@ -707,7 +707,7 @@ public:
                       const std::string& editor,
                       std::string* pId) const;
 
-   std::vector<boost::shared_ptr<ActiveSession> > list(FilePath userHomePath, bool projectSharingEnabled) const;
+   std::vector<boost::shared_ptr<ActiveSession> > list(FilePath userHomePath, bool projectSharingEnabled, bool validate) const;
 
    size_t count(const FilePath& userHomePath,
                 bool projectSharingEnabled) const;

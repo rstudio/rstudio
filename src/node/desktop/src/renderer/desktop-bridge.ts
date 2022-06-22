@@ -376,10 +376,6 @@ export function getDesktopBridge() {
       ipcRenderer.send('desktop_open_session_in_new_window', workingDirectoryPath);
     },
 
-    openTerminal: (terminalPath: string, workingDirectory: string, extraPathEntries: string, shellType: string) => {
-      ipcRenderer.send('desktop_open_terminal', terminalPath, workingDirectory, extraPathEntries, shellType);
-    },
-
     getFixedWidthFontList: (callback: VoidCallback<string>) => {
       ipcRenderer
         .invoke('desktop_get_fixed_width_font_list')

@@ -123,32 +123,38 @@ bool compareActivityLevel(boost::shared_ptr<ActiveSession> a,
 
 } // anonymous namespace
 
-std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath userHomePath, bool projectSharingEnabled) const
+std::vector<boost::shared_ptr<ActiveSession> > ActiveSessions::list(FilePath userHomePath, bool projectSharingEnabled, bool validate) const
 {
    std::vector<std::string> sessionIds = storage_->listSessionIds();
    std::vector<boost::shared_ptr<ActiveSession>> sessions{};
+
    for(const std::string& id : sessionIds)
    {
       boost::shared_ptr<ActiveSession> candidateSession = get(id);
-      if (candidateSession->validate(userHomePath, projectSharingEnabled))
+      if (validate)
       {
-         // Cache the sort conditions to ensure compareActivityLevel will provide a strict weak ordering.
-         // Otherwise, the conditions on which we sort (e.g. lastUsed()) can be updated on disk during a sort
-         // causing an occasional segfault.
-         candidateSession->cacheSortConditions();
-         sessions.push_back(candidateSession);
+         if (candidateSession->validate(userHomePath, projectSharingEnabled))
+         {
+            // Cache the sort conditions to ensure compareActivityLevel will provide a strict weak ordering.
+            // Otherwise, the conditions on which we sort (e.g. lastUsed()) can be updated on disk during a sort
+            // causing an occasional segfault.
+            candidateSession->cacheSortConditions();
+            sessions.push_back(candidateSession);
+         }
+         else
+         {
+            LOG_DEBUG_MESSAGE("Removing invalid session: " + candidateSession->id());
+            // remove sessions that don't have required properties
+            // (they may be here as a result of a race condition where
+            // they are removed but then suspended session data is
+            // written back into them)
+            Error error = candidateSession->destroy();
+            if (error)
+               LOG_ERROR(error);
+         }
       }
       else
-      {
-         LOG_DEBUG_MESSAGE("Removing invalid session: " + candidateSession->id());
-         // remove sessions that don't have required properties
-         // (they may be here as a result of a race condition where
-         // they are removed but then suspended session data is
-         // written back into them)
-         Error error = candidateSession->destroy();
-         if (error)
-            LOG_ERROR(error);
-      }
+         sessions.push_back(candidateSession);
    }
 
    // sort by activity level (most active sessions first)
