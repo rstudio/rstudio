@@ -1868,6 +1868,7 @@ r_util::ActiveSession& activeSession()
    if (!pSession)
    {
       std::string id = options().sessionScope().id();
+
       if (!id.empty())
          pSession = activeSessions().get(id);
       else if (options().programMode() == kSessionProgramModeDesktop)
@@ -1888,15 +1889,21 @@ r_util::ActiveSession& activeSession()
          // if no scope was specified, we are in singleton session mode
          // check to see if there is an existing active session, and use that
          std::vector<boost::shared_ptr<r_util::ActiveSession> > sessions =
-               activeSessions().list(userHomePath(), options().projectSharingEnabled());
-         if (sessions.size() == 1)
+               activeSessions().list(userHomePath(), options().projectSharingEnabled(), true);
+         if (sessions.size() > 0)
          {
-            // there is only one session, so this must be singleton session mode
-            // reopen that session
+            // there is more than one session but no session id was passed in. This is OS server or pro with server-multiple-sessions=0
+            // so we must be referring to the most recent session.
             pSession = sessions.front();
+
+            if (sessions.size() == 1)
+               LOG_DEBUG_MESSAGE("Reusing singleton session: " + pSession->id());
+            else
+               LOG_DEBUG_MESSAGE("Reusing most recent session: " + pSession->id() + " out of: " + std::to_string(sessions.size()));
          }
          else
          {
+
             // create a new session entry
             // this should not really run because in single session mode there will
             // only be one session but we'll create one here just in case for safety
@@ -1907,6 +1914,8 @@ r_util::ActiveSession& activeSession()
             // the actual user preference or session default directory that it should be
             activeSessions().create(options().sessionScope().project(), "~", &sessionId);
             pSession = activeSessions().get(sessionId);
+
+            LOG_DEBUG_MESSAGE("Creating new session in singleton session mode: " + sessionId);
          }
       }
    }
