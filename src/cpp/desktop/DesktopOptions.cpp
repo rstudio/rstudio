@@ -99,7 +99,7 @@ bool portIsOpen(int port)
       DLOGF("Successfully bound to port {}", port);
    }
 
-   // clean up sockets +
+   // close socket
    closesocket(listener);
 
    return bindResult != SOCKET_ERROR;
@@ -132,9 +132,9 @@ bool portIsOpen(int port)
    else
    {
       DLOGF("Successfully bound to port {}", port);
-      close(fd);
    }
 
+   close(fd);
    return bindResult != -1;
 #endif
 }
